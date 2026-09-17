@@ -1,11 +1,13 @@
 <!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
 <!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
 
-# 2026-09-17 — the re-verification batch, and one key it had to clear
+# 2026-09-17 — the re-verification batch, one key it had to clear, and one browser that died
 
 What the re-establishment of [re-verification rows 21, 34, 38 and
-85](../../../kb/re-verification.md) was read out of, plus the registry residue
-that batch created and cleared.
+85](../../../kb/re-verification.md) was read out of, the registry residue that
+batch created and cleared, and — *added later the same day* — the one red of the
+next batch's gate, kept because it is the wild signature an open hazard row says
+it has never been able to reproduce.
 
 ## `removed-BrowserAI.app.test-key.txt`
 
@@ -55,3 +57,33 @@ entries that publish them, and the rigs that produced them are in
 [`2026-09-17-cost-ratios`](../../probes/2026-09-17-cost-ratios/README.md). The
 raw JSON each probe emitted was scratch and was deleted with the rest of
 `.work/`; re-running a probe produces new files rather than these.
+
+## `sweeper-exit1-20260917-140227.log`
+
+**The whole of the failing run**, uncut — 13,202 bytes, SHA-256
+`03503c40d3ab47ec66008d46aaea4f35bedbf3bae2b0c602299217e26b8f5c42`, identical to
+the scratch log it was copied from (`.work/suite/ps-20260917-140227.log`, same
+digest) before that directory was cleared. Nothing was extracted from it, so
+there is no cut to describe.
+
+**Why it is kept.**
+`StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession`
+failed at 855 ms with **exit code `1`**, nothing on either stream, both pipes at
+EOF and five lines in Chromium's own `--log-file`. [The hazard
+row](../../../HAZARDS.md#hazard-index) for a browser dying on a spent desktop
+heap records that exit `1` is the signature seen **in the wild** and that 80
+deliberate reproductions produced `0x80000003` and `0xE0000008` and **never a
+`1`** — so an instance of it is worth more than a line in a report.
+
+**And the instrument that row nominates fired**, in its own words in this log:
+*"A message-only window carrying a 2048-character title was created on this
+desktop and destroyed again. Its heap had room for the allocation an exhausted
+one refuses a starting Chromium, so whatever killed the browser, it was not
+this."* For this shape the desktop heap is therefore **excluded**, and the cause
+is still unnamed.
+
+**What the rest of the gate did**, so the rate is readable rather than implied:
+an immediate re-run of the whole suite was **747 / 0 failed / 0 skipped**, and so
+was the Git Bash half after it — **1 red in 3 full runs** that day, on a tree
+whose only product-source change was a doc comment. Nothing was retried in code
+and no assertion was touched.

@@ -1,0 +1,125 @@
+Running tests from C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+failed TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession (855ms)
+  [Test Failure] InvalidOperationException: The browser (pid 90216) exited before it published a message window for 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-29e865154e604cc18ac7a4f7e16f6421\real\profile'. That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one.
+--- exit code: 1 ---
+--- what it wrote ---
+<it wrote nothing to either stream, and both pipes reached end-of-file>
+--- its own log (C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-29e865154e604cc18ac7a4f7e16f6421\chrome_debug.log) ---
+[90216:79676:0917/140254.411:VERBOSE1:components\policy\core\common\policy_service_impl.cc:632] Taking initial snapshot of POLICY_DOMAIN_CHROME policies
+[90216:79676:0917/140254.420:VERBOSE1:components\variations\service\variations_field_trial_creator.cc:612] Applying FieldTrialTestingConfig
+[90216:79676:0917/140254.423:VERBOSE1:components\variations\service\variations_field_trial_creator.cc:407] VariationsSetupComplete
+[90216:79676:0917/140254.452:VERBOSE1:base\allocator\scheduler_loop_quarantine_config.cc:199] No entry found for browser/global.
+[90216:79676:0917/140254.453:VERBOSE1:base\allocator\scheduler_loop_quarantine_config.cc:199] No entry found for browser/*.
+
+--- the machine at that instant ---
+  processes:        548
+  threads:          12650
+  kernel handles:   369092
+  physical total:   130989 MiB
+  physical free:    72729 MiB
+  commit total:     72492 MiB
+  commit limit:     141229 MiB
+  commit peak:      93068 MiB
+  processors:       32
+  desktop heap:     <usage not readable without a kernel debugger; a Chromium that cannot create a window object fails this way and none of the figures above would show it. The nearest thing to a reading is DesktopHeapProbe, which tries the allocation instead of asking about it, and which the attribution failure prints directly beneath this block>
+--- one CreateWindowExW of our own, on this desktop, at this instant ---
+  verdict: NOT DESKTOP HEAP
+  reading: A message-only window carrying a 2048-character title was created on this desktop and destroyed again. Its heap had room for the allocation an exhausted one refuses a starting Chromium, so whatever killed the browser, it was not this. That is information: it retires the one ceiling none of the figures above can see.
+  from C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+  TUnit.Engine.Exceptions.TestFailedException: [Test Failure] InvalidOperationException: The browser (pid 90216) exited before it published a message window for 'C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-29e865154e604cc18ac7a4f7e16f6421\real\profile'. That is a launch failure rather than an attribution failure, and waiting out the deadline would report the wrong one.
+  --- exit code: 1 ---
+  --- what it wrote ---
+  <it wrote nothing to either stream, and both pipes reached end-of-file>
+  --- its own log (C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-29e865154e604cc18ac7a4f7e16f6421\chrome_debug.log) ---
+  [90216:79676:0917/140254.411:VERBOSE1:components\policy\core\common\policy_service_impl.cc:632] Taking initial snapshot of POLICY_DOMAIN_CHROME policies
+  [90216:79676:0917/140254.420:VERBOSE1:components\variations\service\variations_field_trial_creator.cc:612] Applying FieldTrialTestingConfig
+  [90216:79676:0917/140254.423:VERBOSE1:components\variations\service\variations_field_trial_creator.cc:407] VariationsSetupComplete
+  [90216:79676:0917/140254.452:VERBOSE1:base\allocator\scheduler_loop_quarantine_config.cc:199] No entry found for browser/global.
+  [90216:79676:0917/140254.453:VERBOSE1:base\allocator\scheduler_loop_quarantine_config.cc:199] No entry found for browser/*.
+  
+  --- the machine at that instant ---
+    processes:        548
+    threads:          12650
+    kernel handles:   369092
+    physical total:   130989 MiB
+    physical free:    72729 MiB
+    commit total:     72492 MiB
+    commit limit:     141229 MiB
+    commit peak:      93068 MiB
+    processors:       32
+    desktop heap:     <usage not readable without a kernel debugger; a Chromium that cannot create a window object fails this way and none of the figures above would show it. The nearest thing to a reading is DesktopHeapProbe, which tries the allocation instead of asking about it, and which the attribution failure prints directly beneath this block>
+  --- one CreateWindowExW of our own, on this desktop, at this instant ---
+    verdict: NOT DESKTOP HEAP
+    reading: A message-only window carrying a 2048-character title was created on this desktop and destroyed again. Its heap had room for the allocation an exhausted one refuses a starting Chromium, so whatever killed the browser, it was not this. That is information: it retires the one ceiling none of the figures above can see.
+    at BrowserAI.Tests.StraySweepTests.WaitForAttributionAsync(String image, String profile, LaunchedProcess browser, Int64 browserCreated, JobObjectScope scope, String chromiumLog) in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\StraySweepTests.cs:1674
+    at BrowserAI.Tests.StraySweepTests.TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession() in C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\StraySweepTests.cs:652
+       --- TUnit internals omitted (run with --detailed-stacktrace for full trace) ---
+C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) failed with 1 error(s) (2m 14s 809ms)
+Exit code: 2
+  Standard output: ==============================================================================
+  BrowserAI suite coverage ΓÇö what this run actually exercised
+  ==============================================================================
+    published slice     PRESENT  C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+    repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\payload\payload.json
+    Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1244\chrome-win64\chrome.exe
+    Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe
+    packed release      PRESENT  C:\Source\SixFive7\BrowserAI\Releases\BrowserAI.app-1.0.0-full.nupkg
+    client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+    release installer   PRESENT  C:\Source\SixFive7\BrowserAI\Releases\test-pack\BrowserAI.test-installer.exe
+    git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI rev-parse --is-inside-work-tree said true
+    publish freshness   FRESH      exe 2026-09-17T11:56:46.838Z is 2m00s newer than the newest of 110 inputs (src\BrowserAI\Protocol\ChildEnvironment.cs, 2026-09-17T11:54:46.532Z) ┬╖ the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+    release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+    expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+    first-run bytes     CACHED   seeded from a tree the CDN served 5 min ago; nothing was downloaded in this run (6.1 s). The cached tree is untouched, so its hour still runs from the download that produced it.
+    drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ ┬╖ cwd C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows ┬╖ BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+    filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly ┬╖ read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request ΓÇö never this process's command line
+    foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) ΓÇö it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+        ΓÜá∩╕Å  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+        A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+        window belongs to an ancestor of the launching process, so a change that stole
+        focus on a default install would read as clean on this machine. It is a blind
+        spot in the checking rather than a defect to repair, and nothing here may
+        change the setting: see HAZARDS.md and kb/windows/detection.md.
+    commit charge       HEALTHY    start 71,323 MiB (50.5%) ┬╖ end 71,504 MiB (50.6%) ┬╖ limit 141,229 MiB ┬╖ \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+  ==============================================================================
+    This run exercised every layer. No test took a degraded path.
+  ==============================================================================
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Failed!
+  total: 747
+  failed: 1
+  succeeded: 746
+  skipped: 0
+  duration: 2m 15s 225ms
+Test run completed with non-success exit code: 2 (see: https://aka.ms/testingplatform/exitcodes)
+==============================================================================
+BrowserAI suite coverage — what this run actually exercised
+==============================================================================
+  published slice     PRESENT  C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+  repository payload  PRESENT  C:\Source\SixFive7\BrowserAI\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1244\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe
+  packed release      PRESENT  C:\Source\SixFive7\BrowserAI\Releases\BrowserAI.app-1.0.0-full.nupkg
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   PRESENT  C:\Source\SixFive7\BrowserAI\Releases\test-pack\BrowserAI.test-installer.exe
+  git                 PRESENT  git -C C:\Source\SixFive7\BrowserAI rev-parse --is-inside-work-tree said true
+  publish freshness   FRESH      exe 2026-09-17T11:56:46.838Z is 2m00s newer than the newest of 110 inputs (src\BrowserAI\Protocol\ChildEnvironment.cs, 2026-09-17T11:54:46.532Z) · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     CACHED   seeded from a tree the CDN served 5 min ago; nothing was downloaded in this run (6.1 s). The cached tree is untouched, so its hour still runs from the download that produced it.
+  drive letter        UPPER C:\  C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd C:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=upper and it took, so this half is a different instrument from the other
+  filter              FULL RUN   the platform handed the framework no filter, so this run discovered the whole assembly · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request — never this process's command line
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) — it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 71,323 MiB (50.5%) · end 71,504 MiB (50.6%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+==============================================================================
+  This run exercised every layer. No test took a degraded path.
+==============================================================================
