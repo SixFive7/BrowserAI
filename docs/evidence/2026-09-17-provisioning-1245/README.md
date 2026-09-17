@@ -21,12 +21,23 @@ in prose. These are the four files the numbers were read out of, unmodified.
 |---|---|
 | `chromium-1.json`, `chromium-2.json` | Two clean Chromium provisions into an empty root, each the probe's own output: exit code, stopwatch seconds, total bytes and files, and the per-component breakdown |
 | `firefox-1.json`, `firefox-2.json` | The same two runs for Firefox |
-| `<family>-<n>.installer.log` | What upstream's installer wrote, UTC-stamped per line by the rig. It is four lines total because Node buffers a piped stdout, which is why the per-phase boundaries are not in the kb entry |
 
-**Nothing is cut.** All eight files are whole, so there is no digest of an
-original to record. The `.json` files are exactly what
-`Measure-Provisioning.ps1` wrote; the `.log` files are exactly what it captured,
-with this repository's LF normalisation and nothing else.
+**Nothing is cut and nothing is trimmed.** All four files are whole and are
+exactly what `Measure-Provisioning.ps1` wrote, with this repository's LF
+normalisation and nothing else, so there is no digest of an original to record.
+
+⚠️ **What is deliberately NOT here: the installer's own output.** The rig
+captures it and it is what confirms the derived URLs against the string upstream
+actually prints, but upstream colours that line with ANSI SGR escapes - `0x1B`
+bytes - and `HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte` refuses a C0
+control byte anywhere in this repository's text. **It is dropped rather than
+stripped**, because a doctored capture is worth less than a quoted line: what it
+said, with the escapes removed by hand for reading only, is *"Downloading Chrome
+for Testing 154.0.8037.0 (playwright chromium v1245) from
+https://cdn.playwright.dev/builds/cft/154.0.8037.0/win64/chrome-win64.zip"* and
+*"Downloading Firefox 155.0 (playwright firefox v1548) from
+https://cdn.playwright.dev/dbazure/download/playwright/builds/firefox/1548/firefox-win64.zip"*.
+Re-running the rig produces it again; the file it writes is `<OutJson>.log`.
 
 ## What the run found
 
@@ -34,10 +45,8 @@ with this repository's LF normalisation and nothing else.
 builds Chromium's URL with `cftUrl()`, keyed on `browserVersion` rather than on
 the revision, and 1245 carries the same `154.0.8037.0` as 1244 - so the archive
 fetched is the same archive and `chromium-1245` holds **454,699,952 B across 308
-files**, which is what `chromium-1244` held. The installer log confirms the URL
-as a string rather than as something derived: *"Downloading Chrome for Testing
-154.0.8037.0 (playwright chromium v1245) from
-https://cdn.playwright.dev/builds/cft/154.0.8037.0/win64/chrome-win64.zip"*.
+files**, which is what `chromium-1244` held. The installer confirmed that URL as
+a string rather than as something derived, in the line quoted above.
 
 **Firefox 1544 to 1548 moved by 327 bytes on the wire and 902 on disk**, across
 the same 61 files. `ffmpeg` 1011 and `winldd` 1007 are byte-identical, which is
