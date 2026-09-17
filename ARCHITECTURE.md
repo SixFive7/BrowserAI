@@ -336,6 +336,23 @@ is a question that did not need asking.
 [`ModelSurfaceTests.NoAuthoredToolAsksTheCallerToConfirmAnything`](tests/BrowserAI.Tests/ModelSurfaceTests.cs)
 keeps the count at zero.
 
+**`browserai_resume` repairs a session whose child has died, and that is the one
+way it is not a no-op.** ⚠️ *Added 2026-09-17.* Meeting a directory this process
+already owns, it asks `ChildConnection.ChildHasGone` — the transport's own closed
+state, plus the child's process handle where there is one, and never a pid
+lookup by name — and, when the child has gone, starts a replacement through the
+same `SessionEnvironment.ConnectChild` seam with the options the session was
+opened with (`LiveSession.Launch`), swaps it in under
+`LiveSession.ReplaceChildAsync` and disposes the dead one, which is what closes
+its job handle and ends anything still alive inside it. **Nothing about the
+session's identity moves**: the directory lock is still held, the record is
+untouched and the index entry stays, because this replaces the process behind a
+session rather than the session. The answer carries
+`SessionManager.ChildWasRelaunched`, which names what did not survive — no page,
+no tabs — and a replacement that will not start is
+`SessionErrors.BrowserServerCouldNotBeRelaunched`, which says the session is
+still open. `DeadChildTests` drives both directions.
+
 **Our own files reject what they do not recognise.** ⚠️ *Corrected 2026-08-26
 (previously "`LockRecord.Read` is a hand-written `Utf8JsonReader` parse that
 refuses an unknown key at any of the three levels, a missing key, an **empty

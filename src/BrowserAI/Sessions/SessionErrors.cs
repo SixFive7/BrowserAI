@@ -746,6 +746,24 @@ internal static class SessionErrors
         $"The browser runtime for '{path}' did not start: {why} The directory is left as it is, nothing is running, and the lock has been released. "
         + $"If this persists, delete that directory and call {SessionToolSurface.Init} again to re-provision. Otherwise fix the cause and call {SessionToolSurface.Resume} on the same directory.";
 
+    /// <summary>
+    /// Row 7's companion — the session's browser server had died and a
+    /// replacement would not start.
+    /// </summary>
+    /// <remarks>
+    /// <b>The session is still open, and the sentence has to say so.</b> The
+    /// directory is still held by this process, its record is intact and its log
+    /// is still being written; what is missing is the process that drives a
+    /// browser. A caller told only <i>could not start</i> would reasonably
+    /// conclude the session was lost and go and make another one beside it.
+    /// </remarks>
+    /// <param name="path">The session directory.</param>
+    /// <param name="why">What failed.</param>
+    /// <returns>The refusal.</returns>
+    public static string BrowserServerCouldNotBeRelaunched(string path, string why) =>
+        $"The browser server for '{path}' had died, and starting a replacement failed: {why} The session itself is untouched — this BrowserAI still holds the directory, and its profile, files and log are all still there. "
+        + $"Browser calls on this session will fail until one starts. Call {SessionToolSurface.Resume} on the same directory to try again; if it keeps failing, {SessionToolSurface.Destroy} the session and open a new one, and the reason is in the session's own log.";
+
     /// <summary>Row 8 — somebody else holds the directory.</summary>
     /// <param name="path">The session directory.</param>
     /// <param name="processId">The holder.</param>

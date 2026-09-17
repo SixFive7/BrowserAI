@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.ComponentModel;
 using System.Text;
 using BrowserAI.Interop;
 using Microsoft.Extensions.Logging;
@@ -111,6 +112,56 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     /// to report is why the child died.
     /// </remarks>
     public int? ExitCode { get; private set; }
+
+    /// <summary>
+    /// Whether the child process itself has ended, read from the process handle
+    /// this object holds open.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The handle, never a pid lookup.</b> This object owns an open handle to
+    /// the child for the child's whole life, which is what makes the answer
+    /// about <i>this</i> process rather than about whatever now wears its
+    /// number — Windows will not recycle a pid while a handle to it exists.
+    /// </para>
+    /// <para>
+    /// <b>A child on its way out is alive until the handle says otherwise</b>,
+    /// which is the property that keeps this from racing an exit: the wait is
+    /// signalled by the kernel when the process object is terminated, not when
+    /// something decides it ought to be.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It answers <see langword="true"/> once this transport has been
+    /// disposed</b>, because the handle is closed by then and there is no child
+    /// left to ask about. A failed query answers <see langword="false"/>: an
+    /// instrument that could not read is not evidence that the child is gone,
+    /// and <c>IsConnected</c> is the other half of the
+    /// question anyway.
+    /// </para>
+    /// </remarks>
+    public bool HasExited
+    {
+        get
+        {
+            if (Volatile.Read(ref _disposed) is not 0)
+            {
+                return true;
+            }
+
+            try
+            {
+                return _process.HasExited;
+            }
+            catch (Win32Exception)
+            {
+                return false;
+            }
+            catch (ObjectDisposedException)
+            {
+                return true;
+            }
+        }
+    }
 
     /// <summary>
     /// The job containing the child and every process it spawns, exposed so the

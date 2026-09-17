@@ -112,6 +112,24 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🔧 **`browserai_resume` repairs a session whose browser server has died.**
+  Q211 = a. Until now it asked one question, *do I already own this directory*,
+  and the answer is still yes when the `node` child behind the session has been
+  killed: it answered "This session is already open in this BrowserAI; nothing
+  was changed" in 7.68 ms about a session that could no longer do anything at
+  all. It now asks the second question too, *is the child behind it still
+  there*, and starts a replacement when it is not, with the same launch options
+  the session was opened with. Liveness is read from the transport's own closed
+  state and from the child's process handle, never from a pid lookup by name, so
+  a child on its way out counts as alive until one of those two says otherwise
+  and a resume of a healthy session still changes nothing. The answer says what
+  the replacement did not bring back: the profile is on disk so cookies and
+  stored state survive, and no page is open, so navigate again before acting on
+  what you see. Nothing about the session's identity moves, because the lock is
+  still held and the record is untouched. A replacement that will not start is
+  its own refusal, and it says the session is still open rather than inviting a
+  fresh init.
+
 - ⬆️ **`playwright-core` is pulled one build ahead of the wrapper that pins it,
   as a dated exception.** `@playwright/mcp` `latest` is
   0.0.81 and pins `playwright-core` 1.64.0-alpha-2026-09-14 exactly. The first

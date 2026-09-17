@@ -132,6 +132,33 @@ internal sealed class SessionManager : IAsyncDisposable
     public const int SurvivorsNamed = 20;
 
     /// <summary>
+    /// What a resume says when it found this session's browser server dead and
+    /// started a new one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Resume stopped being a pure no-op on 2026-09-17, and this sentence
+    /// is how a caller finds out.</b> Measured 2026-09-17: with a session's
+    /// <c>node</c> child killed under a live BrowserAI, <c>browserai_resume</c>
+    /// answered <i>"already open in this BrowserAI; nothing was changed"</i> in
+    /// 7.68 ms while the session was unusable — the resume path asked <i>do I
+    /// already own this directory</i>, which is a different question from
+    /// <i>is the child behind it still there</i>.
+    /// </para>
+    /// <para>
+    /// <b>It names what did not survive, because a repair that reads as a
+    /// restore is worse than no repair.</b> The profile on disk is the profile
+    /// the new child opens, so cookies, storage and the session's log are all
+    /// still there; what is gone is everything that lived in the dead process —
+    /// the pages that were open, the tabs, and anything a script left in memory.
+    /// </para>
+    /// </remarks>
+    public const string ChildWasRelaunched =
+        "the browser server for this session had died and was relaunched. The session's directory, profile and log are unchanged, "
+        + "so cookies and stored state are still there — but nothing that lived in the old process survived it: no page is open, "
+        + "there are no tabs, and anything a previous call left on a page is gone. Navigate again before you act on what you see.";
+
+    /// <summary>
     /// One line per item up to <see cref="SurvivorsNamed"/>, and a sentence
     /// saying so when the cap cut the list.
     /// </summary>
@@ -578,6 +605,43 @@ internal sealed class SessionManager : IAsyncDisposable
                 if (appended is not null)
                 {
                     already.Lock.AppendPurpose(RecordText.Sanitise(appended));
+                }
+
+                // ⚠️ THE QUESTION THIS PATH USED TO ASK WAS THE WRONG ONE, AND
+                // SINCE 2026-09-17 IT ASKS BOTH. `do I already own this
+                // directory` is still yes when the child behind it has died --
+                // the session is in this process's own index and the live marker
+                // is this process's -- so the answer was "nothing was changed",
+                // in 7.68 ms, about a session that could no longer do anything
+                // at all. Measured 2026-09-17; see HAZARDS.md and
+                // docs/evidence/2026-09-17-resume-wedge.
+                //
+                // The liveness question is asked of the transport and the
+                // process handle rather than of a pid lookup, so a child on its
+                // way out counts as alive until one of the two says otherwise.
+                // See ChildConnection.ChildHasGone.
+                if (already.Child.ChildHasGone)
+                {
+                    try
+                    {
+                        await RelaunchAsync(already, location, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception failure) when (failure is not OperationCanceledException)
+                    {
+                        SessionToolLog.ChildNotRelaunched(already.Logger, location.FullPath, failure);
+
+                        already.Lock.Settle(row, SessionStore.Failed, Encoding.UTF8.GetBytes(failure.Message));
+
+                        return new ToolOutcome(
+                            SessionErrors.BrowserServerCouldNotBeRelaunched(location.FullPath, failure.Message),
+                            IsError: true);
+                    }
+
+                    already.Lock.Settle(row, SessionStore.Successful, failure: null);
+
+                    return new ToolOutcome(
+                        Describe(already, [ChildWasRelaunched]),
+                        IsError: false);
                 }
 
                 already.Lock.Settle(row, SessionStore.Successful, failure: null);
@@ -2002,11 +2066,11 @@ internal sealed class SessionManager : IAsyncDisposable
             child = await _environment.ConnectChild(
                 options,
                 logging.Factory,
-                $"browserai-{location.Hash[..8]}-",
+                ChildRequestIdPrefix(location),
                 _relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, claim, child, logging, config, configFile, createdHere, _environment.BrowserIdlePeriod, _environment.Clock);
+            session = new LiveSession(location, held, claim, child, options, logging, config, configFile, createdHere, _environment.BrowserIdlePeriod, _environment.Clock);
 #pragma warning restore CA2000
 
             if (!_live.TryAdd(location.Key, session))
@@ -2109,6 +2173,60 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <param name="failure">What went wrong.</param>
     private static void Failed(SessionLock? acquired, Exception failure) =>
         acquired?.SettleOpening(SessionStore.Failed, Encoding.UTF8.GetBytes(failure.ToString()));
+
+    /// <summary>
+    /// Starts a new child for a session whose own has died, and hands it over.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The same launch, not a fresh one.</b> The options are the ones the
+    /// session was opened with — <see cref="LiveSession.Launch"/> — so the
+    /// replacement child gets the same payload, the same browsers root, the same
+    /// generated config file and the same working directory. Rebuilding them
+    /// here would make a relaunch a different launch the day anything above
+    /// changes.
+    /// </para>
+    /// <para>
+    /// <b>Nothing about the session's identity moves.</b> The directory lock is
+    /// still held, the record is untouched and the index entry stays: this
+    /// replaces the process behind the session, never the session.
+    /// </para>
+    /// </remarks>
+    /// <param name="session">The live session whose child has gone.</param>
+    /// <param name="location">Its directory.</param>
+    /// <param name="cancellationToken">Cancels the launch.</param>
+    /// <returns>A task that completes once the new child is driving the session.</returns>
+    private async Task RelaunchAsync(LiveSession session, SessionPath location, CancellationToken cancellationToken)
+    {
+        // CA2000 for the same reason the opening launch disables it: ownership
+        // moves into the live session, whose disposal is an await in a finally
+        // and is not followed by the rule's dataflow.
+#pragma warning disable CA2000
+        var replacement = await _environment.ConnectChild(
+            session.Launch,
+            session.Logging.Factory,
+            ChildRequestIdPrefix(location),
+            _relay,
+            cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2000
+
+        await session.ReplaceChildAsync(replacement).ConfigureAwait(false);
+
+        SessionToolLog.ChildRelaunched(session.Logger, location.FullPath, replacement.ProcessId ?? 0);
+    }
+
+    /// <summary>
+    /// The namespace this session's outgoing request ids are allocated in.
+    /// </summary>
+    /// <remarks>
+    /// <b>One expression, because a relaunched child has to be handed the same
+    /// one.</b> The ids are BrowserAI's own and are what a
+    /// <c>notifications/cancelled</c> names; a second child allocating under a
+    /// different prefix would be a difference nothing downstream could explain.
+    /// </remarks>
+    /// <param name="location">The session the child belongs to.</param>
+    /// <returns>The prefix.</returns>
+    private static string ChildRequestIdPrefix(SessionPath location) => $"browserai-{location.Hash[..8]}-";
 
     private string Describe(LiveSession session, IReadOnlyList<string> notes)
     {
@@ -2793,6 +2911,35 @@ internal sealed class SessionToolException : Exception
 /// <remarks>Event ids start at 40, after <see cref="SessionLog"/>'s 1–8 and <see cref="SessionIndexLog"/>'s 20s.</remarks>
 internal static partial class SessionToolLog
 {
+    /// <summary>
+    /// A resume found this session's child dead and started another.
+    /// </summary>
+    /// <remarks>
+    /// <b>It goes to the session's own log, at Information</b>, because the gap
+    /// it explains is in that log: the rows either side of it were answered by
+    /// two different processes, and without this line the second one's silence
+    /// about the first one's pages reads as a fault.
+    /// </remarks>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="processId">The new child's process id, or 0 when the child is not a process.</param>
+    [LoggerMessage(EventId = 49, Level = LogLevel.Information, Message = "The browser server for {Directory} had died; a replacement was started as pid {ProcessId}.")]
+    public static partial void ChildRelaunched(ILogger logger, string directory, int processId);
+
+    /// <summary>
+    /// A resume found this session's child dead and could not start another.
+    /// </summary>
+    /// <remarks>
+    /// <b>Error, and the session stays open.</b> The directory is still held and
+    /// the record is still there, so the caller can try again; what it may not
+    /// do is go on believing a browser is behind the session.
+    /// </remarks>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="failure">Why the launch failed.</param>
+    [LoggerMessage(EventId = 50, Level = LogLevel.Error, Message = "The browser server for {Directory} had died and a replacement could not be started.")]
+    public static partial void ChildNotRelaunched(ILogger logger, string directory, Exception failure);
+
     /// <summary>A session was opened, by init or by resume.</summary>
     /// <param name="logger">Where it goes.</param>
     /// <param name="directory">The session directory.</param>

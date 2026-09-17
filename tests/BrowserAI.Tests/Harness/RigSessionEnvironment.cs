@@ -56,6 +56,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     private readonly ILoggerFactory _provisioningLog;
 
     private CapturingLoggerProvider? _sessionRecords;
+    private string? _refuseTheNextChild;
     private int _disposed;
 
     private RigSessionEnvironment(
@@ -212,6 +213,11 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         {
             ConnectChild = async (options, loggerFactory, idPrefix, relay, cancellationToken) =>
             {
+                if (Interlocked.Exchange(ref _refuseTheNextChild, null) is { } refusal)
+                {
+                    throw new IOException(refusal);
+                }
+
                 var hop = new PipeDuplex("session hop (BrowserAI ↔ fake session child)");
 
                 var child = new FakePlaywrightChild(hop)
@@ -497,6 +503,19 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// </remarks>
     /// <param name="records">The rig's capturing provider.</param>
     public void CaptureSessionRecordsInto(CapturingLoggerProvider records) => _sessionRecords = records;
+
+    /// <summary>
+    /// Makes the <b>next</b> child this rig is asked for refuse to start, the
+    /// way a missing payload or a broken <c>node</c> does.
+    /// </summary>
+    /// <remarks>
+    /// <b>The next one, not every one.</b> <see cref="Failing"/> refuses them
+    /// all, which cannot reach a session that is already open — and the failure
+    /// worth provoking is a <i>relaunch</i> that will not start, which needs a
+    /// live session first and a refusal second.
+    /// </remarks>
+    /// <param name="reason">What the failure says, so a refusal can be matched to it.</param>
+    public void RefuseTheNextChild(string reason) => Interlocked.Exchange(ref _refuseTheNextChild, reason);
 
     private SessionLogging OpenSessionLog(string sessionDirectory, LogLevel minimumLevel)
     {

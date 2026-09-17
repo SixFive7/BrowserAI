@@ -4,6 +4,7 @@
 using System.Text;
 using System.Text.Json.Nodes;
 using BrowserAI.Logging;
+using BrowserAI.Protocol;
 using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using BrowserAI.Storage;
@@ -32,34 +33,67 @@ namespace BrowserAI.Sessions;
 /// against its directory indefinitely.
 /// </para>
 /// </remarks>
-/// <param name="location">The canonicalised session directory.</param>
-/// <param name="sessionLock">The held lock. This object owns it.</param>
-/// <param name="browsersClaim">
-/// The <b>shared</b> claim on the machine's browsers root, taken by <c>init</c>
-/// or <c>resume</c> before anything else and held for this session's whole life.
-/// This object owns it. See <see cref="Runtime.MaintenanceLock"/>: it is what
-/// makes <c>browserai_reinstall_browser</c>'s exclusive open fail while this
-/// session exists, whatever browser family it uses.
-/// </param>
-/// <param name="child">The child driving this session. This object owns it.</param>
-/// <param name="logging">This session's own logging stack. This object owns it.</param>
-/// <param name="config">The config the child was started with.</param>
-/// <param name="configFile">Where that config was written.</param>
-/// <param name="createdHere">Whether this connection is the one that created the session.</param>
-/// <param name="idlePeriod">How long this session's browser may sit unused before it is closed.</param>
-/// <param name="clock">The clock the idle timer reads. <see cref="TimeProvider.System"/> in the product.</param>
-internal sealed class LiveSession(
-    SessionPath location,
-    SessionLock sessionLock,
-    MaintenanceLock browsersClaim,
-    ChildConnection child,
-    SessionLogging logging,
-    GeneratedConfig config,
-    string configFile,
-    bool createdHere,
-    TimeSpan idlePeriod,
-    TimeProvider clock) : IAsyncDisposable
+internal sealed class LiveSession : IAsyncDisposable
 {
+    /// <param name="location">The canonicalised session directory.</param>
+    /// <param name="sessionLock">The held lock. This object owns it.</param>
+    /// <param name="browsersClaim">
+    /// The <b>shared</b> claim on the machine's browsers root, taken by <c>init</c>
+    /// or <c>resume</c> before anything else and held for this session's whole life.
+    /// This object owns it. See <see cref="Runtime.MaintenanceLock"/>: it is what
+    /// makes <c>browserai_reinstall_browser</c>'s exclusive open fail while this
+    /// session exists, whatever browser family it uses.
+    /// </param>
+    /// <param name="child">The child driving this session. This object owns it.</param>
+    /// <param name="launch">
+    /// Exactly what that child was launched with, kept so a child that has died can
+    /// be replaced by one started the same way rather than one assembled again from
+    /// arguments that may since have moved.
+    /// </param>
+    /// <param name="logging">This session's own logging stack. This object owns it.</param>
+    /// <param name="config">The config the child was started with.</param>
+    /// <param name="configFile">Where that config was written.</param>
+    /// <param name="createdHere">Whether this connection is the one that created the session.</param>
+    /// <param name="idlePeriod">How long this session's browser may sit unused before it is closed.</param>
+    /// <param name="clock">The clock the idle timer reads. <see cref="TimeProvider.System"/> in the product.</param>
+    public LiveSession(
+        SessionPath location,
+        SessionLock sessionLock,
+        MaintenanceLock browsersClaim,
+        ChildConnection child,
+        ChildProcessOptions launch,
+        SessionLogging logging,
+        GeneratedConfig config,
+        string configFile,
+        bool createdHere,
+        TimeSpan idlePeriod,
+        TimeProvider clock)
+    {
+        ArgumentNullException.ThrowIfNull(logging);
+
+        Location = location;
+        Lock = sessionLock;
+        BrowsersClaim = browsersClaim;
+        _child = child;
+        Launch = launch;
+        Logging = logging;
+        Config = config;
+        ConfigFile = configFile;
+        CreatedHere = createdHere;
+        Logger = logging.Factory.CreateLogger<LiveSession>();
+
+        // ⚠️ LAST, AND IT READS `Child` RATHER THAN THE ARGUMENT. The timer
+        // outlives any one child: a resume that meets a dead child swaps a new
+        // one in, and a callback that had captured the original would keep
+        // sending browser_close into a transport whose peer is gone.
+        Idle = new BrowserIdleTimer(
+            location.FullPath,
+            idlePeriod,
+            token => CloseBrowserAsync(Child, sessionLock, token),
+            logging.Factory.CreateLogger<BrowserIdleTimer>(),
+            clock);
+    }
+
     /// <summary>
     /// Upstream's own tool, spelled as upstream spells it.
     /// </summary>
@@ -97,13 +131,14 @@ internal sealed class LiveSession(
         "BrowserAI closed this session's browser itself: nothing had been forwarded through the session for the idle period, "
         + "so the browser tree was released and the node child kept. Nothing was lost — the next call relaunches the browser and answers normally.";
 
+    private ChildConnection _child;
     private int _disposed;
 
     /// <summary>The canonicalised session directory. It is the identity.</summary>
-    public SessionPath Location { get; } = location;
+    public SessionPath Location { get; }
 
     /// <summary>The held lock, and the record inside it.</summary>
-    public SessionLock Lock { get; } = sessionLock;
+    public SessionLock Lock { get; }
 
     /// <summary>
     /// The shared claim on the machine's browsers root, held for this session's
@@ -115,10 +150,26 @@ internal sealed class LiveSession(
     /// refused by the kernel while it lives, and the kernel releases it however
     /// this process dies.
     /// </remarks>
-    public MaintenanceLock BrowsersClaim { get; } = browsersClaim;
+    public MaintenanceLock BrowsersClaim { get; }
 
-    /// <summary>The <c>@playwright/mcp</c> child driving it.</summary>
-    public ChildConnection Child { get; } = child;
+    /// <summary>The <c>@playwright/mcp</c> child driving it, which is not the same one for the session's whole life.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Replaceable since 2026-09-17, and everything that reads it has to
+    /// read it through this property rather than capture it.</b>
+    /// <see cref="ReplaceChildAsync"/> swaps in a child started by
+    /// <c>browserai_resume</c> after the original died; a caller holding the old
+    /// reference would go on talking to a transport whose peer is gone, which is
+    /// the wedge the replacement exists to end.
+    /// </remarks>
+    public ChildConnection Child => Volatile.Read(ref _child);
+
+    /// <summary>What this session's child was launched with.</summary>
+    /// <remarks>
+    /// <b>Kept rather than recomputed</b>, so a relaunch is the same launch: the
+    /// same payload, the same browsers root, the same generated config file and
+    /// the same working directory, down to the bytes on the command line.
+    /// </remarks>
+    public ChildProcessOptions Launch { get; }
 
     /// <summary>
     /// A logger writing into this session's own log, built once.
@@ -128,16 +179,16 @@ internal sealed class LiveSession(
     /// writes its <c>why</c> here, so this is on the hot path of the whole
     /// proxy; <c>CreateLogger</c> allocates and takes the factory's lock.
     /// </remarks>
-    public ILogger Logger { get; } = logging.Factory.CreateLogger<LiveSession>();
+    public ILogger Logger { get; }
 
     /// <summary>This session's own log file and level.</summary>
-    public SessionLogging Logging { get; } = logging;
+    public SessionLogging Logging { get; }
 
     /// <summary>The config the child was started with, and every opinion in it.</summary>
-    public GeneratedConfig Config { get; } = config;
+    public GeneratedConfig Config { get; }
 
     /// <summary>Where that config was written.</summary>
-    public string ConfigFile { get; } = configFile;
+    public string ConfigFile { get; }
 
     /// <summary>
     /// Whether <b>this</b> connection created the session, as opposed to
@@ -148,7 +199,7 @@ internal sealed class LiveSession(
     /// handle was going to provide: a caller driving a session it did not create
     /// is told so, at first use, rather than at reclaim time.
     /// </remarks>
-    public bool CreatedHere { get; } = createdHere;
+    public bool CreatedHere { get; }
 
     /// <summary>Whether the notice about driving somebody else's session has been given.</summary>
     public bool NoticeGiven { get; set; }
@@ -163,12 +214,42 @@ internal sealed class LiveSession(
     /// timer owned anywhere else would need a way to name a session that has
     /// already gone.
     /// </remarks>
-    public BrowserIdleTimer Idle { get; } = new(
-        location.FullPath,
-        idlePeriod,
-        token => CloseBrowserAsync(child, sessionLock, token),
-        logging.Factory.CreateLogger<BrowserIdleTimer>(),
-        clock);
+    public BrowserIdleTimer Idle { get; }
+
+    /// <summary>
+    /// Swaps in a child started to replace one that died, and tears the dead one
+    /// down.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The old connection is disposed rather than dropped, and that is the
+    /// containment half rather than tidiness.</b> Disposing it closes the job
+    /// handle, and closing the job handle is what ends anything still alive
+    /// inside it — a browser tree whose <c>node</c> parent died but which the
+    /// kernel has not been told about is exactly the state this method is
+    /// reached in.
+    /// </para>
+    /// <para>
+    /// <b>The swap happens first.</b> A call arriving mid-replacement reaches
+    /// the new child rather than the one being torn down, which is the ordering
+    /// a caller can actually be answered under.
+    /// </para>
+    /// </remarks>
+    /// <param name="replacement">The child to drive this session from now on. This object owns it.</param>
+    /// <returns>A task that completes once the dead child has been torn down.</returns>
+    public async ValueTask ReplaceChildAsync(ChildConnection replacement)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+
+        var previous = Interlocked.Exchange(ref _child, replacement);
+
+        if (ReferenceEquals(previous, replacement))
+        {
+            return;
+        }
+
+        await previous.DisposeAsync().ConfigureAwait(false);
+    }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

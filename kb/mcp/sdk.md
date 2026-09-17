@@ -478,6 +478,71 @@ disposed. `[FLOATS]`
 > A liveness check that cannot fail is worth less than none, because it reads as
 > covered.
 
+### A pending request is faulted once, at the close, and never again — measured 2026-09-17
+
+**The SDK does fault a pending request when the transport closes. It faults the
+requests that are pending AT THAT MOMENT and nothing afterwards.** Read from
+`ModelContextProtocol.Core` **2.2.0**'s own IL (`ilspycmd -t
+ModelContextProtocol.McpSessionHandler`, the shipped `lib/net10.0` assembly),
+2026-09-17, which is what makes this an answer rather than an inference from
+behaviour. `[FLOATS]`
+
+The three pieces, each named so a re-read can find them:
+
+- **`McpSessionHandler._pendingRequests`** is a
+  `ConcurrentDictionary<RequestId, TaskCompletionSource<JsonRpcMessage>>`.
+  `SendRequestAsync` puts its own TCS in, then awaits
+  `tcs.Task.WaitAsync(cancellationToken)` — **the caller's token and nothing
+  else**. There is no second wait, no linked completion task and no transport
+  state consulted anywhere on that path.
+- **`ProcessMessagesCoreAsync`'s `finally`** is the only thing that ever faults
+  that table. When `_transport.MessageReader.ReadAllAsync` ends it walks every
+  entry and calls `TrySetException` with the channel's own completion exception,
+  or with `new IOException("The server shut down unexpectedly.")` when the
+  channel completed without one. **It runs once**, because the loop ends once.
+- **`TransportBase.SetDisconnected(error)`** sets the state to disconnected and
+  calls `_messageChannel.Writer.TryComplete(error)`, which is what ends that
+  loop. `IsConnected` is false from the same instant.
+
+**So a request registered after the loop's `finally` has run is faulted by
+nothing at all, and waits on the caller's token forever.** That is the whole of
+[the resume wedge](../playwright/provisioning-and-timings.md#the-resume-wedge-measured--2026-09-17):
+the measured `browser_navigate` was issued **2.9 seconds after** the transport
+logged end-of-stream, so it arrived at a table nothing would ever walk again.
+There is no `Disposed` task, no completion task and no "already closed" refusal
+on `SendRequestAsync` — `McpClient.Completion` exists and is
+`GetCompletionDetailsAsync(_transport.MessageReader.Completion)`, but nothing on
+the request path reads it.
+
+**The mid-call case is the same mechanism working**, which is why one shape of
+this was already answered and the other was not: a request pending when the
+close happens IS in the table when the walk runs, and comes back as
+`IOException: The server shut down unexpectedly` — the exception named in the
+section above and asserted by
+`LosslessPassthroughTests.AChildThatDiesMidCallProducesANamedErrorRatherThanASuccess`.
+
+⚠️ **BrowserAI's own transport makes the later request silent as well as
+eternal.** `JsonLinesTransport.SendMessageAsync` drops a frame on a disconnected
+transport — deliberately, because an exception storm during teardown buries
+the reason a session ended — and logs it at `Warning`. That line goes to the
+**session's** log rather than the machine-wide one, which is why the 2026-09-17
+process-log window across the hang carries no warning at all and reads as though
+nothing was attempted. The cut is complete; the line was somewhere else.
+
+**What BrowserAI does about it:** `BrowserProxy` asks
+`ChildConnection.ChildHasGone` at the door and refuses the call with
+`SessionErrors.BrowserServerHasGone` rather than forwarding it, and
+`browserai_resume` relaunches the child. **No timeout was added and none would
+help** — the wait is not slow, it is never-ending, and a number chosen for it
+would be a promptness assertion on a browser.
+
+**To re-establish:** `ilspycmd -t ModelContextProtocol.McpSessionHandler
+%%USERPROFILE%%\.nuget\packages\modelcontextprotocol.core\<version>\lib
+et10.0\ModelContextProtocol.Core.dll`
+and read `SendRequestAsync` and `ProcessMessagesCoreAsync` side by side; the
+behaviour half is `DeadChildTests`, which kills a session's child and calls
+again.
+
 ## Lossless passthrough: cancellation, notifications and error frames
 
 What survives, what is reordered and what has to be rebuilt when the two tool

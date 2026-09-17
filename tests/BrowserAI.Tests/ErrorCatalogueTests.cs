@@ -502,6 +502,71 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(record).IsNotNull();
     }
 
+    /// <summary>
+    /// Row 7's companion — a resume that met a dead child and could not start a
+    /// replacement.
+    /// </summary>
+    /// <remarks>
+    /// <b>It needs a session that opened and then lost its child</b>, which is
+    /// why the rig refuses the <i>next</i> child rather than every one:
+    /// <see cref="RigSessionEnvironment.Failing"/> cannot reach this path at
+    /// all, because nothing it stands up ever becomes a live session.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRelaunchFailureRowIsEmittedByAResumeWhoseReplacementWillNotStart()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var directory = Path.Combine(sessions.Root, "relaunch-refused");
+
+        _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "meets a replacement child that will not start",
+        });
+
+        await sessions.SessionChildren[0].DisposeAsync();
+        await WaitUntilTheChildIsGoneAsync(rig);
+
+        sessions.RefuseTheNextChild("spawn EFTYPE");
+
+        var answer = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
+        {
+            ["directory"] = directory,
+            ["why"] = "the suite provoking a relaunch that cannot start",
+        });
+
+        await Assert.That((bool?)answer["isError"]).IsTrue();
+
+        Match(
+            TextOf(answer),
+            nameof(SessionErrors.BrowserServerCouldNotBeRelaunched),
+            SessionErrors.BrowserServerCouldNotBeRelaunched(SessionPath.For(directory).FullPath, "spawn EFTYPE"));
+    }
+
+    /// <summary>
+    /// Waits until the session child's transport has reported end-of-stream.
+    /// </summary>
+    /// <remarks>
+    /// The product's own record of the close rather than a duration: a child
+    /// counts as dead only once the transport says so.
+    /// <see cref="TestDefaults.InProcessHang"/> bounds it as a hang detector,
+    /// both ends being in this process.
+    /// </remarks>
+    /// <param name="rig">The rig whose session child died.</param>
+    /// <returns>A task that completes once the transport has noticed.</returns>
+    private static async Task WaitUntilTheChildIsGoneAsync(McpTestHarness rig)
+    {
+        using var patience = new CancellationTokenSource(TestDefaults.InProcessHang);
+
+        while (!rig.Logs.Logged("the peer closed its end of the connection"))
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), patience.Token);
+        }
+    }
+
     [Test]
     public async Task APurposeIsCappedStrippedAndFramedAsRecordedData()
     {
@@ -1202,7 +1267,17 @@ internal sealed partial class ErrorCatalogueTests
         // a provocation to arrange, since nothing asks the volume anything. The
         // absence is held by `HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas`,
         // which is where a reader looking for the check should be sent.
-        await Assert.That(rows.Count).IsEqualTo(25);
+        //
+        // ⚠️ **Corrected 2026-09-17 to 26 (previously 25).**
+        // `BrowserServerCouldNotBeRelaunched` arrived with `browserai_resume`'s
+        // repair of a dead child: a resume that meets one starts a replacement,
+        // and a replacement that will not start is a condition with its own
+        // recovery -- the session is still open and still held, so the fix is to
+        // resume again rather than to open another session beside it. It is a
+        // row of its own rather than a clause on `BrowserRuntimeDidNotStart`,
+        // whose sentence releases the lock and invites a re-init, because that
+        // advice is wrong here.
+        await Assert.That(rows.Count).IsEqualTo(26);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

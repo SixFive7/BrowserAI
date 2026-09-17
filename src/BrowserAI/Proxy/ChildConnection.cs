@@ -136,6 +136,38 @@ internal sealed class ChildConnection : IAsyncDisposable
     public int? ProcessId => (_link.Session as ChildProcessSession)?.ProcessId;
 
     /// <summary>
+    /// Whether the child behind this connection has gone, so that nothing sent
+    /// to it can ever be answered.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two instruments, and the weaker one is not enough on its own.</b>
+    /// <c>IsConnected</c> is the transport's own state and goes false when the
+    /// read loop reaches end-of-stream — which is what a killed child looks like
+    /// and the only signal a transport with no process behind it has.
+    /// <see cref="ChildProcessSession.HasExited"/> is the process handle, and it
+    /// answers the case the first one cannot see: a grandchild that inherited
+    /// the write end holds the pipe open after the child itself is gone, so the
+    /// transport reads as connected to a process that no longer exists.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Neither is a pid lookup, and that is deliberate rather than
+    /// incidental.</b> Asking the machine whether a number is running answers
+    /// about whoever wears that number now; the handle answers about the process
+    /// this connection started, and a handle held open is what stops the number
+    /// being reused at all.
+    /// </para>
+    /// <para>
+    /// <b>A child on its way out is alive until one of the two says otherwise.</b>
+    /// That is what keeps a resume from tearing down a child that was merely
+    /// slow, and it is why this asks the kernel rather than a timer.
+    /// </para>
+    /// </remarks>
+    public bool ChildHasGone =>
+        !_link.Session.IsConnected
+        || (_link.Session is ChildProcessSession process && process.HasExited);
+
+    /// <summary>
     /// Every process the kernel currently reports in this child's job: the node
     /// child, the browser it launched and every helper under it.
     /// </summary>
