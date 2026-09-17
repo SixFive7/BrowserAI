@@ -112,6 +112,25 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **First-run provisioning is measured again at the new browser revisions.**
+  Re-verification row 21 went stale one day after it was taken, when the
+  `playwright-core` pull-forward moved chromium 1244 to 1245 and firefox 1544 to
+  1548. Both families were provisioned twice into an empty root through the same
+  rig, and each pair came back identical to the other. Chromium did not move at
+  all, which is worth the sentence: its archive is keyed on the browser version
+  rather than on the revision, and 1245 carries the same 154.0.8037.0 as 1244,
+  so the same archive is fetched and the tree is the same tree to the byte and
+  the file. Firefox moved by 327 bytes on the wire and 902 on disk across the
+  same 61 files, so the quoted download size for that family goes from
+  129,502,321 to 129,502,648 bytes and the Chromium one is re-measured and
+  unchanged at 207,274,189. `ffmpeg` 1011 and `winldd` 1007 are byte-identical,
+  which is the control for the two revisions that moved. The timings moved in
+  both directions on a roll that moved almost no bytes, so they are the link and
+  the machine on the day rather than anything about a revision. The run is kept
+  as evidence this time; the previous one was scratch and went with it. Two of
+  the three sections that went stale that day are still owed: the Firefox
+  against Chromium cost ratios and the resume cost, rows 34 and 38.
+
 - ✅ **The one suite arm that launches an unowned browser runs beside nothing.**
   Q212 = a. The wild exit 1 this repository has chased since 2026-08-26 was
   named on 2026-09-17 and it was this product's own stray sweep: a second

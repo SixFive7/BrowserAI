@@ -1,0 +1,32 @@
+{
+  "family": "chromium",
+  "root": "C:\\Source\\SixFive7\\BrowserAI\\.work\\2026-09-17-o4\\chromium-root",
+  "exitCode": 0,
+  "seconds": 12.51,
+  "totalBytes": 458475923.0,
+  "totalFiles": 316,
+  "topLevel": ".links,chromium-1245,ffmpeg-1011,winldd-1007",
+  "components": [
+    {
+      "name": ".links",
+      "bytes": 69.0,
+      "files": 1
+    },
+    {
+      "name": "chromium-1245",
+      "bytes": 454699952.0,
+      "files": 308
+    },
+    {
+      "name": "ffmpeg-1011",
+      "bytes": 3517342.0,
+      "files": 4
+    },
+    {
+      "name": "winldd-1007",
+      "bytes": 258560.0,
+      "files": 3
+    }
+  ],
+  "utc": "2026-09-17T15:42:13.7783816Z"
+}

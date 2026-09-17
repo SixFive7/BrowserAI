@@ -1,0 +1,5 @@
+2026-09-17T15:42:00.0829420Z  Downloading Chrome for Testing 154.0.8037.0 (playwright chromium v1245)[2m from https://cdn.playwright.dev/builds/cft/154.0.8037.0/win64/chrome-win64.zip[22m
+2026-09-17T15:42:00.0883469Z  Chrome for Testing 154.0.8037.0 (playwright chromium v1245) downloaded to C:\Source\SixFive7\BrowserAI\.work\2026-09-17-o4\chromium-root\chromium-1245
+
+--- stderr ---
+
