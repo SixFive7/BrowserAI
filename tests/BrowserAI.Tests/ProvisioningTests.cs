@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Text.Json.Nodes;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
@@ -32,7 +34,7 @@ namespace BrowserAI.Tests;
 /// and the very next attempt on the same session succeeds.
 /// </para>
 /// </remarks>
-internal sealed class ProvisioningTests
+internal sealed partial class ProvisioningTests
 {
     /// <summary>
     /// <c>init</c> answers while the install is still running, and the word it
@@ -516,7 +518,13 @@ internal sealed class ProvisioningTests
         {
             // Bytes written by THIS attempt, against the measured download total,
             // as a percentage, with elapsed and a rate.
-            await Assert.That(text).Contains("0.0 MB of 203.8 MB downloaded (0%)");
+            // ⚠️ The total is read from the product rather than spelled here, so a
+            // re-measured browser revision moves this assertion with the constant
+            // instead of reddening it. Corrected 2026-09-17 (previously the
+            // literal "0.0 MB of 203.8 MB downloaded (0%)", which went red on the
+            // 1237 -> 1244 roll and had to be hand-edited to match).
+            await Assert.That(text).Contains(
+                $"0.0 MB of {BrowserProvisioner.DownloadSizeFor(ProvisionedBrowsers.Chromium)} downloaded (0%)");
             await Assert.That(text).Contains("Mbps observed");
 
             // And the old sentence is gone: it said the same thing at 8 s and at
@@ -1099,6 +1107,111 @@ internal sealed class ProvisioningTests
             ["name"] = tool,
             ["arguments"] = arguments,
         });
+
+    /// <summary>
+    /// The first-run download size the product quotes at a caller is the figure
+    /// the knowledge base publishes, per family.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two places name one number, so they are held against each other</b> —
+    /// the same shape as <c>SqliteTests</c> holding the vendored
+    /// <c>SQLITE_VERSION</c> against the pin in <c>drift-check.json</c>.
+    /// <see cref="BrowserProvisioner.FirstRunDownloadBytes"/> reaches a caller
+    /// inside <see cref="SessionErrors.ProvisioningInProgress"/>, a sentence
+    /// that reads as a measurement whatever is in it;
+    /// <c>kb/playwright/provisioning-and-timings.md</c> is where the measurement
+    /// actually lives. <c>FirefoxSessionTests.EveryFamilyThisBuildProvisionsHasAMeasuredDownloadSize</c>
+    /// proves a figure EXISTS per family and can say nothing about whether it is
+    /// the one somebody measured; this says it is.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-17, planted red against the 1237/1539 constants and
+    /// watched.</b> The 2026-09-16 re-measurement at chromium 1244 and firefox
+    /// 1544 moved both figures — 203,824,344 → 207,274,189 and 127,247,129 →
+    /// 129,502,321 — and nothing in the tree would have noticed the constants
+    /// staying behind. A browser revision moves these on upstream's schedule and
+    /// not on ours, so the failure mode is a refusal quoting a measured-looking
+    /// number that was measured of a browser this build no longer provisions.
+    /// </para>
+    /// <para>
+    /// <b>It reads the published sentence as its anchor.</b> Rewording the
+    /// article's measurement clause fails this test rather than silently
+    /// unhooking it, which is the rule <c>RecordedCountTests</c> is built on.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheQuotedFirstRunDownloadSizeIsTheFigureTheKnowledgeBasePublishes()
+    {
+        var article = await File.ReadAllTextAsync(Path.Combine(
+            RepositoryLayout.Root.FullName, "kb", "playwright", "provisioning-and-timings.md"));
+
+        var chromium = ChromiumDownloadTotal().Match(article);
+        var firefox = FirefoxDownloadTotal().Match(article);
+
+        await Assert.That(chromium.Success)
+            .IsTrue()
+            .Because(
+                "kb/playwright/provisioning-and-timings.md no longer carries the Chromium measurement clause this "
+                + "test reads as its anchor. Rewording it is what would unhook the check, so the reword fails here.");
+
+        await Assert.That(firefox.Success)
+            .IsTrue()
+            .Because(
+                "kb/playwright/provisioning-and-timings.md no longer carries the Firefox total row this test reads "
+                + "as its anchor. Rewording it is what would unhook the check, so the reword fails here.");
+
+        await Assert.That(BrowserProvisioner.FirstRunDownloadBytes[ProvisionedBrowsers.Chromium])
+            .IsEqualTo(Bytes(chromium))
+            .Because(
+                "BrowserProvisioner.FirstRunDownloadBytes quotes a Chromium first-run download at every caller who "
+                + "is refused while provisioning runs, and the kb article is where that figure is measured. "
+                + "Re-measure -- docs/probes/2026-09-16-provisioning is the rig -- and move BOTH.");
+
+        await Assert.That(BrowserProvisioner.FirstRunDownloadBytes[ProvisionedBrowsers.Firefox])
+            .IsEqualTo(Bytes(firefox))
+            .Because(
+                "BrowserProvisioner.FirstRunDownloadBytes quotes a Firefox first-run download at every caller who "
+                + "is refused while provisioning runs, and the kb article is where that figure is measured. "
+                + "Re-measure -- docs/probes/2026-09-16-provisioning is the rig -- and move BOTH.");
+
+        // The rendered sentence fragment a caller actually reads, against the MB
+        // the same anchor publishes. A constant correct to the byte can still
+        // render a stale string if the formatter changes under it.
+        await Assert.That(BrowserProvisioner.DownloadSizeFor(ProvisionedBrowsers.Chromium))
+            .IsEqualTo($"{chromium.Groups["mb"].Value} MB");
+
+        await Assert.That(BrowserProvisioner.DownloadSizeFor(ProvisionedBrowsers.Firefox))
+            .IsEqualTo($"{firefox.Groups["mb"].Value} MB");
+
+        // ⚠️ Not vacuous, and proved off synthetic text rather than by doctoring
+        // the article: the two anchors must really read a number, and must read
+        // DIFFERENT ones, or a regex that matched the same clause twice would
+        // satisfy every assertion above.
+        await Assert.That(Bytes(chromium)).IsNotEqualTo(Bytes(firefox));
+        await Assert.That(Bytes(chromium)).IsGreaterThan(0);
+    }
+
+    /// <summary>The byte count one anchor published, with its thousands separators removed.</summary>
+    /// <param name="match">The anchor match.</param>
+    /// <returns>The count.</returns>
+    private static long Bytes(Match match) =>
+        long.Parse(match.Groups["bytes"].Value.Replace(",", string.Empty, StringComparison.Ordinal), CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// The Chromium first-run total, as the article's measurement clause states
+    /// it: the three archives summed, and the rounded MB in the headline.
+    /// </summary>
+    [GeneratedRegex(
+        @"by exact `content-length` from the CDN: (?<mb>[\d.]+)\s+MB\s+down\.\*\*.*?=\s*\*\*(?<bytes>[\d,]+) B\*\*",
+        RegexOptions.Singleline)]
+    private static partial Regex ChromiumDownloadTotal();
+
+    /// <summary>The Firefox first-run total, as the article's per-archive table totals it.</summary>
+    [GeneratedRegex(@"\|\s*\*\*total\*\*\s*\|\s*\*\*(?<bytes>[\d,]+) B = (?<mb>[\d.]+) MB\*\*")]
+    private static partial Regex FirefoxDownloadTotal();
+
 
     private static string TextOf(JsonObject result) =>
         string.Concat((result["content"]?.AsArray() ?? [])

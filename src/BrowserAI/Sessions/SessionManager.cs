@@ -45,11 +45,19 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <para>
     /// <b>One number for both families, sized on the larger.</b> Chromium's
-    /// first-run provisioning needs 203.8 MB down and 430.48 MiB extracted —
-    /// both re-measured 2026-08-16 — so peak usage is ~640 MiB while both the
-    /// archive and the tree exist. Firefox needs 127.2 MB down and 340.15 MiB
-    /// extracted (measured 2026-08-19), which is smaller in both halves, so this
-    /// bound holds for it without being restated per family. A
+    /// first-run provisioning needs 207.3 MB down and 437.24 MiB extracted —
+    /// both re-measured 2026-09-16 at chromium 1244 — so peak usage is ~635 MiB
+    /// while both the archive and the tree exist. Firefox needs 129.5 MB down
+    /// and 345.35 MiB extracted (re-measured the same day at firefox 1544),
+    /// which is smaller in both halves, so this bound holds for it without being
+    /// restated per family.
+    /// ⚠️ <b>Corrected 2026-09-17 (previously "needs 203.8 MB down and
+    /// 430.48 MiB extracted … so peak usage is ~640 MiB … Firefox needs
+    /// 127.2 MB down and 340.15 MiB extracted").</b> The constant is unchanged
+    /// and the HEADROOM is what moved: the arithmetic peak went 625 → 635 MiB
+    /// across one browser roll, so this bound now has ~5 MiB of margin rather
+    /// than ~15. It is left alone here because raising a shipped refusal
+    /// threshold is a decision rather than a re-measurement. A
     /// refusal here that names the number is recoverable in one turn; a failure
     /// partway through the download is the <c>spawn EFTYPE</c> shape — success
     /// shaped, stderr empty, discovered at first navigation.

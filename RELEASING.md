@@ -442,8 +442,9 @@ re-downloads the browser and re-extracts it. **Updated 2026-08-17 (previously
 `RevisionPrune` runs on the next successful provision and reclaims the ~430 MiB
 the old revision holds, so what the note has to carry is the download, not the
 disk. The one consequence worth a sentence is the other direction — a **rollback**
-to the previous build re-downloads 203.8 MB, because the revision it names has
-already been pruned.
+to the previous build re-downloads 207.3 MB, because the revision it names has
+already been pruned. *(Re-measured 2026-09-16 at chromium 1244; previously
+203.8 MB.)*
 
 ### 5. Upstream tool-description drift adjudicated
 
@@ -792,7 +793,7 @@ before this and nobody had re-read the number:*
   and written to `.work/suite-coverage.txt`.
 
   ⚠️ **The same variable is what makes the first-run download real.** Ordinary
-  runs download 203.8 MB from Playwright's CDN [at most once an
+  runs download 207.3 MB from Playwright's CDN [at most once an
   hour](TESTING.md#the-first-run-download-runs-at-most-once-an-hour) and seed
   from a cached tree in between; under `BROWSERAI_RELEASE_RUN=1` the cache is
   bypassed unconditionally, so **no release can be cut on evidence that came out

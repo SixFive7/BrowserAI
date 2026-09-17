@@ -390,20 +390,22 @@ internal sealed class BrowserProvisioner : IDisposable
     /// (128,684 B), which both families download into the same root:
     /// </para>
     /// <list type="bullet">
-    /// <item><b>chromium</b> — 202,283,919 + 1,411,741 + 128,684 =
-    /// 203,824,344 B. Re-measured 2026-08-16 at rev 1237 / 152.0.7977.8,
-    /// unchanged from 2026-08-15.</item>
-    /// <item><b>firefox</b> — 125,706,704 + 1,411,741 + 128,684 =
-    /// 127,247,129 B. Measured 2026-08-19 at rev 1539 / 153.0, the same way and
-    /// on the same day as a clean provisioning run that produced 356,674,059 B
-    /// on disk, twice, byte-identical.</item>
+    /// <item><b>chromium</b> — 205,733,764 + 1,411,741 + 128,684 =
+    /// 207,274,189 B. Re-measured 2026-09-16 at rev 1244 / 154.0.8037.0.</item>
+    /// <item><b>firefox</b> — 127,961,896 + 1,411,741 + 128,684 =
+    /// 129,502,321 B. Re-measured 2026-09-16 at rev 1544 / 155.0, the same way
+    /// and on the same day as a clean provisioning run that produced
+    /// 362,120,889 B on disk, twice, byte-identical.</item>
     /// </list>
     /// <para>
     /// <b>Both figures are for one family into an empty root, which is the
     /// predicate and not an accident.</b> A machine that already has the other
-    /// family pays less — measured 2026-08-19, Firefox beside an existing
-    /// <c>ffmpeg</c> and <c>winldd</c> downloads 125,706,704 B and nothing else,
-    /// because each of the three archives carries its own completion marker. The
+    /// family pays less — Firefox beside an existing <c>ffmpeg</c> and
+    /// <c>winldd</c> downloads 127,961,896 B and nothing else, because each of
+    /// the three archives carries its own completion marker. ⚠️ <b>The byte
+    /// count is re-measured at rev 1544 and the "and nothing else" is
+    /// NOT</b>: that was established once, on 2026-08-19, by a third run which
+    /// was not repeated on 2026-09-16. The
     /// upper bound is quoted, for the same reason
     /// <see cref="Sessions.SessionManager.RequiredFreeBytes"/> is sized on the
     /// larger family: a caller deciding whether to wait is not helped by a
@@ -451,8 +453,15 @@ internal sealed class BrowserProvisioner : IDisposable
     public static IReadOnlyDictionary<string, long> FirstRunDownloadBytes { get; } =
         new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase)
         {
-            [ProvisionedBrowsers.Chromium] = 203_824_344,
-            [ProvisionedBrowsers.Firefox] = 127_247_129,
+            // ⚠️ Corrected 2026-09-17 (previously 203_824_344 and 127_247_129,
+            // measured at chromium 1237 and firefox 1539). Re-measured
+            // 2026-09-16 at chromium 1244 / 154.0.8037.0 and firefox 1544 /
+            // 155.0 under playwright-core 1.64.0-alpha-2026-09-14 --
+            // docs/probes/2026-09-16-provisioning is the rig, and
+            // ProvisioningTests.TheQuotedFirstRunDownloadSizeIsTheFigureTheKnowledgeBasePublishes
+            // is what stops these drifting from the kb article again.
+            [ProvisionedBrowsers.Chromium] = 207_274_189,
+            [ProvisionedBrowsers.Firefox] = 129_502_321,
         };
 
     public static IReadOnlyDictionary<string, string> FirstRunDownloadSizes { get; } =

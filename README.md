@@ -61,7 +61,7 @@ A **`BrowserAI.zip`** is published beside the installer, by the same packaging r
 
 **Updates are automatic and there is one track.** No beta channel. BrowserAI checks its own feed and applies an update only when no other instance is live.
 
-**The first session downloads a browser.** Chromium is provisioned once per machine, not once per update — measured at 203.8 MB down, 430.48 MiB on disk and about 12.6 s. Nothing is downloaded at spawn after that, and nothing resolves from a registry at runtime: the client runs exactly the bytes the build froze into the artifact.
+**The first session downloads a browser.** Chromium is provisioned once per machine, not once per update — measured at 207.3 MB down, 437.24 MiB on disk and about 10.8 s (chromium 1244, re-measured 2026-09-16; *previously 203.8 MB, 430.48 MiB and about 12.6 s at chromium 1237*). Nothing is downloaded at spawn after that, and nothing resolves from a registry at runtime: the client runs exactly the bytes the build froze into the artifact.
 
 ---
 
