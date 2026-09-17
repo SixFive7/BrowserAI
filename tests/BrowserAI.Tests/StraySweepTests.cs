@@ -593,8 +593,58 @@ internal sealed class StraySweepTests
     /// attribution half reads.</b> Everything else here uses a probe that
     /// registers the class deliberately.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>THE <c>[NotInParallel]</c> HERE IS KEYLESS, AND THAT IS THE
+    /// WHOLE POINT OF IT — 2026-09-17.</b> Every other arm in this file carries
+    /// <see cref="SweepGroup"/>, which holds the arms that <i>run a sweep</i>
+    /// apart from each other. This one needs the opposite thing: it must be held
+    /// apart from the <b>dozens of arms that start a
+    /// <c>BrowserAI.Server.exe</c></b>, none of which is in that key and none of
+    /// which can be, because a key holds an arm apart only from arms carrying
+    /// the same key.
+    /// </para>
+    /// <para>
+    /// <b>The failure it answers was found in the wild and then named.</b> The
+    /// browser below is launched directly into a scratch session directory that
+    /// holds no <c>browserai.lock</c> by construction — nothing here opens a
+    /// session — and every <c>BrowserAI.Server.exe</c> sweeps at startup. With
+    /// no message window yet published the sweep cannot attribute the process,
+    /// falls back to the session directory its command line names, finds it
+    /// unlocked, and terminates it: <c>StrayCandidate.TryTerminate</c> calls
+    /// <c>TerminateProcess(handle, 1)</c>, which is the exit <c>1</c> this arm
+    /// reported on 2026-09-17 with nothing on either stream. <b>It was read as a
+    /// wild browser death for nineteen days</b>; the attribution is in
+    /// <see href="../../HAZARDS.md">the hazard index</see> and the run is in
+    /// <see href="../../docs/evidence/2026-09-17-reverify/README.md">the
+    /// evidence</see>. It is deterministic rather than rare: <i>any</i> product
+    /// server starting while this browser is alive kills it.
+    /// </para>
+    /// <para>
+    /// <b>What it costs, measured rather than estimated.</b> The arm now runs
+    /// beside nothing, so its duration is on the suite's critical path. Measured
+    /// 2026-09-17 on the reference machine, three runs each: this arm alone is
+    /// <b>1.528 s / 1.513 s / 1.476 s</b> of total run time against a
+    /// <b>0.747 s / 0.732 s / 0.763 s</b> zero-test baseline through the same
+    /// invocation — so roughly <b>0.75 s</b> of critical path, which is the
+    /// price of the only real-browser attribution proof this suite has.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Nothing mechanises the rule this attribute follows, and the
+    /// reason is that the predicate is not in the text.</b> What makes this arm
+    /// dangerous is not that it starts a browser — it is that the browser's
+    /// profile sits in a directory <i>nothing holds a lock on</i>, which is a
+    /// run-time property of the rig. The readable over-approximation, <i>an arm
+    /// that launches a provisioned browser executable</i>, also fires on
+    /// <c>BrowserContainmentTests.AChromiumTreeIsContainedAndItsProfileDeletesCleanly</c>,
+    /// which was deliberately taken <b>out</b> of a serialisation key on
+    /// 2026-08-17 on a measured wall-clock argument — 13.05 s of a 20.6 s run —
+    /// so a scan built on it would undo a decision somebody made with numbers.
+    /// The attribute is therefore the assertable half on its own, and this
+    /// paragraph is what stands in for the mechanism.
+    /// </para>
     /// </remarks>
     [Test]
+    [NotInParallel]
     public async Task TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession()
     {
         // ⚠️ The gate, not a degraded branch. This is R5's ONLY real-browser

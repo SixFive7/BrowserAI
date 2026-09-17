@@ -112,6 +112,29 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- ✅ **The one suite arm that launches an unowned browser runs beside nothing.**
+  Q212 = a. The wild exit 1 this repository has chased since 2026-08-26 was
+  named on 2026-09-17 and it was this product's own stray sweep: a second
+  `BrowserAI.Server.exe`, started by a different arm of the same run, sweeping
+  at startup, finding a browser it could not attribute because no message window
+  had been published yet, falling back to the session directory the command line
+  names, finding it unlocked and terminating it with exit code 1. The rig's
+  scratch session directory holds no lock by construction, so any product server
+  starting while that browser is alive kills it, which makes it deterministic
+  rather than rare. The arm carries a keyless `[NotInParallel]` now: the key it
+  already had holds the arms that run a sweep apart from each other, and the
+  arms that matter are the dozens that start a server, none of which carries
+  that key. What it costs is measured rather than estimated, three runs each:
+  the arm alone is 1.528, 1.513 and 1.476 seconds of total run time against a
+  0.747, 0.732 and 0.763 second zero-test baseline through the same invocation,
+  so about three quarters of a second of critical path. Nothing mechanises the
+  rule and the reason is written down where a reader will meet it: the predicate
+  that matters is that the browser's profile sits in a directory nothing holds a
+  lock on, which is a property of the running rig rather than of its text, and
+  the readable approximation of it would also fire on an arm that was
+  deliberately taken out of a serialisation key on a measured argument. The
+  product is unchanged.
+
 - 🐛 **A browser call into a session whose server has gone comes back now.**
   Q211 = c. Measured on 2026-09-17:
   with a session's node child killed under a live BrowserAI, one

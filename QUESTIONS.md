@@ -1990,7 +1990,21 @@ than the reader column.
 
 ## Added 2026-09-17, from the wild exit 1 being attributed
 
-### One arm launches a browser the product is entitled to kill, and nothing holds it apart from the arms that start a product server
+### One arm launches a browser the product is entitled to kill, and nothing holds it apart from the arms that start a product server — **ANSWERED 2026-09-17: (a)**
+
+> ✅ **(a), the keyless `[NotInParallel]`, taken 2026-09-17.** The arm runs
+> beside nothing now, and what it costs is measured rather than estimated: three
+> runs of the arm alone at **1.528 s / 1.513 s / 1.476 s** of total run time
+> against a **0.747 s / 0.732 s / 0.763 s** zero-test baseline through the same
+> invocation, so roughly **0.75 s** of critical path. **Nothing mechanises it and
+> the reason is in the arm's own remarks**: what makes it dangerous is that the
+> browser's profile sits in a directory nothing holds a lock on, which is a
+> run-time property of the rig, and the readable over-approximation — *an arm
+> that launches a provisioned browser executable* — also fires on
+> `BrowserContainmentTests.AChromiumTreeIsContainedAndItsProfileDeletesCleanly`,
+> which was taken **out** of a serialisation key on 2026-08-17 on a measured
+> 13.05 s-of-20.6 s argument. A scan built on it would undo a decision somebody
+> made with numbers, so the attribute is the assertable half on its own.
 
 **The primer, for somebody who has not read the investigation.** A browser died
 during the PowerShell half of the 2026-09-17 gate, with a signature this
@@ -2064,7 +2078,26 @@ terminate an unattributable browser would weaken the guarantee the sweep exists
 for, on a machine, to make a test comfortable. If that is ever wanted it is a
 charter decision rather than a fix.
 
-### A session whose child died answers one call forever, and nothing on the forward path owns a clock
+### A session whose child died answers one call forever, and nothing on the forward path owns a clock — **ANSWERED 2026-09-17: (a) and (c), and (c) stopped being a hope**
+
+> ✅ **Both taken 2026-09-17, and (2) was refused.** Direction (3)'s stated cost
+> was that *"it needs the SDK's transport to surface the close in a way this code
+> can act on, which is unverified here"* — that was established the same day, by
+> reading `ModelContextProtocol.Core` 2.2.0's shipped IL rather than by observing
+> behaviour: `McpSessionHandler` faults every pending request when the
+> transport's channel completes, **once**, and a request registered after that
+> walk is faulted by nothing
+> ([kb](kb/mcp/sdk.md#a-pending-request-is-faulted-once-at-the-close-and-never-again--measured-2026-09-17)).
+> So the close IS surfaced and the gap is narrower than the direction assumed:
+> a call in flight already comes back, and only a call made **afterwards** is
+> eternal. What (c) became is therefore a question asked at BrowserAI's own door
+> — `ChildConnection.ChildHasGone`, the transport's closed state plus the child's
+> process handle — and a refusal naming `browserai_resume`. (a) is the repair
+> that makes that refusal's advice true. **(2), the clock, was not taken and the
+> cost stated above is why**: no number was added anywhere on the forward path.
+> ⚠️ **What neither closes** is the window between the door check and the SDK
+> registering the pending request, which is microseconds wide and which no test
+> in this suite can plant red.
 
 **The primer, for somebody who has not read the measurement.** BrowserAI proxies
 a `@playwright/mcp` child over stdio. Kill that child while the server is still
