@@ -1,0 +1,14 @@
+=== the values it held, recorded before removal ===
+
+DisplayIcon          : C:\Users\jori\AppData\Local\BrowserAI-test-scratch\real-install-window-27abcac3035a4d2aaed47b7c6984807f\current\BrowserAI.exe
+DisplayName          : BrowserAI (suite)
+DisplayVersion       : 1.0.0
+InstallDate          : 20260917
+InstallLocation      : C:\Users\jori\AppData\Local\BrowserAI-test-scratch\real-install-window-27abcac3035a4d2aaed47b7c6984807f
+Publisher            : Jori Huisman
+QuietUninstallString : "C:\Users\jori\AppData\Local\BrowserAI-test-scratch\real-install-window-27abcac3035a4d2aaed47b7c6984807f\Update.exe" --uninstall --silent
+UninstallString      : "C:\Users\jori\AppData\Local\BrowserAI-test-scratch\real-install-window-27abcac3035a4d2aaed47b7c6984807f\Update.exe" --uninstall
+EstimatedSize        : 140140
+NoModify             : 1
+NoRepair             : 1
+Language             : 1033

@@ -532,6 +532,23 @@ is exactly what reported a clean screen while two windows were on it. What
 carries that guarantee is the subsystem read out of the binary, the cause rather
 than the symptom.
 
+⚠️ **A test host stopped mid-installer-arm leaves
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI.app.test`
+behind, and the next run then SKIPS all three installer arms rather than failing.**
+*Observed 2026-09-17.* The arm installs under the suite's own pack id and removes
+the key on the way out; stop the host between those two and the key outlives the
+run, pointing at a scratch root the same teardown has already deleted. The
+capability that gates those arms treats a key it did not write in this run as a
+run that did not clean up — which is the right refusal, and it means a gate can
+come back **green with three arms unrun**: read the `skipped` count, never the
+`failed` count alone. Clearing it is the `reg delete` the refusal message itself
+names (`ReleaseLayout.ClearTheLeftoverKey`), and **two things are checked before
+running it** — that `InstallLocation` is under `%LocalAppData%\BrowserAI-test-scratch`
+**and** that the directory is gone. A key pointing at a directory that still
+exists is a live install rather than residue, and deleting it would strand one.
+The values one held are in
+[`docs/evidence/2026-09-17-reverify/`](docs/evidence/2026-09-17-reverify/README.md).
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and
