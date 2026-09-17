@@ -40,8 +40,7 @@ release body; nothing else depends on it.
 
 ### Changed
 
-- 📝 **What a resume costs and preserves is re-taken at chromium 1245 and firefox
-  1548, and "resume" is two paths now rather than one.**
+- 📝 **The resume figure is re-taken at 1245 and 1548, and "resume" is two paths now.**
   Re-verification row 38. The load-bearing half held exactly and now on two families:
   cookie, localStorage, IndexedDB, CacheStorage and one service-worker registration all
   survived, sessionStorage alone did not, identically on Chromium and on Firefox, which is
@@ -67,8 +66,7 @@ release body; nothing else depends on it.
   Not re-measured, and the entry says so where it says it: a forward made WITHOUT a resume,
   and therefore the door-refusal added for that case.
 
-- 📝 **The Firefox-against-Chromium cost ratios are re-taken at chromium 1245 and
-  firefox 1548, and the idle-CPU axis is withdrawn rather than re-stated.**
+- 📝 **The cost ratios are re-taken at 1245 and 1548, and the idle-CPU axis is withdrawn.**
   Re-verification row 34, at six rounds per family rather than the stated three, because
   the axis that had flipped sign is the one three rounds cannot settle. RAM holds at
   1.19x, profile disk at 2.76x on every one of six rounds, and processes at 0.78x. First
@@ -93,7 +91,7 @@ release body; nothing else depends on it.
   than an assertion of it. The procedure gains a sentence with it: both families must run
   in one sitting, because the two behind this section were six hours apart.
 
-- 📝 **Payload licensing is re-read at chromium 1245 and firefox 1548, and four of its claims did not survive.**
+- 📝 **Payload licensing is re-read at 1245 and 1548, and four claims did not survive.**
   Re-verification row 26 said `winldd` ships no licence file and full Chromium ships no
   OSS one. Both still hold, and so do `ffmpeg`, Node and `@playwright/mcp`. The Chromium
   half could not have moved and the reason is evidence rather than an assurance:
