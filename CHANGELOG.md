@@ -54,6 +54,25 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 📦 **`New-Release.ps1` clears its own never-published test feed before it
+  packs into it, so a stale pre-release can never refuse a cut again.** The entry
+  below records the checklist correction that met this failure; this is the fix it
+  said belonged to whoever owns the script. `Releases/test-pack/` is a **second
+  Velopack feed**, every gate pack writes a pre-release into it, and a gate runs
+  far more often than a release is cut — so at the moment of a cut it holds
+  versions above the release and `vpk` refuses, *after* the shipping artifacts
+  have already been built. [`build/Clear-TestPackFeed.ps1`](build/Clear-TestPackFeed.ps1)
+  now runs immediately before the test pack and deletes exactly what that pack
+  regenerates: `BrowserAI.app.test-*.nupkg`, `releases.win.json`, `RELEASES`,
+  `assets.win.json`, the two renamed downloads, **and the two pre-rename names** a
+  run that died between the pack and the rename leaves instead. It is **not** a
+  directory wipe — a file under `test-pack/` that no pack regenerates survives —
+  and an absent or empty directory is reported rather than refused, because the
+  first cut on a fresh clone meets both. **Q200**, decided 2026-09-17.
+  [`RELEASING.md`](RELEASING.md) item 5's manual step is corrected by addition and
+  kept as a description of the failure mode; the shipping feed is still cleared by
+  hand and `Test-ReleaseVersion.ps1`'s refusal still covers it.
+
 - 📦 **The release checklist now clears the suite's feed as well as the real
   one.** `Releases/test-pack/` is a **second Velopack feed**, not just a directory
   the checklist keeps, and every gate pack writes a pre-release into it. At the

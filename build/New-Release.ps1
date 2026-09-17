@@ -664,6 +664,37 @@ if (($null -ne $rewritten) -and ($rewritten -ne $assetText)) {
 $testOutputDir = Join-Path $OutputDir 'test-pack'
 $null = New-Item -ItemType Directory -Force -Path $testOutputDir
 
+# --- 6c-i. Clear the second feed BEFORE packing into it ------------------------
+# ⚠️ THIS IS THE STEP THAT STOPS A RELEASE BEING REFUSED BY ITS OWN SCRATCH.
+# The directory above is a FEED, not a folder: it holds `.nupkg`s, a
+# `releases.<channel>.json`, a `RELEASES` file and an `assets.<channel>.json`,
+# and `vpk` reads all of that when it decides whether the version being packed
+# is newer than what is already there. A gate runs far more often than a release
+# is cut, and every gate pack writes a PRE-RELEASE into this feed -- so at the
+# moment of a real cut it holds versions ABOVE the release, and vpk refuses:
+#
+#     There is a release in channel win which is equal or greater to the
+#     current version 1.0.0
+#
+# And because the shipping pack is step 6 and this is step 6c, that refusal
+# fires AFTER the release itself has already been built. The non-zero exit names
+# the suite's installer while the release sits finished on disk, which reads as
+# a broken release rather than as a dirty scratch directory. It refused the
+# 2026-09-16 cut in exactly that shape, and the checklist correction written
+# that day asked a human to clear four file names by hand before every cut.
+#
+# Q200, decided 2026-09-17: the script clears its own regenerated,
+# never-published output. In its own file so the suite can DRIVE it -- an
+# inline `Remove-Item` could only ever be asserted by reading this file for a
+# line, which proves the line was typed rather than that anything is removed.
+& (Join-Path $PSScriptRoot 'Clear-TestPackFeed.ps1') `
+    -Directory $testOutputDir -PackId $testPackId -DownloadId $testDownloadId -Channel $Channel
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Clearing the suite's own test-pack feed failed with exit code $LASTEXITCODE, so vpk would be packing into a feed that may already hold a newer pre-release and would refuse this cut after the release itself had been built."
+    exit 1
+}
+
 $testPackArgs = @()
 for ($i = 0; $i -lt $packArgs.Count; $i++) {
     switch ($packArgs[$i]) {

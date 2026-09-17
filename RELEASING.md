@@ -139,13 +139,38 @@ of the order rather than defects in anything:
    `BrowserAI.test-installer.exe` and `BrowserAI.test-portable.zip` — all of
    which the same run rebuilds, and none of which is ever published.
 
-   📣 **The better fix is a script change and it was deliberately not taken
-   here.** `New-Release.ps1` could clear its own test output before packing into
-   it, since that output is regenerated on every run and published on none — one
-   `Remove-Item` where this bullet is a paragraph a person has to remember. That
-   is a behaviour change to the release script, which belongs to whoever owns it
-   rather than to the executor of a release, and **`ReleaseScriptTests.AReleaseCutOverLocalPreReleasePacksIsRefusedAndNamesWhatToClear`
-   names four files and would need to name these too.**
+   ⚠️ **THE SCRIPT DOES THIS NOW AND THE PARAGRAPH ABOVE IS HISTORY —
+   *corrected 2026-09-17 (previously "📣 **The better fix is a script change and
+   it was deliberately not taken here.** `New-Release.ps1` could clear its own
+   test output before packing into it, since that output is regenerated on every
+   run and published on none — one `Remove-Item` where this bullet is a
+   paragraph a person has to remember. That is a behaviour change to the release
+   script, which belongs to whoever owns it rather than to the executor of a
+   release, and **`ReleaseScriptTests.AReleaseCutOverLocalPreReleasePacksIsRefusedAndNamesWhatToClear`
+   names four files and would need to name these too.**")*.** **Q200**, decided
+   2026-09-17: [`build/Clear-TestPackFeed.ps1`](build/Clear-TestPackFeed.ps1) runs
+   from `New-Release.ps1` immediately before the test pack and deletes exactly
+   what that pack regenerates — `BrowserAI.app.test-*.nupkg`,
+   `releases.win.json`, `RELEASES`, `assets.win.json`, the two renamed downloads,
+   and the two **pre-rename** names a run that died between the pack and the
+   rename leaves instead. **So the previous ⚠️ is now a description of a failure
+   mode rather than a step**, and it is kept for the reader who meets that `vpk`
+   message in an old log. Nothing here is owed by hand.
+
+   **It is its own script for the same reason `Test-ReleaseVersion.ps1` is** — so
+   the suite can drive it. `ReleaseScriptTests.TheSecondFeedIsClearedBeforeItIsPackedIntoAndNothingElseIs`
+   runs it over a planted three-part layout and asserts the test feed is emptied
+   *and* that the shipping feed and `archive/` are byte-identical afterwards, with
+   a third direction holding that a file under `test-pack/` which no pack
+   regenerates survives. `ReleaseScriptTests.TheSuitesInstallerIsPackedUnderATestIdIntoADirectoryOfItsOwn`
+   holds the **order**, which is the half a driven test cannot see: a clear that
+   ran after the pack would delete the installer the suite is about to run.
+
+   ⚠️ **The refusal in `Test-ReleaseVersion.ps1` is NOT redundant now and must
+   not be deleted.** It fires on the **shipping** feed, which nothing clears
+   automatically and which this checklist still empties by hand four files at a
+   time; and it fires before a pack rather than during one. The script change
+   closes the second feed only.
 
    ⚠️ **The cut is REFUSED until this is done, and it says so — *added
    2026-09-16*.** `build/Test-ReleaseVersion.ps1` refuses a **release** candidate

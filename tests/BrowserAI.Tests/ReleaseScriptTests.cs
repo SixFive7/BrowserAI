@@ -48,6 +48,8 @@ internal sealed class ReleaseScriptTests
 
     private static string IlcPassScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Test-IlcFullPass.ps1");
 
+    private static string ClearScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Clear-TestPackFeed.ps1");
+
     /// <summary>An empty channel accepts anything, because there is nothing to be older than.</summary>
     /// <remarks>
     /// The same 404 an unpublished channel returns is what a misconfigured feed
@@ -793,6 +795,27 @@ internal sealed class ReleaseScriptTests
         await Assert.That(loop).Contains("'--outputDir'");
         await Assert.That(loop).Contains("$testOutputDir");
 
+        // ⚠️ AND THE SECOND FEED IS CLEARED BEFORE IT IS PACKED INTO, which is
+        // the ORDER rather than the call: a clear that ran after the pack would
+        // delete the installer the suite is about to run, and one that never ran
+        // lets a gate's pre-release refuse the next release cut — after the
+        // shipping artifacts have already been built. What the step DOES is
+        // driven for real in
+        // TheSecondFeedIsClearedBeforeItIsPackedIntoAndNothingElseIs; what can
+        // only be read here is where it sits in this file.
+        var clear = script.IndexOf("Clear-TestPackFeed.ps1", StringComparison.Ordinal);
+        var testPack = script.IndexOf("& vpk @testPackArgs", StringComparison.Ordinal);
+
+        await Assert.That(clear).IsGreaterThan(-1);
+        await Assert.That(testPack).IsGreaterThan(-1);
+        await Assert.That(clear)
+            .IsLessThan(testPack)
+            .Because("clearing the feed after packing into it would delete the installer the suite runs");
+
+        // It is handed the same three names the pack is, so the two cannot be
+        // pointed at different packages by an edit to one of them.
+        await Assert.That(script).Contains("-Directory $testOutputDir -PackId $testPackId -DownloadId $testDownloadId -Channel $Channel");
+
         // And the names it lands under cannot be mistaken for release artifacts.
         await Assert.That(script).Contains("Download = \"$testDownloadId-installer.exe\"");
         await Assert.That(script).Contains("Download = \"$testDownloadId-portable.zip\"");
@@ -800,6 +823,166 @@ internal sealed class ReleaseScriptTests
         // The published artifacts are still exactly two and still named for a
         // person, which is the half this must not have disturbed.
         await Assert.That(script).Contains("Packed = \"$packId-$Channel-Setup.exe\";    Download = \"$downloadId$downloadSuffix.exe\"");
+    }
+
+    /// <summary>
+    /// <b>The second feed is cleared before it is packed into, so a stale test
+    /// pack can never refuse a release again.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is not hygiene; it is the thing that refused a cut.</b>
+    /// <c>Releases/test-pack/</c> is a <i>second Velopack feed</i>, and every
+    /// gate pack writes a pre-release into it. At the moment a release is cut it
+    /// therefore holds versions newer than the release, and <c>vpk</c> refuses
+    /// it exactly the way it refuses one in <c>Releases/</c> - <i>"There is a
+    /// release in channel win which is equal or greater to the current version
+    /// 1.0.0"</i>. Because the running order packs the shipping artifacts first,
+    /// the refusal fires <b>after</b> the real pack has succeeded, so a non-zero
+    /// exit names the suite's installer while the release itself is already on
+    /// disk. It refused the 2026-09-16 cut in precisely that shape. <b>Q200</b>,
+    /// decided 2026-09-17: the script clears its own regenerated,
+    /// never-published output rather than a checklist item asking a human to.
+    /// </para>
+    /// <para>
+    /// <b>Driven rather than scanned, which is why the step is its own script.</b>
+    /// The <c>vpk pack</c> around it cannot be executed here - it needs the tool,
+    /// a publish and two minutes - but a deletion over a directory of files can
+    /// be, and a <c>Contains</c> over the script text would assert that a line
+    /// was written rather than that it removes anything. So
+    /// <c>build/Clear-TestPackFeed.ps1</c> is separate for the same reason
+    /// <c>Test-ReleaseVersion.ps1</c> and <c>Write-ReleaseManifest.ps1</c> are,
+    /// and <see cref="TheSuitesInstallerIsPackedUnderATestIdIntoADirectoryOfItsOwn"/>
+    /// holds that <c>New-Release.ps1</c> actually calls it, before the pack.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The control runs in the other direction and is half the point.</b>
+    /// A step that cleared the shipping feed would turn a release into a feed
+    /// with no history, and one that cleared <c>archive/</c> would delete the
+    /// only rollback target this project keeps. So the layout planted here holds
+    /// all three - the shipping feed, <c>archive/</c>, and the test feed - and
+    /// every file in the first two is asserted <b>present and byte-identical</b>
+    /// afterwards. A third direction is planted too: a file under
+    /// <c>test-pack/</c> that no pack regenerates survives, because this step
+    /// clears what it is about to rewrite and is not a directory wipe.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSecondFeedIsClearedBeforeItIsPackedIntoAndNothingElseIs()
+    {
+        using var scratch = ScratchDirectory.Create("release-clear-test-feed");
+
+        var shipping = Path.Combine(scratch.Path, "Releases");
+        var archive = Path.Combine(shipping, "archive");
+        var testPack = Path.Combine(shipping, "test-pack");
+
+        _ = Directory.CreateDirectory(archive);
+        _ = Directory.CreateDirectory(testPack);
+
+        // The stale test feed, in the shape a gate pack leaves it: both package
+        // kinds, both Velopack manifests, the legacy RELEASES file, the asset
+        // list, and the two artifacts AFTER the rename the script performs.
+        string[] cleared =
+        [
+            Path.Combine(testPack, $"{ReleaseLayout.TestPackId}-1.0.1-alpha.0.19-full.nupkg"),
+            Path.Combine(testPack, $"{ReleaseLayout.TestPackId}-1.0.1-alpha.0.19-delta.nupkg"),
+            Path.Combine(testPack, $"releases.{ReleaseLayout.Channel}.json"),
+            Path.Combine(testPack, "RELEASES"),
+            Path.Combine(testPack, $"assets.{ReleaseLayout.Channel}.json"),
+            Path.Combine(testPack, $"{ReleaseLayout.TestDownloadId}-installer.exe"),
+            Path.Combine(testPack, $"{ReleaseLayout.TestDownloadId}-portable.zip"),
+
+            // And the pre-rename names, because a run that died between the pack
+            // and the rename leaves these instead - and vpk reads the .nupkg
+            // rather than the renamed exe, so either shape refuses the next cut.
+            Path.Combine(testPack, $"{ReleaseLayout.TestPackId}-{ReleaseLayout.Channel}-Setup.exe"),
+            Path.Combine(testPack, $"{ReleaseLayout.TestPackId}-{ReleaseLayout.Channel}-Portable.zip"),
+        ];
+
+        foreach (var file in cleared)
+        {
+            await File.WriteAllTextAsync(file, "stale");
+        }
+
+        // What must survive, in three directions.
+        string[] survivors =
+        [
+            // (1) The shipping feed: its packages, its manifests, its artifacts.
+            Path.Combine(shipping, $"{ReleaseLayout.PackId}-1.0.0-full.nupkg"),
+            Path.Combine(shipping, $"releases.{ReleaseLayout.Channel}.json"),
+            Path.Combine(shipping, "RELEASES"),
+            Path.Combine(shipping, $"assets.{ReleaseLayout.Channel}.json"),
+            Path.Combine(shipping, $"{ReleaseLayout.DownloadId}.exe"),
+
+            // (2) archive/, which is the only rollback target this project keeps.
+            Path.Combine(archive, $"{ReleaseLayout.PackId}-1.0.0-full.nupkg"),
+
+            // (3) Something under test-pack/ that no pack regenerates. This step
+            //     clears what it is about to rewrite; it is not a wipe.
+            Path.Combine(testPack, "a-note-somebody-left.txt"),
+        ];
+
+        foreach (var file in survivors)
+        {
+            await File.WriteAllTextAsync(file, $"keep {Path.GetFileName(file)}");
+        }
+
+        var (exit, _, output) = await RunAsync(
+            ClearScript,
+            "-Directory", testPack,
+            "-PackId", ReleaseLayout.TestPackId,
+            "-DownloadId", ReleaseLayout.TestDownloadId,
+            "-Channel", ReleaseLayout.Channel);
+
+        await Assert.That(exit).IsEqualTo(0);
+
+        var stillThere = cleared.Where(File.Exists).Select(Path.GetFileName).ToArray();
+
+        await Assert.That(string.Join(", ", stillThere!))
+            .IsEqualTo(string.Empty)
+            .Because("every file the next pack regenerates must be gone before vpk looks at the feed");
+
+        foreach (var file in survivors)
+        {
+            await Assert.That(File.Exists(file))
+                .IsTrue()
+                .Because($"{file} is not the test pack's regenerated output and nothing may delete it");
+
+            await Assert.That(await File.ReadAllTextAsync(file))
+                .IsEqualTo($"keep {Path.GetFileName(file)}")
+                .Because("a survivor must be untouched rather than merely present");
+        }
+
+        // It says what it did, because a silent deletion in a release script is
+        // indistinguishable from a step that did not run.
+        await Assert.That(output).Contains("test-pack");
+
+        // ---- And it is not a refusal when there is nothing to clear ----------
+        // The FIRST cut on a machine meets an empty directory, and a step that
+        // failed there would refuse every release on a fresh clone.
+        var empty = Path.Combine(scratch.Path, "empty", "test-pack");
+        _ = Directory.CreateDirectory(empty);
+
+        var (emptyExit, _, _) = await RunAsync(
+            ClearScript,
+            "-Directory", empty,
+            "-PackId", ReleaseLayout.TestPackId,
+            "-DownloadId", ReleaseLayout.TestDownloadId,
+            "-Channel", ReleaseLayout.Channel);
+
+        await Assert.That(emptyExit).IsEqualTo(0);
+
+        // Nor when the directory does not exist at all, which is the state
+        // before the first gate pack ever runs.
+        var (absentExit, _, _) = await RunAsync(
+            ClearScript,
+            "-Directory", Path.Combine(scratch.Path, "never", "test-pack"),
+            "-PackId", ReleaseLayout.TestPackId,
+            "-DownloadId", ReleaseLayout.TestDownloadId,
+            "-Channel", ReleaseLayout.Channel);
+
+        await Assert.That(absentExit).IsEqualTo(0);
     }
 
     /// <summary>
