@@ -430,7 +430,7 @@ internal static class SuiteEnvironment
                 : " is set, so an absence it does not name is a failing test")
             .Append('\n');
 
-        // ⚠️ Where the first-run test's 203.8 MB came from, and it is a row here
+        // ⚠️ Where the first-run test's download came from, and it is a row here
         // rather than a capability because it is not one: Chromium is provisioned
         // either way and every capability above reads PRESENT either way. What
         // this line says is who PAID for it -- Playwright's CDN, or a tree the

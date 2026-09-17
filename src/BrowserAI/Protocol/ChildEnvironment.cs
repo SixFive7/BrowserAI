@@ -123,7 +123,10 @@ internal static class ChildEnvironment
     /// <para>
     /// The proxy and CA names are inherited because without them a machine behind
     /// TLS inspection cannot provision a browser at all — first-run provisioning
-    /// downloads 203.8 MB from three hosts, and SOCKS is unsupported on that path
+    /// downloads 207.3 MB from three hosts — <i>corrected 2026-09-17, previously
+    /// "203.8 MB", and the live figure is
+    /// <see cref="Runtime.BrowserProvisioner.FirstRunDownloadSizes"/> rather than
+    /// this sentence</i> — and SOCKS is unsupported on that path
     /// regardless
     /// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
     /// </para>

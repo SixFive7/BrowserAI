@@ -66,8 +66,12 @@ internal sealed class UpdateService
     /// <remarks>
     /// Sized against a link rather than a payload: 30 minutes carries
     /// <b>112.4 MB</b> at ~500 kbit/s, which is slower than any link this
-    /// product is usable on — a first-run browser provisioning of 203.8 MB has
-    /// to succeed on the same connection before BrowserAI works at all. It is a
+    /// product is usable on — a first-run browser provisioning of 207.3 MB has
+    /// to succeed on the same connection before BrowserAI works at all
+    /// (<i>corrected 2026-09-17, previously "203.8 MB"; re-measured 2026-09-16 at
+    /// chromium 1244, and the figure the server renders is
+    /// <c>BrowserProvisioner.FirstRunDownloadSizes</c> rather than this
+    /// sentence</i>). It is a
     /// bound on a pathology, not a service level.
     /// <para>
     /// <b>Corrected 2026-08-16 at the plan's final audit (previously "the

@@ -427,7 +427,10 @@ shipped product". The concurrency is reachable; the race is not.*
 **What is real is a wait, and it belongs to the waiter — measurement C.** 20
 attempts at a 1.27579 factor comes out at **470 s**, after which upstream fails
 the install outright rather than queueing further. **A first-run chromium
-download can outlast that**: 203.8 MB in 470 s is 3.5 Mbps, and
+download can outlast that**: 207.3 MB in 470 s is 3.5 Mbps (*corrected
+2026-09-17, previously "203.8 MB in 470 s is 3.5 Mbps"*; both sizes give
+3.5 Mbps to two figures, so the rate is unchanged and the size it is derived
+from is not), and
 `ProvisioningTimers.AbsoluteCap` is deliberately sized for links down to
 0.60 Mbps — so on any link slower than ~3.5 Mbps, a firefox install started
 beside a chromium install fails with `ELOCKED` instead of waiting for it.

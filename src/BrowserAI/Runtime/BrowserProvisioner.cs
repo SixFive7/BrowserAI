@@ -279,7 +279,9 @@ internal sealed record ProvisioningTimers
 /// <para>
 /// <b>Browsers live outside <c>current\</c>, resolved through
 /// <see cref="Hosting.IAppPaths"/>.</b> Inside it, every update would re-download
-/// 203.8 MB. The path also has to be <b>absolute</b>: it reaches the child as
+/// a browser tree — 207.3 MB for chromium at the time of writing, and whatever
+/// <see cref="FirstRunDownloadSizes"/> says at the time of reading. <i>Corrected
+/// 2026-09-17 (previously "every update would re-download 203.8 MB").</i> The path also has to be <b>absolute</b>: it reaches the child as
 /// <c>PLAYWRIGHT_BROWSERS_PATH</c>, and a relative value there resolves against
 /// <c>INIT_CWD</c> — inherited from whatever npm ancestor last ran — before the
 /// child's own working directory.

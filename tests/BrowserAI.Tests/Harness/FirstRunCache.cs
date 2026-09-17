@@ -10,7 +10,7 @@ using BrowserAI.Sessions;
 
 namespace BrowserAI.Tests.Harness;
 
-/// <summary>Where a first-run test's 203.8 MB actually came from.</summary>
+/// <summary>Where a first-run test's couple of hundred megabytes actually came from.</summary>
 internal enum FirstRunSource
 {
     /// <summary>
@@ -55,15 +55,17 @@ internal sealed record FirstRunCacheEntry(
 internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? Entry, string Reason);
 
 /// <summary>
-/// A once-an-hour ceiling on how often the suite asks Playwright's CDN for
-/// 203.8 MB.
+/// A once-an-hour ceiling on how often the suite asks Playwright's CDN for a
+/// whole browser.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>The problem it solves is bandwidth, not time.</b>
 /// <see cref="FirstRunProvisioningTests"/> provisions a browser from an empty
-/// root on every run, which is 203.8 MB down
-/// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
+/// root on every run, which is 207.3 MB down at chromium 1244
+/// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)) —
+/// <i>corrected 2026-09-17, previously "203.8 MB down" with no revision beside
+/// it, which is how a figure goes stale in a comment nobody re-reads</i>.
 /// That was one run a day; it is about to be dozens, and pointing that at a
 /// public CDN is not something to do because nobody stopped us.
 /// </para>

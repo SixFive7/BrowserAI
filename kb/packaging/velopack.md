@@ -61,7 +61,11 @@ Three caveats that bear on the design, none of which the charter had:
 
 - ⚠️ **A repair or overwrite install destroys them.** `install.rs` renames a
   non-empty root to `{root}.{random16}` and, on success, **deletes it**. Re-running
-  `Setup.exe` over an existing install therefore costs a **203.8 MB re-download**.
+  `Setup.exe` over an existing install therefore costs a **207.3 MB re-download**
+  (*corrected 2026-09-17 @ chromium 1244, previously "a **203.8 MB
+  re-download**"*; the figure follows
+  [the measured first-run download](../playwright/provisioning-and-timings.md#first-run-provisioning)
+  and moves with every browser roll).
   **Updates must go through the update path; `Setup.exe` must never be re-run over
   an existing install.**
 - **Uninstall wipes the whole root** (`remove_dir_contents`) — browsers included,
