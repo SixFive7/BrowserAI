@@ -1010,6 +1010,22 @@ changelog rather than written twice — and a link to the section at the tag, wh
 anchor is computed by the same slug rule `DocumentationLinkTests` applies to
 every relative link in the repository.
 
+⚠️ **THE LEGEND IS A TABLE, AND THE NEWLINES ARE THE POINT — 2026-09-17, the
+maintainer's instruction**: *"The legend at the bottom of the release notes that
+explains the icons is missing newlines. Give it a nice yet compact layout."*
+*Previously the legend was one paragraph of twelve entries separated by `·`, and
+this script joined its wrapped lines with spaces before emitting it — so a reader
+of the release page met one unbroken line.* The shape is **two icon-and-meaning
+pairs per row, six rows for the twelve icons, under a one-word heading row**, and
+the legend in [`CHANGELOG.md`](CHANGELOG.md) carries the same table so the two
+cannot disagree. **A legend that is not a table is refused rather than
+flattened** — the body has no legend of its own, so the read is the only place
+the shape can be held — and
+`ChangelogTests.TheLegendAtTheTopIsATableListingExactlyTheApprovedPalette` and
+`.ALegendThatIsNotATableRefusesTheBody` hold both halves. Rendered once through
+GitHub's own renderer on 2026-09-17: **one `<table>`, six `<tbody>` rows, 24
+`<td>` cells**.
+
 ⚠️ **ONE SHAPE FOR EVERY RELEASE SINCE 2026-09-16, the maintainer's choice
 (Q197 b).** *Previously: "its detail is folded into a
 `<details><summary>read more</summary>` block nested inside the list item".* The

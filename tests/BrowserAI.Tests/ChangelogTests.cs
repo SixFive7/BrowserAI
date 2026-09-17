@@ -334,7 +334,8 @@ internal sealed partial class ChangelogTests
         await Assert.That(string.Join(Environment.NewLine, wrong)).IsEmpty();
 
         // ---- The controls, over text this file will never contain -----------
-        var control = string.Join("\n", Palette.Select(entry => $"{entry.Icon} {entry.Means}")) + "\n";
+        var control = "| Icon | Meaning |\n|---|---|\n"
+            + string.Join("\n", Palette.Select(entry => $"| {entry.Icon} | {entry.Means} |")) + "\n";
 
         await Assert.That(Malformed(
             $"# C\n\n{control}\n## [9.9.9] - 2026-01-01\n\n### Added\n\n- An entry nobody gave an icon.\n", icons))
@@ -366,30 +367,113 @@ internal sealed partial class ChangelogTests
     }
 
     /// <summary>
-    /// The legend lists the approved palette, all of it, in order, and nothing
-    /// else.
+    /// The legend is a compact table that lists the approved palette, all of it,
+    /// in order, and nothing else.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// WARNING: A TABLE SINCE 2026-09-17, at the maintainer's instruction:
+    /// <i>"The legend at the bottom of the release notes that explains the icons
+    /// is missing newlines. Give it a nice yet compact layout."</i> The release
+    /// body's footer carries the changelog's own legend, read out of the file
+    /// rather than written twice, and a paragraph of twelve entries separated by
+    /// an interpunct renders as one unbroken line in a browser column.
+    /// <i>Previously the legend was that paragraph, and this arm split it on the
+    /// interpunct.</i>
+    /// </para>
+    /// <para>
+    /// <b>Two pairs per row, six rows, a one-word heading row.</b> The shape is
+    /// asserted rather than the rendering: twelve icons in palette order, read
+    /// left to right and then down, so the reading order of the table is the
+    /// order the palette declares. The rendering itself was checked once against
+    /// GitHub's own renderer, which is
+    /// <see href="https://github.com/SixFive7/BrowserAI">the only thing that can
+    /// answer it</see>.
+    /// </para>
+    /// <para>
+    /// <b>The control is the shape this replaced</b>, which is the one mistake
+    /// available here: a single-line legend must be refused, or the change would
+    /// be a preference rather than a rule.
+    /// </para>
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheLegendAtTheTopListsExactlyTheApprovedPalette()
+    public async Task TheLegendAtTheTopIsATableListingExactlyTheApprovedPalette()
     {
         var text = await File.ReadAllTextAsync(Changelog);
 
-        // The legend is the last paragraph before the first version heading, and
-        // it is read as one line however it is wrapped.
-        var head = text[..text.IndexOf("\n## ", StringComparison.Ordinal)];
-        var legend = head.Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
-            .LastOrDefault(paragraph => paragraph.Contains('·', StringComparison.Ordinal));
-
-        await Assert.That(legend).IsNotNull();
-
-        var flattened = string.Join(" ", legend!.Split('\n').Select(line => line.Trim()));
-        var listed = flattened.Split('·').Select(part => part.Trim()).ToList();
-
-        await Assert.That(string.Join(" | ", listed))
+        await Assert.That(string.Join(" | ", LegendPairs(text)))
             .IsEqualTo(string.Join(" | ", Palette.Select(entry => $"{entry.Icon} {entry.Means}")));
+
+        // Two pairs per row and six rows, which is what "compact" means here and
+        // is the half a palette comparison cannot see.
+        var rows = LegendTableRows(text);
+
+        await Assert.That(rows.Count).IsEqualTo(6);
+        await Assert.That(rows.TrueForAll(row => row.Count is 4)).IsTrue();
+
+        // ---- The controls, over text this file will never contain -----------
+        // The shape this replaced: one paragraph, twelve entries, no newlines.
+        var oneLine = "# C\n\n"
+            + string.Join(" · ", Palette.Select(entry => $"{entry.Icon} {entry.Means}"))
+            + "\n\n## [9.9.9] - 2026-01-01\n";
+
+        await Assert.That(LegendPairs(oneLine)).IsEmpty();
+        await Assert.That(LegendTableRows(oneLine)).IsEmpty();
+
+        // And a table with the right cells is read, so the two controls above
+        // fail for their own reason rather than because nothing is read at all.
+        var table = "# C\n\n| Icon | Meaning |\n|---|---|\n| ✨ | new capability |\n\n## [9.9.9] - 2026-01-01\n";
+
+        await Assert.That(string.Join(" | ", LegendPairs(table))).IsEqualTo("✨ new capability");
     }
+
+    /// <summary>The legend table's body rows, each already split into its cells.</summary>
+    /// <param name="changelog">The changelog's text.</param>
+    /// <returns>One list of cells per body row, or nothing when there is no table.</returns>
+    private static List<List<string>> LegendTableRows(string changelog)
+    {
+        var head = changelog.Replace("\r\n", "\n", StringComparison.Ordinal);
+        var firstHeading = head.IndexOf("\n## ", StringComparison.Ordinal);
+
+        if (firstHeading > 0)
+        {
+            head = head[..firstHeading];
+        }
+
+        // The last block before the first version heading every one of whose
+        // lines is a table row -- a block rather than a line scan, because the
+        // head also carries prose that mentions pipes.
+        var block = head.Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault(paragraph => paragraph
+                .Split('\n')
+                .Where(line => line.Trim().Length > 0)
+                .All(line => line.TrimStart().StartsWith('|')));
+
+        return block is null
+            ? []
+            :
+            [
+                .. block.Split('\n')
+                    .Select(line => line.Trim())
+                    .Where(line => line.Length > 0)
+                    // The heading row and the delimiter row are the table's
+                    // frame rather than its content.
+                    .Skip(2)
+                    .Select(line => (List<string>)[.. line.Trim('|').Split('|').Select(cell => cell.Trim())]),
+            ];
+    }
+
+    /// <summary>The icon-and-meaning pairs the legend table publishes, in reading order.</summary>
+    /// <param name="changelog">The changelog's text.</param>
+    /// <returns>Each pair as the icon, a space, and its meaning.</returns>
+    private static List<string> LegendPairs(string changelog) =>
+    [
+        .. LegendTableRows(changelog).SelectMany(row => row
+            .Chunk(2)
+            .Where(pair => pair.Length is 2 && pair[0].Length > 0)
+            .Select(pair => $"{pair[0]} {pair[1]}")),
+    ];
 
     /// <summary>
     /// Every section's groups are the Keep a Changelog set, each at most once
@@ -440,26 +524,8 @@ internal sealed partial class ChangelogTests
     /// <summary>The icons the legend publishes, in order.</summary>
     /// <param name="changelog">The changelog's text.</param>
     /// <returns>The icons.</returns>
-    private static List<string> LegendIcons(string changelog)
-    {
-        var head = changelog.Replace("\r\n", "\n", StringComparison.Ordinal);
-        var firstHeading = head.IndexOf("\n## ", StringComparison.Ordinal);
-
-        if (firstHeading > 0)
-        {
-            head = head[..firstHeading];
-        }
-
-        var legend = head.Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
-            .LastOrDefault(paragraph => paragraph.Contains('·', StringComparison.Ordinal));
-
-        return legend is null
-            ? []
-            : [.. string.Join(" ", legend.Split('\n').Select(line => line.Trim()))
-                .Split('·')
-                .Select(part => part.Trim().Split(' ')[0])
-                .Where(icon => icon.Length > 0)];
-    }
+    private static List<string> LegendIcons(string changelog) =>
+        [.. LegendPairs(changelog).Select(pair => pair.Split(' ')[0])];
 
     /// <summary>
     /// Every entry of a changelog that is not in the shape a release body is
@@ -791,15 +857,17 @@ internal sealed partial class ChangelogTests
 
             ### Added
 
-            - ✨ **A new thing.** [read more](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md?plain=1#L16-L19)
+            - ✨ **A new thing.** [read more](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md?plain=1#L18-L21)
 
             ### Fixed
 
-            - 🐛 **An old thing was wrong.** [read more](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md?plain=1#L23-L23)
+            - 🐛 **An old thing was wrong.** [read more](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md?plain=1#L25-L25)
 
             ---
 
-            ✨ new capability · 🐛 fix
+            | Icon | Meaning | Icon | Meaning |
+            |---|---|---|---|
+            | ✨ | new capability | 🐛 | fix |
 
             Every entry in full, with its evidence: [CHANGELOG.md](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md#999---2026-01-01)
 
@@ -865,7 +933,9 @@ internal sealed partial class ChangelogTests
 
             ---
 
-            ✨ new capability · 🐛 fix
+            | Icon | Meaning | Icon | Meaning |
+            |---|---|---|---|
+            | ✨ | new capability | 🐛 | fix |
 
             Every entry in full, with its evidence: [CHANGELOG.md](https://github.com/SixFive7/BrowserAI/blob/v9.9.9/CHANGELOG.md#999---2026-01-01)
 
@@ -1183,6 +1253,59 @@ internal sealed partial class ChangelogTests
     }
 
     /// <summary>
+    /// A legend that is not a table is refused, and the refusal says what the
+    /// legend is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's instruction of 2026-09-17 was a layout, and a layout
+    /// nothing refuses is a preference.</b> <i>"The legend at the bottom of the
+    /// release notes that explains the icons is missing newlines. Give it a nice
+    /// yet compact layout."</i> The footer legend is read out of the changelog
+    /// rather than written twice, so the only place the shape can be held is at
+    /// the read: a one-paragraph legend now refuses the body rather than being
+    /// flattened into one line.
+    /// </para>
+    /// <para>
+    /// <b>Watched red 2026-09-17 against the generator as it stood</b>, which
+    /// accepted the paragraph and emitted it as a single line -- which is the
+    /// defect the instruction names.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ALegendThatIsNotATableRefusesTheBody()
+    {
+        using var scratch = ScratchDirectory.Create("release-notes-legend");
+
+        // The shape this replaced, in a fixture that is otherwise the accepted
+        // one -- so the refusal is about the legend and about nothing else.
+        var oneLine = Fixture.Replace(
+            "| Icon | Meaning | Icon | Meaning |\n|---|---|---|---|\n| ✨ | new capability | 🐛 | fix |",
+            "✨ new capability · 🐛 fix",
+            StringComparison.Ordinal);
+
+        await Assert.That(oneLine).IsNotEqualTo(Fixture);
+
+        var changelog = await WriteAsync(scratch, "CHANGELOG.md", oneLine);
+        var body = Path.Combine(scratch.Path, "body.md");
+
+        var run = await RunScriptAsync(NotesScript, "-Path", changelog, "-Version", "9.9.9", "-Destination", body);
+
+        await Assert.That(run.ExitCode).IsNotEqualTo(0);
+        await Assert.That(run.StandardError).Contains("table");
+        await Assert.That(File.Exists(body)).IsFalse();
+
+        // The control: the same fixture with the table is accepted, so this
+        // refuses a legend rather than refusing everything.
+        var accepted = await WriteAsync(scratch, "ACCEPTED.md", Fixture);
+        var second = Path.Combine(scratch.Path, "accepted.md");
+
+        await Assert.That((await RunScriptAsync(NotesScript, "-Path", accepted, "-Version", "9.9.9", "-Destination", second)).ExitCode)
+            .IsEqualTo(0);
+    }
+
+    /// <summary>
     /// A changelog written in the shape the generator reads, small enough to
     /// assert the whole output of.
     /// </summary>
@@ -1197,7 +1320,9 @@ internal sealed partial class ChangelogTests
 
         Everything notable, in the house format.
 
-        ✨ new capability · 🐛 fix
+        | Icon | Meaning | Icon | Meaning |
+        |---|---|---|---|
+        | ✨ | new capability | 🐛 | fix |
 
         ## [Unreleased]
 

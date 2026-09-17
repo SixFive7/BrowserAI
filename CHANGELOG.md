@@ -27,12 +27,14 @@ carries the test one. [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1)
 reads that shape to fold each detail behind a *read more* in the GitHub
 release body; nothing else depends on it.
 
-✨ new capability · 🐛 fix · 🔧 behaviour or configuration change ·
-🔒 security or permissions · 🗑️ removal or deprecation ·
-💥 breaking, or the reader must act · 📝 documentation ·
-✅ tests and the gate · 📦 packaging, installer, release pipeline ·
-⚡ performance · ♻️ refactor with no behaviour change ·
-⬆️ dependency move
+| Icon | Meaning | Icon | Meaning |
+|---|---|---|---|
+| ✨ | new capability | 🐛 | fix |
+| 🔧 | behaviour or configuration change | 🔒 | security or permissions |
+| 🗑️ | removal or deprecation | 💥 | breaking, or the reader must act |
+| 📝 | documentation | ✅ | tests and the gate |
+| 📦 | packaging, installer, release pipeline | ⚡ | performance |
+| ♻️ | refactor with no behaviour change | ⬆️ | dependency move |
 
 ## [Unreleased]
 
@@ -53,6 +55,24 @@ release body; nothing else depends on it.
   one.
 
 ### Changed
+- 🔧 **The icon legend is a compact table now, in the release body and in this file.**
+  The maintainer's words: *"The legend at the bottom of the release notes that
+  explains the icons is missing newlines. Give it a nice yet compact layout."*
+  The release body carries this file's own legend rather than one of its own,
+  and until today that legend was a single paragraph of twelve entries separated
+  by an interpunct, which
+  [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1) then flattened
+  further by joining its wrapped lines with spaces. A reader of the release page
+  met one unbroken line. It is a Markdown table now: **two icon-and-meaning
+  pairs per row, six rows for the twelve icons, under a one-word heading row**,
+  in both places, and the generator emits it line for line. **A legend that is
+  not a table is refused rather than flattened**, which is the half that makes
+  this a rule instead of a preference: the body has no legend of its own, so the
+  read is the only place the shape can be held. Planted red on the fixture
+  (*"Expected to contain `table`"*, against a generator that accepted the
+  paragraph) and on the tree (*"Expected to be equal to ... but received
+  `\"\"`"*). Rendered once through GitHub's own renderer: one `<table>`, six
+  `<tbody>` rows, 24 `<td>` cells.
 - 📝 **Chromium stays the default browser, on a reason rather than on four numbers that moved.**
   The maintainer's ground, in his words: *"the reason for the default is that
   chrome is the most widely used"*. Recorded as a **decision, not a

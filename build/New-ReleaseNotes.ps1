@@ -205,15 +205,29 @@ $section = if ($next.Success) { $rest.Substring(0, $next.Index) } else { $rest }
 # --- The legend, read out of the changelog rather than written here ------------
 # Two copies of a palette would eventually disagree, and the one in the file is
 # the one a reader of the changelog sees.
+#
+# WARNING: A TABLE, AND THE NEWLINES ARE THE POINT -- 2026-09-17, the
+# maintainer's instruction: "The legend at the bottom of the release notes that
+# explains the icons is missing newlines. Give it a nice yet compact layout."
+# Until today the legend was one paragraph of twelve entries separated by an
+# interpunct, and this script FLATTENED it further, joining its wrapped lines
+# with spaces -- so a reader of the release page met one unbroken line. It is
+# read as a Markdown table now and emitted line for line. A legend that is not a
+# table is REFUSED rather than flattened: this is the only place the shape can be
+# held, because the body carries the changelog's legend rather than one of its
+# own.
 $head = $content.Substring(0, [regex]::Match($content, '(?m)^\#\#[ \t]').Index)
-$legendBlock = ($head -split "`n`n" | Where-Object { $_ -match '·' } | Select-Object -Last 1)
+$legendBlock = ($head -split "`n`n" | Where-Object {
+        $rows = @($_ -split "`n" | Where-Object { $_.Trim().Length -gt 0 })
+        ($rows.Count -ge 3) -and (@($rows | Where-Object { -not $_.TrimStart().StartsWith('|') }).Count -eq 0)
+    } | Select-Object -Last 1)
 
 if (-not $legendBlock) {
-    Write-Error "'$Path' carries no palette legend before its first version heading, so the release body has no legend to end with. The legend is the paragraph of icon descriptions separated by '·'."
+    Write-Error "'$Path' carries no palette legend table before its first version heading, so the release body has no legend to end with. The legend is a Markdown table of icons and their meanings -- a heading row, a delimiter row, and one row per pair of icons -- and a legend written as a paragraph is refused rather than flattened into a single line."
     exit 1
 }
 
-$legend = (($legendBlock -split "`n" | ForEach-Object { $_.Trim() }) -join ' ').Trim()
+$legend = (($legendBlock -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_.Length -gt 0 }) -join "`n")
 
 # --- The anchor, by GitHub's rule ----------------------------------------------
 function Get-GitHubAnchor {
