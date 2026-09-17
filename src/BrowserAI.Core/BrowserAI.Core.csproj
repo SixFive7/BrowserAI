@@ -37,6 +37,29 @@
       hand-write unsafe code: every use is a P/Invoke declaration under Interop\.
     -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!--
+      THE RID THIS LIBRARY IS ONLY EVER PUBLISHED UNDER, DECLARED SO THAT EVERY
+      RESTORE RESOLVES THE SAME SET.
+
+      Without it this project's packages.lock.json has TWO stable states and the
+      last restore wins: a RID-specific restore, which every publish and
+      build/New-Release.ps1 performs, writes a `net10.0-windows7.0/win-x64`
+      section, and a solution restore, which `dotnet test` performs, removes it
+      again. Neither is wrong and neither is an artifact; they are two honest
+      answers to two different questions, and the cost was a tree that opened
+      dirty after every publish and again after every suite run. Q201, decided
+      2026-09-17. Q199 had decided only WHICH of the two states to commit, which
+      moved the churn rather than ending it.
+
+      There is no third answer to pick from now. Both executables that link this
+      library publish self-contained NativeAOT for win-x64, this is a
+      Windows-only product by construction, and the RID a library declares is
+      the RID it restores for. TESTING.md records the measurement.
+
+      (No double hyphen anywhere in this comment: one makes MSBuild fail to load
+      the file. That is not a hypothetical; writing this comment tripped it.)
+    -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <PropertyGroup Label="Version">

@@ -597,14 +597,29 @@ the old rule needed protecting is closed rather than narrowed: with the section
 committed, a RID restore leaves the lock file **byte-identical** (measured
 2026-09-16 — SHA-256 `fab160c4…` either side of a RID restore of both
 executables), so a publish no longer produces a diff for anybody to remember to
-revert. ⚠️ **What it does instead is show that file modified after every
+revert. ⚠️ **THERE IS ONE STATE NOW, AND IT IS BY CONSTRUCTION — *corrected 2026-09-17
+(previously "**What it does instead is show that file modified after every
 [item 8](#8-run-everything) run**, because `dotnet test` restores the solution
 without a RID and that writes the other of the file's two states (`7f30ec57…`).
 **Nothing needs doing about it here:** step 5's re-pack restores with the RID and
-leaves the tree clean before the release commit is written. What must not happen,
-before this decision and after it, is a `git add -A` taken on trust. The
-reasoning, and the way that was not taken, are in
-[Testing](TESTING.md#a-publish-rewrites-a-lock-file-and-the-diff-is-committed-rather-than-reverted).
+leaves the tree clean before the release commit is written")*.**
+[`src/BrowserAI.Core/BrowserAI.Core.csproj`](src/BrowserAI.Core/BrowserAI.Core.csproj)
+declares `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` from 2026-09-17 — the
+way out that [Testing](TESTING.md#a-publish-rewrites-a-lock-file-and-the-diff-is-committed-rather-than-reverted)
+had written down and deliberately not taken — so **every** restore shape resolves
+the same set and writes the same bytes. Measured the day it went in, five reads,
+all `fab160c4…`: `dotnet restore --force-evaluate` over the solution, a
+`dotnet publish -c Release -r win-x64 --self-contained`, a plain `dotnet restore`,
+`dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate`, and
+`dotnet restore BrowserAI.slnx --force-evaluate` — the last two being exactly the
+pair that used to disagree. `7f30ec57…` is no longer reachable. **So neither a
+publish nor an [item 8](#8-run-everything) run leaves that file modified**, and
+this item has nothing to do about it in either direction. What must not happen,
+before this decision and after it, is a `git add -A` taken on trust.
+**Q201**, decided 2026-09-17; Q199 above decided only *which* of the two states to
+commit, which moved the churn rather than ending it, and its record is kept
+because it is what a reader who met the flip-flop needs in order to recognise
+that it is gone.
 
 > **Corrected 2026-08-16 on the first run of this checklist (previously: "the
 > publish command, its exit code, and the warning count, which is zero").** The

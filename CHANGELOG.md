@@ -71,6 +71,26 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🔧 **`BrowserAI.Core` declares the RID it is only ever published under, and
+  its lock file stops having two answers.** `src/BrowserAI.Core/packages.lock.json`
+  had **two stable states and the last restore won**: a RID-specific restore (every
+  publish, and `build/New-Release.ps1`) wrote a `net10.0-windows7.0/win-x64`
+  section, and a solution restore (what `dotnet test` performs) removed it again —
+  so the tree opened dirty after every publish *and* after every suite run, and
+  Q199 could only choose which of the two to commit. Declaring
+  `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` on the library ends it at the
+  source: five restore shapes measured on 2026-09-17 all write `fab160c4…`,
+  including the two that used to disagree
+  (`dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate`
+  against `dotnet restore BrowserAI.slnx --force-evaluate`, each forced to
+  re-resolve so that a no-op restore could not be mistaken for agreement). The
+  other state, `7f30ec57…`, is no longer reachable. Solution build after the
+  change: 0 warnings, 0 errors; the only cost is one directory level in the
+  library's own build output, which nothing in this tree reads by path. **Q201**,
+  decided 2026-09-17. [`RELEASING.md`](RELEASING.md) item 5 and
+  [`TESTING.md`](TESTING.md) are corrected by addition — both said the file would
+  show modified after a run, and neither is true now.
+
 - ⬆️ **TUnit moved 1.67.0 → 1.68.4 and Microsoft.Testing.Platform deliberately
   did not move at all.** `dotnet restore --force-evaluate` on 2026-09-17 re-resolved
   the float and took TUnit across two releases: 1.68.0 (2026-09-15) and 1.68.4

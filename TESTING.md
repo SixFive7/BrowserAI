@@ -902,23 +902,52 @@ suite run is followed by reading a log. The one time this file reached `HEAD`
 unreviewed, it was a `git add -A` after a publish. The state a publish leaves
 behind is therefore the state that must be committed, and it now is.
 
-**The cost is stated rather than hidden.** `git status` shows this one file
-modified after every suite run, including all six of a release gate, and the
-repair is `dotnet restore <project> -r win-x64` — or nothing at all, because
-[the release checklist's re-pack step](RELEASING.md#7-build-clean) performs
-exactly that restore and leaves the tree clean before the release commit is
-written. **Never `git add -A` after a suite run**, which was true before this
-decision and is true in the other direction after it.
+⚠️ **THE OSCILLATION IS OVER, BY CONSTRUCTION RATHER THAN BY HABIT — *corrected
+2026-09-17 (previously "**The cost is stated rather than hidden.** `git status`
+shows this one file modified after every suite run, including all six of a release
+gate, and the repair is `dotnet restore <project> -r win-x64` — or nothing at all,
+because [the release checklist's re-pack step](RELEASING.md#7-build-clean)
+performs exactly that restore and leaves the tree clean before the release commit
+is written", and "**The way that would end the oscillation outright was not taken,
+and is written down so that it can be.** `BrowserAI.Core.csproj` declaring the RID
+it is only ever published under would make every restore — solution or project,
+RID named or not — resolve the same set and write the same file. That is a build
+change to a library three projects reference, with its own consequences for their
+outputs, and it belongs to whoever owns the build rather than to a release
+batch")*.** The way that was written down so that it could be taken **was taken**:
+[`src/BrowserAI.Core/BrowserAI.Core.csproj`](src/BrowserAI.Core/BrowserAI.Core.csproj)
+declares `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` from 2026-09-17. That
+is **Q201**, decided the same day, and the decision it replaces is Q199 rather
+than contradicting it: Q199 chose *which* of two states to commit, which was the
+only move available while there were two.
 
-**The way that would end the oscillation outright was not taken, and is written
-down so that it can be.** `BrowserAI.Core.csproj` declaring the RID it is only
-ever published under would make every restore — solution or project, RID named or
-not — resolve the same set and write the same file. That is a build change to a
-library three projects reference, with its own consequences for their outputs,
-and it belongs to whoever owns the build rather than to a release batch. The
-other way, `--locked-mode` restores that fail rather than rewrite, was not taken
-either: it would have **refused** this section rather than recording it, and the
-section is a resolution rather than a corruption.
+**Measured the day it went in, five reads, every one `fab160c4…`** — the state
+this table calls *section present*, now written by the restore that used to remove
+it:
+
+| Restore, after the RID is declared | `src/BrowserAI.Core/packages.lock.json` |
+|---|---|
+| `dotnet restore --force-evaluate` (solution) | `fab160c4…` |
+| `dotnet publish src/BrowserAI.App/BrowserAI.App.csproj -c Release -r win-x64 --self-contained` | `fab160c4…` |
+| `dotnet restore` (plain, solution) | `fab160c4…` |
+| `dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate` | `fab160c4…` |
+| `dotnet restore BrowserAI.slnx --force-evaluate` | `fab160c4…` |
+
+**`7f30ec57…` is no longer reachable**, and the last two rows are the pair that
+disagreed — each forced to actually re-resolve, because a restore that finds a
+lock file and is not asked to re-evaluate does not rewrite anything and would
+have proved nothing. `dotnet build` of the whole solution after the change: 0
+warnings, 0 errors. What the RID costs is one directory level: the library's own
+build output moves to `bin\<config>\net10.0-windows\win-x64\`, which nothing in
+this tree reads by path.
+
+**`git add -A` after a suite run is still wrong** — that was never about this file
+in particular, and it is no more right now that this file has stopped moving.
+
+**The other way out, `--locked-mode` restores that fail rather than rewrite, was
+not taken and is still the wrong shape here**: it would have **refused** this
+section rather than recording it, and the section is a resolution rather than a
+corruption.
 
 ## We write our own harness
 
