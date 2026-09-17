@@ -266,6 +266,18 @@ internal sealed partial class FileAccessRootTests
             {
                 checked_++;
 
+                // ⚠️ ABSOLUTE SINCE 2026-09-17, and asserted rather than merely
+                // tolerated. `Path.Combine` returns its second argument
+                // unchanged when that argument is rooted, so a pointer that
+                // silently went back to being relative would still resolve here
+                // -- the child's working directory IS the output root -- and
+                // this test would pass while every caller got a path it cannot
+                // open. That is the exact failure `filePaths: "absolute"` was
+                // adopted to end, so the spelling is the claim.
+                await Assert.That(Path.IsPathFullyQualified(pointer.Groups["file"].Value))
+                    .IsTrue()
+                    .Because($"the answer said '{pointer.Value}', and a pointer a model can resolve is an absolute one");
+
                 var named = Path.Combine(output, pointer.Groups["file"].Value);
 
                 await Assert.That(File.Exists(named))
@@ -295,10 +307,15 @@ internal sealed partial class FileAccessRootTests
         await Assert.That(checked_).IsEqualTo(3);
 
         // ⚠️ AND THE SNAPSHOT LINK, which was the same defect wearing a Markdown
-        // link. `./page-….yml` is relative to the child's working directory.
+        // link. It read `./page-….yml` -- relative to the child's working
+        // directory -- until 2026-09-17, and reads an absolute path since.
         var links = SnapshotLink().Matches(navigated);
 
         await Assert.That(links.Count).IsEqualTo(1);
+
+        await Assert.That(Path.IsPathFullyQualified(links[0].Groups["file"].Value))
+            .IsTrue()
+            .Because($"the answer said '{links[0].Value}', and a link a model can resolve is an absolute one");
 
         var snapshot = Path.Combine(output, links[0].Groups["file"].Value);
 
@@ -312,7 +329,22 @@ internal sealed partial class FileAccessRootTests
         // note used to say where each file had been left or moved to; there is
         // nothing to explain now, and this is the real-child half of
         // `LosslessPassthroughTests`' byte-identity claim.
-        await Assert.That(navigated).DoesNotContain("BrowserAI");
+        //
+        // ⚠️ The session path is REMOVED BEFORE THE SCAN since 2026-09-17, and
+        // that is a repair rather than a loosening. `filePaths: "absolute"` puts
+        // the full path in every pointer, and on this machine that path runs
+        // through a directory called `BrowserAI` -- so the bare scan started
+        // matching upstream's own bytes and said *something of ours is in the
+        // answer* about a string upstream wrote. What is scanned is everything
+        // the answer says APART from the paths upstream published, which is the
+        // claim this line always meant.
+        var withoutUpstreamsOwnPaths = navigated.Replace(session, "<session>", StringComparison.Ordinal);
+
+        await Assert.That(withoutUpstreamsOwnPaths).DoesNotContain("BrowserAI");
+
+        // Not vacuous: the substitution has to have happened, or the line above
+        // is scanning a string that never carried a path at all.
+        await Assert.That(withoutUpstreamsOwnPaths).Contains("<session>");
 
         _ = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
         {
@@ -325,8 +357,18 @@ internal sealed partial class FileAccessRootTests
     [GeneratedRegex(@"New console entries: (?<file>\S+?\.log)#L(?<first>\d+)-L(?<last>\d+)")]
     private static partial Regex ConsolePointer();
 
-    /// <summary>Upstream's snapshot link, relative to the child's working directory.</summary>
-    [GeneratedRegex(@"\[Snapshot\]\(\./(?<file>[^)]+\.yml)\)")]
+    /// <summary>
+    /// Upstream's snapshot link, which is an absolute path since 2026-09-17.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>The pattern required a leading <c>./</c> until then</b>, because the
+    /// link was relative to the child's working directory and nothing made it
+    /// anything else. <c>filePaths: "absolute"</c> ended that, so requiring the
+    /// prefix would now match nothing — and a regex that matches nothing reads
+    /// here as <i>the child published no snapshot link</i>, which is why the
+    /// count is asserted before anything is resolved.
+    /// </remarks>
+    [GeneratedRegex(@"\[Snapshot\]\((?<file>[^)]+\.yml)\)")]
     private static partial Regex SnapshotLink();
 
     private static async Task<JsonObject> CallAsync(RawStdioClient client, string tool, JsonObject arguments) =>

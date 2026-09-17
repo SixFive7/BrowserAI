@@ -19,7 +19,7 @@ time an upstream version moves.
 ## What it covers, and what it does not
 
 Every `[FLOATS]` fact is *meant* to be re-checked at upstream review, and this
-table is how that happens. **It does not yet cover all of them**: **239**
+table is how that happens. **It does not yet cover all of them**: **240**
 `[FLOATS]` markers stand across the articles against the **131** numbered rows
 below (140 lines, counting 2a, 2b, 4a, 4b, 4c, 16a, 26a, 38a and 63a),
 because one row often stands for a cluster of related entries and because rows
@@ -160,7 +160,12 @@ articles are thin is the difference between an admission and a usable one.
 **Two predicates, quoted before their numbers.** **Markers** is occurrences of
 the token `[FLOATS]` in that article file — the same count, the same corpus and
 the same token-not-meaning caveat as the anchor sentence above, so the column
-sums to the **236** that sentence publishes — *corrected 2026-09-16 (previously
+sums to the **240** that sentence publishes — *corrected 2026-09-17 (previously
+"**236**"), and that number was **four behind the anchor it claims to equal**
+when it was corrected: the anchor already read 239, so this sentence had drifted
+past the point where it could be read as a second reading of the same count.
+Re-counted rather than incremented, from the same scan the test sums. Corrected
+2026-09-16 before that (previously
 "**231**"), re-counted rather than incremented: the new marker is the
 `[STAThread]`-under-NativeAOT measurement in `toolchain.md`, which has row 129.
 Corrected again 2026-09-15 before that
@@ -213,7 +218,7 @@ new one cannot escape the map by being forgotten.
 
 | Article | Markers | Rows | Read this as |
 |---|--:|--:|---|
-| [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) | 41 | 13 | **Thin, and the thinnest here.** The tool-count and artifact rows each carry a large cluster; the credential-reach and registry-leak entries are one row each. **The forty-first marker arrived 2026-09-15** with the zero-byte WebP measurement, and it has row 122 of its own — a fact already known to be about to change, which is the shape row 102 was for |
+| [`playwright/tools-and-artifacts.md`](playwright/tools-and-artifacts.md) | 42 | 13 | **Thin, and the thinnest here.** The tool-count and artifact rows each carry a large cluster; the credential-reach and registry-leak entries are one row each. **The forty-second marker arrived 2026-09-17** with the pointer measurement that closed upstream ask #1 — every artifact pointer a tool result carries is absolute — and it has **no row of its own**, deliberately: what floats there is upstream's `Response._printablePath`, which is the same subject as the artifact cluster row 19 already covers, and the fact is held on every build by `ConfigRoundTripTests` and `FileAccessRootTests` rather than by a re-measurement. **The forty-first arrived 2026-09-15** with the zero-byte WebP measurement, and it has row 122 of its own — a fact already known to be about to change, which is the shape row 102 was for |
 | [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) | 28 | 14 | **Thin**, and partly on purpose: row 21 is one row over every size and timing, because a suite that re-measured them would provision on every run |
 | [`mcp/sdk.md`](mcp/sdk.md) | 24 | 17 | Covered. Two entries carry **no row deliberately** — see the rule below |
 | [`windows/detection.md`](windows/detection.md) | 26 | 19 | Partly. The lock-file and Restart Manager entries have rows; the enumeration hazards and the canonicalisation table ride inside row 4's cluster. **The twenty-fifth and twenty-sixth arrived 2026-08-26** with the one path function, and each has a row of its own: 119 for `GetDriveTypeW` blocking through a `subst`, 120 for the three name shapes `Path.GetFullPath` rewrites rather than rejects. **Rows 110 and 111 arrived 2026-08-20 carrying no `[FLOATS]` marker at all**, which is why the marker column did not move with them: both are Windows and BCL properties, stamped `[MACHINE]` and `[STABLE]`. **Row 115 did the same on 2026-08-24** for a third reason: the fact it re-establishes lives in `windows/processes.md` and the *condition* it can only be re-established under lives here, so the row cites two articles and stamps a marker in one of them |

@@ -266,8 +266,15 @@ internal sealed class UpstreamSnapshotTests
         // pair did not -- so the first number here moves for a reason the
         // previous correction would not have predicted. Both remain properties
         // of the SNAPSHOT rather than of `tool-verdicts.json`.
-        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(46);
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(73);
+        //
+        // ⚠️ Corrected 2026-09-17 @ playwright-core 1.64.0-alpha-2026-09-17
+        // (previously 46 and 73). RE-COUNTED OFF THE ACCEPTED SNAPSHOT a third
+        // time, and a third time the whole of the move is in `core` -- 23 -> 24
+        // with browser_emulate_media, every other capability unchanged to the
+        // tool, and the default surface moving with it (26 -> 27) because `core`
+        // is unconditional.
+        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(47);
+        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(74);
     }
 
     private static JsonDocument ReadToolsList() =>

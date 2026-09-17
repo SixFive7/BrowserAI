@@ -397,7 +397,52 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 ## Upstream asks
 
 - [ ] **Ask `@playwright/mcp` for an option that emits absolute paths in tool
-      results.** Every file the child produces is named in the answer with a path
+      results.** ✅ **ADOPTED 2026-09-17 — the fix is in the build, the ask is
+      answered, and THE ROW STAYS OPEN FOR ITS EXIT rather than for its
+      outcome.** *Added 2026-09-17 at the head of the row, because a reader
+      meeting a still-unticked box needs to know at once what it is still open
+      for; nothing below is retracted.*
+
+      **What is done.** `filePaths: "absolute"` is written in every generated
+      child config (`BrowserConfiguration.FilePaths`, required by
+      `RequiredSessionOpinions`, with `PLAYWRIGHT_MCP_FILE_PATHS` refused so
+      nothing inherited can redirect it), and `ConfigRoundTripTests` makes a
+      running child hand the key back. **Every pointer shape was measured, before
+      and after and end to end, and all of them are absolute** — the screenshot,
+      PDF and storage-state links, the snapshot link, both console log pointers,
+      the download line, the binary response body line, the network-requests
+      link and the four trace links, including the two the pull request's own
+      body did not name.
+      [kb](kb/playwright/tools-and-artifacts.md#every-artifact-pointer-a-tool-result-carries-is-absolute--measured-2026-09-17)
+      carries the table, [`docs/probes/2026-09-17-file-paths`](docs/probes/2026-09-17-file-paths/README.md)
+      the rig.
+
+      ⚠️ **One shape named in the PR body was NOT driven: the paused-debugger
+      location.** It is the fourth `Response._printablePath` call site and so is
+      covered by construction — which is a reading of the bundle, not a
+      measurement, and it is recorded as owed rather than claimed. Provoking it
+      needs a paused session, which is a different rig.
+
+      **What the row is still open for: the exit.** The version carrying the fix
+      is reached through a **dated `playwright-core` override**
+      ([DECISIONS](DECISIONS.md#the-two-exceptions-to-the-versioning-policy)),
+      because `@playwright/mcp` `latest` is still 0.0.81 and still pins
+      1.64.0-alpha-2026-09-14 exactly. **The exit condition is: `@playwright/mcp`
+      `latest` pins a `playwright-core` at or above 1.64.0-alpha-2026-09-17.** On
+      that day the `overrides` block and its `//overrides` note are deleted from
+      [`build/payload/package.json`](build/payload/package.json), the payload is
+      rebuilt, and the deletion is recorded in `upstream-review.json` and
+      `DECISIONS.md`. **Nobody has to remember it**:
+      `PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded` goes red off the
+      committed lock and [`build/Build-Payload.ps1`](build/Build-Payload.ps1)
+      refuses the build off the live resolution, each naming the file and the key.
+      **This row is closed when the exit fires and not before** — an adoption
+      that rests on an exception is not finished while the exception stands.
+      **The standing watch item that carries the deletion, step by step, is
+      [WATCH for the `@playwright/mcp` release that carries #42497](#upstream-asks)
+      further down this section**; this row and that one close together.
+
+      Every file the child produces is named in the answer with a path
       relative to the child's working directory, and the six shapes all come from
       two call sites in `Response`. A client that is not a process with a working
       directory cannot resolve those, which is every LLM reading a tool result.
@@ -642,6 +687,64 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       an ordinary full-page screenshot of a long document, which is what the ask
       says.
 
+- [ ] **WATCH for the `@playwright/mcp` release that carries #42497, and delete
+      the override when it lands.** *Added 2026-09-17 at the maintainer's
+      instruction, in his words: "Do not forget to add monitoring when
+      microsoft/playwright#42497 enters a release and removing our pin".* This
+      is the standing half of the
+      [dated exception](DECISIONS.md#the-two-exceptions-to-the-versioning-policy);
+      the adoption itself is [ask #1](#upstream-asks) above.
+
+      **THE CONDITION.** `@playwright/mcp` `latest` publishes a version whose own
+      `dependencies.playwright-core` is **at or above
+      `1.64.0-alpha-2026-09-17`** — the build carrying
+      [#42673](https://github.com/microsoft/playwright/pull/42673), which closed
+      [#42497](https://github.com/microsoft/playwright/issues/42497). Read it out
+      of that version's own dependencies and never from npm `latest` for
+      `playwright-core`, which is [the trap the drift table exists
+      for](drift-check.json). As of 2026-09-17 `latest` is **0.0.81** and pins
+      **1.64.0-alpha-2026-09-14**, so the condition is not met.
+
+      **WHAT TO DO WHEN IT IS**, in order:
+
+      1. **Delete the override.** In
+         [`build/payload/package.json`](build/payload/package.json), remove the
+         whole `"overrides"` object — its only member is
+         `"playwright-core": "1.64.0-alpha-2026-09-17"` — and the `"//overrides"`
+         note above it that explains why it was there. Nothing else in that file
+         changes: `dependencies` stays `{"@playwright/mcp": "latest"}`.
+      2. **Rebuild the payload** with `pwsh -File build/Build-Payload.ps1` and
+         confirm it prints `playwright-core: <version> (@playwright/mcp's own
+         exact dependency, not npm latest)` rather than the override line. The
+         wrapper's pin floats again from that moment, which is the whole point.
+      3. **Run [the review](UPSTREAM-REVIEW.md) against the roll**, because a
+         roll is a version bump like any other and brings whatever else upstream
+         changed with it. `config-schema.d.ts` is the snapshot to read first: it
+         did **not** move on adoption, because the typings ship with the wrapper,
+         so the roll is when `filePaths` finally appears in it — a confirmation
+         rather than a change.
+      4. **Record the deletion** in [`upstream-review.json`](upstream-review.json)
+         and in the [DECISIONS exception
+         section](DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
+         which then describes **one** exception rather than two and says so in
+         its own heading.
+      5. **Close this item and close [ask #1](#upstream-asks)**, which stays open
+         for this and nothing else.
+
+      **WHAT MONITORS IT, so it cannot be forgotten silently.** Two things, and
+      neither is a person remembering. **(1)** The
+      [daily drift check](CLAUDE.md#the-daily-drift-check) resolves
+      `@playwright/mcp` `latest` and its exact `playwright-core` dependency on
+      every day of work, which is the read the condition above is stated in —
+      `drift-check.json`'s `_how_to_resolve` now says where to take that number
+      from and names this exit. **(2)** `PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded`
+      **goes red on the day the condition is met**, off the committed lock, so it
+      fires from a clean clone with no payload assembled; and
+      [`build/Build-Payload.ps1`](build/Build-Payload.ps1) refuses to assemble a
+      payload past the exit, off the live resolution. Both name the file and the
+      key. The drift check is what notices *early*; the tests are what make
+      ignoring it impossible.
+
 - [x] **Watch both asks together, and be ready to move them to the monorepo.**
       ⚠️ **THE SIGNAL FIRED, 2026-09-14, and upstream took the decision this
       item was reserving.** *Everything below this paragraph is left exactly as
@@ -706,6 +809,19 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       time anybody hears about it. *(Read 2026-09-17 from upstream's own source
       and from `tests/mcp/capabilities.spec.ts`, which lists it among the core
       tools.)*
+
+      ✅ **IT WAS JUDGED `allow` THE SAME DAY, AND THE PREDICTED COUNT WAS
+      WRONG BY ONE IN EVERY PREDICATE IT COULD HAVE MEANT.** *Corrected
+      2026-09-17 (previously "That takes `browser_*` from **83 to 84** names with
+      none removed or renamed"), re-counted off the regenerated snapshot rather
+      than from upstream's source.* **None removed and none renamed held
+      exactly**, and the count did not: quoting each predicate before its number,
+      the **internal registry** went 82 → 83, the **maximum exposed over MCP**
+      73 → 74, the **default surface** 26 → 27, and **what BrowserAI advertises**
+      71 → 72. Every name in the registry starts with `browser_`, so *"`browser_*`
+      names"* is the registry figure and 83 → 84 matches none of them. The
+      earlier number was read from upstream's source before the payload rolled,
+      which is exactly the reading the snapshot exists to replace.
 
       **And what the declined one costs.** #42496 was the recorded closure path
       for the two Q128 hazard rows — reused-filename overwrite, and Windows

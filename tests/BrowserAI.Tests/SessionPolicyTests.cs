@@ -136,13 +136,22 @@ internal sealed class SessionPolicyTests
     /// <c>Advertises + 2</c> and the named hole is a loop.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Corrected 2026-09-17 to 72 of 74 (previously 71 of 73).</b> The
+    /// <see href="https://github.com/microsoft/playwright/pull/42673">dated
+    /// <c>playwright-core</c> override</see> added
+    /// <c>browser_emulate_media</c> — <c>core</c>, so unconditional — and it was
+    /// judged <c>allow</c>, so numerator and denominator moved together and
+    /// <see cref="Withholds"/> did not move at all. That is the ordinary shape;
+    /// the paragraph above records the one time it was not.
+    /// </para>
+    /// <para>
     /// <b>Written down rather than derived, for the reason the old table was:</b>
     /// derived from the product's own decision it would agree with it by
     /// construction and could never fail. This one still can — a refusal
     /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
-    private const int Advertises = 71;
+    private const int Advertises = 72;
 
     /// <summary>
     /// How many tools this build withholds, written down beside

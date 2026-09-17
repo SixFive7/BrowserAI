@@ -75,7 +75,59 @@ release body; nothing else depends on it.
   nothing reading only an exit code can tell a cancelled install from a completed
   one.
 
+- ✨ **Every file a tool result names is now named absolutely.** A screenshot,
+  a PDF, a snapshot, a console log, a download, a saved response body and a
+  trace all used to come back as `output\page-2026-09-17T14-18-13-427Z.png`, a
+  path relative to the browser server's working directory. The reader of a tool
+  result is a model rather than a process with a working directory, so that
+  named nothing it could open. BrowserAI answered this with a note of its own
+  until 2026-08-26, when artifact routing was deleted and every answer became
+  the child's own bytes; from that day the relative pointers reached a caller
+  with nothing beside them. This is that hole closed, and the fix is upstream's:
+  the generated child config now writes `filePaths: "absolute"`, from PR
+  microsoft/playwright#42673, merged 2026-09-16 and closing
+  microsoft/playwright#42497, which is **this project's own request**, filed
+  2026-08-27. Every pointer shape was measured before and after, and again end
+  to end through the published server: the screenshot, PDF and storage-state
+  links, the snapshot link, both console log pointers, the download line, the
+  binary response body line, the network-requests link and the four trace links
+  are all absolute, including the two the pull request's own text did not name.
+  One shape was not driven and is recorded as owed rather than claimed: the
+  paused-debugger location, which needs a paused session to provoke. The key is
+  written explicitly rather than left to a default, because upstream's default
+  is the opposite of what this product wants, and `PLAYWRIGHT_MCP_FILE_PATHS` is
+  refused for every child so that an inherited variable cannot quietly put it
+  back.
+
+- ✨ **`browser_emulate_media` arrives and is allowed.** It emulates the CSS
+  media features a page responds to on the page a session already owns:
+  `prefers-color-scheme`, `prefers-reduced-motion`, `forced-colors`,
+  `prefers-contrast`, and the print or screen media type. It is the only way to
+  see a site's dark mode or its print stylesheet without starting a second
+  session, it reaches nothing outside the page, and it returns immediately. The
+  maintainer's verdict is `allow`, and the reasoning is in the tool's own row in
+  `tool-verdicts.json`. BrowserAI's `tools/list` now carries 72 tools of the 74
+  a fully capable child exposes, two fewer only because `browser_annotate` and
+  `browser_webmcp_call` are still withheld for liveness.
+
 ### Changed
+
+- ⬆️ **`playwright-core` is pulled one build ahead of the wrapper that pins it,
+  as a dated exception.** `@playwright/mcp` `latest` is
+  0.0.81 and pins `playwright-core` 1.64.0-alpha-2026-09-14 exactly. The first
+  build carrying `--file-paths=absolute` is 1.64.0-alpha-2026-09-17, so the
+  payload manifest now carries an npm `overrides` entry that resolves that one
+  instead. This collides head on with the rule that everything floats and
+  nothing is ever pinned to work around a break, so it is recorded as an
+  exception rather than absorbed. It is the maintainer's decision, and it is a
+  different kind of thing from the one exception that already existed: the
+  vendored SQLite pin holds a version still because nothing floats it, and this
+  moves one forward because a wrapper is one release behind. Both now sit side
+  by side in `DECISIONS.md`, which says in its own words that neither is a
+  precedent for a third. The override brought two browser revisions with it,
+  Chromium 1244 to 1245 and Firefox 1544 to 1548, so a first run downloads a new
+  Chromium once.
+
 - 📝 **The resume wedge is measured, and nothing in the product bounds it.**
   Q207 = b. Killing a session's `node` child under a **live** BrowserAI was
   recorded on 2026-09-16 and not diagnosed: `browserai_resume` answered the
@@ -356,6 +408,21 @@ release body; nothing else depends on it.
   space across a run is withdrawn as moot.
 
 ### Fixed
+
+- ✅ **The dated dependency override cannot be forgotten: two instruments go red
+  on the day it expires.** An exception with a written exit is worth
+  nothing if the exit lives only in a document, so the exit is a build failure
+  instead. `PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded` reads the
+  committed lock, so it runs from a clean clone on every build and needs no
+  payload assembled; `build/Build-Payload.ps1` reads the live resolution and
+  refuses to assemble a payload past the exit. Each carries its own ordering of
+  the two version shapes upstream publishes and refuses any third rather than
+  guessing that a shape it cannot order is lower, which is how an override
+  outlives its own exit. Both were planted red before the override landed: the
+  test against a lock doctored so the wrapper already pins the override, and the
+  script against an override lowered to the declared pin. The failure names the
+  file, the key, and what to record when it is deleted.
+
 - 🐛 **The coverage block stops printing a download size somebody typed.**
   Every run of the suite said *downloaded 203.8 MB from the CDN* — a literal in
   `FirstRunCache`, in the one place on the screen that reads like a measurement,

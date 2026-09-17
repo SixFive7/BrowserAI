@@ -280,10 +280,18 @@ internal sealed record SliceRun(
                 .Where(block => (string?)block!["type"] == "text")
                 .Select(block => (string?)block!["text"] ?? string.Empty));
 
-        // `- [Screenshot of viewport](./page-<iso>.png)`. The target is taken
-        // between the first `](` and the matching `)`, on any line that starts a
-        // Markdown link, and only when it names a file rather than a heading
-        // anchor -- upstream writes no other link shape into a tool answer.
+        // `- [Screenshot of viewport](C:\...\output\page-<iso>.png)`. The target
+        // is taken between the first `](` and the matching `)`, on any line that
+        // starts a Markdown link, and only when it names a file rather than a
+        // heading anchor -- upstream writes no other link shape into a tool
+        // answer.
+        //
+        // It read `./page-<iso>.png` until 2026-09-17, when `filePaths:
+        // "absolute"` was adopted. Nothing here needed changing: `Path.Combine`
+        // returns its second argument unchanged when that argument is rooted, so
+        // the same two lines resolve both spellings. The SPELLING is asserted
+        // where it is a claim -- `FileAccessRootTests` and
+        // `VerticalSliceTests` -- rather than here, where it is a parse.
         foreach (var line in text.Split('\n'))
         {
             var opened = line.IndexOf("](", StringComparison.Ordinal);

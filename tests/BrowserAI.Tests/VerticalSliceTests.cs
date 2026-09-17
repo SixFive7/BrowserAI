@@ -96,9 +96,12 @@ internal sealed class VerticalSliceTests
         await Assert.That(string.Join(", ", run.ToolNames))
             .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. expectedUpstream]));
 
-        // Stated as a number as well, because 71 of 73 is what DECISIONS records
+        // Stated as a number as well, because 72 of 74 is what DECISIONS records
         // and a list comparison that both sides got wrong the same way would not
-        // say so. *(Corrected 2026-09-15 a second time the same day, previously
+        // say so. *(Corrected 2026-09-17, previously 71 of 73 -- the dated
+        // playwright-core override added browser_emulate_media, `core` and so
+        // unconditional, judged `allow`, so denominator and numerator moved
+        // together. Corrected 2026-09-15 a second time the same day, previously
         // 70 of 71 -- @playwright/mcp 0.0.81 added browser_webmcp_list and
         // browser_webmcp_call, both `core`, and they were judged in OPPOSITE
         // directions: the list `allow`, the call `deny` on liveness. So the
@@ -106,7 +109,7 @@ internal sealed class VerticalSliceTests
         // same day from 68 of 69 -- 0.0.80 added browser_start_recording and
         // browser_stop_recording and both were judged `allow`; corrected
         // 2026-08-20 before that, previously 58 of 59.)*
-        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 71);
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 72);
 
         // ⚠️ And every withheld tool is absent from the REAL binary's real
         // answer, named individually. The list comparison above would also catch
@@ -368,22 +371,34 @@ internal sealed class VerticalSliceTests
         await Assert.That(inlineHeight).IsEqualTo(fileHeight);
         await Assert.That(inline).IsEquivalentTo(run.ScreenshotBytes);
 
-        // ⚠️ AND NOTHING OF OURS IS IN THE ANSWER. *Corrected 2026-08-26
-        // (previously "the note that names the file is still there, after the
-        // child's own text and before the image", asserting two text blocks and
-        // the absolute path in the last of them).* There is no note. What names
-        // the file is upstream's own `- [Screenshot of viewport](./page-….png)`,
-        // relative to its working directory, which is what `ScreenshotFile` was
-        // read from — so this asserts the file name and NOT the absolute path,
+        // ⚠️ AND NOTHING OF OURS IS IN THE ANSWER. *Corrected 2026-09-17
+        // (previously "this asserts the file name and NOT the absolute path,
         // because an absolute path here would mean somebody had started
-        // rewriting answers again.
+        // rewriting answers again", asserting `DoesNotContain(SessionDirectory)`).*
+        // THE PREMISE WAS THE PART THAT AGED, NOT THE CLAIM. The link is
+        // `- [Screenshot of viewport](C:\…\output\page-….png)` since
+        // `filePaths: "absolute"` was adopted, so an absolute path in the answer
+        // is now UPSTREAM'S OWN and says nothing about whether anybody rewrote
+        // anything. *Corrected 2026-08-26 before that (previously "the note that
+        // names the file is still there, after the child's own text and before
+        // the image", asserting two text blocks and the absolute path in the
+        // last of them).*
+        //
+        // What replaces it keeps the claim and drops the proxy for it: the
+        // session directory appears EXACTLY ONCE, inside upstream's own link.
+        // A note of ours naming the file would be a second occurrence, which is
+        // the shape the deleted note had and the shape a re-added one would
+        // have.
         var texts = content.Where(block => (string?)block?["type"] is "text").ToList();
 
         var answerText = string.Join("\n", texts.Select(block => (string?)block!["text"]));
 
         await Assert.That(texts.Count).IsGreaterThanOrEqualTo(1);
-        await Assert.That(answerText).Contains(Path.GetFileName(run.ScreenshotFile));
-        await Assert.That(answerText).DoesNotContain(run.SessionDirectory);
+        await Assert.That(answerText).Contains(run.ScreenshotFile);
+
+        await Assert.That(answerText.Split(run.SessionDirectory, StringSplitOptions.None).Length - 1)
+            .IsEqualTo(1)
+            .Because($"upstream names the file once, absolutely; a second mention would be a note of ours. The answer was: {answerText}");
 
         // The cost, reported rather than asserted. An inline image is the one
         // thing in an answer that costs the caller tokens and appears in no

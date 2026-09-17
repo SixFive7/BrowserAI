@@ -358,15 +358,22 @@ internal sealed class ModelSurfaceTests
         // judged `allow` on 2026-09-15. The ten are still the ten: the addend is
         // the capability grant, and the base is whatever upstream ships.
         //
-        // ⚠️ The base is 61 since 2026-09-15 (previously 60): @playwright/mcp
+        // ⚠️ The base is 62 since 2026-09-17 (previously 61): the dated
+        // playwright-core override added browser_emulate_media, `core` and so
+        // unconditional, judged `allow`, so upstream's one tool moves this base
+        // by one. That is the ORDINARY case and the note below is the one that
+        // was not.
+        //
+        // ⚠️ The base was 61 from 2026-09-15 (previously 60): @playwright/mcp
         // 0.0.81 added browser_webmcp_list and browser_webmcp_call, and the two
         // were judged in OPPOSITE directions on the same day — `allow` for the
-        // list, `deny` for the call, on liveness — so upstream's pair moves this
+        // list, `deny` for the call, on liveness — so upstream's pair moved this
         // base by one rather than by two. That asymmetry is the whole reason the
-        // number is stated: a base of 62 would mean the denial had stopped
-        // withholding, and a base of 60 would mean the list had never arrived.
+        // number is stated: a base one higher than the surface warrants would
+        // mean a denial had stopped withholding, and one lower would mean a
+        // tool had never arrived.
         await Assert.That(advertised.Count(entry => !SessionToolSurface.IsAuthored(entry.Key)))
-            .IsEqualTo(61 + TheNewlyGrantedTen.Length);
+            .IsEqualTo(62 + TheNewlyGrantedTen.Length);
     }
 
     /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>
