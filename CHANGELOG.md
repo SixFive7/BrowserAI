@@ -40,6 +40,32 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **Payload licensing is re-read at chromium 1245 and firefox 1548, and four of its claims did not survive.**
+  Re-verification row 26 said `winldd` ships no licence file and full Chromium ships no
+  OSS one. Both still hold, and so do `ffmpeg`, Node and `@playwright/mcp`. The Chromium
+  half could not have moved and the reason is evidence rather than an assurance:
+  `chromium-1245` and `chromium-1244` hold the same 308 files at the same 308 sizes and
+  `chrome.exe` is the same SHA-256 in both, because the archive is keyed on
+  `browserVersion` and 154.0.8037.0 did not move with the revision. It was re-read
+  anyway. What did not survive is everything the debt note had not scoped. The row said
+  no `NOTICE` file is published upstream so Apache-2.0 section 4(d) has nothing to
+  propagate; `playwright-core` and `playwright` each ship one, 254 bytes and identical to
+  each other, plus three per-bundle sidecar licences apiece, and the shipped
+  `THIRD-PARTY-NOTICES.txt` has named that path since the day it was written, so the
+  defect was in the knowledge base and never in the artifact. The
+  `chromium-headless-shell` row describes a tree nothing provisions: `--no-shell` has
+  been passed since 2026-08-16, two days after the row was read, and no
+  `chromium_headless_shell-*` directory exists at any revision. A third Playwright
+  package, `playwright`, ships and was never listed, while the notices file says "the two
+  Playwright packages" — its terms and NOTICE text are byte-identical to
+  `playwright-core`'s, so a name is missing rather than a licence, and that is reported
+  rather than fixed because what ships beside the binary is the maintainer's call. And
+  Firefox, a provisioned family since 2026-08-19, was never listed either: 61 files and
+  no standalone licence among them, with the terms inside `omni.ja` as `license.html`,
+  byte-identical across 1544 and 1548. The whole 1544-to-1548 move turns out to be five
+  entries inside one `omni.ja`, four of them Playwright's own juggler files, which is the
+  entirety of the 902 bytes row 21 measured on disk.
+
 - 📝 **Disk after a first run is a measured number again, and it is 598 MB.**
   The total had gone `[STALE]` that morning because both of its addends had
   moved under it. It is re-derived from two figures taken the same day and
