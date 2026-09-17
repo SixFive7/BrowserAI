@@ -52,6 +52,15 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <c>browserai_reinstall_browser</c> now names the family it reinstalls.
     /// </para>
     /// <para>
+    /// <b>Chromium and not Firefox, on the maintainer's stated reason of
+    /// 2026-09-17: <i>"the reason for the default is that chrome is the most
+    /// widely used"</i>.</b> A decision rather than a measurement, and written
+    /// down as one — the four Firefox-against-Chromium cost ratios that used to
+    /// be the only ground on offer were re-measured on 2026-09-16 and three of
+    /// them collapsed by between 1.7× and 7× while idle CPU reversed sign, so
+    /// that argument no longer carries this choice. See <c>DECISIONS.md</c>.
+    /// </para>
+    /// <para>
     /// <b>A default at all, where <c>browserai_reinstall_browser</c>'s
     /// <c>browser</c> has none, and the asymmetry is the point.</b> A browser
     /// chosen by omission at <c>init</c> is a rendering engine, and every session

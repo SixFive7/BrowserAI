@@ -53,6 +53,25 @@ release body; nothing else depends on it.
   one.
 
 ### Changed
+- 📝 **Chromium stays the default browser, on a reason rather than on four numbers that moved.**
+  The maintainer's ground, in his words: *"the reason for the default is that
+  chrome is the most widely used"*. Recorded as a **decision, not a
+  measurement**, which is the point of writing it down this way. What it
+  replaces is the only ground that was on offer anywhere: the four
+  Firefox-against-Chromium cost ratios, which
+  [`kb/playwright/provisioning-and-timings.md`](kb/playwright/provisioning-and-timings.md)
+  described as *"the whole of the evidence behind Chromium being the default
+  family"*. Re-measured on 2026-09-16 with a preserved rig
+  ([re-verification row 34](kb/re-verification.md)), **three of the four
+  collapsed by between 1.7x and 7x and the fourth reversed sign** — RAM 2x to
+  1.19x, first navigate 10x to 4.62x, profile disk 20x to 2.76x, and idle CPU
+  ~24x to **0.77x**, which says Firefox burns *less*. **Nothing about the
+  default changes.** The claim that those ratios justified it is retired in the
+  kb, in the re-verification row, in
+  [`DECISIONS.md`](DECISIONS.md), in `SessionManager.DefaultBrowser`'s own
+  remarks and in [`README.md`](README.md), each corrected by addition with the
+  previous text quoted. No market-share figure is cited: one would be external
+  and would float, and the decision does not need it.
 - 📝 **The upstream record catches up: one ask granted, one fix declined, one
   count reconciled.** Three corrections by addition, each re-read from the
   API on 2026-09-17 rather than carried over.

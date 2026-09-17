@@ -954,13 +954,20 @@ across runs. Note the *file* counts run the other way — Chromium 181 files in
 13.2 MB, Firefox 67 in 36.4 MB — so a comparison by file count says the opposite
 of one by bytes, and neither is wrong.
 
-**What this does NOT settle.** These four were *"the whole of the evidence behind
-Chromium being the default family"*. Three of them are now between 1.7× and 7×
-smaller than the figures that argument was made from and the fourth points the
-other way, so **the evidence behind that decision has changed and the decision
-has not been revisited**. Nothing here re-opens it; that belongs to whoever owns
-[the charter](../../DECISIONS.md), and it is raised there rather than settled
-here.
+**What this does NOT settle, and what has since been settled elsewhere.**
+*Corrected 2026-09-17 (previously "These four were *\"the whole of the evidence
+behind Chromium being the default family\"*. Three of them are now between 1.7×
+and 7× smaller than the figures that argument was made from and the fourth points
+the other way, so **the evidence behind that decision has changed and the
+decision has not been revisited**. Nothing here re-opens it; that belongs to
+whoever owns the charter, and it is raised there rather than settled here.")* It
+was raised there and it was answered on 2026-09-17, in the maintainer's words:
+*"the reason for the default is that chrome is the most widely used"*.
+**Chromium stays the default and these four ratios are no longer offered as the
+reason for it** — the claim that they were the evidence is retired rather than
+re-argued, and [the charter](../../DECISIONS.md) now carries the ground as a
+decision rather than as a measurement. **Nothing here is retracted**: the
+measurements above stand, and what they no longer do is carry a choice.
 
 **To re-establish:** open one session per family through the product, drive the
 same navigation in each, and compare resident set, wall time to first paint,
