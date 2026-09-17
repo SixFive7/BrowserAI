@@ -442,15 +442,56 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       [microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497),
       retitled *"[MCP] Option for absolute paths in tool result links"* — **the
       move was upstream's own doing rather than ours**, which is the one outcome
-      the watch item's options did not name. **OPEN and TRIAGED**: `dgozman`
-      asked for a repro on 2026-09-02 and again on 2026-09-03, a second reporter
-      joined the same day, and
-      [PR #42673](https://github.com/microsoft/playwright/pull/42673)
-      — *"feat(mcp): add `--file-paths=absolute` for absolute paths in tool
-      results"*, by `pavelfeldman`, +67/-6 over 7 files — is **open and
+      the watch item's options did not name.
+
+      ✅ **GRANTED AND MERGED — *corrected 2026-09-17 (previously "**OPEN and
+      TRIAGED**: `dgozman` asked for a repro on 2026-09-02 and again on
+      2026-09-03, a second reporter joined the same day, and
+      [PR #42673](https://github.com/microsoft/playwright/pull/42673) —
+      *\"feat(mcp): add `--file-paths=absolute` for absolute paths in tool
+      results\"*, by `pavelfeldman`, +67/-6 over 7 files — is **open and
       configured to close it**. Read 2026-09-15: still open, `mergeable_state`
-      unstable, last touched 2026-09-14. **The ask is being implemented**, so
-      what is owed here is adoption rather than advocacy.
+      unstable, last touched 2026-09-14")*.**
+      [PR #42673](https://github.com/microsoft/playwright/pull/42673) was merged
+      by `pavelfeldman` at **2026-09-16T15:38:22Z**, and
+      [#42497](https://github.com/microsoft/playwright/issues/42497) closed
+      `completed` one second later, by the merge rather than by a reply —
+      **nobody from this side ever answered `dgozman`'s request for a repro**,
+      which is worth recording because it is not why it was granted. Read
+      2026-09-17 from the API: `merged: true`, `merged_by: pavelfeldman`,
+      `closed_by_pull_requests` naming #42673 as `MERGED`.
+
+      ⚠️ **IT IS NOT REACHABLE BY THIS BUILD, AND THAT IS THE WHOLE STATE OF
+      THIS ROW.** The flag, the `filePaths` config key and
+      `PLAYWRIGHT_MCP_FILE_PATHS` are carried by `playwright-core`
+      **1.64.0-alpha-2026-09-17**, which is that package's `next` dist-tag; and
+      `@playwright/mcp` `latest` is **0.0.81**, which pins `playwright-core`
+      **1.64.0-alpha-2026-09-14 exactly**. Both read 2026-09-17. So there is
+      **no drift by the build rule** — the resolver takes the pin out of
+      `@playwright/mcp`'s own dependencies, never npm `latest` — and nothing is
+      owed until the next `@playwright/mcp` roll.
+
+      **THE ADOPTION PLAN, written now so the roll is a review rather than a
+      design**, and [the review procedure](UPSTREAM-REVIEW.md) is what executes
+      it:
+
+      1. **Write `filePaths: "absolute"` explicitly in the generated config.**
+         Upstream's default is `relative`, and this project's doctrine is
+         written-rather-than-omitted: a stance taken by silence is a stance
+         nobody can find.
+      2. **Put `PLAYWRIGHT_MCP_FILE_PATHS` in `ChildEnvironment`'s refused
+         list.** The generator writes the key, so an inherited environment
+         variable would be a second, invisible answer to a question the config
+         already answers — which is the same argument every other
+         `PLAYWRIGHT_MCP_*` refusal rests on.
+      3. **`RequiredSessionOpinions`** gains it, so a config that stops carrying
+         the key is a red build rather than a silent revert to `relative`.
+      4. **Both snapshots move**: `cli-help.txt` for the flag and
+         `config-schema.d.ts` for the key, and both are adjudicated under
+         [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) rather than regenerated.
+
+      **This row stays open until the roll**, because a resolved ask whose fix
+      nobody can install is not a closed item — it is a scheduled one.
 
 - [ ] **Ask `@playwright/mcp` for a no-clobber option on output files, and for
       names Windows will not keep verbatim to be rejected.** Both are losses
@@ -539,16 +580,38 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       and the ask text carries **zero non-ASCII bytes**, checked with a control
       that planted U+2014 and U+00A0 and found them.
 
-      ⚠️ **Somebody has already opened a fix, 2026-09-15.**
+      ⚠️ **THAT FIX WAS CLOSED UNMERGED, AND THE SETTLEMENT CONDITION IS
+      UNCHANGED — *corrected 2026-09-17 (previously "⚠️ **Somebody has already
+      opened a fix, 2026-09-15.**
       [PR #42721](https://github.com/microsoft/playwright/pull/42721) —
-      *"fix(screenshot): error when webp dimensions exceed 16383px limit"*, by
-      `mohanram-dev`, who commented that it *"validat[es] WebP's 16,383px
+      *\"fix(screenshot): error when webp dimensions exceed 16383px limit\"*, by
+      `mohanram-dev`, who commented that it *\"validat[es] WebP's 16,383px
       specification limit across render scales and guard[s] against silent
-      0-byte screenshot buffers"* — is open and configured to close #42717. It is
-      **not** by a Playwright maintainer, so it is a proposal rather than an
-      outcome; what settles this item is a released `playwright-core` in which
-      16,384 px webp errors instead of succeeding, which the drift check will
-      surface and the review will measure.
+      0-byte screenshot buffers\"* — is open and configured to close #42717. It
+      is **not** by a Playwright maintainer, so it is a proposal rather than an
+      outcome")*.* Read 2026-09-17 from the API: `state: closed`,
+      **`merged: false`**, closed **2026-09-16T00:15:20Z** — and the reason is
+      the single comment on it, by `dcrousso`, verbatim:
+
+      > this is really an upstream issue and should be fixed there instead (and
+      > also i dont think it's really all that likely/common for a screenshot to
+      > be that large in the first place)
+
+      **So the path moved and the destination did not.** The fix is now expected
+      in **Chromium** rather than in Playwright — CL 8416650, *"DevTools: report
+      screenshot encoding failures"*, status **NEW** as of 2026-09-16 — which
+      means it arrives through a browser revision bump rather than through a
+      `playwright-core` change, and there is no PR on this side to watch any
+      more. **What settles this item is exactly what settled it before**: a
+      released build in which a 16,384 px webp screenshot errors instead of
+      returning empty, which the drift check surfaces and the review measures.
+      The proposal being closed is not evidence that the behaviour is
+      acceptable; the two hazard rows stand.
+
+      ⚠️ **The second half of `dcrousso`'s comment is a judgement about
+      likelihood and is recorded rather than accepted.** This project met it on
+      an ordinary full-page screenshot of a long document, which is what the ask
+      says.
 
 - [x] **Watch both asks together, and be ready to move them to the monorepo.**
       ⚠️ **THE SIGNAL FIRED, 2026-09-14, and upstream took the decision this
@@ -588,6 +651,32 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       environment allowlist gets a name to judge — and the first ask resolves.
       Until then nothing here is owed: the ask is being implemented by upstream
       and advocacy would only repeat it.
+
+      ✅ **HALF OF THAT HAPPENED — *added 2026-09-17 by addition; the paragraph
+      above is left standing because it is the prediction this is the outcome
+      of*.** #42673 **merged** 2026-09-16T15:38:22Z and #42497 closed
+      `completed`. What has **not** happened is the second clause: it is in
+      `playwright-core` 1.64.0-alpha-2026-09-17 (`next`) and **not in any
+      released `@playwright/mcp`** — `latest` is 0.0.81, pinning
+      1.64.0-alpha-2026-09-14 exactly — so the drift check has nothing to
+      surface and the adoption is still owed. The plan for it is written out in
+      full under ask #1 above.
+
+      ⚠️ **AND THE NEXT ROLL BRINGS A TOOL WITH IT, WHICH IS A SEPARATE
+      DECISION AND A RED BUILD UNTIL IT IS TAKEN.** `playwright-core`
+      1.64.0-alpha-2026-09-17 adds **`browser_emulate_media`** — *"Emulate CSS
+      media features for the page, for example switch between the light and dark
+      color scheme"* — declared `capability: 'core'`, so it is in upstream's
+      **default** surface and arrives in `tools/list` the moment the payload
+      rolls. That takes `browser_*` from **83 to 84 names with none removed or
+      renamed**. [`tool-verdicts.json`](tool-verdicts.json) is **deny by
+      default** and refuses a name it has no row for at startup, so the suite is
+      red on exactly this until a human judges it — which is the mechanism
+      working, not a defect. A verdict is a judgement about this product and
+      belongs to the maintainer; it is named here so the roll is not the first
+      time anybody hears about it. *(Read 2026-09-17 from upstream's own source
+      and from `tests/mcp/capabilities.spec.ts`, which lists it among the core
+      tools.)*
 
       **And what the declined one costs.** #42496 was the recorded closure path
       for the two Q128 hazard rows — reused-filename overwrite, and Windows

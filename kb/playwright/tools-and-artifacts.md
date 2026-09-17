@@ -645,8 +645,19 @@ document height the proxy has not seen.
 [microsoft/playwright#42717](https://github.com/microsoft/playwright/issues/42717),
 2026-09-14, with the ask body recorded in
 [TODO](../../TODO.md#upstream-asks).
-[PR #42721](https://github.com/microsoft/playwright/pull/42721) is open against
-it, by a non-maintainer, and is not an outcome yet.
+⚠️ **The fix moved to Chromium — *corrected 2026-09-17 (previously
+"[PR #42721](https://github.com/microsoft/playwright/pull/42721) is open against
+it, by a non-maintainer, and is not an outcome yet")*.** That PR was **closed
+unmerged** at 2026-09-16T00:15:20Z — read from the API: `state: closed`,
+`merged: false` — with one comment, by `dcrousso`: *"this is really an upstream
+issue and should be fixed there instead (and also i dont think it's really all
+that likely/common for a screenshot to be that large in the first place)"*. The
+fix is now expected in Chromium rather than in Playwright: **CL 8416650**,
+*"DevTools: report screenshot encoding failures"*, status **NEW** as of
+2026-09-16 — so it will arrive through a **browser revision** bump rather than a
+`playwright-core` change, and there is no PR on this side left to watch.
+**Nothing about this entry's measurement changes**, and the re-establishment
+procedure below is what settles it either way.
 
 **How to re-establish.** Serve a page whose document is exactly 16,383 px tall
 and one exactly 16,384 px tall, drive `node.exe` against

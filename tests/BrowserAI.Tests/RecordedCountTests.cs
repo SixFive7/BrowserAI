@@ -226,6 +226,66 @@ internal sealed partial class RecordedCountTests
     }
 
     /// <summary>
+    /// <b>The <c>PLAYWRIGHT_MCP_*</c> count in <c>ChildEnvironment</c>'s doc
+    /// comment is the one re-verification row 17 carries.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two records, two numbers, for two days.</b> The comment said
+    /// <b>43</b> variables with <b>two</b> outside the config mapping, stamped
+    /// at <c>playwright-core</c> 1.63.0-alpha-2026-08-31; row 17 said <b>45</b>
+    /// with <b>three</b>, re-measured 2026-09-15 at the version that actually
+    /// ships. Neither was wrong when it was written and the comment was simply
+    /// not carried forward — which is the failure mode this whole class exists
+    /// for, arriving in a place nothing was watching.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Row 17 is the anchor and the comment is what is held to it</b>,
+    /// deliberately in that direction. The row names the bundle it was measured
+    /// against and the positive control it used; the comment is prose beside the
+    /// allowlist. So this arm cannot tell you the number is <i>right</i> — only
+    /// <c>UpstreamReviewTests</c> and a re-measurement against the resolved
+    /// bundle can do that — and it does close the one gap a review cannot: two
+    /// places publishing different figures for the same predicate, neither of
+    /// them noticing.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheUpstreamVariableCountInTheDocCommentIsWhatRowSeventeenSays()
+    {
+        var comment = await File.ReadAllTextAsync(
+            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "Protocol", "ChildEnvironment.cs"));
+
+        var rows = await File.ReadAllTextAsync(
+            Path.Combine(RepositoryLayout.Root.FullName, "kb", "re-verification.md"));
+
+        // The `///` markers go first: the sentence is a doc comment split over
+        // two lines, so collapsing whitespace alone leaves a `///` in the middle
+        // of it and the reader below matches nothing while looking correct.
+        var prose = Whitespace().Replace(DocCommentMarker().Replace(comment, string.Empty), " ");
+
+        var stated = VariableCountInComment().Match(prose);
+        var recorded = VariableCountInRow().Match(Whitespace().Replace(rows, " "));
+
+        await Assert.That(stated.Success)
+            .IsTrue()
+            .Because("ChildEnvironment's opening paragraph no longer says how many PLAYWRIGHT_MCP_* variables upstream reads, so nothing can be held to row 17");
+
+        await Assert.That(recorded.Success)
+            .IsTrue()
+            .Because("re-verification row 17 no longer states the count in the shape this reads, so the anchor is gone");
+
+        await Assert.That(stated.Groups["total"].Value)
+            .IsEqualTo(recorded.Groups["total"].Value)
+            .Because("the doc comment beside the allowlist and re-verification row 17 publish the same predicate and must publish the same number");
+
+        await Assert.That(stated.Groups["outside"].Value)
+            .IsEqualTo(recorded.Groups["outside"].Value)
+            .Because("how many of them sit OUTSIDE upstream's own config mapping is the half that decides whether the allowlist can see them at all");
+    }
+
+    /// <summary>
     /// The count <c>kb/README.md</c> publishes about how many articles carry a
     /// <c>[STALE]</c> stamp is what the articles hold.
     /// </summary>
@@ -603,6 +663,31 @@ internal sealed partial class RecordedCountTests
     /// <summary>The fragment count published in <c>CLAUDE.md</c>'s mechanism table.</summary>
     [GeneratedRegex(@"`DocumentationLinkTests` — (?<fragments>\d+) fragments as of \d{4}-\d{2}-\d{2}")]
     private static partial Regex FragmentCount();
+
+    /// <summary>
+    /// What <c>ChildEnvironment</c>'s opening paragraph says upstream reads.
+    /// </summary>
+    /// <remarks>
+    /// Read off the sentence rather than off a constant, because there is no
+    /// constant: the figure is prose, which is exactly why it went stale.
+    /// </remarks>
+    /// <returns>The reader.</returns>
+    [GeneratedRegex(
+        @"Upstream reads <b>(?<total>\d+)</b> <c>PLAYWRIGHT_MCP_\*</c> variables, (?<outside>\w+) of them outside",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex VariableCountInComment();
+
+    /// <summary>The <c>///</c> a doc comment opens each of its lines with.</summary>
+    /// <returns>The reader.</returns>
+    [GeneratedRegex(@"(?m)^\s*///\s?", RegexOptions.CultureInvariant)]
+    private static partial Regex DocCommentMarker();
+
+    /// <summary>What re-verification row 17 says the same count is.</summary>
+    /// <returns>The reader.</returns>
+    [GeneratedRegex(
+        @"\| 17 \| `PLAYWRIGHT_MCP_\*` count is \*\*(?<total>\d+)\*\*, \*\*(?<outside>\w+)\*\* of them outside",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex VariableCountInRow();
 
     /// <summary>The snapshot's tool count, as <c>DECISIONS.md</c> states it.</summary>
     [GeneratedRegex(@"`tools-list\.json` carrying all (?<tools>\d+) tools")]

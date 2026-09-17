@@ -12,12 +12,42 @@ namespace BrowserAI.Protocol;
 /// <remarks>
 /// <para>
 /// <b>It has to be an allowlist rather than a strip-list.</b> Upstream reads
-/// <b>43</b> <c>PLAYWRIGHT_MCP_*</c> variables, two of them outside its own
+/// <b>45</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
 /// config mapping, and the merge order is config file → environment → CLI — so
 /// an inherited variable silently overrides a key BrowserAI generated, with no
 /// error anywhere. Naming what may pass makes the next variable upstream adds
 /// absent by default; naming what may not makes it present, and nothing says
 /// so.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-09-17 @ <c>playwright-core</c>
+/// 1.64.0-alpha-2026-09-14 (previously "<b>43</b> … variables, two of them
+/// outside its own config mapping").</b> <b>Reconciled rather than
+/// re-measured, and the difference matters.</b> The figure above is now
+/// [re-verification row 17](../../../kb/re-verification.md)'s, taken on
+/// 2026-09-15 against the bundle that actually ships, with
+/// the previous bundle as the positive control — it returned 41 + 2 = 43
+/// exactly as this sentence carried, which is what says the old number was
+/// right for its own version rather than wrong. <c>@playwright/mcp</c> 0.0.81
+/// added <c>PLAYWRIGHT_MCP_IDLE_TIMEOUT</c>, inside the mapping (41 → 42), and
+/// <c>PLAYWRIGHT_MCP_PROFILE_DIR_NAME</c>, read straight off
+/// <c>process.env</c> in the <c>--extension</c> channel resolver and therefore
+/// joining the <b>outside</b> set (2 → 3). <b>Two records held two numbers for
+/// two days, each correct about a different version</b>, and neither could see
+/// the other. <c>RecordedCountTests.TheUpstreamVariableCountInTheDocCommentIsWhatRowSeventeenSays</c>
+/// is what stops that recurring: it holds this sentence to the row, in that
+/// direction, because the row names the bundle and the control and this is
+/// prose beside an allowlist. <b>Neither of them can tell you the number is
+/// right</b> — only a re-measurement against the resolved bundle does that.
+/// </para>
+/// <para>
+/// <b>The next one is already known and is deliberately not written in
+/// yet.</b> <c>playwright-core</c> 1.64.0-alpha-2026-09-17 adds
+/// <c>PLAYWRIGHT_MCP_FILE_PATHS</c> inside the mapping, taking it to <b>46</b>
+/// with the same three outside — but that alpha is not what any released
+/// <c>@playwright/mcp</c> pins, so writing it here would be a number about a
+/// version this build cannot reach. It moves at the roll, with the review, and
+/// [TODO](../../../TODO.md#upstream-asks) carries the plan.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-14 @ <c>playwright-core</c>

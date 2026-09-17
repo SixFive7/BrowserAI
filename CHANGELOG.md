@@ -104,6 +104,42 @@ release body; nothing else depends on it.
   release executor.
 
 ### Changed
+- 📝 **The upstream record catches up: ask #1 was granted, the WebP fix was
+  not, and the doc comment beside the environment allowlist stops disagreeing with
+  the row that measures it.** Three corrections by addition, each re-read from the
+  API on 2026-09-17 rather than carried over.
+  **(1)** [microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497)
+  — absolute paths in tool results — **closed `completed`**, by the merge of
+  [PR #42673](https://github.com/microsoft/playwright/pull/42673) at
+  2026-09-16T15:38:22Z rather than by a reply. The flag, the `filePaths` config key
+  and `PLAYWRIGHT_MCP_FILE_PATHS` are in `playwright-core`
+  **1.64.0-alpha-2026-09-17** (`next`) and in **no released `@playwright/mcp`** —
+  `latest` is 0.0.81, pinning **1.64.0-alpha-2026-09-14 exactly** — so there is no
+  drift by the build rule and the row becomes *resolved upstream, adoption pending
+  the roll*, with the adoption plan written out so the roll is a review and not a
+  design.
+  **(2)** [PR #42721](https://github.com/microsoft/playwright/pull/42721), the WebP
+  16,383 px fix, was **closed unmerged** at 2026-09-16T00:15:20Z — `dcrousso`:
+  *"this is really an upstream issue and should be fixed there instead"* — so the
+  fix is expected in **Chromium** (CL 8416650, status NEW) and will arrive through
+  a browser-revision bump rather than a `playwright-core` change. The settlement
+  condition is unchanged and the two hazard rows stand.
+  **(3)** `ChildEnvironment`'s opening paragraph said **43** `PLAYWRIGHT_MCP_*`
+  variables with **two** outside the config mapping, stamped at
+  1.63.0-alpha-2026-08-31, while re-verification row 17 said **45** with **three**
+  at the version that ships. Both were right about their own version and neither
+  could see the other; the comment is reconciled to the row, and
+  `RecordedCountTests.TheUpstreamVariableCountInTheDocCommentIsWhatRowSeventeenSays`
+  now holds it there — planted red at *"Expected to be equal to `45` but received
+  `43`"*.
+  **And one thing is written down before it happens:** the next `@playwright/mcp`
+  roll brings a new **default-surface** tool, `browser_emulate_media`
+  (`capability: 'core'`, taking `browser_*` from 83 to 84 with none removed or
+  renamed). [`tool-verdicts.json`](tool-verdicts.json) is deny-by-default and
+  refuses a name it has no row for at startup, so **the suite will be red on
+  exactly that pending judgement** — which is the mechanism working, and a verdict
+  is the maintainer's to give.
+
 - ✅ **`NeverByImageNameTests` reads the FILTER rather than the API, and 14 of
   the 15 files it was flagging turn out never to have violated anything.** The scan
   asked whether a file contained one of five substrings — `taskkill`,
