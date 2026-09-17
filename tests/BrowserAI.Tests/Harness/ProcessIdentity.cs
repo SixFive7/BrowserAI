@@ -112,6 +112,28 @@ internal static partial class ProcessIdentity
     }
 
     /// <summary>
+    /// What <c>OpenProcess</c> says about a pid, as a Win32 error: <c>0</c> when
+    /// the handle opened.
+    /// </summary>
+    /// <remarks>
+    /// <b>For measuring the error rather than for deciding anything.</b>
+    /// <see cref="IsAlive"/> is the question every caller in this suite actually
+    /// has, and it deliberately refuses to answer it from an open alone — a
+    /// handle outlives the process it names. This exists so that a test which
+    /// keys on a specific Win32 number can read the number Windows returns
+    /// instead of quoting one, which is the difference between a control and a
+    /// table of constants somebody typed.
+    /// </remarks>
+    /// <param name="processId">The pid to try to open.</param>
+    /// <returns>The Win32 error, or <c>0</c> if the open succeeded.</returns>
+    public static int OpenProcessErrorFor(int processId)
+    {
+        using var handle = OpenProcess(ProcessQueryLimitedInformation, bInheritHandle: false, (uint)processId);
+
+        return handle.IsInvalid ? Marshal.GetLastPInvokeError() : 0;
+    }
+
+    /// <summary>
     /// Terminates the recorded process from outside, the way a crash, a session
     /// limit or Task Manager would.
     /// </summary>

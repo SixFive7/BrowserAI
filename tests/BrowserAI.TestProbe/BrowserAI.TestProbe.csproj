@@ -48,4 +48,24 @@
     <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      THE HOST SEES THIS PROBE'S INTERNALS, so a decision the probe takes can be
+      asserted where it is taken rather than only through the report it writes.
+
+      Added 2026-09-17 for ProcessQueryVerdict, which decides what a failed
+      OpenProcess over an already-walked pid means. That decision used to be an
+      inline `note` string in the launcher, reachable only by running the whole
+      acceptance test and reading report.json, so a synthetic control could not
+      be planted against it at all and the one shape that mattered showed up as
+      a flake once in a working week.
+
+      INTERNAL RATHER THAN PUBLIC IS NOT A STYLE CHOICE: CA1515 is an error here,
+      because a public type on an application assembly advertises an API this
+      executable does not have. The grant is how a test asset stays an
+      application and is still testable.
+    -->
+    <InternalsVisibleTo Include="BrowserAI.Tests" />
+  </ItemGroup>
+
 </Project>

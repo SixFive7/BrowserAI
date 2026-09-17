@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO.Pipes;
 using System.Text.Json.Nodes;
+using BrowserAI.TestProbe;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -105,6 +106,116 @@ internal sealed class JobContainmentTests
         await Assert.That(report["walk"]!.AsArray().Select(row => (int)row!["pid"]!)).Contains(escaper);
     }
 
+    /// <summary>
+    /// <b>A pid that vanishes between the walk and the query is EXITED, and a
+    /// query that fails for any other reason is still a failure.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The race this closes, and what it cost.</b> On 2026-09-16, on a
+    /// docs-only commit,
+    /// <see cref="ADescendantTreeIsContainedAndNothingSurvivesTheLauncher"/> went
+    /// red <i>after</i> <c>escapees == 0</c> had already passed: a row came back
+    /// with a null <c>inOurJob</c> because <c>OpenProcess</c> failed for a
+    /// descendant that had exited between the toolhelp walk and the per-row
+    /// query. Nothing about containment was in question — an exited process is
+    /// not a survivor and cannot be an escapee — but the rig had no way to
+    /// express <i>gone</i>, so it expressed <i>unknown</i>, and the host reads
+    /// unknown as failure. A re-run was green, which is the signature of a rig
+    /// race rather than a product defect.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This is a classification, not a retry and not a suppression, and
+    /// the third arm is what says so.</b> Nothing re-queries and nothing waits;
+    /// the verdict is taken from what Windows said the first time. An error that
+    /// is not one of the two vanished-pid shapes is still
+    /// <see cref="ProcessQueryVerdict.Verdict.Unreadable"/>, which is still a red
+    /// row carrying its note — so the change cannot absorb a genuine failure to
+    /// read a process.
+    /// </para>
+    /// <para>
+    /// <b>The error numbers are MEASURED here rather than asserted from
+    /// memory.</b> Two live controls run beside the synthetic ones: a process
+    /// this arm starts and waits for is opened after it is gone, and the error
+    /// that comes back is compared against the constant the classification keys
+    /// on; and the same open against a pid that <i>is</i> alive succeeds, so the
+    /// failing read is a real reading rather than a call that can only ever
+    /// fail. A table of constants with no live control would be a test of what
+    /// somebody typed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AWalkedPidThatVanishedBeforeTheQueryIsExitedAndAnyOtherFailureIsStillAFailure()
+    {
+        // ---- The live control: what Windows ACTUALLY says about a gone pid ---
+        // cmd /c exit runs and returns; nothing holds a handle to it afterwards
+        // except this Process object, which is disposed before the open.
+        int gonePid;
+
+        using (var transient = Process.Start(new ProcessStartInfo(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
+            "/c exit")
+        {
+            UseShellExecute = false,
+
+            // Redirecting the streams does not suppress the console; this would
+            // otherwise flash a window on the maintainer's screen once a run.
+            CreateNoWindow = true,
+        })!)
+        {
+            gonePid = transient.Id;
+            await transient.WaitForExitAsync();
+        }
+
+        // The .NET Process object held the last handle; with it disposed the pid
+        // names nothing. A hang detector, not a promptness claim: the pid is
+        // released when the last handle closes, and nothing here is timed.
+        var deadline = Stopwatch.StartNew();
+        int goneError;
+
+        while ((goneError = ProcessIdentity.OpenProcessErrorFor(gonePid)) is 0
+            && deadline.Elapsed < TestDefaults.ProcessHang)
+        {
+            await Task.Delay(25);
+        }
+
+        await Assert.That(goneError)
+            .IsEqualTo(ProcessQueryVerdict.InvalidParameter)
+            .Because("the classification below keys on this number and it must be the one Windows actually returns");
+
+        // And the other half of the live control: a pid that IS alive opens, so
+        // the reading above is a reading rather than a call that always fails.
+        await Assert.That(ProcessIdentity.OpenProcessErrorFor(Environment.ProcessId))
+            .IsEqualTo(0)
+            .Because("a probe that can only ever fail proves nothing about the failing case");
+
+        // ---- The classification, over that measured number and its sibling ---
+        await Assert.That(ProcessQueryVerdict.ForFailedOpen(goneError))
+            .IsEqualTo(ProcessQueryVerdict.Verdict.Exited);
+
+        await Assert.That(ProcessQueryVerdict.ForFailedOpen(ProcessQueryVerdict.AccessDenied))
+            .IsEqualTo(ProcessQueryVerdict.Verdict.Exited)
+            .Because("PROCESS_QUERY_LIMITED_INFORMATION is granted over every same-user unprotected process, so a denial means the pid was recycled and the process we walked has gone");
+
+        // ---- And the direction that must NOT move -----------------------------
+        // Each of these is a real Win32 error that is not a vanished pid, and
+        // each must stay a failure. If this arm ever goes green on all of them
+        // the classification has become a suppression.
+        foreach (var unrelated in new[]
+        {
+            6,    // ERROR_INVALID_HANDLE
+            8,    // ERROR_NOT_ENOUGH_MEMORY
+            50,   // ERROR_NOT_SUPPORTED
+            1450, // ERROR_NO_SYSTEM_RESOURCES
+        })
+        {
+            await Assert.That(ProcessQueryVerdict.ForFailedOpen(unrelated))
+                .IsEqualTo(ProcessQueryVerdict.Verdict.Unreadable)
+                .Because($"{unrelated} is not a pid that vanished and nothing here may absorb it");
+        }
+    }
+
     [Test]
     public async Task TheBundledNodeAndItsDescendantsAreContained()
     {
@@ -183,14 +294,34 @@ internal sealed class JobContainmentTests
         foreach (var row in walk)
         {
             var pid = (int)row!["pid"]!;
+            var verdict = (string)row["verdict"]!;
+
+            await Assert.That(pid).IsNotEqualTo(0);
+
+            // ⚠️ THE KERNEL'S MEMBERSHIP SNAPSHOT IS ASSERTED FOR EVERY ROW,
+            // whatever the per-row query managed. This is the containment claim
+            // and it does not weaken below: a process the walk reached must have
+            // been in the job's own member list, taken either side of the walk.
+            await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue();
+
+            if (verdict is nameof(ProcessQueryVerdict.Verdict.Exited))
+            {
+                // It was gone before the row could be queried, which is
+                // containment holding rather than failing: an exited process is
+                // neither a survivor nor an escapee, and the teardown assertion
+                // below covers it in the only sense that remains. The note says
+                // what happened, so this branch is visible in the report rather
+                // than silent.
+                await Assert.That((string)row["note"]!).Contains("between the walk and the query");
+                continue;
+            }
 
             // IsProcessInJob for every pid in the descendant tree, and the
             // kernel's own member list for the same pid. Either alone can be
             // incomplete; disagreeing is the interesting case.
+            await Assert.That(verdict).IsEqualTo(nameof(ProcessQueryVerdict.Verdict.Queried));
             await Assert.That((bool?)row["inOurJob"] is true).IsTrue();
-            await Assert.That((bool)row["inJobProcessIdList"]!).IsTrue();
             await Assert.That((string)row["note"]!).IsEmpty();
-            await Assert.That(pid).IsNotEqualTo(0);
         }
 
         // The cross-check in the other direction: a job member the walk never

@@ -89,6 +89,25 @@ release body; nothing else depends on it.
   release executor.
 
 ### Changed
+- ✅ **A pid that vanishes between the containment walk and the query is now
+  *exited* rather than *unknown*, and unknown is what the host read as a
+  containment failure.** `JobContainmentTests.ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`
+  went red on 2026-09-16 on a **docs-only** commit, *after* `escapees == 0` had
+  already passed: a row came back with a null `inOurJob` because `OpenProcess`
+  returned `ERROR_INVALID_PARAMETER` for a descendant that had exited between the
+  toolhelp walk and the per-row query. The rig had one spelling for two opposite
+  answers — *could not be read* and *is no longer there* — and an exited process
+  is neither a survivor nor an escapee. `ProcessQueryVerdict.ForFailedOpen` now
+  decides which it was, **once, from what Windows said**: `87` and `5` are
+  `Exited`, and **everything else stays `Unreadable`**, keeps its note and still
+  reddens the run, so this is a classification rather than a retry or a
+  suppression. `inJobProcessIdList` — the kernel's own membership snapshots taken
+  either side of the walk — is still asserted for every row including an exited
+  one, and `escapees`, `jobMembersTheWalkMissed` and the survivor check are
+  untouched. **Q202**, decided 2026-09-17. Planted red three ways and watched, with
+  the error numbers *measured* rather than quoted. [`HAZARDS.md`](HAZARDS.md)
+  carries the row.
+
 
 - 🔧 **`BrowserAI.Core` declares the RID it is only ever published under, and
   its lock file stops having two answers.** `src/BrowserAI.Core/packages.lock.json`

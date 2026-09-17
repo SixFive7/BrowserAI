@@ -183,12 +183,36 @@ internal static partial class JobProbe
             var inOurJob = default(bool?);
             var inAnyJob = default(bool?);
             var note = string.Empty;
+            var verdict = ProcessQueryVerdict.Verdict.Queried;
 
             using var handle = OpenProcess(ProcessQueryLimitedInformation, bInheritHandle: false, (uint)entry.ProcessId);
 
             if (handle.IsInvalid)
             {
-                note = $"OpenProcess failed with {Marshal.GetLastPInvokeError().ToString(CultureInfo.InvariantCulture)}";
+                // ⚠️ A PID THE WALK SAW AND THE QUERY CANNOT OPEN IS NOT ONE
+                // OUTCOME, and spelling it as one read a probe race as a
+                // containment failure on 2026-09-16. The tree here is live:
+                // helpers retire while the walk is still running, so by the time
+                // the row is built a descendant may simply be gone -- which is
+                // containment holding rather than failing, since an exited
+                // process is neither a survivor nor an escapee.
+                //
+                // ProcessQueryVerdict decides which it was, from what Windows
+                // said, once. It is NOT a retry and NOT a suppression: any error
+                // that is not one of the two vanished-pid shapes stays
+                // Unreadable, keeps its note and still reddens the run. See
+                // JobContainmentTests.AWalkedPidThatVanishedBeforeTheQueryIsExitedAndAnyOtherFailureIsStillAFailure,
+                // which plants all three directions with live controls on the
+                // error numbers.
+                var lastError = Marshal.GetLastPInvokeError();
+
+                verdict = ProcessQueryVerdict.ForFailedOpen(lastError);
+                note = $"OpenProcess failed with {lastError.ToString(CultureInfo.InvariantCulture)}";
+
+                if (verdict is ProcessQueryVerdict.Verdict.Exited)
+                {
+                    note += ", so this process had exited between the walk and the query";
+                }
             }
             else
             {
@@ -210,6 +234,7 @@ internal static partial class JobProbe
                 ["inOurJob"] = inOurJob,
                 ["inAnyJob"] = inAnyJob,
                 ["inJobProcessIdList"] = jobProcessIdSet.Contains(entry.ProcessId),
+                ["verdict"] = verdict.ToString(),
                 ["note"] = note,
             });
         }
