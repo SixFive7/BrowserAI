@@ -16,6 +16,13 @@
        version back. The lock that comes out is copied back to
        `build/payload/package-lock.json` and committed as the provenance stamp.
 
+       Since 2026-09-17 `build/payload/package.json` also carries an npm
+       `overrides` entry for `playwright-core`, which is a DATED EXCEPTION with
+       a written exit rather than a pin. This script reads it, requires the tree
+       to have resolved to it, and REFUSES the build on the day the wrapper's
+       own pin catches up. See DECISIONS.md, 'The two exceptions to the
+       versioning policy'.
+
     2. THE TEST RIG'S BROWSER, which does not ship. BrowserAI provisions
        browsers on first run (ARCHITECTURE.md, "The runtime it ships");
        this is upstream's own installer, run once, so that every
@@ -176,8 +183,83 @@ $declaredCore = if ($mcpEntry.ContainsKey('dependencies')) { $mcpEntry['dependen
 # playwright-core is never resolved independently. If upstream ever loosened
 # that pin to a range, the payload would start floating on a second axis and
 # nothing else would say so.
-if ($declaredCore -ne $coreVersion) {
-    throw "@playwright/mcp $mcpVersion declares playwright-core '$declaredCore' but the tree resolved $coreVersion. Upstream's pin is no longer exact; see UPSTREAM-REVIEW.md before proceeding."
+#
+# SINCE 2026-09-17 THERE IS ONE DATED EXCEPTION, and it is read out of
+# build/payload/package.json rather than written here: an `overrides` entry for
+# playwright-core pulls ONE upstream build forward underneath the wrapper's own
+# exact pin. The invariant does not weaken, it moves: with an override in force
+# the resolved version must equal THE OVERRIDE, the wrapper's declared pin must
+# still be exact, and that pin must still be BELOW the override -- which is the
+# exit. See DECISIONS.md, 'The two exceptions to the versioning policy', and
+# PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded, which fails on the
+# same condition from a clean clone with no payload assembled.
+$sourceManifest = Get-Content -LiteralPath (Join-Path $sourceDir 'package.json') -Raw | ConvertFrom-Json -AsHashtable
+$overriddenCore = if ($sourceManifest.ContainsKey('overrides') -and $sourceManifest['overrides'].ContainsKey('playwright-core')) {
+    $sourceManifest['overrides']['playwright-core']
+}
+else {
+    $null
+}
+
+# Orders the two shapes upstream actually publishes -- `1.64.0` and
+# `1.64.0-alpha-YYYY-MM-DD` -- and REFUSES anything else rather than guessing.
+# A shape this cannot order is a shape a human has to adjudicate, and silently
+# calling it 'lower' would keep an override alive past its own exit.
+function Compare-PlaywrightVersion {
+    param(
+        [Parameter(Mandatory)][string] $Left,
+        [Parameter(Mandatory)][string] $Right)
+
+    function Split-Version {
+        param([Parameter(Mandatory)][string] $Value)
+
+        if ($Value -notmatch '^(\d+)\.(\d+)\.(\d+)(?:-alpha-(\d{4}-\d{2}-\d{2}))?$') {
+            throw "playwright-core version '$Value' is not <major>.<minor>.<patch> or <major>.<minor>.<patch>-alpha-YYYY-MM-DD. build/Build-Payload.ps1 cannot order it; adjudicate the override in DECISIONS.md by hand."
+        }
+
+        return @{
+            Numbers = @([int]$Matches[1], [int]$Matches[2], [int]$Matches[3])
+            # No prerelease outranks any prerelease, per SemVer. '~' sorts above
+            # every digit in ordinal comparison, which is what encodes that.
+            Alpha   = $Matches[4] ? $Matches[4] : '~'
+        }
+    }
+
+    $a = Split-Version -Value $Left
+    $b = Split-Version -Value $Right
+
+    for ($i = 0; $i -lt 3; $i++) {
+        if ($a.Numbers[$i] -ne $b.Numbers[$i]) {
+            return $a.Numbers[$i] -lt $b.Numbers[$i] ? -1 : 1
+        }
+    }
+
+    return [string]::CompareOrdinal($a.Alpha, $b.Alpha)
+}
+
+if ($null -eq $overriddenCore) {
+    if ($declaredCore -ne $coreVersion) {
+        throw "@playwright/mcp $mcpVersion declares playwright-core '$declaredCore' but the tree resolved $coreVersion. Upstream's pin is no longer exact; see UPSTREAM-REVIEW.md before proceeding."
+    }
+}
+else {
+    if ($coreVersion -ne $overriddenCore) {
+        throw "build/payload/package.json overrides playwright-core to '$overriddenCore' but the tree resolved $coreVersion. The override did not take; npm did not apply it, or something else in the tree pins harder."
+    }
+
+    if ($declaredCore -match '[\^~ |<>=*x]' -or [string]::IsNullOrWhiteSpace($declaredCore)) {
+        throw "@playwright/mcp $mcpVersion declares playwright-core '$declaredCore', which is not an exact version. The override rests on upstream pinning exactly; see UPSTREAM-REVIEW.md before proceeding."
+    }
+
+    if ((Compare-PlaywrightVersion -Left $declaredCore -Right $overriddenCore) -ge 0) {
+        throw @"
+THE OVERRIDE'S EXIT HAS FIRED. @playwright/mcp $mcpVersion now pins playwright-core '$declaredCore', which is at or above the override '$overriddenCore'.
+
+Delete the `overrides` block and the `//overrides` note from build/payload/package.json, rebuild, and record the deletion in upstream-review.json and DECISIONS.md. The exception was dated 2026-09-17 and this is the day it ends.
+"@
+    }
+
+    Write-Host "playwright-core is OVERRIDDEN to $overriddenCore (dated exception, 2026-09-17). @playwright/mcp $mcpVersion still declares $declaredCore, which is below it, so the exit has not fired."
 }
 
 # An install script in the shipped tree runs on the build machine with the
@@ -198,7 +280,7 @@ if ($scripted.Count -gt 0) {
 }
 
 Write-Host "@playwright/mcp: $mcpVersion"
-Write-Host "playwright-core: $coreVersion (@playwright/mcp's own exact dependency, not npm latest)"
+Write-Host "playwright-core: $coreVersion ($($null -eq $overriddenCore ? "@playwright/mcp's own exact dependency, not npm latest" : "the dated override, above @playwright/mcp's own exact dependency $declaredCore"))"
 
 Write-Step 'Verifying the lock reproduces the tree on its own'
 
