@@ -53,6 +53,21 @@ release body; nothing else depends on it.
   one.
 
 ### Fixed
+- 🐛 **The coverage block stops printing a download size somebody typed.**
+  Every run of the suite said *downloaded 203.8 MB from the CDN* — a literal in
+  `FirstRunCache`, in the one place on the screen that reads like a measurement,
+  beside the elapsed seconds and the file count the run really did observe. The
+  2026-09-16 re-measurement moved
+  `BrowserProvisioner.FirstRunDownloadBytes` to **207,274,189 B** and moved every
+  other quotation of the figure; this one could not be corrected by re-running
+  anything, which is what makes a number written at a sentence worse than one
+  nobody wrote down. It is rendered through `DownloadSizeFor` now, the same path
+  the provisioning refusal uses. Planted red and watched: *"Expected to contain
+  \"207.3 MB\" … but received \"downloaded 203.8 MB from the CDN because some
+  reason\""*. **The other surviving mentions of the old figure are deliberately
+  untouched** — they are comments and prose, and which of them read as
+  measurements is a separate decision.
+
 
 - 📦 **`New-Release.ps1` clears its own never-published test feed before it
   packs into it, so a stale pre-release can never refuse a cut again.** The entry

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -185,6 +186,56 @@ internal sealed class FirstRunCacheTests
         await Assert.That(summary.Contains("CDN", StringComparison.Ordinal)
             || summary.Contains("CACHED", StringComparison.Ordinal)
             || summary.Contains("NOT RUN", StringComparison.Ordinal)).IsTrue();
+    }
+
+    /// <summary>
+    /// <b>The coverage block's download figure is rendered from the constant the
+    /// refusal text uses, never written at the sentence.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Every run of this suite printed <i>downloaded 203.8 MB from the CDN</i>
+    /// for a month after that stopped being true.</b> It was a literal in the
+    /// sentence, so the 2026-09-16 re-measurement that moved
+    /// <see cref="BrowserProvisioner.FirstRunDownloadBytes"/> to 207,274,189 B
+    /// moved every other quotation of the figure and left this one — in the one
+    /// place that reads like a measurement, beside the elapsed seconds and the
+    /// real file count the same run actually observed.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>What is asserted is the DERIVATION and not the number.</b> The
+    /// figure itself belongs to
+    /// <c>ProvisioningTests.TheQuotedFirstRunDownloadSizeIsTheFigureTheKnowledgeBasePublishes</c>,
+    /// which holds it against the article that measures it. This arm holds that
+    /// the sentence cannot disagree with it — which is a different failure, and
+    /// the one that actually happened.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheDownloadFigureInTheCoverageLineComesFromTheConstant()
+    {
+        var sentence = FirstRunCache.DownloadedFromTheCdn("some reason");
+        var quoted = BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser);
+
+        await Assert.That(sentence)
+            .Contains(quoted)
+            .Because("the coverage block reads as a measurement and must carry the figure every other caller quotes");
+
+        await Assert.That(sentence).Contains("some reason");
+
+        // The control that makes the assertion above mean something: the figure
+        // really does move when the constant does, so a passing arm is not one
+        // that happens to agree with a literal somebody typed.
+        await Assert.That(quoted)
+            .IsEqualTo(BrowserProvisioner.Megabytes(BrowserProvisioner.FirstRunDownloadBytes[SessionManager.DefaultBrowser]))
+            .Because("a figure that did not come from the byte count could still read correctly by coincidence");
+
+        // And the shape of the defect, named rather than described: no run of
+        // this suite may print a download size that was written at the sentence.
+        await Assert.That(sentence.Contains("203.8", StringComparison.Ordinal))
+            .IsFalse()
+            .Because("that figure was chromium 1237's and has been stale since 2026-09-16; a literal here cannot be corrected by a re-measurement");
     }
 
     /// <summary>

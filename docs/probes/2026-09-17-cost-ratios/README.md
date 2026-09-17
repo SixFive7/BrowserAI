@@ -52,5 +52,5 @@ comma decimal separator the double arrives as `123,456` and parses as `NaN` on
 the other side of the pipe — which is how the first run of this probe reported a
 null idle-CPU figure for both families.
 
-| Trips `NeverByImageNameTests` | Yes — `Get-Process`, filtered on `Path` under the browsers root and never on a name |
+| Trips `NeverByImageNameTests` | **No** — *corrected 2026-09-17 (previously "Yes — `Get-Process`, filtered on `Path` under the browsers root and never on a name")*. Same code, a different scan: it reads the FILTER rather than the API from 2026-09-17 (Q203), and a bare `Get-Process` piped into a `Path` test names no image |
 |---|---|

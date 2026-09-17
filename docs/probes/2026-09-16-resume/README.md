@@ -40,5 +40,5 @@ index entry. It never touches `%LocalAppData%\BrowserAI.app`.
 needs the server killed by pid and the session destroyed by a later process;
 both are in the transcript of the 2026-09-16 run.
 
-| Trips `NeverByImageNameTests` | Yes — `Win32_Process` and `Get-Process`, both keyed on a pid and filtered on an executable path BrowserAI owns, never on a name |
+| Trips `NeverByImageNameTests` | **No** — *corrected 2026-09-17 (previously "Yes — `Win32_Process` and `Get-Process`, both keyed on a pid and filtered on an executable path BrowserAI owns, never on a name")*. That sentence was right about the code and right about why it tripped; the scan reads the FILTER rather than the API from 2026-09-17 (Q203), so a pid-keyed call no longer trips it and the description above is now the reason it passes |
 |---|---|

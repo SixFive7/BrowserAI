@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BrowserAI.Runtime;
+using BrowserAI.Sessions;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -252,8 +253,27 @@ internal static class FirstRunCache
                     ? $"the newest cached tree was downloaded {Minutes(elapsed)} ago, past the {Minutes(Ttl)} ceiling"
                     : refusal;
 
-        return new FirstRunPlan(source, null, $"downloaded 203.8 MB from the CDN because {why}");
+        return new FirstRunPlan(source, null, DownloadedFromTheCdn(why));
     }
+
+    /// <summary>
+    /// The coverage block's CDN sentence, with the download size RENDERED from
+    /// the same constant the provisioning refusal quotes.
+    /// </summary>
+    /// <remarks>
+    /// <b>It was a literal until 2026-09-17 and it had been wrong since
+    /// 2026-09-16.</b> The re-measurement that moved
+    /// <see cref="BrowserProvisioner.FirstRunDownloadBytes"/> to 207,274,189 B
+    /// moved every quotation of the figure except this one, which sits in the
+    /// one place that reads like a measurement -- beside the elapsed seconds and
+    /// the file count the run actually observed. A number written at a sentence
+    /// cannot be corrected by re-running anything, which is what makes it worse
+    /// than a number nobody wrote down.
+    /// </remarks>
+    /// <param name="why">Why the cache was bypassed.</param>
+    /// <returns>The sentence the coverage block prints.</returns>
+    public static string DownloadedFromTheCdn(string why) =>
+        $"downloaded {BrowserProvisioner.DownloadSizeFor(SessionManager.DefaultBrowser)} from the CDN because {why}";
 
     /// <summary>Records what the first-run test did, for the coverage block.</summary>
     /// <param name="plan">The plan it took.</param>
