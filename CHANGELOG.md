@@ -518,6 +518,27 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **A read-only file no longer defeats the delete every tree delete goes through.**
+  `Runtime/TreeDelete` called `File.Delete` on the attribute as it found it, and
+  Windows refuses that with `ERROR_ACCESS_DENIED` — the same code a held handle
+  produces, so the list of nodes it could not remove read like a lock and was an
+  attribute. It now clears `FileAttributes.ReadOnly` and deletes again, and only
+  after a delete has already been refused, so the ordinary path is one call and
+  unchanged and a genuine sharing violation is still reported rather than
+  retried into silence. What it buys is ordinary content: anything a session
+  downloaded, or a user dropped into a directory `browserai_destroy` is handed,
+  was being reported as something the product could not remove when it could.
+  **It was found by a release gate going red at the head of its own first run,
+  on a tree nobody had changed** — git writes every loose object read-only, so a
+  scratch directory holding a real repository survived six refused objects deep,
+  and the documented between-runs clear had been removing the evidence with
+  `Remove-Item -Force` on every pair of runs for as long as anybody had typed
+  it. `TreeDeleteTests.AReadOnlyFileIsRemovedRatherThanReportedAsANodeThatWouldNotGo`
+  was planted red against the real shape, with a held file in the same tree as
+  the control so that clearing an attribute cannot become swallowing a hold.
+  The end-to-end half is stronger than the arm: a run that executes the rig now
+  leaves the scratch root empty.
+
 - ✅ **The dated dependency override cannot be forgotten: two instruments go red
   on the day it expires.** An exception with a written exit is worth
   nothing if the exit lives only in a document, so the exit is a build failure

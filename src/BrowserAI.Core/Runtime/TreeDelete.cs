@@ -140,7 +140,12 @@ internal static class TreeDelete
             }
             catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
             {
-                failures.Add($"  {file}: {failure.Message}");
+                var second = RetryWithoutTheReadOnlyAttribute(file, failure);
+
+                if (second is not null)
+                {
+                    failures.Add($"  {file}: {second.Message}");
+                }
             }
         }
 
@@ -196,6 +201,86 @@ internal static class TreeDelete
         }
     }
 
+    /// <summary>
+    /// Clears the read-only attribute and deletes again, answering with the
+    /// failure a caller should report, or <see langword="null"/> when the node
+    /// is gone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-17, off a real failure.</b> Windows refuses to delete
+    /// a file carrying <c>FILE_ATTRIBUTE_READONLY</c> with
+    /// <c>ERROR_ACCESS_DENIED</c> — <b>the same code a held handle produces</b>,
+    /// so the survivor list this routine writes read like a lock for as long as
+    /// it did. Git writes every loose object read-only, and that is how it was
+    /// found: a scratch tree holding a real repository could not be removed, by
+    /// this routine or by the suite's reclaim pass, and a release gate went red
+    /// at the head of a run on a tree nobody had changed.
+    /// </para>
+    /// <para>
+    /// <b>The attribute is cleared only after a delete has already been
+    /// refused</b>, so the ordinary path is one call and unchanged, and a
+    /// genuine sharing violation is still reported rather than retried into
+    /// silence: the retry's own failure is what goes into the list, and the
+    /// first failure is returned unchanged when there was no attribute to
+    /// clear.
+    /// </para>
+    /// <para>
+    /// <b>It is not an escalation.</b> Every caller of this routine is deleting
+    /// a tree BrowserAI owns or was handed by name, and removing an attribute
+    /// from a file that is being deleted in the same breath changes nothing that
+    /// outlives the call. What it buys is that ordinary content — anything a
+    /// session downloaded, anything a user dropped into a directory
+    /// <c>browserai_destroy</c> is given — stops being reported as a node the
+    /// product could not remove when it could.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The file or directory the first delete refused.</param>
+    /// <param name="first">What that delete threw.</param>
+    /// <returns>The failure to report, or <see langword="null"/> if the node is gone.</returns>
+    private static Exception? RetryWithoutTheReadOnlyAttribute(string path, Exception first)
+    {
+        try
+        {
+            var attributes = File.GetAttributes(path);
+
+            if (!attributes.HasFlag(FileAttributes.ReadOnly))
+            {
+                // Nothing to clear, so the first failure is the whole story and
+                // is reported unchanged. This is the held-handle path.
+                return first;
+            }
+
+            File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return first;
+        }
+
+        try
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path);
+            }
+            else
+            {
+                File.Delete(path);
+            }
+
+            return null;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return null;
+        }
+        catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+        {
+            return failure;
+        }
+    }
+
     /// <summary>Removes one directory, recording it if it will not go.</summary>
     private static void RemoveOneDirectory(string directory, List<string> failures)
     {
@@ -211,7 +296,12 @@ internal static class TreeDelete
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
-            failures.Add($"  {directory}\\: {failure.Message}");
+            var second = RetryWithoutTheReadOnlyAttribute(directory, failure);
+
+            if (second is not null)
+            {
+                failures.Add($"  {directory}\\: {second.Message}");
+            }
         }
     }
 

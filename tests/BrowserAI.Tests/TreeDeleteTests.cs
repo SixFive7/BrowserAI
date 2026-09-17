@@ -128,4 +128,95 @@ internal sealed class TreeDeleteTests
         await Assert.That(File.Exists(held)).IsTrue();
         await Assert.That(Directory.Exists(deep)).IsFalse();
     }
+
+    /// <summary>
+    /// A read-only file is deleted, and so is every directory above it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-17, planted red, off a real failure rather than off an
+    /// idea.</b> The 2026-09-17 release gate went red at the head of its own
+    /// first run, in a test nothing had changed: the suite's reclaim pass could
+    /// not take a <c>release-notes-tag-*</c> rig that
+    /// <see cref="ChangelogTests.ABodyIsGeneratedOnlyFromTheChangelogTheTagCarries"/>
+    /// leaves behind, because <b>git writes every loose object read-only</b> and
+    /// this routine called <c>File.Delete</c> on the attribute as it found it.
+    /// Windows refuses that with <c>ERROR_ACCESS_DENIED</c> — the same message a
+    /// held handle produces, which is why the survivor list read like a lock for
+    /// as long as it did. It was deterministic and not a race: two consecutive
+    /// runs left two identical residues of six objects each, and the only thing
+    /// that had ever hidden it is
+    /// <see href="../../TESTING.md">the between-runs clear</see>, which uses
+    /// <c>Remove-Item -Force</c> and therefore clears the attribute.
+    /// </para>
+    /// <para>
+    /// <b>The fix went into the product rather than into the rig</b>, because a
+    /// read-only file is ordinary content: anything a session downloaded, or a
+    /// user dropped into a directory <c>browserai_destroy</c> is handed, would
+    /// have been reported as a node the product could not remove when it could.
+    /// Fixing the rig would have fixed one test and left every product caller
+    /// exactly as wrong — and <c>TreeDelete</c>'s own charter is that it is
+    /// <i>one</i> routine, precisely so two callers cannot end up with two
+    /// behaviours.
+    /// </para>
+    /// <para>
+    /// <b>The held file is the control and it is in this arm rather than beside
+    /// it</b>: clearing an attribute must not turn into swallowing a sharing
+    /// violation, so one tree carries both and the assertions say which node was
+    /// removed and which was reported. The read-only <b>directory</b> is here
+    /// for the same reason — it is a second way Windows can refuse, and if it
+    /// never refuses, this arm says so by passing without anything being done
+    /// about it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AReadOnlyFileIsRemovedRatherThanReportedAsANodeThatWouldNotGo()
+    {
+        using var scratch = ScratchDirectory.Create("tree-delete-readonly");
+
+        var tree = Path.Combine(scratch.Path, "tree");
+        var objects = Path.Combine(tree, "objects", "06");
+
+        _ = Directory.CreateDirectory(objects);
+
+        // Exactly what git leaves behind: a loose object, read-only, under two
+        // directories that are not.
+        var loose = Path.Combine(objects, "e1985daea2cbd300fc423a1bf6bc4283dfbc36");
+
+        await File.WriteAllTextAsync(loose, "a loose object");
+        File.SetAttributes(loose, FileAttributes.ReadOnly);
+
+        // A read-only DIRECTORY too, because RemoveDirectory is a second call
+        // that Windows can refuse for the same reason.
+        var marked = Path.Combine(tree, "marked");
+
+        _ = Directory.CreateDirectory(marked);
+        await File.WriteAllTextAsync(Path.Combine(marked, "ordinary.txt"), "goes");
+        File.SetAttributes(marked, File.GetAttributes(marked) | FileAttributes.ReadOnly);
+
+        // THE CONTROL, in the same tree: a genuine sharing violation must still
+        // be reported, so that clearing an attribute cannot quietly become
+        // ignoring a hold.
+        var held = Path.Combine(tree, "held.bin");
+
+        await File.WriteAllTextAsync(held, "stays, because this test is holding it");
+
+        var failures = new List<string>();
+
+        using (var _ = new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            TreeDelete.Remove(tree, failures);
+        }
+
+        await Assert.That(File.Exists(loose)).IsFalse();
+        await Assert.That(Directory.Exists(objects)).IsFalse();
+        await Assert.That(Directory.Exists(marked)).IsFalse();
+        await Assert.That(failures.Any(line => line.Contains("e1985daea2cb", StringComparison.Ordinal))).IsFalse();
+
+        // The control's half: the held file and the one directory above it.
+        await Assert.That(File.Exists(held)).IsTrue();
+        await Assert.That(failures.Any(line => line.Contains("held.bin", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(failures.Count).IsEqualTo(2);
+    }
 }

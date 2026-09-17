@@ -299,6 +299,24 @@ A directory that will not clear is the signal, not the inconvenience: something
 from the last run is still alive. **Nothing enforces this** — it is a property of
 two runs rather than of one, and no test inside either can see the other.
 
+⚠️ **This step was also hiding a product defect, and that is worth knowing about
+a step whose job is hygiene — *2026-09-17*.** Until that day the reclaim pass
+could not take a read-only file, and `.git` is full of them: git writes every
+loose object read-only, and `Runtime/TreeDelete` called `File.Delete` on the
+attribute as it found it. The 2026-09-17 release gate went red at the head of its
+own run 1, on a tree nobody had changed — a `release-notes-tag-*` rig left by a
+**filtered** run twenty minutes earlier, six objects answering *Access to the path
+'...' is denied*, eleven directories above them answering *The directory is not
+empty*. **It was deterministic and not a race**: the rig's own `Dispose` had been
+failing the same way on every run since the arm was written, and
+`Remove-Item -Recurse -Force` clears the attribute, so the block above had been
+removing the evidence between every pair of runs for as long as anybody had been
+typing it. `TreeDelete` clears the attribute and retries since that day
+([the hazard row](HAZARDS.md#hazard-index)), so a run leaves no residue of this
+shape at all — the clear is back to being about **handles**, which is what the
+paragraph above measures. **Clear after a filtered run too**: a filtered run is a
+development convenience and its residue is not.
+
 Then poll `$log` — `Get-Content -Tail`, `tail -c`, or wait on the summary:
 
 ```bash
