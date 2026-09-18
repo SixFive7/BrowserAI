@@ -16,11 +16,24 @@
     and a hand-assembled manifest is one nobody assembles twice, which is why
     this script exists rather than a paragraph of instructions.
 
-    Seven files, copied rather than transcribed, plus a manifest.json stating
+    Eight files, copied rather than transcribed, plus a manifest.json stating
     the version, the tag it came from, the package and its SHA-256, and the
     resolved version each copied file states. Copied is the operative word: a
     transcribed version number is a number somebody typed, and the whole point
     of the manifest is that it is not.
+
+    AND WHETHER A DEPENDENCY WAS PULLED FORWARD, SINCE 2026-09-18. `override`
+    below records a version a HUMAN HELD BACK. The payload has since acquired
+    the opposite: an npm `overrides` entry in build/payload/package.json pins
+    playwright-core AHEAD of the 1.64.0-alpha-2026-09-14 that @playwright/mcp
+    0.0.81 declares for itself, so the release ships a dependency no package in
+    the tree asks for. `pulledForward` is always emitted -- null when no
+    override is in force, a block per overridden package when one is -- and
+    every number in it is READ: the shipped version and the declared ones out of
+    the payload lock, the pin out of the payload manifest. NPM WRITES NO
+    `overrides` BLOCK INTO THE LOCK IT PRODUCES (measured 2026-09-17), which is
+    why build/payload/package.json is copied as the eighth file rather than read
+    and discarded: it is the only record that an override was in force at all.
 
     AND WHETHER IT WAS A CRUNCH OVERRIDE, SINCE 2026-08-26. DECISIONS.md said in
     bold that "a release whose manifest does not say it was overridden is a
@@ -29,18 +42,18 @@
     including one that was. `override` is always emitted: null for an ordinary
     release, a five-part block for a held one.
 
-    IT REFUSES ON A MISSING FILE, NAMING IT. A manifest with six of seven files
-    in it looks exactly like a complete one to whoever reads it a year later, so
-    a partial manifest is worse than none. In particular payload/payload.json
-    only exists once build/Build-Payload.ps1 has run, and a release cut without
-    a payload is not a release.
+    IT REFUSES ON A MISSING FILE, NAMING IT. A manifest with seven of eight
+    files in it looks exactly like a complete one to whoever reads it a year
+    later, so a partial manifest is worse than none. In particular
+    payload/payload.json only exists once build/Build-Payload.ps1 has run, and a
+    release cut without a payload is not a release.
 
     THIS SCRIPT IS SEPARATE FROM New-Release.ps1 SO THE SUITE CAN DRIVE IT, the
     same reason Test-ReleaseVersion.ps1 is separate. A rule that only exists
     inside a release script is one nobody exercises until the day it matters.
 
 .PARAMETER Root
-    The repository root the seven files are read from. Defaults to this script's
+    The repository root the eight files are read from. Defaults to this script's
     parent, which is what a release does.
 
 .PARAMETER Destination
@@ -102,7 +115,7 @@ $PSStyle.OutputRendering = 'PlainText'
 
 if (-not $Root) { $Root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')) }
 
-# The exact seven of RELEASING.md item 11, with the flattened names the first
+# The exact eight of RELEASING.md item 11, with the flattened names the first
 # hand-assembled manifest used, so the two are comparable.
 #
 # SEVEN SINCE 2026-08-26, previously six. tool-verdicts.json is part of the
@@ -110,11 +123,18 @@ if (-not $Root) { $Root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot
 # forwards and which upstream versions that judgement was made against, and a
 # release whose manifest cannot state that cannot answer "why did this build
 # refuse a tool the next one allows".
+#
+# EIGHT SINCE 2026-09-18. build/payload/package.json is the payload's own
+# manifest, and it is here for one reason the lock beside it cannot serve: npm
+# writes no `overrides` block into a lock. So the lock records a playwright-core
+# version and says nothing about WHY it is that version, and the manifest is the
+# only artifact in a release that records a pull-forward was in force at all.
 $wanted = [ordered]@{
     'src-BrowserAI.packages.lock.json'            = 'src/BrowserAI/packages.lock.json'
     'tests-BrowserAI.Tests.packages.lock.json'    = 'tests/BrowserAI.Tests/packages.lock.json'
     'tests-BrowserAI.TestProbe.packages.lock.json' = 'tests/BrowserAI.TestProbe/packages.lock.json'
     'payload.package-lock.json'                   = 'build/payload/package-lock.json'
+    'payload.package.json'                        = 'build/payload/package.json'
     'payload.json'                                = 'payload/payload.json'
     'browsers.json'                               = 'upstream-snapshots/browsers.json'
     'tool-verdicts.json'                          = 'tool-verdicts.json'
@@ -131,9 +151,10 @@ $wanted = [ordered]@{
 # was not overridden" from "this manifest was written by a build that could not
 # say".
 #
-# A HALF-STATED OVERRIDE REFUSES, for the same reason a manifest holding six of
-# seven files does: a block saying "held at 0.0.700" with no newest version, no
-# reason and nobody's name reads exactly like a complete account of the decision.
+# A HALF-STATED OVERRIDE REFUSES, for the same reason a manifest holding seven
+# of eight files does: a block saying "held at 0.0.700" with no newest version,
+# no reason and nobody's name reads exactly like a complete account of the
+# decision.
 $overrideParts = [ordered]@{
     OverriddenPackage = $OverriddenPackage
     OverrideHeldAt    = $OverrideHeldAt
@@ -156,7 +177,7 @@ foreach ($entry in $wanted.GetEnumerator()) {
 }
 
 if ($missing) {
-    Write-Error ("The resolved set cannot be recorded: " + ($missing -join ', ') + " is missing from $Root. A manifest holding six of seven files reads exactly like a complete one to whoever opens it a year from now, so this refuses rather than writing a partial. If payload/payload.json is the missing one, run build/Build-Payload.ps1 first: a release cut without a payload is not a release.")
+    Write-Error ("The resolved set cannot be recorded: " + ($missing -join ', ') + " is missing from $Root. A manifest holding seven of eight files reads exactly like a complete one to whoever opens it a year from now, so this refuses rather than writing a partial. If payload/payload.json is the missing one, run build/Build-Payload.ps1 first: a release cut without a payload is not a release.")
     exit 1
 }
 
@@ -202,6 +223,61 @@ $npmVersion = {
     if ($npm.packages.ContainsKey("node_modules/$name")) { $npm.packages["node_modules/$name"].version } else { $null }
 }
 
+# --- The pulled-forward dependencies, and they are `override`'s opposite ------
+# `override` above is a version a HUMAN HELD BACK. This is a version the payload
+# ships AHEAD of what the packages in it declare for themselves, which is what an
+# npm `overrides` entry does and which nothing in a release could previously say.
+#
+# ⚠️ THE MANIFEST IS THE ONLY RECORD, and that is the whole reason
+# build/payload/package.json is copied rather than read in passing. Measured
+# 2026-09-17: npm writes NO `overrides` block into the lock it produces -- the
+# lock's root entry carries name, version and dependencies and nothing else -- so
+# the lock states a resolved playwright-core and cannot state that anybody chose
+# it. A reader a year from now, holding the lock alone, sees a version and no
+# reason.
+#
+# EVERY NUMBER HERE IS READ, from two different files, and they are deliberately
+# different questions. `shipped` is what the lock resolved; `pinnedTo` is what
+# the override asked for -- the two agree today and would not if a later npm
+# resolved differently, which is worth being able to see. `declaredBy` is every
+# package in the lock that declares a dependency on the overridden name, at the
+# version IT asks for, which is the other half of the exit condition: the day
+# every declarer names a version at or above the pin, the override is deleted.
+# The root project is skipped because it declares the FLOAT (`latest`) rather
+# than a pin, and reporting `latest` beside three exact versions would read as a
+# fourth measurement.
+$pulledForward = $null
+$payloadManifest = Get-Content -LiteralPath (Join-Path $destination 'payload.package.json') -Raw | ConvertFrom-Json -AsHashtable
+
+if ($payloadManifest.ContainsKey('overrides') -and $payloadManifest.overrides.Keys.Count -gt 0) {
+    $pulledForward = [ordered]@{}
+
+    foreach ($name in ($payloadManifest.overrides.Keys | Sort-Object)) {
+        $declaredBy = [ordered]@{}
+
+        # ⚠️ NOT $package. `-Package` is a [string] PARAMETER of this script and
+        # PowerShell variable names are case-insensitive, so `$package = <a
+        # hashtable>` assigns THROUGH the parameter's type constraint and the
+        # next line reads a String back: "[System.String] does not contain a
+        # method named 'ContainsKey'". Found 2026-09-18 on the first real run.
+        foreach ($entry in ($npm.packages.Keys | Sort-Object)) {
+            if ([string]::IsNullOrEmpty($entry)) { continue }
+
+            $lockEntry = $npm.packages[$entry]
+
+            if ($lockEntry.ContainsKey('dependencies') -and $lockEntry.dependencies.ContainsKey($name)) {
+                $declaredBy[($entry -replace '^node_modules/', '')] = $lockEntry.dependencies[$name]
+            }
+        }
+
+        $pulledForward[$name] = [ordered]@{
+            shipped    = & $npmVersion $name
+            pinnedTo   = $payloadManifest.overrides[$name]
+            declaredBy = $declaredBy
+        }
+    }
+}
+
 if (-not $Tag) {
     # Never invented: a tag that could not be read is recorded as null, because
     # a manifest naming a tag nobody can check is worse than one admitting it
@@ -234,12 +310,14 @@ if ($statedParts.Count -eq 5) {
 $manifest = [ordered]@{
     '_what_this_is' = 'The resolved set this release was cut from. RELEASING.md item 11. Copied, never transcribed: every version below was read back out of the file beside it.'
     '_override'     = 'null means this release took the newest resolve. A block means a HUMAN held an upstream back -- DECISIONS.md, "Every release builds against the latest Playwright, and only a human may say otherwise". The key is always present, because an absent key is not a statement.'
+    '_pulledForward' = 'THE OPPOSITE OF `override`, and the two are never the same thing. `override` is a dependency HELD BACK from what a resolve returned; this is a dependency the payload ships PULLED FORWARD of what the packages in it declare for themselves, which is what an npm `overrides` entry in build/payload/package.json does. null means no override was in force. A block names, per overridden package, the version that SHIPPED (read from payload.package-lock.json), the version the override PINNED TO (read from payload.package.json) and what each package in the lock DECLARES for itself -- and a declared version at or above the pin is the exit condition, the day the override is deleted. The key is always present, for the same reason `override` is. npm writes no `overrides` block into the lock it produces, so the copied payload.package.json beside this file is the only record that one was in force.'
     writtenUtc      = (Get-Date).ToUniversalTime().ToString('o')
     version         = $Version
     tag             = $Tag
     channel         = $Channel
     package         = $packageRecord
     override        = $overrideRecord
+    pulledForward   = $pulledForward
     files           = $files
     resolved        = [ordered]@{
         nuget    = [ordered]@{

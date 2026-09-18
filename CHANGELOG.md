@@ -40,6 +40,29 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📦 **The release manifest records the pulled-forward dependency, and copies the file that pins it.**
+  The manifest could already say a human had HELD an upstream BACK. Since 2026-09-17 the
+  payload does the opposite: an npm overrides entry in `build/payload/package.json` ships
+  `playwright-core` 1.64.0-alpha-2026-09-17 underneath an `@playwright/mcp` 0.0.81 that
+  declares 1.64.0-alpha-2026-09-14 for itself, and `playwright` ships at the declared
+  version beside it, so a release carries two Playwright versions at once and nothing in
+  it said so. `pulledForward` is emitted on every release now, null when no override is in
+  force and a block per overridden package when one is. Every number in it is read rather
+  than typed: the shipped version and each package's declared version out of the payload
+  lock, the pin out of the payload manifest, which is also the exit condition -- the day
+  every declarer names a version at or above the pin, the override is deleted.
+
+  The eighth file is `build/payload/package.json` itself, and it is copied for a reason
+  the lock cannot serve: npm writes no overrides block into the lock it produces, measured
+  2026-09-17, so a reader holding the lock alone sees a resolved version and nothing saying
+  anybody chose it. The two keys are deliberately not merged. `override` is a version held
+  back and `pulledForward` is one shipped ahead, they can both be in force at once, and the
+  manifest's own schema text says which is which -- every manifest written before today
+  reads `override: null` and is silent about the other direction, which is the state this
+  closes. Both arms were watched red first: the eight-file arm on `Expected to be empty but
+  received "payload.package.json"`, and the no-override control on `Expected to contain
+  ""pulledForward": null"`.
+
 - 📝 **The resume figure is re-taken at 1245 and 1548, and "resume" is two paths now.**
   Re-verification row 38. The load-bearing half held exactly and now on two families:
   cookie, localStorage, IndexedDB, CacheStorage and one service-worker registration all

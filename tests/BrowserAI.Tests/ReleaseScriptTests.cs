@@ -556,7 +556,7 @@ internal sealed class ReleaseScriptTests
     }
 
     [Test]
-    public async Task TheResolvedSetManifestIsEmittedWithAllSevenFilesAndWhatEachStates()
+    public async Task TheResolvedSetManifestIsEmittedWithAllEightFilesAndWhatEachStates()
     {
         using var scratch = ScratchDirectory.Create("release-manifest");
         var root = await SyntheticRootAsync(scratch.Path);
@@ -574,6 +574,7 @@ internal sealed class ReleaseScriptTests
             "tests-BrowserAI.Tests.packages.lock.json",
             "tests-BrowserAI.TestProbe.packages.lock.json",
             "payload.package-lock.json",
+            "payload.package.json",
             "payload.json",
             "browsers.json",
             "tool-verdicts.json",
@@ -588,9 +589,12 @@ internal sealed class ReleaseScriptTests
         // install. That pack must never reach a release: not as an asset, not as
         // a row in the resolved set, not as a file in the directory a person
         // opens a year later to find out what shipped. The manifest is a fixed
-        // list of seven copies plus its own `manifest.json`, so this is what
+        // list of EIGHT copies plus its own `manifest.json`, so this is what
         // turns "it cannot get in by construction" into a red build the day
-        // somebody adds an eighth.
+        // somebody adds a ninth. *(Eight since 2026-09-18, previously seven —
+        // `build/payload/package.json` is the only record that an npm override
+        // is in force, because npm writes no `overrides` block into the lock it
+        // produces.)*
         var extra = Directory.EnumerateFileSystemEntries(destination)
             .Select(Path.GetFileName)
             .Where(name => !expected.Contains(name, StringComparer.Ordinal))
@@ -616,6 +620,79 @@ internal sealed class ReleaseScriptTests
         // only meaningful beside the upstream it was adjudicated on. The
         // synthetic value is one no real resolve could produce.
         await Assert.That(manifest).Contains("\"@playwright/mcp\": \"0.0.778\"");
+
+        // ⚠️ THE PULLED-FORWARD DEPENDENCY, and it is the OPPOSITE of `override`
+        // above. `override` is a version a human HELD BACK; this is one the
+        // payload ships AHEAD of what the wrapper declares for itself, which is
+        // what an npm `overrides` entry does. Both keys are always present, for
+        // the same reason: an absent key is not a statement.
+        //
+        // Every number here is READ rather than typed into the script — the
+        // shipped version and the declared ones out of the copied lock, the pin
+        // out of the copied `package.json` — so the fixture makes the three
+        // differ. A fixture where they agreed could not tell a real read from a
+        // value copied off the wrong line.
+        await Assert.That(manifest).Contains("\"pulledForward\"");
+        await Assert.That(manifest).DoesNotContain("\"pulledForward\": null");
+        await Assert.That(manifest).Contains("\"shipped\": \"1.99.0-alpha-2026-01-01\"");
+        await Assert.That(manifest).Contains("\"pinnedTo\": \"1.99.0-alpha-2026-01-01\"");
+        await Assert.That(manifest).Contains("\"@playwright/mcp\": \"1.99.0-alpha-2025-12-31\"");
+        await Assert.That(manifest).Contains("\"playwright\": \"1.99.0-alpha-2025-12-31\"");
+
+        // And the schema text that tells the two fields apart, because a reader
+        // a year from now meets `override: null` beside a populated
+        // `pulledForward` and has nothing else to go on.
+        await Assert.That(manifest).Contains("_pulledForward");
+        await Assert.That(manifest).Contains("PULLED FORWARD");
+    }
+
+    /// <summary>
+    /// A payload with no override in force yields the empty value rather than
+    /// omitting the field.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The control the populated arm above cannot be, and it is the same
+    /// argument <c>override</c> already won.</b> A manifest that carries
+    /// <c>pulledForward</c> only when there is something to say is one where an
+    /// absent key means <i>nothing was pulled forward</i> and <i>this manifest
+    /// was written by a build that could not say</i> at once — and every
+    /// manifest written before 2026-09-18 is the second. <c>"pulledForward":
+    /// null</c> is a statement; an absent key is not.
+    /// </para>
+    /// <para>
+    /// <b>The fixture differs from the populated one in exactly one file.</b>
+    /// The lock still records a <c>playwright-core</c> whose version differs
+    /// from what its dependants declare — because that is what a lock looks like
+    /// whenever npm has resolved a range — so what is being asserted is that the
+    /// claim comes from <c>build/payload/package.json</c>'s <c>overrides</c> and
+    /// from nothing else. Read the field off the lock alone and this arm goes
+    /// red.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APayloadWithNoOverrideInForceSaysSoRatherThanSayingNothing()
+    {
+        using var scratch = ScratchDirectory.Create("release-manifest-no-override");
+        var root = await SyntheticRootAsync(scratch.Path, withOverride: false);
+        var destination = Path.Combine(scratch.Path, "manifest");
+
+        var (exit, _, _) = await RunAsync(
+            ManifestScript, "-Root", root, "-Destination", destination, "-Version", "0.9.1", "-Tag", "v0.9.0-3-gabc1234");
+
+        await Assert.That(exit).IsEqualTo(0);
+
+        var manifest = await File.ReadAllTextAsync(Path.Combine(destination, "manifest.json"));
+
+        await Assert.That(manifest).Contains("\"pulledForward\": null");
+        await Assert.That(manifest).DoesNotContain("\"shipped\"");
+        await Assert.That(manifest).DoesNotContain("\"pinnedTo\"");
+
+        // The eighth file is copied either way: it is what SAYS no override is
+        // in force, so a release that omitted it when there was nothing to
+        // report would be unable to tell that from a release that never looked.
+        await Assert.That(File.Exists(Path.Combine(destination, "payload.package.json"))).IsTrue();
     }
 
     /// <summary>
@@ -1062,11 +1139,11 @@ internal sealed class ReleaseScriptTests
     /// A missing file refuses the manifest rather than writing a partial one.
     /// </summary>
     /// <remarks>
-    /// <b>A manifest holding six of seven files reads exactly like a complete
+    /// <b>A manifest holding seven of eight files reads exactly like a complete
     /// one</b> to whoever opens it a year later, which makes a partial worse
     /// than none. The refusal names the file, because the usual cause is that
-    /// nobody assembled a payload. *(Six of seven since 2026-08-26, previously
-    /// five of six.)*
+    /// nobody assembled a payload. *(Seven of eight since 2026-09-18, previously
+    /// six of seven and five of six before that.)*
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -1211,10 +1288,18 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
-    /// A repository-shaped tree holding the seven files, with versions no real
+    /// A repository-shaped tree holding the eight files, with versions no real
     /// resolve could produce so that a copy cannot be mistaken for a default.
     /// </summary>
-    private static async Task<string> SyntheticRootAsync(string directory)
+    /// <param name="directory">The scratch directory to build the tree under.</param>
+    /// <param name="withOverride">
+    /// Whether <c>build/payload/package.json</c> carries an npm
+    /// <c>overrides</c> entry. Both states are real — one is the payload as it
+    /// stands today, the other is every payload before 2026-09-17 and every one
+    /// after the override's exit fires.
+    /// </param>
+    /// <returns>The root of the synthetic tree.</returns>
+    private static async Task<string> SyntheticRootAsync(string directory, bool withOverride = true)
     {
         var root = Path.Combine(directory, "root");
 
@@ -1245,11 +1330,40 @@ internal sealed class ReleaseScriptTests
         // it passed this test while the script failed on the first real release,
         // 2026-08-16 -- a synthetic input simpler than the real one, which is the
         // shape of test that proves nothing.
+        //
+        // ⚠️ AND THE THREE playwright-core NUMBERS ARE DELIBERATELY DIFFERENT.
+        // The version that SHIPS is the lock's own `node_modules/playwright-core`
+        // entry; what the wrapper and `playwright` DECLARE for themselves is a
+        // day earlier; and the pin that caused it sits in `package.json` rather
+        // than anywhere in this file, because npm writes no `overrides` block
+        // into the lock it produces. A fixture carrying one number could not tell
+        // a manifest that read all three from one that read the first and
+        // repeated it.
         await writeAsync("build/payload/package-lock.json", """
             {"name":"payload","lockfileVersion":3,"packages":{
               "":{"name":"payload","dependencies":{"@playwright/mcp":"latest"}},
-              "node_modules/@playwright/mcp":{"version":"0.0.777"},
+              "node_modules/@playwright/mcp":{"version":"0.0.777",
+                "dependencies":{"playwright":"1.99.0-alpha-2025-12-31","playwright-core":"1.99.0-alpha-2025-12-31"}},
+              "node_modules/playwright":{"version":"1.99.0-alpha-2025-12-31",
+                "dependencies":{"playwright-core":"1.99.0-alpha-2025-12-31"}},
               "node_modules/playwright-core":{"version":"1.99.0-alpha-2026-01-01"}}}
+            """);
+        // ⚠️ THE ONLY RECORD THAT AN OVERRIDE IS IN FORCE, which is why it is
+        // copied into the manifest rather than read and discarded. The `//`
+        // comment key is npm's own convention and the real file carries two of
+        // them, so the fixture carries one: a parser that chokes on it would
+        // choke on the payload's.
+        await writeAsync("build/payload/package.json", withOverride
+            ? """
+            {"name":"payload","version":"0.0.0","private":true,
+             "//":["a note npm ignores"],
+             "dependencies":{"@playwright/mcp":"latest"},
+             "overrides":{"playwright-core":"1.99.0-alpha-2026-01-01"}}
+            """
+            : """
+            {"name":"payload","version":"0.0.0","private":true,
+             "//":["a note npm ignores"],
+             "dependencies":{"@playwright/mcp":"latest"}}
             """);
         await writeAsync("payload/payload.json", """
             {"node":{"version":"v24.0.0","lts":"Synthetic","sha256":"abc123"},

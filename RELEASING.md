@@ -1135,15 +1135,33 @@ the package's SHA-256 and the resolved version each copied file carries:
 |---|---|
 | `packages.lock.json` ×3 | `src/BrowserAI/`, `tests/BrowserAI.Tests/`, `tests/BrowserAI.TestProbe/` |
 | `package-lock.json` | `build/payload/` — the committed provenance stamp the payload build writes |
+| `package.json` | `build/payload/` — the payload's own manifest, and **the only record that an npm `overrides` entry is in force**: npm writes no `overrides` block into the lock it produces |
 | `payload.json` | `payload/` — Node's version, LTS name, archive SHA-256 and both tree sizes |
 | `browsers.json` | `upstream-snapshots/` — the browser revisions, from the resolved payload |
 | `tool-verdicts.json` | the repository root — which tools this build forwards, and the `judgedAgainst` upstream versions that judgement was made on |
 | The derived version and its tag | item 9 |
 | The full `.nupkg` and its size | item 12 |
 | `override` | item 1 — `null` unless a human held an upstream back, and then the held version, the newest one, the break and who decided |
+| `pulledForward` | **`override`'s opposite** — `null` unless an npm `overrides` entry ships a dependency *ahead* of what the packages in the payload declare for themselves, and then, per package, the version that shipped, the version the override pinned to, and what each package in the lock declares |
 
 **Evidence:** the manifest's path, the resolved version each file states, and
-what its `override` key says.
+what its `override` and `pulledForward` keys say.
+
+> ⚠️ **Eight since 2026-09-18** *(previously seven — the `package.json` row
+> above, the `pulledForward` row, and the word "seven" in
+> `build/Write-ReleaseManifest.ps1` and in
+> `build/New-Release.ps1`'s test-pack comment)*. It is here because **the lock
+> cannot answer why**: measured 2026-09-17, npm writes no `overrides` block into
+> the lock it produces, so a reader holding `payload.package-lock.json` alone
+> sees a resolved `playwright-core` and nothing saying anybody chose it. On
+> today's tree that is `1.64.0-alpha-2026-09-17` where `@playwright/mcp` 0.0.81
+> and `playwright` both declare `1.64.0-alpha-2026-09-14` for themselves — a
+> [dated exception with a written exit](DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
+> and the manifest now carries both halves of the exit condition rather than one.
+> **`override` keeps its meaning exactly**: a dependency a human *held back*.
+> Nothing in a release could say *pulled forward* until this key existed, so
+> every manifest written before this date says `override: null` and is silent
+> about the other direction.
 
 > ⚠️ **Seven since 2026-08-26** *(previously six — the row above and the word
 > "six" in `build/Write-ReleaseManifest.ps1`)*. `tool-verdicts.json` arrived at
@@ -1165,13 +1183,14 @@ what its `override` key says.
 > which is a checklist item
 > nobody satisfies twice.
 >
-> ✅ **It is emitted.** `build/Write-ReleaseManifest.ps1` copies the seven files
+> ✅ **It is emitted.** `build/Write-ReleaseManifest.ps1` copies the eight files
 > and writes `manifest.json`; `build/New-Release.ps1` calls it as its eighth
 > step and returns the path as `ResolvedSet`. It lives in its own script for the
 > same reason `Test-ReleaseVersion.ps1` does — **so the suite can drive it** —
 > and `ReleaseScriptTests` runs it both ways, including that **a missing file
-> refuses rather than writing a partial**, because a manifest holding six of
-> seven reads exactly like a complete one a year later.
+> refuses rather than writing a partial**, because a manifest holding seven of
+> eight reads exactly like a complete one a year later. *(Seven of eight since
+> 2026-09-18, previously six of seven.)*
 
 ### 12. The rollback path is publishable
 

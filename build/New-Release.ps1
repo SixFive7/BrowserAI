@@ -200,7 +200,8 @@ $downloadId = 'BrowserAI'
 # with three elements replaced -- so what the arm exercises is the same code path
 # under names that cannot collide with anybody's install. Nothing published ever
 # carries it: it is packed into a directory of its own and the resolved-set
-# manifest names the seven files it always named.
+# manifest names the eight files it always named. *(Eight since 2026-09-18,
+# previously seven.)*
 #
 # *Corrected 2026-09-16 (previously "The id is the ONLY delta ... with two
 # elements replaced")* -- it was not the only one, and the half that was missing
