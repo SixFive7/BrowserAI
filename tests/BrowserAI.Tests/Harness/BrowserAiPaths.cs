@@ -192,7 +192,24 @@ internal static class BrowserAiPaths
     public static IReadOnlyList<string> SharedComponentDirectoriesIn(string browsersRoot) =>
         [.. ProvisionedBrowsers.SharedComponents.Select(component => Path.Combine(browsersRoot, $"{component}-{RevisionOf(component)}"))];
 
-    private static string RevisionOf(string browser)
+    /// <summary>
+    /// What the committed <c>browsers.json</c> snapshot says one component's
+    /// revision is.
+    /// </summary>
+    /// <remarks>
+    /// <b>Public from 2026-09-18, so that the suite has one reader of that
+    /// snapshot rather than two.</b> It was private while every caller was a
+    /// path in this type; <c>ThirdPartyNoticeTests</c> asks the same question
+    /// about a number in a document, and a second reader would be a second place
+    /// the snapshot's shape is known. The file is regenerated from the resolved
+    /// payload and diffed by <c>build/UpstreamSnapshots.targets</c> on every
+    /// build, which is what makes it an answer about today rather than about
+    /// whenever it was committed.
+    /// </remarks>
+    /// <param name="browser">The component, as upstream names it.</param>
+    /// <returns>The revision, as a string, because that is how a directory spells it.</returns>
+    /// <exception cref="InvalidOperationException">The snapshot names no such component.</exception>
+    public static string RevisionOf(string browser)
     {
         using var snapshot = JsonDocument.Parse(File.ReadAllText(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "browsers.json")));

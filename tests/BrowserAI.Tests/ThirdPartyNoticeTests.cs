@@ -394,8 +394,212 @@ internal sealed class ThirdPartyNoticeTests
         await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
     }
 
+    /// <summary>
+    /// <c>README.md</c>'s third-party tables name every package the payload
+    /// ships and every family the product provisions, and every browser revision
+    /// they state is the one the committed <c>browsers.json</c> names today.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The same two omissions, one document across.</b>
+    /// <see cref="TheNoticesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned"/>
+    /// closed them in <c>THIRD-PARTY-NOTICES.txt</c> on 2026-09-18 and nothing
+    /// looked at the table in <c>README.md</c> that answers the same question for
+    /// a reader rather than for a recipient. That table still read <i>full
+    /// <c>chromium</c> 1237</i> against a payload that resolves 1245, still
+    /// carried a <c>chromium-headless-shell</c> row for a tree nothing has
+    /// provisioned since <c>--no-shell</c> on 2026-08-16, and still had no
+    /// Firefox row although Firefox has been a provisioned family since
+    /// 2026-08-19. <b>The file that ships was mechanised and the file that
+    /// explains it was not</b>, which is how one correction leaves half of itself
+    /// behind.
+    /// </para>
+    /// <para>
+    /// <b>Three sources, none of them typed here, and all three committed.</b>
+    /// The package half reads <c>build/payload/package-lock.json</c>, the family
+    /// half reads <see cref="ProvisionedBrowsers.Families"/>, and the revision
+    /// half reads <c>upstream-snapshots/browsers.json</c> through
+    /// <see cref="BrowserAiPaths.RevisionOf"/> — which
+    /// <c>build/UpstreamSnapshots.targets</c> regenerates from the resolved
+    /// payload and diffs on every build, so the snapshot and the payload cannot
+    /// drift apart without failing the build first. Being committed is what lets
+    /// this arm run whole on a clean clone, where the notices arm's path half
+    /// cannot.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A <c>previously "…"</c> span is cut out before the revisions are
+    /// read, and that exemption is the point rather than a concession.</b> A
+    /// correction stamp records what a cell used to say, and that clause is the
+    /// load-bearing half: it is what tells a reader who learned 1237 that the
+    /// number was reviewed and replaced rather than lost. Holding it to today's
+    /// manifest would demand the record be rewritten at every roll, which is the
+    /// opposite of what a stamp is for.
+    /// </para>
+    /// <para>
+    /// <b>A scan that matches nothing is indistinguishable from a table with
+    /// nothing wrong in it, so the positive control is inside the arm</b>: each
+    /// provisioned family must state a revision of its own in the downloads
+    /// table, which goes red if the pattern stops matching or if the
+    /// <c>previously</c> cut swallows a live cell. The shared components are held
+    /// to today's revision only if they state one, because what those rows are
+    /// about is where a licence file sits rather than which revision is current.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheReadmeTablesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned()
+    {
+        var section = ReadmeThirdPartySection();
+        var rows = DownloadsTableRows(section);
+        var packages = PayloadLockPackages();
+        var offences = new List<string>();
+
+        // Neither derivation may come back empty: a lock that parsed to nothing
+        // and a table that matched nothing each make every loop below vacuous,
+        // which is the failure mode a derived list has and a typed one does not.
+        await Assert.That(packages.Count).IsGreaterThan(2);
+        await Assert.That(rows.Count).IsGreaterThan(2);
+
+        // A whole-word match for the reason the notices arm gives: `playwright`
+        // is a substring of the two package ids that were never missing.
+        offences.AddRange(packages
+            .Where(package => !NamedInItsOwnRight(section, package))
+            .Select(package => $"the payload ships '{package}' and README.md's third-party components section does not name it"));
+
+        // The row, not the name. Every family is already named in the prose
+        // above the table and in the trademark paragraph below it; what a reader
+        // cannot find without a row of its own is where that family's terms are.
+        offences.AddRange(ProvisionedBrowsers.Families
+            .Where(family => !rows.Any(row => NamedInItsOwnRight(FirstCell(row), family)))
+            .Select(family => $"'{family}' is a provisioned family and README.md's '{DownloadsHeading}' table has no row of its own naming it"));
+
+        foreach (var component in (string[])[.. ProvisionedBrowsers.Families, .. ProvisionedBrowsers.SharedComponents])
+        {
+            var expected = BrowserAiPaths.RevisionOf(component);
+            var stated = RevisionsStatedFor(rows, component);
+
+            offences.AddRange(stated
+                .Where(revision => !string.Equals(revision, expected, StringComparison.Ordinal))
+                .Select(revision => $"README.md's '{DownloadsHeading}' table says '{component} {revision}' and the committed browsers.json snapshot says {expected}"));
+
+            if (stated.Count is 0 && ProvisionedBrowsers.Families.Contains(component))
+            {
+                offences.Add(
+                    $"README.md's '{DownloadsHeading}' table states no revision beside the provisioned family '{component}', so nothing here can tell whether that row moved with the payload");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+    }
+
     /// <summary>The heading the provisioned-browser entries live under.</summary>
     private const string ProvisionedHeading = "Browsers provisioned on first run";
+
+    /// <summary>The heading <c>README.md</c>'s third-party tables live under.</summary>
+    private const string ThirdPartyHeading = "### Third-party components";
+
+    /// <summary>The sentence the downloads table sits under.</summary>
+    /// <remarks>
+    /// <b>The stable head of it, not the whole line.</b> The sentence ends in a
+    /// clause about obligations that is free to be reworded; the subject is what
+    /// identifies the table.
+    /// </remarks>
+    private const string DownloadsHeading = "What the user's machine downloads";
+
+    /// <summary>
+    /// A correction stamp's record of what a cell used to say, which is exempt
+    /// from the revision check for the reason
+    /// <see cref="TheReadmeTablesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned"/>
+    /// states.
+    /// </summary>
+    private static readonly Regex PreviouslyClause = new(@"previously[^""\n]{0,8}""[^""]*""", RegexOptions.IgnoreCase);
+
+    /// <summary><c>README.md</c>'s third-party components section, as text.</summary>
+    /// <remarks>
+    /// <b>Anchored on the heading and refused when it is gone</b>, rather than
+    /// scanning the whole file: every number outside this section is either a
+    /// measurement of something else or a <c>previously</c> clause recording an
+    /// old one, and a scan that read those would demand the history be rewritten.
+    /// </remarks>
+    /// <returns>The section body, from the heading to the next one.</returns>
+    /// <exception cref="InvalidOperationException">The heading is gone.</exception>
+    private static string ReadmeThirdPartySection()
+    {
+        var readme = File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "README.md"));
+        var at = readme.IndexOf(ThirdPartyHeading, StringComparison.Ordinal);
+
+        if (at < 0)
+        {
+            throw new InvalidOperationException(
+                $"README.md carries no '{ThirdPartyHeading}' heading, which is this check's anchor: the section was renamed or moved and nothing here can say what its tables claim. Re-anchor this test on the new heading rather than deleting it.");
+        }
+
+        var body = readme[(at + ThirdPartyHeading.Length)..];
+        var next = Regex.Match(body, "(?m)^#{1,3} ");
+
+        return next.Success ? body[..next.Index] : body;
+    }
+
+    /// <summary>
+    /// The rows of the <i>what the user's machine downloads</i> table.
+    /// </summary>
+    /// <remarks>
+    /// <b>The contiguous run of table lines under the sentence</b>, the way
+    /// <c>HazardIndex.TableLines</c> walks its own: a table is where it is
+    /// because of what it sits under, and taking every line in the section that
+    /// starts with a pipe would fold in the redistribution table above it, whose
+    /// rows make the opposite claim.
+    /// </remarks>
+    /// <param name="section">The third-party components section.</param>
+    /// <returns>The rows, the alignment rule excluded.</returns>
+    /// <exception cref="InvalidOperationException">The sentence is gone.</exception>
+    private static IReadOnlyList<string> DownloadsTableRows(string section)
+    {
+        var at = section.IndexOf(DownloadsHeading, StringComparison.Ordinal);
+
+        if (at < 0)
+        {
+            throw new InvalidOperationException(
+                $"README.md's third-party section carries no '{DownloadsHeading}' sentence, which is the anchor its table is found by. Re-anchor this test on the new wording rather than deleting it.");
+        }
+
+        return
+        [
+            .. section[at..]
+                .Split('\n')
+                .SkipWhile(line => !line.StartsWith('|'))
+                .TakeWhile(line => line.StartsWith('|'))
+                .Where(line => !Regex.IsMatch(line, @"^\|[\s|:-]*$")),
+        ];
+    }
+
+    /// <summary>A row's first cell, which is the component it is about.</summary>
+    /// <param name="row">The table row.</param>
+    /// <returns>The first cell, or the row when it has none.</returns>
+    private static string FirstCell(string row) =>
+        row.Split('|', StringSplitOptions.RemoveEmptyEntries) is [var first, ..] ? first : row;
+
+    /// <summary>
+    /// Every revision the downloads table states beside a component's name.
+    /// </summary>
+    /// <remarks>
+    /// <b>Adjacency is the whole definition.</b> A number elsewhere in a cell is
+    /// a file size, a line count or a year, and the one thing that reads as
+    /// <i>this is the revision that ships</i> is a number written next to the
+    /// component it belongs to.
+    /// </remarks>
+    /// <param name="rows">The table rows.</param>
+    /// <param name="component">The component, as upstream names it.</param>
+    /// <returns>The revisions stated, in the order they appear.</returns>
+    private static IReadOnlyList<string> RevisionsStatedFor(IEnumerable<string> rows, string component) =>
+    [
+        .. rows
+            .Select(row => PreviouslyClause.Replace(row, " "))
+            .SelectMany(row => Regex.Matches(
+                row,
+                $@"(?<![\w@./\\-]){Regex.Escape(component)}(?![\w./\\-])[^\w\n]{{0,6}}(\d{{3,5}})"))
+            .Select(match => match.Groups[1].Value),
+    ];
 
     /// <summary>
     /// The payload packages whose resolved version the notices state, and which

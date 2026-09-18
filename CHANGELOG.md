@@ -40,6 +40,44 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **The README licensing tables name Firefox, the third Playwright package, and today's revision.**
+  Yesterday's notices correction closed two omissions in the file that ships and left the
+  table in `README.md` that says the same things standing, one document across. It read
+  "full chromium 1237" against a payload that resolves 1245, carried a
+  `chromium-headless-shell` row for a tree nothing has provisioned since `--no-shell` on
+  2026-08-16, and had no Firefox row at all although Firefox has been a provisioned family
+  since 2026-08-19.
+
+  Every cell is corrected by addition from the licensing re-read of 2026-09-17 rather than
+  by reasoning from it. The Chromium row states 1245 and says the reading was re-taken
+  there -- the only licence-adjacent file among that tree's 308 is ABOUT, 257 bytes. A
+  Firefox row sits beside it: MPL-2.0 headline with Apache and BSD terms besides, no
+  standalone licence file in 61 files, the terms inside `omni.ja` as `license.html`, which
+  is what about:license renders. The headless-shell row is struck with the reason, and its
+  1237 is deliberately left where it is, because a number about a tree nobody has must not
+  be rolled as though somebody did. The redistribution table above them names `playwright`,
+  and the sentence saying upstream publishes no NOTICE goes with it: two of the three ship
+  one, 254 bytes, byte for byte each other's.
+
+  The mechanised half reads the same sources the notices arm does and one more. A new arm
+  holds every package in `build/payload/package-lock.json` to being named somewhere in the
+  section, every family in `ProvisionedBrowsers.Families` to a row of its own, and every
+  revision a row states to what the committed `upstream-snapshots/browsers.json` says --
+  which the build regenerates from the resolved payload, so all three sources are committed
+  and the whole arm runs on a clean clone. It was watched red on all four of today's
+  defects at once: "the payload ships 'playwright' and README.md's third-party components
+  section does not name it", "'firefox' is a provisioned family and README.md's 'What the
+  user's machine downloads' table has no row of its own naming it", "README.md's ... table
+  says 'chromium 1237' and the committed browsers.json snapshot says 1245", and the fourth
+  saying no revision stands beside firefox at all.
+
+  What it cannot read is the prose inside a cell, and the README says so rather than
+  implying it: whether the terms a row names are the terms in that tree is a measurement,
+  dated in the row that states it and re-taken by row 26 of the re-verification index. A
+  correction stamp's `previously "..."` span is cut out before the revisions are read,
+  because holding a record of what a cell used to say to today's manifest would demand the
+  record be rewritten at every roll, which is the opposite of what a stamp is for.
+
 - 📝 **The session ledger is snapshotted again, and a re-snapshot is not an edit.**
   `docs/ledger/2026-09-15-release-session.md` was taken on the 16th and the live copy has
   grown by 118 lines since: two more re-ships, the `playwright-core` pull-forward and its
