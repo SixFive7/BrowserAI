@@ -40,6 +40,30 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **The session ledger is snapshotted again, and a re-snapshot is not an edit.**
+  `docs/ledger/2026-09-15-release-session.md` was taken on the 16th and the live copy has
+  grown by 118 lines since: two more re-ships, the `playwright-core` pull-forward and its
+  written exit, the re-verification batch against chromium 1245 and firefox 1548, and the
+  follow-ups through Q215. The body is replaced verbatim with `.work/STATE.md` and the
+  two-line header now names the commit it was taken at.
+
+  The ledger README says nothing here is edited after the snapshot, and that sentence read
+  as forbidding this. It does not, and it says so now: the rule is about the copy, and
+  taking the copy again from a file that has only grown replaces a shorter prefix with a
+  longer whole. That was checked rather than trusted -- the previous body is a byte-exact
+  prefix of the new one, 61,187 bytes shorter, with nothing above the new material touched.
+  Nothing enforces it and the README says that too: a sealed prefix would forbid the
+  re-snapshot rather than the edit, which is why a ledger sits outside the append-only
+  record test.
+
+  Scanned for credentials before it landed, with a positive control first, as the 16th did:
+  seven shapes -- GitHub PAT, AWS access key, private-key header, bearer token, generic
+  secret assignment, Slack token and any e-mail address at all. The control, a planted
+  example of each, matched 7 of 7. The ledger matched 0 of 7. The first attempt at that
+  scan matched only 4 of 7 on the control, because three of the patterns begin with a
+  hyphen or use PCRE inline flags and grep read them as options: a pattern that can never
+  match reports clean, which is the whole reason the control is run first.
+
 - 🗑️ **The idle-CPU axis is retired as not established, and the other three are unchanged.**
   Yesterday's re-take withdrew the number and left what to do about the axis open. It is
   closed now: idle CPU is not a row of the Firefox-against-Chromium cost ratios any more,

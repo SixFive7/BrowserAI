@@ -15,6 +15,18 @@ doing. A ledger that disagrees with the tree is telling you something about the
 day it was written. Where it was wrong, the correction belongs in the document
 that owns the claim, with a `previously` clause, and not here.
 
+⚠️ **A ledger whose live copy is still being appended to may be RE-SNAPSHOTTED,
+and that is not an edit** — *added 2026-09-18, when the first one was*. The rule
+above is about the copy: nothing already here may be rewritten. Taking the copy
+again, from a live file that has only grown, replaces a shorter prefix with a
+longer whole, and the header says which commit each snapshot was taken at.
+**Check it rather than trusting it**: the previous body must be a byte-exact
+prefix of the new one, and on the 2026-09-18 re-snapshot it was, growing by
+61,187 bytes and 118 lines with nothing above them touched. **Nothing enforces
+this** — `AppendOnlyRecordTests` seals `docs/reviews/` and released `CHANGELOG`
+sections, and a ledger is deliberately outside it, because a sealed prefix would
+forbid the re-snapshot rather than the edit.
+
 ⚠️ **A ledger is not a decision of record.** [`DECISIONS.md`](../../DECISIONS.md)
 is the charter; [`HAZARDS.md`](../../HAZARDS.md) is what is known to be
 dangerous; [`kb/`](../../kb/README.md) is what has been measured. If a ledger is
@@ -23,4 +35,4 @@ to whichever of those three owns it. The ledger then records that it was moved.
 
 | Ledger | Session |
 |---|---|
-| [`2026-09-15-release-session.md`](2026-09-15-release-session.md) | The 2026-09-15/16 release session: the 1.0.0 re-cut, the icon choice (Q196), the release-body shape (Q197), the first-run and installer measurements, the machine sweep, and the retirement of the scratch directory |
+| [`2026-09-15-release-session.md`](2026-09-15-release-session.md) | The 2026-09-15 session and every batch since, snapshotted 2026-09-16 and re-snapshotted 2026-09-18: the 1.0.0 re-cut, the icon choice (Q196), the release-body shape (Q197), the first-run and installer measurements, the machine sweep, the retirement of the scratch directory — and then the second and third re-ships, the `playwright-core` pull-forward and its written exit (Q210), the re-verification batch taken against chromium 1245 and firefox 1548, and the follow-ups through Q215. *The name is the day it was opened and is left alone: it is what every link to it says.* |
