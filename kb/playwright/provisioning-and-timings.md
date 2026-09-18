@@ -1146,8 +1146,14 @@ session, with
 [`docs/probes/2026-09-17-cost-ratios`](../../docs/probes/2026-09-17-cost-ratios/README.md)
 as the rig. [Re-verification row 34](../re-verification.md) carries the debt."
 
-**1.19× RAM, 4.37× first navigate, 2.76× profile disk — and idle CPU has no sign
-at this sample size.** Measured 2026-09-17 against Chromium as the unit, **six
+**1.19× RAM, 4.37× first navigate, 2.76× profile disk — and idle CPU is NOT
+ESTABLISHED and is no longer an axis of this section.**
+*Corrected 2026-09-18 (previously "and idle CPU has no sign at this sample
+size")* — that sentence left the axis open and this one closes it: **the axis is
+retired as unmeasurable on a developer machine** (Q215 = a) and is
+[a row in what this project has not established](../not-established.md) rather
+than a ratio in the table below. **The three that remain are measured and
+unchanged.** Measured 2026-09-17 against Chromium as the unit, **six
 rounds per family**, through the product's own `browserai_init` →
 `browser_navigate` against a local origin, at chromium **1245** / 154.0.8037.0
 and firefox **1548** / 155.0 under `playwright-core` 1.64.0-alpha-2026-09-17.
@@ -1159,7 +1165,7 @@ the observed range beside each.
 | Resident set, whole browser tree | **499.2** MB (485.8–505.9) | **593.7** MB (591.4–595.8) | **1.19×** (1.17–1.22) |
 | First navigate, cold — includes the launch | **500** ms (490–534) | **2,184** ms (2,084–2,339) | **4.37×** (4.00–4.68) |
 | Second navigate, browser already up | **72** ms (64–82) | **49** ms (42–54) | **0.68×** (0.58–0.84) |
-| Idle CPU over 30 s, no page activity | **478** ms (360–955) | **626** ms (266–781) | **1.31×** (0.59–2.17) — **not a sign**, see below |
+| ~~Idle CPU over 30 s, no page activity~~ | **478** ms (360–955) | **626** ms (266–781) | ~~**1.31×** (0.59–2.17)~~ — **RETIRED 2026-09-18, NOT ESTABLISHED.** The two columns stand as readings; the ratio is struck because it measures the rig. See below |
 | Profile directory on disk | **13,207,388 B** (181 files) | **36,448,380 B** (66 files) | **2.76×** on all six |
 | Processes under the browsers root | 8 · 8 · 9 · 9 · 9 · 9 | 7 every round | **0.78×** |
 
@@ -1216,10 +1222,33 @@ all three together: **Firefox does not burn an order of magnitude more idle CPU
 than Chromium.** Which of the two burns more, if either, is **not established**,
 and the reason is the instrument — `TotalProcessorTime` differenced across one
 30-second window, on a machine with other things on it — rather than the round
-count. ⚠️ **What to do about that is not decided here**: a longer window, CPU
-sampled rather than differenced, or the axis retired as unmeasurable on a
-developer machine are three different answers, and choosing between them belongs
-to whoever wants the number.
+count. ✅ **RETIRED 2026-09-18, and of those three answers it is the third.**
+*Corrected 2026-09-18 (previously "⚠️ **What to do about that is not decided
+here**: a longer window, CPU sampled rather than differenced, or the axis
+retired as unmeasurable on a developer machine are three different answers, and
+choosing between them belongs to whoever wants the number.")* — the axis is
+**not established** (Q215 = a) and is listed as such in
+[what this project has not established](../not-established.md).
+
+**Nothing consumes it, and that was checked rather than assumed.** These four
+ratios were the whole of the evidence behind Chromium being the default family
+until 2026-09-17, when that decision was re-grounded on the maintainer's own
+reason (Q206) and stopped resting on a measurement at all. A grep over the
+repository for the axis finds it in this article, in
+[row 34](../re-verification.md), in the changelog entries that record the
+readings, in the rig's own README and in two sentences that ARGUE from it —
+[the charter's browser-families row](../../DECISIONS.md) and `SessionManager`'s
+doc comment, both of which said *idle CPU reversed sign* while explaining why
+the cost argument no longer carries the default. Both are corrected by addition:
+the conclusion is unchanged and the reason for it is now the sign reversals
+themselves rather than either direction being true.
+
+**What survives is one sentence, and it is all three measurements together
+support: Firefox does not burn an order of magnitude more idle CPU than
+Chromium.** The recorded ~24× is refuted by both later readings. Which of the
+two burns more, if either, is not established, and **re-opening it needs a
+different instrument rather than more rounds of this one** — a longer window, or
+CPU sampled rather than differenced, on a machine with nothing else running.
 
 ⚠️ **The ratio is the transferable half, and this pair of runs is evidence for
 that rather than an assertion of it.** Both families were 15–20% slower to first
@@ -1296,9 +1325,13 @@ decision rather than as a measurement. **Nothing here is retracted**: the
 measurements above stand, and what they no longer do is carry a choice.
 
 **To re-establish:** open one session per family through the product, drive the
-same navigation in each, and compare resident set, wall time to first paint,
-idle CPU over a fixed window with no page activity, and profile-directory size
-on disk. **Three rounds per family is the floor and six is what this section was
+same navigation in each, and compare resident set, wall time to first paint and
+profile-directory size on disk. *Corrected 2026-09-18 (previously "… compare resident
+set, wall time to first paint, idle CPU over a fixed window with no page
+activity, and profile-directory size on disk")* — **three axes, not four.** The
+rig still takes an idle-CPU reading and a re-run will print one; it is not a
+row of this section any more, for the reason above, and a reading printed is
+not an axis re-established. **Three rounds per family is the floor and six is what this section was
 last taken at** — *corrected 2026-09-17 (previously "**Three rounds per family
 minimum** — one pair cannot distinguish a ratio from an outlier, which is the
 defect the spread above exposes")*, which is still true and is no longer the

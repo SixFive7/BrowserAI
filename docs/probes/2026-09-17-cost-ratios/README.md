@@ -22,7 +22,14 @@ decision turned on them. Keeping the rig is the whole point of this directory.
   launches the browser, and a second one with the browser already up so the
   launch half of the first is visible;
 - **idle CPU** — `TotalProcessorTime` across a 30-second window with no page
-  activity at all;
+  activity at all. ⚠️ **This axis is RETIRED as not established, 2026-09-18
+  (Q215 = a), and the rig still prints it.** Added here rather than removed
+  because this directory is a record of what was run: two sign reversals across
+  three readings, distributions that overlap completely, and a control —
+  Chromium byte-identical across 1244 and 1245 — that moved **−41%** on this axis
+  while moving 0.9% on resident set. **A number this rig prints for it is not an
+  axis re-established**; see
+  [not-established](../../../kb/not-established.md);
 - **profile directory size** on disk, in bytes and files.
 
 `mcp.js` is the same minimal stdio JSON-RPC client the resume rig uses.

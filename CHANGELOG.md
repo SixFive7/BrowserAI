@@ -40,6 +40,34 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🗑️ **The idle-CPU axis is retired as not established, and the other three are unchanged.**
+  Yesterday's re-take withdrew the number and left what to do about the axis open. It is
+  closed now: idle CPU is not a row of the Firefox-against-Chromium cost ratios any more,
+  and it is a row in what this project has not established instead. The evidence is four
+  things. Three readings, two sign reversals, the second inside a single day: about 24
+  times in August, 0.77 times on 2026-09-16, 1.31 times on 2026-09-17. Distributions that
+  overlap completely, Chromium 360 to 955 ms against Firefox 266 to 781, with Firefox's
+  lowest round below Chromium's lowest and Chromium's highest above Firefox's highest. A
+  control the run carried and nothing else on this axis has ever had: Chromium is
+  byte-identical across revisions 1244 and 1245, so its own column between the two runs
+  measures the rig, and it moved minus 41 per cent there against 0.9 per cent on resident
+  set and 0.0006 on profile disk. An axis whose control moves 41 per cent cannot resolve a
+  31 per cent difference, so more rounds of the same instrument will not settle it.
+
+  One thing is established and is kept rather than retired: Firefox does not burn an order
+  of magnitude more idle CPU than Chromium, which is what all three readings agree on and
+  what refutes the recorded 24 times. Re-opening the question needs a different instrument
+  -- a longer window, or CPU sampled rather than differenced, on a machine with nothing
+  else running -- and not another six rounds.
+
+  Nothing consumes the axis, and that was checked rather than assumed. The four ratios
+  stopped being the ground under the default browser family on 2026-09-17, when that
+  decision was re-grounded on the maintainer's own reason. A grep found two sentences that
+  still argued from the sign reversal, in the charter's browser-families row and in
+  SessionManager's doc comment, and both are corrected by addition: each said idle CPU
+  reversed sign while explaining why the cost argument no longer carries the default, and
+  each now rests on the three axes that are measured. The conclusion does not move.
+
 - 📝 **The third-party notices name the third Playwright package and both browsers we provision.**
   `THIRD-PARTY-NOTICES.txt` said "the two Playwright packages" while three ship. `playwright`
   is `@playwright/mcp`'s other exact dependency and has been in the payload since the first

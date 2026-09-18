@@ -57,8 +57,15 @@ internal sealed class SessionManager : IAsyncDisposable
     /// widely used"</i>.</b> A decision rather than a measurement, and written
     /// down as one — the four Firefox-against-Chromium cost ratios that used to
     /// be the only ground on offer were re-measured on 2026-09-16 and three of
-    /// them collapsed by between 1.7× and 7× while idle CPU reversed sign, so
-    /// that argument no longer carries this choice. See <c>DECISIONS.md</c>.
+    /// them collapsed by between 1.7× and 7×, so that argument no longer carries
+    /// this choice. See <c>DECISIONS.md</c>.
+    /// <i>Corrected 2026-09-18 (previously "…collapsed by between 1.7× and 7×
+    /// while idle CPU reversed sign, so that argument…")</i> — the fourth axis
+    /// reversed sign <b>twice</b>, the second time inside a single day against a
+    /// Chromium binary identical to the byte, and it is
+    /// <b>retired as not established</b> rather than counted in either
+    /// direction. Nothing here changes with it: the conclusion rested on the
+    /// three that are measured.
     /// </para>
     /// <para>
     /// <b>A default at all, where <c>browserai_reinstall_browser</c>'s
