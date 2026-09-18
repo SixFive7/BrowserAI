@@ -1237,8 +1237,16 @@ item is still about the package this run publishes. Verified against
 
 - **Node's full `LICENSE`** — it aggregates OpenSSL, ICU, V8, zlib and c-ares
   terms. *"A single `node.exe`, nothing else"* drops it. **Not optional.**
-- The vendored `node_modules` tree **intact**, which ships `@playwright/mcp`'s
-  and `playwright-core`'s Apache-2.0 `LICENSE` and satisfies §4.
+- The vendored `node_modules` tree **intact**, which ships `@playwright/mcp`'s,
+  `playwright`'s and `playwright-core`'s Apache-2.0 `LICENSE` and satisfies §4.
+  ⚠️ ***Corrected 2026-09-18 (previously "`@playwright/mcp`'s and
+  `playwright-core`'s")*** — **three Playwright packages ship and two documents
+  said two.** `playwright` is `@playwright/mcp`'s other exact dependency and has
+  been in `build/payload/package-lock.json` since the first payload build; its
+  terms and `NOTICE` are byte-identical to `playwright-core`'s, so what was
+  missing was a name. `ThirdPartyNoticeTests` now enumerates the payload lock
+  rather than a typed list, so a fourth package is a red build
+  ([row 26](kb/re-verification.md)).
 - Velopack's MIT notice.
 - **`ModelContextProtocol`'s and `ModelContextProtocol.Core`'s Apache-2.0
   licence, whole.** §4(a) requires a redistributor to give every recipient a
@@ -1281,7 +1289,14 @@ is never copied to a publish output — and all four ship in
 
 Nothing the user's machine downloads on first run creates an obligation for us —
 we ship no copy of it. That is not a side benefit of first-run provisioning; it
-is the reason for it.
+is the reason for it. ⚠️ **That is an answer about what we owe and not an answer
+about what somebody has installed**, and from 2026-09-18 the notices carry both:
+a *Browsers provisioned on first run* block names each family in
+`ProvisionedBrowsers.Families`, what it is, where it is fetched to and where its
+own terms live — **Firefox's are inside `omni.ja` as `license.html`, because
+there is no standalone licence file in that tree at all.** Firefox has been a
+provisioned family since 2026-08-19 and the notices named it only in a list of
+things no copy of which ships.
 
 **Evidence:** the paths of each notice file inside the packaged artifact.
 

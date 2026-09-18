@@ -40,6 +40,33 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **The third-party notices name the third Playwright package and both browsers we provision.**
+  `THIRD-PARTY-NOTICES.txt` said "the two Playwright packages" while three ship. `playwright`
+  is `@playwright/mcp`'s other exact dependency and has been in the payload since the first
+  build of one; its LICENSE and NOTICE are byte for byte the same as `playwright-core`'s, so
+  what was missing was a name rather than a licence. It is in the table now with its three
+  paths, the prose says three, and the file states the resolved versions of `playwright` and
+  `playwright-core` because an npm override separated them -- both read back out of the
+  payload lock rather than typed, so a roll is red until this file has been read against the
+  tree it describes.
+
+  Firefox has been provisioned on demand since 2026-08-19 and the notices named it only in a
+  list of things no copy of which ships, which answers what we owe and does not answer what
+  somebody has just installed. A "Browsers provisioned on first run" block now names each
+  family, what it is, where it is fetched to, and where its own terms live: for Chromium the
+  ABOUT file pointing at Google's Chrome Terms of Service, and for Firefox the terms inside
+  `omni.ja` as `license.html`, because there is no standalone licence file in that tree at
+  all.
+
+  Neither omission was findable by anything that existed, and that is what actually changed.
+  The obligations were a list of paths somebody typed, so the list could only be wrong in the
+  direction of naming a path that is not there. The new arm enumerates
+  `build/payload/package-lock.json` and `ProvisionedBrowsers.Families` instead, so a fourth
+  package in the payload or a third browser family is a red build. It was watched red on
+  exactly the two omissions and the three paths under them: "the payload ships 'playwright'
+  and THIRD-PARTY-NOTICES.txt does not name it" and "'firefox' is a provisioned family and
+  THIRD-PARTY-NOTICES.txt has no entry for it".
+
 - 📦 **The release manifest records the pulled-forward dependency, and copies the file that pins it.**
   The manifest could already say a human had HELD an upstream BACK. Since 2026-09-17 the
   payload does the opposite: an npm overrides entry in `build/payload/package.json` ships

@@ -13,6 +13,9 @@ Where each notice lives inside the artifact
   playwright-core         payload\mcp\node_modules\playwright-core\LICENSE
                           payload\mcp\node_modules\playwright-core\NOTICE
                           payload\mcp\node_modules\playwright-core\ThirdPartyNotices.txt
+  playwright              payload\mcp\node_modules\playwright\LICENSE
+                          payload\mcp\node_modules\playwright\NOTICE
+                          payload\mcp\node_modules\playwright\ThirdPartyNotices.txt
   Velopack                this file, below
   ModelContextProtocol    this file, below
   Microsoft.Extensions.*  this file, below
@@ -20,7 +23,26 @@ Where each notice lives inside the artifact
 Node's LICENSE ships whole because it aggregates the OpenSSL, ICU, V8, zlib and
 c-ares terms; "a single node.exe, nothing else" drops them, and it is not
 optional. The vendored node_modules tree ships intact, which is what satisfies
-Apache-2.0 section 4 for the two Playwright packages.
+Apache-2.0 section 4 for the Playwright packages.
+
+3 Playwright packages ship in the payload, and this file said "the two
+Playwright packages" until 2026-09-18. @playwright/mcp is the wrapper this
+product runs, playwright-core is the engine it drives, and playwright is
+@playwright/mcp's other exact dependency, which has been in the payload since
+the first build of it. All three are Apache-2.0; playwright's LICENSE and NOTICE
+are byte for byte the same as playwright-core's, so what was missing was a name
+rather than a licence. The list above is now checked against
+build/payload/package-lock.json by ThirdPartyNoticeTests, so a fourth package
+arriving in the payload is a red build here rather than a name nobody noticed
+was missing.
+
+This payload resolved playwright 1.64.0-alpha-2026-09-14 and playwright-core
+1.64.0-alpha-2026-09-17. The two differ on purpose: an npm overrides entry in
+build/payload/package.json pins playwright-core one build ahead of the version
+@playwright/mcp declares for itself, and it is removed the day @playwright/mcp
+declares that version or a later one. Both numbers are asserted against
+build/payload/package-lock.json rather than typed, so a payload roll is a red
+build until this file has been read against the tree it describes.
 
 The last three have no file of their own anywhere in this artifact. They are
 NuGet packages compiled into BrowserAI.exe, and a NuGet package's licence stays
@@ -31,7 +53,39 @@ the licence to reach every recipient, so all three are reproduced below in full.
 
 No browser is redistributed. Chromium, Firefox, ffmpeg and winldd are downloaded
 to the user's machine on first run and no copy of any of them ships here. That
-is the reason for first-run provisioning rather than a side benefit of it.
+is the reason for first-run provisioning rather than a side benefit of it. What
+follows says what each one is and where its own terms live, because "no copy
+ships" answers what we owe and does not answer what somebody has just installed.
+
+Browsers provisioned on first run - downloaded, never redistributed
+-------------------------------------------------------------------
+
+  chromium   Google Chrome for Testing, fetched by playwright-core from
+             Playwright's CDN into
+             %LocalAppData%\BrowserAI\browsers\chromium-<revision>\.
+             It is Google-branded and carries no OSS licence file anywhere in
+             the tree: the one licence-adjacent file is ABOUT, which points at
+             Google's Chrome Terms of Service, and chrome.exe reports
+             CompanyName "Google LLC".
+
+  firefox    Mozilla Firefox as Playwright builds it, fetched by playwright-core
+             from the same CDN into
+             %LocalAppData%\BrowserAI\browsers\firefox-<revision>\.
+             MPL-2.0 headline, with Apache and BSD terms besides. There is no
+             standalone licence file in the tree at all: the terms travel INSIDE
+             the archive, as chrome/toolkit/content/global/license.html within
+             firefox\omni.ja and chrome/browser/content/browser/license.html
+             within firefox\browser\omni.ja, which is what about:license
+             renders.
+
+  Both families share ffmpeg and winldd, fetched into the same root.
+  ffmpeg-<revision> carries COPYING.LGPLv2.1 in its own directory; winldd ships
+  no licence file at all.
+
+  This block is checked against the product's own list of provisioned families
+  by ThirdPartyNoticeTests, so a third family is a red build rather than an
+  omission. Firefox has been provisioned on demand since 2026-08-19 and was
+  named here only from 2026-09-18.
 
 Trademarks
 ----------

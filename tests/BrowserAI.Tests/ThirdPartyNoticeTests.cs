@@ -3,6 +3,8 @@
 
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using BrowserAI.Runtime;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -58,9 +60,21 @@ internal sealed class ThirdPartyNoticeTests
     /// must be at, relative to the directory holding <c>BrowserAI.exe</c>.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Paths, not a count.</b> A count would go green on a file landing in
     /// the wrong place, and where these sit is what a licence obligation is
     /// about — a notice nobody can find beside the binary is not shipped.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A typed list can only be wrong in one direction, and 2026-09-17
+    /// found it wrong in the other.</b> It can notice a path that is not in the
+    /// artifact; it cannot notice a package that ships and is in nobody's list.
+    /// <c>playwright</c> had been in the payload since the first build of one
+    /// and is in neither this list nor the notices file. The three rows below
+    /// were added 2026-09-18, and the half that keeps it from happening again is
+    /// <see cref="TheNoticesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned"/>,
+    /// which reads the lock instead of a list.
+    /// </para>
     /// </remarks>
     private static readonly (string Obligation, string Path)[] Obligations =
     [
@@ -69,6 +83,9 @@ internal sealed class ThirdPartyNoticeTests
         ("playwright-core, Apache-2.0", @"payload\mcp\node_modules\playwright-core\LICENSE"),
         ("playwright-core, the NOTICE section 4(d) propagates", @"payload\mcp\node_modules\playwright-core\NOTICE"),
         ("playwright-core, its own third-party notices", @"payload\mcp\node_modules\playwright-core\ThirdPartyNotices.txt"),
+        ("playwright, Apache-2.0", @"payload\mcp\node_modules\playwright\LICENSE"),
+        ("playwright, the NOTICE section 4(d) propagates", @"payload\mcp\node_modules\playwright\NOTICE"),
+        ("playwright, its own third-party notices", @"payload\mcp\node_modules\playwright\ThirdPartyNotices.txt"),
         ("Velopack, ModelContextProtocol and Microsoft.Extensions.*, plus the trademark disclaimer", "THIRD-PARTY-NOTICES.txt"),
     ];
 
@@ -244,6 +261,222 @@ internal sealed class ThirdPartyNoticeTests
         await Assert.That(notices).Contains("Copyright (c) .NET Foundation and Contributors");
         await Assert.That(notices).Contains("Copyright (c) .NET Foundation. All rights reserved.");
         await Assert.That(notices).Contains("Copyright (c) Microsoft Corporation. All rights reserved.");
+    }
+
+    /// <summary>
+    /// The notices name every package the payload ships and every browser family
+    /// the product provisions.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Both halves were wrong on 2026-09-17 and neither was findable by
+    /// any test that existed.</b> <see cref="Obligations"/> is a list of paths
+    /// somebody typed, so it can only be wrong in the direction of naming a path
+    /// that is not there — it cannot notice a package that ships and is not
+    /// named at all. The
+    /// [licensing re-read](../../kb/packaging/dependencies.md#third-party-payload-as-shipped)
+    /// found two of those: <c>playwright</c> has been in
+    /// <c>build/payload/package-lock.json</c> since the first payload build
+    /// while the notices said <i>"the two Playwright packages"</i>, and Firefox
+    /// has been a provisioned family since 2026-08-19 while the notices named it
+    /// only in a list of things no copy of which ships.
+    /// </para>
+    /// <para>
+    /// <b>Enumerated from two sources that move on their own, which is the point
+    /// of writing it this way.</b> The payload half reads the committed lock, so
+    /// it runs on a clean clone and a package arriving on a later roll is a red
+    /// build here rather than a name nobody noticed was missing. The browser
+    /// half reads <c>ProvisionedBrowsers.Families</c>, which is the product's own
+    /// list and the thing a third family would be added to.
+    /// </para>
+    /// <para>
+    /// <b>The path half needs an assembled payload and the naming half does
+    /// not</b>, so the payload's absence is recorded rather than skipped: an arm
+    /// that threw away the half not needing a payload would cover less on a
+    /// clean clone than a hand-written list did.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheNoticesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned()
+    {
+        var notices = await File.ReadAllTextAsync(NoticesFile);
+        var packages = PayloadLockPackages();
+        var offences = new List<string>();
+
+        // ⚠️ Read against a whitespace-flattened copy where a needle spans two
+        // words, because this file is hard-wrapped prose: `playwright-core
+        // 1.64.0-alpha-2026-09-17` is one string to a reader and two lines to a
+        // text editor, and a needle that a rewrap can break fails on the layout
+        // rather than on the claim. Found the same afternoon it was written.
+        var flattened = Regex.Replace(notices, @"\s+", " ");
+
+        // Not vacuous: a lock that parsed to nothing would make every loop below
+        // pass, which is the failure mode a derived list has.
+        await Assert.That(packages.Count).IsGreaterThan(2);
+
+        // ⚠️ A WHOLE-WORD MATCH, and a plain Contains would have passed on the
+        // very omission this arm was written for: `playwright` is a substring of
+        // both `@playwright/mcp` and `playwright-core`, so a file naming neither
+        // of the other two would still "name" it.
+        offences.AddRange(packages
+            .Where(package => !NamedInItsOwnRight(notices, package))
+            .Select(package => $"the payload ships '{package}' and THIRD-PARTY-NOTICES.txt does not name it"));
+
+        // And the count the prose states, so "the two Playwright packages"
+        // cannot survive a third arriving.
+        if (!flattened.Contains($"{packages.Count} Playwright packages", StringComparison.Ordinal))
+        {
+            offences.Add($"the payload ships {packages.Count} Playwright packages and the notices do not say so");
+        }
+
+        // ⚠️ EVERY VERSION THIS FILE STATES ABOUT A PAYLOAD PACKAGE IS READ BACK
+        // OUT OF THE LOCK. It states two, and it states them because they
+        // DISAGREE: an npm override pins `playwright-core` one build ahead of
+        // what `@playwright/mcp` declares, so a reader who sees two Playwright
+        // versions in one payload would otherwise have no way to tell a pin from
+        // a mistake. A number in this file that nothing checks is a number that
+        // goes stale silently, which is the argument StampedPackages already
+        // won for the NuGet half.
+        foreach (var package in StampedPayloadPackages)
+        {
+            var resolved = ResolvedVersions.FromPayloadLock(package);
+
+            await Assert.That(resolved).IsNotNull();
+
+            if (!flattened.Contains($"{package} {resolved}", StringComparison.Ordinal))
+            {
+                offences.Add($"the payload resolved {package} {resolved} and the notices do not say so");
+            }
+        }
+
+        // Every family the product will provision on demand gets an entry of its
+        // own, saying what is downloaded and where that thing's terms are. The
+        // bare NAME is not enough and was never the gap: Firefox has been in a
+        // list of things no copy of which ships since before it was a family,
+        // and a reader could still not find its licence from that sentence.
+        var provisioned = ProvisionedBrowsers.Families
+            .Where(family => !EntryFor(notices, family))
+            .Select(family => $"'{family}' is a provisioned family and THIRD-PARTY-NOTICES.txt has no entry for it under '{ProvisionedHeading}'");
+
+        offences.AddRange(provisioned);
+
+        if (!SuiteEnvironment.HasRepositoryPayload())
+        {
+            await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+            return;
+        }
+
+        // The path half. Every package that carries one of these files in the
+        // assembled payload must have that path in the notices, at the spelling
+        // a reader would use to find it beside the binary.
+        foreach (var package in packages)
+        {
+            var directory = Path.Combine(
+                RepositoryPayload.Layout.Root, "mcp", "node_modules", package.Replace('/', Path.DirectorySeparatorChar));
+
+            foreach (var file in (string[])["LICENSE", "NOTICE", "ThirdPartyNotices.txt"])
+            {
+                if (!File.Exists(Path.Combine(directory, file)))
+                {
+                    continue;
+                }
+
+                var shipped = $@"payload\mcp\node_modules\{package.Replace('/', '\\')}\{file}";
+
+                if (!notices.Contains(shipped, StringComparison.Ordinal))
+                {
+                    offences.Add($"'{shipped}' is in the payload and the notices do not point at it");
+                }
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+    }
+
+    /// <summary>The heading the provisioned-browser entries live under.</summary>
+    private const string ProvisionedHeading = "Browsers provisioned on first run";
+
+    /// <summary>
+    /// The payload packages whose resolved version the notices state, and which
+    /// must therefore state the version the payload actually resolved.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two, because two disagree.</b> The notices do not stamp a version on
+    /// every package they name — the obligation is about the path a licence sits
+    /// at, not about a number — but they do stamp the pair an npm override
+    /// separated, because an unexplained pair of Playwright versions in one
+    /// payload reads as a mistake.
+    /// </remarks>
+    private static readonly string[] StampedPayloadPackages = ["playwright", "playwright-core"];
+
+    /// <summary>
+    /// Whether the notices name a package as itself rather than as part of a
+    /// longer id.
+    /// </summary>
+    /// <param name="notices">The notices text.</param>
+    /// <param name="package">The package id.</param>
+    /// <returns>Whether it is named in its own right.</returns>
+    private static bool NamedInItsOwnRight(string notices, string package) =>
+        Regex.IsMatch(
+            notices,
+            $@"(?<![\w@./\\-]){Regex.Escape(package)}(?![\w./\\-])");
+
+    /// <summary>
+    /// Whether the provisioned-browsers block carries an entry for a family.
+    /// </summary>
+    /// <remarks>
+    /// <b>Scoped to the block rather than to the file</b>, because every family
+    /// is already named elsewhere — in the trademark disclaimer, and in the
+    /// sentence saying no copy of any browser ships. What has to exist is the
+    /// entry that says where that family's terms are, and only the block can
+    /// answer that.
+    /// </remarks>
+    /// <param name="notices">The notices text.</param>
+    /// <param name="family">The family, as upstream names it.</param>
+    /// <returns>Whether the block has an entry for it.</returns>
+    private static bool EntryFor(string notices, string family)
+    {
+        var at = notices.IndexOf(ProvisionedHeading, StringComparison.Ordinal);
+
+        if (at < 0)
+        {
+            return false;
+        }
+
+        var block = notices[at..];
+        var end = block.IndexOf("\nTrademarks", StringComparison.Ordinal);
+
+        return Regex.IsMatch(
+            end < 0 ? block : block[..end],
+            $@"(?m)^\s\s{Regex.Escape(family)}\s");
+    }
+
+    /// <summary>
+    /// Every npm package the payload ships, read from the committed lock.
+    /// </summary>
+    /// <remarks>
+    /// <b>The lock rather than the assembled tree</b>, for the reason
+    /// <see cref="ResolvedVersions"/> gives: the lock is committed, so this list
+    /// is the same on a clean clone as on a machine that has built a payload,
+    /// and a test that read the tree would go quiet exactly when nobody had
+    /// assembled one.
+    /// </remarks>
+    /// <returns>The package ids, in order.</returns>
+    private static IReadOnlyList<string> PayloadLockPackages()
+    {
+        var path = Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "package-lock.json");
+
+        using var lockFile = JsonDocument.Parse(File.ReadAllText(path));
+
+        return
+        [
+            .. lockFile.RootElement.GetProperty("packages").EnumerateObject()
+                .Select(entry => entry.Name)
+                .Where(name => name.StartsWith("node_modules/", StringComparison.Ordinal))
+                .Select(name => name["node_modules/".Length..])
+                .Order(StringComparer.Ordinal),
+        ];
     }
 
     /// <summary>
