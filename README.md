@@ -233,7 +233,26 @@ is what `gh release view v1.0.0` says. Nothing enforces this sentence — the ta
 `git tag --list` says, the release is what `gh release view v1.0.0` says, and the
 installed base is still what a person knows.
 
-762 executed test cases, 0 failed, 0 skipped — measured from the **six-run release gate** of 2026-09-17: three full `dotnet test` runs from PowerShell forcing `C:\` and three from Git Bash forcing `c:\`, all six `FULL RUN`, all six `release run YES`, and all six `first-run bytes CDN` (*previously "761"* from the two-shell gate earlier the same day, *"755"*, *"750"* and *"747"* earlier the same day, *"741"* from the six-run release gate of 2026-09-16, *"737"*, *"720"*, *"706"*, *"685"*, *"676"* and "675" earlier the same day, "671" earlier still, "652", "651", "650", "647", "644", "643", "644", "641", "640", "637", "626", "624", "613", "604", "634", "648", "625", "622", "618", "614", "603", "601", "596", "593", "589", "585", "582", "576", "573", "571", "551", "548", "532", "531", "530", "514", "505", "506", "500", "501", "498", "497", "495", "493", "491", "478", "476", "461", "458", "436" and "419" before that; re-measured each time rather than adjusted). **The +1 is a read-only file, 2026-09-17.**
+764 executed test cases, 0 failed, 0 skipped — measured from the **two-shell gate** of 2026-09-18: one full `dotnet test` run from PowerShell forcing `C:\` and one from Git Bash forcing `c:\`, both `FULL RUN`, both with every capability `PRESENT` and no test on a degraded path (*previously "762"* from the six-run release gate of 2026-09-17, *"761"* from the two-shell gate earlier the same day, *"755"*, *"750"* and *"747"* earlier the same day, *"741"* from the six-run release gate of 2026-09-16, *"737"*, *"720"*, *"706"*, *"685"*, *"676"* and "675" earlier the same day, "671" earlier still, "652", "651", "650", "647", "644", "643", "644", "641", "640", "637", "626", "624", "613", "604", "634", "648", "625", "622", "618", "614", "603", "601", "596", "593", "589", "585", "582", "576", "573", "571", "551", "548", "532", "531", "530", "514", "505", "506", "500", "501", "498", "497", "495", "493", "491", "478", "476", "461", "458", "436" and "419" before that; re-measured each time rather than adjusted). **The +2 is the two omissions nothing could see, 2026-09-18.**
+`ReleaseScriptTests.APayloadWithNoOverrideInForceSaysSoRatherThanSayingNothing`
+is the control on the manifest's new `pulledForward` key — watched red at
+*"Expected to contain `"pulledForward": null`"*, and it differs from the
+populated arm in exactly one file, so a field derived from the payload lock
+instead of the payload manifest goes red there.
+`ThirdPartyNoticeTests.TheNoticesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned`
+is the one worth naming: it enumerates `build/payload/package-lock.json` and
+`ProvisionedBrowsers.Families` rather than a typed list, because a typed list
+can only be wrong in the direction of naming a path that is not there — it
+cannot notice a package that ships and is in nobody's list, which is exactly
+what `playwright` had been doing since the first payload build. It was watched
+red naming both omissions and the three paths under them, and **its first
+shape was wrong in a way the red showed**: a plain `Contains` passed on the
+very omission it was written for, because `playwright` is a substring of both
+`@playwright/mcp` and `playwright-core`. The existing eight-file manifest arm
+and three rows in `Obligations` moved with them and are not counted here,
+because neither is a new test case.
+
+**The +1 is a read-only file, 2026-09-17.**
 `TreeDeleteTests.AReadOnlyFileIsRemovedRatherThanReportedAsANodeThatWouldNotGo`,
 planted red and watched at `Assert.That(File.Exists(loose)).IsFalse()` —
 *"Expected to be false but found True"* — against the shape that found the
