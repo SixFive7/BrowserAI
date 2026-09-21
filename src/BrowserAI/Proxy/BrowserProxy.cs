@@ -449,7 +449,15 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        if (SessionToolSurface.IsAuthored(name))
+        // ⚠️ EVERY AUTHORED TOOL BUT ONE. `browserai_page_tool` is ours by name
+        // and a forward by behaviour -- it resolves a name against the session
+        // child's live tool list and hands the call to that child -- so it takes
+        // the routing path below rather than this one, and gets the session
+        // resolution, the provisioning and child-liveness refusals, the `why`
+        // requirement and the session log row that every forwarded call gets.
+        // Answering it here would mean a second copy of all of that, reachable
+        // only from an authored tool, which is how two of them end up disagreeing.
+        if (SessionToolSurface.IsAuthored(name) && !string.Equals(name, SessionToolSurface.PageTool, StringComparison.Ordinal))
         {
             var authored = await _sessions.InvokeAsync(name!, arguments, cancellationToken).ConfigureAwait(false);
 
@@ -531,7 +539,16 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // against the caller, who chooses the session directory and reads the
         // profile inside it as the same user. Change control lives at the
         // release gate, in the four golden snapshots.
-        var decision = _verdicts.Decide(tool);
+        //
+        // ⚠️ AND IT IS ASKED ABOUT UPSTREAM NAMES ONLY, since 2026-09-21. The one
+        // authored tool that reaches this point -- `browserai_page_tool` -- is
+        // judged by being in `SessionToolSurface.Names` at all, which is the same
+        // thing that advertises it and the same thing `tool-verdicts.json`'s
+        // `authored` rows are held identical to in both directions. Asking the
+        // door about it would deny it: `Decide` reads the `upstream` half, an
+        // `answer` row falls through to the no-verdict arm, and a tool of ours
+        // would refuse itself.
+        var decision = SessionToolSurface.IsAuthored(tool) ? ToolDecision.Allowed : _verdicts.Decide(tool);
 
         if (!decision.IsAllowed)
         {
@@ -668,6 +685,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // The child has never heard of `session` or `why`; BrowserAI added both.
         // Removed from a CLONE rather than from the caller's own node, because
         // the request object is the SDK's and may still be read after this.
+        var isPageTool = string.Equals(tool, SessionToolSurface.PageTool, StringComparison.Ordinal);
+
         var forwarded = request.Params?.DeepClone() as JsonObject;
 
         if (forwarded?["arguments"] is JsonObject cloned)
@@ -686,7 +705,69 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // whole period cannot have the browser closed underneath it.
             using var driving = live.Idle.Call();
 
-            var answer = await live.Child.AskAsync(request.Method, forwarded, cancellationToken).ConfigureAwait(false);
+            // ⚠️ THE ONE CALL WHOSE NAME IS NOT THE NAME THAT GOES OUT, and the
+            // rewrite is upstream's own: a page tool's wire name is `webmcp_` and
+            // a sanitised copy of the name the page gave it, which is the name
+            // the snapshot block printed and the caller read. `PageTools` owns
+            // the map and the resolution is re-done from the live tab on every
+            // call, because the same wire name is a different page's code after a
+            // navigation. Refusing here rather than forwarding is what keeps that
+            // hazard from firing.
+            PageToolResolution? resolved = null;
+
+            if (isPageTool)
+            {
+                resolved = await SessionManager.ResolvePageToolAsync(live, arguments, cancellationToken).ConfigureAwait(false);
+
+                if (resolved.Refusal is { } unresolved)
+                {
+                    outcome = SessionStore.Failed;
+                    payload = Encoding.UTF8.GetBytes(unresolved);
+
+                    await RefuseAsync(caller, request.Id, unresolved, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
+                forwarded = resolved.Call;
+            }
+
+            // ⚠️ BROWSERAI'S OWN CLOCK, AND ONLY ON THE ONE CALL NOTHING ELSE
+            // BOUNDS. Upstream awaits a page-supplied handler with no timeout of
+            // its own, so a page can hold a call open forever; every other tool
+            // here is upstream's code with upstream's own limits and is left
+            // alone. See `SessionToolSurface.PageToolBudget` for the number and
+            // why it is that number.
+            using var budget = isPageTool ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken) : null;
+
+            budget?.CancelAfter(SessionToolSurface.PageToolBudget);
+
+            ChildAnswer answer;
+
+            try
+            {
+                answer = await live.Child.AskAsync(request.Method, forwarded, budget?.Token ?? cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (budget is { IsCancellationRequested: true } && !cancellationToken.IsCancellationRequested)
+            {
+                // ⚠️ OURS FIRED, NOT THE CALLER'S, and the two are answered
+                // differently: a caller that cancelled is told nothing, because it
+                // has gone, while this one gets a sentence saying what is still
+                // running and what releases it. `ChildConnection.AskAsync` has
+                // already told the child; the child cannot stop the page's code
+                // and the refusal says so rather than implying a clean stop.
+                var abandoned = SessionErrors.PageToolDidNotAnswer(
+                    resolved!.Name,
+                    resolved.WireName,
+                    SessionToolSurface.PageToolBudget);
+
+                ProxyLog.PageToolAbandoned(live.Logger, tool, live.Location.FullPath);
+
+                outcome = SessionStore.Failed;
+                payload = Encoding.UTF8.GetBytes(abandoned);
+
+                await RefuseAsync(caller, request.Id, abandoned, cancellationToken).ConfigureAwait(false);
+                return;
+            }
 
             (outcome, payload) = Judge(answer);
 
@@ -1322,6 +1403,23 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' on the session at {Session} answered with upstream's 'npx @playwright/mcp install-browser' advice, which does not apply to a BrowserAI install. It was replaced, so that answer is not byte-identical.")]
     public static partial void RemediationRewritten(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// A page tool was still silent when BrowserAI's own budget ran out.
+    /// </summary>
+    /// <remarks>
+    /// Warning rather than Information: the call is gone from BrowserAI's side
+    /// and is not gone from the page's, which is the one state on this path a
+    /// reader has to be able to find afterwards.
+    /// </remarks>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session directory named.</param>
+    [LoggerMessage(
+        EventId = 17,
+        Level = LogLevel.Warning,
+        Message = "'{Tool}' on the session at {Session} abandoned a page tool that had not answered. The browser server bounds nothing here, so the page's own code may still be running; navigating the tab or closing it releases it.")]
+    public static partial void PageToolAbandoned(ILogger logger, string tool, string session);
 
     // ⚠️ EVENT IDS 10, 11, 12 AND 16 ARE RETIRED AND ARE NOT TO BE REUSED,
     // 2026-08-26. They were `InlineImageRestored`, `FilenameRefused`,

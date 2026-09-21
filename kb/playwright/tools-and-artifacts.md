@@ -883,6 +883,79 @@ both is a line the key does not reach — then run `through-browserai.mjs` again
 a published slice. Transcripts:
 [`docs/evidence/2026-09-21-webmcp`](../../docs/evidence/2026-09-21-webmcp/README.md).
 
+## A page tool's wire name is built from the page's tool NAME, and `annotations.title` is not that name — measured 2026-09-21
+
+**This is the fact `browserai_page_tool` resolves on, and it is the opposite way
+round from how it reads.** Measured 2026-09-21 @ `@playwright/mcp` **0.0.82** /
+`playwright-core` **1.64.0-alpha-1789764292000**, against the payload's own
+`cli.js` with a page registering tools by hand. `[FLOATS]`
+
+| The page registered | Snapshot block printed | Wire name | `annotations.title` |
+|---|---|---|---|
+| `{ name: "Do The Thing!" }` | `Do The Thing!` | `webmcp_Do_The_Thing_` | `Do The Thing!` |
+| `{ name: "raw_name_here", title: "Human Title" }` | `raw_name_here` | `webmcp_raw_name_here` | **`Human Title`** |
+| `{ name: "twin" }` twice | `twin` and `twin` | `webmcp_twin`, **`webmcp_twin_2`** | `twin` on both |
+
+**The rule, read from `toMcpToolDefinition` and `sanitizeToolName` in the
+resolved bundle and then measured:** the wire name is `"webmcp_" +
+name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64) || "tool"`, with `_2`, `_3` …
+appended while the name is already taken; and the annotations carry
+`title: tool.title || tool.name`.
+
+⚠️ **So matching a caller's name against `annotations.title` is wrong**, and it
+is wrong in the direction that reads as correct: it works for every page that
+sets no `title` and silently makes every page that does set one uncallable. The
+snapshot block — which is what a model actually reads — prints `tool.name`. What
+the title IS good for is the cross-check: a title that matches with a wire name
+the rule does not build is either a page that set a display title or upstream
+having changed how it builds names, and nothing can tell those apart from
+outside.
+
+**Re-establish it** by driving the payload's own `cli.js` against a page whose
+`document.modelContext.getTools()` returns those three shapes and reading
+`tools/list` and a `browser_snapshot` result side by side —
+[`docs/probes/2026-09-21-webmcp`](../../docs/probes/2026-09-21-webmcp/README.md)
+is the rig; its page registers a titled tool already.
+
+## A hung page tool does not block the child, and is released by navigating away — measured 2026-09-21
+
+**This is what makes a timeout on a page-tool call a real recovery rather than a
+way of giving up.** The call itself is unbounded upstream — `callWebMCPTool`
+awaits `Tab.waitForCompletion` around the page's own handler and the evaluate
+under it carries `kNoTimeout`; the 5 s `kFrameTimeout` that arrived in 0.0.82
+bounds the per-frame LISTING and nothing else. Measured 2026-09-21 @
+`@playwright/mcp` **0.0.82** / `playwright-core`
+**1.64.0-alpha-1789764292000**, against a page whose `invokeTool` returns a
+promise nothing settles, over two runs. `[FLOATS]`
+
+| While one page-tool call is pending | Measured |
+|---|---|
+| `browser_snapshot`, at +1 s, +10 s, +30 s and +55 s | **4–7 ms** |
+| A second, well-behaved page tool | **~520 ms** |
+| `browser_tabs` list | **+4 ms** |
+| The pending call itself | never completed — **61 s** observed, **45 s** in an earlier run |
+| Navigating the tab away | released it in **11–13 ms**, with *"Execution context was destroyed, most likely because of a navigation."* |
+| Closing the tab | released it in **7 ms**, with *"Target page, context or browser has been closed"* |
+| The child afterwards | healthy, exit 0, no strays |
+
+A well-behaved page tool answered in **513 ms** and **521 ms** in the two
+measurements taken, so nothing observed sits between about half a second and
+never.
+
+⚠️ **Not measured, and named rather than implied:** the `executeTool` path
+upstream prefers when a page defines one, N simultaneous hung calls, and whether
+the wait is bounded above by anything at all with nothing navigating. **Also
+read rather than measured:** BrowserAI's own `JsonLinesTransport` holds a write
+lock per frame and releases it in a `finally`, and in-flight requests live in a
+`ConcurrentDictionary`, so the block upstream does not have is not reintroduced
+on the way through.
+
+**Re-establish it** with the hung-call rig described in
+[`docs/probes/2026-09-21-webmcp`](../../docs/probes/2026-09-21-webmcp/README.md):
+serve a page whose `invokeTool` is `() => new Promise(() => {})`, call it, and
+keep asking the same child for snapshots while it pends.
+
+
 ## Artifacts and output-directory behaviour
 
 All read from the shipped bundle or observed against a real child. `[FLOATS]`

@@ -94,6 +94,9 @@ internal sealed class ModelSurfaceTests
         (SessionToolSurface.Destroy, ["directory", "why"], ["directory", "why"]),
         (SessionToolSurface.SetPurpose, ["session", "purpose", "why"], ["session", "purpose", "why"]),
         (SessionToolSurface.ReinstallBrowser, ["browser"], ["browser"]),
+        (SessionToolSurface.PageTool,
+            ["session", "name", "arguments", "page", "why"],
+            ["session", "name", "arguments", "why"]),
     ];
 
     /// <summary>
@@ -1538,7 +1541,7 @@ internal sealed class ModelSurfaceTests
 
         await Assert.That(string.Join(Environment.NewLine, wrong)).IsEmpty();
 
-        // And the table above covers all six, so a seventh authored tool cannot
+        // And the table above covers all eight, so a ninth authored tool cannot
         // arrive unasserted.
         await Assert.That(TheAuthoredSignatures.Select(signature => signature.Tool).Order(StringComparer.Ordinal))
             .IsEquivalentTo(SessionToolSurface.Names.Order(StringComparer.Ordinal).ToArray());

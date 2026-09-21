@@ -488,6 +488,16 @@ internal static class BrowserConfiguration
         // failure the key was adopted to end, and it would leave every other
         // assertion green.
         "filePaths",
+
+        // Added 2026-09-21 with the key itself. `true` is upstream's default, so
+        // this is the `allowUnrestrictedFileAccess` and `timeouts.idle` argument
+        // again -- an omission records no decision and `browser_get_config`
+        // cannot read back a key the file never carried -- and it has one more
+        // of its own: what this key switches on is the only channel through which
+        // a model learns a page offers tools at all, so a generator that stopped
+        // writing it would take `browserai_page_tool`'s whole discovery surface
+        // away and nothing else would fail.
+        "webmcp",
     ];
 
     /// <summary>The config one session's child is started with.</summary>
@@ -811,6 +821,28 @@ internal static class BrowserConfiguration
             writer.WriteStartObject("timeouts");
             writer.WriteNumber("idle", IdleTimeoutMilliseconds);
             writer.WriteEndObject();
+
+            // ⚠️ UPSTREAM'S OWN DEFAULT, WRITTEN RATHER THAN OMITTED, AND THIS
+            // ONE IS A STANCE RATHER THAN A RECORD OF ONE. Added 2026-09-21 with
+            // Q219. `webmcp: true` is what lets a page put its own tools on the
+            // child's tool list and its own tool names, descriptions and schemas
+            // into the snapshot every snapshot-bearing result carries -- which is
+            // page-authored text reaching a model, and is a live hazard row.
+            //
+            // It is written `true` because BrowserAI can now CALL those tools:
+            // `browserai_page_tool` reaches one through a judged tool, bounded,
+            // re-resolved per call. `false` would remove the capability, and --
+            // decisively -- it would remove the only catalogue there is. That
+            // snapshot block is how a model learns a page offers anything at all;
+            // with the key false there is no block, no header count and no
+            // dynamic tools, so the caller would have a tool and no way to know
+            // what to name.
+            //
+            // Written rather than omitted for the reason two blocks up: an
+            // omission records no decision, `browser_get_config` cannot read back
+            // a key the file never carried, and the day upstream's default moves
+            // this is a red build rather than a capability that quietly went.
+            writer.WriteBoolean("webmcp", true);
 
             writer.WriteEndObject();
         }

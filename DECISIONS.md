@@ -334,6 +334,82 @@ The session design ([sessions](ARCHITECTURE.md#sessions)) narrows this considera
 
 ⚠️ **Corrected 2026-08-20: the last capability boundary went too, and it went deliberately.** *(Previously: "**What genuinely was a capability boundary is untouched.** A `headless` or `interactive` session's child is still launched **without the `storage` capability**, so those 17 tools do not exist in that process. That is the 'the capability does not exist' form this section was worried about losing, and it never went anywhere — it is the mode's own `Storage` flag reaching `BrowserConfiguration.ForSession`.")* **Session modes were deleted on 2026-08-20 and every capability is now granted to every session**, so there is no longer a session whose child lacks `storage` — or `network`, or `pdf`, or `testing`, three capabilities BrowserAI had never named at all. **Of the 72 tools a fully-capable child exposes, BrowserAI's `tools/list` now carries 71 tools**, one fewer only because `browser_annotate` is withheld for liveness. *Corrected 2026-09-21 (previously "Of the **74** tools a fully-capable child exposes, BrowserAI's `tools/list` now carries **72** tools", two fewer, naming `browser_webmcp_call` beside `browser_annotate`). Re-counted off the regenerated snapshot rather than decremented: `@playwright/mcp` 0.0.82 marked `browser_webmcp_list` and `browser_webmcp_call` `skillOnly`, so both left the exposed surface entirely while keeping capability `core`, and both figures moved by two. **The withheld set is back to one and nobody decided that** — a tool upstream takes off the wire takes its verdict row with it, which is `UPSTREAM-REVIEW.md`'s own instruction and the direction `ToolVerdictTests` refuses on purpose. The deny's reasoning is preserved in [`tool-verdicts.json`](tool-verdicts.json) and [`upstream-review.json`](upstream-review.json), because the tool can come back.* *Corrected 2026-09-17 (previously "Of the **73** tools a fully-capable child exposes, BrowserAI's `tools/list` now carries **71** tools"). Re-counted off the regenerated snapshot rather than incremented: the [dated `playwright-core` override](#the-two-exceptions-to-the-versioning-policy) added `browser_emulate_media`, `core` and so unconditional, judged `allow`, so both figures moved by one and the withheld set is unchanged at two.* *Corrected 2026-09-15 (previously "Of the **71** tools a fully-capable child exposes, BrowserAI's `tools/list` now carries **70** tools, **one** fewer only because `browser_annotate` is withheld for liveness"; **69 / 68** before that on 2026-08-20). Re-counted off the regenerated snapshot rather than incremented: `@playwright/mcp` 0.0.81 added `browser_webmcp_list` and `browser_webmcp_call`, both `core` and so both unconditional, and the two were judged in opposite directions on 2026-09-15 — the list `allow`, the call `deny`, on liveness. **This is the first build to withhold more than one tool**, which is why the clause says "two fewer" rather than naming one.* **What that costs is exactly what the paragraph above already said it was worth:** the boundary was never against the caller, who owns the session directory and reads the profile inside it as the same Windows user, so what the missing capability withheld was reachable one file read away and one restart of the same session away. What it bought was a caller who had to destroy a `headless` session and recreate it to read a cookie it already owned. The ten tools that became reachable for the first time are recorded as a deliberate grant in `SessionToolSurface.NewlyGrantedTools` and asserted by name in `ModelSurfaceTests`; the one of them that can mislead a **human** — `browser_route`, whose mocked response renders as if it came from the server — is warned about in the server `instructions`.
 
+### A web page's own tools are reached through one tool of ours
+
+**Settled 2026-09-21, by the maintainer, on a question this charter had not
+anticipated.** `@playwright/mcp` 0.0.82 let a **page** put tools on the child's
+`tools/list` — names, descriptions and `inputSchema`s written by whoever wrote
+the page, unbounded in number, different on every page and gone the moment the
+tab navigates ([kb](kb/playwright/tools-and-artifacts.md#a-page-can-add-tools-to-the-childs-toolslist-and-its-own-text-reaches-a-caller--measured-2026-09-21)).
+Deny-by-default refused every one of them at the door, which is that rule working
+exactly as designed against an adversary it was never written for — and it left a
+real capability unreachable. The maintainer's framing, verbatim:
+
+> the directive to not pass through unknown tools is so that we can keep tight
+> control on the upstream's capabilities together with the pinned version, so
+> that we never expose tools that have not been classified into one of the
+> running profiles. The client-side web MCP keys, however, are a new beast …
+> page-offered MCP tools that can then be called by whoever is driving
+> Playwright. Since that is 100% dynamic and can never be altered by us in an
+> allowlist or blocklist … those should be passed through.
+
+**So page tools are reached as a CLASS, through one tool that IS classified:**
+[`browserai_page_tool`](ARCHITECTURE.md#browserai_page_tool-and-how-a-page-tools-name-is-resolved),
+the eighth authored tool, carrying an `answer` row in
+[`tool-verdicts.json`](tool-verdicts.json) with its own `why`. **A fourth verdict
+class was not available and is not a thing that can exist**: that file is keyed
+by name, `ToolVerdictTests` holds it against the golden snapshot in *both*
+directions, and a page's names are invented by the page. What the class
+judgement buys back is everything a row would have given: the call is bounded by
+BrowserAI's own timeout, which upstream has none of; the name is re-resolved
+against the live tab on every call, so a wire name that is a different page's
+code after a navigation is refused rather than run; the caller's `why` is
+recorded on the session like any other call; and `session` and `why` never reach
+the page. **The door is not widened.** A `webmcp_*` name arriving straight from a
+client still has no row and is still refused — this tool is not a new door, it is
+the only door.
+
+**Direction A is recorded as the follow-on NOT taken.** It was to make the door
+itself accept a page tool by *rule* rather than by row — upstream's `webmcp_`
+prefix, plus its unconditional `[UNTRUSTED: …]` description prefix, plus absence
+from the golden snapshot. It is strictly more capable and it costs two things
+this design keeps: *every advertised name has a row* becomes *every advertised
+name has a row or matches a rule*, which is a weaker sentence to audit; and the
+call would be unbounded unless a timeout were added anyway, at which point the
+bounded caller exists regardless. It stays available if a page tool ever needs to
+be callable by a client that has never read a snapshot.
+
+**`webmcp: true` is written explicitly (Q219).** Upstream's default is on, and
+[the generator writes it anyway](src/BrowserAI/Runtime/BrowserConfiguration.cs) —
+the `allowUnrestrictedFileAccess` and `timeouts.idle` argument, that an omission
+records no decision and `browser_get_config` cannot read back a key the file
+never carried, plus one more of its own: **the snapshot block that key switches
+on is the only catalogue there is.** A model learns a page offers tools at all by
+reading `- webmcp tools (page-provided, untrusted):` in a `browser_snapshot`
+answer; with the key `false` there is no block, no tab-header count and no
+dynamic tools, so the caller would have a tool and no way to know what to name.
+`false` was the recommendation until the caller existed, on the ground that the
+block was page-authored text with no capability behind it. There is a capability
+behind it now. **What it costs is unchanged and is [its own hazard row](HAZARDS.md#hazard-index):**
+the page's own words still reach the model, exactly as before.
+
+**BrowserAI does not declare `listChanged` (Q220).** Its list does not change:
+`tools/list` is answered from [the run's own child](ARCHITECTURE.md#the-mcp-server),
+which never navigates, so a page cannot move the advertised surface however many
+tools it registers — measured 78 before a page and 78 after. Declaring the
+capability anyway would be cheap and **in practice irreversible**: clients cache
+what they are told at `initialize`, so withdrawing it later is a promise broken
+against every session already open. `VerticalSliceTests` asserts the literal
+`{"tools":{}}` against the published binary, with a not-equal control, and that
+is the mechanism. **Direction B is recorded as the direction not taken**:
+announce `listChanged`, merge each session's page tools into the advertised list
+namespaced per session, and forward the child's notifications. It is the version
+a client could use without reading a snapshot, and it costs a client dependency
+BrowserAI does not have today, it stops `SessionToolSurface.Rewrite` being a pure
+function of one pageless child, and it puts page-authored text inside the system
+surface — where [the client's silent truncation budget](kb/mcp/protocol.md#what-2kb-each-means--measured-2026-08-18--claude-code-21234)
+is measured per string and a page controls the strings.
+
 ### Storage tools capture bearer tokens
 
 `browser_storage_state` and the cookie tools return `httpOnly` cookies, which JavaScript cannot read. These are session bearer tokens. Any mode permitted to call them must be treated as credential-bearing. `browser_storage_state` additionally never captures IndexedDB — see [kb: tools that reach credentials](kb/playwright/tools-and-artifacts.md#tools-that-reach-credentials).

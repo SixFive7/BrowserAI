@@ -419,12 +419,20 @@ internal sealed class ToolVerdicts
         // The two halves of the file are two different questions, and a row in
         // the wrong half is a statement nobody meant to make: an upstream tool
         // marked `answer` claims BrowserAI implements it, and an authored tool
-        // marked `allow` claims a child could run it.
+        // marked `allow` claims the door decides whether it runs.
+        //
+        // ⚠️ *Corrected 2026-09-21 (previously "an authored tool marked `allow`
+        // claims a child could run it").* One of them reaches a child now --
+        // `browserai_page_tool` forwards a `tools/call` to the session's own --
+        // so the thing `allow` would wrongly claim is no longer "a child" but
+        // "this file decides". It does not: `BrowserProxy` skips the door for
+        // every authored name, because the list that advertises them is the
+        // list that judges them.
         if (authored && kind is not ToolVerdictKind.Answer)
         {
             throw Unreadable(
                 origin,
-                $"'{member}.{row.Name}' is one of BrowserAI's own tools and carries the verdict '{word.GetString()}'. Authored tools are always 'answer' -- there is no child to forward one to");
+                $"'{member}.{row.Name}' is one of BrowserAI's own tools and carries the verdict '{word.GetString()}'. Authored tools are always 'answer': the door does not judge them, because being in SessionToolSurface.Names IS the judgement");
         }
 
         if (authored && !SessionToolSurface.IsAuthored(row.Name))

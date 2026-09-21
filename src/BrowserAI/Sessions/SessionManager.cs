@@ -401,6 +401,132 @@ internal sealed class SessionManager : IAsyncDisposable
             : SessionErrors.BrowserRuntimeDidNotStart(session.Location.FullPath, status.Detail);
     }
 
+    /// <summary>
+    /// Turns a <c>browserai_page_tool</c> call into the <c>tools/call</c> the
+    /// session's child answers to, or into the refusal that says why it cannot.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Every question here is asked of the LIVE tab, on every call.</b> The
+    /// child's tool list carries the current tab's page tools and nothing else,
+    /// and the same wire name is a different page's code after a navigation — so
+    /// there is nothing here worth caching and a cache would be the hazard.
+    /// </para>
+    /// <para>
+    /// <b>The order is: read the arguments, list the child's tools, check the
+    /// page if one was named, then match.</b> The page check comes before the
+    /// match on purpose: a caller whose tab has moved wants to hear that it
+    /// moved, not that the tool it asked for is missing — the second sentence is
+    /// true and sends it looking in the wrong place.
+    /// </para>
+    /// <para>
+    /// <b>It never reads the caller's argument object.</b> Whatever
+    /// <c>arguments</c> holds is handed to the child unexamined, because the
+    /// schema it has to satisfy is the page's and BrowserAI has no opinion about
+    /// it. What BrowserAI does guarantee is what is NOT in it: <c>session</c> and
+    /// <c>why</c> are its own and are never part of that object, because the
+    /// object is built here rather than stripped out of the caller's.
+    /// </para>
+    /// </remarks>
+    /// <param name="live">The session whose tab is being reached into.</param>
+    /// <param name="arguments">The caller's arguments, as they arrived.</param>
+    /// <param name="cancellationToken">The caller's token.</param>
+    /// <returns>The call to forward, or a refusal.</returns>
+    public static async Task<PageToolResolution> ResolvePageToolAsync(
+        LiveSession live,
+        JsonObject? arguments,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(live);
+
+        string name;
+        string? page;
+        JsonNode? sending;
+
+        try
+        {
+            name = Required(arguments, SessionToolSurface.NameParameter);
+            page = Optional(arguments, SessionToolSurface.PageParameter);
+            sending = ArgumentObject(arguments);
+        }
+        catch (SessionToolException wrongShape)
+        {
+            return PageToolResolution.Refused(wrongShape.Message);
+        }
+
+        var listed = await live.Child.AskAsync(ToolsListMethod, new JsonObject(), cancellationToken).ConfigureAwait(false);
+
+        if (listed.Response?.Result is not JsonObject list)
+        {
+            return PageToolResolution.Refused(
+                SessionErrors.PageToolIsNotOnThePage(name, []));
+        }
+
+        var present = PageTools.In(list);
+
+        if (page is { Length: > 0 } expected)
+        {
+            var tabs = await live.Child.AskAsync(
+                ToolsCallMethod,
+                new JsonObject
+                {
+                    ["name"] = TabsTool,
+                    ["arguments"] = new JsonObject { ["action"] = TabsList },
+                },
+                cancellationToken).ConfigureAwait(false);
+
+            var listing = TextOf(tabs);
+
+            if (PageTools.CurrentTabUrl(listing) is not { } actual)
+            {
+                return PageToolResolution.Refused(
+                    SessionErrors.PageToolCurrentPageIsUnknown(
+                        name,
+                        expected,
+                        listing is { Length: > 0 } said ? $"\"{said}\"" : "it said nothing this build could read"));
+            }
+
+            if (!string.Equals(actual, expected, StringComparison.Ordinal))
+            {
+                return PageToolResolution.Refused(SessionErrors.PageToolPageHasMoved(name, expected, actual));
+            }
+        }
+
+        var wanted = PageTools.WireNameFor(name);
+        var matches = present.Where(tool => PageTools.WireNameMatches(tool.WireName, wanted)).ToList();
+
+        if (matches.Count is 0)
+        {
+            // ⚠️ THE CROSS-CHECK, AND IT RUNS ONLY WHEN THE RULE FOUND NOTHING.
+            // An entry whose `annotations.title` is the name the caller typed,
+            // carrying a wire name the rule does not build, is either a page that
+            // set its own display title -- upstream writes
+            // `title: tool.title || tool.name` -- or upstream having changed how
+            // it builds the name, which is a re-verification trigger. BrowserAI
+            // cannot tell those apart from here and the refusal says both.
+            var titled = present.Where(tool => string.Equals(tool.Title, name, StringComparison.Ordinal)).ToList();
+
+            return PageToolResolution.Refused(
+                titled is [var only]
+                    ? SessionErrors.PageToolNameDoesNotFollowTheRule(name, wanted, only.WireName)
+                    : SessionErrors.PageToolIsNotOnThePage(name, present));
+        }
+
+        if (matches.Count > 1)
+        {
+            return PageToolResolution.Refused(SessionErrors.PageToolIsAmbiguous(name, matches));
+        }
+
+        return PageToolResolution.Forwarding(
+            name,
+            matches[0].WireName,
+            new JsonObject
+            {
+                ["name"] = matches[0].WireName,
+                ["arguments"] = sending,
+            });
+    }
+
     /// <summary>Runs one of the authored tools.</summary>
     /// <param name="tool">The tool name, <c>browserai_</c> prefixed.</param>
     /// <param name="arguments">Its arguments, as they arrived.</param>
@@ -937,6 +1063,28 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// </remarks>
     private const int PageSize = 100;
+
+    /// <summary>The two JSON-RPC methods a page-tool resolution sends the child.</summary>
+    private const string ToolsListMethod = "tools/list";
+
+    /// <inheritdoc cref="ToolsListMethod"/>
+    private const string ToolsCallMethod = "tools/call";
+
+    /// <summary>
+    /// The upstream tool that says which page a page-tool call would run in.
+    /// </summary>
+    /// <remarks>
+    /// <b>Named here rather than hand-written as a schema.</b> This is a tool
+    /// NAME and an argument VALUE — both of them upstream's own spellings, both
+    /// read out of the golden snapshot — rather than a definition of anything:
+    /// the schema still comes from the child at run time and is what
+    /// <c>UpstreamSnapshotTests</c> diffs. If upstream ever renames this tool the
+    /// snapshot diff is what says so.
+    /// </remarks>
+    private const string TabsTool = "browser_tabs";
+
+    /// <inheritdoc cref="TabsTool"/>
+    private const string TabsList = "list";
 
     /// <summary>Renders one log row into the answer.</summary>
     /// <remarks>
@@ -2700,6 +2848,46 @@ internal sealed class SessionManager : IAsyncDisposable
     private static string Why(JsonObject? arguments, string tool) =>
         Optional(arguments, SessionToolSurface.WhyParameter)
         ?? throw new SessionToolException(SessionErrors.WhyMissing(tool));
+
+    /// <summary>
+    /// <c>browserai_page_tool</c>'s argument object, required and unexamined.
+    /// </summary>
+    /// <remarks>
+    /// <b>It is checked for being an object and for nothing else.</b> What is
+    /// inside it has to satisfy a schema the PAGE wrote, which BrowserAI has
+    /// never seen and does not validate — and neither does upstream, which hands
+    /// the whole object to the page's handler verbatim. A clone is taken so the
+    /// node that goes to the child cannot be the caller's own, which the SDK may
+    /// still read after this call.
+    /// </remarks>
+    /// <param name="arguments">The caller's arguments.</param>
+    /// <returns>A detached copy of the object to send.</returns>
+    /// <exception cref="SessionToolException">It is absent, or it is not an object.</exception>
+    private static JsonNode ArgumentObject(JsonObject? arguments)
+    {
+        if (arguments?[SessionToolSurface.ArgumentsParameter] is not { } value
+            || value.GetValueKind() is JsonValueKind.Null)
+        {
+            throw new SessionToolException(
+                $"'{SessionToolSurface.ArgumentsParameter}' is required and was not given. Pass an empty object for a page tool that takes nothing: BrowserAI will not invent one, because what reaches the page is exactly what you wrote here.");
+        }
+
+        return value.GetValueKind() is JsonValueKind.Object
+            ? value.DeepClone()
+            : throw new SessionToolException(
+                $"'{SessionToolSurface.ArgumentsParameter}' must be an object, and it arrived as {value.GetValueKind()}. It is what the page's own tool receives, so there is no reading of another shape that would be safe to guess at. Nothing was called.");
+    }
+
+    /// <summary>Every text block of a child's answer, joined.</summary>
+    /// <param name="answer">What the child said.</param>
+    /// <returns>The text, or an empty string when there was none.</returns>
+    private static string TextOf(ChildAnswer answer) =>
+        string.Join(
+            "\n",
+            (answer.Response?.Result?["content"] as JsonArray ?? [])
+                .Where(block => (block as JsonObject)?["type"]?.GetValueKind() is JsonValueKind.String
+                    && block!["type"]!.GetValue<string>() is "text")
+                .Select(block => block!["text"]?.GetValueKind() is JsonValueKind.String ? block["text"]!.GetValue<string>() : string.Empty));
 
     private static string Required(JsonObject? arguments, string name) =>
         Optional(arguments, name)

@@ -137,6 +137,22 @@ internal sealed record SessionRun
                 ["why"] = "the suite exercising this call",
             }).ConfigureAwait(false);
 
+            // ⚠️ The EIGHTH authored tool, called at the one moment it is
+            // guaranteed to refuse for the reason that needs no page-side rig:
+            // the page above registers no WebMCP tools, so the current tab
+            // offers none and the only correct answer is a refusal saying so.
+            // The tool's real behaviour is `PageToolTests`, against pages that
+            // really register some; what this closes is the gap the count arm in
+            // `SessionToolTests` exists for -- an authored tool with nothing
+            // driving it in the shared capture.
+            answers["pageToolOnAPlainPage"] = await CallAsync(client, SessionToolSurface.PageTool, new JsonObject
+            {
+                ["session"] = alpha,
+                [SessionToolSurface.NameParameter] = "anything_at_all",
+                [SessionToolSurface.ArgumentsParameter] = new JsonObject(),
+                ["why"] = "the suite exercising this call",
+            }).ConfigureAwait(false);
+
             // Read while the browser is up: this is the difference between "the
             // key is in the config" and "the browser used it".
             var profileUsed = Directory.Exists(Path.Combine(alpha, SessionLayout.ProfileFolderName))

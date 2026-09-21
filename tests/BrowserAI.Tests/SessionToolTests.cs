@@ -78,10 +78,23 @@ internal sealed class SessionToolTests
         // init's result carries the resolved absolute paths and the browser,
         // which is what lets an agent say where a screenshot went instead of
         // guessing. *(The mode line went on 2026-08-20 with session modes.)*
-        // ⚠️ THE COUNT, DERIVED. Seven tools, seven round trips above and below;
-        // an eighth added to the surface with nothing driving it is a gap this
+        // ⚠️ THE COUNT, DERIVED. Eight tools, eight round trips above and below;
+        // a ninth added to the surface with nothing driving it is a gap this
         // file exists to close, and a name that says "six" cannot report one.
-        await Assert.That(SessionToolSurface.Names.Count).IsEqualTo(7);
+        // ⚠️ *Corrected 2026-09-21 (previously 7.)* The eighth is
+        // `browserai_page_tool`, whose round trip in this capture is the arm
+        // below: it is called on a page that offers no tools at all, which is
+        // the one shape of it that needs no page-side rig. Its real behaviour --
+        // an answer, a hang, a navigation, a collision -- is `PageToolTests`,
+        // against pages that really register some.
+        await Assert.That(SessionToolSurface.Names.Count).IsEqualTo(8);
+
+        // The eighth, answering. `isError` is TRUE and that is the tool working:
+        // the session's tab is on a page with no WebMCP tools, so the only
+        // correct answer is a refusal that says so.
+        await Assert.That(run.IsError("pageToolOnAPlainPage")).IsTrue();
+        await Assert.That(run.Text("pageToolOnAPlainPage")).Contains("offers no tool called 'anything_at_all'");
+        await Assert.That(run.Text("pageToolOnAPlainPage")).Contains("It is offering none at all right now.");
 
         var text = run.Text("init");
 

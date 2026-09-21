@@ -384,9 +384,11 @@ client name; a lock file that is not ours has to stay a different answer from
 know, **with the version as the reason**, and there is no converter. Each refusal
 names a recovery and says that repeating the call will fail identically.
 
-**Seven authored tools, and `session` and `why` are both mandatory.**
+**Eight authored tools, and `session` and `why` are both mandatory.**
 `browserai_init`, `browserai_resume`, `browserai_catch_up`, `browserai_list`,
-`browserai_destroy`, `browserai_set_purpose` and `browserai_reinstall_browser`. **Two** parameters are
+`browserai_destroy`, `browserai_set_purpose`, `browserai_reinstall_browser` and
+[`browserai_page_tool`](#browserai_page_tool-and-how-a-page-tools-name-is-resolved)
+*(the eighth, 2026-09-21)*. **Two** parameters are
 injected into every upstream tool's raw `inputSchema`, appended in that order so
 upstream's own properties keep their positions; a call naming no session is
 refused rather than reaching the run's own child, and a call naming a session
@@ -699,7 +701,14 @@ names, byte-identical. `deny` refuses it at BrowserAI's door **and** drops the
 tool from `tools/list` entirely — dropped, not disabled, because a tool that can
 never succeed costs attention and description budget for as long as it is in the
 list — carrying the row's own `why` as the refusal and a `since` as provenance.
-`answer` is one of BrowserAI's own seven, which never had a child to reach.
+`answer` is one of BrowserAI's own eight. ⚠️ *Corrected 2026-09-21
+(previously "`answer` is one of BrowserAI's own seven, which never had a child to
+reach").* Seven of the eight never had one and
+[`browserai_page_tool`](#browserai_page_tool-and-how-a-page-tools-name-is-resolved)
+does: it resolves a name against the session child's live tool list and forwards
+a `tools/call` to it. It is still an `answer` row rather than an `allow` one
+because it is **ours** — advertised from `SessionToolSurface.Names`, and let past
+the door by being in that list rather than by anything this file says.
 
 **DENY BY DEFAULT: a name with no row is refused too, and that is the half worth
 arguing.** It reverses a decision taken 2026-08-18 — and it reverses it for a
@@ -735,6 +744,66 @@ the browser and keeps the node child; the relaunch on the next call is upstream'
 own lazy creation, so nothing was built for it. Teardown is stdin EOF plus a
 client-liveness watcher — an `OpenProcess` handle signalled on the client's exit,
 never a poll and never a ping — and there is deliberately no close tool.
+
+### `browserai_page_tool`, and how a page tool's name is resolved
+
+| Concern | Implemented by |
+|---|---|
+| The tool, its parameters and its description | `SessionToolSurface.PageTool`, `SessionToolSurface.Authored` |
+| How long BrowserAI waits for a page tool, and why that long | `SessionToolSurface.PageToolBudget` |
+| The name rule, the collision rule, and reading the current tab out of a tab listing | `src/BrowserAI/Sessions/PageTools.cs` |
+| Resolving one call: list, check the page, match, or refuse | `SessionManager.ResolvePageToolAsync` |
+| Forwarding it under BrowserAI's own clock, and the abandonment | `BrowserProxy.AnswerToolsCallAsync` |
+| The six refusals | `SessionErrors.PageTool*`, provoked one by one in `ErrorCatalogueTests` |
+| The behaviour, against pages that really register tools | `PageToolTests` |
+
+**Since `@playwright/mcp` 0.0.82 a page can put tools on the child's own
+`tools/list`** — the current tab's, collected on every snapshot-bearing call —
+and BrowserAI's deny-by-default refuses every one of them at the door, because a
+page's names are invented by the page and can have no row.
+[The decision](DECISIONS.md#a-web-pages-own-tools-are-reached-through-one-tool-of-ours)
+is that they are reachable as a **class**, through this one judged tool.
+
+**The name a caller passes is the one a model can actually have read.** The
+snapshot block prints the page's own tool NAME; upstream's wire name is
+`webmcp_` plus that name with every character outside `[A-Za-z0-9_-]` replaced by
+`_`, cut at 64, and `_2`, `_3` … appended on a collision. `PageTools.WireNameFor`
+reproduces that function and `PageTools.WireNameMatches` reproduces the collision
+rule. ⚠️ **`annotations.title` is the cross-check and not the key**: upstream
+builds the entry with `title: tool.title || tool.name`, so a page that sets its
+own display title puts THAT in the annotations while the snapshot goes on
+printing the name — measured 2026-09-21, and matching on the title would have
+made every page tool that sets one uncallable.
+
+**Four questions, in this order, and the order is the reason each answer is
+useful.** List the session child's tools; if the caller named a `page`, read the
+current tab out of `browser_tabs` and refuse if it has moved; match by wire name;
+and only then, if nothing matched but exactly one entry's title is the name the
+caller typed, say so — that is either a page with a display title or upstream
+having changed how it builds names, and BrowserAI cannot tell those apart from
+here, so the refusal carries both readings. Refusing the moved page **before**
+the match matters: a caller whose tab has navigated wants to hear that, not that
+the tool it asked for is missing.
+
+**Nothing is cached.** The list covers the current tab only and the same wire
+name is a different page's code after a navigation, so a resolution kept between
+calls would be a name pointing at whatever the tab happens to be showing now.
+
+**The call is bounded by BrowserAI and by nothing else.** Upstream awaits a
+handler the PAGE supplied with no timeout of its own, so a page can hold a call
+open forever — measured silent at 61 s. `PageToolBudget` is sixty seconds, on a
+linked token, and when it fires the caller is told what is still running, that the
+session goes on working, and that navigating the tab or closing it releases the
+abandoned call. All three of those are measurements rather than reassurances: a
+pending page tool does not block the child, a snapshot answered in 4–7 ms beside
+one, and a navigation released one in 11–13 ms.
+
+**`session` and `why` never reach the page.** The object forwarded to the child
+is built from the caller's `arguments` member rather than stripped out of the
+caller's own node, so there is no member for them to survive in — and upstream
+enforces nothing about a page's `inputSchema`, handing the whole object to the
+page's handler verbatim.
+
 
 ## Locking, ownership and the sweep
 

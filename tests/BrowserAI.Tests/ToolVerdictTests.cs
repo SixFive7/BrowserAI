@@ -117,8 +117,10 @@ internal sealed class ToolVerdictTests
     /// <remarks>
     /// ⚠️ <b>This test IS the <c>answer</c> half's role, and saying so is the
     /// point of these remarks (2026-08-26).</b> Nothing at run time reads an
-    /// <c>answer</c> row: <c>SessionToolSurface.IsAuthored</c> short-circuits
-    /// every <c>browserai_</c> name before <c>ToolVerdicts.Decide</c> is reached,
+    /// <c>answer</c> row: every <c>browserai_</c> name skips
+    /// <c>ToolVerdicts.Decide</c> — seven of the eight are answered before it is
+    /// reached and <c>browserai_page_tool</c> is let past it explicitly, because
+    /// it takes the forwarding path —
     /// and <c>SessionToolSurface.Rewrite</c> advertises the authored tools from
     /// <c>SessionToolSurface.Names</c> rather than from the file — so deleting an
     /// <c>answer</c> row changes nothing a caller can observe, and only this arm
@@ -146,7 +148,9 @@ internal sealed class ToolVerdictTests
         // Not vacuous: two empty sets agree in both directions. The denominator
         // is stated, and it is the number the surface publishes.
         await Assert.That(authored.Count).IsEqualTo(SessionToolSurface.Names.Count);
-        await Assert.That(authored.Count).IsEqualTo(7);
+        // ⚠️ *Corrected 2026-09-21 to 8 (previously 7)*, with
+        // `browserai_page_tool`.
+        await Assert.That(authored.Count).IsEqualTo(8);
     }
 
     /// <summary>

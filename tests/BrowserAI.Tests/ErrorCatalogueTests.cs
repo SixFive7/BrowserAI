@@ -1188,6 +1188,9 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(APurposeIsCappedStrippedAndFramedAsRecordedData))]
     [DependsOn(nameof(TheFirefoxProfileLockRowIsEmittedByAProfileSomethingElseHasOpen))]
     [DependsOn(nameof(AnInitThatCannotOpenTheBrowsersClaimIsNotToldAReinstallIsRunning))]
+    [DependsOn(nameof(ThePageToolRowsAreEmittedByACallAgainstATabThatReallyOffersPageTools))]
+    [DependsOn(nameof(ThePageCouldNotBeEstablishedRowIsEmittedByATabListingNothingCanRead))]
+    [DependsOn(nameof(ThePageToolAbandonmentRowIsEmittedByAPageToolThatNeverAnswers))]
     public async Task EveryRowInTheCatalogueWasTriggeredBySomethingAbove()
     {
         // The census, and the reason the catalogue is a type rather than a set of
@@ -1328,7 +1331,236 @@ internal sealed partial class ErrorCatalogueTests
         // anything else first -- call `browserai_resume` and try again -- and
         // because it is the only one of the three whose predecessor was
         // silence rather than another sentence.
-        await Assert.That(rows.Count).IsEqualTo(27);
+        //
+        // ⚠️ **Corrected 2026-09-21 to 33 (previously 27).** Six rows arrived
+        // together with `browserai_page_tool`, and they are the first rows in
+        // this catalogue about a tool NOBODY IN THIS PROJECT WROTE: the names,
+        // the schemas and the answers belong to the page. Six rather than fewer
+        // because each has a different recovery, and collapsing any two would
+        // produce the sentence a model cannot act on that the notes above keep
+        // naming -- `PageToolIsNotOnThePage` says read the list again,
+        // `PageToolIsAmbiguous` says nothing here can choose for you,
+        // `PageToolPageHasMoved` says go back or re-read,
+        // `PageToolCurrentPageIsUnknown` says the check you asked for did not
+        // happen, `PageToolNameDoesNotFollowTheRule` says one of two very
+        // different things has gone wrong and names both, and
+        // `PageToolDidNotAnswer` says what is still running and what releases
+        // it.
+        await Assert.That(rows.Count).IsEqualTo(33);
+    }
+
+    /// <summary>
+    /// The five page-tool refusals a caller can meet before anything is
+    /// forwarded, each provoked by a child whose current tab really offers those
+    /// tools.
+    /// </summary>
+    /// <remarks>
+    /// <b>The double rather than a browser, and for once that is the stronger
+    /// rig.</b> What these five rows are about is a resolution — a name a model
+    /// read against a list a page supplied — and the double is the only way to
+    /// hold that list still while five different questions are asked of it. The
+    /// same conditions against real pages are <c>PageToolTests</c>, which is
+    /// where the claim that upstream really builds these names this way lives.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePageToolRowsAreEmittedByACallAgainstATabThatReallyOffersPageTools()
+    {
+        // Upstream's own shape, reproduced literally: `webmcp_` and a sanitised
+        // copy of the page's name, `annotations.title` carrying the page's
+        // `title` where it set one and its NAME where it did not, and a `_2`
+        // suffix on a collision.
+        // ⚠️ ONE LINE, and it has to be: the wire is JSON Lines, so the
+        // double writes whatever this holds as a single frame and a
+        // pretty-printed copy arrives as several broken ones. Watched: five
+        // unparseable frames and a call that never came back.
+        const string WithPageTools =
+            """{"tools":[{"name":"browser_navigate","description":"Navigate to a URL","inputSchema":{"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}},{"name":"browser_tabs","description":"Manage tabs","inputSchema":{"type":"object","properties":{"action":{"type":"string"}},"required":["action"]}},{"name":"webmcp_alpha","description":"[UNTRUSTED] a","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"alpha"}},{"name":"webmcp_twin","description":"[UNTRUSTED] one","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"twin"}},{"name":"webmcp_twin_2","description":"[UNTRUSTED] two","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"twin"}},{"name":"webmcp_raw_name","description":"[UNTRUSTED] titled","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"Human Title"}}]}""";
+
+        const string Here = "http://example.test/here";
+        const string Elsewhere = "http://example.test/elsewhere";
+
+        // Split so that no line of this file spells a Markdown link: a tab line
+        // IS one, and `DocumentationLinkTests` reads every `.cs` file in the
+        // tree for relative links that do not resolve.
+        const string TabLine = "### Result\\n- 0: (current) [a page]";
+
+        await using var sessions = RigSessionEnvironment.Create(child =>
+        {
+            child.ToolsListResult = WithPageTools;
+            child.Tools["browser_tabs"] = new FakeToolBehaviour
+            {
+                RawResult = $$"""{"content":[{"type":"text","text":"{{TabLine}}({{Here}})"}]}""",
+            };
+
+            // The control below forwards a real call, so the double has to be
+            // able to answer one.
+            child.Tools["webmcp_alpha"] = new FakeToolBehaviour
+            {
+                RawResult = """{"content":[{"type":"text","text":"the page answered"}]}""",
+            };
+        });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        List<PageTool> present =
+        [
+            new("webmcp_alpha", "alpha"),
+            new("webmcp_twin", "twin"),
+            new("webmcp_twin_2", "twin"),
+            new("webmcp_raw_name", "Human Title"),
+        ];
+
+        // A name the tab does not offer. The refusal lists what it does, because
+        // the ordinary way to arrive here is a tab that has navigated since the
+        // caller read its snapshot.
+        var absent = await PageToolAsync(rig, "no_such_page_tool");
+
+        await Assert.That((bool?)absent["isError"]).IsTrue();
+
+        Match(
+            TextOf(absent),
+            nameof(SessionErrors.PageToolIsNotOnThePage),
+            SessionErrors.PageToolIsNotOnThePage("no_such_page_tool", present));
+
+        // Two tools with one name on one page, which is upstream's collision
+        // rule leaving the wire names distinct and the read names identical.
+        var ambiguous = await PageToolAsync(rig, "twin");
+
+        Match(
+            TextOf(ambiguous),
+            nameof(SessionErrors.PageToolIsAmbiguous),
+            SessionErrors.PageToolIsAmbiguous("twin", [new PageTool("webmcp_twin", "twin"), new PageTool("webmcp_twin_2", "twin")]));
+
+        // The late-binding refusal: the caller named the page it read the tool
+        // on and the tab is somewhere else.
+        var moved = await PageToolAsync(rig, "alpha", Elsewhere);
+
+        Match(
+            TextOf(moved),
+            nameof(SessionErrors.PageToolPageHasMoved),
+            SessionErrors.PageToolPageHasMoved("alpha", Elsewhere, Here));
+
+        // And the same call with the page it really is on is NOT refused, which
+        // is what stops the four rows above passing for the wrong reason.
+        var accepted = await PageToolAsync(rig, "alpha", Here);
+
+        await Assert.That((bool?)accepted["isError"]).IsNotEqualTo(true);
+
+        // A title that matches with a wire name the rule does not build. Two
+        // readings, and the refusal carries both.
+        var titled = await PageToolAsync(rig, "Human Title");
+
+        Match(
+            TextOf(titled),
+            nameof(SessionErrors.PageToolNameDoesNotFollowTheRule),
+            SessionErrors.PageToolNameDoesNotFollowTheRule("Human Title", "webmcp_Human_Title", "webmcp_raw_name"));
+    }
+
+    /// <summary>
+    /// The refusal for a <c>page</c> argument BrowserAI could not check.
+    /// </summary>
+    /// <remarks>
+    /// <b>Its own rig, because the condition is a tab listing that says nothing
+    /// this build can read</b> — and the point of the row is that a check which
+    /// did not happen is not a check, so the call is refused rather than made
+    /// without it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePageCouldNotBeEstablishedRowIsEmittedByATabListingNothingCanRead()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+        {
+            child.ToolsListResult =
+                """{"tools":[{"name":"webmcp_alpha","description":"a","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"alpha"}}]}""";
+
+            child.Tools["browser_tabs"] = new FakeToolBehaviour
+            {
+                RawResult = """{"content":[{"type":"text","text":"### Result\n- there are no tabs open"}]}""",
+            };
+        });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var unknown = await PageToolAsync(rig, "alpha", "http://example.test/here");
+
+        await Assert.That((bool?)unknown["isError"]).IsTrue();
+
+        Match(
+            TextOf(unknown),
+            nameof(SessionErrors.PageToolCurrentPageIsUnknown),
+            SessionErrors.PageToolCurrentPageIsUnknown(
+                "alpha",
+                "http://example.test/here",
+                "\"### Result\n- there are no tabs open\""));
+    }
+
+    /// <summary>
+    /// The abandonment row, provoked by a child that never answers the page
+    /// tool.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>It really waits <see cref="SessionToolSurface.PageToolBudget"/>,
+    /// and there is no seam that shortens it.</b> What produces this row is
+    /// BrowserAI's own clock running out, so a rig that moved the clock would be
+    /// provoking something else. <see cref="FakeToolBehaviour.HoldUntil"/> rather
+    /// than <see cref="FakeToolBehaviour.Delay"/>: the child has to stay awake
+    /// while it holds the call, because the cancellation BrowserAI sends when the
+    /// budget fires is a frame it must be able to read.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePageToolAbandonmentRowIsEmittedByAPageToolThatNeverAnswers()
+    {
+        using var release = new CancellationTokenSource();
+
+        await using var sessions = RigSessionEnvironment.Create(child =>
+        {
+            child.ToolsListResult =
+                """{"tools":[{"name":"webmcp_slow","description":"a","inputSchema":{"type":"object","properties":{}},"annotations":{"title":"slow"}}]}""";
+
+            child.Tools["webmcp_slow"] = new FakeToolBehaviour
+            {
+                HoldUntil = Task.Delay(Timeout.Infinite, release.Token),
+            };
+        });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        try
+        {
+            var abandoned = await PageToolAsync(rig, "slow");
+
+            await Assert.That((bool?)abandoned["isError"]).IsTrue();
+
+            Match(
+                TextOf(abandoned),
+                nameof(SessionErrors.PageToolDidNotAnswer),
+                SessionErrors.PageToolDidNotAnswer("slow", "webmcp_slow", SessionToolSurface.PageToolBudget));
+        }
+        finally
+        {
+            await release.CancelAsync();
+        }
+    }
+
+    private static async Task<JsonObject> PageToolAsync(McpTestHarness rig, string name, string? page = null)
+    {
+        var arguments = new JsonObject
+        {
+            [SessionToolSurface.SessionParameter] = rig.Session!,
+            [SessionToolSurface.NameParameter] = name,
+            [SessionToolSurface.ArgumentsParameter] = new JsonObject(),
+            [SessionToolSurface.WhyParameter] = "the suite exercising this call",
+        };
+
+        if (page is not null)
+        {
+            arguments[SessionToolSurface.PageParameter] = page;
+        }
+
+        return await CallAsync(rig, SessionToolSurface.PageTool, arguments);
     }
 
     private static async Task<JsonObject> Screenshot(McpTestHarness rig, string session, string filename) =>

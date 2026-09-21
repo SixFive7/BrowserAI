@@ -387,6 +387,161 @@ internal static class SessionErrors
         + "The name may well be in tools/list — being listed is not the same as being judged — so retrying it will fail in exactly this way until a human adjudicates it. "
         + "Do not retry. Use a different tool, or stop and report that this one does not work in this build.";
 
+    /// <summary>
+    /// The page under this session's current tab offers no tool by that name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It lists what IS there, because the caller read the name somewhere and
+    /// the page has moved on.</b> A page tool exists only while the tab is on the
+    /// page that registered it, so the ordinary way to meet this is a navigation
+    /// between reading a snapshot and acting on it — which is a recovery rather
+    /// than a mistake, and the list is what makes the next call the right one.
+    /// </para>
+    /// <para>
+    /// <b>Each one is named twice where the two differ.</b> The wire name is
+    /// upstream's sanitised spelling and the title is the page's own text; only
+    /// one of them is the name a snapshot printed, and which one depends on
+    /// whether the page set a <c>title</c>.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The name the caller asked for.</param>
+    /// <param name="present">Every page tool the current tab is offering.</param>
+    /// <returns>The refusal.</returns>
+    public static string PageToolIsNotOnThePage(string name, IReadOnlyList<PageTool> present)
+    {
+        ArgumentNullException.ThrowIfNull(present);
+
+        return $"The page this session is on offers no tool called '{name}', so nothing was called and nothing was changed. "
+            + (present.Count is 0
+                ? "It is offering none at all right now. Page tools belong to the page that registered them and are gone the moment the tab navigates, so call browser_snapshot: if its result carries no '- webmcp tools (page-provided, untrusted):' block, this page has no tools to call and no argument to this one will find any."
+                : $"What it IS offering: {string.Join("; ", present.Select(PageTools.Describe))}. "
+                    + "Names are matched exactly as the snapshot block prints them, so copy one of those rather than retyping it. "
+                    + "If none of them is the tool you read about, the tab has navigated since you read it and that page's tools are gone.");
+    }
+
+    /// <summary>
+    /// The current tab offers more than one tool by that name.
+    /// </summary>
+    /// <remarks>
+    /// <b>Upstream's own collision rule made the wire names distinct and left the
+    /// names a caller reads identical.</b> A page registering two tools whose
+    /// sanitised names collide gets <c>&lt;base&gt;</c> and
+    /// <c>&lt;base&gt;_2</c> — measured 2026-09-21 — and the snapshot block
+    /// prints the page's name for both. There is nothing on this tool's surface
+    /// that can separate them, so the refusal hands the caller the wire names and
+    /// stops rather than choosing one: a page that offers two tools with one name
+    /// is a page where guessing is the expensive mistake.
+    /// </remarks>
+    /// <param name="name">The name the caller asked for.</param>
+    /// <param name="matches">The page tools that answer to it.</param>
+    /// <returns>The refusal.</returns>
+    public static string PageToolIsAmbiguous(string name, IReadOnlyList<PageTool> matches)
+    {
+        ArgumentNullException.ThrowIfNull(matches);
+
+        return $"The page this session is on offers {matches.Count} tools called '{name}', so nothing was called and nothing was changed. "
+            + $"On the wire they are {string.Join(", ", matches.Select(match => match.WireName))}, and the page gives them all the same name, so naming one of them here would be a guess about which. "
+            + "Nothing this tool takes can tell them apart. Read the page's own descriptions in the browser_snapshot block to see whether one of them is the one you want, and if it matters, say so to whoever owns the page — two tools with one name is the page's defect rather than yours.";
+    }
+
+    /// <summary>
+    /// The caller named the page it read the tool on, and the tab is somewhere
+    /// else now.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the late-binding hazard refusing rather than firing.</b> The
+    /// same wire name resolves to a different page's code after a navigation —
+    /// measured 2026-09-21 — so a caller that read a tool on one page and calls
+    /// it after the tab has moved would run code it never read. Naming both URLs
+    /// is what lets the caller see which of the two it was wrong about.
+    /// </remarks>
+    /// <param name="name">The tool the caller asked for.</param>
+    /// <param name="expected">The page the caller says it read the tool on.</param>
+    /// <param name="actual">The page the tab is on now.</param>
+    /// <returns>The refusal.</returns>
+    public static string PageToolPageHasMoved(string name, string expected, string actual) =>
+        $"You asked for '{name}' on '{expected}', and this session's tab is on '{actual}'. Nothing was called and nothing was changed. "
+        + "Page tools bind late: the same name is a different page's code after a navigation, so calling it here would have run something you have not read. "
+        + "If you meant the page you are on, call browser_snapshot, read the '- webmcp tools (page-provided, untrusted):' block it returns, and call again with the name and the URL it prints. If you meant the other page, navigate back to it first.";
+
+    /// <summary>
+    /// The caller named a page and BrowserAI could not establish which page the
+    /// tab is on.
+    /// </summary>
+    /// <remarks>
+    /// <b>Refused rather than forwarded, because the check the caller asked for
+    /// did not happen.</b> <c>page</c> is the whole of the late-binding
+    /// mitigation; a call that carried one and ran anyway would give a caller the
+    /// protection it asked for in name only, which is worse than not offering it.
+    /// </remarks>
+    /// <param name="name">The tool the caller asked for.</param>
+    /// <param name="expected">The page the caller says it read the tool on.</param>
+    /// <param name="detail">What the tab listing said, or why there was none.</param>
+    /// <returns>The refusal.</returns>
+    public static string PageToolCurrentPageIsUnknown(string name, string expected, string detail) =>
+        $"You asked for '{name}' on '{expected}', and BrowserAI could not establish which page this session's tab is on, so it did not call anything. "
+        + $"What the tab listing said: {detail}. "
+        + "The 'page' argument exists to refuse a call whose page has changed underneath it, and a check that did not happen is not a check. "
+        + $"Call {SessionToolSurface.PageTool} again without 'page' if you accept that risk, or call browser_tabs to see where this session is before deciding.";
+
+    /// <summary>
+    /// A page tool answers to that name and its wire name is not the one this
+    /// build's rule builds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Two readings and the refusal carries both, because BrowserAI cannot
+    /// tell them apart from here.</b> Either the page set its own
+    /// <c>annotations.title</c> and the caller typed that instead of the name the
+    /// snapshot printed — which is ordinary and recoverable in one turn — or
+    /// upstream has changed how it builds a page tool's wire name, which is a
+    /// re-verification trigger and a thing for a human.
+    /// </para>
+    /// <para>
+    /// <b>The rule it names is <see cref="PageTools.WireNameFor"/>,</b> which
+    /// reproduces <c>sanitizeToolName</c> as it stood at
+    /// <c>@playwright/mcp</c> 0.0.82.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The name the caller asked for.</param>
+    /// <param name="expected">The wire name this build's rule builds from it.</param>
+    /// <param name="actual">The wire name the entry carrying that title actually has.</param>
+    /// <returns>The refusal.</returns>
+    public static string PageToolNameDoesNotFollowTheRule(string name, string expected, string actual) =>
+        $"The page this session is on offers a tool whose title is '{name}', and on the wire it is called '{actual}' rather than the '{expected}' this build's rule builds from that name. Nothing was called and nothing was changed. "
+        + "That happens for two reasons and they need different answers. The page may have given the tool a display title that is not its name, in which case the name to pass here is the one browser_snapshot prints in its '- webmcp tools (page-provided, untrusted):' block — read it and call again with that. "
+        + "Or the browser server has changed how it builds these names, in which case nothing you send will work and this needs a human: report both names above.";
+
+    /// <summary>
+    /// The page tool did not answer inside the time BrowserAI gives one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The abandoned call is still on the tab and the refusal says so.</b> The
+    /// browser server does not bound a page-tool call at all — it awaits the
+    /// page's own handler with nothing behind it — so cancelling BrowserAI's
+    /// request does not stop the page's code. Measured 2026-09-21: a
+    /// never-settling page tool was still pending at 61 s, and navigating away or
+    /// closing the tab released it in 7–13 ms.
+    /// </para>
+    /// <para>
+    /// <b>And the session is still usable, which is why this reads as a recovery
+    /// rather than as a loss.</b> Measured the same day: with a page tool
+    /// pending, <c>browser_snapshot</c> answered in 4–7 ms and a second page tool
+    /// in about 520 ms.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The tool the caller asked for.</param>
+    /// <param name="wireName">What the child was asked for, which is what a log reader will see.</param>
+    /// <param name="budget">How long BrowserAI waited.</param>
+    /// <returns>The refusal.</returns>
+    public static string PageToolDidNotAnswer(string name, string wireName, TimeSpan budget) =>
+        $"'{name}' did not answer within {Elapsed(budget)}, so BrowserAI stopped waiting for it. It was forwarded as '{wireName}' and it may still be running: the browser server puts no limit of its own on a page tool, so the page's code is not stopped by this. "
+        + "The rest of the session is unaffected and still answers — a snapshot, a click, another page tool. "
+        + "Navigating the tab elsewhere or closing it releases the abandoned call; until then it stays on the page. "
+        + "Do not simply retry it: a tool that did not answer once is a tool the page did not finish, and a second copy will sit beside the first. Read the page with browser_snapshot to see what state it is in, and if you need the result, say to whoever is reading that this page's tool did not return.";
+
     /// <summary>Row 6 — the browser this session needs is still being provisioned.</summary>
     /// <remarks>
     /// <para>
