@@ -4,6 +4,8 @@
 # Upstream configuration facts
 
 **Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05, read from the resolved bundle · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · Firefox 153.0 (`firefox-1539`) · Windows 11 Pro 26200.
+
+⚠️ **That line is the baseline the OLDEST entries here were taken at, and it is left standing as one — *added by addition 2026-09-21, the fourth roll since*.** What the tree resolves today, read from [the payload lock](../../build/payload/package-lock.json) and [the committed `browsers.json` snapshot](../../upstream-snapshots/browsers.json) rather than from memory: `@playwright/mcp` **0.0.82** · `playwright-core` **1.64.0-alpha-1789764292000** (epoch milliseconds rather than a date, and nothing here parses it as one) · Chrome for Testing **154.0.8037.0** (`chromium-1246`) · Firefox **156.0** (`firefox-1549`). **Every dated entry below states the versions it was taken at**, which is what makes this a baseline rather than a claim about any of them; an entry with no versions of its own was taken at the line above.
 Measured on [the reference machine](../README.md#the-reference-machine).
 
 All `[FLOATS]`, all read from the shipped

@@ -48,6 +48,18 @@ its image name*:
 | **Old**, five substrings anywhere in the file | **15 of 36** | **7 of 14** |
 | **New**, a name FILTER rather than the API | **1 of 36** | **1 of 14** |
 
+⚠️ **The denominators are the 2026-09-17 measurement and are left as measured.**
+*Added 2026-09-21, when a fifteenth rig arrived* —
+[`2026-09-21-webmcp`](2026-09-21-webmcp/README.md), two `.mjs` files taken during
+the `@playwright/mcp` 0.0.82 review. **The NUMERATORS are what the decision below
+rests on and neither moved**: that rig selects no process at all, by name or
+otherwise, so the blind spot is still **one file wide** and it is still
+`2026-09-14-firstrun/observe.ps1`. Re-counting the denominators would mean
+re-running the whole scan over the whole directory, which is what a dated row is
+for; incrementing them would be adjusting a measurement rather than taking one.
+**A second true positive would be a new decision rather than a precedent**, and
+this rig is not one.
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and

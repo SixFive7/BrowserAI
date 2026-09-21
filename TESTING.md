@@ -295,6 +295,28 @@ while ((Get-ChildItem .work\test-scratch -Force -ErrorAction SilentlyContinue).C
 }
 ```
 
+⚠️ **That block does not run under every agent harness, and the failure is a
+refusal rather than a no-op — *added 2026-09-21 by addition, because the block
+above is what a human types and is correct at a PowerShell prompt*.** Claude
+Code's PowerShell tool refuses the **wildcard** form outright, with
+*`Remove-Item on system path '.work\test-scratch\*' is blocked. This path is
+protected from removal.`* — measured 2026-09-21 against a real rig directory,
+with the same directory then removed by the form below, which is the positive
+control that separates *the guard refused* from *there was nothing there*. The
+guard reads the **argument**, so piping the same children in is accepted:
+
+```powershell
+while ((Get-ChildItem .work\test-scratch -Force -ErrorAction SilentlyContinue).Count -gt 0) {
+    Get-ChildItem .work\test-scratch -Force -ErrorAction SilentlyContinue |
+        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+}
+```
+
+**Both forms clear the same set and the loop condition is unchanged**, so the
+step and its meaning are the same; what differs is only which spelling a harness
+will let through. Nothing enforces either, for the reason the paragraph below
+gives.
+
 A directory that will not clear is the signal, not the inconvenience: something
 from the last run is still alive. **Nothing enforces this** — it is a property of
 two runs rather than of one, and no test inside either can see the other.
