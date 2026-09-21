@@ -135,9 +135,17 @@ internal sealed class VerticalSliceTests
         await Assert.That(string.Join(", ", run.ToolNames))
             .IsEqualTo(string.Join(", ", [.. SessionToolSurface.Names, .. expectedUpstream]));
 
-        // Stated as a number as well, because 72 of 74 is what DECISIONS records
+        // Stated as a number as well, because 71 of 72 is what DECISIONS records
         // and a list comparison that both sides got wrong the same way would not
-        // say so. *(Corrected 2026-09-17, previously 71 of 73 -- the dated
+        // say so. *(Corrected 2026-09-21, previously 72 of 74, and this is the
+        // first time it has gone DOWN: @playwright/mcp 0.0.82 marked
+        // browser_webmcp_list and browser_webmcp_call `skillOnly`, so both left
+        // the exposed surface while keeping capability `core`. The pair that
+        // moved the denominator by two and this number by one on the way in did
+        // exactly the same on the way out, because only the `allow` was ever
+        // counted here. Nobody reversed the deny: a tool upstream takes off the
+        // wire takes its verdict row with it. Corrected 2026-09-17, previously
+        // 71 of 73 -- the dated
         // playwright-core override added browser_emulate_media, `core` and so
         // unconditional, judged `allow`, so denominator and numerator moved
         // together. Corrected 2026-09-15 a second time the same day, previously
@@ -148,7 +156,7 @@ internal sealed class VerticalSliceTests
         // same day from 68 of 69 -- 0.0.80 added browser_start_recording and
         // browser_stop_recording and both were judged `allow`; corrected
         // 2026-08-20 before that, previously 58 of 59.)*
-        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 72);
+        await Assert.That(run.ToolNames.Count).IsEqualTo(SessionToolSurface.Names.Count + 71);
 
         // ⚠️ And every withheld tool is absent from the REAL binary's real
         // answer, named individually. The list comparison above would also catch
