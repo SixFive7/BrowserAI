@@ -203,13 +203,18 @@ internal static class BrowserConfiguration
     /// red build.
     /// </para>
     /// <para>
-    /// ⚠️ <b>It is not in <c>config.d.ts</c>.</b> The typings ship with
-    /// <c>@playwright/mcp</c>, which has not rolled; the implementation is in
-    /// <c>playwright-core</c>, which the override moved. <c>loadConfig</c> is a
-    /// bare <c>JSON.parse</c> with no schema validation, so the key works
-    /// regardless — and because that is the same property that makes a renamed
-    /// key vanish in silence, the honouring is measured over a running child by
-    /// <c>ConfigRoundTripTests.TheChildHonoursFilePathsEvenThoughItsOwnTypingsDoNotDeclareIt</c>
+    /// ⚠️ <b>It is in <c>config.d.ts</c> since <c>@playwright/mcp</c>
+    /// 0.0.82</b>, as <c>filePaths?: 'relative' | 'absolute'</c>. <i>Corrected
+    /// 2026-09-21 (previously "It is not in <c>config.d.ts</c>. The typings ship
+    /// with <c>@playwright/mcp</c>, which has not rolled; the implementation is
+    /// in <c>playwright-core</c>, which the override moved.")</i> — the wrapper
+    /// rolled on 2026-09-21 and the dated override was retired with it.
+    /// <b>Nothing about how this is checked changes, and the reason is the
+    /// point:</b> <c>loadConfig</c> is a bare <c>JSON.parse</c> with no schema
+    /// validation, so a declaration in the typings is not evidence that a
+    /// running child honours the key any more than its absence was evidence that
+    /// it does not. The honouring is measured over a running child by
+    /// <c>ConfigRoundTripTests.TheChildHonoursFilePathsAndHandsBackAbsoluteWhereUpstreamDefaultsToRelative</c>
     /// rather than assumed.
     /// </para>
     /// </remarks>

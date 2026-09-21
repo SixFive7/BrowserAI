@@ -358,7 +358,16 @@ internal sealed class ModelSurfaceTests
         // judged `allow` on 2026-09-15. The ten are still the ten: the addend is
         // the capability grant, and the base is whatever upstream ships.
         //
-        // ⚠️ The base is 62 since 2026-09-17 (previously 61): the dated
+        // ⚠️ The base is 61 since 2026-09-21 (previously 62), and it went DOWN
+        // for the first time. @playwright/mcp 0.0.82 marked
+        // browser_webmcp_list and browser_webmcp_call `skillOnly`, so both left
+        // the exposed surface entirely and their verdict rows were deleted as
+        // judgements about nothing. The pair that moved this base by ONE on the
+        // way in moved it by ONE on the way out, for the mirror-image reason:
+        // only the `allow` was ever counted here. Re-counted off the
+        // regenerated snapshot rather than decremented.
+        //
+        // ⚠️ The base was 62 from 2026-09-17 (previously 61): the dated
         // playwright-core override added browser_emulate_media, `core` and so
         // unconditional, judged `allow`, so upstream's one tool moves this base
         // by one. That is the ORDINARY case and the note below is the one that
@@ -373,7 +382,7 @@ internal sealed class ModelSurfaceTests
         // mean a denial had stopped withholding, and one lower would mean a
         // tool had never arrived.
         await Assert.That(advertised.Count(entry => !SessionToolSurface.IsAuthored(entry.Key)))
-            .IsEqualTo(62 + TheNewlyGrantedTen.Length);
+            .IsEqualTo(61 + TheNewlyGrantedTen.Length);
     }
 
     /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>

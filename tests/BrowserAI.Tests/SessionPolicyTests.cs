@@ -487,84 +487,40 @@ internal sealed class SessionPolicyTests
         }
     }
 
-    /// <summary>
-    /// The WebMCP pair <c>@playwright/mcp</c> 0.0.81 added is judged in two
-    /// directions: the list is advertised and forwarded, the call is dropped from
-    /// the surface and refused at the door.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Named rather than left to the counts, because the two tools arrived
-    /// together and a count cannot tell which one survived.</b> The surface arm
-    /// above says 71 of 73 and would be satisfied by the opposite judgement —
-    /// list denied, call allowed — which is the one outcome that would be
-    /// actively dangerous.
-    /// </para>
-    /// <para>
-    /// <b>The reason is liveness, measured 2026-09-15 before anything was
-    /// judged.</b> <c>browser_webmcp_call</c> invokes a tool the <i>page</i>
-    /// registers and waits for it: against a page whose <c>invokeTool</c> never
-    /// settles it had not answered after 45,002 ms, where a well-behaved tool on
-    /// the same page answered in 521 ms. Upstream wraps the <i>list</i> path in a
-    /// five-second timeout and wraps the call path in nothing. That is the
-    /// <c>browser_annotate</c> shape with a wider door — any page can arrange it,
-    /// where the annotation daemon at least needed a human at a dashboard.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>What a deny does NOT close, asserted here so it is not rediscovered
-    /// as a defect.</b> Upstream's <c>renderTabHeader</c> emits
-    /// <c>- N webmcp tools available on the page</c> on every tab header whose
-    /// count is non-zero, and that line reaches the model whatever this file
-    /// says. It carries the count and none of the page's text. The refusal below
-    /// is what a model meets when it acts on that line.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheWebMcpCallIsWithheldOnLivenessAndTheWebMcpListIsNot()
-    {
-        const string Call = "browser_webmcp_call";
-        const string List = "browser_webmcp_list";
-
-        var everything = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities);
-
-        // Both are really upstream's, and both are really in the surface a
-        // fully-capable child exposes -- so the absence below is this build's
-        // decision rather than a bundle that never carried the tool.
-        await Assert.That(everything).Contains(Call);
-        await Assert.That(everything).Contains(List);
-
-        // The call: out of the list, refused at the door, and the refusal is the
-        // `why` the file carries rather than a sentence composed in code.
-        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(Call)).IsTrue();
-
-        var decided = RepositoryVerdicts.Committed.Decide(Call);
-
-        await Assert.That(decided.IsAllowed).IsFalse();
-
-        // The refusal is the file's own `why` behind the catalogue's standing
-        // preamble, rather than a sentence composed in code: a row edited in the
-        // file changes what a caller reads, which is the whole point of the file.
-        await Assert.That(decided.Refusal).IsEqualTo(
-            SessionErrors.ToolIsDenied(Call, RepositoryVerdicts.Committed.Find(Call)!.Why!));
-        await Assert.That(decided.Refusal!).EndsWith(RepositoryVerdicts.Committed.Find(Call)!.Why!);
-
-        // The refusal has to say WHY a caller cannot have it and WHAT to reach
-        // for instead, in the words a model acts on. A refusal that says only
-        // "denied" sends a model looking for a permission it can acquire.
-        await Assert.That(decided.Refusal!).Contains("liveness");
-        await Assert.That(decided.Refusal!).Contains("no timeout");
-        await Assert.That(decided.Refusal!).Contains(List);
-
-        // The list: advertised and forwarded. This half is what makes the arm a
-        // judgement rather than a blanket refusal of anything named webmcp.
-        await Assert.That(RepositoryVerdicts.Committed.IsWithheldFromTheSurface(List)).IsFalse();
-        await Assert.That(RepositoryVerdicts.Committed.Decide(List).IsAllowed).IsTrue();
-
-        // And the judgement was taken against the upstream this build resolves,
-        // which is what stops a row surviving a bump nobody re-read.
-        await Assert.That(RepositoryVerdicts.Committed.Find(Call)!.Since).IsEqualTo("2026-09-15");
-    }
+    // ⚠️ RETIRED 2026-09-21, and named here so the deletion is a record rather
+    // than an absence. `TheWebMcpCallIsWithheldOnLivenessAndTheWebMcpListIsNot`
+    // stood between these two comments from 2026-09-15. It asserted that the
+    // pair @playwright/mcp 0.0.81 added was judged in two directions -- the list
+    // advertised and forwarded, the call dropped from the surface and refused at
+    // the door -- and it opened by requiring BOTH names to be in the surface a
+    // fully-capable child exposes, because an absence has to be this build's
+    // decision rather than a bundle that never carried the tool.
+    //
+    // @playwright/mcp 0.0.82 marked both `skillOnly`, so neither is on the wire
+    // in any configuration, both verdict rows were deleted, and every premise
+    // this arm rested on is gone. Deleting a test for a mechanism that no longer
+    // exists is not a skip.
+    //
+    // WHAT IT WAS FOR IS PRESERVED RATHER THAN LOST, because the tool can come
+    // back and the judgement would then be owed again: the deny was LIVENESS
+    // rather than security -- upstream wraps the list path in a five-second
+    // timeout and the call path in nothing, and a page whose handler never
+    // settles held one call for 45,002 ms where a well-behaved tool on the same
+    // page answered in 521 ms. That reasoning is in tool-verdicts.json's
+    // `_rows_removed_because_upstream_withdrew_the_tool` and in
+    // upstream-review.json, and it was RE-READ in the 0.0.82 bundle and is still
+    // true of the code.
+    //
+    // ONE THING IT RECORDED IS NOW WORSE RATHER THAN GONE. The arm's remarks
+    // said a deny does not close the tab-header line `- N webmcp tools available
+    // on the page`, and that the line "carries the count and none of the page's
+    // text". At 0.0.82 the snapshot itself carries the page's tool names,
+    // descriptions and inputSchemas, so page-authored text reaches a model on
+    // every snapshot-bearing call. That is measured, not inferred -- kb:
+    // "A page can add tools to the child's tools/list, and its own text reaches
+    // a caller", re-verification row 133 -- and what would switch it off is a
+    // `webmcp: false` this build does not write, which is a decision rather than
+    // a test.
 
     /// <summary>
     /// A <c>deny</c> row in <c>tool-verdicts.json</c> is dropped from the

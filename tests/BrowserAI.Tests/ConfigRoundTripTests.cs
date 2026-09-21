@@ -138,25 +138,31 @@ internal sealed class ConfigRoundTripTests
     }
 
     /// <summary>
-    /// The child honours <c>filePaths</c>, a key its own <c>config.d.ts</c> does
-    /// not declare.
+    /// The child honours <c>filePaths</c>, and hands back <c>absolute</c> where
+    /// upstream's default is <c>relative</c>.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The one key in the generated config with no entry in the typings this
-    /// project diffs</b>, and it is measured for exactly that reason. It is
-    /// implemented in <c>playwright-core</c>, which the
-    /// <see href="https://github.com/microsoft/playwright/pull/42673">dated
-    /// override</see> moved to 1.64.0-alpha-2026-09-17, while
-    /// <c>config.d.ts</c> ships with <c>@playwright/mcp</c>, which has not
-    /// rolled — so <c>config-schema.d.ts</c> is the one golden snapshot that did
-    /// <i>not</i> move on adoption.
+    /// ⚠️ <b>Renamed 2026-09-21 (previously
+    /// <c>TheChildHonoursFilePathsEvenThoughItsOwnTypingsDoNotDeclareIt</c>),
+    /// because the name asserted something that stopped being true.</b>
+    /// <c>@playwright/mcp</c> <b>0.0.82</b> declares the key, as
+    /// <c>filePaths?: 'relative' | 'absolute'</c>. <i>Previously: "The one key in
+    /// the generated config with no entry in the typings this project diffs
+    /// … implemented in <c>playwright-core</c>, which the dated override moved
+    /// to 1.64.0-alpha-2026-09-17, while <c>config.d.ts</c> ships with
+    /// <c>@playwright/mcp</c>, which has not rolled — so
+    /// <c>config-schema.d.ts</c> is the one golden snapshot that did not move on
+    /// adoption."</i> The wrapper rolled, the override was retired with it, and
+    /// that snapshot moved like the other three.
     /// </para>
     /// <para>
-    /// That is survivable only because <c>loadConfig</c> is a bare
-    /// <c>JSON.parse</c> with no schema validation, which is the same property
-    /// that makes a renamed key vanish in silence. The typings were never what
-    /// made a key work; a running child saying the value back is. The generic
+    /// <b>The arm survives the rename because what it measures was never the
+    /// typings.</b> <c>loadConfig</c> is a bare <c>JSON.parse</c> with no schema
+    /// validation — the same property that makes a renamed key vanish in silence
+    /// — so a declaration in <c>config.d.ts</c> is not evidence that a running
+    /// child honours the key, and a <i>missing</i> declaration was never evidence
+    /// that it does not. A running child saying the value back is. The generic
     /// walk above would cover this too, and <b>a named arm is what keeps the
     /// cover honest</b>: a generator that stopped writing the key would remove
     /// it from both sides of that comparison and leave it green.
@@ -170,7 +176,7 @@ internal sealed class ConfigRoundTripTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheChildHonoursFilePathsEvenThoughItsOwnTypingsDoNotDeclareIt()
+    public async Task TheChildHonoursFilePathsAndHandsBackAbsoluteWhereUpstreamDefaultsToRelative()
     {
         SuiteEnvironment.RequirePublishedSlice();
 

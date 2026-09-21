@@ -566,13 +566,19 @@ internal sealed partial class RecordedCountTests
         // surface the default 26, and a policy that stopped withholding anything
         // would make the two counts equal.
         //
-        // ⚠️ `withheld` is 2 since 2026-09-15 (previously 1): browser_webmcp_call
-        // joined browser_annotate. The number is spelled here because the
-        // sentence in DECISIONS.md publishes the DIFFERENCE and a difference is
-        // satisfied by both halves moving together.
+        // ⚠️ `withheld` is 1 again since 2026-09-21 (previously 2, and 1 before
+        // 2026-09-15 when browser_webmcp_call joined browser_annotate). NOBODY
+        // DECIDED THAT, which is why it is stamped rather than just changed:
+        // @playwright/mcp 0.0.82 marked browser_webmcp_call `skillOnly`, so it
+        // left the exposed surface and its row was deleted as a judgement about
+        // nothing. The reasoning behind the deny is preserved in
+        // tool-verdicts.json and upstream-review.json, because the tool can come
+        // back. The number is spelled here because the sentence in DECISIONS.md
+        // publishes the DIFFERENCE and a difference is satisfied by both halves
+        // moving together.
         await Assert.That(everything).IsGreaterThanOrEqualTo(granted.Count);
         await Assert.That(granted.Count).IsGreaterThan(UpstreamSurface.DefaultSurface().Count);
-        await Assert.That(withheld).IsEqualTo(2);
+        await Assert.That(withheld).IsEqualTo(1);
     }
 
     /// <summary>
