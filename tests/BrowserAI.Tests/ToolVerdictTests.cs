@@ -267,19 +267,26 @@ internal sealed class ToolVerdictTests
         // against the FILE rather than against a C# constant, because the file
         // is now what decides.
         //
-        // ⚠️ TWO since 2026-09-15 (previously 1). `browser_webmcp_call`
-        // joined `browser_annotate`, on the same liveness grounds and with a
-        // wider door: it runs a tool the PAGE supplies and waits for it with no
-        // timeout, where the annotation tool at least needed a human. The number
-        // is written here rather than derived so that a denial withdrawn in the
-        // file is a red build rather than a quiet reversal.
-        await Assert.That(denied.Count).IsEqualTo(2);
+        // ⚠️ ONE AGAIN since 2026-09-21 (previously two since 2026-09-15,
+        // and one before that). `browser_webmcp_call` was NOT un-denied:
+        // @playwright/mcp 0.0.82 marked it `skillOnly`, so it is on no wire in
+        // any configuration and a row naming it would be a judgement about
+        // nothing -- which is the direction `Coverage` refuses on purpose. The
+        // liveness reasoning is preserved in tool-verdicts.json's
+        // `_rows_removed_because_upstream_withdrew_the_tool` and in
+        // upstream-review.json, because the tool can come back and the judgement
+        // would then be owed again; re-read in the 0.0.82 bundle, the call path
+        // is still unbounded and the new 5 s frame timeout covers only the
+        // listing. The number is written here rather than derived so that a
+        // denial withdrawn in the file is a red build rather than a quiet
+        // reversal -- and this move went through a snapshot diff and a review
+        // first, which is what separates the two.
+        await Assert.That(denied.Count).IsEqualTo(1);
 
-        // And both of them by name, because a count of two is satisfied by the
-        // wrong pair. The dates are the file's own: one judged at the
-        // 0.0.79 surface, one at 0.0.81.
+        // And it by name, because a count is satisfied by the wrong row. The
+        // date is the file's own, judged at the 0.0.79 surface.
         await Assert.That(denied.Select(row => row.Name).Order(StringComparer.Ordinal))
-            .IsEquivalentTo((string[])["browser_annotate", "browser_webmcp_call"]);
+            .IsEquivalentTo((string[])["browser_annotate"]);
     }
 
     [Test]

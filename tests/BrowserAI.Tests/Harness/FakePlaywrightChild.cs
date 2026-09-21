@@ -556,19 +556,43 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// byte for byte.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-09-21 (previously <c>{"tools":{}}</c>), and
+    /// <c>listChanged</c> is back for a reason the 2026-08-18 note did not
+    /// anticipate.</b> <c>@playwright/mcp</c> <b>0.0.82</b> really does advertise
+    /// <c>{"tools":{"listChanged":true}}</c>, because its tool list genuinely
+    /// changes now: the child appends the current page's own WebMCP tools to
+    /// <c>tools/list</c> and notifies when that set moves. This is the double
+    /// tracking the thing it doubles, which is the rule below applied rather
+    /// than relaxed — the snapshot is the source and
+    /// <c>UpstreamSnapshotTests.TheDoubleAdvertisesWhatTheRealChildDoes</c> is
+    /// what moved first.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>BrowserAI does NOT forward it, and that is correct rather than an
+    /// omission.</b> BrowserAI answers <c>tools/list</c> from the run's own
+    /// child, which never navigates and so has no page to collect from, so
+    /// BrowserAI's own list does not change and it advertises
+    /// <c>{"tools":{}}</c> to its caller. Measured end to end 2026-09-21: 78
+    /// tools before a page registered two WebMCP tools and 78 after. See
+    /// <c>kb/playwright/tools-and-artifacts.md</c>, <i>A page can add tools to
+    /// the child's tools/list</i>.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 (previously
     /// <c>{"tools":{"listChanged":true},"logging":{}}</c>).</b> The double was
     /// more capable than the thing it doubles: the committed
-    /// <c>upstream-snapshots/tools-list.json</c> records
+    /// <c>upstream-snapshots/tools-list.json</c> recorded
     /// <c>@playwright/mcp</c> 0.0.79 advertising exactly <c>{"tools":{}}</c> — no
-    /// <c>listChanged</c>, no <c>logging</c> — and
-    /// <c>UpstreamSnapshotTests.TheDoubleAdvertisesWhatTheRealChildDoes</c> now
-    /// holds the two together. A test passing against capability behaviour that
-    /// cannot occur in production is worse than no test: it reads as coverage of
-    /// a branch nothing will ever take, and a proxy that one day branches on
-    /// <c>listChanged</c> would have been green here and wrong on the wire.
+    /// <c>listChanged</c>, no <c>logging</c>. A test passing against capability
+    /// behaviour that cannot occur in production is worse than no test: it reads
+    /// as coverage of a branch nothing will ever take, and a proxy that one day
+    /// branches on <c>listChanged</c> would have been green here and wrong on
+    /// the wire. <b>That day is here and the double moved with it</b>, which is
+    /// the same rule producing the opposite value.
+    /// </para>
     /// </remarks>
-    private const string RealChildCapabilities = """{"tools":{}}""";
+    private const string RealChildCapabilities = """{"tools":{"listChanged":true}}""";
 
     private string Initialize(JsonNode? request)
     {

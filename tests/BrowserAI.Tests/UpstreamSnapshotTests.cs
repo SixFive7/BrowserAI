@@ -273,8 +273,17 @@ internal sealed class UpstreamSnapshotTests
         // with browser_emulate_media, every other capability unchanged to the
         // tool, and the default surface moving with it (26 -> 27) because `core`
         // is unconditional.
-        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(47);
-        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(74);
+        // ⚠️ Corrected 2026-09-21 @ @playwright/mcp 0.0.82 (previously 47 and
+        // 74), and this is the first time either has gone DOWN. RE-COUNTED OFF
+        // THE ACCEPTED SNAPSHOT a fourth time: upstream marked
+        // browser_webmcp_list and browser_webmcp_call `skillOnly` while leaving
+        // them `core`, so they left the exposed surface entirely and `core`'s
+        // exposed count went 24 -> 22. Every other capability is unchanged to
+        // the tool, `storage` is still 17, and both figures move by the same two
+        // because `core` is unconditional and so is in every set. The default
+        // surface moved with them, 27 -> 25, for the same reason.
+        await Assert.That(UpstreamSurface.For(["config", "vision", "devtools"]).Count).IsEqualTo(45);
+        await Assert.That(UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities).Count).IsEqualTo(72);
     }
 
     private static JsonDocument ReadToolsList() =>

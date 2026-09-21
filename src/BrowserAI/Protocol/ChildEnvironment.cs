@@ -12,7 +12,7 @@ namespace BrowserAI.Protocol;
 /// <remarks>
 /// <para>
 /// <b>It has to be an allowlist rather than a strip-list.</b> Upstream reads
-/// <b>46</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
+/// <b>47</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
 /// config mapping, and the merge order is config file → environment → CLI — so
 /// an inherited variable silently overrides a key BrowserAI generated, with no
 /// error anywhere. Naming what may pass makes the next variable upstream adds
@@ -39,6 +39,27 @@ namespace BrowserAI.Protocol;
 /// direction, because the row names the bundle and the control and this is
 /// prose beside an allowlist. <b>Neither of them can tell you the number is
 /// right</b> — only a re-measurement against the resolved bundle does that.
+/// </para>
+/// <para>
+/// ⚠️ <b>Corrected 2026-09-21 @ <c>playwright-core</c>
+/// 1.64.0-alpha-1789764292000 (previously "<b>46</b> … variables, three of them
+/// outside its own config mapping").</b> The one addition is
+/// <c>PLAYWRIGHT_MCP_WEBMCP</c>, which arrived with <c>@playwright/mcp</c>
+/// 0.0.82's page-registered tool collection and is read <b>inside</b>
+/// <c>configFromEnv</c>, so the mapping went 43 → 44 and the outside set is
+/// unchanged at three — still <c>PING_TIMEOUT_MS</c>, <c>EXTENSION_TOKEN</c> and
+/// <c>PROFILE_DIR_NAME</c>. <b>Re-measured against the resolved bundle with the
+/// previous one as the positive control</b>, fetched with
+/// <c>npm pack playwright-core@1.64.0-alpha-2026-09-17</c>: it returned
+/// 43 + 3 = 46, exactly what this sentence carried, against 44 + 3 = 47 on the
+/// bundle that ships. Nothing left the set.
+/// <b><c>PLAYWRIGHT_MCP_WEBMCP</c> is deliberately NOT in <see cref="Refused"/></b>,
+/// which is a different answer from the one <c>PLAYWRIGHT_MCP_FILE_PATHS</c>
+/// got four days earlier and for a stated reason: that list names variables
+/// that <i>override a key the config generator writes</i>, and this product
+/// writes no <c>webmcp</c> key. The allowlist already makes it absent. Naming
+/// it here would assert a decision about page-registered tool collection that
+/// nobody has taken — see <c>upstream-review.json</c>, 2026-09-21.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-17 @ <c>playwright-core</c>

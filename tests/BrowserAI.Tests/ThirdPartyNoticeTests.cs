@@ -332,12 +332,18 @@ internal sealed class ThirdPartyNoticeTests
 
         // ⚠️ EVERY VERSION THIS FILE STATES ABOUT A PAYLOAD PACKAGE IS READ BACK
         // OUT OF THE LOCK. It states two, and it states them because they
-        // DISAGREE: an npm override pins `playwright-core` one build ahead of
-        // what `@playwright/mcp` declares, so a reader who sees two Playwright
-        // versions in one payload would otherwise have no way to tell a pin from
-        // a mistake. A number in this file that nothing checks is a number that
-        // goes stale silently, which is the argument StampedPackages already
-        // won for the NuGet half.
+        // ⚠️ Corrected 2026-09-21 (previously "DISAGREE: an npm override pins
+        // `playwright-core` one build ahead of what `@playwright/mcp` declares,
+        // so a reader who sees two Playwright versions in one payload would
+        // otherwise have no way to tell a pin from a mistake"). THEY AGREE AGAIN
+        // since the override was retired, and the pair stays stamped anyway --
+        // which is the point rather than an oversight. What this arm holds is
+        // that the notices state the versions the payload RESOLVED, and a
+        // reader meeting two equal numbers learns something a reader meeting
+        // one number cannot: that nothing is pulling either of them anywhere.
+        // A number in this file that nothing checks is a number that goes stale
+        // silently, which is the argument StampedPackages already won for the
+        // NuGet half.
         foreach (var package in StampedPayloadPackages)
         {
             var resolved = ResolvedVersions.FromPayloadLock(package);

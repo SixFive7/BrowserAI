@@ -151,14 +151,23 @@ internal sealed class SessionPolicyTests
     /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
-    private const int Advertises = 72;
+    private const int Advertises = 71;
 
     /// <summary>
     /// How many tools this build withholds, written down beside
     /// <see cref="Advertises"/> and for the same reason.
     /// </summary>
     /// <remarks>
-    /// <b>Two since 2026-09-15</b>, and it is stated rather than read off
+    /// ⚠️ <b>One again since 2026-09-21</b>, and <b>nobody decided that</b>:
+    /// <c>@playwright/mcp</c> 0.0.82 marked <c>browser_webmcp_call</c>
+    /// <c>skillOnly</c>, so it left the exposed surface and its verdict row was
+    /// deleted as a judgement about nothing. The deny's reasoning is preserved
+    /// in <c>tool-verdicts.json</c> and <c>upstream-review.json</c> because the
+    /// tool can come back. <see cref="Advertises"/> moved 72 → 71 with it, so
+    /// the pair went 74 → 72 and both halves moved for the same cause — which
+    /// is exactly the shape the paragraph below says this pair exists to catch,
+    /// arriving from upstream rather than from a refusal being reintroduced.
+    /// <i>Previously <b>two since 2026-09-15</b>.</i> It is stated rather than read off
     /// <c>RepositoryVerdicts.Count</c> here: the pair
     /// <c>Advertises</c> + <c>Withholds</c> is the whole claim this class makes
     /// about the size of the surface, and reading either half out of the file
