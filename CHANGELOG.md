@@ -404,6 +404,30 @@ release body; nothing else depends on it.
   `current\` term moves with every publish. That is a property of a derived
   total rather than a defect in this one.
 
+- ⬆️ **TUnit moved 1.68.4 -> 1.68.17 and this time the testing platform moved with it, 2.4.0 -> 2.4.1.**
+  `dotnet restore --force-evaluate` on 2026-09-21 re-resolved the float and moved one
+  project's lock and no other: `tests/BrowserAI.Tests/packages.lock.json`. TUnit,
+  `TUnit.Assertions`, `TUnit.Core` and `TUnit.Engine` went 1.68.4 -> 1.68.17;
+  `Microsoft.Testing.Platform`, `.MSBuild`, `.Extensions.Telemetry` and
+  `.Extensions.TrxReport.Abstractions` went 2.4.0 -> 2.4.1, `.Extensions.TrxReport` went
+  2.3.3 -> 2.4.1, and `Microsoft.Testing.Extensions.CodeCoverage` went 18.10.0 -> 18.11.2.
+
+  THE PLATFORM MOVED BECAUSE TUNIT LET IT, WHICH IS THE SAME MECHANISM THAT HELD IT BACK
+  LAST TIME AND NOT A DIFFERENT ONE. The 2026-09-17 entry above records
+  `Microsoft.Testing.Platform` staying at 2.4.0 while 2.4.1 already existed, because TUnit
+  1.68.4 declared an exact `Microsoft.Testing.Platform 2.4.0` and NuGet resolves the lowest
+  applicable version. Read out of the restored package on 2026-09-21, `tunit.engine.nuspec`
+  at 1.68.17 declares `Microsoft.Testing.Platform 2.4.1`, `Microsoft.Testing.Platform.MSBuild`
+  2.4.1 and `Microsoft.Testing.Extensions.TrxReport.Abstractions` 2.4.1 in every one of its
+  four target-framework groups. So the float is doing exactly what it did in September and
+  the number it lands on is upstream's choice rather than ours.
+
+  The two-step the build uses was run in full: `--force-evaluate` then `--locked-mode`, both
+  exit 0, so the lock describes the tree it produced. Solution build after the move:
+  0 warnings, 0 errors. The three `src/` locks did not move at all, which is the sentence
+  worth having -- `ModelContextProtocol`, `Velopack`, the ILCompiler and ILLink packages and
+  CsWin32 all re-resolved to what they already recorded.
+
 ## [1.0.0] - 2026-09-17
 
 BrowserAI is a Windows MCP server that gives an AI agent a real browser, either
