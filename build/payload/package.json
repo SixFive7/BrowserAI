@@ -16,36 +16,23 @@
     "that actually ships was 1.63.0-alpha-2026-08-05. Declaring it would create a",
     "second, independently floating source for a version upstream pins exactly.",
     "",
+    "THERE WAS AN `overrides` BLOCK HERE BETWEEN 2026-09-17 AND 2026-09-21, and it",
+    "is recorded rather than removed without trace. It pinned playwright-core to",
+    "1.64.0-alpha-2026-09-17 underneath @playwright/mcp 0.0.81, to pull",
+    "microsoft/playwright#42673 -- --file-paths=absolute, this project's own ask",
+    "#42497 -- one build forward of what the wrapper declared for itself. It was a",
+    "DATED EXCEPTION WITH A WRITTEN EXIT and the exit has fired: @playwright/mcp",
+    "0.0.82 declares playwright-core 1.64.0-alpha-1789764292000, whose own bundle",
+    "carries the fix. The wrapper's pin is what ships again, which is this file's",
+    "normal state and needs no entry of its own. See DECISIONS.md, 'The two",
+    "exceptions to the versioning policy', where the exception is recorded as",
+    "ENDED rather than deleted. NOTHING MAY BE ADDED BACK HERE ON THAT PRECEDENT:",
+    "the argument was a merged upstream fix one wrapper release had not caught up",
+    "with, which is a condition that expires, and it expired.",
+    "",
     "See CLAUDE.md, 'Versioning: everything floats, the build freezes it'."
-  ],
-  "//overrides": [
-    "A DATED EXCEPTION WITH A WRITTEN EXIT, taken 2026-09-17 by the maintainer",
-    "(Q210 = a). It is NOT a pin around an absence and it is NOT a precedent; see",
-    "DECISIONS.md, 'The two exceptions to the versioning policy'.",
-    "",
-    "WHAT IT DOES: @playwright/mcp 0.0.81 pins playwright-core",
-    "1.64.0-alpha-2026-09-14 exactly. The first build carrying --file-paths=absolute,",
-    "the `filePaths` config key and PLAYWRIGHT_MCP_FILE_PATHS is",
-    "1.64.0-alpha-2026-09-17 (microsoft/playwright#42673, merged 2026-09-16; this",
-    "project's own ask, microsoft/playwright#42497). This override pulls that one",
-    "build forward underneath the wrapper rather than waiting for the wrapper to",
-    "roll.",
-    "",
-    "THE EXIT, and it is mechanised rather than remembered: this entry is DELETED",
-    "the day @playwright/mcp `latest` pins a playwright-core at or above",
-    "1.64.0-alpha-2026-09-17. PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded",
-    "goes red on that day, naming this key and this file, and build/Build-Payload.ps1",
-    "refuses the build with the same instruction.",
-    "",
-    "NOTHING ELSE MAY BE ADDED HERE ON THIS PRECEDENT. The argument is a merged",
-    "upstream fix that one wrapper release has not caught up with, which is a",
-    "condition that expires; it is not a preference, a workaround for a break, or",
-    "a way to hold a version back."
   ],
   "dependencies": {
     "@playwright/mcp": "latest"
-  },
-  "overrides": {
-    "playwright-core": "1.64.0-alpha-2026-09-17"
   }
 }

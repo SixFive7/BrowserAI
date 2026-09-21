@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using BrowserAI.Tests.Harness;
@@ -89,119 +88,35 @@ internal sealed partial class PayloadTests
         // If upstream ever loosened this pin the payload would start floating
         // on a second axis, and the lock alone would not say so.
         //
-        // ⚠️ This arm used to also assert `declared == resolved`, and that half
-        // moved to `TheResolvedPlaywrightCoreIsWhateverTheOverrideSays` on
-        // 2026-09-17 when the dated override arrived: the resolved version is no
-        // longer upstream's pin, and the property that survives untouched is the
-        // one the override RESTS on -- that upstream still pins exactly, so
-        // overriding it moves the tree by exactly one build rather than opening a
-        // range.
+        // ⚠️ Corrected 2026-09-21 (previously "This arm used to also assert
+        // `declared == resolved`, and that half moved to
+        // `TheResolvedPlaywrightCoreIsWhateverTheOverrideSays` on 2026-09-17 when
+        // the dated override arrived"). The override was retired on 2026-09-21
+        // when @playwright/mcp 0.0.82 shipped a playwright-core carrying the fix
+        // it was taken for, so the arm it moved to is gone and the half comes
+        // back here. THIS IS ALSO WHAT WOULD CATCH AN OVERRIDE BEING ADDED AGAIN:
+        // an `overrides` entry makes the lock resolve to something other than
+        // upstream's declared pin, and this line goes red -- which is the same
+        // check `build/Build-Payload.ps1` makes against the live resolution.
         await Assert.That(declared).DoesNotContain("^");
         await Assert.That(declared).DoesNotContain("~");
         await Assert.That(declared).DoesNotContain("*");
         await Assert.That(declared).DoesNotContain(" ");
-    }
 
-    [Test]
-    public async Task TheResolvedPlaywrightCoreIsWhateverTheOverrideSays()
-    {
-        // With no override the tree resolves upstream's own pin; with one it
-        // resolves the override and nothing else. npm does NOT record an
-        // `overrides` block in the lock it writes -- measured 2026-09-17, the
-        // lock's root package entry carries `name`, `version` and `dependencies`
-        // only -- so the lock alone cannot say an override is in force and this
-        // is the arm that holds the two files together.
         var resolved = ReadJson("package-lock.json").RootElement
             .GetProperty("packages")
             .GetProperty("node_modules/playwright-core")
             .GetProperty("version")
             .GetString();
 
-        await Assert.That(resolved).IsEqualTo(OverriddenPlaywrightCore() ?? DeclaredPlaywrightCore());
-    }
-
-    /// <summary>
-    /// <b>The exit for the dated <c>playwright-core</c> override.</b>
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The override was taken on 2026-09-17 to pull <b>one</b> upstream build
-    /// forward underneath <c>@playwright/mcp</c> 0.0.81: the first
-    /// <c>playwright-core</c> carrying <c>--file-paths=absolute</c>
-    /// (microsoft/playwright#42673, this project's own ask #42497). It is a
-    /// dated exception with a written exit, not a pin — see <c>DECISIONS.md</c>,
-    /// <i>The two exceptions to the versioning policy</i>.
-    /// </para>
-    /// <para>
-    /// <b>This is the mechanism that stops the exit being forgotten.</b> The day
-    /// <c>@playwright/mcp</c> <c>latest</c> pins a <c>playwright-core</c> at or
-    /// above the override, the override is doing nothing except holding a
-    /// version down, and that is the failure the versioning policy exists to
-    /// prevent. It goes red on that day and names the file and the key to
-    /// delete.
-    /// </para>
-    /// <para>
-    /// It reads the <b>committed lock</b>, so it runs on a clean clone with no
-    /// payload assembled — the same reason <see cref="ResolvedVersions"/> reads
-    /// the committed records rather than the tree. The assembled payload's own
-    /// <c>node_modules</c> manifest is checked against it by
-    /// <see cref="TheAssembledManifestDeclaresWhatTheCommittedLockRecords"/>,
-    /// which is the half that catches a payload built from something else.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheDatedPlaywrightCoreOverrideIsStillNeeded()
-    {
-        var overridden = OverriddenPlaywrightCore();
-
-        if (overridden is null)
-        {
-            // No override in force. Nothing to exit from, and saying so is not
-            // the same as skipping: the arm above already requires the resolved
-            // version to be upstream's own pin in that state.
-            return;
-        }
-
-        var declared = DeclaredPlaywrightCore()!;
-
-        await Assert.That(TheOverrideHasExpired(declared, overridden))
-            .IsFalse()
+        await Assert.That(resolved)
+            .IsEqualTo(declared)
             .Because(
-                $"@playwright/mcp now pins playwright-core '{declared}', which is at or above the dated override "
-                + $"'{overridden}'. Delete the `overrides` block and the `//overrides` note from "
-                + "build/payload/package.json, rebuild the payload, and record the deletion in upstream-review.json "
-                + "and DECISIONS.md. The exception was dated 2026-09-17 and this is the day it ends.");
-    }
-
-    [Test]
-    public async Task TheExpiryComparisonFiresInBothDirections()
-    {
-        // The positive control for the arm above, which on every ordinary day
-        // asserts that nothing happened. Without this, an ordering that had
-        // stopped answering would read exactly like an override that is still
-        // needed — and would go on reading that way forever.
-        const string Override = "1.64.0-alpha-2026-09-17";
-
-        await Assert.That(TheOverrideHasExpired("1.64.0-alpha-2026-09-14", Override)).IsFalse();
-        await Assert.That(TheOverrideHasExpired("1.64.0-alpha-2026-09-16", Override)).IsFalse();
-        await Assert.That(TheOverrideHasExpired("1.63.0-alpha-2026-12-31", Override)).IsFalse();
-
-        await Assert.That(TheOverrideHasExpired(Override, Override)).IsTrue();
-        await Assert.That(TheOverrideHasExpired("1.64.0-alpha-2026-09-18", Override)).IsTrue();
-        await Assert.That(TheOverrideHasExpired("1.64.0-alpha-2027-01-01", Override)).IsTrue();
-        await Assert.That(TheOverrideHasExpired("1.65.0-alpha-2026-01-01", Override)).IsTrue();
-
-        // A release with no prerelease outranks every prerelease of the same
-        // triple, which is the shape the wrapper will most likely catch up in.
-        await Assert.That(TheOverrideHasExpired("1.64.0", Override)).IsTrue();
-        await Assert.That(TheOverrideHasExpired("1.63.9", Override)).IsFalse();
-
-        // And a shape it cannot order is a shape a human has to adjudicate.
-        // Calling one 'lower' would keep an override alive past its own exit,
-        // so it throws rather than answering.
-        await Assert.That(() => TheOverrideHasExpired("1.64.0-beta.1", Override)).Throws<FormatException>();
-        await Assert.That(() => TheOverrideHasExpired("next", Override)).Throws<FormatException>();
+                "playwright-core ships as @playwright/mcp's own exact dependency and nothing else resolves it. "
+                + "A resolved version that is not the declared one means something in build/payload/package.json "
+                + "is holding it somewhere else -- which between 2026-09-17 and 2026-09-21 was a dated exception "
+                + "with a written exit, and is now a change to the versioning policy rather than a build detail. "
+                + "See DECISIONS.md, 'The two exceptions to the versioning policy'.");
     }
 
     /// <summary>
@@ -243,11 +158,11 @@ internal sealed partial class PayloadTests
     /// <c>previously</c> span, for the same reason.
     /// </para>
     /// <para>
-    /// The wrapper's own declared pin is read <b>only while an override is in
-    /// force</b>, because it is the override that gives the example a fourth
-    /// number to print. With the exception retired the chain has three links
-    /// again, and nothing here should demand a parenthetical that would no
-    /// longer be true.
+    /// <i>Corrected 2026-09-21 (previously "The wrapper's own declared pin is
+    /// read <b>only while an override is in force</b>, because it is the
+    /// override that gives the example a fourth number to print").</i> The
+    /// exception was retired that day, so the chain has three links again and
+    /// nothing here reads a fourth.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -287,17 +202,6 @@ internal sealed partial class PayloadTests
             BrowserAiPaths.BrowserVersionOf("chromium"),
             "the committed browsers.json snapshot");
 
-        if (OverriddenPlaywrightCore() is not null)
-        {
-            Disagrees(
-                disagreements,
-                example,
-                DeclaredCoreInExample(),
-                "the wrapper's own declared playwright-core",
-                DeclaredPlaywrightCore()!,
-                "the payload lock");
-        }
-
         await Assert.That(disagreements).IsEmpty();
     }
 
@@ -320,7 +224,7 @@ internal sealed partial class PayloadTests
             RepositoryPayload.Layout.Root, "mcp", "node_modules", "playwright-core", "package.json")));
 
         await Assert.That(installed.RootElement.GetProperty("version").GetString())
-            .IsEqualTo(OverriddenPlaywrightCore() ?? DeclaredPlaywrightCore());
+            .IsEqualTo(DeclaredPlaywrightCore());
     }
 
     [Test]
@@ -604,83 +508,24 @@ internal sealed partial class PayloadTests
             .GetString();
     }
 
-    /// <summary>The dated override, if the payload manifest still carries one.</summary>
-    /// <returns>The overridden version, or <see langword="null"/> when the exception has been retired.</returns>
-    private static string? OverriddenPlaywrightCore()
-    {
-        using var manifest = ReadJson("package.json");
-
-        return manifest.RootElement.TryGetProperty("overrides", out var overrides)
-            && overrides.TryGetProperty("playwright-core", out var version)
-                ? version.GetString()
-                : null;
-    }
-
-    /// <summary>
-    /// Whether upstream's own pin has caught up with the override, which is the
-    /// day the override is deleted.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Orders the two shapes upstream actually publishes — <c>1.64.0</c> and
-    /// <c>1.64.0-alpha-YYYY-MM-DD</c> — and <b>refuses</b> anything else. A
-    /// shape this cannot order is a shape a human has to adjudicate, and
-    /// silently calling it lower would keep an override alive past its own exit.
-    /// </para>
-    /// <para>
-    /// <b>A second implementation of the same ordering lives in
-    /// <c>build/Build-Payload.ps1</c>, deliberately.</b> That one refuses to
-    /// <i>assemble</i> a payload past the exit and runs only when somebody
-    /// builds one; this one refuses to <i>build</i> and runs on every suite run
-    /// from a clean clone. The same split, and the same reason, as the snapshot
-    /// generator and its comparer.
-    /// </para>
-    /// </remarks>
-    /// <param name="declared">What <c>@playwright/mcp</c> pins.</param>
-    /// <param name="overridden">What the payload manifest overrides it to.</param>
-    /// <returns>Whether the declared pin is at or above the override.</returns>
-    /// <exception cref="FormatException">Either version is a shape this cannot order.</exception>
-    private static bool TheOverrideHasExpired(string declared, string overridden) =>
-        string.CompareOrdinal(Orderable(declared), Orderable(overridden)) >= 0;
-
-    /// <summary>
-    /// One version as a string whose ordinal order is its version order.
-    /// </summary>
-    /// <remarks>
-    /// The numbers are zero-padded so that <c>10</c> sorts above <c>9</c>, and a
-    /// version with no prerelease gets <c>~</c> — which sorts above every digit
-    /// and every letter in ASCII — so that a release outranks every prerelease
-    /// of the same triple, as SemVer requires.
-    /// </remarks>
-    /// <param name="version">The version.</param>
-    /// <returns>The sortable form.</returns>
-    /// <exception cref="FormatException">The version is a shape this cannot order.</exception>
-    private static string Orderable(string version)
-    {
-        var parsed = PlaywrightVersion().Match(version);
-
-        if (!parsed.Success)
-        {
-            throw new FormatException(
-                $"playwright-core version '{version}' is not <major>.<minor>.<patch> or "
-                + "<major>.<minor>.<patch>-alpha-YYYY-MM-DD. PayloadTests cannot order it; adjudicate the dated "
-                + "override in DECISIONS.md by hand.");
-        }
-
-        var alpha = parsed.Groups["alpha"];
-
-        return string.Create(
-            CultureInfo.InvariantCulture,
-            $"{int.Parse(parsed.Groups["major"].Value, CultureInfo.InvariantCulture):D6}."
-            + $"{int.Parse(parsed.Groups["minor"].Value, CultureInfo.InvariantCulture):D6}."
-            + $"{int.Parse(parsed.Groups["patch"].Value, CultureInfo.InvariantCulture):D6}-"
-            + $"{(alpha.Success ? alpha.Value : "~")}");
-    }
-
-    [GeneratedRegex(
-        @"^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:-alpha-(?<alpha>\d{4}-\d{2}-\d{2}))?$",
-        RegexOptions.CultureInvariant)]
-    private static partial Regex PlaywrightVersion();
+    // ⚠️ RETIRED 2026-09-21, and named here so the deletion is a record rather
+    // than an absence. Three members stood between these two comments --
+    // `OverriddenPlaywrightCore`, which read `overrides.playwright-core` out of
+    // build/payload/package.json; `TheOverrideHasExpired`, which compared the
+    // wrapper's declared pin against it; and `Orderable`, which turned a
+    // playwright-core version into a sortable string and THREW on any shape
+    // other than `<major>.<minor>.<patch>[-alpha-YYYY-MM-DD]`. They existed only
+    // to answer the dated override's exit, the override is gone, and a mechanism
+    // for a thing that no longer exists is not a test anybody can read.
+    //
+    // THE ORDERING IS NOT COMING BACK WIDER. @playwright/mcp 0.0.82 pins
+    // `1.64.0-alpha-1789764292000`, a 13-digit epoch-milliseconds alpha that
+    // `Orderable` refused by design rather than guessed at, and that refusal was
+    // correct: an unorderable shape silently called 'lower' keeps an override
+    // alive past its own exit. Nothing in this tree ranks a playwright-core
+    // version now. Every comparison left is for IDENTITY, against another
+    // recorded string, so a version is an opaque string and its shape is
+    // upstream's business.
 
     private static JsonDocument ReadJson(string name) =>
         JsonDocument.Parse(File.ReadAllText(
@@ -760,9 +605,6 @@ internal sealed partial class PayloadTests
 
     [GeneratedRegex(@"└── playwright-core (?<version>\S+)", RegexOptions.CultureInvariant)]
     private static partial Regex ResolvedCoreInExample();
-
-    [GeneratedRegex(@"exact pin of\s+(?<version>[^\s)]+)", RegexOptions.CultureInvariant)]
-    private static partial Regex DeclaredCoreInExample();
 
     [GeneratedRegex(@"chromium rev (?<version>\d+)", RegexOptions.CultureInvariant)]
     private static partial Regex ChromiumRevisionInExample();
