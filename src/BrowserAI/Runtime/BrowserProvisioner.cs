@@ -458,6 +458,19 @@ internal sealed class BrowserProvisioner : IDisposable
     public static IReadOnlyDictionary<string, long> FirstRunDownloadBytes { get; } =
         new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase)
         {
+            // ⚠️ Corrected 2026-09-21 (previously 129_502_648 for Firefox,
+            // measured at firefox 1548 / 155.0). Re-measured 2026-09-21 at
+            // chromium 1246 / 154.0.8037.0 and firefox 1549 / 156.0 under
+            // playwright-core 1.64.0-alpha-1789764292000, on the roll that
+            // retired the dated override. FIREFOX MOVED BY 1,431,551 BYTES AND
+            // CHROMIUM DID NOT MOVE AT ALL, FOR THE THIRD ROLL RUNNING: 1246
+            // carries the same browserVersion 154.0.8037.0 as 1245 and 1244,
+            // and Chromium's archive is keyed on the version rather than the
+            // revision. Firefox is a genuinely new browser this time, 155.0 ->
+            // 156.0, which is why it moved by a megabyte where the last two
+            // rolls moved it by hundreds of bytes. The Chromium figure is
+            // RE-MEASURED AND UNCHANGED rather than left alone.
+            //
             // ⚠️ Corrected 2026-09-17, later the same day (previously
             // 129_502_321 for Firefox, measured at firefox 1544). Re-measured
             // 2026-09-17 at chromium 1245 / 154.0.8037.0 and firefox 1548 /
@@ -476,7 +489,7 @@ internal sealed class BrowserProvisioner : IDisposable
             // ProvisioningTests.TheQuotedFirstRunDownloadSizeIsTheFigureTheKnowledgeBasePublishes
             // is what stops these drifting from the kb article again.
             [ProvisionedBrowsers.Chromium] = 207_274_189,
-            [ProvisionedBrowsers.Firefox] = 129_502_648,
+            [ProvisionedBrowsers.Firefox] = 130_934_199,
         };
 
     public static IReadOnlyDictionary<string, string> FirstRunDownloadSizes { get; } =

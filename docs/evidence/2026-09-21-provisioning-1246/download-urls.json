@@ -1,0 +1,20 @@
+{
+  "chromium": {
+    "revision": "1246",
+    "browserVersion": "154.0.8037.0",
+    "url": "https://cdn.playwright.dev/builds/cft/154.0.8037.0/win64/chrome-win64.zip"
+  },
+  "firefox": {
+    "revision": "1549",
+    "browserVersion": "156.0",
+    "url": "https://cdn.playwright.dev/dbazure/download/playwright/builds/firefox/1549/firefox-win64.zip"
+  },
+  "ffmpeg": {
+    "revision": "1011",
+    "url": "https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-win64.zip"
+  },
+  "winldd": {
+    "revision": "1007",
+    "url": "https://cdn.playwright.dev/dbazure/download/playwright/builds/winldd/1007/winldd-win64.zip"
+  }
+}
