@@ -126,7 +126,7 @@ internal sealed partial class RealInstallerTests
 
         using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
         {
-            [RegistrationTests.ConfigDirectoryVariable] = clientConfig.Path,
+            [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
         });
 
@@ -292,7 +292,7 @@ internal sealed partial class RealInstallerTests
 
         using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
         {
-            [RegistrationTests.ConfigDirectoryVariable] = clientConfig.Path,
+            [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
         });
 

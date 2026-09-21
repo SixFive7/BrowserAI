@@ -518,6 +518,21 @@ internal sealed partial class HouseRuleTests
     /// member, or a key composed at run time, is outside it — the same line-based
     /// limit every scan in this file has.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The line-based limit bites on the CONSTRUCTION too, and that half was
+    /// measured rather than reasoned — added 2026-09-22 by addition.</b>
+    /// <see cref="OverridesTheEnvironment"/> needs the type name and the
+    /// construction on <i>one</i> line. Adding the onboarding seed to
+    /// <see cref="RegistrationTests"/>' factory wrapped it over two, and this
+    /// scan immediately stopped seeing that file at all: the tree count fell
+    /// <b>2 → 1</b> and the arm went red on its own non-vacuity floor, which is
+    /// exactly what that floor exists for and is the only reason it was noticed.
+    /// The factory was put back on one line; <b>the scan was not widened and the
+    /// floor was not lowered</b>, because widening it is a behaviour change owed
+    /// its own red test and lowering it would have hidden the blind spot instead
+    /// of recording it. <b>So a two-line construction is still invisible here</b>,
+    /// and the floor is what would catch the next one.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -709,6 +724,139 @@ internal sealed partial class HouseRuleTests
 
         return (first, last);
     }
+
+    /// <summary>
+    /// <b>Every scratch <c>CLAUDE_CONFIG_DIR</c> this suite hands the real client
+    /// is seeded as already onboarded, before any <c>claude</c> runs.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The shape being guarded against.</b> Three sites point
+    /// <c>CLAUDE_CONFIG_DIR</c> at a fresh, empty directory and then start the
+    /// real <c>claude.exe</c>. To that client an empty configuration directory is
+    /// a machine nobody has signed in on, and the flow it may run for one opens a
+    /// browser window — on the maintainer's own desktop, since that is where this
+    /// suite runs. <b>It has not happened</b>, and the reason it has not is
+    /// recorded rather than assumed: every <c>hasCompletedOnboarding</c> read in
+    /// the client this was established against sits on the REPL, login or nudge
+    /// paths and none on the <c>mcp</c> subcommand path. That is a fact about one
+    /// build of somebody else's binary, which is exactly the kind of fact this
+    /// repository refuses to rest on.
+    /// </para>
+    /// <para>
+    /// <b>What the marker is, and where it came from</b>, is on
+    /// <see cref="OnboardedClientConfig"/> with the bundle's own source quoted:
+    /// <c>hasCompletedOnboarding</c> in <c>$CLAUDE_CONFIG_DIR\.claude.json</c>,
+    /// and the value written is the client's own <c>plugin eval</c> sandbox
+    /// recipe rather than something invented here.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>This holds that the seeding is THERE, never that it works</b> —
+    /// the same weaker claim, in the same words, as
+    /// <see cref="EveryRawHandleThatOutlivesItsExpressionIsRefCounted"/> and
+    /// <see cref="EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/>.
+    /// Proving it works means running the sign-in flow to see it suppressed,
+    /// which is the event being guarded against, so it is <b>not</b> a third
+    /// exception to the plant-it-red rule: <b>the scan itself was planted red</b>,
+    /// against this tree's own three sites as they stood before the guard, and
+    /// against synthetic seeded and unseeded controls.
+    /// </para>
+    /// <para>
+    /// <b>What it reads is the line</b>, which is the same limit every scan in
+    /// this file has: a value assigned to the configuration-directory variable
+    /// must name the seam on that line. A path computed two statements earlier
+    /// and handed over in a variable is outside it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryScratchClientConfigurationIsSeededAsOnboardedBeforeTheClientRuns()
+    {
+        var offenders = new List<string>();
+        var sites = 0;
+
+        foreach (var file in RepositoryLayout.SourceFilesUnder(["tests"], ["*.cs"]))
+        {
+            var code = await RepositoryLayout.ReadCodeAsync(file);
+            var unseeded = Unseeded(code);
+
+            sites += PointsAtAConfigurationDirectory(code).Count;
+            offenders.AddRange(unseeded.Select(line =>
+                $"{Relative(file)}: {line} — this hands the real client a configuration"
+                + $" directory, so the value has to come through {Seam} rather than naming the"
+                + " directory directly: an empty one reads as a machine nobody has signed in on"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // ⚠️ THE CONTROLS, synthetic because a guarded tree is indistinguishable
+        // from a scan whose needle stopped matching. The variable's name is
+        // composed so that this file does not put itself in scope.
+        // ⚠️ The scope type's name is composed from `Sandbox` rather than
+        // written, for the reason that constant exists: spelled out, these four
+        // lines put THIS file inside
+        // EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing's own
+        // scan, and it reported seventeen arms of this class. Watched red
+        // 2026-09-22 while planting the arm above.
+        var raw = "            [RegistrationTests." + ConfigVariable + "] = clientConfig.Path,";
+        var factory = "    private static " + Sandbox + " PointTheClientAt(string directory) => new(" + ConfigVariable + ", directory);";
+
+        await Assert.That(PointsAtAConfigurationDirectory(raw).Count).IsEqualTo(1);
+        await Assert.That(Unseeded(raw).Count).IsEqualTo(1);
+        await Assert.That(PointsAtAConfigurationDirectory(factory).Count).IsEqualTo(1);
+        await Assert.That(Unseeded(factory).Count).IsEqualTo(1);
+
+        // And the same two lines WITH the seam are not reported, so the rule is
+        // about the seeding and not about naming the variable.
+        var seededRaw = "            [RegistrationTests." + ConfigVariable + "] = " + Seam + "(clientConfig.Path),";
+        var seededFactory = "    private static " + Sandbox + " PointTheClientAt(string directory) => new(" + ConfigVariable + ", " + Seam + "(directory));";
+
+        await Assert.That(PointsAtAConfigurationDirectory(seededRaw).Count).IsEqualTo(1);
+        await Assert.That(Unseeded(seededRaw)).IsEmpty();
+        await Assert.That(Unseeded(seededFactory)).IsEmpty();
+
+        // The declaration of the constant itself is not a site: it names the
+        // variable and assigns no directory to it.
+        var declaration = "    internal const string " + ConfigVariable + " = \"CLAUDE_\" + \"CONFIG_DIR\";";
+
+        await Assert.That(PointsAtAConfigurationDirectory(declaration)).IsEmpty();
+
+        // Not vacuous over the tree: the three sites as of 2026-09-22 — two in
+        // the real-installer arms and the registration factory.
+        await Assert.That(sites).IsGreaterThanOrEqualTo(3);
+    }
+
+    /// <summary>The seam that seeds a scratch configuration directory.</summary>
+    private const string Seam = nameof(OnboardedClientConfig) + "." + nameof(OnboardedClientConfig.Seed);
+
+    /// <summary>
+    /// The configuration-directory constant's name, composed so this file is not
+    /// its own offender.
+    /// </summary>
+    private const string ConfigVariable = "Config" + "DirectoryVariable";
+
+    /// <summary>Lines that give the client a configuration directory to use.</summary>
+    /// <remarks>
+    /// <b>Two shapes, because both are in this tree.</b> A dictionary entry
+    /// keyed on the constant, and a constructor argument beside it — which is how
+    /// the registration factory is written, and which a scan looking only for the
+    /// first would miss entirely. A line that merely declares the constant
+    /// assigns no directory and is neither.
+    /// </remarks>
+    /// <param name="code">The file's text, comment-only lines already blanked.</param>
+    /// <returns>One trimmed line per site.</returns>
+    private static List<string> PointsAtAConfigurationDirectory(string code) =>
+        [.. code.Split('\n')
+            .Where(line => line.Contains(ConfigVariable, StringComparison.Ordinal)
+                && !line.Contains("const string " + ConfigVariable, StringComparison.Ordinal)
+                && (line.Contains("] =", StringComparison.Ordinal) || line.Contains("new(", StringComparison.Ordinal)))
+            .Select(line => line.Trim())];
+
+    /// <summary>The sites that do not pass their directory through the seam.</summary>
+    /// <param name="code">The file's text, comment-only lines already blanked.</param>
+    /// <returns>One trimmed line per uncovered site.</returns>
+    private static List<string> Unseeded(string code) =>
+        [.. PointsAtAConfigurationDirectory(code).Where(line => !line.Contains(Seam, StringComparison.Ordinal))];
 
     /// <summary>The member an attribute block belongs to, for the failure message.</summary>
     /// <param name="lines">The file's lines.</param>

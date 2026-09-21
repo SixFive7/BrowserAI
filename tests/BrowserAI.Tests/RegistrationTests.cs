@@ -1362,6 +1362,65 @@ internal sealed class RegistrationTests
     // ---- The real client ----------------------------------------------------
 
     /// <summary>
+    /// The scratch configuration a real-client arm hands over already carries
+    /// what the client reads as "onboarding is finished".
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The behavioural half of the onboarding guard.</b>
+    /// <see cref="HouseRuleTests.EveryScratchClientConfigurationIsSeededAsOnboardedBeforeTheClientRuns"/>
+    /// holds that every site goes through the seam; this holds that the seam
+    /// writes the file the client would read, in the directory the client would
+    /// read it from, <b>before</b> the scope is anything a child could inherit.
+    /// It runs on every build and needs no client, because what it asserts is a
+    /// file on disk rather than a behaviour of somebody else's binary.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Asserted, not measured against the flow.</b> Nothing here shows that
+    /// an unseeded directory would have opened a sign-in window — establishing
+    /// that means running the flow on the maintainer's desktop, which is the
+    /// event being guarded against. The reasoning, the bundle source it was read
+    /// out of and the absence of any non-interactive signal to set instead are on
+    /// <see cref="OnboardedClientConfig"/>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheScratchConfigurationIsSeededWithWhatTheClientReadsAsOnboarded()
+    {
+        using var config = ScratchDirectory.Create("registration-onboarded");
+
+        // A fresh scratch directory is empty, which is the state being guarded
+        // against: to the client that is a machine nobody has ever signed in on.
+        await Assert.That(Directory.EnumerateFileSystemEntries(config.Path)).IsEmpty();
+
+        using (PointTheClientAt(config.Path))
+        {
+            var seeded = Path.Combine(config.Path, OnboardedClientConfig.FileName);
+
+            await Assert.That(File.Exists(seeded)).IsTrue();
+
+            var written = await File.ReadAllTextAsync(seeded);
+
+            await Assert.That(written).Contains($"\"{OnboardedClientConfig.Marker}\":true");
+
+            // The client prefers `.config.json` in the same directory when it
+            // exists, and a scratch directory holds none -- so the file above is
+            // the one it resolves. Read out of the bundle, quoted on
+            // OnboardedClientConfig.
+            await Assert.That(File.Exists(Path.Combine(config.Path, ".config.json"))).IsFalse();
+
+            // The variable really is pointing at that directory while the scope
+            // is open, which is what makes the seeding reachable at all.
+            await Assert.That(Environment.GetEnvironmentVariable(ConfigDirectoryVariable))
+                .IsEqualTo(config.Path);
+        }
+
+        // And the file name the rest of this class uses is the same one.
+        await Assert.That(ConfigFileName).IsEqualTo(OnboardedClientConfig.FileName);
+    }
+
+    /// <summary>
     /// The real client still says what its exit codes cannot.
     /// </summary>
     /// <remarks>
@@ -1614,7 +1673,16 @@ internal sealed class RegistrationTests
     /// value")</i>, because overwriting each other's value was never the only
     /// way this goes wrong: any child of any arm reads it too.
     /// </remarks>
+    /// <remarks>
+    /// ⚠️ <b>The directory is SEEDED as already onboarded on the way through, and
+    /// that is what makes the seeding inseparable from the use</b> — an empty
+    /// configuration directory is, to the real client, a machine nobody has ever
+    /// signed in on. See <see cref="OnboardedClientConfig"/> for what is written
+    /// and the bundle source it was read out of, and
+    /// <see cref="HouseRuleTests.EveryScratchClientConfigurationIsSeededAsOnboardedBeforeTheClientRuns"/>
+    /// for the scan that refuses a site which skips it.
+    /// </remarks>
     /// <param name="directory">The scratch configuration directory.</param>
     /// <returns>The scope that restores whatever was there before.</returns>
-    private static EnvironmentScope PointTheClientAt(string directory) => new(ConfigDirectoryVariable, directory);
+    private static EnvironmentScope PointTheClientAt(string directory) => new(ConfigDirectoryVariable, OnboardedClientConfig.Seed(directory));
 }

@@ -589,6 +589,34 @@ exists is a live install rather than residue, and deleting it would strand one.
 The values one held are in
 [`docs/evidence/2026-09-17-reverify/`](docs/evidence/2026-09-17-reverify/README.md).
 
+⚠️ **Every scratch `CLAUDE_CONFIG_DIR` this suite hands the real client is seeded
+as already ONBOARDED, before the client is started.** *Added 2026-09-22.* A fresh
+scratch configuration directory is empty — that emptiness is the whole point of
+it, and it is also, to `claude.exe`, a machine nobody has ever signed in on,
+which is the shape in which a client may run its first-run onboarding and open a
+browser window. This suite runs on the maintainer's own desktop.
+`Harness/OnboardedClientConfig.Seed` writes `hasCompletedOnboarding: true` into
+`$CLAUDE_CONFIG_DIR\.claude.json` — the client's own `plugin eval` sandbox
+recipe, quoted from the bundle rather than invented here — and all three sites go
+through it: the registration arms' `PointTheClientAt` and the two installer arms,
+whose real `Setup.exe` runs a hook that registers with the client.
+`HouseRuleTests.EveryScratchClientConfigurationIsSeededAsOnboardedBeforeTheClientRuns`
+refuses a site that skips the seam and
+`RegistrationTests.TheScratchConfigurationIsSeededWithWhatTheClientReadsAsOnboarded`
+holds that the file carries the marker.
+
+⚠️ **The guard is ASSERTED and has never been measured against the flow, and that
+is why its [hazard row](HAZARDS.md#hazard-index) is `open` rather than `closed`.**
+Measuring it means running the sign-in flow to watch it suppressed, which is the
+event being guarded against, so nothing here shows that an unseeded directory
+would have opened a window — only that the marker is there. It is the same weaker
+claim, in the same words, that
+[the handle rule](#what-the-build-itself-must-fail-on) makes. **And there is no
+non-interactive signal to set instead**: `claude mcp add` carries no such flag,
+the only onboarding-named variable in the bundle is a force-**on**, and the
+published documentation does not document the marker at all — so the key is
+`[FLOATS]` against somebody else's self-updating binary.
+
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and

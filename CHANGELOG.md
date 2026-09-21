@@ -93,6 +93,27 @@ release body; nothing else depends on it.
   `PageToolTests` drives every one of them against real pages that really register WebMCP
   tools, through the published binary.
 
+- ✅ **The scratch configuration the suite hands the real client is seeded as already onboarded.**
+  Three arms point `CLAUDE_CONFIG_DIR` at a fresh scratch directory and then start the real
+  client — the sandbox that keeps them off the maintainer's own registration. That
+  emptiness is also, to the client, a first run, and a first run is where onboarding and
+  sign-in live. It has never fired; the guard went in anyway, because this suite runs on
+  the maintainer's desktop and the failure mode is a browser window appearing on it.
+
+  `OnboardedClientConfig.Seed` writes `hasCompletedOnboarding: true` into
+  `$CLAUDE_CONFIG_DIR\.claude.json` before any `claude` runs. **The value is the client's
+  own throwaway-config recipe**, read out of the shipped bundle rather than invented here —
+  the same three keys `claude plugin eval` writes for its sandbox.
+  `HouseRuleTests.EveryScratchClientConfigurationIsSeededAsOnboardedBeforeTheClientRuns`
+  refuses a site that skips the seam, and was planted red against all three.
+
+  **The guard is asserted, never measured against the flow**, and its
+  [hazard row](HAZARDS.md#hazard-index) is `open` saying so: proving it works means running
+  the sign-in flow to watch it suppressed, which is the event being guarded against. There
+  is no non-interactive signal to set instead — `claude mcp add` has no such flag, the one
+  onboarding-named variable in the bundle turns onboarding **on**, and the published
+  documentation does not document the marker at all.
+
 ### Changed
 
 - 🔧 **`webmcp: true` is written into every generated config rather than left to upstream's default.**
