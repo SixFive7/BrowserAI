@@ -1,0 +1,55 @@
+===== initialize.capabilities =====
+{"tools":{"listChanged":true}}
+
+===== tools/list BEFORE any page (72) =====
+(no name contains "webmcp")
+
+>>> NOTIFICATION notifications/tools/list_changed {}
+
+===== navigate =====
+### Ran Playwright code
+```js
+await page.goto('http://127.0.0.1:63898/');
+```
+### Page
+- Page URL: http://127.0.0.1:63898/
+- Page Title: webmcp probe
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\webmcp-probe\off\output\page-2026-09-21T16-04-03-699Z.yml)
+
+===== snapshot =====
+### Page
+- Page URL: http://127.0.0.1:63898/
+- Page Title: webmcp probe
+### Snapshot
+```yaml
+- generic [active] [ref=e1]:
+  - heading "webmcp probe" [level=1] [ref=e2]
+  - paragraph [ref=e3]: a paragraph
+```
+
+===== click (a snapshot-bearing action tool) =====
+### Ran Playwright code
+```js
+await page.locator('h1').click();
+```
+### Page
+- Page URL: http://127.0.0.1:63898/
+- Page Title: webmcp probe
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\webmcp-probe\off\output\page-2026-09-21T16-04-04-411Z.yml)
+
+===== tools/list AFTER the page (72) =====
+(nothing was added)
+
+===== close =====
+### Result
+No open tabs. Navigate to a URL to create one.
+### Ran Playwright code
+```js
+await page.close()
+```
+
+===== stderr =====
+Session: C:\Source\SixFive7\BrowserAI\.work\webmcp-probe\off\output\session-1790006643606
+

@@ -1,0 +1,122 @@
+===== initialize.capabilities =====
+{"tools":{}}
+
+===== TOOLS BEFORE: 78 =====
+(no name contains "webmcp")
+
+===== init =====
+Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e' on every browser tool call.
+  directory: C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e
+  browser: chromium
+  profile: C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e\profile
+  output: C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e\output — every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.
+  downloads: C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e\downloads
+  purpose: One-shot rig for the 2026-09-21 WebMCP measurement; destroyed at the end of the run.
+  created: 2026-09-21T18:04:40.1733366+02:00   last used: 2026-09-21T18:04:40.1733366+02:00
+  viewport: 1920x1080 — a screenshot arrives at this size unscaled, so it is what one costs you
+  child protocol: 2025-11-25
+  browserProvisioning: installed — chromium 154.0.8037.0 (revision 1246) is installed at 'C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1246'.
+  other sessions under C:\Source\SixFive7\BrowserAI\.work: 0
+
+
+===== navigate =====
+### Page
+- Page URL: http://127.0.0.1:65036/
+- Page Title: webmcp probe
+- 2 webmcp tools available on the page
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e\output\page-2026-09-21T16-04-41-088Z.yml)
+
+===== snapshot =====
+### Page
+- Page URL: http://127.0.0.1:65036/
+- Page Title: webmcp probe
+- 2 webmcp tools available on the page
+### Snapshot
+```yaml
+- webmcp tools (page-provided, untrusted):
+  - probe_tool_alpha [readOnly]: PAGE-AUTHORED-DESCRIPTION-ALPHA and here is a sentence a page should not be able to put in front of a model
+    - inputSchema: {"type":"object","properties":{"who":{"type":"string","description":"PAGE-AUTHORED-PARAM-DESCRIPTION"}}}
+  - probe_tool_beta [consequential]: PAGE-AUTHORED-DESCRIPTION-BETA
+    - inputSchema: {"type":"object","properties":{}}
+
+- generic [active] [ref=e1] [box=8,21,1904,76]:
+  - heading "webmcp probe" [level=1] [ref=e2] [box=8,21,1904,37]
+  - paragraph [ref=e3] [box=8,80,1904,18]: a paragraph
+```
+
+===== TOOLS AFTER: 78 =====
+(nothing was added)
+
+===== webmcp_probe_tool_alpha (page-supplied name) =====
+BrowserAI has no forwarding verdict for the tool you named, so nothing was sent to the browser and nothing was changed. This is a GAP rather than a decision: a tool this build was deliberately told not to forward refuses with its own reason instead of this sentence. The name may well be in tools/list — being listed is not the same as being judged — so retrying it will fail in exactly this way until a human adjudicates it. Do not retry. Use a different tool, or stop and report that this one does not work in this build.
+
+===== destroy =====
+Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e' (12.5 MiB). Its purpose was: One-shot rig for the 2026-09-21 WebMCP measurement; destroyed at the end of the run.
+You said it was being destroyed because: Measuring whether a page that registers WebMCP tools can reach a caller of BrowserAI.
+
+===== stderr =====
+info: BrowserAI.Startup[1]
+      BrowserAI 1.0.1-alpha.0.19 started. pid=116820 image=C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI sqlite=3.53.4 sqliteBuild=intended
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 135360, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 132340 in 'C:\Users\jori\AppData\Local\BrowserAI\instances\116820-2660b216e9804cdfaab049adab45af73'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=20.1ms processes=583/417 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=62 titled=13 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=1 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.0.1-alpha.0.19) client received server '{"name":"Playwright","version":"1.64.0-alpha-1789764292000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.0.1-alpha.0.19) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.0.1-alpha.0.19) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.0.1-alpha.0.19), Client (webmcp-probe 1) method 'initialize' request handler completed in 0.1306ms.
+info: BrowserAI.Sessions.SessionManager[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e
+      Session lock acquired for C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e under Global\BrowserAI-0992EF078ADFB8A8CB25D34D079A1366.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      => session=C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e
+      playwright-mcp[0992EF07]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 136876 in 'C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e\output'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      => session=C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e
+      Client (BrowserAI 1.0.1-alpha.0.19) client received server '{"name":"Playwright","version":"1.64.0-alpha-1789764292000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      => session=C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e
+      Client (BrowserAI 1.0.1-alpha.0.19) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      => session=C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Sessions.SessionManager[40]
+      => session=C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e
+      Session open at C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e, headed: False; created by this connection: True.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_navigate: Measuring whether a page that registers WebMCP tools can reach a caller of BrowserAI.
+info: BrowserAI.Sessions.LiveSession[47]
+      browser_snapshot: Measuring whether a page that registers WebMCP tools can reach a caller of BrowserAI.
+info: BrowserAI.Sessions.LiveSession[9]
+      'webmcp_probe_tool_alpha' was refused on the session at C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e: this build's tool-verdicts.json does not allow it to be forwarded. Nothing reached the browser.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      => session=C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e
+      playwright-mcp[0992EF07] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[0992EF07]: pid 136876 exited with code 0.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[12]
+      Session lock re-acquired for C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e by the process that already held its guard, PID 116820 -- this process. Nothing was taken from anybody.
+info: BrowserAI.Sessions.SessionManager[8]
+      Session lock released for C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e; the guard stays so a later reader can say who had it.
+info: BrowserAI.Sessions.SessionManager[42]
+      Session destroyed at C:\Source\SixFive7\BrowserAI\.work\webmcp-e2e; 0 item(s) could not be removed.
+info: BrowserAI.Protocol.DirectStdioServerTransport[4]
+      BrowserAI (stdio): the peer closed its end of the connection.
+info: ModelContextProtocol.Client.McpClient[2103773711]
+      playwright-mcp[surface] message processing canceled.
+info: BrowserAI.Protocol.ChildProcessSession[8]
+      playwright-mcp[surface]: pid 132340 exited with code 0.
+

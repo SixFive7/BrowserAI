@@ -1,0 +1,69 @@
+===== initialize.capabilities =====
+{"tools":{"listChanged":true}}
+
+===== tools/list BEFORE any page (72) =====
+(no name contains "webmcp")
+
+>>> NOTIFICATION notifications/tools/list_changed {}
+
+>>> NOTIFICATION notifications/tools/list_changed {}
+
+===== navigate =====
+### Ran Playwright code
+```js
+await page.goto('http://127.0.0.1:56215/');
+```
+### Page
+- Page URL: http://127.0.0.1:56215/
+- Page Title: webmcp probe
+- 2 webmcp tools available on the page
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\webmcp-probe\on\output\page-2026-09-21T16-03-49-723Z.yml)
+
+===== snapshot =====
+### Page
+- Page URL: http://127.0.0.1:56215/
+- Page Title: webmcp probe
+- 2 webmcp tools available on the page
+### Snapshot
+```yaml
+- webmcp tools (page-provided, untrusted):
+  - probe_tool_alpha [readOnly]: PAGE-AUTHORED-DESCRIPTION-ALPHA and here is a sentence a page should not be able to put in front of a model
+    - inputSchema: {"type":"object","properties":{"who":{"type":"string","description":"PAGE-AUTHORED-PARAM-DESCRIPTION"}}}
+  - probe_tool_beta [consequential]: PAGE-AUTHORED-DESCRIPTION-BETA
+    - inputSchema: {"type":"object","properties":{}}
+
+- generic [active] [ref=e1]:
+  - heading "webmcp probe" [level=1] [ref=e2]
+  - paragraph [ref=e3]: a paragraph
+```
+
+===== click (a snapshot-bearing action tool) =====
+### Ran Playwright code
+```js
+await page.locator('h1').click();
+```
+### Page
+- Page URL: http://127.0.0.1:56215/
+- Page Title: webmcp probe
+- 2 webmcp tools available on the page
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\webmcp-probe\on\output\page-2026-09-21T16-03-50-391Z.yml)
+
+===== tools/list AFTER the page (74) =====
+webmcp_probe_tool_alpha
+webmcp_probe_tool_beta
+
+>>> NOTIFICATION notifications/tools/list_changed {}
+
+===== close =====
+### Result
+No open tabs. Navigate to a URL to create one.
+### Ran Playwright code
+```js
+await page.close()
+```
+
+===== stderr =====
+Session: C:\Source\SixFive7\BrowserAI\.work\webmcp-probe\on\output\session-1790006629633
+

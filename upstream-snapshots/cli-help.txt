@@ -100,6 +100,8 @@ Options:
                                         Defaults to "allow".
   --no-sandbox                          disable the sandbox for all process
                                         types that are normally sandboxed.
+  --no-webmcp                           do not collect or expose the tools that
+                                        a page registers through the WebMCP API.
   --output-dir <path>                   path to the directory for automatically
                                         named output files, for example a
                                         screenshot taken without an explicit
