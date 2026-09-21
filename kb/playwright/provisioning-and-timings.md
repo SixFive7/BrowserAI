@@ -1185,11 +1185,18 @@ update 1–3 min. Estimates, not stopwatch figures. `[UNVERIFIED]`
 
 ## Firefox against Chromium: the standing cost ratios
 
-✅ **RE-ESTABLISHED 2026-09-17 at chromium 1245 and firefox 1548**, clearing the
-`[STALE]` this section carried for six hours, and taken at **six rounds per
-family** rather than the stated three — because the one axis that had flipped
-sign is the one three rounds cannot settle, and a second set of three costs four
-minutes. *Previously, and kept because it is what the debt looked like:*
+✅ **RE-ESTABLISHED 2026-09-22 at chromium 1246 and firefox 1549 (`browserVersion`
+156.0), clearing the `[STALE]` this section carried since 2026-09-21.** All three
+surviving ratios were re-taken in **one sitting**, Chromium first and then
+Firefox, at six rounds for Chromium and **nine for Firefox of which eight
+produced a browser** — see the round that did not, below, which is named rather
+than dropped. **Two ratios are unchanged and one moved back up**: RAM **1.19×**
+and profile disk **2.76×** are identical to three figures, first navigate
+**4.37× → 4.65×**. *Previously* ✅ **RE-ESTABLISHED 2026-09-17 at chromium 1245
+and firefox 1548**, clearing the `[STALE]` this section carried for six hours,
+and taken at **six rounds per family** rather than the stated three — because
+the one axis that had flipped sign is the one three rounds cannot settle, and a
+second set of three costs four minutes. *Previously, and kept because it is what the debt looked like:*
 "⚠️ **`[STALE]` since 2026-09-17, hours after these were taken and against
 both families at once.** The `playwright-core` pull-forward moved **chromium 1244
 → 1245 and firefox 1544 → 1548**, and the header below says of these four that
@@ -1199,8 +1206,10 @@ session, with
 [`docs/probes/2026-09-17-cost-ratios`](../../docs/probes/2026-09-17-cost-ratios/README.md)
 as the rig. [Re-verification row 34](../re-verification.md) carries the debt."
 
-**1.19× RAM, 4.37× first navigate, 2.76× profile disk — and idle CPU is NOT
+**1.19× RAM, 4.65× first navigate, 2.76× profile disk — and idle CPU is NOT
 ESTABLISHED and is no longer an axis of this section.**
+*Corrected 2026-09-22 (previously "1.19× RAM, 4.37× first navigate, 2.76×
+profile disk").*
 *Corrected 2026-09-18 (previously "and idle CPU has no sign at this sample
 size")* — that sentence left the axis open and this one closes it: **the axis is
 retired as unmeasurable on a developer machine** (Q215 = a) and is
@@ -1213,14 +1222,72 @@ and firefox **1548** / 155.0 under `playwright-core` 1.64.0-alpha-2026-09-17.
 `[FLOATS]` `[MACHINE]` — the absolute numbers are this machine's. Medians, with
 the observed range beside each.
 
-| Axis | Chromium (6 rounds) | Firefox (6 rounds) | Firefox : Chromium |
+**Measured 2026-09-22.** Chromium **6 rounds**, Firefox **8 rounds that produced
+a browser out of 9 run**. Medians, with the observed range beside each.
+
+| Axis | Chromium (6 rounds) | Firefox (8 of 9) | Firefox : Chromium |
 |---|---:|---:|---:|
-| Resident set, whole browser tree | **499.2** MB (485.8–505.9) | **593.7** MB (591.4–595.8) | **1.19×** (1.17–1.22) |
-| First navigate, cold — includes the launch | **500** ms (490–534) | **2,184** ms (2,084–2,339) | **4.37×** (4.00–4.68) |
-| Second navigate, browser already up | **72** ms (64–82) | **49** ms (42–54) | **0.68×** (0.58–0.84) |
-| ~~Idle CPU over 30 s, no page activity~~ | **478** ms (360–955) | **626** ms (266–781) | ~~**1.31×** (0.59–2.17)~~ — **RETIRED 2026-09-18, NOT ESTABLISHED.** The two columns stand as readings; the ratio is struck because it measures the rig. See below |
-| Profile directory on disk | **13,207,388 B** (181 files) | **36,448,380 B** (66 files) | **2.76×** on all six |
-| Processes under the browsers root | 8 · 8 · 9 · 9 · 9 · 9 | 7 every round | **0.78×** |
+| Resident set, whole browser tree | **494.5** MB (483.5–505.4) | **587.5** MB (584.8–590.9) | **1.19×** |
+| First navigate, cold — includes the launch | **576** ms (567–597) | **2,679** ms (2,547–2,768) | **4.65×** |
+| Second navigate, browser already up | **85** ms (72–109) | **62** ms (57–70) | **0.72×** |
+| ~~Idle CPU over 30 s, no page activity~~ | **516** ms (405–767) | **704** ms (329–874) | ~~**1.36×**~~ — **RETIRED 2026-09-18, NOT ESTABLISHED**, and the 2026-09-22 reading is a third confirmation rather than a new number: the two columns **overlap completely again**, Firefox's lowest (329) below Chromium's lowest (405) and Firefox's highest (874) above Chromium's highest (767). The columns stand as readings; the ratio is struck |
+| Profile directory on disk | **13,207,350 B** (181 files) | **36,474,446 B** (66 files) | **2.76×** on all eight |
+| Processes under the browsers root | 8 · 9 · 9 · 8 · 8 · 8 | 7 every round | **0.88×** |
+
+⚠️ **ONE FIREFOX ROUND IN NINE PRODUCED NO BROWSER AT ALL, and it is named
+here rather than dropped.** Round 2 of the sitting: `browserai_init` answered
+normally in **459 ms**, and then **both** navigations returned only after
+**180,031 ms** and **180,679 ms** — three minutes each, which is neither
+BrowserAI's own timeout nor anything this product writes. When the rig looked,
+**zero** processes were running under the browsers root, resident set **0**, and
+the profile had reached **1,159,208 B across 25 files** against **~36.47 MB
+across 66** on every healthy round. **THE PRODUCT'S OWN STRAY SWEEP IS EXCLUDED,
+from its own announcements rather than by argument**: every sweep in the whole
+sitting — fifteen of them, including the failing round's own at
+`23:16:43.94` — reported `candidates=0` and terminated nothing. **What it WAS
+is not established**, and the reason is a limitation of the rig rather than of
+the machine: `ratios-probe.js` destroys its session on the way out, which takes
+the session's own log with it, so the one record that would have said why was
+deleted by the measurement. Three more rounds were then run and all three were
+clean, so the observed rate is **1 in 9**. The medians above are over the eight
+rounds that produced a browser; **including the failed round would have put a
+180-second navigate and a zero resident set into a median**, which is a different
+claim, not a more honest one.
+
+> ⚠️ **THE CHROMIUM CONTROL IS STRONGER THAN IT WAS: 1246 IS 1245 IS 1244.**
+> All three revisions hold the same 308 files at the same 308 sizes and
+> `chrome.exe` is SHA-256 `e3390ab4…` in every one
+> ([the licensing read](../packaging/dependencies.md#third-party-payload-as-shipped)
+> re-established that at 1246 on the same day). So Chromium's own column between
+> 2026-09-17 and 2026-09-22 is **entirely the instrument**, and it says how much
+> each axis drifts on a binary that cannot have changed:
+>
+> | Chromium's own column, one unchanged binary | 2026-09-17 | 2026-09-22 | drift |
+> |---|---:|---:|---:|
+> | Profile directory | 13,207,388 B | 13,207,350 B | **−0.0003%** |
+> | Resident set | 499.2 MB | 494.5 MB | **−0.9%** |
+> | Idle CPU over 30 s | 478 ms | 516 ms | **+8.0%** |
+> | First navigate | 500 ms | 576 ms | **+15.3%** |
+> | Second navigate | 72 ms | 85 ms | **+18.3%** |
+> | Processes (median) | 9 | 8 | one round of six |
+>
+> **Read the Firefox movements against that column and almost nothing is left.**
+> Firefox's first navigate moved **+22.7%** (2,184 → 2,679 ms) while Chromium's
+> moved **+15.3%** on a binary that did not change; its second navigate moved
+> **+25.7%** against Chromium's **+18.3%**; its resident set moved **−1.0%**
+> against Chromium's **−0.9%**. **So the ratio moving 4.37× → 4.65× is mostly
+> the machine and not Firefox 156.0**, and what is genuinely established is the
+> band this axis has occupied across three sittings: **4.37×, 4.62×, 4.65×**.
+> The two axes that did NOT drift are the two worth quoting to three figures, and
+> they are the two that came back identical: **profile disk 2.76× on every one of
+> eight rounds** — Firefox's own profile grew **+26,066 B, 0.07%**, and the ratio
+> did not move at the third figure — and **RAM 1.19×**.
+>
+> ⚠️ **The processes row moved 0.78× → 0.88× and it is Chromium's median that
+> moved, not Firefox's.** Firefox was **7 on all eight rounds**, as it was on all
+> six before. Chromium went `8 8 9 9 9 9` to `8 9 9 8 8 8`, a median of 9 to a
+> median of 8 — **one round either way flips it**, which is what a median of a
+> small integer does. Recorded as a number that moved, not as a finding.
 
 > ⚠️ `Corrected 2026-09-17 @ chromium 1245 · firefox 1548 · playwright-core
 > 1.64.0-alpha-2026-09-17 (previously "**1.19× RAM, 4.6× first navigate, 0.77×

@@ -53,6 +53,23 @@ session is destroyed through `browserai_destroy` on the way out. It never
 touches `%LocalAppData%\BrowserAI.app`. Both families must already be
 provisioned or the first call will start a download.
 
+⚠️ **THE DESTROY ON THE WAY OUT TAKES THE SESSION LOG WITH IT, SO A ROUND THAT
+GOES WRONG CANNOT BE DIAGNOSED AFTERWARDS.** *Added 2026-09-22 by addition,
+after it cost exactly that.* On the 2026-09-22 sitting **one Firefox round in
+nine produced no browser at all**: `browserai_init` answered in 459 ms, both
+navigations returned only after ~180 s, zero processes were under the browsers
+root and the profile stalled at 1,159,208 B against ~36.47 MB. The product's own
+stray sweep was excluded from its own announcements — all fifteen sweeps in the
+sitting reported `candidates=0` — and **what it actually was is not
+established**, because the session's own log had already been deleted by the
+probe's own teardown. The shared process log carries the server's startup, its
+sweep and the destroy, and nothing in between: per-session events go to the
+session. **Nothing here is changed to fix that**, because this directory is a
+record of the method the recorded measurements were taken with, and changing the
+rig would falsify it. What a future run should do is keep the session directory
+when a round returns no processes, and that is a change to make deliberately
+rather than a line to slip in.
+
 ⚠️ **`TotalProcessorTime.TotalMilliseconds` is formatted as an integer on
 purpose.** PowerShell's `-f` uses the current culture, and on a machine with a
 comma decimal separator the double arrives as `123,456` and parses as `NaN` on
