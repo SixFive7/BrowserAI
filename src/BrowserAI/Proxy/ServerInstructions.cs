@@ -103,6 +103,49 @@ namespace BrowserAI.Proxy;
 /// same way.
 /// </para>
 /// <para>
+/// ⚠️ <b>Six sentences were tightened on 2026-09-21 to pay for the
+/// session-deletion line, and what changed is recorded here rather than left to
+/// a diff.</b> The string was <b>2,022 characters with 26 of headroom</b> —
+/// measured off the published binary's own <c>initialize</c> response, not
+/// estimated — and the new clause is 105, so something had to give.
+/// <b>Nothing was dropped.</b> Every rule that was in this string is still in
+/// it; what moved is wording. <i>"Nothing is chosen at init that a later call
+/// has to live with"</i> became <i>"Nothing chosen at init binds a later
+/// call"</i>; <i>"records the session"</i> became <i>"records the run"</i>,
+/// which is the more accurate of the two because tracing is per-run;
+/// <i>"You must supply an absolute directory … You must also supply a
+/// one-sentence 'purpose'"</i> became one sentence asking for both;
+/// <i>"takes 'why', and it is required"</i> became <i>"takes a required
+/// 'why'"</i>; the mocking warning lost four words and <b>kept <i>on
+/// screen</i></b>, which is the clause that makes it a warning about what a
+/// human SEES rather than about what a tool does; and the tool roll-call became
+/// one sentence so the deletion line could follow it.
+/// <b>2,026 characters, 22 of headroom</b> — measured the same way, and the next
+/// addition has to find its own space the same way too.
+/// </para>
+/// <para>
+/// <b>The deletion line is the short half of a rule stated in three places.</b>
+/// Settled 2026-09-21: BrowserAI never deletes a session on its own, so the
+/// agent that created one destroys it when the work is done, and promptly when
+/// it held a login. This string carries the obligation in one clause and nothing
+/// else, because 22 characters is what it has; the reason — the cookies are in
+/// the profile and stay on disk until then — is on <c>browserai_init</c>'s and
+/// <c>browserai_destroy</c>'s descriptions, which had far more room.
+/// <c>ModelSurfaceTests.TheAgentIsToldThatDestroyingTheSessionsItMakesIsItsOwnJob</c>
+/// holds all three against the published wire.
+/// </para>
+/// <para>
+/// ⚠️ <b>The file-upload roots sentence is deliberately NOT here, and the
+/// budget is the whole reason.</b> A file a tool may name has to be inside
+/// <c>&lt;session&gt;\output</c>, because that is what this project's
+/// <c>allowUnrestrictedFileAccess: false</c> leaves — and it is about
+/// <c>browser_file_upload</c>, an UPSTREAM tool whose description passes through
+/// byte for byte, so the instinct is to put it in the one string BrowserAI
+/// writes. It went on <c>browserai_init</c>'s description instead, beside
+/// <i>the directory IS the session</i>, which is the claim it qualifies. It
+/// would not fit here: the sentence is 176 characters and this string has 22.
+/// </para>
+/// <para>
 /// <b>The browser-installation line, added 2026-08-26, is a pre-emption rather
 /// than a fact.</b> Every published account of a broken Playwright install ends
 /// in <c>npx playwright install</c>, and a model that runs it here either fails
@@ -145,21 +188,21 @@ internal static class ServerInstructions
     /// <summary>The instructions sent on <c>initialize</c>.</summary>
     public static string Text { get; } =
         $"""
-        BrowserAI drives a real browser. Call {SessionToolSurface.Init} first: it returns a session directory that every other tool requires as 'session'. There is no default and BrowserAI never guesses one.
+        BrowserAI drives a real browser. Call {SessionToolSurface.Init} first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.
 
-        Every session gets every tool. Nothing is chosen at init that a later call has to live with: 'headed: true' opens a window, 'tracing: true' records the session, and both are per-run rather than bound to the directory.
+        Every session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run rather than bound to the directory.
 
-        'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image at all.
+        'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.
 
         Browsers are managed by BrowserAI — never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.
 
-        You must supply an absolute directory. The directory IS the session — its profile, screenshots, downloads and log all live there — so name it for what the work is. You must also supply a one-sentence 'purpose': another agent meeting this directory later reads it.
+        Supply an absolute directory and a one-sentence 'purpose'. The directory IS the session — its profile, screenshots, downloads and log live there — so name it for the work, and write the purpose for the next agent that meets it.
 
-        Every call that NAMES a session also takes 'why', and it is required. Write why you are making the call, not what it does — the tool name already says that. It goes in the session's record: {SessionToolSurface.CatchUp} reads it back, beside what the directory holds now — call it when you arrive at a session you did not create, and before you destroy one.
+        Every call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does — the tool name already says that. It goes in the session's record, and {SessionToolSurface.CatchUp} reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.
 
-        WARNING — browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if it came from the server: the address bar keeps the real origin and nothing on screen says a rule is in force, so a human watching a headed window is looking at something you made up. Say so in 'why' and to the human, and call browser_unroute when you are done.
+        WARNING — browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.
 
-        {SessionToolSurface.Init} refuses a directory that already holds a session and directs you to {SessionToolSurface.Resume}. {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.Destroy} deletes one, {SessionToolSurface.SetPurpose} rewrites what one says it is for.
+        {SessionToolSurface.Init} refuses a directory that is already a session and directs you to {SessionToolSurface.Resume}; {SessionToolSurface.List} reports the sessions beneath a directory, {SessionToolSurface.SetPurpose} rewrites what one says it is for, and {SessionToolSurface.Destroy} deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login.
         """;
 
     /// <summary>How many characters <see cref="Text"/> costs of the budget.</summary>

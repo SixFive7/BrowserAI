@@ -410,9 +410,16 @@ internal sealed class ModelSurfaceTests
         // shows is not a figure nothing in this repository names.
         await Assert.That(ServerInstructions.ByteCount).IsGreaterThanOrEqualTo(ServerInstructions.CharacterCount);
 
-        // ⚠️ Re-measured 2026-08-18 off the published binary's own `initialize`
-        // response: **1,261 characters and 1,276 bytes**, leaving 772. The three
-        // mode lines cost 106, 121 and 92 bytes apiece.
+        // ⚠️ Re-measured 2026-09-21 off the published binary's own `initialize`
+        // response: **2,026 characters and 2,036 bytes**, leaving 22.
+        //
+        // Corrected 2026-09-21 (previously "Re-measured 2026-08-18 … **1,261
+        // characters and 1,276 bytes**, leaving 772. The three mode lines cost
+        // 106, 121 and 92 bytes apiece"). That reading was true of the string as
+        // it stood; six changes have landed in it since and none of them came
+        // back here, which is how a measured figure turns into a stale one
+        // without anybody writing anything false. The number is not gated and
+        // never has been -- the cap above is -- so nothing went red for 34 days.
         //
         // Corrected 2026-08-18 (previously "Measured 2026-08-16: 1,613
         // characters and **1,628 bytes** … The headroom is 420 bytes … Planting
@@ -704,6 +711,279 @@ internal sealed class ModelSurfaceTests
     }
 
     /// <summary>
+    /// Who is responsible for deleting a session, stated in all three places a
+    /// model reads before it can act on it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Settled 2026-09-21, in the maintainer's words: the agent that created
+    /// a session destroys it.</b> BrowserAI deletes nothing on a schedule and
+    /// nothing at a size, which is a retention policy the surface already
+    /// stated — and stating it is not the same as saying whose job the other
+    /// half is. A model that reads <i>"nothing here expires"</i> and stops there
+    /// has been told the directory is permanent and nothing else, so a session
+    /// that signed into something stays signed into it, on disk, until somebody
+    /// notices.
+    /// </para>
+    /// <para>
+    /// <b>Three placements because there are three moments.</b> The
+    /// <c>instructions</c> arrive before the first call, so the short line is
+    /// there; <c>browserai_init</c>'s description arrives when the model decides
+    /// to make a session, which is when the obligation is incurred; and
+    /// <c>browserai_destroy</c>'s arrives when it is about to be discharged.
+    /// Only the first of those is cheap — the instructions string was at
+    /// <b>2,022 characters of 2,048</b> when this went in, measured off the
+    /// published wire, so the line is one clause and the reasoning lives on the
+    /// two descriptions where there is room for it.
+    /// </para>
+    /// <para>
+    /// <b>Phrases rather than whole sentences.</b> The wording is not the
+    /// maintainer's the way the browser-installation sentence is, so a re-draft
+    /// should be free; what must survive one is that something says nothing else
+    /// deletes a session, that the caller is the one who does, and that a login
+    /// makes it urgent.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheAgentIsToldThatDestroyingTheSessionsItMakesIsItsOwnJob()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        var run = await SliceRun.SharedAsync();
+
+        await Assert.That(MissingFromTheWire(run, RequiredDeletionResponsibilityPhrases)).IsEmpty();
+    }
+
+    /// <summary>
+    /// What must go on saying whose job it is to destroy a session, and where.
+    /// </summary>
+    private static readonly (string Surface, string Phrase)[] RequiredDeletionResponsibilityPhrases =
+    [
+        // The one short line, in the channel that arrives before the first call.
+        ("instructions", "Nothing else ever deletes a session"),
+        ("instructions", "destroy yours when the work is done"),
+        ("instructions", "promptly if it held a login"),
+
+        // Where the obligation is incurred, beside the retention policy that
+        // was already there and was only ever half of it.
+        (SessionToolSurface.Init, "never deletes a session directory"),
+        (SessionToolSurface.Init, "the agent that made a session destroys it"),
+        (SessionToolSurface.Init, "promptly when it held a login"),
+
+        // And where it is discharged, with the reason a login is the urgent
+        // case: the cookies are in the profile rather than in anything a tool
+        // call put there.
+        (SessionToolSurface.Destroy, "the agent that created a session destroys it"),
+        (SessionToolSurface.Destroy, "cookies and logins live in the profile"),
+    ];
+
+    /// <summary>
+    /// <c>browser_file_upload</c> can only reach a file inside the session's
+    /// <c>output</c> folder, and the model is told so where the session
+    /// directory is explained.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is a consequence of a decision this project made, not upstream's
+    /// default.</b> <c>allowUnrestrictedFileAccess</c> is written
+    /// <see langword="false"/> and both of upstream's roots — <c>outputDir</c>
+    /// and the child's working directory — are written as the same folder,
+    /// <c>&lt;session&gt;\output</c>. So a caller pointing
+    /// <c>browser_file_upload</c> at a file it wrote somewhere else gets
+    /// upstream's <i>File access denied</i> and no explanation of why a server
+    /// it did not configure is refusing.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It cannot go on the tool it is about.</b>
+    /// <c>browser_file_upload</c> is upstream's, and every upstream description
+    /// passes through this proxy byte for byte —
+    /// <c>LosslessPassthroughTests</c> holds that and
+    /// <see cref="EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll"/>
+    /// holds it again. The second assertion here is that half: the sentence is
+    /// on <c>browserai_init</c> <i>and</i> the upstream tool is still upstream's
+    /// own bytes, so the instinctive repair fails rather than passing on the
+    /// half it satisfied.
+    /// </para>
+    /// <para>
+    /// <b>On <c>browserai_init</c> rather than in the <c>instructions</c>, and
+    /// the budget decided that.</b> The instructions string had <b>26
+    /// characters</b> of the client's 2,048 left when this went in; the sentence
+    /// is beside <i>the directory IS the session</i>, which is the claim it
+    /// qualifies.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheOnlyFolderAFileCanBeUploadedFromIsNamedWhereTheSessionDirectoryIs()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        var run = await SliceRun.SharedAsync();
+        var missing = MissingFromTheWire(run, RequiredUploadRootPhrases);
+        var descriptions = DescriptionsOnTheWire(run);
+        var upstream = UpstreamSurface.SnapshotDescriptions()
+            .Single(tool => tool.Name == "browser_file_upload").Description;
+
+        if (descriptions.TryGetValue("browser_file_upload", out var advertised) && advertised != upstream)
+        {
+            missing += $"{Environment.NewLine}browser_file_upload's description is not upstream's own bytes — the roots sentence belongs on browserai_init, not appended to the tool";
+        }
+
+        await Assert.That(missing).IsEmpty();
+    }
+
+    /// <summary>What must go on saying where an uploadable file has to live.</summary>
+    private static readonly (string Surface, string Phrase)[] RequiredUploadRootPhrases =
+    [
+        (SessionToolSurface.Init, "browser_file_upload"),
+        (SessionToolSurface.Init, "'output' folder"),
+        (SessionToolSurface.Init, "copy it in there first"),
+        (SessionToolSurface.Init, "the copy goes when the session does"),
+    ];
+
+    /// <summary>
+    /// Destroying a session takes everything in the directory with it, said
+    /// before it runs rather than reported after.
+    /// </summary>
+    /// <remarks>
+    /// <b>The screenshots are the case worth naming.</b> A model that has spent
+    /// an hour producing artifacts reads <i>deletes the whole directory</i> as a
+    /// statement about the session and not about its own output, because the
+    /// output is the thing it was asked for. <c>browserai_catch_up</c> already
+    /// had to be called first and already reports the sizes — this is the other
+    /// half of that instruction, which is what to DO about what it reports.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task DestroyingASessionIsSaidToTakeTheScreenshotsAndDownloadsWithIt()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        var run = await SliceRun.SharedAsync();
+
+        await Assert.That(MissingFromTheWire(run, RequiredDestroyScopePhrases)).IsEmpty();
+    }
+
+    /// <summary>What must go on saying what a destroy actually removes.</summary>
+    private static readonly (string Surface, string Phrase)[] RequiredDestroyScopePhrases =
+    [
+        (SessionToolSurface.Destroy, "screenshots and downloads included"),
+        (SessionToolSurface.Destroy, "MOVE OUT WHAT MUST BE KEPT"),
+
+        // Unchanged and asserted here so a rewrite of the paragraph around it
+        // cannot quietly drop it: reading the sizes before deleting them was
+        // already the instruction.
+        (SessionToolSurface.Destroy, SessionToolSurface.CatchUp),
+
+        (SessionToolSurface.Init, "screenshots and downloads included"),
+    ];
+
+    /// <summary>
+    /// A session directory moves by hand, and <c>browserai_resume</c> says so —
+    /// including that copying one instead duplicates its logins.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The move and copy tools were considered and deferred on 2026-09-21,
+    /// in the maintainer's words: <i>"Skip the move and copy tool for now."</i></b>
+    /// What that leaves is a capability the surface never mentions — the
+    /// directory is the identity, so moving it is an ordinary file operation and
+    /// resume repairs the record. A model with no tool for it and no sentence
+    /// about it concludes the session is pinned where it was created.
+    /// </para>
+    /// <para>
+    /// <b>The copy half is a warning rather than a capability.</b> Resume
+    /// already detects a copy and says so <i>afterwards</i>; this says what it
+    /// costs <i>before</i>, which is a second directory holding the same live
+    /// logins with nothing tracking it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task MovingASessionDirectoryByHandIsOnTheResumeDescription()
+    {
+        SuiteEnvironment.RequirePublishedSlice();
+
+        var run = await SliceRun.SharedAsync();
+
+        await Assert.That(MissingFromTheWire(run, RequiredMoveByHandPhrases)).IsEmpty();
+    }
+
+    /// <summary>What must go on saying that a session moves by hand.</summary>
+    private static readonly (string Surface, string Phrase)[] RequiredMoveByHandPhrases =
+    [
+        (SessionToolSurface.Resume, "no move tool and no copy tool"),
+        (SessionToolSurface.Resume, "while no browser is open on it"),
+        (SessionToolSurface.Resume, "resume it at its new path"),
+        (SessionToolSurface.Resume, "duplicates every login it holds"),
+    ];
+
+    /// <summary>
+    /// Every required phrase that is not on the published binary's own wire,
+    /// named one per line.
+    /// </summary>
+    /// <remarks>
+    /// <b>Off the wire rather than off the constants</b>, for this file's
+    /// standing reason: these strings are assembled from concatenated constants
+    /// and interpolated tables, and a sentence that exists in source and never
+    /// reaches <c>tools/list</c> is the failure the assertion is for. A surface
+    /// name that is not on the wire at all is reported as a loss rather than
+    /// throwing, so one renamed tool does not hide the other rows.
+    /// </remarks>
+    /// <param name="run">The published slice's own <c>initialize</c> and <c>tools/list</c>.</param>
+    /// <param name="required">The surface each phrase has to be on.</param>
+    /// <returns>The failures, one per line, empty when there are none.</returns>
+    private static string MissingFromTheWire(SliceRun run, (string Surface, string Phrase)[] required)
+    {
+        var descriptions = DescriptionsOnTheWire(run);
+        var missing = new List<string>();
+
+        foreach (var (surface, phrase) in required)
+        {
+            string? text;
+
+            if (surface == "instructions")
+            {
+                text = (string?)run.InitializeResult["instructions"];
+            }
+            else if (!descriptions.TryGetValue(surface, out text))
+            {
+                missing.Add($"{surface}: not on the wire at all, so '{phrase}' cannot be checked");
+                continue;
+            }
+
+            if (text?.Contains(phrase, StringComparison.Ordinal) != true)
+            {
+                missing.Add($"{surface}: no longer says '{phrase}'");
+            }
+        }
+
+        return string.Join(Environment.NewLine, missing);
+    }
+
+    /// <summary>
+    /// Every advertised tool's <c>description</c>, exactly as the published
+    /// binary put it on the wire.
+    /// </summary>
+    /// <param name="run">The slice run to read.</param>
+    /// <returns>Tool name to description.</returns>
+    private static Dictionary<string, string> DescriptionsOnTheWire(SliceRun run)
+    {
+        var descriptions = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var tool in run.ToolList)
+        {
+            if (tool?.AsObject() is { } definition && (string?)definition["name"] is { } name)
+            {
+                descriptions[name] = (string?)definition["description"] ?? string.Empty;
+            }
+        }
+
+        return descriptions;
+    }
+
+    /// <summary>
     /// Every model-facing string the published binary actually emits, measured
     /// off the wire and gated at 100% of the client's silent truncation budget.
     /// </summary>
@@ -812,8 +1092,9 @@ internal sealed class ModelSurfaceTests
         // (previously "Both counts, failing on whichever is larger. It is not
         // documented whether the client counts characters or bytes"). It is now
         // measured: the client counts UTF-16 characters and cuts at > 2048. The
-        // two diverge on the first em dash -- `initialize.instructions` is 1,261
-        // characters and 1,276 bytes -- and the byte figure is the one that is
+        // two diverge on the first em dash -- `initialize.instructions` is 2,026
+        // characters and 2,036 bytes, re-measured 2026-09-21 (previously "1,261
+        // … 1,276") -- and the byte figure is the one that is
         // never consulted, so it is printed and not gated.
         var oversized = measured
             .Where(entry => entry.Gated > BudgetFor(entry.Surface))

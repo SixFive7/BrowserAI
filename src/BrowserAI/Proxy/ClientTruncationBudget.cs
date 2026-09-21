@@ -72,7 +72,13 @@ namespace BrowserAI.Proxy;
 /// <b>The same cap applies to the server <c>instructions</c></b>, which the
 /// client delivers to the model inside a <c>&lt;system-reminder&gt;</c> block in
 /// the <i>messages</i> array rather than in the system prompt — cut at 2,048
-/// characters with the same suffix. BrowserAI's own is 1,261 characters.
+/// characters with the same suffix. BrowserAI's own is <b>2,026
+/// characters</b>. <i>Corrected 2026-09-21 (previously "1,261 characters",
+/// measured 2026-08-18 and left standing through every change to the string
+/// since).</i> Re-measured off the published binary's own <c>initialize</c>
+/// response by <c>ModelSurfaceTests.EveryModelFacingStringFitsTheClientsSilentTruncationBudget</c>,
+/// which writes every length to <c>.work/description-budget.txt</c> on a run
+/// that passes.
 /// </para>
 /// <para>
 /// <b>It floats.</b> Every figure above is a client-version fact this project
