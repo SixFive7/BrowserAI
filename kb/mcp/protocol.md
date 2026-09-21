@@ -89,10 +89,16 @@ anything.
 2 KB.** The tail simply does not exist and nothing a server can see reports it.
 [What *"2KB each"* means is measured below](#what-2kb-each-means--measured-2026-08-18--claude-code-21234).
 
-> **What BrowserAI actually spends of that, re-measured 2026-08-18 off the
-> shipped binary's own `initialize` response: 1,261 characters and `1,276`
-> bytes, leaving 772.** The three mode lines cost **106, 121 and 92 bytes**
-> apiece, plus a newline each, measured from the same emitted string.
+> **What BrowserAI actually spends of that, re-measured 2026-09-21 off the
+> published binary's own `initialize` response: 2,026 characters and `2,036`
+> bytes, leaving 22.** *Corrected 2026-09-21 (previously "re-measured
+> 2026-08-18 … 1,261 characters and `1,276` bytes, leaving 772. The three mode
+> lines cost **106, 121 and 92 bytes** apiece, plus a newline each, measured from
+> the same emitted string").* The mode lines were deleted on 2026-08-20 and six
+> further changes have landed in the string since; the 2026-08-18 reading was
+> true when it was taken and none of them came back here. The figure is reported
+> rather than gated — `ModelSurfaceTests` gates the 2,048 cap — which is why
+> nothing went red while it aged.
 >
 > ⚠️ **Corrected 2026-08-18 (previously "measured 2026-08-16 at build-order step
 > 13: 1,613 characters and `1,628` bytes, leaving 420 … the difference is almost
@@ -174,6 +180,16 @@ whole entry is **3,360 B**, which is over 2,048 and irrelevant, because the buck
 it would have overflowed does not exist. `instructions` is **1,261 characters**.
 *This retires the standing worry that `browserai_init` was silently truncated on
 every session.*
+
+⚠️ **Both figures in that paragraph are the 2026-08-18 reading and both have
+moved. Re-measured 2026-09-21** off the published binary's own wire, through
+`ModelSurfaceTests.EveryModelFacingStringFitsTheClientsSilentTruncationBudget`,
+which writes every length to `.work/description-budget.txt` on a run that
+passes: `instructions` is **2,026 characters / 2,036 B** and `browserai_init` is
+**1,877 characters / 1,889 B**, the largest description in the
+surface. The paragraph above is left standing because what it establishes — that
+there is no per-tool bucket and nothing is truncated — is unaffected by either
+number; what has aged is the two measurements inside it.
 
 **Re-establish it** in about fifteen minutes, with no cost and no credential:
 

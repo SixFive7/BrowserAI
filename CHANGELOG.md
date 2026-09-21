@@ -40,6 +40,60 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🔧 **The surface now states a session's whole life: who ends it, what ending it takes, and how it moves.**
+  Four things were already true of the product and said in no string a model reads.
+  BrowserAI deletes nothing on a schedule and nothing at a size — `browserai_init` said
+  that half as *"nothing here expires"* — and a retention policy with no owner is half a
+  sentence, so a session that signed into something stays signed into it, on disk, until
+  somebody notices. `browserai_destroy` said it *"deletes the whole directory"*, which a
+  caller reads as a claim about the session rather than about the screenshots it was asked
+  to produce. `browser_file_upload` can only reach a file inside the session's `output`
+  folder, which is this project's `allowUnrestrictedFileAccess: false` rather than
+  upstream's default, and a caller cannot guess it. And a session directory moves by hand
+  while no browser is open on it and resumes at its new path, which nothing said at all.
+
+  Each is placed where it is read at the moment it matters: the deletion responsibility in
+  the server `instructions`, on `browserai_init` and on `browserai_destroy`; what a destroy
+  takes on `browserai_destroy` and `browserai_init`; the upload root on `browserai_init`,
+  beside the sentence that the directory IS the session; moving by hand on
+  `browserai_resume`.
+
+  THE UPLOAD SENTENCE IS NOT ON THE TOOL IT IS ABOUT. `browser_file_upload` is upstream's
+  and every upstream description passes through this proxy byte for byte, so the sentence
+  goes on the one description BrowserAI writes that a caller reads first. The arm that
+  asserts it asserts in the same breath that `browser_file_upload` is still upstream's own
+  bytes.
+
+  SIX SENTENCES IN THE `instructions` WERE TIGHTENED TO PAY FOR THE DELETION LINE, AND
+  NOTHING WAS DROPPED. The string was 2,022 characters of the client's 2,048 — measured off
+  the published binary's own `initialize` response — with 26 to spend and a clause that
+  costs 105. Every rule is still in it: the no-default rule, the `why` rule, the
+  route/network mocking warning with its `on screen` clause intact, the never-install-browsers
+  sentence verbatim, the full-page cost line. What moved is wording, and `ServerInstructions`
+  records each change beside the one it replaced. Measured after: `instructions` 2,026
+  characters of 2,048, `browserai_init` 1,877, `browserai_resume` 1,367,
+  `browserai_destroy` 1,072.
+
+  The move and copy tools were considered and deferred, and so was every way of widening
+  the sandbox; both are recorded in `DECISIONS.md` with the maintainer's words and the
+  alternatives that were weighed.
+
+- ✅ **Four arms hold the session-lifetime rules on the published binary's own wire.**
+  `ModelSurfaceTests.TheAgentIsToldThatDestroyingTheSessionsItMakesIsItsOwnJob`,
+  `.TheOnlyFolderAFileCanBeUploadedFromIsNamedWhereTheSessionDirectoryIs`,
+  `.DestroyingASessionIsSaidToTakeTheScreenshotsAndDownloadsWithIt` and
+  `.MovingASessionDirectoryByHandIsOnTheResumeDescription`, each planted and watched red
+  before the sentences went in — 18 of the 19 required phrases named as absent, and the
+  other two present already, which is the positive control that the scan can find a phrase
+  that is there.
+
+  OFF THE WIRE RATHER THAN OFF THE CONSTANTS, for this file's standing reason: these
+  strings are assembled from concatenated constants and interpolated tables, and a sentence
+  that exists in source and never reaches `tools/list` is the failure being guarded
+  against. Phrases rather than whole sentences, because the wording is not the maintainer's
+  the way the browser-installation sentence is — what must survive a re-draft is the rule,
+  not the draft.
+
 - 💥 **The payload cannot be rebuilt until somebody adjudicates the override's exit.**
   `@playwright/mcp` moved 0.0.81 -> 0.0.82 on 2026-09-18, and 0.0.82 declares
   `playwright-core` and `playwright` at `1.64.0-alpha-1789764292000` -- a 13-digit
