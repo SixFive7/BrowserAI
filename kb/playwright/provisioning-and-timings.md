@@ -996,23 +996,93 @@ that did not exist when the figure below was last taken.
   2026-09-17. Where this used to be a 7.68 ms no-op that left the session
   unusable, it is now a relaunch — [see below](#the-resume-wedge-measured--2026-09-17).
 
-**Path A costs 375 ms and 379 ms on Chromium and 389 ms on Firefox, and loses
-only `sessionStorage`.** Re-measured 2026-09-17 at chromium **1245** /
-154.0.8037.0 and firefox **1548** / 155.0 under `playwright-core`
-1.64.0-alpha-2026-09-17 and `@playwright/mcp` 0.0.81, against a real published
-`BrowserAI.Server.exe` — twice on Chromium and, **for the first time, once on
-Firefox**. This is the measurement the no-expiry-timer decision rests on — the
-durable thing is the profile, not the process — and **the load-bearing half
-held exactly, on both families**:
+**Path A costs 494 and 456 ms on Chromium and 483 and 492 ms on Firefox, and
+loses only `sessionStorage`. PATH B COSTS 406 and 401 ms on Chromium and 396 and
+406 ms on Firefox — AND LOSES MORE THAN `sessionStorage`.** Re-measured
+2026-09-22 at chromium **1246** / 154.0.8037.0 and firefox **1549** / **156.0**
+under `playwright-core` 1.64.0-alpha-1789764292000 and `@playwright/mcp` 0.0.82,
+against a real published `BrowserAI.Server.exe`, **twice per path per family —
+eight runs, and the first Firefox reading Path B has ever had**. *Corrected
+2026-09-22 (previously "**Path A costs 375 ms and 379 ms on Chromium and 389 ms
+on Firefox, and loses only `sessionStorage`.** Re-measured 2026-09-17 at chromium
+**1245** … twice on Chromium and, **for the first time, once on Firefox** …
+**the load-bearing half held exactly, on both families**", whose durability table
+described **Path A only** and was not labelled as doing so).*
 
-| Store | Written before | Read back after the resume — Chromium 1245 | … and Firefox 1548 |
-|---|---|---|---|
-| Cookie | `cookie-value` | **survived** | **survived** |
-| `localStorage` | `local-value` | **survived** | **survived** |
-| `sessionStorage` | `session-value` | **gone** — the only loss | **gone** — the only loss |
-| IndexedDB | `idb-value` | **survived** | **survived** |
-| CacheStorage | `cache-value` | **survived** | **survived** |
-| Service worker registrations | 1 | **1** | **1** |
+**Path A's durability claim held exactly, again, on both families.** It is the
+measurement the no-expiry-timer decision rests on — the durable thing is the
+profile, not the process.
+
+⚠️ **PATH B'S DOES NOT, AND THAT IS THE FINDING OF THIS RE-MEASUREMENT.**
+A relaunch after the child was **killed** loses persistent stores that a clean
+handover keeps, and *which* ones it loses varies run to run. Every Path B run
+lost at least one store beyond `sessionStorage`; no Path A run lost anything
+else. Same probe, same `WRITE`, same `READ`, same origin, seconds apart.
+
+| Store | Written before | Path A — Chromium ×2 | Path A — Firefox ×2 | Path B — Chromium ×2 | Path B — Firefox ×2 |
+|---|---|---|---|---|---|
+| Cookie (`max-age=3600`, **persistent**) | `cookie-value` | **survived** · **survived** | **survived** · **survived** | ⚠️ **GONE** · ⚠️ **GONE** | survived · survived |
+| `localStorage` | `local-value` | **survived** · **survived** | **survived** · **survived** | survived · ⚠️ **GONE** | ⚠️ **GONE** · ⚠️ **GONE** |
+| `sessionStorage` | `session-value` | **gone** — the only loss | **gone** — the only loss | gone | gone |
+| IndexedDB | `idb-value` | **survived** · **survived** | **survived** · **survived** | **survived** · **survived** | **survived** · **survived** |
+| CacheStorage | `cache-value` | **survived** · **survived** | **survived** · **survived** | **survived** · **survived** | **survived** · **survived** |
+| Service worker registrations | 1 | **1** · **1** | **1** · **1** | **1** · **1** | **1** · **1** |
+
+> ⚠️ **THE COOKIE IS NOT A SESSION COOKIE AND THAT WAS CHECKED BEFORE THIS
+> WAS WRITTEN DOWN.** `document.cookie = 'reverify=cookie-value; path=/;
+> max-age=3600'` — an hour's persistent cookie, read back after a
+> `browser_navigate` to the same origin. A session cookie would explain the loss
+> away entirely, and it is not one. `localStorage` is persistent by definition.
+> So both losses are losses of durable state.
+>
+> **IT REPRODUCED ACROSS TWO INDEPENDENT SITTINGS.** An earlier sitting the same
+> evening was **discarded as invalid** — its driver handed all eight runs one
+> literal session path, `…\resume$tag`, because a heredoc ate a level of
+> backslash escaping — and is recorded here rather than deleted because its
+> durability column is identical to the valid one, store for store, in all four
+> Path B runs. Eight Path B runs, two sittings, one result.
+>
+> **WHAT IT PROBABLY IS, LABELLED AS A READING RATHER THAN A MEASUREMENT.** Path
+> A's server closes its stdin and exits, so the browser is shut down and flushes;
+> Path B kills the node children by pid and the browser dies with them, losing
+> whatever the cookie jar and the `localStorage` backing store had not yet
+> written. That is consistent with every run — the two stores that are flushed
+> lazily are the two that go, and IndexedDB and CacheStorage, which commit on
+> transaction, never do — but **nothing here measured a flush**, and which store
+> goes on which run was not predicted in advance.
+>
+> ⚠️ **AND THE PRODUCT SAYS OTHERWISE, IN A MODEL-FACING STRING, ON THIS
+> EXACT PATH.** `SessionManager.ChildWasRelaunched` is what a Path B resume
+> returns, and it reads: *"the browser server for this session had died and was
+> relaunched. The session's directory, profile and log are unchanged, **so
+> cookies and stored state are still there** — but nothing that lived in the old
+> process survived it…"*. The measurement says a cookie may not be. **No product
+> change is taken here** — the wording of a model-facing string is the
+> maintainer's — and it is [an open hazard row](../../HAZARDS.md#hazard-index)
+> rather than a sentence quietly edited.
+
+**Costs, 2026-09-22, two runs each.** Read them against the control in
+[the cost ratios](#firefox-against-chromium-the-standing-cost-ratios): Chromium
+is **byte-identical across 1244, 1245 and 1246**, and its own first-navigate
+drifted **+15.3%** between the two sittings, so most of the movement below is the
+machine.
+
+| | Chromium 1246 | Firefox 1549 | previous |
+|---|---:|---:|---|
+| **Path A** `browserai_resume` | **494** · **456** ms | **483** · **492** ms | 375 · 379 (C), 389 (F) |
+| Path A, the next `browser_navigate` | 515 · 517 ms | 1,501 · 1,502 ms | not recorded |
+| **Path B** `browserai_resume` | **406** · **401** ms | **396** · **406** ms | 346 · 331 (C), none (F) |
+| Path B, the next `browser_navigate` | 526 · 573 ms | 2,455 · 2,333 ms | 444 · 426 (C) |
+
+> ⭐ **FIREFOX RESUMES WITHIN 3% OF CHROMIUM ON PATH A AND WITHIN 2% ON PATH B**,
+> although it is 4.65× slower to first navigate. That is the second reading of
+> the thing the previous entry called the first evidence rather than argument
+> that **a resume is about the DIRECTORY and not about the browser** — and Path
+> B, which relaunches a real browser, says it too.
+>
+> ⭐ **PATH B IS CHEAPER THAN PATH A ON BOTH FAMILIES**, by about 90 ms on
+> Chromium and 88 ms on Firefox. Path A pays for a second process meeting a
+> directory it does not own; Path B is already inside the process that does.
 
 > ⚠️ `Corrected 2026-09-17 @ chromium 1245 · firefox 1548 · playwright-core
 > 1.64.0-alpha-2026-09-17 (previously "**Resume costs 336 ms and 367 ms, and
@@ -1245,10 +1315,29 @@ across 66** on every healthy round. **THE PRODUCT'S OWN STRAY SWEEP IS EXCLUDED,
 from its own announcements rather than by argument**: every sweep in the whole
 sitting — fifteen of them, including the failing round's own at
 `23:16:43.94` — reported `candidates=0` and terminated nothing. **What it WAS
-is not established**, and the reason is a limitation of the rig rather than of
-the machine: `ratios-probe.js` destroys its session on the way out, which takes
-the session's own log with it, so the one record that would have said why was
-deleted by the measurement. Three more rounds were then run and all three were
+is not established by THIS rig**, because `ratios-probe.js` destroys its session
+on the way out and takes the session's own log with it, so the one record that
+would have said why was deleted by the measurement.
+
+✅ **BUT THE SAME SIGNATURE WAS CAUGHT WITH ITS ERROR TEXT ATTACHED LATER THE
+SAME EVENING, in the row 38 resume runs, and the identification is stated as
+INFERRED rather than measured.** A Firefox `browser_navigate` there returned
+after **180,023 ms** carrying:
+*`TimeoutError: async initializeServer: Timeout 180000ms exceeded.`* with a call
+log reading `<launching> …\firefox-1549\firefox\firefox.exe -no-remote
+-headless -profile … -juggler-pipe about:blank`, then `<launched> pid=147320`,
+then `[pid=147320][err] *** You are running in headless mode.` — **and nothing
+further**. So Firefox *started* and never finished `initializeServer`; the
+juggler handshake never completed. **180,000 ms is upstream's own
+`DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT`, `3 * 60 * 1e3`, which
+[this article already documented](#timings-spawn-resume-idle-close-proxy-overhead)
+years of readings ago** — and the paragraph there says a launch that approaches
+it *"is not slow — it is stuck"*. That is the number that ended both calls.
+**What makes this an inference rather than a measurement** is that the
+cost-ratio round's own error text was destroyed with its session: what matches is
+the family, the evening, the zero process count and the duration to within
+**31 ms of 180,000** on one and **8 ms** on the other. **Rate: 2 stuck launches in
+roughly 20 Firefox launches that evening, and 0 in roughly 20 Chromium ones.** Three more rounds were then run and all three were
 clean, so the observed rate is **1 in 9**. The medians above are over the eight
 rounds that produced a browser; **including the failed round would have put a
 180-second navigate and a zero resident set into a median**, which is a different
