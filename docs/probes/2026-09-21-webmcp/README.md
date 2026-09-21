@@ -50,6 +50,34 @@ reason [`build/Build-Payload.ps1`](../../../build/Build-Payload.ps1) sets it:
 upstream's stale-browser collector deletes any registry directory no `.links`
 entry references, and this root holds more than any one rig put there.
 
+## The hung-call shape, and the titled tool
+
+Two later measurements used the same two rigs with the page changed, and both are
+recorded here rather than given files of their own, because the change is one
+line of the page each time.
+
+**A page tool that never answers** is
+`invokeTool: () => new Promise(() => {})`. Call it through `probe.mjs`'s own
+request loop and keep asking the SAME child for `browser_snapshot` while it
+pends: that is the whole of
+[the no-block measurement](../../../kb/playwright/tools-and-artifacts.md#a-hung-page-tool-does-not-block-the-child-and-is-released-by-navigating-away--measured-2026-09-21),
+and the release is timed by navigating the tab away afterwards. ⚠️ **The call
+never completes on its own**, so a rig that waits for it has no end condition
+but its own clock.
+
+**A tool with a display title** is `{ name: "raw_name_here", title: "Human
+Title" }`. `probe.mjs`'s `probe_tool_alpha` already carries one, which is what
+makes the difference visible without changing anything: upstream builds the
+entry with `title: tool.title || tool.name`, so the annotations carry the TITLE
+while the snapshot block prints the NAME. That is
+[the name rule](../../../kb/playwright/tools-and-artifacts.md#a-page-tools-wire-name-is-built-from-the-pages-tool-name-and-annotationstitle-is-not-that-name--measured-2026-09-21),
+and it is the fact `browserai_page_tool` resolves on.
+
+**Both are also driven from the suite now**, against the published binary, by
+`PageToolTests` — which is a different instrument and not a replacement: it
+asserts what BrowserAI does with these facts, and these rigs are how the facts
+themselves are re-established.
+
 ## The page's contract, and why it is spelled the way it is
 
 `collectToolsInPage` in the resolved bundle reads

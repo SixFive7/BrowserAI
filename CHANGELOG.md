@@ -38,7 +38,101 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
+### Added
+
+- ✨ **A tool a web page registers with the browser is callable, through one tool of ours that is judged.**
+  `@playwright/mcp` 0.0.82 let a page put tools on the child's `tools/list` — names,
+  descriptions and `inputSchema`s written by whoever wrote the page — and BrowserAI's
+  deny-by-default refused every one of them at the door. That is the rule working exactly
+  as designed, against an adversary it was never written for, and it left a real capability
+  unreachable: a page's own search, form submit or lookup could be read about and not used.
+
+  `browserai_page_tool` is the eighth authored tool. It takes `session`, `why`, the page's
+  own `name` for the tool, an `arguments` object, and an optional `page` URL. It lists the
+  session child's current tools, resolves the name to the wire name upstream built from it,
+  and forwards the call — returning the child's answer byte-identical, because what comes
+  back is the page's own words and nothing here rewrites them.
+
+  **Page tools are reached as a CLASS rather than through rows, and that is the decision.**
+  [`tool-verdicts.json`](tool-verdicts.json) is keyed by name, `ToolVerdictTests` holds it
+  against the golden snapshot in both directions, and a page's names are invented by the
+  page — so a row per page tool is not a thing that can exist. What the class judgement
+  buys back is everything a row would have given: the call is bounded, the name is
+  re-resolved against the live tab every time, the caller's `why` is recorded on the
+  session, and `session` and `why` never reach the page. **The door is not widened.** A
+  `webmcp_*` name arriving straight from a client still has no row and is still refused;
+  this tool is not a new door, it is the only door. The maintainer's framing, the
+  alternative not taken and why are in
+  [`DECISIONS.md`](DECISIONS.md#a-web-pages-own-tools-are-reached-through-one-tool-of-ours).
+
+  **Resolution is by wire name and `annotations.title` is the cross-check, which is the
+  opposite way round from how it reads.** Upstream builds the entry with
+  `title: tool.title || tool.name`, so a page that sets its own display title puts THAT in
+  the annotations while the snapshot block a model reads goes on printing the name —
+  measured 2026-09-21 against a page registering `{ name: "raw_name_here", title: "Human
+  Title" }`. Matching on the title would have made every titled page tool uncallable. What
+  the title is good for is the case where it matches and the wire name is not the one the
+  rule builds: that is either a page with a display title or upstream having changed how it
+  builds names, BrowserAI cannot tell them apart from here, and the refusal says both.
+
+  **Bounded at 60 seconds, by BrowserAI, because nothing upstream bounds it at all.**
+  `callWebMCPTool` awaits a handler the page supplied with `kNoTimeout` under it; measured
+  silent at 61 s. Sixty seconds is twice Playwright's own default for an operation on a
+  page, so a page tool doing one ordinary round trip to its own backend is not cut off, and
+  short enough that a hung call is recovered inside one turn — nothing measured sits
+  between about half a second and never. **It is a real recovery rather than a give-up, and
+  that was measured before the number was chosen**: a pending page tool does not block the
+  child, `browser_snapshot` answered in 4–7 ms beside one, and navigating away released
+  the abandoned call in 11–13 ms. The refusal says all three, because what the timeout
+  does NOT do is stop the page's code.
+
+  Six refusals, each with a different recovery and each provoked by a real condition in
+  `ErrorCatalogueTests`: the name is not on this page (listing what is), two tools share it,
+  the tab has moved since you read it, the page you named could not be checked, the title
+  matches but the wire name does not follow the rule, and the page never answered.
+  `PageToolTests` drives every one of them against real pages that really register WebMCP
+  tools, through the published binary.
+
 ### Changed
+
+- 🔧 **`webmcp: true` is written into every generated config rather than left to upstream's default.**
+  The key switches on the page-provided tools and the
+  `- webmcp tools (page-provided, untrusted):` block that every `browser_snapshot` answer
+  carries. Upstream's default is on, so nothing about what reaches a model changes —
+  what changes is that a stance is recorded where a reader can find it, the way
+  `allowUnrestrictedFileAccess` and `timeouts.idle` already are: an omission records no
+  decision, `browser_get_config` cannot read back a key the file never carried, and the day
+  upstream's default moves this is a red build rather than a capability that quietly went.
+
+  **`false` was the recommendation until `browserai_page_tool` existed**, on the ground that
+  the block was page-authored text with no capability behind it. There is a capability
+  behind it now, and the block is the only catalogue there is: with the key `false` there is
+  no block, no tab-header count and no dynamic tools, so a caller would have the tool and no
+  way to know what to name. What it costs is unchanged and is still
+  [a hazard row](HAZARDS.md#hazard-index) — the page's own words still reach the model,
+  exactly as before.
+
+- 📝 **Three decisions about page-provided tools, with the directions not taken beside them.**
+  [`DECISIONS.md`](DECISIONS.md#a-web-pages-own-tools-are-reached-through-one-tool-of-ours)
+  carries the maintainer's framing verbatim, why a fourth verdict class is not a thing that
+  can exist, and **direction A recorded as the follow-on not taken** — a marker rule at
+  the door, strictly more capable, costing *every advertised name has a row* the word
+  *row*. It also records that **BrowserAI does not declare `listChanged`**: its list does
+  not change, because `tools/list` is answered from the run's own child, which never
+  navigates — measured 78 before a page and 78 after — and clients cache the
+  capability at `initialize`, so declaring it is cheap and in practice irreversible.
+  **Direction B is recorded as the direction not taken**: announce it, merge each session's
+  page tools into the advertised list, forward the notifications. `VerticalSliceTests`'
+  literal `{"tools":{}}` assertion is the mechanism that keeps the first half true.
+
+  [`HAZARDS.md`](HAZARDS.md#hazard-index) gains two rows and amends one. The untrusted-text
+  row is amended **by addition**: the block is now the discovery channel, and it reaches the
+  model exactly as it did before. The new rows are late binding — the same wire name is
+  a different page's code after a navigation, mitigated by `page` and by re-resolving every
+  call, closed by neither — and the unbounded upstream call, mitigated by our timeout,
+  with the measured fact that the abandoned evaluate stays on the tab until something
+  navigates it. Two `[FLOATS]` facts gain
+  [re-verification rows](kb/re-verification.md): the name rule and the no-block measurement.
 
 - 🔧 **The surface now states a session's whole life: who ends it, what ending it takes, and how it moves.**
   Four things were already true of the product and said in no string a model reads.
