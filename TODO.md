@@ -396,12 +396,29 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 
 ## Upstream asks
 
-- [ ] **Ask `@playwright/mcp` for an option that emits absolute paths in tool
-      results.** ✅ **ADOPTED 2026-09-17 — the fix is in the build, the ask is
-      answered, and THE ROW STAYS OPEN FOR ITS EXIT rather than for its
-      outcome.** *Added 2026-09-17 at the head of the row, because a reader
-      meeting a still-unticked box needs to know at once what it is still open
-      for; nothing below is retracted.*
+- [x] **Ask `@playwright/mcp` for an option that emits absolute paths in tool
+      results.** ✅ **CLOSED 2026-09-21. The exit fired and the fix now arrives by
+      the wrapper's own pin.** `@playwright/mcp` **0.0.82**, published
+      2026-09-18T23:38Z, declares `playwright-core`
+      **1.64.0-alpha-1789764292000**, whose own bundle carries
+      [#42673](https://github.com/microsoft/playwright/pull/42673) — measured on
+      the rebuilt payload by the grep the override was taken on, with its
+      negative control: `PLAYWRIGHT_MCP_FILE_PATHS` **2**, `file-paths` **3**,
+      `filePaths` **8**, identical to the override's own bundle against 0 and 2
+      in the build the wrapper used to pin. The `overrides` block is deleted, the
+      payload was rebuilt through the build's own resolver, and
+      [the review](UPSTREAM-REVIEW.md) was run end to end against the roll.
+      **`config-schema.d.ts` was the snapshot to read first and it said what step
+      3 of the watch item predicted**: `filePaths?: 'relative' | 'absolute'` is
+      declared now, which is a confirmation rather than a change — BrowserAI had
+      been writing the key for four days against typings that did not carry it,
+      survivable only because `loadConfig` validates nothing.
+
+      *Corrected 2026-09-21 (previously "✅ **ADOPTED 2026-09-17 — the fix is in
+      the build, the ask is answered, and THE ROW STAYS OPEN FOR ITS EXIT rather
+      than for its outcome.**"). Nothing below is retracted: the adoption was
+      real on 2026-09-17 and what was outstanding was the exception it rested
+      on.*
 
       **What is done.** `filePaths: "absolute"` is written in every generated
       child config (`BrowserConfiguration.FilePaths`, required by
@@ -423,8 +440,11 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       measurement, and it is recorded as owed rather than claimed. Provoking it
       needs a paused session, which is a different rig.
 
-      **What the row is still open for: the exit.** The version carrying the fix
-      is reached through a **dated `playwright-core` override**
+      ✅ **What the row WAS still open for, and is not any more: the exit.**
+      *Kept in the past tense rather than deleted, because it is the record of an
+      adoption that rested on an exception and of how that ended — four days.*
+      The version carrying the fix
+      was reached through a **dated `playwright-core` override**
       ([DECISIONS](DECISIONS.md#the-two-exceptions-to-the-versioning-policy)),
       because `@playwright/mcp` `latest` is still 0.0.81 and still pins
       1.64.0-alpha-2026-09-14 exactly. **The exit condition is: `@playwright/mcp`
@@ -436,11 +456,24 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       `PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded` goes red off the
       committed lock and [`build/Build-Payload.ps1`](build/Build-Payload.ps1)
       refuses the build off the live resolution, each naming the file and the key.
-      **This row is closed when the exit fires and not before** — an adoption
-      that rests on an exception is not finished while the exception stands.
-      **The standing watch item that carries the deletion, step by step, is
+      **This row was closed when the exit fired and not before** — an adoption
+      that rests on an exception is not finished while the exception stands — and
+      it fired on **2026-09-21**. **The standing watch item that carried the
+      deletion, step by step, is
       [WATCH for the `@playwright/mcp` release that carries #42497](#upstream-asks)
-      further down this section**; this row and that one close together.
+      further down this section**; this row and that one closed together, as they
+      were written to.
+
+      ⚠️ **What the instruments actually did is worth the sentence, because it
+      is not what the paragraph above expected.** Neither went red. Both
+      **refused to answer**: the exit compared versions through a regex matching
+      `<major>.<minor>.<patch>[-alpha-YYYY-MM-DD]`, and 0.0.82 pins a 13-digit
+      epoch-milliseconds alpha from a different shape family, so each threw and
+      said to adjudicate by hand. That was the designed behaviour — silently
+      calling an unorderable shape *lower* is what keeps an override alive past
+      its own exit — and it is what put the decision in front of a human on the
+      right day. **The daily drift check is what noticed**, on 2026-09-21,
+      before anything was rebuilt.
 
       Every file the child produces is named in the answer with a path
       relative to the child's working directory, and the six shapes all come from
@@ -687,13 +720,43 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       an ordinary full-page screenshot of a long document, which is what the ask
       says.
 
-- [ ] **WATCH for the `@playwright/mcp` release that carries #42497, and delete
-      the override when it lands.** *Added 2026-09-17 at the maintainer's
+- [x] **WATCH for the `@playwright/mcp` release that carries #42497, and delete
+      the override when it lands.** ✅ **CLOSED 2026-09-21. Condition met
+      2026-09-18, acted on 2026-09-21, override removed at commit `37abb9a`.**
+      *Added 2026-09-17 at the maintainer's
       instruction, in his words: "Do not forget to add monitoring when
       microsoft/playwright#42497 enters a release and removing our pin".* This
-      is the standing half of the
+      was the standing half of the
       [dated exception](DECISIONS.md#the-two-exceptions-to-the-versioning-policy);
-      the adoption itself is [ask #1](#upstream-asks) above.
+      the adoption itself is [ask #1](#upstream-asks) above, and the two closed
+      together as they were written to.
+
+      **HOW IT WENT, against the five steps below.** The condition was met by
+      `@playwright/mcp` **0.0.82**, published 2026-09-18T23:38Z, pinning
+      `playwright-core` **1.64.0-alpha-1789764292000** — which is **at or above**
+      `1.64.0-alpha-2026-09-17` in substance and **unorderable against it** as a
+      string, and that distinction is the one thing this item did not anticipate.
+      Steps 1, 2 and 3 ran as written: the `overrides` block and its note are
+      gone, the rebuild printed
+      `playwright-core: 1.64.0-alpha-1789764292000 (@playwright/mcp's own exact
+      dependency, not npm latest)`, and the review found `filePaths` in
+      `config-schema.d.ts` exactly as step 3 predicted. **Step 4 was recorded
+      differently from how it is written here**: the DECISIONS section records
+      the exception as **ENDED** and still counts **two**, because an exception
+      that ran its course is a worked example of how one is allowed to work
+      rather than a slot that reopens — the correction is stamped there.
+      **Step 5 is this.**
+
+      ⚠️ **The monitoring worked and not in the shape paragraph (2) below
+      predicts.** Neither instrument went red on the day: both **refused to
+      order** the epoch-stamped version and said a human must adjudicate, which
+      is their designed behaviour. So the exit was *unreadable* rather than
+      *unfired*, the **drift check** is what reported it, and the two instruments
+      made ignoring it impossible in the way that actually matters — by making
+      the payload unbuildable until somebody decided. All three are retired with
+      the override; the ordering was **not** widened to accept the new shape, and
+      [DECISIONS](DECISIONS.md#the-two-exceptions-to-the-versioning-policy) says
+      why.
 
       **THE CONDITION.** `@playwright/mcp` `latest` publishes a version whose own
       `dependencies.playwright-core` is **at or above

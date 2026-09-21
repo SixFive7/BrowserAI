@@ -1154,14 +1154,27 @@ what its `override` and `pulledForward` keys say.
 > cannot answer why**: measured 2026-09-17, npm writes no `overrides` block into
 > the lock it produces, so a reader holding `payload.package-lock.json` alone
 > sees a resolved `playwright-core` and nothing saying anybody chose it. On
-> today's tree that is `1.64.0-alpha-2026-09-17` where `@playwright/mcp` 0.0.81
-> and `playwright` both declare `1.64.0-alpha-2026-09-14` for themselves — a
-> [dated exception with a written exit](DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
-> and the manifest now carries both halves of the exit condition rather than one.
+> today's tree that is nothing: **`pulledForward` reads `null`, and that is the
+> normal state.** *Corrected 2026-09-21 (previously "On today's tree that is
+> `1.64.0-alpha-2026-09-17` where `@playwright/mcp` 0.0.81 and `playwright` both
+> declare `1.64.0-alpha-2026-09-14` for themselves — a dated exception with a
+> written exit, and the manifest now carries both halves of the exit condition
+> rather than one").* The
+> [exception ENDED 2026-09-21](DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
+> `build/payload/package.json` carries no `overrides` block, and every release
+> cut from here on states `"pulledForward": null` unless somebody takes a new
+> exception — which is a change to that section rather than an application of it.
+> **The key is still emitted on every release**, for the same reason `override`
+> is: a manifest silent about a direction cannot be read as saying *not that
+> either*. `ReleaseScriptTests` covers both states, and since 2026-09-21 **the
+> null case is the real one and the block case is the fixture** — the reverse of
+> how the pair was written on 2026-09-18, and the arms say so.
 > **`override` keeps its meaning exactly**: a dependency a human *held back*.
 > Nothing in a release could say *pulled forward* until this key existed, so
-> every manifest written before this date says `override: null` and is silent
-> about the other direction.
+> every manifest written before 2026-09-18 says `override: null` and is silent
+> about the other direction. **The one manifest in `Releases/archive/` that
+> carries a `pulledForward` block — `BrowserAI-1.0.1-alpha.0.10` — is the record
+> of the four days the exception stood.**
 
 > ⚠️ **Seven since 2026-08-26** *(previously six — the row above and the word
 > "six" in `build/Write-ReleaseManifest.ps1`)*. `tool-verdicts.json` arrived at

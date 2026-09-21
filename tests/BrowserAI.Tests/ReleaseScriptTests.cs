@@ -661,6 +661,21 @@ internal sealed class ReleaseScriptTests
     /// null</c> is a statement; an absent key is not.
     /// </para>
     /// <para>
+    /// ⚠️ <b>Since 2026-09-21 THIS IS THE REAL CASE and the populated arm above
+    /// is the fixture, which is the reverse of how the pair was written on
+    /// 2026-09-18.</b> The
+    /// <see href="../../../DECISIONS.md">dated <c>playwright-core</c>
+    /// exception</see> ended that day when <c>@playwright/mcp</c> 0.0.82 shipped
+    /// the fix it was taken for; <c>build/payload/package.json</c> carries no
+    /// <c>overrides</c> block, so every real release from here on writes
+    /// <c>"pulledForward": null</c> and this arm is the one describing what
+    /// ships. <b>Neither arm reads the repository's own payload</b> — both build
+    /// a synthetic root — so the retirement did not move either of them, and
+    /// that is the property worth stating rather than the coincidence: an arm
+    /// that went green because the tree stopped carrying an override would be
+    /// an arm measuring the tree instead of the script.
+    /// </para>
+    /// <para>
     /// <b>The fixture differs from the populated one in exactly one file.</b>
     /// The lock still records a <c>playwright-core</c> whose version differs
     /// from what its dependants declare — because that is what a lock looks like

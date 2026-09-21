@@ -36,11 +36,16 @@ build/payload/package-lock.json by ThirdPartyNoticeTests, so a fourth package
 arriving in the payload is a red build here rather than a name nobody noticed
 was missing.
 
-This payload resolved playwright 1.64.0-alpha-2026-09-14 and playwright-core
-1.64.0-alpha-2026-09-17. The two differ on purpose: an npm overrides entry in
-build/payload/package.json pins playwright-core one build ahead of the version
-@playwright/mcp declares for itself, and it is removed the day @playwright/mcp
-declares that version or a later one. Both numbers are asserted against
+This payload resolved playwright and playwright-core at the same version,
+1.64.0-alpha-1789764292000, which is what @playwright/mcp 0.0.82 declares for
+both. Corrected 2026-09-21 (previously "This payload resolved playwright
+1.64.0-alpha-2026-09-14 and playwright-core 1.64.0-alpha-2026-09-17. The two
+differ on purpose: an npm overrides entry in build/payload/package.json pins
+playwright-core one build ahead of the version @playwright/mcp declares for
+itself, and it is removed the day @playwright/mcp declares that version or a
+later one."). That day came: the overrides entry was removed on 2026-09-21, the
+payload carries one Playwright version again, and build/payload/package.json has
+no overrides block. Both numbers are asserted against
 build/payload/package-lock.json rather than typed, so a payload roll is a red
 build until this file has been read against the tree it describes.
 
