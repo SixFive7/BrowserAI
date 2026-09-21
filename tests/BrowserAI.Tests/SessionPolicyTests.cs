@@ -173,7 +173,7 @@ internal sealed class SessionPolicyTests
     /// about the size of the surface, and reading either half out of the file
     /// the claim is about would make it agree with itself.
     /// </remarks>
-    private const int Withholds = 2;
+    private const int Withholds = 1;
 
     /// <summary>
     /// The three sessions the concurrency arm drives at once.

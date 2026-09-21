@@ -45,15 +45,54 @@ internal sealed class VerticalSliceTests
         //
         // Asserted as the WHOLE object rather than as "logging is absent",
         // because the next capability the SDK adds a guardless Configure* for
-        // would be advertised the same silent way. The value is byte-identical to
-        // the child's own snapshot, which is the second thing this fixes: the two
-        // ends of the proxy now agree about what this server is.
+        // would be advertised the same silent way.
         //
         // BrowserProxy.UnadvertiseLogging is what removes it, from an outgoing
         // message filter -- the only route that neither lies nor suppresses
         // MCP9005 on an obsolete property the constructor overwrites anyway.
+        //
+        // ⚠️ ASSERTED AS A LITERAL SINCE 2026-09-21, previously
+        // `IsEqualTo(UpstreamSurface.ServerCapabilities())`. The old remark
+        // said the value "is byte-identical to the child's own snapshot, which
+        // is the second thing this fixes: the two ends of the proxy now agree
+        // about what this server is". THAT WAS A COINCIDENCE AND IT HAS ENDED,
+        // and the coincidence ending is what makes the claim worth stating:
+        // @playwright/mcp 0.0.82 advertises {"tools":{"listChanged":true}}
+        // because ITS list genuinely changes -- the child appends the current
+        // page's own WebMCP tools to tools/list and notifies when that set
+        // moves. BrowserAI's does not, and must not say it does.
+        //
+        // WHY NOT, MEASURED RATHER THAN ARGUED: BrowserAI answers tools/list
+        // from the run's own child, which never navigates and so has no page to
+        // collect from. Driven end to end on 2026-09-21 against a page
+        // registering two WebMCP tools, BrowserAI's tools/list was 78 before and
+        // 78 after while the child's went 72 -> 74
+        // (docs/probes/2026-09-21-webmcp, re-verification row 133). So
+        // forwarding listChanged would be advertising a capability this server
+        // does not have, which is the same defect as the logging one this arm
+        // was written for, in the opposite direction.
+        //
+        // THE OLD FORM IS NOT REPLACED BY NOTHING. The child's own value is
+        // still pinned, by UpstreamSnapshotTests.TheDoubleAdvertisesWhatTheRealChildDoes
+        // against the snapshot; what is no longer asserted is that the two ends
+        // are the SAME, because they are not and should not be.
         await Assert.That(run.InitializeResult["capabilities"]?.ToJsonString())
-            .IsEqualTo(UpstreamSurface.ServerCapabilities());
+            .IsEqualTo("""{"tools":{}}""")
+            .Because(
+                "BrowserAI advertises tools and nothing else. It deliberately does NOT mirror the child's "
+                + "`listChanged`: the child's tool list changes with the page and BrowserAI's does not, because "
+                + "tools/list is answered from the run's own child, which never navigates.");
+
+        // The control on the sentence above, and it is the reason this arm stopped
+        // comparing the two: the child really does advertise something BrowserAI
+        // does not, so a proxy that started copying the child's capabilities
+        // wholesale would be caught here rather than passing by agreement.
+        await Assert.That(UpstreamSurface.ServerCapabilities())
+            .IsNotEqualTo(run.InitializeResult["capabilities"]?.ToJsonString())
+            .Because(
+                "if upstream's capabilities and BrowserAI's are identical again, the literal above has stopped "
+                + "being a claim about this proxy and is agreeing with the child by accident -- which is how the "
+                + "assertion this replaced went stale without failing");
 
         // Byte for byte, and in upstream's order. Renaming is settled as
         // forbidden, so this asserts identity rather than exercising a map; the
