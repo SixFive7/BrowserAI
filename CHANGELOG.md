@@ -95,6 +95,10 @@ release body; nothing else depends on it.
   not the draft.
 
 - 💥 **The payload cannot be rebuilt until somebody adjudicates the override's exit.**
+  ✅ **ADJUDICATED AND CLOSED THE SAME DAY, 2026-09-21** -- see the roll entry below.
+  This entry stands as the record of the state the day opened in; nothing in it is
+  retracted, and the answer was to roll rather than to widen the comparison.
+
   `@playwright/mcp` moved 0.0.81 -> 0.0.82 on 2026-09-18, and 0.0.82 declares
   `playwright-core` and `playwright` at `1.64.0-alpha-1789764292000` -- a 13-digit
   epoch-milliseconds alpha rather than the `alpha-YYYY-MM-DD` shape upstream publishes
@@ -427,6 +431,144 @@ release body; nothing else depends on it.
   0 warnings, 0 errors. The three `src/` locks did not move at all, which is the sentence
   worth having -- `ModelContextProtocol`, `Velopack`, the ILCompiler and ILLink packages and
   CsWin32 all re-resolved to what they already recorded.
+
+- ⬆️ **The payload rolled to `@playwright/mcp` 0.0.82, and three browser revisions came with it.**
+  `playwright-core` and `playwright` both resolve to `1.64.0-alpha-1789764292000` now,
+  which is one Playwright version in the payload again rather than two. The browsers moved
+  with it, confirmed from the rebuilt payload's own `browsers.json`: chromium **1245 ->
+  1246** at the same `browserVersion` 154.0.8037.0, firefox **1548 -> 1549** with
+  `browserVersion` **155.0 -> 156.0**, webkit **2361 -> 2365** at the same 26.6, with
+  `ffmpeg` 1011 and `winldd` 1007 unmoved. Only chromium and firefox are provisioned by
+  this product; webkit is never installed.
+
+  EVERY MACHINE RE-PROVISIONS, AND THE COST WAS RE-MEASURED RATHER THAN CARRIED FORWARD.
+  Two clean runs per family through the preserved rig, byte-identical within each pair,
+  plus a `HEAD` on each of the four archives. **Chromium did not move at all, for the
+  third roll running** -- `cftUrl()` is keyed on `browserVersion` rather than on the
+  revision, so 207,274,189 B on the wire and 458,475,923 B across 316 files on disk are
+  identical to 1245 and 1244. **Firefox is the first roll here that is a new browser
+  rather than a rebuild**: 130,934,199 B on the wire (+1,431,551) and 365,579,913 B
+  across 71 files on disk (+3,458,122), with its own tree going 61 -> 63 files.
+  `BrowserProvisioner.FirstRunDownloadBytes` quotes that figure to every caller refused
+  while provisioning runs, so it moved with the measurement and the anchor test holds the
+  two together.
+
+  THE REVIEW FOUND TWO UPSTREAM BEHAVIOUR CHANGES NO SNAPSHOT COULD HAVE SHOWN, and both
+  were measured rather than read. `tools/list` is no longer a static surface: the child
+  declares `listChanged` and appends the current page's own WebMCP tools to its list, so a
+  **web page** can add tools with its own descriptions and schemas. And every
+  snapshot-bearing tool result now carries the page's tool listing inside the snapshot.
+  **Through BrowserAI the first is closed twice over and the second is not**, which is
+  written up below.
+
+- 🗑️ **The dated `playwright-core` override is removed, four days after it was taken.**
+  It pinned `playwright-core` to `1.64.0-alpha-2026-09-17` underneath `@playwright/mcp`
+  0.0.81, to pull [microsoft/playwright#42673](https://github.com/microsoft/playwright/pull/42673)
+  -- `--file-paths=absolute`, this project's own ask #42497 -- one build ahead of what the
+  wrapper declared. 0.0.82 declares a `playwright-core` whose own bundle carries that fix,
+  measured by the same grep and the same negative control the override was taken on:
+  `PLAYWRIGHT_MCP_FILE_PATHS` 2, `file-paths` 3, `filePaths` 8, identical to the override's
+  own bundle against 0 and 2 in the build the wrapper used to pin. So the lag the exception
+  existed for closed, which is exactly the condition it was dated against.
+
+  THE EXIT DID NOT FIRE THE WAY IT WAS WRITTEN TO, AND THE INSTRUMENTS WERE RIGHT. Both
+  compared versions through a regex matching `<major>.<minor>.<patch>[-alpha-YYYY-MM-DD]`,
+  and 0.0.82 pins a 13-digit epoch-milliseconds alpha from a different shape family, so
+  each threw and said a human must adjudicate. That was the designed behaviour, not a
+  defect -- silently calling an unorderable shape lower is what keeps an override alive
+  past its own exit -- and it is what put the decision in front of a person on the right
+  day. **Widening the regex was available and was declined.**
+
+  `TODO.md`'s standing watch item is closed with its condition, its date and the commit;
+  ask #1 is closed with it, because the fix now arrives by the wrapper's own pin.
+  `DECISIONS.md` records the second exception as **ENDED** by addition -- opened
+  2026-09-17, closed 2026-09-21 -- and **still counts two**, because an exception that ran
+  its course is a worked example of how one is allowed to work rather than a slot that
+  reopens. The sentence that neither is a precedent stands. `drift-check.json`'s
+  `_how_to_resolve` is back to the plain rule.
+
+- ✅ **The exit test, its positive control and the version ordering underneath them are retired.**
+  `PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded`,
+  `.TheExpiryComparisonFiresInBothDirections` and
+  `.TheResolvedPlaywrightCoreIsWhateverTheOverrideSays` are deleted, with
+  `Compare-PlaywrightVersion` and `Split-Version` in `build/Build-Payload.ps1`.
+  **Deleting a test for a mechanism that no longer exists is not a skip**, and each
+  deletion is recorded where the test was referenced rather than removed without trace:
+  `TODO.md`, `DECISIONS.md`, `RELEASING.md` and the paragraph in this README that says
+  what every move in the test count was planted against.
+
+  NOTHING IN THIS TREE RANKS A PLAYWRIGHT VERSION NOW. Every comparison left is for
+  **identity** against another recorded string, so a version is an opaque string and its
+  shape is upstream's business. **The property that survives is the one that was always
+  the real one**, and it came back to exactly where it stood before 2026-09-17:
+  `PayloadTests.TheLockRecordsUpstreamsOwnExactPinOfPlaywrightCore` asserts the resolved
+  `playwright-core` **equals** the declared one again -- watched red against a doctored
+  lock -- and `build/Build-Payload.ps1` makes the same check against the live resolution.
+  That is also what catches an override being added back, which is a mechanism this rule
+  did not have while the exception stood.
+
+  `SessionPolicyTests.TheWebMcpCallIsWithheldOnLivenessAndTheWebMcpListIsNot` is retired
+  too, for the same reason and a different cause: every premise it rested on is gone.
+
+- 🔒 **A web page can add tools to the child's `tools/list`, and BrowserAI's surface does not move.**
+  Measured three ways on the resolved payload, against a page registering two WebMCP tools
+  with deliberately unmistakable descriptions. The **child**'s `tools/list` went 72 -> 74,
+  it sent `notifications/tools/list_changed`, and the page's own tool names, annotations,
+  descriptions and `inputSchema`s arrived inside the snapshot of every snapshot-bearing
+  result. With `webmcp: false` written: 72 -> 72, no notification, no header line, no
+  snapshot block.
+
+  THROUGH THE PUBLISHED SERVER, BOTH HALVES OF THE EXPOSURE ARE CLOSED AND NEITHER
+  MECHANISM WAS BUILT FOR THIS. BrowserAI's `tools/list` was **78 before the page and 78
+  after** -- nothing was added -- because `tools/list` is answered from the run's own
+  child, which never navigates and so has no page to collect from. And a `tools/call`
+  naming `webmcp_probe_tool_alpha` was refused at the door with the unjudged-tool
+  sentence, nothing forwarded and nothing started, which is deny-by-default meeting a name
+  **a web page invented**.
+
+  WHAT IS NOT CLOSED IS THE TEXT, AND IT IS REPORTED RATHER THAN DECIDED. Tool results are
+  forwarded verbatim by design, so page-authored descriptions and schemas now reach a
+  caller on every snapshot-bearing call. `webmcp: false` removes all of it and BrowserAI
+  writes no `webmcp` key today, so upstream's default is in force. That is a product
+  stance under the written-rather-than-omitted doctrine, the same class as `timeouts.idle`
+  and `imageResponses`, and it is the maintainer's. The rig is
+  `docs/probes/2026-09-21-webmcp`, the transcripts are in `docs/evidence/2026-09-21-webmcp`,
+  and the finding is re-verification row 133.
+
+- 🔧 **Two tools left the surface and nobody here judged them out.**
+  `@playwright/mcp` 0.0.82 marked `browser_webmcp_list` and `browser_webmcp_call`
+  `skillOnly`, so both left the exposed maximum while keeping capability `core`: 74 -> 72
+  exposed, 27 -> 25 default, 9 -> 11 skill-only, every one of the three moved by the same
+  two tools. **No tool was added and none was renamed**; the internal registry is unmoved
+  at 83 and every surviving entry is byte-identical in position.
+
+  Their verdict rows are deleted, which is `UPSTREAM-REVIEW.md`'s own instruction for a
+  tool upstream removed and the direction `ToolVerdictTests` refuses on purpose -- a row
+  naming a tool the snapshot does not carry is a judgement about nothing. **THE DENY'S
+  REASONING IS PRESERVED RATHER THAN LOST**, in `tool-verdicts.json` and
+  `upstream-review.json`, because it is what a future judgement would need:
+  `browser_webmcp_call` was denied on **liveness**, and re-reading the 0.0.82 bundle
+  confirms the call path is still unbounded while the new 5 s frame timeout bounds only
+  the listing. If upstream puts these back on the wire, that deny stands until a human
+  re-judges it.
+
+  BrowserAI now advertises **71 of the 72** tools a fully-capable child exposes, and the
+  withheld set is back to one, `browser_annotate`. Every published count moved with it and
+  was re-counted off the regenerated snapshot rather than decremented.
+
+- 📝 **Four re-verification rows are marked `[STALE]` and owed, and the reason is on each.**
+  Row 26 is payload licensing as shipped, and firefox **156.0** is exactly the case where
+  the terms inside `omni.ja`'s `license.html` can change. Row 34 is the Firefox-against-
+  Chromium cost ratios, where the Chromium side is the same binary and the Firefox side is
+  a new browser -- the shape that moves a ratio. Row 38 is resume and relaunch timings
+  under both families. Row 85 is the update lane's own numbers, every one of which is
+  derived from a payload that moved 18,659,660 -> 18,697,570 bytes.
+
+  Each needs a measurement session rather than a read, and **none was adjusted from the
+  previous figures**. Rows 10, 11, 12, 17, 19, 21, 48 and 69 were answered in this batch:
+  three unchanged, four re-counted off the snapshot, and row 21 re-measured because the
+  product quotes it. Row 17 was taken with the previous bundle as its positive control,
+  fetched with `npm pack`, and it returned exactly what the row recorded.
 
 ## [1.0.0] - 2026-09-17
 
