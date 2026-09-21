@@ -209,7 +209,35 @@ internal static class BrowserAiPaths
     /// <param name="browser">The component, as upstream names it.</param>
     /// <returns>The revision, as a string, because that is how a directory spells it.</returns>
     /// <exception cref="InvalidOperationException">The snapshot names no such component.</exception>
-    public static string RevisionOf(string browser)
+    public static string RevisionOf(string browser) => FieldOf(browser, "revision");
+
+    /// <summary>
+    /// What the committed <c>browsers.json</c> snapshot says one component's
+    /// browser version is.
+    /// </summary>
+    /// <remarks>
+    /// <b>The revision and the browser version move independently, which is why
+    /// both are readable rather than just the one the directory name carries.</b>
+    /// A revision bump at an unchanged browser version is a REBUILD of the same
+    /// browser — chromium 1244 to 1245 held 154.0.8037.0 across it, and firefox
+    /// 1542 to 1544 held 155.0 — while a browser version move is a new browser.
+    /// A document that prints the pair cannot be held to that difference off the
+    /// revision alone.
+    /// </remarks>
+    /// <param name="browser">The component, as upstream names it.</param>
+    /// <returns>The browser version, as the snapshot spells it.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// The snapshot names no such component, or names one that carries no
+    /// browser version — which <c>ffmpeg</c> and <c>winldd</c> genuinely do not.
+    /// </exception>
+    public static string BrowserVersionOf(string browser) => FieldOf(browser, "browserVersion");
+
+    /// <summary>One field of one component, read out of the committed snapshot.</summary>
+    /// <param name="browser">The component, as upstream names it.</param>
+    /// <param name="field">The property to read.</param>
+    /// <returns>The field's value.</returns>
+    /// <exception cref="InvalidOperationException">The component or the field is absent.</exception>
+    private static string FieldOf(string browser, string field)
     {
         using var snapshot = JsonDocument.Parse(File.ReadAllText(
             Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots", "browsers.json")));
@@ -218,7 +246,10 @@ internal static class BrowserAiPaths
         {
             if (entry.GetProperty("name").GetString() == browser)
             {
-                return entry.GetProperty("revision").GetString()!;
+                return entry.TryGetProperty(field, out var value) && value.GetString() is { } text
+                    ? text
+                    : throw new InvalidOperationException(
+                        $"The committed browsers.json snapshot's '{browser}' entry carries no '{field}'.");
             }
         }
 

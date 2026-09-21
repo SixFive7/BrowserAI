@@ -36,6 +36,15 @@ internal sealed partial class PayloadTests
     private static readonly string[] ExpectedDependencies = ["@playwright/mcp"];
 
     /// <summary>
+    /// The sentence in <c>DECISIONS.md</c> that introduces the chain as it ships
+    /// today, as distinct from the 0.0.79-era one printed above it.
+    /// </summary>
+    private const string WorkedExampleAnchor = "What the payload ships today, read from";
+
+    /// <summary>A Markdown code fence, named rather than spelled at each use.</summary>
+    private const string Fence = "```";
+
+    /// <summary>
     /// What a platform-native binary looks like on any platform, not only this
     /// one — a tree that is portable is portable everywhere or it is not
     /// portable.
@@ -193,6 +202,103 @@ internal sealed partial class PayloadTests
         // so it throws rather than answering.
         await Assert.That(() => TheOverrideHasExpired("1.64.0-beta.1", Override)).Throws<FormatException>();
         await Assert.That(() => TheOverrideHasExpired("next", Override)).Throws<FormatException>();
+    }
+
+    /// <summary>
+    /// <b><c>DECISIONS.md</c> section 2's worked example states the chain the
+    /// committed records state.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// That section prints the payload's chain — wrapper, core, browser revision
+    /// — as a worked example, and a worked example is the shape of claim that
+    /// goes stale in silence: every version in it was true on the day it was
+    /// written, nothing re-reads it, and a reader meets a self-consistent
+    /// picture of a payload nobody ships. It stood at <c>@playwright/mcp</c>
+    /// 0.0.79 / <c>playwright-core</c> 1.63.0-alpha-2026-08-05 / chromium 1237
+    /// until 2026-09-21, and the sentence calling <c>chromium-1237</c> <i>the one
+    /// at the end of our chain</i> had been false for weeks.
+    /// </para>
+    /// <para>
+    /// <b>Every number comes from a committed record</b>, so this runs on a clean
+    /// clone with no payload assembled: the two package versions out of
+    /// <c>build/payload/package-lock.json</c>, which
+    /// <see cref="TheAssembledManifestDeclaresWhatTheCommittedLockRecords"/>
+    /// holds to the assembled tree, and the revision and browser version out of
+    /// <c>upstream-snapshots/browsers.json</c> through
+    /// <see cref="BrowserAiPaths.RevisionOf"/> and
+    /// <see cref="BrowserAiPaths.BrowserVersionOf"/>, which is the suite's one
+    /// reader of that snapshot. Both files are regenerated from the resolved
+    /// payload, which is what makes this an answer about today rather than about
+    /// whenever the prose was written.
+    /// </para>
+    /// <para>
+    /// <b>The sentence is the anchor and rewording it fails the build.</b> That
+    /// is <c>RecordedCountTests</c>' trade taken deliberately: a check keyed on
+    /// prose can be unhooked by editing the prose, so the unhooking is made loud
+    /// rather than silent. <b>The 0.0.79 chain printed above it is deliberately
+    /// NOT read</b> — it is a true record of one day, and holding a record to
+    /// today's manifest would demand it be rewritten at every roll, which is the
+    /// same exemption <c>ThirdPartyNoticeTests</c> gives a correction stamp's
+    /// <c>previously</c> span, for the same reason.
+    /// </para>
+    /// <para>
+    /// The wrapper's own declared pin is read <b>only while an override is in
+    /// force</b>, because it is the override that gives the example a fourth
+    /// number to print. With the exception retired the chain has three links
+    /// again, and nothing here should demand a parenthetical that would no
+    /// longer be true.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheWorkedExampleStatesTheChainTheCommittedRecordsState()
+    {
+        var example = WorkedExample();
+        var disagreements = new List<string>();
+
+        string wrapper;
+        string resolved;
+
+        using (var lockFile = ReadJson("package-lock.json"))
+        {
+            var packages = lockFile.RootElement.GetProperty("packages");
+
+            wrapper = packages.GetProperty("node_modules/@playwright/mcp").GetProperty("version").GetString()!;
+            resolved = packages.GetProperty("node_modules/playwright-core").GetProperty("version").GetString()!;
+        }
+
+        Disagrees(disagreements, example, WrapperInExample(), "@playwright/mcp", wrapper, "the payload lock");
+        Disagrees(disagreements, example, ResolvedCoreInExample(), "playwright-core", resolved, "the payload lock");
+
+        Disagrees(
+            disagreements,
+            example,
+            ChromiumRevisionInExample(),
+            "the chromium revision",
+            BrowserAiPaths.RevisionOf("chromium"),
+            "the committed browsers.json snapshot");
+
+        Disagrees(
+            disagreements,
+            example,
+            ChromiumBrowserVersionInExample(),
+            "the chromium browser version",
+            BrowserAiPaths.BrowserVersionOf("chromium"),
+            "the committed browsers.json snapshot");
+
+        if (OverriddenPlaywrightCore() is not null)
+        {
+            Disagrees(
+                disagreements,
+                example,
+                DeclaredCoreInExample(),
+                "the wrapper's own declared playwright-core",
+                DeclaredPlaywrightCore()!,
+                "the payload lock");
+        }
+
+        await Assert.That(disagreements).IsEmpty();
     }
 
     [Test]
@@ -579,4 +685,88 @@ internal sealed partial class PayloadTests
     private static JsonDocument ReadJson(string name) =>
         JsonDocument.Parse(File.ReadAllText(
             Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", name)));
+
+    /// <summary>
+    /// The fenced chain <c>DECISIONS.md</c> section 2 prints as what ships today.
+    /// </summary>
+    /// <returns>The contents of the block, without its fences.</returns>
+    /// <exception cref="InvalidOperationException">The anchor or the block is gone.</exception>
+    private static string WorkedExample()
+    {
+        var decisions = File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "DECISIONS.md"));
+        var anchor = decisions.IndexOf(WorkedExampleAnchor, StringComparison.Ordinal);
+
+        if (anchor < 0)
+        {
+            throw new InvalidOperationException(
+                $"DECISIONS.md carries no '{WorkedExampleAnchor}' sentence, which is this check's anchor: the "
+                + "worked example in section 2 was reworded or moved, and nothing here can say which chain it "
+                + "prints as today's. Re-anchor this test on the new wording rather than deleting it.");
+        }
+
+        var fence = decisions.IndexOf(Fence, anchor, StringComparison.Ordinal);
+        var start = fence < 0 ? -1 : decisions.IndexOf('\n', fence) + 1;
+        var close = start <= 0 ? -1 : decisions.IndexOf(Fence, start, StringComparison.Ordinal);
+
+        if (close < 0)
+        {
+            throw new InvalidOperationException(
+                "DECISIONS.md's worked-example anchor is no longer followed by a fenced block, so section 2 "
+                + "prints no chain for this check to read.");
+        }
+
+        return decisions[start..close];
+    }
+
+    /// <summary>Records one link of the worked example disagreeing with its source.</summary>
+    /// <param name="disagreements">The running list.</param>
+    /// <param name="example">The fenced chain.</param>
+    /// <param name="pattern">What reads this link out of it.</param>
+    /// <param name="what">The link, as the failure message should name it.</param>
+    /// <param name="expected">What the committed record says.</param>
+    /// <param name="source">Which committed record that is.</param>
+    private static void Disagrees(
+        List<string> disagreements,
+        string example,
+        Regex pattern,
+        string what,
+        string expected,
+        string source)
+    {
+        var match = pattern.Match(example);
+
+        if (!match.Success)
+        {
+            // Not the same failure as a wrong number and it must not read like
+            // one: a pattern that stopped matching reports nothing at all, which
+            // is how a scan goes quietly blind.
+            disagreements.Add(
+                $"DECISIONS.md section 2's worked example no longer states {what}, so nothing here can tell whether "
+                + $"that link moved with the payload. {source} says '{expected}'.");
+
+            return;
+        }
+
+        if (match.Groups["version"].Value != expected)
+        {
+            disagreements.Add(
+                $"DECISIONS.md section 2's worked example says {what} '{match.Groups["version"].Value}' and "
+                + $"{source} says '{expected}'. Correct the example by addition, with a stamp.");
+        }
+    }
+
+    [GeneratedRegex(@"@playwright/mcp (?<version>\S+)", RegexOptions.CultureInvariant)]
+    private static partial Regex WrapperInExample();
+
+    [GeneratedRegex(@"└── playwright-core (?<version>\S+)", RegexOptions.CultureInvariant)]
+    private static partial Regex ResolvedCoreInExample();
+
+    [GeneratedRegex(@"exact pin of\s+(?<version>[^\s)]+)", RegexOptions.CultureInvariant)]
+    private static partial Regex DeclaredCoreInExample();
+
+    [GeneratedRegex(@"chromium rev (?<version>\d+)", RegexOptions.CultureInvariant)]
+    private static partial Regex ChromiumRevisionInExample();
+
+    [GeneratedRegex(@"chromium rev \d+ \((?<version>[^)]+)\)", RegexOptions.CultureInvariant)]
+    private static partial Regex ChromiumBrowserVersionInExample();
 }

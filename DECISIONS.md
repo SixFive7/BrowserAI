@@ -70,6 +70,18 @@ This is the core justification for BrowserAI. It is **not** token cost — see [
 
 `browsers.json` pins several browsers; the one at the end of *our* chain is **`chromium-1237`**, the full build. `chromium_headless_shell-1237` is pinned in the same file and [is never provisioned](#processes-browsers-and-session-modes) — naming it here, as an earlier draft did, points the reader at a binary that never reaches a machine.
 
+⚠️ **That chain is the one in force when this section was written, and the sentence above calling `chromium-1237` *the one at the end of our chain* has not been true of what ships for some time.** *Corrected 2026-09-21 @ `@playwright/mcp` 0.0.81 / `playwright-core` 1.64.0-alpha-2026-09-17 / chromium 1245 (previously the worked example stood alone, with no successor beside it, so its present tense read as a claim about today rather than as a record of one day).* **Corrected by addition rather than by replacement:** the 0.0.79 chain is a true record of what `launch.ps1` resolved on the day this argument was made, and the argument is about the *shape* of the chain rather than about any link in it. What the payload ships today, read from [the payload lock](build/payload/package-lock.json) and [the committed `browsers.json` snapshot](upstream-snapshots/browsers.json) rather than from memory:
+
+```
+@playwright/mcp 0.0.81
+  └── playwright-core 1.64.0-alpha-2026-09-17   (the DATED OVERRIDE, above the
+                                                 wrapper's own exact pin of
+                                                 1.64.0-alpha-2026-09-14)
+        └── browsers.json → chromium rev 1245 (154.0.8037.0)
+```
+
+**Each chain is a snapshot of one day and neither is the source of truth** — the live values are `packages` in [`build/payload/package-lock.json`](build/payload/package-lock.json) and the `chromium` entry in [`upstream-snapshots/browsers.json`](upstream-snapshots/browsers.json), both committed, both regenerated from the resolved payload, and both held to the four versions printed above by `PayloadTests.TheWorkedExampleStatesTheChainTheCommittedRecordsState`, so this example goes **red rather than stale**. **The middle link is the one variation the 0.0.79 chain could not show:** since 2026-09-17 it is [a dated override sitting above upstream's own exact pin](#the-two-exceptions-to-the-versioning-policy) rather than upstream's pin itself — a second way for the chain to move, and the reason that exception carries a written exit.
+
 So the package is pinned to a browser revision, but *which package* is not pinned at all. An upstream publish silently invalidates the local browser cache and changes the CLI surface. Both failure modes fired this month, on the same day. The exactness of that chain, and upstream's daily-alpha cadence, are in [kb: tool surface](kb/playwright/tools-and-artifacts.md#the-tool-surface-and-the-package-shape).
 
 ### 3. Two failure classes exist that no configuration can fix

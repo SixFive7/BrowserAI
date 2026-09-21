@@ -40,6 +40,86 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 💥 **The payload cannot be rebuilt until somebody adjudicates the override's exit.**
+  `@playwright/mcp` moved 0.0.81 -> 0.0.82 on 2026-09-18, and 0.0.82 declares
+  `playwright-core` and `playwright` at `1.64.0-alpha-1789764292000` -- a 13-digit
+  epoch-milliseconds alpha rather than the `alpha-YYYY-MM-DD` shape upstream publishes
+  daily. The dated override's exit is a wrapper pin at or above `1.64.0-alpha-2026-09-17`,
+  and both instruments that read it share one regex and REFUSE anything else by design,
+  because silently calling an unorderable shape 'lower' would keep an override alive past
+  its own exit.
+
+  So on a rebuild `build/Build-Payload.ps1` would throw before assembling anything and
+  `PayloadTests.TheDatedPlaywrightCoreOverrideIsStillNeeded` would go red with a
+  `FormatException`, each naming the version and saying to adjudicate the override in
+  `DECISIONS.md` by hand. Neither says the exit has fired and neither says it has not. Both
+  are green on the committed tree today, which still records 0.0.81 and
+  `1.64.0-alpha-2026-09-14`, so no gate is red and nothing is blocked until somebody
+  rebuilds.
+
+  IN SUBSTANCE THE WRAPPER HAS CAUGHT UP AND PASSED THE OVERRIDE, and that was measured
+  rather than reasoned. 1789764292000 ms is 2026-09-18T20:44:52Z; that `playwright-core` was
+  published 2026-09-18T20:49:55Z against the override's 2026-09-17T05:26:56Z; and its
+  `lib/coreBundle.js` carries the fix the override was taken for -- `file-paths` 3
+  occurrences and `filePaths` 8, identical to the override's own bundle, against 0 and 2 in
+  `1.64.0-alpha-2026-09-14`, which is the negative control proving the grep discriminates
+  rather than matching everything. The condition the exception was written to expire on has
+  occurred, and the instrument built to announce it cannot say so.
+
+  Nothing is adopted, the override stands untouched, and the comparison was not edited to
+  make it answer: a shape it cannot order is a shape a human has to adjudicate, which is
+  what it was written to say and what `PayloadTests.TheExpiryComparisonFiresInBothDirections`
+  already asserted for this class. Reported rather than taken, read out of the fetched
+  tarball's own `browsers.json`: adopting 0.0.82 would move chromium 1245 -> 1246 at the
+  same 154.0.8037.0, firefox 1548 -> 1549 with browserVersion 155.0 -> 156.0, and webkit
+  2361 -> 2365 at the same 26.6, with ffmpeg 1011 and winldd 1007 unmoved. The daily cadence
+  is unchanged and still dated, so the pinned alpha is an out-of-band build and the wrapper
+  pinned from a different shape family than the one the ordering was written against.
+
+- 📝 **The charter's version-chain example prints the chain that ships, and an arm holds it there.**
+  `DECISIONS.md` section 2 argues that the version chain floats by printing a worked
+  example, and that example had read `@playwright/mcp` 0.0.79 -> `playwright-core`
+  1.63.0-alpha-2026-08-05 -> chromium rev 1237 since the charter was written, under a
+  sentence calling `chromium-1237` the one at the end of our chain. Self-consistent, true of
+  one day in August, and false of what ships for weeks.
+
+  It is corrected by addition rather than by replacement, because the 0.0.79 chain is a true
+  record of what `launch.ps1` resolved on the day the argument was made, and the argument is
+  about the shape of the chain rather than about any link in it. The chain as it ships now
+  stands beside it, read from the payload lock and the committed `browsers.json` snapshot
+  rather than from memory: `@playwright/mcp` 0.0.81 -> `playwright-core`
+  1.64.0-alpha-2026-09-17, pulled forward by the dated override over the wrapper's own
+  1.64.0-alpha-2026-09-14, -> chromium rev 1245 (154.0.8037.0). The middle link is the one
+  variation the old chain could not show, and the text says so rather than leaving a reader
+  to notice that a pin is above a pin.
+
+  The mechanised half is `PayloadTests.TheWorkedExampleStatesTheChainTheCommittedRecordsState`,
+  which reads the numbers out of the fenced block the prose introduces and holds each to the
+  record it came from -- two out of `build/payload/package-lock.json`, the revision and the
+  browser version out of `upstream-snapshots/browsers.json`. Every source is committed, so
+  the arm runs on a clean clone with no payload assembled. It was watched red three ways:
+  five links at once, each naming its own source; a deleted line, where a pattern that
+  stopped matching reports that it can no longer tell rather than reporting nothing; and a
+  reworded anchor, which throws and says to re-anchor rather than to delete. The wrapper's
+  own declared pin is read only while an override is in force, because it is the override
+  that gives the example a fourth number to print.
+
+  WHAT IS DELIBERATELY NOT READ is the 0.0.79 chain above it. It is a record of one day, and
+  holding a record to today's manifest would demand it be rewritten at every roll, which is
+  the same exemption `ThirdPartyNoticeTests` gives a correction stamp's previously span. The
+  0.0.79-era chain was swept for elsewhere with a positive control -- the sweep had to find
+  the known instance before a zero anywhere else meant anything -- and section 2 is the only
+  place that printed it as current. Every other occurrence is a dated provenance stamp,
+  including the kb "Versions in force" headers, which say in `kb/README.md`'s own words that
+  they record what entries were measured under; rolling one would falsify the record rather
+  than update it.
+
+  `BrowserAiPaths.BrowserVersionOf` joins `RevisionOf` beside it, so the suite still has one
+  reader of that snapshot rather than two. A revision bump at an unchanged browser version
+  is a rebuild of the same browser and a browser version move is a new browser, and a
+  document that prints the pair cannot be held to that difference off the revision alone.
+
+
 - 📝 **The README licensing tables name Firefox, the third Playwright package, and today's revision.**
   Yesterday's notices correction closed two omissions in the file that ships and left the
   table in `README.md` that says the same things standing, one document across. It read
