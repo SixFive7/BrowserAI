@@ -462,12 +462,12 @@ it to `install.rs`'s rename-and-delete.*
 
 ### Sizes
 
-**Re-measured 2026-09-17** by running `build/New-Release.ps1` twice, at
-`1.0.1-reverify.1` and `1.0.1-reverify.2`, into a scratch feed — the procedure
+**Re-measured 2026-09-22** by running `build/New-Release.ps1` twice, at
+`1.0.1-reverify.3` and `1.0.1-reverify.4`, into a scratch feed — the procedure
 [row 85](../re-verification.md) names — against Velopack and `vpk` **1.2.0**,
-node **v24.21.0**, `@playwright/mcp` **0.0.81** and `playwright-core`
-**1.64.0-alpha-2026-09-14**. *(Everything here floats, and it is stamped once at
-the head of this section rather than again on this table: that marker already
+node **v24.21.0**, `@playwright/mcp` **0.0.82** and `playwright-core`
+**1.64.0-alpha-1789764292000**. *(Everything here floats, and it is stamped once
+at the head of this section rather than again on this table: that marker already
 says every number in the section moves with Node, `@playwright/mcp` and the
 toolchain, and a second stamp on the same cluster would add an obligation
 without adding a fact. Written in words because the counter reads the token and
@@ -475,12 +475,60 @@ cannot tell a mention from a stamp.)*
 
 | | Bytes | Note |
 |---|---|---|
-| Publish directory on disk | 262,007,766 | Includes the `.pdb`s, which `vpk` excludes by default |
-| **What ships** (pdb excluded) | **143,503,406** | `payload\node` 93,740,659 · `BrowserAI.Server.exe` 19,202,560 · `payload\mcp` 18,619,618 · `BrowserAI.exe` 10,411,520 · the three `.xml` 1,497,348 · notices 22,610 · `payload` other 9,091 |
-| **Full `.nupkg`** | **54,926,688** | 52.4 MiB. Compression ratio **0.3828** |
-| **Delta `.nupkg`, N→N+1** | **138,515** | **0.2522% of the full package — a 396× reduction** |
-| `Setup.exe` | 59,435,360 | The download, renamed from `BrowserAI.app-win-Setup.exe` |
-| `-Portable.zip` | 54,887,948 | |
+| Publish directory on disk | 262,441,359 | Includes the `.pdb`s, which `vpk` excludes by default |
+| **What ships** (pdb excluded) | **143,715,555** | 206 files. `payload\node` 93,740,659 · `BrowserAI.Server.exe` 19,266,048 · `payload\mcp` 18,697,570 · `BrowserAI.exe` 10,412,544 · the three `.xml` 1,559,174 · notices 26,240 · `payload` other 13,320 |
+| **Full `.nupkg`** | **54,981,749** | 52.4 MiB. Compression ratio **0.3826** |
+| **Delta `.nupkg`, N→N+1** | **138,943** | **0.2527% of the full package — a 396× reduction** |
+| `Setup.exe` | 59,490,421 | The download, renamed from `BrowserAI.app-win-Setup.exe` |
+| `-Portable.zip` | 54,943,009 | |
+
+> ⚠️ `Corrected 2026-09-22 @ Velopack 1.2.0 · node v24.21.0 ·
+> @playwright/mcp 0.0.82 · playwright-core 1.64.0-alpha-1789764292000
+> (previously "Publish directory on disk 262,007,766 … **What ships** (pdb
+> excluded) **143,503,406** — `payload\node` 93,740,659 ·
+> `BrowserAI.Server.exe` 19,202,560 · `payload\mcp` 18,619,618 ·
+> `BrowserAI.exe` 10,411,520 · the three `.xml` 1,497,348 · notices 22,610 ·
+> `payload` other 9,091 … **Full `.nupkg`** **54,926,688** … ratio **0.3828**
+> … **Delta** **138,515** … **0.2522%** … `Setup.exe` 59,435,360 …
+> `-Portable.zip` 54,887,948", measured 2026-09-17 at `1.0.1-reverify.1` and
+> `.2`)`. **This clears the `[STALE]` renewed on 2026-09-21, and the trigger was
+> the one row 85 names.**
+>
+> **WHAT MOVED, AND `payload\mcp` IS THE ONLY INPUT THAT MOVED FOR A REASON
+> ANYBODY CHOSE.** `@playwright/mcp` 0.0.81 → 0.0.82 took the vendored JS tree
+> **18,619,618 → 18,697,570** (`+77,952`) across 194 → 196 files. **Node did
+> not move at all** — `payload\node` is 93,740,659 in both tables, to the byte,
+> because v24.21.0 is unchanged. Everything else is a rebuild: the server exe
+> `+63,488`, the app exe `+1,024`, the three `.xml` `+61,826`, the notices
+> `+3,630` (the 2026-09-18 rewrite that named `playwright` and both browser
+> families) and `payload` other `+4,229`.
+>
+> ⭐ **THREE ARTIFACTS MOVED BY EXACTLY THE SAME NUMBER, +55,061 B**, and it is
+> recorded because it is the kind of coincidence a reader should be able to check
+> rather than wonder about: full `.nupkg` 54,926,688 → 54,981,749,
+> `Setup.exe` 59,435,360 → 59,490,421 and `-Portable.zip` 54,887,948 →
+> 54,943,009. `Setup.exe` carries the full package and the portable zip is the
+> same content, so all three move with the one compression.
+>
+> ⚠️ **THE DELTA IS A FLOOR RATHER THAN A COST, and this run makes that
+> visible for the first time.** `.3` and `.4` are packs of the **same source
+> tree** — nothing was edited between them — and their full packages differ by
+> **6 bytes** (54,981,755 against 54,981,749). So the 138,943 b delta is what
+> Velopack charges for two packs that differ only by a rebuild: NativeAOT output
+> is not byte-reproducible run to run, both binaries are re-published by each
+> pack, and the delta carries both. **It is not the cost of a change**, and the
+> previous table's 138,515 was the same quantity. The row's predicate note —
+> *"for a release in which **both** binaries changed, against 97,216 b for one"*
+> — is exactly this and stands unaltered.
+>
+> ⭐ **A CROSS-CHECK THAT COST NOTHING AND RECONCILES TWO FILES**:
+> `payload/payload.json` records `node.bytes` **93,580,104** and `npm.bytes`
+> **18,697,570**. The publish tree's `payload\mcp` agrees to the byte; its
+> `payload\node` is **93,740,659**, and the difference is exactly the
+> **160,555 B** `LICENSE` that
+> [the licensing read](dependencies.md#third-party-payload-as-shipped)
+> enumerates — so `node.bytes` is `node.exe` alone and the two files are
+> measuring different things on purpose.
 
 > ⚠️ `Corrected 2026-09-17 @ Velopack 1.2.0 · node v24.21.0 · @playwright/mcp
 > 0.0.81 (previously "Publish directory on disk 206,427,574 … **What ships**
