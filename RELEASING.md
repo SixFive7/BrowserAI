@@ -740,7 +740,7 @@ before this and nobody had re-read the number:*
   `src/BrowserAI.App/BrowserAI.App.csproj` — and
   [item 7](#7-build-clean)'s release publish is **not** a substitute, because
   `build/New-Release.ps1` stages into `artifacts\publish-<exe stem>` and never
-  writes `src\<project>in\`. The early signal is the coverage block's
+  writes `src\<project>\bin\`. The early signal is the coverage block's
   `publish freshness` row, which reads `STALE` and names the newest input;
   the reds are the late one.
 - ⚠️ **Pack before you run this item, not after — added 2026-09-15.** Two
