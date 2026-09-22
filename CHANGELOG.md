@@ -130,8 +130,7 @@ and the note says that now.
   `ProxyLogTests.EveryLogEventIdIsUniqueInItsClassAndNoRetiredIdIsInUse` reads every
   `[LoggerMessage]` under `src/` as text, groups the ids by the class that declares them,
   and refuses a repeat. It also refuses any id a class's own `RETIRED-EVENT-IDS:` marker
-  names. **An id is a key somebody's saved log query is
-  written against**, which is the whole reason the rule exists and the reason the retired
+  names. **An id is a key somebody's saved log query is written against**, which is the whole reason the rule exists and the reason the retired
   list is read out of the comment rather than typed into the test: a second copy is a
   second thing to keep in step, and the comment is what a reader of an old log meets.
 
@@ -145,7 +144,7 @@ and the note says that now.
 
   **The marker is read per class**, not out of one file. It was written reading
   `ProxyLog`'s comment alone, which was right while `ProxyLog` was the only class with a
-  retired id and silently covered nothing anywhere else. A second class retired one the
+  retired id and silently left every other class uncovered. A second class retired one the
   same day, so the scan now finds every marker in `src/` and scopes each to the class it
   is declared in, with a control over two markers in one file.
 
@@ -157,7 +156,7 @@ and the note says that now.
 
 ### Changed
 
-- 🐛 **Two client-liveness events shared event id 76, so both moved off it and 76 is retired.**
+- 🐛 **Two client-liveness events shared event id 76, so both moved off it and the id is retired.**
   `ClientHasAlreadyExited` took 76 in `ec6d858` on 2026-09-15 and
   `ClientWaitCannotBeInterpreted` took the same 76 in `bf27512` one day later, read out of
   `git log -S` rather than remembered. `ClientWaitCannotBeInterpreted` is 77 now and
@@ -183,7 +182,7 @@ and the note says that now.
   back off a real log record moved with it, and gained a second assertion that nothing
   emits 76 at all.
 
-- 📦 **Every release packs full packages only, and no published feed carries a delta row.**
+- 📦 **Every release packs full packages only, so an update downloads the whole thing.**
   The maintainer's decision, in his words: *"always produce full packages only. The sizes
   are so small, and internet speeds nowadays are so fast that we don't want to exert any
   effort in creating deltas. Full downloads are always just easier."*
@@ -197,14 +196,12 @@ and the note says that now.
   ever carried a delta, and not because anybody chose it: the clean re-pack empties
   `Releases/`, so `vpk` never had a previous package to compare against. The default is
   `BestSpeed`, so the first cut that left one there would have started emitting deltas
-  with nothing to say so. That is why this is an argument that gets passed rather than a
-  behaviour that gets avoided.
+  with nothing to say so. That is why it is an argument the script passes.
 
   **What it costs is measured rather than waved at**: a same-tree delta is **138,791 b**
   against a full package of **55,022,705 b**, so every install now downloads about 55 MB
-  where it could have downloaded 139 KB. What it buys is one artifact per release, one row
-  per feed, no forward-only chain to reason about, and a rollback that is always a plain
-  download.
+  where it could have downloaded 139 KB. What it buys is one artifact per release and a
+  rollback that is always a plain download.
 
   `ReleaseScriptTests.EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow` holds
   both halves, because either is satisfiable without the other: that the script passes the
@@ -218,7 +215,7 @@ and the note says that now.
   the testing layer table and the paragraph under it, re-verification rows 24 and 85, the
   rollback item in the release checklist, and the kb section that measures the delta. **No
   number was retracted.** They record what `vpk` does when asked, which is what makes this
-  a choice rather than a limitation.
+  a choice and not a limitation.
 
 - 🔧 **The relaunch note stops promising that stored state survived, because it may not have.**
   `SessionManager.ChildWasRelaunched` is what `browserai_resume` returns after it finds a
@@ -433,7 +430,7 @@ and the note says that now.
   the way the browser-installation sentence is — what must survive a re-draft is the rule,
   not the draft.
 
-- 💥 **The payload could not be rebuilt until the override's exit was adjudicated, the same day.**
+- 💥 **The payload could not be rebuilt until the override's exit was adjudicated on 2026-09-21.**
   ✅ **ADJUDICATED AND CLOSED THE SAME DAY, 2026-09-21** -- see the roll entry below.
   This entry stands as the record of the state the day opened in; nothing in it is
   retracted, and the answer was to roll rather than to widen the comparison.
