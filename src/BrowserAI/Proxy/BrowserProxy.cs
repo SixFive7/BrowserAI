@@ -1421,10 +1421,46 @@ internal static partial class ProxyLog
         Message = "'{Tool}' on the session at {Session} abandoned a page tool that had not answered. The browser server bounds nothing here, so the page's own code may still be running; navigating the tab or closing it releases it.")]
     public static partial void PageToolAbandoned(ILogger logger, string tool, string session);
 
-    // ⚠️ EVENT IDS 10, 11, 12 AND 16 ARE RETIRED AND ARE NOT TO BE REUSED,
-    // 2026-08-26. They were `InlineImageRestored`, `FilenameRefused`,
+    // ⚠️ EVENT IDS 10, 11 AND 12 ARE RETIRED AND ARE NOT TO BE REUSED,
+    // 2026-08-26. They were `InlineImageRestored`, `FilenameRefused` and
+    // `NoteNotSpliced` -- three of the four records the artifact machinery
+    // wrote, all deleted with it. An id is a key somebody's log query may still
+    // be written against, and a retired one silently reassigned makes an old
+    // query answer about a new event.
+    //
+    // ⚠️ AND 16 WAS THE FOURTH, AND 16 IS IN USE AGAIN. Corrected 2026-09-22
+    // (previously "EVENT IDS 10, 11, 12 AND 16 ARE RETIRED AND ARE NOT TO BE
+    // REUSED, 2026-08-26. They were `InlineImageRestored`, `FilenameRefused`,
     // `NoteNotSpliced` and `ReservationReleased` -- the four records the
-    // artifact machinery wrote, all deleted with it. An id is a key somebody's
-    // log query may still be written against, and a retired one silently
-    // reassigned makes an old query answer about a new event.
+    // artifact machinery wrote, all deleted with it"). THE RULE IS NOT WHAT
+    // CHANGED; THE CODE BROKE IT, and this comment is corrected rather than the
+    // event renumbered.
+    //
+    // The history, read out of `git log -S` rather than remembered:
+    // `ReservationReleased` took 16 in `dbf1346` on 2026-08-24, was deleted
+    // with the other three in `feec42b` on 2026-08-26 -- the commit that wrote
+    // the sentence above -- and `ChildHasGone` was given 16 in `425a256` on
+    // 2026-09-17, twenty-two days later. `PageToolAbandoned` then took 17,
+    // which is the id 16 would have been had anybody read this.
+    //
+    // NOTHING CAUGHT IT AND NOTHING COULD: no test asserts that an id is
+    // unused, or that the retired set stays retired. The suite asserts
+    // particular ids on particular paths and nothing more -- searched, with a
+    // positive control on the same corpus, 2026-09-22.
+    //
+    // WHAT THE REUSE ACTUALLY COSTS, measured rather than assumed, because the
+    // sentence above is about somebody's old query. `ReservationReleased` held
+    // 16 for TWO DAYS and is in no artifact anybody can fetch today: every
+    // asset on the standing `v1.0.0` release object was built on 2026-09-17,
+    // after the deletion, and that release's own binaries carry 16 as
+    // `ChildHasGone`. WHAT CANNOT BE READ is whether an EARLIER release object
+    // carried it -- that object was replaced, so `gh` no longer describes it --
+    // and that gap is named rather than closed.
+    //
+    // NOT RENUMBERED HERE. Moving `ChildHasGone` to 18 would be the tidy edit
+    // and it is a DECISION rather than a repair: 16 is what the shipped v1.0.0
+    // binaries emit for it, so renumbering trades a stale meaning for a second
+    // stale meaning, in the same key, for the sake of a rule about the first.
+    // It belongs to whoever owns the log surface. The reuse is recorded here so
+    // that a reader of an old log meets it.
 }
