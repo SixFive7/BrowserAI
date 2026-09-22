@@ -354,6 +354,28 @@ and the note says that now.
   [a hazard row](HAZARDS.md#hazard-index) — the page's own words still reach the model,
   exactly as before.
 
+- 📝 **Dash style for the whole repository is recorded as an open question rather than settled.**
+  A wording reader found 26 detail lines in this section carrying an em or en dash beside
+  three entries written today that use a double hyphen, so the changelog is split between
+  two styles by accident rather than by anybody's decision.
+  [`DECISIONS.md`](DECISIONS.md#still-open) now carries it as an open design question with
+  the direction the maintainer chose: decide it later, as its own item, applied to new
+  entries and unsealed documents only.
+
+  **The facts it rests on are all in the entry.**
+  `ChangelogTests.NothingThatReachesAReleaseBodyCarriesACharacterAPersonWouldNotType`
+  already refuses those characters in everything that reaches a release body -- the
+  preamble, every headline, the legend -- so the page a reader meets is protected either
+  way. Everywhere else they are the house voice: this file's entry detail, `CLAUDE.md`,
+  `HAZARDS.md`, `TESTING.md` and every `kb/` article use them and nothing reads them.
+
+  **The 26 lines are not touched**, and that is the half worth writing down. They seal
+  with this release, and re-cutting a released section to change punctuation is the sweep
+  `AppendOnlyRecordTests` exists to refuse. The scope of the question is therefore new
+  entries and unsealed documents, which is what the chosen direction says. What would make
+  it urgent is the character test growing to cover entry detail, which would turn a split
+  convention into a red build.
+
 - 📝 **Three decisions about page-provided tools, with the directions not taken beside them.**
   [`DECISIONS.md`](DECISIONS.md#a-web-pages-own-tools-are-reached-through-one-tool-of-ours)
   carries the maintainer's framing verbatim, why a fourth verdict class is not a thing that
@@ -430,7 +452,7 @@ and the note says that now.
   the way the browser-installation sentence is — what must survive a re-draft is the rule,
   not the draft.
 
-- 💥 **The payload could not be rebuilt until the override's exit was adjudicated on 2026-09-21.**
+- 💥 **The payload could not be rebuilt until the override's exit was adjudicated.**
   ✅ **ADJUDICATED AND CLOSED THE SAME DAY, 2026-09-21** -- see the roll entry below.
   This entry stands as the record of the state the day opened in; nothing in it is
   retracted, and the answer was to roll rather than to widen the comparison.
