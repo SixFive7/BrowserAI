@@ -180,9 +180,10 @@ release body; nothing else depends on it.
 
 - ⬆️ **Velopack rolled 1.2.0 to 1.2.158, and the Windows installer is a 64-bit bootstrapper now.**
   The first move this dependency has made since it was first reviewed. 158 commits, and one
-  release object in between in any form. **Nothing in this repository changed to absorb it**:
-  the `vpk` CLI surface was diffed by running both versions, and no flag this project passes
-  was removed or renamed.
+  release object in between in any form. **No product code changed to absorb it and nothing
+  was pinned back**: the `vpk` CLI surface was diffed by running both versions, and no flag
+  this project passes was removed or renamed. **One test did change**, and it changed because
+  the gate found it rather than because anybody predicted it -- see the stub naming below.
 
   **What arrives with it and is visible to a user.** `Setup.exe` and the root stub are
   built x64 for a win-x64 pack rather than i686, measured on the packed artifact as PE
@@ -199,6 +200,29 @@ release body; nothing else depends on it.
   Windows installer channel-override tag readers, because there is one track and the
   channel is set explicitly for the reason landmine 1 gives. The two renamed MSI flags are
   inert here: `--msi` is never passed.
+
+  **The one thing in this tree that had to move, and the gate is what found it.** Upstream
+  names the stub embedded in the `.nupkg` after `packTitle ?? packId` now instead of after
+  `mainExe`. The shipping pack is unaffected, because its title and its main executable's
+  base name are both `BrowserAI`; the **suite's own** pack is titled `BrowserAI (suite)`, so
+  its stub is named for that, and
+  `RealInstallerTests.TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears` went red on
+  the first gate run after the bump because the two packs' entry names stopped matching. The
+  name normalisation was widened to that one entry, keyed on the `_ExecutionStub.exe` suffix
+  rather than on the title wherever it appears -- stripping `BrowserAI` from names would
+  collapse `BrowserAI.exe` and `BrowserAI.Server.exe` into one key in one pack and leave them
+  alone in the other. Two controls hold both directions. Nothing the user installs is renamed.
+
+  **The rename arrives in a second place, and the same arm found that on the next run.**
+  `vpk` writes one content-type declaration per extension in first-seen order, so the pack
+  whose stub sorts ahead of the `.xml` files meets an `.exe` first: `[Content_Types].xml`
+  carries the same 24 declarations in the same 1,692 bytes in a different order. **That is
+  not nondeterminism and it was checked rather than assumed** -- every shipping pack on this
+  machine, 20 of them across both Velopack versions and back to `0.1.1`, hashes that part
+  identically, and the suite's pack of the same run is the only outlier. That one part is
+  compared as a set of declarations now, with controls in three directions: a re-ordering is
+  not an offence, a missing declaration is, and a read that came back empty is never "the
+  same".
 
   **Our own open ask is still open.** `velopack/velopack#1056`, asking for a way to start
   the installed app without a console window after a non-silent install, has no comments,

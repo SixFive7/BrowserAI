@@ -746,6 +746,50 @@ internal sealed partial class RealInstallerTests
 
         var (_, stillCaught) = Compare(underShippingTitle, underShippingTitleToo);
         await Assert.That(stillCaught.Count).IsEqualTo(1);
+
+        // ⚠️ THE STUB-NAME CONTROL, added 2026-09-22 with Velopack 1.2.158.
+        // The two packs' stubs are named from their TITLES since velopack#985,
+        // so the names have to normalise together -- and nothing else may.
+        await Assert.That(NormaliseEntryName($"lib/app/{ReleaseLayout.PackTitle}_ExecutionStub.exe", ReleaseLayout.PackId))
+            .IsEqualTo(NormaliseEntryName($"lib/app/{ReleaseLayout.TestPackTitle}_ExecutionStub.exe", ReleaseLayout.TestPackId));
+
+        // And the other direction, which is the half that keeps this narrow: an
+        // ordinary binary carrying the shipping title is NOT rewritten, so the
+        // two executables cannot collapse into one key.
+        await Assert.That(NormaliseEntryName($"lib/app/{ReleaseLayout.PackTitle}.exe", ReleaseLayout.PackId))
+            .IsEqualTo($"lib/app/{ReleaseLayout.PackTitle}.exe");
+
+        await Assert.That(NormaliseEntryName($"lib/app/{ReleaseLayout.PackTitle}.Server.exe", ReleaseLayout.PackId))
+            .IsNotEqualTo(NormaliseEntryName($"lib/app/{ReleaseLayout.PackTitle}.exe", ReleaseLayout.PackId));
+
+        // ⚠️ THE CONTENT-TYPES CONTROL, in three directions, because that
+        // exemption is the one that could quietly swallow a real change.
+        const string Xml = """<Default Extension="xml" ContentType="application/octet" />""";
+        const string Exe = """<Default Extension="exe" ContentType="application/octet" />""";
+        const string Ico = """<Default Extension="ico" ContentType="application/octet" />""";
+
+        var inOneOrder = Encoding.UTF8.GetBytes($"<Types>{Ico}{Xml}{Exe}</Types>");
+        var inTheOther = Encoding.UTF8.GetBytes($"<Types>{Ico}{Exe}{Xml}</Types>");
+        var missingOne = Encoding.UTF8.GetBytes($"<Types>{Ico}{Exe}</Types>");
+        var nothingAtAll = Encoding.UTF8.GetBytes("<Types></Types>");
+
+        // Re-ordered: the same declarations, so not an offence.
+        await Assert.That(SameDeclarations(inOneOrder, inTheOther)).IsTrue();
+
+        // A declaration that is genuinely absent from one side IS an offence.
+        await Assert.That(SameDeclarations(inOneOrder, missingOne)).IsFalse();
+
+        // And a read that came back empty is never "the same", which is what
+        // stops a parse that stopped matching from exempting everything.
+        await Assert.That(SameDeclarations(nothingAtAll, nothingAtAll)).IsFalse();
+
+        // The exemption is scoped to that ONE part: the same re-ordering in any
+        // other entry is still reported.
+        var elsewhere = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.xml"] = inOneOrder };
+        var elsewhereToo = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.xml"] = inTheOther };
+
+        var (_, notExempt) = Compare(elsewhere, elsewhereToo);
+        await Assert.That(notExempt.Count).IsEqualTo(1);
     }
 
     /// <summary>
@@ -826,10 +870,82 @@ internal sealed partial class RealInstallerTests
             using var bytes = new MemoryStream();
 
             stream.CopyTo(bytes);
-            entries[entry.FullName.Replace(id, "<id>", StringComparison.Ordinal)] = bytes.ToArray();
+            entries[NormaliseEntryName(entry.FullName, id)] = bytes.ToArray();
         }
 
         return entries;
+    }
+
+    /// <summary>
+    /// Takes the two things out of an entry's NAME that are allowed to differ
+    /// between the two packs: the pack id, and the stub's base name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The stub half arrived with Velopack 1.2.158 and is the only thing
+    /// in this repository that bump changed — 2026-09-22.</b> Upstream named the
+    /// stub embedded in the <c>.nupkg</c> after <c>mainExe</c> until
+    /// <see href="https://github.com/velopack/velopack/pull/985">velopack#985</see>,
+    /// and names it after <c>packTitle ?? packId</c> since. Both packs are built
+    /// from one publish with one <c>--mainExe</c>, so the entry used to be
+    /// <c>BrowserAI_ExecutionStub.exe</c> in both; the two packs carry
+    /// deliberately different TITLES, so it is
+    /// <c>BrowserAI_ExecutionStub.exe</c> and
+    /// <c>BrowserAI (suite)_ExecutionStub.exe</c> now. This arm went red on
+    /// exactly that, on the first gate run after the bump, which is the
+    /// mechanism working.
+    /// </para>
+    /// <para>
+    /// <b>It rewrites the ONE entry rather than the title wherever it appears</b>,
+    /// for the same reason <see cref="Licensed"/> refuses the shipping title: that
+    /// title is <c>BrowserAI</c>, and stripping it from names would turn
+    /// <c>BrowserAI.exe</c> and <c>BrowserAI.Server.exe</c> into the same key in
+    /// one pack and leave them untouched in the other. Keying on the
+    /// <c>_ExecutionStub.exe</c> suffix names what upstream actually varies and
+    /// nothing else.
+    /// </para>
+    /// <para>
+    /// <b>The bytes are still compared.</b> This is a rule about the NAME; the
+    /// stub's contents still have to mention something in <see cref="Licensed"/>
+    /// or the entry is reported, which is what keeps the arm from becoming an
+    /// assertion that two files exist.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The entry's full name inside the package.</param>
+    /// <param name="id">The pack id to normalise out of it.</param>
+    /// <returns>The name both packs should agree on.</returns>
+    private static string NormaliseEntryName(string name, string id) =>
+        StubEntryName.Replace(name.Replace(id, "<id>", StringComparison.Ordinal), "${dir}<stub>_ExecutionStub.exe");
+
+    /// <summary>The embedded execution stub, whose base name follows the pack title.</summary>
+    private static readonly Regex StubEntryName =
+        new(@"(?<dir>^|.*/)[^/]+_ExecutionStub\.exe$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>The OPC part listing one content type per extension.</summary>
+    private const string ContentTypesPart = "[Content_Types].xml";
+
+    /// <summary>One <c>Default</c> or <c>Override</c> declaration.</summary>
+    private static readonly Regex ContentTypeDeclaration =
+        new(@"<(?:Default|Override)\b[^>]*/?>", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <param name="left">One pack's content-types part.</param>
+    /// <param name="right">The other's.</param>
+    /// <returns>Whether they declare the same things, in any order.</returns>
+    private static bool SameDeclarations(byte[] left, byte[] right)
+    {
+        static List<string> declarations(byte[] bytes) =>
+        [
+            .. ContentTypeDeclaration
+                .Matches(Encoding.UTF8.GetString(bytes))
+                .Select(match => match.Value)
+                .Order(StringComparer.Ordinal),
+        ];
+
+        var a = declarations(left);
+        var b = declarations(right);
+
+        // Non-vacuous: an empty read on both sides would report "the same".
+        return a.Count > 0 && a.SequenceEqual(b, StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -869,6 +985,27 @@ internal sealed partial class RealInstallerTests
         foreach (var (name, bytes) in left.OrderBy(entry => entry.Key, StringComparer.Ordinal))
         {
             if (!right.TryGetValue(name, out var other) || bytes.AsSpan().SequenceEqual(other))
+            {
+                continue;
+            }
+
+            // ⚠️ THE CONTENT-TYPES PART IS A SET, AND ITS ORDER IS A FUNCTION OF
+            // THE ENTRY NAMES -- 2026-09-22, with Velopack 1.2.158. `vpk` emits
+            // one declaration per extension in FIRST-SEEN order, so the pack
+            // whose stub is named `BrowserAI (suite)_ExecutionStub.exe` meets an
+            // `.exe` before its first `.xml` and the shipping pack does not:
+            // `...,ico,exe,xml,...` against `...,ico,xml,exe,...`, same 24
+            // declarations, same 1,692 bytes, different order. THIS IS NOT
+            // NONDETERMINISM AND WAS CHECKED RATHER THAN ASSUMED: every shipping
+            // pack on this machine, 20 of them across both Velopack versions,
+            // hashes to the same `92451fc6…`; the suite's pack of the same run is
+            // the only outlier. So it is velopack#985's stub rename arriving in a
+            // second place, and comparing these bytes would be comparing an
+            // ordering the title difference caused.
+            //
+            // The SET is still compared, so a declaration added, removed or
+            // re-typed in one pack and not the other is still an offence.
+            if (name is ContentTypesPart && SameDeclarations(bytes, other))
             {
                 continue;
             }
