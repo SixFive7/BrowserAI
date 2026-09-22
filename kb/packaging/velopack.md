@@ -647,6 +647,20 @@ been measured.
 
 ### The delta is real, and what it costs to produce one
 
+⚠️ **NO RELEASE CARRIES ONE SINCE 2026-09-22, AND THIS SECTION IS NOW ABOUT A
+ROAD NOT TAKEN.** *Added by addition; nothing below is re-measured or retracted.*
+The maintainer's decision, verbatim: *"always produce full packages only. The
+sizes are so small, and internet speeds nowadays are so fast that we don't want
+to exert any effort in creating deltas. Full downloads are always just easier."*
+`build/New-Release.ps1` passes `--delta None` from that day, so every published
+feed holds `Full` rows alone. **The figures below stay measured and stay here**:
+they are what the decision costs, they are what `vpk` still does when asked, and
+they are the numbers anybody revisiting the decision would otherwise have to
+re-establish. **`--delta None` is `vpk`'s own name for it** and was resolved from
+the tool rather than from memory: `vpk pack --help` documents `--delta <MODE>`
+without enumerating the modes, and handing it an unparseable value makes it name
+them. `[FLOATS]`
+
 ⚠️ `Corrected 2026-09-17 (previously "**`BrowserAI-0.9.1-delta.nupkg` is 97,216 b
 against a 49,043,493 b full package**, for a release in which only
 `BrowserAI.exe` changed")` — **re-measured as 138,515 b against a 54,926,688 b

@@ -183,6 +183,43 @@ and the note says that now.
   back off a real log record moved with it, and gained a second assertion that nothing
   emits 76 at all.
 
+- 📦 **Every release packs full packages only, and no published feed carries a delta row.**
+  The maintainer's decision, in his words: *"always produce full packages only. The sizes
+  are so small, and internet speeds nowadays are so fast that we don't want to exert any
+  effort in creating deltas. Full downloads are always just easier."*
+
+  `build/New-Release.ps1` passes `--delta None`, which is `vpk`'s own name for it.
+  **The mode was resolved from the tool rather than from memory**: `vpk pack --help`
+  documents `--delta <MODE>` and does not list the modes, so handing it a value it cannot
+  parse makes it name them.
+
+  ⚠️ **It looked like this was already true and it was not.** No release before this one
+  ever carried a delta, and not because anybody chose it: the clean re-pack empties
+  `Releases/`, so `vpk` never had a previous package to compare against. The default is
+  `BestSpeed`, so the first cut that left one there would have started emitting deltas
+  with nothing to say so. That is why this is an argument that gets passed rather than a
+  behaviour that gets avoided.
+
+  **What it costs is measured rather than waved at**: a same-tree delta is **138,791 b**
+  against a full package of **55,022,705 b**, so every install now downloads about 55 MB
+  where it could have downloaded 139 KB. What it buys is one artifact per release, one row
+  per feed, no forward-only chain to reason about, and a rollback that is always a plain
+  download.
+
+  `ReleaseScriptTests.EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow` holds
+  both halves, because either is satisfiable without the other: that the script passes the
+  argument, which a scan can see, and that the argument means what the script assumes,
+  which only `vpk` can say. It packs a real 162 KB executable twice into a feed that
+  already holds the previous full package. **The positive control is the whole point** --
+  the same two packs without the argument do produce a delta, so "no delta" is the option
+  working rather than `vpk` having nothing to compare against.
+
+  Four documents were re-scoped rather than left to rot, each with what it previously said:
+  the testing layer table and the paragraph under it, re-verification rows 24 and 85, the
+  rollback item in the release checklist, and the kb section that measures the delta. **No
+  number was retracted.** They record what `vpk` does when asked, which is what makes this
+  a choice rather than a limitation.
+
 - 🔧 **The relaunch note stops promising that stored state survived, because it may not have.**
   `SessionManager.ChildWasRelaunched` is what `browserai_resume` returns after it finds a
   session's browser server dead and starts a new one. It read *"The session's directory,

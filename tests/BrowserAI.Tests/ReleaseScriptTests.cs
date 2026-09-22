@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -1412,6 +1413,195 @@ internal sealed class ReleaseScriptTests
 
         await File.WriteAllTextAsync(manifest, $$"""{"Assets":[{{string.Join(",", assets)}}]}""");
         return manifest;
+    }
+
+    /// <summary>
+    /// <b>Every release packs FULL packages only, and the feed it writes carries
+    /// no <c>Delta</c> row.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's decision, 2026-09-22, verbatim:</b> <i>"always produce
+    /// full packages only. The sizes are so small, and internet speeds nowadays
+    /// are so fast that we don't want to exert any effort in creating deltas.
+    /// Full downloads are always just easier."</i> It is a decision of record in
+    /// [DECISIONS](../../DECISIONS.md#locking-logging-versioning-and-registration),
+    /// not a property of how a particular cut happened to be run.
+    /// </para>
+    /// <para>
+    /// <b>Two halves, because either alone is satisfiable without the other.</b>
+    /// The script has to PASS the option, which a scan can see; and the option
+    /// has to MEAN what the script assumes, which only <c>vpk</c> can say. Before
+    /// 1.1.0 the feed carried no delta for a reason nobody chose — the clean
+    /// re-pack empties <c>Releases/</c>, so there was never a previous package to
+    /// delta against — and a test asserting "no delta row" without the option
+    /// would have passed against a script that had never heard of it.
+    /// </para>
+    /// <para>
+    /// <b>The mode is <c>None</c> and it was resolved from the tool rather than
+    /// from memory.</b> <c>vpk pack --help</c> documents <c>--delta &lt;MODE&gt;</c>
+    /// and does not enumerate the modes; handing it a value it cannot parse makes
+    /// it name them: <i>"Cannot parse argument 'ZZZINVALID' for option '--delta'
+    /// as expected type 'Velopack.Packaging.Compression.DeltaMode'. Did you mean
+    /// one of the following? None"</i>. Read 2026-09-22 at <c>vpk</c> 1.2.158.
+    /// </para>
+    /// <para>
+    /// <b>The pack is real and it is small.</b> 162 KB of a real PE rather than
+    /// the 143 MB publish, because what is under test is <c>vpk</c>'s delta
+    /// behaviour and not this product's bytes. Both arms run in about a second.
+    /// It is gated on <see cref="SuiteEnvironment.RequirePackagedRelease"/>: a
+    /// machine with no packed release has never run the release script and so
+    /// has no <c>vpk</c> either, and under <c>BROWSERAI_RELEASE_RUN=1</c> that is
+    /// a failure rather than a skip.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow()
+    {
+        _ = SuiteEnvironment.RequirePackagedRelease();
+
+        // ---- Half one: the script passes it, read out of the argument array
+        // rather than the whole file, for the reason the sibling arm gives.
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+        var start = script.IndexOf("$packArgs = @(", StringComparison.Ordinal);
+
+        await Assert.That(start).IsGreaterThan(-1);
+
+        var end = script.IndexOf("\n)", start, StringComparison.Ordinal);
+        var passed = string.Join(
+            '\n',
+            script[start..end].Split('\n').Where(line => !line.TrimStart().StartsWith('#')));
+
+        await Assert.That(passed)
+            .Contains("'--delta', 'None'")
+            .Because("full packages only is a decision of record, and a release that stopped passing it would"
+                + " start emitting deltas again with nothing to say so");
+
+        // ---- Half two: the option means what the script assumes. A real pack,
+        // twice, into a feed that already holds the previous full package.
+        using var scratch = ScratchDirectory.Create("release-full-only");
+
+        var packDir = Path.Combine(scratch.Path, "packdir");
+        var withOption = Path.Combine(scratch.Path, "with-option");
+        var without = Path.Combine(scratch.Path, "without");
+
+        foreach (var directory in new[] { packDir, withOption, without })
+        {
+            _ = Directory.CreateDirectory(directory);
+        }
+
+        File.Copy(SmallRealExecutable(), Path.Combine(packDir, "App.exe"));
+
+        string[] common =
+        [
+            "pack",
+            "--packId", ReleaseLayout.TestPackId,
+            "--packDir", packDir,
+            "--mainExe", "App.exe",
+            "--channel", "win",
+            "--legacyConsole",
+        ];
+
+        await Assert.That(await VpkAsync([.. common, "--packVersion", "1.0.0", "--outputDir", withOption])).IsEqualTo(0);
+
+        // The same starting feed for both arms, so the only thing that differs
+        // is the option.
+        foreach (var file in new DirectoryInfo(withOption).EnumerateFiles())
+        {
+            file.CopyTo(Path.Combine(without, file.Name));
+        }
+
+        await Assert.That(await VpkAsync([.. common, "--packVersion", "1.1.0", "--outputDir", withOption, "--delta", "None"])).IsEqualTo(0);
+        await Assert.That(await VpkAsync([.. common, "--packVersion", "1.1.0", "--outputDir", without])).IsEqualTo(0);
+
+        // With the option: full packages only, and the feed says so.
+        await Assert.That(DeltaPackagesIn(withOption)).IsEmpty();
+        await Assert.That(await DeltaRowsInAsync(withOption)).IsEqualTo(0);
+        await Assert.That(FullPackagesIn(withOption).Count).IsEqualTo(2);
+
+        // ⚠️ THE POSITIVE CONTROL, and this arm is worth nothing without it. The
+        // same two packs over the same feed WITHOUT the option do produce a
+        // delta, so "no delta" above is the option working rather than vpk
+        // having nothing to compare against.
+        await Assert.That(DeltaPackagesIn(without)).IsNotEmpty();
+        await Assert.That(await DeltaRowsInAsync(without)).IsEqualTo(1);
+    }
+
+    /// <summary>A real PE small enough to pack in about a second.</summary>
+    /// <returns>Its path.</returns>
+    private static string SmallRealExecutable()
+    {
+        var probe = new DirectoryInfo(Path.Combine(RepositoryLayout.Root.FullName, "tests", "BrowserAI.TestProbe", "bin"));
+
+        return probe.Exists
+            ? (probe.EnumerateFiles("BrowserAI.TestProbe.exe", SearchOption.AllDirectories).FirstOrDefault()?.FullName
+                ?? throw new InvalidOperationException(
+                    $"No BrowserAI.TestProbe.exe under '{probe.FullName}'. It is the small real PE this arm packs;"
+                    + " build the solution and run again."))
+            : throw new InvalidOperationException($"'{probe.FullName}' does not exist, so there is nothing small to pack.");
+    }
+
+    /// <param name="arguments">What to hand the packaging tool.</param>
+    /// <returns>Its exit code.</returns>
+    private static async Task<int> VpkAsync(string[] arguments)
+    {
+        var start = new ProcessStartInfo("vpk")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+
+            // House rule: no launch in this tree puts a window on the screen.
+            CreateNoWindow = true,
+        };
+
+        foreach (var argument in arguments)
+        {
+            start.ArgumentList.Add(argument);
+        }
+
+        using var packaging = Process.Start(start)
+            ?? throw new InvalidOperationException(
+                "'vpk' did not start. The release script needs it too, and refuses without it:"
+                + " dotnet tool install -g vpk --version <the Velopack the build resolved>.");
+
+        var output = packaging.StandardOutput.ReadToEndAsync();
+        var errors = packaging.StandardError.ReadToEndAsync();
+
+        await packaging.WaitForExitAsync();
+
+        _ = await output;
+        _ = await errors;
+
+        return packaging.ExitCode;
+    }
+
+    /// <param name="feed">A feed directory.</param>
+    /// <returns>The delta packages in it.</returns>
+    private static List<string> DeltaPackagesIn(string feed) =>
+        [.. new DirectoryInfo(feed).EnumerateFiles("*-delta.nupkg").Select(file => file.Name)];
+
+    /// <param name="feed">A feed directory.</param>
+    /// <returns>The full packages in it.</returns>
+    private static List<string> FullPackagesIn(string feed) =>
+        [.. new DirectoryInfo(feed).EnumerateFiles("*-full.nupkg").Select(file => file.Name)];
+
+    /// <param name="feed">A feed directory.</param>
+    /// <returns>How many rows of the manifest say <c>Delta</c>.</returns>
+    private static async Task<int> DeltaRowsInAsync(string feed)
+    {
+        var manifest = Path.Combine(feed, "releases.win.json");
+
+        if (!File.Exists(manifest))
+        {
+            throw new InvalidOperationException($"'{manifest}' was not written, so the pack did not produce a feed at all.");
+        }
+
+        using var document = JsonDocument.Parse(await File.ReadAllTextAsync(manifest));
+
+        return document.RootElement.GetProperty("Assets").EnumerateArray()
+            .Count(asset => string.Equals(asset.GetProperty("Type").GetString(), "Delta", StringComparison.Ordinal));
     }
 
     /// <summary>

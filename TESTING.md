@@ -75,7 +75,7 @@ Five layers, run at different cadences:
 | **Fake child** | Full proxy over an in-process `Pipe` pair — no `Process`, no Node. Passthrough fidelity, error shapes, image bytes, cancellation, child death | ms | every build |
 | **Real-child contract** | Real `node` + the **resolved** `cli.js`, **no browser**. Golden `tools/list` snapshot, negotiated protocol version, argv contract, config-key validation | 2–5 s | **every build** |
 | **Smoke** | Real child **and real browser**. `browser_navigate`, `isError`, real stderr classification, process-tree lifecycle | 10–30 s | every build · **mandatory before release** |
-| **Update** | Real feed URL resolves and returns a manifest; `vpk pack` emits a delta; N→N+1 applies and the installed version moves | 1–3 min | **mandatory before release** |
+| **Update** | Real feed URL resolves and returns a manifest; `vpk pack` can emit a delta; N→N+1 applies and the installed version moves | 1–3 min | **mandatory before release** |
 
 **The real-child contract layer changes character under a floating build.** When
 the payload was hand-pinned it was a slow-moving regression check that could
@@ -236,6 +236,21 @@ local-directory source composes paths differently and will pass where production
 generated and that the installed version moved**. Delta granularity is the reason
 Velopack was chosen at all ([kb](kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed)),
 and nothing in-house had ever proved `vpk` produces one before 2026-08-16.
+
+⚠️ **RE-SCOPED 2026-09-22: THAT IS A CLAIM ABOUT WHAT `vpk` CAN DO, AND IT IS NO
+LONGER A CLAIM ABOUT WHAT A RELEASE SHIPS.** *Previously the paragraph above
+stood alone, and "delta granularity is the reason Velopack was chosen at all"
+read as a description of the product.* Every release packs **full packages
+only** from 1.1.0, at the maintainer's decision
+([DECISIONS](DECISIONS.md#locking-logging-versioning-and-registration)), so
+`build/New-Release.ps1` passes `--delta None` and no published feed carries a
+`Delta` row. **What this layer proves is unchanged and still worth proving** —
+that `vpk` produces a delta when asked, and that an N→N+1 apply moves the
+installed version — because the second half is the update lane itself and the
+first is what makes the decision a choice rather than a limitation. **The
+choosing is now asserted rather than assumed**, by
+`ReleaseScriptTests.EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow`,
+whose positive control is exactly the delta this paragraph describes.
 
 ## How the suite is run: detached, teed, and the log polled
 

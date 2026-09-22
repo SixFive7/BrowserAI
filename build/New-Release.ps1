@@ -575,6 +575,28 @@ $packArgs = @(
     # StartMenuRoot and not the default Desktop,StartMenuRoot: a desktop icon
     # for a thing somebody opens twice a year is clutter.
     '--shortcuts', 'StartMenuRoot'
+    # ⚠️ FULL PACKAGES ONLY, FOREVER -- 2026-09-22, the maintainer's decision,
+    # verbatim: "always produce full packages only. The sizes are so small, and
+    # internet speeds nowadays are so fast that we don't want to exert any
+    # effort in creating deltas. Full downloads are always just easier."
+    #
+    # `None` is vpk's own name for it and was resolved from the tool rather
+    # than from memory: `vpk pack --help` documents `--delta <MODE>` and does
+    # not enumerate the modes, so handing it one it cannot parse makes it name
+    # them -- "Cannot parse argument 'ZZZINVALID' for option '--delta' as
+    # expected type 'Velopack.Packaging.Compression.DeltaMode'. Did you mean one
+    # of the following? None". Read 2026-09-22 at vpk 1.2.158.
+    #
+    # ⚠️ WITHOUT THIS THE DEFAULT IS `BestSpeed` AND DELTAS COME BACK SILENTLY.
+    # Until 1.1.0 no release carried a delta, and not because anybody chose it:
+    # the clean re-pack empties `Releases/`, so vpk never had a previous package
+    # to compare against. The first cut that left one there would have started
+    # emitting deltas with nothing to say so.
+    # `ReleaseScriptTests.EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow`
+    # holds both halves -- that this argument is passed, and that it means what
+    # this comment says -- with the positive control that the same pack without
+    # it does produce a delta.
+    '--delta', 'None'
     # ⚠️ --msi is NOT passed, ever. --msi PerMachine installs to Program Files
     # and makes the updater self-elevate, and a UAC prompt cannot be answered by
     # a background MCP server. Per-user to %LocalAppData% is the whole design.

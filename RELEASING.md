@@ -1214,6 +1214,16 @@ live **outside** a test run, and both must be true at release time:
 - **The full `.nupkg` for this release is archived.** Velopack prunes `packages\`
   to the current full package and deltas are forward-only, so an unarchived
   release is one you cannot roll back to without a fresh full download.
+
+  ⚠️ **SIMPLER SINCE 2026-09-22, AND THE REASON IS A DECISION RATHER THAN A
+  MECHANISM.** Every release packs **full packages only**
+  ([DECISIONS](DECISIONS.md#locking-logging-versioning-and-registration)), so
+  "without a fresh full download" is no longer a penalty this item is warning
+  about — a fresh full download is what a rollback and an update both are. The
+  archive requirement is **unchanged and matters more, not less**: Velopack
+  still prunes `packages\` to the current package, so the archived `.nupkg` is
+  the only copy of an older release once the feed has moved past it, and it is
+  now the *whole* of what a rollback needs rather than the base of a chain.
 - **The release-validation rule permits a rollback republish.** Written as
   *"monotonic **or** an explicit rollback republish"*. Get this wrong in the
   strict direction and the client accepts a rollback the build refuses to emit —
