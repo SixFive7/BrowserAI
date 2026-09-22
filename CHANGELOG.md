@@ -38,6 +38,17 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-22
+
+A web page can offer its own tools to the browser, and this release makes them
+callable. A name invented by a page is still refused at the door; it is reached
+through one tool of ours, judged like every other tool in the surface. The rest
+is upkeep and repair. Velopack moved for the first time since this project
+started, so the installer is a 64-bit program now and Windows will show the
+app's size in Add/Remove Programs where it showed nothing. And a sentence that
+told a caller its cookies had survived a crash was measured and found wrong, so
+it now says what the measurement says.
+
 ### Added
 
 - ✨ **A tool a web page registers with the browser is callable, through one tool of ours that is judged.**
