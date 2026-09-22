@@ -40,18 +40,19 @@ release body; nothing else depends on it.
 
 ## [1.1.0] - 2026-09-22
 
-A web page can offer its own tools to the browser, and this release makes them
-callable. A name invented by a page is still refused at the door; it is reached
-through one tool of ours, judged like every other tool in the surface. The rest
-is upkeep and repair. Velopack moved for the first time since this project
-started, so the installer is a 64-bit program now and Windows will show the
-app's size in Add/Remove Programs where it showed nothing. And a sentence that
-told a caller its cookies had survived a crash was measured and found wrong, so
-it now says what the measurement says.
+A web page can offer its own tools to the browser. From this version they can be
+called. A name invented by a page is still refused at the door; the page's tool
+is reached through one tool of ours, and that tool is judged like every other.
+
+The rest is upkeep and repair. Velopack moved for the first time since this
+project started. The installer is a 64-bit program now, and Windows will show
+the app's size in Add/Remove Programs, where it showed nothing. One note told a
+caller its cookies had survived a crash. The measurement says they may not have,
+and the note says that now.
 
 ### Added
 
-- ✨ **A tool a web page registers with the browser is callable, through one tool of ours that is judged.**
+- ✨ **A web page's own tools are callable, through one tool of ours that is judged like the rest.**
   `@playwright/mcp` 0.0.82 let a page put tools on the child's `tools/list` — names,
   descriptions and `inputSchema`s written by whoever wrote the page — and BrowserAI's
   deny-by-default refused every one of them at the door. That is the rule working exactly
@@ -323,7 +324,7 @@ it now says what the measurement says.
   navigates it. Two `[FLOATS]` facts gain
   [re-verification rows](kb/re-verification.md): the name rule and the no-block measurement.
 
-- 🔧 **The surface now states a session's whole life: who ends it, what ending it takes, and how it moves.**
+- 🔧 **A session's deletion, what a destroy takes, its upload root and its move are all said now.**
   Four things were already true of the product and said in no string a model reads.
   BrowserAI deletes nothing on a schedule and nothing at a size — `browserai_init` said
   that half as *"nothing here expires"* — and a retention policy with no owner is half a
@@ -601,7 +602,7 @@ it now says what the measurement says.
   received "payload.package.json"`, and the no-override control on `Expected to contain
   ""pulledForward": null"`.
 
-- 📝 **The resume figure is re-taken at 1245 and 1548, and "resume" is two paths now.**
+- 📝 **Resume is two paths now, and each was timed at 1245 and 1548.**
   Re-verification row 38. The load-bearing half held exactly and now on two families:
   cookie, localStorage, IndexedDB, CacheStorage and one service-worker registration all
   survived, sessionStorage alone did not, identically on Chromium and on Firefox, which is
@@ -652,7 +653,7 @@ it now says what the measurement says.
   than an assertion of it. The procedure gains a sentence with it: both families must run
   in one sitting, because the two behind this section were six hours apart.
 
-- 📝 **Payload licensing is re-read at 1245 and 1548, and four claims did not survive.**
+- 📝 **Four claims in the payload licensing row did not survive a re-read at 1245 and 1548.**
   Re-verification row 26 said `winldd` ships no licence file and full Chromium ships no
   OSS one. Both still hold, and so do `ffmpeg`, Node and `@playwright/mcp`. The Chromium
   half could not have moved and the reason is evidence rather than an assurance:
@@ -678,7 +679,7 @@ it now says what the measurement says.
   entries inside one `omni.ja`, four of them Playwright's own juggler files, which is the
   entirety of the 902 bytes row 21 measured on disk.
 
-- 📝 **Disk after a first run is a measured number again, and it is 598 MB.**
+- 📝 **Disk after a first run is a measured number again: 598 MB.**
   The total had gone `[STALE]` that morning because both of its addends had
   moved under it. It is re-derived from two figures taken the same day and
   nothing else, which is the property the old sum lacked: the 1.0.0 release cut
