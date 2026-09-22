@@ -212,10 +212,22 @@ internal sealed partial class ProcessLivenessTests
         // — and against a real client that is every session's browser.
         await Assert.That(Volatile.Read(ref fired)).IsEqualTo(0);
 
-        // The refusal is said out loud, and says WHICH of the two it saw: 76 is
+        // The refusal is said out loud, and says WHICH of the two it saw: 78 is
         // "opened, and already gone", where 72 is "could not be opened".
-        await Assert.That(logs.Records.Any(record => record.EventId.Id is 76)).IsTrue();
+        //
+        // ⚠️ 78 RATHER THAN 76. Corrected 2026-09-22 under Q226 c *(previously
+        // `record.EventId.Id is 76`)*: `ClientHasAlreadyExited` moved off 76
+        // when that id was retired, because two events held it at once and both
+        // of them shipped in v1.0.0. **This arm is the reason the renumber is a
+        // behaviour change rather than a comment edit** — an id is what a reader
+        // of the log keys on, and this is the one place in the suite that reads
+        // one back off a real record.
+        await Assert.That(logs.Records.Any(record => record.EventId.Id is 78)).IsTrue();
         await Assert.That(logs.Records.Any(record => record.EventId.Id is 72)).IsFalse();
+
+        // And 76 is gone rather than merely unused here: nothing this product
+        // emits carries it any more, which is what "retired" has to mean.
+        await Assert.That(logs.Records.Any(record => record.EventId.Id is 76)).IsFalse();
 
         // The positive control, on the same route and the same call: a process
         // that is actually there is still watched. Without it a build that

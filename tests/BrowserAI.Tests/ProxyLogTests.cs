@@ -91,22 +91,42 @@ internal sealed class ProxyLogTests
 
         await Assert.That(string.Join(Environment.NewLine, Duplicates(events))).IsEmpty();
 
-        // ---- The retired half, read out of the comment that owns the rule.
+        // ---- The retired half, read out of the comments that own the rule.
         // ⚠️ RAW, not through RepositoryLayout.ReadCodeAsync: that blanks
         // comment-only lines, which is right for the scan above — a
         // commented-out event is not a declared one — and would blank the very
-        // line this half exists to read.
-        var proxy = RepositoryLayout.ProductFile("Proxy", "BrowserProxy.cs");
-        var retired = RetiredIn(await File.ReadAllTextAsync(proxy.FullName));
+        // lines this half exists to read.
+        //
+        // ⚠️ PER CLASS SINCE 2026-09-22, and the widening is what Q226 c
+        // needed. It read ONE marker, out of BrowserProxy.cs, and applied it to
+        // ProxyLog alone — which was right while ProxyLog was the only class
+        // with a retired id and silently covered nothing anywhere else. A
+        // second class retired an id the same day.
+        var retired = new Dictionary<string, List<int>>(StringComparer.Ordinal);
 
-        await Assert.That(retired)
-            .IsNotEmpty()
-            .Because($"{Relative(proxy)} carries the retired-id rule and must carry the marker line this test reads it from");
+        foreach (var file in RepositoryLayout.ProductSourceFiles)
+        {
+            foreach (var (type, ids) in RetiredIn(await File.ReadAllTextAsync(file.FullName)))
+            {
+                retired[type] = ids;
+            }
+        }
+
+        // Not vacuous, and it names the two that exist rather than asserting a
+        // count: a marker that stopped parsing would leave this empty and every
+        // reuse below would pass.
+        await Assert.That(retired.ContainsKey("ProxyLog"))
+            .IsTrue()
+            .Because("ProxyLog retired ids 10, 11 and 12 on 2026-08-26 and must carry the marker line this test reads them from");
+
+        await Assert.That(retired.ContainsKey("ClientLivenessLog"))
+            .IsTrue()
+            .Because("ClientLivenessLog retired id 76 on 2026-09-22 under Q226 c and must carry the marker line this test reads it from");
 
         var reused = events
-            .Where(e => e.Class is "ProxyLog" && retired.Contains(e.Id))
-            .Select(e => $"{e.File}({e.Line}): {e.Class}.{e.Member} uses {EventIdSpelling} {e.Id}, which the retired marker in"
-                + $" {Relative(proxy)} says is retired and not to be reused. An id is a key somebody's saved log query may"
+            .Where(e => retired.TryGetValue(e.Class, out var ids) && ids.Contains(e.Id))
+            .Select(e => $"{e.File}({e.Line}): {e.Class}.{e.Member} uses {EventIdSpelling} {e.Id}, which that class's own"
+                + " retired marker says is retired and not to be reused. An id is a key somebody's saved log query may"
                 + " still be written against, so a retired one reassigned makes an old query answer about a new event."
                 + " Give the event a free id, or — if the reuse is deliberate — say so in that comment and take it off the marker.")
             .ToList();
@@ -151,9 +171,31 @@ internal sealed class ProxyLogTests
         // does not read the prose around it — the correction paragraph in that
         // same comment names 16 as an id that IS in use again, and a parse that
         // took numbers out of prose would retire it and fail the tree.
-        await Assert.That(RetiredIn("// RETIRED-" + "EVENT" + "-IDS: 10, 11, 12")).IsEquivalentTo([10, 11, 12]);
+        const string Marker = "// RETIRED-" + "EVENT" + "-IDS: ";
+
+        var parsed = RetiredIn($"internal static partial class SyntheticLog\n{{\n    {Marker}10, 11, 12\n}}");
+
+        await Assert.That(parsed.Count).IsEqualTo(1);
+        await Assert.That(parsed[0].Class).IsEqualTo("SyntheticLog");
+        await Assert.That(parsed[0].Ids).IsEquivalentTo([10, 11, 12]);
+
+        // It reads the LINE that is meant to be read, never the prose around
+        // it: the same comment carries a correction paragraph naming 16 as an
+        // id that is in use again, and a parse that took numbers out of prose
+        // would retire 16 and fail the tree.
         await Assert.That(RetiredIn("// EVENT IDS 10, 11 AND 16 ARE RETIRED")).IsEmpty();
-        await Assert.That(retired.Contains(16)).IsFalse();
+        await Assert.That(retired["ProxyLog"].Contains(16)).IsFalse();
+
+        // Two markers in one file belong to their own classes, which is the
+        // property the per-class widening rests on.
+        var twoMarkers = RetiredIn(
+            $"internal static partial class OneLog\n{{\n    {Marker}1, 2\n}}\n"
+            + $"internal static partial class TwoLog\n{{\n    {Marker}3\n}}");
+
+        await Assert.That(twoMarkers.Count).IsEqualTo(2);
+        await Assert.That(twoMarkers[0].Class).IsEqualTo("OneLog");
+        await Assert.That(twoMarkers[1].Class).IsEqualTo("TwoLog");
+        await Assert.That(twoMarkers[1].Ids).IsEquivalentTo([3]);
     }
 
     /// <param name="file">The path to name in a failure.</param>
@@ -223,12 +265,31 @@ internal sealed class ProxyLogTests
 
     /// <param name="code">The text of the file carrying the retired-id rule.</param>
     /// <returns>The ids its marker line names, in the order it names them.</returns>
-    private static List<int> RetiredIn(string code) =>
-        RetiredMarker.Match(code) is { Success: true } marker
-            ? [.. marker.Groups["ids"].Value
+    private static List<(string Class, List<int> Ids)> RetiredIn(string code)
+    {
+        var lines = code.Split('\n');
+        var found = new List<(string, List<int>)>();
+        var enclosing = "(none)";
+
+        foreach (var line in lines)
+        {
+            if (ClassDeclaration.Match(line) is { Success: true } declaration)
+            {
+                enclosing = declaration.Groups["name"].Value;
+            }
+
+            if (RetiredMarker.Match(line) is not { Success: true } marker)
+            {
+                continue;
+            }
+
+            found.Add((enclosing, [.. marker.Groups["ids"].Value
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(part => int.Parse(part, CultureInfo.InvariantCulture))]
-            : [];
+                .Select(part => int.Parse(part, CultureInfo.InvariantCulture))]));
+        }
+
+        return found;
+    }
 
     private static string Relative(FileInfo file) =>
         Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName);

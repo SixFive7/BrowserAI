@@ -432,6 +432,15 @@ internal static partial class ClientLivenessLog
     // repairable from here and is recorded rather than closed. From this
     // version on, 76 is `ClientHasAlreadyExited` and 77 is this.
     //
+    // ⚠️ THAT LAST SENTENCE IS NO LONGER TRUE, AND NEITHER IS "THE LATER ONE
+    // MOVES" ABOVE IT. Corrected 2026-09-22 by addition *(previously "THE LATER
+    // ONE MOVES, so 76 keeps the meaning it had first" and "From this version
+    // on, 76 is `ClientHasAlreadyExited` and 77 is this")*. **Q226 c, the
+    // maintainer's answer: 76 is RETIRED and nothing holds it.**
+    // `ClientHasAlreadyExited` went on to 78. The sentence about v1.0.0 carrying
+    // 76 for two events STANDS -- that is the fact retiring the id is a response
+    // to. See the foot of this class for the retirement and the reason.
+    //
     // It was found by `ProxyLogTests.EveryLogEventIdIsUniqueInItsClassAndNoRetiredIdIsInUse`
     // on the first run it ever had -- a test written for a DIFFERENT collision,
     // `ProxyLog`'s reuse of 16, which was found by reading. Two instances of one
@@ -465,8 +474,15 @@ internal static partial class ClientLivenessLog
     /// <summary>The pid opens and the process behind it has already exited.</summary>
     /// <param name="logger">Where it goes.</param>
     /// <param name="processId">The client's pid.</param>
+    // ⚠️ 78 RATHER THAN 76, AND 76 IS RETIRED. Corrected 2026-09-22 under
+    // Q226 c, the maintainer's choice *(previously `EventId = 76`, which this
+    // event held from `ec6d858` on 2026-09-15 and shared with
+    // `ClientWaitCannotBeInterpreted` from 2026-09-16 until both left it)*.
+    // BOTH events moved rather than one, so no release after v1.0.0 emits 76
+    // at all and the ambiguity ends where it started. The retirement, the
+    // history and the reason are at the foot of this class.
     [LoggerMessage(
-        EventId = 76,
+        EventId = 78,
         Level = LogLevel.Warning,
         Message = "The process that started BrowserAI, pid {ProcessId}, could be opened and has already exited, so there is no client-liveness watch. A dead pid goes on answering OpenProcess for as long as anything anywhere still holds a handle to it — the console host does, for a launcher that ran in a console — so this is the same 'nobody to watch' as a pid that cannot be opened at all, arriving by the other route. Teardown falls back to stdin EOF alone.")]
     public static partial void ClientHasAlreadyExited(ILogger logger, int processId);
@@ -479,4 +495,37 @@ internal static partial class ClientLivenessLog
         Level = LogLevel.Warning,
         Message = "Pid {ProcessId} was opened as the MCP client and is a different process from the one that number named — it started after this one, so it cannot be the process that launched BrowserAI. Windows had reused the number. Nothing is watched: teardown falls back to stdin EOF alone, which is correct, where firing this watch on a stranger's exit would have taken every session's browser down.")]
     public static partial void ClientPidIsNotTheClient(ILogger logger, int processId);
+
+    // ⚠️ EVENT ID 76 IS RETIRED AND IS NOT TO BE REUSED, 2026-09-22. It is the
+    // only id in this repository that TWO events held AT THE SAME TIME, and
+    // both of them shipped.
+    //
+    // The history, read out of `git log -S` rather than remembered:
+    // `ClientHasAlreadyExited` took 76 in `ec6d858` on 2026-09-15, and
+    // `ClientWaitCannotBeInterpreted` took the SAME 76 in `bf27512` on
+    // 2026-09-16, one day later. Nothing caught it, because until 2026-09-22
+    // nothing asserted that an id was used once. `ProxyLogTests` did, on the
+    // first run it ever had, against a tree nobody had changed for it.
+    //
+    // ⚠️ SO A LOG FROM ANY v1.0.0 BINARY CARRIES 76 FOR TWO DIFFERENT EVENTS
+    // and nothing but the message text tells them apart. That is not repairable
+    // from here and is recorded rather than closed.
+    //
+    // ⚠️ BOTH EVENTS LEFT THE ID AND THE ID IS RETIRED, WHICH IS Q226 c AND THE
+    // MAINTAINER'S CHOICE. `ClientWaitCannotBeInterpreted` moved to 77 first,
+    // and `ClientHasAlreadyExited` then moved to 78 rather than keeping 76.
+    // *Corrected 2026-09-22 by addition (previously the comment above
+    // `ClientWaitCannotBeInterpreted` said "THE LATER ONE MOVES, so 76 keeps
+    // the meaning it had first" and `ClientHasAlreadyExited` stayed at 76).*
+    // Keeping 76 for its first meaning would have left a query written against
+    // a v1.0.0 log silently answerable by a v1.1.0 one, in the one direction a
+    // reader cannot detect; retiring the id makes the ambiguity end at v1.0.0
+    // instead of continuing into every release after it. It costs one id.
+    //
+    // ⚠️ THE LINE BELOW IS READ BY `ProxyLogTests`, per class since 2026-09-22.
+    // It is the machine-readable half of the prose above, beside it rather than
+    // instead of it. Taking an id off it is how a deliberate reuse would be
+    // recorded, and the prose above is where the reason would go.
+    //
+    // RETIRED-EVENT-IDS: 76
 }

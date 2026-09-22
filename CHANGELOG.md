@@ -129,8 +129,8 @@ and the note says that now.
 - ✅ **A log event id must be unique in its class, and the scan found a second collision on its first run.**
   `ProxyLogTests.EveryLogEventIdIsUniqueInItsClassAndNoRetiredIdIsInUse` reads every
   `[LoggerMessage]` under `src/` as text, groups the ids by the class that declares them,
-  and refuses a repeat. It also refuses any id the `RETIRED-EVENT-IDS:` marker in
-  `ProxyLog`'s closing comment names. **An id is a key somebody's saved log query is
+  and refuses a repeat. It also refuses any id a class's own `RETIRED-EVENT-IDS:` marker
+  names. **An id is a key somebody's saved log query is
   written against**, which is the whole reason the rule exists and the reason the retired
   list is read out of the comment rather than typed into the test: a second copy is a
   second thing to keep in step, and the comment is what a reader of an old log meets.
@@ -140,7 +140,14 @@ and the note says that now.
   On this test's first run against the real tree it reported `ClientLivenessLog` declaring
   **id 76 twice** -- `ClientWaitCannotBeInterpreted` and `ClientHasAlreadyExited` -- which
   nobody had noticed at all. Two instances of one defect class in one tree is the argument
-  for a scan over the argument that the first was a one-off.
+  for a scan over the argument that the first was a one-off. Both events have left that id
+  and it is retired; the entry below is what happened to them.
+
+  **The marker is read per class**, not out of one file. It was written reading
+  `ProxyLog`'s comment alone, which was right while `ProxyLog` was the only class with a
+  retired id and silently covered nothing anywhere else. A second class retired one the
+  same day, so the scan now finds every marker in `src/` and scopes each to the class it
+  is declared in, with a control over two markers in one file.
 
   **The marker parse is held in both directions**, because the same comment contains a
   correction paragraph naming 16 as an id that is in use again: a parse that took numbers
@@ -150,20 +157,31 @@ and the note says that now.
 
 ### Changed
 
-- 🐛 **Two client-liveness events shared event id 76, and the later one moves to 77.**
+- 🐛 **Two client-liveness events shared event id 76, so both moved off it and 76 is retired.**
   `ClientHasAlreadyExited` took 76 in `ec6d858` on 2026-09-15 and
   `ClientWaitCannotBeInterpreted` took the same 76 in `bf27512` one day later, read out of
-  `git log -S` rather than remembered. **The later one moves, so 76 keeps the meaning it
-  had first.**
+  `git log -S` rather than remembered. `ClientWaitCannotBeInterpreted` is 77 now and
+  `ClientHasAlreadyExited` is 78. **Nothing holds 76, and nothing may.**
 
   ⚠️ **Both are in `v1.0.0`**, so a log from a shipped binary carries 76 for two different
-  events and nothing but the message text tells them apart. That is not repairable from
-  here and is recorded in the code rather than closed. From this version on, 76 is
-  `ClientHasAlreadyExited` and 77 is `ClientWaitCannotBeInterpreted`.
+  events and nothing but the message text tells them apart. That is not repairable and is
+  recorded in the code rather than closed. **Retiring the id is what stops it spreading:**
+  had 76 kept its first meaning, a query written against a v1.0.0 log would go on being
+  answered by every release after it, in the one direction a reader cannot detect. Now the
+  ambiguity ends at v1.0.0.
 
-  This is the one behaviour change in the batch that nobody went looking for: it was found
-  by the new event-id scan on its first run, and the scan was watched red against the real
-  tree before the renumber rather than against a synthetic fixture.
+  **This is the maintainer's decision and not the repair that was first offered.** The
+  batch moved the later event only, on the principle that the first meaning owns the id;
+  that was put to him as one of four directions and he chose to retire the id instead. The
+  class carries its own `RETIRED-EVENT-IDS: 76` line, and the scan reads those markers per
+  class as of this release rather than out of one file.
+
+  It was found by the new event-id scan on its first run, against a tree nobody had changed
+  for it. **The renumber was planted red the way the rule asks**: 76 went onto the retired
+  list while the event still carried it, the scan named the file, the line, the class and
+  the member, and only then did the event move. The one place in the suite that reads an id
+  back off a real log record moved with it, and gained a second assertion that nothing
+  emits 76 at all.
 
 - 🔧 **The relaunch note stops promising that stored state survived, because it may not have.**
   `SessionManager.ChildWasRelaunched` is what `browserai_resume` returns after it finds a
