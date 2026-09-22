@@ -21,11 +21,23 @@ above is about the copy: nothing already here may be rewritten. Taking the copy
 again, from a live file that has only grown, replaces a shorter prefix with a
 longer whole, and the header says which commit each snapshot was taken at.
 **Check it rather than trusting it**: the previous body must be a byte-exact
-prefix of the new one, and on the 2026-09-18 re-snapshot it was, growing by
-61,187 bytes and 118 lines with nothing above them touched. **Nothing enforces
-this** — `AppendOnlyRecordTests` seals `docs/reviews/` and released `CHANGELOG`
-sections, and a ledger is deliberately outside it, because a sealed prefix would
-forbid the re-snapshot rather than the edit.
+prefix of the new one — on the 2026-09-18 re-snapshot it was, growing by 61,187
+bytes and 118 lines, and on the 2026-09-22 one by 41,332 bytes and 76 lines,
+each time with nothing above them touched. **Nothing enforces this** —
+`AppendOnlyRecordTests` seals `docs/reviews/` and released `CHANGELOG` sections,
+and a ledger is deliberately outside it, because a sealed prefix would forbid
+the re-snapshot rather than the edit.
+
+⚠️ **A snapshot taken after the live copy is gone is the LAST one, and it says
+so in its own header** — *added 2026-09-22, when the first one was*. The
+2026-09-15 ledger's live copy was `.work/STATE.md`, and the scratch folder it
+sat in is ephemeral by charter; it was deleted in the same commit that took this
+snapshot. From that commit the snapshot is not a copy of the record, it **is**
+the record, and there is nothing left to re-snapshot it from. **A new session
+does not reopen a closed ledger**: it opens a new file here, named for the day
+it was opened, and this table gains a row. The reason is the rule at the top —
+appending to a closed ledger from a different session's live file would rewrite
+a body rather than extend one, and no prefix check could tell the difference.
 
 ⚠️ **A ledger is not a decision of record.** [`DECISIONS.md`](../../DECISIONS.md)
 is the charter; [`HAZARDS.md`](../../HAZARDS.md) is what is known to be
@@ -35,4 +47,4 @@ to whichever of those three owns it. The ledger then records that it was moved.
 
 | Ledger | Session |
 |---|---|
-| [`2026-09-15-release-session.md`](2026-09-15-release-session.md) | The 2026-09-15 session and every batch since, snapshotted 2026-09-16 and re-snapshotted 2026-09-18: the 1.0.0 re-cut, the icon choice (Q196), the release-body shape (Q197), the first-run and installer measurements, the machine sweep, the retirement of the scratch directory — and then the second and third re-ships, the `playwright-core` pull-forward and its written exit (Q210), the re-verification batch taken against chromium 1245 and firefox 1548, and the follow-ups through Q215. *The name is the day it was opened and is left alone: it is what every link to it says.* |
+| [`2026-09-15-release-session.md`](2026-09-15-release-session.md) | **CLOSED** — the 2026-09-15 session and every batch since, snapshotted 2026-09-16, re-snapshotted 2026-09-18 and finally 2026-09-22: the 1.0.0 re-cut, the icon choice (Q196), the release-body shape (Q197), the first-run and installer measurements, the machine sweep, the retirement of the scratch directory — then the second and third re-ships, the `playwright-core` pull-forward and its written exit (Q210), the re-verification batch taken against chromium 1245 and firefox 1548 — and then WebMCP: the page-tool pass-through decision (Q218), `browserai_page_tool`, the onboarding guard (Q221), the owed re-verification rows, and the questions left open at the close (Q222–Q224). *The name is the day it was opened and is left alone: it is what every link to it says.* |

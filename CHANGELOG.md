@@ -685,6 +685,26 @@ release body; nothing else depends on it.
   product quotes it. Row 17 was taken with the previous bundle as its positive control,
   fetched with `npm pack`, and it returned exactly what the row recorded.
 
+- 📝 **The session ledger is snapshotted for the last time, and the scratch folder is
+  empty.** `docs/ledger/2026-09-15-release-session.md` was taken on the 16th, re-taken on
+  the 18th, and is re-taken here at `75011ea` with everything the live copy gained since:
+  the WebMCP measurements, the page-tool pass-through decision and `browserai_page_tool`,
+  the onboarding guard, the four owed re-verification rows, and the questions left open at
+  the close. The body is replaced verbatim with `.work/STATE.md` and the previous body is
+  a byte-exact prefix of it, 41,332 bytes and 76 lines shorter, with nothing above the new
+  material touched. It was scanned for credentials first, against a positive control
+  carrying all seven shapes the scan looks for: the control matched 7 of 7 and the ledger 0
+  of 7.
+
+  **What makes this one final is that the live copy is gone.** `.work/` is ephemeral by
+  charter, and it is emptied in this same commit -- `STATE.md` and one screenshot of a
+  GitHub settings page whose only load-bearing fact, the `og:image` URL, is already in the
+  ledger. So from here the snapshot is not a copy of the record, it **is** the record, and
+  `docs/ledger/README.md` says both halves: this is the last snapshot of that session, and
+  a new session opens a new ledger beside it rather than appending to a closed one, because
+  appending from a different session's live file would rewrite a body rather than extend
+  one and no prefix check could tell the difference.
+
 ## [1.0.0] - 2026-09-17
 
 BrowserAI is a Windows MCP server that gives an AI agent a real browser, either
