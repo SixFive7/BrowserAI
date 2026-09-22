@@ -723,6 +723,26 @@ before this and nobody had re-read the number:*
   The tool-permission policy was removed — it was never a boundary against the
   caller — and the golden snapshot was doing this job all along, over the schemas
   as well as the names.
+- ⚠️ **RE-PUBLISH BOTH SLICES FIRST, AND A PAYLOAD REBUILD IS WHY IT IS NOT
+  ONLY A `src/` RULE — *added 2026-09-22 by addition*.**
+  [Item 1](#1-everything-re-resolved-to-latest-and-green) re-resolves the payload,
+  and `build/Build-Payload.ps1` deletes and re-resolves
+  `build/payload/package-lock.json` on every run — which
+  `PublishedSlice.EnsureFresh` counts among its inputs. So the published binaries
+  are stale by the time this item runs **even when nothing under `src/` was
+  touched**, and around thirty arms that drive the published binary refuse
+  together rather than failing on anything about the code.
+  **Measured 2026-09-22 on this release's pre-flight run: 47 reds**, every one
+  reading *the published binary at '…\BrowserAI.Server.exe' is older than 1
+  source file(s) … build\payload\package-lock.json*. The two commands are the
+  ones that refusal names — `dotnet publish src/BrowserAI/BrowserAI.csproj -c
+  Release -r win-x64 --self-contained` and the same shape over
+  `src/BrowserAI.App/BrowserAI.App.csproj` — and
+  [item 7](#7-build-clean)'s release publish is **not** a substitute, because
+  `build/New-Release.ps1` stages into `artifacts\publish-<exe stem>` and never
+  writes `src\<project>in\`. The early signal is the coverage block's
+  `publish freshness` row, which reads `STALE` and names the newest input;
+  the reds are the late one.
 - ⚠️ **Pack before you run this item, not after — added 2026-09-15.** Two
   capabilities are produced by `build/New-Release.ps1` and by nothing else — the
   packed `.nupkg` the notice check reads, and, since the install layout split,

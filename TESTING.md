@@ -1563,6 +1563,22 @@ consequences a reader has to carry:
   [the `publish freshness` row](#the-run-states-the-publish-freshness-it-established),
   which reads `STALE` and names the newest input; the thirty refusals are the
   late one.
+
+  ⚠️ **AND IT IS NOT ONLY `src/`: A PAYLOAD REBUILD OBSOLETES THE SLICE TOO —
+  *added 2026-09-22 by addition, and the bullet above says `src/` twice and means
+  it literally*.** `PublishedSlice.EnsureFresh` counts
+  `build/payload/package-lock.json` among its inputs, so
+  `build/Build-Payload.ps1` — which deletes and re-resolves that lock on every
+  run — leaves the published binaries older than something that went into them,
+  exactly as a source edit would. **Measured 2026-09-22 on the release gate's own
+  pre-flight run: 47 reds**, every one of them
+  *the published binary at '…\BrowserAI.Server.exe' is older than 1 source
+  file(s) … build\payload\package-lock.json*, on a tree whose `src/` nobody had
+  touched since the previous publish. **Re-publish BOTH slices after a payload
+  rebuild**, with the same two commands, and note the ORDER a release runs in:
+  [item 1](RELEASING.md#1-everything-re-resolved-to-latest-and-green) re-resolves
+  the payload and [item 8](RELEASING.md#8-run-everything) runs the suite, so the
+  rebuild always comes first and the re-publish is always owed.
 - **Nothing builds a contributor's pull request any more.** For a public
   repository that is the real cost of the removal: 54% of this project's
   enforcement is a test or a release-phase check, and a pull request can now break
