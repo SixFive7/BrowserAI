@@ -1448,6 +1448,27 @@ internal static partial class ProxyLog
     // particular ids on particular paths and nothing more -- searched, with a
     // positive control on the same corpus, 2026-09-22.
     //
+    // ✅ THE SECOND HALF OF THAT SENTENCE IS NO LONGER TRUE, and it is
+    // corrected here rather than rewritten. Corrected 2026-09-22 by addition
+    // (previously the paragraph above stood alone, and "nothing could" was its
+    // last word). `ProxyLogTests.EveryLogEventIdIsUniqueInItsClassAndNoRetiredIdIsInUse`
+    // reads every `[LoggerMessage]` in `src\` as text, refuses two events
+    // sharing an id inside one class, and refuses any id the marker below
+    // names. It was planted red twice against this tree -- once with a
+    // synthetic duplicate and once with `ChildHasGone` moved back onto a
+    // retired id -- before it was allowed to be green. What it still CANNOT see
+    // is whether an id ever shipped under an older meaning; that is what the
+    // marker is for, and keeping the marker honest is a person's job.
+    //
+    // ⚠️ THE LINE BELOW IS READ BY THAT TEST. It is the machine-readable half
+    // of the prose above, beside it rather than instead of it -- the same
+    // arrangement `drift-check.json` prescribes for sqlite.org's `PRODUCT`
+    // line. Taking an id off it is how a deliberate reuse is recorded, and the
+    // prose above is where the reason goes. 16 is deliberately NOT on it: it is
+    // in use, which is what the correction two paragraphs up is about.
+    //
+    // RETIRED-EVENT-IDS: 10, 11, 12
+    //
     // WHAT THE REUSE ACTUALLY COSTS, measured rather than assumed, because the
     // sentence above is about somebody's old query. `ReservationReleased` held
     // 16 for TWO DAYS and is in no artifact anybody can fetch today: every

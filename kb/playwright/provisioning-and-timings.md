@@ -1061,6 +1061,68 @@ else. Same probe, same `WRITE`, same `READ`, same origin, seconds apart.
 > maintainer's — and it is [an open hazard row](../../HAZARDS.md#hazard-index)
 > rather than a sentence quietly edited.
 
+#### A browser server that ends ITSELF loses the same stores as one that is killed — measured 2026-09-22
+
+⭐ **The obvious escape from the finding above was measured and it is closed.**
+The table's own reading was that Path B kills the node children *"losing whatever
+the cookie jar and the `localStorage` backing store had not yet written"*, which
+invites the narrowing *then it is the kill, and a browser that dies of its own
+accord flushes on the way out*. That was the one thing that would have let the
+model-facing string keep its promise for real crashes. **It does not happen.**
+`[FLOATS]`
+
+Nine runs through
+[`docs/probes/2026-09-16-resume/selfdeath-probe.js`](../../docs/probes/2026-09-16-resume/README.md),
+at chromium **1246** and firefox **1549** under `playwright-core`
+1.64.0-alpha-1789764292000 and `@playwright/mcp` 0.0.82, against a real published
+`BrowserAI.Server.exe`. One arrangement, three ways for the child to go:
+
+| How the browser server went | Chromium ×2 | Firefox ×2 |
+|---|---|---|
+| **`kill`** — `Stop-Process` by pid, identity verified. The control, and it is Path B | cookie **GONE**, `localStorage` **GONE** | cookie survived, `localStorage` **GONE** |
+| **`exit`** — the child called `process.exit(0)` on itself | cookie **GONE**, `localStorage` **GONE** | cookie survived, `localStorage` **GONE** |
+| **`abort`** — the child called `process.abort()` on itself | cookie **GONE**, `localStorage` **GONE** | cookie survived, `localStorage` **GONE** |
+
+**`IndexedDB`, `CacheStorage` and the service-worker registration survived in all
+nine**, and `sessionStorage` went in all nine, which is what it does on every
+path. Every run confirmed all six stores present before the death. The resume
+returned `SessionManager.ChildWasRelaunched` in **290–344 ms** in all nine, and
+the browser tree went to **0** processes in all nine.
+
+⭐ **Not one arm is distinguishable from the control**, and the per-family pattern
+is tighter than the killed-only table above it: **Chromium loses both the cookie
+and `localStorage` on 5 of 5, Firefox loses `localStorage` and keeps the cookie
+on 5 of 5.** So the loss is a property of *the browser not shutting down
+cleanly*, not of *who ended it* — which is why the corrected string says exactly
+that and does not say "killed". **Q223 c**, and it is what settled Q223 b.
+
+> **What the probe had to do to make a process end itself, recorded because it
+> is a fact about upstream rather than about this measurement.**
+> `browser_run_code_unsafe` describes itself as executing *"arbitrary JavaScript
+> in the Playwright server process"* and does so through
+> `vm.runInContext` against a context built as `{ page, __end__ }` **and nothing
+> else** — read 2026-09-22 out of the payload's own
+> `playwright-core/lib/coreBundle.js`. `process`, `setTimeout` and `require` are
+> all undefined in that snippet. **The first version of this probe died on
+> `ReferenceError: setTimeout is not defined` and reported a clean run**, because
+> the child it meant to end never went anywhere and the before/after reads were
+> trivially equal. The route that works is `page.constructor.constructor('return
+> process')()` — `page` is a host-realm object, so its constructor's constructor
+> builds a function in the host realm, which is the escape node's own
+> documentation says `vm` is not a defence against. **The tool's description is
+> therefore accurate about the risk and misleading about the default scope**, and
+> that is worth knowing for a tool this product forwards with an `allow` verdict.
+
+> ⚠️ **ONE THING THE SELF-DEATH ARMS DO THAT THE CONTROL DOES NOT, named rather
+> than smoothed over.** A server has **two** `node` children; the control kills
+> both, and `process.exit`/`process.abort` end exactly **one** — the one
+> BrowserAI's transport is talking to, which answered *"The browser child did not
+> answer 'tools/call': IOException: The server shut down unexpectedly"* — leaving
+> the other alive, so those arms sat out the probe's full 30 s wait rather than
+> finishing in the control's 42 ms. **It changes nothing about the readings**:
+> the browser tree went to zero and the relaunch happened in every arm. What the
+> surviving `node` is was not diagnosed, and is recorded as not diagnosed.
+
 **Costs, 2026-09-22, two runs each.** Read them against the control in
 [the cost ratios](#firefox-against-chromium-the-standing-cost-ratios): Chromium
 is **byte-identical across 1244, 1245 and 1246**, and its own first-navigate

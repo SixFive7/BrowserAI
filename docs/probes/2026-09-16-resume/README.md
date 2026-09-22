@@ -43,6 +43,34 @@ against; a `data:` URL has no storage at all and cannot be used here.
   and the transcript is
   [`docs/evidence/2026-09-17-resume-wedge`](../../evidence/2026-09-17-resume-wedge/README.md).
 
+- ⚠️ **`selfdeath-probe.js` is the fourth shape, added 2026-09-22 for
+  [Q223 c](../../../HAZARDS.md#hazard-index).** It asks the one question
+  `resume-probe2.js` left open: the durability table says a relaunch after the
+  child was **killed** loses persistent stores, and reads the mechanism as the
+  kill — so does a browser server that dies **of its own accord** flush on the
+  way out? One arrangement, three ways for the child to go, chosen on the
+  command line: `kill` reproduces Path B exactly (`Stop-Process` by pid,
+  identity verified against a path BrowserAI owns); `exit` has the child call
+  `process.exit(0)` on itself; `abort` has it call `process.abort()`. It writes
+  and reads back the same six stores as `resume-probe2.js`, character for
+  character, so the two measurements are comparable without an argument about
+  the probe. Usage:
+  `node selfdeath-probe.js <BrowserAI.Server.exe> <sessionDir> <report.json> <kill|exit|abort> [browser]`.
+  It destroys its session on the way out. What it found is
+  [in the kb](../../../kb/playwright/provisioning-and-timings.md#a-browser-server-that-ends-itself-loses-the-same-stores-as-one-that-is-killed--measured-2026-09-22):
+  **no arm is distinguishable from the control.**
+
+  **Two things about the instrument, both of which cost a run before they were
+  understood.** The snippet reaches `process` through
+  `page.constructor.constructor('return process')()` rather than naming it,
+  because `browser_run_code_unsafe` runs in a `vm` context holding `page` and one
+  promise and nothing else — a first version used `setTimeout` and died on
+  `ReferenceError`, reporting a clean run in which the child it meant to end
+  never went anywhere. And the wait for the children to go polls **inside one
+  PowerShell** rather than starting one per poll: the obvious loop starts two
+  processes every 500 ms, which under the load of the thing being measured turned
+  a 30-second budget into minutes and read as a hang.
+
 ## What it touches
 
 The session directory it is given, and the product's shared data root — the

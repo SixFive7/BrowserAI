@@ -105,7 +105,14 @@ internal sealed class ThirdPartyNoticeTests
     /// </remarks>
     private static readonly (string Package, string[] Needles)[] StampedPackages =
     [
-        ("Velopack", ["Velopack {0} - MIT", "Retrieved 2026-08-16 against Velopack {0}."]),
+        // ⚠️ The date moves when the text is genuinely re-fetched, and only
+        // then. 2026-08-16 -> 2026-09-22 with the 1.2.0 -> 1.2.158 bump, whose
+        // LICENSE came back byte-identical: 1,091 bytes, SHA-256 91845db8…, at
+        // the new package's own nuspec repository commit. **The version
+        // placeholder is what makes this bite** — the date alone would let a
+        // re-stamp with no re-fetch look identical to a real one, which is
+        // exactly what the remarks above are about.
+        ("Velopack", ["Velopack {0} - MIT", "Retrieved 2026-09-22 against Velopack {0}."]),
         ("ModelContextProtocol", ["ModelContextProtocol {0} and", "Retrieved 2026-08-16 against ModelContextProtocol {0}."]),
         ("ModelContextProtocol.Core", ["ModelContextProtocol.Core {0} - Apache-2.0"]),
     ];

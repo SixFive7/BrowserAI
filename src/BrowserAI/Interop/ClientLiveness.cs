@@ -419,8 +419,26 @@ internal static partial class ClientLivenessLog
     /// <param name="processId">The client's pid.</param>
     /// <param name="wait">What <c>WaitForSingleObject</c> answered.</param>
     /// <param name="reason">The last error's message, which may belong to something else.</param>
+    // ⚠️ 77 RATHER THAN 76, AND 76 IS WHY THIS COMMENT EXISTS. Corrected
+    // 2026-09-22: this event was declared with EventId 76, which
+    // `ClientHasAlreadyExited` below already held, so two different events in
+    // one class shared one key. Read out of `git log -S` rather than
+    // remembered: `ClientHasAlreadyExited` took 76 in `ec6d858` on 2026-09-15,
+    // and this event took the same 76 in `bf27512` on 2026-09-16, one day
+    // later. THE LATER ONE MOVES, so 76 keeps the meaning it had first.
+    //
+    // ⚠️ BOTH ARE IN v1.0.0, so a log from a shipped binary carries 76 for TWO
+    // events and NOTHING can tell them apart but the message text. That is not
+    // repairable from here and is recorded rather than closed. From this
+    // version on, 76 is `ClientHasAlreadyExited` and 77 is this.
+    //
+    // It was found by `ProxyLogTests.EveryLogEventIdIsUniqueInItsClassAndNoRetiredIdIsInUse`
+    // on the first run it ever had -- a test written for a DIFFERENT collision,
+    // `ProxyLog`'s reuse of 16, which was found by reading. Two instances of one
+    // defect class in one tree is the argument for the scan over the argument
+    // that the first one was a one-off.
     [LoggerMessage(
-        EventId = 76,
+        EventId = 77,
         Level = LogLevel.Warning,
         Message = "The MCP client's state, pid {ProcessId}, could not be read: WaitForSingleObject answered 0x{Wait:X8} and the thread's last error said '{Reason}'. It is read as neither alive nor gone, so there is no client-liveness watch and teardown falls back to stdin EOF alone.")]
     public static partial void ClientWaitCannotBeInterpreted(ILogger logger, int processId, uint wait, string reason);

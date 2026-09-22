@@ -460,6 +460,63 @@ it to `install.rs`'s rename-and-delete.*
 > mechanism the day the mechanism arrives is how a document starts being written
 > for the build.
 
+### How often the feed is asked, and by what — measured 2026-09-22
+
+**One request per server start of an INSTALLED, non-pre-release BrowserAI, and
+none at all from anything else.** There is no timer, no interval and no retry:
+`UpdateService.StartInBackground` calls `RunOnceAsync` once and the type holds no
+`PeriodicTimer` of any kind. The question was asked by the maintainer as *"is
+there not a risk of flooding the release page with update checks if an agent
+starts 100+ browsers in sustained bursts?"* — and the answer is that browsers are
+not what asks.
+
+**Three guards decide it, and two of them are BrowserAI's own** — read out of
+`src/BrowserAI.Core/Updates/UpdateService.cs` on 2026-09-22, not inferred:
+
+| Guard | Where | What it does |
+|---|---|---|
+| `if (!isInstalled) return;` | `UpdateService.StartInBackground` | Returns **before any network call**, writing `UpdateLog.NotAnInstall`. This is what a checkout, a `dotnet run`, every test host and every suite-started server look like |
+| `if (BuildVersion.HasPreReleaseSuffix(build)) return;` | the line below it | *Never self-update from a build that is not a release.* An installed pre-release checks nothing either |
+| `VelopackLocator.Current.CurrentlyInstalledVersion is null` | `InstallLocation.Locate` | Supplies the predicate the first guard reads. Velopack answers the question; **BrowserAI performs the skip** |
+
+⚠️ **THE MECHANISM IS OURS, NOT VELOPACK'S, AND THAT CORRECTS WHAT WAS WRITTEN
+DOWN.** *The ledger entry of 2026-09-22 ~04:00 recorded this as an inference —
+"the mechanism keeping suite servers off the feed is inferred (Velopack's
+not-installed detection: the `[17] "Installed at"` line appears only for the
+installed binary), not read this turn".* Read this turn, it is a plain early
+return in this repository's own code, above Velopack entirely. The inference
+pointed at the wrong component and happened to reach the right conclusion, which
+is the shape a confident wrong answer takes.
+
+**A session is not a check, and a browser is certainly not.** Sessions and
+browsers are children of one server per client connection, so 100 browsers inside
+one session cost **zero** extra requests. The only things that ask are: a server
+start of an installed release build, the configuration app's own *Check for
+updates* button (`ConfigurationDialog.Command.CheckForUpdates`, one request per
+click), and the release chain's own post-publish polls.
+
+**The monitor is the asset's own download counter, and it discriminates.** Read
+from `gh release view v1.0.0` on 2026-09-22: `releases.win.json` **48**, against
+**1** for every other asset on the release — `BrowserAI.exe`, `BrowserAI.zip`,
+`BrowserAI.app-1.0.0-full.nupkg`, `RELEASES`, `assets.win.json` and the manifest
+zip. *(47 earlier the same day, so one further check landed in about nine hours —
+one server start.)* Those 48 requests stand against **thousands** of server
+processes the suite started in the same window — the saturation arm alone starts
+100 per run — which is the measurement that says non-installed binaries really do
+ask for nothing. **And the flat `1` on the package assets says something else
+worth having: no install anywhere has ever applied an update, because nothing has
+ever fetched a package.**
+
+**The pathological case, named rather than defended against.** A client that
+spawns a fresh server process per task, in bursts, produces one 260-byte
+conditional GET per start. The CDN does not care, GitHub documents no rate limit
+on release-asset downloads (abuse detection aside), and what actually degrades is
+the download counter's value as a monitor — cosmetically, by inflation.
+**Q225 b**, the maintainer's answer, is to leave the per-start check exactly as it
+is and document it: *"Q225 b"*. The alternative offered and declined was a
+machine-wide check stamp in the shared data root, skipping the feed when any
+instance of this install had checked within the hour.
+
 ### Sizes
 
 **Re-measured 2026-09-22** by running `build/New-Release.ps1` twice, at

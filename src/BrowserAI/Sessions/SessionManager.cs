@@ -155,14 +155,50 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>It names what did not survive, because a repair that reads as a
     /// restore is worse than no repair.</b> The profile on disk is the profile
-    /// the new child opens, so cookies, storage and the session's log are all
-    /// still there; what is gone is everything that lived in the dead process —
-    /// the pages that were open, the tabs, and anything a script left in memory.
+    /// the new child opens, so the session directory, the profile and the log
+    /// are all still there; what is gone is everything that lived in the dead
+    /// process — the pages that were open, the tabs, and anything a script left
+    /// in memory.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-09-22, and the sentence it replaces was measurably
+    /// false</b> <i>(previously "…The session's directory, profile and log are
+    /// unchanged, so cookies and stored state are still there — but nothing that
+    /// lived in the old process survived it…")</i>. The profile really is intact
+    /// on disk; <b>what is on disk is not what was written</b>. Measured
+    /// 2026-09-22 at chromium 1246 and firefox 1549: a relaunch loses persistent
+    /// stores a clean handover keeps, and <b>every single run lost at least one
+    /// store beyond <c>sessionStorage</c></b> — Chromium the cookie and
+    /// <c>localStorage</c>, Firefox <c>localStorage</c> with the cookie
+    /// surviving. <c>IndexedDB</c> and <c>CacheStorage</c>, which commit on
+    /// transaction, survived everywhere.
+    /// </para>
+    /// <para>
+    /// <b>It does not say "killed", and that is the half Q223 c settled rather
+    /// than assumed.</b> The obvious narrowing was measured and refused: eight
+    /// runs in which the browser server ended <i>itself</i> — four by
+    /// <c>process.exit(0)</c> and four by <c>process.abort()</c>, deaths nobody
+    /// caused — lost exactly the same stores as the four in which it was
+    /// terminated, per family, with no arm distinguishable from the control. So
+    /// the note is true of any death that was not a clean shutdown, and a
+    /// wording scoped to a kill would be false on a crash, which is the case a
+    /// caller is likelier to meet. The rig is
+    /// <c>docs/probes/2026-09-16-resume/selfdeath-probe.js</c>.
+    /// </para>
+    /// <para>
+    /// <b>The instruction matters as much as the warning.</b> Which store is
+    /// lost varies by family and could not be predicted in advance, so a caller
+    /// has nothing to act on unless it is told to read back rather than assume.
+    /// <c>DeadChildTests.TheRelaunchNoteDoesNotPromiseThatStoredStateSurvived</c>
+    /// is the guard, and it exists because every other arm in that file asserts
+    /// against this constant and would stay green through any rewrite of it.
     /// </para>
     /// </remarks>
     public const string ChildWasRelaunched =
-        "the browser server for this session had died and was relaunched. The session's directory, profile and log are unchanged, "
-        + "so cookies and stored state are still there — but nothing that lived in the old process survived it: no page is open, "
+        "the browser server for this session had died and was relaunched. The session's directory, profile and log are on disk and "
+        + "unchanged — but what is on disk is not everything that was written: a browser that did not shut down cleanly had no chance "
+        + "to flush, and measurement says recent cookie and localStorage writes may be gone, while IndexedDB and CacheStorage survive. "
+        + "Read any stored value back before you rely on it. Nothing that lived in the old process survived it either: no page is open, "
         + "there are no tabs, and anything a previous call left on a page is gone. Navigate again before you act on what you see.";
 
     /// <summary>

@@ -114,7 +114,140 @@ release body; nothing else depends on it.
   onboarding-named variable in the bundle turns onboarding **on**, and the published
   documentation does not document the marker at all.
 
+- ✅ **A log event id must be unique in its class, and the scan found a second collision on its first run.**
+  `ProxyLogTests.EveryLogEventIdIsUniqueInItsClassAndNoRetiredIdIsInUse` reads every
+  `[LoggerMessage]` under `src/` as text, groups the ids by the class that declares them,
+  and refuses a repeat. It also refuses any id the `RETIRED-EVENT-IDS:` marker in
+  `ProxyLog`'s closing comment names. **An id is a key somebody's saved log query is
+  written against**, which is the whole reason the rule exists and the reason the retired
+  list is read out of the comment rather than typed into the test: a second copy is a
+  second thing to keep in step, and the comment is what a reader of an old log meets.
+
+  **It was written for a collision found by reading and it found another one by running.**
+  `ProxyLog` reused retired id 16 for twenty-two days, which a person noticed on 2026-09-22.
+  On this test's first run against the real tree it reported `ClientLivenessLog` declaring
+  **id 76 twice** -- `ClientWaitCannotBeInterpreted` and `ClientHasAlreadyExited` -- which
+  nobody had noticed at all. Two instances of one defect class in one tree is the argument
+  for a scan over the argument that the first was a one-off.
+
+  **The marker parse is held in both directions**, because the same comment contains a
+  correction paragraph naming 16 as an id that is in use again: a parse that took numbers
+  out of prose would retire 16 and fail the tree. Controls are synthetic and cover a clean
+  pair, a duplicated id, the same id in two different classes (not a collision, because an
+  id is scoped to its class), and the marker reading a list rather than a sentence.
+
 ### Changed
+
+- 🐛 **Two client-liveness events shared event id 76, and the later one moves to 77.**
+  `ClientHasAlreadyExited` took 76 in `ec6d858` on 2026-09-15 and
+  `ClientWaitCannotBeInterpreted` took the same 76 in `bf27512` one day later, read out of
+  `git log -S` rather than remembered. **The later one moves, so 76 keeps the meaning it
+  had first.**
+
+  ⚠️ **Both are in `v1.0.0`**, so a log from a shipped binary carries 76 for two different
+  events and nothing but the message text tells them apart. That is not repairable from
+  here and is recorded in the code rather than closed. From this version on, 76 is
+  `ClientHasAlreadyExited` and 77 is `ClientWaitCannotBeInterpreted`.
+
+  This is the one behaviour change in the batch that nobody went looking for: it was found
+  by the new event-id scan on its first run, and the scan was watched red against the real
+  tree before the renumber rather than against a synthetic fixture.
+
+- 🔧 **The relaunch note stops promising that stored state survived, because it may not have.**
+  `SessionManager.ChildWasRelaunched` is what `browserai_resume` returns after it finds a
+  session's browser server dead and starts a new one. It read *"The session's directory,
+  profile and log are unchanged, so cookies and stored state are still there"*. The first
+  half is true and the second is not: **the profile really is intact on disk, and what is
+  on disk is not what was written.**
+
+  It now says the directory, profile and log are on disk and unchanged, that a browser
+  which did not shut down cleanly had no chance to flush, that recent cookie and
+  `localStorage` writes may be gone while `IndexedDB` and `CacheStorage` survive, and that
+  the caller should read any stored value back before relying on it.
+
+  ⚠️ **It deliberately does not say "killed", and that is the half the measurement
+  settled.** The obvious narrowing -- blame the kill -- was tested and refused: nine runs
+  at chromium 1246 and firefox 1549 in which the browser server ended **itself**, four by
+  `process.exit(0)` and four by `process.abort()` against one kill control, lost exactly
+  the same stores as the control, per family, with no arm distinguishable from it. A
+  wording scoped to a kill would be false on a crash, which is the case a caller is likelier
+  to meet.
+
+  **`DeadChildTests.TheRelaunchNoteDoesNotPromiseThatStoredStateSurvived` is the guard**,
+  and it is a guard on the text rather than on the constant. Every other arm in that file
+  asserts against `SessionManager.ChildWasRelaunched` the symbol, so all of them stayed
+  green through the wording that shipped; this one was watched red against it.
+
+- ⬆️ **Velopack rolled 1.2.0 to 1.2.158, and the Windows installer is a 64-bit bootstrapper now.**
+  The first move this dependency has made since it was first reviewed. 158 commits, and one
+  release object in between in any form. **Nothing in this repository changed to absorb it**:
+  the `vpk` CLI surface was diffed by running both versions, and no flag this project passes
+  was removed or renamed.
+
+  **What arrives with it and is visible to a user.** `Setup.exe` and the root stub are
+  built x64 for a win-x64 pack rather than i686, measured on the packed artifact as PE
+  machine `Amd64` at 62,585,861 bytes against 59,490,421 before. `EstimatedSize` is written
+  as a `REG_DWORD` instead of a `REG_QWORD`, so Windows will show the app's size in
+  Add/Remove Programs where it showed nothing -- confirmed against the real install, whose
+  key carries `REG_QWORD 140209` today. `Update.exe --uninstall` shows an indeterminate
+  progress dialog, suppressed by `--silent` as before. The delta patch format is zstd only;
+  the bsdiff fallback is gone.
+
+  **What is declined and why.** Velopack Flow, the hosted release service that arrives as
+  four new top-level `vpk` commands, because releases go to GitHub Releases through `gh`
+  and a second publish path in the most hazard-dense area of the product buys nothing. The
+  Windows installer channel-override tag readers, because there is one track and the
+  channel is set explicitly for the reason landmine 1 gives. The two renamed MSI flags are
+  inert here: `--msi` is never passed.
+
+  **Our own open ask is still open.** `velopack/velopack#1056`, asking for a way to start
+  the installed app without a console window after a non-silent install, has no comments,
+  no linked pull request and no change in 1.2.158, so the windowless-exit path stays
+  exactly as necessary as it was.
+
+- 📝 **A browser server that ends itself loses the same stores as one that is killed.**
+  The durability table recorded on 2026-09-22 that a relaunch after the child was *killed*
+  loses persistent stores a clean handover keeps, and read the mechanism as the kill. That
+  reading invited an escape -- *a browser that dies of its own accord flushes on the way
+  out* -- and it is now closed by measurement.
+
+  Nine runs, three ways for the child to go, two families: killed by pid, ended by
+  `process.exit(0)`, and ended by `process.abort()`. **Chromium lost the cookie and
+  `localStorage` on 5 of 5. Firefox lost `localStorage` and kept the cookie on 5 of 5.**
+  `IndexedDB`, `CacheStorage` and the service-worker registration survived in all nine, and
+  the relaunch came back in 290 to 344 ms every time. No arm is distinguishable from the
+  control.
+
+  **One fact about upstream came out of building the rig**, and it is worth knowing for a
+  tool this product forwards with an `allow` verdict: `browser_run_code_unsafe` describes
+  itself as executing arbitrary JavaScript in the Playwright server process, and does it
+  through `vm.runInContext` against a context holding `page` and one promise and nothing
+  else. `process`, `setTimeout` and `require` are all undefined there. The description is
+  accurate about the risk and misleading about the default scope.
+
+- 📝 **The feed is asked once per server start, and a hundred browsers in one session ask nothing.**
+  Asked by the maintainer as *"is there not a risk of flooding the release page with update
+  checks if an agent starts 100+ browsers in sustained bursts?"* There is no timer, no
+  interval and no retry: `UpdateService.StartInBackground` runs one pass and the type holds
+  no `PeriodicTimer`. Sessions and browsers are children of one server per client
+  connection, so they cost no requests at all.
+
+  **Two of the three guards are this repository's own**, which is the half that had been
+  written down as an inference and is now read: `StartInBackground` returns before any
+  network call when the build was not installed by the installer, and again when it carries
+  a pre-release suffix. Velopack supplies only the predicate. So a checkout, a `dotnet run`,
+  every test host and every suite-started server ask for nothing.
+
+  **The monitor is the asset's own download counter and it discriminates.** On 2026-09-22
+  `releases.win.json` read 48 against 1 for every other asset on the release, while the
+  suite had started thousands of servers in the same window. The flat 1 on the packages
+  says something else worth having: no install anywhere has ever applied an update, because
+  nothing has ever fetched a package.
+
+  The pathological case is named and accepted: a client spawning a fresh server per task in
+  bursts costs one 260-byte request per start and inflates that counter, degrading the
+  monitor rather than the service. The alternative offered and declined was a machine-wide
+  check stamp in the shared data root.
 
 - 🔧 **`webmcp: true` is written into every generated config rather than left to upstream's default.**
   The key switches on the page-provided tools and the

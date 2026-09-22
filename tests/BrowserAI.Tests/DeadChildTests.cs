@@ -309,6 +309,83 @@ internal sealed class DeadChildTests
         }
     }
 
+    /// <summary>
+    /// The relaunch note distinguishes <b>the profile is on disk</b> from
+    /// <b>your writes are in it</b>, because measurement says those are not the
+    /// same sentence.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is a wording guard and it is deliberate.</b> Every other arm in
+    /// this file asserts against <c>SessionManager.ChildWasRelaunched</c> the
+    /// constant, so all of them stay green through any rewrite of the text the
+    /// constant holds — which is exactly how the sentence below shipped for five
+    /// days saying something measurement contradicts.
+    /// </para>
+    /// <para>
+    /// <b>What it is guarding, measured.</b> 2026-09-22 at chromium 1246 and
+    /// firefox 1549, eight runs over two sittings: a relaunch after the child
+    /// was <i>killed</i> lost at least one persistent store beyond
+    /// <c>sessionStorage</c> every time — the cookie on both Chromium runs,
+    /// <c>localStorage</c> on one Chromium and both Firefox runs — while the
+    /// clean handover through the identical probe lost <c>sessionStorage</c> and
+    /// nothing else on 4 of 4. The string nevertheless read <i>"so cookies and
+    /// stored state are still there"</i>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>And it does NOT say "killed", which is the half Q223 c settled.</b>
+    /// The obvious narrowing — blame the <c>kill</c> — was measured and refused:
+    /// a child that ends ITSELF with <c>process.exit(0)</c>, a death nobody
+    /// caused, loses the same stores as one that is terminated
+    /// (<see href="../../docs/probes/2026-09-16-resume/README.md">the rig</see>).
+    /// So the note is true of any death that was not a clean shutdown, and a
+    /// wording that named the kill would be false on the case a caller is most
+    /// likely to meet.
+    /// </para>
+    /// </remarks>
+    [Test]
+    public async Task TheRelaunchNoteDoesNotPromiseThatStoredStateSurvived()
+    {
+        var note = SessionManager.ChildWasRelaunched;
+
+        // The claim the measurement contradicts. Quoted here in the shape it
+        // shipped in, so that re-introducing it is red rather than reviewed.
+        await Assert.That(note)
+            .DoesNotContain("stored state are still there")
+            .Because("a relaunch follows a browser that did not shut down cleanly, and measurement says the cookie"
+                + " and localStorage writes are exactly what it may not have flushed");
+
+        // The true half has to survive the correction: the DIRECTORY really is
+        // intact, and a caller that concluded otherwise would destroy a session
+        // it could still use.
+        await Assert.That(note).Contains("profile");
+
+        // And the caller has to be told to go and look rather than to assume,
+        // because which store is lost varies by family and nothing predicts it.
+        //
+        // The predicate is the instruction's SHAPE rather than one spelling of
+        // it -- read-it-back, or verify, or check -- because a guard that
+        // demanded an exact phrase would be a guard on the phrase. It was
+        // written as `Contains("read them back")` first and went red against a
+        // note that said "Read any stored value back", which is the same
+        // instruction and a different sentence.
+        var tellsTheCallerToLook =
+            (note.Contains("read", StringComparison.OrdinalIgnoreCase)
+                && note.Contains("back", StringComparison.OrdinalIgnoreCase))
+            || note.Contains("verify", StringComparison.OrdinalIgnoreCase)
+            || note.Contains("check", StringComparison.OrdinalIgnoreCase);
+
+        await Assert.That(tellsTheCallerToLook)
+            .IsTrue()
+            .Because("the note names a risk; without an instruction the model has no action to take from it");
+
+        // ⚠️ NOT "killed". The self-death arm of the probe lost the same stores,
+        // so a note scoped to termination would be false on a crash.
+        await Assert.That(note)
+            .DoesNotContain("was killed")
+            .Because("Q223 c measured a child that ended itself and it lost the same stores; scoping the warning to a kill would understate it");
+    }
+
     private static async Task<JsonObject> CallAsync(McpTestHarness rig, string tool, JsonObject arguments) =>
         await rig.Client.RoundTripAsync("tools/call", new JsonObject
         {
