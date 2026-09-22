@@ -433,7 +433,7 @@ and the note says that now.
   the way the browser-installation sentence is — what must survive a re-draft is the rule,
   not the draft.
 
-- 💥 **The payload cannot be rebuilt until somebody adjudicates the override's exit.**
+- 💥 **The payload could not be rebuilt until the override's exit was adjudicated, the same day.**
   ✅ **ADJUDICATED AND CLOSED THE SAME DAY, 2026-09-21** -- see the roll entry below.
   This entry stands as the record of the state the day opened in; nothing in it is
   retracted, and the answer was to roll rather than to widen the comparison.
