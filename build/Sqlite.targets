@@ -177,7 +177,7 @@
           Outputs="$(SqliteLibrary)">
 
     <Error Condition="!Exists('$(SqliteAmalgamationDirectory)sqlite3.c')"
-           Text="The vendored SQLite amalgamation is not at '$(SqliteAmalgamationDirectory)sqlite3.c'. It is committed source rather than a download: restore it from git, or re-fetch the archive named in drift-check.json and check its SHA3-256 against sqlite.org's own PRODUCT line before extracting." />
+           Text="The vendored SQLite amalgamation is not at '$(SqliteAmalgamationDirectory)sqlite3.c'. It is committed source, not a download: restore it from git, or re-fetch the archive named in drift-check.json and check its SHA3-256 against sqlite.org's own PRODUCT line before extracting." />
 
     <MakeDir Directories="$(SqliteBuildDirectory)" />
 

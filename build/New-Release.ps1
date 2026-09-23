@@ -295,7 +295,7 @@ if (-not $toolVersion) {
 }
 
 if ($toolVersion -ne $libraryVersion) {
-    Write-Error "The vpk tool is $toolVersion and the Velopack library resolved to $libraryVersion. The CLI writes the package format the library reads, so a mismatch produces a package the client cannot read, and it is discovered on a user's machine rather than here. Run: dotnet tool update -g vpk --version $libraryVersion"
+    Write-Error "The vpk tool is $toolVersion and the Velopack library resolved to $libraryVersion. The CLI writes the package format the library reads, so a mismatch produces a package the client cannot read, and it is discovered on a user's machine, not here. Run: dotnet tool update -g vpk --version $libraryVersion"
     exit 1
 }
 

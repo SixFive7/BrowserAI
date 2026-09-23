@@ -167,7 +167,7 @@ $statedParts = @($overrideParts.GetEnumerator() | Where-Object { $_.Value })
 $blankParts = @($overrideParts.GetEnumerator() | Where-Object { -not $_.Value } | ForEach-Object { "-$($_.Key)" })
 
 if ($statedParts.Count -gt 0 -and $blankParts.Count -gt 0) {
-    Write-Error ("A crunch override is stated in full or not at all, and " + ($blankParts -join ', ') + " " + $(if ($blankParts.Count -eq 1) { 'is' } else { 'are' }) + " missing. DECISIONS.md requires the manifest to say what was held, at what version, against what newest version, why, and the name of the human who took the decision -- an agent may never take it. A block carrying some of those reads like a complete account of the decision to whoever opens it a year from now, so this refuses rather than writing one.")
+    Write-Error ("A crunch override is stated in full or not at all, and " + ($blankParts -join ', ') + " " + $(if ($blankParts.Count -eq 1) { 'is' } else { 'are' }) + " missing. DECISIONS.md requires the manifest to say what was held, at what version, against what newest version, why, and the name of the human who took the decision -- an agent may never take it. A block carrying some of those reads like a complete account of the decision to whoever opens it a year from now, so this refuses instead of writing one.")
     exit 1
 }
 
@@ -177,7 +177,7 @@ foreach ($entry in $wanted.GetEnumerator()) {
 }
 
 if ($missing) {
-    Write-Error ("The resolved set cannot be recorded: " + ($missing -join ', ') + " is missing from $Root. A manifest holding seven of eight files reads exactly like a complete one to whoever opens it a year from now, so this refuses rather than writing a partial. If payload/payload.json is the missing one, run build/Build-Payload.ps1 first: a release cut without a payload is not a release.")
+    Write-Error ("The resolved set cannot be recorded: " + ($missing -join ', ') + " is missing from $Root. A manifest holding seven of eight files reads exactly like a complete one to whoever opens it a year from now, so this refuses instead of writing a partial. If payload/payload.json is the missing one, run build/Build-Payload.ps1 first: a release cut without a payload is not a release.")
     exit 1
 }
 

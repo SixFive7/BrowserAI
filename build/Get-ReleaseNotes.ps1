@@ -84,7 +84,7 @@ $content = Get-Content -LiteralPath $Path -Raw
 $section = [regex]::Match($content, '(?ms)^\#\#[ \t]+\[Unreleased\][ \t]*\r?$(.*?)(?=^\#\#[ \t]|\z)')
 
 if (-not $section.Success) {
-    Write-Error "'$Path' has no '## [Unreleased]' heading, so there is nothing to release from and nothing for the empty-section check to read. Restore the heading rather than working around it."
+    Write-Error "'$Path' has no '## [Unreleased]' heading, so there is nothing to release from and nothing for the empty-section check to read. Restore the heading; do not work around it."
     exit 1
 }
 

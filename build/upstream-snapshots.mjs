@@ -401,7 +401,7 @@ function artifactPrefixes(source) {
       if (!member) {
         throw new Error(
           `An artifact prefix expression is neither a literal nor this.<member>: ${expression}\n` +
-          'The prefix set can no longer be derived from the bundle, which is a red build rather than a smaller set.');
+          'The prefix set can no longer be derived from the bundle, which is a red build and not a smaller set.');
       }
       ({ literals, via } = resolveMember(source, member));
     }
@@ -413,7 +413,7 @@ function artifactPrefixes(source) {
   }
 
   if (prefixes.size === 0) {
-    throw new Error('No artifact prefixes were found at all, which means the scan stopped matching rather than upstream removing them.');
+    throw new Error('No artifact prefixes were found at all, which means the scan stopped matching and not upstream removing them.');
   }
 
   return {

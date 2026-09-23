@@ -190,7 +190,7 @@ $heading = [regex]::Match(
     '(?m)^\#\#[ \t]+\[' + [regex]::Escape($Version) + '\][^\n]*$')
 
 if (-not $heading.Success) {
-    Write-Error "'$Path' has no '## [$Version]' section. The body is generated from the section the release is cut from, so a missing section is a missing release note rather than an empty one."
+    Write-Error "'$Path' has no '## [$Version]' section. The body is generated from the section the release is cut from, so a missing section is a missing release note, not an empty one."
     exit 1
 }
 
@@ -223,7 +223,7 @@ $legendBlock = ($head -split "`n`n" | Where-Object {
     } | Select-Object -Last 1)
 
 if (-not $legendBlock) {
-    Write-Error "'$Path' carries no palette legend table before its first version heading, so the release body has no legend to end with. The legend is a Markdown table of icons and their meanings -- a heading row, a delimiter row, and one row per pair of icons -- and a legend written as a paragraph is refused rather than flattened into a single line."
+    Write-Error "'$Path' carries no palette legend table before its first version heading, so the release body has no legend to end with. The legend is a Markdown table of icons and their meanings -- a heading row, a delimiter row, and one row per pair of icons -- and a legend written as a paragraph is refused, not flattened into a single line."
     exit 1
 }
 

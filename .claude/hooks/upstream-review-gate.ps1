@@ -68,7 +68,7 @@ version.
 
 A red marker test is NOT a stale file to fix. It means the review has not happened yet,
 and editing this file to make the test pass defeats the only mechanism that catches what
-a green suite cannot: upstream changing its behaviour rather than its surface.
+a green suite cannot: upstream changing its behaviour and not its surface.
 
 There is a written procedure for that review, and it is not optional: UPSTREAM-REVIEW.md
 in the repository root. Read it now and follow it there. It is the single source of truth
