@@ -17,8 +17,8 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The defect this was written against was in the file that states the
 /// rule.</b> <c>ClientLivenessWatcher</c> opened the pid from
-/// <c>InheritedFromUniqueProcessId</c> — a field the kernel writes once at
-/// creation and never invalidates — with no creation-time pairing anywhere on
+/// <c>InheritedFromUniqueProcessId</c> -- a field the kernel writes once at
+/// creation and never invalidates -- with no creation-time pairing anywhere on
 /// the path, and firing that watch tears down every session in the process. The
 /// directory's own notes predicted the gap and the gap was already there
 /// ([the adversarial review](../../docs/reviews/2026-08-18-adversarial-processes.md),
@@ -28,7 +28,7 @@ namespace BrowserAI.Tests;
 /// <b>A recycled pid cannot be staged, and does not need to be.</b> Nothing can
 /// make Windows hand a chosen number to a chosen process on demand. What a
 /// recycled pid <i>is</i>, exactly, is a pid presented as the parent whose
-/// process started after this one — and that is trivial to stage, because every
+/// process started after this one -- and that is trivial to stage, because every
 /// process a test starts has that property. So the interleaving is not
 /// simulated; the state it produces is constructed directly.
 /// </para>
@@ -43,7 +43,7 @@ internal sealed partial class ProcessLivenessTests
     /// (<c>BrowserProcesses.ScanFor</c>, which has a comment and an early-out in
     /// between). Twenty-five leaves room for a call site to grow a guard without
     /// the number becoming the thing under test, and is still far short of a
-    /// method body — so a second, unpaired open cannot borrow the first one's
+    /// method body -- so a second, unpaired open cannot borrow the first one's
     /// pairing.
     /// </remarks>
     private const int PairingWindow = 25;
@@ -142,7 +142,7 @@ internal sealed partial class ProcessLivenessTests
 
     /// <summary>
     /// A pid that <b>opens</b> and whose process has <b>already exited</b> is
-    /// nobody to watch — the same answer as a pid that cannot be opened at all,
+    /// nobody to watch -- the same answer as a pid that cannot be opened at all,
     /// arriving by a different route.
     /// </summary>
     /// <remarks>
@@ -209,7 +209,7 @@ internal sealed partial class ProcessLivenessTests
         // ⚠️ NOT MERELY NULL: nothing was armed either. A watcher built over an
         // already-signalled handle fires on the line that registers it, so a
         // build that returned one would have run the teardown callback as well
-        // — and against a real client that is every session's browser.
+        // -- and against a real client that is every session's browser.
         await Assert.That(Volatile.Read(ref fired)).IsEqualTo(0);
 
         // The refusal is said out loud, and says WHICH of the two it saw: 78 is
@@ -219,7 +219,7 @@ internal sealed partial class ProcessLivenessTests
         // `record.EventId.Id is 76`)*: `ClientHasAlreadyExited` moved off 76
         // when that id was retired, because two events held it at once and both
         // of them shipped in v1.0.0. **This arm is the reason the renumber is a
-        // behaviour change rather than a comment edit** — an id is what a reader
+        // behaviour change rather than a comment edit** -- an id is what a reader
         // of the log keys on, and this is the one place in the suite that reads
         // one back off a real record.
         await Assert.That(logs.Records.Any(record => record.EventId.Id is 78)).IsTrue();
@@ -271,7 +271,7 @@ internal sealed partial class ProcessLivenessTests
 
                 unpaired.Add(
                     $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}:{(i + 1).ToString(CultureInfo.InvariantCulture)}"
-                    + $" — {lines[i].Trim()}");
+                    + $" -- {lines[i].Trim()}");
             }
         }
 
@@ -284,7 +284,7 @@ internal sealed partial class ProcessLivenessTests
 
     /// <summary>
     /// An <c>OpenProcess</c> <b>call</b>, never its <c>[LibraryImport]</c>
-    /// declaration — the declaration has no handle to pair with and every file
+    /// declaration -- the declaration has no handle to pair with and every file
     /// that calls it has one.
     /// </summary>
     [GeneratedRegex(@"OpenProcess\(\s*\w")]

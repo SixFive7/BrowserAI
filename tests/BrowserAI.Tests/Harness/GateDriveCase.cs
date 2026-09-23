@@ -20,14 +20,14 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>It held by luck, run to run, and nothing noticed when it did not.</b>
-/// On the 2026-08-24 gate <b>all six runs received <c>C:</c></b> — three of them
-/// silently duplicating the other three — and the gate reported exactly what a
+/// On the 2026-08-24 gate <b>all six runs received <c>C:</c></b> -- three of them
+/// silently duplicating the other three -- and the gate reported exactly what a
 /// genuine two-instrument gate reports. On the next gate the two shells did
 /// differ. The spelling is inherited from whatever started the run, so a
 /// harness-started Git Bash and a human-started one are not the same instrument:
 /// measured 2026-08-24, a Git Bash that <i>inherits</i> its working directory
-/// hands a child <c>c:\…</c>, and the same shell after any <c>cd</c> — POSIX
-/// form, Windows form, either case — hands it <c>C:\…</c>, because MSYS resolves
+/// hands a child <c>c:\…</c>, and the same shell after any <c>cd</c> -- POSIX
+/// form, Windows form, either case -- hands it <c>C:\…</c>, because MSYS resolves
 /// the real path and Windows always answers upper.
 /// </para>
 /// <para>
@@ -37,7 +37,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>absolute, explicitly-spelled</b> path to the solution, which is what puts
 /// the spelling into <c>MSBuildProjectDirectory</c>, into <c>TargetPath</c> and
 /// therefore into the test host's own <see cref="AppContext.BaseDirectory"/>
-/// whatever the shell's working directory says — measured 2026-08-24 through
+/// whatever the shell's working directory says -- measured 2026-08-24 through
 /// <c>dotnet msbuild -getProperty:TargetPath</c> from both shells, each given
 /// the other's spelling. <b>A forcing that silently fails to take is the same
 /// trap in a new coat</b>, so each half also declares what it forced in
@@ -77,7 +77,7 @@ internal static class GateDriveCase
     /// <remarks>
     /// <b>Read off <see cref="AppContext.BaseDirectory"/> rather than off the
     /// working directory</b>, because that is the path every composed assertion
-    /// in this suite is anchored on — <c>RepositoryLayout</c> walks up from it.
+    /// in this suite is anchored on -- <c>RepositoryLayout</c> walks up from it.
     /// The working directory is reported beside it in <see cref="CoverageRow"/>
     /// and is not what the verdict is taken on.
     /// </remarks>
@@ -140,7 +140,7 @@ internal static class GateDriveCase
     /// <returns>The refusal.</returns>
     public static string Refusal(DriveLetterCase? declared, DriveLetterCase? received) =>
         $"This run declared {Variable}={Spelling(declared)}, so the shell that started it meant to force a "
-        + $"{Spelling(declared)}-case drive letter onto the test host — and the test host received {Spelling(received)}: "
+        + $"{Spelling(declared)}-case drive letter onto the test host -- and the test host received {Spelling(received)}: "
         + $"AppContext.BaseDirectory is '{AppContext.BaseDirectory}'. "
         + "The forcing did not take, so this half of the release gate is not the instrument it claims to be, and running "
         + "the suite from two shells proves less than it looks like it proves. "

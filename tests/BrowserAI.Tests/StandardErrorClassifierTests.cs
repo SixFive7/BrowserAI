@@ -20,7 +20,7 @@ namespace BrowserAI.Tests;
 /// <b>Both directions, because each is one half of the defect being replaced.</b>
 /// The launcher this product supersedes warned on <i>any</i> stderr while
 /// <c>@playwright/mcp</c> prints a benign <c>Session: &lt;path&gt;</c> line on
-/// every healthy start — so the loud channel was noise and a reader learned to
+/// every healthy start -- so the loud channel was noise and a reader learned to
 /// ignore it. A benign line that warns and an error-shaped line that is silent
 /// are therefore separate assertions, and a build that satisfies only one of them
 /// has reintroduced half of a fixed bug.
@@ -51,7 +51,7 @@ internal sealed class StandardErrorClassifierTests
     /// <remarks>
     /// <b>The most faithful possible error arm.</b> This is the exact failure that
     /// killed all four servers for five days, and the exact line the reference
-    /// implementation's first regex was written against — so the test is a
+    /// implementation's first regex was written against -- so the test is a
     /// reproduction rather than an invention.
     /// </remarks>
     private static readonly string[] DeadFlag = ["--output-mode", "tokens"];

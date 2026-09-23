@@ -15,15 +15,15 @@ namespace BrowserAI.Tests.Harness;
 /// string.</b> Until that day <see cref="RegistrationTarget"/> registered
 /// <c>Environment.ProcessPath</c> verbatim and every arm about it could name an
 /// absolute path that existed nowhere. The configuration app runs the hooks now,
-/// so the path it registers is its SIBLING — composed, then checked — and a
+/// so the path it registers is its SIBLING -- composed, then checked -- and a
 /// composed path that nothing checks is a guess.
 /// </para>
 /// <para>
 /// <b>The files are real PE headers rather than real executables</b>, and that is
 /// the point rather than a shortcut: what
 /// <see cref="PeSubsystem"/> reads is eight bytes at three documented offsets, so
-/// a test can construct the exact input it wants to assert about — a console
-/// binary, a Windows one, a file that is not a PE at all — without publishing
+/// a test can construct the exact input it wants to assert about -- a console
+/// binary, a Windows one, a file that is not a PE at all -- without publishing
 /// anything, without a 54 MB fixture, and without the arms depending on a
 /// publish that may be stale. The real published binaries are checked separately,
 /// by <c>ReleaseScriptTests</c>, against the same reader.

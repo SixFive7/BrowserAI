@@ -15,7 +15,7 @@ namespace BrowserAI.Tests.Harness;
 /// marker check, the machine-wide mutex, the phase watcher, every cap and the
 /// removal of a partial tree are all on the product's side of the seam and run
 /// here exactly as they do in production. What a double cannot say anything about
-/// is whether upstream's installer works — and that is why the empty-root run
+/// is whether upstream's installer works -- and that is why the empty-root run
 /// against the published binary exists and downloads for real.
 /// </para>
 /// <para>
@@ -116,7 +116,7 @@ internal sealed class FakeInstaller : IInstallerRun
         Scripted(directory, TimeSpan.Zero, createDirectory: true, writeMarker: true, exitCode: 0, "Downloading a browser\nDone", release: release);
 
     /// <summary>
-    /// An installer that exits 0 having written no marker — the shape that
+    /// An installer that exits 0 having written no marker -- the shape that
     /// produces <c>spawn EFTYPE</c> and never re-downloads.
     /// </summary>
     /// <param name="directory">The browser directory it creates.</param>
@@ -163,7 +163,7 @@ internal sealed class FakeInstaller : IInstallerRun
     /// </para>
     /// <para>
     /// <b>Each step is a NEW file rather than an append.</b> The product sums file
-    /// lengths, and a growing file and a new file are the same to it — but a new
+    /// lengths, and a growing file and a new file are the same to it -- but a new
     /// file cannot be mistaken for a buffered write that has not reached the
     /// filesystem yet, which is the one way this double could report progress the
     /// product cannot see.
@@ -288,7 +288,7 @@ internal sealed class FakeInstaller : IInstallerRun
     /// <remarks>
     /// ⚠️ <b>One synchronous step, in a method of its own, and both halves of
     /// that are the point.</b> Written inline as <c>await WriteAllTextAsync</c>
-    /// there is a suspension point in the middle of "the tree appears" — and the
+    /// there is a suspension point in the middle of "the tree appears" -- and the
     /// provisioner's watcher is polling for exactly that directory. Under a
     /// congested thread pool the extraction cap then fires, deletes the tree,
     /// and the continuation <b>re-creates</b> it, so the test fails against a

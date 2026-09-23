@@ -16,7 +16,7 @@ namespace BrowserAI.Tests;
 /// and nothing could see it.</b> <c>ProxyLog</c>'s closing comment has said
 /// since 2026-08-26 that ids 10, 11, 12 and 16 were retired and not to be
 /// reused; <c>ChildHasGone</c> was nevertheless given 16 on 2026-09-17, and
-/// <c>PageToolAbandoned</c> then took 17 — the id 16 would have been had anybody
+/// <c>PageToolAbandoned</c> then took 17 -- the id 16 would have been had anybody
 /// read the comment. It was found by reading, on 2026-09-22, and the comment was
 /// corrected rather than the event renumbered (Q224 b): 16 is what the shipped
 /// <c>v1.0.0</c> binaries emit for <c>ChildHasGone</c>, so renumbering would
@@ -35,7 +35,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>What it cannot see.</b> It holds that an id is unique within its declaring
 /// class and that a retired id is not in use. It cannot know that an id ever
-/// SHIPPED under an older meaning — that is what the retired list is for, and
+/// SHIPPED under an older meaning -- that is what the retired list is for, and
 /// keeping the list honest is still a person's job. Nor does it stop a
 /// deliberate renumbering: moving an event to a free id passes, because that is
 /// a decision rather than a defect, and the retired list is where the decision
@@ -93,13 +93,13 @@ internal sealed class ProxyLogTests
 
         // ---- The retired half, read out of the comments that own the rule.
         // ⚠️ RAW, not through RepositoryLayout.ReadCodeAsync: that blanks
-        // comment-only lines, which is right for the scan above — a
-        // commented-out event is not a declared one — and would blank the very
+        // comment-only lines, which is right for the scan above -- a
+        // commented-out event is not a declared one -- and would blank the very
         // lines this half exists to read.
         //
         // ⚠️ PER CLASS SINCE 2026-09-22, and the widening is what Q226 c
         // needed. It read ONE marker, out of BrowserProxy.cs, and applied it to
-        // ProxyLog alone — which was right while ProxyLog was the only class
+        // ProxyLog alone -- which was right while ProxyLog was the only class
         // with a retired id and silently covered nothing anywhere else. A
         // second class retired an id the same day.
         var retired = new Dictionary<string, List<int>>(StringComparer.Ordinal);
@@ -128,7 +128,7 @@ internal sealed class ProxyLogTests
             .Select(e => $"{e.File}({e.Line}): {e.Class}.{e.Member} uses {EventIdSpelling} {e.Id}, which that class's own"
                 + " retired marker says is retired and not to be reused. An id is a key somebody's saved log query may"
                 + " still be written against, so a retired one reassigned makes an old query answer about a new event."
-                + " Give the event a free id, or — if the reuse is deliberate — say so in that comment and take it off the marker.")
+                + " Give the event a free id, or -- if the reuse is deliberate -- say so in that comment and take it off the marker.")
             .ToList();
 
         await Assert.That(string.Join(Environment.NewLine, reused)).IsEmpty();
@@ -168,7 +168,7 @@ internal sealed class ProxyLogTests
         await Assert.That(Duplicates(twoClasses)).IsEmpty();
 
         // And the marker parse, both ways: it reads the list it is given, and it
-        // does not read the prose around it — the correction paragraph in that
+        // does not read the prose around it -- the correction paragraph in that
         // same comment names 16 as an id that IS in use again, and a parse that
         // took numbers out of prose would retire it and fail the tree.
         const string Marker = "// RETIRED-" + "EVENT" + "-IDS: ";
@@ -258,7 +258,7 @@ internal sealed class ProxyLogTests
             .GroupBy(e => (e.Class, e.Id))
             .Where(g => g.Count() > 1)
             .Select(g =>
-                $"{g.Key.Class} declares {EventIdSpelling} {g.Key.Id} {g.Count()} times — "
+                $"{g.Key.Class} declares {EventIdSpelling} {g.Key.Id} {g.Count()} times -- "
                 + string.Join(", ", g.Select(e => $"{e.Member} at {e.File}({e.Line})"))
                 + ". An id identifies an event to whoever reads the log, so two events under one id make a saved query ambiguous."),
     ];

@@ -17,13 +17,13 @@ namespace BrowserAI.Tests;
 /// <b>Every one of these survived to a release gate because nothing looked.</b>
 /// [Item 13](../../RELEASING.md) names the obligations that attach at
 /// first installer handoff, independently of BrowserAI's own licence, and the
-/// first run of that checklist — 2026-08-16, reading the packed
-/// <c>.nupkg</c> rather than the source tree — found <b>two of the four it then
+/// first run of that checklist -- 2026-08-16, reading the packed
+/// <c>.nupkg</c> rather than the source tree -- found <b>two of the four it then
 /// listed absent from an otherwise releasable package</b>: Velopack's MIT
 /// notice, because a NuGet dependency's licence stays in the package cache and
 /// is never copied to a publish output, and the trademark disclaimer, because no
 /// upstream file carries one.
-/// <i>Corrected 2026-08-17 (previously "names four obligations")</i> — the same
+/// <i>Corrected 2026-08-17 (previously "names four obligations")</i> -- the same
 /// day's audit found the item itself short by two, the Apache-2.0 MCP SDK and
 /// the MIT <c>Microsoft.Extensions.*</c> family, so it names six and this
 /// sentence must not fix a count that is allowed to grow.
@@ -38,7 +38,7 @@ namespace BrowserAI.Tests;
 /// <b>Corrected 2026-08-16 at the plan's final audit: the list is six, not four
 /// (previously "four obligations that attach at first installer handoff").</b>
 /// Two more packages are compiled into <c>BrowserAI.exe</c> on exactly
-/// Velopack's terms and were carrying no notice — the Apache-2.0 MCP SDK, whose
+/// Velopack's terms and were carrying no notice -- the Apache-2.0 MCP SDK, whose
 /// §4(a) requires a copy of the licence to reach every recipient, and the
 /// seventeen MIT <c>Microsoft.Extensions.*</c> assemblies. A NuGet package's
 /// licence stays in the machine's package cache and never reaches a publish
@@ -63,7 +63,7 @@ internal sealed class ThirdPartyNoticeTests
     /// <para>
     /// <b>Paths, not a count.</b> A count would go green on a file landing in
     /// the wrong place, and where these sit is what a licence obligation is
-    /// about — a notice nobody can find beside the binary is not shipped.
+    /// about -- a notice nobody can find beside the binary is not shipped.
     /// </para>
     /// <para>
     /// ⚠️ <b>A typed list can only be wrong in one direction, and 2026-09-17
@@ -109,7 +109,7 @@ internal sealed class ThirdPartyNoticeTests
         // then. 2026-08-16 -> 2026-09-22 with the 1.2.0 -> 1.2.158 bump, whose
         // LICENSE came back byte-identical: 1,091 bytes, SHA-256 91845db8…, at
         // the new package's own nuspec repository commit. **The version
-        // placeholder is what makes this bite** — the date alone would let a
+        // placeholder is what makes this bite** -- the date alone would let a
         // re-stamp with no re-fetch look identical to a real one, which is
         // exactly what the remarks above are about.
         ("Velopack", ["Velopack {0} - MIT", "Retrieved 2026-09-22 against Velopack {0}."]),
@@ -182,7 +182,7 @@ internal sealed class ThirdPartyNoticeTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>§4(a) is the obligation and it is unconditional</b> — a redistributor
+    /// <b>§4(a) is the obligation and it is unconditional</b> -- a redistributor
     /// must give every recipient a copy of the licence, and no copy travels: the
     /// package is compiled into <c>BrowserAI.exe</c> and its licence stays in
     /// the NuGet cache. This is Velopack's situation exactly, so it gets
@@ -234,8 +234,8 @@ internal sealed class ThirdPartyNoticeTests
     /// </summary>
     /// <remarks>
     /// <b>Read from the lock file rather than maintained by hand.</b> These
-    /// arrive almost entirely transitively — two are referenced directly and the
-    /// rest come through those and through the MCP SDK — so the set changes
+    /// arrive almost entirely transitively -- two are referenced directly and the
+    /// rest come through those and through the MCP SDK -- so the set changes
     /// whenever anything above them is bumped, silently and without anyone
     /// choosing it. Deriving the list from
     /// <c>src/BrowserAI/packages.lock.json</c> makes a new arrival a red build
@@ -279,7 +279,7 @@ internal sealed class ThirdPartyNoticeTests
     /// ⚠️ <b>Both halves were wrong on 2026-09-17 and neither was findable by
     /// any test that existed.</b> <see cref="Obligations"/> is a list of paths
     /// somebody typed, so it can only be wrong in the direction of naming a path
-    /// that is not there — it cannot notice a package that ships and is not
+    /// that is not there -- it cannot notice a package that ships and is not
     /// named at all. The
     /// [licensing re-read](../../kb/packaging/dependencies.md#third-party-payload-as-shipped)
     /// found two of those: <c>playwright</c> has been in
@@ -432,7 +432,7 @@ internal sealed class ThirdPartyNoticeTests
     /// The package half reads <c>build/payload/package-lock.json</c>, the family
     /// half reads <see cref="ProvisionedBrowsers.Families"/>, and the revision
     /// half reads <c>upstream-snapshots/browsers.json</c> through
-    /// <see cref="BrowserAiPaths.RevisionOf"/> — which
+    /// <see cref="BrowserAiPaths.RevisionOf"/> -- which
     /// <c>build/UpstreamSnapshots.targets</c> regenerates from the resolved
     /// payload and diffs on every build, so the snapshot and the payload cannot
     /// drift apart without failing the build first. Being committed is what lets
@@ -620,8 +620,8 @@ internal sealed class ThirdPartyNoticeTests
     /// </summary>
     /// <remarks>
     /// <b>Two, because two disagree.</b> The notices do not stamp a version on
-    /// every package they name — the obligation is about the path a licence sits
-    /// at, not about a number — but they do stamp the pair an npm override
+    /// every package they name -- the obligation is about the path a licence sits
+    /// at, not about a number -- but they do stamp the pair an npm override
     /// separated, because an unexplained pair of Playwright versions in one
     /// payload reads as a mistake.
     /// </remarks>
@@ -644,7 +644,7 @@ internal sealed class ThirdPartyNoticeTests
     /// </summary>
     /// <remarks>
     /// <b>Scoped to the block rather than to the file</b>, because every family
-    /// is already named elsewhere — in the trademark disclaimer, and in the
+    /// is already named elsewhere -- in the trademark disclaimer, and in the
     /// sentence saying no copy of any browser ships. What has to exist is the
     /// entry that says where that family's terms are, and only the block can
     /// answer that.
@@ -798,8 +798,8 @@ internal sealed class ThirdPartyNoticeTests
         await Assert.That(text).Contains("Playwright is a trademark of Microsoft Corporation");
 
         // One needle from each of the two sections added at the plan's final
-        // audit, so that a package shipping without them is caught here — where
-        // the first run found the previous two absences — and not in the tree.
+        // audit, so that a package shipping without them is caught here -- where
+        // the first run found the previous two absences -- and not in the tree.
         await Assert.That(text).Contains("Version 2.0, January 2004");
         await Assert.That(text).Contains("Microsoft.Extensions packages");
     }
@@ -811,7 +811,7 @@ internal sealed class ThirdPartyNoticeTests
     /// <b>The same rule as <see cref="PublishedSlice.EnsureFresh"/>, for the
     /// same reason.</b> Editing the notices without rebuilding would fail these
     /// tests with <i>the notice is missing from the package</i>, which is true
-    /// of that package and says nothing about the tree — a mystery failure
+    /// of that package and says nothing about the tree -- a mystery failure
     /// pointing at the wrong thing. This names what to run instead.
     /// </remarks>
     /// <param name="artifact">The built thing under assertion.</param>

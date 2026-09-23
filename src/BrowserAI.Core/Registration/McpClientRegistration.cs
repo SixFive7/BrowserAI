@@ -11,9 +11,9 @@ namespace BrowserAI.Registration;
 /// <remarks>
 /// <para>
 /// <b>The requirement is one sentence, and it is
-/// [the charter's](../../../DECISIONS.md#locking-logging-versioning-and-registration)</b> —
+/// [the charter's](../../../DECISIONS.md#locking-logging-versioning-and-registration)</b> --
 /// <i>"registered once at system or user scope, available in every repository,
-/// with no per-repo files"</i> — and it is the founding promise:
+/// with no per-repo files"</i> -- and it is the founding promise:
 /// [DECISIONS §1](../../../DECISIONS.md#1-there-is-no-update-path-and-that-is-the-actual-problem) opens by rejecting a world where onboarding
 /// <i>"requires a repo, a `.mcp.json`, hook registrations"</i>. Until this
 /// existed, what shipped was an installed, self-updating, self-sweeping binary
@@ -22,7 +22,7 @@ namespace BrowserAI.Registration;
 /// <para>
 /// <b>The mechanism is the client's own supported command:
 /// <c>claude mcp add --scope user</c>.</b> User scope <i>is</i> the charter's
-/// sentence — one registration, available in every repository, writing no file
+/// sentence -- one registration, available in every repository, writing no file
 /// into any of them. Decided 2026-08-16 in the maintainer's absence, having been
 /// asked twice, because the product is unusable without it.
 /// </para>
@@ -32,7 +32,7 @@ namespace BrowserAI.Registration;
 /// <list type="number">
 /// <item><description>
 /// <b>Write the client's configuration file directly.</b> Means owning another
-/// product's on-disk format <i>and</i> its merge semantics forever — a second
+/// product's on-disk format <i>and</i> its merge semantics forever -- a second
 /// surface to re-review on every client release, for a file the maintainer edits
 /// daily and cannot afford to have rewritten by a background installer.
 /// </description></item>
@@ -42,7 +42,7 @@ namespace BrowserAI.Registration;
 /// </description></item>
 /// <item><description>
 /// <b>A documented manual step.</b> Abandons the promise that distinguishes this
-/// product from the setup it replaces — the whole complaint in
+/// product from the setup it replaces -- the whole complaint in
 /// [DECISIONS §7](../../../DECISIONS.md#7-distribution-to-colleagues-has-no-story) is that onboarding is a list of manual steps.
 /// </description></item>
 /// </list>
@@ -52,14 +52,14 @@ namespace BrowserAI.Registration;
 /// registrations), must never fail an install, must name
 /// <c>current\BrowserAI.exe</c> and never the stub
 /// (<see cref="RegistrationTarget"/>), and must finish well inside a fast-exit
-/// hook's timeout — <c>--veloapp-install</c> gets 30 s, <c>--veloapp-updated</c>
+/// hook's timeout -- <c>--veloapp-install</c> gets 30 s, <c>--veloapp-updated</c>
 /// 15 s, <c>--veloapp-uninstall</c> 60 s
 /// ([kb](../../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)).
 /// </para>
 /// <para>
 /// <b>Measured 2026-08-16 @ Claude Code 2.1.233</b>, three runs each, from a
-/// non-elevated token: <c>mcp add --scope user</c> takes <b>613–645 ms</b> and
-/// <c>mcp remove</c> <b>646–671 ms</b>, and neither needs elevation because both
+/// non-elevated token: <c>mcp add --scope user</c> takes <b>613-645 ms</b> and
+/// <c>mcp remove</c> <b>646-671 ms</b>, and neither needs elevation because both
 /// write the invoking user's own configuration
 /// ([kb](../../../kb/mcp/protocol.md#registering-browserai-with-the-client)).
 /// </para>
@@ -72,8 +72,8 @@ internal static class McpClientRegistration
     /// </summary>
     /// <remarks>
     /// Lower-case and unqualified, matching the product name. It is <b>not</b> a
-    /// tool name — upstream tool names pass through byte-for-byte
-    /// ([DECISIONS → Tool naming](../../../DECISIONS.md#licence-release-policy-and-the-tool-surface)) — it is the
+    /// tool name -- upstream tool names pass through byte-for-byte
+    /// ([DECISIONS → Tool naming](../../../DECISIONS.md#licence-release-policy-and-the-tool-surface)) -- it is the
     /// server key in the client's own configuration.
     /// </remarks>
     public const string ServerName = "browserai";
@@ -127,7 +127,7 @@ internal static class McpClientRegistration
     /// rather than deleted (previously "<c>project</c> writes a
     /// <c>.mcp.json</c> into the repository, which the charter rejects by
     /// name").</b> What the charter rejects is BrowserAI <i>requiring</i> a
-    /// per-repository file in order to work — being installed once and being
+    /// per-repository file in order to work -- being installed once and being
     /// available everywhere is the promise, and user scope is what keeps it. It
     /// does not reject a person choosing to commit one: a team that wants
     /// BrowserAI pinned in a repository, so that a teammate who clones it is
@@ -150,7 +150,7 @@ internal static class McpClientRegistration
     /// <b>Sized against the shortest hook, not against the measurement.</b> The
     /// tightest fast-exit budget is <c>--veloapp-updated</c>'s 15 s, and that
     /// hook makes one call; 10 s leaves the installer time to notice rather than
-    /// being killed mid-write. The measurement — 613–645 ms — is fifteen times
+    /// being killed mid-write. The measurement -- 613-645 ms -- is fifteen times
     /// under it, which is the headroom rather than the target: a budget derived
     /// from the observed duration would go wrong on the first slow machine.
     /// </remarks>
@@ -163,8 +163,8 @@ internal static class McpClientRegistration
     /// <returns>The argument vector, to be passed one element at a time.</returns>
     /// <remarks>
     /// <b><c>--</c> is load-bearing.</b> Everything after it is the command and
-    /// its arguments rather than options, so a path that begins with a dash — or
-    /// a future one carrying flags — cannot be re-read as an option by the
+    /// its arguments rather than options, so a path that begins with a dash -- or
+    /// a future one carrying flags -- cannot be re-read as an option by the
     /// client's own parser.
     /// </remarks>
     public static IReadOnlyList<string> AddArguments(string command) =>
@@ -178,7 +178,7 @@ internal static class McpClientRegistration
     /// <returns>The argument vector, to be passed one element at a time.</returns>
     /// <remarks>
     /// ⚠️ <b>A project-scope call is the same call with a different scope and a
-    /// different WORKING DIRECTORY</b> — the client writes <c>.mcp.json</c>
+    /// different WORKING DIRECTORY</b> -- the client writes <c>.mcp.json</c>
     /// where it is run, and nowhere else. The command for that scope is written
     /// in its portable form, which is why it must reach the client as one
     /// argument through this vector and never be spelled into a shell line:
@@ -192,7 +192,7 @@ internal static class McpClientRegistration
     /// <returns>The argument vector, to be passed one element at a time.</returns>
     /// <remarks>
     /// <b>The scope is stated on the remove too.</b> Without it the client
-    /// removes the entry <i>from whichever scope it exists in</i> — so an
+    /// removes the entry <i>from whichever scope it exists in</i> -- so an
     /// uninstall could delete a project-scoped server somebody else configured.
     /// </remarks>
     public static IReadOnlyList<string> RemoveArguments() => RemoveArguments(UserScope);
@@ -218,8 +218,8 @@ internal static class McpClientRegistration
     /// </para>
     /// <para>
     /// ⚠️ <b>It is only written when it expands to the install this process is
-    /// running out of.</b> A non-default install root — <c>Setup.exe</c> with an
-    /// install-to argument — does not sit under <c>%LOCALAPPDATA%</c>, and
+    /// running out of.</b> A non-default install root -- <c>Setup.exe</c> with an
+    /// install-to argument -- does not sit under <c>%LOCALAPPDATA%</c>, and
     /// writing this form there would commit a path that resolves to nothing on
     /// the very machine that wrote it. That case gets its absolute path and the
     /// person is told why.
@@ -244,7 +244,7 @@ internal static class McpClientRegistration
     /// else.</b> Measured 2026-08-16 @ 2.1.233: adding a name that already exists
     /// exits <b>1</b> and prints <c>MCP server browserai already exists in user
     /// config</c>, which is the same exit code every other failure uses. Being
-    /// wrong here is safe in the direction that matters — a wording change makes
+    /// wrong here is safe in the direction that matters -- a wording change makes
     /// this return <see langword="false"/>, which reports the pass as
     /// <see cref="RegistrationStatus.Failed"/> in the log and in the registration
     /// record, rather than reporting success for something that did not happen.
@@ -291,7 +291,7 @@ internal static class McpClientRegistration
     /// <remarks>
     /// <b>Every failure path names this.</b> A hook that swallows leaves a
     /// product nobody can reach and nothing to say so; a hook that throws breaks
-    /// the installer. The third option is the one taken — fail visibly, and put
+    /// the installer. The third option is the one taken -- fail visibly, and put
     /// the recovery in the same sentence as the failure.
     /// </remarks>
     public static string ManualCommandFor(string command) =>

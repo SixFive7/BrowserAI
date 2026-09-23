@@ -16,9 +16,9 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// ⚠️ <b>BrowserAI deleted its own <c>filename</c> gate on 2026-08-26.</b>
-/// <c>ArtifactFilename</c> refused nine path shapes on the string —
+/// <c>ArtifactFilename</c> refused nine path shapes on the string --
 /// <c>..</c>, drive-relative, UNC, rooted, Win32 device, reserved device names,
-/// trailing space or dot, a trailing separator, empty — and
+/// trailing space or dot, a trailing separator, empty -- and
 /// <c>ArtifactRouter.Plan</c> combined what survived and refused anything that
 /// still landed outside the session. It was a weaker duplicate of a check the
 /// child already performs, applied one hop earlier, and it was the reason
@@ -31,13 +31,13 @@ namespace BrowserAI.Tests;
 /// read.</b> <c>checkFile</c> refuses a resolved name that is inside neither
 /// <c>outputDir</c> nor the child's working directory; BrowserAI writes both as
 /// <c>&lt;session&gt;\output</c>. That is four sentences of somebody else's
-/// source and one config key, floating, with no golden snapshot over it — the
+/// source and one config key, floating, with no golden snapshot over it -- the
 /// tool descriptions are snapshotted and this behaviour is not.
 /// </para>
 /// <para>
 /// <b>Through the published binary and a real browser, both directions.</b> A
 /// name that climbs out must be refused with nothing written; a plain one must
-/// land. Either arm alone is satisfiable by a broken product — a child that
+/// land. Either arm alone is satisfiable by a broken product -- a child that
 /// refused everything would pass the first, and one that refused nothing would
 /// pass the second.
 /// </para>
@@ -178,13 +178,13 @@ internal sealed partial class FileAccessRootTests
     /// deleted 2026-08-26 with the rest of that file, and its subject has
     /// inverted.</b> It was the reproduction of two defects: the sweep moved the
     /// console log and the snapshot <c>.yml</c> into typed folders, so upstream's
-    /// own pointers named files that were no longer there — and the console half
+    /// own pointers named files that were no longer there -- and the console half
     /// compounded, because the child holds that file open, recreated it at the
     /// root and the next sweep landed the copy as <c>-2</c>, then <c>-3</c>, with
     /// the answer citing lines 25-28 of a 24-line file.
     /// </para>
     /// <para>
-    /// <b>Nothing sweeps now, so the property is free — and that is exactly why
+    /// <b>Nothing sweeps now, so the property is free -- and that is exactly why
     /// it is still asserted.</b> "Correct by construction" is a claim about a
     /// construction, and the construction is one config key and one working
     /// directory. This is what would go red if either moved.
@@ -364,7 +364,7 @@ internal sealed partial class FileAccessRootTests
     /// ⚠️ <b>The pattern required a leading <c>./</c> until then</b>, because the
     /// link was relative to the child's working directory and nothing made it
     /// anything else. <c>filePaths: "absolute"</c> ended that, so requiring the
-    /// prefix would now match nothing — and a regex that matches nothing reads
+    /// prefix would now match nothing -- and a regex that matches nothing reads
     /// here as <i>the child published no snapshot link</i>, which is why the
     /// count is asserted before anything is resolved.
     /// </remarks>

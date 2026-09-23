@@ -9,7 +9,7 @@ using BrowserAI.Sessions;
 namespace BrowserAI.Storage;
 
 /// <summary>
-/// <c>browserai.lock</c> — the whole of who owns a session directory.
+/// <c>browserai.lock</c> -- the whole of who owns a session directory.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -17,20 +17,20 @@ namespace BrowserAI.Storage;
 /// held <c>FileAccess.ReadWrite, FileShare.Read</c> for the session's life: a
 /// second BrowserAI asking for write access is refused by the kernel, any
 /// reader is admitted, and the OS releases it when the holder dies, however it
-/// dies. No registry, no token, no expiry, no heartbeat — *stale* and *alive*
+/// dies. No registry, no token, no expiry, no heartbeat -- *stale* and *alive*
 /// are distinguishable without guessing because the kernel already knows.
 /// </para>
 /// <para>
 /// <b>Six properties, and this type plus <see cref="SessionStore"/> is how each
 /// one survives the move to SQLite.</b> One writer per directory, from the
-/// share mode. Readers proceed <i>and see live data</i> — they read the store,
+/// share mode. Readers proceed <i>and see live data</i> -- they read the store,
 /// which is a different file, so the guard never has to admit them to itself.
 /// Held for the whole session. Released by the OS on death. Observable in one
 /// <c>CreateFile</c>. And it names the holder, because that is what is written
 /// inside it.
 /// </para>
 /// <para>
-/// ⚠️ <b>Written ONCE, at acquisition, and never again — which is what makes
+/// ⚠️ <b>Written ONCE, at acquisition, and never again -- which is what makes
 /// an ABSENT lock file mean *free* here where it could not before.</b> The
 /// record this replaces was rewritten on every forwarded call, so its name was
 /// unbound for a few milliseconds each time and a probe that landed there had
@@ -39,7 +39,7 @@ namespace BrowserAI.Storage;
 /// window left is between the rename and the first hold at acquisition, and
 /// that one is inside the per-directory gate every acquirer takes. What a
 /// reporting caller can still see in it is *free* about a directory somebody
-/// is in the middle of taking — a momentary truth that corrects itself, rather
+/// is in the middle of taking -- a momentary truth that corrects itself, rather
 /// than a stale one that does not.
 /// </para>
 /// <para>
@@ -60,7 +60,7 @@ internal static class LockFile
     /// 2026-08-26; what changed is which side owns it. The layout moved into
     /// <c>BrowserAI.Core</c> with the live-instance census that needs it, this
     /// storage layer stayed in the server, and the server links the library
-    /// rather than the other way round — so the alias had to point this way or
+    /// rather than the other way round -- so the alias had to point this way or
     /// not compile.
     /// </remarks>
     public const string FileName = Sessions.SessionLayout.LockFileName;
@@ -107,7 +107,7 @@ internal static class LockFile
     /// ⚠️ <b>The two halves are also callable separately, and one caller does
     /// that on purpose.</b> Acquisition has to be able to say <i>the guard WAS
     /// written and could not then be held</i>, which is a different sentence
-    /// from <i>nothing was changed</i> — and one of them is false at the moment
+    /// from <i>nothing was changed</i> -- and one of them is false at the moment
     /// it is said if the two failures share a <c>catch</c>. That exact
     /// conflation shipped once, in the record this file replaces.
     /// </para>
@@ -192,7 +192,7 @@ internal static class LockFile
     /// <b>Three answers, and none of them is a guess.</b>
     /// <see cref="LockFileState.Held"/> is the kernel's own sharing violation.
     /// <see cref="LockFileState.Released"/> is a lock file that opens, which
-    /// means it names a holder that is no longer holding — the shape a killed
+    /// means it names a holder that is no longer holding -- the shape a killed
     /// session leaves. <see cref="LockFileState.Free"/> is no lock file at all,
     /// which means the directory has never been taken or was destroyed.
     /// </para>
@@ -203,7 +203,7 @@ internal static class LockFile
     /// sharing only <c>Read</c> is refused by, so for the instant this handle
     /// lives it would refuse a holder's own re-open. Detecting an owner and
     /// blocking one are the same capability. The share mode is wider than a
-    /// holder's on purpose — this handle lets go immediately, and one without
+    /// holder's on purpose -- this handle lets go immediately, and one without
     /// <c>Delete</c> would refuse a concurrent destroy for as long as it lived.
     /// </para>
     /// <para>
@@ -261,7 +261,7 @@ internal static class LockFile
     /// <remarks>
     /// <b>The share mode is what makes this work against a live holder.</b> A
     /// holder's granted access is <c>ReadWrite</c>, so a reader that did not
-    /// share write would be refused outright — which would turn *somebody owns
+    /// share write would be refused outright -- which would turn *somebody owns
     /// this* into *this file is unreadable*, at exactly the moment somebody
     /// wants to know who.
     /// </remarks>
@@ -335,7 +335,7 @@ internal static class LockFile
     /// <remarks>
     /// <b>An unknown key is a refusal rather than a field dropped in
     /// silence.</b> The set of things a lock file may say is closed, and a file
-    /// carrying something else is somebody else's file — which is a different
+    /// carrying something else is somebody else's file -- which is a different
     /// answer from *this directory is free* and has to stay one.
     /// </remarks>
     /// <param name="bytes">The file's bytes.</param>
@@ -451,7 +451,7 @@ internal enum LockFileState
 
     /// <summary>
     /// There is a lock file and it opened, so it names a holder that is no
-    /// longer holding — the shape a killed or finished session leaves behind.
+    /// longer holding -- the shape a killed or finished session leaves behind.
     /// </summary>
     Released,
 
@@ -484,7 +484,7 @@ internal readonly record struct LockFileAnswer(LockFileState State, string? Why)
 /// </param>
 /// <param name="ClientProcessName">
 /// Which MCP client started the holder, or <see langword="null"/> when it could
-/// not be read. <b>Display only</b> — nothing in BrowserAI ever chooses, counts
+/// not be read. <b>Display only</b> -- nothing in BrowserAI ever chooses, counts
 /// or terminates a process by this value.
 /// </param>
 internal sealed record LockFileHolder(int ProcessId, long ProcessCreatedFileTime, string? ClientProcessName)
@@ -500,8 +500,8 @@ internal sealed record LockFileHolder(int ProcessId, long ProcessCreatedFileTime
     /// <remarks>
     /// <b>A second opinion, and never the first one.</b> The kernel's share
     /// mode is what says whether the directory is held; this says whether the
-    /// pid in the file is still the same process. They can disagree — a holder
-    /// that has just exited, a record left by a killed session — and when they
+    /// pid in the file is still the same process. They can disagree -- a holder
+    /// that has just exited, a record left by a killed session -- and when they
     /// do, the share mode is the answer and this is the explanation.
     /// </remarks>
     /// <returns>Whether it is alive.</returns>

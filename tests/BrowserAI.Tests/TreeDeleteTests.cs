@@ -15,7 +15,7 @@ namespace BrowserAI.Tests;
 /// <b>This is the one dimension in which the hand-rolled walk was worse than the
 /// call it replaced.</b> <c>Directory.Delete(path, recursive: true)</c> is
 /// banned repository-wide for reporting one failed node where a tree may hold
-/// many — and it checks <c>FILE_ATTRIBUTE_REPARSE_POINT</c> while it walks,
+/// many -- and it checks <c>FILE_ATTRIBUTE_REPARSE_POINT</c> while it walks,
 /// which <c>TreeDelete</c> did not until 2026-08-18. On a caller-named path
 /// (<c>browserai_destroy</c> takes the directory from the model) inside a
 /// browser profile, where a junction to another volume is an ordinary thing to
@@ -141,7 +141,7 @@ internal sealed class TreeDeleteTests
     /// <see cref="ChangelogTests.ABodyIsGeneratedOnlyFromTheChangelogTheTagCarries"/>
     /// leaves behind, because <b>git writes every loose object read-only</b> and
     /// this routine called <c>File.Delete</c> on the attribute as it found it.
-    /// Windows refuses that with <c>ERROR_ACCESS_DENIED</c> — the same message a
+    /// Windows refuses that with <c>ERROR_ACCESS_DENIED</c> -- the same message a
     /// held handle produces, which is why the survivor list read like a lock for
     /// as long as it did. It was deterministic and not a race: two consecutive
     /// runs left two identical residues of six objects each, and the only thing
@@ -155,7 +155,7 @@ internal sealed class TreeDeleteTests
     /// user dropped into a directory <c>browserai_destroy</c> is handed, would
     /// have been reported as a node the product could not remove when it could.
     /// Fixing the rig would have fixed one test and left every product caller
-    /// exactly as wrong — and <c>TreeDelete</c>'s own charter is that it is
+    /// exactly as wrong -- and <c>TreeDelete</c>'s own charter is that it is
     /// <i>one</i> routine, precisely so two callers cannot end up with two
     /// behaviours.
     /// </para>
@@ -164,7 +164,7 @@ internal sealed class TreeDeleteTests
     /// it</b>: clearing an attribute must not turn into swallowing a sharing
     /// violation, so one tree carries both and the assertions say which node was
     /// removed and which was reported. The read-only <b>directory</b> is here
-    /// for the same reason — it is a second way Windows can refuse, and if it
+    /// for the same reason -- it is a second way Windows can refuse, and if it
     /// never refuses, this arm says so by passing without anything being done
     /// about it.
     /// </para>

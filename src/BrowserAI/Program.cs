@@ -37,8 +37,8 @@ internal static class Program
     /// <para>
     /// <b>It exists for one thing the suite otherwise cannot do: an empty
     /// browsers root.</b> First-run provisioning can only be proven against a
-    /// root where nothing has ever been installed, and the alternative — deleting
-    /// the developer's own <c>%LocalAppData%\BrowserAI\browsers</c> mid-suite —
+    /// root where nothing has ever been installed, and the alternative -- deleting
+    /// the developer's own <c>%LocalAppData%\BrowserAI\browsers</c> mid-suite --
     /// would destroy 430 MiB and break every other browser test running beside
     /// it. <see cref="Hosting.IAppPaths"/> deliberately does not resolve relative
     /// to the binary, so moving the executable does not move the root either.
@@ -53,14 +53,14 @@ internal static class Program
     /// <see cref="LocalAppDataPaths.Overridden"/> now rather than here, because
     /// <c>Main</c> is not the only entry point into this binary: a Velopack
     /// fast-exit hook never reaches this method's body, and the uninstall hook
-    /// offers to delete the data root — so a second reader that answered
+    /// offers to delete the data root -- so a second reader that answered
     /// differently would be offering to delete a directory nobody used.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-09-15 (previously the declaration itself).</b> The
     /// literal moved to <see cref="LocalAppDataPaths.RootVariable"/> and this is
-    /// an alias for it. Two executables resolve a data root now — the server and
-    /// the configuration app — and the class that reads the variable lives in
+    /// an alias for it. Two executables resolve a data root now -- the server and
+    /// the configuration app -- and the class that reads the variable lives in
     /// the library both of them link, which an executable's own constant cannot.
     /// The name is unchanged, and every existing reader still compiles against
     /// this spelling.
@@ -81,23 +81,23 @@ internal static class Program
     /// <remarks>
     /// <para>
     /// <b>Corrected 2026-08-16 (previously "the argument the logon task's action
-    /// passes").</b> [The logon task is dropped](../../kb/windows/detection.md#the-logon-sweep-task) —
+    /// passes").</b> [The logon task is dropped](../../kb/windows/detection.md#the-logon-sweep-task) --
     /// it cannot be registered from BrowserAI's own non-elevated token, measured
-    /// twice, for a minimal task definition as much as for ours — so this
+    /// twice, for a minimal task definition as much as for ours -- so this
     /// argument has exactly one caller left and it is a
     /// <i>measurement</i> rather than a product path:
     /// [re-verification row 78](../../kb/re-verification.md) says to
     /// re-establish the sweep-pass census with
     /// <c>BrowserAI.Server.exe --sweep</c> under a scratch
     /// <c>BROWSERAI_ROOT</c> and read the process log. ⚠️ <i>Corrected
-    /// 2026-09-16 (previously <c>BrowserAI.exe --sweep</c>)</i> — that name
+    /// 2026-09-16 (previously <c>BrowserAI.exe --sweep</c>)</i> -- that name
     /// belongs to the configuration app since 2026-09-15, which does not take
     /// this argument and opens a window instead, so the procedure did not
     /// produce a wrong number: it produced a dialog. That row is the
     /// only route to the <b>published AOT</b> column of
-    /// [the table](../../kb/windows/detection.md#the-sweep-measured-through-the-products-own-code-paths) —
+    /// [the table](../../kb/windows/detection.md#the-sweep-measured-through-the-products-own-code-paths) --
     /// the test probe is a framework-dependent Debug build and measures the
-    /// other column — so deleting this would strand a `[MACHINE]` figure with no
+    /// other column -- so deleting this would strand a `[MACHINE]` figure with no
     /// way back to it.
     /// </para>
     /// <para>
@@ -350,15 +350,15 @@ internal static class Program
         // process just created is safe by construction because it is HELD.
         LiveInstances.StartReclaimInBackground(installRoot, updateLogger);
 
-        // One run, one directory. It holds this run's own child — the one that
-        // answers `tools/list` before any session exists — together with its
+        // One run, one directory. It holds this run's own child -- the one that
+        // answers `tools/list` before any session exists -- together with its
         // profile and the config generated for every session this run opens.
         // Sessions do not replace it: they are additional, and each has its own
         // directory chosen by the caller.
         // ⚠️ THE MARKER IS TAKEN HERE, BY THIS PROCESS, and that is the whole of
         // what closes the hazard both 2026-08-18 adversarial reviews found
         // independently. Until 2026-08-24 the only thing holding this directory
-        // was the SURFACE CHILD, which holds it as a working directory — while
+        // was the SURFACE CHILD, which holds it as a working directory -- while
         // the directory holds the generated config of every session in the run.
         // A surface child that died while the run kept serving left it unheld,
         // and another BrowserAI's startup sweep deleted it five minutes later.
@@ -430,7 +430,7 @@ internal static class Program
             // this is the first moment there is a conversation to end. The watch
             // itself is the second of the two teardown mechanisms, and neither
             // is a close tool: stdin EOF is the backstop, and this covers what
-            // EOF cannot — a client that started BrowserAI through a wrapper, so
+            // EOF cannot -- a client that started BrowserAI through a wrapper, so
             // the pipe outlives the process that owns the conversation. It is an
             // OpenProcess handle, never a ping: `ping` was removed at protocol
             // revision 2026-07-28, and a handle is an event rather than a poll.
@@ -439,7 +439,7 @@ internal static class Program
             // Measured 2026-08-16 against ModelContextProtocol 2.2.0 over real
             // stdio: cancelling `RunAsync`'s token does NOT end it, because the
             // read is parked in a syscall on the console handle and a token
-            // cannot wake it — the transport's own DisposeAsync says as much
+            // cannot wake it -- the transport's own DisposeAsync says as much
             // about the child leg, and it is just as true here. Closing the
             // channel is what produces the end-of-input this process would have
             // seen if the client had closed its end, so there is one shutdown
@@ -516,7 +516,7 @@ internal static class Program
     /// <remarks>
     /// <b>Fire-and-forget with the result observed, which is not the same as
     /// fire-and-forget.</b> This runs on a thread-pool callback that must not
-    /// block, so nothing awaits it — but a discarded <c>Task</c> is a discarded
+    /// block, so nothing awaits it -- but a discarded <c>Task</c> is a discarded
     /// exception, and the one thing that must never happen here is the shutdown
     /// path failing in silence while every other signal stays green.
     /// </remarks>
@@ -599,7 +599,7 @@ internal static partial class StartupLog
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The version is here because the process log survives an update</b> —
+    /// <b>The version is here because the process log survives an update</b> --
     /// it lives outside <c>current\</c>, which an update replaces wholesale, so
     /// the log of a machine that updated itself carries both versions and the
     /// moment it changed. Without it, *"which build was running when this
@@ -607,9 +607,9 @@ internal static partial class StartupLog
     /// </para>
     /// <para>
     /// <b>The SQLite version is here for the same reason and for one more.</b>
-    /// It is the only dependency this product does not float — no maintained
+    /// It is the only dependency this product does not float -- no maintained
     /// package ships a win-x64 static library, so the amalgamation is pinned in
-    /// the tree and compiled by the build — and a pin is exactly the thing that
+    /// the tree and compiled by the build -- and a pin is exactly the thing that
     /// stops matching what a reader assumes. Recording it beside the build
     /// version makes <i>"which SQLite was linked when this happened"</i>
     /// answerable for every past run, on the same file that already survives an
@@ -625,7 +625,7 @@ internal static partial class StartupLog
     /// <b>And the build field beside it is the only place the compile-time
     /// options can be checked.</b> The version says <i>which SQLite</i>; the
     /// options say <i>which build of it</i>, and those are separate ways to be
-    /// wrong — an archive compiled without <c>SQLITE_OMIT_AUTOINIT</c>, or with
+    /// wrong -- an archive compiled without <c>SQLITE_OMIT_AUTOINIT</c>, or with
     /// sqlite.org's recommended <c>SQLITE_THREADSAFE=0</c> that this tree
     /// deliberately does not take, reports the same version and behaves
     /// differently. A test reads this field off the published binary's own
@@ -686,7 +686,7 @@ internal static partial class StartupLog
     /// <remarks>
     /// <b>Critical, and the whole sentence is the parameter.</b> The message
     /// template is a constant by construction, and the refusal has to name the
-    /// root it found, why a shared root is unsafe and what to change — so it is
+    /// root it found, why a shared root is unsafe and what to change -- so it is
     /// composed by <see cref="Hosting.InstallRootScope"/>, where the reasoning
     /// lives, and carried here whole rather than reassembled out of fields a
     /// template would fix the order of.
@@ -706,7 +706,7 @@ internal static partial class StartupLog
     /// <remarks>
     /// Warning rather than Critical: an unreadable ancestor is a locked-down
     /// machine rather than a shared root, and refusing on it would stop a
-    /// background MCP server starting at all. What it must not be is silent —
+    /// background MCP server starting at all. What it must not be is silent --
     /// that is the state the whole 2026-08-20 measurement was about.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
@@ -721,7 +721,7 @@ internal static partial class StartupLog
     /// The client went and closing the protocol channel after it threw.
     /// </summary>
     /// <remarks>
-    /// The process still goes down — the disposals on the way out of
+    /// The process still goes down -- the disposals on the way out of
     /// <c>Main</c> run regardless, and the job objects are the guarantee under
     /// all of it. This line exists so that a shutdown which did not go the way
     /// it was meant to is visible rather than inferred from a missing log.
@@ -742,7 +742,7 @@ internal static partial class StartupLog
     /// install</b>, and the line exists because the alternative is an install
     /// whose only trace of having started BrowserAI at all is a window that
     /// flickered. It is also the evidence that the exit happened <i>before</i>
-    /// the sweep, the marker and the child — nothing else is recorded after it.
+    /// the sweep, the marker and the child -- nothing else is recorded after it.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="variable">The variable Velopack set to say so.</param>
@@ -758,8 +758,8 @@ internal static partial class StartupLog
     /// </summary>
     /// <remarks>
     /// <b>Warning, because one of the two halves is an anomaly wherever it
-    /// happens.</b> A launcher that is already gone is ordinary on its own — a
-    /// wrapper exits and leaves the pipe — and a console stdin is ordinary on its
+    /// happens.</b> A launcher that is already gone is ordinary on its own -- a
+    /// wrapper exits and leaves the pipe -- and a console stdin is ordinary on its
     /// own, when a person runs this by hand. Together they mean nothing can ever
     /// end the conversation, which is the state measured on 2026-09-14: a server
     /// and its node child alive until reboot.

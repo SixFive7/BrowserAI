@@ -19,7 +19,7 @@ namespace BrowserAI.Protocol;
 /// <b>The encoder is the whole reason this exists</b>, and it is the second of
 /// the two SDK deviations build-order step 5 delivers. <c>StreamServerTransport</c>
 /// serialises through <c>McpJsonUtilities.JsonContext</c>, which sets no
-/// <c>Encoder</c> — so <c>JavaScriptEncoder.Default</c> re-escapes on the way
+/// <c>Encoder</c> -- so <c>JavaScriptEncoder.Default</c> re-escapes on the way
 /// out, and every backtick, apostrophe, angle bracket and non-ASCII character
 /// leaves as a <c>\uXXXX</c> sequence. The decoded value is unchanged; the bytes
 /// are not. A proxy that claims byte-exact passthrough and reserialises
@@ -58,7 +58,7 @@ internal static class JsonLines
 
     /// <summary>
     /// The contract for a request id, so that a hand-written envelope writes one
-    /// the same way the SDK does — a <see cref="RequestId"/> holds either a
+    /// the same way the SDK does -- a <see cref="RequestId"/> holds either a
     /// string or a number and the difference reaches the wire.
     /// </summary>
     private static readonly JsonTypeInfo<RequestId> RequestIdTypeInfo =
@@ -110,7 +110,7 @@ internal static class JsonLines
     /// The envelope is written by hand because there is no seam in the SDK's
     /// contract through which a raw value can be substituted for a
     /// <c>JsonNode</c>. Member order differs from the SDK's own output and does
-    /// not matter — JSON-RPC 2.0 defines an object, not a sequence.
+    /// not matter -- JSON-RPC 2.0 defines an object, not a sequence.
     /// </remarks>
     public static void WriteVerbatim(Utf8JsonWriter writer, RequestId id, ReadOnlySpan<byte> payload, bool isError)
     {
@@ -152,7 +152,7 @@ internal static class JsonLines
     /// <b>By offset, never by re-serialising.</b>
     /// <see cref="Utf8JsonReader.TokenStartIndex"/> is the first byte of the
     /// value and <see cref="Utf8JsonReader.BytesConsumed"/> the first byte after
-    /// it, so the slice between them is what the peer actually wrote —
+    /// it, so the slice between them is what the peer actually wrote --
     /// whitespace inside it included, escaping as the peer chose it.
     /// </remarks>
     public static bool TryReadPayload(in ReadOnlySequence<byte> frame, out VerbatimPayload payload)
@@ -204,7 +204,7 @@ internal static class JsonLines
     /// which is why it succeeds on the common case: an <c>id</c> written before
     /// the malformed member is reached, and every well-behaved encoder puts it
     /// near the front. An <c>id</c> that is itself malformed, or that sits after
-    /// the damage, is unrecoverable — the frame is then dropped and logged, as
+    /// the damage, is unrecoverable -- the frame is then dropped and logged, as
     /// it was before this existed.
     /// </remarks>
     public static bool TryRecoverRequestId(in ReadOnlySequence<byte> frame, out RequestId id)

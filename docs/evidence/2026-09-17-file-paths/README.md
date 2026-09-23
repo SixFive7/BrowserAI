@@ -4,7 +4,7 @@
 # 2026-09-17 - the `filePaths` pointer measurement
 
 What the pointer table in
-[kb: tools and artifacts](../../../kb/playwright/tools-and-artifacts.md#every-artifact-pointer-a-tool-result-carries-is-absolute--measured-2026-09-17)
+[kb: tools and artifacts](../../../kb/playwright/tools-and-artifacts.md#every-artifact-pointer-a-tool-result-carries-is-absolute----measured-2026-09-17)
 was cut from. The rig is
 [`docs/probes/2026-09-17-file-paths`](../../probes/2026-09-17-file-paths/README.md).
 

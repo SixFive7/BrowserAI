@@ -16,7 +16,7 @@ namespace BrowserAI.Interop;
 /// This is deliberately not <see cref="System.Diagnostics.Process"/>. The
 /// framework type cannot start a process into a job, and adopting one after the
 /// fact by pid would hand back a <i>second</i> handle to the same process while
-/// leaving the first — the one that keeps the pid from being reused — invisible.
+/// leaving the first -- the one that keeps the pid from being reused -- invisible.
 /// </para>
 /// <para>
 /// Holding the process handle open is what makes every pid recorded here safe to
@@ -155,7 +155,7 @@ internal sealed partial class LaunchedProcess(
 
     /// <summary>
     /// Closes the streams and the process handle. It does <b>not</b> terminate
-    /// the child — that is the job object's business, and this object has no
+    /// the child -- that is the job object's business, and this object has no
     /// kill path at all by design.
     /// </summary>
     public void Dispose()

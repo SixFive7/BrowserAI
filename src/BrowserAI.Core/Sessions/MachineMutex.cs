@@ -39,7 +39,7 @@ internal enum MutexAcquisition
 /// blocker whose reason reaches the calling model. The prior art on this machine
 /// does fall back, deliberately and visibly, because a degraded rig beats an
 /// unusable one; BrowserAI refuses because a degraded lock is indistinguishable
-/// from a working one at exactly the moment it matters — two logon sessions get
+/// from a working one at exactly the moment it matters -- two logon sessions get
 /// two distinct kernel objects for one directory, neither can see the other, and
 /// both report success while a browser profile is opened twice.
 /// </para>
@@ -75,7 +75,7 @@ internal sealed class MachineMutex : IDisposable
     /// clock.</b> A <see cref="LockScopes.NeverWaits"/> acquire and a
     /// five-second one that expired both return
     /// <see cref="MutexAcquisition.NotAcquired"/>, so the return value cannot
-    /// tell them apart and the only other witness is elapsed wall time — which
+    /// tell them apart and the only other witness is elapsed wall time -- which
     /// on a loaded machine measures the scheduler rather than the lock.
     /// <c>UpdateTests.AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing</c>
     /// bounded <c>Stopwatch.Elapsed</c> by five seconds and

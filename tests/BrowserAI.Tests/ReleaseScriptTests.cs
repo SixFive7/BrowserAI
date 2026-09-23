@@ -18,12 +18,12 @@ namespace BrowserAI.Tests;
 /// <b>The rule is driven, the flags are scanned, and the difference is
 /// deliberate.</b> <c>build/Test-ReleaseVersion.ps1</c> is a pure decision and
 /// is executed here for real, both ways. The <c>vpk pack</c> invocation cannot
-/// be — it needs the tool, a publish and two minutes — so what is asserted about
+/// be -- it needs the tool, a publish and two minutes -- so what is asserted about
 /// it is that the four decisions with a blast radius are still in the file:
 /// never <c>--msi</c>, the entry executable rather than the stub, a
 /// <b>Start Menu</b> entry and no desktop one, and an ILC scan that looks for
 /// the one thing that is not a diagnostic. <i>Corrected 2026-09-16 (previously
-/// "no shortcuts")</i> — <c>--shortcuts StartMenuRoot</c> has been passed since
+/// "no shortcuts")</i> -- <c>--shortcuts StartMenuRoot</c> has been passed since
 /// 2026-09-15, when the main executable became the configuration app and a
 /// person needed a way to open it again.
 /// </para>
@@ -32,7 +32,7 @@ namespace BrowserAI.Tests;
 /// prove the pack behaves; the
 /// [install → update → rollback cycle](../../kb/packaging/velopack.md#install--update--rollback-end-to-end)
 /// did
-/// that, by hand, against a real installer this suite must never run — an
+/// that, by hand, against a real installer this suite must never run -- an
 /// installer renames a non-empty root aside and deletes it, which on a
 /// developer's machine is 768 MB of provisioned browsers. What it does do is
 /// make a silent edit to any of those four decisions a red build.
@@ -83,7 +83,7 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
-    /// A lower version is refused <b>unless it is stated</b> — and this is the
+    /// A lower version is refused <b>unless it is stated</b> -- and this is the
     /// half that must exist, or rollback is a client-side fiction.
     /// </summary>
     /// <remarks>
@@ -91,7 +91,7 @@ internal sealed class ReleaseScriptTests
     /// client makes an older version acceptable; a pipeline rule of *strictly
     /// increasing* makes one impossible to publish. A shipping product examined
     /// for this project has exactly that pair and therefore has no rollback at
-    /// all, in either direction — which is why the refusal here names the switch
+    /// all, in either direction -- which is why the refusal here names the switch
     /// instead of being final.
     /// </remarks>
     [Test]
@@ -122,18 +122,18 @@ internal sealed class ReleaseScriptTests
     /// ⚠️ <b>This is the state the repository is actually in between releases,
     /// and it used to read as a rollback.</b> Every gate that installs a real
     /// installer needs a pack, and a pack is made by running the release script
-    /// on whatever MinVer derives from a commit past the tag — so
+    /// on whatever MinVer derives from a commit past the tag -- so
     /// <c>Releases/</c> accumulates <c>1.0.1-alpha.0.19</c>,
     /// <c>1.0.1-alpha.0.2</c> and a stale feed manifest naming them. Cutting
     /// <c>1.0.0</c> against that is <i>lower than the published version</i>, and
-    /// the script said <b>ROLLBACK … re-run with -RollbackRepublish</b> — advice
+    /// the script said <b>ROLLBACK … re-run with -RollbackRepublish</b> -- advice
     /// that would have published a release into a feed whose manifest and
     /// asset list name packages that were never released. <i>Added 2026-09-16.</i>
     /// </para>
     /// <para>
     /// <b>It is narrower than the rollback rule on purpose.</b> It fires only
     /// when the CANDIDATE is a release and the thing above it is a
-    /// PRE-RELEASE — which cannot be a published state, because nothing
+    /// PRE-RELEASE -- which cannot be a published state, because nothing
     /// pre-release is ever uploaded. A genuine rollback over published releases
     /// is untouched, and the arm below is the control that says so.
     /// </para>
@@ -152,7 +152,7 @@ internal sealed class ReleaseScriptTests
         await Assert.That(output).Contains("1.0.1-alpha.0.19");
 
         // And exactly what to clear, so the reader does not have to work it out
-        // — including the two directories that must SURVIVE.
+        // -- including the two directories that must SURVIVE.
         await Assert.That(output).Contains("Releases");
         await Assert.That(output).Contains(".nupkg");
         await Assert.That(output).Contains("releases.win.json");
@@ -162,7 +162,7 @@ internal sealed class ReleaseScriptTests
         await Assert.That(output).Contains("test-pack");
 
         // Never the rollback ADVICE, which is the wrong door and would publish a
-        // release into a feed naming packages nobody released — and the switch
+        // release into a feed naming packages nobody released -- and the switch
         // is named anyway, to say so.
         await Assert.That(output.Contains("Re-run with -RollbackRepublish", StringComparison.Ordinal)).IsFalse();
         await Assert.That(output).Contains("Do NOT pass -RollbackRepublish");
@@ -301,12 +301,12 @@ internal sealed class ReleaseScriptTests
     /// <remarks>
     /// <para>
     /// <b>Velopack derives the install location from the pack id and from
-    /// nothing else</b> — <c>%LocalAppData%\&lt;packId&gt;</c>, immovable at
+    /// nothing else</b> -- <c>%LocalAppData%\&lt;packId&gt;</c>, immovable at
     /// 1.2.0: there is no flag for it and an id may not carry a path. So the id
     /// is the only lever there is, and it is what puts the install root at
     /// <c>BrowserAI.app</c> <i>beside</i> the data root at <c>BrowserAI</c>
     /// rather than on top of it. That matters because <c>Setup.exe</c> renames a
-    /// non-empty install root aside and deletes it, and uninstall empties it —
+    /// non-empty install root aside and deletes it, and uninstall empties it --
     /// which, under the old layout, took 768 MB of provisioned browsers and the
     /// session index with it.
     /// </para>
@@ -339,7 +339,7 @@ internal sealed class ReleaseScriptTests
     /// ⚠️ <b>HALT-A once per publish is the whole point of the loop.</b> Two
     /// binaries are linked into one release by two ILC passes, and a scan that
     /// read one of the two logs would ship a binary nobody had checked while
-    /// reporting that ILC's output was clean — which is the same defect the
+    /// reporting that ILC's output was clean -- which is the same defect the
     /// full-pass check exists for, one level up.
     /// </para>
     /// <para>
@@ -453,7 +453,7 @@ internal sealed class ReleaseScriptTests
     /// <para>
     /// <b>Driven against a synthetic root rather than the repository's own.</b>
     /// One of the seven is <c>payload/payload.json</c>, which exists only after
-    /// <c>build/Build-Payload.ps1</c> has run — so pointing this at the real
+    /// <c>build/Build-Payload.ps1</c> has run -- so pointing this at the real
     /// root would make the test's own result depend on whether a payload
     /// happened to be assembled, which is the conditional-pass shape the whole
     /// [coverage gate](SuiteCoverageTests.cs) exists to remove. The script's
@@ -482,7 +482,7 @@ internal sealed class ReleaseScriptTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Until 2026-09-15 the body was produced by hand at publish time</b> —
+    /// <b>Until 2026-09-15 the body was produced by hand at publish time</b> --
     /// the stamped section, cut at whichever heading boundary fell nearest
     /// GitHub's 125,000-character field, plus a permalink line. That is a
     /// document nobody can reproduce afterwards and nothing can check, and the
@@ -496,7 +496,7 @@ internal sealed class ReleaseScriptTests
     /// out would cost two NativeAOT publishes. So this holds that the release
     /// script calls the generator, hands it the version it is packing rather
     /// than a version of its own, puts the body where the manifest goes, and
-    /// reports it — a release whose body is written somewhere nobody looks is
+    /// reports it -- a release whose body is written somewhere nobody looks is
     /// the same defect wearing a script.
     /// </para>
     /// </remarks>
@@ -588,14 +588,14 @@ internal sealed class ReleaseScriptTests
         var missing = expected.Where(name => !File.Exists(Path.Combine(destination, name))).ToList();
         await Assert.That(string.Join(", ", missing)).IsEmpty();
 
-        // ⚠️ AND NOTHING ELSE — 2026-09-15, when the release script started
+        // ⚠️ AND NOTHING ELSE -- 2026-09-15, when the release script started
         // packing a SECOND installer under a test-only id for the suite to
         // install. That pack must never reach a release: not as an asset, not as
         // a row in the resolved set, not as a file in the directory a person
         // opens a year later to find out what shipped. The manifest is a fixed
         // list of EIGHT copies plus its own `manifest.json`, so this is what
         // turns "it cannot get in by construction" into a red build the day
-        // somebody adds a ninth. *(Eight since 2026-09-18, previously seven —
+        // somebody adds a ninth. *(Eight since 2026-09-18, previously seven --
         // `build/payload/package.json` is the only record that an npm override
         // is in force, because npm writes no `overrides` block into the lock it
         // produces.)*
@@ -631,9 +631,9 @@ internal sealed class ReleaseScriptTests
         // what an npm `overrides` entry does. Both keys are always present, for
         // the same reason: an absent key is not a statement.
         //
-        // Every number here is READ rather than typed into the script — the
+        // Every number here is READ rather than typed into the script -- the
         // shipped version and the declared ones out of the copied lock, the pin
-        // out of the copied `package.json` — so the fixture makes the three
+        // out of the copied `package.json` -- so the fixture makes the three
         // differ. A fixture where they agreed could not tell a real read from a
         // value copied off the wrong line.
         await Assert.That(manifest).Contains("\"pulledForward\"");
@@ -660,7 +660,7 @@ internal sealed class ReleaseScriptTests
     /// argument <c>override</c> already won.</b> A manifest that carries
     /// <c>pulledForward</c> only when there is something to say is one where an
     /// absent key means <i>nothing was pulled forward</i> and <i>this manifest
-    /// was written by a build that could not say</i> at once — and every
+    /// was written by a build that could not say</i> at once -- and every
     /// manifest written before 2026-09-18 is the second. <c>"pulledForward":
     /// null</c> is a statement; an absent key is not.
     /// </para>
@@ -673,8 +673,8 @@ internal sealed class ReleaseScriptTests
     /// the fix it was taken for; <c>build/payload/package.json</c> carries no
     /// <c>overrides</c> block, so every real release from here on writes
     /// <c>"pulledForward": null</c> and this arm is the one describing what
-    /// ships. <b>Neither arm reads the repository's own payload</b> — both build
-    /// a synthetic root — so the retirement did not move either of them, and
+    /// ships. <b>Neither arm reads the repository's own payload</b> -- both build
+    /// a synthetic root -- so the retirement did not move either of them, and
     /// that is the property worth stating rather than the coincidence: an arm
     /// that went green because the tree stopped carrying an override would be
     /// an arm measuring the tree instead of the script.
@@ -682,8 +682,8 @@ internal sealed class ReleaseScriptTests
     /// <para>
     /// <b>The fixture differs from the populated one in exactly one file.</b>
     /// The lock still records a <c>playwright-core</c> whose version differs
-    /// from what its dependants declare — because that is what a lock looks like
-    /// whenever npm has resolved a range — so what is being asserted is that the
+    /// from what its dependants declare -- because that is what a lock looks like
+    /// whenever npm has resolved a range -- so what is being asserted is that the
     /// claim comes from <c>build/payload/package.json</c>'s <c>overrides</c> and
     /// from nothing else. Read the field off the lock alone and this arm goes
     /// red.
@@ -725,7 +725,7 @@ internal sealed class ReleaseScriptTests
     /// <c>Outputs</c>, so a publish whose managed assemblies have not moved
     /// skips it and relinks the previous run's native object. The publish
     /// succeeds, the binary is good, and the ILC-output scan then sweeps a log
-    /// ILC never wrote — <b>a check that cannot fail, reporting clean</b>.
+    /// ILC never wrote -- <b>a check that cannot fail, reporting clean</b>.
     /// Measured 2026-09-15 at <c>-v:normal</c> over this project: <b>95 lines</b>
     /// with the pass and <b>75</b> without, <c>Generating native code</c> present
     /// in the first and absent in the second.
@@ -733,14 +733,14 @@ internal sealed class ReleaseScriptTests
     /// <para>
     /// <b>The marker rather than the line count.</b> A count is a property of the
     /// verbosity, the project and the SDK at once, and the one change it would
-    /// not survive is a publish that legitimately prints more — which is the
+    /// not survive is a publish that legitimately prints more -- which is the
     /// direction this is meant to tolerate. <c>Generating native code</c> is
     /// ILC's own line and is printed when, and only when, the compilation
     /// happens.
     /// </para>
     /// <para>
     /// <b>Both directions, driven for real.</b> The refusal is the half that
-    /// matters and it is fed a log carrying the skip message — the positive
+    /// matters and it is fed a log carrying the skip message -- the positive
     /// control the release script cannot give itself, because a script that
     /// always publishes cleanly can never demonstrate its own refusal.
     /// </para>
@@ -803,8 +803,8 @@ internal sealed class ReleaseScriptTests
     /// <b>The order is the property.</b> Clearing <c>$PackDir</c> was already
     /// there and is not enough: the up-to-date check is on
     /// <c>obj\…\native\BrowserAI.obj</c>, which lives nowhere near the output
-    /// directory. There is no MSBuild property that disables that check — the
-    /// object file <i>is</i> the check — so the removal is the only lever, and a
+    /// directory. There is no MSBuild property that disables that check -- the
+    /// object file <i>is</i> the check -- so the removal is the only lever, and a
     /// scan is what keeps it from being deleted as a slow step nobody could
     /// explain.
     /// </remarks>
@@ -835,7 +835,7 @@ internal sealed class ReleaseScriptTests
     /// named for the id and never for the location.</b> An install under
     /// <c>--installto</c> still rewrites <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to
     /// point at the scratch root, and <c>Update.exe uninstall</c> from that root
-    /// calls <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally — no comparison
+    /// calls <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally -- no comparison
     /// against <c>InstallLocation</c> anywhere. So an installer arm packed under
     /// the shipping id destroys a real install's entry, and a run killed
     /// part-way leaves it gone with nothing to restore it. Measured on this
@@ -894,7 +894,7 @@ internal sealed class ReleaseScriptTests
         // ⚠️ AND THE SECOND FEED IS CLEARED BEFORE IT IS PACKED INTO, which is
         // the ORDER rather than the call: a clear that ran after the pack would
         // delete the installer the suite is about to run, and one that never ran
-        // lets a gate's pre-release refuse the next release cut — after the
+        // lets a gate's pre-release refuse the next release cut -- after the
         // shipping artifacts have already been built. What the step DOES is
         // driven for real in
         // TheSecondFeedIsClearedBeforeItIsPackedIntoAndNothingElseIs; what can
@@ -1089,7 +1089,7 @@ internal sealed class ReleaseScriptTests
     /// <para>
     /// ⚠️ <b>Over constructed inputs, and that is not a shortcut.</b> Planting a
     /// real <c>HKCU\…\Uninstall\…</c> key to exercise the refusal would be the
-    /// suite doing the exact thing the refusal exists to prevent — writing an
+    /// suite doing the exact thing the refusal exists to prevent -- writing an
     /// uninstall entry outside the one its own scratch install creates. So the
     /// classification is asserted here and the reading of the key is the single
     /// line that touches the registry.
@@ -1099,7 +1099,7 @@ internal sealed class ReleaseScriptTests
     /// maintainer has an install; a capability that judged the shipping id would
     /// redden every run here. The capability judges the <b>test</b> id instead,
     /// where every key is one the suite wrote, so any key that outlives a run is
-    /// a run that did not clean up — and the witness names it and the one line
+    /// a run that did not clean up -- and the witness names it and the one line
     /// that clears it.
     /// </para>
     /// </remarks>
@@ -1119,7 +1119,7 @@ internal sealed class ReleaseScriptTests
 
             // A location that is gone. This is what Velopack leaves when an
             // uninstall removed the tree and something interrupted the key's own
-            // removal — Settings then shows an entry for nothing.
+            // removal -- Settings then shows an entry for nothing.
             await Assert.That(ReleaseLayout.Judge(Path.Combine(scratch.Path, "went-away"), scratch.Path))
                 .IsEqualTo(ReleaseLayout.UninstallKeyState.Dangling);
 
@@ -1185,15 +1185,15 @@ internal sealed class ReleaseScriptTests
 
     /// <summary>
     /// The manifest states whether the release was a crunch override, in both
-    /// directions — and an ordinary release says <c>null</c> rather than saying
+    /// directions -- and an ordinary release says <c>null</c> rather than saying
     /// nothing.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>No manifest could express an override until 2026-08-26, while two
-    /// documents said one did.</b> <c>DECISIONS.md</c> put it in bold — <i>"A
+    /// documents said one did.</b> <c>DECISIONS.md</c> put it in bold -- <i>"A
     /// release whose manifest does not say it was overridden is a release
-    /// claiming it was not"</i> — and <c>RELEASING.md</c> item 1 said the same;
+    /// claiming it was not"</i> -- and <c>RELEASING.md</c> item 1 said the same;
     /// the script emitted <c>version</c>, <c>tag</c>, <c>package</c>,
     /// <c>sha256</c> and the resolved versions read out of seven copied files,
     /// and had no field for it. By that sentence's own logic every release
@@ -1261,7 +1261,7 @@ internal sealed class ReleaseScriptTests
     /// <b>The same argument as the missing-file refusal, applied to the claim
     /// rather than to the evidence.</b> A manifest saying <i>held at 0.0.700</i>
     /// with no newest version, no reason and nobody's name reads, a year later,
-    /// exactly like a complete account of the decision — so it refuses rather
+    /// exactly like a complete account of the decision -- so it refuses rather
     /// than writing one.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1313,7 +1313,7 @@ internal sealed class ReleaseScriptTests
     /// <param name="directory">The scratch directory to build the tree under.</param>
     /// <param name="withOverride">
     /// Whether <c>build/payload/package.json</c> carries an npm
-    /// <c>overrides</c> entry. Both states are real — one is the payload as it
+    /// <c>overrides</c> entry. Both states are real -- one is the payload as it
     /// stands today, the other is every payload before 2026-09-17 and every one
     /// after the override's exit fires.
     /// </param>
@@ -1435,9 +1435,9 @@ internal sealed class ReleaseScriptTests
     /// <b>Two halves, because either alone is satisfiable without the other.</b>
     /// The script has to PASS the option, which a scan can see; and the option
     /// has to MEAN what the script assumes, which only <c>vpk</c> can say. Before
-    /// 1.1.0 the feed carried no delta for a reason nobody chose — the clean
+    /// 1.1.0 the feed carried no delta for a reason nobody chose -- the clean
     /// re-pack empties <c>Releases/</c>, so there was never a previous package to
-    /// delta against — and a test asserting "no delta row" without the option
+    /// delta against -- and a test asserting "no delta row" without the option
     /// would have passed against a script that had never heard of it.
     /// </para>
     /// <para>
@@ -1617,8 +1617,8 @@ internal sealed class ReleaseScriptTests
     /// script here writes one word to stdout and its reasoning to stderr, so an
     /// exact-equality assertion over the concatenation is also an assertion that
     /// <c>pwsh</c> had nothing of its own to say. It does, on an ordinary
-    /// machine: a drive letter whose root cannot be reached — a disconnected
-    /// <c>net use</c> mapping is enough — makes <c>pwsh</c> write
+    /// machine: a drive letter whose root cannot be reached -- a disconnected
+    /// <c>net use</c> mapping is enough -- makes <c>pwsh</c> write
     /// <i>"Attempting to perform the InitializeDefaultDrives operation on the
     /// 'FileSystem' provider failed"</i> to stderr at startup, and the assertion
     /// then fails for a reason no part of this repository owns. <b>Found
@@ -1641,8 +1641,8 @@ internal sealed class ReleaseScriptTests
 
             // Redirecting the two streams does NOT suppress the console.
             // Measured 2026-08-23: from a parent with no console of its own,
-            // this launch without the flag put two visible windows on screen —
-            // a Windows Terminal host and a pseudoconsole — and with it put
+            // this launch without the flag put two visible windows on screen --
+            // a Windows Terminal host and a pseudoconsole -- and with it put
             // none. This one is the worst of the ten sites for it: `pwsh` is
             // started once per script arm.
             CreateNoWindow = true,
@@ -1682,14 +1682,14 @@ internal sealed class ReleaseScriptTests
     /// <para>
     /// <b>Added 2026-09-16, when the icon stopped being a placeholder.</b>
     /// <c>assets\BrowserAI.ico</c> is candidate 3 of the ten drawn on 2026-09-15
-    /// — a globe with a reading eye — chosen by the maintainer (Q196), and it is
+    /// -- a globe with a reading eye -- chosen by the maintainer (Q196), and it is
     /// carried by both executables, the Setup stub, the Add/Remove entry and the
     /// Start Menu shortcut. One file, and nothing else changes with it.
     /// </para>
     /// <para>
     /// <b>What is asserted is the SHAPE, not the drawing.</b> A test that the
     /// 256 entry is a render of <c>icon.svg</c> would mean rasterising an SVG on
-    /// every build — a browser, a renderer and a pixel comparison, to answer a
+    /// every build -- a browser, a renderer and a pixel comparison, to answer a
     /// question a person answers by looking. So the line that says <i>this is the
     /// right picture</i> is
     /// [the pre-cut check in RELEASING.md](../../RELEASING.md#7-build-clean),
@@ -1702,7 +1702,7 @@ internal sealed class ReleaseScriptTests
     /// ⚠️ <b>The planted red is a doctored file rather than the old
     /// placeholder</b>, and that is worth saying plainly. Candidate 1, which sat
     /// here until today, was packed by the same script and has the <b>same</b>
-    /// directory shape — four entries, the same sizes, the same payload kinds —
+    /// directory shape -- four entries, the same sizes, the same payload kinds --
     /// so swapping it back in would not move one assertion here. A check that
     /// cannot fail against the file it replaced is not evidence, so the controls
     /// below take the real bytes and break one property each: the entry count,
@@ -1911,9 +1911,9 @@ internal sealed class ReleaseScriptTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Until 2026-09-23 nothing in this repository named an upload set.</b>
-    /// <c>New-Release.ps1</c> does not upload — the publish is a hand-run
+    /// <c>New-Release.ps1</c> does not upload -- the publish is a hand-run
     /// <c>gh release create</c> at
-    /// [RELEASING item 14](../../RELEASING.md#14-a-human-decides) — so the assets
+    /// [RELEASING item 14](../../RELEASING.md#14-a-human-decides) -- so the assets
     /// were whatever whoever ran it picked out of <c>Releases/</c>, and
     /// <c>v1.1.0</c> got seven assets because <c>v1.0.0</c> had seven. That is a
     /// judgement wearing the appearance of a procedure, and this arm is what
@@ -1922,13 +1922,13 @@ internal sealed class ReleaseScriptTests
     /// <para>
     /// <b>Three names, each here for its own reason</b>: the installer is what a
     /// person runs, the full package is what every update and every rollback
-    /// fetches, and <c>releases.&lt;channel&gt;.json</c> is the feed — the one file
+    /// fetches, and <c>releases.&lt;channel&gt;.json</c> is the feed -- the one file
     /// a Velopack client reads
-    /// ([measured 2026-09-23](../../kb/packaging/velopack.md#nothing-anywhere-reads-releases-or-assetschanneljson-from-a-release--measured-2026-09-23)).
+    /// ([measured 2026-09-23](../../kb/packaging/velopack.md#nothing-anywhere-reads-releases-or-assetschanneljson-from-a-release----measured-2026-09-23)).
     /// </para>
     /// <para>
     /// <b>And four names are absent, each by a decision rather than by omission</b>
-    /// — the portable zip and the manifest zip by the maintainer's answers to
+    /// -- the portable zip and the manifest zip by the maintainer's answers to
     /// Q233, <c>RELEASES</c> and <c>assets.&lt;channel&gt;.json</c> by that
     /// measurement. They are asserted absent by name, because a set that merely
     /// happens not to contain something today is not a decision.
@@ -1992,7 +1992,7 @@ internal sealed class ReleaseScriptTests
 
         // ⚠️ THE POSITIVE CONTROL, through the real reader. A doctored
         // declaration must come back doctored, and a script that no longer
-        // declares one at all must refuse rather than return nothing — an empty
+        // declares one at all must refuse rather than return nothing -- an empty
         // set would satisfy every "is not published" assertion above.
         var doctored = ReleaseLayout.ReadUploadSet(
             "$packId = 'x'\n$uploadSet = @(\n    \"$downloadId$downloadSuffix.exe\"\n    \"$downloadId$downloadSuffix.zip\"\n)\n");
@@ -2155,7 +2155,7 @@ internal sealed class ReleaseScriptTests
     /// <b>This is the half that catches an artifact nobody has decided about.</b>
     /// The arm above holds that the declaration says what it should; this one
     /// holds that the declaration still covers everything a pack leaves behind,
-    /// so a new output — a signature, a checksum file, a second channel — is a red
+    /// so a new output -- a signature, a checksum file, a second channel -- is a red
     /// build until somebody says whether it is published.
     /// </para>
     /// <para>
@@ -2229,10 +2229,10 @@ internal sealed class ReleaseScriptTests
     /// </summary>
     /// <remarks>
     /// <list type="bullet">
-    /// <item>the portable archive — Q233, <i>"2 drop and update the readme to not mention it"</i>;</item>
-    /// <item>the resolved-set manifest — Q233, <i>"7 move it"</i>; it is committed under <c>docs/evidence/</c> per release instead;</item>
-    /// <item><c>RELEASES</c> — a Squirrel-migration shim nothing here has a predecessor for, and nothing reads it from a release;</item>
-    /// <item><c>assets.&lt;channel&gt;.json</c> — the local pack-to-upload hand-off <c>vpk upload</c> reads from this directory, and which nobody fetches from a release page;</item>
+    /// <item>the portable archive -- Q233, <i>"2 drop and update the readme to not mention it"</i>;</item>
+    /// <item>the resolved-set manifest -- Q233, <i>"7 move it"</i>; it is committed under <c>docs/evidence/</c> per release instead;</item>
+    /// <item><c>RELEASES</c> -- a Squirrel-migration shim nothing here has a predecessor for, and nothing reads it from a release;</item>
+    /// <item><c>assets.&lt;channel&gt;.json</c> -- the local pack-to-upload hand-off <c>vpk upload</c> reads from this directory, and which nobody fetches from a release page;</item>
     /// <item>a delta package, which no release has carried since the full-packages-only decision and which a feed would have to name before anybody could fetch it.</item>
     /// </list>
     /// </remarks>

@@ -20,8 +20,8 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <b>And it is a span comparison, never a re-serialised one.</b> Parsing both
-/// frames and comparing the resulting objects — or their
-/// <c>ToJsonString()</c> — normalises away escaping, whitespace and numeric
+/// frames and comparing the resulting objects -- or their
+/// <c>ToJsonString()</c> -- normalises away escaping, whitespace and numeric
 /// form, which is the entire set of differences a lossless proxy has to not
 /// introduce. That assertion passes while the bug ships.
 /// </para>

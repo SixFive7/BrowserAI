@@ -17,8 +17,8 @@ namespace BrowserAI.Protocol;
 /// <para>
 /// <b>This type is the whole difference between "semantically lossless" and
 /// "byte-identical".</b> Everything a proxy could otherwise change on the way
-/// through — string escaping, the textual form of a number, key order, the
-/// presence of a member no contract knows about — is decided by whoever
+/// through -- string escaping, the textual form of a number, key order, the
+/// presence of a member no contract knows about -- is decided by whoever
 /// re-serialises the payload. Nobody re-serialises these bytes: they are read
 /// out of the child's frame and written into the caller's with
 /// <see cref="System.Text.Json.Utf8JsonWriter.WriteRawValue(ReadOnlySpan{byte}, bool)"/>.
@@ -40,15 +40,15 @@ internal readonly record struct VerbatimPayload(byte[] Json, bool IsError);
 /// <remarks>
 /// <para>
 /// <b>Why a side table rather than a field.</b> <c>JsonRpcMessage</c>'s
-/// constructor is <c>private protected</c> — <i>"Prevent external
-/// derivations"</i>, read from the shipped 2.2.0 source — so there is no
+/// constructor is <c>private protected</c> -- <i>"Prevent external
+/// derivations"</i>, read from the shipped 2.2.0 source -- so there is no
 /// subclass to hang a payload on, and the alternative,
 /// <c>JsonRpcMessage.Context.Items</c>, means writing into SDK state that
 /// <c>StreamServerTransport</c> deliberately leaves null.
 /// </para>
 /// <para>
 /// The table is keyed on the message instance and holds it weakly, so a
-/// response that is never sent — a cancelled call, a disposed session — takes
+/// response that is never sent -- a cancelled call, a disposed session -- takes
 /// its payload with it rather than leaving a megabyte of screenshot behind.
 /// </para>
 /// </remarks>

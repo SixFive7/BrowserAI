@@ -10,7 +10,7 @@ namespace BrowserAI.Runtime;
 /// <summary>What one prune pass did, and what it deliberately did not do.</summary>
 /// <param name="Removed">The superseded directories that are gone, absolute.</param>
 /// <param name="ReclaimedBytes">
-/// What the pass actually freed, measured before and after rather than assumed —
+/// What the pass actually freed, measured before and after rather than assumed --
 /// a tree that half deleted contributes what it gave up.
 /// </param>
 /// <param name="Retained">
@@ -22,7 +22,7 @@ namespace BrowserAI.Runtime;
 internal sealed record PruneReport(IReadOnlyList<string> Removed, long ReclaimedBytes, IReadOnlyList<string> Retained);
 
 /// <summary>
-/// Deletes browser revisions the shipped manifest no longer names — the
+/// Deletes browser revisions the shipped manifest no longer names -- the
 /// obligation that turning Playwright's own garbage collection off created.
 /// </summary>
 /// <remarks>
@@ -43,9 +43,9 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// looser.</b> A directory is a candidate only when its name begins with a prefix
 /// upstream itself would recognise
 /// (<see cref="BrowserRevision.DirectoryPrefix"/>) and its revision is not the one
-/// the manifest currently carries. Anything else in the browsers root —
+/// the manifest currently carries. Anything else in the browsers root --
 /// <c>.links</c>, a directory a future upstream invents, something a person put
-/// there — is left alone. <b>The rule is deliberately not "delete what I do not
+/// there -- is left alone. <b>The rule is deliberately not "delete what I do not
 /// recognise"</b>: this code runs unattended against a directory under the user's
 /// <c>%LocalAppData%</c>, so an unrecognised name is a reason to stop rather than
 /// a reason to act.
@@ -53,7 +53,7 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// <para>
 /// <b>Two independent guards stand between a pass and a browser somebody is
 /// driving.</b> First, the machine-wide provisioning mutex for <i>every</i> family
-/// is held for the whole pass, at a zero timeout — so a pass either proves that no
+/// is held for the whole pass, at a zero timeout -- so a pass either proves that no
 /// install is in flight anywhere on this machine or does nothing at all. Second,
 /// the machine's process list is read once and a candidate holding a live process
 /// is retained and named, which is the shape
@@ -70,7 +70,7 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// </para>
 /// <para>
 /// ⚠️ <b>The census is asked once per candidate, immediately before that
-/// candidate is deleted — corrected 2026-08-18 (previously once for the whole
+/// candidate is deleted -- corrected 2026-08-18 (previously once for the whole
 /// pass, defended as "the answer cannot become more true by being asked
 /// again").</b> It cannot become more true; it can become <i>fresher</i>, and
 /// that is the whole of what stands between this delete and a browser somebody
@@ -83,19 +83,19 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// this path there is nothing to hold.</b>
 /// <see cref="BrowserProcesses.ScanFor"/> keeps an open handle on every process
 /// it found, and that handle is what stops Windows recycling a pid between
-/// deciding to terminate it and terminating it — race R2.
+/// deciding to terminate it and terminating it -- race R2.
 /// <see cref="BrowserProcesses.RunningFrom"/> closes its handles, which looks
 /// like the same defect and is not: this pass never terminates anything, and its
 /// destructive act is taken on the <b>empty</b> set. A revision is deleted
 /// precisely when no process was found running from it, so there is no handle in
 /// existence to carry across the delete. A held census would make the
-/// <i>retain</i> path marginally more accurate about which pids it names — and
+/// <i>retain</i> path marginally more accurate about which pids it names -- and
 /// retaining is the direction that is already safe.
 /// </para>
 /// <para>
 /// <b>What is left is a real window and it is named rather than papered over.</b>
-/// Nothing on the launch path takes the provisioning mutex —
-/// <c>ChildLaunch.Create</c> and <c>JobLauncher.Start</c> take no mutex at all —
+/// Nothing on the launch path takes the provisioning mutex --
+/// <c>ChildLaunch.Create</c> and <c>JobLauncher.Start</c> take no mutex at all --
 /// so a launch out of a superseded revision between this census and this delete
 /// is unguarded, and no census can see a process that does not exist yet. The
 /// second-best thing is available and is done: when a delete leaves survivors,
@@ -109,7 +109,7 @@ internal static class RevisionPrune
 {
     /// <summary>Runs one pass over a browsers root.</summary>
     /// <param name="browsersDirectory">The browsers root, absolute.</param>
-    /// <param name="manifest">The resolved payload's manifest — what <i>current</i> means.</param>
+    /// <param name="manifest">The resolved payload's manifest -- what <i>current</i> means.</param>
     /// <param name="logger">Where the pass reports.</param>
     /// <param name="familyAlreadyHeld">
     /// The family whose provisioning mutex the calling thread already owns, so the
@@ -124,7 +124,7 @@ internal static class RevisionPrune
     /// <b>It is a parameter because the property this pass has to hold is an
     /// <i>order</i>, and no end state can show an order.</b> The census is asked
     /// once per candidate, immediately before that candidate is deleted, rather
-    /// than once for the whole pass — and a test can only tell those two apart by
+    /// than once for the whole pass -- and a test can only tell those two apart by
     /// answering differently on the second question. This is not a seam on a hot
     /// path: <see cref="Run"/> runs once per successful provision, and the only
     /// other injectable in this area, <c>BrowserProvisioner.PruneRevisions</c>,
@@ -306,14 +306,14 @@ internal static class RevisionPrune
 
     /// <summary>
     /// Whether a tree that would not fully delete is a stuck file or a browser
-    /// running out of it — asked <b>after</b> the delete, because those two
+    /// running out of it -- asked <b>after</b> the delete, because those two
     /// produce the same failure list and want opposite responses.
     /// </summary>
     /// <remarks>
     /// <b>The plain report reads as a virus scanner, and that is the wrong
     /// diagnosis for the only case that is damage.</b> A running browser's
     /// <c>.exe</c> and <c>.dll</c> images are refused by the image section while
-    /// everything it opens lazily — its <c>.pak</c> files, its ICU data — has
+    /// everything it opens lazily -- its <c>.pak</c> files, its ICU data -- has
     /// already gone, so a partially-deleted revision with a live process in it is
     /// a browser that will fail on its next resource load. The unremarkable case
     /// (a scanner, an editor, a handle a crashed run leaked) leaves the same
@@ -333,7 +333,7 @@ internal static class RevisionPrune
 
         return Environment.NewLine
             + $"⚠️ {holders.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} process(es) are running out of '{candidate}' RIGHT NOW (pid {pids}), "
-            + "so those survivors are a live browser rather than a stuck file — and the parts of that tree which did delete are gone from underneath it. "
+            + "so those survivors are a live browser rather than a stuck file -- and the parts of that tree which did delete are gone from underneath it. "
             + "It was idle when this pass checked and is not now. Expect that browser to fail on its next resource load; close it and run the prune again.";
     }
 

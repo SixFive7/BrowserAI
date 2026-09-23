@@ -12,12 +12,12 @@ differencing the arms field by field, with replicates and interleaved arm order.
 **The harness was a spike and is not in this repository**, so nothing here is
 reproducible by running something we ship. What is reproducible is the method,
 which is stated in enough detail below to rebuild: enumerate the surface, take
-8–10 replicates per arm with alternating lead, and **split each arm against
-itself as a control** — that last step is what tells a real difference from
+8-10 replicates per arm with alternating lead, and **split each arm against
+itself as a control** -- that last step is what tells a real difference from
 harness noise, and it is what caught the two false positives recorded below.
 
 **`--browser-test` is not web-detectable.** **0 deterministic differences** across
-486 leaf fields (chrome.exe) / 487 (headless shell), with 8–10 replicates per arm,
+486 leaf fields (chrome.exe) / 487 (headless shell), with 8-10 replicates per arm,
 interleaved with alternating lead. Four self-controls (each arm split against
 itself) also returned 0 with the same noise structure, proving the differ was
 sensitive enough to have caught a single changed bit. `[FLOATS]`
@@ -52,12 +52,12 @@ because both looked like real signals.
 it appears on exactly one line of the process tree, and both renderer command
 lines are byte-identical between arms. `[FLOATS]`
 
-**Call-site inventory: 11 files**, not the 9 an earlier pass found — the two
+**Call-site inventory: 11 files**, not the 9 an earlier pass found -- the two
 missed are Fuchsia-only (`fuchsia_web/webengine/...`), including the only
 renderer-side consumer anywhere in Chromium, which is not built for Windows. The
 one that deserved the closest look was
-`content/browser/in_memory_federated_permission_context.cc` — auto-completing
-FedCM requests *is* web-observable — and it is ruled out because Chrome's
+`content/browser/in_memory_federated_permission_context.cc` -- auto-completing
+FedCM requests *is* web-observable -- and it is ruled out because Chrome's
 `ProfileImpl`/`OffTheRecordProfileImpl` override
 `GetFederatedIdentity*PermissionContext()`, so the in-memory context is
 content_shell-only. `[FLOATS]`
@@ -66,12 +66,12 @@ content_shell-only. `[FLOATS]`
 switch, `CreateMemoryPressureMonitor` returns `nullptr`, so the browser never
 fires `MemoryPressureListener` → `ChildProcess::OnMemoryPressure` → Blink cache
 purge / V8 pressure. That chain fires only under **genuine OS memory pressure**
-and its absence is observable only by waiting for a purge that never comes — not
+and its absence is observable only by waiting for a purge that never comes -- not
 a static fingerprint bit. Compute Pressure does not expose it:
 `PressureObserver.knownSources === ['cpu']`, and `observe('memory')` throws.
 `[FLOATS]`
 
-**Baseline exposure, identical in both arms — this is the context that makes the
+**Baseline exposure, identical in both arms -- this is the context that makes the
 question near-moot:** `[FLOATS]`
 
 - The user agent contains the literal string **`HeadlessChrome`**. That is a
@@ -79,15 +79,15 @@ question near-moot:** `[FLOATS]`
 - Playwright passes **43 switches** plus `about:blank`. It does **not** pass
   `--enable-automation`. `--disable-blink-features=AutomationControlled` is added
   by the **MCP config layer** (`coreBundle.js:71899`), not by `chromiumSwitches`.
-- `navigator.webdriver === false` — `runtime_features.cc:377-379` maps
+- `navigator.webdriver === false` -- `runtime_features.cc:377-379` maps
   `kEnableAutomation`, `kHeadless` **and** `kRemoteDebuggingPipe` to
   `EnableAutomationControlled`, and the MCP-added blink flag cancels it.
 - `chrome-headless-shell` is far more exposed than full `chrome.exe`:
   `window.chrome` absent entirely, `plugins.length === 0`, SwiftShader renderer,
   and `Notification.permission === 'denied'` while `permissions.query()` reports
-  `'prompt'` — the classic mismatch tell.
+  `'prompt'` -- the classic mismatch tell.
 
-**The padding alternative measures identically** — 0 differences across 486
+**The padding alternative measures identically** -- 0 differences across 486
 fields. Unknown switches are not in `kSwitchNames` and not in `kBadFlags`, so they
 are web-invisible by the same mechanism. `[FLOATS]`
 
@@ -95,7 +95,7 @@ are web-invisible by the same mechanism. `[FLOATS]`
 `--browser-test`.** Zero hits across GitHub code search (rebrowser-patches,
 patchright, puppeteer-extra, undetected-chromedriver, nodriver) and four web
 searches spanning DataDome, Castle, CloakBrowser and BotBrowser writeups. **This
-is absence of evidence, not evidence of absence** — stated as such. The
+is absence of evidence, not evidence of absence** -- stated as such. The
 literature's switch-detection surface is `--enable-automation`, `--headless` and
 `--disable-blink-features=AutomationControlled`, all detectable via their
 *effects*, and all already in play here regardless. `[FLOATS]`
@@ -105,7 +105,7 @@ induced (deliberately); headful was not tested (hard constraint, though nothing
 renderer-side depends on the switch); one Chromium version; and no real
 bot-detection service was exercised (local-only constraint).
 
-## The user agent and `navigator.webdriver`, through the config alone — measured 2026-08-19
+## The user agent and `navigator.webdriver`, through the config alone -- measured 2026-08-19
 
 **Asked because the maintainer asked it:** can the user agent and
 `navigator.webdriver` be set to a normal browser's values *through the generated
@@ -118,11 +118,11 @@ reading both values back through `browser_evaluate`, at `@playwright/mcp` 0.0.79
 | Arm | `navigator.userAgent` | `navigator.webdriver` |
 |---|---|---|
 | chromium, nothing set | `… HeadlessChrome/152.0.0.0 Safari/537.36` | `false` |
-| chromium, `browser.contextOptions.userAgent` set | `… Chrome/152.0.0.0 Safari/537.36` — **the value we asked for** | `false` |
+| chromium, `browser.contextOptions.userAgent` set | `… Chrome/152.0.0.0 Safari/537.36` -- **the value we asked for** | `false` |
 | firefox, nothing set | `… rv:153.0) Gecko/20100101 Firefox/153.0` | **`true`** |
-| firefox, `browser.contextOptions.userAgent` set to a distinct string | `BrowserAI-probe/1.0 distinct-context-option` — **the value we asked for** | **`true`** |
-| firefox, `firefoxUserPrefs["dom.webdriver.enabled"] = false` | unchanged | **`true`** — the pref does nothing |
-| firefox, `firefoxUserPrefs["general.useragent.override"]` set — **the control** | `BrowserAI-probe/1.0 distinct-pref` | `true` |
+| firefox, `browser.contextOptions.userAgent` set to a distinct string | `BrowserAI-probe/1.0 distinct-context-option` -- **the value we asked for** | **`true`** |
+| firefox, `firefoxUserPrefs["dom.webdriver.enabled"] = false` | unchanged | **`true`** -- the pref does nothing |
+| firefox, `firefoxUserPrefs["general.useragent.override"]` set -- **the control** | `BrowserAI-probe/1.0 distinct-pref` | `true` |
 
 **Three findings, and the control is what makes the third one mean anything.**
 
@@ -130,7 +130,7 @@ reading both values back through `browser_evaluate`, at `@playwright/mcp` 0.0.79
    plain config key: `configFromCLIOptions` maps `--user-agent` onto the same
    key, `userAgent` is declared in **both**
    `BrowserNewContextParams` and `BrowserTypeLaunchPersistentContextParams`, and
-   `createPersistentBrowser` spreads `contextOptions` into the launch — so unlike
+   `createPersistentBrowser` spreads `contextOptions` into the launch -- so unlike
    [`storageState`](../playwright/configuration.md#silent-config-failures) it is
    not dropped on the persistent path.
 2. **Chromium's user agent is the only thing headedness changes here**, and the
@@ -146,13 +146,13 @@ reading both values back through `browser_evaluate`, at `@playwright/mcp` 0.0.79
 
 **The staleness trap, stated because it is the reason not to do the obvious
 thing.** A hardcoded UA goes stale the moment `browsers.json` moves, and it moves
-with every `@playwright/mcp` bump — and it fails **silently and in the wrong
+with every `@playwright/mcp` bump -- and it fails **silently and in the wrong
 direction**: a server would see `Chrome/152.0.0.0` from a browser that is
 actually 154, which is a *worse* signal than an honest `HeadlessChrome`. Two
 derivations avoid it and neither is free:
 
 - **From the payload.** `browsers.json` carries `browserVersion` beside the
-  revision — `152.0.7977.8` here — and the measured UA reports
+  revision -- `152.0.7977.8` here -- and the measured UA reports
   `Chrome/152.0.0.0`, i.e. the major followed by `.0.0.0`. So the string is
   composable with no launch. What it pins is the *shape* of Chrome's reduced UA
   (`Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
@@ -160,7 +160,7 @@ derivations avoid it and neither is free:
   evidence and an assumption about a policy this repository has not measured.
 - **From the browser.** Read the headless UA the browser itself produces and
   replace the token `HeadlessChrome` with `Chrome`. Every version number then
-  comes from the browser and nothing can go stale — but the value is only
+  comes from the browser and nothing can go stale -- but the value is only
   available *after* a launch, and `contextOptions.userAgent` is applied at launch,
   so it needs either a probe launch per revision or a cached value beside the
   browsers root.
@@ -171,6 +171,6 @@ maintainer's, and the wider parity measurement it belongs to is the open item in
 
 **Re-establish** by driving `cli.js` with a config carrying each arm and
 evaluating `JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })`.
-**Keep the `general.useragent.override` arm** — without a pref that is known to
+**Keep the `general.useragent.override` arm** -- without a pref that is known to
 work, a `dom.webdriver.enabled` that changes nothing cannot be told from a prefs
 channel that was never wired up.

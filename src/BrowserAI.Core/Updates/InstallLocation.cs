@@ -28,15 +28,15 @@ namespace BrowserAI.Updates;
 /// writability, <b>creates <c>packages\</c> and <c>packages\VelopackTemp</c></b>
 /// and opens a log file
 /// ([kb](../../../kb/packaging/velopack.md#5-reading-the-installed-version-must-not-touch-the-network)),
-/// so it is read once here and cached. It does <b>not</b> touch the network —
-/// that landmine never applied to 1.2.0 — but a startup path that created
+/// so it is read once here and cached. It does <b>not</b> touch the network --
+/// that landmine never applied to 1.2.0 -- but a startup path that created
 /// directories on every call would still be wrong.
 /// </para>
 /// <para>
 /// ⚠️ <b>What this decides, corrected 2026-09-15 (previously "<b>Why this
 /// decides the app root at all.</b> The install root is
 /// <c>%LocalAppData%\BrowserAI</c> by default, which is exactly what
-/// <see cref="Hosting.LocalAppDataPaths"/> would compute — but only by default.
+/// <see cref="Hosting.LocalAppDataPaths"/> would compute -- but only by default.
 /// <c>Setup.exe --installto</c> moves it, and a computed root would then put the
 /// process log, the session index and the provisioned browsers beside a
 /// BrowserAI that is not running. Locating is the difference between a
@@ -44,7 +44,7 @@ namespace BrowserAI.Updates;
 /// BrowserAI's data goes, and it did decide that until this date. The argument
 /// was sound and its conclusion was upside down: following the binary guaranteed
 /// the data would be found beside it, and guaranteed the data was inside the one
-/// directory an installer destroys — <c>Setup.exe</c> renames a non-empty
+/// directory an installer destroys -- <c>Setup.exe</c> renames a non-empty
 /// install root aside and deletes it, and uninstall empties it. The data root is
 /// the constant <c>%LocalAppData%\BrowserAI</c> now and the install root is
 /// <c>%LocalAppData%\BrowserAI.app</c> beside it
@@ -69,7 +69,7 @@ internal static class InstallLocation
     public static bool IsInstalled => Resolved.Value.IsInstalled;
 
     /// <summary>
-    /// The install root — the directory <b>containing</b> <c>current\</c> — or
+    /// The install root -- the directory <b>containing</b> <c>current\</c> -- or
     /// <see langword="null"/> when this process is not an installed one.
     /// </summary>
     /// <remarks>
@@ -77,7 +77,7 @@ internal static class InstallLocation
     /// <see cref="LiveInstances"/> as the root the census is about, falling back
     /// to the data root when this process is not an install and there is no such
     /// root to ask about; and the startup log records it. ⚠️ <b>It must never
-    /// reach <see cref="Hosting.LocalAppDataPaths"/> again</b> — that is the
+    /// reach <see cref="Hosting.LocalAppDataPaths"/> again</b> -- that is the
     /// wiring the layout change of 2026-09-15 removed, and
     /// <c>UpdateTests.NoDataPathResolvesUnderAnyInstallRoot</c> is the scan that
     /// fails if it comes back.
@@ -92,7 +92,7 @@ internal static class InstallLocation
     /// uses: a client installed from a beta <c>Setup.exe</c> inherits <c>beta</c>
     /// in its manifest and stays there silently, which is the real reason
     /// <c>ExplicitChannel</c> is set rather than inferred
-    /// ([kb](../../../kb/packaging/velopack.md#channel--the-charters-reason-was-wrong)).
+    /// ([kb](../../../kb/packaging/velopack.md#channel----the-charters-reason-was-wrong)).
     /// </remarks>
     public static string? InstalledChannel => Resolved.Value.Channel;
 

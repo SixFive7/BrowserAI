@@ -25,7 +25,7 @@ internal enum FolderPickOutcome
 /// ⚠️ <b>Three states rather than a nullable string, since 2026-09-16.</b> The
 /// picker used to answer <see langword="null"/> for <i>cancelled</i> and
 /// <see langword="null"/> for <i>a folder was chosen and Windows would not give
-/// a path for it</i>, and the caller read both as a cancel — so the second one
+/// a path for it</i>, and the caller read both as a cancel -- so the second one
 /// closed the picker, changed nothing, and said nothing. The two are different
 /// things to a person and are two values now.
 /// </remarks>
@@ -55,7 +55,7 @@ internal readonly record struct FolderPick(FolderPickOutcome Outcome, string? Pa
 /// <para>
 /// ⚠️ <b><c>SHBrowseForFolderW</c> rather than <c>IFileOpenDialog</c>, and this
 /// is a decision rather than an oversight.</b> The modern picker is COM, and
-/// COM under NativeAOT means source-generated interop —
+/// COM under NativeAOT means source-generated interop --
 /// <c>[GeneratedComInterface]</c> over <c>IModalWindow</c>,
 /// <c>IFileDialog</c> and <c>IFileOpenDialog</c>, which is twenty-six vtable
 /// slots that have to be declared in exact order and whose only failure mode is
@@ -77,7 +77,7 @@ internal readonly record struct FolderPick(FolderPickOutcome Outcome, string? Pa
 /// <para>
 /// ⚠️ <b><c>BIF_NEWDIALOGSTYLE</c> requires the thread to be in a
 /// single-threaded apartment</b>, and a thread that is not gets the old dialog
-/// with no error. That is why the entry point is <c>[STAThread]</c> — a fact
+/// with no error. That is why the entry point is <c>[STAThread]</c> -- a fact
 /// that is invisible at the call site and is therefore written down at both
 /// ends.
 /// </para>
@@ -100,7 +100,7 @@ internal static partial class ShellInterop
     /// How many characters the path buffer holds.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>The Windows extended-length maximum, and not <c>MAX_PATH</c> —
+    /// ⚠️ <b>The Windows extended-length maximum, and not <c>MAX_PATH</c> --
     /// 2026-09-16.</b> The picker used to write the path into the same 260-char
     /// buffer it gave the shell for the display name, and
     /// <c>SHGetPathFromIDListW</c> has no length parameter at all: it assumes
@@ -173,7 +173,7 @@ internal static partial class ShellInterop
     /// <remarks>
     /// <b>Separate from the P/Invokes so that it can be asserted at all.</b> No
     /// test in this repository can open a modal window, so the only part of the
-    /// picker that can be held to anything is what it makes of the answers — and
+    /// picker that can be held to anything is what it makes of the answers -- and
     /// that is this method, over values a test supplies.
     /// </remarks>
     /// <param name="chosen">Whether the picker returned an item list.</param>
@@ -204,7 +204,7 @@ internal static partial class ShellInterop
     /// ⚠️ <b>This is the one launch in the tree that does not set
     /// <c>CreateNoWindow</c>, and it cannot: it starts no process at all.</b>
     /// <c>ShellExecuteW</c> hands the verb to the shell, which opens a window in
-    /// <b>Explorer's</b> process or in a new one of its own — and a window is
+    /// <b>Explorer's</b> process or in a new one of its own -- and a window is
     /// exactly what was asked for. The house scan that requires
     /// <c>CreateNoWindow</c> reads <c>ProcessStartInfo</c> construction sites,
     /// so it does not see this and is not being evaded: there is no

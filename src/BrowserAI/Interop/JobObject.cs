@@ -18,7 +18,7 @@ namespace BrowserAI.Interop;
 /// <b>The intuition runs backwards, so read this before changing a flag.</b> Job
 /// membership is inherited automatically by every descendant created with
 /// <c>CreateProcess</c>. Escaping requires <c>CREATE_BREAKAWAY_FROM_JOB</c> on
-/// the child <i>and</i> a breakaway flag on the job — and when a child asks for
+/// the child <i>and</i> a breakaway flag on the job -- and when a child asks for
 /// it from a job that does not permit it, <c>CreateProcessW</c> fails with
 /// <c>ERROR_ACCESS_DENIED</c> rather than escaping. A job granting no breakaway
 /// flags therefore converts every escape attempt into a launch failure, which is
@@ -39,7 +39,7 @@ namespace BrowserAI.Interop;
 /// it rather than trust it.
 /// </item>
 /// <item>
-/// <b>A name.</b> An unnamed job has exactly one door — the handle this object
+/// <b>A name.</b> An unnamed job has exactly one door -- the handle this object
 /// holds. A named one is an <c>OpenJobObject</c> away from a handle any process
 /// running as the same user can take, and a handle to this job is a handle to
 /// every browser BrowserAI has spawned.
@@ -50,7 +50,7 @@ namespace BrowserAI.Interop;
 /// escape, it causes one: Firefox's <c>NeedToBreakAwayFromJob()</c> returns true
 /// only for a job carrying <i>both</i> <c>KILL_ON_JOB_CLOSE</c> and
 /// <c>BREAKAWAY_OK</c>, so ours is the configuration it checks and declines.
-/// <c>JobObjectBasicUIRestrictions</c> is equally forbidden — jobs nest only if
+/// <c>JobObjectBasicUIRestrictions</c> is equally forbidden -- jobs nest only if
 /// neither sets UI limits, and Chromium's sandbox job has to nest inside ours.
 /// </para>
 /// </remarks>
@@ -58,8 +58,8 @@ internal sealed partial class JobObject : IDisposable
 {
     /// <summary>
     /// The only limit this project sets. Closing the last handle terminates
-    /// every process in the job, which is what makes BrowserAI's own death — by
-    /// crash, by <c>TerminateProcess</c>, by a session limit — take the browser
+    /// every process in the job, which is what makes BrowserAI's own death -- by
+    /// crash, by <c>TerminateProcess</c>, by a session limit -- take the browser
     /// tree with it.
     /// </summary>
     public const uint KillOnJobClose = 0x00002000;
@@ -127,7 +127,7 @@ internal sealed partial class JobObject : IDisposable
     }
 
     /// <summary>
-    /// The limit flags Windows reports for this job — read back, never the
+    /// The limit flags Windows reports for this job -- read back, never the
     /// value that was written.
     /// </summary>
     /// <exception cref="Win32Exception">The query failed.</exception>

@@ -16,7 +16,7 @@ namespace BrowserAI.Tests.Harness;
 /// ⚠️ <b>Found by running the suite ten times, 2026-08-16, at build-order
 /// step 16.</b> <c>ReinstallBrowserTests</c> writes the marker to set up a
 /// complete tree, and the rig's own default session <i>legitimately</i> starts
-/// an install against the same empty root at the same moment — so the fake
+/// an install against the same empty root at the same moment -- so the fake
 /// installer writes the same file. <c>File.WriteAllText</c> opens
 /// <c>FileShare.Read</c>, so the second writer is refused with <i>"the process
 /// cannot access the file … because it is being used by another process"</i>.

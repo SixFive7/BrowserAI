@@ -30,7 +30,7 @@ internal enum PublishFreshnessVerdict
 /// <remarks>
 /// <b>A record so that the guard's refusal and the run's coverage row are two
 /// renderings of one reading rather than two comparisons.</b> The failure this
-/// closes is not that the check was wrong — it was right every time — but that
+/// closes is not that the check was wrong -- it was right every time -- but that
 /// it said nothing when it passed, so the only sentence available to a reader
 /// with a staleness suspicion was one nobody had measured.
 /// </remarks>
@@ -68,9 +68,9 @@ internal sealed record PublishFreshnessReading(
 /// <para>
 /// <b>The slice is driven from the published binary rather than from
 /// <c>dotnet run</c>, and that is the point of the step it belongs to.</b> The
-/// decisions under test — <c>PROC_THREAD_ATTRIBUTE_JOB_LIST</c> under
+/// decisions under test -- <c>PROC_THREAD_ATTRIBUTE_JOB_LIST</c> under
 /// <c>[LibraryImport]</c>, the SDK's serialization under ILC, a
-/// <c>JsonSerializerContext</c>-free JSON path — are all things that behave
+/// <c>JsonSerializerContext</c>-free JSON path -- are all things that behave
 /// identically under the JIT and can only fail after native compilation.
 /// </para>
 /// <para>
@@ -91,7 +91,7 @@ internal static class PublishedSlice
     /// <summary>The published binary.</summary>
     /// <remarks>
     /// ⚠️ <b>Renamed 2026-09-15 (previously <c>BrowserAI.exe</c>).</b> That name
-    /// belongs to the configuration app now — see <see cref="AppExecutable"/> —
+    /// belongs to the configuration app now -- see <see cref="AppExecutable"/> --
     /// and this is the MCP server, which is what every slice arm drives over
     /// stdio.
     /// </remarks>
@@ -102,7 +102,7 @@ internal static class PublishedSlice
     /// <b>A different directory, because it is a different project.</b> The
     /// release script publishes both into one pack directory; an ordinary
     /// <c>dotnet publish</c> of each puts them under their own project. Nothing
-    /// in the suite drives this binary over a protocol — it has no protocol —
+    /// in the suite drives this binary over a protocol -- it has no protocol --
     /// so it is here only for what can be read off the file itself.
     /// </remarks>
     public static string AppExecutable { get; } = Path.Combine(
@@ -139,8 +139,8 @@ internal static class PublishedSlice
     /// <para>
     /// <b>Named by path, because it is the one input here that cannot be
     /// enumerated.</b> <c>RepositoryLayout</c> prunes any directory called
-    /// <c>payload</c> during the walk — there are two of them and one carries an
-    /// unpacked <c>node_modules</c> — so every corpus that class produces is
+    /// <c>payload</c> during the walk -- there are two of them and one carries an
+    /// unpacked <c>node_modules</c> -- so every corpus that class produces is
     /// blind to this file by construction. Naming it is not a shortcut around
     /// the walk; it is the only way to watch a tree the walk is right to prune.
     /// </para>
@@ -153,7 +153,7 @@ internal static class PublishedSlice
     /// resolution: it moves when and only when the payload's resolved set moves,
     /// and it is what the upstream review reads. Watching it means a re-resolve
     /// that changed something makes the publish stale; it does not mean an
-    /// unpacked tree that was deleted and restored does, which is correct — that
+    /// unpacked tree that was deleted and restored does, which is correct -- that
     /// is the same payload.
     /// </para>
     /// </remarks>
@@ -168,17 +168,17 @@ internal static class PublishedSlice
     /// <para>
     /// <b>Four kinds, and the last two each arrived as a measured gap.</b> The
     /// product's C#, the build files that decide how it is compiled, the source
-    /// this repository vendors from elsewhere and compiles in — which until
+    /// this repository vendors from elsewhere and compiles in -- which until
     /// 2026-08-26 was watched by nothing, so a swapped SQLite amalgamation left
     /// the binary reading as fresh and every arm driving it asserting about a
-    /// library nobody had built — and, since 2026-08-30, the payload's
+    /// library nobody had built -- and, since 2026-08-30, the payload's
     /// provenance stamp.
     /// </para>
     /// <para>
     /// <b>The fourth is the same failure one directory across.</b> A publish
     /// copies the resolved payload beside the executable, so a payload
     /// re-resolve that moved <c>@playwright/mcp</c>, <c>playwright-core</c> or
-    /// <c>node</c> leaves the published tree carrying the old one — and until
+    /// <c>node</c> leaves the published tree carrying the old one -- and until
     /// this row existed, reading as fresh. It was benign on the day it was
     /// found, 2026-08-29, and only because the re-resolve had come back byte for
     /// byte; nothing about the check made it benign. See
@@ -211,7 +211,7 @@ internal static class PublishedSlice
     /// the published binary's <c>LastWriteTime</c> of <b>01:14:16.500</b> beside
     /// commit <c>56383c9</c>'s date of <b>01:20:40</b>, saw the commit touching
     /// <c>src/BrowserAI/Sessions/SessionLock.cs</c> six minutes after the
-    /// publish, and reported that four subsequent gate sets — twelve full runs —
+    /// publish, and reported that four subsequent gate sets -- twelve full runs --
     /// had driven a stale binary while passing this check. <b>Every part of that
     /// reading is true and the conclusion is false.</b> <c>SessionLock.cs</c>'s
     /// own timestamp was <b>01:12:22.665</b>, one minute 53.8 seconds
@@ -225,12 +225,12 @@ internal static class PublishedSlice
     /// <b>What made the misreading available is that this check used to say
     /// nothing when it passed.</b> It threw or it was silent, and the run's
     /// coverage block carried a <c>published slice</c> row reporting
-    /// <c>PRESENT</c> — a claim about existence and not about freshness. So
+    /// <c>PRESENT</c> -- a claim about existence and not about freshness. So
     /// twelve green logs offered no sentence to check a staleness suspicion
     /// against, and the nearest thing to hand was a commit date.
     /// ***Corrected 2026-08-30 (previously "Making the run state its own
     /// freshness margin is a change to the coverage block rather than to this
-    /// method, and it is not made here.")*** — it is made now, and it is made
+    /// method, and it is not made here.")*** -- it is made now, and it is made
     /// here rather than beside the block: <see cref="Measure"/> is the one
     /// comparison, <see cref="RefusalFor"/> renders it as this method's refusal
     /// and <see cref="RowFor"/> renders it as the run's
@@ -240,8 +240,8 @@ internal static class PublishedSlice
     /// </para>
     /// <para>
     /// <b>Timestamps rather than content, and that is forced rather than
-    /// chosen.</b> The obvious stronger check — hash the inputs, hash the
-    /// binary, refuse a binary that does not belong to them — has no binary
+    /// chosen.</b> The obvious stronger check -- hash the inputs, hash the
+    /// binary, refuse a binary that does not belong to them -- has no binary
     /// half to compare against here. Measured 2026-08-30: two publishes of an
     /// <i>identical</i> input set, nothing in <see cref="FreshnessInputs"/>
     /// touched between them, produced binaries of the same length
@@ -286,7 +286,7 @@ internal static class PublishedSlice
     /// <see cref="EnsureFresh"/> refuses on; <i>what is the newest thing, and by
     /// how much did the binary beat it?</i> is what the coverage row states. A
     /// second enumeration for the row would be a second implementation free to
-    /// ask a subtly different question — which is exactly how the corpus scan
+    /// ask a subtly different question -- which is exactly how the corpus scan
     /// came to disagree with <c>git ls-files</c> by 520 files while its own
     /// remark said the two matched.
     /// </para>
@@ -308,7 +308,7 @@ internal static class PublishedSlice
     /// a choice made here.</b> Those <see cref="FileInfo"/> instances are created
     /// once when <c>RepositoryLayout</c> initialises and cache their timestamps,
     /// so an edit made <i>while</i> the suite is running is invisible to this
-    /// comparison — as it always has been. It is stated rather than fixed
+    /// comparison -- as it always has been. It is stated rather than fixed
     /// because the row must report what the guard compared: a row that re-stat'd
     /// while the guard did not would be the two-implementations defect wearing
     /// the clothes of an improvement.
@@ -368,7 +368,7 @@ internal static class PublishedSlice
     /// <remarks>
     /// <b>Pure for <see cref="SuiteEnvironment.Decide"/>'s reason exactly.</b>
     /// A healthy tree publishes and then runs, so <c>STALE</c> is a state this
-    /// machine reaches perhaps once a fortnight — and a rendering first exercised
+    /// machine reaches perhaps once a fortnight -- and a rendering first exercised
     /// on the day it matters is the same dead-mechanism defect the coverage block
     /// exists to remove, one layer in.
     /// </remarks>
@@ -393,7 +393,7 @@ internal static class PublishedSlice
     /// <b>A function of the reading so that a refusal can be driven without
     /// arranging a stale publish.</b> The alternative is a test that edits a
     /// source file to provoke one, which would leave the tree needing a
-    /// re-publish to go green again — and the guard's message is the thing a
+    /// re-publish to go green again -- and the guard's message is the thing a
     /// developer reads at the worst moment, so it is worth exercising on every
     /// ordinary run.
     /// </remarks>
@@ -405,7 +405,7 @@ internal static class PublishedSlice
 
         if (Judge(reading) is PublishFreshnessVerdict.NotEstablished)
         {
-            return $"There is no published binary to test against — {reading.Absence} — so this test would prove nothing about the code in the tree. Run: {PublishCommand}";
+            return $"There is no published binary to test against -- {reading.Absence} -- so this test would prove nothing about the code in the tree. Run: {PublishCommand}";
         }
 
         return $"The published binary at '{Executable}' is older than {reading.Newer.Count.ToString(CultureInfo.InvariantCulture)} source file(s), so this test would prove nothing about the code in the tree. Run: {PublishCommand}"
@@ -421,7 +421,7 @@ internal static class PublishedSlice
     /// suspicion nothing to be checked against.</b> On 2026-08-30 a gate runner
     /// noticed the published binary was stamped 01:14:16 and that commit
     /// <c>56383c9</c> was dated 01:20:40 touching a product source file, and
-    /// reported that four gate sets — twelve full runs — had driven a stale
+    /// reported that four gate sets -- twelve full runs -- had driven a stale
     /// binary. The suspicion was reasonable, the arithmetic was right, and the
     /// conclusion was false: a commit's date is when <c>git commit</c> ran and
     /// never a working-tree file's timestamp, and the file in question was
@@ -440,8 +440,8 @@ internal static class PublishedSlice
     /// <para>
     /// <b>The margin is stated rather than left to be subtracted.</b> A reader
     /// with a suspicion has two timestamps and a hypothesis; what settles it is
-    /// the difference and its sign, so the row carries the word — <i>newer</i> or
-    /// <i>OLDER</i> — as well as the number.
+    /// the difference and its sign, so the row carries the word -- <i>newer</i> or
+    /// <i>OLDER</i> -- as well as the number.
     /// </para>
     /// <para>
     /// <b>It is a row and not a <see cref="SuiteCapability"/>, and the reason is
@@ -450,7 +450,7 @@ internal static class PublishedSlice
     /// not a capability because <see cref="SuiteCapability.PublishedSlice"/>
     /// already <i>is</i> one and reports the artefact's existence. Freshness is a
     /// second question about the same artefact, and the two were conflated by a
-    /// reader who had only the first — which is how this row came to be written.
+    /// reader who had only the first -- which is how this row came to be written.
     /// </para>
     /// </remarks>
     /// <param name="reading">The reading.</param>
@@ -495,7 +495,7 @@ internal static class PublishedSlice
 
         if (verdict is PublishFreshnessVerdict.NotEstablished)
         {
-            return $"{reading.Absence} — nothing was compared, so no line in this log says whether a binary matches the tree";
+            return $"{reading.Absence} -- nothing was compared, so no line in this log says whether a binary matches the tree";
         }
 
         var inputs = reading.Inputs.ToString(CultureInfo.InvariantCulture);
@@ -545,7 +545,7 @@ internal static class PublishedSlice
     /// <remarks>
     /// Deliberately <b>not</b> <c>ChildEnvironment.Build()</c>. That is the
     /// allowlist BrowserAI applies to its own child, and using it here would
-    /// mean the test proved the allowlist by supplying it — the child's
+    /// mean the test proved the allowlist by supplying it -- the child's
     /// environment has to be whatever BrowserAI decides when handed an ordinary
     /// one.
     /// </remarks>

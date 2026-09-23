@@ -15,8 +15,8 @@ namespace BrowserAI.Tests;
 /// The npm half of the float. <c>Directory.Packages.props</c> is guarded by
 /// <see cref="BuildConfigurationTests"/>; this guards the one other place a
 /// version can be declared, and the failure it prevents is the same one:
-/// a payload that stopped following upstream while every surface signal — a
-/// green build, a committed lock, a passing suite — reads healthy.
+/// a payload that stopped following upstream while every surface signal -- a
+/// green build, a committed lock, a passing suite -- reads healthy.
 /// </para>
 /// <para>
 /// The two declaration tests read the tracked files under
@@ -24,7 +24,7 @@ namespace BrowserAI.Tests;
 /// The two content tests read the assembled tree under <c>payload/</c> and go
 /// through <see cref="SuiteEnvironment"/>'s gate for it, because a scan of a
 /// tree that is not there passes trivially and reads identically to a scan that
-/// found nothing — which is the whole failure this suite's capability gate
+/// found nothing -- which is the whole failure this suite's capability gate
 /// exists to make loud. <i>(Corrected 2026-08-17, previously "These read the
 /// tracked files under <c>build/payload/</c>, never the assembled tree under
 /// <c>payload/</c>".)</i>
@@ -45,7 +45,7 @@ internal sealed partial class PayloadTests
 
     /// <summary>
     /// What a platform-native binary looks like on any platform, not only this
-    /// one — a tree that is portable is portable everywhere or it is not
+    /// one -- a tree that is portable is portable everywhere or it is not
     /// portable.
     /// </summary>
     private static readonly HashSet<string> NativeExtensions =
@@ -74,7 +74,7 @@ internal sealed partial class PayloadTests
             .IsEquivalentTo(ExpectedDependencies);
 
         // `latest` is the dist-tag, so the payload build re-resolves on every
-        // run. A range — `^0.0.79` — would look equally floating and would pin
+        // run. A range -- `^0.0.79` -- would look equally floating and would pin
         // the major forever, which for a 0.0.x package pins everything.
         await Assert.That(dependencies[0].Value).IsEqualTo("latest");
     }
@@ -125,8 +125,8 @@ internal sealed partial class PayloadTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// That section prints the payload's chain — wrapper, core, browser revision
-    /// — as a worked example, and a worked example is the shape of claim that
+    /// That section prints the payload's chain -- wrapper, core, browser revision
+    /// -- as a worked example, and a worked example is the shape of claim that
     /// goes stale in silence: every version in it was true on the day it was
     /// written, nothing re-reads it, and a reader meets a self-consistent
     /// picture of a payload nobody ships. It stood at <c>@playwright/mcp</c>
@@ -152,7 +152,7 @@ internal sealed partial class PayloadTests
     /// is <c>RecordedCountTests</c>' trade taken deliberately: a check keyed on
     /// prose can be unhooked by editing the prose, so the unhooking is made loud
     /// rather than silent. <b>The 0.0.79 chain printed above it is deliberately
-    /// NOT read</b> — it is a true record of one day, and holding a record to
+    /// NOT read</b> -- it is a true record of one day, and holding a record to
     /// today's manifest would demand it be rewritten at every roll, which is the
     /// same exemption <c>ThirdPartyNoticeTests</c> gives a correction stamp's
     /// <c>previously</c> span, for the same reason.
@@ -416,7 +416,7 @@ internal sealed partial class PayloadTests
     /// A publish copies the resolved payload beside the executable, so a
     /// re-resolve that moved <c>@playwright/mcp</c>, <c>playwright-core</c> or
     /// <c>node</c> left every slice arm driving a published tree carrying the
-    /// old one — reading as fresh, with the lock in the tree saying otherwise.
+    /// old one -- reading as fresh, with the lock in the tree saying otherwise.
     /// Found 2026-08-29 during release preparation and benign on the day, only
     /// because that re-resolve had come back byte for byte.
     /// </para>
@@ -431,7 +431,7 @@ internal sealed partial class PayloadTests
     /// <b>And over the corpus rather than over the tree, because the tree is
     /// pruned.</b> <see cref="RepositoryLayout"/> drops any directory named
     /// <c>payload</c> during the walk, so no corpus it produces can contain this
-    /// file however the enumeration is widened — which is why the second arm
+    /// file however the enumeration is widened -- which is why the second arm
     /// below asserts the exact relative path rather than a pattern.
     /// </para>
     /// </remarks>

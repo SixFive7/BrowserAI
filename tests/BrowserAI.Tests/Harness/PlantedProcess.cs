@@ -8,7 +8,7 @@ namespace BrowserAI.Tests.Harness;
 
 /// <summary>
 /// A real, long-lived process whose <b>image path</b> is inside a directory the
-/// test chooses — which is the only way to provoke the checks that ask whether
+/// test chooses -- which is the only way to provoke the checks that ask whether
 /// something is running out of BrowserAI's browsers root.
 /// </summary>
 /// <remarks>
@@ -19,7 +19,7 @@ namespace BrowserAI.Tests.Harness;
 /// framework-dependent apphost, so a lone <c>.exe</c> in a strange directory
 /// fails to find its <c>.dll</c>, its <c>runtimeconfig.json</c> and its
 /// dependency closure, and dies immediately. That failure is silent from the
-/// outside — the launch succeeds, the process is gone before anything looks —
+/// outside -- the launch succeeds, the process is gone before anything looks --
 /// and it made a tool that <i>deletes browser trees</i> act on an empty answer.
 /// Observed twice on 2026-08-16 before the wait below existed.
 /// </para>
@@ -28,7 +28,7 @@ namespace BrowserAI.Tests.Harness;
 /// System32 DLLs, which resolve by absolute path rather than beside the image.
 /// With <b>no arguments</b> it reads its stdin forever, and
 /// <see cref="JobObjectScope"/> holds the write end of that pipe for the scope's
-/// life — so it stays alive without a busy loop, a timer or a script.
+/// life -- so it stays alive without a busy loop, a timer or a script.
 /// <c>node.exe</c> from the payload would work equally well and was rejected for
 /// one reason: it is 88 MB to copy, and it is absent on a clean clone, which
 /// would make the error catalogue's census depend on whether somebody had run

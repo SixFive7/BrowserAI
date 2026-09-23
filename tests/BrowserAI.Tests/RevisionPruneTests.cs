@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// Pruning superseded browser revisions — the obligation
+/// Pruning superseded browser revisions -- the obligation
 /// <c>PLAYWRIGHT_SKIP_BROWSER_GC=1</c> created and nothing discharged.
 /// </summary>
 /// <remarks>
@@ -24,7 +24,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The manifest is the real one.</b> What counts as <i>current</i> comes from
 /// the resolved payload's <c>browsers.json</c>, so these tests move with a
-/// revision bump instead of asserting a literal that stops being true — the same
+/// revision bump instead of asserting a literal that stops being true -- the same
 /// reason <see cref="ProvisionedBrowsers"/> computes its paths rather than
 /// spelling them.
 /// </para>
@@ -79,7 +79,7 @@ internal sealed class RevisionPruneTests
         var manifest = BrowsersManifest.Read(RepositoryPayload.Layout);
 
         // `.links` is playwright-core's own registry index and deleting it is what
-        // makes upstream's GC prune a live tree — the exact hazard
+        // makes upstream's GC prune a live tree -- the exact hazard
         // PLAYWRIGHT_SKIP_BROWSER_GC=1 exists to stop, which this must not
         // reintroduce from the other side.
         var links = Plant(root, ".links", bytes: 32);
@@ -91,7 +91,7 @@ internal sealed class RevisionPruneTests
 
         // The near miss that matters: a name that starts like a browser but is not
         // one. `chromiumish-1` does not begin with `chromium-`, and upstream's own
-        // comment says why the check is written this way — `webkit` is a prefix of
+        // comment says why the check is written this way -- `webkit` is a prefix of
         // `webkit-technology-preview`.
         var nearMiss = Plant(root, "chromiumish-1", bytes: 64);
 
@@ -150,7 +150,7 @@ internal sealed class RevisionPruneTests
         var superseded = Plant(root, SupersededChromium, bytes: 1024);
 
         // Held on ANOTHER THREAD, because a named mutex is owned by the thread
-        // that waited on it — taking it here would be re-entrant and would prove
+        // that waited on it -- taking it here would be re-entrant and would prove
         // nothing.
         using var taken = new ManualResetEventSlim();
         using var release = new ManualResetEventSlim();
@@ -242,7 +242,7 @@ internal sealed class RevisionPruneTests
             // The prune runs INSIDE the install path's catch-all, which turns any
             // exception into a Failed status. Without a catch of its own, a disk
             // that would not give up an old tree would report a 203.8 MB download
-            // that succeeded as a provisioning failure — and the caller would
+            // that succeeded as a provisioning failure -- and the caller would
             // download it again.
             PruneRevisions = _ => throw new IOException("The pruner fell over."),
         };
@@ -256,7 +256,7 @@ internal sealed class RevisionPruneTests
         // showed it: `Peek` reads the completion marker before the cached result,
         // so an unguarded throw still answers `Installed`. What it also does is
         // write `Provisioning chromium failed` at Error over a download that
-        // succeeded — a confident wrong answer in the one place this project
+        // succeeded -- a confident wrong answer in the one place this project
         // treats as evidence. Both halves are asserted.
         await Assert.That(captured.Records.Any(record => record.EventId.Id is 70)).IsFalse();
 
@@ -403,7 +403,7 @@ internal sealed class RevisionPruneTests
     }
 
     /// <summary>
-    /// The same guard, through a junction above the browsers root — where the
+    /// The same guard, through a junction above the browsers root -- where the
     /// census used to come back empty for every revision on the machine.
     /// </summary>
     /// <remarks>
@@ -413,7 +413,7 @@ internal sealed class RevisionPruneTests
     /// called this the compounding half: the pass composes candidate paths from a
     /// root spelled with <c>Path.Combine</c>, and <c>QueryFullProcessImageNameW</c>
     /// answers with what the object manager resolved. One junction above the root
-    /// and the two never match — so <c>RevisionPrune</c> stops being a race and
+    /// and the two never match -- so <c>RevisionPrune</c> stops being a race and
     /// becomes deterministic: <b>every superseded tree looks idle while browsers
     /// run out of it</b>, which is the direction that loses data rather than the
     /// one that keeps disk.
@@ -421,7 +421,7 @@ internal sealed class RevisionPruneTests
     /// <para>
     /// <b>The assertion is on the contents, not on <c>Removed</c>.</b> A live
     /// browser's own <c>.exe</c> is refused by the image section, so a blind pass
-    /// does not report the revision as removed — it reports it as
+    /// does not report the revision as removed -- it reports it as
     /// <i>would not fully delete</i>, having already taken everything the browser
     /// had not yet mapped. The file planted below is what a resource load would
     /// have needed, and it is the difference between the two outcomes.
@@ -469,7 +469,7 @@ internal sealed class RevisionPruneTests
         await Assert.That(report.Removed).IsEmpty();
 
         // And it was retained because a process is running out of it, with the
-        // pid somebody can act on — never because a file happened not to delete.
+        // pid somebody can act on -- never because a file happened not to delete.
         var retained = string.Join(Environment.NewLine, report.Retained);
 
         await Assert.That(retained).Contains(planted.Id.ToString(System.Globalization.CultureInfo.InvariantCulture));

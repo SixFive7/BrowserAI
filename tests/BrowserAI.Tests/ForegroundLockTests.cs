@@ -8,7 +8,7 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// The run's own statement of whether it could have seen a browser take the
-/// foreground — which on this machine it could not.
+/// foreground -- which on this machine it could not.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -30,7 +30,7 @@ namespace BrowserAI.Tests;
 /// <b>Why the pure arm carries most of the weight.</b> A machine sits in exactly
 /// one band and this one sits in the band that proves nothing, so a check written
 /// only against the live reading would leave three quarters of the classification
-/// as code no run ever takes — the same dead-mechanism defect as a release branch
+/// as code no run ever takes -- the same dead-mechanism defect as a release branch
 /// that first runs on release day.
 /// </para>
 /// </remarks>
@@ -123,7 +123,7 @@ internal sealed class ForegroundLockTests
     /// <b>Asserted over a synthetic reading, because the property has to hold on
     /// a machine that is not this one.</b> This machine happens to be blind, so
     /// the live row would satisfy this today and stop asserting anything the
-    /// moment somebody ran the suite anywhere else — a check that is green when
+    /// moment somebody ran the suite anywhere else -- a check that is green when
     /// it is watching nothing.
     /// </para>
     /// <para>
@@ -149,7 +149,7 @@ internal sealed class ForegroundLockTests
         await Assert.That(blind).Contains("24.9 days");
         await Assert.That(blind).Contains("DID NOT ANSWER");
 
-        // The exception that fires here, named — without it a reader has a
+        // The exception that fires here, named -- without it a reader has a
         // number and no way to tell a null trial from a clean one.
         await Assert.That(blind).Contains("ancestor of the launching process");
 

@@ -16,7 +16,7 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b>Generating a key is not the same as the child honouring it.</b>
 /// <c>loadConfig</c> is a bare <c>JSON.parse</c> with no schema validation, so a
-/// renamed or removed key is discarded in silence — <c>--output-mode</c> was a
+/// renamed or removed key is discarded in silence -- <c>--output-mode</c> was a
 /// no-op for its entire life and nobody noticed. Every opinion this type
 /// generates is therefore listed in <see cref="GeneratedConfig.Opinions"/> and
 /// asserted back out of the running child through <c>browser_get_config</c>. A
@@ -26,7 +26,7 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b>Three places where generation must not take the obvious route.</b>
 /// <c>chromiumSandbox</c> is absent from this file because the config key is
-/// discarded and only <c>--sandbox</c> on the command line works — the CLI stage
+/// discarded and only <c>--sandbox</c> on the command line works -- the CLI stage
 /// merges last and commander defaults <c>sandbox</c> to <see langword="false"/>
 /// rather than to undefined, so it always overwrites what a file says.
 /// <c>browserName</c> <i>and</i> an explicit chromium-alias channel are always
@@ -40,7 +40,7 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b><c>capabilities</c> is written here and must never be passed as
 /// <c>--caps</c>.</b> <c>mergeConfig</c> spreads defined overrides, so the flag
-/// <i>replaces</i> this list rather than merging with it — as does
+/// <i>replaces</i> this list rather than merging with it -- as does
 /// <c>PLAYWRIGHT_MCP_CAPS</c>, which is why the environment is an allowlist
 /// rather than a strip list.
 /// </para>
@@ -50,7 +50,7 @@ namespace BrowserAI.Runtime;
 /// 2026-08-26 (previously "written <c>true</c> unconditionally, with no argument
 /// to turn it off … the maintainer's answer of 2026-08-20, asked whether it
 /// should be always on, per mode or per call: <i>a always</i>").</b> That answer
-/// was given while BrowserAI had a <c>filename</c> gate of its own — a validator
+/// was given while BrowserAI had a <c>filename</c> gate of its own -- a validator
 /// that refused <c>..</c>, drive-relative, UNC, rooted and device paths on the
 /// string, and then rewrote every surviving name into an absolute path inside
 /// the session. The gate is deleted. Nothing of ours looks at a path any more,
@@ -61,14 +61,14 @@ namespace BrowserAI.Runtime;
 /// <b>What the key does, from upstream's own code.</b> <c>checkFile</c> refuses
 /// any resolved name that is inside neither <c>outputDir</c> nor the child's
 /// working directory, and <c>checkUrlAllowed</c> refuses the <c>file:</c>
-/// protocol outright. BrowserAI writes both roots as the same directory —
-/// <c>&lt;session&gt;\output</c> — so the two coincide instead of overlapping,
+/// protocol outright. BrowserAI writes both roots as the same directory --
+/// <c>&lt;session&gt;\output</c> -- so the two coincide instead of overlapping,
 /// and the refusal names the path and both roots.
 /// </para>
 /// <para>
 /// <b>Written rather than omitted, and the difference is the point.</b>
 /// <see langword="false"/> is upstream's default, so the behaviour would be
-/// identical either way — but an omitted key says nothing about whether anybody
+/// identical either way -- but an omitted key says nothing about whether anybody
 /// chose it, and <c>browser_get_config</c> cannot report back an opinion the
 /// file does not carry. <c>ConfigRoundTripTests</c> fails an absent key exactly
 /// as it fails a <see langword="true"/> one.
@@ -78,10 +78,10 @@ namespace BrowserAI.Runtime;
 /// <c>browser_file_upload</c> can no longer reach a file outside the session's
 /// output directory, and <c>browser_navigate</c> cannot open a <c>file:</c> URL
 /// at all. Upstream calls the key a convenience defence rather than a secure
-/// boundary, in <c>config.d.ts</c>'s own words — <i>"a guardrail to prevent the
+/// boundary, in <c>config.d.ts</c>'s own words -- <i>"a guardrail to prevent the
 /// LLM from accidentally wandering outside its intended workspace … not a secure
 /// boundary; a deliberate attempt to reach other directories can be easily
-/// worked around"</i> — and that is exactly what this product wants it for.
+/// worked around"</i> -- and that is exactly what this product wants it for.
 /// Hostile-caller defence is an explicit non-goal; steering an honest mistake is
 /// the whole job, and upstream's roots do it in the one place a mistake actually
 /// reaches a file.
@@ -96,12 +96,12 @@ internal static class BrowserConfiguration
     /// <remarks>
     /// ⚠️ <b><c>HarFolder</c> is deleted, 2026-08-26 (previously
     /// <c>"network"</c>, "which is already where BrowserAI's filename routing
-    /// files anything a <c>network-</c> prefixed tool produces — so the archive
+    /// files anything a <c>network-</c> prefixed tool produces -- so the archive
     /// sits beside the request and response bodies it duplicates rather than in
     /// a folder of its own").</b> There is no filename routing and there is no
     /// <c>output\network\</c>: the output directory is flat, and the archive
     /// lands at its root beside everything else the session writes. The name
-    /// still carries a timestamp, and that half is unchanged and load-bearing —
+    /// still carries a timestamp, and that half is unchanged and load-bearing --
     /// see <see cref="ForSession"/>.
     /// </remarks>
     public const string HarExtension = ".har";
@@ -113,8 +113,8 @@ internal static class BrowserConfiguration
     /// </summary>
     /// <remarks>
     /// <b>Chromium only, and writing it for another family would be worse than
-    /// useless.</b> <c>channel</c> is a Chromium concept — <c>chromiumAliases</c>
-    /// has no Firefox member — and upstream's own <c>validateBrowserConfig</c>
+    /// useless.</b> <c>channel</c> is a Chromium concept -- <c>chromiumAliases</c>
+    /// has no Firefox member -- and upstream's own <c>validateBrowserConfig</c>
     /// drops the key for a non-chromium <c>browserName</c>, so a channel written
     /// beside <c>firefox</c> would be an opinion that never arrives and a round
     /// trip that can never pass.
@@ -137,14 +137,14 @@ internal static class BrowserConfiguration
     /// <b>Because the knob cost almost nothing to turn off and almost nothing to
     /// leave on.</b> Measured: moving from <c>error</c> to <c>debug</c> costs
     /// <b>+1 character</b> on a navigation response and <b>+5</b> otherwise,
-    /// because the events line in a tool response is a <i>pointer</i> —
-    /// <c>path#L1-L20</c> — and never the message text. The whole cost of the
+    /// because the events line in a tool response is a <i>pointer</i> --
+    /// <c>path#L1-L20</c> -- and never the message text. The whole cost of the
     /// most verbose setting is the width of a larger line number.
     /// </para>
     /// <para>
     /// <b>And the read-level knob already exists, one layer up.</b>
     /// <c>browser_console_messages</c> takes its own level, so a caller that
-    /// wants only errors asks for only errors — at the moment it asks, rather
+    /// wants only errors asks for only errors -- at the moment it asks, rather
     /// than having had to decide at <c>init</c> and discovered the loss
     /// afterwards. A capture level chosen hours earlier cannot be raised
     /// retroactively; a read level can always be lowered.
@@ -168,7 +168,7 @@ internal static class BrowserConfiguration
     public const string Codegen = "none";
 
     /// <summary>
-    /// How the child renders a file path back to a caller — <b>absolute</b>,
+    /// How the child renders a file path back to a caller -- <b>absolute</b>,
     /// where upstream's default is <c>relative</c>.
     /// </summary>
     /// <remarks>
@@ -185,9 +185,9 @@ internal static class BrowserConfiguration
     /// <para>
     /// <b>A relative pointer resolves against the child's working directory, and
     /// the reader of a tool result is a model rather than a process.</b> Every
-    /// artifact the child names — the screenshot, PDF and storage-state links,
+    /// artifact the child names -- the screenshot, PDF and storage-state links,
     /// the snapshot link, the console log link, the download line, a binary
-    /// response body and the trace files — arrived as
+    /// response body and the trace files -- arrived as
     /// <c>output\page-….png</c>, which names nothing a caller can open.
     /// BrowserAI used to answer that with a note of its own naming each artifact
     /// absolutely; that note went with artifact routing on 2026-08-26, and from
@@ -207,7 +207,7 @@ internal static class BrowserConfiguration
     /// 0.0.82</b>, as <c>filePaths?: 'relative' | 'absolute'</c>. <i>Corrected
     /// 2026-09-21 (previously "It is not in <c>config.d.ts</c>. The typings ship
     /// with <c>@playwright/mcp</c>, which has not rolled; the implementation is
-    /// in <c>playwright-core</c>, which the override moved.")</i> — the wrapper
+    /// in <c>playwright-core</c>, which the override moved.")</i> -- the wrapper
     /// rolled on 2026-09-21 and the dated override was retired with it.
     /// <b>Nothing about how this is checked changes, and the reason is the
     /// point:</b> <c>loadConfig</c> is a bare <c>JSON.parse</c> with no schema
@@ -221,14 +221,14 @@ internal static class BrowserConfiguration
     public const string FilePaths = "absolute";
 
     /// <summary>
-    /// Upstream's own idle timeout, in milliseconds — <b>one hour</b>, written
+    /// Upstream's own idle timeout, in milliseconds -- <b>one hour</b>, written
     /// rather than omitted.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>It cannot fire, and that is why it is written down.</b>
     /// <see cref="Sessions.BrowserIdleTimer.DefaultIdlePeriod"/> is ten minutes
-    /// and both timers are reset by the same event — a tool call — so BrowserAI's
+    /// and both timers are reset by the same event -- a tool call -- so BrowserAI's
     /// closes the browser six times over before upstream's deadline is reached.
     /// A key that changes nothing is exactly the kind an omission hides: with it
     /// absent, <c>browser_get_config</c> reads back nothing, the round-trip test
@@ -242,7 +242,7 @@ internal static class BrowserConfiguration
     /// Judged 2026-09-15 at <c>@playwright/mcp</c> 0.0.81, where the key arrived:
     /// <i>"Defaults to one hour for headless browsers Playwright launched, and to
     /// no timeout for headed or attached ones."</i> Writing it makes the headed
-    /// case carry an hour it would not otherwise have — which is still
+    /// case carry an hour it would not otherwise have -- which is still
     /// unreachable behind ten minutes, and is the price of one value rather than
     /// a second code path keyed on headedness.
     /// </para>
@@ -274,7 +274,7 @@ internal static class BrowserConfiguration
     /// ⚠️ <b>CHROMIUM ONLY, and this is measured rather than assumed.</b>
     /// Firefox does not know the permission at all: a context created with it
     /// fails at <c>initializeServer</c> with <c>Unknown permission:
-    /// clipboard-read</c>, and the browser exits — so writing it for both
+    /// clipboard-read</c>, and the browser exits -- so writing it for both
     /// families would have made <b>every Firefox session unusable</b>, not
     /// degraded. Measured 2026-08-20 against the provisioned
     /// <c>firefox-1539</c>, by writing it for both families and watching
@@ -287,7 +287,7 @@ internal static class BrowserConfiguration
     /// notifications, camera and microphone all change what a page can do about
     /// the machine rather than about the page, and none of them is needed to read
     /// or drive one. A caller that needs one should have to ask for it, and
-    /// nothing here offers a way — which is a limitation stated rather than a
+    /// nothing here offers a way -- which is a limitation stated rather than a
     /// gap discovered.
     /// </para>
     /// </remarks>
@@ -306,7 +306,7 @@ internal static class BrowserConfiguration
     public const string AllowUnrestrictedFileAccessKey = "allowUnrestrictedFileAccess";
 
     /// <summary>
-    /// The capabilities every session gets — <b>all of them</b>.
+    /// The capabilities every session gets -- <b>all of them</b>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -315,7 +315,7 @@ internal static class BrowserConfiguration
     /// list and every session's child has to be able to answer all of it.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Changed 2026-08-20 (previously two lists — <c>BaseCapabilities</c>
+    /// ⚠️ <b>Changed 2026-08-20 (previously two lists -- <c>BaseCapabilities</c>
     /// of <c>config</c>, <c>vision</c> and <c>devtools</c>, and
     /// <c>UnionCapabilities</c> which added <c>storage</c>; which of the two a
     /// session got was decided by its mode's <c>Storage</c> flag).</b> Session
@@ -329,8 +329,8 @@ internal static class BrowserConfiguration
     /// <para>
     /// <c>config</c> is what makes <c>browser_get_config</c> callable, and that
     /// tool is the only thing that can prove the rest of this file reached the
-    /// child. The base 24 tools are unconditional — upstream ors
-    /// <c>capability.startsWith("core")</c> with whatever is configured — so
+    /// child. The base 24 tools are unconditional -- upstream ors
+    /// <c>capability.startsWith("core")</c> with whatever is configured -- so
     /// naming a <c>core*</c> capability here would do nothing, and
     /// <c>core-install</c> carries no tool at all.
     /// </para>
@@ -346,7 +346,7 @@ internal static class BrowserConfiguration
     /// <b>1920×1080, and the number that decided it is the token cost of a
     /// screenshot.</b> Measured end to end through BrowserAI: a full-page
     /// screenshot at this size arrives as <b>2,691 visual tokens</b>; 1280×720
-    /// is 1,196 and 2560×1440 is <b>4,784 — exactly the API's per-image cap,
+    /// is 1,196 and 2560×1440 is <b>4,784 -- exactly the API's per-image cap,
     /// with zero headroom</b>. So the largest size that is not on the edge of a
     /// hard limit is this one, and it is also the one a page's own desktop
     /// layout is designed for.
@@ -356,12 +356,12 @@ internal static class BrowserConfiguration
     /// 2560×1440 gets 2560×1440 worth of tokens rather than something downscaled
     /// on the way out. The argument exists and the description says what it
     /// costs. <i>Corrected 2026-09-15 (previously "… and that is specific to
-    /// this product. Upstream's <c>scaleImageToFitMessage</c> never runs here —
-    /// BrowserAI's image handling diverges before it — so …").</i> <b>The
+    /// this product. Upstream's <c>scaleImageToFitMessage</c> never runs here --
+    /// BrowserAI's image handling diverges before it -- so …").</i> <b>The
     /// conclusion is unchanged and the reason for it is gone</b>: it was specific
     /// to this product while upstream had a scaler BrowserAI diverged before, and
     /// <c>playwright-core</c> 1.63.0-alpha-2026-08-31 deleted
-    /// <c>scaleImageToFitMessage</c> outright — so nothing downscales an image
+    /// <c>scaleImageToFitMessage</c> outright -- so nothing downscales an image
     /// anywhere in the path, for anybody, and this is no longer a divergence at
     /// all. Measured 2026-09-14 through a raw child: the inline block is
     /// byte-identical to the file at every viewport tested.
@@ -375,7 +375,7 @@ internal static class BrowserConfiguration
     /// <remarks>
     /// <b>Read rather than hard-coded, because a hard-coded one is a lie about
     /// the machine.</b> Upstream leaves <c>locale</c> unset, which gives the
-    /// browser's own default — for the provisioned Chromium that is
+    /// browser's own default -- for the provisioned Chromium that is
     /// <c>en-US</c> whatever the machine is, so a site that localises by
     /// <c>Accept-Language</c> shows an agent something a person at the same
     /// desk would never see. The argument overrides it for a caller who is
@@ -392,8 +392,8 @@ internal static class BrowserConfiguration
     /// <remarks>
     /// <para>
     /// <b>IANA, because that is what Playwright accepts.</b>
-    /// <c>TimeZoneInfo.Local.Id</c> on Windows is a Windows identifier —
-    /// <c>W. Europe Standard Time</c> — and passing one to
+    /// <c>TimeZoneInfo.Local.Id</c> on Windows is a Windows identifier --
+    /// <c>W. Europe Standard Time</c> -- and passing one to
     /// <c>contextOptions.timezoneId</c> is rejected by the browser at context
     /// creation, so the conversion is the whole of the work.
     /// </para>
@@ -402,7 +402,7 @@ internal static class BrowserConfiguration
     /// comes from ICU, which a globalization-invariant build does not carry, and
     /// a Windows identifier written into the config would fail the launch rather
     /// than degrade. An absent key is upstream's own default, which is the
-    /// machine's UTC offset — imperfect, and not a failure.
+    /// machine's UTC offset -- imperfect, and not a failure.
     /// </para>
     /// </remarks>
     public static string? HostTimeZone { get; } =
@@ -419,7 +419,7 @@ internal static class BrowserConfiguration
     /// Named rather than derived, and that is the point: derived from the
     /// generator, this list would shrink in step with a deleted key and the round
     /// trip would stay green while the opinion vanished. Written down, deleting a
-    /// key turns the suite red — planted and reverted 2026-08-16, and the failure
+    /// key turns the suite red -- planted and reverted 2026-08-16, and the failure
     /// names the key.
     /// </para>
     /// <para>
@@ -515,7 +515,7 @@ internal static class BrowserConfiguration
     /// The family this session was created for, read from its own
     /// <c>browserai.data</c> rather than assumed. A profile belongs to the browser
     /// that made it, so generating a Chromium config for a session recorded as
-    /// Firefox would point one browser at the other's profile — which upstream
+    /// Firefox would point one browser at the other's profile -- which upstream
     /// would launch, and which nothing would report.
     /// </param>
     /// <param name="tracing">Whether upstream records this session to the output directory.</param>
@@ -525,9 +525,9 @@ internal static class BrowserConfiguration
     /// ⚠️ <b><c>tracing</c> maps to upstream's <c>saveSession</c>, because there
     /// is nothing else left to map it to.</b> Measured 2026-08-16 against
     /// <c>@playwright/mcp</c> 0.0.79: neither the CLI surface nor
-    /// <c>config.d.ts</c> carries a trace option at all — <c>tracesDir</c> is
+    /// <c>config.d.ts</c> carries a trace option at all -- <c>tracesDir</c> is
     /// computed internally as <c>&lt;outputDir&gt;/traces</c> and is not
-    /// configurable — so BrowserAI's own <c>tracing</c> modifier has no upstream
+    /// configurable -- so BrowserAI's own <c>tracing</c> modifier has no upstream
     /// trace key to reach
     /// ([kb](../../../kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like)).
     /// <c>saveSession</c> is the surviving
@@ -583,18 +583,18 @@ internal static class BrowserConfiguration
     }
 
     /// <summary>
-    /// The config for the run's own child — the one that answers
+    /// The config for the run's own child -- the one that answers
     /// <c>tools/list</c> before any session exists.
     /// </summary>
     /// <remarks>
     /// <b>It carries the same capability set every session gets.</b> This child
     /// produces the one static tool list every caller sees, so it has to expose
-    /// every tool a session could reach — and since 2026-08-20 every session
+    /// every tool a session could reach -- and since 2026-08-20 every session
     /// reaches all of them, so the two lists are the same list rather than one
     /// being the union of several. It also carries a <c>userDataDir</c> for a reason
     /// that has nothing to do with sessions: with the key unset, upstream writes
     /// each run's profile into <c>%LOCALAPPDATA%\ms-playwright-mcp\</c>, keyed by
-    /// a hash of the client's working directory — 159 directories and 877 MB had
+    /// a hash of the client's working directory -- 159 directories and 877 MB had
     /// accumulated on this machine before this step set the key.
     /// </remarks>
     /// <param name="instanceDirectory">This run's own directory.</param>
@@ -936,11 +936,11 @@ internal sealed record BrowserConfigurationRequest
     /// Defaulted rather than required, and the default is the same one
     /// <c>browserai_init</c> applies. ⚠️ <b>Corrected 2026-08-19 (previously
     /// "every caller in this build asks for Chromium").</b> That stopped being
-    /// true when Firefox was offered — <see cref="BrowserConfiguration.ForSession"/> passes whatever
+    /// true when Firefox was offered -- <see cref="BrowserConfiguration.ForSession"/> passes whatever
     /// the session's <c>browserai.data</c> records. The default survives for the
     /// reason it always had: it keeps the Firefox branch a property of the
     /// session's own record rather than a decision each call site takes, and
-    /// <see cref="BrowserConfiguration.ForSurface"/> — the run's own browser-less child — genuinely
+    /// <see cref="BrowserConfiguration.ForSurface"/> -- the run's own browser-less child -- genuinely
     /// has no family to state.
     /// </remarks>
     public string Browser { get; init; } = BrowserConfiguration.BrowserName;
@@ -1016,7 +1016,7 @@ internal sealed record ViewportSize(int Width, int Height)
     /// </summary>
     /// <remarks>
     /// <b>4,096, and it is about tokens rather than about the browser.</b> A
-    /// screenshot arrives unscaled — nothing in the path downscales one — so a
+    /// screenshot arrives unscaled -- nothing in the path downscales one -- so a
     /// viewport past this is an image the API refuses rather than shrinks, and
     /// the failure lands on the call after the one that set it. <i>Corrected
     /// 2026-09-15 (previously "upstream's <c>scaleImageToFitMessage</c> never
@@ -1065,7 +1065,7 @@ internal sealed record ViewportSize(int Width, int Height)
 /// </summary>
 /// <remarks>
 /// <b>Every one of these is regenerated at every child launch and none is
-/// written to the session record</b> — the same rule <c>headed</c>, <c>tracing</c>
+/// written to the session record</b> -- the same rule <c>headed</c>, <c>tracing</c>
 /// and <c>debug</c> follow. A session created at one viewport is resumed at
 /// another without being destroyed first, and nothing on disk differs between
 /// the two.

@@ -15,7 +15,7 @@ namespace BrowserAI.Runtime;
 /// browser executable is missing, <c>throwIfExecutableMissing</c> raises
 /// <c>Browser "&lt;target&gt;" is not installed; expected executable at
 /// &lt;path&gt;. Run `npx @playwright/mcp install-browser &lt;target&gt;` to
-/// install</c> — read out of the resolved bundle 2026-08-16 rather than from
+/// install</c> -- read out of the resolved bundle 2026-08-16 rather than from
 /// memory. Every clause of that is true of a normal Playwright install and wrong
 /// here: BrowserAI ships no <c>npx</c>, has no npm project to run it in, and the
 /// package that command would fetch resolves to whatever npm calls latest today
@@ -24,8 +24,8 @@ namespace BrowserAI.Runtime;
 /// second location that BrowserAI will never launch.
 /// </para>
 /// <para>
-/// <b>Only the remediation clause is replaced.</b> The half before it —
-/// <i>which</i> browser, and the exact path it was expected at — is the useful
+/// <b>Only the remediation clause is replaced.</b> The half before it --
+/// <i>which</i> browser, and the exact path it was expected at -- is the useful
 /// half and is upstream's to phrase. The target it names is the resolved
 /// <c>channel</c> rather than the browser family, so the text a caller sees says
 /// <c>chrome-for-testing</c>; that is what makes an empty browsers root fail
@@ -39,16 +39,16 @@ namespace BrowserAI.Runtime;
 /// protect; here it is deliberately given up for the one payload that
 /// contains an instruction which would send the caller somewhere harmful. The
 /// rewrite fires only when the child reported an error <b>and</b> the marker is
-/// present — every other answer goes through untouched — and the proxy logs the
+/// present -- every other answer goes through untouched -- and the proxy logs the
 /// fact when it does, so a lost byte-identity is a recorded event rather than a
 /// silent one.
 /// </para>
 /// <para>
 /// ⚠️ ***Corrected 2026-08-24 (previously "The rewrite fires only when the marker
-/// is present — every other answer, including every other error, goes through
+/// is present -- every other answer, including every other error, goes through
 /// untouched").*** That understated nothing and overstated the gate: the marker
-/// was the whole test, so any answer whose text contained upstream's sentence —
-/// a page rendering it in its title, an issue, release notes — had BrowserAI's
+/// was the whole test, so any answer whose text contained upstream's sentence --
+/// a page rendering it in its title, an issue, release notes -- had BrowserAI's
 /// own instruction text spliced into it and lost byte-identity on an ordinary
 /// successful call. <c>BrowserProxy.Remediate</c> now requires
 /// <c>isError: true</c> as well, which upstream sets on every answer carrying an
@@ -65,9 +65,9 @@ internal static partial class ProvisioningRemediation
     /// </summary>
     /// <remarks>
     /// Deliberately the <b>subcommand</b> rather than the package name: upstream
-    /// builds the same sentence two ways —
+    /// builds the same sentence two ways --
     /// <c>npx @playwright/mcp install-browser &lt;t&gt;</c> normally and
-    /// <c>playwright-cli install-browser &lt;t&gt;</c> under <c>skillMode</c> —
+    /// <c>playwright-cli install-browser &lt;t&gt;</c> under <c>skillMode</c> --
     /// and a marker keyed on <c>npx</c> would miss the second the day upstream
     /// changed which branch it takes.
     /// </remarks>
@@ -100,8 +100,8 @@ internal static partial class ProvisioningRemediation
     /// Two routes rather than one, because the two failures behind this message
     /// have different recoveries. A tree that was never downloaded is fixed by
     /// <c>browserai_init</c>, which starts the download and returns immediately.
-    /// A tree that was downloaded and then corrupted — a quarantined DLL, a
-    /// half-restored backup — is <b>not</b>, because
+    /// A tree that was downloaded and then corrupted -- a quarantined DLL, a
+    /// half-restored backup -- is <b>not</b>, because
     /// <c>INSTALLATION_COMPLETE</c> is still sitting in it and every check short-
     /// circuits on that marker without validating anything. Only deleting the
     /// directory, which is what <c>browserai_reinstall_browser</c> does, gets out
@@ -110,7 +110,7 @@ internal static partial class ProvisioningRemediation
     /// <param name="browsersDirectory">The browsers root.</param>
     /// <returns>The replacement clause.</returns>
     public static string Replacement(string browsersDirectory) =>
-        $"Call browserai_init again to re-provision it — BrowserAI downloads the exact revision it pins, into '{browsersDirectory}', and returns immediately while that happens. "
+        $"Call browserai_init again to re-provision it -- BrowserAI downloads the exact revision it pins, into '{browsersDirectory}', and returns immediately while that happens. "
         + "If it was already downloaded and is damaged, call browserai_reinstall_browser naming the session's own browser family: an install that completed once is never re-downloaded on its own, because the marker upstream writes short-circuits the check without validating anything. "
         + "Do NOT run npx or npm: BrowserAI ships neither, and that command would fetch a different revision into a directory BrowserAI never launches from.";
 

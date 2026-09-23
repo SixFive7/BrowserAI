@@ -15,7 +15,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>The test that matters is the disagreement one.</b> The two halves of this
-/// answer come from different places and are expected to differ — a log-only
+/// answer come from different places and are expected to differ -- a log-only
 /// answer would say <i>"no credential tools were used"</i> about a directory
 /// full of live session cookies, because cookies arrive from navigation rather
 /// than from tools. So the arm below plants a cookie store the log knows nothing
@@ -118,7 +118,7 @@ internal sealed class CatchUpTests
     }
 
     /// <summary>
-    /// It changes nothing — not the record, not the log — and works on a session
+    /// It changes nothing -- not the record, not the log -- and works on a session
     /// something else is holding.
     /// </summary>
     /// <remarks>
@@ -175,7 +175,7 @@ internal sealed class CatchUpTests
     /// <para>
     /// <b>The defect this holds against was not an aesthetic one.</b>
     /// <c>browserai_init</c> is the one call whose <c>why</c> and whose
-    /// <c>purpose</c> are the same string — it takes no separate <c>why</c>, so
+    /// <c>purpose</c> are the same string -- it takes no separate <c>why</c>, so
     /// the purpose <i>is</i> the why. The entry printed it in full under
     /// <c>why:</c> and then again directly beneath under <c>with: purpose=…</c>,
     /// cut at 200 characters with <c>(+N more characters)</c> after it.
@@ -186,7 +186,7 @@ internal sealed class CatchUpTests
     /// <para>
     /// ⚠️ <b>The mechanism that produced it is gone (2026-08-26): log rows carry
     /// no arguments at all.</b> So this is kept as a regression rather than as
-    /// the fix's own test — what it now holds is that no cut marker of any kind
+    /// the fix's own test -- what it now holds is that no cut marker of any kind
     /// reaches this answer, which is the property a caller relies on when it
     /// reads a <c>why</c> back and acts on it.
     /// </para>
@@ -245,7 +245,7 @@ internal sealed class CatchUpTests
     /// ⚠️ <b>Corrected 2026-08-26 (previously
     /// <c>ResumeAndSetPurposeStillRecordPurposeBesideTheirOwnWhy</c>, asserting
     /// a <c>with: purpose=…</c> line on the log entry).</b> Log rows carry no
-    /// arguments, so the new purpose is no longer <i>in</i> the entry — and that
+    /// arguments, so the new purpose is no longer <i>in</i> the entry -- and that
     /// is the one thing the argument drop genuinely cost, named as a cost rather
     /// than glossed. What replaces it is the <c>purpose</c> statement history:
     /// every value the session has been for, each with the instant it was
@@ -254,7 +254,7 @@ internal sealed class CatchUpTests
     /// </para>
     /// <para>
     /// <b>Both tools, because the standing description and the disposable reason
-    /// say different things</b> — one lasts, one explains a moment — and an
+    /// say different things</b> -- one lasts, one explains a moment -- and an
     /// implementation that recorded only one of them would lose the fact that
     /// the purpose moved.
     /// </para>
@@ -332,8 +332,8 @@ internal sealed class CatchUpTests
     /// <b>Oldest-first is what makes a page stable, and it is the whole reason
     /// the numbering runs that way.</b> The log only ever grows at the newest
     /// end and nothing evicts, so under this numbering an append can change the
-    /// last page and no other. Numbering from the newest end — the shape the old
-    /// truncation used, which cut from the front — shifts every boundary on
+    /// last page and no other. Numbering from the newest end -- the shape the old
+    /// truncation used, which cut from the front -- shifts every boundary on
     /// every call, so page 2 of a live session would be a different set of
     /// entries each time it was fetched.
     /// </para>
@@ -346,7 +346,7 @@ internal sealed class CatchUpTests
     /// <b>And the volatile half is on page 1 alone.</b> The inventory is a fresh
     /// directory walk and the in-use line is a fresh probe, so repeating them
     /// would let two pages of one answer disagree about one session in one
-    /// minute — about information that has nothing to do with the page being
+    /// minute -- about information that has nothing to do with the page being
     /// fetched.
     /// </para>
     /// </remarks>
@@ -387,7 +387,7 @@ internal sealed class CatchUpTests
         // Page 1 by default, and it says which page it is, how many there are,
         // and the call that fetches the next.
         await Assert.That(first).Contains("page 1 of 2");
-        await Assert.That(first).Contains("entries 1–100 of 121");
+        await Assert.That(first).Contains("entries 1-100 of 121");
         await Assert.That(first).Contains($"{SessionToolSurface.CatchUp}(session='{directory}', {SessionToolSurface.PageParameter}=2)");
 
         // Numbered from the oldest, so entry 1 is the init.
@@ -407,7 +407,7 @@ internal sealed class CatchUpTests
         }));
 
         await Assert.That(second).Contains("page 2 of 2");
-        await Assert.That(second).Contains("entries 101–121 of 121");
+        await Assert.That(second).Contains("entries 101-121 of 121");
         await Assert.That(second).Contains("this is the last page");
         await Assert.That(second).Contains($"call number {(Calls - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}");
 
@@ -430,7 +430,7 @@ internal sealed class CatchUpTests
         // The one thing on page 1 that MAY move is the total, because there is a
         // new entry; the entries themselves are the same set in the same order.
         await Assert.That(Entries(again)).IsEquivalentTo(Entries(first));
-        await Assert.That(again).Contains("entries 1–100 of 122");
+        await Assert.That(again).Contains("entries 1-100 of 122");
         await Assert.That(again).DoesNotContain("a call that lands after page 1 was read");
 
         // Out of range is a refusal that names the range and says which end the
@@ -456,7 +456,7 @@ internal sealed class CatchUpTests
     /// out-of-range page was served as a DIFFERENT page.</b> Measured that day
     /// through the published binary: <c>page=2</c> on a six-entry session was
     /// correctly refused, and <c>page=4294967297</c> came back
-    /// <c>isError=false</c> reading <i>"page 1 of 1, entries 1–6 of 6"</i> —
+    /// <c>isError=false</c> reading <i>"page 1 of 1, entries 1-6 of 6"</i> --
     /// 2^32 + 1 truncates to 1, and the range check then passed. A caller was
     /// told it was reading the page it asked for.
     /// </para>
@@ -524,7 +524,7 @@ internal sealed class CatchUpTests
     /// </summary>
     /// <remarks>
     /// <b>A stale <c>in-flight</c> row is the whole of what a hung call, a dead
-    /// child or a killed process leaves</b> — the row is written before the call
+    /// child or a killed process leaves</b> -- the row is written before the call
     /// is forwarded, precisely so that those three leave something. What a
     /// reader must never be given is a <c>false</c> there, which is a lie, or a
     /// <c>true</c>, which is worse.

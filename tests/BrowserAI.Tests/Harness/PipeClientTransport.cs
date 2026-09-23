@@ -26,7 +26,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// Stated plainly, because a harness that quietly covers less than it looks
 /// like it does is the failure this project is about: <b>nothing below is
-/// evidence about <see cref="ChildProcessSession"/></b> — not its job
+/// evidence about <see cref="ChildProcessSession"/></b> -- not its job
 /// ownership, not its exit-code caching, not its stderr drain.
 /// </para>
 /// </remarks>

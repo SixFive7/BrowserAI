@@ -25,14 +25,14 @@ internal enum UpdateOutcome
 }
 
 /// <summary>
-/// Check, download, and — only when nothing else is running — stage the apply
+/// Check, download, and -- only when nothing else is running -- stage the apply
 /// and ask the process to end.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>Nothing here runs on the message loop.</b> A <c>tools/call</c> has to stay
 /// answerable while a package is in flight, so the whole pass is started on a
-/// background thread and never awaited by anything on the request path — the
+/// background thread and never awaited by anything on the request path -- the
 /// same shape as the stray sweep, and for the same reason: a BrowserAI that
 /// cannot update is degraded, one that will not answer is broken.
 /// </para>
@@ -41,9 +41,9 @@ internal enum UpdateOutcome
 /// timeout either aborts a healthy slow link or hangs forever on a stalled one:
 /// </para>
 /// <list type="number">
-///   <item><description><see cref="AbsoluteBudget"/> — the whole download, however fast it is going.</description></item>
-///   <item><description><see cref="StallBudget"/> — reset on <b>every progress callback</b>. This is the one that catches a link that went away, and it is the reason the progress callback is wired to a timer rather than to a log line.</description></item>
-///   <item><description><see cref="CrashTripwire"/> — an outer deadline that is <b>not flow control</b>. Nothing is expected to reach it; if anything does, the pass is wedged in a way the other two did not model, and the point is that it says so rather than living forever.</description></item>
+///   <item><description><see cref="AbsoluteBudget"/> -- the whole download, however fast it is going.</description></item>
+///   <item><description><see cref="StallBudget"/> -- reset on <b>every progress callback</b>. This is the one that catches a link that went away, and it is the reason the progress callback is wired to a timer rather than to a log line.</description></item>
+///   <item><description><see cref="CrashTripwire"/> -- an outer deadline that is <b>not flow control</b>. Nothing is expected to reach it; if anything does, the pass is wedged in a way the other two did not model, and the point is that it says so rather than living forever.</description></item>
 /// </list>
 /// <para>
 /// <b>They are sized against a link speed, not against a package size, because
@@ -53,7 +53,7 @@ internal enum UpdateOutcome
 /// <para>
 /// <b>An update is never applied by a process that is not alone.</b> That is
 /// <see cref="LiveInstances"/>, and the reason is
-/// <c>force_stop_package</c> — see that type. The check happens
+/// <c>force_stop_package</c> -- see that type. The check happens
 /// <i>after</i> the download and again nowhere else: downloading is harmless and
 /// leaves the package staged for whichever instance is last to go.
 /// </para>
@@ -66,7 +66,7 @@ internal sealed class UpdateService
     /// <remarks>
     /// Sized against a link rather than a payload: 30 minutes carries
     /// <b>112.4 MB</b> at ~500 kbit/s, which is slower than any link this
-    /// product is usable on — a first-run browser provisioning of 207.3 MB has
+    /// product is usable on -- a first-run browser provisioning of 207.3 MB has
     /// to succeed on the same connection before BrowserAI works at all
     /// (<i>corrected 2026-09-17, previously "203.8 MB"; re-measured 2026-09-16 at
     /// chromium 1244, and the figure the server renders is
@@ -78,7 +78,7 @@ internal sealed class UpdateService
     /// measured **112.4 MB** full package").</b> 112.4 MB is what the budget
     /// <i>carries</i>, derived from 30 minutes × 500 kbit/s; it is a link
     /// budget and was never a measurement of anything. The full package is
-    /// <b>49,050,382 bytes</b>, measured 2026-08-16 — less than half of it, so
+    /// <b>49,050,382 bytes</b>, measured 2026-08-16 -- less than half of it, so
     /// the headroom is larger than the sentence claimed, which is why nothing
     /// downstream broke. A derived number wearing the word <i>measured</i> is
     /// indistinguishable from a real one, which is the exact failure this
@@ -128,7 +128,7 @@ internal sealed class UpdateService
     /// <param name="requestShutdown">
     /// Asked to end the process once the apply is staged. Never
     /// <c>Environment.Exit</c>: the ordinary shutdown path has to run so the
-    /// session locks release, the job objects close and the log flushes —
+    /// session locks release, the job objects close and the log flushes --
     /// <c>Update.exe</c> is waiting on this pid and will not swap until it is
     /// gone.
     /// </param>
@@ -283,7 +283,7 @@ internal sealed class UpdateService
     /// <remarks>
     /// ⚠️ <b>Added 2026-08-20, and it is the same correction the reinstall
     /// refusal got on the same day.</b> The line this replaces said only that
-    /// <i>another BrowserAI is running</i> — which reads identically whether one
+    /// <i>another BrowserAI is running</i> -- which reads identically whether one
     /// peer is up or forty, and identically again when the census could not be
     /// taken at all and the apply is therefore permanently blocked rather than
     /// temporarily. Those two states need different actions from whoever reads
@@ -437,7 +437,7 @@ internal static partial class UpdateLog
     /// 2026-08-20</b> *(previously "because another BrowserAI is running out of
     /// this install", and nothing else)*. The old line read the same whether one
     /// peer was up or forty, and read the same again when the census could not
-    /// be taken at all — which is not a wait, it is a permanent block, and the
+    /// be taken at all -- which is not a wait, it is a permanent block, and the
     /// two need different actions from whoever finds the line. The size and the
     /// elapsed seconds are the <i>how far in</i> half: the work is done and
     /// staged, so what is left is the exit of every other instance rather than
@@ -535,8 +535,8 @@ internal static partial class UpdateLog
     /// <param name="assemblyVersion">The version the binary carries.</param>
     /// <remarks>
     /// <b>Both versions are logged because they come from different
-    /// mechanisms</b> — one from <c>vpk</c>'s manifest, one from MinVer's
-    /// assembly attribute — and a build packed at one and compiled at the other
+    /// mechanisms</b> -- one from <c>vpk</c>'s manifest, one from MinVer's
+    /// assembly attribute -- and a build packed at one and compiled at the other
     /// is exactly the state that made a fleet download the binary it was already
     /// running, hourly, forever.
     /// </remarks>

@@ -19,22 +19,22 @@ namespace BrowserAI.Interop;
 /// prompt.
 /// </para>
 /// <para>
-/// <b>Why a message box at all.</b> The hook has no console — Velopack starts it
-/// with <c>CREATE_NO_WINDOW</c>, measured in its own launch flags — and
+/// <b>Why a message box at all.</b> The hook has no console -- Velopack starts it
+/// with <c>CREATE_NO_WINDOW</c>, measured in its own launch flags -- and
 /// <c>System.Console</c> is banned process-wide, so there is no text channel to
 /// ask on. A window is what is left, and it is also the right shape: the person
 /// who clicked <i>Uninstall</i> is looking at the screen.
 /// </para>
 /// <para>
 /// <b>It is never reached when nobody is there.</b> Silence is established
-/// before this is called, from the parent's own command line — see
+/// before this is called, from the parent's own command line -- see
 /// <c>Registration.DataRootDisposal.IsSilent</c>. A dialog inside a
 /// <c>--silent</c> uninstall would be a 60-second stall ending in the hook being
 /// killed.
 /// </para>
 /// <para>
 /// <b>The default answer is the safe one, twice over.</b> The dialog opens with
-/// the second button — <i>No</i> — focused, and a call that fails for any reason
+/// the second button -- <i>No</i> -- focused, and a call that fails for any reason
 /// answers <see langword="false"/>. Every path that cannot ask keeps the data.
 /// </para>
 /// </remarks>
@@ -60,8 +60,8 @@ internal static partial class UserPrompt
     /// <param name="title">The window title.</param>
     /// <param name="message">The question, already composed.</param>
     /// <returns>
-    /// Whether the answer was <i>yes</i>. Anything else — <i>no</i>, a closed
-    /// window, a failed call — is <see langword="false"/>.
+    /// Whether the answer was <i>yes</i>. Anything else -- <i>no</i>, a closed
+    /// window, a failed call -- is <see langword="false"/>.
     /// </returns>
     public static bool AskYesNo(string title, string message) =>
         MessageBoxW(

@@ -9,8 +9,8 @@ using System.Text.RegularExpressions;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The dated records — released <c>CHANGELOG.md</c> sections and the bodies
-/// under <c>docs/reviews/</c> — still begin with what they said when they were
+/// The dated records -- released <c>CHANGELOG.md</c> sections and the bodies
+/// under <c>docs/reviews/</c> -- still begin with what they said when they were
 /// sealed.
 /// </summary>
 /// <remarks>
@@ -22,7 +22,7 @@ namespace BrowserAI.Tests;
 /// for another two days. Nothing failed. It was caught by a human reading the
 /// diff, and the only thing standing between the next sweep and the same outcome
 /// was the sentence in
-/// [the reviews' own README](../../docs/reviews/README.md) — <i>"they are dated
+/// [the reviews' own README](../../docs/reviews/README.md) -- <i>"they are dated
 /// records of what was true when they were written, and rewriting one would
 /// destroy the only account of the reasoning"</i>. Prose does not stop a
 /// find-and-replace.
@@ -31,7 +31,7 @@ namespace BrowserAI.Tests;
 /// <b>Append-only, deliberately, rather than frozen.</b> A blanket no-edit rule
 /// would be the wrong mechanism: a typo fix in a review is legitimate, and the
 /// review index's status table in <c>docs/reviews/README.md</c> is explicitly
-/// meant to be updated as findings are acted on — so <c>README.md</c> is not a
+/// meant to be updated as findings are acted on -- so <c>README.md</c> is not a
 /// dated record and is not sealed. What is sealed is the <b>prefix</b>: the
 /// characters a record already had. Appending an addendum passes; rewriting a
 /// sentence in the middle does not, and neither does truncating one.
@@ -39,7 +39,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>A deliberate edit is possible and is never silent.</b> The seal carries a
 /// character count and a SHA-256, and changing a sealed record means changing
-/// the numbers here in the same commit — which is a line in the diff, aimed at
+/// the numbers here in the same commit -- which is a line in the diff, aimed at
 /// exactly the failure mode above, where the sweep's own diff was the only
 /// witness. This is the same trade <c>upstream-review.json</c> takes, and the
 /// same warning applies: <b>re-sealing a record to make this test pass is
@@ -51,9 +51,9 @@ namespace BrowserAI.Tests;
 /// <b>Why a seal rather than the file's git history.</b> <c>git log --numstat</c>
 /// would say for free whether a file has ever had a line deleted, and it was the
 /// first design. It fails on both halves: a legitimate typo fix deletes a line,
-/// and the changelog's protection is per-<i>section</i> — its
+/// and the changelog's protection is per-<i>section</i> -- its
 /// <c>[Unreleased]</c> section is rewritten daily and is not a record of
-/// anything yet — which no whole-file history check can express.
+/// anything yet -- which no whole-file history check can express.
 /// </para>
 /// </remarks>
 internal sealed partial class AppendOnlyRecordTests
@@ -76,10 +76,10 @@ internal sealed partial class AppendOnlyRecordTests
     /// </param>
     /// <remarks>
     /// %s <b>The second digest exists to tell one failure apart from every
-    /// other, and that failure is a DATE — 2026-09-16.</b> A sealed record
+    /// other, and that failure is a DATE -- 2026-09-16.</b> A sealed record
     /// starts at its heading, so <c>## [1.0.0] - 2026-09-15</c> is inside the
     /// prefix: changing the release date at the cut breaks the seal, and the
-    /// failure message read <i>REWRITTEN — a dated record says what was true
+    /// failure message read <i>REWRITTEN -- a dated record says what was true
     /// when it was written</i>, which is exactly the wrong advice for the one
     /// edit the checklist requires. With the body digest the test can say
     /// <b>only the heading line moved</b>, which is a different instruction.
@@ -106,7 +106,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// text and does not skip code spans, so registering it verbatim would have
     /// added a relative link into <c>docs/reviews/</c> that resolves to nothing.
     /// The span was rewritten, the change is named in the record's own opening
-    /// note, and the seal was taken afterwards — which is the only order that
+    /// note, and the seal was taken afterwards -- which is the only order that
     /// does not mean re-sealing a record to make a test pass.
     /// </para>
     /// <para>
@@ -136,8 +136,8 @@ internal sealed partial class AppendOnlyRecordTests
     /// edits the re-ship case requires were taken again and in one commit: the
     /// <b>heading date</b> moved <c>2026-09-15</c> → <c>2026-09-16</c>, which is
     /// inside the sealed prefix by construction, and the <b>twenty-two entries</b>
-    /// that had accumulated under <c>[Unreleased]</c> since the first cut — three
-    /// <c>Added</c>, one <c>Changed</c>, eighteen <c>Fixed</c> — were merged into the
+    /// that had accumulated under <c>[Unreleased]</c> since the first cut -- three
+    /// <c>Added</c>, one <c>Changed</c>, eighteen <c>Fixed</c> -- were merged into the
     /// matching <c>1.0.0</c> groups. The record grew <c>281,709</c> →
     /// <c>310,215</c> characters, which is an append at the end of each group
     /// and a one-line change at the top, and the whole prefix moves because a
@@ -155,7 +155,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// and character use.'"</i> The <b>preamble</b> is rewritten in plain words
     /// and nothing else in the section is touched: no entry, no heading, no
     /// date. The whole prefix moves because a seal starts at the heading.
-    /// <b>No fact was rewritten</b> — the new preamble says the same four things
+    /// <b>No fact was rewritten</b> -- the new preamble says the same four things
     /// the old one did, in shorter sentences and without the three em dashes
     /// that made
     /// <see cref="ChangelogTests.NothingThatReachesAReleaseBodyCarriesACharacterAPersonWouldNotType"/>
@@ -175,8 +175,8 @@ internal sealed partial class AppendOnlyRecordTests
     /// <b>heading date</b> moved <c>2026-09-16</c> → <c>2026-09-17</c>, which is
     /// inside the sealed prefix by construction, and the <b>twenty-eight
     /// entries</b> that had accumulated under <c>[Unreleased]</c> since that
-    /// morning — six <c>Added</c>, sixteen <c>Changed</c>, one <c>Removed</c>,
-    /// five <c>Fixed</c> — were merged into the matching <c>1.0.0</c> groups.
+    /// morning -- six <c>Added</c>, sixteen <c>Changed</c>, one <c>Removed</c>,
+    /// five <c>Fixed</c> -- were merged into the matching <c>1.0.0</c> groups.
     /// The record grew <c>310,216</c> → <c>349,897</c> characters, which is an
     /// append at the end of each group and a one-line change at the top; the
     /// whole prefix moves because a seal starts at the heading. <b>No entry was
@@ -187,13 +187,13 @@ internal sealed partial class AppendOnlyRecordTests
     /// being cut a third time.</b> Each has been ordered in advance by the
     /// person who owns the record, and each has been narrower than the one
     /// before: entries re-shaped, then entries merged, then one paragraph
-    /// rewritten. The way to need none is the ordinary case — a NEW version,
+    /// rewritten. The way to need none is the ordinary case -- a NEW version,
     /// stamped by <c>Get-ReleaseNotes.ps1</c>, whose section nobody has sealed.
     /// </para>
     /// <para>
     /// <b>This is a SECOND lift, not a precedent that lifts are routine.</b> It
-    /// has the same authority as the first — the maintainer's instruction to
-    /// re-ship <c>1.0.0</c> so that it carries the fix — and it is narrower: no
+    /// has the same authority as the first -- the maintainer's instruction to
+    /// re-ship <c>1.0.0</c> so that it carries the fix -- and it is narrower: no
     /// entry was re-shaped and no sentence of the 2026-09-15 body was rewritten.
     /// <b>A third one is another decision and belongs to whoever owns the
     /// rule.</b> What would make it unnecessary is the ordinary case: a NEW
@@ -206,7 +206,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// stands: <i>re-sealing a record to make this test pass is rewriting
     /// history with an extra step.</i> What made this one legitimate is that a
     /// human ordered the re-shaping in advance, in writing, and that <b>no fact
-    /// was rewritten</b> — where a headline is new, the sentence it replaces is
+    /// was rewritten</b> -- where a headline is new, the sentence it replaces is
     /// the first thing in its own detail, word for word, and that was checked
     /// over all 236 entries mechanically rather than by reading. <b>A second
     /// lift is not a precedent; it is another decision, and it belongs to
@@ -217,8 +217,8 @@ internal sealed partial class AppendOnlyRecordTests
     /// <c>[Unreleased]</c> section is deliberately not in the list: it is not a
     /// record of what shipped until a release stamps it. <i>Corrected 2026-09-15
     /// (previously "The changelog carries exactly one released section today,
-    /// and the <c>[Unreleased]</c> section — 143,210 characters of it on the day
-    /// this was written — is deliberately not in the list.")</i> — the 1.0.0 cut
+    /// and the <c>[Unreleased]</c> section -- 143,210 characters of it on the day
+    /// this was written -- is deliberately not in the list.")</i> -- the 1.0.0 cut
     /// of 2026-09-15 stamped 236,567 characters of unreleased work into a
     /// released section and sealed it in the same commit, which is the ordering
     /// [the release checklist](../../RELEASING.md#10-the-changelogs-unreleased-section-is-not-empty)
@@ -255,7 +255,7 @@ internal sealed partial class AppendOnlyRecordTests
         {
             if (!records.TryGetValue(seal.Record, out var text))
             {
-                broken.Add($"{seal.Record}: sealed, and no longer in the tree at all — a dated record was deleted or its heading was renamed");
+                broken.Add($"{seal.Record}: sealed, and no longer in the tree at all -- a dated record was deleted or its heading was renamed");
                 continue;
             }
 
@@ -283,7 +283,7 @@ internal sealed partial class AppendOnlyRecordTests
     {
         if (text.Length < seal.Characters)
         {
-            return $"{seal.Record}: TRUNCATED — {text.Length} characters where {seal.Characters} were sealed. "
+            return $"{seal.Record}: TRUNCATED -- {text.Length} characters where {seal.Characters} were sealed. "
                 + "A dated record does not get shorter; something removed part of the account.";
         }
 
@@ -298,20 +298,20 @@ internal sealed partial class AppendOnlyRecordTests
             $"new(\"{seal.Record}\", {text.Length.ToString(CultureInfo.InvariantCulture)}, \"{Digest(text)}\", \"{Digest(Body(text))}\")";
 
         // ⚠️ THE HEADING LINE, ON ITS OWN. A sealed record starts at its
-        // heading, so a changelog section's DATE is inside the prefix — and
+        // heading, so a changelog section's DATE is inside the prefix -- and
         // changing that date at the cut is a step the release checklist
         // REQUIRES. Told apart from a rewrite by the body digest, because the
         // advice is opposite: one is "revert it", the other is "re-seal it, in
         // the same commit".
         if (string.Equals(Digest(Body(prefix)), seal.BodySha256, StringComparison.Ordinal))
         {
-            return $"{seal.Record}: the HEADING LINE changed and nothing else did — now '{FirstLine(prefix)}'. "
+            return $"{seal.Record}: the HEADING LINE changed and nothing else did -- now '{FirstLine(prefix)}'. "
                 + "If this is a release date being set at the cut, that is expected: the heading is inside the sealed prefix, "
                 + "so the date change and the re-seal are ONE commit and this is the other half of it. Re-seal it here: "
                 + reseal;
         }
 
-        return $"{seal.Record}: REWRITTEN — the first {seal.Characters} characters are no longer what they were. "
+        return $"{seal.Record}: REWRITTEN -- the first {seal.Characters} characters are no longer what they were. "
             + "If a sweep did this, revert it: a dated record says what was true when it was written. "
             + $"If the edit was deliberate, re-seal it here: {reseal}";
     }
@@ -345,16 +345,16 @@ internal sealed partial class AppendOnlyRecordTests
     /// ⚠️ <b>The failure this exists for is a DATE, and it is a step the
     /// release checklist requires.</b> A sealed record starts at its heading, so
     /// <c>## [1.0.0] - 2026-09-17</c> is inside the 349,897 sealed characters
-    /// — <i>corrected 2026-09-17 (previously "<c>## [1.0.0] - 2026-09-16</c> is
+    /// -- <i>corrected 2026-09-17 (previously "<c>## [1.0.0] - 2026-09-16</c> is
     /// inside the 310,215 sealed characters")</i>, by the fourth cut of the same
-    /// version doing it again — <i>corrected 2026-09-16 (previously
+    /// version doing it again -- <i>corrected 2026-09-16 (previously
     /// "<c>## [1.0.0] - 2026-09-15</c> is inside the 281,709 sealed
     /// characters")</i>, by the second cut of the same
     /// version doing exactly what this paragraph describes:
     /// setting the real release date at the cut breaks the seal, and the message
     /// used to say <i>REWRITTEN … a dated record says what was true when it was
     /// written</i>. That is the right sentence for a sweep and exactly the wrong
-    /// one here — it reads as <i>revert this</i> for the one edit that must be
+    /// one here -- it reads as <i>revert this</i> for the one edit that must be
     /// made. <i>Added 2026-09-16.</i>
     /// </para>
     /// <para>
@@ -424,8 +424,8 @@ internal sealed partial class AppendOnlyRecordTests
     /// </summary>
     /// <remarks>
     /// Without this the mechanism protects only what somebody remembered to
-    /// list, and the newest review — the one a sweep is most likely to be run
-    /// beside — would be the one thing it did not cover. A new review or a newly
+    /// list, and the newest review -- the one a sweep is most likely to be run
+    /// beside -- would be the one thing it did not cover. A new review or a newly
     /// stamped release is registered here in the same change that creates it;
     /// [the release checklist](../../RELEASING.md) says so at the step that stamps
     /// the version.
@@ -445,7 +445,7 @@ internal sealed partial class AppendOnlyRecordTests
         var vanished = sealedKeys
             .Where(key => !records.ContainsKey(key))
             .Order(StringComparer.Ordinal)
-            .Select(key => $"{key}: sealed and not in the tree — deleted, renamed, or its changelog heading changed.")
+            .Select(key => $"{key}: sealed and not in the tree -- deleted, renamed, or its changelog heading changed.")
             .ToList();
 
         await Assert.That(string.Join(Environment.NewLine, unsealed.Concat(vanished))).IsEmpty();

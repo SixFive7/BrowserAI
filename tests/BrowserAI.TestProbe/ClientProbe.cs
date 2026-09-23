@@ -21,7 +21,7 @@ namespace BrowserAI.TestProbe;
 /// <b>This shape is the only way to test the client-liveness watcher at all, and
 /// the reason is a Windows fact rather than a preference.</b> In the ordinary
 /// case the process that starts BrowserAI is also the one holding the write end
-/// of its stdin pipe, so killing it closes that handle and stdin reaches EOF —
+/// of its stdin pipe, so killing it closes that handle and stdin reaches EOF --
 /// and EOF alone would explain the teardown. To observe the <i>watcher</i>, the
 /// pipe has to outlive the parent. A Windows pipe signals EOF when its
 /// <b>last</b> write handle closes, so this probe duplicates that handle into the
@@ -34,7 +34,7 @@ namespace BrowserAI.TestProbe;
 /// purpose.</b> BrowserAI is launched into a <c>KILL_ON_JOB_CLOSE</c> job, and if
 /// this probe were its only handle-holder, killing the probe would kill
 /// BrowserAI through the kernel and the test would prove nothing. The duplicate
-/// keeps the job alive across the kill — and hands the test the containment net,
+/// keeps the job alive across the kill -- and hands the test the containment net,
 /// so an assertion that throws still takes the browser down.
 /// </para>
 /// <para>
@@ -165,7 +165,7 @@ internal static partial class ClientProbe
     /// leaves it existing-but-incomplete for as long as that takes. The host was
     /// waiting on <c>File.Exists</c>, so it read at the first instant the name
     /// appeared and was refused with <i>"the process cannot access the file …
-    /// because it is being used by another process"</i> — one occurrence in three
+    /// because it is being used by another process"</i> -- one occurrence in three
     /// consecutive full runs, and the failure named
     /// <c>KillingTheClientTearsTheSessionDownWithoutWaitingForEof</c> rather than
     /// the harness.
@@ -176,14 +176,14 @@ internal static partial class ClientProbe
     /// truncated report is a test failing on an assertion about the product. The
     /// two other probes in this project already write temp-and-rename for exactly
     /// this reason and say so; this one did not, and
-    /// <c>BrowserAI.Tests.Harness.ProbeReport</c>'s own summary — <i>"the probe
-    /// renames its report into place"</i> — was therefore false of one caller.
+    /// <c>BrowserAI.Tests.Harness.ProbeReport</c>'s own summary -- <i>"the probe
+    /// renames its report into place"</i> -- was therefore false of one caller.
     /// </para>
     /// <para>
     /// <b>The rename is retried inside a bound.</b> A file this process has just
     /// closed is briefly held by something outside this repository, and
     /// <c>MOVEFILE_REPLACE_EXISTING</c> wants DELETE on the destination, so an
-    /// unretried rename fails <c>ACCESS_DENIED</c> and kills the probe — the host
+    /// unretried rename fails <c>ACCESS_DENIED</c> and kills the probe -- the host
     /// then reports <i>the probe never wrote its report</i>, which is true and
     /// names the wrong cause.
     /// </para>

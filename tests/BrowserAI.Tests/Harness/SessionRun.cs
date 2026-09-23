@@ -22,9 +22,9 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <b>Two BrowserAI processes, and the second one is not optional.</b> A session
-/// directory cannot be moved while it is open — the child's working directory is
+/// directory cannot be moved while it is open -- the child's working directory is
 /// the session directory and Windows refuses to rename a directory some process
-/// is sitting in — so the move-versus-copy case needs a session that was created,
+/// is sitting in -- so the move-versus-copy case needs a session that was created,
 /// closed, and then met again by a different process. That is exactly the case
 /// the feature exists for.
 /// </para>
@@ -51,7 +51,7 @@ internal sealed record SessionRun
     /// own <c>browserai.log</c> held").</b> There is no such file: a session's
     /// logging stack is stderr at the level the call asked for, and everything
     /// about the session's own calls is in <c>browserai.data</c> instead. Both
-    /// halves of what that file used to prove are still asserted — the scope on
+    /// halves of what that file used to prove are still asserted -- the scope on
     /// stderr, and the calls in the record.
     /// </remarks>
     public required string SessionLog { get; init; }
@@ -164,7 +164,7 @@ internal sealed record SessionRun
             // the session that owns it.
             //
             // The guard is not decoration. If no browser were live the tool would
-            // do exactly what it says — delete 430 MiB and download it again —
+            // do exactly what it says -- delete 430 MiB and download it again --
             // in the middle of a suite whose other tests are driving browsers out
             // of that directory. Checked with the product's own image-path
             // enumeration rather than assumed, so a capture that somehow lost its
@@ -289,7 +289,7 @@ internal sealed record SessionRun
             // ⚠️ Was `resumeWithMode` until 2026-08-20. `mode` is not an
             // argument anywhere any more, so there is nothing for resume to
             // refuse about it; `browser` still is, for the reason that always
-            // separated the two — a profile on disk belongs to the browser that
+            // separated the two -- a profile on disk belongs to the browser that
             // made it, and headedness belongs to nothing.
             answers["resumeWithBrowser"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
             {
@@ -380,7 +380,7 @@ internal sealed record SessionRun
     /// <remarks>
     /// Bounded and loud: if the pin never clears, the failure names the cause
     /// and how long it waited, rather than reporting a bare access-denied that
-    /// reads like a permissions problem. It never retries anything but the pin —
+    /// reads like a permissions problem. It never retries anything but the pin --
     /// a genuinely wrong path throws <see cref="DirectoryNotFoundException"/>
     /// and is not caught here.
     /// </remarks>
@@ -404,7 +404,7 @@ internal sealed record SessionRun
                 {
                     throw new InvalidOperationException(
                         $"'{from}' was still pinned {waited.Elapsed.TotalSeconds:F1} s after BrowserAI exited, so it could not be renamed. "
-                        + "A directory that is a live process's working directory cannot be renamed, nor can any of its ancestors — so something the job object should have taken down is still running.",
+                        + "A directory that is a live process's working directory cannot be renamed, nor can any of its ancestors -- so something the job object should have taken down is still running.",
                         failure);
                 }
 
@@ -424,7 +424,7 @@ internal sealed record SessionRun
         //
         // ⚠️ Retried, and the reason is a Windows fact rather than a defect in
         // the product. BrowserAI has exited and its job object has therefore
-        // terminated the node child — but a terminated process is *signalled*
+        // terminated the node child -- but a terminated process is *signalled*
         // before the kernel has torn its handles down, and a directory that is
         // any live process's current directory cannot be renamed, nor can any
         // of its ancestors. `CloseAndWaitForExitAsync` returning is proof that
@@ -453,7 +453,7 @@ internal sealed record SessionRun
         // than an accident. The recorded path discriminates a copy from a move
         // only while it is ACCURATE: copying `gamma-moved` before its record was
         // repaired would produce a copy whose record names `gamma`, a path that
-        // no longer exists — which is the move signature exactly, and BrowserAI
+        // no longer exists -- which is the move signature exactly, and BrowserAI
         // repairs it silently. Measured 2026-08-16; the first version of this
         // capture copied first and the copy was accepted as a move.
         CopyTree(moved, copy);

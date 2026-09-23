@@ -11,9 +11,9 @@ and the fact that GitHub's automatic *Source code* links cannot be removed at al
 
 | File | The question | Cited by |
 |---|---|---|
-| `A-velopack-readers.md` | Every reader of `RELEASES` and `assets.{channel}.json` in Velopack 1.2.158 - writers, readers, and the zero-caller proof | [kb: nothing anywhere reads them from a release](../../../kb/packaging/velopack.md#nothing-anywhere-reads-releases-or-assetschanneljson-from-a-release--measured-2026-09-23), [`RELEASING.md`](../../../RELEASING.md#what-a-release-publishes) |
-| `B-pages-hosting.md` | Whether GitHub Pages, or anything else, could host the feed and the package instead of the release page | [`DECISIONS.md`](../../../DECISIONS.md#locking-logging-versioning-and-registration), [kb: the release alias is never cached](../../../kb/packaging/velopack.md#the-release-alias-is-never-cached-and-github-pages-is-cached-for-600-seconds--measured-2026-09-23) |
-| `C-source-code-links.md` | Whether the *Source code (zip)* and *(tar.gz)* links on a release can be removed or hidden | [kb: the source-code links cannot be removed](../../../kb/packaging/velopack.md#the-automatic-source-code-links-on-a-release-cannot-be-removed--read-2026-09-23) |
+| `A-velopack-readers.md` | Every reader of `RELEASES` and `assets.{channel}.json` in Velopack 1.2.158 - writers, readers, and the zero-caller proof | [kb: nothing anywhere reads them from a release](../../../kb/packaging/velopack.md#nothing-anywhere-reads-releases-or-assetschanneljson-from-a-release----measured-2026-09-23), [`RELEASING.md`](../../../RELEASING.md#what-a-release-publishes) |
+| `B-pages-hosting.md` | Whether GitHub Pages, or anything else, could host the feed and the package instead of the release page | [`DECISIONS.md`](../../../DECISIONS.md#locking-logging-versioning-and-registration), [kb: the release alias is never cached](../../../kb/packaging/velopack.md#the-release-alias-is-never-cached-and-github-pages-is-cached-for-600-seconds----measured-2026-09-23) |
+| `C-source-code-links.md` | Whether the *Source code (zip)* and *(tar.gz)* links on a release can be removed or hidden | [kb: the source-code links cannot be removed](../../../kb/packaging/velopack.md#the-automatic-source-code-links-on-a-release-cannot-be-removed----read-2026-09-23) |
 
 **What was taken from where.** `A` is a shallow clone of
 `https://github.com/velopack/velopack` at tag **`1.2.158`**

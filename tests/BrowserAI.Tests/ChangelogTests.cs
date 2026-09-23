@@ -20,7 +20,7 @@ namespace BrowserAI.Tests;
 /// unreleased section is empty, and until build-order step 18 there was no file
 /// for it to be empty <i>of</i>. The refusal lives in
 /// <c>build/Get-ReleaseNotes.ps1</c> rather than in the product, because it is
-/// release machinery and BrowserAI is a proxy — but it is driven from here, so
+/// release machinery and BrowserAI is a proxy -- but it is driven from here, so
 /// it is exercised on every run rather than on the day someone cuts a release.
 /// </para>
 /// <para>
@@ -30,7 +30,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️ <b>There is exactly one state in which an empty unreleased section is
-/// correct, and since 2026-09-15 this class knows it</b> —
+/// correct, and since 2026-09-15 this class knows it</b> --
 /// <see cref="TheChangelogHasAnUnreleasedSectionWithEntriesInIt"/>. Stamping a
 /// release empties the section by construction, so the check that guards against
 /// a changelog nobody wrote was firing on the output of the step that writes one.
@@ -46,7 +46,7 @@ internal sealed partial class ChangelogTests
     private static string NotesScript { get; } = Path.Combine(RepositoryLayout.Root.FullName, "build", "New-ReleaseNotes.ps1");
 
     /// <summary>
-    /// The unreleased section has entries in it — unless this commit <i>is</i>
+    /// The unreleased section has entries in it -- unless this commit <i>is</i>
     /// the release that emptied it.
     /// </summary>
     /// <remarks>
@@ -54,7 +54,7 @@ internal sealed partial class ChangelogTests
     /// ⚠️ <b>The exemption is one state wide, and it was added 2026-09-15 at the
     /// maintainer's decision (Q183a).</b> Stamping a release moves every entry
     /// under the new version's heading and leaves <c>## [Unreleased]</c> empty
-    /// <i>by construction</i> — so on the release commit itself this arm was red,
+    /// <i>by construction</i> -- so on the release commit itself this arm was red,
     /// and stayed red on <c>master</c> until somebody landed the next change.
     /// That is the check firing on the one arrangement where an empty section is
     /// not a defect but the correct output of the step before it.
@@ -62,7 +62,7 @@ internal sealed partial class ChangelogTests
     /// <para>
     /// <b>The condition is narrow on purpose and both halves are load-bearing:
     /// the newest dated section's version, and the tag EXACTLY at HEAD.</b>
-    /// <c>git describe --tags --exact-match</c> semantics — distance zero — so a
+    /// <c>git describe --tags --exact-match</c> semantics -- distance zero -- so a
     /// single commit past the release loses the exemption and the section must be
     /// written again. The tag must be that version and no other: the shapes are
     /// <c>## [1.0.0] - 2026-09-15</c> and <c>v1.0.0</c>, the heading bare and the
@@ -80,8 +80,8 @@ internal sealed partial class ChangelogTests
     /// </para>
     /// <para>
     /// <b>Planted red in both directions, 2026-09-15</b>, against synthetic
-    /// changelogs rather than against the tree — tagged-and-empty passes,
-    /// untagged-and-empty fails, and tagged-at-the-wrong-version fails — because
+    /// changelogs rather than against the tree -- tagged-and-empty passes,
+    /// untagged-and-empty fails, and tagged-at-the-wrong-version fails -- because
     /// the tree can only ever be in one of those states at a time and a control
     /// that can only be read one way is not one.
     /// </para>
@@ -181,7 +181,7 @@ internal sealed partial class ChangelogTests
     /// one covers the wrong instant.</b> A release is not a commit: it is a
     /// stamp, then a gate, then a tag, and the section is empty for all of it.
     /// The tag-at-HEAD clause is true only at the end of that, so the arm was
-    /// red through every step before it — which is exactly where a release
+    /// red through every step before it -- which is exactly where a release
     /// stands when somebody is running the six-run gate, and exactly when a red
     /// suite costs the most.
     /// </para>
@@ -189,7 +189,7 @@ internal sealed partial class ChangelogTests
     /// <b>The second clause is the rule the first was standing in for:</b>
     /// <i>nothing has landed that the changelog has not been written for</i>.
     /// Read from git as <c>src/</c> and <c>tests/</c> against the last commit
-    /// that touched <c>CHANGELOG.md</c> — so a docs-only or release-machinery
+    /// that touched <c>CHANGELOG.md</c> -- so a docs-only or release-machinery
     /// commit during a cut leaves the exemption standing, and the first product
     /// or test change after it takes the exemption away and demands an entry
     /// again. That is the demand the whole check exists to make.
@@ -244,7 +244,7 @@ internal sealed partial class ChangelogTests
 
     /// <summary>
     /// The palette a changelog entry may open with, in the order the legend
-    /// lists it — the maintainer's own words, approved 2026-09-15 (Q192b).
+    /// lists it -- the maintainer's own words, approved 2026-09-15 (Q192b).
     /// </summary>
     /// <remarks>
     /// <b>This array is the DECISION and the legend in the file is the
@@ -285,7 +285,7 @@ internal sealed partial class ChangelogTests
     /// characters is a readability budget: it is about the width of the bold
     /// line a reader scans on a release page, and it is short enough that a
     /// headline cannot become the entry. <b>Nothing here measured where GitHub
-    /// wraps</b> — that is a question about a browser's layout at a font size
+    /// wraps</b> -- that is a question about a browser's layout at a font size
     /// and a column width, and the markdown API returns HTML rather than a line
     /// box, so the honest statement is that the number is a budget and not a
     /// wrap point.
@@ -294,7 +294,7 @@ internal sealed partial class ChangelogTests
     /// <b>It is an upper bound on a written sentence, not on a measured
     /// quantity</b>, so it is not the kind of number
     /// <c>HouseRuleTests.NoAssertionBoundsAMeasuredDurationWithANumberItInvented</c>
-    /// exists to catch — nothing about a clock or a size the machine produced is
+    /// exists to catch -- nothing about a clock or a size the machine produced is
     /// being bounded here.
     /// </para>
     /// </remarks>
@@ -307,7 +307,7 @@ internal sealed partial class ChangelogTests
     /// <remarks>
     /// <para>
     /// <b>The shape is what the release-notes generator reads</b>, so a
-    /// malformed entry is not an untidy line — it is a release body that cannot
+    /// malformed entry is not an untidy line -- it is a release body that cannot
     /// be produced, and `build/New-ReleaseNotes.ps1` refuses rather than
     /// guessing. Asserted here as well, because the changelog is edited every
     /// working day and a release is cut rarely.
@@ -482,8 +482,8 @@ internal sealed partial class ChangelogTests
     /// <remarks>
     /// <b>Repeats are the failure this actually caught.</b> Before 2026-09-15
     /// the 1.0.0 section carried <c>Changed</c> four times, <c>Added</c> three,
-    /// <c>Fixed</c> three and <c>Removed</c> three — one run per batch of work
-    /// that landed — so the section read as a diary rather than as a release,
+    /// <c>Fixed</c> three and <c>Removed</c> three -- one run per batch of work
+    /// that landed -- so the section read as a diary rather than as a release,
     /// and a reader looking for what was removed had to find three lists of it.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -728,7 +728,7 @@ internal sealed partial class ChangelogTests
 
             if (!shaped.Success)
             {
-                offences.Add($"CHANGELOG.md:{number}: not '- <icon> **Headline.** …' — {Excerpt(line)}");
+                offences.Add($"CHANGELOG.md:{number}: not '- <icon> **Headline.** …' -- {Excerpt(line)}");
                 continue;
             }
 
@@ -737,23 +737,23 @@ internal sealed partial class ChangelogTests
 
             if (!icons.Contains(icon, StringComparer.Ordinal))
             {
-                offences.Add($"CHANGELOG.md:{number}: '{icon}' is not in the legend's palette — {Excerpt(line)}");
+                offences.Add($"CHANGELOG.md:{number}: '{icon}' is not in the legend's palette -- {Excerpt(line)}");
             }
 
             if (!headline.EndsWith('.'))
             {
-                offences.Add($"CHANGELOG.md:{number}: the headline does not end in a full stop — {headline}");
+                offences.Add($"CHANGELOG.md:{number}: the headline does not end in a full stop -- {headline}");
             }
             else if (SentenceBreak().IsMatch(headline[..^1]))
             {
-                offences.Add($"CHANGELOG.md:{number}: the headline is more than one sentence — {headline}");
+                offences.Add($"CHANGELOG.md:{number}: the headline is more than one sentence -- {headline}");
             }
 
             if (headline.Length > HeadlineBudget)
             {
                 offences.Add(
                     $"CHANGELOG.md:{number}: the headline is {headline.Length.ToString(CultureInfo.InvariantCulture)} characters, "
-                    + $"over the {HeadlineBudget.ToString(CultureInfo.InvariantCulture)} a headline may be — {headline}");
+                    + $"over the {HeadlineBudget.ToString(CultureInfo.InvariantCulture)} a headline may be -- {headline}");
             }
         }
 
@@ -839,7 +839,7 @@ internal sealed partial class ChangelogTests
 
             if (seen.Contains(group, StringComparer.Ordinal))
             {
-                offences.Add($"'{group}' appears twice under one version — the entries belong in one list");
+                offences.Add($"'{group}' appears twice under one version -- the entries belong in one list");
                 continue;
             }
 
@@ -1017,12 +1017,12 @@ internal sealed partial class ChangelogTests
     /// <para>
     /// <b>Asserted as the whole body rather than as things it contains</b>,
     /// because what this generator is for is the document a person meets on a
-    /// release page — and every failure it exists to prevent is a shape failure
+    /// release page -- and every failure it exists to prevent is a shape failure
     /// rather than a missing word. The fixture is small enough to write out in
     /// full, which is the only way an exact assertion is readable.
     /// </para>
     /// <para>
-    /// ⚠️ <b>ONE SHAPE SINCE 2026-09-16, the maintainer's choice (Q197 b)</b> —
+    /// ⚠️ <b>ONE SHAPE SINCE 2026-09-16, the maintainer's choice (Q197 b)</b> --
     /// <i>previously the detail was emitted behind an HTML <c>&lt;details&gt;</c>
     /// fold, and this arm asserted the two spaces and the blank lines that made
     /// GitHub parse the inside of it as Markdown.</i> The fold is gone: a release
@@ -1031,8 +1031,8 @@ internal sealed partial class ChangelogTests
     /// </para>
     /// <para>
     /// <b>The two ranges are the assertion.</b> The fixture's first entry spans
-    /// <b>four</b> lines — a bullet, a continuation, a blank and a second
-    /// paragraph — and its range is <c>L16-L19</c>, which is the half that
+    /// <b>four</b> lines -- a bullet, a continuation, a blank and a second
+    /// paragraph -- and its range is <c>L16-L19</c>, which is the half that
     /// proves the blank line inside an entry is kept and the blank line
     /// <i>after</i> it is not. The second entry is one line and reads
     /// <c>L23-L23</c>. Both are line numbers in the FILE rather than in the
@@ -1088,11 +1088,11 @@ internal sealed partial class ChangelogTests
     /// </para>
     /// <para>
     /// ⚠️ <b>It is a PATHOLOGICAL fallback now and it used to be the branch this
-    /// release took</b> — <i>previously "the 1.0.0 section folded comes to
-    /// <b>280,063</b> — so this is not a defensive branch, it is the branch this
+    /// release took</b> -- <i>previously "the 1.0.0 section folded comes to
+    /// <b>280,063</b> -- so this is not a defensive branch, it is the branch this
     /// release takes".</i> Re-measured 2026-09-16 over the section as it stands:
     /// the old folded shape is <b>288,437</b> characters and would have fallen
-    /// back to <b>19,780</b> — headlines with nothing to click. The linked shape
+    /// back to <b>19,780</b> -- headlines with nothing to click. The linked shape
     /// is <b>41,288</b>, a third of the limit, with a line range on every one of
     /// the 227 entries. So the release that provoked this guard no longer
     /// reaches it, and reaching it now takes a release several times the size of
@@ -1102,7 +1102,7 @@ internal sealed partial class ChangelogTests
     /// <b>The fallback is driven by a small limit rather than a huge fixture</b>,
     /// which is the same document through the same code and costs nothing to
     /// read. The control is the arm above, which produces the linked shape from
-    /// the same fixture — and what this one asserts is that the links are gone
+    /// the same fixture -- and what this one asserts is that the links are gone
     /// entirely rather than truncated, leaving the footer's section link as the
     /// only way in.
     /// </para>
@@ -1162,15 +1162,15 @@ internal sealed partial class ChangelogTests
     /// that shape introduces.</b> A <c>read more</c> link is a LINE RANGE into a
     /// tagged file. Generate the body from a changelog that differs from the one
     /// the tag carries and every link still resolves, still highlights, and
-    /// highlights the wrong lines — in a document nobody re-reads, for a release
+    /// highlights the wrong lines -- in a document nobody re-reads, for a release
     /// that is already published.
     /// </para>
     /// <para>
     /// <b>Over a real repository built in scratch, because the property is about
     /// git rather than about text.</b> Four states, and the first is the one the
-    /// release takes: committed, tagged at HEAD. Then the two refusals — a
+    /// release takes: committed, tagged at HEAD. Then the two refusals -- a
     /// changelog edited after the commit, and a tag left behind on an older
-    /// commit — each asserted on the sentence rather than only on the exit code,
+    /// commit -- each asserted on the sentence rather than only on the exit code,
     /// because a refusal that does not name both halves sends somebody looking
     /// in the wrong place. The fourth is the control that keeps the other three
     /// from being a script that refuses everything.
@@ -1233,8 +1233,8 @@ internal sealed partial class ChangelogTests
 
         // ---- THE CONTROL: a changelog git knows nothing about ---------------
         // Without this the three assertions above are satisfied by a script that
-        // refuses everything, and the fixture arms in this file — which write a
-        // changelog into a gitignored scratch directory — would be the thing
+        // refuses everything, and the fixture arms in this file -- which write a
+        // changelog into a gitignored scratch directory -- would be the thing
         // that discovered it.
         var loose = Path.Combine(scratch.Path, "CHANGELOG.md");
 
@@ -1251,7 +1251,7 @@ internal sealed partial class ChangelogTests
     /// </summary>
     /// <remarks>
     /// <b>Its own runner rather than <see cref="GitOracle"/>'s</b>, which is
-    /// pinned to this repository's root by construction — the whole point here is
+    /// pinned to this repository's root by construction -- the whole point here is
     /// a different repository. <c>CreateNoWindow</c> for the house rule: a
     /// windowless parent puts a terminal on the user's screen without it.
     /// </remarks>
@@ -1301,7 +1301,7 @@ internal sealed partial class ChangelogTests
     /// drifting.</b> The generator is PowerShell and
     /// <see cref="MarkdownAnchor.Slug"/> is C#, so they cannot be one
     /// implementation; what is mechanised is that they agree on the shapes that
-    /// tell slug rules apart — a version heading's dots, an em dash between two
+    /// tell slug rules apart -- a version heading's dots, an em dash between two
     /// spaces, a code span, and an underscore, which GitHub keeps and a
     /// hand-written rule usually strips.
     /// </remarks>
@@ -1310,7 +1310,7 @@ internal sealed partial class ChangelogTests
     /// <returns>The assertion task.</returns>
     [Test]
     [Arguments("## [9.9.9] - 2026-01-01", "9.9.9")]
-    [Arguments("## [9.9.9] - 2026-01-01 — the `one_off` release", "9.9.9")]
+    [Arguments("## [9.9.9] - 2026-01-01 -- the `one_off` release", "9.9.9")]
     [Arguments("## [9.9.9-alpha.1] - 2026-01-01", "9.9.9-alpha.1")]
     public async Task TheReleaseNotesAnchorIsTheOneTheLinkCheckerComputes(string heading, string version)
     {
@@ -1368,7 +1368,7 @@ internal sealed partial class ChangelogTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>An entry above the first <c>### </c> heading crashed with a message
-    /// about a null-valued expression</b> — <c>$group</c> is
+    /// about a null-valued expression</b> -- <c>$group</c> is
     /// <see langword="null"/> there and <c>Set-StrictMode</c> turns
     /// <c>$null.Entries.Add(…)</c> into a stack trace naming a variable nobody
     /// reading a changelog has heard of.
@@ -1376,11 +1376,11 @@ internal sealed partial class ChangelogTests
     /// <para>
     /// ⚠️ <b>A paragraph UNDER a group heading was dropped, silently.</b> It is
     /// not a preamble, it is not an entry, and there is nowhere in a folded body
-    /// for it — so it simply did not appear in the release notes. <b>Refused
+    /// for it -- so it simply did not appear in the release notes. <b>Refused
     /// rather than carried, deliberately</b>: inventing a rendering for a shape
     /// nothing else reads would widen the changelog's format past what
     /// <see cref="EveryEntryOpensWithOnePaletteIconAndABoldOneSentenceHeadline"/>
-    /// holds it to, and prose already has a place — the section preamble, above
+    /// holds it to, and prose already has a place -- the section preamble, above
     /// the first heading, which the body does render. <i>Both added 2026-09-16.</i>
     /// </para>
     /// </remarks>
@@ -1427,7 +1427,7 @@ internal sealed partial class ChangelogTests
 
         // The positive control on the same call: the unmodified fixture, which
         // carries a preamble AND a second paragraph inside an entry, is still
-        // accepted — so neither refusal is about prose or about blank lines.
+        // accepted -- so neither refusal is about prose or about blank lines.
         var good = await WriteAsync(scratch, "GOOD.md", Fixture);
         var accepted = await RunScriptAsync(NotesScript, "-Path", good, "-Version", "9.9.9", "-Destination", body);
 
@@ -1631,7 +1631,7 @@ internal sealed partial class ChangelogTests
     /// </summary>
     /// <remarks>
     /// The date is what tells a released section from <c>## [Unreleased]</c>,
-    /// which carries none — so the first match in the file is the newest release
+    /// which carries none -- so the first match in the file is the newest release
     /// rather than the section a stamp is about to fill. A version pattern alone
     /// would work today and would stop working the moment somebody wrote
     /// <c>## [Unreleased]</c> as a version.
@@ -1658,7 +1658,7 @@ internal sealed partial class ChangelogTests
     /// </summary>
     /// <remarks>
     /// <b>A period inside a version number or a filename is not one</b>, because
-    /// neither is followed by whitespace — <c>1.0.0</c>, <c>lock.json</c> and
+    /// neither is followed by whitespace -- <c>1.0.0</c>, <c>lock.json</c> and
     /// <c>README.md#status</c> all pass, and they are what a changelog headline
     /// is mostly made of.
     /// </remarks>

@@ -14,10 +14,10 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>The two halves pull in opposite directions, which is why this type
 /// exists.</b> The session index, the logs and the instance directory must be
-/// scratch — the index is machine-wide state, and a rig that wrote into the real
+/// scratch -- the index is machine-wide state, and a rig that wrote into the real
 /// one would put throwaway directories into a developer's own
 /// <c>browserai_list</c> and leave them there. The browsers root must be the
-/// real one — the alternative is a 203.8 MB download per test. A single
+/// real one -- the alternative is a 203.8 MB download per test. A single
 /// <c>rootAppDir</c> cannot be both, because <see cref="LocalAppDataPaths"/>
 /// composes every path from it.
 /// </para>

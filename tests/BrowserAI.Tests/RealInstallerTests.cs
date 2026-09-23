@@ -26,39 +26,39 @@ namespace BrowserAI.Tests;
 /// <c>Setup.exe</c> actually does to a directory, and the whole preservation
 /// decision rests on what it does: <c>install.rs</c> renames a non-empty root to
 /// <c>{root}.{random16}</c> and, on success, <b>deletes it</b>. That is not a
-/// failure path — it is what a repair install, an overwrite install and a
+/// failure path -- it is what a repair install, an overwrite install and a
 /// re-run of the same installer all do, and until 2026-09-15 it took 768 MB of
 /// provisioned browsers and the session index with it every time.
 /// </para>
 /// <para>
 /// <b>The second install is the test; the first one only creates something to
-/// destroy.</b> So the arm asserts a positive control from Velopack's own log —
-/// <c>Renaming existing directory</c> — because an installer that quietly
+/// destroy.</b> So the arm asserts a positive control from Velopack's own log --
+/// <c>Renaming existing directory</c> -- because an installer that quietly
 /// skipped the destructive branch would leave the markers alone for the wrong
 /// reason and report exactly the same pass.
 /// </para>
 /// <para>
 /// ⚠️ <b>The installer this arm runs is packed under a TEST id, and the shipping
-/// one is never executed by the suite at all — 2026-09-15.</b> Velopack writes
+/// one is never executed by the suite at all -- 2026-09-15.</b> Velopack writes
 /// one Add/Remove Programs key per pack id per user, named for the id and never
 /// for the location: `--installto` still rewrites
 /// <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to the scratch root, and
 /// <c>Update.exe uninstall</c> from that root calls
 /// <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally, with no comparison
 /// against <c>InstallLocation</c>. So this arm under the shipping id destroys a
-/// real install's entry — measured on this machine as <i>no `BrowserAI.app` key
+/// real install's entry -- measured on this machine as <i>no `BrowserAI.app` key
 /// after six installer-arm runs</i>, and that was with no real install present
 /// to lose. <c>build/New-Release.ps1</c> packs a second installer from the same
 /// publish, at the same version, on the same channel, with the id, the title and
 /// the output directory as the only deltas.
 /// </para>
 /// <para>
-/// ⚠️ <b>And the TITLE, which is the same defect one file later — 2026-09-16.</b>
+/// ⚠️ <b>And the TITLE, which is the same defect one file later -- 2026-09-16.</b>
 /// <i>Corrected 2026-09-16 (previously "with the id and the output directory as
 /// the only deltas")</i>: Velopack names the Start Menu shortcut
 /// <c>&lt;packTitle&gt;.lnk</c> rather than <c>&lt;packId&gt;.lnk</c>, does not
 /// gate shortcut creation on <c>--silent</c>, and removes shortcuts by target at
-/// uninstall — so the id split left the two packs still sharing one
+/// uninstall -- so the id split left the two packs still sharing one
 /// <c>BrowserAI.lnk</c>, which this arm repointed at its scratch root and its own
 /// uninstall then deleted. The suite's pack is titled <c>BrowserAI (suite)</c>,
 /// and the arm reads the user's Start Menu before and after for the same reason
@@ -68,7 +68,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>Everything it touches is scratch, and the sandbox is not a
 /// convenience.</b> The hooks inherit this process's environment, so
 /// <c>CLAUDE_CONFIG_DIR</c> points the registration at a scratch configuration
-/// directory — without it the install hook would rewrite the maintainer's own
+/// directory -- without it the install hook would rewrite the maintainer's own
 /// <c>~/.claude.json</c> and the uninstall hook would then remove the entry it
 /// found there. <c>BROWSERAI_ROOT</c> does the same for the data root, so the
 /// markers this plants are in a directory of its own rather than in the real
@@ -82,14 +82,14 @@ namespace BrowserAI.Tests;
 /// client's serialisation key … because the hooks start the real client and
 /// that variable is process-wide").</i> A key serialises this arm against the
 /// other arms holding the <b>same</b> key, and the readers of a process-wide
-/// environment variable are not those arms — <b>they are every arm in the suite
+/// environment variable are not those arms -- <b>they are every arm in the suite
 /// that launches a product child</b>, none of which opens a scope and none of
 /// which can be enumerated. Measured on the 2026-09-15 release gate, run 1:
 /// while this arm held <c>BROWSERAI_ROOT</c> at its own empty scratch data root,
 /// three children launched by <c>FileAccessRootTests</c> (×2) and
 /// <c>FirefoxSessionTests</c> inherited it, correctly reported first use, started
 /// a <b>203.8 MB</b> provisioning download into this arm's scratch root and
-/// refused the call — three red arms, none of them this one, and the gate
+/// refused the call -- three red arms, none of them this one, and the gate
 /// stopped. The key was the defect; exclusivity is the fix, and
 /// <see cref="HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/>
 /// is what keeps the next file from re-learning it.
@@ -98,7 +98,7 @@ namespace BrowserAI.Tests;
 /// <b>The second face of the same race was silent, and closing it is the other
 /// half of this arm.</b> <see cref="Unchanged"/> hashed only the files this arm
 /// planted, so the foreign download landing elsewhere in the same root passed
-/// unnoticed — a byte-identical claim being made about a directory another test
+/// unnoticed -- a byte-identical claim being made about a directory another test
 /// was writing into. It now reads the whole tree and names anything that is
 /// neither planted nor written by the install itself.
 /// </para>
@@ -139,7 +139,7 @@ internal sealed partial class RealInstallerTests
         // absent afterwards.
         var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
 
-        // ⚠️ AND THE START MENU, for exactly the same reason — 2026-09-16.
+        // ⚠️ AND THE START MENU, for exactly the same reason -- 2026-09-16.
         // Velopack names a shortcut `<packTitle>.lnk` and removes shortcuts by
         // TARGET at uninstall, so a test pack sharing the shipping title
         // rewrites the real install's `.lnk` to point at this scratch root and
@@ -163,7 +163,7 @@ internal sealed partial class RealInstallerTests
             await ReclaimAsync(installRoot.Path);
         }
 
-        // And the real entry is what it was, byte for byte — or is still absent.
+        // And the real entry is what it was, byte for byte -- or is still absent.
         var realKeyAfter = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
 
         await Assert.That(realKeyAfter).IsEqualTo(realKeyBefore);
@@ -171,7 +171,7 @@ internal sealed partial class RealInstallerTests
         var startMenuAfter = ReadStartMenuShortcuts();
 
         // Nothing under the SHIPPING title may point into this arm's scratch
-        // root — which is what a shared title produced, and what is asserted
+        // root -- which is what a shared title produced, and what is asserted
         // rather than reasoned about.
         var repointed = startMenuAfter
             .Where(shortcut => Mentions(shortcut.Value, installRoot.Path))
@@ -183,7 +183,7 @@ internal sealed partial class RealInstallerTests
         // The suite's own shortcut does not outlive the suite's own uninstall.
         await Assert.That(startMenuAfter.ContainsKey($"{ReleaseLayout.TestPackTitle}.lnk")).IsFalse();
 
-        // And the set is what it was, byte for byte — the strongest form of
+        // And the set is what it was, byte for byte -- the strongest form of
         // "the real install's Start Menu entry was not touched", and the one
         // that keeps meaning something on a machine that acquires one.
         await Assert.That(Describe(startMenuAfter)).IsEqualTo(Describe(startMenuBefore));
@@ -259,13 +259,13 @@ internal sealed partial class RealInstallerTests
     /// <para>
     /// ⚠️ <b>It installs SILENTLY and launches the binary itself, deliberately.</b>
     /// A non-silent install would put a progress dialog on the maintainer's
-    /// screen and hand the start to Velopack — which is the very thing whose
+    /// screen and hand the start to Velopack -- which is the very thing whose
     /// flags cannot be influenced from here. Launching the same file the same
     /// way, from a parent with no window, exercises the property under test and
     /// nothing else.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The console check is BY PID, and that is weaker than it looks —
+    /// ⚠️ <b>The console check is BY PID, and that is weaker than it looks --
     /// said here rather than left to be discovered.</b> With the default
     /// terminal set to Windows Terminal, a console allocated to a process shows
     /// up as a window owned by <b>Windows Terminal's</b> process, not by ours:
@@ -273,7 +273,7 @@ internal sealed partial class RealInstallerTests
     /// screen while two windows were on it. So this arm does not claim to detect
     /// a console by looking for its window. What carries that guarantee is
     /// <c>TaskDialogLayoutTests.TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c>,
-    /// which reads the subsystem out of the binary — the cause rather than the
+    /// which reads the subsystem out of the binary -- the cause rather than the
     /// symptom. The by-pid check below is kept because it is free and because it
     /// would catch the one case the subsystem cannot: this process calling
     /// <c>AllocConsole</c> itself.
@@ -358,7 +358,7 @@ internal sealed partial class RealInstallerTests
                 // with it, mid-click.
                 //
                 // Asserted from OUTSIDE the process, on the marker file it holds
-                // — the same file `LiveInstances.Census` counts — because the
+                // -- the same file `LiveInstances.Census` counts -- because the
                 // census is a property of the directory rather than of any one
                 // process's opinion of itself.
                 var live = LiveInstances.DirectoryUnder(installRoot.Path);
@@ -479,7 +479,7 @@ internal sealed partial class RealInstallerTests
         await Assert.That(setupLog).Contains("Renaming existing directory");
 
         // The install root really was replaced, and BOTH binaries are inside
-        // current\ — the configuration app, which is what the stub beside that
+        // current\ -- the configuration app, which is what the stub beside that
         // directory points at, and the MCP server, which is what a client is
         // actually given.
         //
@@ -488,7 +488,7 @@ internal sealed partial class RealInstallerTests
         // <root>\current\BrowserAI.exe, never the stub beside it"). That
         // sentence named the right file for the wrong reason from the day the
         // names swapped: a client is pointed at the SERVER, composed from the
-        // app's directory and refused if it is not there — so an install with
+        // app's directory and refused if it is not there -- so an install with
         // one of the two would register nothing and say so, which is a failure
         // this arm would otherwise have watched happen and called a pass.
         foreach (var executable in new[] { RegistrationTarget.AppFileName, RegistrationTarget.ServerFileName })
@@ -534,7 +534,7 @@ internal sealed partial class RealInstallerTests
     /// <remarks>
     /// <para>
     /// <b>Best effort, and every step is independent of the one before it.</b>
-    /// This runs on the failure path — that is what it is for — so it must work
+    /// This runs on the failure path -- that is what it is for -- so it must work
     /// when the install half-happened, when <c>Update.exe</c> is missing, and
     /// when the uninstall already ran. Nothing here throws and nothing here
     /// asserts: the arm's own red is the report, and a cleanup that replaced it
@@ -545,7 +545,7 @@ internal sealed partial class RealInstallerTests
     /// the one Velopack wrote for this install, under an id nothing else on the
     /// machine uses; the shipping id's key is read by this arm and never
     /// written. A leftover would otherwise sit in Settings pointing at a scratch
-    /// directory that is gone, and would refuse the capability on the next run —
+    /// directory that is gone, and would refuse the capability on the next run --
     /// which is correct, and is the state this exists to stop happening.
     /// </para>
     /// </remarks>
@@ -569,7 +569,7 @@ internal sealed partial class RealInstallerTests
             }
         }
 
-        // ⚠️ THE SHORTCUT, BY TARGET AND NEVER BY NAME — 2026-09-16. A `.lnk`
+        // ⚠️ THE SHORTCUT, BY TARGET AND NEVER BY NAME -- 2026-09-16. A `.lnk`
         // that names this scratch root is one this arm's installer wrote and
         // cannot be anybody's; a `.lnk` matched on its name alone could be the
         // maintainer's, and deleting that is the defect this whole split exists
@@ -655,13 +655,13 @@ internal sealed partial class RealInstallerTests
     /// is what makes that property a statement about the one that does.</b> The
     /// two packs come from one publish directory in one script run, at the same
     /// version and channel, with the id and the output directory as the only
-    /// arguments that differ — and <i>that</i> is a scan over the script. This is
+    /// arguments that differ -- and <i>that</i> is a scan over the script. This is
     /// the bytes.
     /// </para>
     /// <para>
     /// <b>What may differ is named by a rule rather than by a list.</b> An entry
     /// whose bytes differ has to <i>mention the id</i>, in UTF-8 or in UTF-16,
-    /// in one of the two packages — which is what a <c>.nuspec</c>, a Velopack
+    /// in one of the two packages -- which is what a <c>.nuspec</c>, a Velopack
     /// manifest and a stub's embedded metadata all do. Anything else differing
     /// means the two packs were not built from one publish, and a list of
     /// expected file names would have gone stale the first time upstream added
@@ -669,7 +669,7 @@ internal sealed partial class RealInstallerTests
     /// </para>
     /// <para>
     /// ⚠️ <b>The suite pack's TITLE joins that rule and the shipping pack's
-    /// deliberately does not — 2026-09-16.</b> The two packs differ in a second
+    /// deliberately does not -- 2026-09-16.</b> The two packs differ in a second
     /// name since the Start Menu split (<see cref="ReleaseLayout.TestPackTitle"/>),
     /// so an entry carrying it has to be allowed to differ. But the shipping
     /// title is <c>BrowserAI</c>, which appears in every binary in the package:
@@ -732,8 +732,8 @@ internal sealed partial class RealInstallerTests
         await Assert.That(moved).IsEqualTo(1);
 
         // ⚠️ THE TITLE HALF OF THE CONTROL, in both directions. The suite's
-        // title exempts; the shipping title — which every binary in the package
-        // carries — must not, or the rule above licences everything.
+        // title exempts; the shipping title -- which every binary in the package
+        // carries -- must not, or the rule above licences everything.
         var titled = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"called {ReleaseLayout.PackTitle}") };
         var titledToo = new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["a.txt"] = Encoding.UTF8.GetBytes($"called {ReleaseLayout.TestPackTitle}") };
 
@@ -801,7 +801,7 @@ internal sealed partial class RealInstallerTests
     /// ⚠️ <b>Read out of the package rather than out of the script that wrote
     /// it.</b> <c>ReleaseScriptTests</c> holds what
     /// <c>build/New-Release.ps1</c> passes; this holds what came out the other
-    /// end, and the two are different claims — a `vpk` that silently ignored an
+    /// end, and the two are different claims -- a `vpk` that silently ignored an
     /// argument would satisfy the first and fail this.
     /// </para>
     /// <para>
@@ -883,7 +883,7 @@ internal sealed partial class RealInstallerTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The stub half arrived with Velopack 1.2.158 and is the only thing
-    /// in this repository that bump changed — 2026-09-22.</b> Upstream named the
+    /// in this repository that bump changed -- 2026-09-22.</b> Upstream named the
     /// stub embedded in the <c>.nupkg</c> after <c>mainExe</c> until
     /// <see href="https://github.com/velopack/velopack/pull/985">velopack#985</see>,
     /// and names it after <c>packTitle ?? packId</c> since. Both packs are built
@@ -1050,7 +1050,7 @@ internal sealed partial class RealInstallerTests
 
             var path = Path.Combine(directory, name);
 
-            File.WriteAllText(path, $"planted by the suite at {DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture)} — {path}");
+            File.WriteAllText(path, $"planted by the suite at {DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture)} -- {path}");
             planted.Add((path, Hash(path)));
         }
 
@@ -1066,7 +1066,7 @@ internal sealed partial class RealInstallerTests
     /// ⚠️ <b>The whole tree, not just the planted paths, and the difference is a
     /// measured one.</b> <i>Corrected 2026-09-15 (previously the hash loop
     /// alone).</i> Hashing what this arm planted answers *"was anything of mine
-    /// touched"* and cannot answer *"is this still my directory"* — and on the
+    /// touched"* and cannot answer *"is this still my directory"* -- and on the
     /// 2026-09-15 release gate it was not: three children of other arms had
     /// inherited <c>BROWSERAI_ROOT</c> and were writing a 203.8 MB Chromium
     /// download into <c>browsers\chromium-1244</c> while this arm reported the
@@ -1079,7 +1079,7 @@ internal sealed partial class RealInstallerTests
     /// files in the data root: <c>browsers\reinstall.lock</c>, three
     /// <c>index\</c> entries, three <c>instances\{pid}-{guid}\</c> directories
     /// carrying <c>instance.live</c> and two Playwright configuration files
-    /// each, and three <c>live\</c> markers — every one of them written by
+    /// each, and three <c>live\</c> markers -- every one of them written by
     /// another arm's product child that had inherited <c>BROWSERAI_ROOT</c>. The
     /// hash loop alone had reported that same directory unchanged.
     /// </para>
@@ -1212,8 +1212,8 @@ internal sealed partial class RealInstallerTests
     /// <remarks>
     /// The shape <c>RollingFileWriter</c> composes, rather than
     /// <c>browserai-*.log</c>. The looser glob would also match this arm's own
-    /// planted <c>browserai-planted.log</c> — which is checked by hash above and
-    /// must not be exempted here — and would let any foreign file called
+    /// planted <c>browserai-planted.log</c> -- which is checked by hash above and
+    /// must not be exempted here -- and would let any foreign file called
     /// <c>browserai-anything.log</c> through.
     /// </remarks>
     [GeneratedRegex(@"^browserai-\d{8}-\d{3}\.log$", RegexOptions.IgnoreCase)]

@@ -12,11 +12,11 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// ⚠️ <b>Watching the launcher is not an optimisation — it is what makes the
+/// ⚠️ <b>Watching the launcher is not an optimisation -- it is what makes the
 /// wait honest.</b> The launcher gives its driven child a bounded time to
 /// report and then throws, which kills it, and <c>KILL_ON_JOB_CLOSE</c> takes
 /// the whole tree with it. A wait that only polls for a file then sits out the
-/// rest of its own patience waiting for a marker no living process can write —
+/// rest of its own patience waiting for a marker no living process can write --
 /// and reports the elapsed time as if that were the bound that failed.
 /// </para>
 /// <para>
@@ -33,7 +33,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>The evidence is inlined rather than pointed at.</b> Scratch trees are
 /// deleted when a test unwinds, so a failure naming a directory names something
 /// the reader cannot open. Every small file in it is read into the message
-/// instead — which is also why no file name is spelled here: whatever the
+/// instead -- which is also why no file name is spelled here: whatever the
 /// launcher wrote is what gets reported, so renaming one of its logs cannot
 /// silently drop it from the failure.
 /// </para>
@@ -43,8 +43,8 @@ namespace BrowserAI.Tests.Harness;
 /// 2026-08-30 (previously <c>File.ReadAllText</c> for the content and
 /// <c>FileInfo.Length</c> for the byte count).</i> A dump is taken at the
 /// moment a launch did <b>not</b> happen, so the writer of every capture file
-/// in the tree — the driver's <c>stderr</c> tee, the launcher's own
-/// redirections — is by construction still alive and still holding its handle.
+/// in the tree -- the driver's <c>stderr</c> tee, the launcher's own
+/// redirections -- is by construction still alive and still holding its handle.
 /// Both halves of the old reader assumed the opposite, and both are fixed on
 /// <see cref="Evidence"/>.
 /// </para>
@@ -113,7 +113,7 @@ internal static class LauncherWait
     /// <para>
     /// ⚠️ <b>The share mode is the instrument.</b> <c>File.ReadAllText</c> opens
     /// with <c>FileShare.Read</c>, and a share mode is a statement about what
-    /// <i>other</i> handles may do — which Windows checks against the accesses
+    /// <i>other</i> handles may do -- which Windows checks against the accesses
     /// already granted on the file. A live writer holds <c>GENERIC_WRITE</c>, a
     /// reader offering only <c>FILE_SHARE_READ</c> does not permit it, and the
     /// open is refused <b>however permissive the writer was</b>. Node's
@@ -128,7 +128,7 @@ internal static class LauncherWait
     /// <b>Measured 2026-08-29, in the run this was written for.</b> A Firefox
     /// arm stalled out Playwright's own 180 s <c>initializeServer</c> budget and
     /// the dump it produced said <c>(unreadable: … because it is being used by
-    /// another process)</c> for <b>all three</b> capture files — the whole
+    /// another process)</c> for <b>all three</b> capture files -- the whole
     /// account of the stall, in three files this instrument had just walked, and
     /// none of it in the failure. Reproduced in process 2026-08-30, both
     /// directions: a writer holding a file with node's own sharing is refused to
@@ -137,17 +137,17 @@ internal static class LauncherWait
     /// <para>
     /// ⚠️ <b>The byte count comes off the handle, and where there is no handle
     /// there is no number.</b> <c>FileInfo.Length</c> is the size the directory
-    /// enumeration carried when it produced that <c>FileInfo</c> — cached, never
-    /// re-read — so the old dump printed a figure nothing had measured beside
+    /// enumeration carried when it produced that <c>FileInfo</c> -- cached, never
+    /// re-read -- so the old dump printed a figure nothing had measured beside
     /// files it had just failed to open. <b>And the figure was wrong, which was
     /// not the expectation.</b> Measured 2026-08-30 through the enumeration this
     /// method actually performs, <c>EnumerateFiles("*")</c>, a file holding 63
-    /// bytes behind a live writer's handle reported <b>0</b> — the same phantom
+    /// bytes behind a live writer's handle reported <b>0</b> -- the same phantom
     /// <c>(0 bytes)</c> the 2026-08-29 dump carried, reproduced exactly. The same
     /// file queried by its own name in a separate probe minutes earlier reported
     /// 63, so <i>which</i> enumeration shape hits the stale entry is not
     /// established here and is not relied on: NTFS updates that entry lazily and
-    /// the guarantee is one-way. What is fixed is the provenance — a length read
+    /// the guarantee is one-way. What is fixed is the provenance -- a length read
     /// from the open stream, or, for a file nothing could open, no length at all.
     /// </para>
     /// </remarks>

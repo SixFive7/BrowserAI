@@ -4,7 +4,7 @@
 # 2026-09-15 - two binaries in one pack
 
 Evidence for
-[Two binaries in one pack, measured end to end](../../../kb/packaging/velopack.md#two-binaries-in-one-pack-measured-end-to-end--2026-09-15).
+[Two binaries in one pack, measured end to end](../../../kb/packaging/velopack.md#two-binaries-in-one-pack-measured-end-to-end----2026-09-15).
 `pack2.log` is the pack run; `packfeed/` is the feed it produced, text files
 only.
 

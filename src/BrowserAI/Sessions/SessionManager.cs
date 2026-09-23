@@ -26,7 +26,7 @@ namespace BrowserAI.Sessions;
 /// bearer token: a session is a directory, and the caller names it on every call.
 /// A token's entire value was guaranteeing the <c>resume</c> warning was
 /// displayed, and it is precisely the state that evaporates when a model is
-/// compacted — whereas a path is always reconstructible.
+/// compacted -- whereas a path is always reconstructible.
 /// </para>
 /// <para>
 /// <b>Every refusal names a recovery that is not the call that just failed.</b>
@@ -55,12 +55,12 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Chromium and not Firefox, on the maintainer's stated reason of
     /// 2026-09-17: <i>"the reason for the default is that chrome is the most
     /// widely used"</i>.</b> A decision rather than a measurement, and written
-    /// down as one — the four Firefox-against-Chromium cost ratios that used to
+    /// down as one -- the four Firefox-against-Chromium cost ratios that used to
     /// be the only ground on offer were re-measured on 2026-09-16 and three of
     /// them collapsed by between 1.7× and 7×, so that argument no longer carries
     /// this choice. See <c>DECISIONS.md</c>.
     /// <i>Corrected 2026-09-18 (previously "…collapsed by between 1.7× and 7×
-    /// while idle CPU reversed sign, so that argument…")</i> — the fourth axis
+    /// while idle CPU reversed sign, so that argument…")</i> -- the fourth axis
     /// reversed sign <b>twice</b>, the second time inside a single day against a
     /// Chromium binary identical to the byte, and it is
     /// <b>retired as not established</b> rather than counted in either
@@ -97,9 +97,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>A constant because the promise it carries is the one a test has to
     /// hold destroy to, and prose copied into an assertion drifts silently in
     /// the direction that passes.</b> <c>browserai_destroy</c> does not promise
-    /// the tree is gone — Windows will not unlink a file a browser is still
+    /// the tree is gone -- Windows will not unlink a file a browser is still
     /// mapping, and the release lags the process by however long the kernel
-    /// takes — it promises that <b>what survived is named</b>. A test that
+    /// takes -- it promises that <b>what survived is named</b>. A test that
     /// re-typed this heading and then watched it be reworded would stop
     /// recognising the survivor arm, and would go green by never reaching the
     /// assertions that matter.
@@ -109,7 +109,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// stronger property instead.</b> That test required the directory to be
     /// gone, which is a guarantee this tool has never made: it passed nine local
     /// runs and failed three consecutive CI runs on a four-core runner, where
-    /// Firefox — the family slowest to release its profile — was still holding
+    /// Firefox -- the family slowest to release its profile -- was still holding
     /// mapped files when the answer was composed. The assertion was not merely
     /// strict, it was wrong, and the honest version of it needs this string.
     /// </para>
@@ -148,7 +148,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// is how a caller finds out.</b> Measured 2026-09-17: with a session's
     /// <c>node</c> child killed under a live BrowserAI, <c>browserai_resume</c>
     /// answered <i>"already open in this BrowserAI; nothing was changed"</i> in
-    /// 7.68 ms while the session was unusable — the resume path asked <i>do I
+    /// 7.68 ms while the session was unusable -- the resume path asked <i>do I
     /// already own this directory</i>, which is a different question from
     /// <i>is the child behind it still there</i>.
     /// </para>
@@ -157,18 +157,18 @@ internal sealed class SessionManager : IAsyncDisposable
     /// restore is worse than no repair.</b> The profile on disk is the profile
     /// the new child opens, so the session directory, the profile and the log
     /// are all still there; what is gone is everything that lived in the dead
-    /// process — the pages that were open, the tabs, and anything a script left
+    /// process -- the pages that were open, the tabs, and anything a script left
     /// in memory.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-09-22, and the sentence it replaces was measurably
     /// false</b> <i>(previously "…The session's directory, profile and log are
-    /// unchanged, so cookies and stored state are still there — but nothing that
+    /// unchanged, so cookies and stored state are still there -- but nothing that
     /// lived in the old process survived it…")</i>. The profile really is intact
     /// on disk; <b>what is on disk is not what was written</b>. Measured
     /// 2026-09-22 at chromium 1246 and firefox 1549: a relaunch loses persistent
     /// stores a clean handover keeps, and <b>every single run lost at least one
-    /// store beyond <c>sessionStorage</c></b> — Chromium the cookie and
+    /// store beyond <c>sessionStorage</c></b> -- Chromium the cookie and
     /// <c>localStorage</c>, Firefox <c>localStorage</c> with the cookie
     /// surviving. <c>IndexedDB</c> and <c>CacheStorage</c>, which commit on
     /// transaction, survived everywhere.
@@ -176,9 +176,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>It does not say "killed", and that is the half Q223 c settled rather
     /// than assumed.</b> The obvious narrowing was measured and refused: eight
-    /// runs in which the browser server ended <i>itself</i> — four by
+    /// runs in which the browser server ended <i>itself</i> -- four by
     /// <c>process.exit(0)</c> and four by <c>process.abort()</c>, deaths nobody
-    /// caused — lost exactly the same stores as the four in which it was
+    /// caused -- lost exactly the same stores as the four in which it was
     /// terminated, per family, with no arm distinguishable from the control. So
     /// the note is true of any death that was not a clean shutdown, and a
     /// wording scoped to a kill would be false on a crash, which is the case a
@@ -196,7 +196,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </remarks>
     public const string ChildWasRelaunched =
         "the browser server for this session had died and was relaunched. The session's directory, profile and log are on disk and "
-        + "unchanged — but what is on disk is not everything that was written: a browser that did not shut down cleanly had no chance "
+        + "unchanged -- but what is on disk is not everything that was written: a browser that did not shut down cleanly had no chance "
         + "to flush, and measurement says recent cookie and localStorage writes may be gone, while IndexedDB and CacheStorage survive. "
         + "Read any stored value back before you rely on it. Nothing that lived in the old process survived it either: no page is open, "
         + "there are no tabs, and anything a previous call left on a page is gone. Navigate again before you act on what you see.";
@@ -207,7 +207,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>One routine for all three capped listings in this file</b> — the
+    /// <b>One routine for all three capped listings in this file</b> -- the
     /// survivors of a destroy, the survivors of a reinstall's delete, and the
     /// sessions a reinstall refusal names. All three used to take
     /// <c>Take(20)</c> inline against a tally printed above them, and all three
@@ -217,7 +217,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>The note is deliberately not indented.</b> Every line
     /// <c>TreeDelete</c> names is indented by two spaces, and that indent is what
-    /// a reader — and <c>DestroyAnswer</c> in the suite — uses to find where the
+    /// a reader -- and <c>DestroyAnswer</c> in the suite -- uses to find where the
     /// listing ends. A note that lined up with the items would be read as one.
     /// </para>
     /// </remarks>
@@ -291,7 +291,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// ([kb](../../../kb/playwright/provisioning-and-timings.md)), for a question
     /// whose answer cannot change what the dictionary lookup below returns. A
     /// spelling that is not canonical misses the dictionary either way, because
-    /// the key was stored canonical — and when it does,
+    /// the key was stored canonical -- and when it does,
     /// <see cref="ExplainUnknownSession"/> runs the whole sequence and is what
     /// names the spelling to use.
     /// </remarks>
@@ -328,7 +328,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// a path with no <c>browserai.data</c> is
     /// <see cref="SessionErrors.SessionNamesNoSession"/> and wants <c>init</c>; a
     /// path that <i>is</i> a session this process is not driving wants
-    /// <c>resume</c>. Collapsing the last two — as this once did — sends half the
+    /// <c>resume</c>. Collapsing the last two -- as this once did -- sends half the
     /// callers to a tool that will refuse them on the next turn with
     /// <see cref="SessionErrors.SessionAlreadyExists"/>.
     /// </remarks>
@@ -370,7 +370,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Every upstream tool, with no exception — and the exception is what the
+    /// <b>Every upstream tool, with no exception -- and the exception is what the
     /// measurement removed.</b> This was written to let
     /// <c>browser_get_config</c> through, on the strength of a design
     /// claim that <c>browser_get_config</c> keeps working while the download runs
@@ -378,14 +378,14 @@ internal sealed class SessionManager : IAsyncDisposable
     /// 2026-08-16 @ <c>@playwright/mcp</c> 0.0.79, twice, against the child
     /// directly with an empty browsers root: it does <b>not</b>. The tool
     /// resolves the browser before it answers and fails
-    /// <c>throwIfExecutableMissing</c> — it does not <i>launch</i> anything,
+    /// <c>throwIfExecutableMissing</c> -- it does not <i>launch</i> anything,
     /// which is why it is cheap on a provisioned machine, but the executable has
     /// to exist.
     /// </para>
     /// <para>
     /// So letting it through bought a worse answer rather than a working one: a
     /// caller would get upstream's "not installed" error, whose advice is to
-    /// provision — which is already happening — instead of
+    /// provision -- which is already happening -- instead of
     /// <see cref="SessionErrors.ProvisioningInProgress"/>, which says
     /// how large the download is and that the same call will work shortly. What
     /// keeps a downloading session inspectable is BrowserAI's <b>own</b> tools:
@@ -397,7 +397,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>It refuses rather than waiting, and that is the whole non-blocking
     /// design seen from the other end.</b> The session is open, its child is
     /// running, and the very same call succeeds on the next turn once the
-    /// download lands — so the recovery is "call this again", which is the one
+    /// download lands -- so the recovery is "call this again", which is the one
     /// recovery a model needs no help to perform.
     /// </para>
     /// </remarks>
@@ -445,14 +445,14 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>Every question here is asked of the LIVE tab, on every call.</b> The
     /// child's tool list carries the current tab's page tools and nothing else,
-    /// and the same wire name is a different page's code after a navigation — so
+    /// and the same wire name is a different page's code after a navigation -- so
     /// there is nothing here worth caching and a cache would be the hazard.
     /// </para>
     /// <para>
     /// <b>The order is: read the arguments, list the child's tools, check the
     /// page if one was named, then match.</b> The page check comes before the
     /// match on purpose: a caller whose tab has moved wants to hear that it
-    /// moved, not that the tool it asked for is missing — the second sentence is
+    /// moved, not that the tool it asked for is missing -- the second sentence is
     /// true and sends it looking in the wrong place.
     /// </para>
     /// <para>
@@ -823,7 +823,7 @@ internal sealed class SessionManager : IAsyncDisposable
             var record = SessionLock.ReadRecord(location)
                 ?? throw new SessionToolException(
                     $"'{location.FullPath}' has no '{SessionLayout.LockFileName}', so it is not a BrowserAI session and there is nothing to resume. "
-                    + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists — {SessionToolSurface.List} will show what is under a path.");
+                    + $"Call {SessionToolSurface.Init} to create one there, or name the directory of a session that exists -- {SessionToolSurface.List} will show what is under a path.");
 
             var notes = new List<string>();
             string? movedFrom = null;
@@ -851,7 +851,7 @@ internal sealed class SessionManager : IAsyncDisposable
             if (!SamePath(record.Directory, location))
             {
                 notes.Add(Directory.Exists(record.Directory)
-                    ? $"This directory is a COPY of the session at '{record.Directory}', which still exists — the two are now separate sessions, and the process named in the copied record may still be alive against the original. Its recorded purpose and history describe the ORIGINAL, not this copy: read them below before acting on them, and call {SessionToolSurface.SetPurpose} to say what this copy is for."
+                    ? $"This directory is a COPY of the session at '{record.Directory}', which still exists -- the two are now separate sessions, and the process named in the copied record may still be alive against the original. Its recorded purpose and history describe the ORIGINAL, not this copy: read them below before acting on them, and call {SessionToolSurface.SetPurpose} to say what this copy is for."
                     : $"This directory was moved or renamed: its record said '{record.Directory}', which no longer exists. The record has been repaired to '{location.FullPath}'.");
 
                 // Recorded rather than logged here. The interesting record is the
@@ -907,7 +907,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <para>
     /// <b>Two sources that routinely disagree, and the answer keeps them
-    /// apart.</b> The log says what BrowserAI <i>did</i> — it is written by this
+    /// apart.</b> The log says what BrowserAI <i>did</i> -- it is written by this
     /// product, one entry per forwarded call, and it knows nothing about what a
     /// page put on disk. The inventory says what is <i>true now</i>. The
     /// load-bearing example is credentials: cookies arrive from navigation
@@ -929,7 +929,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// was needed because the record was rewritten on every forwarded call, so a
     /// bare probe could catch a busy session mid-rewrite and read it as free.
     /// The guard is written once now and never rewritten, so
-    /// <see cref="SessionLock.ProbeLiveness"/> — one <c>CreateFile</c> — is
+    /// <see cref="SessionLock.ProbeLiveness"/> -- one <c>CreateFile</c> -- is
     /// sound on its own.
     /// </para>
     /// <para>
@@ -948,14 +948,14 @@ internal sealed class SessionManager : IAsyncDisposable
     /// and the record's own cap says `may` because it cannot tell whether a trim
     /// has happened").*** Every clause of that was false of the code three lines
     /// below it. <b>The log is printed OLDEST first, nothing is elided, and
-    /// there is no cap anywhere</b> — <see cref="SessionStore"/>'s <i>"No caps,
+    /// there is no cap anywhere</b> -- <see cref="SessionStore"/>'s <i>"No caps,
     /// anywhere"</i>, held by
     /// <c>SqliteStorageTests.NothingInTheStoreIsCappedByLengthOrByCount</c>.
     /// What replaced the truncation is the paging below, and oldest-first is the
     /// whole of why: rows are only ever appended, so numbering from the oldest
     /// end means an append can change the last page and no other, and a page a
-    /// caller has already read never moves. Numbering from the newest end —
-    /// which is what "newest-last and truncated from the front" was — would
+    /// caller has already read never moves. Numbering from the newest end --
+    /// which is what "newest-last and truncated from the front" was -- would
     /// renumber every page on every call.
     /// </para>
     /// </remarks>
@@ -1032,11 +1032,11 @@ internal sealed class SessionManager : IAsyncDisposable
         }
 
         _ = text.Append('\n')
-            .Append("WHAT WAS DONE HERE — the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.\n")
+            .Append("WHAT WAS DONE HERE -- the session's own log, oldest first. This is what BrowserAI did; it says nothing about what a page wrote to disk.\n")
             .Append("  page ").Append(page.ToString(CultureInfo.InvariantCulture))
             .Append(" of ").Append(pages.ToString(CultureInfo.InvariantCulture))
             .Append(", entries ").Append((total is 0 ? 0 : skip + 1).ToString(CultureInfo.InvariantCulture))
-            .Append('–').Append((skip + rows.Count).ToString(CultureInfo.InvariantCulture))
+            .Append('-').Append((skip + rows.Count).ToString(CultureInfo.InvariantCulture))
             .Append(" of ").Append(total.ToString(CultureInfo.InvariantCulture)).Append('\n');
 
         if (rows.Count is 0)
@@ -1080,11 +1080,11 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>A PAGE SIZE, NOT A TRUNCATION — and that is the whole of the
+    /// ⚠️ <b>A PAGE SIZE, NOT A TRUNCATION -- and that is the whole of the
     /// change (2026-08-26, previously <c>LoggedEntriesShown = 40</c>).</b> The
     /// old constant printed the newest forty entries of a record that held up to
     /// 250 and elided the rest with a sentence naming the file, so the tool that
-    /// exists to answer <i>what was I doing here</i> showed 13–40 % of what the
+    /// exists to answer <i>what was I doing here</i> showed 13-40 % of what the
     /// record held and the remainder was reachable only by opening a JSON file
     /// by hand. Nothing is elided now; everything is reachable, a page at a
     /// time.
@@ -1093,7 +1093,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Numbered from the OLDEST end, which is what makes a page stable.</b>
     /// The log is append-only and nothing evicts, so entry <i>i</i> names the
     /// same entry forever and an append can only ever change the last page.
-    /// Numbering from the newest end — the shape the old truncation used —
+    /// Numbering from the newest end -- the shape the old truncation used --
     /// shifts every boundary on every call, so page 2 of a live session would be
     /// a different set of entries each time it was fetched.
     /// </para>
@@ -1111,8 +1111,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <b>Named here rather than hand-written as a schema.</b> This is a tool
-    /// NAME and an argument VALUE — both of them upstream's own spellings, both
-    /// read out of the golden snapshot — rather than a definition of anything:
+    /// NAME and an argument VALUE -- both of them upstream's own spellings, both
+    /// read out of the golden snapshot -- rather than a definition of anything:
     /// the schema still comes from the child at run time and is what
     /// <c>UpstreamSnapshotTests</c> diffs. If upstream ever renames this tool the
     /// snapshot diff is what says so.
@@ -1128,7 +1128,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>A stale <c>in-flight</c> row says <i>no answer was recorded</i>, which
     /// is the true statement.</b> The row was written before the call was
     /// forwarded; if nothing settled it, the call hung, the child died or the
-    /// process was killed — and a reader that saw a bare tool name with no
+    /// process was killed -- and a reader that saw a bare tool name with no
     /// outcome would have to guess which. A <c>false</c> there would be a lie
     /// and a <c>true</c> would be worse.
     /// </para>
@@ -1151,7 +1151,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             SessionStore.Successful => text.Append("   ✓").Append(Took(row)),
             SessionStore.Failed => text.Append("   ✗ FAILED").Append(Took(row)),
-            _ => text.Append("   — no answer was recorded: the row was written before the call was forwarded and nothing settled it, so the call hung, the child died, or the process ended first"),
+            _ => text.Append("   -- no answer was recorded: the row was written before the call was forwarded and nothing settled it, so the call hung, the child died, or the process ended first"),
         };
 
         _ = text.Append('\n');
@@ -1206,7 +1206,7 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         var contents = SessionInventory.Of(location);
 
-        _ = text.Append('\n').Append("WHAT IS HERE NOW — the directory, walked just now. This is what is true; it does not know why any of it exists.\n");
+        _ = text.Append('\n').Append("WHAT IS HERE NOW -- the directory, walked just now. This is what is true; it does not know why any of it exists.\n");
 
         if (contents.Failure is { } failure)
         {
@@ -1224,7 +1224,7 @@ internal sealed class SessionManager : IAsyncDisposable
         if (contents.LastWritten is { } written)
         {
             _ = text.Append("  last file written: ").Append(Stamp(written.ToLocalTime()))
-                .Append("   (").Append(Age(now - written)).Append(" ago — a browser writes into the profile continuously while a page is open, so this moves when the record does not)\n");
+                .Append("   (").Append(Age(now - written)).Append(" ago -- a browser writes into the profile continuously while a page is open, so this moves when the record does not)\n");
         }
 
         foreach (var kind in contents.Kinds)
@@ -1233,7 +1233,7 @@ internal sealed class SessionManager : IAsyncDisposable
         }
 
         _ = text.Append(contents.CookieStore is { } store
-            ? $"  ⚠️ CREDENTIALS: the profile holds a cookie store at '{store}'. This session may be signed in to something, whether or not any cookie tool appears above — cookies arrive from navigation. {SessionToolSurface.Destroy} is what removes it.\n"
+            ? $"  ⚠️ CREDENTIALS: the profile holds a cookie store at '{store}'. This session may be signed in to something, whether or not any cookie tool appears above -- cookies arrive from navigation. {SessionToolSurface.Destroy} is what removes it.\n"
             : "  no cookie store in the profile, so nothing has signed in through this session yet.\n");
 
         foreach (var archive in contents.Archives)
@@ -1249,7 +1249,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// for removing it.
     /// </summary>
     /// <remarks>
-    /// <b>Reported and never acted on — the maintainer's decision, 2026-08-25.</b>
+    /// <b>Reported and never acted on -- the maintainer's decision, 2026-08-25.</b>
     /// Nothing in BrowserAI deletes an artifact, ever: not on a schedule, not at
     /// a size, not when a session closes. What a caller gets instead is the
     /// number, on both of the tools that describe a session, so that retention
@@ -1264,7 +1264,7 @@ internal sealed class SessionManager : IAsyncDisposable
         var output = Path.Combine(location.FullPath, SessionLayout.OutputFolderName);
         var (bytes, files) = SessionLayout.SizeAndFiles(output);
 
-        return $"output: {Sizes.Describe(bytes)} in {files.ToString(CultureInfo.InvariantCulture)} file(s) — "
+        return $"output: {Sizes.Describe(bytes)} in {files.ToString(CultureInfo.InvariantCulture)} file(s) -- "
             + $"BrowserAI never deletes any of it, on any schedule or at any size; {SessionToolSurface.Destroy} is what removes a session and everything under it.";
     }
 
@@ -1323,7 +1323,7 @@ internal sealed class SessionManager : IAsyncDisposable
         if (found is 0 && !Directory.Exists(root))
         {
             return new ToolOutcome(
-                $"No BrowserAI sessions under '{root}' — and there is no directory at '{root}' on this machine, so there could not be. "
+                $"No BrowserAI sessions under '{root}' -- and there is no directory at '{root}' on this machine, so there could not be. "
                 + "Check the path: a drive letter with nothing mounted on it and a directory that was never created both look like this from here. "
                 + $"Call {SessionToolSurface.List} with a directory that exists to see the sessions beneath it, or {SessionToolSurface.Init} with an absolute path to create one.",
                 IsError: false);
@@ -1347,7 +1347,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Added 2026-08-20. Until then the listing reported browser,
     /// purpose, dates and size and performed no liveness check at all</b>, so a
     /// caller could not tell an abandoned session from one another agent was
-    /// inside — which is the distinction that matters most in the turn before
+    /// inside -- which is the distinction that matters most in the turn before
     /// <c>browserai_destroy</c>.
     /// </para>
     /// <para>
@@ -1355,7 +1355,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <see cref="SessionLock.ProbeLiveness"/> asks the kernel about
     /// <c>browserai.lock</c>; the process check asks for a handle on a peer,
     /// which a token may not be able to open and which names a pid Windows may
-    /// already have reused. <b>It never opens the record</b> — a database open
+    /// already have reused. <b>It never opens the record</b> -- a database open
     /// is orders of magnitude dearer, it can create a file in a directory nobody
     /// asked it to touch, and the newest holder statement cannot answer this
     /// question anyway.
@@ -1371,7 +1371,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// ownership handle to do it. Nothing rewrites the guard: the only window
     /// left is between the rename and the first hold at acquisition, inside the
     /// per-directory gate, and what is seen there is *free* about a directory
-    /// somebody is in the middle of taking — a momentary truth that corrects
+    /// somebody is in the middle of taking -- a momentary truth that corrects
     /// itself.
     /// </para>
     /// <para>
@@ -1384,8 +1384,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// ⚠️ <b>THE HOLDER IS DELIBERATELY NOT NAMED, AND THAT IS THE TRAP THIS
     /// METHOD IS BUILT AROUND.</b> A sharing violation says the file is held; it
     /// does not say by whom, and the record inside can describe a previous
-    /// holder. That exact gap produced a wrong <i>sentence</i> — never a wrong
-    /// owner — on 2026-08-19, and it is [a hazard row](../../../HAZARDS.md#hazard-index).
+    /// holder. That exact gap produced a wrong <i>sentence</i> -- never a wrong
+    /// owner -- on 2026-08-19, and it is [a hazard row](../../../HAZARDS.md#hazard-index).
     /// Turning this answer into <i>"held by PID n"</i> would publish that
     /// sentence to a model on every listing rather than once in a refusal, so
     /// what is printed is the fact the probe can support and a note saying which
@@ -1393,7 +1393,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>A session this process is already driving is answered without asking
-    /// the kernel.</b> That is more accurate — it says <i>which</i> BrowserAI —
+    /// the kernel.</b> That is more accurate -- it says <i>which</i> BrowserAI --
     /// and it removes the whole self-probing half of the cost and of the
     /// handle-collision exposure above.
     /// </para>
@@ -1401,15 +1401,15 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Cost: one <c>CreateFile</c>/<c>CloseHandle</c> per listed entry, plus
     /// the gate's own create/acquire/release/close.</b> No process handle and no
     /// second directory walk. ⚠️ ***Corrected 2026-08-24 (previously "and nothing
-    /// else. No process handle, no mutex, no second directory walk") — there IS
+    /// else. No process handle, no mutex, no second directory walk") -- there IS
     /// now a mutex per entry, and the figures below are the file half only. The
-    /// uncontended acquire alone was measured at 0.007–0.009 ms; the create/close
+    /// uncontended acquire alone was measured at 0.007-0.009 ms; the create/close
     /// pair is unmeasured and is deliberately not guessed at here.*** Measured
     /// 2026-08-20 at <b>0.035 ms</b> free and <b>0.049 ms</b>
     /// held
-    /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)),
-    /// against <b>0.6–2.3 ms</b> for the <see cref="SessionLayout.SizeOnDisk"/>
-    /// recursive enumeration this same loop already performs for every entry —
+    /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report----measured-2026-08-20)),
+    /// against <b>0.6-2.3 ms</b> for the <see cref="SessionLayout.SizeOnDisk"/>
+    /// recursive enumeration this same loop already performs for every entry --
     /// measured on the same day over a 310-file tree, and a session whose
     /// profile has been used is far larger than that. <b>It is a seventeenth of
     /// a cost the listing already pays, on the smallest tree available to
@@ -1417,8 +1417,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>A drive-root listing cannot become pathological on this account</b>:
-    /// the loop is over the session <i>index</i> — one file per session
-    /// BrowserAI has ever been told about — and the <c>directory</c> argument
+    /// the loop is over the session <i>index</i> -- one file per session
+    /// BrowserAI has ever been told about -- and the <c>directory</c> argument
     /// <i>filters</i> that list rather than causing a walk of it. Pointing this
     /// tool at <c>C:\</c> therefore adds one file open per known session and
     /// never one per file on the volume, and the entries it adds them for are
@@ -1428,8 +1428,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// ⚠️ <b>That was true of this probe and read as though it were true of the
     /// listing, and until 2026-08-24 the listing was the expensive half.</b> The
     /// subtree filter ran <i>after</i> the record was opened, so every session on
-    /// the machine had its <c>browserai.json</c> strictly parsed — and each of
-    /// those opens carried <c>RenameWindow</c>'s budget — to print the few under
+    /// the machine had its <c>browserai.json</c> strictly parsed -- and each of
+    /// those opens carried <c>RenameWindow</c>'s budget -- to print the few under
     /// the prefix. <see cref="SessionIndex.FollowUnder"/> is what moved the
     /// filter above the open.
     /// </para>
@@ -1440,7 +1440,7 @@ internal sealed class SessionManager : IAsyncDisposable
     {
         if (_live.ContainsKey(session.Key))
         {
-            return "in use: YES — this BrowserAI process is driving it right now.";
+            return "in use: YES -- this BrowserAI process is driving it right now.";
         }
 
         var answer = SessionLock.ProbeLiveness(session);
@@ -1448,13 +1448,13 @@ internal sealed class SessionManager : IAsyncDisposable
         return answer.State switch
         {
             SessionLiveness.Held =>
-                $"in use: YES — something holds '{session.LockFile}' right now. That is the kernel's answer about the file, not about who: the guard names whoever took the directory, so this does not say which process.",
+                $"in use: YES -- something holds '{session.LockFile}' right now. That is the kernel's answer about the file, not about who: the guard names whoever took the directory, so this does not say which process.",
 
             SessionLiveness.NotHeld =>
-                $"in use: no — nothing held '{session.LockFile}'. It is a snapshot rather than a reservation: another agent can open the session immediately afterwards.",
+                $"in use: no -- nothing held '{session.LockFile}'. It is a snapshot rather than a reservation: another agent can open the session immediately afterwards.",
 
             _ =>
-                $"in use: UNKNOWN — {answer.Why} Treat it as possibly in use; this is not the same answer as 'no'.",
+                $"in use: UNKNOWN -- {answer.Why} Treat it as possibly in use; this is not the same answer as 'no'.",
         };
     }
 
@@ -1486,7 +1486,7 @@ internal sealed class SessionManager : IAsyncDisposable
         if (SessionLayout.OldFormatRefusal(location) is { } notThisFormat)
         {
             return new ToolOutcome(
-                $"{notThisFormat}\n\nI cannot clean this up — remove the entire directory yourself.",
+                $"{notThisFormat}\n\nI cannot clean this up -- remove the entire directory yourself.",
                 IsError: true);
         }
 
@@ -1554,7 +1554,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // entirely do the thing it is named for must not be indistinguishable,
         // to a model scanning result shapes, from one that did.
         //
-        // The objection this was taken over is recorded in QUESTIONS.md §11 —
+        // The objection this was taken over is recorded in QUESTIONS.md §11 --
         // an error invites a retry, and a retry finds no session and refuses,
         // which is a worse message than the truthful one. The refinement that
         // answers it is the text below: it says the session IS destroyed, says
@@ -1574,7 +1574,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"{summary}\n\nBUT {failures.Count.ToString(CultureInfo.InvariantCulture)} {SurvivorsHeading}\n"
                 + Listing(failures)
                 + "\n\nThe session itself IS destroyed: its record is gone and BrowserAI's index has forgotten it, so what is listed above is residue on disk rather than a session."
-                + $"\nDo NOT call {SessionToolSurface.Destroy} on '{location.FullPath}' again — there is no session there for it to destroy, and it will refuse."
+                + $"\nDo NOT call {SessionToolSurface.Destroy} on '{location.FullPath}' again -- there is no session there for it to destroy, and it will refuse."
                 + "\nWhat is left is outside BrowserAI: wait for whatever still holds those files to exit and then delete them yourself, or leave them. Nothing in BrowserAI reads them again.",
                 IsError: true);
     }
@@ -1648,7 +1648,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Changed 2026-08-19 at Firefox support (previously no arguments at
-    /// all — "there is nothing to name: the install is shared by every session
+    /// all -- "there is nothing to name: the install is shared by every session
     /// on this machine").</b> <b>The stated reason expired rather than being
     /// overruled.</b> With one family provisioned there was genuinely nothing to
     /// name; with <see cref="ProvisionedBrowsers.Families"/> holding two there
@@ -1670,7 +1670,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Optional, defaulting to Chromium.</b> The worst of the three: a caller
     /// whose Firefox is broken calls it, Chromium is deleted and re-downloaded,
     /// and the answer says a reinstall succeeded. Success-shaped, nothing fixed
-    /// — the failure class the whole product is written against.
+    /// -- the failure class the whole product is written against.
     /// </item>
     /// </list>
     /// <para>
@@ -1687,7 +1687,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Naming the family narrows the refusal as well as the delete.</b> The
     /// running-process check was always per-directory; with the family named it
     /// is per-family in effect too, so an open Chromium session no longer blocks
-    /// a Firefox reinstall. Nothing was relaxed to achieve that — the check asks
+    /// a Firefox reinstall. Nothing was relaxed to achieve that -- the check asks
     /// the same question of a smaller tree.
     /// </para>
     /// <para>
@@ -1704,7 +1704,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// completion marker, so a family's reinstall deletes
     /// <c>chromium-&lt;rev&gt;</c> or <c>firefox-&lt;rev&gt;</c> and nothing
     /// else. A corrupt <c>ffmpeg</c> is therefore <i>not</i> repairable through
-    /// this tool by either family — recorded as a limitation rather than
+    /// this tool by either family -- recorded as a limitation rather than
     /// discovered as one.
     /// </para>
     /// <para>
@@ -1724,8 +1724,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// true and is not the whole race: the peer's session is <b>created</b> in
     /// that window too, and a session whose tree was deleted from under it is not
     /// a failed delete, it is a live session pointing at nothing. The answer is
-    /// the machine-wide claim this method now takes first — see
-    /// <see cref="MaintenanceLock"/> — which stops the peer's <c>init</c> rather
+    /// the machine-wide claim this method now takes first -- see
+    /// <see cref="MaintenanceLock"/> -- which stops the peer's <c>init</c> rather
     /// than losing a race with it.
     /// </para>
     /// <para>
@@ -1745,7 +1745,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// corrupts is a <b>writer</b>: a concurrent installer is <c>node.exe</c> out
     /// of the payload, extracting <i>into</i> the tree, which
     /// <see cref="BrowserProcesses.RunningFrom"/> cannot see at all. And a
-    /// different thread taking a mutex is a wait rather than a deadlock — the
+    /// different thread taking a mutex is a wait rather than a deadlock -- the
     /// real obstacle was thread affinity in an <c>async</c> method, which
     /// <c>BrowserProvisioner.ReinstallAsync</c> now solves the same way
     /// <c>BrowserProvisioner.Start</c> always did. <b>The second question is
@@ -1794,7 +1794,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// ⚠️ <b>The take IS the check since 2026-08-20 (previously a
     /// <c>MaintenanceLock.Probe</c> that acquired nothing).</b> The probe existed
     /// because an <c>init</c> that took the claim for a microsecond would make a
-    /// racing reinstall report that another reinstall was running — and under the
+    /// racing reinstall report that another reinstall was running -- and under the
     /// reader/writer design there is nothing to probe with: an open that a
     /// reinstall's exclusive handle refuses is exactly the shared open a session
     /// needs anyway, and it is held rather than released, so there is no
@@ -1802,7 +1802,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>The refusal names the reinstall by quoting the record the writer
-    /// wrote</b>, and carries how far in it is — see
+    /// wrote</b>, and carries how far in it is -- see
     /// <see cref="SessionErrors.BrowsersAreBeingReinstalled"/>. A caller blocked
     /// by a 203.8 MB download should learn what it is waiting on and how far
     /// through it is, which is the same treatment first-run provisioning already
@@ -1827,7 +1827,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// ⚠️ <b>Added 2026-08-24. Until then every cause wore the reinstall's
     /// sentence</b>, so an ACL denial, a full volume and a path that is too long
-    /// all told the caller to wait minutes for a download that was not running —
+    /// all told the caller to wait minutes for a download that was not running --
     /// and the recovery for those is the opposite of waiting. A sharing violation
     /// on this open really is contention, by the exclusion arithmetic in
     /// <see cref="MaintenanceLock"/>'s remarks, so <b>that half is deliberately
@@ -1852,7 +1852,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The kernel decides, and this only says which of the two causes it
-    /// was — a correction of 2026-08-20 (previously a census that decided).</b>
+    /// was -- a correction of 2026-08-20 (previously a census that decided).</b>
     /// The gate used to be a census that counted sessions and
     /// refused on the count; it is now the exclusive open itself, which is
     /// refused while any session holds the same file shared. That is strictly
@@ -1862,7 +1862,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>The two causes are mutually exclusive by construction, which is why no
     /// parsing is needed to tell them apart.</b> A reinstall can only hold the
-    /// claim exclusively when no session holds it shared — so if the census finds
+    /// claim exclusively when no session holds it shared -- so if the census finds
     /// sessions, sessions are the cause and they are what the caller must close;
     /// if it finds none <i>and the kernel said the file was held</i>, another
     /// reinstall has it and the record says which.
@@ -1888,7 +1888,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>There is no drain and no intent marker, and writer starvation is
-    /// accepted</b> — the maintainer's words: <i>"it should not start a
+    /// accepted</b> -- the maintainer's words: <i>"it should not start a
     /// drain/preventstart process of sorts. Keep it simple. Let the user solve the
     /// open sessions block."</i>
     /// </para>
@@ -1922,9 +1922,9 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return $"{SessionToolSurface.ReinstallBrowser} was not run: it needs this machine's browsers root to itself, and {claimants.Count.ToString(CultureInfo.InvariantCulture)} session(s) are holding it:\n"
             + Listing(claimants)
-            + $"\nEvery open session holds '{Path.Combine(root, MaintenanceLock.FileName)}' shared for its whole life, whatever browser family it uses, so a live {ProvisionedBrowsers.Firefox} session blocks a {ProvisionedBrowsers.Chromium} reinstall as surely as a {ProvisionedBrowsers.Chromium} one does — nothing runs out of this root while it is being replaced. "
+            + $"\nEvery open session holds '{Path.Combine(root, MaintenanceLock.FileName)}' shared for its whole life, whatever browser family it uses, so a live {ProvisionedBrowsers.Firefox} session blocks a {ProvisionedBrowsers.Chromium} reinstall as surely as a {ProvisionedBrowsers.Chromium} one does -- nothing runs out of this root while it is being replaced. "
             + "Nothing was changed and nothing was terminated. This call did not wait for those sessions and never will, because waiting on a browser a human may not close is not a thing a tool call may do, and it published no intent that would stop new sessions starting meanwhile. "
-            + $"Close them, or wait for them to end, and call {SessionToolSurface.ReinstallBrowser} again. There is deliberately no force option — forcing here means killing browsers other agents are driving.";
+            + $"Close them, or wait for them to end, and call {SessionToolSurface.ReinstallBrowser} again. There is deliberately no force option -- forcing here means killing browsers other agents are driving.";
     }
 
     /// <summary>
@@ -1944,7 +1944,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>For the shared components the two questions come apart.</b>
     /// <c>ffmpeg-win64.exe</c> exists only while a recording is running and
-    /// <c>PrintDeps.exe</c> only during dependency validation at launch — so a
+    /// <c>PrintDeps.exe</c> only during dependency validation at launch -- so a
     /// process-only gate answers <i>nothing is using it</i> on a machine with ten
     /// live sessions, any of which starts the codec the instant a
     /// <c>video</c> artifact is asked for, and the tree is then being deleted
@@ -2089,7 +2089,7 @@ internal sealed class SessionManager : IAsyncDisposable
             return new ToolOutcome(
                 $"'{outcome.Named}' was only partly removed, so nothing was downloaded on top of it and the {target} install is now incomplete. {outcome.Failures.Count.ToString(CultureInfo.InvariantCulture)} item(s) survived:\n"
                 + Listing(outcome.Failures)
-                + $"\nSomething still has those files open. Once it has exited, call {SessionToolSurface.ReinstallBrowser} again — it will delete what is left and download a complete tree.",
+                + $"\nSomething still has those files open. Once it has exited, call {SessionToolSurface.ReinstallBrowser} again -- it will delete what is left and download a complete tree.",
                 IsError: true);
         }
 
@@ -2111,7 +2111,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// process is driving are known directly; sessions driven by <i>another</i>
     /// BrowserAI are found through the index, whose entries are followed to a
     /// <c>browserai.lock</c> whose holder is checked with
-    /// <see cref="ProcessLiveness.IsAlive"/> — pid and creation time together,
+    /// <see cref="ProcessLiveness.IsAlive"/> -- pid and creation time together,
     /// never a pid alone, because Windows reuses pids and a reclaim keyed on one
     /// eventually reads a stranger as the holder.
     /// <para>
@@ -2122,7 +2122,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// the wrong browser")*. His words were <i>"any init or resume should take a
     /// system level lock. No matter the browser type"</i>, and the lock is one
     /// file at the root of the browsers directory that knows nothing about
-    /// families — so a live Firefox session really does refuse a Chromium
+    /// families -- so a live Firefox session really does refuse a Chromium
     /// reinstall, and listing only the matching family would name none of the
     /// sessions the caller has to close. The old reasoning was not wrong and is
     /// no longer the question: it was about which sessions can hold an
@@ -2131,8 +2131,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>This list explains a refusal; it never decides one.</b> The kernel
-    /// decides, on the exclusive open. So a session this walk cannot see — an
-    /// index entry that was swept, a record that will not parse — costs the
+    /// decides, on the exclusive open. So a session this walk cannot see -- an
+    /// index entry that was swept, a record that will not parse -- costs the
     /// refusal a line rather than costing the machine a guarantee.
     /// </para>
     /// </remarks>
@@ -2143,7 +2143,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         foreach (var session in _live.Values)
         {
-            lines.Add($"  {session.Location.FullPath} — open in this BrowserAI (browser '{session.Lock.Record.Browser}')");
+            lines.Add($"  {session.Location.FullPath} -- open in this BrowserAI (browser '{session.Lock.Record.Browser}')");
         }
 
         foreach (var entry in _index.Follow())
@@ -2165,7 +2165,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // open, and without naming a pid Windows may already have reused.
             if (SessionLock.ProbeLiveness(session).State is SessionLiveness.Held)
             {
-                lines.Add($"  {session.FullPath} — held by another process since {Stamp(record.LastUsed)}");
+                lines.Add($"  {session.FullPath} -- held by another process since {Stamp(record.LastUsed)}");
             }
         }
 
@@ -2355,8 +2355,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <b>It runs before the lock is disposed and the failure payload is the
     /// exception with its stack.</b> The row is the only durable evidence that
-    /// an <c>init</c> was attempted here at all — the session never opened, so
-    /// there is no live session to ask — and a caller resuming the directory
+    /// an <c>init</c> was attempted here at all -- the session never opened, so
+    /// there is no live session to ask -- and a caller resuming the directory
     /// tomorrow meets *this browser would not start, and here is what it said*
     /// rather than a purpose with nothing behind it.
     /// </remarks>
@@ -2371,7 +2371,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <para>
     /// <b>The same launch, not a fresh one.</b> The options are the ones the
-    /// session was opened with — <see cref="LiveSession.Launch"/> — so the
+    /// session was opened with -- <see cref="LiveSession.Launch"/> -- so the
     /// replacement child gets the same payload, the same browsers root, the same
     /// generated config file and the same working directory. Rebuilding them
     /// here would make a relaunch a different launch the day anything above
@@ -2454,13 +2454,13 @@ internal sealed class SessionManager : IAsyncDisposable
             .Append("  browser: ").Append(record.Browser).Append('\n')
             .Append("  profile: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.ProfileFolderName)).Append('\n')
             .Append("  output: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.OutputFolderName))
-            .Append(" — every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n")
+            .Append(" -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n")
             .Append("  downloads: ").Append(Path.Combine(session.Location.FullPath, SessionLayout.DownloadsFolderName)).Append('\n')
             .Append("  purpose: ").Append(record.Purpose).Append('\n')
             .Append("  created: ").Append(Stamp(record.Created)).Append("   last used: ").Append(Stamp(record.LastUsed)).Append('\n')
             .Append("  viewport: ").Append(session.Config.Opinions.FirstOrDefault(opinion => opinion.Path == "browser.contextOptions.viewport.width")?.Value.ToString() ?? "?")
             .Append('x').Append(session.Config.Opinions.FirstOrDefault(opinion => opinion.Path == "browser.contextOptions.viewport.height")?.Value.ToString() ?? "?")
-            .Append(" — a screenshot arrives at this size unscaled, so it is what one costs you\n")
+            .Append(" -- a screenshot arrives at this size unscaled, so it is what one costs you\n")
             .Append("  child protocol: ").Append(session.Child.NegotiatedProtocolVersion ?? "<none>").Append('\n')
             .Append("  browserProvisioning: ").Append(Provisioning(record.Browser)).Append('\n');
 
@@ -2468,7 +2468,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             _ = text
                 .Append("  ⚠️ NETWORK CAPTURE IS ON for this run: '").Append(har)
-                .Append("'. Every request and response, headers included, is being written there in clear text — every bearer token and session cookie that crosses the wire. Service workers are BLOCKED while it is on, so the site may behave differently from an ordinary run. Delete the file when you are done with it.\n");
+                .Append("'. Every request and response, headers included, is being written there in clear text -- every bearer token and session cookie that crosses the wire. Service workers are BLOCKED while it is on, so the site may behave differently from an ordinary run. Delete the file when you are done with it.\n");
         }
 
         _ = text.Append(HowItGotHere(record));
@@ -2488,7 +2488,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
             if (siblings.Count is not 0)
             {
-                _ = text.Append(" — ").Append(string.Join(", ", siblings.Take(10).Select(directory => Path.GetFileName(directory))));
+                _ = text.Append(" -- ").Append(string.Join(", ", siblings.Take(10).Select(directory => Path.GetFileName(directory))));
             }
 
             _ = text.Append('\n');
@@ -2508,29 +2508,29 @@ internal sealed class SessionManager : IAsyncDisposable
     /// corrupted, with nothing to read and no basis for deciding whether to keep
     /// waiting. So the download starts here and the answer says so; every upstream
     /// call is refused with
-    /// <see cref="SessionErrors.ProvisioningInProgress"/> meanwhile — including
+    /// <see cref="SessionErrors.ProvisioningInProgress"/> meanwhile -- including
     /// <c>browser_get_config</c>, which resolves the executable before it answers
-    /// — BrowserAI's own tools keep working throughout, and the same child
+    /// -- BrowserAI's own tools keep working throughout, and the same child
     /// navigates once the install lands.
     /// </para>
     /// <para>
-    /// The word in the result is the state itself — <c>installed</c>,
-    /// <c>provisioning</c>, <c>failed</c> — because a caller that has to parse
+    /// The word in the result is the state itself -- <c>installed</c>,
+    /// <c>provisioning</c>, <c>failed</c> -- because a caller that has to parse
     /// English to find out whether a navigation will work is one upstream wording
     /// change away from getting it wrong.
     /// </para>
     /// <para>
     /// ⚠️ <b>The middle word became <c>provisioning</c> on 2026-08-18 (previously
-    /// <c>downloading</c>).</b> One word covers five phases — waiting on another
+    /// <c>downloading</c>).</b> One word covers five phases -- waiting on another
     /// process's provisioning mutex, deleting an abandoned tree, downloading,
-    /// extracting, and pruning superseded revisions — and only one of them is a
+    /// extracting, and pruning superseded revisions -- and only one of them is a
     /// download. The cached-run path reaches the mutex-waiter routinely, so the
     /// misleading phase was not the rare one. There is no fourth word for it:
     /// the three buckets a caller acts on are <i>installed</i> / <i>not yet</i> /
     /// <i>failed</i>, and a mutex-loser belongs in the middle exactly as a
     /// downloader does. What separates the five is
     /// <see cref="ProvisioningStatus.Detail"/>, the sentence printed beside the
-    /// word — and both of its unfinished branches were given an explicit "wait
+    /// word -- and both of its unfinished branches were given an explicit "wait
     /// and call the same tool again" at the same time, because <c>downloading</c>
     /// implied a recovery that <c>provisioning</c> does not. <c>QUESTIONS.md</c>
     /// §9 records the decision.
@@ -2555,13 +2555,13 @@ internal sealed class SessionManager : IAsyncDisposable
                 _ => "failed",
             };
 
-            return $"{word} — {status.Detail}";
+            return $"{word} -- {status.Detail}";
         }
 #pragma warning disable CA1031 // A provisioning probe that throws must not fail an init: the session is usable, and the answer says what could not be read.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
-            return $"unknown — the browsers root '{_environment.Paths.BrowsersDirectory}' could not be examined: {failure.Message}";
+            return $"unknown -- the browsers root '{_environment.Paths.BrowsersDirectory}' could not be examined: {failure.Message}";
         }
     }
 
@@ -2597,7 +2597,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Read and not Named, because the record may have been written on
     /// another machine.</b> A recorded path this build would not have written is
     /// not this directory, and the move/copy test downstream settles what to do
-    /// about it by asking whether it exists — which is a filesystem call this one
+    /// about it by asking whether it exists -- which is a filesystem call this one
     /// is not entitled to make on a stranger's string.
     /// </remarks>
     private static bool SamePath(string recorded, SessionPath location)
@@ -2623,7 +2623,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>It goes through the same function every other door does — corrected
+    /// ⚠️ <b>It goes through the same function every other door does -- corrected
     /// 2026-08-26, previously a bare <c>Path.GetFullPath</c> plus an upper-cased
     /// prefix, with no alias resolution at all.</b> That second chain existed
     /// because the shared one refused a volume root, and a volume root is exactly
@@ -2631,7 +2631,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// exception was the worst answer this product could give: a caller who
     /// listed <c>D:\link\work</c> where the sessions live under
     /// <c>C:\real\work</c> was told <i>"No BrowserAI sessions under '…'. That is
-    /// an answer rather than an error"</i> — confidently, wrongly, and with
+    /// an answer rather than an error"</i> -- confidently, wrongly, and with
     /// nothing to correct because it was not a refusal.
     /// </para>
     /// <para>
@@ -2660,27 +2660,27 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Scoped by root and never by machine.</b> The machine-wide view is
     /// <see cref="SessionIndex"/>'s and stays available through
     /// <c>browserai_list</c>; this answers the narrower question an agent
-    /// arriving in one tree has — <i>what else is here</i> — so it meets that
+    /// arriving in one tree has -- <i>what else is here</i> -- so it meets that
     /// tree's sessions and nobody else's.
     /// </para>
     /// <para>
     /// ⚠️ <b>Its one caller is the line in the <c>init</c>/<c>resume</c> answer
-    /// that names the siblings — 2026-08-29, previously two.</b> The other wrote
+    /// that names the siblings -- 2026-08-29, previously two.</b> The other wrote
     /// <c>browserai-sessions.json</c> beside the sessions, from the same walk,
     /// and it is deleted: nothing read it, and this line already carried its
     /// content to the only reader either had. <b>So the entries this returns are
     /// directories and nothing else.</b> They used to carry purpose, created,
-    /// last-used and a <see cref="SessionLayout.SizeOnDisk"/> per sibling — a
+    /// last-used and a <see cref="SessionLayout.SizeOnDisk"/> per sibling -- a
     /// recursive enumeration of every session under the root, on every session
-    /// open — and only the file printed them.
+    /// open -- and only the file printed them.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The prefix comes from the one derivation — W8, closed 2026-08-26.</b>
+    /// ⚠️ <b>The prefix comes from the one derivation -- W8, closed 2026-08-26.</b>
     /// This re-derived it: <c>ToUpperInvariant</c>, then append a separator, three
     /// lines from a call into <see cref="SessionIndex"/>, whose own remark
     /// forbade re-deriving the predicate in as many words. It was benign because
     /// <paramref name="root"/> is a directory name off an already-canonical
-    /// <see cref="SessionPath"/> — and nothing said so, and nothing would have
+    /// <see cref="SessionPath"/> -- and nothing said so, and nothing would have
     /// noticed when it stopped being true.
     /// </para>
     /// </remarks>
@@ -2733,7 +2733,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// ⚠️ <b>The "at the cap" hedge is gone with the cap (2026-08-26).</b> The
     /// old record kept 32 statements per field and trimmed out of the middle, so
     /// every list of that length had to be printed with <i>statements between
-    /// the first and these may have been dropped</i> — a sentence that could not
+    /// the first and these may have been dropped</i> -- a sentence that could not
     /// say whether anything actually had been. Nothing evicts now, so what is
     /// printed is the whole history and there is nothing to hedge.
     /// </para>
@@ -2756,7 +2756,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return fields.Count is 0
             ? string.Empty
-            : "  how this session got here — every field of browserai.data is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n"
+            : "  how this session got here -- every field of browserai.data is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n"
                 + string.Join(string.Empty, fields);
 
         static void line<T>(List<string> into, string name, IReadOnlyList<Statement<T>> statements, Func<T, string> render)
@@ -2787,13 +2787,13 @@ internal sealed class SessionManager : IAsyncDisposable
     /// which is what every authored tool already answers with.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Every door takes this route since 2026-08-26 — previously
+    /// ⚠️ <b>Every door takes this route since 2026-08-26 -- previously
     /// <c>init</c> and <c>resume</c> went through a second entry point
     /// (<c>ResolveToOpen</c>) that ran the boundary refusals, and
     /// <c>destroy</c>, <c>set_purpose</c>, <c>catch_up</c> and <c>list</c> did
     /// not.</b> The split existed so that a session created on a share by a
     /// build older than the refusals stayed removable. Nothing was ever
-    /// distributed, so that population is empty — and the cost of the split was
+    /// distributed, so that population is empty -- and the cost of the split was
     /// real: <c>destroy</c> on a UNC path reached <c>Directory.Exists</c> and
     /// took <b>21 seconds</b> to answer <i>that is not a session</i>, measured
     /// through the wire on 2026-08-26.
@@ -2837,8 +2837,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <b>Silent normalisation with one note, rather than a refusal or nothing at
-    /// all.</b> The refusal this replaced taught something true — <i>BrowserAI
-    /// takes only the filesystem's own spelling</i> — and charged a turn for it,
+    /// all.</b> The refusal this replaced taught something true -- <i>BrowserAI
+    /// takes only the filesystem's own spelling</i> -- and charged a turn for it,
     /// every turn, to a caller whose alias was not its own choice: a
     /// <c>subst</c> in the user's shell, a redirected profile, a junctioned
     /// <c>AppData</c>. The lesson survives here at no turn's cost, and on a
@@ -2891,7 +2891,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <remarks>
     /// <b>It is checked for being an object and for nothing else.</b> What is
     /// inside it has to satisfy a schema the PAGE wrote, which BrowserAI has
-    /// never seen and does not validate — and neither does upstream, which hands
+    /// never seen and does not validate -- and neither does upstream, which hands
     /// the whole object to the page's handler verbatim. A clone is taken so the
     /// node that goes to the child cannot be the caller's own, which the SDK may
     /// still read after this call.
@@ -2958,7 +2958,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// work.</b> <c>"3"</c> is a string and is refused rather than coerced:
     /// a schema says <c>integer</c>, and a server that quietly accepts the
     /// string form teaches a model that the schema is advisory. A fraction is
-    /// refused for the same reason — page 1.5 is not a page.
+    /// refused for the same reason -- page 1.5 is not a page.
     /// </remarks>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="name">The argument.</param>
@@ -3013,7 +3013,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>Normalised rather than echoed, because the answer is written to
     /// <c>browserai.data</c> and read back forever.</b> The comparison is
     /// case-insensitive so <c>"Firefox"</c> is accepted, and what is stored is
-    /// the canonical member of <see cref="ProvisionedBrowsers.Families"/> — the
+    /// the canonical member of <see cref="ProvisionedBrowsers.Families"/> -- the
     /// same string <c>browsers.json</c> keys on, the config generator writes as
     /// <c>browserName</c>, and the provisioner mutex hashes.
     /// </para>
@@ -3025,7 +3025,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <see cref="ProvisionedBrowsers.ReinstallTargets"/>, which adds
     /// <c>shared</c>. Before that this method read <c>Families</c> directly, so
     /// widening the reinstall would have widened <c>init</c> in the same edit and
-    /// nothing would have failed — a session could then have been opened against
+    /// nothing would have failed -- a session could then have been opened against
     /// a codec.
     /// </para>
     /// </remarks>
@@ -3066,7 +3066,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// console level is <c>debug</c> always: measured, <c>error</c> to
     /// <c>debug</c> costs +1 character on a navigation response and +5
     /// otherwise, because the events line is a pointer rather than the message
-    /// text — and <c>browser_console_messages</c> already takes its own read
+    /// text -- and <c>browser_console_messages</c> already takes its own read
     /// level, which can be lowered at the moment of asking where a capture level
     /// chosen at <c>init</c> cannot be raised retroactively.
     /// </para>
@@ -3101,7 +3101,7 @@ internal sealed class SessionManager : IAsyncDisposable
         return ViewportSize.TryParse(asked, out var size)
             ? size
             : throw new SessionToolException(
-                $"'viewport' = '{asked}' is not a size BrowserAI accepts. Write it as WIDTHxHEIGHT in CSS pixels — '{BrowserConfiguration.DefaultViewport}' is the default — with each side between "
+                $"'viewport' = '{asked}' is not a size BrowserAI accepts. Write it as WIDTHxHEIGHT in CSS pixels -- '{BrowserConfiguration.DefaultViewport}' is the default -- with each side between "
                 + $"{ViewportSize.Smallest.ToString(CultureInfo.InvariantCulture)} and {ViewportSize.Largest.ToString(CultureInfo.InvariantCulture)}. "
                 + "Nothing was created and nothing was changed. It is refused rather than rounded to the nearest thing that works, because a size you did not choose is one every later screenshot is silently taken at.");
     }
@@ -3139,7 +3139,7 @@ internal sealed class SessionToolException : Exception
 }
 
 /// <summary>Source-generated log messages for the session tools.</summary>
-/// <remarks>Event ids start at 40, after <see cref="SessionLog"/>'s 1–8 and <see cref="SessionIndexLog"/>'s 20s.</remarks>
+/// <remarks>Event ids start at 40, after <see cref="SessionLog"/>'s 1-8 and <see cref="SessionIndexLog"/>'s 20s.</remarks>
 internal static partial class SessionToolLog
 {
     /// <summary>
@@ -3192,7 +3192,7 @@ internal static partial class SessionToolLog
     /// <para>
     /// <b>The text is the caller's, unmodified.</b> It is free text from a model
     /// and it is written into a file another model may read, which is the same
-    /// channel <c>purpose</c> is — but it is not replayed into a tool answer, so
+    /// channel <c>purpose</c> is -- but it is not replayed into a tool answer, so
     /// the framing that guards <c>purpose</c> is not needed here and would be
     /// noise in a log line.
     /// </para>

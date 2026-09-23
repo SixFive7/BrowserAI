@@ -50,8 +50,8 @@ internal readonly record struct CommitChargeReading(ulong? Committed, ulong? Lim
 /// ⚠️ <b>This row exists because a closed hazard row asks for it by name, and no
 /// run recorded it.</b> The 2026-08-24 closure of the six-run-gate row in
 /// [HAZARDS.md](../../../HAZARDS.md#hazard-index) attributed three timed-out
-/// hang detectors to a kernel-level memory leak outside this repository —
-/// <b>137.4 GB committed of a 157.7 GB limit</b> at the worst of it — and it
+/// hang detectors to a kernel-level memory leak outside this repository --
+/// <b>137.4 GB committed of a 157.7 GB limit</b> at the worst of it -- and it
 /// closed by naming the one reading that would tell that cause from a live one:
 /// <i>"the commit charge beside the run"</i>. It then named that reading in a
 /// document and nothing took it, so every gate run since has been unable to
@@ -68,7 +68,7 @@ internal readonly record struct CommitChargeReading(ulong? Committed, ulong? Lim
 /// </para>
 /// <para>
 /// <b>No assertion may read the numbers, for
-/// <see cref="MachineLoad"/>'s reason exactly</b> — they are properties of
+/// <see cref="MachineLoad"/>'s reason exactly</b> -- they are properties of
 /// whatever else the machine is running, so a bound on one would be a test that
 /// passes or fails depending on the developer's other windows. What
 /// <see cref="SuiteCoverageTests"/> asserts is that the row is produced, that its

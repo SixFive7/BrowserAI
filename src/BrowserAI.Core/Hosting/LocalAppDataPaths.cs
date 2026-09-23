@@ -9,12 +9,12 @@ namespace BrowserAI.Hosting;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Per-user by design — a machine-wide install would need elevation, and a UAC
+/// Per-user by design -- a machine-wide install would need elevation, and a UAC
 /// prompt cannot be answered by a background MCP server.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-15 (previously "The layout under an install root …
-/// It never computed the root in the installed case — it takes one. What step 19
+/// It never computed the root in the installed case -- it takes one. What step 19
 /// added is <see cref="Updates.InstallLocation"/>, which <i>locates</i> that root
 /// … when this process is an installed one").</b> It computes it again, and that
 /// is the whole of the layout decision taken this date: <b>the data root is the
@@ -28,13 +28,13 @@ namespace BrowserAI.Hosting;
 /// <b>The constructor still takes a root, and the one thing that supplies one is
 /// <see cref="Overridden"/>.</b> The suite needs an <i>empty</i> browsers root
 /// to prove first-run provisioning against, and a stdio server has no channel
-/// but the environment — so <c>BROWSERAI_ROOT</c> survives, scoped to the data
+/// but the environment -- so <c>BROWSERAI_ROOT</c> survives, scoped to the data
 /// root and to nothing else. It never moves the install root, which is Velopack's
 /// to choose.
 /// </para>
 /// <para>
 /// <b>Never <c>AppContext.BaseDirectory</c>.</b> An installed BrowserAI runs out
-/// of <c>&lt;install root&gt;\current\</c>, which an update replaces wholesale —
+/// of <c>&lt;install root&gt;\current\</c>, which an update replaces wholesale --
 /// and the install root above it is renamed aside and deleted by a repair
 /// install and emptied by an uninstall. Nothing below resolves into either.
 /// </para>
@@ -63,7 +63,7 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
     /// <remarks>
     /// <b>Reachable without a locator, which is what a Velopack hook needs.</b>
     /// A fast-exit callback has no <c>VelopackLocator</c> it may pay for and no
-    /// business deriving a data root from its own image path — see
+    /// business deriving a data root from its own image path -- see
     /// <see cref="IAppPaths"/> for why that derivation is the wrong one.
     /// </remarks>
     public static string Default { get; } = Path.Combine(
@@ -78,8 +78,8 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
     /// <para>
     /// <b>It exists for one thing the suite otherwise cannot do: an empty
     /// browsers root.</b> First-run provisioning can only be proven against a
-    /// root where nothing has ever been installed, and the alternative — deleting
-    /// the developer's own <c>%LocalAppData%\BrowserAI\browsers</c> mid-suite —
+    /// root where nothing has ever been installed, and the alternative -- deleting
+    /// the developer's own <c>%LocalAppData%\BrowserAI\browsers</c> mid-suite --
     /// would destroy 430 MiB and break every other browser test running beside
     /// it. <see cref="IAppPaths"/> deliberately does not resolve relative to the
     /// binary, so moving the executable does not move the root either.
@@ -90,7 +90,7 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
     /// <c>BrowserAI.Core</c> acyclic: this class reads the variable and lives in
     /// the library, and <c>Program</c> lives in an executable that the library
     /// may not see. There are now <b>two</b> executables that resolve a data
-    /// root — the server and the configuration app — so a constant owned by
+    /// root -- the server and the configuration app -- so a constant owned by
     /// either one of them would have been owned by the wrong one.
     /// </para>
     /// <para>
@@ -116,14 +116,14 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
     /// than one: <c>Program.Main</c> serves stdio, and
     /// <c>Registration.HookRegistration</c> runs inside an installer callback
     /// that never reaches <c>Main</c>'s body. Two readers would eventually
-    /// answer differently, and the one that would matter is the uninstall hook —
+    /// answer differently, and the one that would matter is the uninstall hook --
     /// it offers to delete the data root, and a root it resolved differently
     /// from the running product is a root nobody was using.
     /// </para>
     /// <para>
     /// <b>A relative value is ignored rather than resolved</b>, for the reason a
     /// relative <c>PLAYWRIGHT_BROWSERS_PATH</c> is refused: it would land
-    /// somewhere nobody chose and report nothing. Never cached — the suite sets
+    /// somewhere nobody chose and report nothing. Never cached -- the suite sets
     /// this variable in-process around a scope and expects the next read to see
     /// it.
     /// </para>

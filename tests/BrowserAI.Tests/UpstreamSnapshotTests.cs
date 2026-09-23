@@ -178,7 +178,7 @@ internal sealed class UpstreamSnapshotTests
     /// <c>initialize</c> with <c>{"tools":{"listChanged":true},"logging":{}}</c>
     /// while the snapshot recorded <c>{"tools":{}}</c>. Every test in the
     /// in-process layer therefore ran against a child that could send
-    /// <c>notifications/tools/list_changed</c> and <c>notifications/message</c> —
+    /// <c>notifications/tools/list_changed</c> and <c>notifications/message</c> --
     /// two things production can never produce. That is coverage of a branch
     /// nothing will take, which reads as coverage and is not.
     /// </para>
@@ -221,7 +221,7 @@ internal sealed class UpstreamSnapshotTests
     /// The suite's own capability filter reproduces the snapshot's recorded
     /// default surface, and BrowserAI's two capability sets are the 42 and 59
     /// [kb](../../kb/playwright/tools-and-artifacts.md#the-per-capability-breakdown-counted)
-    /// records — upstream's numbers, before this product's own filtering.
+    /// records -- upstream's numbers, before this product's own filtering.
     /// </summary>
     /// <remarks>
     /// Without the first half, <c>UpstreamSurface</c> is a second implementation

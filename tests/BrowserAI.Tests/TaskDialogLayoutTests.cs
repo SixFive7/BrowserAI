@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// The two hand-written task dialog structures, against Microsoft's own
-/// metadata — and the subsystem each shipped executable declares.
+/// metadata -- and the subsystem each shipped executable declares.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -22,7 +22,7 @@ namespace BrowserAI.Tests;
 /// fact this whole file exists for.</b> The natural C# layout pads every pointer
 /// to eight bytes and produces a 184-byte structure that Windows reads as though
 /// it were the 160-byte one: every field after the first mismatch means
-/// something else, and the failure is not a diagnostic — the call returns
+/// something else, and the failure is not a diagnostic -- the call returns
 /// <c>E_INVALIDARG</c>, or renders a dialog whose title is its content. That is
 /// the classic way to get the raw task dialog wrong, and it is checked against
 /// the vendor rather than against the last person who read the header.
@@ -55,7 +55,7 @@ internal sealed class TaskDialogLayoutTests
         // ⚠️ The positive control for the claim above: a naturally packed
         // version of the same fields is a DIFFERENT size, so this arm is
         // capable of failing. Without it, a `Pack = 1` silently dropped from
-        // the declaration would have to be caught by the 160 alone — which it
+        // the declaration would have to be caught by the 160 alone -- which it
         // would be, but nothing would say why the number was chosen.
         await Assert.That(Marshal.SizeOf<NaturallyPacked>()).IsNotEqualTo(ours);
     }
@@ -140,7 +140,7 @@ internal sealed class TaskDialogLayoutTests
     /// <b>The server's half matters just as much and in the other direction.</b>
     /// A client speaks to it over stdio, and
     /// <c>RegistrationTarget</c> refuses to register a file at the server's name
-    /// that is not a console binary — so a server accidentally built
+    /// that is not a console binary -- so a server accidentally built
     /// <c>WinExe</c> would install fine and register nothing.
     /// </para>
     /// <para>
@@ -184,7 +184,7 @@ internal sealed class TaskDialogLayoutTests
     /// <c>comctl32</c>, which a process does not get by default: without the
     /// dependency the loader binds version 5, the export is absent, and the call
     /// fails at run time with <b>no compile-time signal of any kind</b>. Nothing
-    /// in this repository could see that until this arm — it was read by hand,
+    /// in this repository could see that until this arm -- it was read by hand,
     /// once. <i>Added 2026-09-16.</i>
     /// </para>
     /// <para>
@@ -198,7 +198,7 @@ internal sealed class TaskDialogLayoutTests
     /// <para>
     /// <b>The control is the SERVER.</b> A reader that had stopped finding
     /// resources would report every property absent, which is indistinguishable
-    /// from a binary that declares none — so the arm also reads a binary that is
+    /// from a binary that declares none -- so the arm also reads a binary that is
     /// <i>known</i> to declare no common controls, and requires the reader to
     /// come back with a manifest that says so rather than with nothing.
     /// </para>
@@ -251,16 +251,16 @@ internal sealed class TaskDialogLayoutTests
     /// ⚠️ <b><c>[STAThread]</c> under NativeAOT was an assumption, not a
     /// measurement, and two things depend on it with no diagnostic if it is
     /// wrong.</b> The folder picker's <c>BIF_NEWDIALOGSTYLE</c> silently falls
-    /// back to the pre-Vista dialog on a thread that is not in one — no error, a
-    /// different window — and the version 6 common controls a task dialog is made
+    /// back to the pre-Vista dialog on a thread that is not in one -- no error, a
+    /// different window -- and the version 6 common controls a task dialog is made
     /// of expect an STA. <i>Added 2026-09-16.</i>
     /// </para>
     /// <para>
     /// <b>Off the PUBLISHED binary, because that is where the question is
     /// real.</b> The suite's own host is an ordinary CoreCLR process and says
     /// nothing about what ILC did with the attribute, so the arm runs
-    /// <c>BrowserAI.exe --report</c> — the application's testable
-    /// non-interactive path — and reads the apartment out of the file it writes.
+    /// <c>BrowserAI.exe --report</c> -- the application's testable
+    /// non-interactive path -- and reads the apartment out of the file it writes.
     /// </para>
     /// <para>
     /// <b>It writes nothing but its own report.</b> <c>--report</c> reads state

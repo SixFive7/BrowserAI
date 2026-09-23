@@ -21,8 +21,8 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>A string no code path emits is documentation rather than behaviour</b>, and
 /// this file is the check that says which is which. Each arm below provokes a
-/// real condition — a missing argument, a held lock, a copied directory, a volume
-/// with no room — and compares what came back against
+/// real condition -- a missing argument, a held lock, a copied directory, a volume
+/// with no room -- and compares what came back against
 /// <see cref="SessionErrors"/>. Nothing is asserted as a literal, so a row that
 /// reads perfectly and is reachable from nowhere fails.
 /// </para>
@@ -46,14 +46,14 @@ internal sealed partial class ErrorCatalogueTests
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        // Row 1 — no session at all. Before step 13 this was answered by the
+        // Row 1 -- no session at all. Before step 13 this was answered by the
         // run's own child, which is a session nobody chose the mode of.
         var missing = await CallAsync(rig, "browser_navigate", new JsonObject { ["url"] = "data:text/html,x" });
 
         await Assert.That((bool?)missing["isError"]).IsTrue();
         Match(TextOf(missing), nameof(SessionErrors.SessionMissing), SessionErrors.SessionMissing("browser_navigate"));
 
-        // Row 2 — a path that is not a session.
+        // Row 2 -- a path that is not a session.
         var absent = Path.Combine(sessions.Root, "never-a-session");
         var unknown = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = absent, ["why"] = "the suite exercising this call" });
 
@@ -62,7 +62,7 @@ internal sealed partial class ErrorCatalogueTests
             nameof(SessionErrors.SessionNamesNoSession),
             SessionErrors.SessionNamesNoSession("browser_navigate", absent));
 
-        // Row 2's companion — a real session this process is not driving.
+        // Row 2's companion -- a real session this process is not driving.
         var closed = Path.Combine(sessions.Root, "closed-session");
 
         _ = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
@@ -78,7 +78,7 @@ internal sealed partial class ErrorCatalogueTests
         // reads the store, so copying the guard alone leaves a directory that is
         // not a session and produces the wrong row. And the store is copied out
         // from under a LIVE writer, so everything it has said is still in the
-        // `-wal` — the main file on its own reads as `user_version` zero, which
+        // `-wal` -- the main file on its own reads as `user_version` zero, which
         // is a database BrowserAI never created. That pair, copied together, IS
         // the crashed-holder shape, and a read-only open recovers it.
         var stranded = Path.Combine(sessions.Root, "stranded-session");
@@ -108,7 +108,7 @@ internal sealed partial class ErrorCatalogueTests
             nameof(SessionErrors.DirectoryNotAbsolute),
             SessionErrors.DirectoryNotAbsolute("session", "relative\\path"));
 
-        // Row 1's companion — a real session, named correctly, with no `why`.
+        // Row 1's companion -- a real session, named correctly, with no `why`.
         //
         // ⚠️ THE SESSION HAS TO BE REAL AND OPEN, which is what makes this arm
         // worth writing rather than obvious: the `why` refusal is deliberately
@@ -137,7 +137,7 @@ internal sealed partial class ErrorCatalogueTests
     /// ⚠️ <b>Renamed 2026-09-17 (previously
     /// <c>InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume</c>).</b> The
     /// full-volume half is gone with the free-space check itself, at the
-    /// maintainer's decision — <i>"Checking for free space is out of scope … I do
+    /// maintainer's decision -- <i>"Checking for free space is out of scope … I do
     /// not want to check for that at all."</i> That half asserted a refusal this
     /// build no longer makes, so it was <b>deleted rather than skipped</b>: a test
     /// for removed behaviour is not a gap in coverage, it is coverage of
@@ -274,7 +274,7 @@ internal sealed partial class ErrorCatalogueTests
             ["purpose"] = "the original a copy is taken of",
         });
 
-        // Row 4 — init on a directory that already holds a session.
+        // Row 4 -- init on a directory that already holds a session.
         var again = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = original,
@@ -294,7 +294,7 @@ internal sealed partial class ErrorCatalogueTests
                 record.LastUsed,
                 record.Purpose));
 
-        // Row 10 — an argument resume does not accept.
+        // Row 10 -- an argument resume does not accept.
         var withBrowser = await CallAsync(rig, SessionToolSurface.Resume, new JsonObject
         {
             ["why"] = "the suite exercising this call",
@@ -384,7 +384,7 @@ internal sealed partial class ErrorCatalogueTests
         var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
         var request = new SessionLockRequest { Browser = "chromium", Purpose = "the session that holds the lock" };
 
-        // Row 8 — held. A second acquisition against a lock this process still
+        // Row 8 -- held. A second acquisition against a lock this process still
         // owns is the same refusal a second BrowserAI would meet.
         using (var held = SessionLock.TryAcquire(location, request, logger).Acquired!)
         {
@@ -396,7 +396,7 @@ internal sealed partial class ErrorCatalogueTests
             Record(nameof(SessionErrors.LockHeld));
         }
 
-        // Row 9 — the holder is gone, so the lock is reclaimed. Not an error:
+        // Row 9 -- the holder is gone, so the lock is reclaimed. Not an error:
         // the call proceeds and says so.
         var reclaimed = SessionLock.TryAcquire(location, request, logger);
 
@@ -405,9 +405,9 @@ internal sealed partial class ErrorCatalogueTests
         Record(nameof(SessionErrors.LockReclaimed));
         reclaimed.Acquired!.Dispose();
 
-        // The row added 2026-08-19 — `browserai.lock` is there, nobody is holding it,
+        // The row added 2026-08-19 -- `browserai.lock` is there, nobody is holding it,
         // and this process cannot open it. THIS ARM USED TO THROW. The first open
-        // in `TakeOrReport` — the read of the previous record, under the gate —
+        // in `TakeOrReport` -- the read of the previous record, under the gate --
         // caught a missing file, a sharing violation and an unparseable record,
         // and an `UnauthorizedAccessException` is none of the three, so a
         // permanently denied lock file propagated out of `TryAcquire` after
@@ -434,7 +434,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // ⚠️ IT SAYS WHAT IT IS NOT. A model told only "could not open" concludes
         // that somebody else has the session and waits, which is the one action
-        // that cannot help here — a real holder is refused as a sharing violation
+        // that cannot help here -- a real holder is refused as a sharing violation
         // and reported by name through `LockHeld`, two arms above.
         await Assert.That(denied.Message).Contains(location.LockFile);
         await Assert.That(denied.Message).Contains("NOT another process holding the session");
@@ -450,7 +450,7 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(untouched).IsNotNull();
         await Assert.That(untouched!.Purpose).IsEqualTo(request.Purpose);
 
-        // Row 14 — the machine-wide lock cannot be created. Triggered by taking
+        // Row 14 -- the machine-wide lock cannot be created. Triggered by taking
         // the name with a DIFFERENT kind of kernel object, which is one of the
         // four ways the object manager says no; a low-integrity process is the
         // other and is not something a test can become.
@@ -503,7 +503,7 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     /// <summary>
-    /// Row 7's companion — a resume that met a dead child and could not start a
+    /// Row 7's companion -- a resume that met a dead child and could not start a
     /// replacement.
     /// </summary>
     /// <remarks>
@@ -547,7 +547,7 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     /// <summary>
-    /// Row 7's other companion — a call forwarded to a session whose browser
+    /// Row 7's other companion -- a call forwarded to a session whose browser
     /// server has gone.
     /// </summary>
     /// <remarks>
@@ -676,7 +676,7 @@ internal sealed partial class ErrorCatalogueTests
         // Thirty seconds was an assumption that this test finishes inside thirty
         // seconds; at unbounded suite parallelism that is not safe, and a run
         // slow enough to break it would see the install LAND and the row-6
-        // refusal below become a success — a red build caused by a busy machine
+        // refusal below become a success -- a red build caused by a busy machine
         // and reported as the product emitting the wrong error. Never released,
         // so "still downloading" is a fact about state rather than about time.
         var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -695,9 +695,9 @@ internal sealed partial class ErrorCatalogueTests
             ["purpose"] = "created before the browser exists",
         });
 
-        // Row 6. The condition is real — this rig's browsers root is empty and
+        // Row 6. The condition is real -- this rig's browsers root is empty and
         // its installer cannot finish until this test releases it, which it never
-        // does — and the call is answered rather than held.
+        // does -- and the call is answered rather than held.
         var refused = await CallAsync(rig, "browser_navigate", new JsonObject
         {
             ["url"] = "data:text/html,x",
@@ -798,7 +798,7 @@ internal sealed partial class ErrorCatalogueTests
     /// <b>The both-directions control is
     /// <see cref="TheMaintenanceRowIsEmittedByAnInitThatMeetsARunningReinstall"/></b>,
     /// which takes the claim exclusively and therefore produces a genuine sharing
-    /// violation — so the unhedged reinstall sentence is still asserted for the
+    /// violation -- so the unhedged reinstall sentence is still asserted for the
     /// case it is right about, and this test is the case it was wrong about.
     /// </para>
     /// <para>
@@ -857,7 +857,7 @@ internal sealed partial class ErrorCatalogueTests
             reference[..reference.IndexOf("Windows said:", StringComparison.Ordinal)]);
 
         // ⚠️ THE POSITIVE CONTROL. The ACL is off, so the same init must now
-        // succeed — which is what proves the refusal was the denial rather than
+        // succeed -- which is what proves the refusal was the denial rather than
         // the rig.
         var allowed = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
@@ -926,7 +926,7 @@ internal sealed partial class ErrorCatalogueTests
     /// <b>In the sweep key because it runs a sweep, and for no other reason.</b>
     /// <c>Global\BrowserAI-Sweep</c> is machine-wide and try-acquired at zero
     /// timeout (race R9), so a second sweep running beside this one does nothing
-    /// at all — which would make this test assert on a pass that never happened.
+    /// at all -- which would make this test assert on a pass that never happened.
     /// Re-justified 2026-08-17 when the suite went to unbounded parallelism;
     /// <see cref="StraySweepTests"/> carries the full account of the key.
     /// </remarks>
@@ -974,7 +974,7 @@ internal sealed partial class ErrorCatalogueTests
     /// <remarks>
     /// <b>No browser is started and none is needed.</b> What Firefox does to
     /// <c>parent.lock</c> is hold it read-write with no sharing, and a process
-    /// doing exactly that produces the identical condition — while a real
+    /// doing exactly that produces the identical condition -- while a real
     /// Firefox meeting the collision would put a modal on the desktop of the
     /// machine running the suite, which is the thing this row exists to prevent.
     /// </remarks>
@@ -1044,7 +1044,7 @@ internal sealed partial class ErrorCatalogueTests
     /// process on the machine happens to be sweeping.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Corrected 2026-08-26 (previously "asking again … — a skipped sweep
+    /// ⚠️ <b>Corrected 2026-08-26 (previously "asking again … -- a skipped sweep
     /// is not a missed one").</b> That is true of the product and was never a
     /// reason for a test that needs its own pass to have run: asking again is a
     /// poll that can lose every time, and the mutex is a queue. The measurement
@@ -1093,7 +1093,7 @@ internal sealed partial class ErrorCatalogueTests
     /// file <c>SessionLock.Rewrite</c> renamed over <c>browserai.json</c>).</b>
     /// There is no rewrite and no temp file: a row is an <c>INSERT</c> on a
     /// connection that is already open, and an ACL applied after the open is not
-    /// re-checked by Windows — so a denial cannot fail one. What can, and what a
+    /// re-checked by Windows -- so a denial cannot fail one. What can, and what a
     /// hand-edited or damaged record actually looks like, is a table that is not
     /// there: a second connection drops it, the product's next <c>INSERT</c>
     /// fails at once with SQLite's own message, and the table is put back so the
@@ -1217,8 +1217,8 @@ internal sealed partial class ErrorCatalogueTests
         //
         // ⚠️ **Corrected 2026-08-18 to 21 (previously 22, and "24 since
         // build-order step 17" before that).** Three rows went with the
-        // tool-permission matrix — `ModeRefusal`, `UnclassifiedTool` and
-        // `ConfigurationWouldDiscloseSecrets` — and one arrived in their place,
+        // tool-permission matrix -- `ModeRefusal`, `UnclassifiedTool` and
+        // `ConfigurationWouldDiscloseSecrets` -- and one arrived in their place,
         // `AnnotationWouldHangAWindowlessSession`, which took it to 22. The
         // twenty-second to go was `DirectoryIsACopy`, deleted with
         // `acknowledgeCopy` when `browserai.json` became an append-only list of
@@ -1356,8 +1356,8 @@ internal sealed partial class ErrorCatalogueTests
     /// </summary>
     /// <remarks>
     /// <b>The double rather than a browser, and for once that is the stronger
-    /// rig.</b> What these five rows are about is a resolution — a name a model
-    /// read against a list a page supplied — and the double is the only way to
+    /// rig.</b> What these five rows are about is a resolution -- a name a model
+    /// read against a list a page supplied -- and the double is the only way to
     /// hold that list still while five different questions are asked of it. The
     /// same conditions against real pages are <c>PageToolTests</c>, which is
     /// where the claim that upstream really builds these names this way lives.
@@ -1462,7 +1462,7 @@ internal sealed partial class ErrorCatalogueTests
     /// </summary>
     /// <remarks>
     /// <b>Its own rig, because the condition is a tab listing that says nothing
-    /// this build can read</b> — and the point of the row is that a check which
+    /// this build can read</b> -- and the point of the row is that a check which
     /// did not happen is not a check, so the call is refused rather than made
     /// without it.
     /// </remarks>
@@ -1652,8 +1652,8 @@ internal sealed partial class ErrorCatalogueTests
     /// to <c>PRAGMA user_version</c> in the store. <i>A key this build does not
     /// recognise</i> moved to <c>browserai.lock</c>, whose property set is
     /// closed for the same reason the record's used to be. A <b>fourth</b> shape
-    /// arrived with the cutover — a directory holding the old
-    /// <c>browserai.json</c> — and it is asserted in
+    /// arrived with the cutover -- a directory holding the old
+    /// <c>browserai.json</c> -- and it is asserted in
     /// <c>SessionDestroyTests</c>, because its answer is a sentence rather than
     /// a catalogue row.
     /// </para>
@@ -1782,7 +1782,7 @@ internal sealed partial class ErrorCatalogueTests
     /// <para>
     /// <b>This is the same channel <c>RecordText.Sanitise</c> exists to keep
     /// clean, on the half nothing sanitised.</b> A refusal goes straight into the
-    /// calling model's context, and — for a refusal at the verdict door — into
+    /// calling model's context, and -- for a refusal at the verdict door -- into
     /// the record's failure payload. <c>canonical</c> is an identifier that means
     /// nothing to a model, in the one sentence the model is supposed to act on.
     /// </para>
@@ -1841,8 +1841,8 @@ internal sealed partial class ErrorCatalogueTests
     /// ⚠️ <b>It was accepted, created, locked, and then failed at child launch
     /// with the cause unnamed (measured 2026-08-26, 70 levels).</b> The answer
     /// was <i>"The browser runtime for '…' did not start: IOException: Could not
-    /// start '…\node.exe' in '…\output'"</i>, and the recovery it offered —
-    /// delete the directory and <c>browserai_init</c> again to re-provision — is
+    /// start '…\node.exe' in '…\output'"</i>, and the recovery it offered --
+    /// delete the directory and <c>browserai_init</c> again to re-provision -- is
     /// the wrong one: nothing is broken about the install.
     /// </para>
     /// <para>

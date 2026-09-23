@@ -13,7 +13,7 @@ using ModelContextProtocol.Protocol;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// What the caller receives is what the child wrote — asserted on bytes.
+/// What the caller receives is what the child wrote -- asserted on bytes.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -26,14 +26,14 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// So the assertions are on <b>byte spans</b>, taken with
-/// <see cref="JsonSpan"/> — a reader written for the tests and sharing nothing
-/// with the product's own slicing — and never on parsed objects. Comparing two
+/// <see cref="JsonSpan"/> -- a reader written for the tests and sharing nothing
+/// with the product's own slicing -- and never on parsed objects. Comparing two
 /// parses, or two <c>ToJsonString()</c>s, normalises away escaping, whitespace
 /// and numeric form, which is precisely the set of differences a proxy must not
 /// introduce.
 /// </para>
 /// <para>
-/// ⚠️ <b>Tightened 2026-08-26 (previously two claims — <i>"a call BrowserAI
+/// ⚠️ <b>Tightened 2026-08-26 (previously two claims -- <i>"a call BrowserAI
 /// forwarded unchanged comes back unchanged"</i> and <i>"a call whose request
 /// BrowserAI rewrote comes back with every byte the child wrote, in order, plus
 /// one appended <c>content</c> element"</i>).</b> The second clause described
@@ -52,7 +52,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// ⚠️ <b>One payload is still rewritten and it is named rather than hidden:</b>
 /// upstream's <c>install-browser</c> advice, gated on <c>isError</c>, which
-/// <c>ProvisioningRemediationTests</c> owns end to end — including a real-child
+/// <c>ProvisioningRemediationTests</c> owns end to end -- including a real-child
 /// canary over upstream's own wording, so a reword there is a red build rather
 /// than a rewrite that silently stops firing.
 /// </para>
@@ -73,13 +73,13 @@ internal sealed class LosslessPassthroughTests
     /// re-escapes, plus three numeric forms nothing normalises back.
     /// </summary>
     /// <remarks>
-    /// The escaping in the other direction — a sequence the child chose to
-    /// write, which a <c>JsonNode</c> round trip would decode and emit raw — is
+    /// The escaping in the other direction -- a sequence the child chose to
+    /// write, which a <c>JsonNode</c> round trip would decode and emit raw -- is
     /// <c>AnEscapeTheChildChoseStaysAnEscape</c>, because that one cannot be
     /// written in a raw string literal.
     /// </remarks>
     private const string AwkwardResult =
-        """{"content":[{"type":"text","text":"Page URL: `x` it's <b>&amp;</b> café — ünïcødé"}],"structuredContent":{"ratio":1.0e2,"count":1.500,"negative":-0,"depth":{"a":{"b":[1,2,3]}}},"x-browserai-unknown-member":true}""";
+        """{"content":[{"type":"text","text":"Page URL: `x` it's <b>&amp;</b> café -- ünïcødé"}],"structuredContent":{"ratio":1.0e2,"count":1.500,"negative":-0,"depth":{"a":{"b":[1,2,3]}}},"x-browserai-unknown-member":true}""";
 
     [Test]
     public async Task AResultArrivesAtTheCallerAsTheExactBytesTheChildWrote()
@@ -231,7 +231,7 @@ internal sealed class LosslessPassthroughTests
     /// <c>content</c> element</b>).</b> There is no appended element. Nothing
     /// between the two servers rewrites a <c>filename</c>, routes a file, sweeps
     /// an output root or writes a note, so the second arm of the old claim
-    /// describes machinery that no longer exists — and the claim collapses back
+    /// describes machinery that no longer exists -- and the claim collapses back
     /// to the one it started as: <b>a <c>tools/call</c> answer reaches the
     /// caller as the exact bytes the child wrote</b>, with no exception for the
     /// calls that name a file.
@@ -251,7 +251,7 @@ internal sealed class LosslessPassthroughTests
         // JsonNode round trip would decode `café` and re-emit a raw `é`, which
         // is the difference between forwarding the bytes and rebuilding them.
         const string Escaped =
-            @"{""content"":[{""type"":""text"",""text"":""- [Screenshot](café.png) — done""}],""x-browserai-unknown-member"":true}";
+            @"{""content"":[{""type"":""text"",""text"":""- [Screenshot](café.png) -- done""}],""x-browserai-unknown-member"":true}";
 
         await using var sessions = RigSessionEnvironment.Create(child =>
             child.Tools["browser_take_screenshot"] = new FakeToolBehaviour
@@ -478,8 +478,8 @@ internal sealed class LosslessPassthroughTests
     /// <remarks>
     /// ⚠️ <b>This test asserted byte-identity until build-order step 12, and the
     /// assertion had to go rather than be relaxed.</b> Rewriting <c>tools/list</c>
-    /// — the authored tools in front, a required <c>session</c> injected into
-    /// every upstream schema — is in scope by the charter, so the old assertion
+    /// -- the authored tools in front, a required <c>session</c> injected into
+    /// every upstream schema -- is in scope by the charter, so the old assertion
     /// was asserting the absence of a feature. What is kept is every property
     /// byte-identity was there to protect: upstream's names, upstream's order,
     /// and the two vendor extensions a typed round trip drops. Byte-identity
@@ -487,8 +487,8 @@ internal sealed class LosslessPassthroughTests
     /// </remarks>
     /// <remarks>
     /// ⚠️ <b>Two injected parameters since 2026-08-20 (previously one).</b>
-    /// <c>why</c> rides the same path <c>session</c> does — mutating the
-    /// <see cref="JsonNode"/> the child sent rather than rebuilding it — so this
+    /// <c>why</c> rides the same path <c>session</c> does -- mutating the
+    /// <see cref="JsonNode"/> the child sent rather than rebuilding it -- so this
     /// test is what says the second one did not disturb the first: <c>url</c>
     /// still holds position 0, both are appended in order, and upstream's own
     /// <c>required</c> entry is still ahead of both.
@@ -650,7 +650,7 @@ internal sealed class LosslessPassthroughTests
     /// <b>The child has never heard of <c>session</c> or <c>why</c>; BrowserAI
     /// put them in the schema.</b> Forwarding either would hand upstream's zod
     /// parse a property its own schema does not declare, and the failure mode is
-    /// not a clean error — it is upstream's own decision about unknown keys,
+    /// not a clean error -- it is upstream's own decision about unknown keys,
     /// taken per tool, which this project does not control and must not depend
     /// on.
     /// </para>
@@ -756,7 +756,7 @@ internal sealed class LosslessPassthroughTests
 /// <remarks>
 /// Same pattern as <c>SdkStdioClientTransportTests</c>: the product no longer
 /// travels these paths, so nothing else in the suite would notice if upstream
-/// changed them — and a deviation whose justification has silently expired is
+/// changed them -- and a deviation whose justification has silently expired is
 /// how a component nobody needs survives a rewrite.
 /// </remarks>
 internal sealed class SdkErrorShapeTests

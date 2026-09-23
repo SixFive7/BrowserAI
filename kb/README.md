@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Jori Huisman -->
 <!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
 
-# Knowledge base — what we measured
+# Knowledge base -- what we measured
 
 [`../DECISIONS.md`](../DECISIONS.md) records what we **decided** and
 [`../ARCHITECTURE.md`](../ARCHITECTURE.md) records how the product is **put
@@ -12,7 +12,7 @@ measurement stays true until upstream ships.
 
 **What belongs here:** a fact about Chromium, Firefox, Playwright, Node or
 Windows that we established by running something, reading a shipped binary, or
-reading upstream source — together with enough provenance to re-establish it.
+reading upstream source -- together with enough provenance to re-establish it.
 
 **What does not:** design decisions (`../DECISIONS.md`), what implements what
 (`../ARCHITECTURE.md`), work items (`../TODO.md`), or the review procedure
@@ -23,8 +23,8 @@ reading upstream source — together with enough provenance to re-establish it.
 | Article | Holds |
 |---|---|
 | [`windows/job-objects.md`](windows/job-objects.md) | Holding a process tree so that killing the supervisor kills everything: job objects, breakaway, nesting, and the two implementation mistakes that leak |
-| [`windows/processes.md`](windows/processes.md) | Starting a process and talking to it — stdio, exit codes, **third-party code that writes to stdout's *handle* from a type initializer**; durable writes, deletes and renames; the Win32 interop surface behind all three |
-| [`windows/detection.md`](windows/detection.md) | Finding a browser that is already running — message windows, cross-process title reads, image-path enumeration, lock files, Windows object-name scoping, **what a mapped drive letter costs and which path aliases `Path.GetFullPath` resolves**, **why Windows hands every path back with an upper-case drive letter while a process keeps whatever casing its shell gave it**, and **named-mutex / lock-file semantics from first-party C# prior art** |
+| [`windows/processes.md`](windows/processes.md) | Starting a process and talking to it -- stdio, exit codes, **third-party code that writes to stdout's *handle* from a type initializer**; durable writes, deletes and renames; the Win32 interop surface behind all three |
+| [`windows/detection.md`](windows/detection.md) | Finding a browser that is already running -- message windows, cross-process title reads, image-path enumeration, lock files, Windows object-name scoping, **what a mapped drive letter costs and which path aliases `Path.GetFullPath` resolves**, **why Windows hands every path back with an upper-case drive letter while a process keeps whatever casing its shell gave it**, and **named-mutex / lock-file semantics from first-party C# prior art** |
 | [`chromium/resurrection.md`](chromium/resurrection.md) | `RegisterApplicationRestart`, the 1023-character limit, and what actually brought the browsers back after a reboot |
 | [`chromium/profiles.md`](chromium/profiles.md) | What Chrome does with an unusable `--user-data-dir`: fallback, exit code 21, and the dialog that blocks startup |
 | [`chromium/fingerprinting.md`](chromium/fingerprinting.md) | Whether `--browser-test` is web-detectable, and the baseline exposure that makes the question near-moot |
@@ -35,14 +35,14 @@ reading upstream source — together with enough provenance to re-establish it.
 | [`mcp/sdk.md`](mcp/sdk.md) | `ModelContextProtocol` as a proxy has to drive it: the deviations, NativeAOT and ILC, the two custom transports, the in-process harness and lossless passthrough |
 | [`packaging/velopack.md`](packaging/velopack.md) | The update path, its nine landmines, the install/update/rollback verification of each, and the restart/mutex handover race |
 | [`packaging/dependencies.md`](packaging/dependencies.md) | Package provenance with date stamps, token cost, the licence terms of everything shipped, and **what vendoring a runtime cost two long-lived repositories** |
-| [`toolchain.md`](toolchain.md) | MSBuild, NuGet, npm, PowerShell, analyzers, git line endings and the test host — traps in the tooling that builds this, none of them about processes or browsers |
+| [`toolchain.md`](toolchain.md) | MSBuild, NuGet, npm, PowerShell, analyzers, git line endings and the test host -- traps in the tooling that builds this, none of them about processes or browsers |
 
 Two pages are not articles and are maintained differently:
 
 | Page | What it is for |
 |---|---|
 | [`re-verification.md`](re-verification.md) | The **build gate**. Every `[FLOATS]` fact a version bump can silently invalidate, what would break it, and whether a test covers it. Read line by line at every upstream review; three of its numbers are asserted on every build |
-| [`not-established.md`](not-established.md) | The negative results, aggregated: what this project has explicitly **not** measured, and why. Read it before treating a gap here as an oversight — several of them are deliberate and will stay open |
+| [`not-established.md`](not-established.md) | The negative results, aggregated: what this project has explicitly **not** measured, and why. Read it before treating a gap here as an oversight -- several of them are deliberate and will stay open |
 
 ## Conventions
 
@@ -54,7 +54,7 @@ Every entry carries a marker and a date:
 | **`[STABLE]`** | A Windows or protocol fact that upstream cannot move. Re-verify only on a Windows major version. |
 | **`[MACHINE]`** | Measured on the reference machine described below, and not established anywhere else. The number is real; its generality is not claimed. Never act on one as if it were universal. |
 | **`[UNVERIFIED]`** | Inferred, not observed. Says so, and says why it was not observed. |
-| **`[STALE]`** | A re-check is owed and has not happened. The sanctioned alternative to guessing, and the only honest way to leave an entry whose measurement could not be re-run. That **2** articles carry one today is the marker doing its job rather than a fault. *Corrected 2026-09-17 (previously "That **1** article carries one today")* — [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) joined it that day, with three sections stamped: the `playwright-core` pull-forward to 1.64.0-alpha-2026-09-17 moved chromium 1244 → 1245 and firefox 1544 → 1548, and the first-run download, the Firefox-against-Chromium cost ratios and the resume cost are all keyed to a revision. **Every number in them is left exactly as measured**, because adjusting one to match an expectation is the thing this marker exists instead of; re-taking them is three measurement sessions with rigs that already exist, and [re-verification](re-verification.md) rows 21, 34 and 38 carry the debt. ✅ *Amended 2026-09-17, later the same day: **one of the three is re-taken and two are still owed**.* [Row 21](re-verification.md) was re-run at chromium 1245 and firefox 1548 and its section's stamp is cleared — Chromium came back identical to the byte and the file, because its archive is keyed on `browserVersion` and that did not move, and Firefox moved by 327 bytes on the wire and 902 on disk. **The article count did not move and is still 2**, because rows 34 and 38 — the cost ratios and the resume cost — are still stamped in place and still owed; re-counted rather than decremented. ✅ *Amended again 2026-09-17, later still: **two of the three are re-taken and one is owed**.* [Row 34](re-verification.md) was re-run at chromium 1245 and firefox 1548 at **six rounds per family** and its section's stamp is cleared — RAM, profile disk and process count came back identical, first navigate moved inside its own spread, second navigate moved, and the idle-CPU axis is **withdrawn rather than re-stated**: it reversed sign for the second time in a day against a Chromium binary that is identical to the byte, which makes it a fact about the instrument. **The article count is STILL 2** — re-counted, not decremented — because row 38's resume section is still stamped and because this article carries a third, unrelated stamp of its own on the derived disk-after-first-run total. That last one is why clearing every owed row here would still leave the count at 2, and saying so now is cheaper than the next reader deriving it. ✅ *Amended a third time 2026-09-17, and this is the last of them: **all three are re-taken and none is owed**.* [Row 38](re-verification.md) was re-run at chromium 1245 and firefox 1548 and its section's stamp is cleared — the durability claim held exactly and on two families, the cost moved 9%, and *resume* turned out to be **two paths** since that morning rather than one, so the entry now says which path each number is of. **The count is STILL 2, and the sentence above predicted exactly that** — re-counted rather than reasoned: `playwright/provisioning-and-timings.md` keeps its third, unrelated stamp on the derived disk-after-first-run total, which goes stale again on every publish by construction, and `packaging/velopack.md` keeps its own. **Three owed rows were cleared in one day and the number did not move**, which is the marker measuring articles rather than debts and is worth knowing before anyone reads a flat count as a lack of progress. The other is [`packaging/velopack.md`](packaging/velopack.md), which carries it for *what Velopack costs the AOT binary*, a pair measured either side of adding the package — re-taking it means building a tree with the update lane removed, which is a different product rather than a different measurement, so it is stamped in place with that as the reason. *Corrected 2026-09-17 (previously "[`packaging/velopack.md`](packaging/velopack.md)'s update-lane figures are owed a re-measurement that needs two real release publishes, and they say so at the head of the entry instead of reading as current")* — **those two publishes were run on 2026-09-17** and [the sizes table](packaging/velopack.md#sizes) is measured again; the count did not move because one clause of that section is genuinely still un-re-runnable and kept its stamp, which is the marker doing the narrower job rather than the article failing to clear. |
+| **`[STALE]`** | A re-check is owed and has not happened. The sanctioned alternative to guessing, and the only honest way to leave an entry whose measurement could not be re-run. That **2** articles carry one today is the marker doing its job rather than a fault. *Corrected 2026-09-17 (previously "That **1** article carries one today")* -- [`playwright/provisioning-and-timings.md`](playwright/provisioning-and-timings.md) joined it that day, with three sections stamped: the `playwright-core` pull-forward to 1.64.0-alpha-2026-09-17 moved chromium 1244 → 1245 and firefox 1544 → 1548, and the first-run download, the Firefox-against-Chromium cost ratios and the resume cost are all keyed to a revision. **Every number in them is left exactly as measured**, because adjusting one to match an expectation is the thing this marker exists instead of; re-taking them is three measurement sessions with rigs that already exist, and [re-verification](re-verification.md) rows 21, 34 and 38 carry the debt. ✅ *Amended 2026-09-17, later the same day: **one of the three is re-taken and two are still owed**.* [Row 21](re-verification.md) was re-run at chromium 1245 and firefox 1548 and its section's stamp is cleared -- Chromium came back identical to the byte and the file, because its archive is keyed on `browserVersion` and that did not move, and Firefox moved by 327 bytes on the wire and 902 on disk. **The article count did not move and is still 2**, because rows 34 and 38 -- the cost ratios and the resume cost -- are still stamped in place and still owed; re-counted rather than decremented. ✅ *Amended again 2026-09-17, later still: **two of the three are re-taken and one is owed**.* [Row 34](re-verification.md) was re-run at chromium 1245 and firefox 1548 at **six rounds per family** and its section's stamp is cleared -- RAM, profile disk and process count came back identical, first navigate moved inside its own spread, second navigate moved, and the idle-CPU axis is **withdrawn rather than re-stated**: it reversed sign for the second time in a day against a Chromium binary that is identical to the byte, which makes it a fact about the instrument. **The article count is STILL 2** -- re-counted, not decremented -- because row 38's resume section is still stamped and because this article carries a third, unrelated stamp of its own on the derived disk-after-first-run total. That last one is why clearing every owed row here would still leave the count at 2, and saying so now is cheaper than the next reader deriving it. ✅ *Amended a third time 2026-09-17, and this is the last of them: **all three are re-taken and none is owed**.* [Row 38](re-verification.md) was re-run at chromium 1245 and firefox 1548 and its section's stamp is cleared -- the durability claim held exactly and on two families, the cost moved 9%, and *resume* turned out to be **two paths** since that morning rather than one, so the entry now says which path each number is of. **The count is STILL 2, and the sentence above predicted exactly that** -- re-counted rather than reasoned: `playwright/provisioning-and-timings.md` keeps its third, unrelated stamp on the derived disk-after-first-run total, which goes stale again on every publish by construction, and `packaging/velopack.md` keeps its own. **Three owed rows were cleared in one day and the number did not move**, which is the marker measuring articles rather than debts and is worth knowing before anyone reads a flat count as a lack of progress. The other is [`packaging/velopack.md`](packaging/velopack.md), which carries it for *what Velopack costs the AOT binary*, a pair measured either side of adding the package -- re-taking it means building a tree with the update lane removed, which is a different product rather than a different measurement, so it is stamped in place with that as the reason. *Corrected 2026-09-17 (previously "[`packaging/velopack.md`](packaging/velopack.md)'s update-lane figures are owed a re-measurement that needs two real release publishes, and they say so at the head of the entry instead of reading as current")* -- **those two publishes were run on 2026-09-17** and [the sizes table](packaging/velopack.md#sizes) is measured again; the count did not move because one clause of that section is genuinely still un-re-runnable and kept its stamp, which is the marker doing the narrower job rather than the article failing to clear. |
 
 **Never edit a result without re-running the measurement.** An entry whose number
 was updated by reasoning rather than by running something is worse than no entry,
@@ -65,21 +65,21 @@ has not happened, mark it `[STALE]` rather than guessing.
 > on every build** by
 > `RecordedCountTests.TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold`.
 > **Stamping an entry and moving that sentence are one edit, not two:** the check
-> reads the clause — *"That no article carries one today"*, or *"That N articles
-> carry one today"* — and holds it against the articles, so a stamp with the
+> reads the clause -- *"That no article carries one today"*, or *"That N articles
+> carry one today"* -- and holds it against the articles, so a stamp with the
 > sentence unmoved is red, and so is a sentence claiming a stamp no article
 > carries. A **backticked** marker is the stamp; the bracketed token written any
 > other way is prose about the convention and counts as nothing. *Added
 > 2026-08-27, when that check stopped matching the bare token everywhere under
-> `kb/` — under which an article could not discuss this marker at all, and the
+> `kb/` -- under which an article could not discuss this marker at all, and the
 > escape hatch this section prescribes would itself have failed the build.*
 >
 > **Exercised for the first time 2026-08-29**, when the velopack update-lane
 > entry took the stamp its own paragraph had spent two days explaining it could
 > not take, and the count above moved from *no* to *1* in the same commit. **The
-> stamp was watched red against the unmoved sentence first** — the failure named
+> stamp was watched red against the unmoved sentence first** -- the failure named
 > the stamping article and named the resolution, which is precisely what the
-> superseded guard could not do — and the other direction is held by that check's
+> superseded guard could not do -- and the other direction is held by that check's
 > own synthetic controls rather than by doctoring this file.
 
 ### The reference machine
@@ -95,10 +95,10 @@ of these entries useful to a reader who is not sitting at it.
 | .NET | SDK 10.0.400, runtime 10.0.11, ILC 10.0.11 |
 | Shell | PowerShell 7 and Git Bash |
 | Session | Interactive, medium-integrity, UAC-filtered administrator |
-| Load | An ordinary developer desktop — a browser, an editor and a dozen unrelated Electron/CEF applications, several of which publish real user-data-dirs and message-only windows of their own |
+| Load | An ordinary developer desktop -- a browser, an editor and a dozen unrelated Electron/CEF applications, several of which publish real user-data-dirs and message-only windows of their own |
 
-That last row is not colour. Several measurements here — window-walk counts,
-process-enumeration timings, the Restart Manager's cost — scale with what else is
+That last row is not colour. Several measurements here -- window-walk counts,
+process-enumeration timings, the Restart Manager's cost -- scale with what else is
 running, and a reader reproducing them on an idle VM should expect different
 numbers and the same conclusions.
 
@@ -120,12 +120,12 @@ right, because it is the one that gets edited when a measurement is re-run.
 > ([kb](windows/job-objects.md)) sits in the chain between BrowserAI's job and
 > the browser, and the containment guarantee is stated as holding *through* it.
 > That was established against libuv 1.52.1 as shipped in 26.7.0 and **has not
-> been re-checked on v24.19.0** — not "checked and found identical".
+> been re-checked on v24.19.0** -- not "checked and found identical".
 >
 > **Half closed, 2026-08-16.** `JobContainmentTests.
 > TheBundledNodeAndItsDescendantsAreContained` runs the bundled **v24.19.0** and
 > its `child_process.spawn` grandchildren inside BrowserAI's own job, and
-> containment holds — 4 processes, 0 escapees, 0 survivors, twice. What that
+> containment holds -- 4 processes, 0 escapees, 0 survivors, twice. What that
 > does **not** establish is the libuv claim itself: the test observes
 > containment, not whether libuv still creates its permissive global job under
 > this version. [Row 2](re-verification.md) covers the measured half; the source

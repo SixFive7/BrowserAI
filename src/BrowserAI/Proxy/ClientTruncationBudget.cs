@@ -5,7 +5,7 @@ namespace BrowserAI.Proxy;
 
 /// <summary>
 /// What the client silently cuts a model-facing string at, in what unit, and
-/// which surfaces it applies to — <b>measured</b>, not read off documentation.
+/// which surfaces it applies to -- <b>measured</b>, not read off documentation.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -20,13 +20,13 @@ namespace BrowserAI.Proxy;
 /// </para>
 /// <para>
 /// <b>The truncation is POSITIONAL, not semantic.</b> It cuts wherever the limit
-/// falls — mid-sentence, mid-word — and everything after it is never seen by the
+/// falls -- mid-sentence, mid-word -- and everything after it is never seen by the
 /// model. So an over-long description fails in the worst way available: the text
 /// exists in source, reads correctly in review, and simply never arrives. That is
 /// why the budget is a <b>hard build failure at 100%</b> and deliberately has no
 /// warning tier: the maintainer's position is that there is plenty of context, so
 /// a large string costs nothing worth reporting, and the only interesting event
-/// is going over — which is a broken state rather than a tight one.
+/// is going over -- which is a broken state rather than a tight one.
 /// </para>
 /// <para>
 /// <b>"EACH" MEANS EACH STRING. Measured 2026-08-18 @ Claude Code 2.1.234.</b>
@@ -40,8 +40,8 @@ namespace BrowserAI.Proxy;
 /// </para>
 /// <list type="bullet">
 /// <item><b>Per string, never per tool.</b> A probe tool whose whole serialized
-/// entry was <b>4,578 bytes</b> — a 1,500-character description and four
-/// 700-character parameter descriptions, every string under the cap — arrived
+/// entry was <b>4,578 bytes</b> -- a 1,500-character description and four
+/// 700-character parameter descriptions, every string under the cap -- arrived
 /// <b>completely intact</b>. Entries of <b>17 KB</b> and <b>20 KB</b> also
 /// arrived whole. There is no per-tool bucket, so
 /// <c>browserai_init</c>'s 3,360-byte entry is not truncated and never
@@ -51,7 +51,7 @@ namespace BrowserAI.Proxy;
 /// not counted at all.</item>
 /// <item><b>The predicate is <c>&gt; 2048</c>.</b> 2,047 intact, 2,048 intact,
 /// 2,049 cut. Measured as a triple in one run.</item>
-/// <item><b>UTF-16 code units, not code points</b> — 1,539 code points spread
+/// <item><b>UTF-16 code units, not code points</b> -- 1,539 code points spread
 /// over 3,000 units was truncated. The cut is surrogate-aware: where unit 2,048
 /// would split a pair it backs off to <b>2,047</b> and the result stays
 /// well-formed.</item>
@@ -62,8 +62,8 @@ namespace BrowserAI.Proxy;
 /// <item><b>No total budget.</b> 202 tools totalling <b>348,314 bytes</b> of tool
 /// entries went in one request with nothing dropped and nothing cut.</item>
 /// <item><b>The cut is visible to the model and invisible to us.</b> The client
-/// appends the literal <c>"… [truncated]"</c> — U+2026, a space, and
-/// <c>[truncated]</c>, 13 characters — so a truncated string arrives at
+/// appends the literal <c>"… [truncated]"</c> -- U+2026, a space, and
+/// <c>[truncated]</c>, 13 characters -- so a truncated string arrives at
 /// <b>2,061</b> characters. A server cannot see this; it happens after the
 /// JSON-RPC response has left. Nothing about it reaches BrowserAI, which is
 /// exactly why the gate is a build failure rather than a run-time check.</item>
@@ -71,7 +71,7 @@ namespace BrowserAI.Proxy;
 /// <para>
 /// <b>The same cap applies to the server <c>instructions</c></b>, which the
 /// client delivers to the model inside a <c>&lt;system-reminder&gt;</c> block in
-/// the <i>messages</i> array rather than in the system prompt — cut at 2,048
+/// the <i>messages</i> array rather than in the system prompt -- cut at 2,048
 /// characters with the same suffix. BrowserAI's own is <b>2,026
 /// characters</b>. <i>Corrected 2026-09-21 (previously "1,261 characters",
 /// measured 2026-08-18 and left standing through every change to the string
@@ -109,13 +109,13 @@ internal static class ClientTruncationBudget
     /// <c>inputSchema</c> to.
     /// </summary>
     /// <remarks>
-    /// <b>The client does not truncate these — measured, 20,000 characters
+    /// <b>The client does not truncate these -- measured, 20,000 characters
     /// through intact.</b> <i>Corrected 2026-08-18 (previously "⚠️ ASSUMED, NOT
     /// DOCUMENTED … this applies the same number to them because it is the only
     /// number anybody has").</i> The number is kept, and kept enforced, for two
     /// reasons that are not the old one: it is a client-version fact that floats
     /// and could be tightened by any release, and this is the surface BrowserAI
-    /// is most exposed on — one injected <c>session</c> description lands on
+    /// is most exposed on -- one injected <c>session</c> description lands on
     /// fifty-nine upstream tools at once, so the day the client does start
     /// cutting schemas, one string becomes fifty-nine silent truncations.
     /// <b>It is a self-imposed house limit, not a client limit</b>, and must not

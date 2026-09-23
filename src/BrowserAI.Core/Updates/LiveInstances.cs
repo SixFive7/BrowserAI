@@ -16,7 +16,7 @@ namespace BrowserAI.Updates;
 /// ⚠️ <b>Widened 2026-08-20 (previously a <see langword="bool"/>, whose
 /// <see langword="false"/> meant <i>not alone</i> and <i>could not tell</i> at
 /// once).</b> That conflation was written for the updater, where both answers
-/// mean <i>do not apply</i> and the safe direction is the same one — see
+/// mean <i>do not apply</i> and the safe direction is the same one -- see
 /// <see cref="LiveInstances.AmIAlone"/>, which still collapses them and is the
 /// guarantee that the updater did not move. For anything that <i>repairs</i>
 /// rather than refrains, the two are opposites: a refusal built on
@@ -35,8 +35,8 @@ internal enum Liveness
     /// </summary>
     /// <remarks>
     /// <b>At least, never exactly.</b> A marker whose held-ness could not be
-    /// established does not reduce a count that is already positive — it is
-    /// reported in <see cref="LivenessAnswer.Why"/> instead — because a definite
+    /// established does not reduce a count that is already positive -- it is
+    /// reported in <see cref="LivenessAnswer.Why"/> instead -- because a definite
     /// <i>somebody is there</i> is more use to every caller than an uncertainty
     /// that would erase it.
     /// </remarks>
@@ -65,7 +65,7 @@ internal sealed record LivenessAnswer
     public int Others { get; init; }
 
     /// <summary>
-    /// Why the answer could not be settled — a path, a mutex name, an
+    /// Why the answer could not be settled -- a path, a mutex name, an
     /// exception's own message. Never <see langword="null"/> for
     /// <see cref="Liveness.Undetermined"/>.
     /// </summary>
@@ -122,7 +122,7 @@ internal sealed record LiveMarkerReclaim
     public int Held { get; init; }
 
     /// <summary>
-    /// Markers this pass could not settle — unopenable for a reason other than
+    /// Markers this pass could not settle -- unopenable for a reason other than
     /// sharing, or free and undeletable. <b>None of them were touched.</b>
     /// </summary>
     public int Undetermined { get; init; }
@@ -132,7 +132,7 @@ internal sealed record LiveMarkerReclaim
 
     /// <summary>
     /// The wait this pass asked the gate for, read back off the gate rather than
-    /// restated here. <see langword="null"/> when no acquire happened at all —
+    /// restated here. <see langword="null"/> when no acquire happened at all --
     /// the directory did not exist, or the gate could not be created.
     /// </summary>
     /// <remarks>
@@ -140,9 +140,9 @@ internal sealed record LiveMarkerReclaim
     /// <b>It is how a caller can tell an instant skip from a skip that waited
     /// first</b>, which <see cref="Outcome"/> cannot: both are
     /// <see cref="LiveMarkerReclaimOutcome.Skipped"/>. This pass takes the gate
-    /// at <see cref="Sessions.LockScopes.NeverWaits"/> on purpose — it runs while
+    /// at <see cref="Sessions.LockScopes.NeverWaits"/> on purpose -- it runs while
     /// a process is starting, and a reclaim is never worth a millisecond of
-    /// startup — so a value other than zero here is the defect, arriving as a
+    /// startup -- so a value other than zero here is the defect, arriving as a
     /// fact rather than as an inference from a stopwatch on a loaded machine.
     /// </para>
     /// <para>
@@ -170,12 +170,12 @@ internal sealed record LiveMarkerReclaim
 /// <para>
 /// <b>This exists to gate the update apply, and the thing it prevents is
 /// measured.</b> Velopack's <c>force_stop_package</c> kills every process whose
-/// image path is under the install root — on <c>apply</c>, <c>install</c>,
+/// image path is under the install root -- on <c>apply</c>, <c>install</c>,
 /// <c>start</c>, <c>uninstall</c> <b>and after every hook returns</b>, matching
 /// by path, without asking
 /// ([kb](../../../kb/packaging/velopack.md#4-force_stop_package-kills-everything-under-the-root)).
-/// At the concurrency BrowserAI is designed for — eight editors with a dozen
-/// agent sessions each — one process deciding to update destroys every other
+/// At the concurrency BrowserAI is designed for -- eight editors with a dozen
+/// agent sessions each -- one process deciding to update destroys every other
 /// live session mid-task, and it is precisely the landmine the only prior art
 /// available cannot have hit, that product being single-instance.
 /// </para>
@@ -199,9 +199,9 @@ internal sealed record LiveMarkerReclaim
 /// <b>Deliberately not <see cref="IAppPaths.InstanceRoot"/>.</b> ⚠️
 /// <b>Corrected 2026-08-24 (previously "That directory's liveness signal is the
 /// child holding it as a working directory, so a run has no signal until its
-/// child has started").</b> It has one now —
+/// child has started").</b> It has one now --
 /// <c>Runtime.InstanceDirectory.MarkerFileName</c>, this same mechanism applied
-/// to the same problem — and the separation stands on what was always the load
+/// to the same problem -- and the separation stands on what was always the load
 /// bearing half: <b>this marker is joined before the instance directory
 /// exists at all</b>, and the update check runs on a background thread from the
 /// moment the process starts, which is inside exactly that window. The two also
@@ -216,7 +216,7 @@ internal sealed record LiveMarkerReclaim
 /// <i>after</i> an update has been found <b>and</b> downloaded. That had never
 /// once happened on the machine this product is developed on, and
 /// <b>755 unheld markers</b> had accumulated in two days. Reclaim is now a
-/// routine of its own — <see cref="ReclaimStaleMarkers"/> — run from the stray
+/// routine of its own -- <see cref="ReclaimStaleMarkers"/> -- run from the stray
 /// sweep and from startup, and <see cref="Census"/> keeps doing it as well
 /// because a census that walked past a dead marker would count it.
 /// </para>
@@ -260,7 +260,7 @@ internal sealed class LiveInstances : IDisposable
     /// Announces this process, and keeps announcing it until disposal or death.
     /// </summary>
     /// <param name="installRoot">
-    /// The install root this process runs out of — the directory containing
+    /// The install root this process runs out of -- the directory containing
     /// <c>current\</c>. <b>Never the data root</b>: see the remarks on
     /// <see cref="DirectoryUnder"/>.
     /// </param>
@@ -331,14 +331,14 @@ internal sealed class LiveInstances : IDisposable
 
     /// <summary>
     /// Whether this process is the only BrowserAI running out of this install
-    /// root — <b>or that the question could not be settled, and why</b>.
+    /// root -- <b>or that the question could not be settled, and why</b>.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Three answers, and the third one carries a sentence.</b> A marker that
     /// cannot be opened for a reason other than sharing, a directory that cannot
     /// be enumerated, a gate that expired, a process that has already left the
-    /// live set — none of those is <i>somebody else is running</i>, and none of
+    /// live set -- none of those is <i>somebody else is running</i>, and none of
     /// them is <i>nobody is</i>. They are <see cref="Liveness.Undetermined"/>,
     /// and <see cref="LivenessAnswer.Why"/> names the path or the failure so that
     /// a refusal built on one can be diagnosed instead of merely repeated.
@@ -346,7 +346,7 @@ internal sealed class LiveInstances : IDisposable
     /// <para>
     /// <b>A positive count wins over an uncertainty.</b> Two markers proven held
     /// and one unreadable is <see cref="Liveness.NotAlone"/> with
-    /// <c>Others = 2</c> — <i>at least two</i> — rather than
+    /// <c>Others = 2</c> -- <i>at least two</i> -- rather than
     /// <see cref="Liveness.Undetermined"/>. Erasing a fact that was established
     /// because a different one was not is a strictly worse answer for every
     /// caller.
@@ -357,7 +357,7 @@ internal sealed class LiveInstances : IDisposable
     /// <see cref="ReclaimStaleMarkers"/>, because a census that walked past one
     /// would have to count it as something, and there is no honest value for it.
     /// A free marker that will not delete is <b>not</b> counted as another
-    /// instance and does not make the answer undetermined — it never was one —
+    /// instance and does not make the answer undetermined -- it never was one --
     /// which is what keeps this reclaim from changing the verdict.
     /// </para>
     /// </remarks>
@@ -369,7 +369,7 @@ internal sealed class LiveInstances : IDisposable
             // Not "alone" and not "not alone": this process is no longer a
             // member of the set it is asking about, so it cannot speak for it.
             return LivenessAnswer.Undetermined(
-                $"this process has left the live set under '{_directory}' — its own marker '{OwnFile}' was released — so a census taken now would not include it.");
+                $"this process has left the live set under '{_directory}' -- its own marker '{OwnFile}' was released -- so a census taken now would not include it.");
         }
 
         try
@@ -451,7 +451,7 @@ internal sealed class LiveInstances : IDisposable
     /// <para>
     /// <b>Both call sites take the same gate as a join and a census, and both
     /// skip instantly when it is held.</b> One process reclaims and the rest
-    /// move on — the same discipline <c>Sessions.StraySweep</c> already
+    /// move on -- the same discipline <c>Sessions.StraySweep</c> already
     /// applies machine-wide, reused rather than reinvented. The timeout is
     /// <see cref="LockScopes.NeverWaits"/> and not
     /// <see cref="LockScopes.LiveInstanceGate"/> precisely because this may run
@@ -461,7 +461,7 @@ internal sealed class LiveInstances : IDisposable
     /// </para>
     /// <para>
     /// <b>A marker is stale only when it is NOT HELD. Existence is not
-    /// held-ness</b> — the same rule <c>Runtime.MaintenanceLock</c> and
+    /// held-ness</b> -- the same rule <c>Runtime.MaintenanceLock</c> and
     /// <c>Sessions.SessionLock</c> state about their own files, and for
     /// the same reason: a crashed holder leaves the file behind, so existence
     /// means <i>somebody died here once</i> and never <i>somebody is working
@@ -470,13 +470,13 @@ internal sealed class LiveInstances : IDisposable
     /// acted on.
     /// </para>
     /// <para>
-    /// <b>Reclaiming another process's live marker would be a serious bug</b> —
+    /// <b>Reclaiming another process's live marker would be a serious bug</b> --
     /// it would make a running instance invisible to every later census and
     /// therefore killable by an apply. The negative is proved with a positive
     /// control rather than argued:
     /// <c>UpdateTests.AHeldMarkerSurvivesTheReclaimAndTheSameMarkerGoesOnceItIsReleased</c>
     /// holds one marker open, runs this, requires it to survive, releases it,
-    /// runs this again and requires it to go — so a pass that removed nothing at
+    /// runs this again and requires it to go -- so a pass that removed nothing at
     /// all could not pass either half.
     /// </para>
     /// </remarks>
@@ -672,7 +672,7 @@ internal sealed class LiveInstances : IDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// One canonicalisation function, four consumers — the per-directory gate,
+    /// One canonicalisation function, four consumers -- the per-directory gate,
     /// the lock file, the session index key and this. A second spelling is how
     /// two names come to mean different things while both report success.
     /// </para>
@@ -681,7 +681,7 @@ internal sealed class LiveInstances : IDisposable
     /// <c>SessionPath.Resolve(rootAppDir).MutexName</c>, with no prefix of its
     /// own).</b> That shared the <i>per-directory gate's</i> namespace as well
     /// as its canonicalisation, which made this a fourth scope wearing the
-    /// first's names — and <see cref="Sessions.LockScopes"/> documents three.
+    /// first's names -- and <see cref="Sessions.LockScopes"/> documents three.
     /// A session opened on the install root itself collided <b>exactly</b>, and
     /// nothing refuses that path: <c>CanonicalPath</c> refuses network
     /// paths and aliased spellings, and <c>%LOCALAPPDATA%\BrowserAI</c> is
@@ -692,7 +692,7 @@ internal sealed class LiveInstances : IDisposable
     /// <see cref="Join"/> waits <see cref="LockScopes.LiveInstanceGate"/>, five
     /// seconds. Queued behind a hold of the 120-second
     /// <see cref="LockScopes.PerDirectoryGate"/> it expires, and a failed join
-    /// costs this process its ability to update <b>for good</b> — one log line,
+    /// costs this process its ability to update <b>for good</b> -- one log line,
     /// no refusal, nothing a caller could see. <see cref="AmIAlone"/>'s census
     /// held the same object from the other side, blocking that directory's
     /// <c>TryAcquire</c>. Found by
@@ -701,7 +701,7 @@ internal sealed class LiveInstances : IDisposable
     /// </para>
     /// <para>
     /// <b>The prefix is the remedy the review named and the one this product
-    /// had already used once</b> — <c>BrowserProvisioner.MutexPrefix</c> is
+    /// had already used once</b> -- <c>BrowserProvisioner.MutexPrefix</c> is
     /// <c>Global\BrowserAI-Provision-</c> for exactly this reason. Adding a
     /// second one is cheaper than making the session guard understand a
     /// directory it otherwise has no opinion about.
@@ -720,14 +720,14 @@ internal sealed class LiveInstances : IDisposable
     /// <returns>A <c>Global\</c> name.</returns>
     /// <remarks>
     /// ⚠️ <b>It takes the identity chain and not the canonicaliser in front of
-    /// it, and that is a decision — 2026-08-26.</b> The app root is not a
+    /// it, and that is a decision -- 2026-08-26.</b> The app root is not a
     /// caller's string: it is this process's own, already judged against the
     /// user's profile through the filesystem by
     /// <see cref="Hosting.InstallRootScope"/>, which resolves both sides of that
     /// comparison the same way <c>Sessions.CanonicalPath</c> would.
     /// Asking again would be a second object-manager call and a directory open
     /// per census for an answer already established, and it would make the live
-    /// set's gate refusable — which is a startup failure wearing an update
+    /// set's gate refusable -- which is a startup failure wearing an update
     /// check's name.
     /// </remarks>
     public static string MutexNameFor(string installRoot) =>
@@ -743,13 +743,13 @@ internal sealed class LiveInstances : IDisposable
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The INSTALL root, and this is the one thing in the product that is
-    /// still keyed to it — 2026-09-15.</b> Everything else moved to the data
+    /// still keyed to it -- 2026-09-15.</b> Everything else moved to the data
     /// root at <c>%LocalAppData%\BrowserAI</c> that day
     /// (<see cref="Hosting.IAppPaths"/>); this did not, and the reason is that
     /// the census asks a question <i>about</i> the install root.
     /// <c>force_stop_package</c> terminates every process whose image path is
     /// under that root, so <i>am I the last one?</i> means <i>is any other
-    /// process running out of this install?</i> — and a set keyed to the data
+    /// process running out of this install?</i> -- and a set keyed to the data
     /// root would answer about processes a different install root's apply would
     /// not touch, and would miss the ones it would.
     /// </para>
@@ -781,7 +781,7 @@ internal sealed class LiveInstances : IDisposable
     /// <remarks>
     /// <b>The gate is the caller's to hold, and both callers do.</b> This is the
     /// one routine that decides a marker's fate, so a census and a reclaim
-    /// cannot come to different conclusions about the same file — which is what
+    /// cannot come to different conclusions about the same file -- which is what
     /// a second copy of the sharing-violation rule would eventually produce.
     /// </remarks>
     /// <param name="directory">The marker directory, which must exist.</param>

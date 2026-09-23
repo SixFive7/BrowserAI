@@ -15,7 +15,7 @@ namespace BrowserAI.Tests.Harness;
 /// this: every number here is a property of whatever else is running on the
 /// machine, so an assertion on one would be a test that passes or fails
 /// depending on the developer's other windows. What it is for is the sentence a
-/// test prints when a process it launched died for no reason it can see —
+/// test prints when a process it launched died for no reason it can see --
 /// <i>"a real Chromium exited with code 1 having written nothing"</i> is a
 /// finding with no content until you know whether the machine was idle or was
 /// carrying eight hundred processes at the time.
@@ -25,7 +25,7 @@ namespace BrowserAI.Tests.Harness;
 /// answers the whole system in a single syscall: the process, thread and handle
 /// counts, and the commit and physical figures a launch failure is most likely
 /// to be about. Deliberately <i>not</i> a walk that groups processes by image
-/// name — the house rule forbids matching, counting or terminating by name, and
+/// name -- the house rule forbids matching, counting or terminating by name, and
 /// a diagnostic is not an exception to it. The system-wide totals answer the
 /// question that matters ("was this machine saturated") without asking the one
 /// that is forbidden.
@@ -34,7 +34,7 @@ namespace BrowserAI.Tests.Harness;
 /// ⚠️ <b>Desktop heap is the one ceiling this cannot see, and it is named as a
 /// gap rather than left to be assumed covered.</b> A Chromium that cannot create
 /// a window station object fails in exactly the way being investigated, and
-/// there is no documented API that reports desktop-heap usage — it is readable
+/// there is no documented API that reports desktop-heap usage -- it is readable
 /// only with a kernel debugger extension. So a launch failure with these numbers
 /// all healthy does not exonerate the machine. <b>Since 2026-08-29 there is a
 /// reading for it</b>, and it is not a column here: <see cref="DesktopHeapProbe"/>
@@ -83,7 +83,7 @@ internal static partial class MachineLoad
     /// declaration of <c>GetPerformanceInfo</c> in this assembly and there
     /// should stay one.</b> Two <c>[LibraryImport]</c>s naming one export are
     /// two chances to disagree about <c>DllImportSearchPath</c>, and the second
-    /// one always works — the module is already loaded by the time it runs.
+    /// one always works -- the module is already loaded by the time it runs.
     /// </para>
     /// <para>
     /// <b>This is the same figure as <c>Get-Counter '\Memory\Committed

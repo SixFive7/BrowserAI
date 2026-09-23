@@ -21,9 +21,9 @@ namespace BrowserAI.Protocol;
 /// </para>
 /// <para>
 /// <b>This object owns the job handle for the child's whole life</b>, and that
-/// is the containment guarantee rather than a detail of it: if BrowserAI dies —
+/// is the containment guarantee rather than a detail of it: if BrowserAI dies --
 /// crash, <c>TerminateProcess</c>, a session limit, a power of ten of other
-/// reasons — the kernel closes the last handle and every process in the job goes
+/// reasons -- the kernel closes the last handle and every process in the job goes
 /// with it. Nothing has to run for that to happen, which is the point. A cleanup
 /// path that must execute is a cleanup path that will one day not.
 /// </para>
@@ -36,7 +36,7 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     /// Diagnostics, not protocol. A child that writes a byte this decoder
     /// cannot make sense of must not take the session down with it, so unlike
     /// <see cref="StdioChannel.Utf8NoBom"/> this one substitutes rather than
-    /// throws — an unreadable log line is a worse log line, and a dead session.
+    /// throws -- an unreadable log line is a worse log line, and a dead session.
     /// </summary>
     private static readonly UTF8Encoding LenientUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
 
@@ -107,8 +107,8 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     /// <remarks>
     /// <b>This is why it is cached as an <see cref="int"/> the instant it
     /// exists.</b> The framework's <c>Process.ExitCode</c> throws after
-    /// <c>Dispose()</c>, so the ordinary shape — dispose in a <c>finally</c>,
-    /// report the exit code afterwards — reports nothing, and the thing it fails
+    /// <c>Dispose()</c>, so the ordinary shape -- dispose in a <c>finally</c>,
+    /// report the exit code afterwards -- reports nothing, and the thing it fails
     /// to report is why the child died.
     /// </remarks>
     public int? ExitCode { get; private set; }
@@ -122,7 +122,7 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     /// <b>The handle, never a pid lookup.</b> This object owns an open handle to
     /// the child for the child's whole life, which is what makes the answer
     /// about <i>this</i> process rather than about whatever now wears its
-    /// number — Windows will not recycle a pid while a handle to it exists.
+    /// number -- Windows will not recycle a pid while a handle to it exists.
     /// </para>
     /// <para>
     /// <b>A child on its way out is alive until the handle says otherwise</b>,
@@ -331,8 +331,8 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     /// <remarks>
     /// <b>Both directions are the requirement, because each is half of the bug
     /// this replaces.</b> A benign line logged loudly trains a reader to ignore
-    /// warnings — <c>@playwright/mcp</c> writes <c>Session: &lt;path&gt;</c> on
-    /// every healthy start with session logging on — and an error-shaped line
+    /// warnings -- <c>@playwright/mcp</c> writes <c>Session: &lt;path&gt;</c> on
+    /// every healthy start with session logging on -- and an error-shaped line
     /// logged quietly is a startup failure nobody sees. The classification is
     /// therefore the level: <see cref="StandardErrorClassifier"/> decides, and
     /// nothing here re-decides it.

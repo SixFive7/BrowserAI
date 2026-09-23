@@ -19,7 +19,7 @@ internal sealed record LogRecord(string Category, LogLevel Level, EventId EventI
 /// <remarks>
 /// <b>Observability is a feature requirement here, so it is asserted like
 /// one.</b> Every defect in this project's founding table reported healthy
-/// while broken, and the answer to that is a log line that says what happened —
+/// while broken, and the answer to that is a log line that says what happened --
 /// which is only a mechanism if something fails when it stops being written.
 /// </remarks>
 internal sealed class CapturingLoggerProvider : ILoggerProvider

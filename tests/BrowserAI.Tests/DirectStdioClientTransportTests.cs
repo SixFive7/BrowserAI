@@ -39,7 +39,7 @@ internal sealed class DirectStdioClientTransportTests
     /// One character from each class the SDK's server transport escapes, so the
     /// same payload proves the point on both sides of the proxy.
     /// </summary>
-    private const string AwkwardText = "back`tick it's <angled> café — ünïcødé";
+    private const string AwkwardText = "back`tick it's <angled> café -- ünïcødé";
 
     [Test]
     public async Task TheChildsDirectParentIsThisProcess()
@@ -68,7 +68,7 @@ internal sealed class DirectStdioClientTransportTests
     /// <remarks>
     /// ⚠️ <b>This mutates the process-wide environment, and it carried
     /// <c>[NotInParallel(nameof(TheChildsEnvironmentIsExactlyTheAllowlist))]</c>
-    /// until 2026-08-17 — a constraint key with exactly one member, which
+    /// until 2026-08-17 -- a constraint key with exactly one member, which
     /// constrains nothing.</b> TUnit serialises tests that <i>share</i> a key, so
     /// a group of one is a no-op wearing the clothes of a guard, and it read as
     /// protection for four months.
@@ -76,7 +76,7 @@ internal sealed class DirectStdioClientTransportTests
     /// Removed rather than widened, because the mutation is provably harmless and
     /// the reason is the thing under test. Every name planted below is in
     /// <see cref="ChildEnvironment.Refused"/> except one that nothing reads, and
-    /// none is in <see cref="ChildEnvironment.InheritedWhenSet"/> — so no child
+    /// none is in <see cref="ChildEnvironment.InheritedWhenSet"/> -- so no child
     /// this suite starts through the product can see any of them, including the
     /// real Playwright installer, whose block comes from the same allowlist. The
     /// only other route is the harness handing a published binary this process's
@@ -195,7 +195,7 @@ internal sealed class DirectStdioClientTransportTests
         // of roughly seventeen bytes each. A child writing this much before it
         // reads a single byte of stdin **blocks in WriteFile** unless somebody
         // is draining the other end, and it blocks before it has written its
-        // report — so a proxy that drains stderr only when it feels like it
+        // report -- so a proxy that drains stderr only when it feels like it
         // does not fail here, it hangs here, with the child alive, the pipes
         // open and no error anywhere.
         const int Lines = 20_000;

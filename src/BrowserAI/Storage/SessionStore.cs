@@ -16,7 +16,7 @@ namespace BrowserAI.Storage;
 /// decided by <see cref="LockFile"/> and by the kernel's share modes, and this
 /// file has nothing to do with it. That separation is the whole design: a
 /// transaction cannot be both the lock and the write path, because a reader
-/// only sees committed work and committing ends the transaction — so a store
+/// only sees committed work and committing ends the transaction -- so a store
 /// that tried to be the guard would either hide the log from every reader or
 /// lock them out of it. What is left for the store to do is be a store.
 /// </para>
@@ -31,12 +31,12 @@ namespace BrowserAI.Storage;
 /// <para>
 /// <b>Write-ahead logging, so a reader is never refused by a live writer.</b>
 /// The reader that matters is <c>browserai_catch_up</c> against a session
-/// another BrowserAI is driving — *the case it exists for* — so a journal mode
+/// another BrowserAI is driving -- *the case it exists for* -- so a journal mode
 /// in which a commit blocks readers would fail exactly when it was needed.
 /// </para>
 /// <para>
 /// ⚠️ <b>A CRASHED HOLDER'S WRITE-AHEAD LOG, AND WHAT A READ-ONLY CALLER
-/// ACTUALLY GETS — measured 2026-08-26 rather than reasoned about, because the
+/// ACTUALLY GETS -- measured 2026-08-26 rather than reasoned about, because the
 /// answer is not the one the design note predicted.</b> When a holder dies
 /// without closing, the <c>-wal</c> carries committed transactions the
 /// <c>.data</c> file does not, and reading them means <i>building</i> the
@@ -50,13 +50,13 @@ namespace BrowserAI.Storage;
 /// <para>
 /// <b>Two consequences, both accepted and both pinned by
 /// <c>SqliteStorageTests</c>.</b> First, reading a session directory is not a
-/// side-effect-free act — a <c>-shm</c> appears beside the store, in a
+/// side-effect-free act -- a <c>-shm</c> appears beside the store, in a
 /// directory the caller only asked to look at. ⚠️ <b>And the reader is not
 /// always a caller: starting the server does this to EVERY session on the
-/// machine</b> (added 2026-08-26 — this paragraph said <i>the caller</i> and
+/// machine</b> (added 2026-08-26 -- this paragraph said <i>the caller</i> and
 /// meant it). <c>Program.Main</c> starts the stray sweep, one pass calls
 /// <c>SessionIndex.Sweep</c>, and that follows every entry in the machine-wide
-/// index through <see cref="OpenForReading"/> — so one process start is one
+/// index through <see cref="OpenForReading"/> -- so one process start is one
 /// store open, and one <c>-shm</c> and <c>-wal</c>, per registered session on
 /// the host. Measured that day through the published binary against a
 /// cleanly-closed session, with a second BrowserAI that sent nothing but
@@ -132,8 +132,8 @@ internal sealed class SessionStore : IDisposable
     /// </summary>
     /// <remarks>
     /// <b>Derived from <see cref="LockScopes.PerDirectoryGate"/> rather than
-    /// chosen.</b> The two answer the same question about the same directory —
-    /// *how long may a second caller be made to wait before it is told no* —
+    /// chosen.</b> The two answer the same question about the same directory --
+    /// *how long may a second caller be made to wait before it is told no* --
     /// and two different numbers would mean a caller admitted by one could be
     /// refused by the other, with nothing in either message naming the
     /// disagreement.
@@ -146,7 +146,7 @@ internal sealed class SessionStore : IDisposable
     /// </summary>
     /// <remarks>
     /// <b>Only the lock holder may call this</b>, and nothing here checks that:
-    /// see the type's own remarks. The order inside is load-bearing — the busy
+    /// see the type's own remarks. The order inside is load-bearing -- the busy
     /// timeout is set before the first statement that can be refused by
     /// contention, and the journal mode before the schema, so a store is never
     /// created in a mode it will not be used in.
@@ -361,7 +361,7 @@ internal sealed class SessionStore : IDisposable
     /// <summary>Every statement, oldest first.</summary>
     /// <remarks>
     /// <b><c>ORDER BY rowid</c> is stated rather than assumed.</b> The table has
-    /// no key of its own — the schema is three text columns — so *the order they
+    /// no key of its own -- the schema is three text columns -- so *the order they
     /// were written in* is the implicit rowid and nothing else. A bare
     /// <c>SELECT</c> happens to return them that way today and is entitled to
     /// stop, and "newest statement wins" is how every field in this record is
@@ -431,7 +431,7 @@ internal sealed class SessionStore : IDisposable
     /// <b>The <c>at</c> of the newest row rather than the newest <c>at</c>.</b>
     /// Rows are written in call order and <c>id</c> is that order, so ordering
     /// by the timestamp column would sort by a string whose value comes from a
-    /// clock the caller can move — and *when did anything last happen here* is
+    /// clock the caller can move -- and *when did anything last happen here* is
     /// the one field a listing prints for every session.
     /// </remarks>
     /// <returns>The stamp, as it is stored.</returns>
@@ -549,7 +549,7 @@ internal sealed class SessionStore : IDisposable
 /// <b>Append-only, and "current" means the newest.</b> Nothing overwrites a
 /// statement; a session that moves, or changes its purpose, gains a row. That
 /// is what lets a record say how it got here rather than only where it ended
-/// up — and it is what kills the string concatenation the old record used to
+/// up -- and it is what kills the string concatenation the old record used to
 /// build a purpose out of every purpose before it.
 /// </remarks>
 internal sealed record StoredStatement(string Field, string At, string Value);

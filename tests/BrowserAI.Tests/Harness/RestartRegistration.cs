@@ -18,7 +18,7 @@ namespace BrowserAI.Tests.Harness;
 /// limit by 531 or more, which means the registration <i>fails</i> and Windows
 /// does not resurrect the browser after a reboot or an update. That is an
 /// argument about a length; this is the observation that settles it, and the two
-/// can disagree — a shorter command line, or an upstream that starts trimming its
+/// can disagree -- a shorter command line, or an upstream that starts trimming its
 /// argument list, would flip the answer with nothing else changing.
 /// </para>
 /// <para>
@@ -31,7 +31,7 @@ namespace BrowserAI.Tests.Harness;
 /// </remarks>
 internal static partial class RestartRegistration
 {
-    /// <summary><c>HRESULT_FROM_WIN32(ERROR_NOT_FOUND)</c> — no registration exists.</summary>
+    /// <summary><c>HRESULT_FROM_WIN32(ERROR_NOT_FOUND)</c> -- no registration exists.</summary>
     public const int NotRegistered = unchecked((int)0x80070490);
 
     private const uint ProcessQueryInformation = 0x00000400;

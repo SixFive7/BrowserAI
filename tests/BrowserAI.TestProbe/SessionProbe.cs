@@ -30,7 +30,7 @@ namespace BrowserAI.TestProbe;
 /// <para>
 /// <b>Nothing here can outlive its test.</b> Every wait is bounded by
 /// <see cref="Patience"/> as well as by whatever the host does, so a probe whose
-/// host died still exits on its own — belt as well as the test's job object.
+/// host died still exits on its own -- belt as well as the test's job object.
 /// </para>
 /// </remarks>
 internal static class SessionProbe
@@ -44,7 +44,7 @@ internal static class SessionProbe
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 (previously two minutes).</b> This is a
     /// SELF-DESTRUCT BACKSTOP, and a backstop that fires while its test is still
-    /// running is not a backstop — it is a promptness assertion on the test host,
+    /// running is not a backstop -- it is a promptness assertion on the test host,
     /// enforced from another process, that fails as <i>"the process I planted has
     /// gone"</i>. Two minutes is reachable: at
     /// <c>SuiteParallelism.Unbounded</c> the suite puts 419 tests on one machine
@@ -55,7 +55,7 @@ internal static class SessionProbe
     /// <para>
     /// <b>Nothing depends on this being tight.</b> Every probe is launched into a
     /// <c>JobObjectScope</c> carrying <c>KILL_ON_JOB_CLOSE</c>, so the host
-    /// finishing — or dying — closes the last handle and the kernel takes the
+    /// finishing -- or dying -- closes the last handle and the kernel takes the
     /// probe with it. This only has to be shorter than "forever", so that a probe
     /// started outside a job by a hand-run command cannot outlive the day. Half
     /// an hour is that, and it is the same shape as the suite's own
@@ -77,7 +77,7 @@ internal static class SessionProbe
     /// would be a global mutation aimed at a local question.
     /// </para>
     /// <para>
-    /// ⚠️ <b>It reports the refusal as well as the names — 2026-08-26, previously
+    /// ⚠️ <b>It reports the refusal as well as the names -- 2026-08-26, previously
     /// only the derived names.</b> A relative spelling used to canonicalise
     /// against this process's own working directory and produce an identity; it
     /// is refused now, and a probe that could only report an identity had no way
@@ -142,7 +142,7 @@ internal static class SessionProbe
         // ⚠️ EVERY FIELD BELOW IS THERE BECAUSE ONE OCCURRENCE WENT UNDIAGNOSED.
         // Measured 2026-08-18: a loser reported an outcome other than `Held` once
         // in eighteen full-suite runs, and the report it wrote carried the
-        // outcome, the message and nothing else — so the run that caught it could
+        // outcome, the message and nothing else -- so the run that caught it could
         // not say which outcome, what the machine looked like, or whether the
         // holder it failed to name was even alive. A failure that names its own
         // state costs one run to diagnose; one that says "not Held" costs twenty.
@@ -370,8 +370,8 @@ internal static class SessionProbe
     /// </summary>
     /// <remarks>
     /// <b>The wait is bounded rather than zero, unlike <see cref="Sweep"/>'s.</b>
-    /// This probe exists to <i>be</i> the holder — for the skip path and for the
-    /// abandoned-mutex path — so it must end up holding the object even if
+    /// This probe exists to <i>be</i> the holder -- for the skip path and for the
+    /// abandoned-mutex path -- so it must end up holding the object even if
     /// another process on the machine is momentarily using the same name. A
     /// zero-timeout acquire here would make the test flaky in the one direction
     /// that reads as a product defect.
@@ -408,7 +408,7 @@ internal static class SessionProbe
     /// <b>The report carries the timeout the acquire was handed, not how long it
     /// took.</b> A stopwatch here would be measuring the scheduler on a loaded
     /// box, across a process boundary, in each of eight processes started
-    /// together — and process creation is the most contended operation there is.
+    /// together -- and process creation is the most contended operation there is.
     /// <see cref="MachineMutex.LastAcquireTimeout"/> is set by the acquire from
     /// its own argument, so nothing a starved machine does can move it.
     /// </remarks>
@@ -480,7 +480,7 @@ internal static class SessionProbe
     /// How long to wait for the machine-wide sweep gate. <b>The caller supplies
     /// it rather than this file choosing one</b>, because the bound is the
     /// suite's own hang detector and this project cannot see
-    /// <c>TestDefaults</c> — it references the product and nothing else.
+    /// <c>TestDefaults</c> -- it references the product and nothing else.
     /// </param>
     /// <returns>Zero.</returns>
     public static int StraySweepPass(string reportPath, string images, int gatePatienceMilliseconds)
@@ -600,7 +600,7 @@ internal static class SessionProbe
     /// <remarks>
     /// <para>
     /// <b>The index takes no lock, so "one valid file" is a claim about what two
-    /// processes renaming over one name do to each other</b> — and that is not
+    /// processes renaming over one name do to each other</b> -- and that is not
     /// something a single-threaded stub can be asked. Every writer targets the
     /// same key, so every write after the first is a rename over a file another
     /// process may be renaming over at the same instant.
@@ -659,7 +659,7 @@ internal static class SessionProbe
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Read <i>and</i> write, and no sharing at all</b> — which is what
+    /// <b>Read <i>and</i> write, and no sharing at all</b> -- which is what
     /// Firefox's profile lock asks for, and the reason a preflight's open is
     /// refused whatever share mode the preflight itself permits. A stub that
     /// merely opened for write with <c>FileShare.None</c> would produce the same
@@ -669,7 +669,7 @@ internal static class SessionProbe
     /// <para>
     /// <b>A separate process, because that is the whole point.</b> A lock held on
     /// another thread of the test host would not be refused to the host at all,
-    /// and the Restart Manager would name the host — so the attribution assertion
+    /// and the Restart Manager would name the host -- so the attribution assertion
     /// would be about the wrong process.
     /// </para>
     /// </remarks>
@@ -702,7 +702,7 @@ internal static class SessionProbe
     /// <b>It exists to prove the one property no in-process test can:</b> a
     /// reader that dies releases the claim, with nothing running to clean up
     /// after it. Windows closes the handle when the process object goes, whether
-    /// the process exited, crashed or was terminated — which is exactly why this
+    /// the process exited, crashed or was terminated -- which is exactly why this
     /// claim is a file and not a named semaphore, whose count is not restored on
     /// a holder's death.
     /// </para>
@@ -764,7 +764,7 @@ internal static class SessionProbe
     /// <remarks>
     /// ⚠️ <b>Added 2026-08-18.</b> A file this process has just closed is briefly
     /// held by something outside this repository, and
-    /// <c>MOVEFILE_REPLACE_EXISTING</c> wants DELETE on the destination — so it
+    /// <c>MOVEFILE_REPLACE_EXISTING</c> wants DELETE on the destination -- so it
     /// is refused <c>ACCESS_DENIED</c> rather than as a sharing violation, and an
     /// unretried rename kills the probe. The host then reports <i>"the probe
     /// never wrote its report"</i>, which is true and names the wrong cause.

@@ -8,7 +8,7 @@ The re-establishment named by
 which is [re-verification row 38](../../../kb/re-verification.md).
 
 `mcp.js` is a minimal newline-delimited JSON-RPC client for a real
-`BrowserAI.Server.exe` over stdio — the framing `StdioChannel` owns.
+`BrowserAI.Server.exe` over stdio -- the framing `StdioChannel` owns.
 `page-server.js` serves a one-page origin on `127.0.0.1`, which is a
 potentially-trustworthy origin and therefore one a service worker will register
 against; a `data:` URL has no storage at all and cannot be used here.
@@ -19,7 +19,7 @@ against; a `data:` URL has no storage at all and cannot be used here.
   session, fills cookie, `localStorage`, `sessionStorage`, IndexedDB,
   CacheStorage and a service worker, and confirms all six are set. A closes its
   stdin, its node children are confirmed **gone by pid against a path BrowserAI
-  owns**, and then **server B** — a different process — resumes the directory.
+  owns**, and then **server B** -- a different process -- resumes the directory.
   The resume is timed at the client, and every store is read back.
 - `resume-probe.js` is the one-server shape the old procedure literally
   described: kill the node child under a **live** BrowserAI and resume in the
@@ -39,7 +39,7 @@ against; a `data:` URL has no storage at all and cannot be used here.
   session. **It does not leave a wedged session behind.** Usage:
   `node wedge-probe.js <BrowserAI.Server.exe> <sessionDir> <report.json> <boundMs> [browser]`.
   What it found is
-  [in the kb](../../../kb/playwright/provisioning-and-timings.md#the-resume-wedge-measured--2026-09-17),
+  [in the kb](../../../kb/playwright/provisioning-and-timings.md#the-resume-wedge-measured----2026-09-17),
   and the transcript is
   [`docs/evidence/2026-09-17-resume-wedge`](../../evidence/2026-09-17-resume-wedge/README.md).
 
@@ -47,7 +47,7 @@ against; a `data:` URL has no storage at all and cannot be used here.
   [Q223 c](../../../HAZARDS.md#hazard-index).** It asks the one question
   `resume-probe2.js` left open: the durability table says a relaunch after the
   child was **killed** loses persistent stores, and reads the mechanism as the
-  kill — so does a browser server that dies **of its own accord** flush on the
+  kill -- so does a browser server that dies **of its own accord** flush on the
   way out? One arrangement, three ways for the child to go, chosen on the
   command line: `kill` reproduces Path B exactly (`Stop-Process` by pid,
   identity verified against a path BrowserAI owns); `exit` has the child call
@@ -57,14 +57,14 @@ against; a `data:` URL has no storage at all and cannot be used here.
   the probe. Usage:
   `node selfdeath-probe.js <BrowserAI.Server.exe> <sessionDir> <report.json> <kill|exit|abort> [browser]`.
   It destroys its session on the way out. What it found is
-  [in the kb](../../../kb/playwright/provisioning-and-timings.md#a-browser-server-that-ends-itself-loses-the-same-stores-as-one-that-is-killed--measured-2026-09-22):
+  [in the kb](../../../kb/playwright/provisioning-and-timings.md#a-browser-server-that-ends-itself-loses-the-same-stores-as-one-that-is-killed----measured-2026-09-22):
   **no arm is distinguishable from the control.**
 
   **Two things about the instrument, both of which cost a run before they were
   understood.** The snippet reaches `process` through
   `page.constructor.constructor('return process')()` rather than naming it,
   because `browser_run_code_unsafe` runs in a `vm` context holding `page` and one
-  promise and nothing else — a first version used `setTimeout` and died on
+  promise and nothing else -- a first version used `setTimeout` and died on
   `ReferenceError`, reporting a clean run in which the child it meant to end
   never went anywhere. And the wait for the children to go polls **inside one
   PowerShell** rather than starting one per poll: the obvious loop starts two
@@ -73,8 +73,8 @@ against; a `data:` URL has no storage at all and cannot be used here.
 
 ## What it touches
 
-The session directory it is given, and the product's shared data root — the
-session index and live markers — which is the same state the suite drives. It
+The session directory it is given, and the product's shared data root -- the
+session index and live markers -- which is the same state the suite drives. It
 destroys its session through `browserai_destroy` on the way out, so it leaves no
 index entry. It never touches `%LocalAppData%\BrowserAI.app`.
 
@@ -82,5 +82,5 @@ index entry. It never touches `%LocalAppData%\BrowserAI.app`.
 needs the server killed by pid and the session destroyed by a later process;
 both are in the transcript of the 2026-09-16 run.
 
-| Trips `NeverByImageNameTests` | **No** — *corrected 2026-09-17 (previously "Yes — `Win32_Process` and `Get-Process`, both keyed on a pid and filtered on an executable path BrowserAI owns, never on a name")*. That sentence was right about the code and right about why it tripped; the scan reads the FILTER rather than the API from 2026-09-17 (Q203), so a pid-keyed call no longer trips it and the description above is now the reason it passes |
+| Trips `NeverByImageNameTests` | **No** -- *corrected 2026-09-17 (previously "Yes -- `Win32_Process` and `Get-Process`, both keyed on a pid and filtered on an executable path BrowserAI owns, never on a name")*. That sentence was right about the code and right about why it tripped; the scan reads the FILTER rather than the API from 2026-09-17 (Q203), so a pid-keyed call no longer trips it and the description above is now the reason it passes |
 |---|---|

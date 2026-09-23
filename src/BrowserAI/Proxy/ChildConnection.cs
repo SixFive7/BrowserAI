@@ -19,7 +19,7 @@ namespace BrowserAI.Proxy;
 /// <remarks>
 /// <para>
 /// <b>There is one of these per child, and there are now several children per
-/// process.</b> Each session owns one, plus one for the run itself — the child
+/// process.</b> Each session owns one, plus one for the run itself -- the child
 /// that answers <c>tools/list</c> before any session exists. Splitting it out of
 /// <see cref="BrowserProxy"/> is what made that possible: the proxy is the
 /// caller-facing server and decides <i>which</i> child a call goes to, and this
@@ -32,7 +32,7 @@ namespace BrowserAI.Proxy;
 /// path: <c>McpSessionHandler</c> has the machinery, but its registration is
 /// disposed as <c>tcs.Task.WaitAsync(ct)</c> unwinds and CTS callbacks run LIFO,
 /// so the callback is unregistered before it can run. An id we chose is an id we
-/// can name in a notification we send ourselves, from the <c>catch</c> — where it
+/// can name in a notification we send ourselves, from the <c>catch</c> -- where it
 /// is awaited and cannot fire before the request it names was sent.
 /// </para>
 /// </remarks>
@@ -76,7 +76,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// <para>
     /// <b>Pinning is not a tidiness choice.</b> Left null, the SDK client
     /// prefers <c>2026-07-28</c> and probes the child with <c>server/discover</c>
-    /// first, bounded by <c>DiscoverProbeTimeout</c> — five seconds by default.
+    /// first, bounded by <c>DiscoverProbeTimeout</c> -- five seconds by default.
     /// A child that drops the unknown method instead of answering costs that on
     /// <i>every</i> spawn, against a ~300 ms baseline, and it presents as
     /// "browser automation got slow" with no error anywhere.
@@ -101,7 +101,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// on <c>ModelContextProtocol.Core</c> 2.2.0, 2026-08-18:
     /// <c>McpClientOptions.InitializationTimeout</c> defaults to <c>00:01:00</c>.
     /// Nothing in this repository chose that number, nothing documented it, and
-    /// the failure it produces — <c>Initialization timed out</c> — carries no
+    /// the failure it produces -- <c>Initialization timed out</c> -- carries no
     /// elapsed time, no child identity and none of the child's stderr, so it
     /// reads as a protocol fault rather than as a slow start.
     /// </para>
@@ -110,7 +110,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// is <c>node.exe</c> loading <c>cli.js</c> out of a bundled payload; a warm
     /// spawn hands shakes in roughly 300 ms, and a cold one on a contended machine
     /// takes seconds. Sixty seconds is therefore not a hang detector at all on a
-    /// loaded box — it is a promptness assertion on somebody else's process
+    /// loaded box -- it is a promptness assertion on somebody else's process
     /// start. Ten minutes is more than two orders of magnitude above the warm
     /// cost and <b>must never be reached by a slow machine</b>; a child that has
     /// not spoken in ten minutes is not starting slowly, it is not starting.
@@ -130,7 +130,7 @@ internal sealed class ChildConnection : IAsyncDisposable
 
     /// <summary>
     /// The child's own process id, or <see langword="null"/> when the child is
-    /// not a process at all — which is the in-process test layer and nothing
+    /// not a process at all -- which is the in-process test layer and nothing
     /// else.
     /// </summary>
     public int? ProcessId => (_link.Session as ChildProcessSession)?.ProcessId;
@@ -143,7 +143,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// <para>
     /// <b>Two instruments, and the weaker one is not enough on its own.</b>
     /// <c>IsConnected</c> is the transport's own state and goes false when the
-    /// read loop reaches end-of-stream — which is what a killed child looks like
+    /// read loop reaches end-of-stream -- which is what a killed child looks like
     /// and the only signal a transport with no process behind it has.
     /// <see cref="ChildProcessSession.HasExited"/> is the process handle, and it
     /// answers the case the first one cannot see: a grandchild that inherited
@@ -359,7 +359,7 @@ internal sealed class ChildConnection : IAsyncDisposable
 /// Three outcomes rather than two, because they reach the caller as three
 /// different frames: the child's result, the child's own JSON-RPC error, and the
 /// child not answering at all. Collapsing the last two would produce the failure
-/// shape this project exists to eliminate — an error naming no cause.
+/// shape this project exists to eliminate -- an error naming no cause.
 /// </remarks>
 internal sealed record ChildAnswer
 {

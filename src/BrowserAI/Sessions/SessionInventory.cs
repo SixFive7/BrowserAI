@@ -14,7 +14,7 @@ namespace BrowserAI.Sessions;
 /// <b>This is the half of <c>browserai_catch_up</c> that the log cannot
 /// answer, and the two routinely disagree.</b> The log says what BrowserAI
 /// <i>did</i>: which tools were called, in what order, and what the caller said
-/// each was for. This says what is <i>true now</i> — and the load-bearing
+/// each was for. This says what is <i>true now</i> -- and the load-bearing
 /// example is credentials. **Cookies arrive from navigation, not from tools**, so
 /// a session whose log shows no <c>browser_cookie_*</c> call at all can hold a
 /// live signed-in profile, and a log-only answer would say <i>"no credential
@@ -24,8 +24,8 @@ namespace BrowserAI.Sessions;
 /// <b>Nothing here opens a file.</b> The cookie question is answered by the
 /// <i>existence</i> of the store, not by reading it: opening a Chromium cookie
 /// database to count rows would mean holding a file a running browser has open,
-/// and the answer a caller acts on — <i>this directory may hold credentials</i>
-/// — does not need the count.
+/// and the answer a caller acts on -- <i>this directory may hold credentials</i>
+/// -- does not need the count.
 /// </para>
 /// <para>
 /// <b>Every failure is reported as an unknown rather than as a zero.</b> A tree
@@ -41,7 +41,7 @@ internal static class SessionInventory
     /// </summary>
     /// <remarks>
     /// A HAR records every request and response the browser made, headers
-    /// included — so a session that holds one holds every bearer token and
+    /// included -- so a session that holds one holds every bearer token and
     /// session cookie that crossed the wire in clear text. It is matched by
     /// EXTENSION rather than by location, because a caller may point
     /// <c>browser_network_requests</c> anywhere inside <c>output\</c> and the
@@ -168,7 +168,7 @@ internal static class SessionInventory
     /// </summary>
     /// <remarks>
     /// <b>Both families, by their own file names.</b> Chromium keeps
-    /// <c>Network\Cookies</c> under the profile's default directory — and kept it
+    /// <c>Network\Cookies</c> under the profile's default directory -- and kept it
     /// at the profile root in older revisions, which is why both are looked for;
     /// Firefox keeps <c>cookies.sqlite</c>. A search rather than a fixed path,
     /// because the profile's inner directory name is the browser's business and
@@ -285,7 +285,7 @@ internal sealed record ArtifactKind(string Name)
 /// exist are fixed-unit: <c>browserai_list</c> prints
 /// MiB to one place, and the provisioner prints decimal MB because that is the
 /// unit a CDN's <c>content-length</c> is quoted in. Fixed MiB is exactly wrong
-/// for this answer — a bucket holding three screenshots prints <c>0.0 MiB</c>,
+/// for this answer -- a bucket holding three screenshots prints <c>0.0 MiB</c>,
 /// which a caller about to destroy a session reads as <i>nothing here</i>. The
 /// two established figures are deliberately left alone rather than migrated:
 /// they are published numbers with tests over them, and changing what they say

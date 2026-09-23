@@ -22,9 +22,9 @@ namespace BrowserAI.Tests;
 /// seams exist.</b> Under a test host this process is not a Velopack install and
 /// <c>VelopackLocator.Current</c> has never been set, so <c>UpdateService</c> is
 /// driven through <see cref="IUpdateClient"/> and the install-shaped facts are
-/// asserted on the source instead. What the seams cannot cover — that a real
+/// asserted on the source instead. What the seams cannot cover -- that a real
 /// package applies, that a rollback applies, and that the browsers beside
-/// <c>current\</c> survive both — was run by hand against a real install and is
+/// <c>current\</c> survive both -- was run by hand against a real install and is
 /// recorded in
 /// [kb](../../kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed),
 /// because it needs an installer this suite must never run.
@@ -42,7 +42,7 @@ internal sealed class UpdateTests
     /// <c>{base}/{channel}/releases.{channel}.json</c>, which 404s and surfaces
     /// as *"no update available"*. It bricked auto-update for three shipped
     /// versions of a sibling project and the only recovery was a manual
-    /// reinstall of every client — which is why this is a refusal at
+    /// reinstall of every client -- which is why this is a refusal at
     /// construction rather than a comment.
     /// </remarks>
     [Test]
@@ -77,7 +77,7 @@ internal sealed class UpdateTests
     /// </summary>
     /// <remarks>
     /// The two therefore agree on NTFS and disagree on a case-sensitive object
-    /// store, which is exactly a sibling project's S3 setup — a feed that works
+    /// store, which is exactly a sibling project's S3 setup -- a feed that works
     /// on the developer's machine and 404s in production.
     /// </remarks>
     [Test]
@@ -130,8 +130,8 @@ internal sealed class UpdateTests
     /// carrying the WRONG BODY.</b> On 2026-09-15, for about two minutes after
     /// the release assets were replaced,
     /// <c>releases/latest/download/releases.win.json</c> answered 200 with the
-    /// <b>previous</b> manifest — <c>Age: 2701</c> on the response, the API
-    /// correct throughout — so a check that read only the status code would have
+    /// <b>previous</b> manifest -- <c>Age: 2701</c> on the response, the API
+    /// correct throughout -- so a check that read only the status code would have
     /// reported a feed that was serving a package nobody could download. The
     /// body is therefore read for what it names: the pack id this build installs
     /// under, and a version no older than the first release published under that
@@ -142,7 +142,7 @@ internal sealed class UpdateTests
     /// the August manifest, pack id <c>BrowserAI</c> at version <c>1.0.0</c>,
     /// recovered verbatim from the archived release evidence
     /// (<c>Releases/archive/BrowserAI-1.0.0-manifest/release-evidence.md</c>,
-    /// where it was recorded when the id changed) rather than reconstructed — and
+    /// where it was recorded when the id changed) rather than reconstructed -- and
     /// it fails on the id while passing every other check, which is exactly the
     /// shape the stale response had.
     /// </para>
@@ -153,7 +153,7 @@ internal sealed class UpdateTests
     /// paths differently and will pass where production 404s, and a served
     /// stand-in composes them the same way as the real one *by construction*
     /// rather than by evidence. What has to be checked is the URL somebody
-    /// actually typed, against the storage somebody actually configured — the
+    /// actually typed, against the storage somebody actually configured -- the
     /// exact pair that bricked a production deployment's auto-update for three
     /// shipped versions.
     /// </para>
@@ -162,15 +162,15 @@ internal sealed class UpdateTests
     /// <see cref="UpdateConfiguration.ProductionBaseUrl"/>, then replace this
     /// skip with a real request for <c>{ProductionBaseUrl}/releases.win.json</c>
     /// asserting a 200 and a parseable <c>Assets</c> array. Everything else in
-    /// the update lane — the pack, the delta, the apply, the rollback and the
-    /// survival of the browsers — was run for real and is recorded in
+    /// the update lane -- the pack, the delta, the apply, the rollback and the
+    /// survival of the browsers -- was run for real and is recorded in
     /// [kb](../../kb/packaging/velopack.md#the-update-lane-end-to-end-against-a-real-feed).
     /// </para>
     /// <para>
     /// ⚠️ <b>This skip blocks a release, and that is intended.</b>
     /// [`CLAUDE.md`](../../CLAUDE.md) forbids releasing with a skipped test, and
     /// [release checklist item 8](../../RELEASING.md) requires the skipped count
-    /// to be zero. So the debt is not a note somebody has to remember — it is a
+    /// to be zero. So the debt is not a note somebody has to remember -- it is a
     /// red gate on the first release, which is exactly where it belongs.
     /// </para>
     /// </remarks>
@@ -197,7 +197,7 @@ internal sealed class UpdateTests
 
         // ⚠️ THE POSITIVE CONTROL. The body that really was served, recovered
         // from the archived release evidence. It parses, it carries `Assets`,
-        // its version is exactly the floor — and it names the OLD pack id, which
+        // its version is exactly the floor -- and it names the OLD pack id, which
         // is the one thing that tells a stale feed from a current one. Without
         // this, a check that had stopped reading the id would report the live
         // feed correct and pass.
@@ -292,7 +292,7 @@ internal sealed class UpdateTests
                 complaints.Add(
                     $"the feed names {(ids.Count is 0 ? "no package id at all" : $"'{string.Join("', '", ids)}'")}"
                     + $" rather than '{FirstPackId}', so an installed BrowserAI would find nothing to update from"
-                    + " — which is what a stale cached response looks like");
+                    + " -- which is what a stale cached response looks like");
             }
 
             if (newest < FirstPublishedVersion)
@@ -346,7 +346,7 @@ internal sealed class UpdateTests
     /// forever.
     /// </summary>
     /// <remarks>
-    /// The file outliving its holder is the normal case — BrowserAI is
+    /// The file outliving its holder is the normal case -- BrowserAI is
     /// terminated from outside by design, so a <c>finally</c> is by construction
     /// the path that does not run when it matters. An unreclaimed marker would
     /// disable updating permanently after the first hard kill, and nothing would
@@ -440,14 +440,14 @@ internal sealed class UpdateTests
 
     /// <summary>
     /// A marker whose held-ness cannot be established makes the census
-    /// <b>undetermined</b> — and it is left exactly where it is.
+    /// <b>undetermined</b> -- and it is left exactly where it is.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>This is the arm that used to answer <i>not alone</i>, and both
     /// answers keep the updater on the same side.</b> What the old one could not
     /// do is tell a maintainer that the problem is an ACL on a named path rather
-    /// than a peer that is genuinely running — which is a refusal nothing can act
+    /// than a peer that is genuinely running -- which is a refusal nothing can act
     /// on. The assertion is therefore on the <i>reason</i> as much as on the
     /// state.
     /// </para>
@@ -514,7 +514,7 @@ internal sealed class UpdateTests
 
     /// <summary>
     /// The reclaim removes a marker nobody holds and <b>leaves a held one
-    /// exactly where it is</b> — proved in both directions with the same file.
+    /// exactly where it is</b> -- proved in both directions with the same file.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -528,15 +528,15 @@ internal sealed class UpdateTests
     /// first.
     /// </para>
     /// <para>
-    /// <b>The handle is the product's own</b> —
+    /// <b>The handle is the product's own</b> --
     /// <c>FileAccess.ReadWrite, FileShare.Read</c>, byte for byte what
-    /// <see cref="LiveInstances.Join"/> takes — so what is being asserted is the
+    /// <see cref="LiveInstances.Join"/> takes -- so what is being asserted is the
     /// kernel's sharing rule rather than a convention this test invented.
     /// </para>
     /// <para>
     /// <b>In-process, deliberately.</b> Sharing modes are enforced by the kernel
     /// against handles, not against processes, so a second holder is refused
-    /// whether it is in this process or another one — which is the same argument
+    /// whether it is in this process or another one -- which is the same argument
     /// <see cref="ASecondLiveInstanceIsSeenAndTheFirstThenRefusesToApply"/>
     /// already makes.
     /// </para>
@@ -591,8 +591,8 @@ internal sealed class UpdateTests
     /// <remarks>
     /// <para>
     /// <b>It used to be the same name.</b> <c>LiveInstances.MutexNameFor</c> was
-    /// <c>SessionPath.For(rootAppDir).MutexName</c> — the same construction
-    /// and the same namespace a session's per-directory gate uses — so a session
+    /// <c>SessionPath.For(rootAppDir).MutexName</c> -- the same construction
+    /// and the same namespace a session's per-directory gate uses -- so a session
     /// opened on <c>%LOCALAPPDATA%\BrowserAI</c> collided <i>exactly</i>, and
     /// nothing refuses that path: <c>CanonicalPath</c> refuses network
     /// paths and aliased spellings, and the install root is neither.
@@ -609,7 +609,7 @@ internal sealed class UpdateTests
     /// </para>
     /// <para>
     /// <b>The remedy is the one the review named and the one this product had
-    /// already used once</b> — <c>BrowserProvisioner.MutexPrefix</c> is
+    /// already used once</b> -- <c>BrowserProvisioner.MutexPrefix</c> is
     /// <c>Global\BrowserAI-Provision-</c> for the same reason. Asserted as
     /// <i>different from</i> the per-directory name rather than as a literal, so
     /// it stays true if either construction is ever changed.
@@ -655,8 +655,8 @@ internal sealed class UpdateTests
     /// <remarks>
     /// <para>
     /// <b>This is what stops a hundred starting processes becoming a thundering
-    /// herd.</b> The gate is taken at <see cref="LockScopes.NeverWaits"/> — one
-    /// process reclaims and the rest pay an acquire and leave — which is the
+    /// herd.</b> The gate is taken at <see cref="LockScopes.NeverWaits"/> -- one
+    /// process reclaims and the rest pay an acquire and leave -- which is the
     /// discipline the stray sweep already applies machine-wide, reused rather
     /// than reinvented. The mutex is held on <i>another thread</i> because a
     /// Windows mutex is owned by the thread that waited on it, so this thread
@@ -669,7 +669,7 @@ internal sealed class UpdateTests
     /// <see cref="LockScopes.LiveInstanceGate"/> and said, in as many words,
     /// <i>"nothing about a machine's load can approach it, because the work
     /// bounded is one zero-timeout acquire"</i>. <b>That sentence was falsified:
-    /// one full-suite run in seven on 2026-08-20 measured 5 s 248 ms</b> — not
+    /// one full-suite run in seven on 2026-08-20 measured 5 s 248 ms</b> -- not
     /// in the acquire, which structurally cannot block at a zero timeout, but in
     /// the thread being descheduled while the same tree's suite duration varied
     /// between 1 m 56 s and 5 m 59 s from load outside the repository. <b>A
@@ -677,8 +677,8 @@ internal sealed class UpdateTests
     /// </para>
     /// <para>
     /// <b>What replaced it is the gate's own record of the wait it was asked
-    /// for</b> — <see cref="MachineMutex.LastAcquireTimeout"/>, surfaced on
-    /// <see cref="LiveMarkerReclaim.GateWait"/> — which a starved thread cannot
+    /// for</b> -- <see cref="MachineMutex.LastAcquireTimeout"/>, surfaced on
+    /// <see cref="LiveMarkerReclaim.GateWait"/> -- which a starved thread cannot
     /// move. <b>It is a weaker claim and that is stated rather than glossed:</b>
     /// the assertion is now <i>the pass asked not to wait</i> rather than <i>the
     /// pass did not wait</i>. An edit that passed a real timeout is still caught;
@@ -785,7 +785,7 @@ internal sealed class UpdateTests
     }
 
     /// <summary>
-    /// An <b>undetermined</b> census stages the update and applies nothing —
+    /// An <b>undetermined</b> census stages the update and applies nothing --
     /// byte for byte the outcome a <b>not alone</b> census produces.
     /// </summary>
     /// <remarks>
@@ -795,13 +795,13 @@ internal sealed class UpdateTests
     /// not what the maintainer's instruction was about.</b> The requirement was
     /// that the updater keep treating <c>Undetermined</c> exactly as it treats
     /// <c>NotAlone</c>, and only the service can be asked that: it is the one
-    /// consumer, and every assertion below is on what it <i>did</i> — one
+    /// consumer, and every assertion below is on what it <i>did</i> -- one
     /// download, zero applies, no shutdown request.
     /// </para>
     /// <para>
     /// <b>The census is asserted to be undetermined first, so this cannot pass
     /// for the wrong reason.</b> Without that line an implementation that
-    /// answered <c>NotAlone</c> here — the pre-widening behaviour — would produce
+    /// answered <c>NotAlone</c> here -- the pre-widening behaviour -- would produce
     /// an identical result and the test would report a property it never checked.
     /// </para>
     /// </remarks>
@@ -839,7 +839,7 @@ internal sealed class UpdateTests
     /// ⚠️ <b>Added 2026-08-20, and the line it asserts replaced one that said
     /// only "another BrowserAI is running out of this install".</b> That read the
     /// same whether one peer was up or forty, and read the same again when the
-    /// census could not be taken at all — which is not a wait but a permanent
+    /// census could not be taken at all -- which is not a wait but a permanent
     /// block. Whoever finds this line in a log has to act differently in those
     /// two cases, so the line has to distinguish them.
     /// </para>
@@ -896,7 +896,7 @@ internal sealed class UpdateTests
     /// <remarks>
     /// <b>It asks rather than exits.</b> <c>Update.exe</c> is waiting on this
     /// pid and will not swap <c>current\</c> until it is gone, so the ordinary
-    /// shutdown has to run first — the session locks release, the job objects
+    /// shutdown has to run first -- the session locks release, the job objects
     /// close, the log flushes. An <c>Environment.Exit</c> here would skip all
     /// three.
     /// </remarks>
@@ -963,7 +963,7 @@ internal sealed class UpdateTests
     /// <remarks>
     /// <b>This is the assertion the three-timer design exists for.</b> A stall
     /// timer that is not reset by the thing it watches is an absolute timeout
-    /// wearing a second name — and against a large package on a slow link that
+    /// wearing a second name -- and against a large package on a slow link that
     /// is the difference between an update that lands and one that never can.
     /// The double's <c>FullPackageSize</c> is 112.4 MB, which is what the
     /// 30-minute budget carries at ~500 kbit/s rather than a measured package
@@ -995,7 +995,7 @@ internal sealed class UpdateTests
     /// </summary>
     /// <remarks>
     /// Asserted rather than commented, because the outer deadline stops being a
-    /// crash tripwire the moment it is small enough to fire on a slow link — at
+    /// crash tripwire the moment it is small enough to fire on a slow link -- at
     /// which point it is a second absolute timeout and the design has silently
     /// become the one-timer version it was written against.
     /// </remarks>
@@ -1007,14 +1007,14 @@ internal sealed class UpdateTests
     }
 
     /// <summary>
-    /// Running uninstalled is a supported configuration and must not warn — and
+    /// Running uninstalled is a supported configuration and must not warn -- and
     /// a genuine locator failure still must.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>The record this demotes fired on every startup of a binary Velopack did
-    /// not install</b> — <c>dotnet run</c>, every test host, and the configuration
-    /// CI runs in — at <c>Warning</c>, on stderr, which is the stream this project
+    /// not install</b> -- <c>dotnet run</c>, every test host, and the configuration
+    /// CI runs in -- at <c>Warning</c>, on stderr, which is the stream this project
     /// relies on for diagnosis. A hundred of them per saturation run, every one
     /// of them saying that nothing was wrong.
     /// </para>
@@ -1025,8 +1025,8 @@ internal sealed class UpdateTests
     /// <c>Warn</c>; upstream's other warnings and all of its errors carry
     /// different text and different levels. The <c>Error</c> arm matters most:
     /// upstream's message admits it cannot tell <i>not installed</i> from
-    /// <i>packaged improperly</i>, and the record that DOES tell them apart —
-    /// <i>"unable to locate a valid manifest file"</i> — is logged at
+    /// <i>packaged improperly</i>, and the record that DOES tell them apart --
+    /// <i>"unable to locate a valid manifest file"</i> -- is logged at
     /// <c>Error</c> and is untouched.
     /// </para>
     /// </remarks>
@@ -1128,13 +1128,13 @@ internal sealed class UpdateTests
     /// nothing asserted it.</b> Its default is <see langword="true"/>: an
     /// installed BrowserAI would <c>exit(0)</c> at handshake time and relaunch
     /// detached with dead pipes, which presents to the client as a server that
-    /// started and vanished — the exact failure shape this project exists to
+    /// started and vanished -- the exact failure shape this project exists to
     /// remove.
     /// </para>
     /// <para>
     /// <b>Order is asserted as well as presence, because the hazard is a
     /// reorder.</b> The same call serves the installer's own fast-exit hooks, so
-    /// anything placed above it runs inside every hook too — and a line moved
+    /// anything placed above it runs inside every hook too -- and a line moved
     /// above it breaks nothing that any other test looks at. The four names
     /// checked below are the startup steps that must come after it, each read
     /// from <c>Program.cs</c> by position.
@@ -1185,7 +1185,7 @@ internal sealed class UpdateTests
         // install root instead, and the environment read moved inside
         // `LocalAppDataPaths.Overridden` so that a hook and `Main` cannot answer
         // it differently. The loop below used to skip a name it could not find,
-        // so either move would have left this arm green while guarding nothing —
+        // so either move would have left this arm green while guarding nothing --
         // which is what "must not silently lose an arm" means. A name that is no
         // longer in Program.cs is now a red test that says so, and whoever moves
         // one next has to re-point it deliberately.
@@ -1203,7 +1203,7 @@ internal sealed class UpdateTests
 
             if (at < 0)
             {
-                late.Add($"'{after}' is no longer in Program.cs at all, so this arm is guarding nothing. Re-point it at whatever took its place — the property is that every startup step runs AFTER VelopackStartup.Run, which also serves the installer's fast-exit hooks.");
+                late.Add($"'{after}' is no longer in Program.cs at all, so this arm is guarding nothing. Re-point it at whatever took its place -- the property is that every startup step runs AFTER VelopackStartup.Run, which also serves the installer's fast-exit hooks.");
                 continue;
             }
 
@@ -1224,7 +1224,7 @@ internal sealed class UpdateTests
     /// <b>Either half alone is a defect, and the one-sided version is a shipping
     /// product.</b> <c>AllowVersionDowngrade</c> defaults to
     /// <see langword="false"/>, which reports an available rollback as *"no
-    /// updates"* — silently. The pipeline half is the release-validation rule
+    /// updates"* -- silently. The pipeline half is the release-validation rule
     /// reading *monotonic <b>or</b> an explicit rollback republish*; with the
     /// client half on and the pipeline half missing, the runtime accepts a
     /// rollback the build refuses to emit, which is the state a shipping
@@ -1253,7 +1253,7 @@ internal sealed class UpdateTests
     /// </summary>
     /// <remarks>
     /// <b>§G calls this its worst hazard because it is unrecoverable in the
-    /// field</b> — a client that cannot reach the feed cannot be told to roll
+    /// field</b> -- a client that cannot reach the feed cannot be told to roll
     /// back either, and the only fix is a manual reinstall of every machine. The
     /// three feed-URL shapes are asserted above; <b>the assignment that consumes
     /// them was asserted by nothing</b>, so a deletion would leave every URL
@@ -1273,7 +1273,7 @@ internal sealed class UpdateTests
         // draft of this test proved why: `UpdateFeed`'s refusal messages name
         // `UpdateOptions.ExplicitChannel` in the sentence that tells a caller
         // where the channel belongs, so a scan for the bare name fails on the
-        // documentation of the very rule it is enforcing — which trains the next
+        // documentation of the very rule it is enforcing -- which trains the next
         // person to delete the explanation to make a test pass.
         var offenders = new List<string>();
 
@@ -1299,7 +1299,7 @@ internal sealed class UpdateTests
     /// <remarks>
     /// <para>
     /// <b>It reads as "next to the binary" and resolves inside
-    /// <c>current\</c></b>, which an update replaces wholesale — so a log, a
+    /// <c>current\</c></b>, which an update replaces wholesale -- so a log, a
     /// cache or a browser tree placed there is deleted by the event most likely
     /// to have produced the line somebody came to read. A shipped product
     /// examined for this project does exactly this and carries a 10-day log
@@ -1338,7 +1338,7 @@ internal sealed class UpdateTests
     }
 
     /// <summary>
-    /// <b>No path BrowserAI keeps data in resolves under an install root</b> —
+    /// <b>No path BrowserAI keeps data in resolves under an install root</b> --
     /// not under the one Velopack creates for this pack id, and not under one
     /// <c>--installto</c> chose.
     /// </summary>
@@ -1346,9 +1346,9 @@ internal sealed class UpdateTests
     /// <para>
     /// <b>The install root is destroyed twice over, by design.</b>
     /// <c>Setup.exe</c> renames a non-empty root aside and deletes it on success
-    /// — a repair or overwrite install is exactly that path — and uninstall
+    /// -- a repair or overwrite install is exactly that path -- and uninstall
     /// calls <c>remove_dir_contents</c> on the whole root
-    /// ([kb](../../kb/packaging/velopack.md#where-state-may-live--the-finding-the-provisioning-design-rests-on)).
+    /// ([kb](../../kb/packaging/velopack.md#where-state-may-live----the-finding-the-provisioning-design-rests-on)).
     /// Until 2026-09-15 every member of <see cref="IAppPaths"/> was a child of
     /// that root, so a re-run of the installer cost 768 MB of provisioned
     /// browsers and the session index with them. The <c>current\</c> swap that
@@ -1357,9 +1357,9 @@ internal sealed class UpdateTests
     /// </para>
     /// <para>
     /// <b>Two halves, and the first is the one that could be planted red.</b>
-    /// The scan pins the rule that makes the second half true — a
+    /// The scan pins the rule that makes the second half true -- a
     /// <see cref="LocalAppDataPaths"/> may only be composed from nothing or from
-    /// the override, never from a located install root — and it fails against the
+    /// the override, never from a located install root -- and it fails against the
     /// wiring that shipped before this date, where <c>Program</c> passed
     /// <c>InstallLocation.RootAppDir</c> and the registration hook passed the
     /// grandparent of its own image path. The second half is the standing
@@ -1370,7 +1370,7 @@ internal sealed class UpdateTests
     /// <b>Never derive the data root from the install root or from the image
     /// path.</b> Both are available and both are wrong: the portable zip has no
     /// install root at all, and a hook's image path is
-    /// <c>&lt;root&gt;\current\BrowserAI.exe</c> — so a data root derived from it
+    /// <c>&lt;root&gt;\current\BrowserAI.exe</c> -- so a data root derived from it
     /// moves with <c>--installto</c>, and the uninstall hook would then offer to
     /// delete a directory the running product never used.
     /// </para>
@@ -1396,7 +1396,7 @@ internal sealed class UpdateTests
                 if (argument.Length is not 0 && !argument.Contains("overridden", StringComparison.OrdinalIgnoreCase))
                 {
                     offenders.Add(
-                        $"{file.Name} composes the data seam as '{Composition}{argument})'. The data root is a constant that only {Program.AppRootVariable} moves, so the argument may be nothing at all or the override and nothing else — an install root reaching it puts the browsers, the session index and the log inside a directory Setup.exe renames aside and deletes.");
+                        $"{file.Name} composes the data seam as '{Composition}{argument})'. The data root is a constant that only {Program.AppRootVariable} moves, so the argument may be nothing at all or the override and nothing else -- an install root reaching it puts the browsers, the session index and the log inside a directory Setup.exe renames aside and deletes.");
                 }
 
                 at = code.IndexOf(Composition, at + Composition.Length, StringComparison.Ordinal);
@@ -1457,7 +1457,7 @@ internal sealed class UpdateTests
     /// </summary>
     /// <remarks>
     /// <b>Velopack prunes <c>packages\</c> to the current full package and deltas
-    /// are forward-only</b> — watched happening at step 19: after 0.9.0 → 0.9.1,
+    /// are forward-only</b> -- watched happening at step 19: after 0.9.0 → 0.9.1,
     /// the 0.9.0 package it had been reconstructed from was gone. So an
     /// unarchived release has no rollback target at all, and the symptom arrives
     /// only when somebody needs to roll back. The refusal is asserted with the

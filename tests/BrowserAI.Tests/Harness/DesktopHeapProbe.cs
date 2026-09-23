@@ -13,7 +13,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>For failure messages, and only for them</b> — the same bar
+/// <b>For failure messages, and only for them</b> -- the same bar
 /// <see cref="MachineLoad"/> is held to, for the same reason. What this returns
 /// is a property of whatever else is on the machine's desktop, so an assertion
 /// on the verdict would be a test that passes or fails depending on the
@@ -26,7 +26,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>Why this exists at all.</b> A desktop heap spent to the byte kills a
 /// Chromium before it creates a single window: <c>CreateWindowExW</c> is
 /// refused, and <c>WindowImpl::Init</c> in <c>ui/gfx/win/window_impl.cc</c> ends
-/// that path in a <c>NOTREACHED()</c> and a check rather than an error return —
+/// that path in a <c>NOTREACHED()</c> and a check rather than an error return --
 /// and a check does not log. What comes out is a browser that died with nothing
 /// on either stream, a five-line log and a clean bill of health from every
 /// system-wide counter, because the resource that ran out is the one nothing can
@@ -45,7 +45,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>The title is 2,048 characters, and that is the measured regime rather than
 /// a round number.</b> Window text lives in the desktop heap, so the length of
-/// the title <i>is</i> the size of the allocation being attempted — and the rig
+/// the title <i>is</i> the size of the allocation being attempted -- and the rig
 /// established that a heap with one window of headroom (≈4.4 KB) still kills a
 /// browser, while a one-character window fits in far less than that. A probe
 /// that asked for the smallest possible allocation would report a clean create
@@ -65,19 +65,19 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <b>The zero is this call's answer and not a stale one</b>, which is what
-/// makes the paragraph above safe to act on: on .NET — and unlike .NET
-/// Framework — the error information is cleared to 0 <i>before</i> the callee is
+/// makes the paragraph above safe to act on: on .NET -- and unlike .NET
+/// Framework -- the error information is cleared to 0 <i>before</i> the callee is
 /// invoked whenever <c>SetLastError</c> is set, so
 /// <see cref="Marshal.GetLastPInvokeError"/> afterwards is what this call set,
 /// including when what it set is nothing. *Verified 2026-08-29 against
 /// Microsoft's own reference for <c>SetLastError</c> and
-/// <c>Marshal.GetLastWin32Error</c>; **read rather than run** — the generated
+/// <c>Marshal.GetLastWin32Error</c>; **read rather than run** -- the generated
 /// stub is not emitted to disk in this build, so nothing here has looked at it.*
 /// </para>
 /// <para>
 /// <b>What it cannot see, said here rather than implied.</b> It reads the
 /// desktop <i>this thread</i> is on, which is the desktop a browser launched by
-/// this suite inherits — so it is the right desktop today and would silently
+/// this suite inherits -- so it is the right desktop today and would silently
 /// become the wrong one if a launcher ever gave its browsers a desktop of their
 /// own. And it is one sample: a heap that was refilled between the death and the
 /// probe reads clean, which is a false negative it cannot distinguish from a
@@ -129,7 +129,7 @@ internal static partial class DesktopHeapProbe
     private const int ErrorNoMoreUserHandles = 1158;
 
     /// <summary>
-    /// <c>HWND_MESSAGE</c>: the parent that makes a window message-only —
+    /// <c>HWND_MESSAGE</c>: the parent that makes a window message-only --
     /// invisible, never enumerated, and scoped to this window station and
     /// desktop, which is the scope being asked about.
     /// </summary>
@@ -213,7 +213,7 @@ internal static partial class DesktopHeapProbe
             "CreateWindowExW was refused and set no last error at all (GetLastError = 0). READ THAT AS THE DIAGNOSIS "
             + "RATHER THAN AS A GAP: measured 2026-08-27 on the desktop-heap rig, a refusal for want of desktop heap "
             + $"does not reliably set one, and with a {TitleLength.ToString(CultureInfo.InvariantCulture)}-character title it reported 0 on both a 512 KB heap and a "
-            + "20,480 KB one, where one-character titles reported ERROR_NOT_ENOUGH_MEMORY — and the long-title regime is "
+            + "20,480 KB one, where one-character titles reported ERROR_NOT_ENOUGH_MEMORY -- and the long-title regime is "
             + "the one that reproduces the shape seen in the wild. The zero is this call's own answer rather than a "
             + "stale one: on .NET the error is cleared before a SetLastError import is invoked. This is also the branch "
             + "Chromium crashes on rather than reports, which is why the browser said nothing."),
@@ -226,7 +226,7 @@ internal static partial class DesktopHeapProbe
             ExhaustedVerdict,
             $"CreateWindowExW was refused with ERROR_NO_MORE_USER_HANDLES ({ErrorNoMoreUserHandles.ToString(CultureInfo.InvariantCulture)}) on this desktop. "
             + "This desktop is out of USER handles rather than out of heap bytes, which the rig produced by filling with "
-            + "many small windows instead of few large ones — 23,718 against 4,637 — and it kills a browser earlier still, "
+            + "many small windows instead of few large ones -- 23,718 against 4,637 -- and it kills a browser earlier still, "
             + "with no log file at all. Same subsystem, same outcome for the browser, different number."),
         _ => (
             RefusedElsewhereVerdict,

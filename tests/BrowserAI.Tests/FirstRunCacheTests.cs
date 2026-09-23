@@ -15,7 +15,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Every test here is about the mechanism, not about the machine.</b> None of
 /// them downloads anything and none of them touches
-/// <see cref="FirstRunCache.Root"/> — the round trip below publishes a
+/// <see cref="FirstRunCache.Root"/> -- the round trip below publishes a
 /// three-file tree into a scratch directory, because a test that published into
 /// the real cache would prune the real entry out from under a first-run test
 /// running beside it. That is not hypothetical: this suite runs four tests at
@@ -25,7 +25,7 @@ namespace BrowserAI.Tests;
 /// <b>What this file exists to stop is the cache quietly becoming permanent.</b>
 /// A TTL that never expires, a stamp in the future that is trusted forever, a
 /// release run that reads <c>.work\</c> instead of the CDN, or a half-copied
-/// tree that satisfies the marker check — each of those turns
+/// tree that satisfies the marker check -- each of those turns
 /// <see cref="FirstRunProvisioningTests"/> into a test that no longer exercises
 /// what its name claims, which is the failure class this repository exists to
 /// eliminate.
@@ -39,7 +39,7 @@ internal sealed class FirstRunCacheTests
     /// <remarks>
     /// <b>Deliberately not a real revision.</b> The cache matches
     /// <c>ffmpeg-*</c>, so a revision number here would be a second place for
-    /// upstream's to be recorded — and a stale one reads as a claim about what
+    /// upstream's to be recorded -- and a stale one reads as a claim about what
     /// this build installs rather than as the placeholder it is.
     /// </remarks>
     private const string PlantedFfmpeg = "ffmpeg-0";
@@ -198,7 +198,7 @@ internal sealed class FirstRunCacheTests
     /// for a month after that stopped being true.</b> It was a literal in the
     /// sentence, so the 2026-09-16 re-measurement that moved
     /// <see cref="BrowserProvisioner.FirstRunDownloadBytes"/> to 207,274,189 B
-    /// moved every other quotation of the figure and left this one — in the one
+    /// moved every other quotation of the figure and left this one -- in the one
     /// place that reads like a measurement, beside the elapsed seconds and the
     /// real file count the same run actually observed.
     /// </para>
@@ -207,7 +207,7 @@ internal sealed class FirstRunCacheTests
     /// figure itself belongs to
     /// <c>ProvisioningTests.TheQuotedFirstRunDownloadSizeIsTheFigureTheKnowledgeBasePublishes</c>,
     /// which holds it against the article that measures it. This arm holds that
-    /// the sentence cannot disagree with it — which is a different failure, and
+    /// the sentence cannot disagree with it -- which is a different failure, and
     /// the one that actually happened.
     /// </para>
     /// </remarks>
@@ -250,7 +250,7 @@ internal sealed class FirstRunCacheTests
         var root = Path.Combine(scratch.Path, label);
 
         // ⚠️ The sentence is READ, never discarded. Publish is deliberately
-        // never fatal — a cache that will not publish costs a download — so a
+        // never fatal -- a cache that will not publish costs a download -- so a
         // publish that failed used to reach the line below as an empty
         // directory and fail with "Sequence contains no elements", which names
         // neither the operation nor the reason. Measured 2026-08-17 under
@@ -273,7 +273,7 @@ internal sealed class FirstRunCacheTests
     /// </summary>
     /// <remarks>
     /// <b>Three files rather than 318.</b> Everything the cache checks is a
-    /// name, a marker or a census, and none of it needs a real Chromium — so
+    /// name, a marker or a census, and none of it needs a real Chromium -- so
     /// these tests cost milliseconds and the real layout is asserted by the run
     /// that actually downloads it.
     /// </remarks>

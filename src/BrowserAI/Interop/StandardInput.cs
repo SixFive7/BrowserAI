@@ -12,12 +12,12 @@ namespace BrowserAI.Interop;
 /// <remarks>
 /// <para>
 /// <b>It exists for one decision and it is a teardown decision.</b> BrowserAI
-/// has two ways of learning that the conversation is over — stdin reaching
+/// has two ways of learning that the conversation is over -- stdin reaching
 /// end-of-file, and an <c>OpenProcess</c> handle on the launcher being signalled
 /// (<see cref="ClientLivenessWatcher"/>). A console stdin disables the first:
 /// there is no writer to close it, so the read parks for ever. That is fine
 /// while the second still works, and it is the exact shape that produced a
-/// server running until the machine was rebooted when it did not — measured
+/// server running until the machine was rebooted when it did not -- measured
 /// 2026-09-14 against the installer's own post-install start.
 /// </para>
 /// <para>
@@ -29,8 +29,8 @@ namespace BrowserAI.Interop;
 /// actually means.
 /// </para>
 /// <para>
-/// <b>Never <c>System.Console</c>.</b> It is banned process-wide — see
-/// <c>src/BrowserAI/BannedSymbols.txt</c> — and
+/// <b>Never <c>System.Console</c>.</b> It is banned process-wide -- see
+/// <c>src/BrowserAI/BannedSymbols.txt</c> -- and
 /// <c>Console.IsInputRedirected</c> would answer a near-enough question by
 /// touching the type that owns the wire.
 /// </para>

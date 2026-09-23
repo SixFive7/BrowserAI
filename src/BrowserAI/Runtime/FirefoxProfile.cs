@@ -16,14 +16,14 @@ namespace BrowserAI.Runtime;
 /// <b>The preflight is mandatory rather than defence in depth.</b> Playwright's
 /// <c>isProfileLocked</c> checks only Chromium's <c>lockfile</c> and never
 /// Firefox's <c>parent.lock</c>, so a collision is not refused anywhere upstream
-/// — Firefox raises a <b>native modal on the Windows desktop</b> and the launch
+/// -- Firefox raises a <b>native modal on the Windows desktop</b> and the launch
 /// blocks against Playwright's three-minute launch timeout. On a background MCP
 /// server with nobody at the keyboard that is an invisible hang, which is the
 /// founding failure shape of this project rather than an inconvenience.
 /// </para>
 /// <para>
 /// <b>BrowserAI's own session lock is taken before any child starts, so the
-/// collision is already unreachable by ordering — and that is exactly why this
+/// collision is already unreachable by ordering -- and that is exactly why this
 /// exists.</b> Coverage by ordering is a guarantee no test states and no
 /// refactor notices losing. The preflight says it out loud, in the one function
 /// every child launch passes through, and a test holds the lock and watches it
@@ -33,8 +33,8 @@ namespace BrowserAI.Runtime;
 /// <b>Existence proves nothing; only a sharing violation does.</b> Chromium's
 /// <c>lockfile</c> is opened <c>FILE_FLAG_DELETE_ON_CLOSE</c>, so the kernel
 /// removes it however the browser dies and its presence is liveness. Firefox
-/// keeps <c>parent.lock</c> deliberately — it reads the mtime to detect a startup
-/// crash — so a profile that has ever been used has one, and a check on
+/// keeps <c>parent.lock</c> deliberately -- it reads the mtime to detect a startup
+/// crash -- so a profile that has ever been used has one, and a check on
 /// existence would refuse every second launch of a healthy session.
 /// </para>
 /// </remarks>
@@ -59,14 +59,14 @@ internal static class FirefoxProfile
     /// than cleaned up after.</b> Firefox calls
     /// <c>RegisterApplicationRestart</c> in <c>nsAppRunner.cpp</c> with the
     /// original argv, so <c>-profile &lt;dir&gt;</c> survives into whatever
-    /// Windows relaunches — and it observes this pref at runtime, calling
+    /// Windows relaunches -- and it observes this pref at runtime, calling
     /// <c>UnregisterApplicationRestart</c> when it is false.
     /// </para>
     /// <para>
     /// ⚠️ <b>It is load-bearing for Firefox and would be pointless for
     /// Chromium, and the difference was measured rather than assumed.</b>
-    /// Chromium's registration fails on length — Playwright's command line
-    /// overshoots the 1023-character limit — so a live Chromium answers
+    /// Chromium's registration fails on length -- Playwright's command line
+    /// overshoots the 1023-character limit -- so a live Chromium answers
     /// <c>ERROR_NOT_FOUND</c> with nothing set. Firefox's registration does not
     /// go through that call site at all: measured 2026-08-16 against a Firefox
     /// BrowserAI provisioned, exactly one process in the tree answered
@@ -76,7 +76,7 @@ internal static class FirefoxProfile
     public const string RestartRegistrationPreference = "toolkit.winRegisterApplicationRestart";
 
     /// <summary>Where a profile directory's lock file is.</summary>
-    /// <param name="profileDirectory">The profile directory — Playwright's <c>userDataDir</c>.</param>
+    /// <param name="profileDirectory">The profile directory -- Playwright's <c>userDataDir</c>.</param>
     /// <returns>The absolute path of <c>parent.lock</c> inside it.</returns>
     public static string LockFileIn(string profileDirectory)
     {
@@ -92,7 +92,7 @@ internal static class FirefoxProfile
     /// <para>
     /// <b>The open is for write and shares everything.</b> Firefox holds
     /// <c>parent.lock</c> with no sharing at all, so any open of ours is refused
-    /// while it lives — which means our own share mode decides nothing about the
+    /// while it lives -- which means our own share mode decides nothing about the
     /// answer and everything about the damage. Sharing freely makes the
     /// microsecond this handle exists invisible to a second BrowserAI performing
     /// the same preflight; asking for exclusivity would make two harmless
@@ -105,13 +105,13 @@ internal static class FirefoxProfile
     /// </para>
     /// <para>
     /// <b>An open that fails for any other reason is <i>not</i> free.</b> A
-    /// denied ACL, a path that cannot be reached, a volume that vanished — none
+    /// denied ACL, a path that cannot be reached, a volume that vanished -- none
     /// of them prove the profile is available, and the failure this guards
     /// against costs three minutes of silence. The result says which case it is
     /// so the refusal can too.
     /// </para>
     /// </remarks>
-    /// <param name="profileDirectory">The profile directory — Playwright's <c>userDataDir</c>.</param>
+    /// <param name="profileDirectory">The profile directory -- Playwright's <c>userDataDir</c>.</param>
     /// <returns>What the lock says.</returns>
     public static FirefoxProfileState Inspect(string profileDirectory)
     {
@@ -158,8 +158,8 @@ internal static class FirefoxProfile
     /// <remarks>
     /// <para>
     /// <b>The Firefox half of attribution, and the only half that differs from
-    /// Chromium's.</b> Detection — is a browser out of BrowserAI's own tree
-    /// running at all — is a full-image-path match and covers both families for
+    /// Chromium's.</b> Detection -- is a browser out of BrowserAI's own tree
+    /// running at all -- is a full-image-path match and covers both families for
     /// free. What Chromium answers with a message window's title, Firefox answers
     /// only here.
     /// </para>
@@ -168,7 +168,7 @@ internal static class FirefoxProfile
     /// intersect what comes back with processes it has independently established
     /// are running <i>its own</i> binaries, by full image path and creation time.
     /// The Restart Manager will happily name the user's personal Firefox if the
-    /// profile handed in is the user's — which is precisely why the result of
+    /// profile handed in is the user's -- which is precisely why the result of
     /// this call may never be an input to a termination on its own.
     /// </para>
     /// </remarks>
@@ -221,7 +221,7 @@ internal enum FirefoxProfileLockState
 /// <param name="LockFile">The file that was examined.</param>
 /// <param name="Holders">Who holds it, when Windows would say.</param>
 /// <param name="Why">
-/// What went wrong, when something did — either the reason the file could not be
+/// What went wrong, when something did -- either the reason the file could not be
 /// examined, or the reason its holder could not be named.
 /// </param>
 internal sealed record FirefoxProfileState(
@@ -241,15 +241,15 @@ internal sealed record FirefoxProfileState(
 /// <para>
 /// <b>An exception rather than a returned refusal, because of where the check
 /// has to be.</b> The guard belongs in the one function every child launch
-/// passes through — which builds launch options and has no way to express "no
-/// launch" in its return type — and every other reason that function refuses
+/// passes through -- which builds launch options and has no way to express "no
+/// launch" in its return type -- and every other reason that function refuses
 /// (an incomplete payload, a relative browsers root) throws as well. Answering
 /// with <see langword="null"/> options would leave a caller free to ignore it.
 /// </para>
 /// <para>
 /// <b>The message is the error catalogue's row 11 verbatim</b>, so whatever
-/// surfaces it — a session tool's refusal, a log line, a stack trace in the
-/// process log — says the same sentence, and the catalogue's census can prove
+/// surfaces it -- a session tool's refusal, a log line, a stack trace in the
+/// process log -- says the same sentence, and the catalogue's census can prove
 /// this row is reachable.
 /// </para>
 /// </remarks>

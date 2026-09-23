@@ -14,7 +14,7 @@ namespace BrowserAI.Tests.Harness;
 /// running at once: a single in-process round trip took <b>1.51 s</b> and
 /// <b>2.27 s</b> against an 800 ms idle period, so
 /// <c>BrowserIdleTimerTests</c>'s driving loop could not achieve its own
-/// premise and failed five times in twenty runs — every time with the product
+/// premise and failed five times in twenty runs -- every time with the product
 /// behaving correctly. Four retries and a budget already raised from two
 /// seconds to ten had been spent on that, which is two of the three moves this
 /// repository forbids.
@@ -22,7 +22,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Hand-written rather than taken from
 /// <c>Microsoft.Extensions.TimeProvider.Testing</c>.</b> What is needed is
-/// forty lines of it — advance, and fire whatever is due — and the package
+/// forty lines of it -- advance, and fire whatever is due -- and the package
 /// would be a floating dependency, a licence entry and an upstream review
 /// surface for a type the suite can own outright. That trade is the same one
 /// this suite already made for <c>RawStdioClient</c> and
@@ -37,7 +37,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <b>What it deliberately does not model.</b> There is no automatic advance,
-/// no wall-clock component and no thread of its own — a test that forgets to
+/// no wall-clock component and no thread of its own -- a test that forgets to
 /// advance sees a timer that never fires, which is a visible failure rather
 /// than a flaky one.
 /// </para>
@@ -182,7 +182,7 @@ internal sealed class ManualClock : TimeProvider
         /// ordering is the whole of what keeps this class from deadlocking.</b>
         /// <see cref="ManualClock.AdvanceTicks"/> holds the clock's lock and asks
         /// every timer for its due time, so a timer that took its own lock and
-        /// then reached for the clock's would close the cycle — and it would
+        /// then reached for the clock's would close the cycle -- and it would
         /// close it exactly when a callback re-armed during a dispatch, which is
         /// the one path this clock exists to model.
         /// </remarks>

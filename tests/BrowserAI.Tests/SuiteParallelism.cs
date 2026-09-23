@@ -16,7 +16,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>Corrected 2026-08-17 (previously <c>4</c>, "chosen because it was
 /// measured … the resource being contended is not CPU, it is the machine's
 /// capacity to start browsers").</b> That cap was added against a 1-in-7 mass
-/// failure whose cause was <i>never established</i> — its own note said so,
+/// failure whose cause was <i>never established</i> -- its own note said so,
 /// twice. It was a workaround, and it was hiding four defects. This one is not
 /// the same kind of number: it is a value the suite is <b>demonstrated</b> to
 /// pass at, sitting beside a named list of what has to be fixed before it can
@@ -24,7 +24,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️⚠️ <b>DO NOT "FIX" A RED RUN BY CAPPING THIS.</b> The maintainer's ruling,
-/// 2026-08-17, verbatim: <i>"Keep unbounded regardless — It is also a test for
+/// 2026-08-17, verbatim: <i>"Keep unbounded regardless -- It is also a test for
 /// race conditions and interferences. It is not only there for speed."</i>
 /// Running every test at once is a <b>race detector</b>, and the fixture that
 /// only ever runs four-wide finds nothing. The last person who read a red run as
@@ -33,13 +33,13 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ✅ <b>Unbounded is quiet as of 2026-08-18: 20 consecutive green runs</b>, 419
-/// tests, 0 failed, 0 skipped, <b>72–142 s</b> each — and that streak ran while
+/// tests, 0 failed, 0 skipped, <b>72-142 s</b> each -- and that streak ran while
 /// three other agents were building and testing on the same machine, which is
 /// why the wall clock moves by a factor of two across it and why it is the
 /// number worth quoting. It was red <b>11 runs in 20</b> the day before.
 /// Nothing about the limit changed; what changed is that every <i>promptness
 /// assertion</i> in the suite was deleted or made event-driven, and every
-/// surviving duration was given headroom a starved machine cannot reach — the
+/// surviving duration was given headroom a starved machine cannot reach -- the
 /// maintainer's instruction, verbatim: <i>"Remove any timings other than
 /// timeouts that catch really hung processes. Even on slow systems."</i> The
 /// vocabulary those bounds now come from is <c>TestDefaults</c>, and its remarks
@@ -72,7 +72,7 @@ namespace BrowserAI.Tests;
 /// for a marker nobody was going to write. Fixed in <c>BrowserProvisioner</c>.
 /// </description></item>
 /// <item><description>
-/// <b>Two wall-clock assertions over an async pipeline</b> — one asserting a
+/// <b>Two wall-clock assertions over an async pipeline</b> -- one asserting a
 /// <i>rate</i>, one a stopwatch against a budget already raised once. The first
 /// is now driven by a <c>ManualClock</c> through a
 /// <see cref="TimeProvider"/> seam on the product; the second is deleted,
@@ -93,9 +93,9 @@ namespace BrowserAI.Tests;
 /// bounds that were promptness assertions in disguise</b>. They did not fail
 /// because anything was wrong; they failed because the machine was busy, and
 /// every one of them reported something other than "this machine is busy". The
-/// three that were named here — <c>BrowserContainmentTests</c>' 180 s
+/// three that were named here -- <c>BrowserContainmentTests</c>' 180 s
 /// <c>ReportPatience</c>, <c>FirefoxTests</c>' launch budget, and
-/// <c>TestDefaults.Patience</c> at thirty seconds — are all gone, and so are the
+/// <c>TestDefaults.Patience</c> at thirty seconds -- are all gone, and so are the
 /// twenty-odd that were not named. The whole failure population at unbounded was
 /// three messages: <c>Initialization timed out</c> (46), <c>No frame arrived on
 /// this pipe within 30 s</c> (71) and a bare <c>A task was canceled</c> (48).
@@ -120,7 +120,7 @@ namespace BrowserAI.Tests;
 /// <list type="bullet">
 /// <item><description>
 /// <b>Limit 16: 13 consecutive green runs</b>, 419 tests, 0 failed, 0 skipped,
-/// 76.5–104 s. The streak was stopped at thirteen because the machine was needed,
+/// 76.5-104 s. The streak was stopped at thirteen because the machine was needed,
 /// not because it broke.
 /// </description></item>
 /// <item><description>
@@ -131,15 +131,15 @@ namespace BrowserAI.Tests;
 /// <para>
 /// Flipping <c>Limit</c> to <see cref="Demonstrated"/> is a one-line, informed
 /// choice. Flipping it because a run went red is the mistake this whole comment
-/// exists to prevent — and it is now also the wrong diagnosis, because the class
+/// exists to prevent -- and it is now also the wrong diagnosis, because the class
 /// of failure that made unbounded red has been removed rather than accommodated.
 /// </para>
 /// <para>
 /// <b>Wall clock, and what is actually in it.</b> Before this work:
-/// <b>33.7 s</b> at four-wide, with no saturation test. Now: <b>76.5–107 s</b>.
+/// <b>33.7 s</b> at four-wide, with no saturation test. Now: <b>76.5-107 s</b>.
 /// The two are not comparable as a parallelism measurement, because
 /// <c>SaturationTests</c> is new, is <c>[NotInParallel]</c>, and takes the
-/// machine to itself for ~80–96 s of that. The parallelism change on its own,
+/// machine to itself for ~80-96 s of that. The parallelism change on its own,
 /// measured before the saturation test existed, was <b>33.7 s → ~20 s</b>.
 /// </para>
 /// </remarks>
@@ -168,7 +168,7 @@ internal sealed class SuiteParallelism : IParallelLimit
     /// </para>
     /// <para>
     /// ⚠️ <b>It is no longer the fallback it was written as, and it is kept
-    /// anyway — deliberately.</b> The reason it existed was <i>"if a green gate
+    /// anyway -- deliberately.</b> The reason it existed was <i>"if a green gate
     /// is needed before the timing work lands"</i>, and that work landed on
     /// 2026-08-18. Deleting it then was tempting and would have been wrong twice
     /// over. It is a <b>measurement</b>, and this repository does not delete

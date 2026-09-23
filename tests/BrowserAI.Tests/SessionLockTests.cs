@@ -18,7 +18,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The three lock scopes under real concurrency — the decision
+/// The three lock scopes under real concurrency -- the decision
 /// [DECISIONS → Still open](../../DECISIONS.md#still-open) named as settled on paper
 /// and unexercised.
 /// </summary>
@@ -36,8 +36,8 @@ namespace BrowserAI.Tests;
 /// so a failed assertion unwinding past the scope takes the whole tree with it,
 /// and every probe additionally exits on its own after two minutes. The
 /// directories are under the suite's scratch root, which is reclaimed at the
-/// start of every run. The one piece of machine-wide state these tests create —
-/// a named mutex — is named from a directory that carries a fresh GUID, so a run
+/// start of every run. The one piece of machine-wide state these tests create --
+/// a named mutex -- is named from a directory that carries a fresh GUID, so a run
 /// can never inherit one from a previous run and quietly test nothing.
 /// </para>
 /// </remarks>
@@ -58,7 +58,7 @@ internal sealed class SessionLockTests
     /// <remarks>
     /// The design target is ~100 concurrent BrowserAI processes. Sixteen is what
     /// the suite pays for on every run; the same test was also run at
-    /// <b>64</b> on 2026-08-16, twice, with the same result — one acquired,
+    /// <b>64</b> on 2026-08-16, twice, with the same result -- one acquired,
     /// sixty-three told who had it, the slowest refusal at 1.40 s against the
     /// five-second gate. Re-establish by raising this constant, rebuilding and
     /// running this test alone. The number recorded in
@@ -73,7 +73,7 @@ internal sealed class SessionLockTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Not a hang detector and not a promptness assertion — the inverse of
+    /// <b>Not a hang detector and not a promptness assertion -- the inverse of
     /// both.</b> Everything else in this suite bounds how long something may
     /// take, and must be unreachable by a slow machine. This bounds how long a
     /// call is <i>observed failing to return</i>, so a slow, starved or paging
@@ -95,7 +95,7 @@ internal sealed class SessionLockTests
     /// were added 2026-08-24 for adversarial review B4, where the excluded
     /// behaviour is a disposal that contends with nothing and returns in
     /// microseconds, and the required behaviour is a wait that <b>cannot</b> end
-    /// until the thread doing the watching lets it — so there is no load under
+    /// until the thread doing the watching lets it -- so there is no load under
     /// which the fixed code reaches this bound at all.
     /// </para>
     /// </remarks>
@@ -146,7 +146,7 @@ internal sealed class SessionLockTests
             // than `Held`, and the run that caught it recorded only that much: not
             // which outcome, not the holder it named, not what was on disk. The
             // property under test is a property of sixteen processes, so a
-            // failure that shows one of them cannot be diagnosed — it took twenty
+            // failure that shows one of them cannot be diagnosed -- it took twenty
             // further runs to not reproduce. The dossier is the whole set, and it
             // is read before the release flag is written, so the winner is still
             // holding while it is taken.
@@ -178,7 +178,7 @@ internal sealed class SessionLockTests
                 // ⚠️ This is NOT a promptness assertion, and the distinction is
                 // the whole reason the gate was re-sized on 2026-08-18. What it
                 // asserts is that no contender reached the gate's timeout, which
-                // is the same statement as "every refusal named the holder" —
+                // is the same statement as "every refusal named the holder" --
                 // reaching it produces `Busy`, which the outcome assertion above
                 // catches first. It is kept because a build that changed `Busy`
                 // into something else would slip past that one.
@@ -219,7 +219,7 @@ internal sealed class SessionLockTests
     /// </para>
     /// <para>
     /// <b>Why this exists.</b> Every process that wanted to know who held a
-    /// session took the gate, losers included — so a refusal waited behind the
+    /// session took the gate, losers included -- so a refusal waited behind the
     /// whole queue rather than behind one critical section, and the cost was
     /// super-linear: 367 ms at 16 contenders, 3,349 ms at the charter's design
     /// point of 100, and at 200 the then-five-second gate was reached by queueing
@@ -287,12 +287,12 @@ internal sealed class SessionLockTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>This is the test that stops the optimisation being taken one step
-    /// too far, and the step was attacked before it was built</b> —
+    /// too far, and the step was attacked before it was built</b> --
     /// [the adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
     /// D. With the gate skipped on the free path, two contenders both probe and
     /// both see "free"; A writes and holds its record; B's rename is refused
     /// because A's handle is open, and B <i>retries</i>. The moment anything
-    /// closes A's handle — a rewrite, a teardown, a destroy — B's next retry
+    /// closes A's handle -- a rewrite, a teardown, a destroy -- B's next retry
     /// lands, and <b>B holds <c>browserai.lock</c> while A holds a valid handle to a
     /// now-nameless file</b>. Both report ownership. The retry loop becomes the
     /// serialiser, and a retry loop is not a lock.
@@ -302,7 +302,7 @@ internal sealed class SessionLockTests
     /// that matters, and it is not a promptness assertion.</b> A machine that is
     /// slow, starved or paging can only make the call take <i>longer</i>, which
     /// makes this pass. The one thing that makes it fail is the call returning
-    /// while a foreign process holds the gate — which is precisely the defect.
+    /// while a foreign process holds the gate -- which is precisely the defect.
     /// Against the product as written, a free directory is taken in tens of
     /// milliseconds, so the window below is more than two orders of magnitude of
     /// headroom on the failing behaviour.
@@ -544,7 +544,7 @@ internal sealed class SessionLockTests
 
         foreach (var report in outcomes)
         {
-            // ⚠️ THE ARGUMENT, READ BACK OFF THE GATE — never the wall-clock
+            // ⚠️ THE ARGUMENT, READ BACK OFF THE GATE -- never the wall-clock
             // time the call took. Every contender asked for
             // LockScopes.NeverWaits, and that is the whole of "try-acquire-and-
             // skip at zero timeout": the acquire records what it was handed, so
@@ -552,7 +552,7 @@ internal sealed class SessionLockTests
             //
             // This replaced `elapsedMilliseconds < 1000` on 2026-08-23, which
             // was the same defect the live-marker reclaim had shed three days
-            // earlier with five times MORE headroom — and this one measured
+            // earlier with five times MORE headroom -- and this one measured
             // across a process boundary, in each of eight processes launched
             // together, where process creation is the most contended thing on a
             // loaded box. It also invented its own 1000 rather than deriving
@@ -593,7 +593,7 @@ internal sealed class SessionLockTests
     /// measured reasons; <see cref="LockScopes.PerDirectoryGate"/> was 5 s and
     /// nobody noticed the pair. <c>SessionLock.OpenHeld</c> and
     /// <c>SessionLock.ReadRecord</c> both run <i>inside</i> the gate and both go
-    /// through <see cref="RenameWindow"/> — so a reader legitimately waiting out
+    /// through <see cref="RenameWindow"/> -- so a reader legitimately waiting out
     /// a rename could hold the gate six times longer than the gate's own
     /// timeout, and every other contender would be told <c>Busy</c>: <i>"something
     /// is wrong"</i>, about a machine where nothing was.
@@ -620,7 +620,7 @@ internal sealed class SessionLockTests
         await Assert.That(LockScopes.PerDirectoryGate).IsGreaterThan(inside)
             .Because(
                 "every open performed under the per-directory gate goes through RenameWindow, and one hold contains "
-                + $"{LockScopes.RenameWindowWaitsInsideTheGate.ToString(CultureInfo.InvariantCulture)} of them in series — so a gate that expires "
+                + $"{LockScopes.RenameWindowWaitsInsideTheGate.ToString(CultureInfo.InvariantCulture)} of them in series -- so a gate that expires "
                 + "before that total does turns a peer's correct 'held by PID n' into a wrong 'Busy', on a holder that "
                 + "is doing exactly what the design tells it to");
 
@@ -651,13 +651,13 @@ internal sealed class SessionLockTests
     /// reading <see cref="MachineMutex.LastAcquireTimeout"/> back off the gate
     /// instead of timing the call. A property that always answered
     /// <see cref="LockScopes.NeverWaits"/> would make that assertion vacuous and
-    /// would be indistinguishable from a working one when read from there — so
+    /// would be indistinguishable from a working one when read from there -- so
     /// both values are exercised here, on one object, in order.
     /// </para>
     /// <para>
     /// <b>Unasked is a third state and is kept separate from zero.</b> A reclaim
-    /// that never reached an acquire — no directory, or a gate that could not be
-    /// created — must not report that it asked not to wait.
+    /// that never reached an acquire -- no directory, or a gate that could not be
+    /// created -- must not report that it asked not to wait.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -719,14 +719,14 @@ internal sealed class SessionLockTests
     /// per-directory gate without waiting for it").</b> The gate was there
     /// because the record was durably rewritten and renamed on every forwarded
     /// call, so a bare probe could catch a busy session in the instant its
-    /// ownership handle was dropped and read it as free — which is what
+    /// ownership handle was dropped and read it as free -- which is what
     /// <c>browserai_list</c> printed between 2026-08-20 and 2026-08-24. Nothing
     /// rewrites the guard now, so the gate buys nothing and costs a
     /// <c>CreateMutexW</c> per listed entry.
     /// </para>
     /// <para>
     /// <b>Two things it must not do, and the second is the new one.</b> It must
-    /// not queue — <c>browserai_list</c> runs it once per session on the machine,
+    /// not queue -- <c>browserai_list</c> runs it once per session on the machine,
     /// and 100 contenders on one gate was measured at 3,349 ms. And it must not
     /// open the store: a database open is orders of magnitude dearer than a
     /// <c>CreateFile</c>, it can leave a <c>-shm</c> in a directory nobody asked
@@ -735,7 +735,7 @@ internal sealed class SessionLockTests
     /// </para>
     /// <para>
     /// <b>This is weaker than a red test and could not have been planted as one
-    /// — say so rather than implying otherwise.</b> What it holds is the one
+    /// -- say so rather than implying otherwise.</b> What it holds is the one
     /// property the behavioural tests beside it cannot: those would all still
     /// pass with a gate, or with a database open, in the answer.
     /// </para>
@@ -877,7 +877,7 @@ internal sealed class SessionLockTests
     /// machine-wide process log, <b>with the predicate quoted</b>: since the
     /// 2026-08-26 logging cutover that file holds <b>8,423</b> <c>Session lock
     /// reclaimed</c> lines, <b>8,418</b> of them carrying <c>still running:
-    /// True</c>, and <b>zero</b> <c>Session lock acquired</c> lines — in the two
+    /// True</c>, and <b>zero</b> <c>Session lock acquired</c> lines -- in the two
     /// 2026-08-29 files alone, <b>2,081 of 2,081</b>. The reason is structural:
     /// the only acquisitions that reach that file are <c>destroy</c> and
     /// <c>set_purpose</c>, and both dispose the live session and re-acquire, so
@@ -893,7 +893,7 @@ internal sealed class SessionLockTests
     /// <see cref="SessionLockOutcome.Reclaimed"/> and <c>HolderRunning</c> true
     /// for exactly this shape, and both are still the right answers: the
     /// directory was held and it is now ours. What was wrong was the record, so
-    /// the record is the only thing that moved — and keeping the two tests apart
+    /// the record is the only thing that moved -- and keeping the two tests apart
     /// is what stops a later change to one of them quietly taking the other's
     /// evidence with it.
     /// </para>
@@ -1013,9 +1013,9 @@ internal sealed class SessionLockTests
         // ⚠️ The rename below is retried, and the reason is a live-system
         // condition rather than a defect in either side of it. A file this
         // process has just closed is briefly held by something OUTSIDE this
-        // repository — the same scanner's handle that
+        // repository -- the same scanner's handle that
         // `SessionLock`'s two-second move budget, `InstallationMarker` and the
-        // first-run cache's commit all exist for — and `MOVEFILE_REPLACE_EXISTING`
+        // first-run cache's commit all exist for -- and `MOVEFILE_REPLACE_EXISTING`
         // wants DELETE on the destination, so it is refused ACCESS_DENIED rather
         // than as a sharing violation. Measured 2026-08-18: one run in twenty of
         // the full suite at `SuiteParallelism.Unbounded`, 47 ms into this test,
@@ -1064,8 +1064,8 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
-    /// A reader in another process never sees the record half-written, and —
-    /// unlike before — never sees it <b>absent</b> either.
+    /// A reader in another process never sees the record half-written, and --
+    /// unlike before -- never sees it <b>absent</b> either.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1084,13 +1084,13 @@ internal sealed class SessionLockTests
     /// <para>
     /// <b>An append is an <c>INSERT</c> now, so the assertion is the strong
     /// one.</b> Nothing renames, nothing unbinds a name, and the store's own
-    /// write-ahead log is what makes a reader's view consistent — so a null read
+    /// write-ahead log is what makes a reader's view consistent -- so a null read
     /// is a defect with no tolerance attached to it, and it is asserted as one.
     /// That is the property the two superseded attempts were both approximating.
     /// </para>
     /// <para>
     /// <b>The reader has to have been looking WHILE the writer wrote</b>, or
-    /// "never torn" is a claim about an empty observation — so the assertion is
+    /// "never torn" is a claim about an empty observation -- so the assertion is
     /// on <i>distinct records observed</i> rather than on a read count. Two
     /// different purposes cannot both be seen unless the record changed under
     /// the reader.
@@ -1186,7 +1186,7 @@ internal sealed class SessionLockTests
 
         await Assert.That(string.Join(Environment.NewLine, damaged.Distinct(StringComparer.Ordinal))).IsEmpty();
 
-        // And it is still there afterwards, readable, with the writer finished —
+        // And it is still there afterwards, readable, with the writer finished --
         // so a run that somehow passed the line above while having actually lost
         // the record still fails here.
         await Assert.That(SessionLock.ReadRecord(path)).IsNotNull();
@@ -1257,7 +1257,7 @@ internal sealed class SessionLockTests
     /// <b>Both arms in one test because the defect was that they were one
     /// arm.</b> Until 2026-08-19 <c>WriteDurably</c> and the re-open shared a
     /// single <c>catch</c>, so a failure <i>after</i> the rename answered
-    /// <i>"the directory was not taken and nothing was changed"</i> — about a
+    /// <i>"the directory was not taken and nothing was changed"</i> -- about a
     /// machine where <c>browserai.lock</c> had just been replaced with a record
     /// naming this process as the holder. Asserting the honest sentence without
     /// also asserting that the other arm still says <i>nothing was changed</i>
@@ -1276,13 +1276,13 @@ internal sealed class SessionLockTests
     /// when a second test needed it.</i>
     /// </para>
     /// <para>
-    /// ⚠️ <b>This test costs <see cref="RenameWindow.Budget"/> — thirty seconds —
+    /// ⚠️ <b>This test costs <see cref="RenameWindow.Budget"/> -- thirty seconds --
     /// and that is coverage rather than waste.</b> The denied open runs through
     /// <c>RenameWindow.WaitOut</c>, which exists to wait out a rename in flight;
     /// a permanent denial is a different fault and must still be <i>reported</i>
     /// rather than waited on forever. <i>Corrected 2026-08-19 (previously "This
     /// is the only test in the suite that reaches the end of that budget, so it
-    /// is also the only one that proves the wait is bounded at all")</i> — there
+    /// is also the only one that proves the wait is bounded at all")</i> -- there
     /// are two now. <c>ErrorCatalogueTests.TheLockRowsAreEmittedByRealLockConditions</c>
     /// denies the same right over a <c>browserai.lock</c> that already exists, which
     /// reaches the <b>first</b> open in <c>TakeOrReport</c> rather than the
@@ -1352,8 +1352,8 @@ internal sealed class SessionLockTests
     /// ⚠️ <b>Corrected 2026-08-26 (previously
     /// <c>ARewriteThatFailsKeepsTheDirectoryAndOneThatCannotTakeItBackSaysSo</c>).</b>
     /// That test existed because <c>Rewrite</c> <i>dropped</i> the ownership
-    /// handle before every replacement — Windows will not rename over a file
-    /// this process is holding — so an exception anywhere between the drop and
+    /// handle before every replacement -- Windows will not rename over a file
+    /// this process is holding -- so an exception anywhere between the drop and
     /// the re-open left the session silently unowned while the caller was told
     /// only that a write had failed. It shipped broken once, which is what
     /// earned it a regression test.
@@ -1364,14 +1364,14 @@ internal sealed class SessionLockTests
     /// the guard's handle is opened once at acquisition and closed once at
     /// disposal, and nothing between those two points touches it. So the
     /// assertion is the property directly: a stranger's <c>FileAccess.ReadWrite</c>
-    /// open of <c>browserai.lock</c> — the same test a competing BrowserAI's
-    /// <c>TryAcquire</c> performs — is refused before a write, after a write,
+    /// open of <c>browserai.lock</c> -- the same test a competing BrowserAI's
+    /// <c>TryAcquire</c> performs -- is refused before a write, after a write,
     /// and after a write that <b>threw</b>.
     /// </para>
     /// <para>
     /// ⚠️ <b>Coverage bounded, and named rather than implied.</b> The old test's
-    /// second arm — a replacement that failed <i>and</i> a name that could not be
-    /// taken back — has no counterpart, because there is no window in which the
+    /// second arm -- a replacement that failed <i>and</i> a name that could not be
+    /// taken back -- has no counterpart, because there is no window in which the
     /// name is not held. The failing write here is provoked by disposing the
     /// session's store out from under it, which is the one deterministic write
     /// failure this suite can construct without injecting a fault into the
@@ -1445,8 +1445,8 @@ internal sealed class SessionLockTests
     /// <b>This is finding B4 of
     /// [the 2026-08-18 adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
     /// and it is the one whose failure does not heal.</b> <c>SessionManager</c>
-    /// serialises nothing — <c>_live</c> is a <c>ConcurrentDictionary</c> and is
-    /// the only synchronisation there is — so two tool calls naming one session
+    /// serialises nothing -- <c>_live</c> is a <c>ConcurrentDictionary</c> and is
+    /// the only synchronisation there is -- so two tool calls naming one session
     /// run concurrently by design. A <c>_disposed</c> check taken <i>outside</i>
     /// the exclusion is a decision made by reading a field another thread is
     /// writing, and the disposal disposes the very object a blocked caller would
@@ -1463,12 +1463,12 @@ internal sealed class SessionLockTests
     /// a mutation is a single <c>INSERT</c> with no caller code inside it. The
     /// one seam left in a path that holds the exclusion is
     /// <c>ReleaseAndDelete</c>'s own <c>delete</c>, so what this now forces is
-    /// the other pairing — <c>Dispose</c> against <c>ReleaseAndDelete</c> — and
+    /// the other pairing -- <c>Dispose</c> against <c>ReleaseAndDelete</c> -- and
     /// its sibling below forces a mutation against the same delete.
     /// </para>
     /// <para>
     /// ⚠️ <b>Coverage bounded, and stated rather than implied.</b> The third
-    /// pairing — a <i>disposal</i> arriving during a <i>mutation</i> — has no
+    /// pairing -- a <i>disposal</i> arriving during a <i>mutation</i> -- has no
     /// deterministic seam left, because the mutation no longer runs any caller's
     /// code. What holds it is the same private <c>Lock</c> these two prove is
     /// taken by both disposal paths and by every writing path, and nothing here
@@ -1555,8 +1555,8 @@ internal sealed class SessionLockTests
     /// that unlinks the directory.
     /// </para>
     /// <para>
-    /// <b>The seam is again the product's own delegate</b> — <c>delete</c> runs
-    /// after the handles are closed and before the gate is released — and the
+    /// <b>The seam is again the product's own delegate</b> -- <c>delete</c> runs
+    /// after the handles are closed and before the gate is released -- and the
     /// direction of the join is again the whole assertion. Against the defect
     /// the mutation is refused <i>at once</i>, because <c>_disposed</c> was set at
     /// the top of <c>ReleaseAndDelete</c> and the mutation read it without
@@ -1640,7 +1640,7 @@ internal sealed class SessionLockTests
     /// stop opening.</b> To be refused by a holder's <c>FileShare.Read</c> a
     /// liveness probe must ask for access outside <c>Read</c>, and a handle
     /// whose granted access is outside <c>Read</c> is exactly what an open
-    /// sharing only <c>Read</c> is refused by — so detecting an owner and
+    /// sharing only <c>Read</c> is refused by -- so detecting an owner and
     /// blocking one are the same capability, and no share mode dissolves it.
     /// <c>browserai_list</c> opens exactly that handle, for the length of one
     /// <c>FileStream</c> construction, once per session on the machine.
@@ -1655,7 +1655,7 @@ internal sealed class SessionLockTests
     /// <para>
     /// <b>The licence for waiting is a precondition, not a guess.</b> The caller
     /// holds the per-directory gate and the file on disk names this process, so
-    /// no second owner can exist — becoming one means passing through the gate.
+    /// no second owner can exist -- becoming one means passing through the gate.
     /// An ownership test has no such precondition and must never wait, which is
     /// what <see cref="TheOnlyOpenThatWaitsAHandleOutIsTheOneThatFollowsOurOwnWrite"/>
     /// holds.
@@ -1740,14 +1740,14 @@ internal sealed class SessionLockTests
 
     /// <summary>
     /// A request that refuses an existing record is answered <b>under the
-    /// gate</b>, changing nothing — and the same directory is still reclaimed by
+    /// gate</b>, changing nothing -- and the same directory is still reclaimed by
     /// a request that does not.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Why the question is asked twice.</b> `browserai_init`'s own look at
-    /// the record is ungated, which it has to be — it runs before the
-    /// directory is created — so it can land in the instant in which the guard's
+    /// the record is ungated, which it has to be -- it runs before the
+    /// directory is created -- so it can land in the instant in which the guard's
     /// name is unbound while a peer is acquiring the directory, read <see langword="null"/> as
     /// <i>free, proceed</i>, and reach the reclaim below. The reclaim appends a
     /// <c>mode</c> and a <c>browser</c> statement, so what the window costs is a
@@ -1837,7 +1837,7 @@ internal sealed class SessionLockTests
     /// <para>
     /// <b>Getting it backwards in either direction is a defect.</b> An ownership
     /// test routed through the tolerant open waits a <i>live owner</i> out for
-    /// thirty seconds and then treats it as a peer looking — the mechanism
+    /// thirty seconds and then treats it as a peer looking -- the mechanism
     /// inverted, which is the failure <see cref="RenameWindow"/>'s own table
     /// exists to prevent. A post-write hold routed through the bare open is the
     /// CI failure of 2026-08-19, restored.
@@ -1846,7 +1846,7 @@ internal sealed class SessionLockTests
     /// ⚠️ <b>Retargeted 2026-08-26 (previously <c>OpenHeld</c> against
     /// <c>ReopenHeld</c>, both inside <c>SessionLock</c>).</b> Neither exists:
     /// the guard's open is <c>LockFile.Hold</c>, and there are two call sites
-    /// that follow a write — <c>LockFile.TakeAndWrite</c> and
+    /// that follow a write -- <c>LockFile.TakeAndWrite</c> and
     /// <c>SessionLock.TakeOrReport</c>, which writes and holds separately so that
     /// it can tell <i>nothing was changed</i> from <i>the guard WAS written</i>.
     /// </para>
@@ -1879,7 +1879,7 @@ internal sealed class SessionLockTests
                         .Any(line => lines[line].Contains("Write(path, holder)", StringComparison.Ordinal)
                             || lines[line].Contains("LockFile.Write(", StringComparison.Ordinal));
 
-                    tolerant.Add($"{file.Name}:{(at + 1).ToString(CultureInfo.InvariantCulture)}{(wrote ? string.Empty : " — NOT PRECEDED BY A WRITE")}");
+                    tolerant.Add($"{file.Name}:{(at + 1).ToString(CultureInfo.InvariantCulture)}{(wrote ? string.Empty : " -- NOT PRECEDED BY A WRITE")}");
                 }
 
                 if (lines[at].Contains("LockFile.Hold(", StringComparison.Ordinal)
@@ -2057,8 +2057,8 @@ internal sealed class SessionLockTests
     /// <remarks>
     /// <b>An exclusive open rather than a question put to the object under
     /// test.</b> Asking the lock whether it still holds the directory would be
-    /// asking the thing under test; the kernel refuses this open while — and only
-    /// while — a handle is really there. A file that is not there at all counts
+    /// asking the thing under test; the kernel refuses this open while -- and only
+    /// while -- a handle is really there. A file that is not there at all counts
     /// as unheld: a destroy that unlinked it took the handle with it, which is
     /// the outcome rather than the defect.
     /// </remarks>
@@ -2166,7 +2166,7 @@ internal sealed class SessionLockTests
     /// exactly the length of one acquisition, so its presence is direct evidence
     /// that a rename was in flight at this instant rather than an inference
     /// about how wide a window is. <i>(Corrected 2026-08-26, previously
-    /// "<c>browserai.json.new-&lt;guid&gt;</c> … the length of one rewrite" —
+    /// "<c>browserai.json.new-&lt;guid&gt;</c> … the length of one rewrite" --
     /// there are no rewrites left, so the one rename is acquisition's.)</i>
     /// </remarks>
     /// <param name="lockFile">The lock file that read as no record.</param>

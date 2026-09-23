@@ -23,14 +23,14 @@ namespace BrowserAI.Protocol;
 /// <list type="number">
 /// <item>
 /// A shell sits between BrowserAI and <c>node</c>, so the process BrowserAI can
-/// see is not the process it needs to own — which breaks tree ownership and
+/// see is not the process it needs to own -- which breaks tree ownership and
 /// exit-code attribution, both of which the job object depends on.
 /// </item>
 /// <item>
 /// Argument fidelity is lost. Measured against a node probe: a literal
 /// <c>%USERNAME%</c> reached the child as the expanded value, and an argument
 /// containing whitespace <b>and</b> <c>&amp;</c> made the child fail to start
-/// outright — <c>'C:/Program' is not recognized</c> — because the SDK's
+/// outright -- <c>'C:/Program' is not recognized</c> -- because the SDK's
 /// caret-escaping skips arguments that contain whitespace and cmd then splits
 /// the command path, which contains a space in the stock Node install location.
 /// </item>
@@ -44,7 +44,7 @@ namespace BrowserAI.Protocol;
 /// member of a job object from the instant it exists, and .NET cannot express
 /// that: <c>ProcessStartInfo</c> has no creation-flags surface. Starting first
 /// and assigning afterwards was measured leaking grandchildren, so the launch
-/// goes through <see cref="JobLauncher"/> and this class supplies the policy —
+/// goes through <see cref="JobLauncher"/> and this class supplies the policy --
 /// what to run, where, and with which environment.
 /// </para>
 /// </remarks>

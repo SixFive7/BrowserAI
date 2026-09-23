@@ -23,15 +23,15 @@ namespace BrowserAI.Tests;
 /// <b>The preflight prevents a hang rather than a wrong answer, so the test
 /// asserts on the clock.</b> Playwright's <c>isProfileLocked</c> checks only
 /// Chromium's <c>lockfile</c> and never Firefox's <c>parent.lock</c>
-/// ([kb](../../kb/chromium/profiles.md#the-dialog-hazard--worse-than-a-dialog-appears)),
-/// so a collision is answered by Firefox itself — with a native modal on the
+/// ([kb](../../kb/chromium/profiles.md#the-dialog-hazard----worse-than-a-dialog-appears)),
+/// so a collision is answered by Firefox itself -- with a native modal on the
 /// Windows desktop, against a three-minute launch timeout, on a machine with
 /// nobody at the keyboard. A refusal that took three minutes would satisfy every
 /// other assertion here and would have prevented nothing.
 /// </para>
 /// <para>
 /// <b>Nothing in this file matches, counts or terminates a process by image
-/// name — including the arms that deliberately look at the developer's own
+/// name -- including the arms that deliberately look at the developer's own
 /// Firefox.</b> Every pid acted on is one this test recorded at spawn and
 /// re-validated against its creation time; every browser identified as ours is
 /// identified by full image path against the binary BrowserAI provisioned. That
@@ -42,7 +42,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// ⚠️ <b>A machine-wide reading in a Firefox test must be scoped to the Firefox
 /// executable, never to the browsers root.</b> The root holds Chromium too, and
-/// <see cref="BrowserProcesses.RunningFrom"/> is a prefix match on it — so a
+/// <see cref="BrowserProcesses.RunningFrom"/> is a prefix match on it -- so a
 /// "did a browser appear" question asked of the root is answered by every
 /// Chromium renderer, GPU and utility process that the seven unrelated launch
 /// sites elsewhere in this suite start, four tests at a time. That is a Firefox
@@ -79,8 +79,8 @@ internal sealed class FirefoxTests
     /// <c>AFirefoxWeLaunchedIsAttributedToItsSessionAndIsNotRegisteredForRestart</c>
     /// failed at <b>3m01s</b> with <i>"'tools/call' (id 2) did not complete
     /// before this client's whole-conversation budget of 180 s expired"</i>, the
-    /// peer still running and its stderr empty — which names nothing. Five runs
-    /// of every Firefox test together on an idle machine were clean at 7–9 s,
+    /// peer still running and its stderr empty -- which names nothing. Five runs
+    /// of every Firefox test together on an idle machine were clean at 7-9 s,
     /// so the launch was not conflicting with the other real Firefox in the
     /// suite; it was being cut off.
     /// </para>
@@ -345,7 +345,7 @@ internal sealed class FirefoxTests
     /// <remarks>
     /// <para>
     /// <b>The negative subject is real rather than synthesised.</b> This machine
-    /// runs the maintainer's own Firefox out of <c>C:\Program Files</c> — dozens
+    /// runs the maintainer's own Firefox out of <c>C:\Program Files</c> -- dozens
     /// of processes, real profiles, real windows, a live <c>parent.lock</c>.
     /// That is a far stronger foreign browser than anything a test could plant:
     /// it exercises the Restart Manager path for real and then has to be
@@ -355,8 +355,8 @@ internal sealed class FirefoxTests
     /// <para>
     /// ⚠️ <b>The cost of the conditional arm, stated rather than hidden.</b> On
     /// a machine with no other Firefox running, the foreign half proves nothing
-    /// and says so through the recorded census. The unconditional half — a
-    /// session's own unheld lock file attributing nobody — runs everywhere.
+    /// and says so through the recorded census. The unconditional half -- a
+    /// session's own unheld lock file attributing nobody -- runs everywhere.
     /// </para>
     /// </remarks>
     [Test]
@@ -626,8 +626,8 @@ internal sealed class FirefoxTests
         // ⚠️ What the lock file does when its holder dies, re-measured here
         // rather than carried over, because the whole preflight rests on it.
         // [kb](../../kb/windows/detection.md) records that Firefox never deletes
-        // parent.lock — unlike Chromium's lockfile, which the kernel removes on
-        // FILE_FLAG_DELETE_ON_CLOSE — so its existence proves nothing and only a
+        // parent.lock -- unlike Chromium's lockfile, which the kernel removes on
+        // FILE_FLAG_DELETE_ON_CLOSE -- so its existence proves nothing and only a
         // sharing violation does. That is what this asserts: the file is still
         // there after the process holding it was terminated, which is precisely
         // the state an existence check would misread as "a browser is running".
@@ -663,7 +663,7 @@ internal sealed class FirefoxTests
     /// <b>The wait is on the process, not on the lock, and that is a cost
     /// decision.</b> <c>TerminateProcess</c> returning is not proof that the
     /// kernel has torn the process's handles down, so something has to be
-    /// waited on — but a Restart Manager query costs <b>638 ms</b> on this
+    /// waited on -- but a Restart Manager query costs <b>638 ms</b> on this
     /// machine, so polling one every 100 ms would put ten seconds of
     /// machine-wide handle enumeration inside a suite whose in-process rigs
     /// assert ten-second budgets. Liveness is a handle check that costs
@@ -693,7 +693,7 @@ internal sealed class FirefoxTests
     /// <remarks>
     /// The tool's body is <c>JSON.stringify(context.config, null, 2)</c>, and
     /// upstream's response builder wraps every text section in a
-    /// <c>### &lt;title&gt;</c> heading before it reaches the wire — so the JSON
+    /// <c>### &lt;title&gt;</c> heading before it reaches the wire -- so the JSON
     /// is cut out of the answer rather than parsed from it whole.
     /// </remarks>
     private static async Task<JsonObject> ResolvedConfigAsync(RawStdioClient child)
@@ -723,11 +723,11 @@ internal sealed class FirefoxTests
     /// <remarks>
     /// <para>
     /// <b>The image list is the Firefox executable and nothing else</b>, so this
-    /// sweep cannot form an opinion about any other browser on the machine —
+    /// sweep cannot form an opinion about any other browser on the machine --
     /// including a Chromium another test has open.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-26 (previously a retry loop — "retrying while
+    /// ⚠️ <b>Corrected 2026-08-26 (previously a retry loop -- "retrying while
     /// some other process on the machine happens to be sweeping").</b> A loop is
     /// a poll that can lose every time it asks; queueing on the mutex is the
     /// serialisation. See <c>StraySweepTests.SweepAsync</c>, which is where the
@@ -748,8 +748,8 @@ internal sealed class FirefoxTests
     /// ⚠️ <b>A sweep is several hundred blocking syscalls and one Restart
     /// Manager query per known session, and the pool grows by about one thread a
     /// second.</b> Run through <c>Task.Run</c>, it occupies a worker for as long
-    /// as it takes and the suite's in-process rigs — which answer in
-    /// milliseconds and assert budgets in tens of seconds — start failing
+    /// as it takes and the suite's in-process rigs -- which answer in
+    /// milliseconds and assert budgets in tens of seconds -- start failing
     /// somewhere else entirely. That is a measured failure in this repository
     /// rather than a precaution: <c>StraySweepTests</c> records a file-I/O loop
     /// on a pool thread taking <c>FakeChildHarnessTests</c> from 8 ms to 2.9 s.
@@ -806,7 +806,7 @@ internal sealed class FirefoxTests
     /// <remarks>
     /// <b>The exact executable, not the browsers root.</b> The root also holds
     /// Chromium, and a prefix match on it answers a question about Chromium's
-    /// helper processes while wearing the name of a Firefox check — which is the
+    /// helper processes while wearing the name of a Firefox check -- which is the
     /// flake recorded on the assertion in
     /// <see cref="ThePreflightRefusesAHeldProfileBeforeAnyFirefoxOrWindowExists"/>.
     /// An image <i>name</i> is not an option and never was: it would name the

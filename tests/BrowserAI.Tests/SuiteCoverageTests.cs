@@ -42,7 +42,7 @@ internal static class SuiteCoverage
     /// <see cref="SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease"/>
     /// starts wrote its own one-test <c>FILTERED</c> block <i>over the parent's
     /// file while the parent was still running</i>. The parent rewrote it at its
-    /// own session end, so the copy a gate log appends was never wrong — but
+    /// own session end, so the copy a gate log appends was never wrong -- but
     /// anyone reading the file during that window got the child's, and a block
     /// whose whole job is to say what a run covered must not be readable as a
     /// statement about a different run.
@@ -59,7 +59,7 @@ internal static class SuiteCoverage
     /// <c>TUnitTestFramework.ExecuteRequestAsync</c> assigns
     /// <c>GlobalContext.Current</c> and <c>TestSessionContext.Current</c> before
     /// it runs a single hook, so a reading taken here is taken after the only
-    /// event that could populate them — and a null filter read before that point
+    /// event that could populate them -- and a null filter read before that point
     /// is indistinguishable from a run that really had none, which is the false
     /// green <see cref="SuiteFilter"/> exists to prevent.
     /// </remarks>
@@ -149,7 +149,7 @@ internal static class SuiteCoverage
     /// to be one.</b> Until 2026-08-24 the refusal was an ordinary <c>[Test]</c>,
     /// so <c>BROWSERAI_RELEASE_RUN=1</c> plus a <c>--treenode-filter</c> that did
     /// not happen to select that one method was a filtered run, a claimed
-    /// release, and <b>green</b> — the guard failing in exactly the class of run
+    /// release, and <b>green</b> -- the guard failing in exactly the class of run
     /// it exists to guard. It is a session hook now, and
     /// <see cref="SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease"/>
     /// proves the difference by filtering the child down to a method that is
@@ -173,7 +173,7 @@ internal static class SuiteCoverage
     /// </para>
     /// <para>
     /// <b>The one thing it still cannot cover is a run that never starts a
-    /// session</b> — a filter naming no assembly at all, or a host that fails
+    /// session</b> -- a filter naming no assembly at all, or a host that fails
     /// before the framework's hooks are registered. That run reports nothing and
     /// is not a release either, but nothing here fails it, and
     /// [`TESTING.md`](../../TESTING.md) states the guarantee with that limit
@@ -199,14 +199,14 @@ internal static class SuiteCoverage
 /// <para>
 /// <b>Every assertion here is about the mechanism, not about the machine.</b>
 /// The suite must stay runnable on a clean clone, so nothing below requires a
-/// browser — what is required is that a run without one cannot report the same
+/// browser -- what is required is that a run without one cannot report the same
 /// summary as a run with one.
 /// </para>
 /// <para>
 /// <b>The release branch is exercised in every ordinary run.</b>
 /// <see cref="SuiteEnvironment.Decide"/> is a pure function of the two inputs
 /// precisely so that <c>BROWSERAI_RELEASE_RUN</c> is not a code path that only
-/// runs on release day — a mechanism nobody exercises until it matters is the
+/// runs on release day -- a mechanism nobody exercises until it matters is the
 /// same defect as the one this file closes.
 /// </para>
 /// </remarks>
@@ -329,7 +329,7 @@ internal sealed partial class SuiteCoverageTests
     /// <remarks>
     /// <para>
     /// <b>The positive control under the live arm below.</b> A developer machine
-    /// declares nothing, so the live arm asserts nothing there — and a check that
+    /// declares nothing, so the live arm asserts nothing there -- and a check that
     /// can only pass is indistinguishable from one that works. Every combination
     /// is driven here instead, in-process and pure, on every ordinary run.
     /// </para>
@@ -382,8 +382,8 @@ internal sealed partial class SuiteCoverageTests
     /// <para>
     /// <b>The gate's reason for running two shells is that they are two
     /// instruments, and until 2026-08-24 nothing measured that.</b> All six runs
-    /// of that day's gate received <c>C:</c> — three of them silently duplicating
-    /// the other three — and the run summary, the coverage block and the release
+    /// of that day's gate received <c>C:</c> -- three of them silently duplicating
+    /// the other three -- and the run summary, the coverage block and the release
     /// checklist all read exactly as they read on a gate that really did exercise
     /// both spellings.
     /// </para>
@@ -424,8 +424,8 @@ internal sealed partial class SuiteCoverageTests
     /// ⚠️ <b>The reading exists because a closed hazard row asked for it by name
     /// and nothing took it.</b> The six-run-gate row in
     /// [HAZARDS.md](../../HAZARDS.md#hazard-index) closed on 2026-08-24 against a
-    /// kernel-level leak outside this repository — 137.4 GB committed of a
-    /// 157.7 GB limit — and closed by naming the one reading that would tell
+    /// kernel-level leak outside this repository -- 137.4 GB committed of a
+    /// 157.7 GB limit -- and closed by naming the one reading that would tell
     /// that cause from a live one: <i>the commit charge beside the run</i>. It
     /// then sat in a document, taken by nobody, so when the same shape recurred
     /// on 2026-08-29 the reading did not exist for that run either and the row's
@@ -435,7 +435,7 @@ internal sealed partial class SuiteCoverageTests
     /// <b>The pure arm is mandatory rather than thorough</b>, for
     /// <see cref="AFilteredRunIsToldFromAFullOneFromOneThatCouldNotTellAndFromABrokenInstrument"/>'s
     /// reason exactly: a healthy machine sits in <c>HEALTHY</c> for ever, so the
-    /// two bands that matter would otherwise be code nobody has ever run —
+    /// two bands that matter would otherwise be code nobody has ever run --
     /// first exercised on the day something is already wrong, which is the worst
     /// possible day to find out that a band prints the wrong word.
     /// </para>
@@ -512,11 +512,11 @@ internal sealed partial class SuiteCoverageTests
     /// suspicion nothing to be checked against.</b>
     /// <see cref="PublishedSlice.EnsureFresh"/> has compared the published binary
     /// against every input that goes into it since the beginning, and it threw or
-    /// it said nothing — so twelve green gate logs carried no sentence about
+    /// it said nothing -- so twelve green gate logs carried no sentence about
     /// freshness at all. On 2026-08-30 a gate runner with a staleness suspicion
     /// reached for the nearest figure to hand, a <b>commit date</b>, put
     /// <c>56383c9</c>'s 01:20:40 beside the binary's 01:14:16 and reported four
-    /// gate sets — twelve full runs — as having driven a stale binary. Every
+    /// gate sets -- twelve full runs -- as having driven a stale binary. Every
     /// reading in that account was true and the conclusion was false: the file the
     /// commit touched was stamped 01:12:22.665, before the publish, and
     /// <c>git commit</c> records when it ran rather than touching a working-tree
@@ -529,14 +529,14 @@ internal sealed partial class SuiteCoverageTests
     /// reason exactly: a healthy tree publishes and then runs, so <c>STALE</c> is
     /// a state this machine reaches perhaps once a fortnight and the rendering
     /// that matters would otherwise first run on a day somebody is already
-    /// confused. Both directions are driven here — a stale reading must carry the
+    /// confused. Both directions are driven here -- a stale reading must carry the
     /// word, the sign and the warning, and a fresh one must carry none of them.
     /// </para>
     /// <para>
     /// <b>And the live arm ties the row to the guard rather than to a second
     /// enumeration.</b> The row and the refusal are two renderings of one
     /// <see cref="PublishedSlice.Measure"/>, so a run whose block says
-    /// <c>FRESH</c> while its slice arms refuse is impossible by construction —
+    /// <c>FRESH</c> while its slice arms refuse is impossible by construction --
     /// which is a claim worth an assertion precisely because the construction is
     /// the whole of the guarantee. A second walk asking a subtly different
     /// question is how the corpus scan came to disagree with <c>git ls-files</c>
@@ -674,14 +674,14 @@ internal sealed partial class SuiteCoverageTests
 
     /// <summary>
     /// A filtered run is told from a full one, from one that could not tell, and
-    /// from a broken instrument — and only one of the four costs a release.
+    /// from a broken instrument -- and only one of the four costs a release.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>The positive control under the live arms below</b>, and it is mandatory
     /// rather than thorough. A gate run is never filtered, so
     /// <see cref="SuiteFilter.Verdict"/> reads <c>FULL RUN</c> on every run this
-    /// repository takes — and a reading that can only ever come back empty is
+    /// repository takes -- and a reading that can only ever come back empty is
     /// indistinguishable from one that cannot read. This drives all four states
     /// and both modes in-process, on every ordinary run.
     /// </para>
@@ -689,7 +689,7 @@ internal sealed partial class SuiteCoverageTests
     /// <b><see cref="SuiteFilterVerdict.Unread"/> is the state this exists
     /// for.</b> <see cref="GlobalContext"/> lazily creates an empty instance for
     /// whoever asks first, so a filter read before the framework populated
-    /// anything is <see langword="null"/> — identical to a run that really had
+    /// anything is <see langword="null"/> -- identical to a run that really had
     /// none. The pair of readings below is what separates them, and the row must
     /// never spell that state <c>FULL RUN</c>.
     /// </para>
@@ -818,7 +818,7 @@ internal sealed partial class SuiteCoverageTests
     /// <para>
     /// ⚠️ <b>This is the ECHO of decision (d) and no longer the mechanism, and
     /// the difference is the defect it was.</b> Until 2026-08-24 the refusal
-    /// lived here, in an ordinary <c>[Test]</c> — so <c>BROWSERAI_RELEASE_RUN=1</c>
+    /// lived here, in an ordinary <c>[Test]</c> -- so <c>BROWSERAI_RELEASE_RUN=1</c>
     /// with a filter that did not select this one method was a filtered run, a
     /// claimed release, and green. It is
     /// <see cref="SuiteCoverage.ReportWhatThisRunExercised"/>'s session hook that
@@ -828,8 +828,8 @@ internal sealed partial class SuiteCoverageTests
     /// <b>What it still buys, kept deliberately rather than deleted.</b> The
     /// session hook fails a run <i>after</i> everything has run; this fails it in
     /// the list of tests, with the refusal quoted, which is where a human looks
-    /// first. It also asserts the negative direction live — an unfiltered
-    /// ordinary run is not refused — on every run of this suite, which is the
+    /// first. It also asserts the negative direction live -- an unfiltered
+    /// ordinary run is not refused -- on every run of this suite, which is the
     /// direction the out-of-process control cannot cover.
     /// </para>
     /// </remarks>
@@ -859,7 +859,7 @@ internal sealed partial class SuiteCoverageTests
     /// ⚠️ <b>And since 2026-08-24 it carries the harder half: the filter names a
     /// method that is NOT the refusal.</b> The child selects
     /// <see cref="AReleaseRunFailsWhereAnOrdinaryRunSkips"/>, a pure test that
-    /// passes, and is handed <c>BROWSERAI_RELEASE_RUN=1</c> — so the only thing
+    /// passes, and is handed <c>BROWSERAI_RELEASE_RUN=1</c> -- so the only thing
     /// that can fail it is the session hook. That is the whole point: while the
     /// refusal was an ordinary <c>[Test]</c> this child <b>exited 0</b>, which is
     /// a filtered release reporting success, and it is the red this arm was
@@ -1018,7 +1018,7 @@ internal sealed partial class SuiteCoverageTests
     /// declaration only exists in a controlled environment, so a check written
     /// only against the live one would be a mechanism a developer machine could
     /// never exercise and CI would meet for the first time on the run that
-    /// needed it — which is the same dead-mechanism defect as a release branch
+    /// needed it -- which is the same dead-mechanism defect as a release branch
     /// that first runs on release day.
     /// </para>
     /// <para>
@@ -1054,7 +1054,7 @@ internal sealed partial class SuiteCoverageTests
             .IsEmpty();
 
         // `none`, which is what a fully provisioned controlled environment
-        // declares — and is not the same thing as declaring nothing.
+        // declares -- and is not the same thing as declaring nothing.
         await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(SuiteEnvironment.NothingExpectedAbsent, [])).IsEmpty();
 
         // ⚠️ THE FAULT: a fifth capability goes absent in an environment that
@@ -1141,7 +1141,7 @@ internal sealed partial class SuiteCoverageTests
     /// <remarks>
     /// <para>
     /// <b>This is the live arm, and on a developer machine it asserts
-    /// nothing</b> — which is correct rather than a gap. What is provisioned on
+    /// nothing</b> -- which is correct rather than a gap. What is provisioned on
     /// somebody's laptop is a fact about their disk; a suite that pinned it would
     /// be red on every clean clone. <c>BROWSERAI_EXPECTED_ABSENT</c> is set by
     /// the environment that knows.
@@ -1160,7 +1160,7 @@ internal sealed partial class SuiteCoverageTests
     /// <b>What it closes:</b> <see cref="AReleaseRunExercisedEveryLayer"/> makes
     /// an absence *loud*, and loud is not the same as *noticed*. CI ran with
     /// two capabilities ABSENT from the day it existed, so two more going the
-    /// same way changes nothing a reader would spot — the run is green, the block
+    /// same way changes nothing a reader would spot -- the run is green, the block
     /// says ABSENT four times instead of twice, and the tests that needed them
     /// skip. This is the assertion that tells those two states apart.
     /// </para>

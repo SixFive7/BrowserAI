@@ -15,8 +15,8 @@ namespace BrowserAI.TestProbe;
 /// went red after <c>escapees == 0</c> had already passed: a row came back with
 /// a null <c>inOurJob</c> because <c>OpenProcess</c> failed for a descendant
 /// that had exited between the toolhelp walk and the per-row query. The product
-/// was never in question — a process that has exited is contained by
-/// definition, and the arm's own teardown assertion would have said so — but
+/// was never in question -- a process that has exited is contained by
+/// definition, and the arm's own teardown assertion would have said so -- but
 /// the rig had no way to express <i>gone</i> and so expressed <i>unknown</i>,
 /// which the host reads as a failure.
 /// </para>
@@ -32,12 +32,12 @@ namespace BrowserAI.TestProbe;
 /// <para>
 /// <b>Why each of the two is sound, stated rather than assumed.</b>
 /// <c>ERROR_INVALID_PARAMETER</c> is what <c>OpenProcess</c> returns for a pid
-/// no live process has — the pid is the only parameter that can be invalid, and
+/// no live process has -- the pid is the only parameter that can be invalid, and
 /// the walk proved it was well-formed one instant earlier.
 /// <c>ERROR_ACCESS_DENIED</c> is the recycled case: this probe opens with
 /// <c>PROCESS_QUERY_LIMITED_INFORMATION</c>, which Windows grants over every
-/// same-user, unprotected process — including one that has already exited while
-/// somebody still holds a handle — so a denial means the pid now names
+/// same-user, unprotected process -- including one that has already exited while
+/// somebody still holds a handle -- so a denial means the pid now names
 /// something this process may not open, and a pid is only reissued after its
 /// previous owner has gone.
 /// </para>
@@ -56,7 +56,7 @@ internal static class ProcessQueryVerdict
     /// <summary><c>ERROR_ACCESS_DENIED</c>.</summary>
     public const int AccessDenied = 5;
 
-    /// <summary><c>ERROR_INVALID_PARAMETER</c> — what a pid nobody holds produces.</summary>
+    /// <summary><c>ERROR_INVALID_PARAMETER</c> -- what a pid nobody holds produces.</summary>
     public const int InvalidParameter = 87;
 
     /// <summary>What the per-row query established about a walked process.</summary>

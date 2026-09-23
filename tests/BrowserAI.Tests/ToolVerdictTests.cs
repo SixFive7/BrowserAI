@@ -19,21 +19,21 @@ namespace BrowserAI.Tests;
 /// do.</b> <c>upstream-snapshots/tools-list.json</c> is regenerated from the
 /// resolved payload and byte-diffed on every build, so it already says <i>a tool
 /// appeared</i>. What it cannot say is <i>and nobody has decided whether we
-/// forward it</i> — a snapshot is a record of upstream and a verdict is a
+/// forward it</i> -- a snapshot is a record of upstream and a verdict is a
 /// statement about this product. The comparison below is what makes the second
 /// question a red build rather than a thing somebody remembers to ask.
 /// </para>
 /// <para>
 /// <b>The comparison runs on every build; the ADJUDICATION is release-gated.</b>
 /// Those are different things and putting the comparison behind the release gate
-/// would be a downgrade — <c>RELEASING.md</c> item 4 is where a human writes down
+/// would be a downgrade -- <c>RELEASING.md</c> item 4 is where a human writes down
 /// what verdict a new tool got and why, and this is where the build refuses to be
 /// green until one exists.
 /// </para>
 /// <para>
 /// <b>Both directions, and the second one is not symmetry for its own sake.</b> A
 /// row naming a tool the snapshot does not carry is a tool upstream <i>removed</i>
-/// — the row is then a judgement about nothing, and the build should say so while
+/// -- the row is then a judgement about nothing, and the build should say so while
 /// somebody still remembers what it was for.
 /// </para>
 /// </remarks>
@@ -78,7 +78,7 @@ internal sealed class ToolVerdictTests
     /// check that returns zero disagreements is exactly that shape: it reads
     /// identically whether the file is complete or the comparison is broken. The
     /// two controls below are the same method, over the same snapshot, with one
-    /// row removed and one row invented — and they assert on the <i>text</i> of
+    /// row removed and one row invented -- and they assert on the <i>text</i> of
     /// the disagreement, because a message that does not name the tool is one
     /// nobody can act on.
     /// </remarks>
@@ -112,17 +112,17 @@ internal sealed class ToolVerdictTests
 
     /// <summary>
     /// The <c>answer</c> rows and the authored surface are the same seven names,
-    /// in both directions — which is the whole of what those rows do.
+    /// in both directions -- which is the whole of what those rows do.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>This test IS the <c>answer</c> half's role, and saying so is the
     /// point of these remarks (2026-08-26).</b> Nothing at run time reads an
     /// <c>answer</c> row: every <c>browserai_</c> name skips
-    /// <c>ToolVerdicts.Decide</c> — seven of the eight are answered before it is
+    /// <c>ToolVerdicts.Decide</c> -- seven of the eight are answered before it is
     /// reached and <c>browserai_page_tool</c> is let past it explicitly, because
-    /// it takes the forwarding path —
+    /// it takes the forwarding path --
     /// and <c>SessionToolSurface.Rewrite</c> advertises the authored tools from
-    /// <c>SessionToolSurface.Names</c> rather than from the file — so deleting an
+    /// <c>SessionToolSurface.Names</c> rather than from the file -- so deleting an
     /// <c>answer</c> row changes nothing a caller can observe, and only this arm
     /// would notice. That makes the rows <b>build-and-test-time data</b>, and it
     /// is stated in <c>tool-verdicts.json</c> itself, in <c>ToolVerdicts</c>'
@@ -163,7 +163,7 @@ internal sealed class ToolVerdictTests
     /// twice in ONE, and the two failure modes are different (2026-08-26).</b>
     /// Measured that day on .NET 10: <c>JsonDocument</c> keeps both properties,
     /// so <c>Rows()</c> returned two <c>ToolVerdict</c>s and the constructor's
-    /// <c>ToFrozenDictionary</c> threw a bare <c>ArgumentException</c> — which
+    /// <c>ToFrozenDictionary</c> threw a bare <c>ArgumentException</c> -- which
     /// reached <c>Program</c>'s process boundary and exited 1 with a message
     /// naming <b>neither the file nor the row</b>, against this type's own
     /// promise that every refusal names both.
@@ -171,7 +171,7 @@ internal sealed class ToolVerdictTests
     /// <para>
     /// <b>The quieter half is the worse one.</b> <c>TryGetProperty</c> answers
     /// the <b>last</b> duplicate, so any doctored row that does not reach the
-    /// frozen dictionary first would be read silently — one tool carrying
+    /// frozen dictionary first would be read silently -- one tool carrying
     /// <c>allow</c> and <c>deny</c>, with the reader picking one and saying
     /// nothing.
     /// </para>
@@ -179,7 +179,7 @@ internal sealed class ToolVerdictTests
     /// <b>Planted in the TEXT, because it cannot be planted anywhere else.</b> A
     /// <c>JsonObject</c> cannot hold two properties under one name, so the
     /// doctoring machinery every other malformed arm uses is structurally unable
-    /// to express this shape — which is part of why it went unnoticed.
+    /// to express this shape -- which is part of why it went unnoticed.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -331,7 +331,7 @@ internal sealed class ToolVerdictTests
     /// back to an empty default; this one cannot, because empty means <i>refuse
     /// every browser call</i>. A silent fallback would present as a server that
     /// starts, advertises a full surface, and then refuses everything with a
-    /// sentence about verdicts that names no file — which is a morning lost to
+    /// sentence about verdicts that names no file -- which is a morning lost to
     /// the wrong question.
     /// </para>
     /// <para>

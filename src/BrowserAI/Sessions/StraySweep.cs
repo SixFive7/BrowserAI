@@ -13,7 +13,7 @@ namespace BrowserAI.Sessions;
 
 /// <summary>
 /// One pass over the machine looking for browsers BrowserAI started and no
-/// session accounts for — and, for anything it is sure about, ending them.
+/// session accounts for -- and, for anything it is sure about, ending them.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,7 +23,7 @@ namespace BrowserAI.Sessions;
 /// for a single process is wrong here: ninety-six of them sweeping at startup is
 /// a thundering herd, and ninety-six racing to kill the same stray is a
 /// correctness problem. One machine-wide mutex at <b>zero timeout</b> answers
-/// both — one process sweeps and the rest pay a mutex acquire and leave. A
+/// both -- one process sweeps and the rest pay a mutex acquire and leave. A
 /// skipped sweep is not a missed sweep: whoever holds the mutex is looking at
 /// the same machine.
 /// </para>
@@ -32,16 +32,16 @@ namespace BrowserAI.Sessions;
 /// fail safe.</b> <see cref="BrowserProcesses.ScanFor"/> is the first guard and
 /// it is a full-image-path match against binaries BrowserAI provisioned.
 /// <see cref="MessageWindows"/> is the second and it rests on undocumented
-/// behaviour — so it is deliberately <b>not</b> load-bearing: when it comes back
+/// behaviour -- so it is deliberately <b>not</b> load-bearing: when it comes back
 /// empty this refuses to kill and reports. The undocumented path can only ever
 /// cause BrowserAI to decline to act and say so; it can never cause a wrong kill
 /// and it can never cause silence.
 /// </para>
 /// <para>
 /// <b>Both guards must agree, and the second one is the entire safety
-/// boundary.</b> Enumeration hands back strangers' paths — Docker Desktop,
+/// boundary.</b> Enumeration hands back strangers' paths -- Docker Desktop,
 /// Discord, Signal, 1Password, Steam, Teams, WhatsApp and ChatGPT all publish
-/// real <c>userDataDir</c>s on that channel — and the class is forgeable by any
+/// real <c>userDataDir</c>s on that channel -- and the class is forgeable by any
 /// process that cares to register it. So a candidate becomes a stray only when
 /// its attributed directory holds a <c>browserai.lock</c> this sweeper can take
 /// itself, which is a directory BrowserAI created and nothing else can be.
@@ -71,7 +71,7 @@ internal sealed class StraySweep
     /// <param name="profileLockImages">
     /// The subset of <paramref name="browserImages"/> whose profile is
     /// identified through <c>parent.lock</c> rather than through a message
-    /// window — Firefox, from
+    /// window -- Firefox, from
     /// <see cref="Runtime.ProvisionedBrowsers.ExecutablesFor"/>. Empty means the
     /// second path is not attempted, which costs attribution and never safety.
     /// </param>
@@ -81,10 +81,10 @@ internal sealed class StraySweep
     /// is <see cref="Updates.LiveInstances.ReclaimStaleMarkers"/>, which is added
     /// to this pass rather than given a sweeper of its own because this one is
     /// already machine-wide, already mutex-serialised and already skips instantly
-    /// when a peer holds the gate — the three properties a marker reclaim needs
+    /// when a peer holds the gate -- the three properties a marker reclaim needs
     /// and the reason not to invent a second discipline for it.
     /// ⚠️ <b>It is a different root from the one the rest of this pass works
-    /// on — 2026-09-15.</b> The browsers and the index above come from the
+    /// on -- 2026-09-15.</b> The browsers and the index above come from the
     /// <i>data</i> root; the markers are keyed to the install root, because the
     /// question they answer is which processes an apply's
     /// <c>force_stop_package</c> would kill. The split is passed in rather than
@@ -122,7 +122,7 @@ internal sealed class StraySweep
     /// <para>
     /// <b>The factory runs inside the catch too.</b> Constructing the sweep
     /// reads the payload manifest and composes paths, either of which can throw
-    /// on a broken install — and a failure there is exactly as fatal as a
+    /// on a broken install -- and a failure there is exactly as fatal as a
     /// failure inside the pass, which is to say not at all.
     /// </para>
     /// <para>
@@ -173,7 +173,7 @@ internal sealed class StraySweep
     /// <summary>Runs one pass, synchronously, waiting for nothing.</summary>
     /// <remarks>
     /// <b>This is the product's only entry, and it is the argument-free one on
-    /// purpose</b> — race <b>R9</b> is that a pass which cannot have the gate
+    /// purpose</b> -- race <b>R9</b> is that a pass which cannot have the gate
     /// does nothing at all rather than queueing behind the one that has it.
     /// <c>StraySweepTests.OnlyTheSuiteEverWaitsForTheSweepGate</c> holds that
     /// against <c>src\</c> as text.
@@ -189,7 +189,7 @@ internal sealed class StraySweep
     /// few milliseconds by every BrowserAI that starts, this suite starts a
     /// great many of them in parallel, and an arm that needs its own pass to
     /// have <i>run</i> was therefore losing a coin toss roughly once in five
-    /// full runs — <c>ASweepWithNoAppPathsReportsNoMarkerPassAtAll</c>, 2026-08-26.
+    /// full runs -- <c>ASweepWithNoAppPathsReportsNoMarkerPassAtAll</c>, 2026-08-26.
     /// The fix is to queue on the same kernel object the winner holds, which is
     /// what a mutex is for; asking again in a loop is the same coin tossed more
     /// often.
@@ -284,7 +284,7 @@ internal sealed class StraySweep
     /// closed by a string check.</b> The title is an untrusted string published
     /// by any process that registered the class, and the next thing that happens
     /// to it is a filesystem call. Measured: <c>File.Exists</c> on a local path
-    /// costs 0.56 ms and on an unmapped drive letter 0.01 ms — but
+    /// costs 0.56 ms and on an unmapped drive letter 0.01 ms -- but
     /// <c>\\10.255.255.1\share</c> costs <b>21,037 ms</b> and a dead hostname
     /// <b>22,225 ms</b>. One UNC title stalls the whole pass for twenty-one
     /// seconds.
@@ -306,20 +306,20 @@ internal sealed class StraySweep
     /// so the guard rejected the UNC <i>spelling</i> while admitting UNC
     /// <i>semantics</i>. Found by
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
-    /// finding 8, and triaged on 2026-08-23 — where it was cheap because
+    /// finding 8, and triaged on 2026-08-23 -- where it was cheap because
     /// <see cref="Interop.VolumeIdentity"/> had arrived in between for the
     /// session directory's own boundary refusals.
     /// </para>
     /// <para>
     /// <b>The volume question costs no filesystem call, which is the only
     /// reason it may be asked here.</b> <c>VolumeIdentity.Through</c> is
-    /// <c>QueryDosDeviceW</c> and <c>GetDriveTypeW</c> — the object manager and
-    /// the operating system's own classification, measured at <b>0.9 ms</b> —
+    /// <c>QueryDosDeviceW</c> and <c>GetDriveTypeW</c> -- the object manager and
+    /// the operating system's own classification, measured at <b>0.9 ms</b> --
     /// so this guard still cannot pay the cost it exists to prevent. A guard
     /// that opened anything would be the defect wearing the fix's name.
     /// </para>
     /// <para>
-    /// ⚠️ <b>And it follows a <c>subst</c> to whatever is at the end of it —
+    /// ⚠️ <b>And it follows a <c>subst</c> to whatever is at the end of it --
     /// 2026-08-26, previously <c>VolumeIdentity.Of</c>, which stops at the first
     /// hop.</b> A letter <c>subst</c>ed onto a mapped drive is the same defect as
     /// finding 8 wearing one more layer: it is a rooted local drive-letter path
@@ -332,7 +332,7 @@ internal sealed class StraySweep
     /// <c>subst</c>ed letter over local storage stays admitted and its filesystem
     /// calls are local-speed; a letter naming nothing answers in 0.01 ms. Neither
     /// can stall the pass, and refusing them would narrow what the sweep can see
-    /// — which costs a stray browser left running, the failure this whole class
+    /// -- which costs a stray browser left running, the failure this whole class
     /// exists for. A session directory refuses more because it is deciding what a
     /// caller may *own*, which is a different question.
     /// </para>
@@ -466,22 +466,22 @@ internal sealed class StraySweep
     /// answers that are already candidates.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Intersected with the candidate set, never trusted on its own — and
+    /// ⚠️ <b>Intersected with the candidate set, never trusted on its own -- and
     /// this is the entire safety boundary of the second path.</b> The Restart
     /// Manager answers about whatever file it is handed, so pointing it at a
     /// user's own Firefox profile would name the user's own browser. A holder
     /// becomes actionable only when it is already one of
-    /// <see cref="BrowserProcesses.ScanFor"/>'s candidates — a full-image-path
-    /// match against a binary BrowserAI provisioned — <b>and</b> its start time
+    /// <see cref="BrowserProcesses.ScanFor"/>'s candidates -- a full-image-path
+    /// match against a binary BrowserAI provisioned -- <b>and</b> its start time
     /// matches the one recorded when it was found.
-    /// Both guards are the same ones the Chromium path uses; the third — the
-    /// session's own <c>browserai.lock</c> being takeable — is applied by
+    /// Both guards are the same ones the Chromium path uses; the third -- the
+    /// session's own <c>browserai.lock</c> being takeable -- is applied by
     /// <see cref="ActOn"/> after this.
     /// </para>
     /// <para>
     /// <b>The index is the source of directories, and a null one costs
     /// attribution rather than safety.</b> Without it there is nothing to ask
-    /// about, so every Firefox candidate stays unattributable and is reported —
+    /// about, so every Firefox candidate stays unattributable and is reported --
     /// which is the direction this whole subsystem is allowed to be wrong in.
     /// </para>
     /// <para>
@@ -702,12 +702,12 @@ internal sealed class StraySweep
     /// the session.</b> BrowserAI passes <c>&lt;session&gt;\profile</c>, so the
     /// title names the profile and the <c>browserai.lock</c> that proves ownership is
     /// one level up. The climb happens only when the leaf is exactly the profile
-    /// folder name and only to look for a lock file — it can never reach a
+    /// folder name and only to look for a lock file -- it can never reach a
     /// personal Chrome profile, whose parent holds no <c>browserai.lock</c> either.
     /// </remarks>
     /// <param name="full">
     /// A title already known to be a rooted local drive-letter path and already
-    /// checked against the spelling BrowserAI records — see the caller.
+    /// checked against the spelling BrowserAI records -- see the caller.
     /// </param>
     /// <returns>The session directory, or <see langword="null"/>.</returns>
     private static string? SessionDirectoryFrom(string full)
@@ -810,7 +810,7 @@ internal sealed record StraySweepResult
     /// questions, and only the second says whether attribution had anything to
     /// work with. Every embedder owns several anonymous message windows plus at
     /// most one titled singleton, so a walk that found dozens of windows and
-    /// <i>none</i> named is what a broken title read looks like — and it would
+    /// <i>none</i> named is what a broken title read looks like -- and it would
     /// otherwise be indistinguishable from a clean machine.
     /// </remarks>
     public int TitledWindows { get; init; }
@@ -900,7 +900,7 @@ internal static partial class SweepLog
     [LoggerMessage(
         EventId = 4,
         Level = LogLevel.Warning,
-        Message = "The stray sweep did not run: '{Mutex}' could not be created. BrowserAI is degraded rather than broken — sessions still work, but a browser nothing claims will not be found.")]
+        Message = "The stray sweep did not run: '{Mutex}' could not be created. BrowserAI is degraded rather than broken -- sessions still work, but a browser nothing claims will not be found.")]
     public static partial void NoSweepLock(ILogger logger, string mutex, Exception failure);
 
     /// <summary>A stray was ended.</summary>
@@ -960,7 +960,7 @@ internal static partial class SweepLog
     /// <remarks>
     /// ⚠️ <b>Warning, and it is the loudest thing this class says about its own
     /// blindness.</b> Detection is an exact match of a full image path against a
-    /// path BrowserAI composed, and the two are produced by different things —
+    /// path BrowserAI composed, and the two are produced by different things --
     /// one by string composition, one by the kernel after reparse processing. An
     /// image whose filesystem spelling is unknown therefore cannot match any
     /// process at all, and the pass that follows reports a clean machine. The

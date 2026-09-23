@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// Every assertion here is aimed at something that would otherwise report
-/// healthy — a tool list quietly shortened by the SDK's convenience overload, a
+/// healthy -- a tool list quietly shortened by the SDK's convenience overload, a
 /// navigation whose result is an error nobody reads, a node process left running
 /// after the binary that owned it was killed.
 /// </remarks>
@@ -107,13 +107,13 @@ internal sealed class VerticalSliceTests
         // shuffled the list.
         //
         // The seven authored tools come first; upstream's follow, and it is the
-        // WHOLE exposable surface — 69 rather than the default 24 — because the
+        // WHOLE exposable surface -- 69 rather than the default 24 -- because the
         // run's own child is started with every capability upstream declares.
         // The spec forbids the tool set varying per connection, so one static
         // list is the only shape available and it has to be everything.
         //
-        // ⚠️ Corrected 2026-08-20 (previously "the UNION surface — 59 rather
-        // than the default 24 — every capability any MODE can have"). Session
+        // ⚠️ Corrected 2026-08-20 (previously "the UNION surface -- 59 rather
+        // than the default 24 -- every capability any MODE can have"). Session
         // modes were deleted and `network`, `pdf` and `testing` were granted for
         // the first time, so the list is ten longer.
         //
@@ -183,7 +183,7 @@ internal sealed class VerticalSliceTests
             await Assert.That(run.ToolNames).Contains(granted);
         }
 
-        // Not vacuous — the child really does have each of them, so the absence
+        // Not vacuous -- the child really does have each of them, so the absence
         // above is BrowserAI's filter rather than an upstream that never shipped
         // the tool.
         foreach (var denial in RepositoryVerdicts.TheDenials)
@@ -201,8 +201,8 @@ internal sealed class VerticalSliceTests
         // Corrected 2026-08-18 (previously this asserted every name carried a
         // row in `SessionToolPolicy.Classification`, deny-by-default). That
         // table was part of the (tool, mode) permission matrix, which was never
-        // a boundary against the caller — who chooses the session directory and
-        // reads the profile inside it as the same user — and change detection
+        // a boundary against the caller -- who chooses the session directory and
+        // reads the profile inside it as the same user -- and change detection
         // for a tool upstream adds now lives in the golden `tools-list.json`
         // snapshot, which diffs each tool's inputSchema as well as its name.
         var unrouted = run.ToolList
@@ -223,7 +223,7 @@ internal sealed class VerticalSliceTests
     /// was named <c>EveryUpstreamToolGainsTheSessionParameterAndNoneLosesItsOwn</c>).</b>
     /// <c>why</c> rides the same path, and the ORDER is asserted rather than
     /// mere presence: both are appended, upstream's own properties keep their
-    /// positions, and <c>session</c> comes before <c>why</c> — a rewrite that
+    /// positions, and <c>session</c> comes before <c>why</c> -- a rewrite that
     /// reordered would cost a prompt-cache miss per call with nothing failing.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -307,19 +307,19 @@ internal sealed class VerticalSliceTests
     /// ⚠️ <b>The defect this closed was ours, and 2026-08-26 removed its cause
     /// rather than its symptom.</b> Upstream's handler ends
     /// <c>await response.addFileResult(resolvedFile, data); if (!params.filename)
-    /// await response.registerImageResult(data, fileType);</c> — the only
+    /// await response.registerImageResult(data, fileType);</c> -- the only
     /// <c>registerImageResult</c> call site in the resolved bundle. BrowserAI
     /// used to rewrite <c>arguments["filename"]</c> on every screenshot, to give
     /// the file a name a human could read a month later, so <b>the guard was
     /// never true and no screenshot ever came back inline</b>; the repair was to
     /// append the block ourselves. Nothing rewrites the argument now, so the
     /// guard is true again on its own and there is no restoration left in the
-    /// product — <b>the block in the answer is upstream's own</b>.
+    /// product -- <b>the block in the answer is upstream's own</b>.
     /// </para>
     /// <para>
     /// <b>Against the real child, off the wire, because a double proves the
     /// wrong thing here.</b> The claim is that the bytes in the answer are the
-    /// bytes upstream produced — a fake child writes whatever a test told it to,
+    /// bytes upstream produced -- a fake child writes whatever a test told it to,
     /// so it can only show that the plumbing moves bytes, not that these are the
     /// right ones. This drives the published NativeAOT binary, a real Chromium
     /// and a real <c>@playwright/mcp</c>, and compares the block against the file
@@ -343,7 +343,7 @@ internal sealed class VerticalSliceTests
         // is no generator folder and no derived name: upstream chooses the name,
         // upstream writes the file, and it lands at the output ROOT because that
         // is upstream's own working directory. What survives from the old claim
-        // is the half that was ever a claim about the product — the path in the
+        // is the half that was ever a claim about the product -- the path in the
         // answer is the path the file is at.
         await Assert.That(run.ScreenshotFile).EndsWith(".png");
         await Assert.That(Path.GetDirectoryName(run.ScreenshotFile))
@@ -358,13 +358,13 @@ internal sealed class VerticalSliceTests
             .IsEquivalentTo(new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A });
 
         // ⚠️ THE INLINE HALF IS UPSTREAM'S OWN IMAGE SINCE 2026-08-26, AND IT IS
-        // THE FILE'S IMAGE AGAIN SINCE 2026-09-15 — for a different reason than
+        // THE FILE'S IMAGE AGAIN SINCE 2026-09-15 -- for a different reason than
         // it was before. *Corrected 2026-09-15 (previously "AND IT IS NOT THE
         // FILE'S BYTES … upstream puts its bytes through
         // `scaleImageToFitMessage` first, which shrinks anything over 1,568 px
         // on a side and re-encodes … at the 1920x1080 default the file is the
         // full capture and the inline block is scaled DOWN in pixels while being
-        // several times LARGER in bytes — 9,379 on disk against 379,731 inline
+        // several times LARGER in bytes -- 9,379 on disk against 379,731 inline
         // on 2026-08-26, because a re-encode is not Chromium's own encoder",
         // asserting `Math.Max(inlineWidth, inlineHeight) <= 1568`; and corrected
         // 2026-08-26 before that, previously asserting
@@ -372,14 +372,14 @@ internal sealed class VerticalSliceTests
         // the block itself by reading the file back off disk.)*
         //
         // BrowserAI still supplies no `filename`, so the block is still the one
-        // upstream sends — what changed is upstream: `playwright-core`
+        // upstream sends -- what changed is upstream: `playwright-core`
         // 1.63.0-alpha-2026-08-31 DELETED `scaleImageToFitMessage`, so there is
         // no scaler left anywhere in the path and the block is the capture at
         // its own size.
         //
         // **Measured here rather than assumed, because the sameness is now the
         // finding.** The bound below WAS 1,568 and was watched red at exactly
-        // this line, receiving 1920 — which is the viewport, which is the point.
+        // this line, receiving 1920 -- which is the viewport, which is the point.
         // What is asserted now is the viewport on both sides: the file is the
         // capture and the block is the same capture, and neither has been
         // touched on the way to the caller.
@@ -404,7 +404,7 @@ internal sealed class VerticalSliceTests
 
         // ⚠️ THE BLOCK IS THE VIEWPORT, and the dimensions are read from the
         // PNG rather than taken from the argument that asked for them. The
-        // product constant is the bound — never a number written here — so a
+        // product constant is the bound -- never a number written here -- so a
         // viewport default that moved would move this assertion with it, which
         // is the property the old literal 1,568 could not have.
         await Assert.That(inlineWidth).IsEqualTo(BrowserConfiguration.DefaultViewport.Width);
@@ -459,7 +459,7 @@ internal sealed class VerticalSliceTests
     /// A separate non-async method for the reason
     /// <c>ModelSurfaceTests.Report</c> is one: <c>TextWriter.WriteLine</c> is a
     /// synchronous call and CA1849 refuses it inside an <c>async</c> method,
-    /// which is right — and awaiting a diagnostic write in the middle of an
+    /// which is right -- and awaiting a diagnostic write in the middle of an
     /// assertion sequence is the wrong fix.
     /// </remarks>
     /// <summary>A PNG's pixel dimensions, read out of its own IHDR chunk.</summary>

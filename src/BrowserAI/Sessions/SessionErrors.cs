@@ -14,9 +14,9 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>The audience is a model deciding what to do next, not a human tailing a
 /// console</b>, and §H.4 makes three rules of that. <i>Name the fix, not just the
-/// fault</i> — "not permitted" tells a model nothing it can act on. <i>Recoverable
-/// in one turn</i> — the next call should be able to succeed. <i>Never blame the
-/// caller for a decision we made</i> — a refused <c>init</c> is our design
+/// fault</i> -- "not permitted" tells a model nothing it can act on. <i>Recoverable
+/// in one turn</i> -- the next call should be able to succeed. <i>Never blame the
+/// caller for a decision we made</i> -- a refused <c>init</c> is our design
 /// working, and should read that way.
 /// </para>
 /// <para>
@@ -25,7 +25,7 @@ namespace BrowserAI.Sessions;
 /// condition and compares what came back against this file, then asserts that
 /// <i>every</i> public method was matched by one of those provocations. A row
 /// nobody can reach is documentation rather than behaviour, and this is the check
-/// that says so — which is why a row is written here only once something can
+/// that says so -- which is why a row is written here only once something can
 /// provoke it, and never in advance.
 /// </para>
 /// <para>
@@ -40,7 +40,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// ⚠️ <b><c>purpose</c> is a channel between agents.</b> It is free text one
-/// model wrote and another reads, replayed into a second context — so every
+/// model wrote and another reads, replayed into a second context -- so every
 /// method that echoes one puts it behind <see cref="Recorded"/>, which caps it,
 /// strips control characters and frames it as <i>recorded data</i> rather than as
 /// text addressed to the reader. An unframed replay is an instruction-injection
@@ -60,13 +60,13 @@ internal static class SessionErrors
     /// 2,000-character cap on a purpose and a 400-character cap on a <c>why</c>,
     /// and both are gone: the record keeps whatever an agent wrote, at whatever
     /// length. What this bounds is how much of somebody else's text a refusal
-    /// hands to a model that asked a different question — which is a decision
+    /// hands to a model that asked a different question -- which is a decision
     /// about a sentence rather than about a file, and is why removing every cap
     /// from the record did not touch it.
     /// </remarks>
     public const int ReplayedPurposeLength = 300;
 
-    /// <summary>Row 1 — the call named no session.</summary>
+    /// <summary>Row 1 -- the call named no session.</summary>
     /// <param name="tool">The tool that was called.</param>
     /// <returns>The refusal.</returns>
     public static string SessionMissing(string tool) =>
@@ -74,21 +74,21 @@ internal static class SessionErrors
         + $"Call {SessionToolSurface.Init} with an absolute directory to create a session, {SessionToolSurface.Resume} to reopen one that exists, or {SessionToolSurface.List} with a directory to see the sessions beneath it. Nothing was changed.";
 
     /// <summary>
-    /// Row 1's companion — the call named a session and did not say why it was
+    /// Row 1's companion -- the call named a session and did not say why it was
     /// being made.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>It says what to write, not only that something is missing.</b> A model
     /// told <i>"'why' is required"</i> retries with a restatement of the tool
-    /// name, which satisfies the schema and records nothing — so the refusal
+    /// name, which satisfies the schema and records nothing -- so the refusal
     /// carries the same contrast the parameter's own description does, because
     /// the description was read once at connect time and this is read at the
     /// moment of the mistake.
     /// </para>
     /// <para>
     /// <b>Nothing was forwarded and the sentence says so.</b> The refusal happens
-    /// before the child hears about the call, so a retry is safe — which is the
+    /// before the child hears about the call, so a retry is safe -- which is the
     /// one fact a model needs before it can act on this in a single turn.
     /// </para>
     /// </remarks>
@@ -96,11 +96,11 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string WhyMissing(string tool) =>
         $"'{tool}' needs a '{SessionToolSurface.WhyParameter}'. Every call that names a session takes one, and it is not optional. Nothing was forwarded to the browser and nothing was changed, so calling again with it is safe. "
-        + "Write why you are making the call, not what it does — the tool name already says that. One short clause: \"checking whether the login survived the redirect\" beats \"clicking the submit button\". "
+        + "Write why you are making the call, not what it does -- the tool name already says that. One short clause: \"checking whether the login survived the redirect\" beats \"clicking the submit button\". "
         + "It goes in the session's log, which is what lets whoever opens this directory next read back what was being attempted rather than only which tools ran.";
 
     /// <summary>
-    /// Row 1's second companion — the call was not forwarded because its log
+    /// Row 1's second companion -- the call was not forwarded because its log
     /// entry could not be written.
     /// </summary>
     /// <remarks>
@@ -115,7 +115,7 @@ internal static class SessionErrors
     /// <para>
     /// <b>It names the file, because the recovery is about the file.</b> The two
     /// reachable causes are a per-directory gate that could not be taken inside
-    /// its timeout — another call on the same session, which passes — and a
+    /// its timeout -- another call on the same session, which passes -- and a
     /// record that could not be written, which does not.
     /// </para>
     /// </remarks>
@@ -125,19 +125,19 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string SessionLogCouldNotBeWritten(string tool, string record, string detail) =>
         $"'{tool}' was NOT forwarded to the browser, because its row in '{record}' could not be written ({detail}). Nothing reached the page and nothing was changed. "
-        + "Every call this session makes is recorded in that file in order, and a call BrowserAI cannot record is one whose absence nobody would ever see — so it is refused instead. "
-        + "If the file itself cannot be written, the volume is full, the directory has become read-only, or the record has been damaged — and no call on this session will work until that is fixed.";
+        + "Every call this session makes is recorded in that file in order, and a call BrowserAI cannot record is one whose absence nobody would ever see -- so it is refused instead. "
+        + "If the file itself cannot be written, the volume is full, the directory has become read-only, or the record has been damaged -- and no call on this session will work until that is fixed.";
 
-    /// <summary>Row 2 — the path is not a session at all.</summary>
+    /// <summary>Row 2 -- the path is not a session at all.</summary>
     /// <param name="tool">The tool that was called.</param>
     /// <param name="path">The path the caller named.</param>
     /// <returns>The refusal.</returns>
     public static string SessionNamesNoSession(string tool, string path) =>
-        $"No BrowserAI session at '{path}' — there is no '{SessionLayout.DataFileName}' there — so '{tool}' was not run and nothing was changed. "
+        $"No BrowserAI session at '{path}' -- there is no '{SessionLayout.DataFileName}' there -- so '{tool}' was not run and nothing was changed. "
         + $"Call {SessionToolSurface.Init} with directory='{path}' to create one, or {SessionToolSurface.List} with a directory to see the sessions beneath it.";
 
     /// <summary>
-    /// Row 2's companion — the path <i>is</i> a session, and this process is not
+    /// Row 2's companion -- the path <i>is</i> a session, and this process is not
     /// driving it.
     /// </summary>
     /// <remarks>
@@ -146,7 +146,7 @@ internal static class SessionErrors
     /// token and the only way to fail was to name nothing. With the directory as
     /// the identity there are two distinguishable cases, and telling a caller to
     /// <c>init</c> a directory that already holds a session would earn them
-    /// row 4 on the next turn — which breaks the "recoverable in one turn" rule
+    /// row 4 on the next turn -- which breaks the "recoverable in one turn" rule
     /// the catalogue is built on.
     /// </remarks>
     /// <param name="tool">The tool that was called.</param>
@@ -154,19 +154,19 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string SessionNotOpen(string tool, string path) =>
         $"'{path}' is a BrowserAI session, but this BrowserAI is not driving it, so '{tool}' was not run and nothing was changed. "
-        + $"Call {SessionToolSurface.Resume} with directory='{path}' first — a session is resumable forever, so one that exists can always be reopened.";
+        + $"Call {SessionToolSurface.Resume} with directory='{path}' first -- a session is resumable forever, so one that exists can always be reopened.";
 
-    /// <summary>Row 3 — the directory is empty, relative or malformed.</summary>
+    /// <summary>Row 3 -- the directory is empty, relative or malformed.</summary>
     /// <param name="argument">Which argument was wrong.</param>
     /// <param name="value">What arrived.</param>
     /// <returns>The refusal.</returns>
     public static string DirectoryNotAbsolute(string argument, string value) =>
         $"'{argument}' must be an absolute local path, and '{RecordText.Escape(value)}' is not. There is no default: name where this session's data should live. "
-        + "BrowserAI does not resolve a relative path, because that would silently pick a location nobody chose — a different one per process. Pass a full path such as C:\\work\\checkout-flow-bug.";
+        + "BrowserAI does not resolve a relative path, because that would silently pick a location nobody chose -- a different one per process. Pass a full path such as C:\\work\\checkout-flow-bug.";
 
-    /// <summary>Row 3 — the path is absolute and still unusable.</summary>
+    /// <summary>Row 3 -- the path is absolute and still unusable.</summary>
     /// <remarks>
-    /// ⚠️ <b>The caller's own spelling is ESCAPED and not echoed — corrected
+    /// ⚠️ <b>The caller's own spelling is ESCAPED and not echoed -- corrected
     /// 2026-08-26.</b> Measured that day through the published binary: an
     /// <c>init</c> on a path carrying U+0007 answered with a message that named
     /// <c>U+0007</c> in words and then <b>carried two literal U+0007 bytes</b>
@@ -184,7 +184,7 @@ internal static class SessionErrors
         $"'{argument}' = '{RecordText.Escape(value)}' is not a usable directory path: {why} Nothing was changed. Name an absolute path BrowserAI can create a directory at.";
 
     /// <summary>
-    /// Row 3's second companion — the path is absolute, usable, and on a network
+    /// Row 3's second companion -- the path is absolute, usable, and on a network
     /// volume.
     /// </summary>
     /// <remarks>
@@ -192,14 +192,14 @@ internal static class SessionErrors
     /// <b>Refused because the cost lands on somebody else.</b> One
     /// <c>File.Exists</c> against a share that has stopped answering measured
     /// <b>22,210 ms</b> on this machine, and several such calls happen inside
-    /// <see cref="LockScopes.PerDirectoryGate"/> — so the caller who named the
+    /// <see cref="LockScopes.PerDirectoryGate"/> -- so the caller who named the
     /// dead share is not the one who waits. Every other process contending for
     /// that directory does.
     /// </para>
     /// <para>
     /// ⚠️ <b>The <paramref name="why"/> clause is not decoration.</b> The
     /// commonest way into this refusal is a mapped drive letter, which does not
-    /// look like a network path at all — a caller told only <i>"that is a network
+    /// look like a network path at all -- a caller told only <i>"that is a network
     /// path"</i> about <c>Z:\work\thing</c> would reasonably conclude BrowserAI
     /// was wrong. Naming the mapping is what makes the next turn the right one.
     /// </para>
@@ -209,23 +209,23 @@ internal static class SessionErrors
     /// <param name="why">Which kind of network path it is, as a clause.</param>
     /// <returns>The refusal.</returns>
     public static string DirectoryOnANetworkPath(string argument, string value, string why) =>
-        $"'{argument}' = '{RecordText.Escape(value)}' is on a network path — {why} — and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. "
+        $"'{argument}' = '{RecordText.Escape(value)}' is on a network path -- {why} -- and BrowserAI keeps sessions on local volumes only. Nothing was created and nothing was changed. "
         + "This is refused rather than handled because the cost is not paid by the caller who names it: one filesystem call against a share that stops answering has been measured here at 22 seconds, and a session takes a lock that every other process using that same directory waits behind. "
         + "Name a directory on a local drive, such as C:\\work\\my-session. If the data has to end up on the share, run the session locally and copy it there afterwards.";
 
     /// <summary>
-    /// Row 3's third companion — the path is spelled in the device namespace.
+    /// Row 3's third companion -- the path is spelled in the device namespace.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Replaces <c>DirectoryIsAnAliasedSpelling</c> 2026-08-26 (previously
     /// "'{argument}' = '{value}' is a second spelling of a directory the
-    /// filesystem calls something else — {why} … Call the same tool again with
+    /// filesystem calls something else -- {why} … Call the same tool again with
     /// {argument}='{accepted}'").</b> That row refused every alias and named the
     /// spelling to use instead. Every alias it refused is now resolved rather
-    /// than refused — a <c>\\?\</c> prefix is four characters off the front, a
+    /// than refused -- a <c>\\?\</c> prefix is four characters off the front, a
     /// <c>subst</c> is one object-manager read, a junction is one directory open
-    /// on a volume already proven local — and each of those answers was already
+    /// on a volume already proven local -- and each of those answers was already
     /// being computed to build that sentence. What is left is this one shape,
     /// and it is left deliberately rather than by omission.
     /// </para>
@@ -233,7 +233,7 @@ internal static class SessionErrors
     /// <b><c>\\?\</c> and <c>\\.\</c> are not one thing.</b> The first is a
     /// length-and-parsing prefix over an ordinary path. The second is the
     /// <i>device namespace</i>, where <c>\\.\NUL</c> and
-    /// <c>\\.\PhysicalDrive0</c> name devices rather than directories — it
+    /// <c>\\.\PhysicalDrive0</c> name devices rather than directories -- it
     /// reaches past every check the filesystem would otherwise apply, which is
     /// the reason the deleted <c>filename</c> gate refused it in those same
     /// words. A directory argument has no business there.
@@ -241,7 +241,7 @@ internal static class SessionErrors
     /// <para>
     /// <b>One turn to fix, by construction.</b> The accepted form is the same
     /// string minus four characters, so the next call is this call with one
-    /// argument replaced — which is why it is a parameter rather than advice
+    /// argument replaced -- which is why it is a parameter rather than advice
     /// about how to find it.
     /// </para>
     /// </remarks>
@@ -250,11 +250,11 @@ internal static class SessionErrors
     /// <param name="accepted">The same path with the prefix removed.</param>
     /// <returns>The refusal.</returns>
     public static string DirectorySpelledInTheDeviceNamespace(string argument, string value, string accepted) =>
-        $"'{argument}' = '{RecordText.Escape(value)}' is spelled in the device namespace — '\\\\.\\' is where '\\\\.\\NUL' and '\\\\.\\PhysicalDrive0' live, and it reaches past every check the filesystem would otherwise apply to a directory name. Nothing was created and nothing was changed. "
+        $"'{argument}' = '{RecordText.Escape(value)}' is spelled in the device namespace -- '\\\\.\\' is where '\\\\.\\NUL' and '\\\\.\\PhysicalDrive0' live, and it reaches past every check the filesystem would otherwise apply to a directory name. Nothing was created and nothing was changed. "
         + "Every other spelling of a local directory is taken as the directory it names: BrowserAI resolves the extended-length prefix, a 'subst'ed drive letter and a junction into the filesystem's own name for the directory, and records that. This one it will not. "
         + $"Call the same tool again with {argument}='{RecordText.Escape(accepted)}'.";
 
-    /// <summary>Row 4 — <c>init</c> met a directory that is already a session.</summary>
+    /// <summary>Row 4 -- <c>init</c> met a directory that is already a session.</summary>
     /// <remarks>
     /// ⚠️ <b>Corrected 2026-08-20 (previously the sentence opened "a '{mode}'
     /// session on {browser}", and the method took a <c>mode</c>).</b> Session
@@ -274,11 +274,11 @@ internal static class SessionErrors
         DateTimeOffset lastUsed,
         string purpose) =>
         $"A session already exists at '{path}': a session on {browser}, created {Stamp(created)}, last used {Stamp(lastUsed)}. {Recorded(purpose)} "
-        + $"{SessionToolSurface.Init} will not take it over. Use {SessionToolSurface.Resume} with directory='{path}' to drive it — do that only if you expected it to be there, because another agent may be using it — or {SessionToolSurface.Destroy} to delete it, or {SessionToolSurface.Init} on a directory that is not already one. "
+        + $"{SessionToolSurface.Init} will not take it over. Use {SessionToolSurface.Resume} with directory='{path}' to drive it -- do that only if you expected it to be there, because another agent may be using it -- or {SessionToolSurface.Destroy} to delete it, or {SessionToolSurface.Init} on a directory that is not already one. "
         + "There is deliberately no difference between a session that was lost and one that was closed cleanly: both are resumed.";
 
     /// <summary>
-    /// Row 5 — a tool this build was told not to forward.
+    /// Row 5 -- a tool this build was told not to forward.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -286,7 +286,7 @@ internal static class SessionErrors
     /// <c>tool-verdicts.json</c>'s, and the split is the whole design.</b> The
     /// frame is ours and is the same for every denied tool: it was not run,
     /// nothing was changed, and the name is not in this server's
-    /// <c>tools/list</c>. The reason — and what to do instead — is the row's own
+    /// <c>tools/list</c>. The reason -- and what to do instead -- is the row's own
     /// <c>why</c>, because the reason is a fact about that tool and belongs in
     /// the file a person adjudicates rather than in a C# literal beside a
     /// constant.
@@ -295,7 +295,7 @@ internal static class SessionErrors
     /// <b>It says the tool is not in the list, first.</b> The reader of this
     /// sentence asked for a tool this server never offered, so it almost
     /// certainly knows the name from <c>@playwright/mcp</c> rather than from
-    /// <c>tools/list</c> — and a refusal that did not say so reads as a tool that
+    /// <c>tools/list</c> -- and a refusal that did not say so reads as a tool that
     /// broke rather than one that is absent, which is a retry.
     /// </para>
     /// <para>
@@ -316,7 +316,7 @@ internal static class SessionErrors
     /// create a session in 'interactive' or 'persistent' mode if a human will be
     /// at the keyboard").</b> The tool is now withheld from the surface in every
     /// mode, so there is no mode to name and no session to create that would make
-    /// the call work — offering one would send a model to build a session for a
+    /// the call work -- offering one would send a model to build a session for a
     /// tool that is still not there. The mode parameter went with the sentence.
     /// Before that it was <c>ModeRefusal</c>, which named the mode that would
     /// permit a tool the <c>(tool, mode)</c> permission matrix refused.
@@ -330,14 +330,14 @@ internal static class SessionErrors
         + why;
 
     /// <summary>
-    /// Row 5's companion — a tool nobody has judged, which is a gap rather than
+    /// Row 5's companion -- a tool nobody has judged, which is a gap rather than
     /// a decision.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>It names no tool, and that is deliberate.</b> This is the one
     /// refusal whose subject is a string the caller invented, and the answer is
-    /// read by a model — so quoting it back would put arbitrary caller-supplied
+    /// read by a model -- so quoting it back would put arbitrary caller-supplied
     /// bytes into model-facing text for no gain. The caller already knows what it
     /// sent; what it does not know is where to look next, and that is what the
     /// sentence carries instead. (It is not a claim that the string is contained:
@@ -349,18 +349,18 @@ internal static class SessionErrors
     /// <b>It says GAP rather than refusal, because the two have different
     /// fixes.</b> A denied tool answers with its own reason and there is nothing
     /// to be done about it; a tool with no verdict is one this build was never
-    /// told about — a name from another server, a typo, or an upstream tool that
+    /// told about -- a name from another server, a typo, or an upstream tool that
     /// arrived in a payload nobody has adjudicated yet.
     /// </para>
     /// <para>
     /// ⚠️ <b>REWRITTEN 2026-09-15, because the last sentence pointed the caller
     /// straight back at the tool it had just refused.</b> <i>Previously: "Call
-    /// tools/list and use a name exactly as it is spelled there — every tool in
+    /// tools/list and use a name exactly as it is spelled there -- every tool in
     /// that list reaches the browser, and a name that is not in it never will,
     /// however many times it is sent", with the paragraph above ending
     /// "… and <c>tools/list</c> settles all three in one call".</i> <b>It is only
     /// a <c>deny</c> row that is filtered out of <c>tools/list</c>; an UNJUDGED
-    /// name is advertised</b>, because a gap is not a decision — so of the three
+    /// name is advertised</b>, because a gap is not a decision -- so of the three
     /// cases that sentence claimed to settle, it settled the two that do not
     /// happen in a shipped build and misdirected the one that does. Read against
     /// a list the caller can see its own name in, <i>every tool in that list
@@ -371,8 +371,8 @@ internal static class SessionErrors
     /// </para>
     /// <para>
     /// <b>The state is unreachable in a release and the sentence still matters.</b>
-    /// A payload carrying an unjudged tool is a red build — <c>ToolVerdictTests</c>
-    /// compares the file against the golden snapshot in both directions — the
+    /// A payload carrying an unjudged tool is a red build -- <c>ToolVerdictTests</c>
+    /// compares the file against the golden snapshot in both directions -- the
     /// verdicts ship inside the payload, and <c>judgedAgainst</c> is asserted
     /// against the payload lock, so the only window in which a caller can meet
     /// this refusal is the one between an upstream roll and its adjudication.
@@ -384,7 +384,7 @@ internal static class SessionErrors
     public static string ToolHasNoVerdict() =>
         "BrowserAI has no forwarding verdict for the tool you named, so nothing was sent to the browser and nothing was changed. "
         + "This is a GAP rather than a decision: a tool this build was deliberately told not to forward refuses with its own reason instead of this sentence. "
-        + "The name may well be in tools/list — being listed is not the same as being judged — so retrying it will fail in exactly this way until a human adjudicates it. "
+        + "The name may well be in tools/list -- being listed is not the same as being judged -- so retrying it will fail in exactly this way until a human adjudicates it. "
         + "Do not retry. Use a different tool, or stop and report that this one does not work in this build.";
 
     /// <summary>
@@ -395,7 +395,7 @@ internal static class SessionErrors
     /// <b>It lists what IS there, because the caller read the name somewhere and
     /// the page has moved on.</b> A page tool exists only while the tab is on the
     /// page that registered it, so the ordinary way to meet this is a navigation
-    /// between reading a snapshot and acting on it — which is a recovery rather
+    /// between reading a snapshot and acting on it -- which is a recovery rather
     /// than a mistake, and the list is what makes the next call the right one.
     /// </para>
     /// <para>
@@ -427,7 +427,7 @@ internal static class SessionErrors
     /// <b>Upstream's own collision rule made the wire names distinct and left the
     /// names a caller reads identical.</b> A page registering two tools whose
     /// sanitised names collide gets <c>&lt;base&gt;</c> and
-    /// <c>&lt;base&gt;_2</c> — measured 2026-09-21 — and the snapshot block
+    /// <c>&lt;base&gt;_2</c> -- measured 2026-09-21 -- and the snapshot block
     /// prints the page's name for both. There is nothing on this tool's surface
     /// that can separate them, so the refusal hands the caller the wire names and
     /// stops rather than choosing one: a page that offers two tools with one name
@@ -442,7 +442,7 @@ internal static class SessionErrors
 
         return $"The page this session is on offers {matches.Count} tools called '{name}', so nothing was called and nothing was changed. "
             + $"On the wire they are {string.Join(", ", matches.Select(match => match.WireName))}, and the page gives them all the same name, so naming one of them here would be a guess about which. "
-            + "Nothing this tool takes can tell them apart. Read the page's own descriptions in the browser_snapshot block to see whether one of them is the one you want, and if it matters, say so to whoever owns the page — two tools with one name is the page's defect rather than yours.";
+            + "Nothing this tool takes can tell them apart. Read the page's own descriptions in the browser_snapshot block to see whether one of them is the one you want, and if it matters, say so to whoever owns the page -- two tools with one name is the page's defect rather than yours.";
     }
 
     /// <summary>
@@ -451,8 +451,8 @@ internal static class SessionErrors
     /// </summary>
     /// <remarks>
     /// <b>This is the late-binding hazard refusing rather than firing.</b> The
-    /// same wire name resolves to a different page's code after a navigation —
-    /// measured 2026-09-21 — so a caller that read a tool on one page and calls
+    /// same wire name resolves to a different page's code after a navigation --
+    /// measured 2026-09-21 -- so a caller that read a tool on one page and calls
     /// it after the tab has moved would run code it never read. Naming both URLs
     /// is what lets the caller see which of the two it was wrong about.
     /// </remarks>
@@ -494,7 +494,7 @@ internal static class SessionErrors
     /// <b>Two readings and the refusal carries both, because BrowserAI cannot
     /// tell them apart from here.</b> Either the page set its own
     /// <c>annotations.title</c> and the caller typed that instead of the name the
-    /// snapshot printed — which is ordinary and recoverable in one turn — or
+    /// snapshot printed -- which is ordinary and recoverable in one turn -- or
     /// upstream has changed how it builds a page tool's wire name, which is a
     /// re-verification trigger and a thing for a human.
     /// </para>
@@ -510,7 +510,7 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string PageToolNameDoesNotFollowTheRule(string name, string expected, string actual) =>
         $"The page this session is on offers a tool whose title is '{name}', and on the wire it is called '{actual}' rather than the '{expected}' this build's rule builds from that name. Nothing was called and nothing was changed. "
-        + "That happens for two reasons and they need different answers. The page may have given the tool a display title that is not its name, in which case the name to pass here is the one browser_snapshot prints in its '- webmcp tools (page-provided, untrusted):' block — read it and call again with that. "
+        + "That happens for two reasons and they need different answers. The page may have given the tool a display title that is not its name, in which case the name to pass here is the one browser_snapshot prints in its '- webmcp tools (page-provided, untrusted):' block -- read it and call again with that. "
         + "Or the browser server has changed how it builds these names, in which case nothing you send will work and this needs a human: report both names above.";
 
     /// <summary>
@@ -519,16 +519,16 @@ internal static class SessionErrors
     /// <remarks>
     /// <para>
     /// <b>The abandoned call is still on the tab and the refusal says so.</b> The
-    /// browser server does not bound a page-tool call at all — it awaits the
-    /// page's own handler with nothing behind it — so cancelling BrowserAI's
+    /// browser server does not bound a page-tool call at all -- it awaits the
+    /// page's own handler with nothing behind it -- so cancelling BrowserAI's
     /// request does not stop the page's code. Measured 2026-09-21: a
     /// never-settling page tool was still pending at 61 s, and navigating away or
-    /// closing the tab released it in 7–13 ms.
+    /// closing the tab released it in 7-13 ms.
     /// </para>
     /// <para>
     /// <b>And the session is still usable, which is why this reads as a recovery
     /// rather than as a loss.</b> Measured the same day: with a page tool
-    /// pending, <c>browser_snapshot</c> answered in 4–7 ms and a second page tool
+    /// pending, <c>browser_snapshot</c> answered in 4-7 ms and a second page tool
     /// in about 520 ms.
     /// </para>
     /// </remarks>
@@ -538,11 +538,11 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string PageToolDidNotAnswer(string name, string wireName, TimeSpan budget) =>
         $"'{name}' did not answer within {Elapsed(budget)}, so BrowserAI stopped waiting for it. It was forwarded as '{wireName}' and it may still be running: the browser server puts no limit of its own on a page tool, so the page's code is not stopped by this. "
-        + "The rest of the session is unaffected and still answers — a snapshot, a click, another page tool. "
+        + "The rest of the session is unaffected and still answers -- a snapshot, a click, another page tool. "
         + "Navigating the tab elsewhere or closing it releases the abandoned call; until then it stays on the page. "
         + "Do not simply retry it: a tool that did not answer once is a tool the page did not finish, and a second copy will sit beside the first. Read the page with browser_snapshot to see what state it is in, and if you need the result, say to whoever is reading that this page's tool did not return.";
 
-    /// <summary>Row 6 — the browser this session needs is still being provisioned.</summary>
+    /// <summary>Row 6 -- the browser this session needs is still being provisioned.</summary>
     /// <remarks>
     /// <para>
     /// <b>The number is quoted because the wait is the caller's decision.</b> An
@@ -555,7 +555,7 @@ internal static class SessionErrors
     /// <b>It is an error and not a block, which is the whole design.</b>
     /// <c>init</c> returned immediately, this call is refused immediately, and
     /// the same session's same child answers the same call once the install
-    /// lands — no restart, no new session, nothing to re-create. A blocking
+    /// lands -- no restart, no new session, nothing to re-create. A blocking
     /// <c>init</c> would have corrupted whatever timing the caller was managing
     /// and told it nothing.
     /// </para>
@@ -566,8 +566,8 @@ internal static class SessionErrors
     /// and nothing at all on the fourth: "wait about ten seconds" said the same
     /// thing at 8 s in and at 25 minutes in, so a model had no way to tell a
     /// download that was working from one that was not, and its only recourse was
-    /// to keep calling. What it now reads is measured — bytes written, elapsed,
-    /// and the rate those two give — which is the same sample the stall detector
+    /// to keep calling. What it now reads is measured -- bytes written, elapsed,
+    /// and the rate those two give -- which is the same sample the stall detector
     /// judges the install on, so the sentence and the cap can never disagree.
     /// </para>
     /// <para>
@@ -590,10 +590,10 @@ internal static class SessionErrors
         string directory,
         string megabytes,
         ProvisioningProgress? progress = null) =>
-        $"'{tool}' needs a browser, and this is the first use of {browser} on this machine. The download has started ({megabytes}) into '{directory}' and BrowserAI did not wait for it — nothing was changed and no browser was launched. "
+        $"'{tool}' needs a browser, and this is the first use of {browser} on this machine. The download has started ({megabytes}) into '{directory}' and BrowserAI did not wait for it -- nothing was changed and no browser was launched. "
         + $"{Progress(progress, megabytes)} "
         + "Nothing has to change to recover: call the same tool again on the same session, because the session and its child are already running, so nothing has to be re-created and there is nothing to restart. "
-        + $"Every browser tool is refused until it lands, including 'browser_get_config' — it reads the browser's own resolved configuration and cannot answer before the browser exists. {SessionToolSurface.List}, {SessionToolSurface.Resume} and {SessionToolSurface.SetPurpose} all work meanwhile.";
+        + $"Every browser tool is refused until it lands, including 'browser_get_config' -- it reads the browser's own resolved configuration and cannot answer before the browser exists. {SessionToolSurface.List}, {SessionToolSurface.Resume} and {SessionToolSurface.SetPurpose} all work meanwhile.";
 
     /// <summary>
     /// The progress clause, which is the whole of what a caller has to decide on.
@@ -602,8 +602,8 @@ internal static class SessionErrors
     /// <para>
     /// <b>A percentage is quoted for the download and withheld for the
     /// extraction, and the asymmetry is honest rather than lazy.</b> The measured
-    /// total is a <i>download</i> figure — the sum of three archives'
-    /// <c>content-length</c> — while the extracted tree is more than twice that
+    /// total is a <i>download</i> figure -- the sum of three archives'
+    /// <c>content-length</c> -- while the extracted tree is more than twice that
     /// (207.3 MB down against 437.2 MiB on disk for chromium, re-measured
     /// 2026-09-16 at rev 1244; previously 203.8 MB against 430.5 MiB at rev
     /// 1237), so a percentage
@@ -661,15 +661,15 @@ internal static class SessionErrors
             : $"{((int)span.TotalMinutes).ToString(CultureInfo.InvariantCulture)} m {span.Seconds.ToString(CultureInfo.InvariantCulture)} s";
 
     /// <summary>
-    /// Row 13 — something is running out of BrowserAI's own browser tree that no
+    /// Row 13 -- something is running out of BrowserAI's own browser tree that no
     /// session accounts for.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Reporting only, and there is no code path that could terminate it.</b>
     /// The process was found by matching the <i>full image path</i> against the
-    /// browsers root — never by image name, which would name the user's own
-    /// Chrome as readily as ours — and what it belongs to is unknown by
+    /// browsers root -- never by image name, which would name the user's own
+    /// Chrome as readily as ours -- and what it belongs to is unknown by
     /// definition: a BrowserAI that died without releasing its session, a
     /// debugger, a copy somebody launched by hand. Killing an unattributable
     /// process is how a tool that was asked to replace a directory ends up
@@ -695,14 +695,14 @@ internal static class SessionErrors
 
         var named = string.Join(
             "\n",
-            running.Take(20).Select(entry => $"  PID {entry.ProcessId.ToString(CultureInfo.InvariantCulture)} — {entry.ImagePath}"));
+            running.Take(20).Select(entry => $"  PID {entry.ProcessId.ToString(CultureInfo.InvariantCulture)} -- {entry.ImagePath}"));
 
-        return $"'{tool}' was not run: a browser is running from BrowserAI's own tree at '{directory}' that no session on this machine claims. Nothing was changed and nothing was terminated — this is reported, never killed, because what it belongs to is unknown and it may be somebody's window.\n{named}\n"
+        return $"'{tool}' was not run: a browser is running from BrowserAI's own tree at '{directory}' that no session on this machine claims. Nothing was changed and nothing was terminated -- this is reported, never killed, because what it belongs to is unknown and it may be somebody's window.\n{named}\n"
             + "It is most often a BrowserAI that died without releasing its session. Close it, or wait for it to exit, and call this tool again; Windows will not delete a directory whose executables are open, so there is nothing to force.";
     }
 
     /// <summary>
-    /// Row 13's sibling — the stray sweep found a browser of ours it could not
+    /// Row 13's sibling -- the stray sweep found a browser of ours it could not
     /// attribute to any directory.
     /// </summary>
     /// <remarks>
@@ -711,14 +711,14 @@ internal static class SessionErrors
     /// Detection is documented and it decided: these processes are running a
     /// binary BrowserAI provisioned. Attribution rests on reading a message-only
     /// window's title, which is undocumented behaviour of a documented function
-    /// — so when it comes back empty the sweep declines to act <i>and says
+    /// -- so when it comes back empty the sweep declines to act <i>and says
     /// so</i>. The undocumented half can never cause a wrong kill and can never
     /// cause silence, and this sentence is the second half of that promise.
     /// </para>
     /// <para>
     /// <b>The ordinary cause is not a stray at all, and saying so is what stops
     /// this reading as an alarm.</b> A Chromium tree publishes its profile path
-    /// from exactly one process — the one that owns the singleton window — so
+    /// from exactly one process -- the one that owns the singleton window -- so
     /// every renderer, GPU and utility process of a browser that is perfectly
     /// well accounted for lands here too. What is worth a human's attention is a
     /// pid here that persists across passes with no session open.
@@ -739,15 +739,15 @@ internal static class SessionErrors
 
         var named = string.Join(
             "\n",
-            running.Take(20).Select(entry => $"  PID {entry.ProcessId.ToString(CultureInfo.InvariantCulture)} — {entry.ImagePath}"));
+            running.Take(20).Select(entry => $"  PID {entry.ProcessId.ToString(CultureInfo.InvariantCulture)} -- {entry.ImagePath}"));
 
-        return $"The stray sweep found {running.Count.ToString(CultureInfo.InvariantCulture)} process(es) running a browser BrowserAI provisioned that it could not attribute to any session directory. Nothing was terminated — an unattributable process is reported and never killed, because what it belongs to is unknown and it may be somebody's window.\n{named}\n"
-            + "Most of these are not strays: a browser tree publishes its profile path from one process only — the one that owns the singleton window — so the helper processes of a browser that is fully accounted for appear here as well. "
+        return $"The stray sweep found {running.Count.ToString(CultureInfo.InvariantCulture)} process(es) running a browser BrowserAI provisioned that it could not attribute to any session directory. Nothing was terminated -- an unattributable process is reported and never killed, because what it belongs to is unknown and it may be somebody's window.\n{named}\n"
+            + "Most of these are not strays: a browser tree publishes its profile path from one process only -- the one that owns the singleton window -- so the helper processes of a browser that is fully accounted for appear here as well. "
             + $"What is worth looking at is a pid that is still listed on the next pass with no session open. Use {SessionToolSurface.List} to see which sessions exist, and close the one that owns it.";
     }
 
     /// <summary>
-    /// Row 25 — a <c>browserai_reinstall_browser</c> holds this machine's
+    /// Row 25 -- a <c>browserai_reinstall_browser</c> holds this machine's
     /// browsers root, so nothing may start a session against it and nothing may
     /// start a second reinstall.
     /// </summary>
@@ -755,15 +755,15 @@ internal static class SessionErrors
     /// <para>
     /// <b>One row, three callers, and that is the point of it being one.</b>
     /// <c>browserai_init</c>, <c>browserai_resume</c> and
-    /// <c>browserai_reinstall_browser</c> all meet the same state — somebody is
-    /// replacing the browsers — and the recovery is the same for all three. Three
+    /// <c>browserai_reinstall_browser</c> all meet the same state -- somebody is
+    /// replacing the browsers -- and the recovery is the same for all three. Three
     /// rows would be three sentences to keep in step about one condition.
     /// </para>
     /// <para>
     /// ⚠️ <b>One condition was split out of it on 2026-08-24, and this says which
     /// so that the next reader does not merge them back.</b> Until then every
     /// failure to open the claim file wore this sentence, including the ones that
-    /// were not a holder at all — an ACL denial, a full volume, an unwritable
+    /// were not a holder at all -- an ACL denial, a full volume, an unwritable
     /// profile. <see cref="TheBrowsersRootCouldNotBeClaimed"/> is that case, and
     /// it is a separate row because <b>the recovery is the opposite one</b>:
     /// waiting clears this and will never clear that.
@@ -776,7 +776,7 @@ internal static class SessionErrors
     /// to avoid.
     /// </para>
     /// <para>
-    /// <b>The mutual case is the maintainer's, verbatim</b> — <i>"No reinstall if
+    /// <b>The mutual case is the maintainer's, verbatim</b> -- <i>"No reinstall if
     /// there is any session running system wide. Including any reinstall
     /// sessions."</i> Two reinstalls over one root would delete the tree the
     /// other is extracting into, which is the corruption the provisioning mutex
@@ -801,17 +801,17 @@ internal static class SessionErrors
         + $"The claim says: {holder}. "
         + $"{ReinstallProgress(progress)} "
         + "It deletes a browser tree and downloads it again, so a session started meanwhile would launch out of a directory that is being removed. "
-        + $"Nothing was terminated and there is deliberately no force option. Call the same tool again once it lands — a browser download is minutes rather than seconds, and {SessionToolSurface.List} answers throughout.";
+        + $"Nothing was terminated and there is deliberately no force option. Call the same tool again once it lands -- a browser download is minutes rather than seconds, and {SessionToolSurface.List} answers throughout.";
 
     /// <summary>
-    /// Row 28 — the browsers root's claim file could not be opened at all, and
+    /// Row 28 -- the browsers root's claim file could not be opened at all, and
     /// the kernel's refusal was not a sharing violation.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>A separate row from <see cref="BrowsersAreBeingReinstalled"/> rather
     /// than a clause inside it, and the test is the recovery.</b> That row's
-    /// three callers share one row because they share one recovery — <i>wait,
+    /// three callers share one row because they share one recovery -- <i>wait,
     /// then call again</i>. This condition's recovery is the opposite: nothing
     /// will change by waiting, and something outside BrowserAI has to be fixed.
     /// Two recoveries are two rows; one row that says both is a sentence a model
@@ -829,7 +829,7 @@ internal static class SessionErrors
     /// <param name="detail">What Windows said, verbatim.</param>
     /// <returns>The refusal.</returns>
     public static string TheBrowsersRootCouldNotBeClaimed(string tool, string browsersDirectory, string detail) =>
-        $"'{tool}' was not run and nothing was changed: BrowserAI could not open this machine's browsers claim at '{Path.Combine(browsersDirectory, MaintenanceLock.FileName)}', and the kernel's refusal was not a sharing violation — so this is NOT a reinstall in progress, and waiting will not clear it. "
+        $"'{tool}' was not run and nothing was changed: BrowserAI could not open this machine's browsers claim at '{Path.Combine(browsersDirectory, MaintenanceLock.FileName)}', and the kernel's refusal was not a sharing violation -- so this is NOT a reinstall in progress, and waiting will not clear it. "
         + $"Windows said: {detail} "
         + "Every session holds that file open for its whole life, so it has to be openable before any session can start. "
         + "The usual causes are an ACL that denies this account, a full or failing volume, a profile directory that is not writable, and a filter driver holding the file open; BrowserAI cannot tell which of those it is from here and has deliberately not guessed. "
@@ -844,7 +844,7 @@ internal static class SessionErrors
     /// ⚠️ <b>Added 2026-08-20, at the maintainer's instruction that a reinstall
     /// report progress "just like the first run provisioning" does.</b> Before
     /// it, this refusal named the holder and said <i>minutes rather than
-    /// seconds</i> — which reads identically at 4 s in and at 4 minutes in, so a
+    /// seconds</i> -- which reads identically at 4 s in and at 4 minutes in, so a
     /// caller had no way to tell a reinstall that was working from one that was
     /// not, and its only recourse was to keep calling. That is the same defect
     /// the first-run refusal had and the same fix.
@@ -859,7 +859,7 @@ internal static class SessionErrors
     /// <para>
     /// <b>No percentage, and that is not an omission.</b> The measured download
     /// totals are per family, and which family is being reinstalled is the
-    /// holder's to say — it is in the quoted claim, one clause above. A
+    /// holder's to say -- it is in the quoted claim, one clause above. A
     /// percentage computed against the wrong family's total would be a confident
     /// number that is simply wrong, which this catalogue never prefers to an
     /// admitted gap.
@@ -878,7 +878,7 @@ internal static class SessionErrors
 
         if (sample.StagedBytes <= 0)
         {
-            return $"Progress: it has been running {elapsed} and there is nothing in the download staging directory — which is either the delete, which comes first, or an extraction already under way; the two look the same from outside the process doing them.";
+            return $"Progress: it has been running {elapsed} and there is nothing in the download staging directory -- which is either the delete, which comes first, or an extraction already under way; the two look the same from outside the process doing them.";
         }
 
         var written = BrowserProvisioner.Megabytes(sample.StagedBytes);
@@ -893,7 +893,7 @@ internal static class SessionErrors
         return $"Progress: {written} downloaded in {elapsed}, {rate.ToString("F2", CultureInfo.InvariantCulture)} Mbps observed. The claim above names which browser it is fetching, and that is what the figure is against.";
     }
 
-    /// <summary>Row 7 — the directory was locked and the browser runtime did not start.</summary>
+    /// <summary>Row 7 -- the directory was locked and the browser runtime did not start.</summary>
     /// <param name="path">The session directory.</param>
     /// <param name="why">What failed.</param>
     /// <returns>The refusal.</returns>
@@ -902,7 +902,7 @@ internal static class SessionErrors
         + $"If this persists, delete that directory and call {SessionToolSurface.Init} again to re-provision. Otherwise fix the cause and call {SessionToolSurface.Resume} on the same directory.";
 
     /// <summary>
-    /// Row 7's other companion — the session's browser server has gone, so the
+    /// Row 7's other companion -- the session's browser server has gone, so the
     /// call was not forwarded.
     /// </summary>
     /// <remarks>
@@ -915,7 +915,7 @@ internal static class SessionErrors
     /// improvement; nothing here is a timeout and nothing here waits.
     /// </para>
     /// <para>
-    /// <b>It names <c>browserai_resume</c> because resume repairs this</b> — it
+    /// <b>It names <c>browserai_resume</c> because resume repairs this</b> -- it
     /// checks whether the child behind an owned session is still alive and
     /// starts a replacement when it is not. Naming a recovery that did not exist
     /// would be worse than naming none.
@@ -932,10 +932,10 @@ internal static class SessionErrors
     public static string BrowserServerHasGone(string tool, string path) =>
         $"The browser server for '{path}' has ended, so '{tool}' was not forwarded and nothing in the browser changed. "
         + $"Call {SessionToolSurface.Resume} on that directory: it starts a replacement and tells you it did. "
-        + "The session's profile, files and log are all still on disk, so cookies and stored state survive — but no page is open in a new browser server, so navigate again before you act on what you see.";
+        + "The session's profile, files and log are all still on disk, so cookies and stored state survive -- but no page is open in a new browser server, so navigate again before you act on what you see.";
 
     /// <summary>
-    /// Row 7's companion — the session's browser server had died and a
+    /// Row 7's companion -- the session's browser server had died and a
     /// replacement would not start.
     /// </summary>
     /// <remarks>
@@ -949,10 +949,10 @@ internal static class SessionErrors
     /// <param name="why">What failed.</param>
     /// <returns>The refusal.</returns>
     public static string BrowserServerCouldNotBeRelaunched(string path, string why) =>
-        $"The browser server for '{path}' had died, and starting a replacement failed: {why} The session itself is untouched — this BrowserAI still holds the directory, and its profile, files and log are all still there. "
+        $"The browser server for '{path}' had died, and starting a replacement failed: {why} The session itself is untouched -- this BrowserAI still holds the directory, and its profile, files and log are all still there. "
         + $"Browser calls on this session will fail until one starts. Call {SessionToolSurface.Resume} on the same directory to try again; if it keeps failing, {SessionToolSurface.Destroy} the session and open a new one, and the reason is in the session's own log.";
 
-    /// <summary>Row 8 — somebody else holds the directory.</summary>
+    /// <summary>Row 8 -- somebody else holds the directory.</summary>
     /// <param name="path">The session directory.</param>
     /// <param name="processId">The holder.</param>
     /// <param name="clientName">What started the holder, if it recorded one.</param>
@@ -975,7 +975,7 @@ internal static class SessionErrors
     }
 
     /// <summary>
-    /// Row 9 — the holder is gone, so the lock is reclaimed. <b>Not an error.</b>
+    /// Row 9 -- the holder is gone, so the lock is reclaimed. <b>Not an error.</b>
     /// </summary>
     /// <remarks>
     /// The holder record outliving the holder is what makes a stale lock a
@@ -1002,7 +1002,7 @@ internal static class SessionErrors
     }
 
     /// <summary>
-    /// Row 11 — the Firefox profile is open elsewhere, so nothing was launched.
+    /// Row 11 -- the Firefox profile is open elsewhere, so nothing was launched.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1033,8 +1033,8 @@ internal static class SessionErrors
             : $"The Firefox profile at '{profileDirectory}' could not be checked for a lock ({state.Why}), so no browser was started and nothing was changed. An unreadable lock is not an unlocked one, and BrowserAI will not launch on the difference.";
 
         return cause
-            + $" BrowserAI checks '{FirefoxProfile.LockFileName}' itself before launching, because nothing downstream does: Playwright's profile check reads Chromium's lock file only, and Firefox answers a collision by putting a dialog on the Windows desktop and blocking the launch for up to three minutes — on a machine with nobody at the keyboard that is a hang with no message anywhere. "
-            + $"Wait for that browser to close and call the same tool again on the same session, or call {SessionToolSurface.Init} on a different directory to run a second one beside it. Note that a '{FirefoxProfile.LockFileName}' left behind by a crashed Firefox is not a lock — Firefox never deletes the file, and this check reads the live handle rather than the file's existence, so a stale one costs nothing.";
+            + $" BrowserAI checks '{FirefoxProfile.LockFileName}' itself before launching, because nothing downstream does: Playwright's profile check reads Chromium's lock file only, and Firefox answers a collision by putting a dialog on the Windows desktop and blocking the launch for up to three minutes -- on a machine with nobody at the keyboard that is a hang with no message anywhere. "
+            + $"Wait for that browser to close and call the same tool again on the same session, or call {SessionToolSurface.Init} on a different directory to run a second one beside it. Note that a '{FirefoxProfile.LockFileName}' left behind by a crashed Firefox is not a lock -- Firefox never deletes the file, and this check reads the live handle rather than the file's existence, so a stale one costs nothing.";
     }
 
     /// <summary>Row 11's holder clause, when Windows would name one.</summary>
@@ -1064,7 +1064,7 @@ internal static class SessionErrors
         return $"Windows names the holder: {named}.";
     }
 
-    /// <summary>Row 10 — an argument <c>resume</c> does not accept.</summary>
+    /// <summary>Row 10 -- an argument <c>resume</c> does not accept.</summary>
     /// <param name="argument">The argument.</param>
     /// <param name="why">Why it cannot be set on a session that exists.</param>
     /// <returns>The refusal.</returns>
@@ -1072,7 +1072,7 @@ internal static class SessionErrors
         $"'{argument}' cannot be set on {SessionToolSurface.Resume}, because {why}. Nothing was changed. "
         + $"Omit the argument to reopen this session as it is, or call {SessionToolSurface.Init} on a new directory if you want different settings.";
 
-    /// <summary>Row 14 — the machine-wide lock could not be created.</summary>
+    /// <summary>Row 14 -- the machine-wide lock could not be created.</summary>
     /// <remarks>
     /// A hard blocker with no reduced-protection mode to fall back to, and the
     /// reason is the payload: a <c>Local\</c> lock would report success while
@@ -1085,7 +1085,7 @@ internal static class SessionErrors
     /// <returns>The refusal.</returns>
     public static string NoMachineWideLock(string path, string mutexName, string why) =>
         $"BrowserAI could not create the machine-wide lock '{mutexName}' that makes a session exclusive ({why}). No session was created and nothing was changed. "
-        + "This needs SeCreateGlobalPrivilege, which an interactive user has and a low-integrity or AppContainer process does not — there is no reduced-protection mode to fall back to, because a logon-session-scoped lock would report success while allowing a second BrowserAI to open the same browser profile. "
+        + "This needs SeCreateGlobalPrivilege, which an interactive user has and a low-integrity or AppContainer process does not -- there is no reduced-protection mode to fall back to, because a logon-session-scoped lock would report success while allowing a second BrowserAI to open the same browser profile. "
         + "Run BrowserAI as an ordinary interactive user.";
 
     /// <summary>
@@ -1095,14 +1095,14 @@ internal static class SessionErrors
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Added 2026-08-19, because until then this case was an exception
-    /// rather than a refusal.</b> <c>SessionLock.TakeOrReport</c>'s first open —
-    /// the read of the previous record, under the per-directory gate — caught a
+    /// rather than a refusal.</b> <c>SessionLock.TakeOrReport</c>'s first open --
+    /// the read of the previous record, under the per-directory gate -- caught a
     /// missing file, a sharing violation and an unparseable record, and nothing
     /// else. A permanent ACL denial arrives as
     /// <see cref="UnauthorizedAccessException"/>, which is not an
     /// <see cref="IOException"/> and matched none of the three, so it
     /// <b>propagated out of the product's primary session-opening entry
-    /// point</b> — after <c>RenameWindow</c> had spent its whole budget waiting
+    /// point</b> -- after <c>RenameWindow</c> had spent its whole budget waiting
     /// for a rename that was never in flight. <c>OpenHeld</c>'s own remarks
     /// already recorded that a UAE had escaped <c>TryAcquire</c> once; the wait
     /// narrowed the transient window and never closed the permanent one.
@@ -1124,8 +1124,8 @@ internal static class SessionErrors
     public static string LockFileCannotBeOpened(string path, string lockFile, string why, TimeSpan waited) =>
         $"'{lockFile}' exists and BrowserAI could not open it ({why}), so '{path}' was not taken and nothing was changed. "
         + $"This is NOT another process holding the session: a holder is refused as a sharing violation and is reported by name, and BrowserAI already waited {waited.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)} seconds in case a record was being replaced. Waiting longer cannot help. "
-        + "The likeliest cause is permissions — a DENY entry on that file or on a directory above it, which is inherited and can be invisible from the file itself — and antivirus, backup and file-sync software produce the same refusal while they hold a file open in a way Windows does not report as sharing. "
-        + $"Recovery: check who may read that path, or move this session to a directory this user owns. If the file is expendable, deleting it makes the directory a NEW session rather than a broken one — {SessionToolSurface.Init} then works on it, and the profile, output and downloads beside it are untouched. Repeating the call that just failed will fail identically.";
+        + "The likeliest cause is permissions -- a DENY entry on that file or on a directory above it, which is inherited and can be invisible from the file itself -- and antivirus, backup and file-sync software produce the same refusal while they hold a file open in a way Windows does not report as sharing. "
+        + $"Recovery: check who may read that path, or move this session to a directory this user owns. If the file is expendable, deleting it makes the directory a NEW session rather than a broken one -- {SessionToolSurface.Init} then works on it, and the profile, output and downloads beside it are untouched. Repeating the call that just failed will fail identically.";
 
     // ⚠️ Row 15 -- DirectoryIsACopy -- was DELETED on 2026-08-18 along with
     // `acknowledgeCopy`, and deleted rather than left unreferenced because
@@ -1179,8 +1179,8 @@ internal static class SessionErrors
     /// <remarks>
     /// ⚠️ <b>This is the anti-injection frame, and it is one sentence for a
     /// reason.</b> The text is free-form English written by one agent and read by
-    /// another, so an unframed replay — <i>"purpose: ignore your previous
-    /// instructions"</i> — arrives in the second model's context indistinguishable
+    /// another, so an unframed replay -- <i>"purpose: ignore your previous
+    /// instructions"</i> -- arrives in the second model's context indistinguishable
     /// from the server addressing it. Naming it as something a previous session
     /// recorded, quoting it, and capping its length is what makes it legible as
     /// data. The strip is <see cref="RecordText.Sanitise"/>'s, so a purpose that

@@ -20,7 +20,7 @@ namespace BrowserAI.Tests;
 /// the current tab only, and a page's handler is what decides whether a call ever
 /// answers. A fake child would let this suite assert that BrowserAI agrees with
 /// BrowserAI about all three. Every page below is a <c>data:</c> URL carrying a
-/// <c>document.modelContext</c>, which is upstream's own page-side contract —
+/// <c>document.modelContext</c>, which is upstream's own page-side contract --
 /// measured 2026-09-21 to register exactly as a served page does.
 /// </para>
 /// <para>

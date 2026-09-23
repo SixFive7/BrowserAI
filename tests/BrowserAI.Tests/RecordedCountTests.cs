@@ -17,7 +17,7 @@ namespace BrowserAI.Tests;
 /// <b>The pattern is <c>ReVerificationIndexTests</c>', generalised.</b> That
 /// class reads one sentence in <c>kb/re-verification.md</c> and asserts the
 /// three numbers in it against a re-count. It caught nothing on 2026-08-18
-/// because it was the only place the pattern had been applied — and four counts
+/// because it was the only place the pattern had been applied -- and four counts
 /// in prose were wrong at the same moment, one of them because a "correction"
 /// had replaced a right number with a wrong one by measuring a different
 /// predicate over the same table.
@@ -51,7 +51,7 @@ namespace BrowserAI.Tests;
 /// its numbers are read.
 /// </para>
 /// <para>
-/// <b>What is deliberately NOT here, and why</b> — a count nobody can re-derive
+/// <b>What is deliberately NOT here, and why</b> -- a count nobody can re-derive
 /// inside the suite must not be given a test that pretends otherwise:
 /// </para>
 /// <list type="bullet">
@@ -64,7 +64,7 @@ namespace BrowserAI.Tests;
 /// </item>
 /// <item>
 /// <c>CLAUDE.md</c>'s <i>"kept by 222 files out of 224"</i> is a measurement of a
-/// past moment — the day before the rule became a test — and is now false by
+/// past moment -- the day before the rule became a test -- and is now false by
 /// construction, because <c>HouseRuleTests</c> holds it at 100%.
 /// </item>
 /// <item>
@@ -75,7 +75,7 @@ namespace BrowserAI.Tests;
 /// <item>
 /// <c>RELEASING.md</c>'s publish-directory table and <c>DECISIONS.md</c>'s
 /// installer size need a <c>vpk pack</c> artifact, and <c>Releases/</c> is
-/// gitignored — a test would be red on every clean clone and on CI.
+/// gitignored -- a test would be red on every clean clone and on CI.
 /// </item>
 /// </list>
 /// </remarks>
@@ -90,8 +90,8 @@ internal sealed partial class RecordedCountTests
     /// ⚠️ <b>Corrected 2026-08-19 (previously
     /// <c>TheHazardTallyInTodoIsWhatTheIndexHolds</c>, reading the same sentence
     /// out of <c>TODO.md</c>).</b> It was written there because the number was a
-    /// <i>backlog</i> — 55 rows that were <c>open</c> and carried <c>—</c>,
-    /// nobody having adjudicated them either way — and a backlog is work not yet
+    /// <i>backlog</i> -- 55 rows that were <c>open</c> and carried <c>--</c>,
+    /// nobody having adjudicated them either way -- and a backlog is work not yet
     /// done, which is what that file is for. The backlog was cleared on
     /// 2026-08-19 and the item deleted, and the sentence had to go somewhere or
     /// the check went with it.
@@ -100,7 +100,7 @@ internal sealed partial class RecordedCountTests
     /// <b>At zero it is a stronger mechanism than it was as a backlog</b>, which
     /// is why it moved rather than being deleted. Counting down, it said
     /// <i>somebody should decide these</i>. At zero it says <b>a row that
-    /// arrives <c>open</c> with <c>—</c> fails the build</b>, so a hazard has to
+    /// arrives <c>open</c> with <c>--</c> fails the build</b>, so a hazard has to
     /// be adjudicated when it is written down instead of accumulating for a
     /// later pass.
     /// </para>
@@ -123,7 +123,7 @@ internal sealed partial class RecordedCountTests
 
         Check(
             disagreements,
-            "rows that are open AND carry — for evidence",
+            "rows that are open AND carry -- for evidence",
             recorded,
             "unadjudicated",
             unadjudicated.Count);
@@ -236,16 +236,16 @@ internal sealed partial class RecordedCountTests
     /// at <c>playwright-core</c> 1.63.0-alpha-2026-08-31; row 17 said <b>45</b>
     /// with <b>three</b>, re-measured 2026-09-15 at the version that actually
     /// ships. Neither was wrong when it was written and the comment was simply
-    /// not carried forward — which is the failure mode this whole class exists
+    /// not carried forward -- which is the failure mode this whole class exists
     /// for, arriving in a place nothing was watching.
     /// </para>
     /// <para>
     /// ⚠️ <b>Row 17 is the anchor and the comment is what is held to it</b>,
     /// deliberately in that direction. The row names the bundle it was measured
     /// against and the positive control it used; the comment is prose beside the
-    /// allowlist. So this arm cannot tell you the number is <i>right</i> — only
+    /// allowlist. So this arm cannot tell you the number is <i>right</i> -- only
     /// <c>UpstreamReviewTests</c> and a re-measurement against the resolved
-    /// bundle can do that — and it does close the one gap a review cannot: two
+    /// bundle can do that -- and it does close the one gap a review cannot: two
     /// places publishing different figures for the same predicate, neither of
     /// them noticing.
     /// </para>
@@ -305,8 +305,8 @@ internal sealed partial class RecordedCountTests
     /// run for a tree that was correct.
     /// </item>
     /// <item>
-    /// <b>It was unconditional</b>, so the kb rule's own escape hatch — re-run the
-    /// measurement, or mark the entry — would itself fail the build. Its failure
+    /// <b>It was unconditional</b>, so the kb rule's own escape hatch -- re-run the
+    /// measurement, or mark the entry -- would itself fail the build. Its failure
     /// message said the sentence in <c>kb/README.md</c> is what has to change, and
     /// changing that sentence could not have satisfied the assertion: <b>the
     /// message described a resolution the mechanism did not permit.</b>
@@ -315,7 +315,7 @@ internal sealed partial class RecordedCountTests
     /// <para>
     /// <b>The fix is the one the re-verification index already took for the floats
     /// marker, applied on the axis this claim actually needs.</b> That gate met the
-    /// same trap and answered it by <i>scope</i> — the two pages under <c>kb/</c>
+    /// same trap and answered it by <i>scope</i> -- the two pages under <c>kb/</c>
     /// whose job is to discuss the convention are excluded, and every other file
     /// there stamps facts. <b>Scope cannot answer it here</b>, because the article
     /// that has to discuss this marker is a real article carrying real
@@ -327,15 +327,15 @@ internal sealed partial class RecordedCountTests
     /// <b>The stamp is the marker in backticks, and that is measured rather than
     /// asserted.</b> It is how <c>kb/README.md</c>'s conventions table spells
     /// every one of the five markers, and on 2026-08-27 all 487 marker
-    /// occurrences under <c>kb/</c> — 240 <c>[FLOATS]</c>, 106 <c>[STABLE]</c>,
-    /// 108 <c>[MACHINE]</c>, 33 <c>[UNVERIFIED]</c> — were written that way,
+    /// occurrences under <c>kb/</c> -- 240 <c>[FLOATS]</c>, 106 <c>[STABLE]</c>,
+    /// 108 <c>[MACHINE]</c>, 33 <c>[UNVERIFIED]</c> -- were written that way,
     /// without exception. The bracketed token written any other way is prose
     /// <i>about</i> the convention and stamps nothing.
     /// </para>
     /// <para>
     /// <b>The published claim is the anchor and the two move together.</b> A real
     /// stamp is now resolvable exactly as the old message claimed: stamp the entry
-    /// and move the sentence, and the pair passes. Neither half passes alone — a
+    /// and move the sentence, and the pair passes. Neither half passes alone -- a
     /// stamp with the sentence unmoved fails, and a sentence claiming a stamp no
     /// article carries fails too.
     /// </para>
@@ -408,7 +408,7 @@ internal sealed partial class RecordedCountTests
     /// <para>
     /// <b>Added 2026-08-19, and it was already wrong.</b> The table was stamped
     /// <i>Counted 2026-08-17</i> and published 28 numbers; <b>19 of them had
-    /// drifted</b> — 9 of the 14 marker counts and 10 of the 14 row counts —
+    /// drifted</b> -- 9 of the 14 marker counts and 10 of the 14 row counts --
     /// while the three totals in the anchor sentence a few lines above it stayed
     /// asserted and correct the whole time. It drifted in <b>both</b> directions
     /// (<c>tools-and-artifacts.md</c> said 30 against 39,
@@ -418,7 +418,7 @@ internal sealed partial class RecordedCountTests
     /// <para>
     /// <b>Three assertions, and the second and third are what make the first
     /// worth having.</b> Cell by cell, both columns. Then the marker column must
-    /// <b>sum to</b> the corpus-wide total the anchor sentence publishes — the
+    /// <b>sum to</b> the corpus-wide total the anchor sentence publishes -- the
     /// check the earlier defect walked straight past, because a breakdown
     /// answerable to nothing can be individually plausible and collectively
     /// impossible. Then the table must name <b>every</b> article in the corpus,
@@ -603,7 +603,7 @@ internal sealed partial class RecordedCountTests
     /// </summary>
     /// <remarks>
     /// <b>The whole per-article judgement, so the controls can drive both
-    /// directions through it</b> — the shape of
+    /// directions through it</b> -- the shape of
     /// <c>ReVerificationIndexTests.Offenders</c>, and for the same reason: a
     /// control that re-implements the predicate it is controlling proves only that
     /// two copies agree. The corpus is not this method's business and is passed
@@ -647,13 +647,13 @@ internal sealed partial class RecordedCountTests
     /// counted reached zero, so that link became a self-link and the wording
     /// went with it. Nothing else about the shape changed: four named totals and
     /// a category clause with no full stop in it. The superseded text is
-    /// paraphrased rather than quoted here for one reason —
+    /// paraphrased rather than quoted here for one reason --
     /// <c>DocumentationLinkTests</c> reads every relative link in every
     /// <c>.cs</c> file, and a quoted one resolves against this directory rather
     /// than against the repository root, so quoting it verbatim fails that gate.
     /// </remarks>
     [GeneratedRegex(
-        @"\*\*(?<unadjudicated>\d+) rows of this index are `open` and carry `—` for evidence\.\*\*" +
+        @"\*\*(?<unadjudicated>\d+) rows of this index are `open` and carry `-` for evidence\.\*\*" +
         @".*?By category, using the index's own `Area` cells verbatim: (?<categories>[^.]+)\." +
         @" (?<withEvidence>\d+) more are `open` while carrying evidence, so (?<open>\d+) are `open` in total, against (?<closed>\d+) `closed`\.")]
     private static partial Regex HazardTally();
@@ -661,13 +661,13 @@ internal sealed partial class RecordedCountTests
     /// <summary>One <c>Area name N</c> pair inside the breakdown.</summary>
     /// <remarks>
     /// The area half is greedy up to the count, so a name carrying spaces or
-    /// brackets — every one of them does — is captured whole.
+    /// brackets -- every one of them does -- is captured whole.
     /// </remarks>
     [GeneratedRegex(@"(?<area>[^,]+?)\s+(?<count>\d+)(?:,|$)")]
     private static partial Regex CategoryTally();
 
     /// <summary>The fragment count published in <c>CLAUDE.md</c>'s mechanism table.</summary>
-    [GeneratedRegex(@"`DocumentationLinkTests` — (?<fragments>\d+) fragments as of \d{4}-\d{2}-\d{2}")]
+    [GeneratedRegex(@"`DocumentationLinkTests` -- (?<fragments>\d+) fragments as of \d{4}-\d{2}-\d{2}")]
     private static partial Regex FragmentCount();
 
     /// <summary>
@@ -727,8 +727,8 @@ internal sealed partial class RecordedCountTests
     /// <remarks>
     /// ⚠️ <b>Deliberately narrower than
     /// <c>ReVerificationIndexTests.Floats</c></b>, which is still the bare token.
-    /// That counter is kept honest by its scope — it excludes the two pages whose
-    /// job is to discuss the convention — and every remaining file under
+    /// That counter is kept honest by its scope -- it excludes the two pages whose
+    /// job is to discuss the convention -- and every remaining file under
     /// <c>kb/</c> only ever stamps with it. This one cannot take that answer: the
     /// article that has to discuss <i>this</i> marker is an article full of real
     /// measurements, so the narrowing had to be on shape instead.
@@ -742,7 +742,7 @@ internal sealed partial class RecordedCountTests
     /// </summary>
     /// <remarks>
     /// The clause is matched rather than the whole sentence, because the rest of
-    /// it — <i>"is the healthy state, not evidence the marker is dead"</i> — is
+    /// it -- <i>"is the healthy state, not evidence the marker is dead"</i> -- is
     /// true of zero and false of anything else, and a writer stamping an entry has
     /// to be free to finish the sentence honestly. <c>no</c> is spelled out
     /// because that is how the tree reads today; the numeric branch is what a

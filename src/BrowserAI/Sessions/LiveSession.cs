@@ -21,14 +21,14 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>One job object per child, never one shared job.</b> A shared job fuses
 /// every session's process tree together, so tearing down one session would kill
-/// them all — and assigning BrowserAI itself would make it a casualty of its own
+/// them all -- and assigning BrowserAI itself would make it a casualty of its own
 /// cleanup. The job lives inside <see cref="ChildConnection"/>'s transport, which
 /// is per session by construction.
 /// </para>
 /// <para>
 /// <b>Disposal releases the directory and leaves the record.</b> The holder
-/// record outliving the holder is what makes a stale lock a sentence — <i>"held
-/// by PID 1234 since 14:02, no longer running — reclaiming"</i> — rather than a
+/// record outliving the holder is what makes a stale lock a sentence -- <i>"held
+/// by PID 1234 since 14:02, no longer running -- reclaiming"</i> -- rather than a
 /// refusal, and reclaim is forever, so a torn-down session stays resumable
 /// against its directory indefinitely.
 /// </para>
@@ -114,7 +114,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <para>
     /// ⚠️ <b>It has to be self-attributing, because every other row in the log
     /// was written by a caller.</b> <c>browserai_catch_up</c> presents the log as
-    /// <i>"WHAT WAS DONE HERE — the session's own log … This is what BrowserAI
+    /// <i>"WHAT WAS DONE HERE -- the session's own log … This is what BrowserAI
     /// did"</i>, and a reader meeting a <c>browser_close</c> with a caller-shaped
     /// sentence beside it would reasonably conclude an agent had closed the
     /// browser. This one names the timer, so the row reads as the only thing in
@@ -123,13 +123,13 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <para>
     /// <b>The period is deliberately not interpolated.</b> It is a seam the suite
     /// drives in milliseconds, so quoting it would put a test-shaped number into
-    /// a model-facing record on every close — and the fact a reader needs is
+    /// a model-facing record on every close -- and the fact a reader needs is
     /// <i>why there is a gap here</i>, which the sentence carries without it.
     /// </para>
     /// </remarks>
     public const string IdleCloseWhy =
         "BrowserAI closed this session's browser itself: nothing had been forwarded through the session for the idle period, "
-        + "so the browser tree was released and the node child kept. Nothing was lost — the next call relaunches the browser and answers normally.";
+        + "so the browser tree was released and the node child kept. Nothing was lost -- the next call relaunches the browser and answers normally.";
 
     private ChildConnection _child;
     private int _disposed;
@@ -225,7 +225,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <b>The old connection is disposed rather than dropped, and that is the
     /// containment half rather than tidiness.</b> Disposing it closes the job
     /// handle, and closing the job handle is what ends anything still alive
-    /// inside it — a browser tree whose <c>node</c> parent died but which the
+    /// inside it -- a browser tree whose <c>node</c> parent died but which the
     /// kernel has not been told about is exactly the state this method is
     /// reached in.
     /// </para>
@@ -293,8 +293,8 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <remarks>
     /// <para>
     /// <b>The tool is the mechanism, and nothing else would be.</b> Killing the
-    /// browser out of the job would take the node child with it — the job is per
-    /// child, which is the containment contract — and there is no other lever:
+    /// browser out of the job would take the node child with it -- the job is per
+    /// child, which is the containment contract -- and there is no other lever:
     /// Playwright owns the browser process, so asking Playwright is the only way
     /// to put it down without putting the session down too.
     /// </para>
@@ -311,14 +311,14 @@ internal sealed class LiveSession : IAsyncDisposable
     /// ⚠️ <b>IT WRITES A ROW, and it wrote nothing at all until 2026-08-26.</b>
     /// The close talks to the child directly and never touched
     /// <see cref="Lock"/>; while <c>browserai.log</c> existed the event survived
-    /// there, and P2 deleted that file — so an autonomous browser close became
+    /// there, and P2 deleted that file -- so an autonomous browser close became
     /// invisible in the only record there is, and a reader met an unexplained gap
     /// in wall-clock time followed by a silent relaunch.
     /// </para>
     /// <para>
     /// <b>Written the way every forwarded call's row is written</b>:
     /// <c>in-flight</c> before the call reaches the child, settled from the
-    /// child's own answer. The ordering is not decoration here either — a close
+    /// child's own answer. The ordering is not decoration here either -- a close
     /// that hangs, or one whose child has died, leaves the row unsettled, which
     /// is exactly the state <c>browserai_catch_up</c> renders as <i>"no answer
     /// was recorded"</i>. Writing it afterwards would lose precisely the closes

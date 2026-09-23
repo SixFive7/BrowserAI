@@ -11,7 +11,7 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// The storage layer: the hand-written interop, the schema, and the two
-/// properties the whole design rests on — that a reader sees a live writer's
+/// properties the whole design rests on -- that a reader sees a live writer's
 /// work, and that a crashed writer's does not come back until somebody with
 /// write access asks for it.
 /// </summary>
@@ -22,7 +22,7 @@ namespace BrowserAI.Tests;
 /// host is CoreCLR, so <c>DirectPInvoke</c> and <c>NativeLibrary</c> are inert
 /// and the module name resolves to the DLL <c>SourceGear.sqlite3</c> puts
 /// beside the host. That library is the same SQLite <i>version</i> as the
-/// vendored amalgamation — the package's version number is the SQLite version —
+/// vendored amalgamation -- the package's version number is the SQLite version --
 /// and a <i>different build</i> of it, with somebody else's compile flags. So
 /// everything here is a claim about this layer's behaviour against SQLite, and
 /// nothing here is a claim about the flags: those are asserted against the
@@ -30,8 +30,8 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>No duration is asserted anywhere in this file.</b> Every property below
-/// is an event — a row that is there, an exception that was thrown, a value
-/// that came back — and the one number that looks like a duration is a
+/// is an event -- a row that is there, an exception that was thrown, a value
+/// that came back -- and the one number that looks like a duration is a
 /// configured budget read back from the connection, which is a setting rather
 /// than a measurement.
 /// </para>
@@ -77,7 +77,7 @@ internal sealed class SqliteStorageTests
     /// <remarks>
     /// <b>The message has to carry both halves.</b> A bare result code says a
     /// prepare failed and not which one, and this layer prepares a dozen fixed
-    /// statements — so a message without the SQL is a number and a shrug.
+    /// statements -- so a message without the SQL is a number and a shrug.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -105,7 +105,7 @@ internal sealed class SqliteStorageTests
     /// <remarks>
     /// <b>The misuse path, and it is the one that would otherwise be
     /// silent.</b> A bind that returned a code nobody read would leave the
-    /// parameter unbound, which SQLite treats as SQL <c>NULL</c> — so the
+    /// parameter unbound, which SQLite treats as SQL <c>NULL</c> -- so the
     /// statement runs, the row lands, and the record says the call had no
     /// reason.
     /// </remarks>
@@ -140,7 +140,7 @@ internal sealed class SqliteStorageTests
     /// </para>
     /// <para>
     /// <b>The timeout is compared against the product constant it derives
-    /// from</b>, never against a number written here — which is also what keeps
+    /// from</b>, never against a number written here -- which is also what keeps
     /// it out of the class of assertion this repository forbids, since it is a
     /// setting read back rather than a duration measured.
     /// </para>
@@ -169,8 +169,8 @@ internal sealed class SqliteStorageTests
     /// <b>The version is checked in a pass of its own, so that a version error
     /// reads as a version error.</b> That is this repository's standing
     /// position on a record it cannot act on, and the reason it matters here is
-    /// that the alternative — letting the first statement fail on a missing
-    /// column — reports damage about a file that is perfectly intact.
+    /// that the alternative -- letting the first statement fail on a missing
+    /// column -- reports damage about a file that is perfectly intact.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -282,7 +282,7 @@ internal sealed class SqliteStorageTests
     /// <remarks>
     /// <b>Settling in place is the whole reason the log is a table.</b> The
     /// record this replaces could only append, so an outcome had to be a second
-    /// entry that a reader then had to pair up — and *no answer was ever
+    /// entry that a reader then had to pair up -- and *no answer was ever
     /// recorded* had no representation at all. Here a hung call is a row that
     /// still says <c>in-flight</c>.
     /// </remarks>
@@ -334,8 +334,8 @@ internal sealed class SqliteStorageTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>This is the interop defect the obvious spelling produces.</b>
-    /// <c>StringMarshalling.Utf8</c> plus a byte count of <c>-1</c> — which is
-    /// what every example writes — tells SQLite to read to the first zero byte,
+    /// <c>StringMarshalling.Utf8</c> plus a byte count of <c>-1</c> -- which is
+    /// what every example writes -- tells SQLite to read to the first zero byte,
     /// and U+0000 encodes as exactly that. The value is then stored truncated,
     /// read back truncated, and nothing anywhere reports it.
     /// </para>
@@ -343,7 +343,7 @@ internal sealed class SqliteStorageTests
     /// <b>It is not hypothetical for this product.</b> A <c>why</c> is the
     /// caller's own text, uncapped by decision, and the sanitiser that will
     /// neutralise control characters runs above this layer rather than inside
-    /// it — so the storage layer has to be the thing that stores what it was
+    /// it -- so the storage layer has to be the thing that stores what it was
     /// handed.
     /// </para>
     /// </remarks>
@@ -381,7 +381,7 @@ internal sealed class SqliteStorageTests
     /// The record this replaces capped a <c>why</c> at 400 characters, a purpose
     /// at 2,000 and the log at 250 entries, and every one of those caps existed
     /// because an append rewrote the whole file durably. An append is now an
-    /// <c>INSERT</c>, so the caps have no reason left — and a cap that came back
+    /// <c>INSERT</c>, so the caps have no reason left -- and a cap that came back
     /// silently would be the same silent data loss under a new name.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -426,7 +426,7 @@ internal sealed class SqliteStorageTests
     /// database-as-the-guard design fails.</b> A session another BrowserAI is
     /// driving is the case a reader exists for, so a reader that opened
     /// successfully and then showed the session as of its start would satisfy
-    /// the letter of *readers proceed* and none of its purpose — a confident
+    /// the letter of *readers proceed* and none of its purpose -- a confident
     /// wrong answer rather than a refusal.
     /// </para>
     /// <para>
@@ -486,12 +486,12 @@ internal sealed class SqliteStorageTests
     /// closing, its <c>-wal</c> carries committed transactions the store file
     /// does not, and recovering them means <i>writing</i> the wal-index, which a
     /// read-only connection cannot do. So a crashed session reads as unreadable
-    /// until somebody opens it for writing — which the next acquisition does.
+    /// until somebody opens it for writing -- which the next acquisition does.
     /// </para>
     /// <para>
-    /// <b>Why that is the right trade.</b> The alternative shape — a read-only
+    /// <b>Why that is the right trade.</b> The alternative shape -- a read-only
     /// reader that ignored the <c>-wal</c> and answered from the store file
-    /// alone — would report a session's history as of its last checkpoint,
+    /// alone -- would report a session's history as of its last checkpoint,
     /// confidently, with nothing saying the newest part was missing. This
     /// repository has spent two hazard rows closing exactly that class of
     /// answer. A refusal a caller can act on is worth more than a number that
@@ -501,7 +501,7 @@ internal sealed class SqliteStorageTests
     /// <b>The crash is constructed rather than staged.</b> The state that
     /// matters is *a valid store file plus a hot <c>-wal</c> and no
     /// <c>-shm</c>*, and copying both out from under a live writer produces it
-    /// exactly, deterministically, without killing a process — the <c>-shm</c>
+    /// exactly, deterministically, without killing a process -- the <c>-shm</c>
     /// is explicitly not persistent state, so leaving it behind is faithful
     /// rather than convenient.
     /// </para>
@@ -576,7 +576,7 @@ internal sealed class SqliteStorageTests
 
     /// <summary>
     /// ⚠️ Where the directory is writable, a read-only open recovers a crashed
-    /// holder's log itself — and writes a file into the directory to do it.
+    /// holder's log itself -- and writes a file into the directory to do it.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -649,7 +649,7 @@ internal sealed class SqliteStorageTests
     /// reports. sqlite.org's recommended option set includes
     /// <c>SQLITE_THREADSAFE=0</c>; this tree deliberately does not take it,
     /// because BrowserAI reaches storage from an async message loop, a
-    /// background sweep, a background update check and an idle timer — and a
+    /// background sweep, a background update check and an idle timer -- and a
     /// library without mutexes corrupts quietly instead of failing.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -676,7 +676,7 @@ internal sealed class SqliteStorageTests
     /// <remarks>
     /// <b><c>File.Copy</c> cannot do this and the reason is the sharing
     /// arithmetic.</b> It opens the source asking to share reads only, and
-    /// SQLite's own open has been <i>granted</i> read and write — so the copy is
+    /// SQLite's own open has been <i>granted</i> read and write -- so the copy is
     /// refused. Sharing write and delete on the way in is what makes the read a
     /// bystander rather than a second opinion about who owns the file.
     /// </remarks>

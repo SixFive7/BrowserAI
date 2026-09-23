@@ -17,9 +17,9 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// ⚠️ <b>This is the shape that shipped broken in v1.0.0, and until 2026-09-15
 /// nothing in this suite could produce it.</b>
-/// <c>InstallerHandoffTests</c>' own class remarks said so —
+/// <c>InstallerHandoffTests</c>' own class remarks said so --
 /// <i>"no test in this suite starts BrowserAI with a real console. It cannot"</i>
-/// — and the consequence was measured on the maintainer's screen: a non-silent
+/// -- and the consequence was measured on the maintainer's screen: a non-silent
 /// install left an orphan <c>BrowserAI.exe</c>, an orphan <c>node.exe</c> and a
 /// full-size Windows Terminal window, for 215 seconds, while six green suite
 /// runs said nothing.
@@ -29,15 +29,15 @@ namespace BrowserAI.Tests.Harness;
 /// <c>cmd.exe</c> is started with <c>CreateNoWindow</c>, so Windows allocates it
 /// a console <b>with no window</b>; <c>start /b</c> shares that console rather
 /// than opening another. The child's standard input is therefore a real console
-/// handle — <c>GetConsoleMode</c> succeeds on it, which is the predicate
-/// <see cref="Interop.StandardInput.IsAConsole"/> actually asks — with no
+/// handle -- <c>GetConsoleMode</c> succeeds on it, which is the predicate
+/// <see cref="Interop.StandardInput.IsAConsole"/> actually asks -- with no
 /// terminal anywhere.
 /// </para>
 /// <para>
 /// ⚠️ <b>Nothing is redirected, and that is load-bearing rather than lazy.</b>
 /// .NET sets <c>STARTF_USESTDHANDLES</c> as soon as <i>any</i> stream is
 /// redirected, and fills the others from the <b>test host's own</b> standard
-/// handles — which are a console under PowerShell and a pipe under Git Bash
+/// handles -- which are a console under PowerShell and a pipe under Git Bash
 /// (measured 2026-09-15, and the reason
 /// <c>InstallerHandoffTests.TheConsoleQuestionIsRepeatableAndHasNoSideEffect</c>
 /// asserts no value). A rig that redirected stderr to capture the product's log
@@ -47,13 +47,13 @@ namespace BrowserAI.Tests.Harness;
 /// (see <see cref="ProcessLogRecords"/>).
 /// </para>
 /// <para>
-/// <b>A dead launcher comes in two shapes and the caller picks one</b> — see
+/// <b>A dead launcher comes in two shapes and the caller picks one</b> -- see
 /// <see cref="LauncherCorpse"/>. While anything holds a process handle the
 /// kernel keeps the process object and <c>OpenProcess</c> succeeds on the
 /// corpse, so <i>"the launcher is gone"</i> and <i>"its pid no longer opens"</i>
 /// are two different sentences and the product meets both.
 /// <see cref="LauncherCorpse.Freed"/> uses two <c>start /b</c>s so that nothing
-/// anywhere holds the inner one — the installer's shape, where
+/// anywhere holds the inner one -- the installer's shape, where
 /// <c>OpenProcess</c> answers <c>ERROR_INVALID_PARAMETER</c>;
 /// <see cref="LauncherCorpse.Openable"/> uses one and the test host keeps the
 /// handle, which is the shape <c>Setup.exe</c> leaves behind whenever the
@@ -69,8 +69,8 @@ namespace BrowserAI.Tests.Harness;
 /// designed <i>out</i> of the rig. It could not be: nothing makes Windows free
 /// a pid on request, and the second full run of the day found the product
 /// meeting an openable corpse anyway and serving nobody for ten minutes on the
-/// strength of it. The product decides it now — an opened parent that has
-/// already exited is nobody to serve — and this rig produces the shape on
+/// strength of it. The product decides it now -- an opened parent that has
+/// already exited is nobody to serve -- and this rig produces the shape on
 /// purpose rather than avoiding it.
 /// </para>
 /// <para>
@@ -88,7 +88,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
 
     /// <summary>
     /// The launcher, kept undisposed in <see cref="LauncherCorpse.Openable"/> so
-    /// that its handle — and with it its pid — outlives the process.
+    /// that its handle -- and with it its pid -- outlives the process.
     /// </summary>
     private Process? _launcher;
 
@@ -166,7 +166,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// tree-as-text scan for the timed <c>Process.WaitForExit</c> overload, which
     /// returns without draining the async readers and truncates stderr silently.
     /// A method of that name on another type reads identically to it, so the
-    /// scan reported this one — correctly, in the sense that it could not
+    /// scan reported this one -- correctly, in the sense that it could not
     /// know. Renaming keeps the scan sharp rather than teaching it an exception.
     /// </remarks>
     /// <param name="patience">
@@ -213,8 +213,8 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// <para>
     /// ⚠️ <b>It exists so that a lost race fails in a second instead of in ten
     /// minutes.</b> The decision under test has exactly two outcomes and both
-    /// are written down — <i>no client to serve</i> or <i>watching the
-    /// client</i> — so an arm that waits only for the one it expects spends the
+    /// are written down -- <i>no client to serve</i> or <i>watching the
+    /// client</i> -- so an arm that waits only for the one it expects spends the
     /// whole of <c>TestDefaults.ProcessHang</c> learning nothing, which is
     /// precisely what the 2026-09-15 flake cost. Waiting for either and
     /// asserting which arrived turns the same failure into a named one.
@@ -222,7 +222,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// <para>
     /// <b>It is not a shortcut around the hang detector.</b> When the product
     /// says neither, this still runs out the full patience and answers
-    /// <see langword="null"/> — a product that writes nothing at all is a hang
+    /// <see langword="null"/> -- a product that writes nothing at all is a hang
     /// and is reported as one.
     /// </para>
     /// </remarks>
@@ -251,7 +251,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
 
     /// <inheritdoc />
     /// <remarks>
-    /// ⚠️ <b>By identity, never by image name</b> — the repository-wide rule.
+    /// ⚠️ <b>By identity, never by image name</b> -- the repository-wide rule.
     /// The pid and its creation time both come out of the product's own first
     /// record, which also names the image, so the thing terminated is provably
     /// the process this rig started. A build in which the product does not exit
@@ -295,7 +295,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
             //
             // The product this rig starts is a BrowserAI with nobody to serve,
             // and since 2026-09-15 that process EXITS ON ITS OWN in about half
-            // a second — which is the whole point of the arms that use this rig.
+            // a second -- which is the whole point of the arms that use this rig.
             // So the liveness check above can be true and the process already on
             // its way out by the time `TerminateProcess` reaches it, and Windows
             // answers a failure for a pid that is mid-teardown. Measured twice
@@ -303,7 +303,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
             // all passed: `Could not terminate process 109176`, then `82304`.
             //
             // ⚠️ An instantaneous `!IsAlive()` filter was tried first and was
-            // NOT enough — the process was still in the table when the filter
+            // NOT enough -- the process was still in the table when the filter
             // ran, so the exception escaped and the arm was red again. The
             // question is not *is it gone now* but *does it go*, so this waits,
             // bounded by the suite's own hang detector rather than by a number
@@ -398,7 +398,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
 
         // ⚠️ KEPT, AND THE KEEPING IS THE MECHANISM. `Process` holds the handle
         // it was started with until it is disposed, and a held handle is what
-        // stops the kernel releasing the process object — so this pid answers
+        // stops the kernel releasing the process object -- so this pid answers
         // OpenProcess for as long as this rig lives, and answers it about a
         // process that has exited. Disposing it here, as `using` would, is the
         // one thing that would turn this mode back into the other one.
@@ -422,8 +422,8 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// <remarks>
     /// <b>Out of the log rather than off the process table</b>, because the pid
     /// and its creation time have to come from the same instant. Every record
-    /// carries <c>pid=&lt;n&gt;@&lt;creation&gt;</c> in its header — the pair
-    /// <see cref="ProcessLogRecords"/> selects on — and the <c>Startup[1]</c>
+    /// carries <c>pid=&lt;n&gt;@&lt;creation&gt;</c> in its header -- the pair
+    /// <see cref="ProcessLogRecords"/> selects on -- and the <c>Startup[1]</c>
     /// record names the image beside it, so the identity is established by the
     /// product saying who it is rather than by this rig guessing.
     /// </remarks>
@@ -528,14 +528,14 @@ internal enum LauncherCorpse
     /// <remarks>
     /// <para>
     /// <b>Equally real, and it is what the product actually meets.</b> A pid is
-    /// kept alive by any handle anywhere — the console host holds one for a
-    /// process that ran in a console — so a launcher that is gone may still be
+    /// kept alive by any handle anywhere -- the console host holds one for a
+    /// process that ran in a console -- so a launcher that is gone may still be
     /// openable for as long as the kernel is holding the object. Nothing about
     /// that is exotic and nothing about it is up to the rig.
     /// </para>
     /// <para>
     /// <b>Here it is up to the rig, which is the point.</b> The test host starts
-    /// the launcher itself and keeps the <c>Process</c> — and its handle — for
+    /// the launcher itself and keeps the <c>Process</c> -- and its handle -- for
     /// the whole life of the rig, so the corpse is openable <i>by
     /// construction</i> rather than by luck. That is what makes the arms over
     /// this mode deterministic where the 2026-09-15 flake was a coin toss.

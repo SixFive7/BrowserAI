@@ -18,8 +18,8 @@ namespace BrowserAI.Interop;
 /// <b>Why this is a P/Invoke and not <c>Process.Start</c>.</b> The correct
 /// pattern cannot be expressed in .NET at all: <c>ProcessStartInfo</c> has no
 /// creation-flags surface and the framework exposes no job-object API. The
-/// obvious substitute — start the process, then call
-/// <c>AssignProcessToJobObject</c> — was measured leaking <b>2 escapees</b>,
+/// obvious substitute -- start the process, then call
+/// <c>AssignProcessToJobObject</c> -- was measured leaking <b>2 escapees</b>,
 /// because the child spawns grandchildren in the window before the assignment
 /// lands. <c>PROC_THREAD_ATTRIBUTE_JOB_LIST</c> makes membership part of process
 /// creation, so that window does not exist rather than being closed afterwards.
@@ -31,7 +31,7 @@ namespace BrowserAI.Interop;
 /// <b>The command line is a <see cref="char"/> buffer, not a string.</b>
 /// <c>CreateProcessW</c> mutates the buffer it is given, so passing a managed
 /// string is undefined behaviour, and <c>[LibraryImport]</c> does not support
-/// <c>StringBuilder</c> — the usual workaround. A writable array is the only
+/// <c>StringBuilder</c> -- the usual workaround. A writable array is the only
 /// shape that is correct in both directions.
 /// </para>
 /// <para>
@@ -45,8 +45,8 @@ namespace BrowserAI.Interop;
 /// <see langword="null"/> the API accepts, and it said nothing about which of
 /// the two buffers Windows writes back into. <c>Span&lt;char&gt;</c> for the
 /// command line and <c>ReadOnlySpan&lt;char&gt;</c> for the environment now say
-/// exactly that: the first is mutated in place — <b>which is our array, because
-/// the span is pinned rather than copied</b> — and the second is not.
+/// exactly that: the first is mutated in place -- <b>which is our array, because
+/// the span is pinned rather than copied</b> -- and the second is not.
 /// <b>Nothing was known to be wrong with the old shape and nothing changed at
 /// the call</b>; it was a signature that presents as a plausible wrong answer
 /// rather than as an error, which is the class this repository spends the most
@@ -68,7 +68,7 @@ namespace BrowserAI.Interop;
 /// its last sentence was true of one launch and false of the process).</b>
 /// <c>bInheritHandles=TRUE</c> duplicates every inheritable handle <i>in the
 /// process</i>, and with several sessions opening at once the pipe ends of a
-/// launch in flight on another thread are inheritable too — so each child got
+/// launch in flight on another thread are inheritable too -- so each child got
 /// its siblings' stdout and stderr write ends and held them for its whole life.
 /// <c>PROC_THREAD_ATTRIBUTE_HANDLE_LIST</c> makes the inherited set exact rather
 /// than ambient; see <see cref="ProcessAttributeList"/> for what that closed.
@@ -167,7 +167,7 @@ internal static partial class JobLauncher
             // (firefox-1539) took it in NEITHER arm, with a visible window of
             // its own as the positive control, so Firefox does not do this at
             // all
-            // ([kb](../../../kb/windows/processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it--measured-2026-08-24)).
+            // ([kb](../../../kb/windows/processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it----measured-2026-08-24)).
             //
             // ⚠️ IT IS ONE DISCRIMINATING TRIAL, AND WHOEVER RE-RUNS IT MUST
             // REPRODUCE THE CONDITION RATHER THAN THE COUNT. Three further trials
@@ -180,7 +180,7 @@ internal static partial class JobLauncher
             // process, so the child inherited the right to take the foreground.
             // Arrange that condition or the experiment reproduces the null and
             // reads as "the flag does nothing"
-            // ([kb](../../../kb/windows/detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal--measured-2026-08-24)).
+            // ([kb](../../../kb/windows/detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal----measured-2026-08-24)).
             //
             // ⚠️ SW_SHOWNOACTIVATE ALONE IS KNOWN NOT TO BE ENOUGH SOMEWHERE
             // ELSE, and that measurement is recorded here rather than
@@ -266,7 +266,7 @@ internal static partial class JobLauncher
     /// <remarks>
     /// <b>Internal so the two invariants the span signature rests on can be
     /// asserted rather than read.</b> The buffer is never empty and its last
-    /// character is NUL — both true by construction here, and neither stated
+    /// character is NUL -- both true by construction here, and neither stated
     /// anywhere until the declaration stopped carrying a length.
     /// </remarks>
     /// <param name="command">The executable, which becomes argv[0].</param>
@@ -337,7 +337,7 @@ internal static partial class JobLauncher
     /// <remarks>
     /// <b>Internal for the same reason as <see cref="BuildCommandLine"/>:</b>
     /// an empty environment still produces one NUL, so the block is never a
-    /// zero-length buffer — which would reach Windows as <see langword="null"/>
+    /// zero-length buffer -- which would reach Windows as <see langword="null"/>
     /// and mean <i>inherit the parent's environment</i>, the opposite of what an
     /// explicitly empty environment asks for.
     /// </remarks>
@@ -418,21 +418,21 @@ internal static partial class JobLauncher
     /// ⚠️ <b>The handle list was added 2026-08-18; before it there was one
     /// attribute and the inherited set was "everything".</b>
     /// <c>bInheritHandles: true</c> duplicates <b>every inheritable handle in the
-    /// process</b> into the child, not just this launch's three — and
+    /// process</b> into the child, not just this launch's three -- and
     /// <see cref="ChildPipes.Create"/> makes both ends of all three pipes
     /// inheritable before clearing the parent's, because
     /// <c>SetHandleInformation</c> cannot add inheritance to a handle created
     /// without it. With several sessions in one process and no lock anywhere
     /// between <c>ChildPipes.Create</c> and <c>CreateProcessW</c>, thread B's
-    /// <c>node.exe</c> — and therefore B's whole Chromium tree — inherited
+    /// <c>node.exe</c> -- and therefore B's whole Chromium tree -- inherited
     /// thread A's stdout and stderr write ends and held them for B's entire life.
     /// </para>
     /// <para>
     /// <b>That is the hang this file already documents, closed for the parent and
     /// left open for a sibling</b>: <i>"a stdout read that never sees EOF because
     /// the parent still holds the write end is a hang with no error anywhere."</i>
-    /// It also broke the graceful close — A's stdin never reaching EOF means
-    /// every teardown falls through to the 5 s timeout and the job kill — and it
+    /// It also broke the graceful close -- A's stdin never reaching EOF means
+    /// every teardown falls through to the 5 s timeout and the job kill -- and it
     /// put <b>our own stdout handle</b>, the JSON-RPC channel, inside a Chromium
     /// tree, which is a route to stdout no banned-symbol analyzer can see. One
     /// attribute closes all three. Found by

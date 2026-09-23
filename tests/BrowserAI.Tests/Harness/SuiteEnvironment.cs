@@ -42,7 +42,7 @@ internal enum SuiteCapability
     /// <b>It is a capability rather than an assumption because the product's
     /// registration reads upstream's English.</b> Every failure the client has
     /// exits 1, benign or not, so <i>"already exists"</i> and <i>"No MCP server
-    /// named"</i> are the only discriminators there are — and a run that cannot
+    /// named"</i> are the only discriminators there are -- and a run that cannot
     /// start the client cannot notice either of them moving. Absent, the
     /// real-client arms skip; under <c>BROWSERAI_RELEASE_RUN=1</c> they fail,
     /// which is correct: a release that cannot demonstrate its own registration
@@ -60,7 +60,7 @@ internal enum SuiteCapability
     /// and the one arm that needs an installer needs it for a question nothing
     /// else can answer: whether <c>Setup.exe</c>'s rename-and-delete of a
     /// non-empty install root leaves the data root alone. Absent, that arm skips
-    /// loudly; under <c>BROWSERAI_RELEASE_RUN=1</c> it fails, which is correct —
+    /// loudly; under <c>BROWSERAI_RELEASE_RUN=1</c> it fails, which is correct --
     /// a release whose installer has never been run against a second install is
     /// one whose whole preservation claim is unexercised.
     /// </remarks>
@@ -71,12 +71,12 @@ internal enum SuiteCapability
     /// </summary>
     /// <remarks>
     /// <b>A capability rather than an assumption because the suite must run on
-    /// an export that has none.</b> Every tree-as-text rule in this repository —
-    /// the SPDX header, the link scan, the fragment count, never-by-image-name —
+    /// an export that has none.</b> Every tree-as-text rule in this repository --
+    /// the SPDX header, the link scan, the fragment count, never-by-image-name --
     /// reads the corpus <see cref="RepositoryLayout"/>'s walk produces, and the
     /// only second opinion about that corpus is <c>git ls-files</c>. Absent, the
     /// arm that compares them skips loudly and the block below says so; under
-    /// <c>BROWSERAI_RELEASE_RUN=1</c> it fails, which is correct — a release cut
+    /// <c>BROWSERAI_RELEASE_RUN=1</c> it fails, which is correct -- a release cut
     /// from a run that could not check its own corpus is a release whose every
     /// tree scan is unverified.
     /// </remarks>
@@ -93,7 +93,7 @@ internal enum SuiteCapability
 /// one, which is this project's founding failure class inside its own release
 /// gate.</b> Measured 2026-08-16, on the tree at <c>c21fea7</c>, by moving the
 /// whole publish directory aside and running the suite: <b>329 total, 328
-/// succeeded, 1 skipped, exit 0</b> — the same four numbers as a run that
+/// succeeded, 1 skipped, exit 0</b> -- the same four numbers as a run that
 /// launched a real browser. Thirty-five guards across thirteen files returned
 /// early after asserting something weaker, and every one of them reported as a
 /// pass.
@@ -115,7 +115,7 @@ internal enum SuiteCapability
 /// <description>
 /// <b>An ordinary run skips, loudly.</b> <see cref="Skip.Test(string)"/> makes
 /// the test report as <i>skipped</i> rather than as <i>passed</i>, so the run's
-/// own summary carries a skipped count that a healthy run does not — and
+/// own summary carries a skipped count that a healthy run does not -- and
 /// [release checklist item 8](../../../RELEASING.md) already requires that count
 /// to be zero. A clean clone can still run the suite, which is the property the
 /// early returns existed to preserve.
@@ -142,7 +142,7 @@ internal enum SuiteCapability
 /// <para>
 /// <b>Nothing here reads a test's duration.</b> The rig shares one
 /// <see cref="SliceRun"/>, so a slice test that really did assert against a live
-/// browser can take 2.6 ms — measured 2026-08-16. A duration threshold would be
+/// browser can take 2.6 ms -- measured 2026-08-16. A duration threshold would be
 /// a second false green wearing the clothes of a fix.
 /// </para>
 /// </remarks>
@@ -160,13 +160,13 @@ internal static class SuiteEnvironment
     /// <b>What this closes, and why the policy above could not.</b>
     /// <see cref="Decide"/> pins what a guard must <i>do</i> about an absent
     /// capability, and <see cref="SuiteCoverageTests.NothingThisRunLacksIsHalfInstalled"/>
-    /// pins that nothing is half-installed — but <b>nothing pinned WHICH
+    /// pins that nothing is half-installed -- but <b>nothing pinned WHICH
     /// capabilities are expected to be absent</b>. So a fifth quietly going
     /// absent in CI reads exactly like the four that are absent by design: the
     /// run stays green, the block says ABSENT, and the tests that needed it skip
     /// loudly into a log nobody reads line by line. That is this repository's
-    /// founding failure shape — a degraded run indistinguishable from a real one
-    /// — surviving one layer above the gate written to remove it.
+    /// founding failure shape -- a degraded run indistinguishable from a real one
+    /// -- surviving one layer above the gate written to remove it.
     /// </para>
     /// <para>
     /// <b>The set is only knowable in a controlled environment, so the
@@ -178,8 +178,8 @@ internal static class SuiteEnvironment
     /// </para>
     /// <para>
     /// ⚠️ <b>Nothing sets it as of 2026-08-20, and that is a removal rather than
-    /// a defect.</b> Hosted CI was this variable's only consumer — it named
-    /// <c>PackagedRelease,ClientCommandLine</c> on the step that ran the suite —
+    /// a defect.</b> Hosted CI was this variable's only consumer -- it named
+    /// <c>PackagedRelease,ClientCommandLine</c> on the step that ran the suite --
     /// and CI was removed that day at the maintainer's decision. Unset means
     /// <i>declares nothing</i>, which is already the developer-machine
     /// behaviour, so the mechanism below is correct, inert, and ready for
@@ -189,7 +189,7 @@ internal static class SuiteEnvironment
     /// <para>
     /// <b><c>none</c> is a value rather than an omission, and that is
     /// load-bearing twice.</b> Windows cannot carry an empty environment variable
-    /// — <c>$env:X = ''</c> removes it — so <i>"declared, and nothing is expected
+    /// -- <c>$env:X = ''</c> removes it -- so <i>"declared, and nothing is expected
     /// absent"</i> is inexpressible as an empty string and would collapse into
     /// <i>"not declared"</i>, which is the one value that switches the pin off.
     /// It is also what let the fault be planted end to end rather than only in
@@ -354,7 +354,7 @@ internal static class SuiteEnvironment
         var rule = new string('=', 78);
 
         _ = report.Append(rule).Append('\n');
-        _ = report.Append("BrowserAI suite coverage — what this run actually exercised\n");
+        _ = report.Append("BrowserAI suite coverage -- what this run actually exercised\n");
         _ = report.Append(rule).Append('\n');
 
         var degraded = 0;
@@ -468,7 +468,7 @@ internal static class SuiteEnvironment
         // thing that would turn this one green is changing a machine-wide user
         // preference, which is out of bounds. Without it a run on a machine whose
         // foreground lock is effectively infinite reports exactly what a run on a
-        // machine that could see a focus steal reports — this block's founding
+        // machine that could see a focus steal reports -- this block's founding
         // defect, one layer out from the product.
         _ = report.Append(ForegroundLock.CoverageRow).Append('\n');
 
@@ -557,7 +557,7 @@ internal static class SuiteEnvironment
     /// only ever exists in a controlled environment, so an assertion written
     /// only against the live environment would be a mechanism a developer
     /// machine can never exercise and the controlled one would meet for the
-    /// first time at the moment it mattered — and with no controlled
+    /// first time at the moment it mattered -- and with no controlled
     /// environment left, it would be a mechanism nothing exercises at all. Every
     /// branch below is reachable in-process from
     /// <see cref="SuiteCoverageTests.TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent"/>,
@@ -567,7 +567,7 @@ internal static class SuiteEnvironment
     /// <b>Exact in both directions, not just <i>undeclared absence is red</i>.</b>
     /// A declaration naming a capability that is in fact present is a lie that
     /// weakens the pin silently: it is standing permission for that capability to
-    /// go absent later and nothing would say so — which is the whole defect this
+    /// go absent later and nothing would say so -- which is the whole defect this
     /// closes, re-introduced through the file that closes it. So an over-broad
     /// declaration is a failure too, and the cost is that installing something on
     /// the runner means editing the declaration in the same commit. That is the
@@ -577,7 +577,7 @@ internal static class SuiteEnvironment
     /// <b>A name that is not a capability is a failure rather than an ignored
     /// token.</b> A typo would otherwise silently shrink the declared set, which
     /// fails in the safe direction today and in the unsafe direction the moment
-    /// somebody widens it — and a check that quietly discards its own input is
+    /// somebody widens it -- and a check that quietly discards its own input is
     /// how a positive control gets lost. Matched against
     /// <see cref="Enum.GetNames{TEnum}()"/> rather than through
     /// <see cref="Enum.TryParse{TEnum}(string, bool, out TEnum)"/>, because that
@@ -608,7 +608,7 @@ internal static class SuiteEnvironment
             .Where(capability => !declared.Contains(capability))
             .Select(capability =>
                 $"'{Title(capability)}' ({capability}) is ABSENT and this run's environment did not declare that it would be. "
-                + $"{WitnessFor(capability)}. Either the machine lost a capability it used to have — which is what this check exists to catch — or {ExpectedAbsentVariable} needs it added. {RemedyFor(capability)}"));
+                + $"{WitnessFor(capability)}. Either the machine lost a capability it used to have -- which is what this check exists to catch -- or {ExpectedAbsentVariable} needs it added. {RemedyFor(capability)}"));
 
         missing.AddRange(declared
             .Where(capability => !actually.Contains(capability))
@@ -632,7 +632,7 @@ internal static class SuiteEnvironment
     /// ⚠️ <b>Only one caller is left as of 2026-08-20, and the split is kept
     /// anyway.</b> The other was
     /// <c>SuiteCoverageTests.TheWorkflowStillDeclaresWhatItExpectsToBeAbsent</c>,
-    /// which read <c>.github/workflows/build.yml</c> and was deleted with CI —
+    /// which read <c>.github/workflows/build.yml</c> and was deleted with CI --
     /// it could not be re-pointed at a file that does not exist without losing
     /// the positive control that made it worth having. The reason to keep this
     /// entry point is the one it was created for: the day something declares
@@ -699,7 +699,7 @@ internal static class SuiteEnvironment
             : RepositoryPayload.IsAbsentAsAWhole ? CapabilityState.AbsentAsAWhole : CapabilityState.Partial,
 
         // A revision directory with no executable in it is a half-finished
-        // download or a half-deleted tree, never a clean machine — the same
+        // download or a half-deleted tree, never a clean machine -- the same
         // distinction the publish and the payload already draw, added 2026-08-16
         // when the two ungated tests moved in here and brought it with them.
         SuiteCapability.ProvisionedChromium => File.Exists(BrowserAiPaths.ExpectedChromiumExecutable)
@@ -727,8 +727,8 @@ internal static class SuiteEnvironment
 
         // No Partial state here either, for the same reason and one more: git
         // either answers "this is a work tree" or it does not, and the two ways
-        // of not answering — no git on PATH, and a directory that is not a
-        // repository — are the same absence to every caller. A `.git` present
+        // of not answering -- no git on PATH, and a directory that is not a
+        // repository -- are the same absence to every caller. A `.git` present
         // and unreadable would be a third thing, and it is not distinguished
         // here because nothing could act on the distinction.
         SuiteCapability.Git => GitOracle.IsAvailable
@@ -745,18 +745,18 @@ internal static class SuiteEnvironment
     /// <para>
     /// <b>Deliberately not a search of <c>.work/</c>.</b> Only the release
     /// script's own output directory counts, because a package left behind by an
-    /// older run predates whatever is being asserted about it — and a stale
+    /// older run predates whatever is being asserted about it -- and a stale
     /// artefact that satisfies a notice check is the same shape of false green
     /// as the degraded run.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The name is composed from the pack id rather than typed —
+    /// ⚠️ <b>The name is composed from the pack id rather than typed --
     /// 2026-09-15, and the literal it replaced had just gone stale.</b> The id
     /// became <c>BrowserAI.app</c> that day (it is what Velopack derives the
     /// install directory from), so <c>vpk</c> now writes
     /// <c>BrowserAI.app-&lt;version&gt;-full.nupkg</c> and the old
     /// <c>BrowserAI-*-full.nupkg</c> pattern would have matched **only packages
-    /// from the previous layout** — present on a machine that had packed one
+    /// from the previous layout** -- present on a machine that had packed one
     /// before, absent on every machine that packs one after. That is the stale
     /// artefact this remark already warned about, arriving through the file name
     /// instead of through the directory.
@@ -805,7 +805,7 @@ internal static class SuiteEnvironment
         if (state is CapabilityState.Partial)
         {
             throw new InvalidOperationException(
-                $"{Title(capability)}: {WitnessFor(capability)}. The directory exists and what must be inside it does not, which is a broken build rather than a clean clone — so this is a failure in every run, release or not. {RemedyFor(capability)}");
+                $"{Title(capability)}: {WitnessFor(capability)}. The directory exists and what must be inside it does not, which is a broken build rather than a clean clone -- so this is a failure in every run, release or not. {RemedyFor(capability)}");
         }
     }
 
@@ -819,7 +819,7 @@ internal static class SuiteEnvironment
     /// <b>[CallerMemberName] alone names the wrong thing when a guard sits in a
     /// helper.</b> Measured 2026-08-16 on the first degraded run after this gate
     /// landed: the block reported a skipped test called <c>RunAsync</c>, which is
-    /// a private method of <c>StraySweepTests</c> and not a test at all — and a
+    /// a private method of <c>StraySweepTests</c> and not a test at all -- and a
     /// coverage block that names something a reader cannot find is the same
     /// defect it exists to fix, one level down.
     /// </remarks>

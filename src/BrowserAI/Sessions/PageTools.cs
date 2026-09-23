@@ -11,7 +11,7 @@ namespace BrowserAI.Sessions;
 /// child's own <c>tools/list</c>.
 /// </summary>
 /// <param name="WireName">
-/// The name the child answers to — <c>webmcp_</c> and a sanitised copy of what
+/// The name the child answers to -- <c>webmcp_</c> and a sanitised copy of what
 /// the page called the tool. It is upstream's spelling and BrowserAI never
 /// invents one.
 /// </param>
@@ -28,7 +28,7 @@ internal sealed record PageTool(string WireName, string? Title);
 /// <remarks>
 /// <b>The two names are carried even on the way to a success</b>, because the
 /// call can still be abandoned on the timeout and that refusal has to say both
-/// what the caller asked for and what was actually sent — a session log read
+/// what the caller asked for and what was actually sent -- a session log read
 /// afterwards shows the wire name and nothing else.
 /// </remarks>
 /// <param name="Name">The page's own name for the tool, as the caller typed it.</param>
@@ -67,11 +67,11 @@ internal sealed record PageToolResolution(string Name, string WireName, JsonObje
 /// <para>
 /// ⚠️ <b>Resolution is by WIRE NAME and the cross-check is
 /// <c>annotations.title</c>, which is the opposite way round from how this was
-/// specified — because <c>title</c> is not the page's tool name.</b> Read out of
+/// specified -- because <c>title</c> is not the page's tool name.</b> Read out of
 /// the resolved bundle and then measured, 2026-09-21 @ <c>@playwright/mcp</c>
 /// 0.0.82 / <c>playwright-core</c> 1.64.0-alpha-1789764292000: upstream builds
 /// the entry with <c>title: tool.title || tool.name</c>, so a page that supplies
-/// its own <c>title</c> puts THAT in the annotations — while the snapshot block a
+/// its own <c>title</c> puts THAT in the annotations -- while the snapshot block a
 /// model reads the tool out of prints <c>tool.name</c>. Measured against a page
 /// registering <c>{ name: "raw_name_here", title: "Human Title" }</c>: the
 /// snapshot block printed <c>raw_name_here</c>, the wire name was
@@ -83,7 +83,7 @@ internal sealed record PageToolResolution(string Name, string WireName, JsonObje
 /// <para>
 /// <b>Re-resolved on every call, never cached.</b> The child's list covers the
 /// CURRENT TAB only and the same wire name resolves to a different page's code
-/// after a navigation — see the late-binding row in <c>HAZARDS.md</c>. A
+/// after a navigation -- see the late-binding row in <c>HAZARDS.md</c>. A
 /// resolution kept between calls would be a name pointing at whatever the tab
 /// happens to be showing now.
 /// </para>
@@ -98,7 +98,7 @@ internal static class PageTools
     /// would run in.
     /// </summary>
     /// <remarks>
-    /// <b>Upstream's own marker, measured rather than assumed</b> — a tab list
+    /// <b>Upstream's own marker, measured rather than assumed</b> -- a tab list
     /// line carries the index, then this marker on the current tab, then the
     /// page title in square brackets and the URL in round ones, and a run with
     /// one tab still carries the marker. Measured 2026-09-21 @
@@ -113,7 +113,7 @@ internal static class PageTools
     /// <c>name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64) || "tool"</c>, read
     /// from <c>sanitizeToolName</c> in the resolved bundle. JavaScript's
     /// <c>slice</c> counts UTF-16 code units, which is what a .NET string index
-    /// counts, so the two cut in the same place — including in the middle of a
+    /// counts, so the two cut in the same place -- including in the middle of a
     /// surrogate pair, which neither of them guards against.
     /// </remarks>
     public const int SanitisedMaximumLength = 64;
@@ -152,7 +152,7 @@ internal static class PageTools
     /// <b>The suffix is upstream's collision rule, not ours.</b> A page
     /// registering two tools whose sanitised names collide gets
     /// <c>&lt;base&gt;</c>, <c>&lt;base&gt;_2</c>, <c>&lt;base&gt;_3</c> and so
-    /// on — measured 2026-09-21 against a page registering <c>twin</c> twice,
+    /// on -- measured 2026-09-21 against a page registering <c>twin</c> twice,
     /// which produced <c>webmcp_twin</c> and <c>webmcp_twin_2</c> with the same
     /// <c>annotations.title</c> on both. Both are matches, and a caller naming
     /// that tool gets the ambiguity refusal rather than a silently chosen one.
@@ -189,8 +189,8 @@ internal static class PageTools
     /// <summary>Every page-supplied tool on a child's <c>tools/list</c> result.</summary>
     /// <remarks>
     /// <b>Identified by upstream's prefix and nothing else.</b> There is no
-    /// structural marker on the wire — a page tool carries the same four members
-    /// a static one does — so the prefix is the discriminator, and it is the one
+    /// structural marker on the wire -- a page tool carries the same four members
+    /// a static one does -- so the prefix is the discriminator, and it is the one
     /// upstream itself composes the name from. A static tool that ever began
     /// <c>webmcp_</c> would be caught by the golden snapshot diff first.
     /// </remarks>
@@ -258,7 +258,7 @@ internal static class PageTools
     /// <para>
     /// ⚠️ <b>The URL is taken from the LAST <c>](</c> on the line, not the
     /// first.</b> The title in front of it is the page's own text and can contain
-    /// a <c>](</c> of its own — a page titled <c>a](http://not-this-one)</c>
+    /// a <c>](</c> of its own -- a page titled <c>a](http://not-this-one)</c>
     /// would otherwise hand a caller a URL it invented. The last one is the link
     /// target because upstream writes the URL last and closes the line with
     /// <c>)</c>.

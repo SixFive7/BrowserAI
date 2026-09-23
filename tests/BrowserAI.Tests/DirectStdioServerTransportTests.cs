@@ -35,7 +35,7 @@ internal sealed class DirectStdioServerTransportTests
     /// a backtick, an apostrophe, both angle brackets, an ampersand, and
     /// characters outside ASCII.
     /// </summary>
-    private const string AwkwardText = "Page URL: `x` it's <b>&amp;</b> café — ünïcødé";
+    private const string AwkwardText = "Page URL: `x` it's <b>&amp;</b> café -- ünïcødé";
 
     private static readonly TimeSpan Patience = TestDefaults.InProcessHang;
 
@@ -183,13 +183,13 @@ internal sealed class DirectStdioServerTransportTests
     /// ⚠️ <b>This is the shipped defect of v1.0.0, reduced to the one object
     /// that caused it.</b> <c>JsonLinesTransport.DisposeAsync</c> cancelled its
     /// token, closed its own end of the channel and then awaited the read loop
-    /// — on the strength of a comment that said <i>"closing the peer's end is
+    /// -- on the strength of a comment that said <i>"closing the peer's end is
     /// what actually wakes a read blocked in a syscall"</i>. That is true of the
     /// child leg, where this process owns the pipe; it is false of the caller
     /// leg, where the other end of stdin belongs to somebody else. Measured
     /// 2026-09-15 on .NET 10 against <c>Console.OpenStandardInput()</c>: after a
     /// read has parked, neither cancelling the token nor disposing the stream
-    /// completes it — <b>3 s each, both still <c>WaitingForActivation</c>, with
+    /// completes it -- <b>3 s each, both still <c>WaitingForActivation</c>, with
     /// a console stdin and with a pipe stdin alike</b>
     /// (<c>docs/evidence/2026-09-15-fix/consoleprobe/probe-console-a.txt</c>).
     /// </para>

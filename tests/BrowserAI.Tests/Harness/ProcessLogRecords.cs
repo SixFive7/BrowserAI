@@ -19,8 +19,8 @@ namespace BrowserAI.Tests.Harness;
 /// <see cref="Logging.RollingFileWriter"/> "buffers nothing … a record that has
 /// been logged is already on disk", whereas stderr goes through
 /// <c>AddConsole</c>, which hands records to a background processor thread. A
-/// process killed with <c>TerminateProcess</c> — which is exactly what
-/// <see cref="SliceRun"/> does, deliberately, to prove containment — discards
+/// process killed with <c>TerminateProcess</c> -- which is exactly what
+/// <see cref="SliceRun"/> does, deliberately, to prove containment -- discards
 /// whatever that queue still held.
 /// </para>
 /// <para>
@@ -29,14 +29,14 @@ namespace BrowserAI.Tests.Harness;
 /// complete; on a four-core runner carrying 431 tests it does not, and
 /// <c>ProtocolSplitTests</c> went red on the runner for a record the product had
 /// written correctly. Measured twice, 2026-08-18, on two consecutive CI runs
-/// that lost different amounts of the tail — which is the signature of a queue
+/// that lost different amounts of the tail -- which is the signature of a queue
 /// rather than of an absent call.
 /// </para>
 /// <para>
-/// <b>Scoped to one process's whole identity — <c>(pid, creationFileTime)</c> —
+/// <b>Scoped to one process's whole identity -- <c>(pid, creationFileTime)</c> --
 /// never to the whole file and never to a bare pid.</b> The log is machine-wide
 /// and every BrowserAI on the box appends to it, so an unscoped read is
-/// answerable by some other run — the same vacuity that made
+/// answerable by some other run -- the same vacuity that made
 /// <c>SaturationTests</c>' record count pass on a machine with history and fail
 /// on a fresh one. A <i>pid</i>-scoped read is the same vacuity wearing a scope:
 /// the log is retained for thirty days and Windows reuses pids inside that
@@ -45,17 +45,17 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-29 (previously <c>ForPid(int)</c>, matching
-/// <c>"  pid=&lt;n&gt;@"</c> — the pid alone, with the creation FILETIME behind
+/// <c>"  pid=&lt;n&gt;@"</c> -- the pid alone, with the creation FILETIME behind
 /// the <c>@</c> read past and never compared).</b> The type's own remarks already
 /// said a bare pid does not identify a writer, and the method's name said it did;
 /// the name was the accurate one. <b>Demonstrated live</b> while the spawn-record
 /// reclaim above it was being planted red: a read scoped to a live test host's pid
 /// came back holding records written on 2026-08-24 by a different process that had
 /// worn that number. The
-/// pair is this repository's standing identity for a process — it is what
+/// pair is this repository's standing identity for a process -- it is what
 /// <c>ProcessIdentity.IsAlive(int, long)</c> takes, what <c>browserai.lock</c>
 /// spells, and what <see cref="Logging.FileLoggerProvider"/> writes into every
-/// record — and the pid-only entry point is gone rather than caveated, because a
+/// record -- and the pid-only entry point is gone rather than caveated, because a
 /// reader that can be handed half an identity will be.
 /// </para>
 /// </remarks>
@@ -79,7 +79,7 @@ internal static class ProcessLogRecords
     /// <b>This is what lets the identity scope be watched working.</b> The live
     /// read above can only be answered by whatever the machine's log happens to
     /// hold, and on a box whose log holds no stranger wearing this pid it passes
-    /// by matching nothing — so a control has to hand the reader a directory it
+    /// by matching nothing -- so a control has to hand the reader a directory it
     /// composed, holding exactly the record that must come back and the one that
     /// must not.
     /// </remarks>

@@ -44,15 +44,15 @@ namespace BrowserAI.Sessions;
 /// <b>The discriminator is the duration the object is held for, and it decides
 /// whether there is a wait at all.</b> Anything held for a session's life is the
 /// caller's business and never waits: BrowserAI cannot know what a wait costs
-/// its caller, so it returns the fact — <i>this directory is busy, and here is
-/// who has it</i> — and the decision to retry belongs to the model. The sweep is
+/// its caller, so it returns the fact -- <i>this directory is busy, and here is
+/// who has it</i> -- and the decision to retry belongs to the model. The sweep is
 /// try-acquire-and-skip at zero timeout for a second reason: a skipped sweep is
 /// not a missed sweep, because whoever holds the mutex is scanning the same
 /// store.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-18 (previously: "Milliseconds is internal, so the
-/// per-directory gate keeps a short bounded wait — asking a calling model to
+/// per-directory gate keeps a short bounded wait -- asking a calling model to
 /// retry a 5 ms operation would be absurd").</b> That reasoning sizes the
 /// timeout against <i>one</i> holder and is why the gate was five seconds; the
 /// wait is behind the <b>queue</b> of every process naming the same directory,
@@ -68,14 +68,14 @@ namespace BrowserAI.Sessions;
 /// answered by <c>SessionLock.ProbeForHolder</c> in front of the gate, because
 /// the sharing violation on <c>browserai.lock</c> already proves ownership and the
 /// mutex never made it more true. <b>Sizing the timeout and removing the queue
-/// are both needed and neither replaces the other</b> — the probe is why the
+/// are both needed and neither replaces the other</b> -- the probe is why the
 /// queue is short, the timeout is what still has to be right when it is not.
 /// </para>
 /// <para>
 /// <b>Every name carries the <c>Global\</c> prefix and there is no
 /// <c>Local\</c> fallback anywhere in this product.</b> A <c>Local\</c> name is
 /// scoped to the logon session, so falling back to it does not weaken the lock
-/// evenly — it removes it precisely where it is needed, between a Remote Desktop
+/// evenly -- it removes it precisely where it is needed, between a Remote Desktop
 /// session and the console one, which is the only arrangement in which two
 /// BrowserAIs contend without either being able to detect it. Refusing beats
 /// descending: a lock that narrows its own scope when it cannot get the scope it
@@ -97,7 +97,7 @@ internal static class LockScopes
     /// <remarks>
     /// 128 bits of a 256-bit digest. A collision would have to be engineered,
     /// and its worst outcome is two unrelated directories serialising against
-    /// each other for a few milliseconds — never a lock that reports success
+    /// each other for a few milliseconds -- never a lock that reports success
     /// while guarding nothing, which is the failure the length has to be chosen
     /// against.
     /// </remarks>
@@ -105,7 +105,7 @@ internal static class LockScopes
 
     /// <summary>
     /// The machine-wide sweep mutex. One name, one place in code, <c>Global\</c>
-    /// prefixed — which is what closes race <b>R4</b>, the scheduled task and
+    /// prefixed -- which is what closes race <b>R4</b>, the scheduled task and
     /// BrowserAI using different mutexes.
     /// </summary>
     public const string Sweep = $@"{GlobalPrefix}BrowserAI-Sweep";
@@ -124,7 +124,7 @@ internal static class LockScopes
     /// "four orders of magnitude of headroom … exceeding it means something is
     /// wrong that a longer wait would not fix"). Both halves of that sentence
     /// were false, and the second one was printed at the caller.</b> The headroom
-    /// is not against one section — it is against the <b>queue of every process
+    /// is not against one section -- it is against the <b>queue of every process
     /// contending for the same directory</b>, because each of them enters this
     /// gate in turn just to discover the file is held. Measured on an
     /// <b>idle</b> machine, 200 real processes released together against one
@@ -133,13 +133,13 @@ internal static class LockScopes
     /// </para>
     /// <list type="table">
     /// <listheader><term>Contenders</term><description>Slowest refusal, and what it answered</description></listheader>
-    /// <item><term>16</term><description>367 ms — every refusal named the holder</description></item>
-    /// <item><term>100 — <b>the charter's design point</b></term><description>3,349 ms, p99 3,227 ms. <b>A margin of 1.49× on an idle machine</b></description></item>
-    /// <item><term>200</term><description><b>73 refusals of 796 came back <c>Busy</c> at 5,022–5,056 ms</b>, in 4 runs of 4</description></item>
+    /// <item><term>16</term><description>367 ms -- every refusal named the holder</description></item>
+    /// <item><term>100 -- <b>the charter's design point</b></term><description>3,349 ms, p99 3,227 ms. <b>A margin of 1.49× on an idle machine</b></description></item>
+    /// <item><term>200</term><description><b>73 refusals of 796 came back <c>Busy</c> at 5,022-5,056 ms</b>, in 4 runs of 4</description></item>
     /// </list>
     /// <para>
-    /// <b>So <c>Busy</c> was reachable by queueing alone</b> — no stuck holder, no
-    /// starvation, nothing wrong at all — and the sentence it printed told the
+    /// <b>So <c>Busy</c> was reachable by queueing alone</b> -- no stuck holder, no
+    /// starvation, nothing wrong at all -- and the sentence it printed told the
     /// calling model that waiting would not help, when waiting was the entire
     /// remedy. At the design point the old value had less headroom than a single
     /// browser launch takes.
@@ -167,7 +167,7 @@ internal static class LockScopes
     /// 3 runs at each N on an idle machine
     /// ([kb](../../../kb/windows/detection.md#named-mutexes-and-lock-files)):
     /// slowest refusal <b>329 ms → 30 ms</b> at 16, <b>2,084 ms → 203 ms</b> at
-    /// the design point of 100, <b>4,267 ms → 449 ms</b> at 200 — and the shape
+    /// the design point of 100, <b>4,267 ms → 449 ms</b> at 200 -- and the shape
     /// changed from <c>p50 ≈ max/2</c>, which is a queue draining one entrant at
     /// a time, to a cluster.
     /// </para>
@@ -193,7 +193,7 @@ internal static class LockScopes
     /// <see cref="RenameWindowWaitsInsideTheGate"/> of them in series</b>, so the
     /// number to beat is 90 s and the gate was 60. A holder legitimately waiting
     /// out three rename windows therefore made every peer's <c>TryAcquire</c>
-    /// return <c>Busy</c> — and the <c>Busy</c> sentence offers <i>"a process is
+    /// return <c>Busy</c> -- and the <c>Busy</c> sentence offers <i>"a process is
     /// wedged holding it"</i> as one of two explanations, which would again be a
     /// diagnosis the code cannot support. Found by
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
@@ -210,8 +210,8 @@ internal static class LockScopes
     /// <para>
     /// <b>Three, and they are enumerable rather than estimated.</b>
     /// <c>SessionLock.TakeOrReport</c>, inside the gate: the first
-    /// <c>OpenHeld</c>, then <c>WriteDurably</c>'s replace loop — whose
-    /// <c>MoveBudget</c> is this same value — then the re-open.
+    /// <c>OpenHeld</c>, then <c>WriteDurably</c>'s replace loop -- whose
+    /// <c>MoveBudget</c> is this same value -- then the re-open.
     /// <c>SessionLock.Rewrite</c>, inside the gate, takes the same three in a
     /// different order: the replace, the re-open, and <c>Reclaim</c>'s re-open on
     /// the failure path.
@@ -221,7 +221,7 @@ internal static class LockScopes
     /// silent 30 s.</b> A new wait inside the critical section has to be counted
     /// here, and counting it fails
     /// <c>SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt</c> until the
-    /// gate above is re-sized — which is the conversation that should happen and
+    /// gate above is re-sized -- which is the conversation that should happen and
     /// did not when the third one was added.
     /// </para>
     /// </remarks>
@@ -241,7 +241,7 @@ internal static class LockScopes
     /// <para>
     /// ⚠️ <b>Split out on 2026-08-18, at the value it already had.</b> That code
     /// used <see cref="PerDirectoryGate"/>, and raising the gate to sixty seconds
-    /// would have silently taken this with it — putting a <b>sixty-second stall
+    /// would have silently taken this with it -- putting a <b>sixty-second stall
     /// on the startup path</b>, because <c>Join</c> runs while BrowserAI is
     /// starting and blocks until this expires. Nothing about this scope asked for
     /// that; it inherited it from a constant that was re-sized for a different

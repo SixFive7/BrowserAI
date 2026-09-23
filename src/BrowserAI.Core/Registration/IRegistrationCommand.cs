@@ -11,7 +11,7 @@ namespace BrowserAI.Registration;
 /// <para>
 /// <b>It exists for the same reason <see cref="Hosting.IAppPaths"/> does.</b>
 /// Registration runs inside a Velopack fast-exit hook, which is a context no
-/// test host can enter — so the decision has to be separable from the effect or
+/// test host can enter -- so the decision has to be separable from the effect or
 /// none of it is testable without an install. Everything above this interface
 /// is exercised against a double; what remains below it is one
 /// <c>CreateProcessW</c> and a <c>PATH</c> walk, and the suite drives those
@@ -34,7 +34,7 @@ internal interface IRegistrationCommand
     /// <remarks>
     /// <b><see langword="null"/> is an ordinary answer, not a failure.</b> A
     /// machine with no MCP client installed is a machine BrowserAI still
-    /// installs correctly on — it simply has nothing to register with, which is
+    /// installs correctly on -- it simply has nothing to register with, which is
     /// a logged fact rather than an error.
     /// </remarks>
     string? Locate(string executableName);
@@ -62,7 +62,7 @@ internal interface IRegistrationCommand
     /// ONLY thing that decides where a project-scope registration lands.</b>
     /// <c>claude mcp add --scope project</c> writes <c>.mcp.json</c> into the
     /// directory it was run in and nowhere else, so a call that did not set one
-    /// would write into the default below — the user profile — and report
+    /// would write into the default below -- the user profile -- and report
     /// success about a file in the wrong place.
     /// </remarks>
     CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory);
@@ -70,7 +70,7 @@ internal interface IRegistrationCommand
 
 /// <summary>What one invocation of the client did.</summary>
 /// <param name="ExitCode">
-/// The process's exit code, cached the instant it exited —
+/// The process's exit code, cached the instant it exited --
 /// <c>Process.ExitCode</c> throws after <c>Dispose()</c>, which is the defect
 /// that made a hard startup failure log identically to a clean shutdown in the
 /// setup this project replaces.

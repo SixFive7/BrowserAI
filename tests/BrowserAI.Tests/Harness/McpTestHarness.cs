@@ -17,7 +17,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>Two hops, which is why the SDK's own fixtures are not vendored.</b>
 /// <c>ClientServerTestBase</c> is 1,082 lines, unpublished to NuGet,
 /// Apache-2.0, and wires a single client↔server pipe pair. A proxy is a server
-/// on one side and a client on the other, so the rig needs two — and copying
+/// on one side and a client on the other, so the rig needs two -- and copying
 /// theirs to add the second would buy a permanent three-way merge against an
 /// upstream that edits <c>tests/</c> weekly.
 /// </para>
@@ -39,8 +39,8 @@ namespace BrowserAI.Tests.Harness;
 /// what <c>RunAsync</c> returns on.
 /// </item>
 /// <item>
-/// <b>Neither</b> leaves the server task running — it was still running when
-/// dispose began in every rig, against a bounded wait — as well as leaving the
+/// <b>Neither</b> leaves the server task running -- it was still running when
+/// dispose began in every rig, against a bounded wait -- as well as leaving the
 /// pipes open.
 /// </item>
 /// </list>
@@ -49,7 +49,7 @@ namespace BrowserAI.Tests.Harness;
 /// consequence and wrong about the mechanism: the two steps are not a sequence
 /// in which the first enables the second, they are two independent ways to end
 /// the server task of which only one also closes the pipes. Keeping both is
-/// still correct — cancellation is what a caller-supplied token has to do, and
+/// still correct -- cancellation is what a caller-supplied token has to do, and
 /// completion is what <see cref="StdioChannel.Over(Stream, Stream)"/> requires,
 /// since it deliberately does not own the streams it is handed.
 /// </para>
@@ -113,7 +113,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
     /// <remarks>
     /// <b>These stopped being the same object at step 13.</b> Once <c>session</c>
     /// became mandatory, a <c>tools/call</c> goes to the child of the session it
-    /// names and never to the run's own — so a test asserting on what the child
+    /// names and never to the run's own -- so a test asserting on what the child
     /// received has to look at the session's. <c>tools/list</c> still comes from
     /// <see cref="SurfaceChild"/>, because the tool set may not vary per
     /// connection and one static list has to be answerable before any session
@@ -486,7 +486,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
 
                 // ⚠️ Read off the rig rather than written here. A headed
                 // session behind a real node child is a Chromium window on the
-                // developer's screen which takes their foreground — measured
+                // developer's screen which takes their foreground -- measured
                 // 2026-08-17 as the ONLY thing in the whole suite that did.
                 // RigSessionEnvironment decides, so a second real-child arm
                 // inherits the answer instead of rediscovering the defect.

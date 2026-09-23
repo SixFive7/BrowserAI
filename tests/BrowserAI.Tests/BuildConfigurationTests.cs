@@ -170,8 +170,8 @@ internal sealed partial class BuildConfigurationTests
     /// <remarks>
     /// <para>
     /// <b>[TESTING.md](../../TESTING.md#what-the-build-itself-must-fail-on)
-    /// requires this in those words</b> — <i>"assert the property is unset, so
-    /// it cannot arrive later as somebody's size optimisation"</i> — and until
+    /// requires this in those words</b> -- <i>"assert the property is unset, so
+    /// it cannot arrive later as somebody's size optimisation"</i> -- and until
     /// 2026-08-16 nothing did: <c>grep -rn "ResourceKeys" tests/</c> returned
     /// nothing, found while assembling the evidence
     /// [item 7](../../RELEASING.md) asks for. The property was correct
@@ -226,7 +226,7 @@ internal sealed partial class BuildConfigurationTests
     /// <b>[TESTING.md](../../TESTING.md#what-the-build-itself-must-fail-on)
     /// opens with this and nothing asserted it.</b>
     /// <see cref="NoBuildFileSuppressesWarnings"/> forbids <c>NoWarn</c> and
-    /// <c>WarningsNotAsErrors</c> — the two ways to demote a warning — and never
+    /// <c>WarningsNotAsErrors</c> -- the two ways to demote a warning -- and never
     /// looked for the property that promotes them in the first place, so
     /// deleting the line left the suite green and turned every analyzer in this
     /// repository into advice. Found by the plan's final audit, in the same
@@ -235,7 +235,7 @@ internal sealed partial class BuildConfigurationTests
     /// <para>
     /// <b>Both halves, for the same reason that one has both.</b> The property
     /// must be <c>true</c> wherever it appears, and it must <i>appear</i> in the
-    /// file that reaches every project — a per-project declaration would leave
+    /// file that reaches every project -- a per-project declaration would leave
     /// the next project uncovered and pass a "nothing sets it to false" check.
     /// </para>
     /// </remarks>
@@ -260,7 +260,7 @@ internal sealed partial class BuildConfigurationTests
     /// <remarks>
     /// <b>Unreachable code is not a tidiness complaint.</b> It means the compiler
     /// proved a branch cannot execute, and in this codebase that branch is
-    /// usually a guard, a <c>catch</c> or a cleanup path — the recovery path that
+    /// usually a guard, a <c>catch</c> or a cleanup path -- the recovery path that
     /// was never going to run is this project's founding failure class. The
     /// promotion is what keeps it an error if the blanket property above ever
     /// goes; <see cref="NoBuildFileSuppressesWarnings"/> is what keeps a
@@ -298,7 +298,7 @@ internal sealed partial class BuildConfigurationTests
     /// <para>
     /// <b>The positive half is the one that catches a deletion.</b> Forbidding
     /// the property repo-wide says nothing if the product project stops
-    /// declaring it at all — the ILC gate would then rest on <c>PublishAot</c>'s
+    /// declaring it at all -- the ILC gate would then rest on <c>PublishAot</c>'s
     /// defaults, silently. So the shipped assembly must still say
     /// <c>false</c> in its own file, which is where a reviewer can see it.
     /// </para>
@@ -332,8 +332,8 @@ internal sealed partial class BuildConfigurationTests
     /// <para>
     /// <b>Neither entry is a pin, and the file is outside every other scan.</b>
     /// [STACK.md](../../STACK.md#the-build-configuration)
-    /// requires *"an SDK floor that rolls forward"* — a floor forbids being
-    /// stale, where a ceiling would forbid being current — and *"the MTP runner
+    /// requires *"an SDK floor that rolls forward"* -- a floor forbids being
+    /// stale, where a ceiling would forbid being current -- and *"the MTP runner
     /// setting TUnit requires"*, without which <c>dotnet test</c> takes the
     /// VSTest path and errors out against an MTP v2 project.
     /// </para>
@@ -372,7 +372,7 @@ internal sealed partial class BuildConfigurationTests
     /// <c>MAX_PATH</c> fails somewhere inside Chromium with an error nobody can
     /// attribute. The update path requires <c>asInvoker</c>
     /// because BrowserAI installs per-user precisely so that nothing ever waits
-    /// on a UAC prompt a background MCP server cannot answer — an elevation
+    /// on a UAC prompt a background MCP server cannot answer -- an elevation
     /// request here would hang the client at startup.
     /// </para>
     /// <para>
@@ -442,7 +442,7 @@ internal sealed partial class BuildConfigurationTests
     /// signal.</b> <c>TaskDialogIndirect</c> is exported only by the
     /// side-by-side version 6 <c>comctl32</c>; with no dependency the loader
     /// binds version 5, the export is not there, and the call fails at run time
-    /// — presenting as <i>the application starts and nothing happens</i>. It is
+    /// -- presenting as <i>the application starts and nothing happens</i>. It is
     /// the classic failure of this whole approach, which is why it is asserted
     /// rather than left to the one manual check that would find it.
     /// </remarks>

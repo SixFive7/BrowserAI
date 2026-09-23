@@ -21,19 +21,19 @@ internal sealed record HazardRow(int Line, string Area, string Hazard, string St
     public string? State => HazardIndex.StateOf(Status);
 
     /// <summary>
-    /// Whether this row is <c>open</c> and has nothing in its evidence cell —
+    /// Whether this row is <c>open</c> and has nothing in its evidence cell --
     /// the predicate the tally in <c>TODO.md</c> counts.
     /// </summary>
     /// <remarks>
     /// <b>Named rather than inlined, because getting this predicate wrong is the
     /// specific accident this whole mechanism exists for.</b> A re-count once
-    /// measured <i>rows that are <c>open</c> at all</i> — a different question
-    /// over the same table — and "corrected" a figure that had been right. Both
+    /// measured <i>rows that are <c>open</c> at all</i> -- a different question
+    /// over the same table -- and "corrected" a figure that had been right. Both
     /// the sentence in <c>TODO.md</c> and the test that checks it now read this
     /// one property, so they cannot be asking different questions.
     /// </remarks>
     public bool IsOpenAndUnadjudicated =>
-        State is HazardIndex.Open && Evidence is "" or "—" or "-";
+        State is HazardIndex.Open && Evidence is "" or "--" or "-";
 }
 
 /// <summary>
@@ -45,8 +45,8 @@ internal sealed record HazardRow(int Line, string Area, string Hazard, string St
 /// <c>HazardIndexTests</c> checks the symbols a row names and the two-state
 /// invariant; <c>RecordedCountTests</c> checks the tallies documents publish
 /// about this table. Those were separate readings of the same file until
-/// 2026-08-18, and the counting-discipline rule this repository states —
-/// <i>the count and its check derive from one implementation</i> — is not
+/// 2026-08-18, and the counting-discipline rule this repository states --
+/// <i>the count and its check derive from one implementation</i> -- is not
 /// satisfiable while they are.
 /// </para>
 /// <para>
@@ -130,8 +130,8 @@ internal static partial class HazardIndex
     /// <b>A second, deliberately independent enumeration of the same table.</b>
     /// <see cref="Rows"/> scans the whole file and keeps whatever looks like a
     /// row; this walks the contiguous run of pipe-leading lines that starts at
-    /// the header. The two share the <i>predicate</i> — <see cref="SplitRow"/>
-    /// and <see cref="Fields"/> — and nothing else, which is what lets one check
+    /// the header. The two share the <i>predicate</i> -- <see cref="SplitRow"/>
+    /// and <see cref="Fields"/> -- and nothing else, which is what lets one check
     /// the other: a region that stopped early and a line the parser dropped both
     /// show up as the two counts disagreeing.
     /// </para>
@@ -140,7 +140,7 @@ internal static partial class HazardIndex
     /// because <c>HAZARDS.md</c> opens with a three-column table describing the
     /// index's own columns. Those lines split into five fields perfectly
     /// legitimately, and a guard that read them would have to be taught an
-    /// exception — at which point the exception, not the rule, is what a future
+    /// exception -- at which point the exception, not the rule, is what a future
     /// malformed row would land in.
     /// </para>
     /// </remarks>
@@ -189,7 +189,7 @@ internal static partial class HazardIndex
     /// here</b>: inside a table row a backslash-escaped pipe is content and the
     /// renderer prints one pipe. Reading it the same way means the parser and
     /// the rendered file agree about where a cell ends, and it is what makes the
-    /// guard's advice — <i>write it <c>\|</c></i> — true rather than a
+    /// guard's advice -- <i>write it <c>\|</c></i> -- true rather than a
     /// suggestion that moves the row from one silent skip to another.
     /// </para>
     /// <para>
@@ -238,12 +238,12 @@ internal static partial class HazardIndex
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>The leading word, matched exactly — never containment.</b> Until
+    /// ⚠️ <b>The leading word, matched exactly -- never containment.</b> Until
     /// 2026-08-18 the check asked whether the cell <i>contained</i> "open" or
     /// "closed", and a row reading <c>**half closed**</c> passed it for eight
     /// days: the invariant the test's name promised was not enforced, and the row
     /// was in neither tally. Containment is also ambiguous in the other
-    /// direction — <c>**open** — bounded, not closed</c> contains both words, and
+    /// direction -- <c>**open** -- bounded, not closed</c> contains both words, and
     /// under the old rule counted as closed.
     /// </para>
     /// <para>

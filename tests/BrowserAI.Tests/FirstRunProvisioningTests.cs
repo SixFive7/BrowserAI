@@ -28,7 +28,7 @@ namespace BrowserAI.Tests;
 /// <b>It is driven through the published binary rather than in process</b>,
 /// because the property being proven is what a <i>caller</i> experiences: an
 /// <c>init</c> that answers at once, a browser call refused with a size and a
-/// route out, and the same session — same child, no restart — navigating once
+/// route out, and the same session -- same child, no restart -- navigating once
 /// the install lands.
 /// </para>
 /// <para>
@@ -38,8 +38,8 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️ <b>It pays that price at most once an hour, and the two modes prove
-/// different things.</b> Added 2026-08-17 on the maintainer's instruction —
-/// <i>"only download once per hour. I don't want to hammer the servers"</i> —
+/// different things.</b> Added 2026-08-17 on the maintainer's instruction --
+/// <i>"only download once per hour. I don't want to hammer the servers"</i> --
 /// because a suite that was run once a day is about to be run dozens of times.
 /// <see cref="FirstRunCache"/> keeps the tree the last CDN run produced;
 /// <see cref="FirstRunCache.Plan"/> decides which mode this run is in, and
@@ -54,7 +54,7 @@ namespace BrowserAI.Tests;
 /// </listheader>
 /// <item>
 /// <term><c>init</c> answers at once and reports <c>provisioning</c></term>
-/// <description>real · real — the cached mode drives the <i>loser</i> of the
+/// <description>real · real -- the cached mode drives the <i>loser</i> of the
 /// machine-wide mutex, which is a production path nothing else covers end to
 /// end</description>
 /// </item>

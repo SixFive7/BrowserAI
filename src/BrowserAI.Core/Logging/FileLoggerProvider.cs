@@ -22,7 +22,7 @@ namespace BrowserAI.Logging;
 /// <para>
 /// <b>Two times per record, and neither replaces the other.</b> The leading
 /// column is when the record was <i>written</i>, taken by the sink inside the
-/// file's write gate immediately before the bytes go down — so write order and
+/// file's write gate immediately before the bytes go down -- so write order and
 /// timestamp order coincide and the file is sorted <b>by construction</b> rather
 /// than by anybody sorting it. <c>made=</c> is when the record was
 /// <i>created</i>, stamped here. The two differ only by however long a writer
@@ -32,7 +32,7 @@ namespace BrowserAI.Logging;
 /// <para>
 /// <b>The writer is <c>pid=&lt;n&gt;@&lt;createdFileTime&gt;</c>, never a bare
 /// pid.</b> Windows reuses pids, and the machine-wide log outlives the processes
-/// in it by thirty days — so a bare pid in a month-old record eventually names a
+/// in it by thirty days -- so a bare pid in a month-old record eventually names a
 /// stranger. The pair is this repository's standing identity for a process:
 /// it is what <see cref="ProcessLiveness.IsAlive(int, long)"/> takes, and it is
 /// spelled here exactly as <c>browserai.lock</c> spells
@@ -42,9 +42,9 @@ namespace BrowserAI.Logging;
 /// <para>
 /// ⚠️ <b><c>@0</c> means this process could not read its own creation time</b>,
 /// which is a pair a reader must not feed to a liveness check: it would answer
-/// <i>not running</i> for a process that is. It has never been observed —
+/// <i>not running</i> for a process that is. It has never been observed --
 /// <c>GetProcessTimes</c> on the current-process pseudo-handle has no documented
-/// failure — and it is spelled rather than thrown because a logger that cannot
+/// failure -- and it is spelled rather than thrown because a logger that cannot
 /// construct itself takes the process with it.
 /// </para>
 /// </remarks>

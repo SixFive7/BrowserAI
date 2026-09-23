@@ -11,7 +11,7 @@ namespace BrowserAI.Updates;
 /// <b>The seam is the reason the update path can be tested at all.</b> Under
 /// <c>dotnet run</c> and under every test host this process is not a Velopack
 /// install, so a build that called <c>UpdateManager</c> directly could only ever
-/// be exercised by installing itself — and a server that self-restarts would
+/// be exercised by installing itself -- and a server that self-restarts would
 /// relaunch itself out of the suite
 /// ([kb](../../../kb/packaging/velopack.md#6-notinstalledexception-under-dotnet-run-and-every-test-host)).
 /// </para>
@@ -37,7 +37,7 @@ internal interface IUpdateClient
 
     /// <summary>Downloads and stages a candidate.</summary>
     /// <param name="candidate">What <see cref="CheckAsync"/> returned.</param>
-    /// <param name="progress">Called with 0–100. <b>Every call resets the stall timer</b>, so it must be invoked from the download rather than from a clock.</param>
+    /// <param name="progress">Called with 0-100. <b>Every call resets the stall timer</b>, so it must be invoked from the download rather than from a clock.</param>
     /// <param name="cancellationToken">Cancels the download.</param>
     /// <returns>The download.</returns>
     Task DownloadAsync(UpdateCandidate candidate, Action<int> progress, CancellationToken cancellationToken);
@@ -84,7 +84,7 @@ internal sealed record UpdateCandidate
     /// </summary>
     /// <remarks>
     /// Logged because it is the number that decides whether an update costs
-    /// single-digit MB or the whole payload — and because a rollback always
+    /// single-digit MB or the whole payload -- and because a rollback always
     /// reports zero: <c>packages\</c> is pruned to the current full package
     /// during the forward update and deltas are forward-only.
     /// </remarks>

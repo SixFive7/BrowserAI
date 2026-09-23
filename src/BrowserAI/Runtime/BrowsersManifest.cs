@@ -13,7 +13,7 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b>The revision is read from the payload, never typed into C#.</b> That file
 /// is inside the artifact and no "latest" lookup exists anywhere in upstream's
-/// registry code, so a release knows forever exactly which browser it wants —
+/// registry code, so a release knows forever exactly which browser it wants --
 /// and a bump moves this number without anybody editing anything. A literal
 /// <c>chromium-1237</c> in the product would keep resolving after the payload
 /// moved on, and the failure would be a browser that is present and wrong.
@@ -31,7 +31,7 @@ namespace BrowserAI.Runtime;
 /// <b><c>INSTALLATION_COMPLETE</c> is written last, and Playwright never checks
 /// it at launch.</b> That asymmetry is the whole reason this type exposes it: an
 /// <i>interrupted</i> install self-heals because the marker is absent, but a
-/// tree that is half there and unmarked launches as <c>spawn EFTYPE</c> — and
+/// tree that is half there and unmarked launches as <c>spawn EFTYPE</c> -- and
 /// upstream then writes <c>DEPENDENCIES_VALIDATED</c> into the corrupt directory
 /// and suppresses revalidation for thirty days. BrowserAI checks the marker
 /// before it decides a browser is present, which is the check upstream does not
@@ -112,7 +112,7 @@ internal sealed class BrowsersManifest
     }
 
     /// <summary>What the manifest says about one browser family.</summary>
-    /// <param name="browser">The family, as upstream names it — <c>chromium</c>, <c>firefox</c>.</param>
+    /// <param name="browser">The family, as upstream names it -- <c>chromium</c>, <c>firefox</c>.</param>
     /// <returns>The revision.</returns>
     /// <exception cref="InvalidOperationException">The manifest does not name it.</exception>
     public BrowserRevision For(string browser) =>
@@ -137,7 +137,7 @@ internal sealed record BrowserRevision(string Name, string Revision, string? Bro
     /// browser</b>, and it is why the underscore matters:
     /// <c>browserDirectoryPrefix.replace(/-/g, "_") + "-" + revision</c>, read
     /// 2026-08-17 out of the resolved <c>playwright-core</c> bundle, with the
-    /// comment beside it saying why — <c>webkit</c> is a prefix of
+    /// comment beside it saying why -- <c>webkit</c> is a prefix of
     /// <c>webkit-technology-preview</c>, so a folder name that kept its dashes
     /// would make an older registry delete the wrong tree. Matching on this rather
     /// than on the bare name is what stops <see cref="RevisionPrune"/> inheriting

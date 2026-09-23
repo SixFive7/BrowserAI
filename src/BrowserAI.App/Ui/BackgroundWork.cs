@@ -25,10 +25,10 @@ internal readonly record struct BackgroundPoll<TResult>(bool Finished, TResult? 
 /// <remarks>
 /// <para>
 /// ⚠️ <b>Every action this app offers used to run on the UI thread, and the
-/// update check had no bound at all — 2026-09-16.</b> The check and the download
+/// update check had no bound at all -- 2026-09-16.</b> The check and the download
 /// were called with <c>.GetAwaiter().GetResult()</c> inside the dialog's
 /// callback, with <see cref="CancellationToken.None"/>, against a Velopack
-/// <c>UpdateManager</c> built from a bare URL — whose <c>SimpleWebSource</c>
+/// <c>UpdateManager</c> built from a bare URL -- whose <c>SimpleWebSource</c>
 /// default is a <b>thirty-minute</b> <c>HttpClient</c> timeout. A feed that
 /// answered slowly therefore froze the window, with no cursor, no repaint and no
 /// close button, for up to half an hour. The server's lane wrapped the identical
@@ -37,7 +37,7 @@ internal readonly record struct BackgroundPoll<TResult>(bool Finished, TResult? 
 /// <para>
 /// <b>The bound is the server's own constant and is never a number written
 /// here.</b> <see cref="DefaultBudget"/> is
-/// <see cref="UpdateService.CrashTripwire"/> — the same outer deadline the
+/// <see cref="UpdateService.CrashTripwire"/> -- the same outer deadline the
 /// server's pass runs under, for the same calls. It is a crash tripwire rather
 /// than flow control: nothing healthy reaches it, and the dialog stays fully
 /// usable the whole time, so a person who does not want to wait closes the
@@ -46,7 +46,7 @@ internal readonly record struct BackgroundPoll<TResult>(bool Finished, TResult? 
 /// <para>
 /// ⚠️ <b>The deadline is enforced by the POLL and not by the token, deliberately.</b>
 /// <c>UpdateManager.CheckForUpdatesAsync</c> takes no cancellation token at all
-/// — <see cref="VelopackUpdateClient"/> says so where it calls it — so a
+/// -- <see cref="VelopackUpdateClient"/> says so where it calls it -- so a
 /// cancelled token cannot stop the request in flight. What the deadline does is
 /// <b>abandon the wait</b>: the dialog stops waiting, says so, and the orphaned
 /// task finishes into nothing. The token is passed as well, because the parts
@@ -56,7 +56,7 @@ internal readonly record struct BackgroundPoll<TResult>(bool Finished, TResult? 
 /// <b>The result crosses threads once, at completion.</b> The work computes
 /// everything it wants to say and hands it back as one value; nothing it touches
 /// is read by the dialog while it runs. That is what makes this safe without a
-/// lock — a completed <see cref="Task{TResult}"/> is a memory barrier, and an
+/// lock -- a completed <see cref="Task{TResult}"/> is a memory barrier, and an
 /// abandoned one is never read at all.
 /// </para>
 /// </remarks>
@@ -102,7 +102,7 @@ internal sealed class BackgroundWork<TResult>(TimeSpan budget) : IDisposable
     /// <param name="progress">What the dialog says while this runs.</param>
     /// <param name="subject">
     /// What the timeout sentence calls this, as a noun phrase that can open a
-    /// sentence — <i>The update check</i>.
+    /// sentence -- <i>The update check</i>.
     /// </param>
     /// <param name="work">The work, off this thread.</param>
     /// <returns>Whether it started.</returns>

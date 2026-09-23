@@ -14,8 +14,8 @@ namespace BrowserAI.Tests.Harness;
 /// <b>Both in-process doubles are built on this and neither uses a product
 /// type.</b> <see cref="FakePlaywrightChild"/> stands in for the child and
 /// <see cref="RawPipeClient"/> stands in for the caller; if either framed its
-/// bytes with <c>BrowserAI.Protocol</c> code, a symmetric framing mistake —
-/// made on the way out and again on the way in — would pass green.
+/// bytes with <c>BrowserAI.Protocol</c> code, a symmetric framing mistake --
+/// made on the way out and again on the way in -- would pass green.
 /// </para>
 /// <para>
 /// <b>The read is buffered, and that is not a micro-optimisation.</b> Reading a

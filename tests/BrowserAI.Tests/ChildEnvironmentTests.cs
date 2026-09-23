@@ -10,7 +10,7 @@ namespace BrowserAI.Tests;
 /// process.
 /// </summary>
 /// <remarks>
-/// The end-to-end half — that a child really is handed this and nothing else —
+/// The end-to-end half -- that a child really is handed this and nothing else --
 /// is in <see cref="DirectStdioClientTransportTests"/>. This half is what makes
 /// the list itself reviewable: a name moved from <c>Refused</c> into
 /// <c>InheritedWhenSet</c> is a deliberate edit that fails here, rather than a
@@ -77,7 +77,7 @@ internal sealed class ChildEnvironmentTests
     /// ⚠️ <b>Six since 2026-09-17 (previously five).</b>
     /// <c>PLAYWRIGHT_MCP_FILE_PATHS</c> maps onto <c>filePaths</c>, which the
     /// generator now writes as <c>absolute</c>. An inherited <c>relative</c>
-    /// would not fail — it would silently put the child back to naming every
+    /// would not fail -- it would silently put the child back to naming every
     /// artifact with a path a model cannot resolve, which is the whole defect
     /// the key was adopted to end.
     /// </para>
@@ -97,7 +97,7 @@ internal sealed class ChildEnvironmentTests
     /// name rather than merely absent.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>None of these was a hole and none of them is one now — the finding
+    /// ⚠️ <b>None of these was a hole and none of them is one now -- the finding
     /// is against the list's own stated purpose (2026-08-26).</b> The allowlist
     /// is the child's entire block by construction, so all six were already
     /// absent; what <c>Refused</c> exists for, in its own words, is to turn

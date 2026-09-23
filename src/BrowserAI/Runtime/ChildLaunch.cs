@@ -15,11 +15,11 @@ namespace BrowserAI.Runtime;
 /// and both are settled the only way that works. <c>browserName</c> and an
 /// explicit chromium-alias channel are always both set: omit them and upstream
 /// fills in <c>channel: "chrome"</c>, the user's own installed Google Chrome, so
-/// the entire batteries-included premise becomes silently dead code — measured
+/// the entire batteries-included premise becomes silently dead code -- measured
 /// with an <b>empty</b> browsers directory, where <c>initialize</c>,
 /// <c>tools/list</c> and <c>browser_navigate</c> all succeeded. And
 /// <c>--sandbox</c> goes on the command line, never <c>chromiumSandbox</c> in the
-/// config file — originally because the config key parsed, validated and was
+/// config file -- originally because the config key parsed, validated and was
 /// discarded, and since 2026-09-14 because an explicit argument is worth more
 /// than a default that has been measured to move
 /// ([kb](../../../kb/playwright/configuration.md#defaults-that-are-not-what-they-look-like)).
@@ -55,7 +55,7 @@ internal static class ChildLaunch
     /// 2026-08-16 and re-confirmed by the whole-slice arm on 2026-09-14: with
     /// this flag, <c>--no-sandbox</c> is absent from the browser and from every
     /// one of its children. <b>The flag stays on the command line and the
-    /// generator still omits the key</b> — the sandbox now rests on an explicit
+    /// generator still omits the key</b> -- the sandbox now rests on an explicit
     /// argument <i>and</i> on upstream's default agreeing with it, rather than
     /// on the default alone. Moving it into the config file would make this
     /// product's security posture depend on a default that has just been
@@ -64,7 +64,7 @@ internal static class ChildLaunch
     /// </para>
     /// <para>
     /// <b>Only the browser's own command line proves any of this.</b> A test
-    /// that asserts on what we wrote asserts on nothing — which is precisely
+    /// that asserts on what we wrote asserts on nothing -- which is precisely
     /// how the upstream change was caught: by
     /// <c>SandboxFlagTests</c> reading a live Chromium, not by a changelog.
     /// </para>
@@ -93,7 +93,7 @@ internal static class ChildLaunch
     /// directory</b>: <c>browserai.lock</c> and <c>browserai.data</c> are the only
     /// files at a session's root, and a third one would make the two that matter
     /// missable. *(Corrected 2026-08-26, previously "<c>browserai.json</c> and the
-    /// session log" — one file became two and the session log went to stderr; the
+    /// session log" -- one file became two and the session log went to stderr; the
     /// rule is unchanged and now has one more file to protect.)*
     /// </param>
     /// <param name="config">The generated config, from <see cref="BrowserConfiguration"/>.</param>

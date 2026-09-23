@@ -19,7 +19,7 @@ namespace BrowserAI.Updates;
 /// </para>
 /// <para>
 /// ⚠️ <b><see cref="UpdateOptions.AllowVersionDowngrade"/> is on, and it is half
-/// of a pair.</b> It is what makes an older version acceptable to the client —
+/// of a pair.</b> It is what makes an older version acceptable to the client --
 /// it <i>is</i> the rollback mechanism, and its default is <see langword="false"/>,
 /// which yields *"no updates"* silently. The other half is on the pipeline:
 /// <c>build/New-Release.ps1</c>'s validation rule reads *monotonic <b>or</b> an
@@ -30,7 +30,7 @@ namespace BrowserAI.Updates;
 /// <para>
 /// <b>Constructing this is cheap and issues no request.</b> The landmine list
 /// this product was built against said an <c>UpdateManager</c> touches
-/// the network on construction; that never applied to 1.2.0 — the constructor
+/// the network on construction; that never applied to 1.2.0 -- the constructor
 /// only assigns fields
 /// ([kb](../../../kb/packaging/velopack.md#5-reading-the-installed-version-must-not-touch-the-network)).
 /// The installed version is still read from

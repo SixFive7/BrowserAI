@@ -12,7 +12,7 @@ namespace BrowserAI.Runtime;
 /// two executables from that day: <c>BrowserAI.exe</c>, a Windows-subsystem
 /// configuration app, and <c>BrowserAI.Server.exe</c>, the console-subsystem MCP
 /// server. They sit in the same directory, and the one that gets registered with
-/// a client is composed from the other one's path — see
+/// a client is composed from the other one's path -- see
 /// <see cref="Registration.RegistrationTarget"/>. A composed path is a guess
 /// until something checks it, and the failure a check prevents here is specific:
 /// registering the <b>app</b> under the server's name would put a window on the
@@ -29,14 +29,14 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>Nothing here is Win32.</b> The layout is public, fixed and documented, so
-/// this is eight bytes read at three offsets rather than a P/Invoke — which also
+/// this is eight bytes read at three offsets rather than a P/Invoke -- which also
 /// means it works on a file that is not loadable, is the wrong architecture, or
 /// is a hand-built header a test wrote, and that last one is what makes the
 /// refusals above assertable over constructed inputs.
 /// </para>
 /// <para>
 /// ⚠️ <b>It answers <see langword="null"/> rather than throwing for anything it
-/// cannot read</b> — absent, too short, not a PE, an unreadable handle. The
+/// cannot read</b> -- absent, too short, not a PE, an unreadable handle. The
 /// caller is a registration decision inside an installer hook, where the
 /// difference between <i>this is the wrong kind of file</i> and <i>this file
 /// could not be read</i> does not change what happens: neither may be
@@ -187,7 +187,7 @@ internal static class PeSubsystem
     /// <remarks>
     /// <c>ReadExactly</c> rather than <c>Read</c>: a short read at a file
     /// boundary would otherwise leave the tail of the buffer at zero and be
-    /// indistinguishable from a field that really is zero — which for
+    /// indistinguishable from a field that really is zero -- which for
     /// <c>Subsystem</c> is <c>IMAGE_SUBSYSTEM_UNKNOWN</c>, a value that reads
     /// like an answer.
     /// </remarks>

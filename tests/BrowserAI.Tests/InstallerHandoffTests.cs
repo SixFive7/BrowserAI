@@ -8,34 +8,34 @@ using BrowserAI.Updates;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// What happens when something other than an MCP client starts BrowserAI — which,
+/// What happens when something other than an MCP client starts BrowserAI -- which,
 /// until 2026-09-14, was a server that ran until the machine was rebooted.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>The failure was measured end to end and it was a shipping defect</b>
-/// (evidence: <c>docs/evidence/2026-09-14-firstrun/</c>). A non-silent <c>Setup.exe</c> —
-/// the path <c>README.md</c> tells a person to take — finishes by starting
+/// (evidence: <c>docs/evidence/2026-09-14-firstrun/</c>). A non-silent <c>Setup.exe</c> --
+/// the path <c>README.md</c> tells a person to take -- finishes by starting
 /// <c>current\BrowserAI.exe</c> itself, with <c>show_window=true</c>: Velopack
 /// passes <c>CREATE_NO_WINDOW</c> for a hook and <b>not</b> for the app start,
 /// read out of 1.2.0's <c>process_win.rs</c> and confirmed against the logged
 /// flag values. A console-subsystem binary therefore gets a real console window,
 /// and with it a stdin that never reports end-of-file. <c>Setup.exe</c> then
 /// exited 44 ms later, so the liveness watch found the launcher pid already dead
-/// and degraded to <i>EOF alone</i> — which could never arrive. The server and
+/// and degraded to <i>EOF alone</i> -- which could never arrive. The server and
 /// its node child were still running 254 seconds later, serving nobody, and were
 /// killed only by an uninstall.
 /// </para>
 /// <para>
 /// <b>Two halves, and only one of them is about the installer.</b> The first is
 /// the specific case: Velopack says so, in an environment variable, so BrowserAI
-/// can answer it exactly. The second is the general one — <i>nothing can ever
-/// tell me this conversation is over</i> — and it holds for any launcher that
+/// can answer it exactly. The second is the general one -- <i>nothing can ever
+/// tell me this conversation is over</i> -- and it holds for any launcher that
 /// exits while leaving a console attached.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-15 (previously "no test in this suite starts
-/// BrowserAI with a real console. It cannot — every launch site in the tree is
+/// BrowserAI with a real console. It cannot -- every launch site in the tree is
 /// required to set <c>CreateNoWindow</c> … and a test that allocated a console
 /// would put a window over whatever is on screen. So the console half of the
 /// second rule is covered by the pure decision and by the wiring scan below,
@@ -44,8 +44,8 @@ namespace BrowserAI.Tests;
 /// wrong, and <b>the gap cost a shipped release</b>: v1.0.0 went out, the first
 /// non-silent install produced the exact shape this paragraph said could not be
 /// tested, and six green runs of this suite said nothing about it.
-/// <c>CreateNoWindow</c> does not suppress the console — it suppresses the
-/// console's <b>window</b> — so a windowless <c>cmd.exe</c> hands a child a real
+/// <c>CreateNoWindow</c> does not suppress the console -- it suppresses the
+/// console's <b>window</b> -- so a windowless <c>cmd.exe</c> hands a child a real
 /// console handle with nothing on screen. <see cref="OrphanedConsoleStart"/> is
 /// that rig, and the two end-to-end arms below are what the paragraph said were
 /// impossible.
@@ -68,7 +68,7 @@ internal sealed class InstallerHandoffTests
     /// them.</b> The clearing exists because a child inherits its parent's
     /// environment: with <c>VELOPACK_FIRSTRUN</c> still set, clicking
     /// <i>Register</i> starts <c>claude.exe</c> carrying it, and anything
-    /// <i>that</i> starts carries it too — including the MCP server, which exits
+    /// <i>that</i> starts carries it too -- including the MCP server, which exits
     /// 0 on that variable by design. But it ran <b>before</b>
     /// <c>VelopackApp.Run()</c>, and <c>Run()</c> decides whether to invoke
     /// <c>OnFirstRun</c> and <c>OnRestarted</c> by reading exactly those two
@@ -80,7 +80,7 @@ internal sealed class InstallerHandoffTests
     /// <b>A source-order claim, so it is read out of the source.</b> Nothing
     /// observable distinguishes the two orders without an installer: the
     /// difference is two log lines in a run this suite cannot start. What is
-    /// assertable is the order itself, and that is what this holds — the clear
+    /// assertable is the order itself, and that is what this holds -- the clear
     /// is after the hook call and before the first thing that launches a
     /// process.
     /// </para>
@@ -149,7 +149,7 @@ internal sealed class InstallerHandoffTests
     /// The measured cost of the old behaviour was not only that the process
     /// stayed: it swept the machine, took a machine-wide mutex, created an
     /// instance directory and started a node child that would have provisioned
-    /// 768 MB on a first run. So the assertion is not <i>it exited</i> — it is
+    /// 768 MB on a first run. So the assertion is not <i>it exited</i> -- it is
     /// that <c>logs\</c> is the <b>only</b> thing under the root afterwards,
     /// which is the same shape
     /// <c>InstallRootScopeTests.ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog</c>
@@ -175,7 +175,7 @@ internal sealed class InstallerHandoffTests
         environment[VelopackStartup.FirstRunVariable] = "true";
 
         // ⚠️ Inside a kill-on-close job, which is the suite's standing rule for
-        // starting a real BrowserAI — and here it is also the hang detector: a
+        // starting a real BrowserAI -- and here it is also the hang detector: a
         // build in which this exit was deleted starts serving and waits on its
         // stdin for ever, and what fails then must be this assertion rather than
         // the whole run.
@@ -219,17 +219,17 @@ internal sealed class InstallerHandoffTests
     /// <remarks>
     /// <para>
     /// <b>The conjunction is the whole decision.</b> A watch that could not
-    /// attach happens whenever a client starts BrowserAI through a wrapper — that
+    /// attach happens whenever a client starts BrowserAI through a wrapper -- that
     /// is the case the watch exists for, and stdin's EOF still ends the
     /// conversation. A console stdin happens whenever a developer runs the binary
-    /// by hand — and the launcher is that terminal, which is alive and watchable.
+    /// by hand -- and the launcher is that terminal, which is alive and watchable.
     /// Only together do they mean that neither teardown signal can ever arrive.
     /// </para>
     /// <para>
     /// <b>This is the wiring rather than a run</b>, and the reason is in the
     /// class remarks: the suite may not allocate a console. What it can do is
     /// hold that <c>Program</c> asks both questions, in one condition, at the
-    /// place where the watcher's own answer is known — and that the answer is a
+    /// place where the watcher's own answer is known -- and that the answer is a
     /// clean exit rather than a refusal to start.
     /// </para>
     /// </remarks>
@@ -276,14 +276,14 @@ internal sealed class InstallerHandoffTests
     /// 2026-09-15: a test host started by <c>Start-Process pwsh -WindowStyle
     /// Hidden</c> inherits a <b>console</b> standard input, and one started by
     /// <c>nohup bash -c … | tee</c> inherits a <b>pipe</b>. Two instruments, as
-    /// the two halves of this gate are meant to be — and a suite that asserted
+    /// the two halves of this gate are meant to be -- and a suite that asserted
     /// either value would be asserting a property of whoever started it.
     /// </para>
     /// <para>
     /// <b>What that says about the product is the reassuring half.</b> Neither
     /// shell's answer can trigger the no-client exit on its own: the launcher is
     /// alive and watchable in both, so the conjunction is false either way. The
-    /// exit needs a launcher that is gone <i>and</i> a console — which is the
+    /// exit needs a launcher that is gone <i>and</i> a console -- which is the
     /// installer's shape and nothing the suite produces.
     /// </para>
     /// <para>
@@ -310,8 +310,8 @@ internal sealed class InstallerHandoffTests
     /// <remarks>
     /// <para>
     /// <b>This is the arm that was missing on 2026-09-15, and it was watched red
-    /// against the published v1.0.0 build.</b> The product decided correctly —
-    /// <c>Startup[72]</c> then <c>Startup[9]</c>, 0.53 s in — and then did not
+    /// against the published v1.0.0 build.</b> The product decided correctly --
+    /// <c>Startup[72]</c> then <c>Startup[9]</c>, 0.53 s in -- and then did not
     /// exit: alive sixty seconds later holding a <c>node.exe</c>, with the log
     /// ending at the <i>is exiting</i> line and <c>instances\</c> and
     /// <c>live\</c> still under the root, so the <c>finally</c> had not run
@@ -323,7 +323,7 @@ internal sealed class InstallerHandoffTests
     /// <b>Both arms, because the variable is not the trigger.</b> Velopack's
     /// post-install launch sets <c>VELOPACK_FIRSTRUN=true</c>, and the real
     /// install on 2026-09-15 nevertheless reached the no-client decision rather
-    /// than the installer exit — so something between the launch and the read
+    /// than the installer exit -- so something between the launch and the read
     /// unset it, and the exit may not depend on it. The stub
     /// <c>BrowserAI.exe</c> in an install root reaches the app through
     /// <c>Update.exe start</c>, which is console-bearing and does not set the
@@ -334,7 +334,7 @@ internal sealed class InstallerHandoffTests
     /// ⚠️ <b>The arm asserts which decision was taken, not merely that the
     /// process went.</b> The rig's launcher dies about three hundred times
     /// faster than the product takes to ask about it, but the question is a
-    /// race in principle — and a build in which the launcher were still
+    /// race in principle -- and a build in which the launcher were still
     /// watchable would exit for the ordinary reason and pass while testing
     /// nothing.
     /// </para>
@@ -353,7 +353,7 @@ internal sealed class InstallerHandoffTests
 
         await Assert.That(run.Started).IsTrue();
 
-        // The decision first, so that a failure names which one was taken —
+        // The decision first, so that a failure names which one was taken --
         // and waiting for the OTHER outcome as well, so that a lost race is a
         // named failure in a second rather than a ten-minute one that says only
         // that a sentence never arrived.
@@ -376,9 +376,9 @@ internal sealed class InstallerHandoffTests
     /// <para>
     /// <b>This is the flake of 2026-09-15, turned into a property.</b>
     /// <see cref="ARunWithNobodyToServeStartsNothingAndCreatesNothingButItsLog"/>
-    /// went red once in four full runs — at the full
+    /// went red once in four full runs -- at the full
     /// <c>TestDefaults.ProcessHang</c>, waiting for a record that was never
-    /// going to arrive — because the launcher's pid happened to still be
+    /// going to arrive -- because the launcher's pid happened to still be
     /// openable when the product looked. <c>OpenProcess</c> succeeding was read
     /// as <i>there is somebody there</i>, the fast exit was skipped, and the
     /// product went on to serve nobody.
@@ -386,7 +386,7 @@ internal sealed class InstallerHandoffTests
     /// <para>
     /// <b>A corpse that opens is not a rig artefact.</b> Windows keeps a process
     /// object for as long as any handle anywhere names it, and for a launcher
-    /// that ran in a console the console host is one such holder — so the
+    /// that ran in a console the console host is one such holder -- so the
     /// installer's own <c>Setup.exe</c> leaves either shape behind depending on
     /// nothing the product can see. <see cref="LauncherCorpse.Openable"/>
     /// produces it deterministically, by keeping the handle in the test host.
@@ -439,8 +439,8 @@ internal sealed class InstallerHandoffTests
     /// <b>The ordering is the property, and it was the second finding of
     /// 2026-09-15.</b> The real install's orphan had already started its
     /// <c>playwright-mcp</c> child <b>506 ms before</b> it worked out that there
-    /// was nobody to serve — and had swept the machine and opened the update
-    /// lane as well — so the run that had least reason to cost anything cost the
+    /// was nobody to serve -- and had swept the machine and opened the update
+    /// lane as well -- so the run that had least reason to cost anything cost the
     /// most, and left a second orphan behind when it hung.
     /// </para>
     /// <para>
@@ -460,7 +460,7 @@ internal sealed class InstallerHandoffTests
 
         using var root = ScratchDirectory.CreateUnderProfile("orphan-costs");
 
-        // ⚠️ THE OPENABLE CORPSE, deliberately — 2026-09-15. This arm used to
+        // ⚠️ THE OPENABLE CORPSE, deliberately -- 2026-09-15. This arm used to
         // take whichever shape the machine happened to produce, and on the one
         // full run of four in which the launcher's pid was still openable it
         // sat at the full TestDefaults.ProcessHang waiting for a record the

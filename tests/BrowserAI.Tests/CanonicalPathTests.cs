@@ -15,7 +15,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Every alias below is real.</b> A junction comes from <c>mklink /J</c>, a
 /// short name from <c>GetShortPathNameW</c>, and the <c>subst</c> and mapped
-/// drives from <c>DefineDosDeviceW</c> — the same call <c>subst</c> and the
+/// drives from <c>DefineDosDeviceW</c> -- the same call <c>subst</c> and the
 /// multiple-UNC provider make. None of the four needs administrator rights, so
 /// none of them is skipped or asserted against a string the test wrote itself,
 /// which is the failure mode a predicate like this invites: a predicate tested
@@ -64,7 +64,7 @@ internal sealed class CanonicalPathTests
     /// letter, while this address failed in <b>12.8 ms</b>
     /// ([kb](../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
     /// One arm below deliberately DOES open a path through the mapping, to prove
-    /// that the opening call cannot answer there — so the cheap one is the only
+    /// that the opening call cannot answer there -- so the cheap one is the only
     /// one this suite can afford.
     /// </remarks>
     private const string UnreachableShare = @"10.255.255.1\share";
@@ -569,11 +569,11 @@ internal sealed class CanonicalPathTests
     /// <para>
     /// ⚠️ <b>This is the control the third verdict has never had, and the record
     /// said it could not exist.</b> P5's could-not-check read <i>"Unestablished
-    /// unexercised (honest — unreachable without <c>Create</c> failing too)"</i>.
+    /// unexercised (honest -- unreachable without <c>Create</c> failing too)"</i>.
     /// That is false: more non-existent levels than
     /// <c>CanonicalPath.AncestorWalkLimit</c> exhausts the walk, <c>final</c>
     /// comes back <see langword="null"/>, and the path is served with the
-    /// caller's own spelling — while .NET creates the tree happily, so the
+    /// caller's own spelling -- while .NET creates the tree happily, so the
     /// session opens. Measured 2026-08-26 through the published binary with a
     /// clean bisect: 60 levels, no note; 66 levels, the note <b>and</b> a session
     /// that opened and was then destroyed. No ACL, no denied ancestor and no

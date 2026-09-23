@@ -19,7 +19,7 @@ namespace BrowserAI.Tests;
 /// selector reads: a chromium-alias channel → <c>chromium</c>; any other channel
 /// → that channel; <b>no</b> channel → <c>headless ? "chromium-headless-shell" :
 /// "chromium"</c>. The shell is deliberately never provisioned, so dropping the
-/// channel would not degrade — it would fail, and the failure would be baffling
+/// channel would not degrade -- it would fail, and the failure would be baffling
 /// without this note.
 /// </para>
 /// <para>

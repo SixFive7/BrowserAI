@@ -17,7 +17,7 @@ namespace BrowserAI.Tests;
 /// <b>Asserted on the generated config rather than on the schema.</b> A
 /// parameter a model can see and the product ignores is the failure this file
 /// exists to catch, so every arm below reads the bytes the child is started
-/// with — through <c>BrowserConfiguration.ForSession</c>, which is what
+/// with -- through <c>BrowserConfiguration.ForSession</c>, which is what
 /// <c>OpenAsync</c> calls, or through the front door where the value has to
 /// survive argument parsing as well.
 /// </para>
@@ -26,7 +26,7 @@ namespace BrowserAI.Tests;
 /// <c>ConfigRoundTripTests.EveryGeneratedOpinionComesBackFromTheChild</c> reads
 /// every generated key back out of a live browser, and
 /// <c>BrowserConfiguration.RequiredSessionOpinions</c> names the ones whose
-/// disappearance is a red build — so a key added here and dropped by upstream's
+/// disappearance is a red build -- so a key added here and dropped by upstream's
 /// own merge is caught there rather than here.
 /// </para>
 /// </remarks>
@@ -88,13 +88,13 @@ internal sealed partial class RunOptionTests
         await Assert.That(host["browser.contextOptions.locale"]).IsEqualTo($"\"{BrowserConfiguration.HostLocale}\"");
 
         // The host locale is the machine's rather than a literal, which is the
-        // whole claim — asserted against the framework rather than against a
+        // whole claim -- asserted against the framework rather than against a
         // string this file also chose.
         await Assert.That(BrowserConfiguration.HostLocale)
             .IsEqualTo(System.Globalization.CultureInfo.CurrentCulture.Name);
 
         // ⚠️ IANA RATHER THAN WINDOWS, which is what Playwright accepts. On a
-        // host whose Windows identifier cannot be converted the key is absent —
+        // host whose Windows identifier cannot be converted the key is absent --
         // an absent key is upstream's default, where a Windows identifier would
         // fail the launch.
         if (BrowserConfiguration.HostTimeZone is { } zone)
@@ -131,7 +131,7 @@ internal sealed partial class RunOptionTests
     /// <b><c>serviceWorkers: "block"</c> is not optional beside <c>recordHar</c>
     /// and this is the arm that says so.</b> A request served out of a worker's
     /// cache never reaches the network layer the archive is written from, so
-    /// without the block the capture is silently incomplete — incomplete in the
+    /// without the block the capture is silently incomplete -- incomplete in the
     /// direction that matters, because the requests a worker serves are the
     /// repeat ones a reader is looking for. The two are asserted together
     /// because separating them is exactly the edit that would look harmless.
@@ -160,7 +160,7 @@ internal sealed partial class RunOptionTests
     /// <para>
     /// <b>The timestamp IS the mechanism, so the format is what is asserted.</b>
     /// A fixed name would destroy the previous run's capture the moment a
-    /// session was resumed — an overwrite a caller would discover by looking for
+    /// session was resumed -- an overwrite a caller would discover by looking for
     /// evidence that had gone. Two configs generated in the same millisecond
     /// would collide and a test cannot rule that out; what it can rule out is the
     /// version with no timestamp at all, which is the one anybody would write.
@@ -170,7 +170,7 @@ internal sealed partial class RunOptionTests
     /// <c>output\network\</c>, "which is already where BrowserAI's filename
     /// routing files anything a <c>network-</c> prefixed tool produces").</b>
     /// There is no filename routing and there are no typed folders, so the
-    /// folder that sentence pointed at does not exist — and the HAR is the one
+    /// folder that sentence pointed at does not exist -- and the HAR is the one
     /// artifact whose directory BrowserAI still chooses, because it is a
     /// launch-time config value rather than something a tool names. It goes
     /// where everything else the session writes goes: <c>output\</c>, flat, as
@@ -240,8 +240,8 @@ internal sealed partial class RunOptionTests
         // every response for a feature this product does not have.
         await Assert.That(opinions["codegen"]).IsEqualTo("\"none\"");
 
-        // Snapshot boxes: on. The cost is deferred — a response carries a link
-        // rather than the snapshot — and every session is granted `vision`,
+        // Snapshot boxes: on. The cost is deferred -- a response carries a link
+        // rather than the snapshot -- and every session is granted `vision`,
         // whose six coordinate tools are unusable without them.
         await Assert.That(opinions["snapshot.boxes"]).IsEqualTo("true");
 
@@ -335,7 +335,7 @@ internal sealed partial class RunOptionTests
     /// <remarks>
     /// <b>Off disk rather than out of the generator</b>, because what is being
     /// asserted is that the argument survived parsing and reached the file the
-    /// child is started with — a check against the generator would pass for a
+    /// child is started with -- a check against the generator would pass for a
     /// front door that dropped the argument on the way in.
     /// </remarks>
     /// <param name="sessions">The rig.</param>

@@ -7,7 +7,7 @@ using Microsoft.Win32.SafeHandles;
 namespace BrowserAI.Interop;
 
 /// <summary>
-/// What kind of volume a path is on, and what the filesystem calls that path —
+/// What kind of volume a path is on, and what the filesystem calls that path --
 /// answered without ever risking a network round trip on the way to finding
 /// out.
 /// </summary>
@@ -15,7 +15,7 @@ namespace BrowserAI.Interop;
 /// <para>
 /// <b>The whole type exists because of an ordering constraint.</b> A filesystem
 /// call against an unreachable share costs a measured <b>22,210 ms</b> on this
-/// machine — through a mapped <i>drive letter</i>, not only through a UNC
+/// machine -- through a mapped <i>drive letter</i>, not only through a UNC
 /// spelling ([kb](../../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
 /// So anything that decides <i>is this a network path</i> must be answerable
 /// before the first filesystem call, and the three questions below are ordered
@@ -23,18 +23,18 @@ namespace BrowserAI.Interop;
 /// </para>
 /// <list type="number">
 ///   <item><description>
-///     <see cref="IsUncOrDeviceSpelling"/> — characters only, no syscall at all.
+///     <see cref="IsUncOrDeviceSpelling"/> -- characters only, no syscall at all.
 ///   </description></item>
 ///   <item><description>
-///     <see cref="Of"/> — the object manager only. <c>GetDriveTypeW</c> and
+///     <see cref="Of"/> -- the object manager only. <c>GetDriveTypeW</c> and
 ///     <c>QueryDosDeviceW</c> read the DOS device symbolic link; neither opens a
-///     file. Measured <b>0.0103–0.0212 ms</b> per <c>QueryDosDeviceW</c> over
+///     file. Measured <b>0.0103-0.0212 ms</b> per <c>QueryDosDeviceW</c> over
 ///     1,000 calls, and <b>0.9 ms</b> for <c>GetDriveTypeW</c> against a letter
 ///     mapped to a dead hostname <i>immediately after</i> a <c>File.Exists</c> on
 ///     that same letter took 22 s.
 ///   </description></item>
 ///   <item><description>
-///     <see cref="FinalNameOf"/> — one directory open. <b>Only ever called once
+///     <see cref="FinalNameOf"/> -- one directory open. <b>Only ever called once
 ///     <see cref="Of"/> has said the volume is local.</b>
 ///   </description></item>
 /// </list>
@@ -44,7 +44,7 @@ namespace BrowserAI.Interop;
 /// <see cref="FinalNameOf"/> and <see cref="DeepestExistingFinalName"/>).***
 /// <b>The answer is bounded; the cost is not, and the code claimed both.</b>
 /// <see cref="Of"/> reads the <b>drive letter's</b> DOS device link and nothing
-/// else — it judges the volume, not the path — while
+/// else -- it judges the volume, not the path -- while
 /// <see cref="DeepestExistingFinalName"/> then issues up to its walk limit of
 /// <c>CreateFileW</c> calls along components it has judged nothing about. A
 /// directory symbolic link or a volume mount point anywhere in that chain,
@@ -53,12 +53,12 @@ namespace BrowserAI.Interop;
 /// <c>Directory.Exists</c> against a dead host re-measured on this machine
 /// 2026-08-26 at <b>22,157 ms</b>, per call. It runs inside
 /// <c>Sessions.CanonicalPath.FinalName</c>, which <c>SessionLock.TryAcquire</c>
-/// reaches under the per-directory gate — where the caller who named the path is
+/// reaches under the per-directory gate -- where the caller who named the path is
 /// not the one who waits.
 /// </para>
 /// <para>
 /// <b>Recorded rather than fixed, and the reason is written down where the
-/// decision is</b> — [the hazard index](../../../HAZARDS.md#hazard-index). The
+/// decision is</b> -- [the hazard index](../../../HAZARDS.md#hazard-index). The
 /// composition has <b>not</b> been measured end to end: this account can create
 /// neither a directory symlink nor a mount point, having neither
 /// <c>SeCreateSymbolicLinkPrivilege</c> nor Developer Mode, so the mechanism is
@@ -71,8 +71,8 @@ namespace BrowserAI.Interop;
 /// <para>
 /// <b>Why <c>QueryDosDeviceW</c> rather than only <c>GetDriveTypeW</c>.</b> They
 /// answer different questions and this product needs both. Measured 2026-08-19:
-/// a <c>subst</c>ed letter reports <c>DRIVE_FIXED</c> — it is genuinely fixed
-/// storage — while its DOS device target is <c>\??\C:\…</c>, a symbolic link to
+/// a <c>subst</c>ed letter reports <c>DRIVE_FIXED</c> -- it is genuinely fixed
+/// storage -- while its DOS device target is <c>\??\C:\…</c>, a symbolic link to
 /// another DOS path rather than to a device. That is the discriminator for an
 /// <i>alias</i>. Conversely a mapped letter's target is
 /// <c>\Device\LanmanRedirector\…</c>, but pattern-matching device names means
@@ -81,14 +81,14 @@ namespace BrowserAI.Interop;
 /// <c>GetDriveTypeW</c>, which is the operating system's own classification.
 /// </para>
 /// <para>
-/// ⚠️ <b>And <c>QueryDosDeviceW</c> is asked FIRST — corrected 2026-08-26,
+/// ⚠️ <b>And <c>QueryDosDeviceW</c> is asked FIRST -- corrected 2026-08-26,
 /// previously <c>GetDriveTypeW</c> was.</b> The 0.9 ms figure above holds for a
 /// letter that is not a substitution and for no other. Measured 2026-08-26,
 /// <c>subst W: V:\dir</c> over a <c>V:</c> mapped to an unroutable address:
 /// <c>GetDriveTypeW("W:\")</c> took <b>21,035 ms</b> and then answered
 /// <c>DRIVE_NO_ROOT_DIR</c>, while the mapped letter itself answered
 /// <c>DRIVE_REMOTE</c> in <b>1 ms</b>
-/// ([kb](../../../kb/windows/detection.md#getdrivetypew-through-a-subst-onto-a-mapped-drive-costs-the-full-21-seconds--measured-2026-08-26)).
+/// ([kb](../../../kb/windows/detection.md#getdrivetypew-through-a-subst-onto-a-mapped-drive-costs-the-full-21-seconds----measured-2026-08-26)).
 /// It resolves the substitution and classifies what is at the end of it, so on
 /// that one shape the call this type is ordered around <i>was</i> the network
 /// call. Unwinding the substitution first means <c>GetDriveTypeW</c> is only
@@ -144,7 +144,7 @@ internal static partial class VolumeIdentity
     /// <para>
     /// <b>It is a spelling test and says so in its name.</b> A <c>Z:\</c> that
     /// resolves to a share is a network path and is invisible here; that half is
-    /// <see cref="Of"/>'s, and the split is deliberate — this one is safe to run
+    /// <see cref="Of"/>'s, and the split is deliberate -- this one is safe to run
     /// on a string of unknown provenance, and <see cref="Of"/> needs a drive
     /// letter.
     /// </para>
@@ -161,7 +161,7 @@ internal static partial class VolumeIdentity
     /// only.
     /// </summary>
     /// <param name="path">
-    /// A rooted local drive-letter path — <c>X:\…</c>. Anything else is
+    /// A rooted local drive-letter path -- <c>X:\…</c>. Anything else is
     /// <see cref="VolumeKind.NotADriveLetter"/>, including every spelling
     /// <see cref="IsUncOrDeviceSpelling"/> catches.
     /// </param>
@@ -179,7 +179,7 @@ internal static partial class VolumeIdentity
         var device = path[..2];
 
         // ⚠️ ASKED FIRST, AND THE ORDER WAS THE OTHER WAY AROUND UNTIL
-        // 2026-08-26 — *previously `GetDriveTypeW` first, with the remark
+        // 2026-08-26 -- *previously `GetDriveTypeW` first, with the remark
         // "Deliberately asked AFTER the network question. A letter that does not
         // resolve at all is reported as such rather than as an alias, because
         // the two have completely different fixes."* That reasoning is still
@@ -191,14 +191,14 @@ internal static partial class VolumeIdentity
         // Measured 2026-08-26 on this machine, `subst W: V:\dir` over a `V:`
         // mapped to an unroutable address: `GetDriveTypeW("V:\")` answers
         // DRIVE_REMOTE in **1 ms**, and `GetDriveTypeW("W:\")` takes
-        // **21,035 ms** and then answers DRIVE_NO_ROOT_DIR — so the one call
+        // **21,035 ms** and then answers DRIVE_NO_ROOT_DIR -- so the one call
         // this whole type is ordered around paid the exact cost it exists to
         // prevent, and misclassified the letter afterwards
-        // ([kb](../../../kb/windows/detection.md#getdrivetypew-through-a-subst-onto-a-mapped-drive-costs-the-full-21-seconds--measured-2026-08-26)).
+        // ([kb](../../../kb/windows/detection.md#getdrivetypew-through-a-subst-onto-a-mapped-drive-costs-the-full-21-seconds----measured-2026-08-26)).
         //
         // `QueryDosDeviceW` reads the DOS device symbolic link and nothing else,
         // so unwinding the substitution first means `GetDriveTypeW` is only ever
-        // asked about a letter that is NOT one — where it is the 0.9 ms call
+        // asked about a letter that is NOT one -- where it is the 0.9 ms call
         // this type was written around. Every other answer is unchanged: a
         // letter that resolves to nothing is still `NoSuchDrive`, and a letter
         // whose target is a device is still classified by the operating system
@@ -245,7 +245,7 @@ internal static partial class VolumeIdentity
     /// drive would read as local to every one that did not.
     /// </para>
     /// <para>
-    /// <b>Still no filesystem call anywhere in it</b> — one
+    /// <b>Still no filesystem call anywhere in it</b> -- one
     /// <c>QueryDosDeviceW</c> per hop, plus one <c>GetDriveTypeW</c> at the end.
     /// A chain that does not terminate inside <paramref name="chainLimit"/>
     /// answers <see cref="VolumeKind.NoSuchDrive"/>, because there is no volume
@@ -290,7 +290,7 @@ internal static partial class VolumeIdentity
     /// ⚠️ <b>Never call this on a path <see cref="Of"/> has not already found
     /// local.</b> It opens a directory, and an open against an unreachable share
     /// is the 22-second call this whole type is ordered around. <b>That
-    /// precondition bounds the DRIVE LETTER and nothing deeper</b> — a reparse
+    /// precondition bounds the DRIVE LETTER and nothing deeper</b> -- a reparse
     /// point in the middle of the path is traversed by this open, and the type's
     /// own remarks carry the correction and the hazard row.
     /// </para>
@@ -305,7 +305,7 @@ internal static partial class VolumeIdentity
     /// <returns>
     /// The final path, or <see langword="null"/> when the directory does not
     /// exist or the handle could not be opened. <b>Absence is not a negative
-    /// answer</b> — see <see cref="NameDoesNotExist"/>.
+    /// answer</b> -- see <see cref="NameDoesNotExist"/>.
     /// </returns>
     public static unsafe string? FinalNameOf(string directory)
     {
@@ -357,7 +357,7 @@ internal static partial class VolumeIdentity
     /// caller's session directory;
     /// <c>Hosting.InstallRootScope</c> asks it to decide whether this process's
     /// app root is inside the current user's profile. Both are the same
-    /// question — <i>what does the filesystem call this?</i> — and a second walk
+    /// question -- <i>what does the filesystem call this?</i> -- and a second walk
     /// written beside this one would be a second answer to it.
     /// </para>
     /// <para>
@@ -365,18 +365,18 @@ internal static partial class VolumeIdentity
     /// which is the ordinary state of a path nothing has created yet. A tail
     /// that does not exist cannot be a reparse point, so proving the deepest
     /// existing ancestor unaliased proves the whole path unaliased. Any other
-    /// failure — <c>ERROR_ACCESS_DENIED</c> above all — stops the walk with
+    /// failure -- <c>ERROR_ACCESS_DENIED</c> above all -- stops the walk with
     /// <see langword="null"/>, because walking past it would turn <i>unknown</i>
     /// into a confident answer read off an ancestor.
     /// </para>
     /// <para>
     /// ⚠️ <b>Never call this on a path <see cref="Of"/> has not already found
-    /// local</b> — it opens a directory, which is
+    /// local</b> -- it opens a directory, which is
     /// <see cref="FinalNameOf"/>'s 22-second hazard.
     /// </para>
     /// <para>
     /// ⚠️ <b>And <see cref="Of"/> is not sufficient, which is the correction
-    /// this walk carries — 2026-08-26.</b> It judges the drive letter; this loop
+    /// this walk carries -- 2026-08-26.</b> It judges the drive letter; this loop
     /// opens up to <paramref name="walkLimit"/> components nothing has judged, so
     /// a directory symlink or a volume mount point pointing at a dead share is
     /// followed here at the redirector's cost rather than the object manager's.
@@ -391,7 +391,7 @@ internal static partial class VolumeIdentity
     /// can name a path of any depth.
     /// </param>
     /// <returns>
-    /// The final name — still carrying <see cref="ExtendedLengthPrefix"/> — and
+    /// The final name -- still carrying <see cref="ExtendedLengthPrefix"/> -- and
     /// the ancestor it belongs to, or <see langword="null"/> and the ancestor
     /// the walk gave up on.
     /// </returns>
@@ -417,7 +417,7 @@ internal static partial class VolumeIdentity
 
     /// <summary>
     /// The filesystem's own name for a path, in the plain drive-letter spelling
-    /// every Win32 path reporter answers with — or why that could not be
+    /// every Win32 path reporter answers with -- or why that could not be
     /// established.
     /// </summary>
     /// <remarks>
@@ -427,8 +427,8 @@ internal static partial class VolumeIdentity
     /// <see cref="IsUncOrDeviceSpelling"/> on the characters,
     /// <see cref="Of"/> on the object manager, and only then the directory open
     /// <see cref="DeepestExistingFinalName"/> costs. That ordering is the whole
-    /// point of this type — an open against an unreachable share costs a measured
-    /// <b>22,210 ms</b> — so a caller reaching for <see cref="FinalNameOf"/>
+    /// point of this type -- an open against an unreachable share costs a measured
+    /// <b>22,210 ms</b> -- so a caller reaching for <see cref="FinalNameOf"/>
     /// directly is taking the guard on itself.
     /// </para>
     /// <para>
@@ -438,7 +438,7 @@ internal static partial class VolumeIdentity
     /// <see cref="ExtendedLengthPrefix"/>, and every reparse point already
     /// resolved. A path composed with <c>Path.Combine</c> is none of those, and
     /// comparing the two directly compares the answers to two different
-    /// questions — which is what made
+    /// questions -- which is what made
     /// <c>Interop.BrowserProcesses.ScanFor</c> return <c>candidates=0</c> for
     /// good under one junction.
     /// </para>
@@ -450,8 +450,8 @@ internal static partial class VolumeIdentity
     /// </para>
     /// <para>
     /// <b>Why a sentence rather than a bare <see langword="null"/>.</b> Every
-    /// caller of this is deciding whether it may act on an <i>absence</i> — no
-    /// candidate found, nothing running out of a tree — and an absence that
+    /// caller of this is deciding whether it may act on an <i>absence</i> -- no
+    /// candidate found, nothing running out of a tree -- and an absence that
     /// arrives because the question could not be asked is a different fact from
     /// one that arrives because there is nothing there. The sentence is what
     /// makes the two distinguishable on a log line.
@@ -459,7 +459,7 @@ internal static partial class VolumeIdentity
     /// <para>
     /// <b><c>Hosting.InstallRootScope</c> deliberately does not call this</b>,
     /// and that is not an oversight to be tidied. It compares <i>two</i> paths
-    /// and answers three ways — serve, refuse, could-not-establish — and its
+    /// and answers three ways -- serve, refuse, could-not-establish -- and its
     /// refusals quote the ancestor the walk stopped at, so it needs the halves
     /// this method composes rather than the composition.
     /// </para>
@@ -492,7 +492,7 @@ internal static partial class VolumeIdentity
 
             if (afterPrefix is null || afterPrefix.StartsWith(@"UNC\", StringComparison.OrdinalIgnoreCase))
             {
-                return (null, $"it is a UNC or device path, and asking the filesystem what it calls one can block for as long as the share takes to answer — measured at 22,210 ms.");
+                return (null, $"it is a UNC or device path, and asking the filesystem what it calls one can block for as long as the share takes to answer -- measured at 22,210 ms.");
             }
 
             probe = afterPrefix;
@@ -503,7 +503,7 @@ internal static partial class VolumeIdentity
         //    would cost 22 s to discover the slow way.
         if (Of(probe).Kind is VolumeKind.Network)
         {
-            return (null, $"drive '{probe[..2]}' is a mapped network drive, so asking the filesystem what it calls that path can block for as long as the share takes to answer — measured at 22,210 ms.");
+            return (null, $"drive '{probe[..2]}' is a mapped network drive, so asking the filesystem what it calls that path can block for as long as the share takes to answer -- measured at 22,210 ms.");
         }
 
         // 3. And only now, one directory open per level climbed.
@@ -539,8 +539,8 @@ internal static partial class VolumeIdentity
     /// <b>The discriminator that decides whether to walk up.</b> A
     /// <see cref="FinalNameOf"/> that failed because the directory is not there
     /// yet means <c>init</c> on a path nothing has created, and the question
-    /// should be re-asked of the parent. A failure for any other reason —
-    /// <c>ERROR_ACCESS_DENIED</c> most of all — means the answer is unknown, and
+    /// should be re-asked of the parent. A failure for any other reason --
+    /// <c>ERROR_ACCESS_DENIED</c> most of all -- means the answer is unknown, and
     /// walking up would turn <i>unknown</i> into a confident <i>fine</i> read off
     /// an ancestor that is not the directory in question.
     /// </remarks>
@@ -613,13 +613,13 @@ internal enum VolumeKind
     Local,
 
     /// <summary>
-    /// A drive letter that resolves through a network redirector —
+    /// A drive letter that resolves through a network redirector --
     /// <c>DRIVE_REMOTE</c>. What a <c>net use Z: \\host\share</c> produces.
     /// </summary>
     Network,
 
     /// <summary>
-    /// A drive letter that is a symbolic link to another DOS path — what
+    /// A drive letter that is a symbolic link to another DOS path -- what
     /// <c>subst</c> produces. Local, and still an alias.
     /// </summary>
     Substituted,

@@ -23,15 +23,15 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️ <b>Three things this file used to hold are gone with the shape they were
-/// about (2026-08-26).</b> The <c>arguments</c> array and its policy —
-/// withheld names, <c>&lt;object, N keys&gt;</c>, the 200-character cut — went
+/// about (2026-08-26).</b> The <c>arguments</c> array and its policy --
+/// withheld names, <c>&lt;object, N keys&gt;</c>, the 200-character cut -- went
 /// with the decision to drop arguments from the record entirely; the cap and
 /// its middle-trim went with the decision that there are no caps; and
 /// <c>ARefusedCallLeavesNoEntry</c> <b>inverted</b>, because a refused call is
 /// now recorded. That last one is the interesting migration: the property it
 /// was protecting was <i>the log says what the session DID</i>, and with
 /// <c>browserai.log</c> deleted the record is the only place a refusal survives
-/// at all — so <i>the agent reached for a tool this build will not forward</i>
+/// at all -- so <i>the agent reached for a tool this build will not forward</i>
 /// became replay rather than diagnostics.
 /// </para>
 /// </remarks>
@@ -89,7 +89,7 @@ internal sealed class SessionLogTests
                 "browser_navigate",
             ]);
 
-        // init's row carries the PURPOSE, because init has no `why` — and the
+        // init's row carries the PURPOSE, because init has no `why` -- and the
         // purpose is why the session exists.
         await Assert.That(log[0].Why).IsEqualTo("reproducing the checkout 500 on staging");
 
@@ -123,7 +123,7 @@ internal sealed class SessionLogTests
 
         var record = SessionLock.ReadRecord(SessionPath.For(directory))!;
 
-        // The record's standing purpose moved, and the previous one is kept —
+        // The record's standing purpose moved, and the previous one is kept --
         // which is the half `why` is NOT: one is durable and one is disposable.
         // The purpose change is dated, so its position in the stream survives
         // the loss of the `arguments` array that used to carry it.
@@ -177,7 +177,7 @@ internal sealed class SessionLogTests
     /// ⚠️ <b>THIS TEST INVERTED (2026-08-26, previously
     /// <c>ARefusedCallLeavesNoEntry</c>).</b> Its old reasoning was that the log
     /// records what the session <i>did</i>, so a row for a call that never
-    /// reached a browser would make it a record of intent — and it pointed the
+    /// reached a browser would make it a record of intent -- and it pointed the
     /// reader at the session's own text log for <i>what was attempted and
     /// refused</i>. <b>That file is gone.</b> With it gone, the choice is
     /// between recording the refusal here and losing it: <i>the agent reached
@@ -187,7 +187,7 @@ internal sealed class SessionLogTests
     /// </para>
     /// <para>
     /// <b>Written and settled in one go, with no in-flight window.</b> Nothing
-    /// was forwarded, so there is no instant at which the answer is unknown —
+    /// was forwarded, so there is no instant at which the answer is unknown --
     /// which is what distinguishes a refusal from a call that hung.
     /// </para>
     /// </remarks>
@@ -232,7 +232,7 @@ internal sealed class SessionLogTests
     /// so a navigation that timed out and a navigation that worked are the same
     /// shape at the transport. Reading them the same way would put
     /// <i>successful</i> beside every timeout in the record, which is the
-    /// confident-wrong-answer class this repository keeps closing — a reader
+    /// confident-wrong-answer class this repository keeps closing -- a reader
     /// would see <c>browser_navigate</c> with a <c>why</c> and could not tell a
     /// load from a failure.
     /// </remarks>
@@ -287,14 +287,14 @@ internal sealed class SessionLogTests
 
     /// <summary>
     /// The row is on disk, readable by another process, <b>while the call is
-    /// still outstanding</b> — and it settles only when the answer arrives.
+    /// still outstanding</b> -- and it settles only when the answer arrives.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>THIS IS THE ORDERING PROPERTY, AND IT IS WHY THE ROW IS WRITTEN
     /// BEFORE THE FORWARD RATHER THAN AFTER.</b> A navigation that hangs, a
-    /// child that dies, a process that is killed — the calls anybody
-    /// investigates — leave exactly this row and nothing else. A row written on
+    /// child that dies, a process that is killed -- the calls anybody
+    /// investigates -- leave exactly this row and nothing else. A row written on
     /// the way back would be missing from all three, which is the shape the
     /// comment above the old append existed to prevent: *a log line written on
     /// the way back would be missing from exactly the calls anybody
@@ -303,7 +303,7 @@ internal sealed class SessionLogTests
     /// <para>
     /// <b>Read from a second connection, not from the session's own.</b> The
     /// claim is that the row is <i>durable and visible</i> at that instant, not
-    /// that some object in this process is holding it — and a reader in another
+    /// that some object in this process is holding it -- and a reader in another
     /// process is what <c>browserai_catch_up</c> against a live session
     /// actually is.
     /// </para>
@@ -374,7 +374,7 @@ internal sealed class SessionLogTests
         _ = await call;
 
         // And it settles when the answer arrives, with the instant it settled at
-        // — which is what makes a duration derivable and what tells a stale row
+        // -- which is what makes a duration derivable and what tells a stale row
         // from a finished one.
         var settled = (await SettledLogOf(directory)).Single(row => row.Tool is "browser_navigate");
 
@@ -392,7 +392,7 @@ internal sealed class SessionLogTests
     /// ⚠️ <b>THE SETTLE IS NOT ORDERED BEFORE THE ANSWER, and reading the row
     /// the instant a round trip returns is a race a test loses under load.</b>
     /// <c>BrowserProxy</c> settles in a <c>finally</c> that runs <i>after</i>
-    /// the answer has gone back to the caller — deliberately, because that
+    /// the answer has gone back to the caller -- deliberately, because that
     /// <c>finally</c> is what covers the ways out the child never hears about,
     /// and because the arm above asserts the in-flight window is genuinely
     /// visible to a second reader while a call is outstanding. Nothing in the
@@ -407,7 +407,7 @@ internal sealed class SessionLogTests
     /// </para>
     /// <para>
     /// <b>Bounded by the suite's own hang detector and by nothing this file
-    /// invented.</b> What is asserted is still that the row settles — never how
+    /// invented.</b> What is asserted is still that the row settles -- never how
     /// fast, which is a promptness claim and would be a defect.
     /// </para>
     /// </remarks>

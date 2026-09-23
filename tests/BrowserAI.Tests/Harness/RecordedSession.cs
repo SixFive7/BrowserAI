@@ -13,9 +13,9 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// <b>One helper because every test that asks does it the same way.</b> The log
-/// is not on <see cref="SessionRecord"/> — deliberately, because a session with
+/// is not on <see cref="SessionRecord"/> -- deliberately, because a session with
 /// ten thousand calls in it would otherwise have to be held in memory to answer
-/// <i>what browser is this</i> — so a test that wants the rows opens the store.
+/// <i>what browser is this</i> -- so a test that wants the rows opens the store.
 /// A second spelling of that open is how two tests come to ask different
 /// questions about one file.
 /// </para>

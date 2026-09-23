@@ -19,7 +19,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The kill has to come from outside, and the launcher has to be a separate
 /// process.</b> What is being proven is that containment survives BrowserAI
-/// dying without running any code — no <c>finally</c>, no shutdown hook, no
+/// dying without running any code -- no <c>finally</c>, no shutdown hook, no
 /// handler. That is why the test host starts a launcher process, and why it
 /// terminates that launcher rather than asking it to exit.
 /// </para>
@@ -62,8 +62,8 @@ internal sealed class JobContainmentTests
 
     /// <summary>
     /// A node child that spawns two of its own, then reports the tree. The
-    /// spawn is deliberately <c>detached: false</c>-shaped — an ordinary
-    /// <c>child_process.spawn</c> — because that is what puts the grandchildren
+    /// spawn is deliberately <c>detached: false</c>-shaped -- an ordinary
+    /// <c>child_process.spawn</c> -- because that is what puts the grandchildren
     /// in libuv's permissive job, which is the configuration that would leak if
     /// ours were misconfigured.
     /// </summary>
@@ -118,8 +118,8 @@ internal sealed class JobContainmentTests
     /// red <i>after</i> <c>escapees == 0</c> had already passed: a row came back
     /// with a null <c>inOurJob</c> because <c>OpenProcess</c> failed for a
     /// descendant that had exited between the toolhelp walk and the per-row
-    /// query. Nothing about containment was in question — an exited process is
-    /// not a survivor and cannot be an escapee — but the rig had no way to
+    /// query. Nothing about containment was in question -- an exited process is
+    /// not a survivor and cannot be an escapee -- but the rig had no way to
     /// express <i>gone</i>, so it expressed <i>unknown</i>, and the host reads
     /// unknown as failure. A re-run was green, which is the signature of a rig
     /// race rather than a product defect.
@@ -130,7 +130,7 @@ internal sealed class JobContainmentTests
     /// the verdict is taken from what Windows said the first time. An error that
     /// is not one of the two vanished-pid shapes is still
     /// <see cref="ProcessQueryVerdict.Verdict.Unreadable"/>, which is still a red
-    /// row carrying its note — so the change cannot absorb a genuine failure to
+    /// row carrying its note -- so the change cannot absorb a genuine failure to
     /// read a process.
     /// </para>
     /// <para>

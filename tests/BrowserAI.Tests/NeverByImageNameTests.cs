@@ -28,7 +28,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What is deliberately not banned:</b> reading a process's name. The rule
-/// forbids matching, counting and terminating by name, not observing one —
+/// forbids matching, counting and terminating by name, not observing one --
 /// <c>SdkStdioClientTransportTests</c> reads a parent's image name to prove
 /// that the SDK's own transport interposes a shell, which is a defect being
 /// exposed rather than a process being chosen.
@@ -41,7 +41,7 @@ internal sealed class NeverByImageNameTests
     /// anything: the five substrings the scan matched until 2026-09-17.
     /// </summary>
     /// <remarks>
-    /// <b>Deleted rather than retired</b> — the shapes moved into
+    /// <b>Deleted rather than retired</b> -- the shapes moved into
     /// <see cref="ProcessSelection"/>, which reads them as filters rather than as
     /// APIs, and each carries its own reason there. The one that needed carrying
     /// over in full is <c>szExeFile</c>: it was <i>claimed</i> by
@@ -49,8 +49,8 @@ internal sealed class NeverByImageNameTests
     /// false claim of coverage is worse than none because it stops anyone
     /// looking. The needle is the FIELD rather than the walk, because
     /// <c>CreateToolhelp32Snapshot</c> is how a pid and a parent are read without
-    /// touching a name at all — <c>JobProbe</c> declares that member as
-    /// <c>ImageNameWeDoNotRead</c> for exactly that reason — so banning the walk
+    /// touching a name at all -- <c>JobProbe</c> declares that member as
+    /// <c>ImageNameWeDoNotRead</c> for exactly that reason -- so banning the walk
     /// would have made this repository's one deliberately name-blind toolhelp use
     /// into the exclusion this file refuses to create.
     /// </remarks>
@@ -79,11 +79,11 @@ internal sealed class NeverByImageNameTests
     /// <para>
     /// <b>Why this arm exists at all.</b> Until 2026-09-17 the scan asked
     /// whether a file contained one of five substrings, which cannot tell
-    /// <c>-Id $pid</c> from a bare image name — opposite things sharing a cmdlet.
+    /// <c>-Id $pid</c> from a bare image name -- opposite things sharing a cmdlet.
     /// The cost was not theoretical: of the rigs under
     /// [`docs/probes`](../../docs/probes/README.md), <b>15 files in 7 of the 14
     /// directories</b> tripped the old scan and <b>fourteen of those fifteen were
-    /// false positives</b> — pid-keyed throughout — so a measurement's own rig
+    /// false positives</b> -- pid-keyed throughout -- so a measurement's own rig
     /// could not live anywhere the scan reads. <b>Q203</b>, decided 2026-09-17.
     /// ⚠️ <b>The fifteenth is real and still keeps that directory out of
     /// <c>build/</c>:</b> <c>2026-09-14-firstrun/observe.ps1</c> calls
@@ -95,8 +95,8 @@ internal sealed class NeverByImageNameTests
     /// front of it.</b> Every violation shape below must be caught <i>and</i> the
     /// pid-keyed spelling of the same call must pass, so an over-eager rewrite of
     /// the predicate reddens here rather than quietly permitting a kill by name.
-    /// The third block is the mixed case — a pid filter on a line that also names
-    /// an image — which must be a violation, because the name is what decides and
+    /// The third block is the mixed case -- a pid filter on a line that also names
+    /// an image -- which must be a violation, because the name is what decides and
     /// the pid is decoration.
     /// </para>
     /// <para>

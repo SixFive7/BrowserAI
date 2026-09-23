@@ -15,7 +15,7 @@ namespace BrowserAI.Logging;
 /// <para>
 /// <b>stderr is enforced by configuration, not by rule.</b>
 /// <c>LogToStandardErrorThreshold</c> is set to the lowest level that exists,
-/// so no severity has a path to stdout at all — not <c>Information</c>, not
+/// so no severity has a path to stdout at all -- not <c>Information</c>, not
 /// <c>Trace</c>, and not a line added in three months by someone who never read
 /// a design document. The banned-symbol list stops direct console writes that
 /// never reach a logger; this stops everything that does. Both are kept,
@@ -28,8 +28,8 @@ namespace BrowserAI.Logging;
 /// </para>
 /// <para>
 /// <b>Disposal closes the file, and it takes an explicit call to do it.</b> The
-/// obvious reading — the factory disposes its providers, the provider owns the
-/// sink — is false, and was measured false: see <see cref="Dispose"/>.
+/// obvious reading -- the factory disposes its providers, the provider owns the
+/// sink -- is false, and was measured false: see <see cref="Dispose"/>.
 /// </para>
 /// <para>
 /// <b>There is no flush-on-exit hook, and that is deliberate.</b>
@@ -108,8 +108,8 @@ internal sealed class ProcessLog : IDisposable
     /// 'what were the other ninety-five doing'").</b> The second destination is
     /// gone, at the maintainer's decision: <b>anything attributable to a session
     /// goes to that session's own log, and the central log keeps only what has
-    /// none.</b> The duplicate was the bulk of the shared file's traffic — every
-    /// session's every record, from ~100 processes at once — and every byte of it
+    /// none.</b> The duplicate was the bulk of the shared file's traffic -- every
+    /// session's every record, from ~100 processes at once -- and every byte of it
     /// was already on disk somewhere a reader could find it by the session's own
     /// path. What answers *what were the other ninety-five doing* is now the
     /// session index and the per-session files it names, not one file a hundred
@@ -119,7 +119,7 @@ internal sealed class ProcessLog : IDisposable
     /// ⚠️ <b>Corrected again 2026-08-26 (previously "anything attributable to a
     /// session goes to that session's own log").</b> There is no session log
     /// file any more: <c>browserai.log</c> is gone and this stack is stderr
-    /// alone. Nothing was lost by deleting it — every record it held was
+    /// alone. Nothing was lost by deleting it -- every record it held was
     /// already going to stderr through the console provider beside it, and
     /// everything about the session's own calls, refusals included, is in
     /// <c>browserai.data</c>, which outlives the process the way a log file
@@ -128,9 +128,9 @@ internal sealed class ProcessLog : IDisposable
     /// <para>
     /// ⚠️ <b>This reduces the shared file's write rate; it does not dissolve the
     /// contention.</b> Six categories can never move because no session owns
-    /// them — the stray sweep (machine-wide by design: it hunts browsers
+    /// them -- the stray sweep (machine-wide by design: it hunts browsers
     /// belonging to <i>any</i> session), startup, updates, provisioning, the
-    /// server transport and the MCP server itself — and one more from the proxy:
+    /// server transport and the MCP server itself -- and one more from the proxy:
     /// a call naming no session, and a call naming a session that does not exist.
     /// The gate in <see cref="RollingFileWriter"/> is what makes the remainder
     /// safe, not this.
@@ -178,18 +178,18 @@ internal sealed class ProcessLog : IDisposable
     /// <remarks>
     /// ⚠️ <b>Corrected 2026-08-16 (previously "The factory disposes its
     /// providers, and the file provider owns the writer, so this closes the
-    /// handle too" — and it did not).</b> Measured twice on
+    /// handle too" -- and it did not).</b> Measured twice on
     /// <c>Microsoft.Extensions.Logging</c> 10.0.x, by planting a provider that
     /// counts its own disposals: <b><c>LoggerFactory.Create(b =&gt;
     /// b.AddProvider(instance))</c> followed by <c>factory.Dispose()</c> calls
-    /// that provider's <c>Dispose</c> <i>zero</i> times</b> — a container never
-    /// disposes an instance it did not create — so the rolling file handle
+    /// that provider's <c>Dispose</c> <i>zero</i> times</b> -- a container never
+    /// disposes an instance it did not create -- so the rolling file handle
     /// survived every disposal, and opening the log afterwards with
     /// <c>FileShare.None</c> was refused. It cost nothing in <c>Main</c>, where
     /// the process exits immediately afterwards, and it was found the first time
     /// something short-lived opened one and then read it back: a Velopack hook.
     /// <see cref="SessionLogging"/> was already immune, because it disposes its
-    /// file explicitly after the factory — that belt-and-braces second call was
+    /// file explicitly after the factory -- that belt-and-braces second call was
     /// the mechanism, not the redundancy it read as
     /// ([kb](../../../kb/windows/processes.md#files-durable-writes-and-deletes)).
     /// </remarks>

@@ -15,10 +15,10 @@ namespace BrowserAI.Tests.Harness;
 /// <b>Two names, and the difference between them is the install layout.</b>
 /// <c>$packId</c> is <c>BrowserAI.app</c> and is what Velopack derives the
 /// install directory from; <c>$downloadId</c> is <c>BrowserAI</c> and is what the
-/// two human-facing artifacts are renamed to — <c>BrowserAI.exe</c> and
+/// two human-facing artifacts are renamed to -- <c>BrowserAI.exe</c> and
 /// <c>BrowserAI.zip</c> on the default channel. A suite that typed either one would go on
 /// agreeing with itself after somebody changed the script, which is the one
-/// thing it must not do — the capability below is what decides whether a real
+/// thing it must not do -- the capability below is what decides whether a real
 /// installer is exercised at all.
 /// </para>
 /// <para>
@@ -47,8 +47,8 @@ internal static partial class ReleaseLayout
     /// <remarks>
     /// <b>The same lever <c>BROWSERAI_RELEASE_PACKAGE</c> is, one level up.</b>
     /// It names a <i>directory</i> rather than a file, because the capability is
-    /// two files that have to agree — the installer and the feed manifest packed
-    /// beside it — and a variable naming only the installer would be a way of
+    /// two files that have to agree -- the installer and the feed manifest packed
+    /// beside it -- and a variable naming only the installer would be a way of
     /// pointing the arm at last month's layout by hand. It exists so that a pack
     /// into a scratch output directory can be exercised without writing into the
     /// repository's own <c>Releases/</c>.
@@ -77,7 +77,7 @@ internal static partial class ReleaseLayout
     /// named for the id and never for the location.</b> An install under
     /// <c>--installto</c> still rewrites <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to
     /// point at the scratch root, and <c>Update.exe uninstall</c> from that root
-    /// calls <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally — there is no
+    /// calls <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally -- there is no
     /// comparison against <c>InstallLocation</c> anywhere in it. So an installer
     /// arm packed under the shipping id destroys a real install's entry, and a
     /// run killed part-way leaves it gone with nothing to restore it. Measured
@@ -91,7 +91,7 @@ internal static partial class ReleaseLayout
     /// the title and the output directory replaced. What the arm exercises is
     /// therefore the same code path under names that cannot collide with
     /// anybody's install. <i>Corrected 2026-09-16 (previously "The id is the only
-    /// delta … with the id and the output directory replaced")</i> — see
+    /// delta … with the id and the output directory replaced")</i> -- see
     /// <see cref="TestPackTitle"/> for what a shared title did to the Start Menu.
     /// </para>
     /// </remarks>
@@ -115,7 +115,7 @@ internal static partial class ReleaseLayout
     /// install, and the uninstall removes shortcuts by target. Two packs sharing
     /// one title therefore share one <c>.lnk</c>: the suite's installer arm
     /// rewrote <c>%APPDATA%\…\Start Menu\Programs\BrowserAI.lnk</c> to point at
-    /// its scratch root, and its uninstall then deleted it — destroying a real
+    /// its scratch root, and its uninstall then deleted it -- destroying a real
     /// install's Start Menu entry exactly the way the shared pack id destroyed
     /// the real Add/Remove entry. <i>Found 2026-09-16 by review, after the id
     /// split had been made and the title had been left behind.</i>
@@ -126,7 +126,7 @@ internal static partial class ReleaseLayout
     /// The per-user Start Menu directory the shortcuts land in.
     /// </summary>
     /// <remarks>
-    /// <c>Environment.SpecialFolder.Programs</c> — the same directory Velopack
+    /// <c>Environment.SpecialFolder.Programs</c> -- the same directory Velopack
     /// writes to for a per-user install, which is the only kind this product
     /// does.
     /// </remarks>
@@ -145,13 +145,13 @@ internal static partial class ReleaseLayout
     /// default channel.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>The rule is the script's and the literal is read out of it —
+    /// ⚠️ <b>The rule is the script's and the literal is read out of it --
     /// 2026-09-15.</b> A person downloads <c>BrowserAI.exe</c> and
     /// <c>BrowserAI.zip</c>; a channel that is not the default keeps its name so
     /// that two packs into one output directory cannot overwrite each other,
     /// which is the one property vpk's own <c>-win-Setup</c> naming had.
     /// <see cref="Channel"/> is what this suite packs, and
-    /// <c>$defaultChannel</c> is what the script compares against — read from
+    /// <c>$defaultChannel</c> is what the script compares against -- read from
     /// the script for the same reason <see cref="PackId"/> is, so a suite that
     /// typed either would go on agreeing with itself after somebody changed it.
     /// </remarks>
@@ -204,7 +204,7 @@ internal static partial class ReleaseLayout
     /// </summary>
     /// <remarks>
     /// <b>One key per id per user, named for the id and never for the
-    /// location</b> — [measured 2026-09-14](../../../kb/packaging/velopack.md#two-installs-of-one-app-id-share-one-uninstall-key--measured-2026-09-14),
+    /// location</b> -- [measured 2026-09-14](../../../kb/packaging/velopack.md#two-installs-of-one-app-id-share-one-uninstall-key----measured-2026-09-14),
     /// by accident, on this machine: a second install with <c>--installto</c>
     /// rewrote the first one's entry, and the second uninstall deleted it.
     /// </remarks>
@@ -245,7 +245,7 @@ internal static partial class ReleaseLayout
     /// ⚠️ <b>A key whose location exists and is not scratch is REAL and is never
     /// refused.</b> The maintainer has one; refusing it would redden every run
     /// on the machine this product is developed on. That is why the capability
-    /// judges the <b>test</b> id and never the shipping one — under the test id
+    /// judges the <b>test</b> id and never the shipping one -- under the test id
     /// every key is the suite's own, so any key that outlives a run is a run
     /// that did not clean up.
     /// </para>
@@ -296,7 +296,7 @@ internal static partial class ReleaseLayout
     /// </summary>
     /// <remarks>
     /// <see langword="false"/> is <i>this machine has no installer of this
-    /// layout</i> rather than <i>something is broken</i> — a developer who has
+    /// layout</i> rather than <i>something is broken</i> -- a developer who has
     /// never run the release script and one whose <c>Releases/</c> holds a build
     /// from before the rename are the same absence to every caller, and both
     /// are answered by running the script.
@@ -341,7 +341,7 @@ internal static partial class ReleaseLayout
             ? $"{TestSetupExecutable} (nothing has packed one)"
             : LeftoverTestInstallLocation() is { } leftover
                 ? $"HKCU\\{TestUninstallKey} survived a previous run, pointing at '{(leftover.Length is 0 ? "<no InstallLocation>" : leftover)}'. "
-                    + "Every key under the TEST id is one this suite wrote, so one that outlived a run is a run that did not clean up — and Settings is showing an uninstall entry for something that is not there. "
+                    + "Every key under the TEST id is one this suite wrote, so one that outlived a run is a run that did not clean up -- and Settings is showing an uninstall entry for something that is not there. "
                     + $"Clear it with: {ClearTheLeftoverKey}"
                 : HasCurrentInstaller()
                     ? TestSetupExecutable
@@ -354,7 +354,7 @@ internal static partial class ReleaseLayout
     /// <remarks>
     /// <para>
     /// <b>Read out of the script for the same reason <see cref="PackId"/> is.</b>
-    /// The upload set was a judgement until 2026-09-23 — nothing named one, so
+    /// The upload set was a judgement until 2026-09-23 -- nothing named one, so
     /// whoever ran <c>gh release create</c> chose the assets by looking at
     /// <c>Releases/</c>. A suite that typed the three names here would go on
     /// agreeing with itself after somebody changed the script, which is the one
@@ -390,7 +390,7 @@ internal static partial class ReleaseLayout
         {
             throw new InvalidOperationException(
                 "build/New-Release.ps1 no longer declares $uploadSet as an @( ) list of double-quoted names, "
-                + "so the suite cannot read what a release publishes out of it — and an upload set nothing reads back is a judgement again.");
+                + "so the suite cannot read what a release publishes out of it -- and an upload set nothing reads back is a judgement again.");
         }
 
         return [.. QuotedName().Matches(block.Groups["body"].Value).Select(name => name.Groups["name"].Value)];

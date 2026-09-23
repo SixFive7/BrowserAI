@@ -18,7 +18,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Everything the dialog says is a pure function of an <c>AppState</c></b>,
 /// and that is what makes a window application testable at all. What is left
-/// over — that Windows draws the page — is covered by
+/// over -- that Windows draws the page -- is covered by
 /// <c>RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow</c>
 /// and by <c>TaskDialogLayoutTests</c>; between them the untested remainder is
 /// the pixels.
@@ -63,7 +63,7 @@ internal sealed class ConfigurationAppTests
         await Assert.That(stale.MayRegister).IsTrue();
         await Assert.That(stale.MayUnregister).IsFalse();
 
-        // ⚠️ STALE AND NOT MISSING — 2026-09-16. An entry naming
+        // ⚠️ STALE AND NOT MISSING -- 2026-09-16. An entry naming
         // `current\BrowserAI.exe` in a pre-split install points at a file that
         // IS there and is the configuration app, so "which is not there any
         // more" would be a sentence a person could check and find false. The
@@ -294,8 +294,8 @@ internal sealed class ConfigurationAppTests
         // finds NOTHING here would be asserting something about the machine:
         // this scratch tree lives inside a repository that has a `.mcp.json` of
         // its own, so the walk correctly climbs past it and finds that one.
-        // What is asserted is the property the walk has — the NEAREST file
-        // wins — which is machine-independent, and that nothing inside the
+        // What is asserted is the property the walk has -- the NEAREST file
+        // wins -- which is machine-independent, and that nothing inside the
         // scratch tree is claimed before anything is planted there.
         var above = AppState.NearestProject(deep.FullName, scratch.Path);
 
@@ -324,7 +324,7 @@ internal sealed class ConfigurationAppTests
     /// ⚠️ <b>An exception crossing an <c>[UnmanagedCallersOnly]</c> boundary is
     /// a <c>FailFast</c>, not an exception.</b> The runtime cannot unwind into
     /// native frames, so the process is terminated where it stands: no dialog,
-    /// no log line, no exit code a person or a script could read — the window
+    /// no log line, no exit code a person or a script could read -- the window
     /// simply vanishes mid-click. Every action this app offers runs inside that
     /// callback, and three of them could reach one today:
     /// <c>Directory.CreateDirectory</c> for the log directory,
@@ -335,14 +335,14 @@ internal sealed class ConfigurationAppTests
     /// <para>
     /// <b>Assertable because the dispatch is not the unmanaged method.</b>
     /// <c>Callback</c> resolves the instance and forwards to
-    /// <c>Dispatch</c>, which is ordinary managed code — an
+    /// <c>Dispatch</c>, which is ordinary managed code -- an
     /// <c>[UnmanagedCallersOnly]</c> method cannot be called from C# at all, so
     /// a dispatch written inside one is a dispatch no test can ever reach.
     /// </para>
     /// <para>
     /// <b>No window is ever created here.</b> Every arm runs with
     /// <c>_window</c> at zero, where <c>Rerender</c> and <c>SetContent</c> both
-    /// return before they call Windows — so this is the callback's decisions and
+    /// return before they call Windows -- so this is the callback's decisions and
     /// nothing else.
     /// </para>
     /// </remarks>
@@ -432,7 +432,7 @@ internal sealed class ConfigurationAppTests
     /// <para>
     /// ⚠️ <b>Three outcomes, because two of them used to be one.</b> The picker
     /// answered <see langword="null"/> both when the person closed it and when
-    /// <c>SHGetPathFromIDListW</c> refused the chosen item — and the caller read
+    /// <c>SHGetPathFromIDListW</c> refused the chosen item -- and the caller read
     /// both as a cancel, so the second closed the picker, wrote nothing and said
     /// nothing at all. The buffer was <c>MAX_PATH</c>, so any folder past 260
     /// characters took that path. <i>Split 2026-09-16.</i>
@@ -481,7 +481,7 @@ internal sealed class ConfigurationAppTests
     /// <remarks>
     /// <b>The value the folder picker is now given.</b> It is zero before
     /// <c>TDN_DIALOG_CREATED</c> and after the dialog closes, and the window in
-    /// between — which is what makes
+    /// between -- which is what makes
     /// <see cref="HouseRuleTests.EveryFolderPickerIsOwnedByTheDialogThatOpenedIt"/>
     /// a statement about a real value rather than about a spelling.
     /// </remarks>
@@ -511,7 +511,7 @@ internal sealed class ConfigurationAppTests
     /// <b>The other half of
     /// <see cref="HouseRuleTests.NoUpdateCallIsMadeWithAnUnboundedToken"/>.</b>
     /// That one holds that every caller names a token; this holds what the token
-    /// is worth — and it is <c>UpdateService.CrashTripwire</c>, the outer
+    /// is worth -- and it is <c>UpdateService.CrashTripwire</c>, the outer
     /// deadline the server's own pass runs the same two calls under.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -526,7 +526,7 @@ internal sealed class ConfigurationAppTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The deadline is enforced by the poll and not by the token, and
-    /// this is what says so.</b> The work below ignores its token entirely —
+    /// this is what says so.</b> The work below ignores its token entirely --
     /// which is not a contrivance: <c>UpdateManager.CheckForUpdatesAsync</c>
     /// takes no token at all, so the real call cannot be stopped either. What is
     /// asserted is that the dialog stops <i>waiting</i>.
@@ -667,7 +667,7 @@ internal sealed class ConfigurationAppTests
     /// <para>
     /// ⚠️ <b><c>LoadIconW</c> has no size parameter at all.</b> It answers the
     /// 32×32 image out of the group, and a Per-Monitor-V2 process then draws it
-    /// <i>stretched</i> — on a 200% display, thirty-two pixels blown up to
+    /// <i>stretched</i> -- on a 200% display, thirty-two pixels blown up to
     /// sixty-four, beside text that is not. The application icon ships larger
     /// images and <c>LoadImageW</c> at <c>IMAGE_ICON</c> with a size is what picks
     /// one.
@@ -677,8 +677,8 @@ internal sealed class ConfigurationAppTests
     /// <b>Two claims, because neither alone is the fix.</b> That the size asked
     /// for really does follow the DPI, which is behaviour and is asserted
     /// against Windows' own metric; and that the call which takes a size is the
-    /// one the product makes, which is not observable from here — no test in
-    /// this repository can open a dialog and read the pixels off it — so it is
+    /// one the product makes, which is not observable from here -- no test in
+    /// this repository can open a dialog and read the pixels off it -- so it is
     /// read out of the source, the way the other unobservable argument rules in
     /// this suite are.
     /// </para>

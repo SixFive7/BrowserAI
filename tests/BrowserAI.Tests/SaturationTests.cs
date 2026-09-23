@@ -19,8 +19,8 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Every other test in this suite is about one thing being right. This one
 /// is about the machine not being the thing that breaks.</b> The number 100
-/// comes from the charter — eight editor windows with a dozen agent sessions
-/// each — and until 2026-08-17 nothing exercised anything like it: the widest
+/// comes from the charter -- eight editor windows with a dozen agent sessions
+/// each -- and until 2026-08-17 nothing exercised anything like it: the widest
 /// concurrency the suite reached was <c>ProcessLogTests</c>' eight probe
 /// processes writing twenty-five lines apiece, which is not a browser, not a
 /// session and not a job.
@@ -29,7 +29,7 @@ namespace BrowserAI.Tests;
 /// <b>It is nondeterministic in its timing and deterministic in every
 /// assertion, which is the only shape worth having.</b> Nothing below reads a
 /// stopwatch, compares an elapsed time or asserts a rate. What it asserts is
-/// identity, disjointness and completeness — properties that are either true or
+/// identity, disjointness and completeness -- properties that are either true or
 /// false whatever the machine is doing, and every one of which is <i>false</i>
 /// if containment or session isolation breaks. The one place time appears is a
 /// bounded wait for a real process tree to die, which is a hang detector rather
@@ -40,7 +40,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <list type="number">
 /// <item><description>
-/// <b>Every process answered.</b> Not "most of them" — a run in which one
+/// <b>Every process answered.</b> Not "most of them" -- a run in which one
 /// BrowserAI in a hundred silently failed to open a session is exactly the
 /// degradation this repository exists to make impossible to miss, so the count
 /// is asserted against the count that was dispatched and every failure carries
@@ -59,7 +59,7 @@ namespace BrowserAI.Tests;
 /// </description></item>
 /// <item><description>
 /// <b>Nothing survives teardown.</b> Every pid recorded while the browsers were
-/// up is dead once the jobs close — and the pids are recorded with their
+/// up is dead once the jobs close -- and the pids are recorded with their
 /// creation times, so a recycled pid cannot make a leak look like a clean exit.
 /// </description></item>
 /// <item><description>
@@ -77,7 +77,7 @@ namespace BrowserAI.Tests;
 /// its continuations is not this test's business
 /// (see <see cref="RecordHeader"/>). The clause about <i>this run's</i>
 /// processes is the 2026-08-24 pid scope
-/// (see <see cref="TornRecordsThisRunWasPartyTo"/>) — the log is machine-wide,
+/// (see <see cref="TornRecordsThisRunWasPartyTo"/>) -- the log is machine-wide,
 /// so an unscoped claim about it is a claim about every checkout on the box.
 /// </para>
 /// </description></item>
@@ -91,7 +91,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️ <b><c>[NotInParallel]</c> with no key, which in TUnit means it runs beside
-/// nothing at all — and this is the one kind of exclusivity that is a
+/// nothing at all -- and this is the one kind of exclusivity that is a
 /// requirement rather than an excuse.</b> The distinction is not "it is flaky
 /// otherwise": <b>the assertions are meaningless without the resource</b>. This
 /// test's subject is what BrowserAI does when the machine is pinned, so the
@@ -102,7 +102,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Measured 2026-08-17, and this is why the earlier note here was wrong.</b>
 /// Run in parallel with the rest of the suite it was the top failure of the
-/// streak — five red runs in six, at <b>0, 0, 6, 1, 1, 39, 36</b> failures —
+/// streak -- five red runs in six, at <b>0, 0, 6, 1, 1, 39, 36</b> failures --
 /// and <i>not one</i> of those failures was containment or isolation. They were
 /// timeouts: <c>initialization timed out</c>, <c>no frame arrived within 30 s</c>
 /// between two objects in the same process, and rig teardowns reporting their
@@ -111,7 +111,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>The 100 is not negotiable downwards to make this pass.</b> The charter
-/// makes that claim publicly, so it gets measured or amended — never quietly
+/// makes that claim publicly, so it gets measured or amended -- never quietly
 /// weakened.
 /// </para>
 /// </remarks>
@@ -149,7 +149,7 @@ internal sealed partial class SaturationTests
     /// <item><description>
     /// <b>Alone, at 24:</b> green in <b>82 s</b>. Every one of the hundred peers
     /// answered, every session was claimed once, every job was disjoint, nothing
-    /// leaked. <b>802 processes</b> were live at the census — the figure the
+    /// leaked. <b>802 processes</b> were live at the census -- the figure the
     /// fault-injection run reported when teardown was skipped.
     /// </description></item>
     /// <item><description>
@@ -269,7 +269,7 @@ internal sealed partial class SaturationTests
             // them a pid Windows had recycled between two peers reading their
             // job membership. Twenty-four browser trees closing at once frees
             // roughly two hundred pids in a second, so at this scale reuse is
-            // not the unlucky case — it is the normal one, and a pid on its own
+            // not the unlucky case -- it is the normal one, and a pid on its own
             // is not an identity.
             var owners = new Dictionary<(int ProcessId, long Created), int>();
             var shared = new List<string>();
@@ -332,7 +332,7 @@ internal sealed partial class SaturationTests
 
             // ⚠️ COUNTED OVER THIS RUN'S OWN PIDS, and that is the 2026-08-18
             // correction. It used to count every record header in every log file
-            // on the machine — so on a developer's machine, with months of
+            // on the machine -- so on a developer's machine, with months of
             // history under `%LocalAppData%\BrowserAI\logs`, it was satisfied
             // before this test started and could not fail. The first machine it
             // ever met with an empty log directory was a CI runner, where it read
@@ -400,8 +400,8 @@ internal sealed partial class SaturationTests
     /// <para>
     /// <b>The both-directions control for the pid scope above, planted here
     /// because it cannot be planted live.</b> The arm it guards reads the
-    /// machine-wide log with no time filter — deliberately, see
-    /// <see cref="ReadProcessLogSince"/> — so the only way to watch the scope
+    /// machine-wide log with no time filter -- deliberately, see
+    /// <see cref="ReadProcessLogSince"/> -- so the only way to watch the scope
     /// work is to hand the same predicate a line it must ignore and a line it
     /// must catch. A green run of the live arm proves nothing about either,
     /// because on a machine whose log holds no torn record at all both scopes
@@ -420,8 +420,8 @@ internal sealed partial class SaturationTests
     [Test]
     public async Task AStrangersTornRecordIsNotThisRunsAndOneThisRunWasPartyToIs()
     {
-        // Odd, so neither could ever be a real Windows pid — those are
-        // multiples of four — which is what makes a planted line provably a
+        // Odd, so neither could ever be a real Windows pid -- those are
+        // multiples of four -- which is what makes a planted line provably a
         // stranger's rather than a peer's on an unlucky day.
         const int Ours = 4242;
         const int Stranger = 9191;
@@ -490,8 +490,8 @@ internal sealed partial class SaturationTests
     /// evidence for or against it.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Scoped by pid and never by time.</b> The obvious filter — skip what
-    /// was written before this run started — is the one
+    /// ⚠️ <b>Scoped by pid and never by time.</b> The obvious filter -- skip what
+    /// was written before this run started -- is the one
     /// <see cref="ReadProcessLogSince"/> already refuses, and for a reason that
     /// has not changed: NTFS does not keep a file's last-write time current
     /// while handles are open on it, and this file has a hundred BrowserAIs
@@ -501,8 +501,8 @@ internal sealed partial class SaturationTests
     /// </para>
     /// <para>
     /// <b>Either end counts, and that is the strength being kept.</b> A tear has
-    /// two parties — the record that was interrupted and the record that
-    /// interrupted it — and our write failing to be atomic against a stranger's
+    /// two parties -- the record that was interrupted and the record that
+    /// interrupted it -- and our write failing to be atomic against a stranger's
     /// is the same defect as a stranger's failing to be atomic against ours.
     /// Only a line naming none of this run's pids is somebody else's history.
     /// </para>
@@ -549,20 +549,20 @@ internal sealed partial class SaturationTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>This is the test cleaning up after itself, and without it the test
-    /// degrades every run that follows it — including its own.</b> Each BrowserAI
+    /// degrades every run that follows it -- including its own.</b> Each BrowserAI
     /// creates an instance directory (<c>&lt;pid&gt;-&lt;guid&gt;</c>) and a
     /// live-instance marker (<c>&lt;pid&gt;-&lt;guid&gt;.live</c>) at startup,
     /// and this test starts a hundred of them against the real
     /// <c>%LocalAppData%\BrowserAI</c>. Both are reclaimed by the product on its
-    /// own schedule — the instance sweep at the next startup, the live marker at
-    /// the next update census — and neither schedule keeps up with a hundred per
+    /// own schedule -- the instance sweep at the next startup, the live marker at
+    /// the next update census -- and neither schedule keeps up with a hundred per
     /// run.
     /// </para>
     /// <para>
     /// <b>Measured 2026-08-17, running the suite back to back.</b> Runs 1 and 2
     /// were green; by run 6 the real app root held <b>306</b> instance
     /// directories and <b>2,629</b> live markers, and the run took <b>2m43s</b>
-    /// with 39 failures — every one of them a thirty-second in-process timeout,
+    /// with 39 failures -- every one of them a thirty-second in-process timeout,
     /// none of them a logic error. A hundred concurrent startups each sweeping a
     /// directory of three hundred candidates is thirty thousand rename attempts
     /// per run, and it grows with every run.
@@ -570,13 +570,13 @@ internal sealed partial class SaturationTests
     /// <para>
     /// <b>Keyed on this test's own pids and nothing else.</b> Both names begin
     /// with the pid that created them, so nothing another BrowserAI on the
-    /// machine owns can match — and a pid this run did not start is never acted
+    /// machine owns can match -- and a pid this run did not start is never acted
     /// on. Best-effort throughout: a directory that will not go is the product's
     /// sweep to reclaim, exactly as it would be for a run that was killed.
     /// </para>
     /// <para>
     /// <b>What this does NOT do is assert.</b> A killed BrowserAI legitimately
-    /// leaves both behind — that is what the containment contract guarantees —
+    /// leaves both behind -- that is what the containment contract guarantees --
     /// so leaving them is not a defect and reclaiming them is not a fix. It is
     /// this test declining to make the machine worse.
     /// </para>
@@ -656,8 +656,8 @@ internal sealed partial class SaturationTests
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-17 (previously: every line must either be a record
     /// header or start with four spaces).</b> That fired on the first real run
-    /// against a perfectly intact log — <c>SessionErrors.UnattributableBrowserRunning</c>
-    /// lists candidate pids one per line, indented by two — because a log
+    /// against a perfectly intact log -- <c>SessionErrors.UnattributableBrowserRunning</c>
+    /// lists candidate pids one per line, indented by two -- because a log
     /// <i>message</i> may contain newlines and the shape of its continuations is
     /// not this test's business. A rule about where a header may appear is; a
     /// rule about what every other line must look like is a second, weaker copy
@@ -668,8 +668,8 @@ internal sealed partial class SaturationTests
     /// TWO spaces before <c>pid=</c>), and it had never matched a single
     /// <c>INFO</c> or <c>WARN</c> record in its life.</b>
     /// <c>FileLoggerProvider.Abbreviate</c> pads every level name to five
-    /// characters so the columns line up — <c>"INFO "</c>, <c>"WARN "</c>,
-    /// <c>"CRIT "</c> — and then writes <c>"  pid="</c>. So a four-letter level
+    /// characters so the columns line up -- <c>"INFO "</c>, <c>"WARN "</c>,
+    /// <c>"CRIT "</c> -- and then writes <c>"  pid="</c>. So a four-letter level
     /// is followed by <b>three</b> spaces and <c>\s\s</c> could not reach
     /// <c>pid=</c>; only the five-letter levels <c>TRACE</c>, <c>DEBUG</c> and
     /// <c>ERROR</c> ever matched. Measured 2026-08-18 against a real
@@ -691,15 +691,15 @@ internal sealed partial class SaturationTests
     /// hundred peers … on a log that was perfectly intact" and blamed a
     /// last-write-time filter. Twelve was the number of <c>DEBUG</c> records in
     /// the file. Removing the filter raised the number by reading more history
-    /// and left the cause untouched — which is why the same test failed again the
+    /// and left the cause untouched -- which is why the same test failed again the
     /// first time it met a machine with no history. With the expression fixed,
     /// that same run reads 2,217 headers, all at index 0, from 100 distinct pids.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-24 (previously
     /// <c>…T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s+pid=\d+</c>).</b> A record now carries
-    /// <b>two</b> times — the leading column is when it was <i>written</i>, taken
-    /// inside the file's write gate, and <c>made=</c> is when it was created —
+    /// <b>two</b> times -- the leading column is when it was <i>written</i>, taken
+    /// inside the file's write gate, and <c>made=</c> is when it was created --
     /// and the writer is <c>pid=&lt;n&gt;@&lt;createdFileTime&gt;</c> rather than
     /// a bare pid. Both halves are matched here rather than skipped over with
     /// <c>.*</c>: this expression is what says <i>a header may only appear at the
@@ -777,7 +777,7 @@ internal sealed partial class SaturationTests
         {
             // ⚠️ EVERY file, with no last-write-time filter, and the filter that
             // was here is why. It skipped a file that existed before the test
-            // and whose mtime read older than the start — but NTFS does not keep
+            // and whose mtime read older than the start -- but NTFS does not keep
             // a file's last-write time current while handles are open on it, and
             // this file has a hundred BrowserAIs appending to it. So the one
             // file holding all the records was the one being skipped. Measured
@@ -872,7 +872,7 @@ internal sealed partial class SaturationTests
     }
 
     /// <summary>
-    /// One BrowserAI process, its session, and — for some of them — its browser.
+    /// One BrowserAI process, its session, and -- for some of them -- its browser.
     /// </summary>
     private sealed class Peer(int index, string root) : IAsyncDisposable
     {
@@ -890,7 +890,7 @@ internal sealed partial class SaturationTests
         /// </summary>
         /// <remarks>
         /// Kept on the peer rather than only on its report, because the report
-        /// is not available when a run throws — and the bookkeeping this test
+        /// is not available when a run throws -- and the bookkeeping this test
         /// has to reclaim is keyed on exactly this number.
         /// </remarks>
         public int ProcessId { get; private set; }

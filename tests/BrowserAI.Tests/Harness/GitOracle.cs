@@ -14,19 +14,19 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Git is the oracle here, never the source of truth.</b> The suite has to
 /// run on an export with no git in it, which is why
-/// <see cref="RepositoryLayout"/> walks the disk rather than shelling out — and
+/// <see cref="RepositoryLayout"/> walks the disk rather than shelling out -- and
 /// that objection does not reach this type, because nothing here is asked unless
 /// git answers. Absent, <see cref="SuiteCapability.Git"/> reads ABSENT in the
 /// coverage block and <see cref="RepositoryFilesAsync"/>'s one reader skips
 /// loudly, exactly as every other absent capability does.
 /// <see cref="TagExactlyAtHeadAsync"/>'s reader does not skip and must not:
 /// absent git it reads <see langword="null"/>, which is <i>no tag here</i>, and
-/// the claim it guards only gets weaker — see the remark on that member.
+/// the claim it guards only gets weaker -- see the remark on that member.
 /// </para>
 /// <para>
 /// ⚠️ <b>This exists because the walk's own remark was false by 520 files while
 /// nothing noticed.</b> It claimed the walk yielded the same files as
-/// <c>git ls-files</c> — verified once, by hand, on 2026-08-17, and never again.
+/// <c>git ls-files</c> -- verified once, by hand, on 2026-08-17, and never again.
 /// When agent worktrees appeared under <c>.claude/worktrees/</c>, ignored by git
 /// and not pruned by the walk, every tree-as-text scan read a second checkout as
 /// repository content: the fragment scan counted <b>2,378</b> against a real
@@ -39,8 +39,8 @@ namespace BrowserAI.Tests.Harness;
 /// and not yet staged read as a divergence, which is the normal state of the
 /// tree during any piece of work; <c>--others</c> alone would miss everything
 /// committed. <c>--exclude-standard</c> is what applies <c>.gitignore</c>, and
-/// it is the half that makes a stray ignored directory — a worktree, a cache,
-/// anything — a divergence rather than agreement.
+/// it is the half that makes a stray ignored directory -- a worktree, a cache,
+/// anything -- a divergence rather than agreement.
 /// </para>
 /// <para>
 /// <b><c>-z</c> rather than one path per line.</b> Git quotes and escapes a path
@@ -56,7 +56,7 @@ internal static class GitOracle
     /// <remarks>
     /// <b>A hang detector, not a promptness claim.</b> <c>git ls-files</c> over a
     /// few hundred paths is milliseconds; what this bounds is a git that never
-    /// returns — a credential helper prompting on a redirected stdin, an index on
+    /// returns -- a credential helper prompting on a redirected stdin, an index on
     /// a filesystem that went away. Without it the whole suite hangs instead of
     /// failing, which is the one outcome no gate can report.
     /// </remarks>
@@ -81,7 +81,7 @@ internal static class GitOracle
     /// two absences this has to cover are a machine with no git installed and an
     /// export with no repository in it, and only a question put to git from the
     /// repository root answers both at once. It also settles the third case
-    /// nobody thinks of — a git that starts and then refuses — which a
+    /// nobody thinks of -- a git that starts and then refuses -- which a
     /// <c>File.Exists</c> probe would call present.
     /// </remarks>
     public static bool IsAvailable => Available.Value;
@@ -119,7 +119,7 @@ internal static class GitOracle
     /// question.</b> Distance zero or nothing: <c>--exact-match</c> makes a
     /// commit one past the tag an <i>error</i> rather than a
     /// <c>v1.0.0-1-g&lt;sha&gt;</c> string somebody then has to parse the
-    /// distance out of. Today's tree is the case that matters — <c>v1.0.0</c>
+    /// distance out of. Today's tree is the case that matters -- <c>v1.0.0</c>
     /// sits on <c>0455ca7</c> and HEAD is 215 commits past it, and this answers
     /// <see langword="null"/> for that as firmly as it does for an untagged
     /// repository.
@@ -127,7 +127,7 @@ internal static class GitOracle
     /// <para>
     /// ⚠️ <b>A refusal and an absence are the same answer here, deliberately.</b>
     /// No git, no repository, HEAD not tagged and a git that started and then
-    /// declined all read <see langword="null"/> — <i>this commit is not a
+    /// declined all read <see langword="null"/> -- <i>this commit is not a
     /// release</i>. The one reader uses it to <b>relax</b> a requirement, so
     /// every one of those states leaves the stricter claim standing; there is no
     /// arrangement in which failing to reach git turns a red into a green.
@@ -226,7 +226,7 @@ internal static class GitOracle
 
         // -C, although the working directory is already the root. A host started
         // somewhere else, or a git resolving the working directory through a
-        // junction, would otherwise answer about a different repository — and
+        // junction, would otherwise answer about a different repository -- and
         // the answer would look perfectly ordinary.
         git.StartInfo.ArgumentList.Add("-C");
         git.StartInfo.ArgumentList.Add(RepositoryLayout.Root.FullName);

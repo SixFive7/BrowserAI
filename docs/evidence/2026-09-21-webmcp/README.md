@@ -5,7 +5,7 @@
 
 What
 [kb: a page can add tools to the child's `tools/list`, and its text reaches a
-caller](../../../kb/playwright/tools-and-artifacts.md#a-page-can-add-tools-to-the-childs-toolslist-and-its-own-text-reaches-a-caller--measured-2026-09-21)
+caller](../../../kb/playwright/tools-and-artifacts.md#a-page-can-add-tools-to-the-childs-toolslist-and-its-own-text-reaches-a-caller----measured-2026-09-21)
 was cut from. The rig is
 [`docs/probes/2026-09-21-webmcp`](../../probes/2026-09-21-webmcp/README.md).
 

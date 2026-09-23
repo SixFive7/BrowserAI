@@ -18,8 +18,8 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// ⚠️ <b>The second arm exists because a fast machine never reaches it.</b>
-/// Destroy answers in two shapes — everything went, or a tally and a list of what
-/// would not — and on a developer machine the first shape is the only one anybody
+/// Destroy answers in two shapes -- everything went, or a tally and a list of what
+/// would not -- and on a developer machine the first shape is the only one anybody
 /// ever sees. <b>Since 2026-08-19 they carry different <c>isError</c> flags</b>
 /// (<i>previously both were <c>isError: false</c></i>), which makes the shape a
 /// fast machine never reaches also the one whose result code nothing local could
@@ -28,13 +28,13 @@ namespace BrowserAI.Tests;
 /// CI runs on a four-core runner, where Firefox was still mapping its profile
 /// when the answer was composed. <see cref="DestroyAnswer"/> now carries the
 /// contract for both tests, and <see cref="ADestroyThatCannotRemoveEverythingNamesWhatSurvivedAndSaysHowMany"/>
-/// provokes the survivor arm deterministically — with a handle this test holds
-/// itself, needing no browser and no slow machine — so the arm CI takes is
+/// provokes the survivor arm deterministically -- with a handle this test holds
+/// itself, needing no browser and no slow machine -- so the arm CI takes is
 /// exercised on every run rather than only on the runs that fail.
 /// </para>
 /// <para>
 /// <b>Why this is not asserted on the outcome.</b> A destroy that released the
-/// lock first and a destroy that held it to the end leave byte-identical trees —
+/// lock first and a destroy that held it to the end leave byte-identical trees --
 /// an empty parent, or the same list of survivors. The difference is only
 /// visible <i>while it runs</i>, so the assertion is made by a peer that tries to
 /// take the directory throughout, using the same call the sweep uses
@@ -44,7 +44,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The peer waits for the delete to begin, and that is what makes the test
 /// exact rather than lucky.</b> Before the destroy re-takes the directory there
-/// is a legitimate unowned interval — the live session is released first — and a
+/// is a legitimate unowned interval -- the live session is released first -- and a
 /// probe landing there would block the destroy's own acquisition rather than
 /// measure anything. So the peer probes nothing until the first planted file has
 /// gone, which is proof the delete pass is already running and therefore that
@@ -55,7 +55,7 @@ namespace BrowserAI.Tests;
 /// <b>The window is widened on purpose rather than waited for.</b> The defect
 /// this was written against
 /// ([the 2026-08-18 adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md))
-/// released ownership, then walked the whole tree for a size, then deleted — so
+/// released ownership, then walked the whole tree for a size, then deleted -- so
 /// the unowned interval was a full recursive walk of a Chromium profile wide.
 /// The planted files reproduce that width without a browser: they sort before
 /// <c>browserai.lock</c>, so the delete pass removes every one of them before it
@@ -92,7 +92,7 @@ internal sealed class SessionDestroyTests
     /// <b>A sleep rather than a spin, and it is not a promptness bound.</b> The
     /// suite runs every test at once on purpose; a thread spinning on a named
     /// mutex and a file open for the length of a directory delete is this test
-    /// paying for its evidence with everybody else's timing, and it showed —
+    /// paying for its evidence with everybody else's timing, and it showed --
     /// the most start-up-sensitive test in the suite began meeting its own
     /// budget. It costs nothing here, because what the peer is watching for is
     /// the removal of two thousand files: hundreds of probes land inside that
@@ -197,7 +197,7 @@ internal sealed class SessionDestroyTests
 
     /// <summary>
     /// A destroy that could not remove everything says so, says how many, and
-    /// names them — and still reports success.
+    /// names them -- and still reports success.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -220,7 +220,7 @@ internal sealed class SessionDestroyTests
     /// side (<c>QUESTIONS.md</c> §11): a call that did not entirely do the thing
     /// it is named for must not be indistinguishable, to a model scanning result
     /// shapes, from one that did. <b>The retry the old defence predicted is
-    /// answered by the text rather than by the flag</b> — the arm now says the
+    /// answered by the text rather than by the flag</b> -- the arm now says the
     /// session is already destroyed, says not to call the tool again, and says
     /// what to do instead, which is what the assertions below hold it to. A
     /// naming nobody checks is still how either flag becomes a lie.
@@ -286,7 +286,7 @@ internal sealed class SessionDestroyTests
                 .Because(answer);
 
             // And the directory above it, which the post-order walk reaches last
-            // and reports as `<path>\: <why>` — the trailing separator is how a
+            // and reports as `<path>\: <why>` -- the trailing separator is how a
             // directory that would not go is told apart from a file of the same
             // name. A caller told only about the file would not know the session
             // directory itself is still there.
@@ -318,7 +318,7 @@ internal sealed class SessionDestroyTests
     /// twenty lines; the only evidence of the other five was a subtraction nobody
     /// was asked to do, and this answer is written for a model, which will read
     /// twenty lines under a heading as the whole list. The cap itself is right
-    /// and is unchanged — a thousand-line answer is not an improvement.
+    /// and is unchanged -- a thousand-line answer is not an improvement.
     /// </para>
     /// <para>
     /// <b>Deterministic, by the same means as its neighbour above:</b> one more
@@ -330,7 +330,7 @@ internal sealed class SessionDestroyTests
     /// <para>
     /// <b>The truncation note is read from the product</b>, through
     /// <see cref="SessionManager.TruncationNote"/> and
-    /// <see cref="DestroyAnswer"/>, rather than re-typed here — a test holding
+    /// <see cref="DestroyAnswer"/>, rather than re-typed here -- a test holding
     /// its own copy of a sentence stops recognising the arm the day somebody
     /// rewords it.
     /// </para>
@@ -457,8 +457,8 @@ internal sealed class SessionDestroyTests
     /// <para>
     /// <b>The tool that deletes trees must not delete one whose contents it
     /// cannot recognise.</b> <c>browserai_destroy</c> is safe because it refuses
-    /// any directory that is not a BrowserAI session — that is the whole of what
-    /// stops it being aimed at <c>Documents\</c> — and a directory holding a
+    /// any directory that is not a BrowserAI session -- that is the whole of what
+    /// stops it being aimed at <c>Documents\</c> -- and a directory holding a
     /// <c>browserai.json</c> is a BrowserAI session, just not one this build can
     /// open. Neither <i>not a session</i> nor <i>damaged</i> is true of it.
     /// </para>
@@ -501,7 +501,7 @@ internal sealed class SessionDestroyTests
         var text = TextOf(answer);
 
         // ⚠️ THE MAINTAINER'S WORDING, VERBATIM.
-        await Assert.That(text).Contains("I cannot clean this up — remove the entire directory yourself.");
+        await Assert.That(text).Contains("I cannot clean this up -- remove the entire directory yourself.");
 
         // With the format as the reason rather than damage, and no converter
         // offered.

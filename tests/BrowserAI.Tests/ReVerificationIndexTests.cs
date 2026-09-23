@@ -24,8 +24,8 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// It is a real failure and not a hypothetical one. Wiring the <c>Automated by</c>
-/// column found eight rows naming test types that no build had ever produced —
-/// written from spike work that never reached the suite — and a planning
+/// column found eight rows naming test types that no build had ever produced --
+/// written from spike work that never reached the suite -- and a planning
 /// document asserting those tests already existed.
 /// </para>
 /// <para>
@@ -38,8 +38,8 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The count is scoped to the articles, and that is a fix rather than a
 /// convenience.</b> It used to sweep every tracked <c>.md</c> in the
-/// repository, which meant five sentences of prose <i>about</i> the convention —
-/// in <c>CLAUDE.md</c>, <c>TODO.md</c> and the plan — were counted as if they
+/// repository, which meant five sentences of prose <i>about</i> the convention --
+/// in <c>CLAUDE.md</c>, <c>TODO.md</c> and the plan -- were counted as if they
 /// stamped facts, and the recorded number was 195 for 190 stamped facts. The
 /// counter now reads <c>kb/</c> and nothing else, minus the two pages whose job
 /// is to discuss the convention. A real marker added anywhere in an article is
@@ -88,8 +88,8 @@ internal sealed partial class ReVerificationIndexTests
     /// ⚠️ <b>The <c>previously "…"</c> clause is stripped first, and it was not
     /// until 2026-08-26.</b> <c>HazardIndexTests</c> has read around it since
     /// the day that gate provoked its first correction; this one did not, so a
-    /// superseded test name quoted the way <c>CLAUDE.md</c> requires — verbatim,
-    /// in backticks — failed here while the identical correction passed there.
+    /// superseded test name quoted the way <c>CLAUDE.md</c> requires -- verbatim,
+    /// in backticks -- failed here while the identical correction passed there.
     /// The cost was paid in the document: rows 19 and 96 of the index quoted
     /// dead test names <b>without</b> backticks and explained the gate in prose,
     /// which is a document bent around a test. Both now read as corrections, and
@@ -212,9 +212,9 @@ internal sealed partial class ReVerificationIndexTests
     /// <para>
     /// <b>Internal rather than private so the marker corpus has one definition.</b>
     /// <c>RecordedCountTests.TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold</c>
-    /// checks a second claim about the same corpus — how many articles carry a
+    /// checks a second claim about the same corpus -- how many articles carry a
     /// <c>[STALE]</c> stamp, against the number
-    /// <c>kb/README.md</c> publishes — and a scan of its own would be free to
+    /// <c>kb/README.md</c> publishes -- and a scan of its own would be free to
     /// disagree with this one about which files are articles.
     /// </para>
     /// <para>
@@ -247,7 +247,7 @@ internal sealed partial class ReVerificationIndexTests
     /// <b>Internal since 2026-08-19, so "what counts as a row" has one
     /// definition.</b> The "Where the holes are" table publishes a per-article
     /// row count, and a second parser for the same table would be free to
-    /// disagree with this one — which is exactly how that table came to be
+    /// disagree with this one -- which is exactly how that table came to be
     /// wrong. <c>Content</c> is the four content cells joined, so a citation is
     /// counted wherever in the row it was written rather than only in
     /// <c>Fact</c>.
@@ -296,7 +296,7 @@ internal sealed partial class ReVerificationIndexTests
     /// inherited members, and used <c>GetMethod</c>, which throws
     /// <c>AmbiguousMatchException</c> on an overload set. No live row depended on
     /// any of the three and every row resolved, so this was a <b>false-red
-    /// risk</b> rather than a hole — the next person to write a re-verification
+    /// risk</b> rather than a hole -- the next person to write a re-verification
     /// row against a private product member, a field or an overload would have
     /// got a red build for a row that was correct. P6's rider L harmonised the
     /// <c>previously "…"</c> clause between these two gates and left this axis
@@ -309,7 +309,7 @@ internal sealed partial class ReVerificationIndexTests
     /// as <i>not ours to check</i> and passes it, because a hazard row may cite
     /// <c>Directory.Move</c> or a phrase in prose that happens to carry a dot.
     /// This gate's <c>Automated by</c> column names <b>a test that answers the
-    /// row</b> or the word <i>manual</i> — there is no third thing it may name —
+    /// row</b> or the word <i>manual</i> -- there is no third thing it may name --
     /// so a type that resolves nowhere is a row claiming coverage that does not
     /// exist, which is precisely what this class was written for. Passing it
     /// would restore the eight rows naming test types no build had ever produced.

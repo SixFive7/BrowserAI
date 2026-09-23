@@ -4,9 +4,9 @@
 # 2026-09-14 - a non-silent install starts the app in a console window
 
 Evidence for
-[A non-silent install starts the app in a console window](../../../kb/packaging/velopack.md#a-non-silent-install-starts-the-app-in-a-console-window-and-nobody-is-on-the-other-end-of-it--measured-2026-09-14),
+[A non-silent install starts the app in a console window](../../../kb/packaging/velopack.md#a-non-silent-install-starts-the-app-in-a-console-window-and-nobody-is-on-the-other-end-of-it----measured-2026-09-14),
 for
-[Two installs of one app id share one uninstall key](../../../kb/packaging/velopack.md#two-installs-of-one-app-id-share-one-uninstall-key--measured-2026-09-14),
+[Two installs of one app id share one uninstall key](../../../kb/packaging/velopack.md#two-installs-of-one-app-id-share-one-uninstall-key----measured-2026-09-14),
 for `src/BrowserAI/Program.cs`'s remark about the full exe path on the desktop,
 and for `InstallerHandoffTests`.
 

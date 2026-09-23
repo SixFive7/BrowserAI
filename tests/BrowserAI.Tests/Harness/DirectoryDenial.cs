@@ -24,7 +24,7 @@ namespace BrowserAI.Tests.Harness;
 /// ⚠️ <b>Every denial must be taken back off before teardown</b>, which is why
 /// this hands back a disposable rather than a rule: a scratch directory whose
 /// files cannot be read cannot be enumerated either, so a leaked denial does not
-/// fail the test that made it — it fails whatever runs next.
+/// fail the test that made it -- it fails whatever runs next.
 /// </para>
 /// <para>
 /// <b>The rights are chosen for what the two operations do NOT share.</b>

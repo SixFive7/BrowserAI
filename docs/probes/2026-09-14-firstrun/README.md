@@ -4,9 +4,9 @@
 # 2026-09-14 - a non-silent install starts the app in a console window
 
 Re-establishes
-[A non-silent install starts the app in a console window](../../../kb/packaging/velopack.md#a-non-silent-install-starts-the-app-in-a-console-window-and-nobody-is-on-the-other-end-of-it--measured-2026-09-14)
+[A non-silent install starts the app in a console window](../../../kb/packaging/velopack.md#a-non-silent-install-starts-the-app-in-a-console-window-and-nobody-is-on-the-other-end-of-it----measured-2026-09-14)
 and the uninstall-key finding in
-[Two installs of one app id share one uninstall key](../../../kb/packaging/velopack.md#two-installs-of-one-app-id-share-one-uninstall-key--measured-2026-09-14),
+[Two installs of one app id share one uninstall key](../../../kb/packaging/velopack.md#two-installs-of-one-app-id-share-one-uninstall-key----measured-2026-09-14),
 which is also the hazard-index row about Velopack's app id being `BrowserAI`.
 `launch-detached.ps1` starts `Setup.exe` from a windowless parent, `observe.ps1`
 records the process tree and the top-level windows, and `watch-tree.ps1` records

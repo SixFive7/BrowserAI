@@ -22,8 +22,8 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The table is the specification, and it lives here because every row of it
 /// is a test in this file.</b> It was written for a design in which
-/// <b>~100 concurrent BrowserAI processes</b> is a normal working day — eight
-/// editor windows with a dozen agent sessions each — so a sweep that is merely
+/// <b>~100 concurrent BrowserAI processes</b> is a normal working day -- eight
+/// editor windows with a dozen agent sessions each -- so a sweep that is merely
 /// <i>correct</i> for one process is wrong: 96 processes sweeping at startup is a
 /// thundering herd, and 96 racing to kill the same stray is a correctness problem
 /// rather than a performance one. The first three rows are the ones that lose data
@@ -31,57 +31,57 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <list type="table">
 ///   <item>
-///     <term>R1 — the sweep kills a browser a live session just launched</term>
-///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>browserai.lock</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill — and by <see cref="SessionLock.TryHoldUnowned"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
+///     <term>R1 -- the sweep kills a browser a live session just launched</term>
+///     <description>The sweep may only kill a browser whose directory lock it can itself acquire. If <c>browserai.lock</c> cannot be opened for write, someone owns the directory: skip, unconditionally. The lock is held for the whole kill -- and by <see cref="SessionLock.TryHoldUnowned"/>, never <c>TryAcquire</c>, which would overwrite the crashed session's own record</description>
 ///   </item>
 ///   <item>
-///     <term>R2 — PID reuse between detection and kill</term>
+///     <term>R2 -- PID reuse between detection and kill</term>
 ///     <description>Capture <c>(pid, creationFileTime)</c> at detection and hold an <c>OpenProcess</c> handle from that moment: Windows will not recycle a PID while a handle is open. Re-verify the creation time immediately before <c>TerminateProcess</c> regardless</description>
 ///   </item>
 ///   <item>
-///     <term>R3 — <c>AbandonedMutexException</c></term>
+///     <term>R3 -- <c>AbandonedMutexException</c></term>
 ///     <description>A sweeper that dies holding the mutex makes every later acquire throw. The mutex <b>is</b> acquired when that exception is thrown: catch it, treat it as acquired, proceed. Unhandled, one crash disables sweeping permanently and nothing reports it</description>
 ///   </item>
 ///   <item>
-///     <term>R4 — two sweepers use different mutexes</term>
+///     <term>R4 -- two sweepers use different mutexes</term>
 ///     <description>One name, one place in code, <c>Global\</c> prefixed. A <c>Local\</c> prefix would silently give per-logon mutexes and let two sweeps run</description>
 ///   </item>
 ///   <item>
-///     <term>R5 — session-0 blindness</term>
-///     <description><c>FindWindowExW(HWND_MESSAGE, …)</c> is scoped to a window station and desktop, so a sweeper outside the interactive session sees no message windows at all — it would sweep, find nothing, and report success forever. BrowserAI is a stdio child of an interactive client, so it is in the right session by construction, and this test is what stops that being an assumption</description>
+///     <term>R5 -- session-0 blindness</term>
+///     <description><c>FindWindowExW(HWND_MESSAGE, …)</c> is scoped to a window station and desktop, so a sweeper outside the interactive session sees no message windows at all -- it would sweep, find nothing, and report success forever. BrowserAI is a stdio child of an interactive client, so it is in the right session by construction, and this test is what stops that being an assumption</description>
 ///   </item>
 ///   <item>
-///     <term>R6 — the store is enumerated while an <c>init</c> adds an entry</term>
+///     <term>R6 -- the store is enumerated while an <c>init</c> adds an entry</term>
 ///     <description>Benign: a missed entry is a live session, which the sweep would skip anyway, and it is present next pass</description>
 ///   </item>
 ///   <item>
-///     <term>R7 — the sweep deletes a pointer for a directory an <c>init</c> is creating</term>
+///     <term>R7 -- the sweep deletes a pointer for a directory an <c>init</c> is creating</term>
 ///     <description>Not prevented, <b>absorbed</b>. Pointers are re-asserted idempotently on every <c>init</c> and <c>resume</c>, so a wrongly-deleted one costs a cycle of invisibility. Locking the store to close this would put a machine-wide lock on the hot path of every session start, which is a worse trade at 96 processes. Deletion additionally re-checks absence immediately before acting</description>
 ///   </item>
 ///   <item>
-///     <term>R8 — two sweeps in different terminal-server sessions</term>
+///     <term>R8 -- two sweeps in different terminal-server sessions</term>
 ///     <description>Correct and intended: message windows are per-session, so each session must sweep its own. The <c>Global\</c> mutex serialises them, which costs a little parallelism and prevents nothing valid</description>
 ///   </item>
 ///   <item>
-///     <term>R9 — a sweep runs longer than the next one that starts</term>
+///     <term>R9 -- a sweep runs longer than the next one that starts</term>
 ///     <description>Try-acquire-and-skip at zero timeout means the later one simply does nothing. No pile-up is possible, and a skipped sweep is not a missed sweep: whoever holds the mutex is scanning the same store</description>
 ///   </item>
 ///   <item>
-///     <term>R10 — killing a stray mid-write corrupts its profile</term>
+///     <term>R10 -- killing a stray mid-write corrupts its profile</term>
 ///     <description>Accepted. The profile has no owner by definition (R1), and Chromium is built to survive <c>taskkill</c>, which is what upstream itself does</description>
 ///   </item>
 ///   <item>
-///     <term>R11 — an exception in the sweep kills the process</term>
+///     <term>R11 -- an exception in the sweep kills the process</term>
 ///     <description>Catch-all at the thread boundary. A sweep failure is a log line, never a crash and never a protocol error: a BrowserAI that cannot sweep is degraded, one that will not start is broken</description>
 ///   </item>
 ///   <item>
-///     <term>R12 — the sweep writes to <c>stdout</c></term>
+///     <term>R12 -- the sweep writes to <c>stdout</c></term>
 ///     <description>Forbidden process-wide already; the sweep is inside that rule, not an exception to it</description>
 ///   </item>
 /// </list>
 /// <para>
-/// Each test below names its row. R8's second half — two sweeps in two different
-/// <i>logon sessions</i> — is the one property that cannot be produced from a
+/// Each test below names its row. R8's second half -- two sweeps in two different
+/// <i>logon sessions</i> -- is the one property that cannot be produced from a
 /// single logon; what is asserted there is the mechanism that makes it correct
 /// (a <c>Global\</c> name, and two processes serialising on it), with the
 /// untested half named rather than implied.
@@ -91,7 +91,7 @@ namespace BrowserAI.Tests;
 /// stronger test rather than a weaker one.</b> Detection matches on <i>full
 /// image path</i>, so a test that declares the planted copy as "a browser
 /// BrowserAI provisioned" exercises the identical code path a real Chromium
-/// takes — while making it impossible for a run of this suite to terminate
+/// takes -- while making it impossible for a run of this suite to terminate
 /// anything a developer or another test owns. The one arm that uses a real
 /// browser is the session-0 blindness guard, and it deliberately only
 /// <i>finds</i>.
@@ -109,7 +109,7 @@ namespace BrowserAI.Tests;
 /// product's own design that makes it so: <c>Global\BrowserAI-Sweep</c> is a
 /// machine-wide mutex, R4 and R9 in the table above are <i>about</i> it, and a
 /// second sweeper is by construction either serialised behind the first or
-/// skipped entirely — so a second sweep test would be asserting on a pass that
+/// skipped entirely -- so a second sweep test would be asserting on a pass that
 /// either did not run or ran against candidates the first had already killed.
 /// The key holds exactly the tests that <b>run a sweep</b>: these, plus
 /// <c>ErrorCatalogueTests</c>' unattributable-stray row and
@@ -117,8 +117,8 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What left the key on the same day, and why it is worth writing down.</b>
-/// Two Firefox tests were in it — one that only <i>observed</i> the machine and
-/// one that merely started a browser — and neither swept anything. They were
+/// Two Firefox tests were in it -- one that only <i>observed</i> the machine and
+/// one that merely started a browser -- and neither swept anything. They were
 /// there because the observation was machine-wide; scoping it to a direct child
 /// of the test host removed the need. The cost of not noticing was the whole
 /// suite's critical path: the chain spanned <b>20.4 s of a 20.6 s run</b>, and
@@ -323,7 +323,7 @@ internal sealed class StraySweepTests
     /// <c>TheSweepMutexIsNamedOnceInTheProductAndTheTaskRunsThatSameProduct</c>,
     /// which also asserted on the logon task's generated XML).</b>
     /// [The logon task is dropped](../../kb/windows/detection.md#the-logon-sweep-task),
-    /// so the second sweeper is no longer a task — it is
+    /// so the second sweeper is no longer a task -- it is
     /// <c>BrowserAI.exe --sweep</c>, the measurement entry point
     /// [row 78](../../kb/re-verification.md) names. The half that
     /// mattered is unchanged and is the half kept: the name is <c>Global\</c>
@@ -338,12 +338,12 @@ internal sealed class StraySweepTests
     /// <remarks>
     /// <para>
     /// <b>Added 2026-08-20. Reclaim used to happen only inside the updater's
-    /// "am I alone?" path</b> — which runs after an update has been found
+    /// "am I alone?" path</b> -- which runs after an update has been found
     /// <b>and</b> downloaded, and had therefore never once run on the machine
     /// this product is developed on: 755 unheld markers in two days. It rides
     /// this pass because this pass already has the three properties a reclaim
-    /// needs — machine-wide, mutex-serialised, and instantly skipped when a peer
-    /// holds the gate — rather than getting a second discipline of its own.
+    /// needs -- machine-wide, mutex-serialised, and instantly skipped when a peer
+    /// holds the gate -- rather than getting a second discipline of its own.
     /// </para>
     /// <para>
     /// <b>The held marker is the control</b>, and it is what separates <i>the
@@ -417,7 +417,7 @@ internal sealed class StraySweepTests
     /// <para>
     /// ⚠️ <b>This is the arm that found the gate race, on 2026-08-26.</b> It
     /// reported <c>Skipped</c> where it requires <c>Ran</c> once in five full
-    /// runs — not a skipped <i>test</i>, which is what the outcome's name reads
+    /// runs -- not a skipped <i>test</i>, which is what the outcome's name reads
     /// like in a failure message, but the product's own
     /// <see cref="StraySweepOutcome.Skipped"/> arriving as the actual value of a
     /// failed assertion. <c>[NotInParallel]</c> holds these arms apart from each
@@ -471,7 +471,7 @@ internal sealed class StraySweepTests
     /// <para>
     /// <b><c>Run</c> has a second overload since 2026-08-26 and it exists for
     /// this suite</b>, because an arm that needs its own pass to have <i>run</i>
-    /// was losing the gate to a real BrowserAI another test had started — once in
+    /// was losing the gate to a real BrowserAI another test had started -- once in
     /// five full runs. Waiting is the correct serialisation there: the kernel
     /// hands the mutex over in the order it was asked for.
     /// </para>
@@ -485,7 +485,7 @@ internal sealed class StraySweepTests
     /// </para>
     /// <para>
     /// <b>What it cannot see:</b> a call whose expression does not mention the
-    /// sweep and does not live in its own file — a local variable named
+    /// sweep and does not live in its own file -- a local variable named
     /// something else, handed across a method boundary. That is the same limit
     /// every tree-as-text rule here has, and the two real call sites both have
     /// the shape it reads. An argument carrying parentheses of its own is
@@ -512,7 +512,7 @@ internal sealed class StraySweepTests
                     if (argument is not ("" or "LockScopes.NeverWaits"))
                     {
                         offenders.Add(
-                            $"{file.Name}: a sweep pass is started with '{argument}' — the product may not wait for"
+                            $"{file.Name}: a sweep pass is started with '{argument}' -- the product may not wait for"
                             + " the machine-wide gate, because ~100 peers queueing to redo one pass is the herd R9 removes");
                     }
                 }
@@ -585,7 +585,7 @@ internal sealed class StraySweepTests
     /// <b>This arm deliberately only finds.</b> A sweep declaring the real
     /// Chromium as ours would be a sweep entitled to act on every other test's
     /// browser, and on a developer's. What is asserted is detection plus
-    /// attribution — the two things a session-0 sweeper gets wrong, silently,
+    /// attribution -- the two things a session-0 sweeper gets wrong, silently,
     /// by finding nothing at all and reporting success forever.
     /// </para>
     /// <para>
@@ -595,7 +595,7 @@ internal sealed class StraySweepTests
     /// </para>
     /// <para>
     /// ⚠️ <b>THE <c>[NotInParallel]</c> HERE IS KEYLESS, AND THAT IS THE
-    /// WHOLE POINT OF IT — 2026-09-17.</b> Every other arm in this file carries
+    /// WHOLE POINT OF IT -- 2026-09-17.</b> Every other arm in this file carries
     /// <see cref="SweepGroup"/>, which holds the arms that <i>run a sweep</i>
     /// apart from each other. This one needs the opposite thing: it must be held
     /// apart from the <b>dozens of arms that start a
@@ -606,8 +606,8 @@ internal sealed class StraySweepTests
     /// <para>
     /// <b>The failure it answers was found in the wild and then named.</b> The
     /// browser below is launched directly into a scratch session directory that
-    /// holds no <c>browserai.lock</c> by construction — nothing here opens a
-    /// session — and every <c>BrowserAI.Server.exe</c> sweeps at startup. With
+    /// holds no <c>browserai.lock</c> by construction -- nothing here opens a
+    /// session -- and every <c>BrowserAI.Server.exe</c> sweeps at startup. With
     /// no message window yet published the sweep cannot attribute the process,
     /// falls back to the session directory its command line names, finds it
     /// unlocked, and terminates it: <c>StrayCandidate.TryTerminate</c> calls
@@ -625,19 +625,19 @@ internal sealed class StraySweepTests
     /// 2026-09-17 on the reference machine, three runs each: this arm alone is
     /// <b>1.528 s / 1.513 s / 1.476 s</b> of total run time against a
     /// <b>0.747 s / 0.732 s / 0.763 s</b> zero-test baseline through the same
-    /// invocation — so roughly <b>0.75 s</b> of critical path, which is the
+    /// invocation -- so roughly <b>0.75 s</b> of critical path, which is the
     /// price of the only real-browser attribution proof this suite has.
     /// </para>
     /// <para>
     /// ⚠️ <b>Nothing mechanises the rule this attribute follows, and the
     /// reason is that the predicate is not in the text.</b> What makes this arm
-    /// dangerous is not that it starts a browser — it is that the browser's
+    /// dangerous is not that it starts a browser -- it is that the browser's
     /// profile sits in a directory <i>nothing holds a lock on</i>, which is a
     /// run-time property of the rig. The readable over-approximation, <i>an arm
     /// that launches a provisioned browser executable</i>, also fires on
     /// <c>BrowserContainmentTests.AChromiumTreeIsContainedAndItsProfileDeletesCleanly</c>,
     /// which was deliberately taken <b>out</b> of a serialisation key on
-    /// 2026-08-17 on a measured wall-clock argument — 13.05 s of a 20.6 s run —
+    /// 2026-08-17 on a measured wall-clock argument -- 13.05 s of a 20.6 s run --
     /// so a scan built on it would undo a decision somebody made with numbers.
     /// The attribute is therefore the assertable half on its own, and this
     /// paragraph is what stands in for the mechanism.
@@ -648,8 +648,8 @@ internal sealed class StraySweepTests
     public async Task TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession()
     {
         // ⚠️ The gate, not a degraded branch. This is R5's ONLY real-browser
-        // arm — the only proof that a real Chromium publishes what attribution
-        // reads — and until 2026-08-16 a machine with no provisioned browser ran
+        // arm -- the only proof that a real Chromium publishes what attribution
+        // reads -- and until 2026-08-16 a machine with no provisioned browser ran
         // a one-line directory check here and reported this test as PASSED. A
         // test that reports the same result whether or not it did the thing its
         // name claims is the founding failure class of this project, inside the
@@ -670,7 +670,7 @@ internal sealed class StraySweepTests
         // cosmetic: with no window and nothing to do, a headless Chromium exits
         // on its own within a second or so, and the attribution loop below then
         // waits out its whole deadline against a browser that has already gone.
-        // Observed 2026-08-16 — the test passed alone and failed under a fully
+        // Observed 2026-08-16 -- the test passed alone and failed under a fully
         // parallel suite, which is the shape of every timing bug this project
         // has met.
         // ⚠️ `--enable-logging --log-file --v=1`, added 2026-08-18, and it is a
@@ -678,7 +678,7 @@ internal sealed class StraySweepTests
         // failed at least three times in two days with *"exited before it
         // published a message window … it wrote nothing to either stream"*, and
         // the reason it stayed open that long is that Chromium's account of a
-        // failed start does not go to stderr by default on Windows — it goes to a
+        // failed start does not go to stderr by default on Windows -- it goes to a
         // log file, and nobody had asked for one. A browser that dies saying
         // nothing anywhere is a very different finding from one whose reasons
         // were never collected, and until now this test could not distinguish
@@ -725,8 +725,8 @@ internal sealed class StraySweepTests
     /// <para>
     /// <b>This is direction (b) of [question 8](../../QUESTIONS.md), built
     /// 2026-08-27 after the maintainer chose (e).</b> A desktop heap spent to the
-    /// byte kills a Chromium before it creates a single window — measured over
-    /// eighty launches on a rig built to exhaust one — and every instrument this
+    /// byte kills a Chromium before it creates a single window -- measured over
+    /// eighty launches on a rig built to exhaust one -- and every instrument this
     /// suite owns reports the machine as healthy while it happens, because
     /// <c>UOI_HEAPSIZE</c> gives a desktop heap's <i>size</i> and no API on
     /// Windows reports its <i>usage</i>. The only reading that separates this
@@ -738,7 +738,7 @@ internal sealed class StraySweepTests
     /// what it says.</b> The verdict is a property of whatever else is on the
     /// developer's desktop, which is the same reason
     /// <see cref="MachineLoad"/> is barred from every assertion in this
-    /// repository — so what is held here is that the message names the probe and
+    /// repository -- so what is held here is that the message names the probe and
     /// exactly one of its sanctioned verdicts. On a machine with a working
     /// desktop that verdict is
     /// <see cref="DesktopHeapProbe.NotDesktopHeapVerdict"/>, and a run that
@@ -748,7 +748,7 @@ internal sealed class StraySweepTests
     /// <para>
     /// <b>The death is provoked rather than waited for, and it needs no browser.</b>
     /// The probe executable with no arguments at all falls through its own
-    /// dispatch to <c>Usage()</c>, writes nothing anywhere and is gone —
+    /// dispatch to <c>Usage()</c>, writes nothing anywhere and is gone --
     /// so the branch under test is reached deterministically, on the first pass
     /// of the loop, without a provisioned Chromium and without the desktop this
     /// arm is about being touched. It is the probe's <b>own</b> build output
@@ -892,8 +892,8 @@ internal sealed class StraySweepTests
 
     /// <summary>R7: a pointer whose directory came back before the delete is kept.</summary>
     /// <remarks>
-    /// The race itself — an <c>init</c> landing between the enumeration and the
-    /// delete microseconds later — is <b>absorbed rather than prevented</b>, and
+    /// The race itself -- an <c>init</c> landing between the enumeration and the
+    /// delete microseconds later -- is <b>absorbed rather than prevented</b>, and
     /// both halves are asserted: the re-check that catches the case it can, and
     /// the idempotent re-assert that makes losing one cost a single cycle of
     /// invisibility.
@@ -949,8 +949,8 @@ internal sealed class StraySweepTests
     /// about two sweeps in two different <i>terminal-server logon sessions</i>,
     /// and a suite running in one logon cannot create a second. What is asserted
     /// is the mechanism that makes that case correct: the name is
-    /// <c>Global\</c>-prefixed — so it is one kernel object across every logon
-    /// session rather than one per session — and two processes contending for it
+    /// <c>Global\</c>-prefixed -- so it is one kernel object across every logon
+    /// session rather than one per session -- and two processes contending for it
     /// really do serialise, with one acquiring and the other refused
     /// immediately. A <c>Local\</c> prefix would pass neither.
     /// </remarks>
@@ -996,7 +996,7 @@ internal sealed class StraySweepTests
 
         var skipped = await Sweep();
 
-        // ⚠️ TRY-ACQUIRE-AND-SKIP, NEVER QUEUE — and the three assertions below
+        // ⚠️ TRY-ACQUIRE-AND-SKIP, NEVER QUEUE -- and the three assertions below
         // are what say so, which is why the stopwatch that used to be here is
         // gone.
         //
@@ -1004,7 +1004,7 @@ internal sealed class StraySweepTests
         // read "a skip that waited even briefly would be the wrong mechanism
         // wearing the right answer". The probe launched above holds the sweep
         // mutex for its whole life, so a pass that QUEUED would block on it and
-        // then run — returning `Ran`, with a non-zero candidate count and a
+        // then run -- returning `Ran`, with a non-zero candidate count and a
         // terminated process. `Skipped` with zero candidates and the planted
         // process still alive is unreachable by a queueing implementation at any
         // speed. One second, meanwhile, is a number a starved machine reaches
@@ -1102,7 +1102,7 @@ internal sealed class StraySweepTests
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>The failure this prevents is a twenty-one-second stall, not a wrong
-    /// answer</b> — measured 21,037 ms for <c>\\10.255.255.1\share</c> and
+    /// answer</b> -- measured 21,037 ms for <c>\\10.255.255.1\share</c> and
     /// 22,225 ms for a dead hostname. <b>It is asserted on the rejection, not on
     /// the clock</b>; see the note in the body.
     /// </remarks>
@@ -1143,21 +1143,21 @@ internal sealed class StraySweepTests
     }
 
     /// <summary>
-    /// A title on a <b>mapped network drive letter</b> is refused too — the
+    /// A title on a <b>mapped network drive letter</b> is refused too -- the
     /// guard is about the volume, not about the spelling.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>This is the half the character check cannot reach, and it costs the
     /// same twenty-two seconds.</b> <c>net use Z: \\dead\share</c> produces a
-    /// path that satisfies every test in the arm above — an ASCII letter, a
-    /// colon, a separator — and <c>File.Exists</c> on it was measured at
+    /// path that satisfies every test in the arm above -- an ASCII letter, a
+    /// colon, a separator -- and <c>File.Exists</c> on it was measured at
     /// <b>22,210 ms</b>
     /// ([kb](../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
     /// The loop evaluates <b>every</b> title on the machine rather than only a
     /// candidate's, and the class it walks is forgeable, so one process
     /// registering <c>Chrome_MessageWindow</c> with a <c>Z:\…</c> title stalls
-    /// the whole pass — while holding the machine-wide sweep mutex.
+    /// the whole pass -- while holding the machine-wide sweep mutex.
     /// </para>
     /// <para>
     /// <b>Found by <a href="../../docs/reviews/2026-08-18-adversarial-processes.md">the
@@ -1165,8 +1165,8 @@ internal sealed class StraySweepTests
     /// declined as expensive when it was written; what changed is that
     /// <c>VolumeIdentity</c> arrived on 2026-08-19 for
     /// <c>CanonicalPath</c> and answers exactly this question with
-    /// <b>no filesystem call</b> — <c>QueryDosDeviceW</c> and
-    /// <c>GetDriveTypeW</c>, measured at 0.9 ms — so the fix became a call to
+    /// <b>no filesystem call</b> -- <c>QueryDosDeviceW</c> and
+    /// <c>GetDriveTypeW</c>, measured at 0.9 ms -- so the fix became a call to
     /// something already in the tree and already tested.
     /// </para>
     /// <para>
@@ -1208,7 +1208,7 @@ internal sealed class StraySweepTests
     /// redirector; this is the letter that stands in for one. It passes every
     /// character test, it is not <c>DRIVE_REMOTE</c>, and the <c>File.Exists</c>
     /// the pass performs on it costs the full <b>21 s</b> against a share that
-    /// has stopped answering — measured on this machine the same day, where
+    /// has stopped answering -- measured on this machine the same day, where
     /// <c>GetDriveTypeW</c> through such a letter took <b>21,035 ms</b> and then
     /// answered <c>DRIVE_NO_ROOT_DIR</c>.
     /// </remarks>
@@ -1283,8 +1283,8 @@ internal sealed class StraySweepTests
     /// <b>Asserted against the whole machine rather than against a fixture.</b>
     /// The legacy <c>%LOCALAPPDATA%\ms-playwright</c> tree that the
     /// <c>npx</c>-based setup this project replaces leaves behind is the exact
-    /// shape of the mistake — same Chromium revision, same vendor, a browser
-    /// nobody is using — and it must not match, because its image path is not
+    /// shape of the mistake -- same Chromium revision, same vendor, a browser
+    /// nobody is using -- and it must not match, because its image path is not
     /// the binary BrowserAI provisioned.
     /// </para>
     /// <para>
@@ -1379,7 +1379,7 @@ internal sealed class StraySweepTests
     /// <c>Hosting.LocalAppDataPaths</c> composes every path with
     /// <c>Path.Combine</c>, which never resolves a link, while
     /// <c>QueryFullProcessImageNameW</c> answers with the path the object manager
-    /// resolved — i.e. <b>after</b> reparse processing. A relocated user profile,
+    /// resolved -- i.e. <b>after</b> reparse processing. A relocated user profile,
     /// a redirected <c>AppData</c>, a <c>subst</c>ed letter or an 8.3 component
     /// therefore made the two sides of the comparison different strings for every
     /// process on the machine: <c>candidates=0</c> on every pass, for good, and
@@ -1388,8 +1388,8 @@ internal sealed class StraySweepTests
     /// <para>
     /// <b>The first three assertions are the measurement the whole fix rests on,
     /// and the review left it <c>[REASONED]</c>.</b> The process below is
-    /// launched <i>through the junction</i> — which is what BrowserAI does,
-    /// because the junction is above the root it was configured with — and what
+    /// launched <i>through the junction</i> -- which is what BrowserAI does,
+    /// because the junction is above the root it was configured with -- and what
     /// the kernel reports back is the target. Nothing here is a stand-in: the
     /// junction is a real <c>mklink /J</c> and the process is a real one running
     /// out of it.
@@ -1398,7 +1398,7 @@ internal sealed class StraySweepTests
     /// ⚠️ <b>The stranger is what keeps <i>what the sweep may match</i> separate
     /// from <i>what it may terminate</i>.</b> A second process planted in the
     /// same junctioned tree and launched through the same junction is <b>not</b>
-    /// a candidate — so what the wanted set gained is a second spelling of the
+    /// a candidate -- so what the wanted set gained is a second spelling of the
     /// same file, never a wider rule. Detection is still an exact full-path match
     /// against a closed set of executables BrowserAI itself composed; it is still
     /// never a prefix and never an image name; and every guard between a
@@ -1497,7 +1497,7 @@ internal sealed class StraySweepTests
 
         // Nothing opened it, which is what the ordering inside VolumeIdentity is
         // for: a share is refused on its characters. Bounded by the suite's own
-        // hang budget rather than by a number invented at the assertion — what
+        // hang budget rather than by a number invented at the assertion -- what
         // this excludes is a twenty-two-second stall, not a slow answer.
         await Assert.That(elapsed).IsLessThan(TestDefaults.InProcessHang);
 
@@ -1599,14 +1599,14 @@ internal sealed class StraySweepTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Corrected 2026-08-26 (previously a retry loop — "a test that needs
+    /// ⚠️ <b>Corrected 2026-08-26 (previously a retry loop -- "a test that needs
     /// a pass to <i>run</i> asks again rather than failing").</b> Asking again is
     /// the same coin tossed more often: the gate is held for a few milliseconds
     /// by every BrowserAI that starts, this suite starts a great many of them in
     /// parallel, and <c>[NotInParallel]</c> serialises these arms against each
     /// other and against nothing else. The measured consequence was
     /// <c>ASweepWithNoAppPathsReportsNoMarkerPassAtAll</c> failing once in five
-    /// full runs with <c>Skipped</c> where it required <c>Ran</c> — and that arm
+    /// full runs with <c>Skipped</c> where it required <c>Ran</c> -- and that arm
     /// had no loop to lose in, which is what made the loop look like a solution
     /// rather than a workaround.
     /// </para>
@@ -1614,7 +1614,7 @@ internal sealed class StraySweepTests
     /// <b>A wait is the serialisation; a loop is a poll.</b> The kernel hands
     /// the mutex over in the order it was asked for, so a pass that waits gets
     /// its turn, and <see cref="TestDefaults.ProcessHang"/> bounds it as a hang
-    /// detector — a gate still held after that is a real BrowserAI stuck, which
+    /// detector -- a gate still held after that is a real BrowserAI stuck, which
     /// is a finding rather than a flake.
     /// </para>
     /// <para>
@@ -1629,7 +1629,7 @@ internal sealed class StraySweepTests
                 .Run(GatePatience));
 
     /// <summary>
-    /// Runs one pass the way the product does — taking the gate or not, never
+    /// Runs one pass the way the product does -- taking the gate or not, never
     /// waiting.
     /// </summary>
     /// <remarks>
@@ -1704,7 +1704,7 @@ internal sealed class StraySweepTests
                 // this message fired once in five fully parallel runs and said
                 // only that the process was gone. Extended 2026-08-18 with the
                 // log and the machine, because it then fired again saying the
-                // browser *"wrote nothing to either stream"* — which was true,
+                // browser *"wrote nothing to either stream"* -- which was true,
                 // uninformative, and left the actual question open: on Windows a
                 // Chromium that will not start writes to a log file and not to
                 // stderr, and the failure is suspected to be a resource ceiling
@@ -1719,7 +1719,7 @@ internal sealed class StraySweepTests
                 // `MachineLoad` says outright that it cannot see, and it is the
                 // one a deliberate rig then reproduced this exact death from.
                 // Trying the allocation is the only reading there is, and THIS
-                // is the only instant it can be taken — a heap that was full
+                // is the only instant it can be taken -- a heap that was full
                 // when the browser died is commonly not full a second later.
                 throw new InvalidOperationException(
                     $"The browser (pid {browserId}) exited before it published a message window for '{profile}'. "

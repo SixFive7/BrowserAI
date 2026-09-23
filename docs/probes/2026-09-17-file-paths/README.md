@@ -4,7 +4,7 @@
 # 2026-09-17 - which artifact pointers `filePaths: "absolute"` reaches
 
 Establishes
-[Every artifact pointer a tool result carries is absolute, and the option that did it](../../../kb/playwright/tools-and-artifacts.md#every-artifact-pointer-a-tool-result-carries-is-absolute--measured-2026-09-17),
+[Every artifact pointer a tool result carries is absolute, and the option that did it](../../../kb/playwright/tools-and-artifacts.md#every-artifact-pointer-a-tool-result-carries-is-absolute----measured-2026-09-17),
 which is the measurement that closed
 [upstream ask #1](../../../TODO.md#upstream-asks) - `--file-paths=absolute`,
 [microsoft/playwright#42673](https://github.com/microsoft/playwright/pull/42673),

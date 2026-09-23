@@ -14,11 +14,11 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>Nothing in the suite read this file until 2026-08-17</b>, and it is the
-/// longest-lived document in the repository — 137 rows on that day, 76 of them
+/// longest-lived document in the repository -- 137 rows on that day, 76 of them
 /// <c>closed</c>, each closure resting on evidence nobody checked. (Those two
 /// figures are a measurement of 2026-08-17 and are deliberately left at it; the
 /// live tally is checked against the sentence <c>HAZARDS.md</c> publishes about
-/// itself by <c>RecordedCountTests</c> — <i>corrected 2026-08-19, previously
+/// itself by <c>RecordedCountTests</c> -- <i>corrected 2026-08-19, previously
 /// "the sentence in <c>TODO.md</c>"</i>, which is where it lived while it was a
 /// backlog of unadjudicated rows rather than an assertion that there are none.)
 /// The rule it
@@ -29,7 +29,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>It found three stale claims on the first run.</b> Two rows credited
 /// <c>DirectStdioClientTransport.BuildStartInfo</c>, a method that has never
-/// existed in the shipped tree — the child is started through
+/// existed in the shipped tree -- the child is started through
 /// <c>JobLauncher</c> and <c>CreateProcessW</c>, which has no
 /// <c>ProcessStartInfo</c> to build. The claim had also been copied into an XML
 /// doc comment, which is how a wrong sentence becomes two.
@@ -37,7 +37,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Why the check is not limited to names ending in <c>Tests</c>.</b> A row
 /// closed on a product symbol is making exactly the same kind of claim as one
-/// closed on a test, and it decays the same way — the two stale rows above were
+/// closed on a test, and it decays the same way -- the two stale rows above were
 /// product symbols, not test names. Any backticked <c>Type.Member</c> whose type
 /// resolves in either of this repository's two assemblies is therefore checked.
 /// Framework symbols such as <c>Directory.Move</c> resolve in neither and are
@@ -46,7 +46,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What this deliberately does not check:</b> whether the evidence a row
-/// names is evidence <i>for that row</i>. It cannot — that is a reading, not a
+/// names is evidence <i>for that row</i>. It cannot -- that is a reading, not a
 /// lookup. The audit that produced this file found one row closed on a test that
 /// proves something else entirely, and a second row, open, that the same test
 /// closes. Both were fixed by hand. This gate would not have caught either, and
@@ -65,13 +65,13 @@ internal sealed partial class HazardIndexTests
     /// <b>Internal since 2026-08-26, so "a symbol this repository can answer
     /// for" has one definition.</b> <c>ReVerificationIndexTests</c> asks the same
     /// question of its own index and searched the test assembly alone, which is
-    /// one of the three axes on which the two gates had silently diverged — and
+    /// one of the three axes on which the two gates had silently diverged -- and
     /// <c>CLAUDE.md</c> presents them as one class of mechanism.
     /// </para>
     /// <para>
     /// ⚠️ <b>FOUR since 2026-09-15 (previously two, "the suite and the
-    /// product").</b> The product is three assemblies now — the server, the
-    /// configuration app and the library they share — and a row naming a symbol
+    /// product").</b> The product is three assemblies now -- the server, the
+    /// configuration app and the library they share -- and a row naming a symbol
     /// in either of the two new ones would have read as a row naming a symbol
     /// that does not exist. Each is reached through a type that is certain to
     /// stay in it, so a file moving between them does not silently drop an
@@ -95,7 +95,7 @@ internal sealed partial class HazardIndexTests
         {
             offenders.AddRange(Named(row.Evidence)
                 .Where(Missing)
-                .Select(name => $"HAZARDS.md:{row.Line}: '{name}' does not exist — {Excerpt(row.Hazard)}"));
+                .Select(name => $"HAZARDS.md:{row.Line}: '{name}' does not exist -- {Excerpt(row.Hazard)}"));
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
@@ -105,14 +105,14 @@ internal sealed partial class HazardIndexTests
     public async Task NoRowIsClosedOnAnEmptyEvidenceCell()
     {
         // The file's own rule, in its column table: "A row marked `closed` with
-        // `—` here is not closed. That is the whole point of splitting the two
+        // `-` here is not closed. That is the whole point of splitting the two
         // columns: `closed` is a claim, and this column is what makes it
         // checkable." It was true of every row on 2026-08-17 and had never been
         // asserted, so the next row closed in a hurry was free to break it.
         var offenders = HazardIndex.Rows()
             .Where(row => row.State is HazardIndex.Closed)
-            .Where(row => row.Evidence.Length == 0 || row.Evidence is "—" or "-")
-            .Select(row => $"HAZARDS.md:{row.Line}: closed with no evidence — {Excerpt(row.Hazard)}");
+            .Where(row => row.Evidence.Length == 0 || row.Evidence is "--" or "-")
+            .Select(row => $"HAZARDS.md:{row.Line}: closed with no evidence -- {Excerpt(row.Hazard)}");
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
     }
@@ -129,7 +129,7 @@ internal sealed partial class HazardIndexTests
         // promises and it passed a row reading `**half closed**` for eight days,
         // which is exactly the state the two-state invariant forbids: not open,
         // not closed, and in neither tally. Containment was ambiguous the other
-        // way too -- `**open** — bounded, not closed` carries both words, and the
+        // way too -- `**open** -- bounded, not closed` carries both words, and the
         // old rule counted it as closed because it looked for "closed" first.
         // HazardIndex.StateOf now matches the LEADING word exactly; what may
         // follow it is a date, emphasis or a qualifying clause, none of which
@@ -195,7 +195,7 @@ internal sealed partial class HazardIndexTests
         var offenders = table
             .Select(line => (line.Line, Cells: HazardIndex.SplitRow(line.Text)))
             .Where(line => line.Cells.Length != HazardIndex.Fields)
-            .Select(line => $"HAZARDS.md:{line.Line}: splits into {line.Cells.Length} fields, not {HazardIndex.Fields}, so HazardIndex.Rows() drops it in silence and the row is in NEITHER tally — first cell: {Excerpt(line.Cells.ElementAtOrDefault(1)?.Trim() ?? string.Empty)} — a literal '|' written into a cell is the usual cause: escape it as '\\|', which this parser and Markdown both read as one pipe, or quote the value differently, or reword the cell so it does not need one");
+            .Select(line => $"HAZARDS.md:{line.Line}: splits into {line.Cells.Length} fields, not {HazardIndex.Fields}, so HazardIndex.Rows() drops it in silence and the row is in NEITHER tally -- first cell: {Excerpt(line.Cells.ElementAtOrDefault(1)?.Trim() ?? string.Empty)} -- a literal '|' written into a cell is the usual cause: escape it as '\\|', which this parser and Markdown both read as one pipe, or quote the value differently, or reword the cell so it does not need one");
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
@@ -213,13 +213,13 @@ internal sealed partial class HazardIndexTests
         // and a row written with a leading space ends the region early and takes
         // every row below it out of the guard.
         await Assert.That(table.Count - 2).IsEqualTo(HazardIndex.Rows().Count)
-            .Because($"the table region is {table.Count} lines, which is {table.Count - 2} after its header and separator, and HazardIndex.Rows() returns {HazardIndex.Rows().Count} — the difference is lines the parser dropped without saying which");
+            .Because($"the table region is {table.Count} lines, which is {table.Count - 2} after its header and separator, and HazardIndex.Rows() returns {HazardIndex.Rows().Count} -- the difference is lines the parser dropped without saying which");
 
         // The positive control, because every real line in this file splits into
         // eight and a check that can only ever come back empty is
         // indistinguishable from one that cannot look. The content is the
         // 2026-08-30 mistake verbatim.
-        const string BareRow = "| Sessions and locking | **A dump could not read a live writer's file** | — | — | closed 2026-08-30 | `LauncherWait.Evidence` opens FileShare.ReadWrite | FileShare.Delete |";
+        const string BareRow = "| Sessions and locking | **A dump could not read a live writer's file** | - | -- | closed 2026-08-30 | `LauncherWait.Evidence` opens FileShare.ReadWrite | FileShare.Delete |";
 
         await Assert.That(HazardIndex.SplitRow(BareRow).Length).IsNotEqualTo(HazardIndex.Fields)
             .Because("the line the guard exists for has to be a line the guard can see");

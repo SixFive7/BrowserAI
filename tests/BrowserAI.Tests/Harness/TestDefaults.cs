@@ -19,7 +19,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// So the rule for anything declared here: <b>it must be unreachable by a slow
-/// machine.</b> Not "generous", not "an order of magnitude" — unreachable. The
+/// machine.</b> Not "generous", not "an order of magnitude" -- unreachable. The
 /// suite runs at <see cref="SuiteParallelism.Unbounded"/>, which puts 419 tests
 /// and (inside <c>SaturationTests</c>) 100 processes onto one machine at once,
 /// and the .NET thread pool grows by about one worker a second past
@@ -35,7 +35,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <b>If a test needs to know that something happened promptly, it must assert
-/// on an event and not on a clock</b> — a handle that signals, a process that
+/// on an event and not on a clock</b> -- a handle that signals, a process that
 /// exits, a file that appears, a gate the test itself releases, or a
 /// <see cref="ManualClock"/> it drives. A stopwatch compared against a constant
 /// is the defect, not the safeguard.
@@ -51,7 +51,7 @@ internal static class TestDefaults
     /// <para>
     /// ⚠️ <b>This is not a budget and nothing may assert on it.</b> This layer
     /// answers in single-digit milliseconds, so five minutes is roughly
-    /// <b>30,000×</b> the normal cost — the boundary between "this machine is
+    /// <b>30,000×</b> the normal cost -- the boundary between "this machine is
     /// starved" and "nothing is ever coming". A test that trips it has found a
     /// deadlock. <b>A slow machine must never reach it.</b>
     /// </para>
@@ -60,7 +60,7 @@ internal static class TestDefaults
     /// seconds was reached routinely at unbounded parallelism: 71 failures in one
     /// twenty-run session read <i>"No frame arrived on this pipe within 30 s
     /// … The peer is in this process, so this is a deadlock or a dropped write
-    /// rather than a slow machine"</i> — a message that was, every single time,
+    /// rather than a slow machine"</i> -- a message that was, every single time,
     /// wrong about its own cause. The name moved too: <c>Patience</c> says
     /// nothing about which of the two kinds of duration it is, and that ambiguity
     /// is what let a promptness assertion wear a timeout's clothes for a month.
@@ -84,7 +84,7 @@ internal static class TestDefaults
     /// <remarks>
     /// ⚠️ <b>Not a budget; nothing may assert on it.</b> A probe starts, writes a
     /// report and exits in well under a second, and <c>KILL_ON_JOB_CLOSE</c> is a
-    /// kernel operation whose cost is scheduling latency — so this is several
+    /// kernel operation whose cost is scheduling latency -- so this is several
     /// hundred times the normal cost, and <b>a slow machine must never reach
     /// it</b>. It is longer than <see cref="InProcessHang"/> because process
     /// creation is the single most contended operation on a saturated Windows
@@ -99,7 +99,7 @@ internal static class TestDefaults
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Not a budget; nothing may assert on it.</b> A cold Chromium or
-    /// Firefox tree comes up in 5–15 s on an idle machine, so this is more than a
+    /// Firefox tree comes up in 5-15 s on an idle machine, so this is more than a
     /// hundred times the normal cost, and <b>a slow machine must never reach
     /// it</b>.
     /// </para>
@@ -108,7 +108,7 @@ internal static class TestDefaults
     /// correctness property rather than slack.</b> Playwright's own
     /// <c>DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT</c> is three minutes. A harness bound
     /// at or below that always wins the race and replaces upstream's diagnosis
-    /// with <i>"the budget expired"</i> — measured 2026-08-17, a Firefox launch
+    /// with <i>"the budget expired"</i> -- measured 2026-08-17, a Firefox launch
     /// reported at exactly 3m00s as a bare cancellation with the peer still
     /// running and its stderr empty, which names nothing. Widening this cannot
     /// turn a broken launch green: a browser that will not come up now fails with
@@ -127,7 +127,7 @@ internal static class TestDefaults
     /// shape.</b> Measured by reflection on <c>ModelContextProtocol.Core</c>
     /// 2.2.0, 2026-08-18: <c>McpClientOptions.InitializationTimeout</c> defaults
     /// to <c>00:01:00</c>. At unbounded parallelism that produced 46
-    /// <c>Initialization timed out</c> failures in one twenty-run session — a
+    /// <c>Initialization timed out</c> failures in one twenty-run session -- a
     /// message with no elapsed time, no peer identity and no stderr in it.
     /// </para>
     /// <para>
@@ -150,7 +150,7 @@ internal static class TestDefaults
     /// because CI slowness was tripping the probe against servers that do
     /// answer it. Here every peer is an in-process double that answers
     /// immediately, so a probe that ever runs to its timeout is a defect in a
-    /// double — and the cheapest way to find it is to make it cost 250 ms
+    /// double -- and the cheapest way to find it is to make it cost 250 ms
     /// rather than five seconds.
     /// </para>
     /// <para>
@@ -181,7 +181,7 @@ internal static class TestDefaults
     /// </summary>
     /// <remarks>
     /// A provenance stamp rather than a target. The double caps at the same
-    /// place the real child does, and — like the real child — it never rejects
+    /// place the real child does, and -- like the real child -- it never rejects
     /// a version, it caps or echoes.
     /// </remarks>
     public const string ChildProtocolCeiling = "2025-11-25";
@@ -189,7 +189,7 @@ internal static class TestDefaults
     /// <summary>Client options with the probe timeout pinned.</summary>
     /// <param name="protocolVersion">
     /// The revision to pin, or <see langword="null"/> to leave the client on
-    /// its dual-path default — which is the mode that issues the probe.
+    /// its dual-path default -- which is the mode that issues the probe.
     /// </param>
     /// <returns>Options carrying the pin and nothing else surprising.</returns>
     public static McpClientOptions ClientOptions(string? protocolVersion) => new()

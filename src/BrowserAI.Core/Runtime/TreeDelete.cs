@@ -19,7 +19,7 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b>Note also that <c>Directory.GetFiles(path)</c> is top-level only</b> unless
 /// <c>AllDirectories</c> is passed, so the safe-looking alternative is not a
-/// recursive delete at all — it silently leaves every subdirectory in place, and
+/// recursive delete at all -- it silently leaves every subdirectory in place, and
 /// the failure is an empty-looking result rather than an error.
 /// </para>
 /// <para>
@@ -27,7 +27,7 @@ namespace BrowserAI.Runtime;
 /// caller is told one thing rather than everything.</b>
 /// <c>Directory.EnumerateFileSystemEntries(root, "*", SearchOption.AllDirectories)</c>
 /// aborts the <i>entire</i> enumeration on the first
-/// <c>UnauthorizedAccessException</c> — one unreadable subdirectory anywhere and
+/// <c>UnauthorizedAccessException</c> -- one unreadable subdirectory anywhere and
 /// every entry after it is never yielded, including the thousands that would
 /// have deleted cleanly.
 /// </para>
@@ -41,8 +41,8 @@ namespace BrowserAI.Runtime;
 /// file held <c>FileShare.None</c>, and again against one holding a subdirectory
 /// the caller may not read, it removed everything else and threw <b>one</b>
 /// exception naming <b>one</b> node. The on-disk outcome was identical to this
-/// routine's, node for node. <b>What differs is the report</b> — where the
-/// framework named one node, the per-node walk named four and two respectively —
+/// routine's, node for node. <b>What differs is the report</b> -- where the
+/// framework named one node, the per-node walk named four and two respectively --
 /// and that is not a cosmetic difference here, because
 /// <c>browserai_destroy</c>'s answer <i>is</i> the list of what survived, and an
 /// instance directory nobody can attribute is one nobody ever unblocks.
@@ -57,7 +57,7 @@ namespace BrowserAI.Runtime;
 /// did not check for one until 2026-08-18.</b>
 /// <c>Directory.EnumerateDirectories</c> returns a junction or a directory
 /// symlink as an ordinary directory, so the walk descended into it and deleted
-/// the <b>target's</b> contents — outside the tree it was asked to remove, on a
+/// the <b>target's</b> contents -- outside the tree it was asked to remove, on a
 /// path a caller named. <c>browserai_destroy</c> takes that path from the model,
 /// and a browser profile is a tree in which junctions are ordinary: a
 /// <c>Cache</c> moved to another volume, a <c>downloads</c> junction to the real
@@ -72,7 +72,7 @@ namespace BrowserAI.Runtime;
 /// <c>RemoveDirectory</c> on the link. Neither this file's remarks, nor
 /// <c>Runtime\CLAUDE.md</c>, nor the ban message in
 /// [`build/BannedSymbols.txt`](../../../build/BannedSymbols.txt) mentioned
-/// reparse points at all — the ban justified itself on <i>reporting</i> alone,
+/// reparse points at all -- the ban justified itself on <i>reporting</i> alone,
 /// so a reader comparing the two would have concluded this routine was a
 /// superset. It is now, and the ban message says which two things it is a
 /// superset of. Found by
@@ -83,11 +83,11 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b>Three callers, three different reasons to meet the failure.</b>
 /// <c>browserai_destroy</c> deletes a directory that has just held a running
-/// browser, and Chromium leaves mapped files behind for a moment after exit —
+/// browser, and Chromium leaves mapped files behind for a moment after exit --
 /// the race is the normal case rather than the unlucky one.
 /// <c>browserai_reinstall_browser</c> removes a browser tree that ~100
 /// concurrent processes might still be reading, which is why it refuses while
-/// any session has a live browser — and refusing is not the same as being safe,
+/// any session has a live browser -- and refusing is not the same as being safe,
 /// because a leaked handle from a crashed run answers to nobody.
 /// <c>InstanceDirectory</c> is the third: the same just-held-a-browser
 /// race, on a path taken at every clean exit and every startup sweep.
@@ -95,7 +95,7 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-16 (previously "The Velopack swap is the third, and
 /// arrives with the update path").</b> It shipped and it never
-/// arrived, because the swap is <c>force_stop_package</c> — upstream's own
+/// arrived, because the swap is <c>force_stop_package</c> -- upstream's own
 /// binary, which does not call into this. The third caller was
 /// <c>InstanceDirectory</c> all along, and it was using the framework
 /// primitive: found by [the plan's final audit](../../../TODO.md), which is exactly
@@ -160,8 +160,8 @@ internal static class TreeDelete
     }
 
     /// <summary>
-    /// Whether a directory is a reparse point — a junction, a directory symlink
-    /// or a volume mount point — and must therefore be unlinked rather than
+    /// Whether a directory is a reparse point -- a junction, a directory symlink
+    /// or a volume mount point -- and must therefore be unlinked rather than
     /// walked.
     /// </summary>
     /// <remarks>
@@ -179,7 +179,7 @@ internal static class TreeDelete
     /// <c>RemoveDirectory</c> removes the reparse point and leaves an entry in
     /// the mount manager's database, where the framework primitive calls
     /// <c>DeleteVolumeMountPoint</c> first. That residue is a stale name in a
-    /// registry key, not data — and it is the only respect in which this routine
+    /// registry key, not data -- and it is the only respect in which this routine
     /// still does less than the call it replaced. Named rather than left to be
     /// discovered.
     /// </para>
@@ -210,7 +210,7 @@ internal static class TreeDelete
     /// <para>
     /// ⚠️ <b>Added 2026-09-17, off a real failure.</b> Windows refuses to delete
     /// a file carrying <c>FILE_ATTRIBUTE_READONLY</c> with
-    /// <c>ERROR_ACCESS_DENIED</c> — <b>the same code a held handle produces</b>,
+    /// <c>ERROR_ACCESS_DENIED</c> -- <b>the same code a held handle produces</b>,
     /// so the survivor list this routine writes read like a lock for as long as
     /// it did. Git writes every loose object read-only, and that is how it was
     /// found: a scratch tree holding a real repository could not be removed, by
@@ -229,9 +229,9 @@ internal static class TreeDelete
     /// <b>It is not an escalation.</b> Every caller of this routine is deleting
     /// a tree BrowserAI owns or was handed by name, and removing an attribute
     /// from a file that is being deleted in the same breath changes nothing that
-    /// outlives the call. What it buys is that ordinary content — anything a
+    /// outlives the call. What it buys is that ordinary content -- anything a
     /// session downloaded, anything a user dropped into a directory
-    /// <c>browserai_destroy</c> is given — stops being reported as a node the
+    /// <c>browserai_destroy</c> is given -- stops being reported as a node the
     /// product could not remove when it could.
     /// </para>
     /// </remarks>

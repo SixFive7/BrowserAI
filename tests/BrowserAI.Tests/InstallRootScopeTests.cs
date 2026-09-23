@@ -17,8 +17,8 @@ namespace BrowserAI.Tests;
 /// The refusal's predicate is <i>inside this user's profile</i>, and four
 /// ordinary Windows features make a per-user path fail a string comparison of
 /// that: a junction, a <c>subst</c>ed drive letter, an 8.3 short component and
-/// the <c>\\?\</c> prefix. Every one of them is built for real here — no
-/// stand-ins — because a predicate checked only against strings a test invented
+/// the <c>\\?\</c> prefix. Every one of them is built for real here -- no
+/// stand-ins -- because a predicate checked only against strings a test invented
 /// is a predicate checked against its author's idea of an alias.
 /// </para>
 /// <para>
@@ -231,7 +231,7 @@ internal sealed class InstallRootScopeTests
     /// <remarks>
     /// The short-name arm carries its own control: 8.3 generation is a per-volume
     /// setting, and on a volume with it disabled
-    /// <see cref="PathAliases.ShortNameOf"/> answers the long path unchanged —
+    /// <see cref="PathAliases.ShortNameOf"/> answers the long path unchanged --
     /// which would make the arm assert nothing. It asserts the alias is served
     /// either way and says which case it was in the message.
     /// </remarks>
@@ -265,9 +265,9 @@ internal sealed class InstallRootScopeTests
     /// <remarks>
     /// <para>
     /// <b>Through the front door, because the ordering inside <c>Main</c> is
-    /// half the property.</b> The check sits after the log — the log is the only
+    /// half the property.</b> The check sits after the log -- the log is the only
     /// channel a refusal has, since <c>stdout</c> is the protocol and
-    /// <c>System.Console</c> is banned outright — and before the sweep, the live
+    /// <c>System.Console</c> is banned outright -- and before the sweep, the live
     /// marker, the instance directory and every session. So the assertion is not
     /// only <i>it exited</i>: it is that <c>logs\</c> is the <b>only</b> thing
     /// under the root afterwards.
@@ -291,7 +291,7 @@ internal sealed class InstallRootScopeTests
 
         // ⚠️ Inside a kill-on-close job, which is the suite's standing rule for
         // starting a real BrowserAI: a test that leaks one leaks whatever it
-        // started. It is also the hang detector — a build in which the check was
+        // started. It is also the hang detector -- a build in which the check was
         // deleted starts serving and waits on stdin for ever, and what fails
         // then has to be this assertion rather than the whole run.
         using var job = JobObject.CreateKillOnClose();
@@ -344,8 +344,8 @@ internal sealed class InstallRootScopeTests
     /// assertion is that the answer arrives anyway: a filesystem call against an
     /// unreachable share costs a measured 22 s, so a check that reached the
     /// filesystem before deciding would be a 22-second startup stall rather than
-    /// a refusal. The wall clock is not asserted — that would be asserting the
-    /// speed of the machine — but the refusal is, and it is the same ordering
+    /// a refusal. The wall clock is not asserted -- that would be asserting the
+    /// speed of the machine -- but the refusal is, and it is the same ordering
     /// `CanonicalPath` is built on.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -367,7 +367,7 @@ internal sealed class InstallRootScopeTests
     /// <b>This is the arm the 2026-09-15 layout split opened and the decision of
     /// the same day closed.</b> The data root became a constant that
     /// <c>--installto</c> cannot touch, and the live-instance markers and their
-    /// <c>Global\</c> mutex moved to the install root — which was then judged by
+    /// <c>Global\</c> mutex moved to the install root -- which was then judged by
     /// nothing at all. Two users sharing one install root still lose the census
     /// silently, and an apply's <c>force_stop_package</c> still terminates every
     /// process under it.
@@ -421,8 +421,8 @@ internal sealed class InstallRootScopeTests
     /// <remarks>
     /// <b>The false-positive half, for the second root.</b> Every alias arm above
     /// is about the data root; this one is the assurance that the default
-    /// installed arrangement — <c>%LocalAppData%\BrowserAI.app</c> beside
-    /// <c>%LocalAppData%\BrowserAI</c> — is not refused by the check that was
+    /// installed arrangement -- <c>%LocalAppData%\BrowserAI.app</c> beside
+    /// <c>%LocalAppData%\BrowserAI</c> -- is not refused by the check that was
     /// just added, which would stop every installed BrowserAI on the machine.
     /// </remarks>
     /// <returns>The assertion task.</returns>

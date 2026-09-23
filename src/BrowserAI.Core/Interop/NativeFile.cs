@@ -41,7 +41,7 @@ namespace BrowserAI.Interop;
 /// <para>
 /// <b>A file lock rather than a named object, for the reason
 /// <c>Runtime.MaintenanceLock</c> already gives.</b> The kernel releases it
-/// however the holder dies — clean exit, <c>TerminateProcess</c>, a bugcheck —
+/// however the holder dies -- clean exit, <c>TerminateProcess</c>, a bugcheck --
 /// whereas a named semaphore's count is not restored, so one crashed writer
 /// would wedge every BrowserAI on the machine until the next reboot. It has no
 /// thread affinity either, which a named mutex does.
@@ -50,7 +50,7 @@ namespace BrowserAI.Interop;
 /// <b>The locked range is one byte beyond any possible end of file, and that is
 /// what keeps readers out of it.</b> A byte-range lock on Windows is enforced
 /// against <c>ReadFile</c> as well as <c>WriteFile</c>, so locking <c>[0,
-/// ∞)</c> — the obvious spelling — would fail every concurrent reader of the log
+/// ∞)</c> -- the obvious spelling -- would fail every concurrent reader of the log
 /// with <c>ERROR_LOCK_VIOLATION</c>, and *a reader must never be locked out of
 /// the log it came to read*. Locking a region past the end of a file is
 /// explicitly legal and costs nothing, so the region is a pure semaphore that
@@ -74,7 +74,7 @@ internal static partial class NativeFile
     /// <remarks>
     /// <para>
     /// <b><c>FileAccess.Write</c> is <c>GENERIC_WRITE</c>, which
-    /// <c>LockFileEx</c> requires</b> — it refuses a handle carrying neither
+    /// <c>LockFileEx</c> requires</b> -- it refuses a handle carrying neither
     /// <c>GENERIC_READ</c> nor <c>GENERIC_WRITE</c>, which is exactly what the
     /// old <c>FILE_APPEND_DATA</c>-only mask was.
     /// </para>
@@ -86,7 +86,7 @@ internal static partial class NativeFile
     /// ([review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
     /// finding 10); withholding it makes the file undeletable while any handle
     /// is open. Neither is free, and which cost is the right one depends on what
-    /// the file is — see the two call sites, which each say.
+    /// the file is -- see the two call sites, which each say.
     /// </para>
     /// </remarks>
     /// <param name="path">The file. Created when it is not there.</param>
@@ -116,7 +116,7 @@ internal static partial class NativeFile
     /// <para>
     /// <c>LockFileEx</c> rather than <c>LockFile</c> or
     /// <see cref="FileStream"/>'s <c>Lock</c>, both of which fail immediately on
-    /// a conflict and would need a retry loop — which is a spin under exactly
+    /// a conflict and would need a retry loop -- which is a spin under exactly
     /// the contention the lock exists for.
     /// </para>
     /// </remarks>
@@ -156,7 +156,7 @@ internal static partial class NativeFile
     /// struct without <c>DisableRuntimeMarshallingAttribute</c> on the whole
     /// assembly (<c>SYSLIB1051</c>), which is a project-wide change to satisfy
     /// one parameter. This is five blittable fields, and it is checked against
-    /// Microsoft's own metadata by <c>InteropLayoutTests</c> — which is this
+    /// Microsoft's own metadata by <c>InteropLayoutTests</c> -- which is this
     /// directory's rule for any struct written here, and the only mechanism that
     /// can see a field that slid four bytes.
     /// </remarks>

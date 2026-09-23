@@ -16,8 +16,8 @@ namespace BrowserAI.Tests.Harness;
 /// process, so there is no stderr to read afterwards and no log file on disk;
 /// the product's account of what it did exists only in an
 /// <see cref="ILoggerFactory"/> the test constructed. Attaching it to the test
-/// context means a red run carries the proxy's own narration — the negotiated
-/// revision, the dropped frame, the transport that was already disconnected —
+/// context means a red run carries the proxy's own narration -- the negotiated
+/// revision, the dropped frame, the transport that was already disconnected --
 /// instead of an assertion message on its own.
 /// </para>
 /// <para>
@@ -37,9 +37,9 @@ internal sealed class TUnitLoggerProvider : ILoggerProvider
     {
         /// <summary>
         /// Serialises writes across every logger in the process. A
-        /// <see cref="TextWriter"/> is not safe to lock on — it has weak
+        /// <see cref="TextWriter"/> is not safe to lock on -- it has weak
         /// identity, so a lock taken on it can be taken by unrelated code
-        /// through the same object — and the writer is TUnit's rather than
+        /// through the same object -- and the writer is TUnit's rather than
         /// ours.
         /// </summary>
         private static readonly Lock OutputLock = new();
@@ -62,7 +62,7 @@ internal sealed class TUnitLoggerProvider : ILoggerProvider
 
             if (writer is null)
             {
-                // Logging outside a test — a class-level hook, or a background
+                // Logging outside a test -- a class-level hook, or a background
                 // task that outlived the test that started it. Dropping the
                 // record is right; throwing from a logger would turn a
                 // diagnostic into the failure.

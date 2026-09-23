@@ -15,7 +15,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>The child never rejects a version.</b> It caps a newer one and echoes an
-/// older one, both silently — verified from both directions, so a mis-negotiation
+/// older one, both silently -- verified from both directions, so a mis-negotiation
 /// produces nothing to catch and the negotiated value has to be asserted
 /// instead. That is why the product checks it at startup and why this exists.
 /// </para>

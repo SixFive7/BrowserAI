@@ -20,7 +20,7 @@ namespace BrowserAI.TestProbe;
 /// function</b>, and this is the discriminator that pins it.
 /// <c>GetWindowTextW</c>'s contract says a window with no caption returns a null
 /// string; a <c>Chrome_MessageWindow</c> has no caption and returns its name
-/// anyway, because cross-process the call never sends <c>WM_GETTEXT</c> at all —
+/// anyway, because cross-process the call never sends <c>WM_GETTEXT</c> at all --
 /// it reads the kernel-side name set at <c>CreateWindowExW</c>.
 /// </para>
 /// <para>
@@ -33,7 +33,7 @@ namespace BrowserAI.TestProbe;
 /// <para>
 /// <b>It also stands in for a browser.</b> Window classes are per-process, so a
 /// plain console application can register <c>Chrome_MessageWindow</c> and publish
-/// any path it likes — which is simultaneously how the sweep's attribution half
+/// any path it likes -- which is simultaneously how the sweep's attribution half
 /// is tested without a browser, and why attribution can never be allowed to
 /// decide anything on its own.
 /// </para>
@@ -70,7 +70,7 @@ internal static partial class WindowProbe
     /// property of the developer's screen out of an assertion.</b>
     /// <c>MessageWindowTests.EnumWindowsFindsNoMessageWindowsAtAllWhileTheWalkFindsThem</c>
     /// proved <c>EnumWindows</c> had really enumerated by requiring it to return
-    /// more than fifty windows — true of a desktop somebody is using, and
+    /// more than fifty windows -- true of a desktop somebody is using, and
     /// <b>false on a CI agent with no interactive desktop</b>, where a service
     /// window station holds a handful. <c>kb/windows/detection.md</c> already
     /// carried that floor as a <c>[MACHINE]</c> property.
@@ -79,7 +79,7 @@ internal static partial class WindowProbe
     /// A window of our own is the honest control: it is <b>ours</b>, so finding
     /// it proves the enumeration ran, whatever else is on the machine. It takes
     /// its own class, because the assertion beside it counts windows of the
-    /// singleton class that <c>EnumWindows</c> returns and requires zero — a
+    /// singleton class that <c>EnumWindows</c> returns and requires zero -- a
     /// second window of the same class would make that count one and the test
     /// would be asserting the opposite of what it means.
     /// </para>

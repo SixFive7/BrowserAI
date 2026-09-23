@@ -15,8 +15,8 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// Every run starts by reclaiming what a previous run may have leaked. This
 /// suite drives real processes, machine-wide named objects and real
-/// directories, so a run that is killed — a failed assertion taking the host
-/// with it, a debugger detached — leaves state behind that the <i>next</i> run
+/// directories, so a run that is killed -- a failed assertion taking the host
+/// with it, a debugger detached -- leaves state behind that the <i>next</i> run
 /// meets as a failure. That failure reports the wrong cause: it names the
 /// change under test while describing the previous run's crash, and the time
 /// goes on the wrong bug.
@@ -37,7 +37,7 @@ internal static class ScratchRoot
     /// </summary>
     /// <remarks>
     /// <b>Exposed so the pass can be a test rather than only a side effect.</b>
-    /// The suite's own specification says <i>"the pass is itself a test — it
+    /// The suite's own specification says <i>"the pass is itself a test -- it
     /// runs the same reclaim the product performs, so a defect in reclaim shows
     /// up as a suite that cannot start clean, which is a louder signal than a
     /// sweep that quietly finds nothing"</i>, and until 2026-08-17 the pass ran
@@ -47,7 +47,7 @@ internal static class ScratchRoot
     public static List<string> LastPassSurvivors { get; } = [];
 
     /// <summary>
-    /// Every line the spawn-record half of the pass produced — terminated,
+    /// Every line the spawn-record half of the pass produced -- terminated,
     /// skipped, or could not be terminated.
     /// </summary>
     /// <remarks>
@@ -84,7 +84,7 @@ internal static class ScratchRoot
     }
 
     /// <summary>
-    /// <c>%LocalAppData%\BrowserAI-test-scratch</c> — the one place the suite
+    /// <c>%LocalAppData%\BrowserAI-test-scratch</c> -- the one place the suite
     /// writes outside the repository, created and swept on the same pass.
     /// </summary>
     /// <remarks>
@@ -92,8 +92,8 @@ internal static class ScratchRoot
     /// ⚠️ <b>It exists for exactly one thing and must not be used for anything
     /// else: an <b>app root</b> a published BrowserAI will accept.</b> Since
     /// 2026-08-20 the product refuses at startup when its app root is outside
-    /// the current user's profile — see
-    /// <see cref="BrowserAI.Hosting.InstallRootScope"/> — so a test that hands
+    /// the current user's profile -- see
+    /// <see cref="BrowserAI.Hosting.InstallRootScope"/> -- so a test that hands
     /// it <c>&lt;repo&gt;\.work\…</c> through
     /// <see cref="BrowserAiPaths.AppRootOverride"/> is handed a process that
     /// exits 1 before it serves anything.
@@ -102,8 +102,8 @@ internal static class ScratchRoot
     /// <b>A sibling of the product's own root rather than a child of it</b>, so
     /// the reclaim below can delete the whole thing without ever being one
     /// mistake away from a developer's real browsers, sessions and log. The
-    /// repository's own rule — everything the suite writes goes in
-    /// <c>.work\</c> — is deliberately broken here, because the property under
+    /// repository's own rule -- everything the suite writes goes in
+    /// <c>.work\</c> -- is deliberately broken here, because the property under
     /// test is <i>where the app root is</i> and no directory inside the
     /// repository can have it.
     /// </para>
@@ -112,7 +112,7 @@ internal static class ScratchRoot
     /// nowhere else").</b> There is a second place since the reclaim began
     /// announcing what it terminated: <see cref="SpawnRecord"/> writes that to
     /// the machine's process log under <c>%LocalAppData%\BrowserAI\logs</c>. Two
-    /// rather than one, and the count is the whole of the change — the reason
+    /// rather than one, and the count is the whole of the change -- the reason
     /// stands, and so does the rule that a third needs the same argument. Worth
     /// saying plainly: the suite's own published slices have always written
     /// there, which is why <see cref="ProcessLogRecords"/> exists to read them
@@ -155,7 +155,7 @@ internal static class ScratchRoot
     /// <b>It does not weaken <see cref="DriveLetterCase"/> and does not overlap
     /// it.</b> That type re-spells a path deliberately, at the sites whose whole
     /// subject is the spelling, including a spelling no Windows API ever returns
-    /// — so the class of defect is still driven both ways on every run. This
+    /// -- so the class of defect is still driven both ways on every run. This
     /// removes an <i>accidental</i> dependence on the shell from every other
     /// site, which is the opposite of removing coverage.
     /// </para>
@@ -223,8 +223,8 @@ internal static class ScratchRoot
     /// The index root is machine-wide state, and it is the one piece of it this
     /// suite creates that a directory sweep cannot reach: an entry lives under
     /// <c>%LocalAppData%\BrowserAI\index\</c> and names a directory somewhere
-    /// else. A test that pointed the index at the real root — by taking
-    /// <see cref="LocalAppDataPaths"/>'s default rather than a scratch root —
+    /// else. A test that pointed the index at the real root -- by taking
+    /// <see cref="LocalAppDataPaths"/>'s default rather than a scratch root --
     /// would put this run's throwaway directories into a developer's own
     /// <c>browserai_list</c>, and they would stay there.
     /// </para>
@@ -269,8 +269,8 @@ internal static class ScratchRoot
     /// <remarks>
     /// <para>
     /// <b>A rig that inherits an abandoned sweep mutex tests nothing.</b> This
-    /// suite deliberately kills processes holding that object — it is how race
-    /// R3 is provoked at all — so a run cut short between the kill and the
+    /// suite deliberately kills processes holding that object -- it is how race
+    /// R3 is provoked at all -- so a run cut short between the kill and the
     /// acquire leaves the abandonment pending. The next run's <i>first</i>
     /// acquire then reports <c>AcquiredAbandoned</c> whatever it was testing,
     /// and every arm that asserts an ordinary acquisition fails while naming the

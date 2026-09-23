@@ -17,13 +17,13 @@ namespace BrowserAI.Hosting;
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-15 (previously "Step 19 swapped the <b>root</b>, not
 /// the class … what actually had to move is where <c>rootAppDir</c> comes from,
-/// and that is <see cref="Updates.InstallLocation"/> — the locator when this
+/// and that is <see cref="Updates.InstallLocation"/> -- the locator when this
 /// process is an installed one, <c>%LocalAppData%\BrowserAI</c> when it is not
 /// … the two agree only while the install is at its default location, and
 /// <c>Setup.exe --installto</c> makes them disagree silently, which would put
 /// the log and 768 MB of browsers somewhere the running binary is not").</b>
 /// That reasoning was sound and its conclusion was upside down. <b>The data
-/// root is a constant — <c>%LocalAppData%\BrowserAI</c> — and the locator feeds
+/// root is a constant -- <c>%LocalAppData%\BrowserAI</c> -- and the locator feeds
 /// nothing here.</b> What the old wiring guaranteed was that the data would
 /// always be found beside the binary; what it cost is that the data was always
 /// inside a directory the installer destroys. The binary can be relocated, and
@@ -32,32 +32,32 @@ namespace BrowserAI.Hosting;
 /// </para>
 /// <para>
 /// <b>An install root is destroyed twice over, by design.</b> <c>Setup.exe</c>
-/// renames a non-empty root aside and, on success, <b>deletes it</b> — a repair
-/// or an overwrite install is exactly that path — and uninstall runs
+/// renames a non-empty root aside and, on success, <b>deletes it</b> -- a repair
+/// or an overwrite install is exactly that path -- and uninstall runs
 /// <c>remove_dir_contents</c> over the whole root
-/// ([kb](../../../kb/packaging/velopack.md#where-state-may-live--the-finding-the-provisioning-design-rests-on)).
+/// ([kb](../../../kb/packaging/velopack.md#where-state-may-live----the-finding-the-provisioning-design-rests-on)).
 /// Neither event is a mistake and neither can be hooked: there is no callback
 /// before <c>Setup.exe</c>'s rename-and-clean, measured against 1.2.0's own
 /// source. So the layout is the only defence there is, and it is
 /// <c>%LocalAppData%\BrowserAI.app</c> for the install and
-/// <c>%LocalAppData%\BrowserAI</c> for the data — siblings, neither inside the
+/// <c>%LocalAppData%\BrowserAI</c> for the data -- siblings, neither inside the
 /// other.
 /// </para>
 /// <para>
 /// ⚠️ <b>Never derive the data root from the install root, and never from the
 /// image path.</b> Both are to hand and both are wrong. <c>Setup.exe
 /// --installto</c> and the portable zip put the binary anywhere, so a derived
-/// data root moves house whenever the binary does — abandoning the browsers and
+/// data root moves house whenever the binary does -- abandoning the browsers and
 /// the session index rather than keeping them. And a Velopack hook runs on
 /// <c>&lt;install root&gt;\current\BrowserAI.exe</c>, so a hook deriving a root
 /// from its own image is the one process that would resolve it differently from
-/// the product — which matters most in the hook that offers to
+/// the product -- which matters most in the hook that offers to
 /// <i>delete</i> the data root.
 /// </para>
 /// <para>
 /// <b>Never <c>AppContext.BaseDirectory</c>.</b> It reads as "next to the
 /// binary" and resolves <i>inside</i> <c>current\</c>, which an update replaces
-/// wholesale — so a log or a browser tree placed there is deleted by the event
+/// wholesale -- so a log or a browser tree placed there is deleted by the event
 /// most likely to have produced the line you came to read. A shipped product
 /// examined for this project does exactly this and carries a 10-day log
 /// retention policy that can therefore never once have applied.
@@ -84,13 +84,13 @@ internal interface IAppPaths
     string LogDirectory { get; }
 
     /// <summary>
-    /// Where provisioned browsers live — 768 MB of them, outside anything an
+    /// Where provisioned browsers live -- 768 MB of them, outside anything an
     /// installer removes.
     /// </summary>
     /// <remarks>
     /// <b>Always absolute.</b> It reaches the child as
     /// <c>PLAYWRIGHT_BROWSERS_PATH</c>, and a relative value there resolves
-    /// against <c>INIT_CWD</c> — inherited from whatever npm ancestor last ran —
+    /// against <c>INIT_CWD</c> -- inherited from whatever npm ancestor last ran --
     /// before it resolves against the child's own working directory. That
     /// failure lands the browser somewhere nobody chose and reports nothing.
     /// </remarks>
@@ -102,7 +102,7 @@ internal interface IAppPaths
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Outside the install root for the reason the log is — a repair install
+    /// Outside the install root for the reason the log is -- a repair install
     /// and an uninstall both empty that root, and the index is
     /// [the only inventory of session directories there is](../../BrowserAI/Sessions/SessionIndex.cs).
     /// Losing it would not lose a session, because every entry is re-asserted on
@@ -126,9 +126,9 @@ internal interface IAppPaths
     /// <para>
     /// Outside the install root for the same reason the log is, and per-run
     /// rather than shared, because the child's working directory <i>is</i> the
-    /// output root — upstream resolves a relative <c>filename</c> against the
+    /// output root -- upstream resolves a relative <c>filename</c> against the
     /// child's cwd, so a bare <c>foo.png</c> lands inside this tree by
-    /// construction — and two runs must not write into one.
+    /// construction -- and two runs must not write into one.
     /// </para>
     /// <para>
     /// <b>Corrected again 2026-08-16 (previously "The replacement is step 12's,
@@ -141,7 +141,7 @@ internal interface IAppPaths
     /// be answerable before any session exists, and the child that answers it
     /// needs a working directory and a profile of its own. The second is
     /// <b>every session's generated config</b>, which is a per-run artifact
-    /// rather than part of a session's durable state — and no artifact is ever at
+    /// rather than part of a session's durable state -- and no artifact is ever at
     /// a session's root, so a third file there is out. See
     /// <see cref="Sessions.SessionLayout"/> for what the root is allowed to hold
     /// and why.
@@ -149,7 +149,7 @@ internal interface IAppPaths
     /// <para>
     /// <b>Corrected 2026-08-16 (previously "Sessions replace this at build-order
     /// step 10").</b> They do not, and step 10 is where that was first noticed.
-    /// Step 10 built the session directory, its lock and the three lock scopes —
+    /// Step 10 built the session directory, its lock and the three lock scopes --
     /// but nothing in the product created a session yet.
     /// </para>
     /// </remarks>

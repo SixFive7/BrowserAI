@@ -21,7 +21,7 @@ namespace BrowserAI.Tests;
 /// was found.</b> <i>Previously: "<b>The config key reads fine and does
 /// nothing.</b> Upstream's <c>validateBrowserConfig</c> intends
 /// <c>chromiumSandbox = true</c> on non-Linux, and the browser still runs
-/// <c>--no-sandbox</c> — upstream behaviour contradicting upstream intent,
+/// <c>--no-sandbox</c> -- upstream behaviour contradicting upstream intent,
 /// which means the default posture is unsandboxed and a config key is not a
 /// fix. Only the CLI flag works."</i> The MCP CLI's action stage used to
 /// normalise its own option with
@@ -32,7 +32,7 @@ namespace BrowserAI.Tests;
 /// honoured with no flag at all.
 /// </para>
 /// <para>
-/// <b>Both arms are needed, and the second is the one that ages — it aged.</b>
+/// <b>Both arms are needed, and the second is the one that ages -- it aged.</b>
 /// The first asserts what BrowserAI ships. The second used to assert that the
 /// upstream defect was still there, so that the day upstream fixed it this test
 /// would go red and the flag would stop being load-bearing on purpose rather
@@ -44,7 +44,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>BrowserAI's own behaviour did not change and was deliberately left
 /// alone.</b> <see cref="ChildLaunch.SandboxFlag"/> still goes on the command
 /// line and the generator still omits the key, which the first arm proves
-/// unchanged — and that is now belt and braces rather than the only thing that
+/// unchanged -- and that is now belt and braces rather than the only thing that
 /// works. Dropping the flag on the strength of upstream's new default is a
 /// decision nobody has taken: it would make the sandbox depend on a default
 /// that has just been shown to move.

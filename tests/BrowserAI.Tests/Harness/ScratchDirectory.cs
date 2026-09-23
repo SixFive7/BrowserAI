@@ -20,8 +20,8 @@ namespace BrowserAI.Tests.Harness;
 /// ⚠️ <b>Corrected 2026-08-29 (previously "Everything the suite writes lands
 /// under <c>.work\</c> … and never in <c>%TEMP%</c> or beside the product's real
 /// <c>%LocalAppData%\BrowserAI</c>").</b> The second half was never true of what
-/// the suite <i>starts</i> — a published slice writes its records into the real
-/// process log, which is what <see cref="ProcessLogRecords"/> reads — and since
+/// the suite <i>starts</i> -- a published slice writes its records into the real
+/// process log, which is what <see cref="ProcessLogRecords"/> reads -- and since
 /// 2026-08-29 it is not true of the harness either: <see cref="SpawnRecord"/>
 /// announces a reclaim it performed to that same log. The two places outside the
 /// repository are named on <see cref="ScratchRoot.ProfileScratch"/>.
@@ -68,7 +68,7 @@ internal sealed class ScratchDirectory : IDisposable
     /// <c>Directory.Delete(recursive: true)</c> is banned repository-wide</b>
     /// (<c>build/BannedSymbols.txt</c>). The ban has no exception for test code
     /// and never had one to lose: the only recorded violation of that rule in
-    /// this repository was in test code — <see cref="ScratchRoot"/>'s reclaim
+    /// this repository was in test code -- <see cref="ScratchRoot"/>'s reclaim
     /// pass, which used the framework primitive until 2026-08-17 and was caught
     /// by a manual audit rather than by anything mechanical.
     /// </para>
@@ -102,13 +102,13 @@ internal sealed class ScratchDirectory : IDisposable
     /// handles down:</b> <c>TerminateProcess</c> returning is not proof that a
     /// mapped file has been released, and neither is a browser vanishing from
     /// the process table. What a caller measures with this is whether a tree
-    /// becomes deletable <i>at all</i> — a handle on its way out against a leak
-    /// nothing will ever release — and never how fast.
+    /// becomes deletable <i>at all</i> -- a handle on its way out against a leak
+    /// nothing will ever release -- and never how fast.
     /// </para>
     /// <para>
     /// ⚠️ <b>One routine and not three.</b> It was three: two private copies in
     /// <c>BrowserContainmentTests</c> and <c>BrowserIdleTimerTests</c>, and a
-    /// third about to be typed into <c>FirefoxSessionTests</c> — which is the
+    /// third about to be typed into <c>FirefoxSessionTests</c> -- which is the
     /// shape <see cref="TreeDelete"/>'s own remarks name as how two callers end
     /// up with one behaviour and the third with another, with nothing reporting
     /// the difference. <paramref name="patience"/> stays a parameter rather than

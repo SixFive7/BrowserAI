@@ -17,7 +17,7 @@ namespace BrowserAI.Tests;
 /// Chromium, and pinning it to a browser launch would make it something nobody
 /// runs. The window that stands in for a browser is published by a probe
 /// process, because window classes are per-process and any program may register
-/// <c>Chrome_MessageWindow</c> — which is simultaneously how this is testable
+/// <c>Chrome_MessageWindow</c> -- which is simultaneously how this is testable
 /// and why attribution is never allowed to decide anything on its own.
 /// </para>
 /// <para>
@@ -88,7 +88,7 @@ internal sealed class MessageWindowTests
     }
 
     /// <summary>
-    /// The two title APIs agree about every message window on this machine —
+    /// The two title APIs agree about every message window on this machine --
     /// where "disagree" means the two <i>APIs</i> disagree, not that the window
     /// changed between two reads of it.
     /// </summary>
@@ -97,7 +97,7 @@ internal sealed class MessageWindowTests
     /// ⚠️ <b>It flaked once in five full runs on 2026-08-26, and the flake was
     /// the test measuring something other than its own claim.</b>
     /// <c>GetWindowTextW</c> answered a title for a Chromium window while
-    /// <c>InternalGetWindowText</c> answered empty for the same handle — the
+    /// <c>InternalGetWindowText</c> answered empty for the same handle -- the
     /// suite's own concurrent slice session tearing its browser down between the
     /// two calls. <b>A window that vanished or was renamed between two reads is
     /// not an API disagreement</b>, and the old shape could not tell the two
@@ -112,7 +112,7 @@ internal sealed class MessageWindowTests
     /// least one of the two, which is a fact about the window and is counted as
     /// one. <b>It is not a retry-until-green loop:</b> there is no loop, no
     /// clock, and a stable disagreement fails on the second probe exactly as it
-    /// did on the first. It is also not a weakening — the assertion is still
+    /// did on the first. It is also not a weakening -- the assertion is still
     /// <i>zero divergences</i>, over strictly more evidence per window.
     /// </para>
     /// <para>
@@ -314,7 +314,7 @@ internal sealed class MessageWindowTests
         // and that is a cost decision made once: every round starts and kills a
         // process, this test is not serialised against the rest of the suite,
         // and the suite's in-process rigs assert a two-second budget. A longer
-        // run buys nothing — a walk either survives a window dying under it or
+        // run buys nothing -- a walk either survives a window dying under it or
         // it does not.
         for (var round = 0; round < 3; round++)
         {
@@ -335,7 +335,7 @@ internal sealed class MessageWindowTests
         // `restarts` is recorded rather than asserted on: a restart needs a
         // window to die in the microseconds between two FindWindowExW calls, so
         // requiring one would be a flaky test. What is asserted is the invariant
-        // a missing ERROR_INVALID_WINDOW_HANDLE check breaks — a walk that
+        // a missing ERROR_INVALID_WINDOW_HANDLE check breaks -- a walk that
         // quietly stops early and loses a window that was there the whole time.
         await Assert.That(restarts).IsGreaterThanOrEqualTo(0);
 

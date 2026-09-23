@@ -63,7 +63,7 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// <b>The problem it solves is bandwidth, not time.</b>
 /// <see cref="FirstRunProvisioningTests"/> provisions a browser from an empty
 /// root on every run, which is 207.3 MB down at chromium 1244
-/// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)) —
+/// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)) --
 /// <i>corrected 2026-09-17, previously "203.8 MB down" with no revision beside
 /// it, which is how a figure goes stale in a comment nobody re-reads</i>.
 /// That was one run a day; it is about to be dozens, and pointing that at a
@@ -73,8 +73,8 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// <b>What is cached is the provisioned tree, and the TTL is one hour measured
 /// from the download.</b> Inside the hour the test copies that tree in instead
 /// of downloading; outside it, the test downloads for real and refreshes the
-/// entry. So the genuinely cold path still runs — at most hourly, and at least
-/// hourly — and <b>no cached run can extend the TTL</b>, because the stamp
+/// entry. So the genuinely cold path still runs -- at most hourly, and at least
+/// hourly -- and <b>no cached run can extend the TTL</b>, because the stamp
 /// records when the bytes were fetched rather than when they were last used.
 /// </para>
 /// <para>
@@ -93,7 +93,7 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// <item>
 /// <description>
 /// <b>Every run says which path it took</b>, in the coverage block
-/// <see cref="SuiteEnvironment.Summary"/> prints unconditionally — the same
+/// <see cref="SuiteEnvironment.Summary"/> prints unconditionally -- the same
 /// block, and for the same reason, that makes a degraded run distinguishable
 /// from a real one.
 /// </description>
@@ -115,7 +115,7 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// <para>
 /// <b>Publishing is committed by a rename and never by a write, which is this
 /// repository's standing answer to a concurrent writer.</b> The tree is copied
-/// into <c>.staging-&lt;guid&gt;\</c> — a name readers do not enumerate — and
+/// into <c>.staging-&lt;guid&gt;\</c> -- a name readers do not enumerate -- and
 /// then moved to its final <c>entry-&lt;stamp&gt;-&lt;guid&gt;\</c> name in one
 /// <c>MoveFileEx</c>. The destination name carries a GUID, so two publishers
 /// cannot collide and neither has to wait for a lock; a reader either sees a
@@ -127,9 +127,9 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// <see cref="Plan"/> re-establishes it before every use: the stamp must name
 /// this build's revision, <c>chromium-&lt;rev&gt;\INSTALLATION_COMPLETE</c> and
 /// an <c>ffmpeg-*</c> marker must both be present, <c>chrome.exe</c> must be
-/// where the payload says, no <c>chromium_headless_shell-*</c> may exist — a
+/// where the payload says, no <c>chromium_headless_shell-*</c> may exist -- a
 /// cache carrying one would make the test's negative assertion pass for the
-/// wrong reason — and the census must match the stamp file for file and byte for
+/// wrong reason -- and the census must match the stamp file for file and byte for
 /// byte. A tree that fails any of those is refused with the reason, and the run
 /// goes to the CDN.
 /// </para>
@@ -186,8 +186,8 @@ internal static class FirstRunCache
     /// <remarks>
     /// <b>Under the repository's own gitignored scratch root, and nowhere near
     /// <c>%LocalAppData%\BrowserAI</c>.</b> That directory holds the developer's
-    /// real provisioned browsers; a cache that wrote there — or worse, pruned
-    /// there — would be a destructive operation against the one tree this
+    /// real provisioned browsers; a cache that wrote there -- or worse, pruned
+    /// there -- would be a destructive operation against the one tree this
     /// repository's rules put out of bounds.
     /// </remarks>
     public static string Root { get; } = Path.Combine(RepositoryLayout.Root.FullName, ".work", "first-run-cache");
@@ -303,12 +303,12 @@ internal static class FirstRunCache
     /// <c>INSTALLATION_COMPLETE</c> and nothing else, and a BrowserAI process is
     /// watching this directory while the copy runs. A marker that arrived before
     /// the bytes underneath it would hand that process a half-copied Chromium
-    /// and produce <c>spawn EFTYPE</c> — which is precisely the tree upstream
+    /// and produce <c>spawn EFTYPE</c> -- which is precisely the tree upstream
     /// never checks for and this product does.
     /// </para>
     /// <para>
     /// Every marker is written through <see cref="InstallationMarker"/>, which
-    /// shares the write, and each is empty — verified 2026-08-17 against a real
+    /// shares the write, and each is empty -- verified 2026-08-17 against a real
     /// provisioned root, where all four markers are 0 bytes.
     /// </para>
     /// </remarks>
@@ -445,8 +445,8 @@ internal static class FirstRunCache
     /// <remarks>
     /// <b>Public because it is the half worth testing directly.</b> The rename
     /// makes a torn entry unreachable; this is what catches an entry that was
-    /// complete once and is not now — a file deleted out of the cache, a disk
-    /// that lost one, a revision that moved under it — and every refusal it
+    /// complete once and is not now -- a file deleted out of the cache, a disk
+    /// that lost one, a revision that moved under it -- and every refusal it
     /// returns names what it found rather than saying no.
     /// </remarks>
     /// <param name="candidate">The entry directory.</param>
@@ -546,14 +546,14 @@ internal static class FirstRunCache
     /// </para>
     /// <para>
     /// <b>This is the same shape, and the same justification, as
-    /// <see cref="InstallationMarker"/>'s retry</b> — a bounded wait against a
+    /// <see cref="InstallationMarker"/>'s retry</b> -- a bounded wait against a
     /// transient sharing state that resolves on its own, not a sleep inserted to
     /// let a peer finish. The budget is small and the last failure is
     /// <b>rethrown</b>, so a rename that is genuinely blocked still surfaces as
     /// itself rather than as an empty directory. The product meets the identical
     /// condition in <c>InstanceDirectory.Claim</c> and answers it differently and
     /// correctly: there the refusal <i>means</i> "somebody holds it", the
-    /// directory is skipped, and the next startup reclaims it — a retry there
+    /// directory is skipped, and the next startup reclaims it -- a retry there
     /// would weaken a liveness test, where here it protects a commit.
     /// </para>
     /// </remarks>
@@ -587,7 +587,7 @@ internal static class FirstRunCache
     /// <b>One entry, because each is ~430 MiB and a second buys nothing.</b> The
     /// window in which this could delete a tree another process is reading needs
     /// one run to be seeding from an entry while a second finishes a cold
-    /// download — that is, for the same entry to be inside the TTL for one
+    /// download -- that is, for the same entry to be inside the TTL for one
     /// process and outside it for another, within the seconds a copy takes. A
     /// staging directory older than the TTL is swept too: it belongs to a run
     /// that died mid-publish, and nothing will ever come back for it.

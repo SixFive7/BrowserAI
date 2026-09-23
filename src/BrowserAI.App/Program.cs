@@ -26,7 +26,7 @@ namespace BrowserAI.App;
 /// <para>
 /// ⚠️ <b>The hooks are dispatched by Velopack itself rather than by reading
 /// <c>args</c> here.</b> <c>VelopackApp.Run()</c> recognises its own four
-/// arguments, invokes the callback and <b>exits the process</b> — so serving a
+/// arguments, invokes the callback and <b>exits the process</b> -- so serving a
 /// hook never reaches the line below it. Re-implementing that dispatch would be
 /// a second parser for somebody else's argument syntax, running beside theirs,
 /// and the first divergence would be an installer that hangs on its own timeout.
@@ -41,7 +41,7 @@ internal static class Program
     /// <b>This application's testable non-interactive path.</b> A window
     /// application whose only entry point opens a window is one nothing can
     /// assert about, and a support artifact that describes a different state
-    /// from the window would be worse than none — so the dialog and this file
+    /// from the window would be worse than none -- so the dialog and this file
     /// render the same <see cref="AppState"/>.
     /// </remarks>
     public const string ReportArgument = "--report";
@@ -66,7 +66,7 @@ internal static class Program
     /// here.</b> The installer starts THIS process with
     /// <c>VELOPACK_FIRSTRUN=true</c>, and a child inherits its parent's
     /// environment block: click <i>Register</i>, and <c>claude.exe</c> is
-    /// started carrying it — and anything <i>that</i> process starts carries it
+    /// started carrying it -- and anything <i>that</i> process starts carries it
     /// too, including <c>BrowserAI.Server.exe</c>. The server exits 0 on that
     /// variable, deliberately, because a server the installer started has no
     /// client. It would then have exited 0 for a client that really was there,
@@ -93,7 +93,7 @@ internal static class Program
     /// </summary>
     /// <remarks>
     /// The shell's folder picker falls back to the pre-Vista dialog on a thread
-    /// that is not in one — silently, with no error — and the common controls a
+    /// that is not in one -- silently, with no error -- and the common controls a
     /// task dialog is made of expect it. Neither failure is one a test here can
     /// see, so the reason is written at both ends.
     /// </remarks>
@@ -283,7 +283,7 @@ internal sealed class ConfigurationSession(
     /// <remarks>
     /// %s <b>This is the reporting half of the dialog's exception boundary.</b>
     /// Everything this app does runs inside a reverse P/Invoke, where an escaped
-    /// exception is a <c>FailFast</c> — no window, no record, nothing. The host
+    /// exception is a <c>FailFast</c> -- no window, no record, nothing. The host
     /// catches, hands it here, and then re-renders, so the note this sets is
     /// what the person meets. The log line is the other half and is the one a
     /// support artifact will carry. <i>Added 2026-09-16.</i>
@@ -298,7 +298,7 @@ internal sealed class ConfigurationSession(
 
     /// <summary>Lets go of anything still in flight.</summary>
     /// <remarks>
-    /// The work is abandoned rather than waited for — a window that is closing
+    /// The work is abandoned rather than waited for -- a window that is closing
     /// must not wait for a feed that is not answering, which is the whole reason
     /// the work left this thread.
     /// </remarks>
@@ -309,7 +309,7 @@ internal sealed class ConfigurationSession(
     /// for over yet?
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>This is what replaces blocking the UI thread — 2026-09-16.</b> The
+    /// ⚠️ <b>This is what replaces blocking the UI thread -- 2026-09-16.</b> The
     /// update check and the download used to be called with
     /// <c>.GetAwaiter().GetResult()</c> from inside the click, against a client
     /// whose only bound was Velopack's thirty-minute <c>HttpClient</c> default.
@@ -506,7 +506,7 @@ internal sealed class ConfigurationSession(
     /// <b>The apply is in here rather than on the click, and the reason is that
     /// it does not return.</b> <c>ApplyAndRestart</c> hands over to
     /// <c>Update.exe</c> and ends this process, so there is nothing for a UI
-    /// thread to do afterwards — and putting it on the click would mean the
+    /// thread to do afterwards -- and putting it on the click would mean the
     /// download it follows had to be on the click too, which is the defect this
     /// whole path was rewritten for.
     /// </remarks>

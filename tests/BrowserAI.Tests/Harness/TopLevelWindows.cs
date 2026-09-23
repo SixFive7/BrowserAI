@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// <c>EnumWindows</c> and the class name of every window it returns — the
+/// <c>EnumWindows</c> and the class name of every window it returns -- the
 /// oracle that keeps the product's class-qualified message-window walk from
 /// being "simplified" into a loop that silently finds nothing.
 /// </summary>
@@ -15,7 +15,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>The two sets do not overlap, and that is the whole point.</b>
 /// <c>EnumWindows</c> walks top-level windows; a message-only window has
 /// <c>HWND_MESSAGE</c> as its parent and is not one. So the obvious-looking
-/// rewrite — enumerate all the windows and filter by class — finds <b>zero</b>
+/// rewrite -- enumerate all the windows and filter by class -- finds <b>zero</b>
 /// <c>Chrome_MessageWindow</c>s, on a machine that has dozens of them. It would
 /// not throw, it would not warn, and every sweep would report a clean machine
 /// forever.
@@ -85,7 +85,7 @@ internal static partial class TopLevelWindows
     /// <returns>Whether Windows would draw it.</returns>
     /// <remarks>
     /// <b>Every GUI process on this machine owns invisible top-level windows</b>
-    /// — the input-method ones, <c>IME</c> and <c>MSCTFIME UI</c> — so an
+    /// -- the input-method ones, <c>IME</c> and <c>MSCTFIME UI</c> -- so an
     /// assertion about "the windows a process has" that did not filter on this
     /// would be an assertion about the input stack.
     /// </remarks>

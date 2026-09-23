@@ -15,7 +15,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// This is the assertion build-order step 5 turns on: a child spawned through
 /// BrowserAI's transport must have <b>BrowserAI as its direct parent</b>. The
-/// failure it is aimed at is silent by nature — the SDK's own stdio transport
+/// failure it is aimed at is silent by nature -- the SDK's own stdio transport
 /// rewrites every Windows command into <c>cmd.exe /c …</c>, and the resulting
 /// shell is invisible to everything except a parent-pid query. A test that
 /// merely checked "the child started and answered" passes with the shell in
@@ -25,7 +25,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>NtQueryInformationProcess</c> rather than WMI or a toolhelp walk:
 /// ~0.77 µs per call against ~3.3 ms for <c>Process.GetProcessById</c> and
 /// milliseconds for WMI, and it is what <c>dotnet/runtime</c> itself uses. It
-/// is undocumented-but-permanent in the sense that matters here — the field
+/// is undocumented-but-permanent in the sense that matters here -- the field
 /// this reads has been at the same offset since Windows NT, and the call is
 /// made against a process the caller already owns.
 /// </para>

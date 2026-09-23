@@ -26,7 +26,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>Program.Main</c> reads <see cref="AppRootOverride"/> and takes it over
 /// the computed default, and
 /// <see cref="PublishedSlice.InheritedEnvironment"/> copies the whole
-/// environment — that variable included — into the published child. This type
+/// environment -- that variable included -- into the published child. This type
 /// constructs <see cref="LocalAppDataPaths"/> with <b>no</b> root argument, so
 /// it always answers the per-user default under
 /// <c>%LOCALAPPDATA%</c>. The two disagree exactly when the override is set,
@@ -38,7 +38,7 @@ namespace BrowserAI.Tests.Harness;
 /// that date the product also took its root from
 /// <c>VelopackLocator.Current.RootAppDir</c> when it was an installed process,
 /// so this type answered the default while an installed BrowserAI answered
-/// wherever <c>Setup.exe --installto</c> had put it — a second way to disagree
+/// wherever <c>Setup.exe --installto</c> had put it -- a second way to disagree
 /// that no test could see, because a test host is never an install. The data
 /// root is a constant now (<see cref="IAppPaths"/>), the locator feeds it
 /// nothing, and <c>new LocalAppDataPaths()</c> with no argument <i>is</i> what
@@ -68,13 +68,13 @@ internal static class BrowserAiPaths
     /// </summary>
     /// <remarks>
     /// The only way to give a real BrowserAI an <b>empty</b> browsers root
-    /// without deleting the developer's own — which would destroy 430 MiB and
+    /// without deleting the developer's own -- which would destroy 430 MiB and
     /// break every other browser test running beside it.
     /// </remarks>
     public static string AppRootOverride => Program.AppRootVariable;
 
     /// <summary>
-    /// Every path the product resolves under the default data root — the same
+    /// Every path the product resolves under the default data root -- the same
     /// object <see cref="BrowsersDirectory"/> comes from.
     /// </summary>
     /// <remarks>
@@ -92,7 +92,7 @@ internal static class BrowserAiPaths
     /// ⚠️ <b>Declared before everything that uses it, and that ordering is
     /// load-bearing.</b> Static field initialisers run in declaration order, so
     /// with this below <see cref="ExpectedChromiumExecutable"/> the path composed
-    /// there is <c>chromium-</c> with no revision at all — which reads as a
+    /// there is <c>chromium-</c> with no revision at all -- which reads as a
     /// browser that resolved to the wrong place. Caught by the suite on
     /// 2026-08-16, not by review.
     /// </remarks>
@@ -101,7 +101,7 @@ internal static class BrowserAiPaths
     /// <summary>The firefox revision the committed snapshot names.</summary>
     /// <remarks>
     /// ⚠️ <b>Corrected 2026-08-19 (previously "Firefox is not a browser BrowserAI
-    /// creates sessions for — that is still owed, and carried in TODO.md").</b>
+    /// creates sessions for -- that is still owed, and carried in TODO.md").</b>
     /// It is one now: <c>browserai_init</c> accepts <c>browser: "firefox"</c>,
     /// and <c>FirefoxSessionTests</c> drives one through the front door. The
     /// revision was already needed before that, because the
@@ -120,7 +120,7 @@ internal static class BrowserAiPaths
     /// <para>
     /// <b>Named so that "nobody has provisioned it" is distinguishable from "it
     /// was provisioned and the executable is missing".</b> The second is a real
-    /// defect and reads as a clean machine without it —
+    /// defect and reads as a clean machine without it --
     /// <see cref="SuiteEnvironment.StateOf"/> answers
     /// <see cref="CapabilityState.Partial"/> for that shape, which fails in
     /// every run rather than skipping. The distinction used to be drawn inside
@@ -219,8 +219,8 @@ internal static class BrowserAiPaths
     /// <b>The revision and the browser version move independently, which is why
     /// both are readable rather than just the one the directory name carries.</b>
     /// A revision bump at an unchanged browser version is a REBUILD of the same
-    /// browser — chromium 1244 to 1245 held 154.0.8037.0 across it, and firefox
-    /// 1542 to 1544 held 155.0 — while a browser version move is a new browser.
+    /// browser -- chromium 1244 to 1245 held 154.0.8037.0 across it, and firefox
+    /// 1542 to 1544 held 155.0 -- while a browser version move is a new browser.
     /// A document that prints the pair cannot be held to that difference off the
     /// revision alone.
     /// </remarks>
@@ -228,7 +228,7 @@ internal static class BrowserAiPaths
     /// <returns>The browser version, as the snapshot spells it.</returns>
     /// <exception cref="InvalidOperationException">
     /// The snapshot names no such component, or names one that carries no
-    /// browser version — which <c>ffmpeg</c> and <c>winldd</c> genuinely do not.
+    /// browser version -- which <c>ffmpeg</c> and <c>winldd</c> genuinely do not.
     /// </exception>
     public static string BrowserVersionOf(string browser) => FieldOf(browser, "browserVersion");
 

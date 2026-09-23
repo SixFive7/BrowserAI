@@ -12,7 +12,7 @@ namespace BrowserAI.Storage;
 /// <b>The code is kept beside the message because callers act on it and readers
 /// act on the message.</b> <c>SQLITE_BUSY</c> is a thing to wait out,
 /// <c>SQLITE_MISUSE</c> is a defect in this layer, <c>SQLITE_NOTADB</c> is a
-/// file that is not ours — three different answers a caller has to be able to
+/// file that is not ours -- three different answers a caller has to be able to
 /// tell apart without reading English.
 /// </para>
 /// <para>

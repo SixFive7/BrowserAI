@@ -22,7 +22,7 @@ namespace BrowserAI.Tests.Harness;
 /// Measured 2026-08-16 @ Claude Code 2.1.233: a duplicate <c>add</c> exits
 /// <b>1</b> with <i>"MCP server browserai already exists in user config"</i> and
 /// a <c>remove</c> of an absent name exits <b>1</b> with <i>"No MCP server named
-/// \"browserai\" in user scope"</i> — the same exit code as every real failure,
+/// \"browserai\" in user scope"</i> -- the same exit code as every real failure,
 /// which is why the product has to read the words. A double that invented
 /// friendlier exit codes would let the product's discrimination rot unnoticed,
 /// so <c>RegistrationTests.TheClientStillSaysWhatTheExitCodesCannot</c> asserts
@@ -59,7 +59,7 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     /// <summary>What is registered, by server name, valued by the command.</summary>
     public Dictionary<string, string> Registered { get; } = new(StringComparer.Ordinal);
 
-    /// <summary>The verbs this double was asked for, in order — <c>add</c> or <c>remove</c>.</summary>
+    /// <summary>The verbs this double was asked for, in order -- <c>add</c> or <c>remove</c>.</summary>
     public IReadOnlyList<string> Verbs => [.. Invocations.Select(arguments => arguments.Count > 1 ? arguments[1] : "<none>")];
 
     /// <inheritdoc />

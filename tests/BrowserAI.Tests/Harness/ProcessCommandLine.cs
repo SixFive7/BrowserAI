@@ -22,7 +22,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>It reads by pid and reports a path; it never matches a name.</b> The image
 /// path is what lets a caller say "this pid is the Chromium <i>we</i>
-/// provisioned" by comparing against a path BrowserAI owns — the sanctioned
+/// provisioned" by comparing against a path BrowserAI owns -- the sanctioned
 /// alternative to an image-name match, and the reason the never-by-image-name
 /// rule costs nothing here.
 /// </para>

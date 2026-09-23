@@ -13,12 +13,12 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// <b>Both are real and neither needs a privilege.</b> That is what lets the
-/// tests that use them assert on the product rather than on a stand-in — a
+/// tests that use them assert on the product rather than on a stand-in -- a
 /// predicate checked only against strings a test invented is a predicate checked
 /// against its author's idea of an alias.
 /// </para>
 /// <para>
-/// The drive-letter aliases — <c>subst</c> and a mapped network drive — are
+/// The drive-letter aliases -- <c>subst</c> and a mapped network drive -- are
 /// <see cref="DosDeviceAlias"/>'s, because they are made by a different
 /// mechanism and have to be undone.
 /// </para>
@@ -71,7 +71,7 @@ internal static partial class PathAliases
     /// assigned, and a hand-written <c>~1</c> would be a string that merely looks
     /// like one. A volume with 8.3 generation disabled answers with the long path
     /// unchanged, which is a fact a caller has to notice rather than something to
-    /// paper over — so the answer is returned as it comes and the assertion that
+    /// paper over -- so the answer is returned as it comes and the assertion that
     /// it differs belongs to the test.
     /// </remarks>
     /// <param name="path">An existing path.</param>

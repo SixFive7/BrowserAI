@@ -38,7 +38,7 @@ namespace BrowserAI.Logging;
 /// <para>
 /// <b>Every failure is swallowed.</b> Local disk only, no network path, no
 /// dialog, no retry loop. A log write that fails is dropped, because logging
-/// must never be able to become the outage — a <c>\\host\share</c> that is not
+/// must never be able to become the outage -- a <c>\\host\share</c> that is not
 /// answering blocks a file call for 21 measured seconds, and a log write is not
 /// where anyone should discover that.
 /// </para>
@@ -47,12 +47,12 @@ namespace BrowserAI.Logging;
 /// the machine's log rather than one process's own.</b>
 /// <see cref="NativeFile.OpenForLockedAppend"/> is asked for no delete sharing
 /// here, which closes
-/// [finding 10](../../../docs/reviews/2026-08-18-adversarial-processes.md) — with
+/// [finding 10](../../../docs/reviews/2026-08-18-adversarial-processes.md) -- with
 /// it granted, anything could unlink the live log and every subsequent write
 /// succeeded into an unlinked file object while <see cref="CurrentFile"/> went
 /// on naming a path that no longer existed, and nothing failed. The cost is
 /// accepted knowingly: while one BrowserAI holds today's file, <b>nobody</b> can
-/// remove it — not the user, not an installer, and not this type's own
+/// remove it -- not the user, not an installer, and not this type's own
 /// <see cref="SweepExpired"/>, which is why that pass tolerates a refusal
 /// instead of reporting one.
 /// </para>
@@ -69,7 +69,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     /// <summary>
     /// How long a rolled file is kept. The number is ours rather than measured;
     /// what matters is that it is enforced somewhere that outlives an update,
-    /// which is the half a shipped product's identical policy never had — its
+    /// which is the half a shipped product's identical policy never had -- its
     /// logs sat inside the directory each update replaced wholesale, so the
     /// retention window could never once have been reached.
     /// </summary>
@@ -218,13 +218,13 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-24 (previously "The starting size is read once.
     /// It drifts under concurrency, which only means the roll happens at
-    /// approximately the cap rather than exactly at it — and paying a metadata
+    /// approximately the cap rather than exactly at it -- and paying a metadata
     /// query per record to fix that would be a worse trade").</b> The roll now
     /// happens <b>exactly</b> at the cap: the length is the file's own, read
     /// through the open handle <i>inside the write gate</i>, so no other
     /// process can have appended between the read and the decision and there is
-    /// no per-process counter left to drift. It is not a metadata query — the
-    /// handle is already open — and no file in the directory ever exceeds
+    /// no per-process counter left to drift. It is not a metadata query -- the
+    /// handle is already open -- and no file in the directory ever exceeds
     /// <see cref="MaxBytesPerFile"/>.
     /// </para>
     /// <para>
@@ -235,7 +235,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     /// </para>
     /// <para>
     /// <b>The instant is stamped here, in the gate, one statement before the
-    /// bytes go down</b> — see <see cref="FileLoggerProvider.WriteStamp"/> for
+    /// bytes go down</b> -- see <see cref="FileLoggerProvider.WriteStamp"/> for
     /// why that is the whole answer to keeping the file sorted.
     /// </para>
     /// </remarks>

@@ -13,7 +13,7 @@ namespace BrowserAI.Updates;
 /// <para>
 /// ⚠️ <b><see cref="ProductionBaseUrl"/> is deliberately unset, and that is a
 /// state rather than an omission.</b> The update feed will be a public GitHub
-/// repository — the maintainer has agreed to make it public — but **nothing has
+/// repository -- the maintainer has agreed to make it public -- but **nothing has
 /// been published and what gets published is still open**. Writing a URL here
 /// before one exists would produce a build that checks a 404 on every start and
 /// reports *"no update available"*, which is
@@ -22,9 +22,9 @@ namespace BrowserAI.Updates;
 /// once, at Debug, and never asks.
 /// </para>
 /// <para>
-/// <b>This is the one release-gate assertion that is deferred</b> — *the real
+/// <b>This is the one release-gate assertion that is deferred</b> -- *the real
 /// production feed URL resolves over HTTP and
-/// returns a manifest* — and it is deferred rather than faked. A local HTTP
+/// returns a manifest* -- and it is deferred rather than faked. A local HTTP
 /// server would compose paths the same way and pass, while proving nothing about
 /// the URL nobody has chosen yet.
 /// </para>
@@ -37,7 +37,7 @@ internal static class UpdateConfiguration
     /// </summary>
     /// <remarks>
     /// When it is set, it is the repository's release feed root and it must
-    /// <b>not</b> carry the channel — <see cref="UpdateFeed.Create"/> refuses one
+    /// <b>not</b> carry the channel -- <see cref="UpdateFeed.Create"/> refuses one
     /// that does.
     /// </remarks>
     /// <remarks>
@@ -71,7 +71,7 @@ internal static class UpdateConfiguration
     /// <b>It exists for the update lane, which cannot be tested any other way.</b>
     /// Proving that a package applies, that a rollback applies, and that the
     /// browsers beside <c>current\</c> survive both needs a real install pointed
-    /// at a real feed — and until the production one exists, the only feed there
+    /// at a real feed -- and until the production one exists, the only feed there
     /// is is a directory on this machine.
     /// </para>
     /// <para>

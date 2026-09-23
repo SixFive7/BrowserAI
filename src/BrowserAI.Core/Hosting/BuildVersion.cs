@@ -23,7 +23,7 @@ namespace BrowserAI.Hosting;
 /// exists.</b> MinVer sets <c>AssemblyVersion</c> to
 /// <c>{Major}.0.0.0</c> by design, so every 0.x build reports
 /// <c>0.0.0.0</c> from the assembly version and every 1.x build reports
-/// <c>1.0.0.0</c> — measured here, on the artifact, at the tag. That is the
+/// <c>1.0.0.0</c> -- measured here, on the artifact, at the tag. That is the
 /// *version shows 4 parts* defect another shipped Velopack product filed as an
 /// observed symptom rather than a theory
 /// ([kb](../../../kb/packaging/velopack.md)), with the number collapsed
@@ -34,8 +34,8 @@ namespace BrowserAI.Hosting;
 /// </para>
 /// <para>
 /// <b>No build metadata, ever.</b> The SDK appends <c>+$(SourceRevisionId)</c>
-/// — or <c>.$(SourceRevisionId)</c> when the string already carries a
-/// <c>+</c> — to the informational version, and
+/// -- or <c>.$(SourceRevisionId)</c> when the string already carries a
+/// <c>+</c> -- to the informational version, and
 /// <c>Directory.Build.props</c> turns that off repository-wide. The version is
 /// a value §G's update path <i>matches</i> rather than compares, and a
 /// decorated copy can never equal the one a feed serves.
@@ -47,8 +47,8 @@ internal static class BuildVersion
     /// What a binary carrying no informational version reports.
     /// </summary>
     /// <remarks>
-    /// It cannot arise from a build of this repository — the build refuses a
-    /// version derived from no tag, and the SDK always emits the attribute —
+    /// It cannot arise from a build of this repository -- the build refuses a
+    /// version derived from no tag, and the SDK always emits the attribute --
     /// so this covers the assembly being loaded some way nobody has thought of.
     /// It carries a pre-release suffix deliberately: whatever else is unknown
     /// about such a build, it is provably not a release, and

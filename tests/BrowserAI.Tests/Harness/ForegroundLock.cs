@@ -67,12 +67,12 @@ internal sealed record ForegroundLockReading(TimeSpan? Timeout, int Error);
 /// <para>
 /// <b>Measured 2026-08-24, and it took four attempts of which three proved
 /// nothing.</b> <c>SPI_GETFOREGROUNDLOCKTIMEOUT</c> reads <c>2147483647</c> ms
-/// on this machine — about 24.8 days — so Windows refuses a foreground change in
+/// on this machine -- about 24.8 days -- so Windows refuses a foreground change in
 /// the general case and both arms of a focus experiment answer <i>no steal</i>.
 /// The single trial that discriminated did so through the lock's own exception:
 /// the foreground window belonged to VS Code, an <b>ancestor of the launching
 /// process</b>, so the child inherited the right to take the foreground. See
-/// [kb](../../../kb/windows/detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal--measured-2026-08-24).
+/// [kb](../../../kb/windows/detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal----measured-2026-08-24).
 /// </para>
 /// <para>
 /// ⚠️ <b>It reports, and it never repairs.</b> The timeout is a machine-wide
@@ -87,8 +87,8 @@ internal sealed record ForegroundLockReading(TimeSpan? Timeout, int Error);
 /// <b>A row in the coverage block rather than a
 /// <see cref="SuiteCapability"/>, and the distinction is the same one
 /// <see cref="FirstRunCache"/> draws.</b> Every capability is something a run
-/// can go and produce — publish the slice, assemble the payload, provision a
-/// browser, pack a release — so <c>BROWSERAI_RELEASE_RUN=1</c> turning its
+/// can go and produce -- publish the slice, assemble the payload, provision a
+/// browser, pack a release -- so <c>BROWSERAI_RELEASE_RUN=1</c> turning its
 /// absence into a failure names a command that fixes it. This is not one: the
 /// only way to turn it green is to change a machine-wide setting, which is out
 /// of bounds, so a capability would make every release from this machine
@@ -99,7 +99,7 @@ internal sealed record ForegroundLockReading(TimeSpan? Timeout, int Error);
 internal static partial class ForegroundLock
 {
     /// <summary>
-    /// <c>SPI_GETFOREGROUNDLOCKTIMEOUT</c>, <c>0x2000</c> — <i>"the amount of
+    /// <c>SPI_GETFOREGROUNDLOCKTIMEOUT</c>, <c>0x2000</c> -- <i>"the amount of
     /// time following user input, in milliseconds, during which the system will
     /// not allow applications to force themselves into the foreground"</i>.
     /// </summary>
@@ -133,14 +133,14 @@ internal static partial class ForegroundLock
     /// a comparison against it.</b> The lock expires that many milliseconds
     /// after the last user input, so <i>can this machine discriminate?</i>
     /// reduces to <i>can the lock expire inside the time an experiment here is
-    /// allowed to take?</i> — and the only budget in this suite for anything
+    /// allowed to take?</i> -- and the only budget in this suite for anything
     /// involving a real browser is <see cref="TestDefaults.BrowserHang"/>.
     /// </para>
     /// <para>
     /// ⚠️ <b>This is a classification threshold and not an assertion over a
     /// measured duration.</b> Nothing here starts a stopwatch, and the house
     /// rule that forbids a number written at an assertion is satisfied the way
-    /// it asks to be — by deriving from <c>TestDefaults</c> rather than by
+    /// it asks to be -- by deriving from <c>TestDefaults</c> rather than by
     /// choosing a figure that reads plausible.
     /// </para>
     /// </remarks>
@@ -156,7 +156,7 @@ internal static partial class ForegroundLock
     /// <remarks>
     /// <b>Pure for <see cref="SuiteEnvironment.Decide"/>'s reason exactly.</b>
     /// A machine only ever sits in one band, so a classification written only
-    /// against the live reading would be three quarters dead code — and the band
+    /// against the live reading would be three quarters dead code -- and the band
     /// this machine is in is the one that proves nothing.
     /// </remarks>
     /// <param name="timeout">The timeout Windows reported, or <see langword="null"/> when it would not answer.</param>
@@ -241,11 +241,11 @@ internal static partial class ForegroundLock
         return verdict switch
         {
             ForegroundLockVerdict.Unlocked =>
-                $"{value} — the lock never applies, so a browser taking the foreground is visible here",
+                $"{value} -- the lock never applies, so a browser taking the foreground is visible here",
             ForegroundLockVerdict.Waitable =>
-                $"{value} ({Humanise(timeout)}) — it expires inside the {Humanise(Budget)} an experiment here may take, so an idle machine sees a steal",
+                $"{value} ({Humanise(timeout)}) -- it expires inside the {Humanise(Budget)} an experiment here may take, so an idle machine sees a steal",
             _ =>
-                $"{value} ({Humanise(timeout)}) — it outlasts the {Humanise(Budget)} an experiment here may take, so Windows refuses a foreground change in the general case",
+                $"{value} ({Humanise(timeout)}) -- it outlasts the {Humanise(Budget)} an experiment here may take, so Windows refuses a foreground change in the general case",
         };
     }
 

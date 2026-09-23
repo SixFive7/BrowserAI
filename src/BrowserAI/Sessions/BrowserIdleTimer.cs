@@ -12,7 +12,7 @@ namespace BrowserAI.Sessions;
 /// <remarks>
 /// <para>
 /// <b>There is exactly one timer, and this is it.</b> No handle-expiry timer, no
-/// session TTL and no reclaim window — <b>reclaim is forever</b>, because the
+/// session TTL and no reclaim window -- <b>reclaim is forever</b>, because the
 /// durable thing is the profile rather than the process: a resume after killing
 /// the node child preserves cookies, localStorage, IndexedDB, service workers and
 /// CacheStorage, losing only <c>sessionStorage</c>, in ~515 ms
@@ -20,15 +20,15 @@ namespace BrowserAI.Sessions;
 /// Every expiry timer that was considered was a cliff that deleted work in
 /// exchange for nothing: an agent thinking for 61 minutes came back to a dead
 /// handle, and the recovery was a <c>resume</c> it could have done anyway. The
-/// cost is honest — directories accumulate forever — and it is why explicit
+/// cost is honest -- directories accumulate forever -- and it is why explicit
 /// <c>browserai_list</c> and <c>browserai_destroy</c> matter here more, not less.
 /// </para>
 /// <para>
 /// <b>The relaunch is implicit, and that is what makes the timer safe to have at
 /// all.</b> Measured 2026-08-16 twice against <c>@playwright/mcp</c> 0.0.79 with
-/// <c>chromium-1237</c>: <c>browser_close</c> takes the whole browser tree down —
+/// <c>chromium-1237</c>: <c>browser_close</c> takes the whole browser tree down --
 /// 8 then 7 processes to zero, 378.3 MB then 369.4 MB of browser working set to
-/// zero — leaves the node child running, and the <i>next</i> tool call brings the
+/// zero -- leaves the node child running, and the <i>next</i> tool call brings the
 /// browser back in 416 ms then 409 ms with no error and no
 /// <i>"browser is closed"</i> anywhere. Nothing in BrowserAI relaunches
 /// anything: Playwright creates the browser lazily on first use, so the recovery
@@ -37,7 +37,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>It starts disarmed.</b> A session that has been opened and never driven has
-/// no browser — Playwright has not launched one — so arming at <c>init</c> would
+/// no browser -- Playwright has not launched one -- so arming at <c>init</c> would
 /// buy one pointless round trip per session and a log line saying nothing was
 /// closed. The first forwarded tool call arms it.
 /// </para>
@@ -45,8 +45,8 @@ namespace BrowserAI.Sessions;
 /// <b>A call in flight is a session being driven, however long the call takes.</b>
 /// <see cref="Call"/> both resets the period and marks the call outstanding, so a
 /// navigation that outlives the whole period cannot have the browser closed
-/// underneath it. The residual window — a call that arrives in the microseconds
-/// between the decision to close and the close being sent — is <i>narrowed</i> by
+/// underneath it. The residual window -- a call that arrives in the microseconds
+/// between the decision to close and the close being sent -- is <i>narrowed</i> by
 /// a second check rather than eliminated, and it is harmless for the reason above:
 /// the caller's next call relaunches the browser and answers normally.
 /// </para>
@@ -54,7 +54,7 @@ namespace BrowserAI.Sessions;
 /// <b>The clock is a constructor parameter, and that is the only reason this
 /// class can be tested at all.</b> Every property above is a statement about
 /// <i>when</i> something happens, and a test that establishes one by letting real
-/// time pass is not testing the timer — it is testing the machine's scheduler.
+/// time pass is not testing the timer -- it is testing the machine's scheduler.
 /// Measured 2026-08-17 with the suite running every test at once: a single
 /// in-process round trip through the rig took <b>1.51 s and 2.27 s</b> against an
 /// 800 ms period, so the test that drove this timer <i>correctly concluded</i>
@@ -68,7 +68,7 @@ namespace BrowserAI.Sessions;
 /// again, still no close; one tick past, exactly one close.</i> None of that can
 /// be falsified by a loaded machine, because none of it reads a wall clock. The
 /// product passes <see cref="TimeProvider.System"/> and behaves exactly as it
-/// did — <c>SessionEnvironment.Clock</c> carries the same guard
+/// did -- <c>SessionEnvironment.Clock</c> carries the same guard
 /// <c>BrowserIdlePeriod</c> carries, so a test clock cannot leak into a shipped
 /// build without a test going red.
 /// </para>
@@ -83,7 +83,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// It closes the browser and keeps the node child. Re-measured 2026-08-16,
     /// that is ~496 MB → ~118 MB, with the next call bringing the browser back in
     /// ~0.41 s
-    /// ([kb](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)) —
+    /// ([kb](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)) --
     /// so the period is long enough that ordinary think-time between calls never
     /// closes a browser, and the cost of being wrong is under half a second on a
     /// relaunch the caller cannot see.
@@ -93,7 +93,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     /// <see cref="SessionEnvironment.BrowserIdlePeriod"/>, which is why this
     /// constant is asserted on directly: a test-friendly value that leaked into
     /// the product would show up nowhere else, because a browser closing too
-    /// eagerly is invisible — the next call silently relaunches it.
+    /// eagerly is invisible -- the next call silently relaunches it.
     /// </para>
     /// </remarks>
     public static TimeSpan DefaultIdlePeriod { get; } = TimeSpan.FromMinutes(10);

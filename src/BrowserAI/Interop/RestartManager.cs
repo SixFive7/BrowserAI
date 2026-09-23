@@ -17,7 +17,7 @@ namespace BrowserAI.Interop;
 /// <b>This is the file → process direction, and Windows offers exactly one
 /// supported way to ask it.</b> A sharing violation says <i>somebody</i> has the
 /// file; it never says who. The Restart Manager does, and it is the same
-/// mechanism an installer uses to name the applications it would have to close —
+/// mechanism an installer uses to name the applications it would have to close --
 /// so it is documented, stable, and needs no privilege beyond opening the
 /// processes it reports.
 /// </para>
@@ -26,8 +26,8 @@ namespace BrowserAI.Interop;
 /// say which profile a Firefox is on.</b> Chromium publishes its
 /// <c>userDataDir</c> as a message-only window's title
 /// (<see cref="MessageWindows"/>); Firefox publishes nothing at all, and its
-/// <c>parent.lock</c> is <i>never deleted</i> — Mozilla keeps it deliberately and
-/// reads its mtime to detect startup crashes — so the file's existence proves
+/// <c>parent.lock</c> is <i>never deleted</i> -- Mozilla keeps it deliberately and
+/// reads its mtime to detect startup crashes -- so the file's existence proves
 /// nothing and only a live handle on it does.
 /// </para>
 /// <para>
@@ -83,7 +83,7 @@ internal static partial class RestartManager
     /// <summary>Every live process holding <paramref name="path"/> open.</summary>
     /// <param name="path">
     /// An absolute path. A file that does not exist has no holders and is not an
-    /// error — the Restart Manager registers the <i>name</i>, so the answer is
+    /// error -- the Restart Manager registers the <i>name</i>, so the answer is
     /// simply empty.
     /// </param>
     /// <returns>
@@ -221,7 +221,7 @@ internal static partial class RestartManager
     /// it, filters on it or acts on it, which is the whole of the distinction
     /// between <i>observing</i> a name and <i>choosing</i> a process by one.
     /// BrowserAI may only terminate a process belonging to a job it created or
-    /// one whose full image path it verified against a binary it installed —
+    /// one whose full image path it verified against a binary it installed --
     /// asserted at zero occurrences by <c>NeverByImageNameTests</c>, because a
     /// name-keyed kill would one day close the developer's own browser.
     /// </remarks>
@@ -273,7 +273,7 @@ internal static partial class RestartManager
     private static partial int RmEndSession(uint dwSessionHandle);
 
     /// <summary>
-    /// <c>RM_UNIQUE_PROCESS</c> — a pid and the <c>FILETIME</c> it started at.
+    /// <c>RM_UNIQUE_PROCESS</c> -- a pid and the <c>FILETIME</c> it started at.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>The start time is two <c>uint</c>s rather than a <c>long</c>, and
@@ -323,6 +323,6 @@ internal static partial class RestartManager
 /// time recorded anywhere else in this process.
 /// </param>
 /// <param name="Description">
-/// What Windows calls it. <b>Diagnostic only</b> — never matched on.
+/// What Windows calls it. <b>Diagnostic only</b> -- never matched on.
 /// </param>
 internal sealed record FileHolder(int ProcessId, long StartedFileTime, string Description);

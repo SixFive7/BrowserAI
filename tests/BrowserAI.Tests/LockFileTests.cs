@@ -9,7 +9,7 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// <c>browserai.lock</c> — the guard, on its own, before anything is wired to
+/// <c>browserai.lock</c> -- the guard, on its own, before anything is wired to
 /// it.
 /// </summary>
 /// <remarks>
@@ -27,7 +27,7 @@ namespace BrowserAI.Tests;
 /// <b>Within one process, and that is a real limit stated rather than
 /// glossed.</b> Windows applies its sharing rules per handle rather than per
 /// process, so a second <c>FileStream</c> here is refused by exactly the same
-/// arithmetic a second BrowserAI would be — which is why the probe arms are
+/// arithmetic a second BrowserAI would be -- which is why the probe arms are
 /// meaningful. What a single process cannot show is the fourth property,
 /// release-on-death; <c>SessionLockTests</c> owns that across real processes
 /// for the record this replaces, and it moves with the cutover rather than
@@ -45,7 +45,7 @@ internal sealed class LockFileTests
     /// <b>The third state is the one the record this replaces could not
     /// have.</b> That record was rewritten on every forwarded call, so its name
     /// was unbound for milliseconds at a time and an absence had to be read as
-    /// *undetermined* — a record being replaced as often as a session that had
+    /// *undetermined* -- a record being replaced as often as a session that had
     /// gone. Nothing rewrites this file, so an absence is an absence, and a
     /// file that opens is a holder that has released.
     /// </para>
@@ -98,7 +98,7 @@ internal sealed class LockFileTests
     /// violation may be read as owned; nothing else may be read as free.
     /// Collapsing a denied open into *nobody has this* hands a caller a
     /// confident wrong answer in the one direction that costs somebody else's
-    /// session — and <c>browserai_destroy</c> is the call standing behind that
+    /// session -- and <c>browserai_destroy</c> is the call standing behind that
     /// answer.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -178,7 +178,7 @@ internal sealed class LockFileTests
     /// <remarks>
     /// <b>A pid on its own is not an identity.</b> Windows reuses process ids
     /// within seconds, so a guard that recorded only the number would let a
-    /// reclaim take a live stranger's directory — which is why the creation
+    /// reclaim take a live stranger's directory -- which is why the creation
     /// FILETIME is written beside it and why a file missing one is refused
     /// rather than read.
     /// </remarks>
@@ -231,7 +231,7 @@ internal sealed class LockFileTests
     /// <b>This is the window that used to open once per forwarded call, turned
     /// into a permanent guard.</b> The record this replaces closed its own
     /// ownership handle, wrote a temporary file, renamed it over the target and
-    /// re-opened — every time anything was appended — so for a few milliseconds
+    /// re-opened -- every time anything was appended -- so for a few milliseconds
     /// per call the directory was genuinely unheld and its name genuinely
     /// unbound. Everything a session says now goes into a different file, so
     /// this one is written at acquisition and never again.
@@ -290,7 +290,7 @@ internal sealed class LockFileTests
     /// <remarks>
     /// <b>The set of things a lock file may say is closed.</b> A file carrying
     /// a property this build does not write is somebody else's file, and *this
-    /// is not ours* is a different answer from *this directory is free* — one
+    /// is not ours* is a different answer from *this directory is free* -- one
     /// of them means walk away and the other means take it.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -347,7 +347,7 @@ internal sealed class LockFileTests
     /// <remarks>
     /// ⚠️ <b><c>File.ReadAllBytes</c> cannot do this, and finding that out is
     /// half the point of the property being tested.</b> It opens sharing reads
-    /// only, and a holder's <i>granted</i> access is <c>ReadWrite</c> — so the
+    /// only, and a holder's <i>granted</i> access is <c>ReadWrite</c> -- so the
     /// framework's convenience method is refused by exactly the mechanism that
     /// makes the guard a guard. Every reader in the product shares write and
     /// delete on the way in for that reason, and a test that used the

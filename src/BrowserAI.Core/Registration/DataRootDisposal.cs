@@ -41,8 +41,8 @@ internal sealed record DataRootDisposalReport(
 /// <b>It exists because the two are separate directories now</b>
 /// (<see cref="Hosting.IAppPaths"/>, 2026-09-15). Velopack empties the install
 /// root and knows nothing about
-/// <c>%LocalAppData%\BrowserAI</c> — which holds ~768 MB of provisioned
-/// browsers, the session index and the process log — so without this an
+/// <c>%LocalAppData%\BrowserAI</c> -- which holds ~768 MB of provisioned
+/// browsers, the session index and the process log -- so without this an
 /// uninstall would silently leave all of it behind for ever. The old layout had
 /// the opposite defect and no question to ask: uninstall took the browsers with
 /// it, always, whether or not the person was about to reinstall.
@@ -52,7 +52,7 @@ internal sealed record DataRootDisposalReport(
 /// <c>--silent</c> uninstall keeps, an unreadable parent keeps, a dialog that
 /// fails to open keeps, a closed window keeps. The asymmetry is deliberate:
 /// data that stays can be deleted by hand in one action, and data that went
-/// cannot be brought back — the browsers are a 768 MB download and the session
+/// cannot be brought back -- the browsers are a 768 MB download and the session
 /// index is the only inventory of session directories there is.
 /// </para>
 /// <para>
@@ -60,14 +60,14 @@ internal sealed record DataRootDisposalReport(
 /// <c>current\</c> and an install creates a root; neither has any business
 /// asking, and <see cref="HookRegistration"/> calls this for
 /// <see cref="RegistrationIntent.Uninstall"/> and for nothing else. That is not
-/// a matter of care at the call site — it is what
+/// a matter of care at the call site -- it is what
 /// <c>RegistrationTests.AnUpdateNeverAsksAboutTheDataRootAndNeverTouchesIt</c>
 /// holds.
 /// </para>
 /// <para>
 /// ⚠️ <b>It runs inside a fast-exit callback with a 60-second budget</b>
 /// ([kb](../../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)), and
-/// it is the one hook that may be interactive — the rest of that rule stands.
+/// it is the one hook that may be interactive -- the rest of that rule stands.
 /// The ordering in <see cref="HookRegistration"/> is what makes that safe: the
 /// client is unregistered and the record written <i>before</i> anything is
 /// asked, so a hook killed at 60 seconds for want of an answer has already done
@@ -88,7 +88,7 @@ internal static class DataRootDisposal
     /// <b>The parent's command line is the only place this answer exists.</b>
     /// Velopack keeps silence in a process-wide atomic inside <c>Update.exe</c>
     /// (<c>dialogs::set_silent</c>) and passes the hook nothing but
-    /// <c>--veloapp-uninstall &lt;version&gt;</c> — no flag and no environment
+    /// <c>--veloapp-uninstall &lt;version&gt;</c> -- no flag and no environment
     /// variable, read out of 1.2.0's own <c>run_hook</c>. Windows itself keeps
     /// the two apart in the registry: <c>UninstallString</c> is
     /// <c>Update.exe --uninstall</c> and <c>QuietUninstallString</c> is the same
@@ -143,14 +143,14 @@ internal static class DataRootDisposal
     /// <returns>The message.</returns>
     public static string Question(string dataRoot, long bytes) =>
         $"BrowserAI's data is kept separately from the program and has not been removed:\n\n"
-        + $"{dataRoot}\n{Describe(bytes)} — downloaded browsers, the index of your session directories, and the log.\n\n"
+        + $"{dataRoot}\n{Describe(bytes)} -- downloaded browsers, the index of your session directories, and the log.\n\n"
         + "Delete it as well?\n\n"
         + "No keeps it, and installing BrowserAI again finds it exactly as it is. Yes deletes it; the browsers are a ~768 MB download the next install would have to fetch again. Your session directories are wherever you created them and are never touched either way.";
 
     /// <summary>Keep or remove, as a function of the two inputs and nothing else.</summary>
     /// <remarks>
     /// <b>Pure, so that the branch a release depends on is exercised rather than
-    /// only written</b> — the same reason <c>SuiteEnvironment.Decide</c> is. The
+    /// only written</b> -- the same reason <c>SuiteEnvironment.Decide</c> is. The
     /// alternative is a decision reachable only from inside a real uninstall,
     /// which is the one context this suite may never enter.
     /// </remarks>
@@ -165,7 +165,7 @@ internal static class DataRootDisposal
     }
 
     /// <summary>
-    /// Asks and decides. <b>Removes nothing</b> — see <see cref="Remove"/>.
+    /// Asks and decides. <b>Removes nothing</b> -- see <see cref="Remove"/>.
     /// </summary>
     /// <remarks>
     /// <b>Split from the removal because the log is inside the tree.</b> The
@@ -174,7 +174,7 @@ internal static class DataRootDisposal
     /// file recording the decision. The caller closes the log and then calls
     /// <see cref="Remove"/>, which is why the decision is logged and the outcome
     /// of the removal is returned to be written into the installer's own log
-    /// instead — the file that survives either answer.
+    /// instead -- the file that survives either answer.
     /// </remarks>
     /// <param name="paths">The data seam, resolved exactly as the product resolves it.</param>
     /// <param name="silent">Whether the uninstall is unattended.</param>
@@ -235,7 +235,7 @@ internal static class DataRootDisposal
     /// <b>Through <see cref="TreeDelete"/> for the two properties the framework
     /// call does not have together</b>: it names every node it could not remove,
     /// and it unlinks a directory reparse point rather than descending into it.
-    /// The second matters here more than anywhere else in this product — a
+    /// The second matters here more than anywhere else in this product -- a
     /// junction anywhere under a browser profile would otherwise empty whatever
     /// it points at, on a path nobody typed.
     /// </remarks>
@@ -263,7 +263,7 @@ internal static class DataRootDisposal
     /// <remarks>
     /// <b>The three data directories, asked through the seam rather than by
     /// name.</b> A data root that holds only the hook's own log and the
-    /// registration record is a BrowserAI that never ran — the install hook
+    /// registration record is a BrowserAI that never ran -- the install hook
     /// creates the log on the way in, so the directory always exists by the time
     /// an uninstall asks. What makes the question worth asking is a provisioned
     /// browser tree, a session index or an instance directory, and each of those
@@ -286,7 +286,7 @@ internal static class DataRootDisposal
     /// <c>TreeDelete</c>'s reason: a junction would count somebody else's tree
     /// into a number this hook is about to quote, and a loop would never finish
     /// inside a 60-second budget. An unreadable file is skipped rather than
-    /// thrown on — the number is for a sentence a person reads, not for an
+    /// thrown on -- the number is for a sentence a person reads, not for an
     /// accounting record.
     /// </remarks>
     /// <param name="directory">The directory.</param>

@@ -27,17 +27,17 @@ namespace BrowserAI.Sessions;
 /// earlier build refused at <c>browserai_init</c> and <c>browserai_resume</c>
 /// only, so that a session created on a share by an older build stayed
 /// removable. Nothing was ever distributed, so that population is empty and the
-/// exception costs more than it buys — see
+/// exception costs more than it buys -- see
 /// [the decision](../../../DECISIONS.md#one-path-function-normalise-what-is-cheap-refuse-what-is-not).
 /// </para>
 /// <para>
 /// ⚠️ <b>THE ORDER IS THE DESIGN, and it is not an optimisation.</b> Every
 /// question that could refuse is asked before the one call that opens anything,
 /// because a filesystem call against a share that has stopped answering costs a
-/// measured <b>22,210 ms</b> — through a mapped <i>drive letter</i>, not only
+/// measured <b>22,210 ms</b> -- through a mapped <i>drive letter</i>, not only
 /// through a UNC spelling
 /// ([kb](../../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds))
-/// — and several such calls happen inside <see cref="LockScopes.PerDirectoryGate"/>,
+/// -- and several such calls happen inside <see cref="LockScopes.PerDirectoryGate"/>,
 /// where the caller who named the dead share is not the one who waits.
 /// </para>
 /// <para>
@@ -45,7 +45,7 @@ namespace BrowserAI.Sessions;
 /// <see cref="PathOrigin.Named"/> is a path a caller put in a tool argument, and
 /// it pays for the whole sequence. <see cref="PathOrigin.Read"/> is a path
 /// BrowserAI stored or a stranger published, and it runs the subset of the same
-/// questions that cost nothing — <b>zero syscalls by construction</b>, because
+/// questions that cost nothing -- <b>zero syscalls by construction</b>, because
 /// everything this build writes is canonical already and a stored path that is
 /// not was not written by this build. The index knows what to do with one of
 /// those: it is <c>Unusable</c>, it is swept, and the next <c>init</c> or
@@ -54,8 +54,8 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>What this deliberately accepts.</b> A drive letter that names nothing on
 /// this machine is neither a network path nor an alias, so it falls through to
-/// the ordinary creation failure — <i>the system cannot find the path
-/// specified</i> — which already says what to do.
+/// the ordinary creation failure -- <i>the system cannot find the path
+/// specified</i> -- which already says what to do.
 /// </para>
 /// <para>
 /// <b>And what it cannot see</b>, stated here rather than left to be
@@ -77,7 +77,7 @@ namespace BrowserAI.Sessions;
 ///   </description></item>
 ///   <item><description>
 ///     <b>Case.</b> Two spellings differing only in case are one session by
-///     design — the claim <see cref="SessionPath.Key"/> makes — so a case
+///     design -- the claim <see cref="SessionPath.Key"/> makes -- so a case
 ///     difference is not an alias and is never refused. What the canonical form
 ///     does carry is the filesystem's own casing, because that is what
 ///     <c>GetFinalPathNameByHandleW</c> reports.
@@ -102,14 +102,14 @@ internal static class CanonicalPath
     /// <remarks>
     /// <b>A bound because <c>DefineDosDevice</c> will happily build a cycle.</b>
     /// Each hop is one object-manager read and one string rewrite, so the cost is
-    /// not what is being bounded — termination is.
+    /// not what is being bounded -- termination is.
     /// </remarks>
     public const int SubstitutionChainLimit = 8;
 
     /// <summary>Every reserved DOS device name, which no path segment may be.</summary>
     /// <remarks>
     /// <b>The stem is what is tested, not the whole segment.</b> <c>NUL.png</c>
-    /// opens the device exactly as <c>NUL</c> does, whatever extension follows —
+    /// opens the device exactly as <c>NUL</c> does, whatever extension follows --
     /// and <c>Path.GetFullPath</c> rewrites a bare one into <c>\\.\NUL</c>
     /// outright (measured 2026-08-26, .NET 10.0.11). This list was
     /// <c>ArtifactFilename</c>'s until that type was deleted with the filename
@@ -152,8 +152,8 @@ internal static class CanonicalPath
     /// <para>
     /// ⚠️ <b>The one derivation, and the reason it is a member rather than two
     /// lines at each call site.</b> <c>SessionManager.Subtree</c> and
-    /// <c>SessionManager.Beneath</c> each derived it — case-fold, then append a
-    /// separator — while <see cref="SessionIndex"/>'s own remark forbade
+    /// <c>SessionManager.Beneath</c> each derived it -- case-fold, then append a
+    /// separator -- while <see cref="SessionIndex"/>'s own remark forbade
     /// re-deriving the predicate in as many words. It was benign because
     /// <c>Beneath</c>'s input happened to be canonical; what makes it worth a
     /// member is that nothing said so and nothing would have noticed when it
@@ -350,7 +350,7 @@ internal static class CanonicalPath
     /// <para>
     /// ⚠️ <b>A <c>~</c> is NOT refused, and the design this was built from said
     /// it should be.</b> The stated reason there was that refusing one makes the
-    /// 8.3 expansion unreachable — but nothing here calls <c>GetFullPath</c> at
+    /// 8.3 expansion unreachable -- but nothing here calls <c>GetFullPath</c> at
     /// all, so the justification is circular, and a directory somebody genuinely
     /// named <c>my~project</c> would be unfindable for the life of the session.
     /// The 8.3 spelling it would have caught cannot be in a record this build
@@ -398,12 +398,12 @@ internal static class CanonicalPath
     /// why each of these is a refusal rather than something left to fail later:
     /// <c>Path.GetFullPath(@"C:\work\sess.")</c> answers <c>C:\work\sess</c>,
     /// the same with a trailing space answers the same, and
-    /// <c>Path.GetFullPath(@"C:\work\NUL")</c> answers <c>\\.\NUL</c> — a device.
+    /// <c>Path.GetFullPath(@"C:\work\NUL")</c> answers <c>\\.\NUL</c> -- a device.
     /// A caller told nothing would get a session directory whose name is not the
     /// one it asked for, which is the two-spellings failure arriving by the other
     /// door.
     /// <para>
-    /// ⚠️ <b>Every quoted segment goes through <see cref="RecordText.Escape"/> —
+    /// ⚠️ <b>Every quoted segment goes through <see cref="RecordText.Escape"/> --
     /// corrected 2026-08-26.</b> These clauses are interpolated into
     /// <see cref="SessionErrors.DirectoryUnusable"/>, which is model-facing, and
     /// the control-character clause was <i>naming</i> U+0007 in words while
@@ -426,7 +426,7 @@ internal static class CanonicalPath
 
             if (segment[^1] is '.' or ' ')
             {
-                return $"'{shown}' ends with a {(segment[^1] is ' ' ? "space" : "dot")}, which Windows silently strips — "
+                return $"'{shown}' ends with a {(segment[^1] is ' ' ? "space" : "dot")}, which Windows silently strips -- "
                     + $"so the directory would be '{RecordText.Escape(segment.TrimEnd(' ', '.'))}' rather than the name you asked for.";
             }
 
@@ -465,7 +465,7 @@ internal static class CanonicalPath
     /// <remarks>
     /// <b>A clause rather than a catalogue sentence, because nothing a caller
     /// asked for was refused.</b> It becomes an index entry's <c>Problem</c> and
-    /// a stray sweep's reason for sparing a process — two places a reader looks
+    /// a stray sweep's reason for sparing a process -- two places a reader looks
     /// after the fact, neither of them an answer to a tool call.
     /// </remarks>
     private static PathVerdict NotRecorded(string value, string why) =>
@@ -477,7 +477,7 @@ internal static class CanonicalPath
             ? []
             : spelling[2..].Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries);
 
-    /// <summary>Whether a path is rooted at a drive letter — <c>X:\</c>.</summary>
+    /// <summary>Whether a path is rooted at a drive letter -- <c>X:\</c>.</summary>
     private static bool IsDriveRooted(string spelling) =>
         spelling is { Length: >= 3 }
         && char.IsAsciiLetter(spelling[0])
@@ -500,7 +500,7 @@ internal static class CanonicalPath
     /// <remarks>
     /// <b><c>C:\</c> and <c>C:</c> are different things.</b> The second is
     /// drive-relative and means <i>the current directory on C</i>, so a trim that
-    /// produced it would be a silently different answer — which is exactly why
+    /// produced it would be a silently different answer -- which is exactly why
     /// the volume-root refusal belongs to <see cref="SessionPath"/> and not
     /// here: <c>browserai_list</c> is pointed at a volume root on purpose.
     /// </remarks>
@@ -524,7 +524,7 @@ internal enum PathOrigin
     Named,
 
     /// <summary>
-    /// BrowserAI stored it, or a stranger published it. Spend nothing — the
+    /// BrowserAI stored it, or a stranger published it. Spend nothing -- the
     /// writer already paid, and a stored path that fails the free checks was not
     /// written by this build.
     /// </summary>
@@ -538,7 +538,7 @@ internal enum PathOrigin
 /// unopenable-ancestor case: the path is served with the caller's own spelling
 /// and the reason it could not be verified travels with it. Collapsing that into
 /// either of the other two loses the only thing that would let somebody diagnose
-/// it — the same shape, and the same argument, as <c>InstallRootVerdict</c>.
+/// it -- the same shape, and the same argument, as <c>InstallRootVerdict</c>.
 /// </remarks>
 internal sealed record PathVerdict
 {
@@ -554,7 +554,7 @@ internal sealed record PathVerdict
     /// ⚠️ <b>Two shapes, because a refusal has two audiences.</b> For
     /// <see cref="PathOrigin.Named"/> it is a whole <see cref="SessionErrors"/>
     /// sentence, written for the model that will read it as an answer. For
-    /// <see cref="PathOrigin.Read"/> it is a clause — nothing a caller asked for
+    /// <see cref="PathOrigin.Read"/> it is a clause -- nothing a caller asked for
     /// was refused, so there is no answer to write; it becomes an index entry's
     /// <c>Problem</c> and a stray sweep's reason for sparing a process.
     /// </remarks>

@@ -8,7 +8,7 @@ namespace BrowserAI.Registration;
 /// <summary>Which lifecycle event is asking, and therefore what it may do.</summary>
 /// <remarks>
 /// <b>The three differ in exactly one judgement: whose answer wins when an entry
-/// is already there.</b> Getting that wrong in either direction is a real cost —
+/// is already there.</b> Getting that wrong in either direction is a real cost --
 /// re-pointing always would silently discard a user's own edits on every update,
 /// and never re-pointing would leave a stale path after a
 /// <c>Setup.exe --installto</c> somewhere else, which is a product that cannot be
@@ -34,9 +34,9 @@ internal enum RegistrationIntent
     /// somebody removed").</b> The premise stopped being true the day the server
     /// was renamed: the path inside <c>current\</c> <i>can</i> move now, and
     /// every registration written before that day names a file the update
-    /// deleted. The half that survives is the reason — a user who added
+    /// deleted. The half that survives is the reason -- a user who added
     /// arguments or environment variables to their own registration must not
-    /// have them deleted by a background update — so an entry of ours that still
+    /// have them deleted by a background update -- so an entry of ours that still
     /// resolves is left exactly as it is, and only one that resolves to nothing
     /// is re-pointed. A <c>browserai</c> entry outside our install root is
     /// somebody else's and is reported rather than touched.
@@ -69,7 +69,7 @@ internal enum RegistrationStatus
     ClientNotFound,
 
     /// <summary>
-    /// BrowserAI refused to register the path it was asked about — the execution
+    /// BrowserAI refused to register the path it was asked about -- the execution
     /// stub, or anything else outside <c>current\</c>.
     /// </summary>
     Refused,
@@ -106,7 +106,7 @@ internal sealed record RegistrationReport(RegistrationStatus Status, string Deta
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Nothing here decides <i>how</i> — that is
+/// <b>Nothing here decides <i>how</i> -- that is
 /// <see cref="McpClientRegistration"/>, deliberately in a file of its own.</b>
 /// This type decides <i>when</i>, reads the client's answers, and makes certain
 /// that whatever happened is legible afterwards.
@@ -122,7 +122,7 @@ internal sealed record RegistrationReport(RegistrationStatus Status, string Deta
 /// <para>
 /// <b>Idempotence is measured, not assumed.</b> Measured 2026-08-16 @ Claude Code
 /// 2.1.233: a second <c>add</c> of the same name exits <b>1</b> with <i>"already
-/// exists"</i> — so <c>add</c> alone is <i>not</i> idempotent and this type
+/// exists"</i> -- so <c>add</c> alone is <i>not</i> idempotent and this type
 /// supplies the property the client does not. An install removes first and then
 /// adds; an update adds and treats <i>already exists</i> as success. Install,
 /// update, repair and reinstall therefore all converge on exactly one entry.
@@ -174,10 +174,10 @@ internal static class McpRegistrar
                 return new RegistrationReport(RegistrationStatus.ClientNotFound, detail, null, command);
             }
 
-            // ⚠️ READ BEFORE EVERY INTENT, AND NOT ONLY BEFORE AN UPDATE —
+            // ⚠️ READ BEFORE EVERY INTENT, AND NOT ONLY BEFORE AN UPDATE --
             // 2026-09-16. Until this day the install hook ran `mcp remove` and
             // then `mcp add` with no check at all, and the uninstall hook ran
-            // `mcp remove` unconditionally — so installing BrowserAI OVERWROTE
+            // `mcp remove` unconditionally -- so installing BrowserAI OVERWROTE
             // another BrowserAI's registration and uninstalling it DELETED one.
             // Three sentences in this codebase said that never happens
             // (RegistrationOwnership's own summary, AppState.MayRemove, and the
@@ -235,7 +235,7 @@ internal static class McpRegistrar
     /// update of a BrowserAI somebody unregistered by hand is not an invitation
     /// to leave them without one and that has been this hook's behaviour since
     /// it existed. <i>Ours and present</i> is left exactly as it is, arguments
-    /// and all — a person may have added their own. <i>Ours and stale</i> is
+    /// and all -- a person may have added their own. <i>Ours and stale</i> is
     /// re-pointed, which is the whole reason this method exists. <b>Foreign is
     /// reported and never touched</b>: an entry named <c>browserai</c> whose
     /// command is not under our install root belongs to another BrowserAI, and
@@ -246,7 +246,7 @@ internal static class McpRegistrar
     /// </para>
     /// <para>
     /// <b>Ours is decided by the install root and not by the file name</b>, so a
-    /// second install elsewhere reads as foreign — which it is.
+    /// second install elsewhere reads as foreign -- which it is.
     /// </para>
     /// </remarks>
     private static RegistrationReport Repair(
@@ -286,7 +286,7 @@ internal static class McpRegistrar
     /// <para>
     /// ⚠️ <b>Shared by all three intents since 2026-09-16.</b> It was
     /// <see cref="Repair"/>'s alone, which meant an <i>install</i> overwrote a
-    /// foreign entry and an <i>uninstall</i> deleted one — the exact two things
+    /// foreign entry and an <i>uninstall</i> deleted one -- the exact two things
     /// <see cref="RegistrationOwnership"/> says this product never does. The
     /// wording is unchanged for the intents that write, so a person who has met
     /// this message before meets the same one; the uninstall's closing sentence
@@ -295,16 +295,16 @@ internal static class McpRegistrar
     /// </para>
     /// <para>
     /// <b>Nothing runs.</b> The refusal is returned before any client command is
-    /// started, so the verb list a double records is empty — which is how the
+    /// started, so the verb list a double records is empty -- which is how the
     /// suite tells <i>refused</i> from <i>tried and failed</i>.
     /// </para>
     /// <para>
     /// <b>There is no exit code on this path and that is by design</b>: these run
     /// inside Velopack fast-exit callbacks, where a non-zero result fails
     /// somebody's install. What carries the outcome instead is
-    /// <c>mcp-registration.json</c> — <c>isWhatWasAskedFor</c> is
+    /// <c>mcp-registration.json</c> -- <c>isWhatWasAskedFor</c> is
     /// <see langword="false"/> for a refusal and the detail names the foreign
-    /// path — and a warning-level line in the installer's own log.
+    /// path -- and a warning-level line in the installer's own log.
     /// </para>
     /// </remarks>
     /// <param name="logger">Where the refusal is reported.</param>
@@ -359,7 +359,7 @@ internal static class McpRegistrar
     /// is there</i> included another BrowserAI's entry, and this method deleted
     /// it and wrote its own over the top. <see cref="Apply"/> now refuses a
     /// foreign entry before this is reached, so the remaining states really are
-    /// the ones the sentence assumed — absent, or ours.
+    /// the ones the sentence assumed -- absent, or ours.
     /// </remarks>
     private static RegistrationReport Reassert(IRegistrationCommand commands, ILogger logger, string client, string command)
     {
@@ -555,7 +555,7 @@ internal static partial class RegistrationLog
     [LoggerMessage(
         EventId = 8,
         Level = LogLevel.Error,
-        Message = "The MCP registration pass threw. The install itself is unaffected — a hook that throws breaks an installer, so this is caught here and reported instead.")]
+        Message = "The MCP registration pass threw. The install itself is unaffected -- a hook that throws breaks an installer, so this is caught here and reported instead.")]
     public static partial void PassFailed(ILogger logger, Exception failure);
 
     /// <summary>Where the registration record went, and what it says.</summary>

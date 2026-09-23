@@ -10,7 +10,7 @@ namespace BrowserAI.App.Ui;
 /// <remarks>
 /// Separate from the marshalling on purpose: everything in here is assertable
 /// without a window, and the suite asserts it. What cannot be asserted without a
-/// window — that Windows renders it — is the part that is kept as small as
+/// window -- that Windows renders it -- is the part that is kept as small as
 /// possible.
 /// </remarks>
 internal sealed record TaskDialogPage
@@ -68,7 +68,7 @@ internal enum ClickOutcome
 /// <para>
 /// <b>One dialog at a time, on one thread</b>, which is what makes the static
 /// callback safe. The handle in <c>lpCallbackData</c> is what carries the
-/// instance across the native boundary — never a static field, because a static
+/// instance across the native boundary -- never a static field, because a static
 /// field is exactly the thing a second dialog would quietly share.
 /// </para>
 /// </remarks>
@@ -91,13 +91,13 @@ internal sealed class TaskDialogHost : IDisposable
     /// <param name="onLink">What a hyperlink does.</param>
     /// <param name="onTick">
     /// Asked roughly every 200 ms while the dialog is up.
-    /// <b>It must return immediately</b> — it runs on the same callback as every
+    /// <b>It must return immediately</b> -- it runs on the same callback as every
     /// click, so anything it waits for is a frozen window.
     /// </param>
     /// <param name="onFailure">
     /// What to do with an exception out of one of the four above.
-    /// <b>It is expected to record the failure where a person will meet it</b> —
-    /// the process log, and the note the next page carries — because this host
+    /// <b>It is expected to record the failure where a person will meet it</b> --
+    /// the process log, and the note the next page carries -- because this host
     /// re-renders straight afterwards and shows whatever that produced.
     /// </param>
     public TaskDialogHost(
@@ -305,9 +305,9 @@ internal sealed class TaskDialogHost : IDisposable
     /// <remarks>
     /// <para>
     /// /// ⚠️ <b>Loaded at the dialog's DPI, and that is the whole point of the
-    /// call it uses — 2026-09-16.</b> <c>LoadIconW</c> has no size parameter: it
+    /// call it uses -- 2026-09-16.</b> <c>LoadIconW</c> has no size parameter: it
     /// answers the 32×32 image out of the group, which a Per-Monitor-V2 process
-    /// then draws <i>stretched</i> — on a 200% display, a 32-pixel icon blown up
+    /// then draws <i>stretched</i> -- on a 200% display, a 32-pixel icon blown up
     /// to 64. The application icon ships larger images; <c>LoadImageW</c> at
     /// <c>IMAGE_ICON</c> with a size is what picks one. The DPI is the window's
     /// where there is a window and the system's on the first page, which is
@@ -316,7 +316,7 @@ internal sealed class TaskDialogHost : IDisposable
     /// <para>
     /// ⚠️ <b>The comctl32 call the documentation points at is exported by
     /// ORDINAL ONLY</b>, so naming it in a <c>LibraryImport</c> throws
-    /// <c>EntryPointNotFoundException</c> at the call — from inside
+    /// <c>EntryPointNotFoundException</c> at the call -- from inside
     /// <see cref="Show"/>, which is outside the callback's own boundary and takes
     /// the window with it. Measured 2026-09-16 against the published binary,
     /// which exited <c>0xC0000409</c>. <c>LoadImageW</c> is exported by name.
@@ -326,7 +326,7 @@ internal sealed class TaskDialogHost : IDisposable
     /// the sized load fails, the unscaled one is exactly the behaviour that
     /// shipped; if the SDK ever stopped writing the icon group
     /// under the id below, that load answers zero and the dialog would render
-    /// with the <i>no icon at all</i> layout — a different shape, silently. A
+    /// with the <i>no icon at all</i> layout -- a different shape, silently. A
     /// stock icon is a visible wrong rather than an invisible one.
     /// </para>
     /// </remarks>
@@ -439,7 +439,7 @@ internal sealed class TaskDialogHost : IDisposable
     /// <remarks>
     /// <b>It resolves the instance and forwards; every decision is in
     /// <see cref="Dispatch"/>.</b> The split is what makes the callback path
-    /// assertable without a window — an <c>[UnmanagedCallersOnly]</c> method
+    /// assertable without a window -- an <c>[UnmanagedCallersOnly]</c> method
     /// cannot be called from managed code at all, so a dispatch written inside
     /// this one is a dispatch nothing can exercise until Windows exercises it.
     /// </remarks>
@@ -579,7 +579,7 @@ internal sealed class TaskDialogHost : IDisposable
     /// <c>FailFast</c>.</b> The runtime cannot unwind into native frames, so the
     /// process is terminated where it stands: the window vanishes mid-click with
     /// no dialog, no log line and no exit code anything could read. Three calls
-    /// reachable from a click could produce one today —
+    /// reachable from a click could produce one today --
     /// <c>Directory.CreateDirectory</c> for the log directory,
     /// <c>Path.Combine</c> outside the registry reader's own <c>try</c> when
     /// <c>CLAUDE_CONFIG_DIR</c> holds an invalid path, and
@@ -587,7 +587,7 @@ internal sealed class TaskDialogHost : IDisposable
     /// </para>
     /// <para>
     /// <b>Reported once, then shown once.</b> The reporter belongs to the caller
-    /// — it writes the process log and sets the note the next page carries — and
+    /// -- it writes the process log and sets the note the next page carries -- and
     /// the re-render that follows is what puts that note on screen. If the
     /// re-render <i>itself</i> throws then the page factory is the broken thing,
     /// so the content is replaced outright with the message instead; that path

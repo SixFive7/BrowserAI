@@ -7,7 +7,7 @@ namespace BrowserAI.Interop;
 
 /// <summary>
 /// The message-only windows Chromium publishes for its own single-instance
-/// logic, and the titles they carry — which is how a running browser is tied to
+/// logic, and the titles they carry -- which is how a running browser is tied to
 /// the profile directory it opened.
 /// </summary>
 /// <remarks>
@@ -17,7 +17,7 @@ namespace BrowserAI.Interop;
 /// decides: a process is a candidate because its <i>full image path</i> is a
 /// binary BrowserAI provisioned. Everything here only answers <i>which
 /// directory</i>, so that the ownership test can run and a report can name the
-/// session. When it comes back empty the sweep refuses to kill and says so —
+/// session. When it comes back empty the sweep refuses to kill and says so --
 /// the undocumented path can only ever cause BrowserAI to decline to act.
 /// </para>
 /// <para>
@@ -27,12 +27,12 @@ namespace BrowserAI.Interop;
 /// with no caption returns a null string. A <c>Chrome_MessageWindow</c> is
 /// created with <c>dwStyle = 0</c> and has no caption, so by the documentation
 /// this should return nothing. It does not: cross-process,
-/// <c>GetWindowTextW</c> never sends <c>WM_GETTEXT</c> at all — it reads the
+/// <c>GetWindowTextW</c> never sends <c>WM_GETTEXT</c> at all -- it reads the
 /// kernel-side window name set at <c>CreateWindowExW</c>, which is why a hung,
 /// suspended or deliberately hostile owner cannot defeat it. Measured across
 /// ~1,550 windows, every integrity level, a thread blocked 15 s inside its own
 /// WndProc and a fully suspended Chromium
-/// ([kb](../../../kb/windows/detection.md#cross-process-title-reads--settled-by-two-independent-agents)).
+/// ([kb](../../../kb/windows/detection.md#cross-process-title-reads----settled-by-two-independent-agents)).
 /// </para>
 /// <para>
 /// <b><see cref="InternalWindowText"/> is the fallback, and it is the documented
@@ -40,15 +40,15 @@ namespace BrowserAI.Interop;
 /// documented on MS Learn as copying the window text <i>without sending
 /// <c>WM_GETTEXT</c></i>, and measured to agree with <c>GetWindowTextW</c> on
 /// every one of those ~1,550 windows. Its caveat is availability rather than
-/// semantics, and it is reached only when the documented API returned nothing —
+/// semantics, and it is reached only when the documented API returned nothing --
 /// so on this machine, today, it never runs. It is kept because the day
 /// <c>GetWindowTextW</c> starts honouring its own contract is the day the sweep
 /// goes blind, and this is the API that would still answer.
 /// </para>
 /// <para>
 /// <b><c>SendMessageTimeoutW(WM_GETTEXT)</c> must never be used here.</b> It is
-/// the one API a stray in exactly the state we care about — hung, wedged,
-/// mid-crash — can defeat, returning an empty string against a suppressing
+/// the one API a stray in exactly the state we care about -- hung, wedged,
+/// mid-crash -- can defeat, returning an empty string against a suppressing
 /// WndProc and failing outright after a full timeout against one that does not
 /// pump. <c>SMTO_ABORTIFHUNG</c> does not abort early.
 /// </para>
@@ -65,7 +65,7 @@ internal static partial class MessageWindows
     /// unrelated Electron embedders on this machine publish 55 between them. It
     /// is also <b>forgeable</b>: window classes are per-process, so any program
     /// can register this name and publish any path it likes. Neither fact
-    /// matters, because nothing here decides ownership — see the type's remarks.
+    /// matters, because nothing here decides ownership -- see the type's remarks.
     /// </remarks>
     public const string ChromiumSingletonClass = "Chrome_MessageWindow";
 
@@ -74,7 +74,7 @@ internal static partial class MessageWindows
     /// </summary>
     /// <remarks>
     /// A restart happens when a window died between two iterations, which is a
-    /// live condition rather than a fault — it is exactly what browsers exiting
+    /// live condition rather than a fault -- it is exactly what browsers exiting
     /// looks like. Bounded so that a machine churning windows continuously
     /// produces a report saying the walk was incomplete rather than a loop.
     /// </remarks>
@@ -95,8 +95,8 @@ internal static partial class MessageWindows
     /// <param name="className">
     /// The class to walk. <b>Mandatory</b>: a <see langword="null"/> class
     /// returns nothing at all from this parent, as does
-    /// <c>EnumChildWindows(HWND_MESSAGE, …)</c>, and <c>EnumWindows</c> — which
-    /// finds several hundred top-level windows — has <i>zero</i> overlap with
+    /// <c>EnumChildWindows(HWND_MESSAGE, …)</c>, and <c>EnumWindows</c> -- which
+    /// finds several hundred top-level windows -- has <i>zero</i> overlap with
     /// this set. A walk that dropped the class would silently find none.
     /// </param>
     /// <returns>The windows, and whether the walk had to restart.</returns>
@@ -146,7 +146,7 @@ internal static partial class MessageWindows
     /// <remarks>
     /// The exact-title probe, as distinct from <see cref="Walk"/>. It is
     /// structurally incapable of returning a profile the caller did not name,
-    /// which the enumerating walk is not — enumeration hands back strangers'
+    /// which the enumerating walk is not -- enumeration hands back strangers'
     /// paths, and there the ownership test is the entire safety boundary.
     /// </remarks>
     /// <param name="className">The window class.</param>
@@ -167,7 +167,7 @@ internal static partial class MessageWindows
         GetWindowThreadProcessId(window, out var processId) is 0 ? 0 : (int)processId;
 
     /// <summary>
-    /// The window's title as the <b>documented</b> API reads it — which
+    /// The window's title as the <b>documented</b> API reads it -- which
     /// cross-process is the kernel-side name and not a <c>WM_GETTEXT</c>.
     /// </summary>
     /// <remarks>
@@ -211,7 +211,7 @@ internal static partial class MessageWindows
     }
 
     /// <summary>
-    /// The same title through <c>InternalGetWindowText</c> — the fallback, and
+    /// The same title through <c>InternalGetWindowText</c> -- the fallback, and
     /// the suite's oracle.
     /// </summary>
     /// <remarks>
@@ -241,7 +241,7 @@ internal static partial class MessageWindows
     /// </summary>
     /// <param name="window">The window handle.</param>
     /// <returns>
-    /// The title, or <see langword="null"/> when both reads came back empty —
+    /// The title, or <see langword="null"/> when both reads came back empty --
     /// which is the ordinary case for the several nameless windows every
     /// embedder owns, and the case in which the sweep refuses to act.
     /// </returns>

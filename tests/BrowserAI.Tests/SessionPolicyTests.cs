@@ -21,7 +21,7 @@ namespace BrowserAI.Tests;
 /// different modes are being driven at once").</b> Seven of this file's eight
 /// tests asserted a permission matrix that no longer exists. <b>Six were deleted
 /// outright</b> and the seventh was inverted, rather than any of them being left
-/// asserting a tautology — a test that can no longer fail is worse than a gap,
+/// asserting a tautology -- a test that can no longer fail is worse than a gap,
 /// because it reads as covered. The eighth, the concurrency arm, was reframed and
 /// is the last test below. Across the suite that is <b>432 tests before and 428
 /// after</b>: six deleted here plus one in <c>ErrorCatalogueTests</c>
@@ -31,24 +31,24 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <list type="bullet">
 /// <item><c>EveryToolTheChildCanExposeCarriesAnExplicitClassification</c> and
-/// <c>EveryToolTheProxyAdvertisesIsClassified</c> — there is no classification
+/// <c>EveryToolTheProxyAdvertisesIsClassified</c> -- there is no classification
 /// table to be exhaustive about. The change-detection they provided is the
 /// [golden snapshot](../../upstream-snapshots/tools-list.json)'s job, and the
 /// snapshot does it better: it diffs each tool's <c>inputSchema</c> as well as
 /// its name, which a name-keyed table never saw.</item>
 /// <item><c>EachModePermitsExactlyTheSurfaceTheTestsDeclare</c> and
-/// <c>ThePolicyRowsAndTheModeTableCannotDriftApart</c> — there are no policy rows
+/// <c>ThePolicyRowsAndTheModeTableCannotDriftApart</c> -- there are no policy rows
 /// left to drift from the mode table. The first is replaced below by the counts
 /// that survive, which are nearly the whole surface.</item>
 /// <item><c>AToolNobodyClassifiedIsRefusedInEveryMode</c> and
-/// <c>AnUnclassifiedToolInTheChildsListIsRefusedOverTheWire</c> — the
+/// <c>AnUnclassifiedToolInTheChildsListIsRefusedOverTheWire</c> -- the
 /// <c>(tool, mode)</c> matrix is gone, so the second was inverted to assert that
 /// a tool this build had never heard of was <i>forwarded</i>. ⚠️ <b>That
 /// inversion was itself inverted on 2026-08-26</b>: deny-by-default came back as
 /// a VERDICT rather than as a permission, and
 /// <c>AToolThisBuildHasNeverJudgedIsRefusedRatherThanForwarded</c> below says why
 /// the 2026-08-18 reasoning does not reach it.</item>
-/// <item><c>AStorageToolOnAHeadlessSessionIsRefusedWithTextNamingPersistent</c> —
+/// <item><c>AStorageToolOnAHeadlessSessionIsRefusedWithTextNamingPersistent</c> --
 /// BrowserAI no longer refuses it. A headless session's own child is launched
 /// without the <c>storage</c> capability, so the storage tools do not exist in
 /// it and upstream answers; that is a property of
@@ -63,14 +63,14 @@ namespace BrowserAI.Tests;
 /// so DPAPI decrypts for it. Refusing <c>browser_cookie_list</c> to a caller
 /// holding file tools costs a lookup per call and buys one extra step.
 /// <b>Measured 2026-08-18</b>, from a second process as the same user against a
-/// session this product configured — <c>CryptUnprotectData</c> and AES-256-GCM,
+/// session this product configured -- <c>CryptUnprotectData</c> and AES-256-GCM,
 /// no App-Bound Encryption
-/// ([kb](../../kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)).
+/// ([kb](../../kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one----measured-2026-08-18)).
 /// </para>
 /// <para>
 /// ⚠️ <b>Since 2026-08-26 the decision this class is about is a FILE.</b>
-/// <c>tool-verdicts.json</c> carries a row per tool — <c>allow</c>, <c>deny</c>
-/// with the reason a caller reads, or <c>answer</c> — and a name with no row is
+/// <c>tool-verdicts.json</c> carries a row per tool -- <c>allow</c>, <c>deny</c>
+/// with the reason a caller reads, or <c>answer</c> -- and a name with no row is
 /// refused. Three arms below are about the mechanism rather than about any one
 /// tool, and they use rig copies of that file so the product's own deny set is
 /// left alone; <c>ToolVerdictTests</c> owns the file itself and its agreement
@@ -79,14 +79,14 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What is asserted instead is what is actually true.</b> A call names its
-/// session or it is refused — that is <b>routing</b>, and the concurrency arm
+/// session or it is refused -- that is <b>routing</b>, and the concurrency arm
 /// below drives it across sessions being opened and destroyed at the same time.
 /// And <c>browser_annotate</c> is <b>not advertised at all</b>, because it would
-/// <b>hang</b>: that is a liveness claim and is asserted as one — and
+/// <b>hang</b>: that is a liveness claim and is asserted as one -- and
 /// <b>measured on 2026-08-18</b>, three runs against a real headless child: a
 /// visible window took the foreground within 1.2 s every time and the call was
 /// still silent 90 s later
-/// ([kb](../../kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does--measured-2026-08-18)).
+/// ([kb](../../kb/playwright/tools-and-artifacts.md#what-browser_annotate-actually-does----measured-2026-08-18)).
 /// <b>The measurement is deliberately not an arm of this class</b>: asserting
 /// that a call does not return means spending the budget waiting for it, with a
 /// focus-stealing window on the developer's screen throughout.
@@ -95,7 +95,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>Amended 2026-08-18, later the same day (previously "<c>browser_annotate</c>
 /// is refused on a windowless session … permitted on the two modes that open
 /// one").</b> The same measurement said the daemon is detached, per-user and
-/// writes into <c>%TEMP%</c>, and that the call is unbounded on every mode — so
+/// writes into <c>%TEMP%</c>, and that the call is unbounded on every mode -- so
 /// the tool is withheld from <c>tools/list</c> in every mode and refused if a
 /// caller names it anyway. Both halves are asserted below, and against a child
 /// double that would happily answer the call.
@@ -115,7 +115,7 @@ internal sealed class SessionPolicyTests
     /// 2026-08-16 against the five-class permission matrix).</b> Session modes
     /// were deleted, so there is one row rather than three; and every capability
     /// is now granted to every session, which put ten previously-unreachable
-    /// tools into the surface — <c>network</c>'s four, <c>pdf</c>'s one and
+    /// tools into the surface -- <c>network</c>'s four, <c>pdf</c>'s one and
     /// <c>testing</c>'s five. The 2026-09-15 move is upstream's rather than
     /// ours: <c>@playwright/mcp</c> 0.0.80 added
     /// <c>browser_start_recording</c> and <c>browser_stop_recording</c>, both
@@ -126,20 +126,20 @@ internal sealed class SessionPolicyTests
     /// (previously "Of the 71 tools a fully-capable child exposes, BrowserAI's
     /// <c>tools/list</c> carries <b>70</b>: <c>browser_annotate</c> is withheld,
     /// and it is still the only one").</b> <c>@playwright/mcp</c> 0.0.81 added
-    /// <c>browser_webmcp_list</c> and <c>browser_webmcp_call</c> — both
-    /// <c>core</c>, so both unconditional — taking the exposable surface from 71
+    /// <c>browser_webmcp_list</c> and <c>browser_webmcp_call</c> -- both
+    /// <c>core</c>, so both unconditional -- taking the exposable surface from 71
     /// to <b>73</b>. The two were judged in opposite directions: the list
     /// <c>allow</c>, the call <c>deny</c> on liveness, because it runs a tool the
     /// page supplies and waits for it with no timeout. So the denominator moved
     /// by two, the numerator by one, and <b>the withheld set is two rather than
-    /// one for the first time</b> — which is why the arithmetic below reads
+    /// one for the first time</b> -- which is why the arithmetic below reads
     /// <c>Advertises + 2</c> and the named hole is a loop.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-09-17 to 72 of 74 (previously 71 of 73).</b> The
     /// <see href="https://github.com/microsoft/playwright/pull/42673">dated
     /// <c>playwright-core</c> override</see> added
-    /// <c>browser_emulate_media</c> — <c>core</c>, so unconditional — and it was
+    /// <c>browser_emulate_media</c> -- <c>core</c>, so unconditional -- and it was
     /// judged <c>allow</c>, so numerator and denominator moved together and
     /// <see cref="Withholds"/> did not move at all. That is the ordinary shape;
     /// the paragraph above records the one time it was not.
@@ -147,7 +147,7 @@ internal sealed class SessionPolicyTests
     /// <para>
     /// <b>Written down rather than derived, for the reason the old table was:</b>
     /// derived from the product's own decision it would agree with it by
-    /// construction and could never fail. This one still can — a refusal
+    /// construction and could never fail. This one still can -- a refusal
     /// reintroduced anywhere, or a surface that changed size.
     /// </para>
     /// </remarks>
@@ -164,7 +164,7 @@ internal sealed class SessionPolicyTests
     /// deleted as a judgement about nothing. The deny's reasoning is preserved
     /// in <c>tool-verdicts.json</c> and <c>upstream-review.json</c> because the
     /// tool can come back. <see cref="Advertises"/> moved 72 → 71 with it, so
-    /// the pair went 74 → 72 and both halves moved for the same cause — which
+    /// the pair went 74 → 72 and both halves moved for the same cause -- which
     /// is exactly the shape the paragraph below says this pair exists to catch,
     /// arriving from upstream rather than from a refusal being reintroduced.
     /// <i>Previously <b>two since 2026-09-15</b>.</i> It is stated rather than read off
@@ -181,8 +181,8 @@ internal sealed class SessionPolicyTests
     /// <remarks>
     /// ⚠️ <b>Named rather than derived from anything, 2026-08-20 (previously one
     /// session per row of <c>SessionModes.All</c>).</b> Modes are gone. Three is
-    /// what the arithmetic in that arm is written against — 25 rounds × 3
-    /// sessions × 4 probes — and naming them here rather than looping over a
+    /// what the arithmetic in that arm is written against -- 25 rounds × 3
+    /// sessions × 4 probes -- and naming them here rather than looping over a
     /// product list is what stops the denominator moving when something
     /// unrelated does.
     /// </remarks>
@@ -241,19 +241,19 @@ internal sealed class SessionPolicyTests
     /// <c>AToolThisBuildHasNeverHeardOfIsForwardedRatherThanRefused</c>, whose
     /// own comment said it was "the test that proves the removal actually
     /// happened").</b> Deny-by-default is back, and the old claim is no longer
-    /// true of this product — so the arm asserts the new policy rather than being
+    /// true of this product -- so the arm asserts the new policy rather than being
     /// deleted, because the case it covers did not go anywhere.
     /// </para>
     /// <para>
     /// <b>What was removed on 2026-08-18 is still removed, and this is not it.</b>
     /// That was a <c>(tool, mode)</c> PERMISSION matrix, deleted because it was
     /// never a boundary against a caller who owns the session directory and reads
-    /// the profile inside it as the same user — and every word of that reasoning
+    /// the profile inside it as the same user -- and every word of that reasoning
     /// still holds. A verdict is a different question: it decides whether a name
     /// this build has never been told about is worth <b>starting a browser</b>
     /// for. Upstream creates the browser context before it looks a tool name up,
     /// so the forwarded call the old arm asserted would launch a browser to be
-    /// told there is nothing to run — and would echo the caller's own string back
+    /// told there is nothing to run -- and would echo the caller's own string back
     /// into model-facing text on the way out. Neither is a permission and neither
     /// was in scope on 2026-08-18.
     /// </para>
@@ -328,7 +328,7 @@ internal sealed class SessionPolicyTests
     /// ⚠️ <b>The short-circuit in front of the door was a PREFIX test until
     /// 2026-08-26</b>, so <c>browserai_zzz</c> never reached the verdict at all:
     /// it landed on <c>SessionManager.InvokeAsync</c>'s default arm, was refused
-    /// with a good sentence, and <b>wrote no log row</b> — because no session had
+    /// with a good sentence, and <b>wrote no log row</b> -- because no session had
     /// been resolved at that point. An unjudged <i>upstream</i> name was recorded
     /// on the session it named. Same class of caller mistake, two different
     /// records, and the difference was invisible.
@@ -441,7 +441,7 @@ internal sealed class SessionPolicyTests
             sessions: sessions);
 
         // The surface half, off the wire: the child advertises it, BrowserAI
-        // does not. Both halves matter — "absent from our list" is satisfied
+        // does not. Both halves matter -- "absent from our list" is satisfied
         // vacuously by a child that never had it.
         var childsOwn = rig.SurfaceChild.ToolsListResult;
         var advertised = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
@@ -533,7 +533,7 @@ internal sealed class SessionPolicyTests
 
     /// <summary>
     /// A <c>deny</c> row in <c>tool-verdicts.json</c> is dropped from the
-    /// advertised list, refused at the door, and recorded — for a tool this
+    /// advertised list, refused at the door, and recorded -- for a tool this
     /// build does not actually deny.
     /// </summary>
     /// <remarks>
@@ -541,16 +541,16 @@ internal sealed class SessionPolicyTests
     /// <b>The subject is the MECHANISM, and that is why it denies
     /// <c>browser_navigate</c> rather than <c>browser_annotate</c>.</b> The arm
     /// above proves the shipped judgement; this one proves the judgement is
-    /// <i>read from the file</i> — which the shipped one cannot, because a
+    /// <i>read from the file</i> -- which the shipped one cannot, because a
     /// hardcoded constant naming the same tool would satisfy every assertion
     /// about it. A rig copy of the file is what separates the two, and it leaves
     /// the product's own deny set untouched, which is what four documents publish
     /// a count of. *(Was "at exactly one" until 2026-09-15; it is two now, and
-    /// the point is unchanged — a rig copy must not move a published number.)*
+    /// the point is unchanged -- a rig copy must not move a published number.)*
     /// </para>
     /// <para>
     /// <b>Three claims, and each is the half the others do not cover.</b> Absent
-    /// from the list, because a denied tool is dropped rather than disabled —
+    /// from the list, because a denied tool is dropped rather than disabled --
     /// there is nothing for a model to read and weigh. Refused at the door,
     /// because a model that knows the name from upstream can still send it.
     /// Recorded, because <i>the agent reached for a tool this build will not
@@ -630,7 +630,7 @@ internal sealed class SessionPolicyTests
     }
 
     /// <summary>
-    /// A tool with no verdict is refused at the door — and, unlike a denied one,
+    /// A tool with no verdict is refused at the door -- and, unlike a denied one,
     /// is still advertised.
     /// </summary>
     /// <remarks>
@@ -638,8 +638,8 @@ internal sealed class SessionPolicyTests
     /// ⚠️ <b>DENY BY DEFAULT, and the asymmetry with a denial is deliberate
     /// rather than an oversight.</b> A <c>deny</c> is a decision, so the tool is
     /// dropped from the list; a missing row is a <i>gap</i>, so the tool stays in
-    /// the list and the call is refused. Two reasons. The gap is already loud —
-    /// <c>ToolVerdictTests</c> is red on the same build — so dropping it from the
+    /// the list and the call is refused. Two reasons. The gap is already loud --
+    /// <c>ToolVerdictTests</c> is red on the same build -- so dropping it from the
     /// list would add nothing. And filtering on <i>absence</i> would turn a
     /// verdicts file that failed to load into a silently empty surface, which is
     /// the failure the loud loader exists to prevent.
@@ -726,7 +726,7 @@ internal sealed class SessionPolicyTests
     /// ⚠️ <b>F6, and the whole of it is whose fault the answer says it is.</b>
     /// The three strings were read as
     /// <c>(node as JsonValue)?.GetValue&lt;string&gt;()</c>, and on
-    /// <c>"name": 5</c> that does not answer <see langword="null"/> —
+    /// <c>"name": 5</c> that does not answer <see langword="null"/> --
     /// <c>JsonValue</c> accepts a number and <c>GetValue&lt;string&gt;</c>
     /// throws <c>InvalidOperationException</c>, which escaped the whole handler
     /// and reached the caller as a bare <c>-32603</c> with the SDK's own
@@ -789,7 +789,7 @@ internal sealed class SessionPolicyTests
         await Assert.That(TextOf(wrongWhy)).Contains("Array");
 
         // ⚠️ THE POSITIVE CONTROL. The same three arguments, right this time,
-        // reach the child — so a version that refused everything would pass
+        // reach the child -- so a version that refused everything would pass
         // every assertion above.
         var accepted = await rig.Client.RoundTripAsync("tools/call", new JsonObject
         {
@@ -843,7 +843,7 @@ internal sealed class SessionPolicyTests
     {
         // ⚠️ The failure this exists for is not a glitch: a call that resolved
         // one session's handle to another's child drives the WRONG BROWSER, and
-        // it presents as nothing at all — a successful call and a plausible
+        // it presents as nothing at all -- a successful call and a plausible
         // result, against a page the caller never asked for. So this drives real
         // calls across three sessions, all outstanding at the server together,
         // WHILE other sessions are being opened and destroyed on the same
@@ -974,7 +974,7 @@ internal sealed class SessionPolicyTests
         // calls, minus the annotation probe, which every session refuses.
         //
         // Corrected 2026-08-18 (previously 25, counted as the rounds times the
-        // modes that refused it — one of three). The tool is withheld from the
+        // modes that refused it -- one of three). The tool is withheld from the
         // surface and refused everywhere now, so it is 75, one per round per
         // session.
         var refusedByLiveness = RepositoryVerdicts.Committed.Decide(RepositoryVerdicts.ADenial.Name).IsAllowed

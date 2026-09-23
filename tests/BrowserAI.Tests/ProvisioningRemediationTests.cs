@@ -19,7 +19,7 @@ namespace BrowserAI.Tests;
 /// rather than invented here.</b> <c>throwIfExecutableMissing</c> composes
 /// <c>`${label} is not installed${location}. Run \`${command}\` to install`</c>,
 /// where <c>command</c> is <c>npx @playwright/mcp install-browser
-/// &lt;target&gt;</c> and <c>target</c> is the resolved <b>channel</b> — so a
+/// &lt;target&gt;</c> and <c>target</c> is the resolved <b>channel</b> -- so a
 /// BrowserAI caller sees <c>chrome-for-testing</c> rather than
 /// <c>chromium</c>. Every clause of that advice is wrong here: BrowserAI ships
 /// no <c>npx</c>, has no npm project to run it in, and the package it would
@@ -164,7 +164,7 @@ internal sealed class ProvisioningRemediationTests
     /// <c>isError</c> answer against a live tab carries the page's own title in
     /// the same result, so page content can still trip the rewrite on a call
     /// that genuinely failed. ⚠️ <i>Corrected 2026-08-26 (previously "what stops
-    /// that mattering is the other half — <c>ArtifactPointerTests.APointerSurvivesAnAnswerThatAlsoTrippedTheProvisioningRewrite</c>").</i>
+    /// that mattering is the other half -- <c>ArtifactPointerTests.APointerSurvivesAnAnswerThatAlsoTrippedTheProvisioningRewrite</c>").</i>
     /// There is no other half and there is nothing left for it to matter to:
     /// what made a spurious rewrite <i>harmful</i> was that the rewrite branch
     /// skipped the artifact bookkeeping, so a page could switch the pointer
@@ -220,7 +220,7 @@ internal sealed class ProvisioningRemediationTests
     /// than BrowserAI's code.</b> Every other test in this file drives
     /// <see cref="UpstreamMessage"/>, which is a constant somebody typed out of
     /// the bundle on 2026-08-16. If upstream rewords its advice, every one of
-    /// them stays green while the rewrite silently stops firing in production —
+    /// them stays green while the rewrite silently stops firing in production --
     /// and what a caller then receives is the <c>npx</c> instruction this whole
     /// file exists to keep away from a model. Nothing else in the suite would
     /// notice: the golden snapshot covers tool names, descriptions and schemas,
@@ -229,7 +229,7 @@ internal sealed class ProvisioningRemediationTests
     /// <para>
     /// <b>The child is started directly rather than through BrowserAI, and it
     /// has to be.</b> Through the product, an empty browsers root never reaches
-    /// upstream at all — <c>SessionManager.ProvisioningRefusal</c> answers the
+    /// upstream at all -- <c>SessionManager.ProvisioningRefusal</c> answers the
     /// call itself and starts a download, which is the correct behaviour and the
     /// reason the genuine error is unreachable from that direction. So this
     /// starts <c>node.exe</c> on the payload's own <c>cli.js</c> with
@@ -247,7 +247,7 @@ internal sealed class ProvisioningRemediationTests
     /// </para>
     /// <para>
     /// <b>It costs no download.</b> The failure is <c>throwIfExecutableMissing</c>
-    /// resolving a path and finding nothing there — upstream never reaches for
+    /// resolving a path and finding nothing there -- upstream never reaches for
     /// the network on this path, which is the whole complaint the rewrite makes
     /// about its advice.
     /// </para>
@@ -331,7 +331,7 @@ internal sealed class ProvisioningRemediationTests
         await Assert.That(rewritten).Contains(SessionToolSurface.ReinstallBrowser);
 
         // ⚠️ THE CONTROL, over the same real text. Take upstream's subcommand
-        // out of it and the rewrite must decline — otherwise the arm above is
+        // out of it and the rewrite must decline -- otherwise the arm above is
         // satisfied by a function that rewrites anything, and the canary is
         // measuring nothing.
         var withoutTheAnchor = text.Replace(ProvisioningRemediation.Marker, "do-something-else", StringComparison.Ordinal);

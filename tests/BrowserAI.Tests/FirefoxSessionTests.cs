@@ -18,8 +18,8 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>This is the half <see cref="FirefoxTests"/> never covered.</b> That class
-/// proves the locking design — the <c>parent.lock</c> preflight, Restart Manager
-/// attribution, the restart-registration preference — by composing a Firefox
+/// proves the locking design -- the <c>parent.lock</c> preflight, Restart Manager
+/// attribution, the restart-registration preference -- by composing a Firefox
 /// config in the test and launching the child through <c>ChildLaunch.Create</c>.
 /// Every one of those assertions was true while <c>browserai_init</c> still
 /// refused <c>browser: "firefox"</c>, because none of them goes through the
@@ -30,7 +30,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>The end-to-end arm asserts the browser is Firefox by full image path,
 /// and that assertion is what makes the rest of it mean anything.</b> A session
 /// that silently ran Chromium against a Firefox-named record would navigate,
-/// screenshot and destroy exactly as happily — success-shaped, wrong browser,
+/// screenshot and destroy exactly as happily -- success-shaped, wrong browser,
 /// nothing anywhere saying so. Never by image name: the maintainer's own Firefox
 /// runs from <c>C:\Program Files</c> on this machine, and every reading here is
 /// scoped to the job this test owns as well as to the binary BrowserAI
@@ -78,7 +78,7 @@ internal sealed class FirefoxSessionTests
     /// survivor arm answers <i>"BUT N item(s) could not be removed"</i> and names
     /// them, because Windows will not unlink a file a browser is still mapping
     /// and the release lags the process by however long the kernel
-    /// takes — so a legitimate outcome failed the test. It passed nine local
+    /// takes -- so a legitimate outcome failed the test. It passed nine local
     /// runs and failed three consecutive CI runs on a four-core runner, against
     /// Firefox, the family slowest to let go of its profile. <b>The assertion was
     /// wrong rather than merely strict</b>, and a wrong assertion that only fires
@@ -88,7 +88,7 @@ internal sealed class FirefoxSessionTests
     /// <para>
     /// <b>What replaced it is stronger, not weaker, and in four ways the old one
     /// could not catch.</b> The answer and the disk must <i>agree</i>: a destroy
-    /// that leaves the tree standing and says nothing fails, exactly as before —
+    /// that leaves the tree standing and says nothing fails, exactly as before --
     /// but so does one that <i>reports</i> survivors it does not have, one whose
     /// survivor list is a count with nothing named under it, and one that names
     /// a path outside the directory it was given. The old assertion was blind to
@@ -102,7 +102,7 @@ internal sealed class FirefoxSessionTests
     /// <c>BrowserContainmentTests</c> and <c>BrowserIdleTimerTests</c> tear a
     /// real browser tree down with
     /// <see cref="ScratchDirectory.RemoveTreeWhenReleasedAsync"/> and assert the
-    /// tree becomes deletable — a property of the browser's teardown, which is
+    /// tree becomes deletable -- a property of the browser's teardown, which is
     /// what those two tests are about. Used <i>instead</i> of the agreement check
     /// here it would be a weakening: the test's own delete loop would remove the
     /// tree, so a <c>browserai_destroy</c> that did nothing whatsoever and
@@ -214,17 +214,17 @@ internal sealed class FirefoxSessionTests
             ["directory"] = session,
         });
 
-        // ⚠️ THE ANSWER, THE FLAG AND THE DISK MUST AGREE — IN BOTH DIRECTIONS,
+        // ⚠️ THE ANSWER, THE FLAG AND THE DISK MUST AGREE -- IN BOTH DIRECTIONS,
         // and see `DestroyAnswer` for why this is not `Directory.Exists` is
         // false. The contract lives there rather than here so that this test and
         // the deterministic survivor in `SessionDestroyTests` cannot hold destroy
-        // to two different promises — and so that the arm a fast machine never
+        // to two different promises -- and so that the arm a fast machine never
         // reaches is exercised on every run by one that does.
         //
         // ⚠️ There is deliberately NO bare `isError` assertion beside this call
         // any more. Until 2026-08-19 this line required `isError` not to be true,
         // which against Firefox on a four-core runner asserts that the browser
-        // let go of its profile in time — the same wrong-because-stronger
+        // let go of its profile in time -- the same wrong-because-stronger
         // assertion, one layer along, that the remarks above are about. The flag
         // is now checked against what the answer itself says.
         await DestroyAnswer.AccountsForWhatItLeftAsync(TextOf(destroyed), (bool?)destroyed["isError"], session);
@@ -248,7 +248,7 @@ internal sealed class FirefoxSessionTests
     /// <see cref="BrowserProvisioner.FirstRunDownloadSizes"/> promises.</b> The
     /// figure reaches a caller inside
     /// <see cref="SessionErrors.ProvisioningInProgress"/>, a sentence that reads
-    /// as a measurement whatever is in it — so a third family added without one
+    /// as a measurement whatever is in it -- so a third family added without one
     /// would quote another browser's number or a placeholder, and neither is
     /// distinguishable from a measurement by anyone reading the refusal. This is
     /// the same shape as the deny-by-default tool classification: a family the
@@ -293,7 +293,7 @@ internal sealed class FirefoxSessionTests
     /// ⚠️ <b>Corrected 2026-08-19 (previously both enums were asserted against
     /// <c>ProvisionedBrowsers.Families</c>).</b> The reinstall tool's argument
     /// gained a third value, <c>shared</c>, which is <c>ffmpeg</c> and
-    /// <c>winldd</c> rather than a browser — so the two enums are now different
+    /// <c>winldd</c> rather than a browser -- so the two enums are now different
     /// lists and this test is the one that says so. Asserting them against the
     /// <i>same</i> list is what would have let <c>shared</c> reach
     /// <c>browserai_init</c> in the widening edit, and a session bound for life
@@ -378,8 +378,8 @@ internal sealed class FirefoxSessionTests
     /// </summary>
     /// <remarks>
     /// <b>The settled no-arguments decision moved because its stated reason
-    /// expired</b> — "there is nothing to name" was true of a build with one
-    /// family — and this is the arm that holds the replacement to being a
+    /// expired</b> -- "there is nothing to name" was true of a build with one
+    /// family -- and this is the arm that holds the replacement to being a
     /// refusal rather than a default. A default here deletes and re-downloads a
     /// healthy tree and reports success while the broken one stays broken.
     /// </remarks>

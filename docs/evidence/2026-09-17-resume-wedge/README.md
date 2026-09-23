@@ -10,7 +10,7 @@ its transcript was never persisted, so
 rig. This is the re-run, bounded and instrumented, and this time the transcript
 is here.
 
-Cited by [kb: provisioning and timings](../../../kb/playwright/provisioning-and-timings.md#the-resume-wedge-measured--2026-09-17),
+Cited by [kb: provisioning and timings](../../../kb/playwright/provisioning-and-timings.md#the-resume-wedge-measured----2026-09-17),
 the hazard row, and the question it raised in
 [`QUESTIONS.md`](../../../QUESTIONS.md).
 

@@ -17,7 +17,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Until 2026-08-20 it said nothing at all.</b> The listing carried mode,
 /// browser, purpose, dates and size and performed no liveness check, so a caller
-/// could not tell an abandoned session from one another agent was inside — which
+/// could not tell an abandoned session from one another agent was inside -- which
 /// is the distinction that matters most in the turn before
 /// <c>browserai_destroy</c>.
 /// </para>
@@ -32,15 +32,15 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Every arm carries its own positive control.</b> The peer's handle is
 /// released and the ACL is lifted, and the same two sessions are then required
-/// to report <i>not in use</i> — so an implementation that answered "in use" for
+/// to report <i>not in use</i> -- so an implementation that answered "in use" for
 /// everything, or "unknown" for everything, fails the second listing even though
 /// it would pass the first.
 /// </para>
 /// <para>
 /// <b>In-process against the rig rather than the published binary.</b> The
 /// mechanism under test is the kernel's file-sharing rule, which is enforced
-/// against handles rather than against processes — the same argument
-/// <c>UpdateTests</c> makes about the live-marker set — and the rig is what
+/// against handles rather than against processes -- the same argument
+/// <c>UpdateTests</c> makes about the live-marker set -- and the rig is what
 /// allows a peer's handle and an ACL to be planted around a single call.
 /// </para>
 /// </remarks>
@@ -110,7 +110,7 @@ internal sealed class SessionListTests
             denied.Dispose();
         }
 
-        await Assert.That(BlockFor(text, driven)).Contains("in use: YES — this BrowserAI process is driving it right now.");
+        await Assert.That(BlockFor(text, driven)).Contains("in use: YES -- this BrowserAI process is driving it right now.");
 
         // ⚠️ Q100e, on the tool a caller reads before deciding what to keep.
         // Nothing here is ever deleted on a schedule or at a size, so the number
@@ -122,7 +122,7 @@ internal sealed class SessionListTests
 
         var peerBlock = BlockFor(text, peerHeld);
 
-        await Assert.That(peerBlock).Contains("in use: YES — something holds ");
+        await Assert.That(peerBlock).Contains("in use: YES -- something holds ");
         await Assert.That(peerBlock).Contains(SessionPath.For(peerHeld).LockFile);
 
         // ⚠️ THE TRAP, ASSERTED AS AN ABSENCE. A sharing violation says the file
@@ -135,7 +135,7 @@ internal sealed class SessionListTests
         await Assert.That(peerBlock).DoesNotContain("PID");
         await Assert.That(peerBlock).DoesNotContain(Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
-        await Assert.That(BlockFor(text, free)).Contains("in use: no — nothing held ");
+        await Assert.That(BlockFor(text, free)).Contains("in use: no -- nothing held ");
 
         var unknownBlock = BlockFor(text, unreadable);
 
@@ -152,9 +152,9 @@ internal sealed class SessionListTests
             ["directory"] = sessions.Root,
         }));
 
-        await Assert.That(BlockFor(after, peerHeld)).Contains("in use: no — nothing held ");
-        await Assert.That(BlockFor(after, unreadable)).Contains("in use: no — nothing held ");
-        await Assert.That(BlockFor(after, driven)).Contains("in use: YES — this BrowserAI process is driving it right now.");
+        await Assert.That(BlockFor(after, peerHeld)).Contains("in use: no -- nothing held ");
+        await Assert.That(BlockFor(after, unreadable)).Contains("in use: no -- nothing held ");
+        await Assert.That(BlockFor(after, driven)).Contains("in use: YES -- this BrowserAI process is driving it right now.");
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ internal sealed class SessionListTests
     /// <para>
     /// <b>Asserted on <see cref="SessionLock.ProbeLiveness"/> directly as well as
     /// through the tool</b>, because the tool can only show three of the arms
-    /// and the fourth — no guard at all — is the one that changed.
+    /// and the fourth -- no guard at all -- is the one that changed.
     /// </para>
     /// <para>
     /// ⚠️ <b>THE ABSENT ARM INVERTED (2026-08-26, previously
@@ -176,7 +176,7 @@ internal sealed class SessionListTests
     /// forwarded call, so its name was unbound for milliseconds at a time and an
     /// absence could not be told from a rewrite. <c>browserai.lock</c> is
     /// written once at acquisition and never again, so an absence is an absence
-    /// — and reading it as <i>undetermined</i> would now be the hedge rather
+    /// -- and reading it as <i>undetermined</i> would now be the hedge rather
     /// than the honest answer.
     /// </para>
     /// <para>
@@ -243,7 +243,7 @@ internal sealed class SessionListTests
     /// which required <c>UNKNOWN</c>).</b> That test's premise was the rewrite
     /// window: every forwarded browser call replaced <c>browserai.json</c>
     /// whole, dropping the ownership handle at the top and taking it back at the
-    /// bottom with the gate held throughout — so a bare probe could catch a busy
+    /// bottom with the gate held throughout -- so a bare probe could catch a busy
     /// session <i>present and unheld</i> and the listing printed <i>in use:
     /// no</i> about a session another agent was driving. The gate was the
     /// discriminator, and the listing took it once per entry.
@@ -253,8 +253,8 @@ internal sealed class SessionListTests
     /// it.</b> What is left is narrower by orders of magnitude and is asserted
     /// here rather than left to be discovered: between a peer taking the gate
     /// and that peer's own <c>browserai.lock</c> landing, a listing sees the
-    /// directory as free. That is a <b>momentary</b> truth — it was free, and it
-    /// is about to stop being — and the answer's own text already says a
+    /// directory as free. That is a <b>momentary</b> truth -- it was free, and it
+    /// is about to stop being -- and the answer's own text already says a
     /// snapshot is not a reservation. Widening it again would show up here.
     /// </para>
     /// <para>
@@ -304,7 +304,7 @@ internal sealed class SessionListTests
         // wrong answer -- it is the answer to a question asked at an instant that
         // will not last. The sentence beside it is what stops a caller reading it
         // as a reservation.
-        await Assert.That(block).Contains("in use: no — nothing held ");
+        await Assert.That(block).Contains("in use: no -- nothing held ");
         await Assert.That(block).Contains("a snapshot rather than a reservation");
         await Assert.That(block).DoesNotContain("in use: UNKNOWN");
 
@@ -332,7 +332,7 @@ internal sealed class SessionListTests
             ["directory"] = sessions.Root,
         }));
 
-        await Assert.That(BlockFor(after, midTake)).Contains("in use: YES — something holds ");
+        await Assert.That(BlockFor(after, midTake)).Contains("in use: YES -- something holds ");
     }
 
     [Test]
@@ -403,14 +403,14 @@ internal sealed class SessionListTests
     /// <para>
     /// <b><c>CanonicalPath</c> knows and drops it.</b> <c>VolumeIdentity.Of</c>
     /// answers <c>NoSuchDrive</c>, and only <c>Network</c> and
-    /// <c>Substituted</c> are acted on — justified in that file on the ground
+    /// <c>Substituted</c> are acted on -- justified in that file on the ground
     /// that an absent letter <i>"falls through to the ordinary creation failure,
     /// which already says what to do"</i>. <c>list</c> creates nothing, so for
     /// this one door there is no such sentence.
     /// </para>
     /// <para>
     /// <b>Answered with one <c>Directory.Exists</c> on the empty path only</b>,
-    /// against a root the canonicaliser has already proven local — a network
+    /// against a root the canonicaliser has already proven local -- a network
     /// spelling and a mapped letter are both refused above it, so the 22-second
     /// call this product is ordered around cannot be reached from here.
     /// </para>
@@ -482,7 +482,7 @@ internal sealed class SessionListTests
     /// </summary>
     /// <remarks>
     /// <b><c>Single</c> rather than a substring search</b>, so an assertion can
-    /// never accidentally be satisfied by a neighbouring session's line — which
+    /// never accidentally be satisfied by a neighbouring session's line -- which
     /// is exactly the failure a test with four almost-identical entries invites.
     /// </remarks>
     /// <param name="text">The whole listing.</param>

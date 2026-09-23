@@ -13,7 +13,7 @@ namespace BrowserAI.Protocol;
 /// <para>
 /// <b>It has to be an allowlist rather than a strip-list.</b> Upstream reads
 /// <b>47</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
-/// config mapping, and the merge order is config file → environment → CLI — so
+/// config mapping, and the merge order is config file → environment → CLI -- so
 /// an inherited variable silently overrides a key BrowserAI generated, with no
 /// error anywhere. Naming what may pass makes the next variable upstream adds
 /// absent by default; naming what may not makes it present, and nothing says
@@ -26,7 +26,7 @@ namespace BrowserAI.Protocol;
 /// re-measured, and the difference matters.</b> The figure above is now
 /// [re-verification row 17](../../../kb/re-verification.md)'s, taken on
 /// 2026-09-15 against the bundle that actually ships, with
-/// the previous bundle as the positive control — it returned 41 + 2 = 43
+/// the previous bundle as the positive control -- it returned 41 + 2 = 43
 /// exactly as this sentence carried, which is what says the old number was
 /// right for its own version rather than wrong. <c>@playwright/mcp</c> 0.0.81
 /// added <c>PLAYWRIGHT_MCP_IDLE_TIMEOUT</c>, inside the mapping (41 → 42), and
@@ -38,7 +38,7 @@ namespace BrowserAI.Protocol;
 /// is what stops that recurring: it holds this sentence to the row, in that
 /// direction, because the row names the bundle and the control and this is
 /// prose beside an allowlist. <b>Neither of them can tell you the number is
-/// right</b> — only a re-measurement against the resolved bundle does that.
+/// right</b> -- only a re-measurement against the resolved bundle does that.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-21 @ <c>playwright-core</c>
@@ -47,7 +47,7 @@ namespace BrowserAI.Protocol;
 /// <c>PLAYWRIGHT_MCP_WEBMCP</c>, which arrived with <c>@playwright/mcp</c>
 /// 0.0.82's page-registered tool collection and is read <b>inside</b>
 /// <c>configFromEnv</c>, so the mapping went 43 → 44 and the outside set is
-/// unchanged at three — still <c>PING_TIMEOUT_MS</c>, <c>EXTENSION_TOKEN</c> and
+/// unchanged at three -- still <c>PING_TIMEOUT_MS</c>, <c>EXTENSION_TOKEN</c> and
 /// <c>PROFILE_DIR_NAME</c>. <b>Re-measured against the resolved bundle with the
 /// previous one as the positive control</b>, fetched with
 /// <c>npm pack playwright-core@1.64.0-alpha-2026-09-17</c>: it returned
@@ -59,7 +59,7 @@ namespace BrowserAI.Protocol;
 /// that <i>override a key the config generator writes</i>, and this product
 /// writes no <c>webmcp</c> key. The allowlist already makes it absent. Naming
 /// it here would assert a decision about page-registered tool collection that
-/// nobody has taken — see <c>upstream-review.json</c>, 2026-09-21.
+/// nobody has taken -- see <c>upstream-review.json</c>, 2026-09-21.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-17 @ <c>playwright-core</c>
@@ -72,8 +72,8 @@ namespace BrowserAI.Protocol;
 /// [dated override](../../../DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
 /// so the number is now about the version that ships and belongs here.
 /// <b>Re-measured rather than taken from that paragraph</b>, with
-/// 1.64.0-alpha-2026-09-14 as the positive control — it returned 42 + 3 = 45,
-/// exactly what the previous sentence carried — against 43 + 3 = 46 on the
+/// 1.64.0-alpha-2026-09-14 as the positive control -- it returned 42 + 3 = 45,
+/// exactly what the previous sentence carried -- against 43 + 3 = 46 on the
 /// bundle that ships. The one addition is <c>PLAYWRIGHT_MCP_FILE_PATHS</c>,
 /// inside the mapping, and it is in <see cref="Refused"/> rather than merely
 /// absent, because the config generator writes <c>filePaths</c> explicitly.
@@ -90,7 +90,7 @@ namespace BrowserAI.Protocol;
 /// inside the mapping; the two outside it are still
 /// <c>PLAYWRIGHT_MCP_PING_TIMEOUT_MS</c> and
 /// <c>PLAYWRIGHT_MCP_EXTENSION_TOKEN</c>. <b>Nothing here needed a code
-/// change, and that is the allowlist working rather than luck</b> — the new
+/// change, and that is the allowlist working rather than luck</b> -- the new
 /// variable is absent from a child by construction because it was never named
 /// in <see cref="InheritedWhenSet"/>. It is deliberately <i>not</i> added to
 /// <see cref="Refused"/>: that list names the variables that redirect a
@@ -108,7 +108,7 @@ namespace BrowserAI.Protocol;
 /// nothing to clear: the child is never started through <c>ProcessStartInfo</c>
 /// at all. What <see cref="Build"/> returns is passed whole to
 /// <see cref="Interop.JobLauncher"/>, which writes it into the <c>CreateProcessW</c>
-/// environment block under <c>CREATE_UNICODE_ENVIRONMENT</c> — so the allowlist
+/// environment block under <c>CREATE_UNICODE_ENVIRONMENT</c> -- so the allowlist
 /// is the child's entire block <b>by construction</b> rather than by a call
 /// somebody has to remember. The hazard above is real and is closed one step
 /// further back than it asks; the sentence describing a <c>Clear()</c> that does
@@ -145,17 +145,17 @@ internal static class ChildEnvironment
     /// </para>
     /// <para>
     /// <c>PATH</c> is deliberately included even though BrowserAI spawns
-    /// everything by absolute path. Stripping it buys nothing here — the
-    /// hazards above are all named variables, none of them <c>PATH</c> — and
+    /// everything by absolute path. Stripping it buys nothing here -- the
+    /// hazards above are all named variables, none of them <c>PATH</c> -- and
     /// costs a class of failure that only appears on someone else's machine.
     /// </para>
     /// <para>
     /// The proxy and CA names are inherited because without them a machine behind
-    /// TLS inspection cannot provision a browser at all — first-run provisioning
-    /// downloads 207.3 MB from three hosts — <i>corrected 2026-09-17, previously
+    /// TLS inspection cannot provision a browser at all -- first-run provisioning
+    /// downloads 207.3 MB from three hosts -- <i>corrected 2026-09-17, previously
     /// "203.8 MB", and the live figure is
     /// <see cref="Runtime.BrowserProvisioner.FirstRunDownloadSizes"/> rather than
-    /// this sentence</i> — and SOCKS is unsupported on that path
+    /// this sentence</i> -- and SOCKS is unsupported on that path
     /// regardless
     /// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
     /// </para>
@@ -182,11 +182,11 @@ internal static class ChildEnvironment
     /// <remarks>
     /// <c>PLAYWRIGHT_SKIP_BROWSER_GC</c> stops Playwright's stale-browser
     /// collector deleting any registry directory not referenced by a
-    /// <c>.links</c> entry — against a tree BrowserAI provisioned, the blast
+    /// <c>.links</c> entry -- against a tree BrowserAI provisioned, the blast
     /// radius of that sweep is "deletes our own Chromium". Pruning old revisions
     /// becomes BrowserAI's job as a direct consequence, and that obligation is
     /// discharged by <see cref="Runtime.RevisionPrune"/> on every successful
-    /// provision — without it each <c>browsers.json</c> bump strands ~430 MiB per
+    /// provision -- without it each <c>browsers.json</c> bump strands ~430 MiB per
     /// machine, forever.
     /// <c>PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD</c> keeps provisioning a decision
     /// BrowserAI makes rather than a side effect of the child starting.
@@ -206,12 +206,12 @@ internal static class ChildEnvironment
     /// <para>
     /// An allowlist already makes every one of these absent. Naming them is
     /// what turns "absent because nobody added it" into "absent because it is
-    /// refused" — the difference between a property and an accident, and the
+    /// refused" -- the difference between a property and an accident, and the
     /// only version of it a test can assert.
     /// </para>
     /// <para>
     /// ⚠️ <b>The one that had to be here and was not is
-    /// <c>PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS</c> — added
+    /// <c>PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS</c> -- added
     /// 2026-08-26.</b> <see cref="Runtime.BrowserConfiguration"/> calls
     /// <c>allowUnrestrictedFileAccess: false</c> <i>the only containment this
     /// product has left</i>, and that variable is the environment route that
@@ -271,7 +271,7 @@ internal static class ChildEnvironment
     /// then <see cref="Forced"/>, then the caller's own additions.
     /// </summary>
     /// <param name="additional">
-    /// Variables this particular child needs — an absolute
+    /// Variables this particular child needs -- an absolute
     /// <c>PLAYWRIGHT_BROWSERS_PATH</c>, for instance. Later entries win over
     /// <see cref="Forced"/> only if they name something else; a
     /// <see cref="Refused"/> name throws.

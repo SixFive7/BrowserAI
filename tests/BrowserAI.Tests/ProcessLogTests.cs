@@ -21,8 +21,8 @@ internal sealed partial class ProcessLogTests
     /// <remarks>
     /// <b>It did not, and the claim that it did was in the code.</b> Measured
     /// 2026-08-16: <c>LoggerFactory.Dispose()</c> never calls <c>Dispose</c> on a
-    /// provider <i>instance</i> handed to <c>AddProvider</c> — a container does
-    /// not dispose what it did not create — so the rolling handle outlived every
+    /// provider <i>instance</i> handed to <c>AddProvider</c> -- a container does
+    /// not dispose what it did not create -- so the rolling handle outlived every
     /// disposal and the log could not be opened exclusively afterwards. Harmless
     /// in <c>Main</c>, which exits immediately; found by the first short-lived
     /// caller that opened a log and then read it back, which is a Velopack hook.
@@ -146,14 +146,14 @@ internal sealed partial class ProcessLogTests
     /// the previous run recorded is terminated by <c>(pid,
     /// creationFileTime)</c> from its own spawn record</i>; nothing wrote a
     /// record until 2026-08-19, so a run killed mid-test left a process the next
-    /// run could not identify — only a directory it could not delete, reported
+    /// run could not identify -- only a directory it could not delete, reported
     /// as a locked file rather than as a live process.
     /// </para>
     /// <para>
     /// ⚠️ <b>The second line of the record is this test host's own pid with a
     /// creation time that is deliberately wrong, and that is the assertion the
     /// whole mechanism turns on.</b> A pid Windows has recycled belongs to
-    /// something else — plausibly the developer's editor — so a reclaim that
+    /// something else -- plausibly the developer's editor -- so a reclaim that
     /// acted on the number alone would end it. If this code ever regressed to
     /// matching on pid, the run would die here rather than fail here, which is
     /// the loudest possible form of red.
@@ -168,7 +168,7 @@ internal sealed partial class ProcessLogTests
     /// ⚠️ <b>Every row here is owned by a process that is provably gone, and that
     /// is deliberate (2026-08-29).</b> Since the owner column exists, a row is
     /// only ever judged on its subject once its owner has been shown not to be
-    /// running — so a test about the <i>subject</i> check has to get past the
+    /// running -- so a test about the <i>subject</i> check has to get past the
     /// owner check first. The three arms that follow are unchanged in what they
     /// assert; the owner is arranged, not asserted. The owner check has its own
     /// tests either side of this one.
@@ -223,7 +223,7 @@ internal sealed partial class ProcessLogTests
                 .Because(string.Join(" | ", report));
 
             // The recorded process is gone, and the one whose identity did not
-            // match is not — which is this process, still executing.
+            // match is not -- which is this process, still executing.
             await Assert.That(ProcessIdentity.IsAlive(started.Id, created)).IsFalse();
             await Assert.That(ProcessIdentity.IsAlive(Environment.ProcessId, mine)).IsTrue();
 
@@ -248,7 +248,7 @@ internal sealed partial class ProcessLogTests
     /// ⚠️ <b>This is the 18-of-18, in one test.</b> Measured 2026-08-29 and
     /// written up as [QUESTIONS §8a](../../QUESTIONS.md): the reclaim pass runs
     /// on first use of a scratch root <i>in each process</i>, and it used to
-    /// terminate every recorded pid that was still that process — so a second
+    /// terminate every recorded pid that was still that process -- so a second
     /// harness process reading a <b>live</b> run's record ended that run's
     /// browsers, probes and slices with exit code 1 and then deleted the scratch
     /// tree they were using. Eighteen launches, eighteen kills, and the shape it
@@ -265,7 +265,7 @@ internal sealed partial class ProcessLogTests
     /// <para>
     /// <b>Both halves of (b) are asserted, because the row matters as much as the
     /// process.</b> A pass that spared the process and still blanked the file
-    /// would leave the live run with nothing naming its own children — so the day
+    /// would leave the live run with nothing naming its own children -- so the day
     /// that run really was killed, the recovery this whole mechanism exists for
     /// would be gone. The row must be written back verbatim.
     /// </para>
@@ -312,7 +312,7 @@ internal sealed partial class ProcessLogTests
     }
 
     /// <summary>
-    /// A row whose owner is gone is still reclaimed — which is the job the pass
+    /// A row whose owner is gone is still reclaimed -- which is the job the pass
     /// exists for, and the thing the owner column must not cost it.
     /// </summary>
     /// <remarks>
@@ -359,7 +359,7 @@ internal sealed partial class ProcessLogTests
 
     /// <summary>
     /// A pass that ended something says so in the process log, naming the
-    /// process, the exit code and the record it was honouring — and a pass that
+    /// process, the exit code and the record it was honouring -- and a pass that
     /// ended nothing says nothing at all.
     /// </summary>
     /// <remarks>
@@ -367,7 +367,7 @@ internal sealed partial class ProcessLogTests
     /// ⚠️ <b>Direction (d) of [QUESTIONS §8a](../../QUESTIONS.md), taken
     /// 2026-08-29.</b> The pass's whole account of itself used to be
     /// <see cref="ScratchRoot.LastPassReport"/>, an in-memory list of which only
-    /// a <i>survivor</i> reached the coverage block — so a reclaim that succeeded
+    /// a <i>survivor</i> reached the coverage block -- so a reclaim that succeeded
     /// left no trace anywhere. That is the reason nothing can say which
     /// terminator fired on 2026-08-26, and the reason an exit code of 1 was worth
     /// two rigs.
@@ -381,7 +381,7 @@ internal sealed partial class ProcessLogTests
     /// same reader answering about the same log.
     /// </para>
     /// <para>
-    /// <b>Scoped to this host's whole identity</b> — <c>(pid, creationFileTime)</c>,
+    /// <b>Scoped to this host's whole identity</b> -- <c>(pid, creationFileTime)</c>,
     /// through <see cref="ProcessLogRecords"/>: the log is machine-wide and every
     /// BrowserAI on the box appends to it, so an unscoped read is answerable by
     /// somebody else's history, and a pid-scoped one by a stranger who wore this
@@ -447,8 +447,8 @@ internal sealed partial class ProcessLogTests
     /// <para>
     /// ⚠️ <b>Taken 2026-08-29, at the maintainer's decision.</b>
     /// <see cref="ProcessLogRecords"/> matched
-    /// <c>"  pid=&lt;n&gt;@"</c> — the pid alone, with the creation FILETIME
-    /// behind the <c>@</c> read past and never compared — while its own remarks
+    /// <c>"  pid=&lt;n&gt;@"</c> -- the pid alone, with the creation FILETIME
+    /// behind the <c>@</c> read past and never compared -- while its own remarks
     /// said a bare pid does not identify a writer. The log is machine-wide and
     /// kept for thirty days, and Windows reuses pids well inside that window, so
     /// the scope was answerable by whoever last wore the number. <b>Demonstrated
@@ -459,7 +459,7 @@ internal sealed partial class ProcessLogTests
     /// <para>
     /// <b>Planted, because it cannot be planted live.</b> Whether the machine's
     /// real log happens to hold a stranger wearing this run's pid is a property of
-    /// the box and of the last thirty days, not of the reader — so a live arm
+    /// the box and of the last thirty days, not of the reader -- so a live arm
     /// passes by matching nothing on most machines and would only ever go red by
     /// luck. What is handed to the reader instead is a directory holding three
     /// records that differ in nothing but the FILETIME.
@@ -689,7 +689,7 @@ internal sealed partial class ProcessLogTests
     /// <para>
     /// <b>The analyzer cannot express this and the suppression makes it worse.</b>
     /// <c>build/BannedSymbols.txt</c> bans the timed overload, so the call site
-    /// carries an <c>RS0030</c> suppression — which permits the timed call and
+    /// carries an <c>RS0030</c> suppression -- which permits the timed call and
     /// has no way to require the flush. A later edit that deletes the bare call
     /// leaves the suppression, its comment and the whole build intact, and
     /// truncates stderr silently. That is the exact gap this fills.
@@ -699,7 +699,7 @@ internal sealed partial class ProcessLogTests
     /// would pin today's tree and go red the day the last timed call is
     /// legitimately replaced by <c>WaitForExitAsync</c>, which is the direction
     /// this repository wants to move in. What is asserted instead is that the
-    /// matcher still works, against two samples held here — so the scan cannot
+    /// matcher still works, against two samples held here -- so the scan cannot
     /// pass by having quietly stopped matching, and an empty tree stays green.
     /// </para>
     /// </remarks>
@@ -1141,7 +1141,7 @@ internal sealed partial class ProcessLogTests
 /// </summary>
 /// <remarks>
 /// Source-generated because <c>CA1848</c> is an error here and a
-/// <c>LogInformation</c> call would not compile — which is the correct rule, and
+/// <c>LogInformation</c> call would not compile -- which is the correct rule, and
 /// means a test that logs needs its own message.
 /// </remarks>
 internal static partial class ProcessLogProbe

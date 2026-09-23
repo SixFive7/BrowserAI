@@ -55,7 +55,7 @@ namespace BrowserAI.Tests;
 /// <c>NativeFile.Overlapped</c> is compared against
 /// <see cref="System.Threading.NativeOverlapped"/> rather than against
 /// [`NativeMethods.txt`](NativeMethods.txt), because CsWin32 refuses to generate
-/// <c>OVERLAPPED</c> at all — <c>error PInvoke003: This API will not be
+/// <c>OVERLAPPED</c> at all -- <c>error PInvoke003: This API will not be
 /// generated. Use System.Threading.NativeOverlapped instead</c>, measured
 /// 2026-08-24. It is still Microsoft's own definition and still a definition this
 /// repository did not write; it simply arrives from the framework instead of from
@@ -143,7 +143,7 @@ internal sealed class InteropLayoutTests
 
     /// <summary>
     /// Both buffers handed to <c>CreateProcessW</c> are NUL-terminated and
-    /// never empty — the two invariants the span declaration rests on and the
+    /// never empty -- the two invariants the span declaration rests on and the
     /// <c>ref char</c> one silently assumed.
     /// </summary>
     /// <remarks>
@@ -160,7 +160,7 @@ internal sealed class InteropLayoutTests
     /// differently.</b> An empty command line would have thrown
     /// <see cref="IndexOutOfRangeException"/> at <c>ref commandLine[0]</c>; an
     /// empty environment block reaches Windows as <see langword="null"/>, which
-    /// means <i>inherit the parent's environment</i> — the exact opposite of what
+    /// means <i>inherit the parent's environment</i> -- the exact opposite of what
     /// an explicitly empty environment asks for, and a silent one.
     /// </para>
     /// </remarks>

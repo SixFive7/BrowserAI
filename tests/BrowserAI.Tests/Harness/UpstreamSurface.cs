@@ -15,7 +15,7 @@ namespace BrowserAI.Tests.Harness;
 /// diffed, so an upstream change is a snapshot diff first and a surface
 /// assertion second. Computing the expected list from it means a test never
 /// carries a list of tool names, which would be a hand-written copy of upstream's
-/// surface — exactly what the scope boundary forbids.
+/// surface -- exactly what the scope boundary forbids.
 /// </para>
 /// <para>
 /// <b>The <c>core*</c> family is unconditional.</b> Upstream ors
@@ -109,8 +109,8 @@ internal static class UpstreamSurface
     /// <remarks>
     /// <b>Derived from <c>toolsByCapability</c> rather than from
     /// <c>declaredCapabilities</c>, and the two differ.</b> Upstream declares
-    /// <c>core-install</c>, which carries no tool at all — the snapshot records
-    /// it under <c>capabilitiesCarryingNoTool</c> — so a check that every
+    /// <c>core-install</c>, which carries no tool at all -- the snapshot records
+    /// it under <c>capabilitiesCarryingNoTool</c> -- so a check that every
     /// declared capability is granted would fail on a capability there is
     /// nothing to grant.
     /// </remarks>
@@ -143,7 +143,7 @@ internal static class UpstreamSurface
     }
 
     /// <summary>
-    /// How many tools the snapshot carries in total — every tool upstream can
+    /// How many tools the snapshot carries in total -- every tool upstream can
     /// expose under any capability set.
     /// </summary>
     /// <remarks>
@@ -196,7 +196,7 @@ internal static class UpstreamSurface
     /// <remarks>
     /// <b>Still not a hand-written schema.</b> The bytes are upstream's own, read
     /// out of a file the build regenerates from the resolved payload and diffs on
-    /// every run — so a test that asserts on a description is asserting on what
+    /// every run -- so a test that asserts on a description is asserting on what
     /// upstream actually shipped, and an upstream reword reaches it as a diff
     /// first.
     /// </remarks>
@@ -204,7 +204,7 @@ internal static class UpstreamSurface
     /// <remarks>
     /// ⚠️ <b>Minified, and that is a framing requirement rather than a
     /// preference.</b> The snapshot on disk is pretty-printed, so
-    /// <c>GetRawText()</c> hands back a string full of newlines — and the
+    /// <c>GetRawText()</c> hands back a string full of newlines -- and the
     /// double's transport is <b>newline-delimited</b>, so answering with it
     /// splits one result into three hundred unparseable frames, the caller waits
     /// out its five-minute hang detector, and the failure names the pipe rather

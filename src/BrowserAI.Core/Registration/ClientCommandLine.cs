@@ -28,7 +28,7 @@ namespace BrowserAI.Registration;
 /// <c>Interop.JobLauncher</c>, and the difference is deliberate.</b> The
 /// job object exists so that a long-lived child and every grandchild it spawns
 /// die with BrowserAI. This process lives for ~650 ms, spawns nothing, and runs
-/// inside a hook that is about to exit — and
+/// inside a hook that is about to exit -- and
 /// <c>force_stop_package</c> kills everything under the install root after every
 /// hook returns anyway
 /// ([kb](../../../kb/packaging/velopack.md#4-force_stop_package-kills-everything-under-the-root)),
@@ -65,7 +65,7 @@ internal sealed class ClientCommandLine : IRegistrationCommand
     /// <para>
     /// <b>It earned its place the same day.</b> Measured 2026-08-16 against the
     /// real installed binary: with <c>PATH</c> cut down to <c>system32</c> alone,
-    /// the install hook still registered — <i>through this directory</i>. A hook
+    /// the install hook still registered -- <i>through this directory</i>. A hook
     /// whose inherited environment is thinner than the shell's is not
     /// hypothetical.
     /// </para>
@@ -75,8 +75,8 @@ internal sealed class ClientCommandLine : IRegistrationCommand
     /// reads the <i>token</i>, not the environment block, so setting that
     /// variable moves nothing
     /// ([kb](../../../kb/windows/processes.md#the-win32-interop-surface)). Right for
-    /// the product — an environment variable must not be able to point a
-    /// registration at somebody else's profile — and it is written down because
+    /// the product -- an environment variable must not be able to point a
+    /// registration at somebody else's profile -- and it is written down because
     /// it silently defeated an attempt to measure a machine with no client on it.
     /// </para>
     /// </remarks>

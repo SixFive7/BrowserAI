@@ -12,7 +12,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>What this is for.</b> Three sites in this suite point
 /// <c>CLAUDE_CONFIG_DIR</c> at a <i>fresh, empty</i> directory and then start the
 /// real <c>claude.exe</c>. An empty configuration directory is, to that client,
-/// a machine nobody has ever signed in on — which is the shape in which it may
+/// a machine nobody has ever signed in on -- which is the shape in which it may
 /// run its first-run onboarding and sign-in flow, and that flow opens a browser
 /// window. The maintainer runs these arms on his own desktop. <b>It has not
 /// happened</b>: no <c>hasCompletedOnboarding</c> read on the <c>mcp</c>
@@ -57,7 +57,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>The value written here is the client's OWN recipe for a throwaway
 /// configuration directory</b>, not one this repository invented. It is what
 /// <c>claude plugin eval</c> writes when it builds its sandbox, quoted from the
-/// same bundle — <c>i</c> is the directory the function then returns as
+/// same bundle -- <c>i</c> is the directory the function then returns as
 /// <c>configDir</c>:
 /// </para>
 /// <code>
@@ -84,7 +84,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>-e/--env</c>, <c>-H/--header</c>, <c>-h/--help</c>, <c>-s/--scope</c> and
 /// <c>-t/--transport</c>. The only onboarding-named environment variable in the
 /// bundle is <c>CLAUDE_CODE_POWERUP_ONBOARDING</c>, and the line quoted above
-/// shows it is a <b>force-on</b> rather than a suppressor — <c>"banner"</c> or
+/// shows it is a <b>force-on</b> rather than a suppressor -- <c>"banner"</c> or
 /// <c>"step"</c> shows onboarding even when the configuration says it is
 /// complete. A grep for <c>CLAUDE_CODE_NONINTERACTIVE</c> over the bundle
 /// returned <b>zero</b>, with <c>CLAUDE_CONFIG_DIR</c> at 74 hits and
@@ -93,7 +93,7 @@ namespace BrowserAI.Tests.Harness;
 /// marker at all</b>: the settings reference's global-config list does not carry
 /// it, and the <c>claude-directory</c> page documents <c>~/.claude.json</c> with
 /// no onboarding or first-run key. So the bundle is the only source there is,
-/// and this fact is <c>[FLOATS]</c> — it is a private key in a shipped binary.
+/// and this fact is <c>[FLOATS]</c> -- it is a private key in a shipped binary.
 /// </para>
 /// </remarks>
 internal static class OnboardedClientConfig

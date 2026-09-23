@@ -14,8 +14,8 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// <b>The TRACKED file at the repository root, not the payload's copy.</b> The
-/// two are the same bytes — a build target copies one to the other, and
-/// <c>ToolVerdictTests</c> asserts the copy landed — but the tracked one is
+/// two are the same bytes -- a build target copies one to the other, and
+/// <c>ToolVerdictTests</c> asserts the copy landed -- but the tracked one is
 /// there on a clean clone with no payload assembled, so every arm that only
 /// needs to know what this build judges runs without the capability gate.
 /// </para>
@@ -43,20 +43,20 @@ internal static class RepositoryVerdicts
     /// ⚠️ <b>Found, because the C# constant this replaced is exactly what the
     /// verdicts file exists to delete.</b> Until 2026-08-26 the suite spelled
     /// <c>SessionToolPolicy.AnnotateTool</c> in eight files, and every one of
-    /// them was reading the product's own decision back out of the product — so
+    /// them was reading the product's own decision back out of the product -- so
     /// a suite that agreed with a wrong constant could not say so. This reads
     /// the shipped file, which is what the product reads.
     /// </para>
     /// <para>
     /// ⚠️ <b>A LIST since 2026-09-15 (previously <c>TheOneDenial</c>, a
     /// <c>Single</c> that threw a type-initialiser failure on a second
-    /// row).</b> There is a second row now — <c>browser_webmcp_call</c>, denied
-    /// on the same liveness grounds as <c>browser_annotate</c> — so the shape
+    /// row).</b> There is a second row now -- <c>browser_webmcp_call</c>, denied
+    /// on the same liveness grounds as <c>browser_annotate</c> -- so the shape
     /// that was protecting the suite from a silent re-point has to become the
     /// shape that scales with the file. <b>The protection is not dropped, it
-    /// moves</b>: the arms that assert the <i>mechanism</i> — refused at the
+    /// moves</b>: the arms that assert the <i>mechanism</i> -- refused at the
     /// door, absent from <c>tools/list</c>, absent from the real binary's real
-    /// answer — now run over <i>every</i> row rather than over one, so a third
+    /// answer -- now run over <i>every</i> row rather than over one, so a third
     /// denial arriving is covered rather than ignored, and the counts those
     /// arms state are <see cref="Count"/> rather than <c>1</c>.
     /// </para>
@@ -78,7 +78,7 @@ internal static class RepositoryVerdicts
         };
 
     /// <summary>
-    /// How many tools this build withholds — the addend every surface count in
+    /// How many tools this build withholds -- the addend every surface count in
     /// the suite is written against.
     /// </summary>
     public static int Count => TheDenials.Count;
@@ -90,7 +90,7 @@ internal static class RepositoryVerdicts
     /// <remarks>
     /// <b>The oldest judgement, tie-broken by name, rather than the first row in
     /// the file.</b> Row order follows upstream's <c>tools/list</c> order, so
-    /// "the first one" moves the day upstream reorders its own array — which is
+    /// "the first one" moves the day upstream reorders its own array -- which is
     /// exactly the silent re-point the <c>Single</c> this replaced was guarding
     /// against. A date and a name are ours and do not move.
     /// </remarks>

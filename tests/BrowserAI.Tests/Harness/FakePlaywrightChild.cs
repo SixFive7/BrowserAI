@@ -39,7 +39,7 @@ internal sealed record FakeToolBehaviour
     /// <remarks>
     /// This one blocks the child's read loop, which is what several ordering
     /// assertions rely on. A call that has to stay open <i>while the child keeps
-    /// listening</i> — the shape a cancellation test needs — uses
+    /// listening</i> -- the shape a cancellation test needs -- uses
     /// <see cref="HoldUntil"/> instead.
     /// </remarks>
     public TimeSpan Delay { get; init; }
@@ -100,7 +100,7 @@ internal sealed record FakeToolBehaviour
     /// proxy's side.
     /// </summary>
     /// <remarks>
-    /// The file exists and its length is readable — that much is metadata — but
+    /// The file exists and its length is readable -- that much is metadata -- but
     /// its contents are not, which is the one arm of the inline-image path that
     /// cannot be reached by any argument the caller controls. The handle is
     /// released when the child stops.
@@ -118,7 +118,7 @@ internal sealed record FakeToolBehaviour
 /// <para>
 /// <b>It never uses the SDK, and that is the load-bearing property.</b> Every
 /// response is a literal string this class writes onto the wire, so a
-/// difference observed at the caller is a difference the proxy introduced —
+/// difference observed at the caller is a difference the proxy introduced --
 /// not one a second serialiser happened to make. A double built on
 /// <c>McpServer</c> would re-escape its own output through the same encoder the
 /// product replaced, and the passthrough tests it exists to support would be
@@ -132,7 +132,7 @@ internal sealed record FakeToolBehaviour
 /// and the 2026-08-15 spike burned 30 s per rig on exactly that with no error
 /// anywhere. Which code to answer with is then a fidelity question, and
 /// <c>-32601</c> is the one measured from the real child on 2026-08-16.
-/// BrowserAI's own end answers <c>-32602</c> — per-request metadata missing —
+/// BrowserAI's own end answers <c>-32602</c> -- per-request metadata missing --
 /// because the SDK implements <c>2026-07-28</c> and the child does not. A
 /// double of the child that answered <c>-32602</c> would be doubling the proxy.
 /// </para>
@@ -148,7 +148,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
 {
     /// <summary>
     /// The canned <c>tools/list</c> result. <b>This is the double's payload,
-    /// not a schema the product declares</b> — the scope rule that forbids
+    /// not a schema the product declares</b> -- the scope rule that forbids
     /// hand-written tool schemas is about what BrowserAI ships, and what
     /// BrowserAI ships comes from the child at runtime. The real surface lives
     /// in <c>upstream-snapshots/tools-list.json</c>, and a test that needs it
@@ -564,7 +564,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// changes now: the child appends the current page's own WebMCP tools to
     /// <c>tools/list</c> and notifies when that set moves. This is the double
     /// tracking the thing it doubles, which is the rule below applied rather
-    /// than relaxed — the snapshot is the source and
+    /// than relaxed -- the snapshot is the source and
     /// <c>UpstreamSnapshotTests.TheDoubleAdvertisesWhatTheRealChildDoes</c> is
     /// what moved first.
     /// </para>
@@ -583,7 +583,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// <c>{"tools":{"listChanged":true},"logging":{}}</c>).</b> The double was
     /// more capable than the thing it doubles: the committed
     /// <c>upstream-snapshots/tools-list.json</c> recorded
-    /// <c>@playwright/mcp</c> 0.0.79 advertising exactly <c>{"tools":{}}</c> — no
+    /// <c>@playwright/mcp</c> 0.0.79 advertising exactly <c>{"tools":{}}</c> -- no
     /// <c>listChanged</c>, no <c>logging</c>. A test passing against capability
     /// behaviour that cannot occur in production is worse than no test: it reads
     /// as coverage of a branch nothing will ever take, and a proxy that one day

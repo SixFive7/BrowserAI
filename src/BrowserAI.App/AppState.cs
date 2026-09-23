@@ -13,8 +13,8 @@ namespace BrowserAI.App;
 /// <remarks>
 /// <para>
 /// <b>One type, two consumers</b>: the dialog renders it and <c>--report</c>
-/// serialises it. That is deliberate — a support artifact that described a
-/// different state from the window would be worse than no artifact — and it is
+/// serialises it. That is deliberate -- a support artifact that described a
+/// different state from the window would be worse than no artifact -- and it is
 /// what makes the window's content assertable without a window.
 /// </para>
 /// <para>
@@ -108,7 +108,7 @@ internal sealed record AppState
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Added 2026-09-16, because one of them stopped being true.</b>
-    /// <c>OursAndStale</c> used to mean one thing — the file is gone — and the
+    /// <c>OursAndStale</c> used to mean one thing -- the file is gone -- and the
     /// sentence said so. Since the classifier started requiring the file to be
     /// the <b>server</b> rather than merely present, it also covers the state
     /// every pre-split install is in: an entry naming
@@ -148,7 +148,7 @@ internal sealed record AppState
     /// <summary>Whether the <i>unregister</i> action is offered.</summary>
     /// <remarks>
     /// <para>
-    /// <b>Only for an entry we wrote.</b> A foreign one is never removed — that
+    /// <b>Only for an entry we wrote.</b> A foreign one is never removed -- that
     /// is somebody else's install and removing it would be this product
     /// uninstalling another.
     /// </para>
@@ -156,7 +156,7 @@ internal sealed record AppState
     /// ⚠️ <b>And never over a configuration that could not be read</b>, which
     /// this did not check until a test constructed the combination. The reader
     /// answers <see cref="RegistrationOwnership.Absent"/> whenever it fails, so
-    /// today the two cannot co-occur and the guard is unreachable — which is
+    /// today the two cannot co-occur and the guard is unreachable -- which is
     /// exactly the kind of guard that stops being unreachable when somebody
     /// makes the reader smarter. It is here because the symmetry is the
     /// invariant: <b>no action is offered on top of a state nobody
@@ -202,8 +202,8 @@ internal sealed record AppState
     /// <remarks>
     /// <b>Upward, because that is how the client finds one.</b> A person running
     /// this from inside a repository expects it to report that repository's
-    /// file, and a person running it from the Start Menu — whose working
-    /// directory is the install root — expects it to report nothing, which is
+    /// file, and a person running it from the Start Menu -- whose working
+    /// directory is the install root -- expects it to report nothing, which is
     /// what an upward walk from there answers.
     /// </remarks>
     public static RegistrationView? NearestProject(string start, string? installRoot)

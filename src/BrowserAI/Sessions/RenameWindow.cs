@@ -16,7 +16,7 @@ namespace BrowserAI.Sessions;
 /// <c>MOVEFILE_REPLACE_EXISTING</c>, which is what makes a reader see the old
 /// record or the new one and never a torn one. While that rename is in flight
 /// the file being replaced enters a <b>delete-pending</b> state, and every new
-/// open of that name is refused <c>STATUS_DELETE_PENDING</c> — which surfaces as
+/// open of that name is refused <c>STATUS_DELETE_PENDING</c> -- which surfaces as
 /// <c>ERROR_ACCESS_DENIED</c>, that is, as an
 /// <see cref="UnauthorizedAccessException"/> and <b>not</b> as an
 /// <see cref="IOException"/>. A handler written for the sharing violation
@@ -24,7 +24,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>Both sides of the rename need this and only one side had it.</b> The
-/// writers — <c>SessionLock.Replace</c> and <c>SessionIndex.Replace</c> — have
+/// writers -- <c>SessionLock.Replace</c> and <c>SessionIndex.Replace</c> -- have
 /// waited out a busy destination since 2026-08-16, each with the measured budget
 /// and the note explaining that a concurrent reader or a virus scanner is a live
 /// condition rather than a bug. The readers had nothing, which made the pair
@@ -37,7 +37,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>Measured 2026-08-18 at <c>SuiteParallelism.Unbounded</c>:</b> twice in
-/// twenty-eight full-suite runs, at two different call sites — a rename in
+/// twenty-eight full-suite runs, at two different call sites -- a rename in
 /// <c>SessionLockTests.ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen</c>
 /// and a read in <c>SessionLockTests.ARewriteIsNeverObservedTorn</c>, the latter
 /// with a reader in a tight loop beside a rewriter doing a hundred renames. Two
@@ -56,7 +56,7 @@ namespace BrowserAI.Sessions;
 /// <description>What a refusal means, and what it must do</description>
 /// </listheader>
 /// <item>
-/// <term><b>Entitled</b> — <c>SessionLock.ReadRecord</c>,
+/// <term><b>Entitled</b> -- <c>SessionLock.ReadRecord</c>,
 /// <c>SessionLock.OpenHeld</c>, <c>SessionIndex.FollowOne</c></term>
 /// <description>
 /// It already holds whatever gives it the right to look: the per-directory
@@ -66,31 +66,31 @@ namespace BrowserAI.Sessions;
 /// </description>
 /// </item>
 /// <item>
-/// <term><b>Not entitled</b> — <c>InstanceDirectory</c>'s claim,
+/// <term><b>Not entitled</b> -- <c>InstanceDirectory</c>'s claim,
 /// <c>LiveInstances</c>' registration, <c>FirefoxProfile</c>'s probe,
 /// <c>SessionLock.ProbeForHolder</c></term>
 /// <description>
 /// The refusal <b>is the answer</b>. Each of those opens exists precisely to
 /// find out whether something else holds the thing, and a retry would convert
-/// <i>somebody owns this</i> into <i>eventually, nobody did</i> — which is the
+/// <i>somebody owns this</i> into <i>eventually, nobody did</i> -- which is the
 /// mechanism, inverted. <b>Never route one of those through here.</b>
 /// <c>SessionLock.ProbeForHolder</c> is the newest and the clearest case: it
 /// opens <c>browserai.lock</c> in front of the per-directory gate to find out whether
 /// anyone owns it, so a denial waited out would be a live owner waited out. It
 /// is also the one that cannot decide <see cref="UnauthorizedAccessException"/>
-/// at all — delete-pending and a permanent ACL denial arrive identically — so it
+/// at all -- delete-pending and a permanent ACL denial arrive identically -- so it
 /// treats that as <i>no answer</i> and lets the gate settle it.
 /// </description>
 /// </item>
 /// <item>
-/// <term><b>Entitled, and the only possible owner</b> —
+/// <term><b>Entitled, and the only possible owner</b> --
 /// <c>SessionLock.ReopenHeld</c>, at its three call sites</term>
 /// <description>
 /// It holds the per-directory gate <i>and</i> the record on disk is one it has
 /// just written or is recovering, so no other process can be the owner: becoming
 /// one means passing through <c>SessionLock.TakeOrReport</c>, which needs the
 /// gate this caller is holding. A refusal is therefore an <b>ungated transient
-/// handle</b>, not an owner, and it is waited out —
+/// handle</b>, not an owner, and it is waited out --
 /// <see cref="WaitOutWhereNoOwnerIsPossible"/>. <b>The precondition is the whole
 /// licence</b>: route an open that has not established it through here and a
 /// live owner gets waited out for thirty seconds and then reported as a
@@ -106,8 +106,8 @@ namespace BrowserAI.Sessions;
 /// the holder opened the file in a mode that excludes us").</b> That reading is
 /// right for the two rows above it and wrong for the third, and the difference
 /// cost a lock: <c>SessionLock.ProbeForHolder</c> opens <c>browserai.lock</c>
-/// <c>FileAccess.ReadWrite</c> without the gate, so its handle — microseconds
-/// wide — refuses a gate holder's own re-open, which then reported a record it
+/// <c>FileAccess.ReadWrite</c> without the gate, so its handle -- microseconds
+/// wide -- refuses a gate holder's own re-open, which then reported a record it
 /// had genuinely written as one it could not take. <b>The probe cannot be made
 /// not to do that</b>, and the proof is one line of sharing arithmetic: to be
 /// refused by a holder's <c>FileShare.Read</c> a probe must ask for access
@@ -138,7 +138,7 @@ internal static class RenameWindow
     /// "five attempts over 150 ms" on 2026-08-16 for the same reason).</b> Two
     /// seconds was reachable, and the failure it produced blamed the wrong thing.
     /// Measured at <c>SuiteParallelism.Unbounded</c>: <i>"could not be replaced
-    /// after <b>3 attempts over 2.3 s</b>"</i> — a loop whose own sleeps total
+    /// after <b>3 attempts over 2.3 s</b>"</i> -- a loop whose own sleeps total
     /// <b>15 ms</b> across those three attempts. The file was not the problem;
     /// the process did not get scheduled, and the message said <i>"something else
     /// is holding it open"</i> about a machine that was merely busy. That is a
@@ -147,7 +147,7 @@ internal static class RenameWindow
     /// </para>
     /// <para>
     /// <b>Thirty seconds, and the arithmetic is the justification.</b> The event
-    /// underneath is one syscall wide — microseconds — and the retry loop intends
+    /// underneath is one syscall wide -- microseconds -- and the retry loop intends
     /// to spend milliseconds. Thirty seconds is three orders of magnitude above
     /// the contention and, more to the point, <b>2,000× the sleep budget the loop
     /// actually asks for</b>, which is the number that matters when what expires
@@ -163,8 +163,8 @@ internal static class RenameWindow
     /// <para>
     /// <b><c>SessionIndex</c> keeps its own 500 ms and is deliberately not merged
     /// into this.</b> That is not the same decision made twice: an index entry's
-    /// rename is <b>fail-safe</b> — giving up leaves the entry for the next use to
-    /// re-assert, and the caller never sees it — so a short budget there trades a
+    /// rename is <b>fail-safe</b> -- giving up leaves the entry for the next use to
+    /// re-assert, and the caller never sees it -- so a short budget there trades a
     /// re-assertion for not stalling a session start. This one is <b>fatal</b>:
     /// exhausting it throws out of a lock rewrite. Different consequences,
     /// different numbers, and the reason is written at both.
@@ -196,7 +196,7 @@ internal static class RenameWindow
     /// <b>The caller must have established the precondition, and there are
     /// exactly three places that can.</b> Each holds
     /// <c>LockScopes.PerDirectoryGate</c> and is re-opening a record it has just
-    /// written itself or is taking back after its own write failed —
+    /// written itself or is taking back after its own write failed --
     /// <c>SessionLock.TakeOrReport</c> after <c>WriteDurably</c>,
     /// <c>SessionLock.Rewrite</c> after the same, and <c>SessionLock.Reclaim</c>
     /// recovering from a rewrite that threw. Ownership is only ever granted
@@ -216,7 +216,7 @@ internal static class RenameWindow
     /// </para>
     /// <para>
     /// <b>Still bounded, and by the same <see cref="Budget"/>.</b> A handle that
-    /// outlasts thirty seconds is not a probe passing through — it is something
+    /// outlasts thirty seconds is not a probe passing through -- it is something
     /// on the machine holding the file, which is a different fault and must be
     /// reported rather than waited on. <c>LockScopes.PerDirectoryGate</c> is
     /// larger than this budget and <c>SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt</c>

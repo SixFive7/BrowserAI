@@ -17,7 +17,7 @@ namespace BrowserAI.Storage;
 /// itself to every <c>[LibraryImport]</c> declaration makes the source
 /// generator take a reference count for the duration of each call, which is the
 /// property <c>HouseRuleTests.EveryRawHandleThatOutlivesItsExpressionIsRefCounted</c>
-/// exists to keep — and here it is free, because nothing in this layer ever
+/// exists to keep -- and here it is free, because nothing in this layer ever
 /// reads the raw value out.
 /// </para>
 /// <para>
@@ -88,7 +88,7 @@ internal sealed class SqliteStatementHandle : SafeHandle
     /// rather than with this call's</b>, and it destroys the statement either
     /// way. Reporting that stale code as a failed release would say the
     /// resource is still held when it is not, so the result is discarded here
-    /// and read where it belongs — at the step that produced it.
+    /// and read where it belongs -- at the step that produced it.
     /// </remarks>
     protected override bool ReleaseHandle()
     {

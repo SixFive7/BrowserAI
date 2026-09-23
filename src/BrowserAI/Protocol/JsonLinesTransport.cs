@@ -39,7 +39,7 @@ internal enum JsonLinesRole
 /// <remarks>
 /// <para>
 /// BrowserAI replaces <b>both</b> of the SDK's stdio transports, for two
-/// unrelated reasons — <c>StdioClientTransport</c> interposes <c>cmd.exe</c>,
+/// unrelated reasons -- <c>StdioClientTransport</c> interposes <c>cmd.exe</c>,
 /// and <c>StreamServerTransport</c> re-escapes every result. What is left over
 /// once those two are removed is the same code twice, so it is written once
 /// here and the two subclasses supply only what genuinely differs: where the
@@ -308,7 +308,7 @@ internal abstract class JsonLinesTransport : TransportBase
     /// </summary>
     /// <remarks>
     /// Strict on the way out, tolerant on the way in. BrowserAI never emits
-    /// CRLF — <see cref="StdioChannel"/> exists to guarantee that — but a peer
+    /// CRLF -- <see cref="StdioChannel"/> exists to guarantee that -- but a peer
     /// that does is answerable rather than mysterious, and the alternative is a
     /// session that dies on a stray byte nobody can see in a log.
     /// </remarks>
@@ -462,7 +462,7 @@ internal abstract class JsonLinesTransport : TransportBase
     /// <remarks>
     /// <para>
     /// <b>Only on the caller's leg.</b> The peer on the child's leg sends
-    /// responses, and a response is not a thing one answers — a <c>-32700</c>
+    /// responses, and a response is not a thing one answers -- a <c>-32700</c>
     /// aimed at a child would be a frame it has no pending request for.
     /// </para>
     /// <para>
@@ -622,6 +622,6 @@ internal static partial class TransportLog
     [LoggerMessage(
         EventId = 15,
         Level = LogLevel.Information,
-        Message = "{Transport}: the read loop was abandoned rather than awaited — the peer owns the other end of it, so closing this end cannot wake it and nothing may wait on a read that will never return.")]
+        Message = "{Transport}: the read loop was abandoned rather than awaited -- the peer owns the other end of it, so closing this end cannot wake it and nothing may wait on a read that will never return.")]
     public static partial void ReadLoopAbandoned(ILogger logger, string transport);
 }

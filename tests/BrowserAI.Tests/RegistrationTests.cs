@@ -19,7 +19,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Two layers, and the split is the whole design.</b> Everything above
 /// <see cref="IRegistrationCommand"/> runs against a double, because a Velopack
-/// fast-exit hook is a context no test host can enter — the same reason the
+/// fast-exit hook is a context no test host can enter -- the same reason the
 /// update lane is driven through <c>IUpdateClient</c>. What only the real client
 /// can answer is asked of the real client, in the same run, against a
 /// <b>scratch configuration directory</b>.
@@ -36,15 +36,15 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b><c>[NotInParallel]</c> with no key, on the class, which in TUnit means
 /// these arms run beside nothing at all.</b> <i>Corrected 2026-09-15 (previously
 /// a <c>ClientGroup</c> key on the two arms that open a scope: "they both write
-/// one process-wide environment variable — <c>CLAUDE_CONFIG_DIR</c> — and
+/// one process-wide environment variable -- <c>CLAUDE_CONFIG_DIR</c> -- and
 /// then start a process that reads it. Two at once would each register into the
 /// other's scratch directory … every member writes the same variable and
 /// nothing else in the suite starts the client".)</i> Every sentence of that was
 /// true and the conclusion did not follow: a key holds an arm apart from the
 /// arms carrying the <b>same key</b>, and a process-wide variable is read by
-/// <b>every child any arm in the suite starts</b> — none of which holds a key,
+/// <b>every child any arm in the suite starts</b> -- none of which holds a key,
 /// and none of which can be enumerated. The measured failure is
-/// <see cref="RealInstallerTests"/>' — the sibling member of the old group,
+/// <see cref="RealInstallerTests"/>' -- the sibling member of the old group,
 /// whose <c>BROWSERAI_ROOT</c> reached three unrelated arms' browsers. The same
 /// hazard is here: a <c>claude</c> CLI started by anything else during the
 /// window would read this scratch configuration directory. <b>The class carries
@@ -75,7 +75,7 @@ internal sealed class RegistrationTests
     /// <remarks>
     /// §G landmine 3. The stub is <b>392,704 bytes</b> beside a
     /// <b>17,853,952-byte</b> binary, is compiled as a Windows-subsystem
-    /// executable and <b>exits in 59 ms</b> while the app runs on — so a client
+    /// executable and <b>exits in 59 ms</b> while the app runs on -- so a client
     /// registered against it watches its MCP server die at the handshake, every
     /// time, with nothing in any log to say why.
     /// </remarks>
@@ -113,8 +113,8 @@ internal sealed class RegistrationTests
     /// from … the registered path and the running binary cannot disagree: they
     /// are the same string").</b> The hooks run on the Velopack main exe, and
     /// from this day the main exe is the configuration app. So the path handed
-    /// to a client is <b>composed</b> — the running image's directory plus the
-    /// server's file name — and a composed path is a guess until something
+    /// to a client is <b>composed</b> -- the running image's directory plus the
+    /// server's file name -- and a composed path is a guess until something
     /// checks it.
     /// </para>
     /// <para>
@@ -223,8 +223,8 @@ internal sealed class RegistrationTests
     /// registration.
     /// </summary>
     /// <remarks>
-    /// <b>The client's <c>add</c> is not idempotent</b> — measured 2026-08-16 @
-    /// 2.1.233, a second one exits 1 — so this property belongs to BrowserAI and
+    /// <b>The client's <c>add</c> is not idempotent</b> -- measured 2026-08-16 @
+    /// 2.1.233, a second one exits 1 -- so this property belongs to BrowserAI and
     /// is asserted here over a double that models exactly that behaviour.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -482,7 +482,7 @@ internal sealed class RegistrationTests
     /// <c>mcp remove</c> and then <c>mcp add</c> with no check at all, and
     /// <c>Remove</c> (the uninstall hook) ran <c>mcp remove</c> unconditionally.
     /// So installing BrowserAI <b>overwrote</b> another BrowserAI's registration
-    /// and uninstalling it <b>deleted</b> one — which is the exact thing
+    /// and uninstalling it <b>deleted</b> one -- which is the exact thing
     /// <see cref="RegistrationOwnership"/>'s own summary, <c>AppState.MayRemove</c>
     /// and the registration row in <c>DECISIONS.md</c> all say this product never
     /// does. Those three sentences were kept true rather than narrowed.
@@ -494,7 +494,7 @@ internal sealed class RegistrationTests
     /// </para>
     /// <para>
     /// <b>The states that must NOT have changed are asserted beside the one that
-    /// did</b> — absent, ours-and-present and ours-and-stale all still reassert
+    /// did</b> -- absent, ours-and-present and ours-and-stale all still reassert
     /// on install and still unregister on uninstall. A refusal that fired on
     /// everything would satisfy the foreign arm alone.
     /// </para>
@@ -639,13 +639,13 @@ internal sealed class RegistrationTests
         await Assert.That(ours.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
         await Assert.That(ours.Command).IsEqualTo(server);
 
-        // ⚠️ OURS, PRESENT, AND THE WRONG BINARY — 2026-09-16. Every
+        // ⚠️ OURS, PRESENT, AND THE WRONG BINARY -- 2026-09-16. Every
         // registration written before the two-binary split names
         // `current\BrowserAI.exe`, which since 2026-09-15 is the CONFIGURATION
         // APP. The file is there, so a classifier that asks only whether it
         // exists answers "ours and present", the update hook leaves it exactly
         // as it is, and the client then starts a window and waits forever for a
-        // JSON-RPC handshake from a process that is showing a dialog — with
+        // JSON-RPC handshake from a process that is showing a dialog -- with
         // nothing in any log, because nothing failed.
         //
         // What makes an entry OURS is the install root. What makes it PRESENT is
@@ -666,7 +666,7 @@ internal sealed class RegistrationTests
 
         // And a file under our root that is not a portable executable at all
         // gets the same answer, because the question is never "is something
-        // there" — it is "may this be launched as the server".
+        // there" -- it is "may this be launched as the server".
         var notAnExecutable = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.Server.exe.bak");
 
         InstalledLayout.WriteSomethingThatIsNotAnExecutable(notAnExecutable);
@@ -793,7 +793,7 @@ internal sealed class RegistrationTests
     /// <remarks>
     /// <b>Warning, not error, and never a throw.</b> An installer that failed
     /// because the user has no MCP client would be worse than the state it was
-    /// protecting against — but an installed BrowserAI nothing is configured to
+    /// protecting against -- but an installed BrowserAI nothing is configured to
     /// talk to is exactly the state this whole mechanism exists to end, so it is
     /// never silent either.
     /// </remarks>
@@ -910,14 +910,14 @@ internal sealed class RegistrationTests
     /// inside the install root, and the two events a person reads this file
     /// after are the two that empty it: a repair install, which renames the root
     /// aside and deletes it, and an uninstall. The assertion is the stronger one
-    /// now — the record and the log are not under the install root at all, and
+    /// now -- the record and the log are not under the install root at all, and
     /// the hook leaves that root untouched.
     /// </para>
     /// <para>
     /// <b>The data root is a scratch directory here, and it has to be.</b> The
     /// product resolves a constant under <c>%LocalAppData%</c>; a test that let
     /// it do so would write a registration record into the developer's own data
-    /// root — which is why the overload the suite drives takes the seam rather
+    /// root -- which is why the overload the suite drives takes the seam rather
     /// than defaulting it.
     /// </para>
     /// </remarks>
@@ -987,7 +987,7 @@ internal sealed class RegistrationTests
         // EMPTY). It is not empty any more and cannot be: the two executables
         // have to be on disk for the composed server path to be checkable at
         // all, so this arm builds a `current\` before it runs. What is asserted
-        // is the property that was always meant — the hook ADDS nothing — and it
+        // is the property that was always meant -- the hook ADDS nothing -- and it
         // is taken as a difference against what was there first, so a file the
         // hook writes anywhere under that root fails it exactly as before.
         var afterwards = Directory
@@ -1047,7 +1047,7 @@ internal sealed class RegistrationTests
     /// <remarks>
     /// <b>Both halves, and the second is the one that would break a scripted
     /// uninstall.</b> A dialog inside <c>Update.exe --uninstall --silent</c> is a
-    /// 60-second stall ending in the hook being killed — so the assertion is not
+    /// 60-second stall ending in the hook being killed -- so the assertion is not
     /// only that the directory survived, it is that the question was never
     /// asked at all.
     /// </remarks>
@@ -1157,13 +1157,13 @@ internal sealed class RegistrationTests
 
     /// <summary>
     /// An answer of yes removes the data root, through <c>TreeDelete</c>, with
-    /// nothing left behind — the hook's own open log included.
+    /// nothing left behind -- the hook's own open log included.
     /// </summary>
     /// <remarks>
     /// <b>The log is the interesting node and it is why the removal is split
     /// from the decision.</b> The hook writes its process log inside the data
     /// root, so a delete performed while that file was open would leave exactly
-    /// one directory standing — the one holding the record of the decision. The
+    /// one directory standing -- the one holding the record of the decision. The
     /// product closes the log first; this asserts the consequence rather than
     /// the arrangement.
     /// </remarks>
@@ -1206,7 +1206,7 @@ internal sealed class RegistrationTests
     }
 
     /// <summary>
-    /// An update never asks about the data root and never touches it — which is
+    /// An update never asks about the data root and never touches it -- which is
     /// the founding promise of separating the two directories at all.
     /// </summary>
     /// <remarks>
@@ -1264,8 +1264,8 @@ internal sealed class RegistrationTests
     /// question.
     /// </summary>
     /// <remarks>
-    /// <b>The install hook creates the data root itself</b> — it opens a log
-    /// there — so by the time an uninstall runs, the directory always exists.
+    /// <b>The install hook creates the data root itself</b> -- it opens a log
+    /// there -- so by the time an uninstall runs, the directory always exists.
     /// Asking about a few kilobytes of log and a registration record, which are
     /// the two files somebody reads <i>after</i> an uninstall, would be a modal
     /// window with nothing in it.
@@ -1317,8 +1317,8 @@ internal sealed class RegistrationTests
     /// parent is silent.
     /// </summary>
     /// <remarks>
-    /// <b>Velopack passes the hook nothing</b> — not a flag, not an environment
-    /// variable — so <c>Update.exe</c>'s own command line is the only place the
+    /// <b>Velopack passes the hook nothing</b> -- not a flag, not an environment
+    /// variable -- so <c>Update.exe</c>'s own command line is the only place the
     /// answer exists. Windows keeps the two shapes apart in the registry:
     /// <c>UninstallString</c> is <c>Update.exe --uninstall</c> and
     /// <c>QuietUninstallString</c> is the same with <c>--silent</c>. The last two
@@ -1377,7 +1377,7 @@ internal sealed class RegistrationTests
     /// </para>
     /// <para>
     /// ⚠️ <b>Asserted, not measured against the flow.</b> Nothing here shows that
-    /// an unseeded directory would have opened a sign-in window — establishing
+    /// an unseeded directory would have opened a sign-in window -- establishing
     /// that means running the flow on the maintainer's desktop, which is the
     /// event being guarded against. The reasoning, the bundle source it was read
     /// out of and the absence of any non-interactive signal to set instead are on
@@ -1425,8 +1425,8 @@ internal sealed class RegistrationTests
     /// </summary>
     /// <remarks>
     /// <b>The one assertion the double cannot make.</b> Every failure the client
-    /// has exits 1 — a duplicate <c>add</c> and a broken configuration are
-    /// indistinguishable by exit code — so the product discriminates on
+    /// has exits 1 -- a duplicate <c>add</c> and a broken configuration are
+    /// indistinguishable by exit code -- so the product discriminates on
     /// upstream's English. This is what turns a wording change into a red test
     /// instead of a registration silently reported as failed in the field.
     /// </remarks>
@@ -1470,10 +1470,10 @@ internal sealed class RegistrationTests
 
     /// <summary>
     /// The whole mechanism against the real client: registered at user scope,
-    /// idempotent, removable — and the maintainer's own configuration untouched.
+    /// idempotent, removable -- and the maintainer's own configuration untouched.
     /// </summary>
     /// <remarks>
-    /// <b>This is the proof that the charter's promise is kept</b> — one
+    /// <b>This is the proof that the charter's promise is kept</b> -- one
     /// registration, at user scope, available in every repository, with no file
     /// written into any of them. The entry is asserted in the client's own
     /// configuration file rather than in the client's report of it.
@@ -1592,13 +1592,13 @@ internal sealed class RegistrationTests
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>Every arm driving <see cref="McpRegistrar.Apply"/> through a double
-    /// has to pass this — every intent, not just
+    /// has to pass this -- every intent, not just
     /// <see cref="RegistrationIntent.Update"/>.</b> <i>Widened 2026-09-16
     /// (previously "Every arm driving <c>RegistrationIntent.Update</c> through a
     /// double")</i>: until that day only an update read the client's file, so an
     /// install or an uninstall without the seam happened to be deterministic. It
     /// is not any more, and the six arms that relied on it went red the moment
-    /// the read moved — against the maintainer's own registration, which is
+    /// the read moved -- against the maintainer's own registration, which is
     /// foreign to every scratch install root. The registrar's default reads the
     /// client's own user-scope configuration, which on this machine is the
     /// maintainer's, so an arm without the seam asks a question about whatever
@@ -1620,7 +1620,7 @@ internal sealed class RegistrationTests
         };
 
     /// <summary>
-    /// Reads a log file the way everything else in this suite does — sharing
+    /// Reads a log file the way everything else in this suite does -- sharing
     /// with a writer that may still hold it.
     /// </summary>
     /// <remarks>
@@ -1664,10 +1664,10 @@ internal sealed class RegistrationTests
     /// </summary>
     /// <remarks>
     /// <b>Process-wide, because that is the only channel there is.</b> The child
-    /// inherits this process's environment block, and the alternative — an
-    /// environment overlay on the product's own command runner — would be a seam
+    /// inherits this process's environment block, and the alternative -- an
+    /// environment overlay on the product's own command runner -- would be a seam
     /// that exists for no reason but this test. It is restored however the test
-    /// ends, and the whole class is <c>[NotInParallel]</c> with no key —
+    /// ends, and the whole class is <c>[NotInParallel]</c> with no key --
     /// <i>corrected 2026-09-15 (previously "The arms that use it are
     /// <c>[NotInParallel]</c> on one group so they cannot overwrite each other's
     /// value")</i>, because overwriting each other's value was never the only
@@ -1675,7 +1675,7 @@ internal sealed class RegistrationTests
     /// </remarks>
     /// <remarks>
     /// ⚠️ <b>The directory is SEEDED as already onboarded on the way through, and
-    /// that is what makes the seeding inseparable from the use</b> — an empty
+    /// that is what makes the seeding inseparable from the use</b> -- an empty
     /// configuration directory is, to the real client, a machine nobody has ever
     /// signed in on. See <see cref="OnboardedClientConfig"/> for what is written
     /// and the bundle source it was read out of, and

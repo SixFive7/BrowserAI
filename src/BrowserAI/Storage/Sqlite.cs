@@ -14,7 +14,7 @@ namespace BrowserAI.Storage;
 /// <para>
 /// <b>Hand-written, and the whole managed layer above it is this repository's.</b>
 /// The alternative was <c>Microsoft.Data.Sqlite.Core</c> plus
-/// <c>SQLitePCLRaw</c> plus a provider — three packages, three notices, and
+/// <c>SQLitePCLRaw</c> plus a provider -- three packages, three notices, and
 /// their IL in front of a publish that fails on one ILC warning. What that
 /// would buy is ADO.NET's conveniences over a store that runs a dozen fixed
 /// statements. What it costs is the one thing this product cannot spend.
@@ -33,29 +33,29 @@ namespace BrowserAI.Storage;
 /// never looked up at all: <c>DirectPInvoke</c> plus <c>NativeLibrary</c> in
 /// <c>build/Sqlite.targets</c> make the linker resolve every entry point out of
 /// the archive at publish time, so no library is loaded and no search is
-/// performed. The name matters only for the other case — a CoreCLR host, which
-/// is how the test suite runs product code — where it is the name every package
+/// performed. The name matters only for the other case -- a CoreCLR host, which
+/// is how the test suite runs product code -- where it is the name every package
 /// in this ecosystem gives the loose native DLL, and where
 /// <c>SourceGear.sqlite3</c> in the test project is what puts one on disk.
 /// Choosing a private name would orphan that.
 /// </para>
 /// <para>
 /// ⚠️ <b><c>SQLITE_OMIT_AUTOINIT</c> is in the compile flags, so
-/// <see cref="EnsureInitialized"/> is not optional — and what happens without
+/// <see cref="EnsureInitialized"/> is not optional -- and what happens without
 /// it is worse than a refusal.</b> Without that flag <c>sqlite3_open_v2</c>
 /// calls <c>sqlite3_initialize</c> for you; with it, sqlite.org says the
 /// behaviour of an entry point that needs the library initialised is
 /// <i>undefined</i>. Measured 2026-08-26 against the published binary, with
 /// <see cref="EnsureInitialized"/>'s body removed: the first
-/// <c>sqlite3_open_v2</c> takes an <b>access violation</b> —
-/// <c>0xC0000005</c>, exit code <c>-1073741819</c> — and the server dies before
+/// <c>sqlite3_open_v2</c> takes an <b>access violation</b> --
+/// <c>0xC0000005</c>, exit code <c>-1073741819</c> -- and the server dies before
 /// it answers <c>initialize</c>. Not <c>SQLITE_MISUSE</c>, not any result code:
 /// nothing managed sees it and no <c>catch</c> can stand in front of it.
 /// </para>
 /// <para>
 /// <b>And the omission is invisible in the suite.</b> The loose DLL a CoreCLR
 /// host loads is built <i>without</i> the flag and initialises itself, so this
-/// whole class of failure appears only in the published binary — which is why
+/// whole class of failure appears only in the published binary -- which is why
 /// the startup record carries <see cref="BuildReport"/> and a test reads it
 /// back off the published slice.
 /// </para>
@@ -63,13 +63,13 @@ namespace BrowserAI.Storage;
 /// ⚠️ <b>One search-path value for the whole file, and it has to be repeated on
 /// every declaration because the attribute cannot be put anywhere else.</b>
 /// <c>DefaultDllImportSearchPaths</c> is valid on an assembly or a method and
-/// on nothing in between — CS0592, measured here rather than assumed — so the
+/// on nothing in between -- CS0592, measured here rather than assumed -- so the
 /// type-level declaration that would have made mixing unexpressible does not
 /// compile, and assembly level would re-point <c>Interop\</c>'s Win32
 /// declarations at the same value. That matters because of the trap P0
 /// measured: the resolved library is cached per module name, so once
 /// <i>any</i> declaration naming <c>e_sqlite3</c> has loaded it, a wrong one
-/// beside it succeeds too — a file that mixed the values would test clean and
+/// beside it succeeds too -- a file that mixed the values would test clean and
 /// fail on whichever declaration happened to run first. <b>Nothing enforces the
 /// uniformity below; a reader does.</b>
 /// </para>
@@ -107,23 +107,23 @@ internal static partial class Sqlite
     /// <summary><c>SQLITE_OK</c>.</summary>
     public const int Ok = 0;
 
-    /// <summary><c>SQLITE_ERROR</c> — a generic failure; <c>sqlite3_errmsg</c> says which.</summary>
+    /// <summary><c>SQLITE_ERROR</c> -- a generic failure; <c>sqlite3_errmsg</c> says which.</summary>
     public const int GenericError = 1;
 
-    /// <summary><c>SQLITE_BUSY</c> — another writer holds the database.</summary>
+    /// <summary><c>SQLITE_BUSY</c> -- another writer holds the database.</summary>
     public const int Busy = 5;
 
-    /// <summary><c>SQLITE_CANTOPEN</c> — the file could not be opened or created.</summary>
+    /// <summary><c>SQLITE_CANTOPEN</c> -- the file could not be opened or created.</summary>
     public const int CannotOpen = 14;
 
     /// <summary>
-    /// <c>SQLITE_IOERR</c> — the operating system refused an operation on one of
+    /// <c>SQLITE_IOERR</c> -- the operating system refused an operation on one of
     /// the database's files.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>It is a family rather than a code, and one member of it is
     /// transient.</b> Most of the extended codes under it are real disk faults;
-    /// the ones this product meets in practice are the shared-memory arms —
+    /// the ones this product meets in practice are the shared-memory arms --
     /// a reader mapping or locking the wal-index of a database whose holder is
     /// in the middle of dying, so its handles are closing while the reader is
     /// opening. That one ends on its own, which is why
@@ -132,28 +132,28 @@ internal static partial class Sqlite
     /// </remarks>
     public const int IoError = 10;
 
-    /// <summary><c>SQLITE_MISUSE</c> — this library was used wrongly, not the database.</summary>
+    /// <summary><c>SQLITE_MISUSE</c> -- this library was used wrongly, not the database.</summary>
     /// <remarks>
     /// ⚠️ <b>It is not what an uninitialised library answers, and assuming it
     /// was is the mistake this remark exists to stop.</b> Under
     /// <c>SQLITE_OMIT_AUTOINIT</c> an open with no <c>sqlite3_initialize</c> in
-    /// front of it does not return a code at all: it faults — measured, see
+    /// front of it does not return a code at all: it faults -- measured, see
     /// <see cref="EnsureInitialized"/>. What this code really covers is misuse
     /// SQLite can still see, such as reusing a statement after its connection
     /// has gone.
     /// </remarks>
     public const int Misuse = 21;
 
-    /// <summary><c>SQLITE_RANGE</c> — a bind index outside the statement's parameters.</summary>
+    /// <summary><c>SQLITE_RANGE</c> -- a bind index outside the statement's parameters.</summary>
     public const int Range = 25;
 
-    /// <summary><c>SQLITE_NOTADB</c> — the file is not a database.</summary>
+    /// <summary><c>SQLITE_NOTADB</c> -- the file is not a database.</summary>
     public const int NotADatabase = 26;
 
-    /// <summary><c>SQLITE_ROW</c> — <c>sqlite3_step</c> produced a row.</summary>
+    /// <summary><c>SQLITE_ROW</c> -- <c>sqlite3_step</c> produced a row.</summary>
     public const int Row = 100;
 
-    /// <summary><c>SQLITE_DONE</c> — <c>sqlite3_step</c> finished.</summary>
+    /// <summary><c>SQLITE_DONE</c> -- <c>sqlite3_step</c> finished.</summary>
     public const int Done = 101;
 
     /// <summary><c>SQLITE_OPEN_READONLY</c>.</summary>
@@ -178,7 +178,7 @@ internal static partial class Sqlite
     public const int TypeNull = 5;
 
     /// <summary>
-    /// <c>SQLITE_TRANSIENT</c> — tell SQLite to copy the bound bytes before the
+    /// <c>SQLITE_TRANSIENT</c> -- tell SQLite to copy the bound bytes before the
     /// bind call returns.
     /// </summary>
     /// <remarks>
@@ -205,8 +205,8 @@ internal static partial class Sqlite
     /// so <c>SQLITE_STRICT_SUBTYPE=1</c> arrives here as a bare
     /// <c>STRICT_SUBTYPE</c> while <c>SQLITE_DQS=0</c> arrives as
     /// <c>DQS=0</c>. The values are the half worth keeping, because a flag
-    /// whose value drifted — <c>DQS=3</c>, the default, instead of
-    /// <c>DQS=0</c> — is present under any check that compares names alone.
+    /// whose value drifted -- <c>DQS=3</c>, the default, instead of
+    /// <c>DQS=0</c> -- is present under any check that compares names alone.
     /// </para>
     /// <para>
     /// <b><c>THREADSAFE</c> is deliberately absent from this list and is checked
@@ -217,7 +217,7 @@ internal static partial class Sqlite
     /// with a background sweep, a background update check and an idle timer in
     /// it. What that makes it is not an <i>intended flag</i> but a floor under
     /// every build this code may run against, the loose DLL a test host loads
-    /// included — so it is asserted where it holds rather than listed where it
+    /// included -- so it is asserted where it holds rather than listed where it
     /// would not.
     /// </para>
     /// </remarks>
@@ -242,7 +242,7 @@ internal static partial class Sqlite
     /// <b>Read from the library rather than from the source it was built from.</b>
     /// The amalgamation's own <c>SQLITE_VERSION</c> is what a reader of the tree
     /// would quote and it is one compile step away from what the binary
-    /// contains — a build that linked a stale archive would report the stale
+    /// contains -- a build that linked a stale archive would report the stale
     /// version here, which is exactly the disagreement worth being able to see.
     /// </remarks>
     public static string Version => Marshal.PtrToStringUTF8(LibVersion()) ?? UnknownVersion;
@@ -298,7 +298,7 @@ internal static partial class Sqlite
     /// <para>
     /// ⚠️ <b>The <c>catch</c> is not a safety net for the failure that matters
     /// most.</b> A library that was never initialised does not raise anything
-    /// this can catch — it faults, and the process is gone
+    /// this can catch -- it faults, and the process is gone
     /// (<see cref="EnsureInitialized"/>, measured). So this method is
     /// defensive about the cases that <i>are</i> exceptions, and the one it
     /// cannot be defensive about is handled by calling
@@ -333,14 +333,14 @@ internal static partial class Sqlite
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Required, because <c>SQLITE_OMIT_AUTOINIT</c> is in the compile
-    /// flags — and the cost of forgetting is a dead process rather than an
+    /// flags -- and the cost of forgetting is a dead process rather than an
     /// error.</b> Without that flag every entry point that needs the library
     /// initialised calls this itself; with it, sqlite.org calls the behaviour
     /// undefined, and what this build actually does was measured 2026-08-26
     /// rather than assumed: the published binary, with this method's body
     /// removed, took an <b>access violation</b> inside the first
-    /// <c>sqlite3_open_v2</c> — <c>0xC0000005</c>, exit code
-    /// <c>-1073741819</c> — and closed its stdout without answering
+    /// <c>sqlite3_open_v2</c> -- <c>0xC0000005</c>, exit code
+    /// <c>-1073741819</c> -- and closed its stdout without answering
     /// <c>initialize</c>. No result code, no exception, nothing a
     /// <c>catch</c> can be put in front of.
     /// </para>
@@ -458,7 +458,7 @@ internal static partial class Sqlite
     }
 
     /// <summary>
-    /// <c>int sqlite3_initialize(void)</c> — initialises the library.
+    /// <c>int sqlite3_initialize(void)</c> -- initialises the library.
     /// </summary>
     /// <returns><see cref="Ok"/>, or the failure.</returns>
     [DefaultDllImportSearchPaths(DllImportSearchPath.SafeDirectories)]
@@ -466,7 +466,7 @@ internal static partial class Sqlite
     private static partial int Initialize();
 
     /// <summary>
-    /// <c>const char *sqlite3_libversion(void)</c> — a pointer to a string
+    /// <c>const char *sqlite3_libversion(void)</c> -- a pointer to a string
     /// constant inside the library, never freed and never owned by us.
     /// </summary>
     /// <remarks>
@@ -481,7 +481,7 @@ internal static partial class Sqlite
     private static partial IntPtr LibVersion();
 
     /// <summary>
-    /// <c>const char *sqlite3_errstr(int)</c> — the generic text for a result
+    /// <c>const char *sqlite3_errstr(int)</c> -- the generic text for a result
     /// code, with no database involved.
     /// </summary>
     /// <param name="result">The result code.</param>
@@ -495,7 +495,7 @@ internal static partial class Sqlite
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>The handle comes back even when the result is a failure</b>, and
-    /// it must still be closed — that is the only way to reach
+    /// it must still be closed -- that is the only way to reach
     /// <c>sqlite3_errmsg</c> for the open's own error. The single case where it
     /// does not is a failure to allocate the handle at all, which is why
     /// <see cref="SqliteDatabase"/> checks <c>IsInvalid</c> before asking the
@@ -511,7 +511,7 @@ internal static partial class Sqlite
     internal static partial int OpenV2(string filename, out SqliteDatabaseHandle database, int flags, string? vfs);
 
     /// <summary>
-    /// <c>int sqlite3_close_v2(sqlite3*)</c> — releases the connection, deferring
+    /// <c>int sqlite3_close_v2(sqlite3*)</c> -- releases the connection, deferring
     /// if statements are still live.
     /// </summary>
     /// <remarks>
@@ -529,7 +529,7 @@ internal static partial class Sqlite
     internal static partial int CloseV2(IntPtr database);
 
     /// <summary>
-    /// <c>const char *sqlite3_errmsg(sqlite3*)</c> — what went wrong on this
+    /// <c>const char *sqlite3_errmsg(sqlite3*)</c> -- what went wrong on this
     /// connection, in English.
     /// </summary>
     /// <param name="database">The connection.</param>
@@ -539,7 +539,7 @@ internal static partial class Sqlite
     internal static partial IntPtr ErrorMessage(SqliteDatabaseHandle database);
 
     /// <summary>
-    /// <c>int sqlite3_busy_timeout(sqlite3*, int)</c> — how long a blocked
+    /// <c>int sqlite3_busy_timeout(sqlite3*, int)</c> -- how long a blocked
     /// connection retries before answering <see cref="Busy"/>.
     /// </summary>
     /// <param name="database">The connection.</param>
@@ -550,7 +550,7 @@ internal static partial class Sqlite
     internal static partial int BusyTimeout(SqliteDatabaseHandle database, int milliseconds);
 
     /// <summary>
-    /// <c>int sqlite3_exec(sqlite3*, const char*, callback, void*, char**)</c> —
+    /// <c>int sqlite3_exec(sqlite3*, const char*, callback, void*, char**)</c> --
     /// runs one or more statements that produce nothing.
     /// </summary>
     /// <remarks>
@@ -596,7 +596,7 @@ internal static partial class Sqlite
     /// <c>-1</c>.</b> One statement per prepare is the rule this layer keeps:
     /// anything with a second statement in it goes through <see cref="Exec"/>,
     /// so there is no tail anybody would read, and a caller that hands two
-    /// statements to a prepare silently runs only the first — which is the one
+    /// statements to a prepare silently runs only the first -- which is the one
     /// mistake the absent tail makes findable rather than silent, because
     /// nothing here ever reports a remainder.
     /// </remarks>
@@ -620,7 +620,7 @@ internal static partial class Sqlite
     internal static partial int Step(SqliteStatementHandle statement);
 
     /// <summary>
-    /// <c>int sqlite3_finalize(sqlite3_stmt*)</c> — destroys the statement.
+    /// <c>int sqlite3_finalize(sqlite3_stmt*)</c> -- destroys the statement.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>Its result is the last <c>step</c>'s error and not this call's.</b>
@@ -643,8 +643,8 @@ internal static partial class Sqlite
     /// ⚠️ <b>The byte count is explicit and never <c>-1</c>, and that is the
     /// difference between storing a caller's text and storing a prefix of
     /// it.</b> With <c>-1</c> SQLite reads to the first zero byte, so a value
-    /// carrying U+0000 — which <c>StringMarshalling.Utf8</c> encodes as a plain
-    /// <c>0x00</c> — is silently truncated at it. This layer stores what it was
+    /// carrying U+0000 -- which <c>StringMarshalling.Utf8</c> encodes as a plain
+    /// <c>0x00</c> -- is silently truncated at it. This layer stores what it was
     /// given, so it encodes the text itself and says how long it is.
     /// </remarks>
     /// <param name="statement">The compiled statement.</param>

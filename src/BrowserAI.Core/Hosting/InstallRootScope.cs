@@ -6,7 +6,7 @@ using BrowserAI.Interop;
 namespace BrowserAI.Hosting;
 
 /// <summary>
-/// Whether this process's roots — <b>both</b> of them — are ones only the
+/// Whether this process's roots -- <b>both</b> of them -- are ones only the
 /// current user can reach, and the refusal when one is not.
 /// </summary>
 /// <remarks>
@@ -19,25 +19,25 @@ namespace BrowserAI.Hosting;
 /// marker directory).</b> The installer's flag cannot defeat it any more: the
 /// data root is a constant and the flag moves the install root, which this
 /// judgement does not read. The variable is what is left. The marker directory
-/// left this root the same day and is keyed to the install root — see the fourth
+/// left this root the same day and is keyed to the install root -- see the fourth
 /// bullet below, which is where that gap is named rather than closed. What
 /// happens when a root really is shared was measured on 2026-08-20
-/// ([kb](../../../kb/windows/detection.md#two-users-and-one-install-root--what-spans-users-and-what-does-not--measured-2026-08-20)):
+/// ([kb](../../../kb/windows/detection.md#two-users-and-one-install-root----what-spans-users-and-what-does-not----measured-2026-08-20)):
 /// the <b>file</b> locks keep working across users, because a share mode is
 /// enforced by the kernel against handles and is indifferent to which token
-/// opened them — but the <b>`Global\` mutexes do not</b>. The DACL the kernel
+/// opened them -- but the <b>`Global\` mutexes do not</b>. The DACL the kernel
 /// puts on one names LOCAL SYSTEM, the creating logon session and the creating
 /// user, <b>with no group ACE at all</b>. Whichever user creates a name first
 /// owns it; the other's <c>Sessions.MachineMutex.Create</c> is refused,
 /// <c>Updates.LiveInstances.Join</c> catches that and returns
 /// <see langword="null"/>, and a process that never joined <b>creates no
 /// marker</b>. It is therefore invisible to the other user's census, which
-/// answers <i>alone</i> — and an update apply then runs
+/// answers <i>alone</i> -- and an update apply then runs
 /// <c>force_stop_package</c>, which terminates every process under the install
 /// root, the other user's BrowserAI and its browsers included.
 /// </para>
 /// <para>
-/// <b>The maintainer took direction (a) on 2026-08-20 — refuse at startup</b>
+/// <b>The maintainer took direction (a) on 2026-08-20 -- refuse at startup</b>
 /// (<c>QUESTIONS.md</c> §12, answered <i>"L1 a"</i>). It takes a configuration
 /// somebody chose on purpose away from them, which is why it was his to decide
 /// and not this code's.
@@ -49,8 +49,8 @@ namespace BrowserAI.Hosting;
 /// prefix all make a legitimate per-user root look external to a string
 /// comparison, and the second half of that is worse: a junction <i>under</i> the
 /// profile pointing at <c>D:\Shared</c> would pass one. So both sides go through
-/// <see cref="VolumeIdentity.DeepestExistingFinalName"/> — the same walk
-/// <c>Sessions.CanonicalPath</c> uses on a caller's session directory —
+/// <see cref="VolumeIdentity.DeepestExistingFinalName"/> -- the same walk
+/// <c>Sessions.CanonicalPath</c> uses on a caller's session directory --
 /// and the comparison is on what the filesystem itself calls each of them.
 /// </para>
 /// <para>
@@ -60,7 +60,7 @@ namespace BrowserAI.Hosting;
 /// <list type="bullet">
 ///   <item><description>
 ///     <b>It does not read a DACL.</b> <i>Outside the profile</i> is not the
-///     same predicate as <i>shared</i> — a single-user install at
+///     same predicate as <i>shared</i> -- a single-user install at
 ///     <c>D:\Tools\BrowserAI</c> is refused for nothing, and that trade is
 ///     stated in <c>QUESTIONS.md</c> §12 direction (a) as the cost of taking
 ///     it. The converse also holds and is the surviving hole: a profile
@@ -69,7 +69,7 @@ namespace BrowserAI.Hosting;
 ///   </description></item>
 ///   <item><description>
 ///     <b>An answer it could not establish is not a refusal.</b> A root whose
-///     final name cannot be read — an ancestor this token may not open — is
+///     final name cannot be read -- an ancestor this token may not open -- is
 ///     served, with a warning naming what could not be established. Refusing
 ///     there would stop a background MCP server from starting at all on a
 ///     locked-down machine, which is a worse failure than the one being
@@ -84,7 +84,7 @@ namespace BrowserAI.Hosting;
 ///   <item><description>
 ///     ⚠️ <b>CLOSED BY MECHANISM 2026-09-15, later the same day</b>
 ///     <i>(previously: "It judges the DATA root, and the live-instance census is
-///     keyed to the INSTALL root — added 2026-09-15 with the layout split. So
+///     keyed to the INSTALL root -- added 2026-09-15 with the layout split. So
 ///     <c>Setup.exe --installto</c> can still put the markers and their
 ///     <c>Global\</c> mutex somewhere two users share, and nothing here says a
 ///     word about it … it is <b>open</b> rather than accepted: the row in
@@ -95,7 +95,7 @@ namespace BrowserAI.Hosting;
 ///     user's profile</i>, resolved through
 ///     <see cref="VolumeIdentity.DeepestExistingFinalName"/> on both sides, with
 ///     the same UNC and mapped-drive short circuits in front of it. What differs
-///     is only the sentence — a refusal names <i>both</i> roots and the remedy
+///     is only the sentence -- a refusal names <i>both</i> roots and the remedy
 ///     that can actually move the one at fault, because
 ///     <c>BROWSERAI_ROOT</c> cannot move the install root and
 ///     <c>--installto</c> cannot move the data root, and a refusal naming the
@@ -116,7 +116,7 @@ internal static class InstallRootScope
     /// The same bound <c>Sessions.CanonicalPath.AncestorWalkLimit</c>
     /// uses, and for the same reason: the walk costs one directory open per
     /// level. It is spelled again rather than shared across the namespace
-    /// boundary because the two are independent budgets that happen to agree —
+    /// boundary because the two are independent budgets that happen to agree --
     /// an app root is a handful of levels deep and a caller's session directory
     /// can be anything.
     /// </remarks>
@@ -134,7 +134,7 @@ internal static class InstallRootScope
     /// resolved them has nothing to say about where its binary lives. Only then
     /// is the install root judged, and only when there is one: an uninstalled
     /// BrowserAI has no install root, and <c>Program</c> passes
-    /// <see langword="null"/> rather than substituting the data root — which
+    /// <see langword="null"/> rather than substituting the data root -- which
     /// would judge the same path twice and produce a second refusal saying the
     /// same thing in the wrong words.
     /// </para>
@@ -147,7 +147,7 @@ internal static class InstallRootScope
     /// </remarks>
     /// <param name="dataRoot">The data root this process resolved, absolute.</param>
     /// <param name="installRoot">
-    /// The install root — the directory containing <c>current\</c> — or
+    /// The install root -- the directory containing <c>current\</c> -- or
     /// <see langword="null"/> when this process is not an installed one.
     /// </param>
     /// <returns>The verdict.</returns>
@@ -342,7 +342,7 @@ internal static class InstallRootScope
     /// <remarks>
     /// <para>
     /// ⚠️ <b>It names BOTH roots, always, and the remedy for the one at fault
-    /// — 2026-09-15.</b> There are two roots since the layout split, they are
+    /// -- 2026-09-15.</b> There are two roots since the layout split, they are
     /// moved by two different levers, and <b>neither lever can move the other's
     /// root</b>: <c>BROWSERAI_ROOT</c> moves the data root and cannot touch the
     /// install root, <c>Setup.exe --installto</c> moves the install root and
@@ -355,7 +355,7 @@ internal static class InstallRootScope
     /// A shared <i>data</i> root loses the live-instance census through the
     /// mutex DACL; a shared <i>install</i> root loses the same census for the
     /// same reason and costs less, because each user's browsers, session index
-    /// and log are their own now — what an apply destroys there is the other
+    /// and log are their own now -- what an apply destroys there is the other
     /// user's processes and the browsers they were driving.
     /// </para>
     /// </remarks>
@@ -374,19 +374,19 @@ internal static class InstallRootScope
         string? installRoot,
         string why) =>
         $"BrowserAI will not serve out of the {Noun(which)} '{root}': {why}. "
-        + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the file locks span users, but the machine-wide mutexes do not — the kernel gives one no group ACE at all, so whichever user creates a name first owns it and the other cannot join the live-instance set. "
+        + "A root two Windows users can both reach is unsafe in a way nothing reports at run time: the file locks span users, but the machine-wide mutexes do not -- the kernel gives one no group ACE at all, so whichever user creates a name first owns it and the other cannot join the live-instance set. "
         + "A process that never joined creates no marker, so it is invisible to the other user's census; that census answers 'nothing else is running', and applying an update then terminates every process under the install root, including the other user's browsers and whatever they were driving. "
         + $"This build has two roots and they are moved by two different levers, so both are named: the data root is '{dataRoot}' and the install root is {(installRoot is { Length: > 0 } installed ? $"'{installed}'" : "absent, because this process was not installed")}. "
         + (which is JudgedRoot.Install
-            ? $"Recovery: install BrowserAI inside '{profile}' — the default location, or 'Setup.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
-            : $"Recovery: clear {LocalAppDataPaths.RootVariable} and start BrowserAI again — with no override the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ")
+            ? $"Recovery: install BrowserAI inside '{profile}' -- the default location, or 'Setup.exe --installto <a directory under that profile>'. {LocalAppDataPaths.RootVariable} cannot help here: it moves the data root and never the install root. "
+            : $"Recovery: clear {LocalAppDataPaths.RootVariable} and start BrowserAI again -- with no override the data root is the per-user one under '{profile}', which Windows keeps separate for every account. The installer's --installto cannot help here: it moves the install root and never the data root. ")
         + $"Nothing was started, nothing was changed, and no session, marker or browser was created under '{root}'.";
 }
 
 /// <summary>Which of this process's two roots is under judgement.</summary>
 /// <remarks>
 /// <b>It exists to choose a noun and a remedy, and for nothing else.</b> The
-/// predicate is identical for both — see <see cref="InstallRootScope"/>'s
+/// predicate is identical for both -- see <see cref="InstallRootScope"/>'s
 /// fourth bullet, which says so in as many words, because a second predicate
 /// wearing one name is how two roots start being judged by two different rules.
 /// </remarks>
@@ -404,7 +404,7 @@ internal enum JudgedRoot
 /// <b>Three states rather than a boolean</b>, for the reason
 /// <c>Updates.Liveness</c> has three: <i>could not establish</i> is neither of
 /// the other two, and collapsing it into either loses the only thing that would
-/// let somebody diagnose it. Here it collapses to <i>serve</i> — see
+/// let somebody diagnose it. Here it collapses to <i>serve</i> -- see
 /// <see cref="InstallRootScope"/>'s remarks for why that direction and not the
 /// other.
 /// </remarks>

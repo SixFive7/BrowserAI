@@ -36,7 +36,7 @@ internal sealed record SessionEnvironment
     /// <remarks>
     /// <b>Required rather than read from <see cref="Payload"/> on demand, and for
     /// the reason <see cref="Provisioner"/> is.</b> Loading it lazily at the door
-    /// would put a file read — and a possible failure naming a missing payload —
+    /// would put a file read -- and a possible failure naming a missing payload --
     /// on the path of a call that has already been accepted; loading it here
     /// means a process that cannot read its verdicts never starts serving.
     /// Handing it in also lets the suite vary the file without writing one, which
@@ -52,7 +52,7 @@ internal sealed record SessionEnvironment
     /// <remarks>
     /// <b>Required rather than defaulted, and that is on purpose.</b> A
     /// provisioner conjured at the call site would point at whatever browsers
-    /// root happened to be in scope — and the one thing that must never happen in
+    /// root happened to be in scope -- and the one thing that must never happen in
     /// a test is a 203.8 MB download nobody asked for. Handing it in makes the
     /// browsers root and the installer an explicit decision of whoever builds the
     /// environment.
@@ -82,9 +82,9 @@ internal sealed record SessionEnvironment
     /// <remarks>
     /// <para>
     /// <b>A seam for one reason: the shipped period is ten minutes, and no test
-    /// may wait that long.</b> Everything the timer decides — reset on every
+    /// may wait that long.</b> Everything the timer decides -- reset on every
     /// forwarded call, never fire while a call is outstanding, close once and
-    /// stay disarmed — is the same code at 200 ms as at ten minutes, so the suite
+    /// stay disarmed -- is the same code at 200 ms as at ten minutes, so the suite
     /// drives it in milliseconds and the product never sees this set.
     /// </para>
     /// <para>
@@ -109,7 +109,7 @@ internal sealed record SessionEnvironment
     /// one by letting real time pass is measuring the machine's scheduler rather
     /// than the product. Measured 2026-08-17 with the suite running all 416 tests
     /// at once: one in-process round trip took <b>1.51 s and 2.27 s</b> against
-    /// an 800 ms period, so the driving test concluded — correctly — that the
+    /// an 800 ms period, so the driving test concluded -- correctly -- that the
     /// session had gone idle, and went red five times in twenty runs while the
     /// product was right every time.
     /// </para>
@@ -135,14 +135,14 @@ internal sealed record SessionEnvironment
     /// exists for one test that could not otherwise be written.</b> The
     /// routing has to be driven across sessions of
     /// <i>different</i> modes at once, and doing that against real children costs
-    /// three node processes and a browser per assertion — which is slow enough
+    /// three node processes and a browser per assertion -- which is slow enough
     /// that the concurrency would be tested once rather than at every level of
     /// contention. Substituted, the same product code runs against in-process
     /// doubles in milliseconds.
     /// </para>
     /// <para>
     /// The default is the real thing, and the suite proves the real thing
-    /// separately against the published binary — so this cannot become the only
+    /// separately against the published binary -- so this cannot become the only
     /// path anybody exercises.
     /// </para>
     /// </remarks>

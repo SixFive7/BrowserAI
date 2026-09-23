@@ -8,7 +8,7 @@ using Microsoft.Win32.SafeHandles;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// Asking about, and acting on, a process that was recorded earlier — by pid
+/// Asking about, and acting on, a process that was recorded earlier -- by pid
 /// <b>and</b> creation time, never by name.
 /// </summary>
 /// <remarks>
@@ -21,7 +21,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>There is no by-name variant of any of this, and there never will be.</b>
 /// The rule that BrowserAI can only act on a job it created or a path it owns
-/// has no exception for test code — the harness that counts <c>chrome.exe</c>
+/// has no exception for test code -- the harness that counts <c>chrome.exe</c>
 /// today is the sweep that kills the user's forty <c>firefox.exe</c> tomorrow.
 /// </para>
 /// </remarks>
@@ -62,7 +62,7 @@ internal static partial class ProcessIdentity
     /// whole cost of
     /// [QUESTIONS §8a](../../../QUESTIONS.md) was that a browser
     /// which died wearing this exit code was indistinguishable from a browser
-    /// that crashed — for two rigs and eighty launches. The reclaim pass now
+    /// that crashed -- for two rigs and eighty launches. The reclaim pass now
     /// announces what it did, and an announcement that spelled <c>1</c> at the
     /// message rather than reading it from the call would be a second copy of a
     /// number that must never disagree with the first.
@@ -71,7 +71,7 @@ internal static partial class ProcessIdentity
     public const int TerminationExitCode = 1;
 
     /// <summary>
-    /// Whether the recorded process is still running — not merely whether
+    /// Whether the recorded process is still running -- not merely whether
     /// something holds its pid.
     /// </summary>
     /// <param name="processId">The pid recorded at spawn.</param>
@@ -118,7 +118,7 @@ internal static partial class ProcessIdentity
     /// <remarks>
     /// <b>For measuring the error rather than for deciding anything.</b>
     /// <see cref="IsAlive"/> is the question every caller in this suite actually
-    /// has, and it deliberately refuses to answer it from an open alone — a
+    /// has, and it deliberately refuses to answer it from an open alone -- a
     /// handle outlives the process it names. This exists so that a test which
     /// keys on a specific Win32 number can read the number Windows returns
     /// instead of quoting one, which is the difference between a control and a
@@ -178,7 +178,7 @@ internal static partial class ProcessIdentity
     /// <remarks>
     /// <b><c>TerminateProcess</c> only asks.</b> It returns as soon as the
     /// request is queued, so a caller that reads liveness on the next line reads
-    /// <i>alive</i> about a process that is on its way out — and a reclaim whose
+    /// <i>alive</i> about a process that is on its way out -- and a reclaim whose
     /// next step deletes the tree that process is holding then blames a locked
     /// file. The bound is a hang detector: a process that will not die inside it
     /// is not going to.

@@ -13,10 +13,10 @@ namespace BrowserAI.Protocol;
 /// <para>
 /// <b>This exists so that a result leaves as the bytes the child produced.</b>
 /// The SDK's <c>StreamServerTransport</c> serialises through
-/// <c>McpJsonUtilities.JsonContext</c> — read from the shipped 2.2.0 source,
+/// <c>McpJsonUtilities.JsonContext</c> -- read from the shipped 2.2.0 source,
 /// <c>JsonSerializer.SerializeToUtf8Bytes(message,
 /// McpJsonUtilities.JsonContext.Default.JsonRpcMessage)</c>, with no options
-/// seam anywhere on the path — so <c>JavaScriptEncoder.Default</c> re-escapes
+/// seam anywhere on the path -- so <c>JavaScriptEncoder.Default</c> re-escapes
 /// every backtick, apostrophe, angle bracket and non-ASCII character on the way
 /// out. Byte-identity is unobtainable through it, at any configuration.
 /// </para>
@@ -76,7 +76,7 @@ internal sealed class DirectStdioServerTransport : JsonLinesTransport
     /// ⚠️ <b>Always <see langword="false"/>, and it is a statement about who
     /// owns the wire rather than a caveat.</b> The other end of this process's
     /// standard input belongs to whoever started it. Disposing the stream on
-    /// this side closes nothing the caller holds — and for a console standard
+    /// this side closes nothing the caller holds -- and for a console standard
     /// input it does not even close a handle: measured 2026-09-15 on .NET 10,
     /// <c>Console.OpenStandardInput()</c> hands back a
     /// <c>WindowsConsoleStream</c> whose disposal leaves the console handle

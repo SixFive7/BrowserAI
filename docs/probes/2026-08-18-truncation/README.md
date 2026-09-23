@@ -4,7 +4,7 @@
 # 2026-08-18 - what the client silently truncates
 
 Re-establishes the **2,048 UTF-16 characters per model-facing string** budget in
-[kb](../../../kb/mcp/protocol.md#what-2kb-each-means--measured-2026-08-18--claude-code-21234),
+[kb](../../../kb/mcp/protocol.md#what-2kb-each-means----measured-2026-08-18--claude-code-21234),
 which `ModelSurfaceTests.EveryModelFacingStringFitsTheClientsSilentTruncationBudget`
 holds the whole published surface against. `probe-server*.js` publish strings of
 stepped lengths as a fake MCP server, `capture.js` proxies the client's HTTP

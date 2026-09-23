@@ -20,9 +20,9 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>The installer is a double here and the download is real elsewhere.</b>
-/// Everything these tests exercise is product code — the marker check, the
+/// Everything these tests exercise is product code -- the marker check, the
 /// machine-wide mutex, the phase watcher, all three caps, the removal of a
-/// partial tree, the refusal text, the recovery — and the one thing they cannot
+/// partial tree, the refusal text, the recovery -- and the one thing they cannot
 /// say anything about is whether upstream's installer works. That is
 /// <see cref="FirstRunProvisioningTests"/>, which runs against an empty browsers
 /// root through the published binary and downloads for real.
@@ -30,7 +30,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The refusal is the feature, not a limitation.</b> A blocking <c>init</c>
 /// would hold a caller for minutes with nothing to read; these assert the other
-/// shape — the session opens, the call is refused with a size and a route out,
+/// shape -- the session opens, the call is refused with a size and a route out,
 /// and the very next attempt on the same session succeeds.
 /// </para>
 /// </remarks>
@@ -264,7 +264,7 @@ internal sealed partial class ProvisioningTests
 
         // The installer was STOPPED rather than merely abandoned. A watcher that
         // gave up without closing the job would leave a 200 MB download running
-        // with nobody left to receive it — which is the exact shape a cap exists
+        // with nobody left to receive it -- which is the exact shape a cap exists
         // to prevent, and it is invisible in the status.
         await Assert.That(started!.WasStopped).IsTrue();
     }
@@ -282,14 +282,14 @@ internal sealed partial class ProvisioningTests
 
     /// <summary>
     /// A slow install that keeps writing outlives a cap many times shorter than
-    /// its own total — unboundedly, and without a real clock anywhere.
+    /// its own total -- unboundedly, and without a real clock anywhere.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>This is the arm that is red against a total-time ceiling, and it is
     /// the whole reason the cap changed.</b> The old <c>AbsoluteCap</c> stopped
     /// an install that had taken longer than the cap, whatever it was doing, so
-    /// it fired on exactly one case — a link that was slow and working.
+    /// it fired on exactly one case -- a link that was slow and working.
     /// </para>
     /// <para>
     /// ⚠️ <b>Rewritten 2026-08-20, and it is the fix for this test rather than a
@@ -298,7 +298,7 @@ internal sealed partial class ProvisioningTests
     /// what makes it safe at unbounded suite parallelism")*. The ratio reasoning
     /// was sound and insufficient: a ratio between two <b>real</b> clocks is
     /// still a race, and this arm went red once in nine consecutive full-suite
-    /// runs with the product behaving perfectly — the double's 25 ms gap
+    /// runs with the product behaving perfectly -- the double's 25 ms gap
     /// stretching past the product's 1 s cap on a machine running five hundred
     /// tests at once.
     /// </para>
@@ -316,7 +316,7 @@ internal sealed partial class ProvisioningTests
     /// <b>The assertion is stronger than the one it replaces, which is the
     /// point.</b> "Survived sixty writes" is a bounded claim about a number
     /// somebody chose; this survives <see cref="UnboundedPolls"/> polls each one
-    /// tick short of the whole budget — nearly seven simulated days — and the
+    /// tick short of the whole budget -- nearly seven simulated days -- and the
     /// number could be raised by three orders of magnitude without costing a
     /// second of wall clock. <b>Nothing here can be flaky</b>: there is no real
     /// duration anywhere in it, so there is no load under which it behaves
@@ -350,7 +350,7 @@ internal sealed partial class ProvisioningTests
 
                 // ⚠️ Effectively infinite, and deliberately: this arm is about
                 // the STALL cap, and the simulated clock passes ten real minutes
-                // per poll — so a lifelike extraction cap would fire on the
+                // per poll -- so a lifelike extraction cap would fire on the
                 // second poll after the tree appears and this test would be
                 // measuring the wrong number.
                 ExtractionCap = TimeSpan.FromDays(3_650),
@@ -413,7 +413,7 @@ internal sealed partial class ProvisioningTests
     /// <para>
     /// <b>The poll count is the assertion, and it is exact.</b> A detector with
     /// an off-by-one in either direction, or one that needed two consecutive
-    /// silent polls, changes this number — which is a thing no wall-clock test
+    /// silent polls, changes this number -- which is a thing no wall-clock test
     /// of this could ever have asserted.
     /// </para>
     /// </remarks>
@@ -472,7 +472,7 @@ internal sealed partial class ProvisioningTests
         await Assert.That(started!.WasStopped).IsTrue();
 
         // ⚠️ THE EXACT POLL. One before the first silent one is the baseline
-        // read, three are the moving ones, and the fourth is the first silence —
+        // read, three are the moving ones, and the fourth is the first silence --
         // so the detector must fire having asked exactly Moving + 1 times.
         await Assert.That(Volatile.Read(ref polls)).IsEqualTo(Moving + 1);
     }
@@ -486,7 +486,7 @@ internal sealed partial class ProvisioningTests
     /// installer writes a known number of bytes and then holds.</b> Elapsed time
     /// and the rate derived from it are not predictable in a suite, so what is
     /// asserted is the byte figure, the total it is quoted against, and that a
-    /// rate was given at all — the three things the maintainer asked for. A test
+    /// rate was given at all -- the three things the maintainer asked for. A test
     /// that asserted the rate would be asserting the speed of the machine.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -634,17 +634,17 @@ internal sealed partial class ProvisioningTests
     /// holder keeps the mutex through its revision prune, which walks every
     /// process on the machine, so there is a real window in which the holder is
     /// finished and no marker will ever appear. A caller that had just deleted
-    /// the tree — which is exactly what <c>browserai_reinstall_browser</c>
-    /// does — then sat in the outer deadline this design no longer has, with no
+    /// the tree -- which is exactly what <c>browserai_reinstall_browser</c>
+    /// does -- then sat in the outer deadline this design no longer has, with no
     /// browser installed.
     /// </para>
     /// <para>
     /// <b>What makes this test the right shape is that it never mentions the
     /// prune.</b> The prune is only how the window is reached today; the defect
     /// is the inference. So the claim is held by
-    /// <see cref="ProvisioningClaim"/> — the product's own cross-process
+    /// <see cref="ProvisioningClaim"/> -- the product's own cross-process
     /// contract, taken from a thread of its own exactly as another BrowserAI
-    /// process would take it — and then released with the tree still incomplete,
+    /// process would take it -- and then released with the tree still incomplete,
     /// which is the condition rather than one route to it.
     /// </para>
     /// <para>
@@ -697,7 +697,7 @@ internal sealed partial class ProvisioningTests
             // budget written here, and that is what makes this test bearable in
             // a suite that runs everything at once: Quick() sets it to 30 s, so
             // a regression comes back as `Failed` after thirty seconds rather
-            // than hanging. Measured against the injected fault on 2026-08-17 —
+            // than hanging. Measured against the injected fault on 2026-08-17 --
             // the pre-fix inference restored, this test failed at 30.4 s with
             // "Expected to be equal to Installed but received Failed". In a
             // shipped build the same path is sixty minutes with no browser
@@ -727,17 +727,17 @@ internal sealed partial class ProvisioningTests
     /// unfinished attempt rendered <i>"… is being downloaded into '…'"</i>,
     /// including the one where this process has started nothing at all: it lost
     /// the machine-wide provisioning mutex and is watching for the holder's
-    /// marker. What the holder is doing is unknowable from here — downloading,
+    /// marker. What the holder is doing is unknowable from here -- downloading,
     /// extracting, or walking every process on the machine inside its revision
-    /// prune — and the same window is what produced the sixty-minute hang two
+    /// prune -- and the same window is what produced the sixty-minute hang two
     /// tests above, so it is neither hypothetical nor rare.
     /// </para>
     /// <para>
     /// ⚠️ <b>The state word became <c>provisioning</c> on 2026-08-18 (previously
     /// <c>downloading</c>, and this test's remarks said it was staying).</b> The
-    /// bucketing did not move — every consumer still branches on
+    /// bucketing did not move -- every consumer still branches on
     /// <i>installed</i> / <i>not yet</i> / <i>failed</i>, and this loser still
-    /// belongs in the middle — so what changed is only that the word no longer
+    /// belongs in the middle -- so what changed is only that the word no longer
     /// names one of the five phases it covers. <c>QUESTIONS.md</c> §9 carries the
     /// decision. The sentence remains the discriminator, which is why this test
     /// still reads it rather than the word.
@@ -748,7 +748,7 @@ internal sealed partial class ProvisioningTests
     /// that it was waiting on bytes and should try again later; <c>provisioning</c>
     /// says only <i>not yet</i>. So both unfinished branches state what to do
     /// next, and this test asserts it on the branch where <b>nothing at all is
-    /// happening in this process</b> — the one where a reader has least to go on.
+    /// happening in this process</b> -- the one where a reader has least to go on.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -798,7 +798,7 @@ internal sealed partial class ProvisioningTests
                 if (patience.Elapsed > TestDefaults.InProcessHang)
                 {
                     throw new TimeoutException(
-                        $"The attempt never reported that it was waiting on another process. Last status: {waiting.State} — {waiting.Detail}");
+                        $"The attempt never reported that it was waiting on another process. Last status: {waiting.State} -- {waiting.Detail}");
                 }
 
                 await Task.Delay(TimeSpan.FromMilliseconds(20));
@@ -827,7 +827,7 @@ internal sealed partial class ProvisioningTests
         // ⚠️ Found by the suite rather than by review. Keyed on the family
         // alone, every rig in this suite serialised against every other one, and
         // the losers sat watching for a marker in their OWN root that the winner
-        // was never going to write — reported as "downloading" until the outer
+        // was never going to write -- reported as "downloading" until the outer
         // deadline, on tests that had nothing to do with provisioning.
         var oneRoot = BrowserProvisioner.MutexNameFor(@"C:\a\browsers", "chromium");
         var anotherRoot = BrowserProvisioner.MutexNameFor(@"C:\b\browsers", "chromium");
@@ -874,8 +874,8 @@ internal sealed partial class ProvisioningTests
     {
         using var log = LoggerFactory.Create(builder => _ = builder.AddProvider(new TUnitLoggerProvider()));
 
-        // A relative PLAYWRIGHT_BROWSERS_PATH resolves against INIT_CWD —
-        // inherited from whatever npm ancestor last ran — before the child's own
+        // A relative PLAYWRIGHT_BROWSERS_PATH resolves against INIT_CWD --
+        // inherited from whatever npm ancestor last ran -- before the child's own
         // directory, so it lands a 430 MiB tree somewhere nobody chose and
         // reports nothing.
         var refused = Assert.Throws<ArgumentException>(() =>
@@ -914,8 +914,8 @@ internal sealed partial class ProvisioningTests
     /// </summary>
     /// <remarks>
     /// ⚠️ <b><c>OuterDeadline</c> corrected 2026-08-18 (previously 30 s).</b>
-    /// Nothing here asserts that it fires — the arms that exercise a cap
-    /// configure that cap explicitly — so its only job is to stop a wedged
+    /// Nothing here asserts that it fires -- the arms that exercise a cap
+    /// configure that cap explicitly -- so its only job is to stop a wedged
     /// provisioner hanging the run. Thirty seconds is reachable at unbounded
     /// suite parallelism: this loop calls <c>Thread.Sleep</c> on a pool thread
     /// between polls, and the pool grows by about one worker a second, so under
@@ -939,15 +939,15 @@ internal sealed partial class ProvisioningTests
     /// microseconds between another process's marker write and this process's
     /// acquire, and nothing can put a test there.
     /// <c>Ensure</c> short-circuits on a complete tree, so the end-to-end route
-    /// is closed by construction. What <i>is</i> assertable is the rule itself —
+    /// is closed by construction. What <i>is</i> assertable is the rule itself --
     /// and it is the rule that was wrong: an abandoned mutex was taken as
     /// sufficient, and the marker was consulted one line after the tree had gone
     /// ([the adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
     /// A2).
     /// </para>
     /// <para>
-    /// The arm that <i>is</i> reachable end to end — abandoned over an unmarked
-    /// tree — is asserted below, so the branch is known to be wired rather than
+    /// The arm that <i>is</i> reachable end to end -- abandoned over an unmarked
+    /// tree -- is asserted below, so the branch is known to be wired rather than
     /// merely correct in isolation.
     /// </para>
     /// </remarks>
@@ -1062,7 +1062,7 @@ internal sealed partial class ProvisioningTests
     /// <remarks>
     /// <b>A gate rather than a duration.</b> The sentence under test is composed
     /// from the watcher's last sample, and the watcher runs on a thread of its
-    /// own — so "sleep and then assert" would be asserting the scheduler at
+    /// own -- so "sleep and then assert" would be asserting the scheduler at
     /// unbounded suite parallelism. What this waits for is the condition.
     /// </remarks>
     /// <param name="call">What to call.</param>
@@ -1114,7 +1114,7 @@ internal sealed partial class ProvisioningTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Two places name one number, so they are held against each other</b> —
+    /// <b>Two places name one number, so they are held against each other</b> --
     /// the same shape as <c>SqliteTests</c> holding the vendored
     /// <c>SQLITE_VERSION</c> against the pin in <c>drift-check.json</c>.
     /// <see cref="BrowserProvisioner.FirstRunDownloadBytes"/> reaches a caller
@@ -1128,8 +1128,8 @@ internal sealed partial class ProvisioningTests
     /// <para>
     /// ⚠️ <b>Added 2026-09-17, planted red against the 1237/1539 constants and
     /// watched.</b> The 2026-09-16 re-measurement at chromium 1244 and firefox
-    /// 1544 moved both figures — 203,824,344 → 207,274,189 and 127,247,129 →
-    /// 129,502,321 — and nothing in the tree would have noticed the constants
+    /// 1544 moved both figures -- 203,824,344 → 207,274,189 and 127,247,129 →
+    /// 129,502,321 -- and nothing in the tree would have noticed the constants
     /// staying behind. A browser revision moves these on upstream's schedule and
     /// not on ours, so the failure mode is a refusal quoting a measured-looking
     /// number that was measured of a browser this build no longer provisions.

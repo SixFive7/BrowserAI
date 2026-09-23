@@ -27,14 +27,14 @@ internal static class RepositoryLayout
     /// carries an unpacked <c>node_modules</c>, so enumerating first and
     /// discarding second means reading tens of thousands of paths to keep none
     /// of them. <c>payload\</c> earns its place in this list rather than in
-    /// <see cref="NotOursAtTheRoot"/> because there are two of them — the
+    /// <see cref="NotOursAtTheRoot"/> because there are two of them -- the
     /// unpacked one at the root and the vendored npm tree under <c>build\</c>.
     /// </para>
     /// <para>
     /// <b>Declared above every member that reads it, and that is load-bearing
     /// rather than tidy.</b> Static field initializers run in textual order, so
     /// this list sitting below <see cref="LinkBearingFiles"/> made it empty at
-    /// the moment that walk ran — the prune silently did nothing and the scan
+    /// the moment that walk ran -- the prune silently did nothing and the scan
     /// swept in the whole gitignored <c>.work\</c> tree. Observed 2026-08-17
     /// while this was being written; it fails open, which is why it is written
     /// down here rather than left to whoever moves it next.
@@ -50,14 +50,14 @@ internal static class RepositoryLayout
     /// <para>
     /// ⚠️ <b>Split out of the single list on 2026-08-18, and it was hiding five
     /// product source files.</b> The prune matched a directory <i>name</i> at
-    /// any depth, case-insensitively — so <c>src\BrowserAI\Artifacts\</c>, which
+    /// any depth, case-insensitively -- so <c>src\BrowserAI\Artifacts\</c>, which
     /// is where the artifact router lives, matched the root's <c>artifacts\</c>
     /// build-output directory and was pruned out of <b>every</b> scan built on
     /// <see cref="LinkBearingFiles"/>: the link check, the fragment check and
     /// the SPDX house rule alike. Five files, silently outside three tests.
     /// </para>
     /// <para>
-    /// <b>It was found by a new check rather than by review</b> — the fragment
+    /// <b>It was found by a new check rather than by review</b> -- the fragment
     /// scan counted 552 where a script counting the same corpus outside the
     /// suite counted 554, and the two missing entries were both in
     /// <c>Artifacts\</c>. A prune that removes files reports nothing when it
@@ -89,7 +89,7 @@ internal static class RepositoryLayout
     /// <b>This is the subset the "never repo-wide" rules are about</b>
     /// ([TESTING.md](../../TESTING.md#what-the-build-itself-must-fail-on)). A
     /// property set here applies to the assembly nobody has written yet, which
-    /// is precisely why AOT and trim suppression must not be set here — and why
+    /// is precisely why AOT and trim suppression must not be set here -- and why
     /// <c>TreatWarningsAsErrors</c> must.
     /// </para>
     /// <para>
@@ -141,7 +141,7 @@ internal static class RepositoryLayout
     /// <c>third-party/sqlite</c> holds the SQLite amalgamation, which
     /// <c>build/Sqlite.targets</c> compiles with <c>cl.exe</c> and ILC links
     /// into <c>BrowserAI.exe</c>. It is product source by every meaning that
-    /// matters and it is invisible to a scan anchored on an extension —
+    /// matters and it is invisible to a scan anchored on an extension --
     /// measured 2026-08-26: a swapped amalgamation left the published binary
     /// reading as fresh, so a suite arm driving that binary would have been
     /// asserting about SQLite nobody had compiled.
@@ -176,7 +176,7 @@ internal static class RepositoryLayout
     /// <b>Enumerated over the whole tree rather than over a list of directory
     /// names, and that is the point.</b> A documentation restructure moves files
     /// between directories; a scan anchored on <c>src</c>, <c>tests</c> and
-    /// <c>build</c> would stop seeing a file the day it moved — silently, and in
+    /// <c>build</c> would stop seeing a file the day it moved -- silently, and in
     /// exactly the change it exists to guard. What is pruned is what is not this
     /// repository's own hand-written text: version control, agent scratch, the
     /// bundled payload, and build output under every name it takes here.
@@ -187,7 +187,7 @@ internal static class RepositoryLayout
     /// *.md</c>, with no difference in either direction").</b> That sentence was
     /// true when it was written, was never checked again, and was <b>false by
     /// 520 files</b> for as long as agent worktrees existed under
-    /// <c>.claude\</c> — which this walk does not prune, because
+    /// <c>.claude\</c> -- which this walk does not prune, because
     /// <c>settings.json</c> and <c>hooks\</c> are committed and pruning would
     /// lose the SPDX and link coverage of both. Every tree-as-text scan read a
     /// second checkout as repository content: the fragment scan counted
@@ -199,7 +199,7 @@ internal static class RepositoryLayout
     /// <see cref="HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds"/>
     /// compares this list against <c>git ls-files</c> on every run, in both
     /// directions, and skips loudly when git is absent. No count is quoted here
-    /// any more — a number in a remark is the thing that went stale, and the
+    /// any more -- a number in a remark is the thing that went stale, and the
     /// comparison does not need one.
     /// </para>
     /// <para>
@@ -231,11 +231,11 @@ internal static class RepositoryLayout
     /// <para>
     /// ⚠️ <b>This list is not the one
     /// <see cref="HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds"/>
-    /// holds against git</b> — that arm compares the extension-filtered subset,
+    /// holds against git</b> -- that arm compares the extension-filtered subset,
     /// because both sides of it filter through <see cref="IsLinkBearing"/>. What
     /// is verified against git is therefore the prose kinds; the rest of this
     /// list is the walk's word alone. The direction of that gap is the safe one
-    /// for a scan that asserts an absence — a file the walk invents is one more
+    /// for a scan that asserts an absence -- a file the walk invents is one more
     /// file checked, never one fewer.
     /// </para>
     /// </remarks>
@@ -253,7 +253,7 @@ internal static class RepositoryLayout
     /// <b>Public so that the walk and the thing that checks the walk ask the
     /// same question.</b> A second copy of this list on the git side of that
     /// comparison would eventually answer differently, and the divergence it
-    /// reported would be its own — which is exactly the trap
+    /// reported would be its own -- which is exactly the trap
     /// <c>RecordedCountTests</c> exists to avoid one layer up.
     /// </remarks>
     /// <param name="path">A file name or path.</param>
@@ -269,7 +269,7 @@ internal static class RepositoryLayout
     /// <b>Writing down why a rule exists must not violate the rule.</b> Without
     /// this, the paragraph explaining that <c>AssignProcessToJobObject</c> is
     /// the wrong mechanism is itself an occurrence of it, and the only way out
-    /// would be to stop explaining — which is the worse of the two trades. It
+    /// would be to stop explaining -- which is the worse of the two trades. It
     /// is line-based on purpose: a needle sitting at the end of a line of real
     /// code is left visible, because that is where a suppression comment beside
     /// a violation would be.
@@ -283,7 +283,7 @@ internal static class RepositoryLayout
     /// <b>Added 2026-09-15, when the product stopped being one project.</b>
     /// Fifteen arms composed <c>src\BrowserAI\&lt;relative path&gt;</c> by hand,
     /// and the library split turned five of them into
-    /// <c>FileNotFoundException</c> — which is the good half of that failure:
+    /// <c>FileNotFoundException</c> -- which is the good half of that failure:
     /// the bad half is the arm that would have gone on reading a file that had
     /// been superseded rather than moved. One resolver means the next move is a
     /// named refusal here rather than fifteen edits, and a file that is in no
@@ -292,7 +292,7 @@ internal static class RepositoryLayout
     /// <para>
     /// <b>The order is the search order and it is deliberate</b>: the server
     /// first, because it is the project that was there before the split, then
-    /// the library, then the configuration app. Nothing ambiguous can arise —
+    /// the library, then the configuration app. Nothing ambiguous can arise --
     /// two projects holding the same relative path would be two files with the
     /// same name in the same namespace, which does not compile.
     /// </para>

@@ -20,9 +20,9 @@ namespace BrowserAI.Tests.Harness;
 /// <b>This is mandatory rather than a nicety, and the reason is structural.</b>
 /// BrowserAI replaces <i>both</i> of the SDK's stdio transports. With both ends
 /// replaced, a test that drives BrowserAI through an <c>McpClient</c> is testing
-/// the code under test using the code under test: a symmetric bug — the same
+/// the code under test using the code under test: a symmetric bug -- the same
 /// escaping assumption made on the way out and on the way in, the same framing
-/// mistake made twice — passes green, and every layer above it inherits the
+/// mistake made twice -- passes green, and every layer above it inherits the
 /// blind spot. The oracle has to share no code with the product.
 /// </para>
 /// <para>
@@ -194,8 +194,8 @@ internal sealed class RawStdioClient : IAsyncDisposable
         // corrected for a day earlier: a budget covering everything since Start()
         // cannot distinguish "this peer has stopped answering" from "this
         // conversation has a lot of exchanges in it", and it fires on the latter
-        // while naming the former. Worse, it was numerically equal to — and
-        // therefore always won against — Playwright's own three-minute launch
+        // while naming the former. Worse, it was numerically equal to -- and
+        // therefore always won against -- Playwright's own three-minute launch
         // timeout, so upstream's diagnosis was replaced by ours in exactly the
         // case upstream had something to say. Measured 2026-08-17: a Firefox
         // launch reported at 3m00s with the peer still running and its stderr
@@ -304,7 +304,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// could produce.</b> <c>SliceRun</c> asserted on
     /// <see cref="StandardErrorSoFar"/> and
     /// <c>ProtocolSplitTests.TheChildNegotiatesItsCeilingAndTheProductRecordsWhichVersionThatWas</c>
-    /// went red on the runner with the record it wanted missing — along with
+    /// went red on the runner with the record it wanted missing -- along with
     /// <i>every</i> record after a certain point, session-lock acquisitions
     /// included, which is what proves it was a truncated read rather than an
     /// absent log line. The product had written it; the pump had not been
@@ -314,8 +314,8 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>Bounded, and it says so when the bound is reached.</b> End-of-file
-    /// arrives when the last holder of the write end exits — the peer, and any
-    /// grandchild that inherited it — so a caller must have stopped those first.
+    /// arrives when the last holder of the write end exits -- the peer, and any
+    /// grandchild that inherited it -- so a caller must have stopped those first.
     /// If it has not, the capture is returned anyway with a line saying it is
     /// incomplete, because a silently short capture is exactly the defect this
     /// method exists to remove and reproducing it inside the fix would be absurd.

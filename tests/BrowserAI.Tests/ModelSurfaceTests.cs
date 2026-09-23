@@ -47,7 +47,7 @@ internal sealed class ModelSurfaceTests
     /// over: a tool whose whole purpose is to tell you what happened must not
     /// itself become the most recent thing that happened, and writing an entry
     /// would mean taking the per-directory gate, which a session another live
-    /// BrowserAI is driving would refuse — which is the case it exists for. The
+    /// BrowserAI is driving would refuse -- which is the case it exists for. The
     /// row is here so that a future <c>why</c> added to it is a red build rather
     /// than a silent widening.
     /// </para>
@@ -55,7 +55,7 @@ internal sealed class ModelSurfaceTests
     /// ⚠️ <b>Changed 2026-08-20: <c>mode</c> is gone from <c>init</c> and
     /// <c>headed</c> is on both.</b> Session modes were deleted, every
     /// capability is granted to every session, and headedness became a per-run
-    /// argument — so <c>init</c> no longer has a third required property and
+    /// argument -- so <c>init</c> no longer has a third required property and
     /// <c>resume</c> takes one more optional one.
     /// </para>
     /// <para>
@@ -63,7 +63,7 @@ internal sealed class ModelSurfaceTests
     /// deliberate rather than drift.</b> <c>browserai_resume</c> ships
     /// <c>tracing</c> and <c>consoleLevel</c>, which §H.2 gives only to
     /// <c>init</c>. The rule §H.2 states for refusing an argument on
-    /// <c>resume</c> is that <i>"a profile is browser-specific"</i> — it is
+    /// <c>resume</c> is that <i>"a profile is browser-specific"</i> -- it is
     /// about <c>browser</c>, and about facts the directory on disk already
     /// records. Neither of these is such a fact: <c>tracing</c> becomes
     /// <c>saveSession</c> and <c>consoleLevel</c> becomes <c>console.level</c>
@@ -104,15 +104,15 @@ internal sealed class ModelSurfaceTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Not a whole-string comparison</b> — the whole point of the rewrite is
+    /// <b>Not a whole-string comparison</b> -- the whole point of the rewrite is
     /// that the string changes. This is the record of <i>why</i> a sentence is
     /// there: a phrase is added the moment anyone decides upstream's wording is
     /// load-bearing, and a rewrite that drops it fails rather than quietly
     /// removing the warning a model was acting on.
     /// </para>
     /// <para>
-    /// Every phrase below is one a model acts on — what a tool costs, what it
-    /// refuses, that it is dangerous — read out of the committed snapshot on
+    /// Every phrase below is one a model acts on -- what a tool costs, what it
+    /// refuses, that it is dangerous -- read out of the committed snapshot on
     /// 2026-08-16 at <c>@playwright/mcp</c> 0.0.79.
     /// </para>
     /// </remarks>
@@ -124,7 +124,7 @@ internal sealed class ModelSurfaceTests
         ("browser_run_code_unsafe", "executes arbitrary JavaScript in the Playwright server process"),
 
         // ⚠️ DELETED 2026-08-18: ("browser_annotate", "wait for the user to draw
-        // annotations") — "blocks on a human. A model that does not know this
+        // annotations") -- "blocks on a human. A model that does not know this
         // schedules it and waits forever." The tool is withheld from the surface
         // now, so there is no description of it for a phrase to survive in, and
         // the fact the phrase protected is answered by removal rather than by
@@ -153,12 +153,12 @@ internal sealed class ModelSurfaceTests
     /// <para>
     /// <b>Two requirements, from two documents, and neither was met until
     /// 2026-08-17.</b> The guidance design puts *"the real-Chrome-profile
-    /// warning, and the retention policy"* in the creation tool's description —
+    /// warning, and the retention policy"* in the creation tool's description --
     /// the spec requires retention to be stated <i>there</i>, and <c>init</c>'s
     /// description is the channel a model sees at the moment it reaches for the
     /// tool; the
     /// [DECISIONS](../../DECISIONS.md#shape-and-packaging) demands the same thing independently, because
-    /// <c>init</c> accepts any path — *"the `init` tool description is a security
+    /// <c>init</c> accepts any path -- *"the `init` tool description is a security
     /// surface … say plainly what pointing at an existing browser profile
     /// does"*. Retention was stated on <c>resume</c> and on <c>list</c>, which is
     /// everywhere except where it was required.
@@ -205,14 +205,14 @@ internal sealed class ModelSurfaceTests
     /// <b>Written down rather than read off
     /// <see cref="SessionToolSurface.NewlyGrantedTools"/>.</b> Derived from the
     /// product's own list this would agree with it by construction and could
-    /// never fail — the same reason the mode table this replaced kept a
+    /// never fail -- the same reason the mode table this replaced kept a
     /// hand-written expectation row. What it can catch: a capability quietly
     /// dropped from <see cref="BrowserConfiguration.GrantedCapabilities"/>, an
     /// upstream rename, and a product list edited to match a surface rather than
     /// the other way round.
     /// </para>
     /// <para>
-    /// <b>None of these has ever been reachable</b> — not in BrowserAI and not
+    /// <b>None of these has ever been reachable</b> -- not in BrowserAI and not
     /// in the predecessor product it was written against. Four are
     /// <c>network</c>, one is <c>pdf</c>, five are <c>testing</c>, and BrowserAI
     /// never named any of those three capabilities until session modes were
@@ -241,13 +241,13 @@ internal sealed class ModelSurfaceTests
     /// <para>
     /// ⚠️ <b>Replaces <c>EveryConsumerRendersEveryModeInTheTable</c>,
     /// 2026-08-20.</b> That test asserted that six consumers each rendered every
-    /// row of <c>SessionModes.All</c> — the server instructions, <c>init</c>'s
+    /// row of <c>SessionModes.All</c> -- the server instructions, <c>init</c>'s
     /// description, <c>resume</c>'s result, the refusal a bad <c>mode</c>
     /// produced, the generated child config, and the suite's own expectation
     /// table. Five of the six no longer exist, and the sixth renders nothing
     /// that varies. It was <b>replaced rather than deleted</b>: the failure it
-    /// existed to catch — a capability decided in one place and rendered in
-    /// another, drifting silently — is exactly the failure a grant of ten
+    /// existed to catch -- a capability decided in one place and rendered in
+    /// another, drifting silently -- is exactly the failure a grant of ten
     /// previously-unreachable tools can reintroduce.
     /// </para>
     /// <para>
@@ -308,7 +308,7 @@ internal sealed class ModelSurfaceTests
 
         // 5. `browser_run_code_unsafe` is NOT one of the ten and never was. It
         //    is `core`, so it has been reachable in every session this product
-        //    has ever opened — a reader meeting the grant must not come away
+        //    has ever opened -- a reader meeting the grant must not come away
         //    thinking it arrived with it.
         if (SessionToolSurface.NewlyGrantedTools.Contains("browser_run_code_unsafe", StringComparer.Ordinal))
         {
@@ -356,7 +356,7 @@ internal sealed class ModelSurfaceTests
 
         // Not vacuous: the surface really is bigger than it was, and by exactly
         // the ten. 58 was the advertised count on 2026-08-19, and that sentence
-        // stays true — what moves the base to 60 is @playwright/mcp 0.0.80,
+        // stays true -- what moves the base to 60 is @playwright/mcp 0.0.80,
         // which added browser_start_recording and browser_stop_recording, both
         // judged `allow` on 2026-09-15. The ten are still the ten: the addend is
         // the capability grant, and the base is whatever upstream ships.
@@ -378,8 +378,8 @@ internal sealed class ModelSurfaceTests
         //
         // ⚠️ The base was 61 from 2026-09-15 (previously 60): @playwright/mcp
         // 0.0.81 added browser_webmcp_list and browser_webmcp_call, and the two
-        // were judged in OPPOSITE directions on the same day — `allow` for the
-        // list, `deny` for the call, on liveness — so upstream's pair moved this
+        // were judged in OPPOSITE directions on the same day -- `allow` for the
+        // list, `deny` for the call, on liveness -- so upstream's pair moved this
         // base by one rather than by two. That asymmetry is the whole reason the
         // number is stated: a base one higher than the surface warrants would
         // mean a denial had stopped withholding, and one lower would mean a
@@ -470,7 +470,7 @@ internal sealed class ModelSurfaceTests
     /// its own training.</b> Every published account of a broken Playwright
     /// install ends in <c>npx playwright install</c>, and a model that runs it
     /// here either fails or succeeds into a second browser tree in a second
-    /// location BrowserAI will never launch from — the same harm
+    /// location BrowserAI will never launch from -- the same harm
     /// <c>ProvisioningRemediation</c> exists to undo, arriving by a route no
     /// answer-rewrite can reach because nothing in this server said it.
     /// </para>
@@ -478,13 +478,13 @@ internal sealed class ModelSurfaceTests
     /// <b>Here rather than on a tool description, for this file's standing
     /// reason.</b> <c>instructions</c> is the one model-facing string BrowserAI
     /// writes; every upstream description passes through byte for byte, and
-    /// there is no tool to hang it on anyway — the mistake is made <i>instead
+    /// there is no tool to hang it on anyway -- the mistake is made <i>instead
     /// of</i> calling a tool.
     /// </para>
     /// <para>
     /// <b>The wording is asserted verbatim rather than by phrase, and that is
     /// deliberate for this one sentence.</b> The maintainer wrote it; the two
-    /// halves — <i>never install any yourself</i> and <i>this is the repair</i> —
+    /// halves -- <i>never install any yourself</i> and <i>this is the repair</i> --
     /// are each useless without the other, and a re-draft that keeps one is the
     /// failure worth a red build.
     /// </para>
@@ -494,7 +494,7 @@ internal sealed class ModelSurfaceTests
     public async Task TheBrowserInstallationSentenceIsInTheInstructionsAndInsideTheBudget()
     {
         const string Sentence =
-            "Browsers are managed by BrowserAI — never install any yourself (no `npx playwright install`). "
+            "Browsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). "
             + "If the browser installation is broken, `browserai_reinstall_browser` is the repair.";
 
         await Assert.That(ServerInstructions.Text).Contains(Sentence);
@@ -506,7 +506,7 @@ internal sealed class ModelSurfaceTests
         // ⚠️ The budget, asserted again HERE rather than left to the test above,
         // because this is the change that spends it. The client cuts at 2,048
         // UTF-16 characters with nothing reported, so a sentence added past the
-        // cut is a sentence nobody has ever read — which is the exact failure it
+        // cut is a sentence nobody has ever read -- which is the exact failure it
         // was added to prevent, wearing a green suite.
         await Assert.That(ServerInstructions.CharacterCount).IsLessThanOrEqualTo(ServerInstructions.MaximumCharacters);
 
@@ -531,7 +531,7 @@ internal sealed class ModelSurfaceTests
     /// <para>
     /// <b>Both halves, because either one alone is the wrong fix.</b> Upstream's
     /// <c>browser_take_screenshot</c> description explains what <c>fullPage</c>
-    /// does and cannot know what it costs here — nothing downscales the image on
+    /// does and cannot know what it costs here -- nothing downscales the image on
     /// the way back, so what the page renders is what the model receives. The
     /// instinctive repair is to append a sentence to that description, and the
     /// append path was <b>deleted</b> on 2026-08-18 so that every upstream
@@ -551,7 +551,7 @@ internal sealed class ModelSurfaceTests
     /// Upstream deleted <c>scaleImageToFitMessage</c>, and a raw child measured
     /// at three viewports, both page shapes and three encodings returned an
     /// inline block <b>byte-identical to the file every time</b>, with bytes
-    /// following pixels and no ceiling anywhere — a <c>fullPage</c> shot of a
+    /// following pixels and no ceiling anywhere -- a <c>fullPage</c> shot of a
     /// 20,016 px document came back at 1280x20016. The sentence that told a model
     /// its image had been shrunk to a ceiling was therefore false in the
     /// direction that costs money.
@@ -560,7 +560,7 @@ internal sealed class ModelSurfaceTests
     /// <b>The phrases are asserted rather than the whole sentence.</b> Wording is
     /// the maintainer's to tune; what must survive a re-draft is that the model
     /// is told the parameter's name, that there is <b>no</b> ceiling, and that
-    /// <c>filename</c> is the way to pay nothing — which is the actionable half
+    /// <c>filename</c> is the way to pay nothing -- which is the actionable half
     /// and the half the old sentence never had.
     /// </para>
     /// </remarks>
@@ -587,7 +587,7 @@ internal sealed class ModelSurfaceTests
 
         if ((string?)advertised["browser_take_screenshot"]?["description"] != upstreamScreenshot)
         {
-            missing.Add("browser_take_screenshot's description is not upstream's own bytes — the cost sentence belongs in the instructions, not appended to the tool");
+            missing.Add("browser_take_screenshot's description is not upstream's own bytes -- the cost sentence belongs in the instructions, not appended to the tool");
         }
 
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
@@ -642,8 +642,8 @@ internal sealed class ModelSurfaceTests
         // withholds, which is one tool. Through the product's own predicate
         // rather than `- 1`, so the day the decision is reversed this follows it.
         //
-        // ⚠️ Corrected 2026-09-15 (previously `- 1`): it is two tools now —
-        // `browser_annotate` and `browser_webmcp_call`, both on liveness — and
+        // ⚠️ Corrected 2026-09-15 (previously `- 1`): it is two tools now --
+        // `browser_annotate` and `browser_webmcp_call`, both on liveness -- and
         // the subtrahend is read off the file rather than typed, so the arm
         // states a relationship and the file states the number.
         var advertisedUpstream = UpstreamSurface.SnapshotDescriptions()
@@ -715,7 +715,7 @@ internal sealed class ModelSurfaceTests
 
             if (!description.Contains(phrase, StringComparison.Ordinal))
             {
-                lost.Add($"{tool}: lost '{phrase}' — either our rewrite dropped it or upstream reworded it, and both are changes nobody adjudicated");
+                lost.Add($"{tool}: lost '{phrase}' -- either our rewrite dropped it or upstream reworded it, and both are changes nobody adjudicated");
             }
         }
 
@@ -731,7 +731,7 @@ internal sealed class ModelSurfaceTests
     /// <b>Settled 2026-09-21, in the maintainer's words: the agent that created
     /// a session destroys it.</b> BrowserAI deletes nothing on a schedule and
     /// nothing at a size, which is a retention policy the surface already
-    /// stated — and stating it is not the same as saying whose job the other
+    /// stated -- and stating it is not the same as saying whose job the other
     /// half is. A model that reads <i>"nothing here expires"</i> and stops there
     /// has been told the directory is permanent and nothing else, so a session
     /// that signed into something stays signed into it, on disk, until somebody
@@ -743,7 +743,7 @@ internal sealed class ModelSurfaceTests
     /// there; <c>browserai_init</c>'s description arrives when the model decides
     /// to make a session, which is when the obligation is incurred; and
     /// <c>browserai_destroy</c>'s arrives when it is about to be discharged.
-    /// Only the first of those is cheap — the instructions string was at
+    /// Only the first of those is cheap -- the instructions string was at
     /// <b>2,022 characters of 2,048</b> when this went in, measured off the
     /// published wire, so the line is one clause and the reasoning lives on the
     /// two descriptions where there is room for it.
@@ -799,8 +799,8 @@ internal sealed class ModelSurfaceTests
     /// <para>
     /// <b>It is a consequence of a decision this project made, not upstream's
     /// default.</b> <c>allowUnrestrictedFileAccess</c> is written
-    /// <see langword="false"/> and both of upstream's roots — <c>outputDir</c>
-    /// and the child's working directory — are written as the same folder,
+    /// <see langword="false"/> and both of upstream's roots -- <c>outputDir</c>
+    /// and the child's working directory -- are written as the same folder,
     /// <c>&lt;session&gt;\output</c>. So a caller pointing
     /// <c>browser_file_upload</c> at a file it wrote somewhere else gets
     /// upstream's <i>File access denied</i> and no explanation of why a server
@@ -809,7 +809,7 @@ internal sealed class ModelSurfaceTests
     /// <para>
     /// ⚠️ <b>It cannot go on the tool it is about.</b>
     /// <c>browser_file_upload</c> is upstream's, and every upstream description
-    /// passes through this proxy byte for byte —
+    /// passes through this proxy byte for byte --
     /// <c>LosslessPassthroughTests</c> holds that and
     /// <see cref="EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll"/>
     /// holds it again. The second assertion here is that half: the sentence is
@@ -839,7 +839,7 @@ internal sealed class ModelSurfaceTests
 
         if (descriptions.TryGetValue("browser_file_upload", out var advertised) && advertised != upstream)
         {
-            missing += $"{Environment.NewLine}browser_file_upload's description is not upstream's own bytes — the roots sentence belongs on browserai_init, not appended to the tool";
+            missing += $"{Environment.NewLine}browser_file_upload's description is not upstream's own bytes -- the roots sentence belongs on browserai_init, not appended to the tool";
         }
 
         await Assert.That(missing).IsEmpty();
@@ -863,7 +863,7 @@ internal sealed class ModelSurfaceTests
     /// an hour producing artifacts reads <i>deletes the whole directory</i> as a
     /// statement about the session and not about its own output, because the
     /// output is the thing it was asked for. <c>browserai_catch_up</c> already
-    /// had to be called first and already reports the sizes — this is the other
+    /// had to be called first and already reports the sizes -- this is the other
     /// half of that instruction, which is what to DO about what it reports.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -892,14 +892,14 @@ internal sealed class ModelSurfaceTests
     ];
 
     /// <summary>
-    /// A session directory moves by hand, and <c>browserai_resume</c> says so —
+    /// A session directory moves by hand, and <c>browserai_resume</c> says so --
     /// including that copying one instead duplicates its logins.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>The move and copy tools were considered and deferred on 2026-09-21,
     /// in the maintainer's words: <i>"Skip the move and copy tool for now."</i></b>
-    /// What that leaves is a capability the surface never mentions — the
+    /// What that leaves is a capability the surface never mentions -- the
     /// directory is the identity, so moving it is an ordinary file operation and
     /// resume repairs the record. A model with no tool for it and no sentence
     /// about it concludes the session is pinned where it was created.
@@ -1004,7 +1004,7 @@ internal sealed class ModelSurfaceTests
     /// <b>The gap this closes is parameter descriptions.</b> The two tests above
     /// cover the <c>instructions</c> string and every tool <c>description</c>;
     /// <c>inputSchema.properties[*].description</c> was asserted by nothing at
-    /// all — and it is the surface BrowserAI is most exposed on, because
+    /// all -- and it is the surface BrowserAI is most exposed on, because
     /// <c>SessionToolSurface</c> injects one shared <c>session</c> description
     /// into every upstream tool, so a single edit lands on it fifty-nine times.
     /// </para>
@@ -1018,7 +1018,7 @@ internal sealed class ModelSurfaceTests
     /// JSON-RPC over real pipes, <c>initialize</c> → <c>notifications/initialized</c>
     /// → <c>tools/list</c>. (⚠️ A client that feeds the server from a redirected
     /// <i>file</i> gets instant EOF on stdin and the server exits before
-    /// answering — <see cref="RawStdioClient"/> holds the pipe open and flushes
+    /// answering -- <see cref="RawStdioClient"/> holds the pipe open and flushes
     /// per frame, which is why it is the client here.)
     /// </para>
     /// <para>
@@ -1027,7 +1027,7 @@ internal sealed class ModelSurfaceTests
     /// file. The floors below are what keep that from becoming vacuous.
     /// </para>
     /// <para>
-    /// <b>Hard failure at 100%, and no warning tier — deliberately.</b> The
+    /// <b>Hard failure at 100%, and no warning tier -- deliberately.</b> The
     /// recorded argument against a headroom gate stands and is not contradicted
     /// here: that argument was against failing <i>below</i> 100%, because a
     /// fourth session mode should fail on the six-consumer line rather than on a
@@ -1035,7 +1035,7 @@ internal sealed class ModelSurfaceTests
     /// discarding text, which is a broken state rather than a tight one.
     /// </para>
     /// <para>
-    /// <b>The per-string reading is MEASURED — see
+    /// <b>The per-string reading is MEASURED -- see
     /// <see cref="ClientTruncationBudget"/>.</b> <i>Corrected 2026-08-18
     /// (previously "⚠️ The per-string reading is an ASSUMPTION … the experiment
     /// that settles the reading needs the data, and a test must not pretend to
@@ -1043,7 +1043,7 @@ internal sealed class ModelSurfaceTests
     /// Code 2.1.234, reading the <c>tools</c> array the client sends to the
     /// Messages API: the cap is per string, it is <b>2,048 UTF-16 characters</b>
     /// rather than bytes, and there is no per-tool and no whole-surface total.
-    /// <c>browserai_init</c>'s whole entry — 3,360 bytes as the client sends it —
+    /// <c>browserai_init</c>'s whole entry -- 3,360 bytes as the client sends it --
     /// arrives intact, so it was never the casualty the old note feared.
     /// </para>
     /// <para>
@@ -1051,7 +1051,7 @@ internal sealed class ModelSurfaceTests
     /// different reason than before: they are the figure that would matter if a
     /// client release ever did introduce a per-tool bucket, and a report nobody
     /// has to re-derive is what makes that re-check cheap. What <i>is</i> asserted
-    /// is the measured predicate — <c>Length &gt; 2048</c>, in characters, on
+    /// is the measured predicate -- <c>Length &gt; 2048</c>, in characters, on
     /// each string separately.
     /// </para>
     /// </remarks>
@@ -1137,7 +1137,7 @@ internal sealed class ModelSurfaceTests
     /// size is the size the server actually wrote.
     /// </summary>
     /// <remarks>
-    /// The default encoder turns <c>—</c> into six ASCII characters. Measuring a
+    /// The default encoder turns <c>--</c> into six ASCII characters. Measuring a
     /// budget through it reports a number that is not on any wire.
     /// </remarks>
     private static readonly System.Text.Json.JsonSerializerOptions Unminified = new()
@@ -1266,8 +1266,8 @@ internal sealed class ModelSurfaceTests
         foreach (var (name, original) in upstream)
         {
             // ⚠️ Corrected 2026-08-18 (previously every upstream tool was
-            // expected in the advertised list, and one of them — `browser_annotate`
-            // — was expected to have a sentence of ours appended). That tool is
+            // expected in the advertised list, and one of them -- `browser_annotate`
+            // -- was expected to have a sentence of ours appended). That tool is
             // now filtered out of `tools/list` entirely, so the shape of this
             // test changed with it: the withheld one must be ABSENT, and every
             // other description must be upstream's own, unchanged, to the byte.
@@ -1313,7 +1313,7 @@ internal sealed class ModelSurfaceTests
             await Assert.That(advertised.ContainsKey(denial.Name)).IsFalse();
         }
 
-        // And nothing of the removed matrix — or of the withheld tool — survives
+        // And nothing of the removed matrix -- or of the withheld tool -- survives
         // anywhere in the surface a model reads. A positive control comes first,
         // because a sweep that matches nothing is indistinguishable from a
         // genuine absence.
@@ -1344,15 +1344,15 @@ internal sealed class ModelSurfaceTests
         //
         // ⚠️ FOUR FILES SINCE 2026-08-20 (previously five, the fifth being
         // `Sessions/SessionMode.cs`). That file was DELETED with session modes
-        // and this list is not allowed to shrink by accident — the loop below
+        // and this list is not allowed to shrink by accident -- the loop below
         // fails on a named file that is missing, which is exactly what it did
         // when the deletion landed. `Runtime/BrowserConfiguration.cs` takes its
         // place rather than the list simply getting shorter: it is where a
         // session's capability set is now decided, so it is on the enforcement
         // path by the same argument SessionMode.cs was.
         //
-        // What these carry is routing — `session` is mandatory and resolves to
-        // one child — the capability grant, and the single liveness refusal. All
+        // What these carry is routing -- `session` is mandatory and resolves to
+        // one child -- the capability grant, and the single liveness refusal. All
         // three deserve the same guarantee for the same reason: a caller cannot
         // tell from the outside which build it is talking to.
         string[] enforcement =
@@ -1406,7 +1406,7 @@ internal sealed class ModelSurfaceTests
         // left: an environment variable that turned `browser_annotate` back on
         // would hang an overnight run, and the hang is the thing this product
         // exists not to do. And since 2026-08-20 the capability GRANT is on this
-        // list too — a variable that quietly dropped `storage` from a session
+        // list too -- a variable that quietly dropped `storage` from a session
         // would present as upstream not knowing the tool.
         //
         // ⚠️ `Sessions/SessionMode.cs` was replaced by
@@ -1556,8 +1556,8 @@ internal sealed class ModelSurfaceTests
     /// <c>acknowledgeCopy</c> was deleted</b>, and this is what keeps it there.
     /// That flag gated <c>browserai_resume</c> on a directory that looked like a
     /// copy of a session that still existed. It was necessary while
-    /// <c>browserai.json</c> was a snapshot — taking the copy over overwrote the only
-    /// evidence that it <i>was</i> a copy — and it stopped being necessary the
+    /// <c>browserai.json</c> was a snapshot -- taking the copy over overwrote the only
+    /// evidence that it <i>was</i> a copy -- and it stopped being necessary the
     /// moment the record became an append-only list of timestamped statements,
     /// because the resume can now hand the model the whole provenance instead.
     /// </para>
@@ -1566,8 +1566,8 @@ internal sealed class ModelSurfaceTests
     /// confirmation flag is a question whose entire content can be returned as
     /// fact; a model that has been told what a thing is does not need to be asked
     /// whether it meant it, and a flag it must guess at is a flag it will pass
-    /// <c>true</c> to. The one thing BrowserAI still refuses outright — a
-    /// reinstall while a browser is running out of the tree — is refused with
+    /// <c>true</c> to. The one thing BrowserAI still refuses outright -- a
+    /// reinstall while a browser is running out of the tree -- is refused with
     /// <i>no force option</i> and no argument to add one, which is the same
     /// principle from the other end.
     /// </para>

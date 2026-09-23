@@ -11,7 +11,7 @@ namespace BrowserAI.Registration;
 /// <summary>Everything one Velopack lifecycle hook did.</summary>
 /// <remarks>
 /// <b>Two answers rather than one, since 2026-09-15.</b> A hook used to do
-/// exactly one thing — point a client at this build, or unpoint it — and the
+/// exactly one thing -- point a client at this build, or unpoint it -- and the
 /// uninstall hook now also decides what becomes of the data root. The second
 /// answer is returned rather than only logged because the log it would be
 /// written into is inside the directory it is about: on a removal that file is
@@ -33,7 +33,7 @@ internal sealed record HookOutcome(RegistrationReport Registration, DataRootDisp
 /// <para>
 /// ⚠️ <b>A hook opens its own log rather than using the process's.</b>
 /// <c>Program.Main</c> buffers Velopack's own records and replays them once the
-/// install root is known — which works for an ordinary start and cannot work for
+/// install root is known -- which works for an ordinary start and cannot work for
 /// a hook, because <c>VelopackApp.Run()</c> <b>exits the process</b> when it has
 /// served one. Anything a hook merely buffers is discarded at that exit. So the
 /// destination is established here, inside the hook, and every record is on disk
@@ -41,14 +41,14 @@ internal sealed record HookOutcome(RegistrationReport Registration, DataRootDisp
 /// </para>
 /// <para>
 /// ⚠️ <b>The log and the record go to the DATA root, and the image path decides
-/// only what gets registered — corrected 2026-09-15 (previously "the install
+/// only what gets registered -- corrected 2026-09-15 (previously "the install
 /// root is derived from the running image … so the path that is registered and
 /// the directory the record lands in cannot disagree").</b> They cannot
 /// disagree, and they were both wrong: the install root is the directory
 /// <c>Setup.exe</c> renames aside and deletes and uninstall empties, so a
 /// registration record written there is destroyed by exactly the events somebody
 /// would read it after. The data root is
-/// <see cref="Hosting.LocalAppDataPaths.Default"/> — reachable from a hook
+/// <see cref="Hosting.LocalAppDataPaths.Default"/> -- reachable from a hook
 /// without a locator, which is the property that made it possible to stop
 /// deriving one. The image path is still what
 /// <see cref="RegistrationTarget"/> judges, because what a client is pointed at
@@ -93,7 +93,7 @@ internal static class HookRegistration
     /// <param name="imagePath">The running image, or what stands in for it.</param>
     /// <param name="commands">The seam over starting the client.</param>
     /// <param name="paths">
-    /// Where the log and the record go, and — on an uninstall — what is offered
+    /// Where the log and the record go, and -- on an uninstall -- what is offered
     /// for deletion. <b>Required rather than defaulted</b>: a test that forgot
     /// it would write into the developer's own data root and offer to delete it.
     /// </param>

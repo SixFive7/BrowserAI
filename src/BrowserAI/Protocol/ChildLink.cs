@@ -22,9 +22,9 @@ namespace BrowserAI.Protocol;
 /// <see href="../../../STACK.md#nine-places-where-the-sdk-must-be-deviated-from">deviation
 /// 7</see>: "observing and forwarding child→caller notifications needs an
 /// <c>ITransport</c> decorator (~30 lines)").</b> A decorator is needed, and not
-/// for that. Forwarding a <i>named</i> notification is public API —
+/// for that. Forwarding a <i>named</i> notification is public API --
 /// <c>McpSession.RegisterNotificationHandler</c>, which <c>McpClient</c>
-/// inherits — so the progress relay needs no decorator at all. What has no
+/// inherits -- so the progress relay needs no decorator at all. What has no
 /// public route is the live transport instance, which byte-identical
 /// passthrough needs because the raw bytes exist nowhere else. The deviation's
 /// underlying claim, that <c>McpClientOptions</c> has no <c>Filters</c>, is
@@ -34,7 +34,7 @@ namespace BrowserAI.Protocol;
 /// <para>
 /// It <b>refuses</b> a transport it cannot see through rather than degrading.
 /// Silently falling back to a re-serialised result would be a proxy that claims
-/// byte-identity and does not deliver it, with every signal green — which is the
+/// byte-identity and does not deliver it, with every signal green -- which is the
 /// failure class this project exists to eliminate, produced by the code written
 /// to remove it.
 /// </para>

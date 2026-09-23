@@ -20,8 +20,8 @@ namespace BrowserAI.Tests.Harness;
 /// <b>Each session gets a real <c>ChildConnection</c> over a real hop to its own
 /// double</b>, substituted through <see cref="SessionEnvironment.ConnectChild"/>.
 /// Everything above that seam is the product: the lock, the record, the session
-/// log, the index entry, the generated config, the routing and — the reason this
-/// exists — routing a call to the child of the session it named. What is absent is
+/// log, the index entry, the generated config, the routing and -- the reason this
+/// exists -- routing a call to the child of the session it named. What is absent is
 /// <c>ChildProcessSession</c>: the launcher, the job, the stderr pump and the
 /// cached exit code, which steps 5, 6 and 7 prove against real processes and
 /// which no assertion in this layer is evidence about.
@@ -29,7 +29,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Why it is worth the seam.</b> The lookup that decides which child a call
 /// reaches has to be driven across sessions of different modes <i>at the same
-/// time</i>, at a level of contention that would actually expose a race — a call
+/// time</i>, at a level of contention that would actually expose a race -- a call
 /// routed to a neighbour's child drives the wrong browser and looks like a
 /// success. *Corrected 2026-08-18 (previously "The lookup that decides whether a
 /// call may touch cookies").* The <c>(tool, mode)</c> permission policy was
@@ -181,7 +181,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             // ⚠️ The product's own default, spelled again here for one reason:
             // the connection has to be RECORDED. A real session's node pid and
             // the membership of its job object are the only per-session facts
-            // about browser processes this suite can ask for — an image-path
+            // about browser processes this suite can ask for -- an image-path
             // scan of the machine cannot tell one session's Chromium from
             // another's, and this suite runs browsers in parallel. Everything
             // below the ConnectAsync call is the product's.
@@ -296,7 +296,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// Whether a session can be opened in this environment at all.
     /// </summary>
     /// <remarks>
-    /// False for <see cref="Failing"/>, whose whole purpose is that it cannot —
+    /// False for <see cref="Failing"/>, whose whole purpose is that it cannot --
     /// so the rig does not open its default session there and turn one test's
     /// deliberate failure into every test's setup failure.
     /// </remarks>
@@ -309,8 +309,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// <b>Separate from <see cref="CanOpenSessions"/>, because they are different
     /// facts.</b> That one says a session <i>cannot</i> be opened here; this one
     /// says one should not be. The test that needs it is
-    /// <see cref="BrowserAI.Sessions.SessionErrors.StrayCannotBeAttributed"/> — a
-    /// browser running out of our tree that <b>no session claims</b> — which is
+    /// <see cref="BrowserAI.Sessions.SessionErrors.StrayCannotBeAttributed"/> -- a
+    /// browser running out of our tree that <b>no session claims</b> -- which is
     /// unreachable while any session is open, including the rig's own.
     /// </remarks>
     public bool OpensDefaultSession { get; private init; } = true;
@@ -373,7 +373,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// <param name="installer">
     /// How the provisioner starts an install. The default lays a complete tree
     /// down instantly, so every test that is not <i>about</i> provisioning behaves
-    /// as though the browser were already there — which is the state a developer's
+    /// as though the browser were already there -- which is the state a developer's
     /// machine is in and the state every earlier step's tests assumed.
     /// </param>
     /// <param name="timers">The caps, shrunk when a test is about one of them.</param>
@@ -390,12 +390,12 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// <param name="clock">
     /// A clock the test advances by hand, for the arms whose subject is
     /// <i>when</i> the idle timer fires. Left unset, the product's real clock
-    /// applies. See <see cref="ManualClock"/> for why the alternative — letting
-    /// real time pass and hoping the machine cooperates — is not one.
+    /// applies. See <see cref="ManualClock"/> for why the alternative -- letting
+    /// real time pass and hoping the machine cooperates -- is not one.
     /// </param>
     /// <param name="realSessionChildren">
     /// Whether each session gets a real <c>node.exe</c> out of the payload, in a
-    /// real job, against the developer's real browsers root — rather than an
+    /// real job, against the developer's real browsers root -- rather than an
     /// in-process double. True for the one arm that has to observe an actual
     /// browser going away.
     /// </param>
@@ -490,8 +490,8 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// the machine-wide log.</b> Until then a session's factory carried a second
     /// provider over the process log's writer, so a rig that captured the
     /// <i>process</i> factory saw session records for free. It no longer does,
-    /// and two tests went red for it — a child that died mid-call and a rebuilt
-    /// result — both asserting that a record was <b>written at all</b>, which is
+    /// and two tests went red for it -- a child that died mid-call and a rebuilt
+    /// result -- both asserting that a record was <b>written at all</b>, which is
     /// still true and was still being asserted in the right place.
     /// </para>
     /// <para>
@@ -510,7 +510,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <b>The next one, not every one.</b> <see cref="Failing"/> refuses them
-    /// all, which cannot reach a session that is already open — and the failure
+    /// all, which cannot reach a session that is already open -- and the failure
     /// worth provoking is a <i>relaunch</i> that will not start, which needs a
     /// live session first and a refusal second.
     /// </remarks>

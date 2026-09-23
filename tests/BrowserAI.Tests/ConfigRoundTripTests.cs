@@ -16,7 +16,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Generating a key is not the same as the child honouring it, and the
 /// failure is silent.</b> <c>loadConfig</c> is a bare <c>JSON.parse</c> with no
-/// schema validation, so a renamed or removed key is discarded without a word —
+/// schema validation, so a renamed or removed key is discarded without a word --
 /// <c>--output-mode</c> was a no-op for its entire life and nobody noticed. This
 /// is the test that makes a key we set and the child ignores a red build rather
 /// than a mystery in production.
@@ -25,7 +25,7 @@ namespace BrowserAI.Tests;
 /// <b>Two halves, and both are needed.</b> The first walks every leaf of the
 /// generated file and requires it back, which catches a key the child drops. The
 /// second requires a <i>named</i> list of keys to be in the generated file at
-/// all, which catches a key the generator stops writing — deleting one from
+/// all, which catches a key the generator stops writing -- deleting one from
 /// <see cref="BrowserConfiguration"/> would otherwise remove it from both sides
 /// of the first comparison and leave this green.
 /// </para>
@@ -151,7 +151,7 @@ internal sealed class ConfigRoundTripTests
     /// the generated config with no entry in the typings this project diffs
     /// … implemented in <c>playwright-core</c>, which the dated override moved
     /// to 1.64.0-alpha-2026-09-17, while <c>config.d.ts</c> ships with
-    /// <c>@playwright/mcp</c>, which has not rolled — so
+    /// <c>@playwright/mcp</c>, which has not rolled -- so
     /// <c>config-schema.d.ts</c> is the one golden snapshot that did not move on
     /// adoption."</i> The wrapper rolled, the override was retired with it, and
     /// that snapshot moved like the other three.
@@ -159,8 +159,8 @@ internal sealed class ConfigRoundTripTests
     /// <para>
     /// <b>The arm survives the rename because what it measures was never the
     /// typings.</b> <c>loadConfig</c> is a bare <c>JSON.parse</c> with no schema
-    /// validation — the same property that makes a renamed key vanish in silence
-    /// — so a declaration in <c>config.d.ts</c> is not evidence that a running
+    /// validation -- the same property that makes a renamed key vanish in silence
+    /// -- so a declaration in <c>config.d.ts</c> is not evidence that a running
     /// child honours the key, and a <i>missing</i> declaration was never evidence
     /// that it does not. A running child saying the value back is. The generic
     /// walk above would cover this too, and <b>a named arm is what keeps the
@@ -200,8 +200,8 @@ internal sealed class ConfigRoundTripTests
     /// <c>EveryGeneratedConfigLiftsUpstreamsWorkspaceGuardrail</c>, requiring
     /// <see langword="true"/> everywhere on the maintainer's 2026-08-20 answer
     /// of "a always").</b> The guardrail is BrowserAI's containment now.
-    /// BrowserAI's own <c>filename</c> gate is deleted — nothing validates,
-    /// rewrites or bounds a caller's path any more — so upstream's file-access
+    /// BrowserAI's own <c>filename</c> gate is deleted -- nothing validates,
+    /// rewrites or bounds a caller's path any more -- so upstream's file-access
     /// roots are the only thing left between a caller's string and the
     /// filesystem, and a config that lifted them would leave nothing at all.
     /// </para>
@@ -209,7 +209,7 @@ internal sealed class ConfigRoundTripTests
     /// <b>Written rather than merely omitted, and that is the assertion.</b>
     /// <see langword="false"/> is upstream's default, so leaving the key out
     /// produces the same behaviour and says nothing about whether anybody chose
-    /// it — and <see cref="EveryGeneratedOpinionComesBackFromTheChild"/> can
+    /// it -- and <see cref="EveryGeneratedOpinionComesBackFromTheChild"/> can
     /// only prove the child honoured an opinion the file actually carries. An
     /// absent key is therefore a failure here exactly as a <see langword="true"/>
     /// one is, which is the both-directions half.
@@ -218,7 +218,7 @@ internal sealed class ConfigRoundTripTests
     /// <b>What it costs is stated where a reader meets it:</b> <c>file:</c>
     /// navigation is refused outright and <c>browser_file_upload</c> can no
     /// longer reach a file outside the session's output directory. That trade is
-    /// the maintainer's, taken knowingly — see <c>BrowserConfiguration</c>.
+    /// the maintainer's, taken knowingly -- see <c>BrowserConfiguration</c>.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -256,7 +256,7 @@ internal sealed class ConfigRoundTripTests
 
             if (opinion is null)
             {
-                refused.Add($"{what}: '{BrowserConfiguration.AllowUnrestrictedFileAccessKey}' is not written at all. Upstream's default is false and the behaviour would be the same, but nothing then says BrowserAI chose it and the round trip has no opinion to read back — an omission is not a decision");
+                refused.Add($"{what}: '{BrowserConfiguration.AllowUnrestrictedFileAccessKey}' is not written at all. Upstream's default is false and the behaviour would be the same, but nothing then says BrowserAI chose it and the round trip has no opinion to read back -- an omission is not a decision");
                 return;
             }
 
@@ -311,7 +311,7 @@ internal sealed class ConfigRoundTripTests
     /// upstream's response builder wraps every text section in a
     /// <c>### &lt;title&gt;</c> heading before it reaches the wire, so the answer
     /// is Markdown with JSON inside it. Sliced from the first brace to the last
-    /// rather than parsed as a whole — a heading cannot contain one.
+    /// rather than parsed as a whole -- a heading cannot contain one.
     /// </remarks>
     private static JsonObject ResolvedConfig(SessionRun run)
     {

@@ -49,7 +49,7 @@ internal sealed record Statement<T>(DateTimeOffset At, T Value);
 /// <b>One exception for three sources, deliberately.</b> A caller asking *what
 /// is this directory* meets a SQLite refusal, an unparseable <c>browserai.lock</c>
 /// and a directory carrying the old <c>browserai.json</c> as the same kind of
-/// event — the record could not be read and nothing was changed — and every one
+/// event -- the record could not be read and nothing was changed -- and every one
 /// of them arrives with a sentence that names the recovery. Three exception
 /// types would put three catch arms at every reader, and the reader that
 /// forgets one is the one that turns a readable failure into a stack trace.
@@ -85,7 +85,7 @@ internal sealed class SessionRecordException : Exception
 /// <para>
 /// <b>Assembled from two files, and it says which is which.</b> The statements
 /// come from <c>browserai.data</c>; whether anybody is <i>holding</i> the
-/// directory does not come from here at all — that is
+/// directory does not come from here at all -- that is
 /// <see cref="SessionLock.ProbeLiveness"/>, one <c>CreateFile</c> on
 /// <c>browserai.lock</c>, and no reader of this type may substitute the newest
 /// <see cref="HolderHistory"/> row for it. A holder row says who took the
@@ -94,7 +94,7 @@ internal sealed class SessionRecordException : Exception
 /// <para>
 /// <b>Newest statement wins, and nothing is ever overwritten.</b> A session
 /// that moves gains a <c>directory</c> row; a session that is re-purposed gains
-/// a <c>purpose</c> row. ⚠️ <b>That is what killed the concatenation</b> —
+/// a <c>purpose</c> row. ⚠️ <b>That is what killed the concatenation</b> --
 /// <c>resume</c> used to build the next purpose out of the whole of the
 /// previous one, which grew quadratically and lost the tail of it silently at
 /// the 2,000-character cap. A row is a row.
@@ -337,8 +337,8 @@ internal static class SessionRecordReader
     /// <summary>The holder record as one <c>statements</c> row's value.</summary>
     /// <remarks>
     /// <b>The same JSON <c>browserai.lock</c> carries, on purpose.</b> The two
-    /// say the same thing about the same acquisition — one for a prober that
-    /// must not open a database, one for a history that outlives every holder —
+    /// say the same thing about the same acquisition -- one for a prober that
+    /// must not open a database, one for a history that outlives every holder --
     /// and a second spelling is how the two come to disagree about who had a
     /// directory.
     /// </remarks>
@@ -376,8 +376,8 @@ internal static class SessionRecordReader
 /// <para>
 /// <b>A <c>purpose</c> and a <c>why</c> are written by one model and replayed
 /// into another's context, so they are a channel between agents.</b> What keeps
-/// them data rather than instructions is not a length — the maintainer removed
-/// every cap — it is that they cannot carry the characters a terminal, a
+/// them data rather than instructions is not a length -- the maintainer removed
+/// every cap -- it is that they cannot carry the characters a terminal, a
 /// renderer or a prompt assembler acts on.
 /// </para>
 /// <para>
@@ -386,7 +386,7 @@ internal static class SessionRecordReader
 /// line is a different paragraph. <c>\r</c> is dropped, so a record written on
 /// Windows and read anywhere does not carry a stray carriage return into a
 /// renderer. Every other <c>Cc</c> becomes a space, and so do U+2028 and U+2029
-/// — which <c>char.IsControl</c> cannot see, because it tests category
+/// -- which <c>char.IsControl</c> cannot see, because it tests category
 /// <c>Cc</c> alone and those two are <c>Zl</c> and <c>Zp</c>. Every <c>Cf</c>
 /// is dropped outright: U+200B, U+202E and U+FEFF are invisible by
 /// construction, so neutralising them to a space would leave a space nobody
@@ -394,7 +394,7 @@ internal static class SessionRecordReader
 /// too, for the same reason: half a character is not text.
 /// </para>
 /// <para>
-/// ⚠️ <b>It enumerates RUNES, and it iterated <c>char</c> until 2026-08-26 —
+/// ⚠️ <b>It enumerates RUNES, and it iterated <c>char</c> until 2026-08-26 --
 /// which meant the <c>Cf</c> rule above covered the basic plane alone.</b>
 /// <c>char.GetUnicodeCategory</c> answers <c>UnicodeCategory.Surrogate</c> for
 /// either half of a supplementary-plane character and never <c>Format</c>, so
@@ -402,7 +402,7 @@ internal static class SessionRecordReader
 /// the published binary, on one <c>browserai_init</c> purpose read back through
 /// <c>browserai_catch_up</c>: U+200B, U+202E and U+FEFF were dropped as
 /// documented, and <b>U+E0001, U+E0048, U+E0049 and U+1D173 came through
-/// whole</b> — the second and third being the invisible text "HI" in the TAG
+/// whole</b> -- the second and third being the invisible text "HI" in the TAG
 /// block, which is the canonical smuggling range for this class.
 /// </para>
 /// <para>
@@ -413,10 +413,10 @@ internal static class SessionRecordReader
 /// </remarks>
 internal static class RecordText
 {
-    /// <summary>Line separator, U+2028 — <c>Zl</c>, which <c>char.IsControl</c> does not see.</summary>
+    /// <summary>Line separator, U+2028 -- <c>Zl</c>, which <c>char.IsControl</c> does not see.</summary>
     private const char LineSeparator = '\u2028';
 
-    /// <summary>Paragraph separator, U+2029 — <c>Zp</c>, likewise.</summary>
+    /// <summary>Paragraph separator, U+2029 -- <c>Zp</c>, likewise.</summary>
     private const char ParagraphSeparator = '\u2029';
 
     /// <summary>Cleans free text for storage and for replay.</summary>
@@ -493,8 +493,8 @@ internal static class RecordText
     /// <para>
     /// ⚠️ <b>For the half of this channel nothing sanitises: a refusal.</b>
     /// <see cref="Sanitise"/> guards what goes into the record; a refusal goes
-    /// straight into the calling model's context — and, for a refusal at the
-    /// verdict door, into the record's failure payload — and it quotes the
+    /// straight into the calling model's context -- and, for a refusal at the
+    /// verdict door, into the record's failure payload -- and it quotes the
     /// caller's own path back. Measured 2026-08-26 through the published binary:
     /// a <c>browserai_init</c> on a path carrying U+0007 answered with a message
     /// that correctly named <c>U+0007</c> in words and then embedded the byte
@@ -503,7 +503,7 @@ internal static class RecordText
     /// <para>
     /// <b>It shows rather than strips, and that is the difference from
     /// <see cref="Sanitise"/>.</b> A caller has to be able to see which
-    /// character it typed was the problem, so nothing is dropped — it is
+    /// character it typed was the problem, so nothing is dropped -- it is
     /// rendered. <c>\n</c> is escaped here and survives there, because a refusal
     /// is one quoted sentence and a newline inside the quotes is what would let
     /// a caller's path read as the server's own lines.

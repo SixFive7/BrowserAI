@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 /// The mutex name, the lock file and the session index all key on the same
 /// directory. If any two of them normalise differently the same directory
 /// acquires two identities, and a lock keyed on one of them reports success
-/// while guarding nothing — which is why this is a done-test of its own rather
+/// while guarding nothing -- which is why this is a done-test of its own rather
 /// than a property of the lock.
 /// </remarks>
 internal sealed class SessionPathTests
@@ -33,7 +33,7 @@ internal sealed class SessionPathTests
         var trailing = SessionPath.For(directory + Path.DirectorySeparatorChar);
         var cased = SessionPath.For(directory.ToUpperInvariant());
 
-        // ⚠️ THE `..` SPELLING MOVED RATHER THAN WENT — 2026-08-26, previously a
+        // ⚠️ THE `..` SPELLING MOVED RATHER THAN WENT -- 2026-08-26, previously a
         // fourth entry here built from `Path.Combine(scratch.Path, "elsewhere",
         // "..", "Session One")`. This type normalises nothing now: it derives
         // names from a path `CanonicalPath` has already answered for, so
@@ -73,7 +73,7 @@ internal sealed class SessionPathTests
         // ⚠️ INVERTED 2026-08-26, and the inversion is the point (previously
         // "ARelativeSpellingCanonicalisesTheSameWay", which asserted that
         // `.\Session One` from the parent directory produced the same mutex,
-        // index key and identity as the absolute spelling). It did — and that is
+        // index key and identity as the absolute spelling). It did -- and that is
         // exactly the property that must not exist. A relative path resolves
         // against THIS process's working directory, which is a different
         // directory per process and never the one the caller meant, and the tools

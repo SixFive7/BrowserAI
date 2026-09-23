@@ -21,7 +21,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Every capability the double exists for has a test here, and that is the
 /// point of the file.</b> A capability with no test is one the next step
-/// discovers is missing — at the moment it is needed, in the middle of writing
+/// discovers is missing -- at the moment it is needed, in the middle of writing
 /// something else. The capabilities are the ones
 /// [TESTING.md](../../TESTING.md#we-write-our-own-harness) lists
 /// for <c>FakePlaywrightChild</c>: a canned <c>tools/list</c>, a programmable
@@ -32,7 +32,7 @@ namespace BrowserAI.Tests;
 /// <b>What these tests do not cover, said here rather than implied.</b> This
 /// layer proves the framing, the serialisation and the proxy's handlers. It
 /// proves nothing about process launch, job containment, stderr classification
-/// or exit codes — those are steps 5, 6 and 7, against real processes, and
+/// or exit codes -- those are steps 5, 6 and 7, against real processes, and
 /// re-proving them here would need the processes back.
 /// </para>
 /// </remarks>
@@ -71,7 +71,7 @@ internal sealed class FakeChildHarnessTests
     /// <see cref="McpClientOptions.DiscoverProbeTimeout"/> being paid on every
     /// connect. It could never have detected that: this suite pins the probe to
     /// <b>250 ms</b>, so the failure it named would have moved the measurement by
-    /// a quarter of a second against a bound of ten seconds — a fact the budget's
+    /// a quarter of a second against a bound of ten seconds -- a fact the budget's
     /// own remarks had already recorded without the assertion being removed.
     /// What the mechanism actually needs is
     /// asserted directly, from three sides, by
@@ -85,7 +85,7 @@ internal sealed class FakeChildHarnessTests
     /// descheduled continuation, and raising it a second time is the move this
     /// repository forbids. A rig that has genuinely stopped is still caught, by
     /// the per-exchange <see cref="TestDefaults.InProcessHang"/> deadline inside the
-    /// client — which fails naming the method that did not answer, rather than
+    /// client -- which fails naming the method that did not answer, rather than
     /// naming a number.
     /// </para>
     /// </remarks>
@@ -317,8 +317,8 @@ internal sealed class FakeChildHarnessTests
         // TestDefaults pins the timeout short.
         //
         // ⚠️ The comparison carries a millisecond of slack, and it is not a
-        // weakening. .NET's timer and `Stopwatch` read different clocks — the
-        // timer wheel against QPC — so a 250 ms timeout can be *observed*
+        // weakening. .NET's timer and `Stopwatch` read different clocks -- the
+        // timer wheel against QPC -- so a 250 ms timeout can be *observed*
         // finishing at 249.57 ms. Measured on 2026-08-16: this assertion failed
         // by 0.43 ms, once, on a suite that had passed six times running, which
         // is a red build wearing a disguise. What is being asserted is that the
@@ -416,7 +416,7 @@ internal sealed class FakeChildHarnessTests
     }
 
     /// <summary>
-    /// No rig opens a browser window — not the one whose children are real, and
+    /// No rig opens a browser window -- not the one whose children are real, and
     /// not the one whose children are doubles.
     /// </summary>
     /// <remarks>
@@ -428,7 +428,7 @@ internal sealed class FakeChildHarnessTests
     /// the suite showed exactly two windows and took the foreground twice, both
     /// from the single <c>realSessionChildren: true</c> arm, because
     /// <see cref="McpTestHarness"/> opened its default session in
-    /// <c>persistent</c> — which was <c>Headed: true</c>. Every other real
+    /// <c>persistent</c> -- which was <c>Headed: true</c>. Every other real
     /// browser the suite launches was already headless and showed nothing.
     /// </para>
     /// <para>
@@ -437,7 +437,7 @@ internal sealed class FakeChildHarnessTests
     /// both halves of a trade: the real-backed rig windowless AND the
     /// double-backed rig headed).</b> The trade is gone. The double-backed rig
     /// was headed only because <c>persistent</c> was the mode whose policy
-    /// permitted every tool — <c>headless</c> permitted 41 of 58 — and a refusal
+    /// permitted every tool -- <c>headless</c> permitted 41 of 58 -- and a refusal
     /// of ours standing in front of a double would have replaced the child's
     /// bytes with our sentence. Session modes were deleted that day and every
     /// session now gets every capability, so there is no permissive mode to

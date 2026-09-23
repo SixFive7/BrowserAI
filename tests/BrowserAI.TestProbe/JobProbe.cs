@@ -38,7 +38,7 @@ namespace BrowserAI.TestProbe;
 /// <para>
 /// <b>No step of this file matches a process by image name.</b> The toolhelp
 /// walk deliberately declares <c>szExeFile</c> as an opaque buffer and never
-/// reads it — the structure has to be the size Windows expects, but nothing
+/// reads it -- the structure has to be the size Windows expects, but nothing
 /// here can compare it to <c>chrome.exe</c> even by accident.
 /// </para>
 /// </remarks>
@@ -74,7 +74,7 @@ internal static partial class JobProbe
     /// constant here, because two nested patiences is how the tighter one
     /// silently becomes the real bound.</b> This used to wait 60 s regardless,
     /// under a host that advertised 180 s for exactly the case the comment on it
-    /// names — "a cold browser on a loaded machine is the normal reason this is
+    /// names -- "a cold browser on a loaded machine is the normal reason this is
     /// slow". A launcher that gives up at a third of that makes the host's number
     /// a decoration, and the failure it produces is reported by the host two
     /// minutes later, wearing the host's number. Measured 2026-08-17: a Firefox
@@ -281,7 +281,7 @@ internal static partial class JobProbe
     /// creates a global job carrying <c>BREAKAWAY_OK</c> and
     /// <c>SILENT_BREAKAWAY_OK</c> and assigns every non-detached child to it,
     /// and Playwright spawns the browser with <c>detached: false</c> on Windows
-    /// — so this is the exact configuration that sits between BrowserAI's job
+    /// -- so this is the exact configuration that sits between BrowserAI's job
     /// and a real browser, and the exact one that would leak if the outer job
     /// were misconfigured. Reproducing it here makes the acceptance test prove
     /// that on a machine with no payload built.
@@ -387,8 +387,8 @@ internal static partial class JobProbe
     /// failure.
     /// </item>
     /// <item>
-    /// With a permissive job nested inside ours — libuv's, which is always
-    /// there in production — the launch <b>succeeds</b> and the new process
+    /// With a permissive job nested inside ours -- libuv's, which is always
+    /// there in production -- the launch <b>succeeds</b> and the new process
     /// stops at the first job that does not permit breakaway, which is ours. It
     /// is contained, not escaped. A verdict of "0 means we failed" would be
     /// wrong here, which is why this returns the pid too: what matters is where
@@ -481,7 +481,7 @@ internal static partial class JobProbe
     /// ⚠️ <b>Corrected 2026-08-18 (previously <c>Thread.Sleep(1500)</c>, with the
     /// note "descendants a browser or a runtime starts asynchronously appear
     /// after the child reports ready").</b> That is true and 1,500 ms was a guess
-    /// at how long they take. A guess in this position does not fail loudly — it
+    /// at how long they take. A guess in this position does not fail loudly -- it
     /// fails <i>quietly</i>, by walking a tree that is still coming up, which
     /// makes "every process is in our job" a claim about fewer processes than
     /// existed. On a machine running the whole suite at once, the guess is wrong
@@ -497,7 +497,7 @@ internal static partial class JobProbe
     /// </para>
     /// <para>
     /// <b>It never fails, and it asserts no floor.</b> The patience is the host's,
-    /// and running it out is not an error here — the host's own assertions
+    /// and running it out is not an error here -- the host's own assertions
     /// (<c>walk.Count &gt;= 4</c> among them) are what decide, and they have the
     /// evidence. A wait that threw, or that insisted on a member count before
     /// returning, would replace those assertions with this one and could hang a
@@ -715,8 +715,8 @@ internal static partial class JobProbe
     /// </summary>
     /// <remarks>
     /// The element type is <see cref="ushort"/> rather than <see cref="char"/>
-    /// because <c>char</c> is not blittable under runtime marshalling — the
-    /// generator refuses it with SYSLIB1051 — and because UTF-16 code units
+    /// because <c>char</c> is not blittable under runtime marshalling -- the
+    /// generator refuses it with SYSLIB1051 -- and because UTF-16 code units
     /// nobody decodes is exactly what this field is.
     /// </remarks>
     [InlineArray(260)]

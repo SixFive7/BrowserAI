@@ -171,7 +171,7 @@ internal sealed class ReinstallBrowserTests
         // ⚠️ Before the marker is written, for the reason spelled out in
         // `ItDeletesTheTreeAndDownloadsItAgainWhenNothingIsRunning`: the rig's
         // own `init` starts an install and `Ensure` returns before the installer
-        // runs, so the count below has to be taken after it has finished — and
+        // runs, so the count below has to be taken after it has finished -- and
         // `WaitAsync` short-circuits on a complete tree, so waiting after
         // planting the marker would join nothing and the in-flight install would
         // land inside the window this test measures. Observed 2026-08-16.
@@ -297,7 +297,7 @@ internal sealed class ReinstallBrowserTests
     /// <b>This is the arm that is red against the gate this tool shipped with.</b>
     /// Until 2026-08-19 the family path asked <i>are there open sessions</i> only
     /// <b>inside</b> <c>if (running.Count is not 0)</c>, so a session whose
-    /// browser was not launched at that instant let the delete through — and the
+    /// browser was not launched at that instant let the delete through -- and the
     /// browser it is about to launch lands in a tree being removed. The
     /// maintainer's decision, verbatim: <i>"No reinstall if there is any session
     /// running system wide."</i>
@@ -354,7 +354,7 @@ internal sealed class ReinstallBrowserTests
     /// first holds the browsers root.
     /// </summary>
     /// <remarks>
-    /// <b>The maintainer asked for this in the same breath as the rest</b> —
+    /// <b>The maintainer asked for this in the same breath as the rest</b> --
     /// <i>"Including any reinstall sessions."</i> Two of them over one root would
     /// have the second's recursive delete land inside the first's extraction,
     /// which is precisely the corruption the provisioning mutex prevents between
@@ -472,7 +472,7 @@ internal sealed class ReinstallBrowserTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b><c>WaitAsync</c> is not enough for this, and never was — it is the
+    /// ⚠️ <b><c>WaitAsync</c> is not enough for this, and never was -- it is the
     /// wait the two tests below already do and it does not answer this
     /// question.</b> <c>WaitAsync</c> begins with <c>Ensure</c>, which
     /// short-circuits the instant <c>INSTALLATION_COMPLETE</c> appears; the
@@ -480,7 +480,7 @@ internal sealed class ReinstallBrowserTests
     /// the machine-wide provisioning mutex while it prunes superseded revisions,
     /// and it releases only on the way out. The gap was invisible until
     /// 2026-08-18, when <c>browserai_reinstall_browser</c> started refusing while
-    /// that mutex is held — which is the point of the fix and is exactly what a
+    /// that mutex is held -- which is the point of the fix and is exactly what a
     /// caller would meet.
     /// </para>
     /// <para>
@@ -519,7 +519,7 @@ internal sealed class ReinstallBrowserTests
     /// ⚠️ <b>Renamed 2026-08-19 (previously
     /// <c>ItTakesNoArgumentsAndSaysWhyInItsDescription</c>, asserting a property
     /// count of zero).</b> The no-arguments property was real and its stated
-    /// reason — <i>"there is nothing to name"</i> — expired when
+    /// reason -- <i>"there is nothing to name"</i> -- expired when
     /// <c>browserai_init</c> began offering a second family. What survives
     /// unchanged is everything else: still no <c>session</c> argument, because
     /// this tool is machine-scoped rather than session-scoped, and still no force
@@ -568,19 +568,19 @@ internal sealed class ReinstallBrowserTests
     /// ⚠️ <b>The gap this closes, added 2026-08-19.</b> <c>ffmpeg</c> and
     /// <c>winldd</c> are downloaded into the browsers root by <b>both</b>
     /// families, each carries its own <c>INSTALLATION_COMPLETE</c>, and a family
-    /// reinstall deletes only that family's revision directory — so a corrupted
+    /// reinstall deletes only that family's revision directory -- so a corrupted
     /// <c>ffmpeg</c>, which is what the <c>video</c> artifact type needs, was
     /// permanent through this server's own surface.
     /// </para>
     /// <para>
     /// <b>Both directions, because the interesting half is what it does NOT
     /// touch.</b> A family reinstall must still leave the shared trees alone, and
-    /// a shared reinstall must leave the family trees alone — an implementation
+    /// a shared reinstall must leave the family trees alone -- an implementation
     /// that deleted the browsers root would satisfy any assertion about the
     /// component that came back.
     /// </para>
     /// <para>
-    /// <b>No default session, because that is the refusal this target has</b> —
+    /// <b>No default session, because that is the refusal this target has</b> --
     /// see <see cref="ASessionOfEitherFamilyBlocksEveryReinstallTarget"/>. The
     /// rig opens one, and it would block this.
     /// </para>
@@ -679,7 +679,7 @@ internal sealed class ReinstallBrowserTests
     /// tree, and for a family that is the same question as <i>a session is
     /// driving this browser</i>: <c>chrome.exe</c> lives for the session's life
     /// and holds its own image open. For the shared components the two questions
-    /// come apart — <c>ffmpeg-win64.exe</c> exists only while a recording runs —
+    /// come apart -- <c>ffmpeg-win64.exe</c> exists only while a recording runs --
     /// so a process-only gate answers <i>nothing is using it</i> on a machine
     /// full of live sessions, any of which starts the codec the instant a
     /// <c>video</c> artifact is asked for.
@@ -687,7 +687,7 @@ internal sealed class ReinstallBrowserTests
     /// <para>
     /// <b>The session here is Firefox and the components are shared, which is
     /// what makes this arm the decision rather than a restatement.</b> A Firefox
-    /// session does <b>not</b> block a Chromium reinstall — the arm below asserts
+    /// session does <b>not</b> block a Chromium reinstall -- the arm below asserts
     /// that too, so this cannot be satisfied by a filter that simply stopped
     /// filtering.
     /// </para>
@@ -866,7 +866,7 @@ internal sealed class ReinstallBrowserTests
     /// <b>Two rather than one, because one proves nothing about cumulativeness.</b>
     /// The maintainer's word for it was <i>"cumulative"</i>, and what that means
     /// on Windows is that any number of <c>FileAccess.Read</c> /
-    /// <c>FileShare.Read</c> opens coexist with no count kept anywhere — so the
+    /// <c>FileShare.Read</c> opens coexist with no count kept anywhere -- so the
     /// arm that would fail against a design holding one claim per process is the
     /// one where the first session goes and the second still holds it.
     /// </remarks>
@@ -929,7 +929,7 @@ internal sealed class ReinstallBrowserTests
     /// <para>
     /// <b>This is the property that decided the mechanism, and it cannot be
     /// proven in one process.</b> A named semaphore spans threads exactly as a
-    /// file does, and its count is <i>not</i> restored when its holder dies — so
+    /// file does, and its count is <i>not</i> restored when its holder dies -- so
     /// one crashed session would refuse every reinstall on the machine until the
     /// next reboot. Windows closes a file handle when the process object goes,
     /// however it went.
@@ -941,7 +941,7 @@ internal sealed class ReinstallBrowserTests
     /// </para>
     /// <para>
     /// <b>The kill is the job object closing</b>, which is a
-    /// <c>TerminateProcess</c> with no unwinding at all — the harshest death
+    /// <c>TerminateProcess</c> with no unwinding at all -- the harshest death
     /// available, and the one a semaphore could not survive.
     /// </para>
     /// </remarks>

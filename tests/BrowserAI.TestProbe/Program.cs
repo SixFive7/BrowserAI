@@ -72,16 +72,16 @@ internal static class Program
     /// </summary>
     /// <remarks>
     /// <para>
-    /// It reports what only the child can know — its own pid and the
-    /// environment block it was actually handed — then echoes every frame it is
+    /// It reports what only the child can know -- its own pid and the
+    /// environment block it was actually handed -- then echoes every frame it is
     /// sent, byte for byte, and lives until its stdin closes.
     /// </para>
     /// <para>
     /// A real <c>node.exe</c> would prove the same things, and the suite
     /// deliberately does not use one: <c>payload/</c> is a build output that a
     /// clean clone does not have, and build-order step 1 requires the suite to
-    /// pass there. The hazards under test — an interposed shell, a merged
-    /// environment block, an exit code read after <c>Dispose()</c> — are
+    /// pass there. The hazards under test -- an interposed shell, a merged
+    /// environment block, an exit code read after <c>Dispose()</c> -- are
     /// properties of how Windows starts a process, not of which process it is.
     /// </para>
     /// </remarks>

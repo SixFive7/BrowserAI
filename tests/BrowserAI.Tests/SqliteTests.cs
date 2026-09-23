@@ -11,7 +11,7 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// The SQLite that is compiled from source in this tree and linked into the
-/// published binary — that it is the version the pin says, and that the binary
+/// published binary -- that it is the version the pin says, and that the binary
 /// reports it.
 /// </summary>
 /// <remarks>
@@ -20,12 +20,12 @@ namespace BrowserAI.Tests;
 /// and these two tests are the price of that.</b> Every other native dependency
 /// here arrives through a package manager and a lock file, so a version nobody
 /// chose is a diff. SQLite arrives as ~9 MB of vendored C that nobody reads,
-/// compiled by <c>build/Sqlite.targets</c> and linked by ILC — three places that
+/// compiled by <c>build/Sqlite.targets</c> and linked by ILC -- three places that
 /// can each say a different number while every signal stays green.
 /// </para>
 /// <para>
 /// <b>Nothing here calls into SQLite.</b> The product's single declaration, in
-/// <c>src\BrowserAI\Storage\Sqlite.cs</c>, binds the module <c>e_sqlite3</c> —
+/// <c>src\BrowserAI\Storage\Sqlite.cs</c>, binds the module <c>e_sqlite3</c> --
 /// which under the published binary is a symbol linked into the executable and
 /// under this test host, CoreCLR, is a DLL that does not exist. So the version
 /// is read off the <i>artifact's own record</i> rather than by calling the
@@ -58,8 +58,8 @@ internal sealed partial class SqliteTests
     /// </para>
     /// <para>
     /// <b>The hashes are the half that catches an edit rather than a swap.</b>
-    /// Third-party source is exactly the kind of file a sweep walks through —
-    /// this repository has already had one rewrite a sealed record — and 9 MB of
+    /// Third-party source is exactly the kind of file a sweep walks through --
+    /// this repository has already had one rewrite a sealed record -- and 9 MB of
     /// C is the last place anybody would look. The archive's own SHA3-256 is
     /// recorded beside them as provenance and deliberately <b>not</b> asserted:
     /// the zip is not in the tree, so nothing here could re-derive it, and a test
@@ -137,7 +137,7 @@ internal sealed partial class SqliteTests
     /// <b>This is the arm that says the static link happened at all.</b> Nothing
     /// else in the suite can: <c>DirectPInvoke</c> and <c>NativeLibrary</c> are
     /// inert MSBuild items outside a publish, so a build in which the compile
-    /// step silently did nothing looks identical everywhere except here — and
+    /// step silently did nothing looks identical everywhere except here -- and
     /// the failure it would produce is a <c>DllNotFoundException</c> at whatever
     /// moment a session first touched the record, which is the worst possible
     /// place to find out.
@@ -179,7 +179,7 @@ internal sealed partial class SqliteTests
     /// ⚠️ <b>It was not, and the gap fails in the direction nothing reports.</b>
     /// <c>PublishedSlice.EnsureFresh</c> compared the binary's timestamp
     /// against the product's <c>.cs</c> files and the build files, and
-    /// <c>third-party/sqlite/sqlite3.c</c> is neither — so swapping the
+    /// <c>third-party/sqlite/sqlite3.c</c> is neither -- so swapping the
     /// amalgamation and running the suite left every slice arm driving a binary
     /// that still had the old SQLite linked into it, reading as fresh, with the
     /// tree saying otherwise.
@@ -224,7 +224,7 @@ internal sealed partial class SqliteTests
     /// options with their value and some without, so
     /// <c>SQLITE_STRICT_SUBTYPE=1</c> is reported as a bare
     /// <c>STRICT_SUBTYPE</c> while <c>SQLITE_DQS=0</c> is reported as
-    /// <c>DQS=0</c> — a mechanical translation gets that wrong, which is why
+    /// <c>DQS=0</c> -- a mechanical translation gets that wrong, which is why
     /// the correspondence is asserted on the <i>names</i> and the values are
     /// carried by the list.
     /// </para>
@@ -238,7 +238,7 @@ internal sealed partial class SqliteTests
     /// </para>
     /// <para>
     /// <b>This arm needs nothing but the tree</b>, so a machine that cannot
-    /// publish still holds the correspondence — the same split
+    /// publish still holds the correspondence -- the same split
     /// <see cref="ThePinnedVersionIsTheVersionOfTheVendoredSource"/> is on.
     /// </para>
     /// </remarks>
@@ -295,13 +295,13 @@ internal sealed partial class SqliteTests
     /// </para>
     /// <para>
     /// ⚠️ <b>It also carries the initialisation check, which nothing else
-    /// can — and that check does not fail as a wrong value.</b>
+    /// can -- and that check does not fail as a wrong value.</b>
     /// <c>SQLITE_OMIT_AUTOINIT</c> is in the flags, so a published binary that
     /// opened a database without calling <c>sqlite3_initialize</c> first
     /// <b>faults</b>: measured 2026-08-26, an access violation inside the first
     /// <c>sqlite3_open_v2</c>, exit code <c>-1073741819</c>, stdout closed
     /// before <c>initialize</c> was answered. So this arm's red for that defect
-    /// is not a field reading <c>&lt;unavailable&gt;</c> — it is the slice
+    /// is not a field reading <c>&lt;unavailable&gt;</c> -- it is the slice
     /// failing to start at all, which is also what
     /// <see cref="ThePublishedBinaryReportsTheStaticallyLinkedSqliteVersion"/>
     /// reports. The DLL a test host loads is built <i>without</i> that flag and

@@ -13,8 +13,8 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>It replaces a substring scan, and the difference is the whole point.</b>
 /// Until 2026-09-17 the scan behind <c>NeverByImageNameTests</c> flagged the
-/// <i>API</i> — any file containing <c>Get-Process</c>, <c>Win32_Process</c> or
-/// <c>GetProcessesByName</c> anywhere — which cannot tell
+/// <i>API</i> -- any file containing <c>Get-Process</c>, <c>Win32_Process</c> or
+/// <c>GetProcessesByName</c> anywhere -- which cannot tell
 /// <c>Get-Process -Id $pid</c> from <c>Get-Process chrome</c>. Those are opposite
 /// things: one names a pid the caller already had, the other picks a stranger out
 /// of the machine by what its executable is called. <b>Q203</b>, decided
@@ -32,13 +32,13 @@ namespace BrowserAI.Tests.Harness;
 /// <b>Every needle here is composed at run time</b>, for the same reason the
 /// forbidden list always was: this file is inside the corpus the scan reads, and
 /// a literal would make the rule's own implementation its first offender. The
-/// alternative — an exclusion naming this file — would create the one place in
+/// alternative -- an exclusion naming this file -- would create the one place in
 /// the repository where the rule does not apply.
 /// </para>
 /// <para>
 /// ⚠️ <b>What it cannot see, stated rather than implied.</b> It reads one line
 /// at a time, so a query built on one line and filtered on the next is only
-/// caught by the second line — which is why the comparison rule is gated on the
+/// caught by the second line -- which is why the comparison rule is gated on the
 /// <b>file</b> carrying a process-enumeration call rather than on the line. And
 /// it reads text, not meaning: a name assembled from variables, or a filter
 /// passed through a parameter, is beyond any scan of this kind. The
@@ -67,7 +67,7 @@ internal static class ProcessSelection
     /// <b><c>=</c> is deliberately absent here and lives in
     /// <see cref="FilteredName"/> instead.</b> In PowerShell <c>=</c> is
     /// assignment, and <c>name = $p.Name</c> in a hashtable that <i>emits</i> a
-    /// process's name is the exact shape the rule's own remark calls permitted —
+    /// process's name is the exact shape the rule's own remark calls permitted --
     /// observing a name rather than selecting on one. Treating <c>=</c> as a
     /// comparison everywhere made a rig that reports a tree read as a rig that
     /// hunts one.
@@ -90,7 +90,7 @@ internal static class ProcessSelection
     /// ⚠️ <b><c>WHERE</c> is deliberately NOT a marker, and it was one for about
     /// ten minutes.</b> Under <see cref="RegexOptions.IgnoreCase"/> it matches
     /// <c>Where-Object</c> and LINQ's <c>.Where(</c>, which between them produced
-    /// four offenders in this tree on the first run — two release scripts
+    /// four offenders in this tree on the first run -- two release scripts
     /// filtering a <c>PSObject</c>'s properties and two test files writing
     /// <c>.Where(name =&gt; …)</c>, none of which has ever touched a process. WQL
     /// is recognised by its <c>FROM</c> clause instead, which cannot be anything
@@ -226,7 +226,7 @@ internal static class ProcessSelection
         var argument = rest.TrimStart();
 
         // Nothing at all, a pipeline, or the end of an expression: no positional
-        // argument was passed, so this enumerates everything and filters later —
+        // argument was passed, so this enumerates everything and filters later --
         // and whatever it filters on is read by the rules above.
         if (argument.Length is 0 || "|)};,>&".Contains(argument[0], StringComparison.Ordinal))
         {

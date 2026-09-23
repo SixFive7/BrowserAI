@@ -25,7 +25,7 @@ internal enum ToolVerdictKind
 /// <param name="Name">The tool name, exactly as the shipped file spells it.</param>
 /// <param name="Kind">Where the call is answered.</param>
 /// <param name="Why">
-/// On a <see cref="ToolVerdictKind.Deny"/>, the reason a caller reads — the
+/// On a <see cref="ToolVerdictKind.Deny"/>, the reason a caller reads -- the
 /// whole of the refusal below BrowserAI's own first sentence. <see langword="null"/>
 /// otherwise; a <c>deny</c> without one does not load.
 /// </param>
@@ -43,7 +43,7 @@ internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Wh
 /// <remarks>
 /// <para>
 /// <b>The list is data because the decision is ours and the tool set is
-/// upstream's.</b> Until 2026-08-26 the whole of this was one C# constant —
+/// upstream's.</b> Until 2026-08-26 the whole of this was one C# constant --
 /// <c>SessionToolPolicy.AnnotateTool</c>, a denylist of exactly one name, with a
 /// refusal written out longhand in <see cref="SessionErrors"/> beside it. That
 /// works for one tool and answers nothing about the other sixty-eight: a build
@@ -53,8 +53,8 @@ internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Wh
 /// </para>
 /// <para>
 /// <b>DENY BY DEFAULT, and the window that opens is bounded by a red build
-/// rather than by a promise.</b> A name with no row is refused at the door —
-/// <see cref="Decide"/> — because the alternative is that the file stops being a
+/// rather than by a promise.</b> A name with no row is refused at the door --
+/// <see cref="Decide"/> -- because the alternative is that the file stops being a
 /// gate and becomes an inventory. What makes that safe rather than a slow
 /// capability leak is <c>ToolVerdictTests</c>: every tool in the golden
 /// <c>tools-list.json</c> snapshot must have a row here and every row must name a
@@ -65,7 +65,7 @@ internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Wh
 /// <para>
 /// ⚠️ <b>This reverses a decision taken 2026-08-18, and it reverses it for a
 /// reason that decision's own reasoning does not reach.</b> A <c>(tool, mode)</c>
-/// deny-by-default matrix was deleted that day as <i>security theatre</i> — it
+/// deny-by-default matrix was deleted that day as <i>security theatre</i> -- it
 /// was never a boundary against a caller who owns the session directory and reads
 /// the profile inside it as the same user, and that argument is untouched and
 /// still correct. What is different here is that a verdict is not a permission:
@@ -73,7 +73,7 @@ internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Wh
 /// starting a browser for</b>. Upstream looks a tool name up <i>after</i>
 /// creating the browser context (<c>coreBundle.js</c>: the CLI factory's
 /// <c>create</c> runs at <c>:73101</c>, the name lookup at <c>:65533</c>), so a
-/// call naming nothing launches a browser to be told there is nothing to run —
+/// call naming nothing launches a browser to be told there is nothing to run --
 /// and upstream's answer echoes the caller's own string back into model-facing
 /// text. Neither of those is a permission question and neither was in scope on
 /// 2026-08-18.
@@ -150,7 +150,7 @@ internal sealed class ToolVerdicts
     /// keeps the two in step.</b>
     /// <c>ToolVerdictTests.TheAuthoredRowsAreExactlyTheToolsBrowserAiAnswersItself</c>
     /// holds these rows identical to <c>SessionToolSurface.Names</c> in both
-    /// directions — which is why a row cannot be removed by accident — and
+    /// directions -- which is why a row cannot be removed by accident -- and
     /// <c>build/Write-ReleaseManifest.ps1</c> copies the whole file beside the
     /// release so a rollback can read which tools a build forwarded and which
     /// upstream that judgement was made against. <c>SessionToolSurface.Rewrite</c>
@@ -277,13 +277,13 @@ internal sealed class ToolVerdicts
     /// <para>
     /// <b>A <c>deny</c> row and nothing else, and the asymmetry with
     /// <see cref="Decide"/> is deliberate.</b> A denied tool is <b>dropped, not
-    /// disabled</b> — no entry, no description explaining that it will refuse,
-    /// nothing for a model to read and weigh — because a tool that can never
+    /// disabled</b> -- no entry, no description explaining that it will refuse,
+    /// nothing for a model to read and weigh -- because a tool that can never
     /// succeed costs attention and description budget for as long as it is in the
     /// list. A tool with <i>no</i> row is a different thing: it is a gap rather
     /// than a decision, so it is still advertised and refused at the door. Two
-    /// reasons, and the second is the stronger. A gap is already loud — the
-    /// coverage comparison is red on the same build — so the advertisement adds
+    /// reasons, and the second is the stronger. A gap is already loud -- the
+    /// coverage comparison is red on the same build -- so the advertisement adds
     /// nothing to it. And filtering on <i>absence</i> would make a file that
     /// failed to load present as an empty surface, which is the silent failure the
     /// loud loader above exists to prevent.
@@ -299,9 +299,9 @@ internal sealed class ToolVerdicts
     /// <para>
     /// <b>Two refusals, because a caller can act on the difference.</b> A
     /// <c>deny</c> answers with the file's own <c>why</c> behind BrowserAI's own
-    /// first sentence — <i>this build was told not to forward it, here is what to
+    /// first sentence -- <i>this build was told not to forward it, here is what to
     /// do instead</i>. A name with no row answers that this build has no verdict
-    /// at all — <i>this is a gap, call <c>tools/list</c></i>. Collapsing them
+    /// at all -- <i>this is a gap, call <c>tools/list</c></i>. Collapsing them
     /// would send a model looking for a permission to acquire in the one case and
     /// for a typo in the other.
     /// </para>
@@ -309,7 +309,7 @@ internal sealed class ToolVerdicts
     /// <b>An <c>answer</c> row cannot reach here and is refused rather than
     /// allowed if it ever does.</b> <c>SessionToolSurface.IsAuthored</c>
     /// short-circuits the seven authored names before the door, and the loader
-    /// refuses an <c>answer</c> row whose name is not one of them — so the branch
+    /// refuses an <c>answer</c> row whose name is not one of them -- so the branch
     /// is unreachable by construction, and the direction it fails in is the one
     /// that does not forward an authored name to a child that has never heard of
     /// it.

@@ -46,7 +46,7 @@ namespace BrowserAI.Tests;
 /// <b>Firefox is the harder arm and it is not decoration.</b> It stacks a second
 /// permissive job of its own on top of libuv's, and its background tasks and
 /// crash reporter are the only code in either browser family that asks to break
-/// away — so it is the exact configuration that would leak if our job were
+/// away -- so it is the exact configuration that would leak if our job were
 /// misconfigured. BrowserAI does not create Firefox <i>sessions</i> yet
 /// ([TODO.md](../../TODO.md)); what is under test here is containment, which is
 /// <see cref="Interop.JobObject"/>'s and applies to anything the launcher starts.
@@ -60,8 +60,8 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Nothing here matches a process by image name at any step.</b> Every pid is
 /// recorded when it is spawned and re-validated against its recorded creation
-/// time before anything acts on it, and the one place an image is looked at —
-/// deciding whether a process came out of our own browsers root — compares the
+/// time before anything acts on it, and the one place an image is looked at --
+/// deciding whether a process came out of our own browsers root -- compares the
 /// full path.
 /// </para>
 /// </remarks>
@@ -91,19 +91,19 @@ internal sealed class BrowserContainmentTests
     /// <para>
     /// ⚠️ <b>Not serialised against anything, and the history of that is worth
     /// more than the current state.</b> This arm carried
-    /// <c>[NotInParallel("stray-sweep")]</c> until 2026-08-17 — not for anything
+    /// <c>[NotInParallel("stray-sweep")]</c> until 2026-08-17 -- not for anything
     /// it does, but because <see cref="FirefoxTests"/>' preflight test asked the
     /// <i>machine</i> whether a Firefox had appeared, and this arm starts one.
     /// Two rounds of narrowing that reading fixed it: first to the Firefox
     /// executable rather than the browsers root, which stopped every Chromium in
     /// the suite falsifying it, and then to a <b>direct child of the test
-    /// host</b>, which is what this arm's Firefox — a grandchild of a probe, by
-    /// way of <c>node.exe</c> — can never be.
+    /// host</b>, which is what this arm's Firefox -- a grandchild of a probe, by
+    /// way of <c>node.exe</c> -- can never be.
     /// </para>
     /// <para>
     /// <b>It is worth stating what that cost while it stood.</b> This test is
     /// <b>13.05 s</b>, and the chain it was pinned into spanned <b>20.4 s of a
-    /// 20.6 s run</b> — so one test's machine-wide question was the suite's
+    /// 20.6 s run</b> -- so one test's machine-wide question was the suite's
     /// entire critical path. Serialising to protect an over-wide observation is
     /// never free, and here the bill was most of the wall clock.
     /// </para>
@@ -123,7 +123,7 @@ internal sealed class BrowserContainmentTests
     /// it is the only test here that starts no browser: the child is a dozen
     /// lines of JavaScript that answers two frames and leaves. What it drives is
     /// the driver, in the tree shape the arms above use, with the browser taken
-    /// out — so a change to the tee is caught in seconds rather than by a
+    /// out -- so a change to the tee is caught in seconds rather than by a
     /// containment run.
     /// </para>
     /// <para>
@@ -131,7 +131,7 @@ internal sealed class BrowserContainmentTests
     /// That asks for <c>FileShare.Read</c>, which a live writer refuses, so the
     /// read succeeding <i>is</i> the measurement that nothing is holding the
     /// file. It is also the exact call
-    /// <see cref="LauncherWait.Evidence"/> used to make and no longer does —
+    /// <see cref="LauncherWait.Evidence"/> used to make and no longer does --
     /// the two halves of this pair meet here, and this one asserts the half the
     /// other cannot: a reader that shares everything can no longer tell a closed
     /// file from a held one.
@@ -140,7 +140,7 @@ internal sealed class BrowserContainmentTests
     /// ⚠️ <b>The liveness assertion is not decoration.</b> A driver that died
     /// would release the handle too, and then a green here would be saying
     /// nothing at all. It is read after the wait rather than before it, so the
-    /// case it exists for — the driver dying <i>during</i> the wait — is the case
+    /// case it exists for -- the driver dying <i>during</i> the wait -- is the case
     /// it catches.
     /// </para>
     /// <para>
@@ -151,7 +151,7 @@ internal sealed class BrowserContainmentTests
     /// gone"</i>. And by hand outside the suite, which is where the shape was
     /// established first: the same child, the same four arguments,
     /// <c>File.ReadAllText</c> refused for the whole wait with <i>"because it is
-    /// being used by another process"</i> while the driver stayed alive — and the
+    /// being used by another process"</i> while the driver stayed alive -- and the
     /// enumerated length of that held file read <b>0</b> against 61 real bytes,
     /// the same phantom the 2026-08-29 dump printed, arriving here out of the
     /// driver's own tee.
@@ -328,13 +328,13 @@ internal sealed class BrowserContainmentTests
 
         // ⚠️ The driver's own answer and the launcher's tree are inlined into
         // this failure, because without them it says `Expected to be true but
-        // found False` and nothing else — about a browser, in a scratch
+        // found False` and nothing else -- about a browser, in a scratch
         // directory the test then deletes.
         //
         // Added 2026-08-18, after this arm failed at 3m04s with exactly that
         // message. Three minutes is Playwright's own
         // DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, so the answer sitting unread in the
-        // report was upstream's account of a launch that did not happen — the
+        // report was upstream's account of a launch that did not happen -- the
         // one thing worth having, and the one thing not printed.
         await Assert.That((bool?)child["navigated"])
             .IsTrue()
@@ -354,7 +354,7 @@ internal sealed class BrowserContainmentTests
         await Assert.That(fromOurRoot.All(process => process.ImagePath.StartsWith(BrowserAiPaths.BrowsersDirectory, StringComparison.OrdinalIgnoreCase))).IsTrue();
 
         // ⚠️ Restart registration, asked of the live process rather than argued
-        // from a length — and the two browsers do NOT answer the same way.
+        // from a length -- and the two browsers do NOT answer the same way.
         // Windows resurrects a registered process after a reboot or an update,
         // and [the maintainer's own browsers came back that
         // way](../../kb/chromium/resurrection.md): no session, no lock, nothing
@@ -370,7 +370,7 @@ internal sealed class BrowserContainmentTests
             // bullet: every process answers ERROR_NOT_FOUND. The recorded reason
             // is that Playwright's command line overshoots
             // RegisterApplicationRestart's 1023-character limit so the
-            // registration fails — that is an argument, and this is the
+            // registration fails -- that is an argument, and this is the
             // observation. An upstream that trimmed its argument list would flip
             // it with nothing else changing.
             var offenders = registered.Select(entry => $"pid {entry.ProcessId} answered 0x{entry.Result:X8} rather than ERROR_NOT_FOUND: {entry.ImagePath}");
@@ -380,13 +380,13 @@ internal sealed class BrowserContainmentTests
         else
         {
             // ⚠️ Measured 2026-08-16 and it contradicts the assumption the bullet
-            // was written under: **Firefox registers itself for restart** —
-            // exactly one process in the tree answers S_OK — which is
+            // was written under: **Firefox registers itself for restart** --
+            // exactly one process in the tree answers S_OK -- which is
             // `toolkit.winRegisterApplicationRestart` doing what
             // [kb](../../kb/chromium/resurrection.md) says it does, on a build
             // BrowserAI provisioned. Containment is unaffected, because
             // KILL_ON_JOB_CLOSE happens now and Windows' restart happens after a
-            // reboot or an update — but it means Firefox sessions cannot be
+            // reboot or an update -- but it means Firefox sessions cannot be
             // offered without turning that pref off in the profile, or a machine
             // update will resurrect a browser no session claims. That is what
             // `FirefoxProfile` writes and `FirefoxTests` asserts; this arm
@@ -484,7 +484,7 @@ internal sealed class BrowserContainmentTests
     /// <para>
     /// <b>It speaks MCP by hand over a pipe rather than importing anything.</b>
     /// What is under test is containment, so the fewer layers between the job and
-    /// the browser the better — and this way the tree is exactly the production
+    /// the browser the better -- and this way the tree is exactly the production
     /// shape with one extra node in front: launcher → driver → <c>cli.js</c> →
     /// browser → helpers. An extra level makes the test stricter, never weaker.
     /// </para>
@@ -501,8 +501,8 @@ internal sealed class BrowserContainmentTests
     /// was ever read, so upstream's account of every launch that did not happen
     /// went into a pipe nobody drained. That is the same gap
     /// <see cref="BrowserAI.TestProbe.JobProbe"/> closed one level up on
-    /// 2026-08-17 — its comment there says a discarded stream is "the whole
-    /// difference between a diagnosable failure and a three-minute mystery" —
+    /// 2026-08-17 -- its comment there says a discarded stream is "the whole
+    /// difference between a diagnosable failure and a three-minute mystery" --
     /// and it was still open one level down, which is why the 2026-08-18 dump
     /// could name a failure and not say why. It was open again on 2026-08-29:
     /// a Firefox arm stalled 32 s between creating its profile database and
@@ -513,13 +513,13 @@ internal sealed class BrowserContainmentTests
     /// <para>
     /// <b>The file goes in the scratch directory rather than through the host</b>,
     /// because <see cref="LauncherWait.Evidence"/> already inlines every file it
-    /// finds there, truncated, into the failure message — so a tee is the whole
+    /// finds there, truncated, into the failure message -- so a tee is the whole
     /// change and nothing on the C# side needs to know this file exists.
     /// </para>
     /// <para>
     /// <b>An unread pipe is a second failure mode and this closes that too.</b>
     /// A pipe whose reader never reads it fills, and a child writing into a full
-    /// pipe blocks in its write rather than reporting anything — so a
+    /// pipe blocks in its write rather than reporting anything -- so a
     /// sufficiently chatty <c>cli.js</c> would have hung here in a way
     /// indistinguishable from the browser stall this arm exists to catch.
     /// Unobserved rather than hypothetical: nothing in this tree has ever
@@ -529,7 +529,7 @@ internal sealed class BrowserContainmentTests
     /// <b>Added 2026-08-30: the tee is closed on the one failure this process
     /// can see itself, and the comment beside it says why that is the smaller
     /// half.</b> When the child ends, the handle goes; when the launcher kills
-    /// this process from outside — which is the event the arms above are about —
+    /// this process from outside -- which is the event the arms above are about --
     /// nothing runs at all, so the file is still open when
     /// <see cref="LauncherWait.Evidence"/> reads it. That is why the pair
     /// exists and why the reader, not the writer, carries the weight of it. Held
@@ -687,7 +687,7 @@ internal sealed class BrowserContainmentTests
     /// <para>
     /// <b>The exit rides the write callback</b>, which fires once the reply is in
     /// the OS, so leaving cannot truncate the answer the driver is waiting on.
-    /// That is a completion signal and not a delay — there is no duration
+    /// That is a completion signal and not a delay -- there is no duration
     /// anywhere in this script, which is what keeps the arm above a hang detector
     /// rather than a race.
     /// </para>
@@ -723,7 +723,7 @@ internal sealed class BrowserContainmentTests
     /// <b>Firefox does not, because there is nothing to reuse:</b> BrowserAI
     /// creates no Firefox sessions at all yet ([TODO.md](../../TODO.md)), so this
     /// arm spells the
-    /// minimum that selects it and nothing else — the family, the profile and
+    /// minimum that selects it and nothing else -- the family, the profile and
     /// headless. In particular no channel, because <c>chromiumAliases</c> is a
     /// Chromium concept with no Firefox equivalent.
     /// </remarks>

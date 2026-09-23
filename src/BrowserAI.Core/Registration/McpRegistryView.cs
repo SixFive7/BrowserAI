@@ -25,8 +25,8 @@ internal enum RegistrationScope
 /// </summary>
 /// <remarks>
 /// <b>The distinction the configuration app is built around.</b> An entry named
-/// <c>browserai</c> that points somewhere we do not own is somebody else's — a
-/// second install, a build from source, a path a person typed — and BrowserAI
+/// <c>browserai</c> that points somewhere we do not own is somebody else's -- a
+/// second install, a build from source, a path a person typed -- and BrowserAI
 /// neither adopts it, overwrites it nor deletes it. It says where it is and
 /// refuses. Inferred intent is never acted on; only an explicit click edits
 /// anything.
@@ -40,7 +40,7 @@ internal enum RegistrationOwnership
     /// Ours, and the file it names is the MCP server.
     /// </summary>
     /// <remarks>
-    /// <b>The server, not merely a file</b> — <i>narrowed 2026-09-16, previously
+    /// <b>The server, not merely a file</b> -- <i>narrowed 2026-09-16, previously
     /// "Ours, and the file it names is there".</i> The console subsystem is what
     /// decides it, because a pre-split entry naming
     /// <c>current\BrowserAI.exe</c> points at a file that exists and is the
@@ -49,12 +49,12 @@ internal enum RegistrationOwnership
     OursAndPresent,
 
     /// <summary>
-    /// Ours — the command is under our install root — and the file it names
+    /// Ours -- the command is under our install root -- and the file it names
     /// cannot be launched as the MCP server: it is gone, or it is not a
     /// console-subsystem binary.
     /// </summary>
     /// <remarks>
-    /// <b>Two causes, one state, because the action is the same</b> —
+    /// <b>Two causes, one state, because the action is the same</b> --
     /// <i>widened 2026-09-16, previously "but the file it names is not there any
     /// more. This is what an entry written by an older layout looks like after
     /// the server was renamed".</i> That sentence described half of what an
@@ -83,7 +83,7 @@ internal enum RegistrationOwnership
 /// <param name="Ownership">Whose it is.</param>
 /// <param name="Unreadable">
 /// Why the file could not be read, when that is the reason there is no answer.
-/// <see langword="null"/> when the file was read — including when it simply is
+/// <see langword="null"/> when the file was read -- including when it simply is
 /// not there, which is an answer rather than a failure.
 /// </param>
 internal sealed record RegistrationView(
@@ -100,7 +100,7 @@ internal sealed record RegistrationView(
 /// <para>
 /// <b>Added 2026-09-15 with the configuration app</b>, which has to be able to
 /// show a state before anybody clicks anything. Writing still goes through the
-/// client's own CLI — <c>claude mcp add</c> and <c>claude mcp remove</c> — for
+/// client's own CLI -- <c>claude mcp add</c> and <c>claude mcp remove</c> -- for
 /// the reason it always has: the file format is the client's, it has changed
 /// before, and a hand-rolled splicer is a second implementation of somebody
 /// else's schema that nobody will re-derive when it moves.
@@ -257,7 +257,7 @@ internal static class McpRegistryView
     /// <c>${LOCALAPPDATA}/BrowserAI.app/current/…</c> precisely so that it is
     /// right on a teammate's machine as well as this one; unexpanded, it would
     /// classify as foreign on the very machine that wrote it. What is stored is
-    /// never rewritten — the expansion exists to answer a question, not to
+    /// never rewritten -- the expansion exists to answer a question, not to
     /// produce a value.
     /// </para>
     /// <para>
@@ -304,11 +304,11 @@ internal static class McpRegistryView
             return RegistrationOwnership.Foreign;
         }
 
-        // ⚠️ PRESENT MEANS *THE SERVER*, NOT *A FILE* — 2026-09-16. Until this
+        // ⚠️ PRESENT MEANS *THE SERVER*, NOT *A FILE* -- 2026-09-16. Until this
         // day the answer here was `File.Exists(full)`, and that was right for
         // exactly as long as this product shipped one executable. Every
         // registration written before the 2026-09-15 split names
-        // `current\BrowserAI.exe`, which is now the CONFIGURATION APP — so in an
+        // `current\BrowserAI.exe`, which is now the CONFIGURATION APP -- so in an
         // install that has been updated the file is there, existence answers
         // "ours and present", `McpRegistrar.Repair` leaves it exactly as it is
         // by design, and the client starts a window and waits forever for a
@@ -318,8 +318,8 @@ internal static class McpRegistryView
         // The subsystem is the same discriminator `RegistrationTarget` uses when
         // it composes the path in the first place, and it is the one a rename
         // cannot fake: subsystem 3 is always given a console and subsystem 2
-        // never is. Anything else — the app, a text file wearing the name, a
-        // file that cannot be read — is OURS AND STALE, which is the state
+        // never is. Anything else -- the app, a text file wearing the name, a
+        // file that cannot be read -- is OURS AND STALE, which is the state
         // `Repair` re-points and the state the window offers to register out of.
         // Neither may be launched as an MCP server, and the difference between
         // "gone" and "wrong" changes the sentence rather than the action.

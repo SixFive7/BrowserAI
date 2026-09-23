@@ -16,7 +16,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// A cleanup that only happens in a <c>finally</c> is a cleanup that will one
-/// day not happen — and here it is not a matter of chance: BrowserAI is designed
+/// day not happen -- and here it is not a matter of chance: BrowserAI is designed
 /// to be killable from outside without running any code, and the acceptance test
 /// for the job object kills it on every run. That is what turned nineteen suite
 /// runs into nineteen abandoned directories, which is how this sweep came to
@@ -41,21 +41,21 @@ internal sealed class InstanceDirectoryTests
 
         // ⚠️ PRECONDITION, not a retry on the assertion. What this test plants
         // has to be a directory NOTHING HOLDS, because that is the state a run
-        // killed an hour ago leaves — and the line above cannot produce it: a
+        // killed an hour ago leaves -- and the line above cannot produce it: a
         // file written microseconds earlier is still open to a real-time
         // scanner, and Windows refuses to rename a directory while any handle is
         // open below it. The timestamp can be backdated; the scanner cannot.
         //
         // Measured 2026-08-17 under a fully parallel suite: this test failed
         // once in ten runs at "Expected to be false but found True", because
-        // InstanceDirectory.Claim's rename was refused and the sweep concluded —
-        // correctly, by its own contract — that something still held the
+        // InstanceDirectory.Claim's rename was refused and the sweep concluded --
+        // correctly, by its own contract -- that something still held the
         // directory. Establishing the precondition is what makes the assertion
         // below a statement about the sweep rather than about Defender.
         //
         // The product deliberately does NOT retry there, and that is the right
         // call: a live instance directory always refuses the rename, so a retry
-        // would cost its budget once per live run on every startup — at the
+        // would cost its budget once per live run on every startup -- at the
         // ~100-process design point, minutes.
         await WaitUntilNothingHoldsAsync(abandoned);
 
@@ -142,11 +142,11 @@ internal sealed class InstanceDirectoryTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Found independently by both 2026-08-18 adversarial reviews —
+    /// <b>Found independently by both 2026-08-18 adversarial reviews --
     /// <a href="../../docs/reviews/2026-08-18-adversarial-locking.md">locking</a>
     /// B5 and
     /// <a href="../../docs/reviews/2026-08-18-adversarial-processes.md">processes</a>
-    /// finding 11 — and fixed 2026-08-24.</b> Exactly one process had ever held
+    /// finding 11 -- and fixed 2026-08-24.</b> Exactly one process had ever held
     /// this directory: the surface child, which is given it as a working
     /// directory. Session children are given the session's own output root
     /// instead, while the instance directory holds the generated config of
@@ -158,7 +158,7 @@ internal sealed class InstanceDirectoryTests
     /// </para>
     /// <para>
     /// <b>Nothing in this test is ever anybody's current directory</b>, which is
-    /// the whole point — the old holder is absent by construction rather than by
+    /// the whole point -- the old holder is absent by construction rather than by
     /// timing. The sibling test above keeps the working-directory lock honest;
     /// this one proves the run no longer depends on it.
     /// </para>
@@ -231,14 +231,14 @@ internal sealed class InstanceDirectoryTests
     /// <b><see cref="Runtime.TreeDelete"/> exists for exactly this caller.</b> An
     /// instance directory has just held a
     /// running browser, and Chromium leaves mapped files behind for a moment
-    /// after exit — the race is the normal case rather than the unlucky one.
+    /// after exit -- the race is the normal case rather than the unlucky one.
     /// </para>
     /// <para>
     /// <b>The assertion that matters is the log line, not the survivor.</b>
     /// Measured 2026-08-16 on .NET 10.0.11: <c>Directory.Delete(path, recursive:
     /// true)</c> leaves the same nodes behind that the per-node walk does, so an
     /// on-disk assertion alone passes against the primitive §E forbids. What it
-    /// cannot produce is the list — it throws one exception naming one node, and
+    /// cannot produce is the list -- it throws one exception naming one node, and
     /// this file used to swallow it whole.
     /// </para>
     /// </remarks>
@@ -293,7 +293,7 @@ internal sealed class InstanceDirectoryTests
     /// <para>
     /// <b>Measured 2026-08-16, twice, and it is why the claim is a rename.</b>
     /// Windows refuses to remove a directory that is a live process's current
-    /// directory — but it does not refuse to delete the files <i>inside</i> it,
+    /// directory -- but it does not refuse to delete the files <i>inside</i> it,
     /// so <c>Directory.Delete(path, recursive: true)</c> emptied a live run's
     /// instance directory completely and only then failed on the node. The
     /// generated config, the surface child's profile, the output folder and the

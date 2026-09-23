@@ -43,7 +43,7 @@ namespace BrowserAI.Proxy;
 /// go in front and a required <c>session</c> parameter is injected into every
 /// upstream <c>inputSchema</c>. The rewrite is done on the
 /// <see cref="JsonNode"/> the child sent, never on a typed schema, so a
-/// tool-level member no contract knows about still survives —
+/// tool-level member no contract knows about still survives --
 /// <c>LosslessPassthroughTests</c> asserts exactly that. Renaming remains
 /// forbidden: upstream names pass through byte for byte.
 /// </para>
@@ -123,8 +123,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <b>The seam exists for the in-process test layer and nothing else uses
     /// it.</b> A proxy has two hops, so a harness that stands a fake child on the
     /// far end has to reach the client leg without a process. Everything that
-    /// decides behaviour — the pinned revision, the negotiation check, the raw
-    /// forwarding path, the <c>tools/list</c> rewrite — is below this line rather
+    /// decides behaviour -- the pinned revision, the negotiation check, the raw
+    /// forwarding path, the <c>tools/list</c> rewrite -- is below this line rather
     /// than above it, so the harness exercises the same code the product runs.
     /// </remarks>
     /// <param name="transport">The client transport to connect over. The SDK client owns it.</param>
@@ -263,7 +263,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>So the handshake claimed a capability this server does not implement</b>
-    /// — it has never emitted a <c>notifications/message</c> and never will — and
+    /// -- it has never emitted a <c>notifications/message</c> and never will -- and
     /// a client that called <c>logging/setLevel</c> got <c>{}</c> and then silence
     /// for ever. That is this project's founding failure shape: something reports
     /// a capability it does not have, and nothing anywhere goes red. It was also a
@@ -273,8 +273,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>Why an outgoing filter rather than the options object.</b> Setting
-    /// <c>Capabilities.Logging = null</c> does nothing — the constructor overwrites
-    /// it — and the property is <c>[Obsolete(DiagnosticId = "MCP9005")]</c> at
+    /// <c>Capabilities.Logging = null</c> does nothing -- the constructor overwrites
+    /// it -- and the property is <c>[Obsolete(DiagnosticId = "MCP9005")]</c> at
     /// 2.2.0, so naming it at all needs a suppression, which the style rule
     /// forbids. Rewriting the frame is the only route that neither lies nor
     /// suppresses. It is <b>subtractive only</b>: nothing is added, nothing is
@@ -386,7 +386,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// permission").</b> The refusals this proxy makes by name are now whatever
     /// <c>tool-verdicts.json</c> says they are, plus every name that file does not
     /// carry a row for. <c>browser_annotate</c> is still the only tool this build
-    /// ships a <c>deny</c> for, and it is still liveness rather than permission —
+    /// ships a <c>deny</c> for, and it is still liveness rather than permission --
     /// what changed is that the sentence is a fact about the file rather than
     /// about the code.
     /// </para>
@@ -698,9 +698,9 @@ internal sealed class BrowserProxy : IAsyncDisposable
         try
         {
             // The one timer, reset here and nowhere else. A call this session
-            // forwards is what "being driven" means for a browser-idle timer — a
+            // forwards is what "being driven" means for a browser-idle timer -- a
             // call refused by the mode policy or by provisioning never reaches a
-            // browser and never keeps one warm — and the scope holds the call
+            // browser and never keeps one warm -- and the scope holds the call
             // outstanding across the await, so a navigation that outlives the
             // whole period cannot have the browser closed underneath it.
             using var driving = live.Idle.Call();
@@ -824,7 +824,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// not a server fault.</b> <c>-32603 Internal error</c> tells a model that
     /// BrowserAI broke; what actually happened is that it sent a number where
     /// the schema says string, which it can fix on the next turn if anybody
-    /// tells it. Absent stays absent — the callers below distinguish *missing*
+    /// tells it. Absent stays absent -- the callers below distinguish *missing*
     /// from *wrong*, and they answer differently.
     /// </remarks>
     /// <param name="node">The object the argument lives in.</param>
@@ -852,7 +852,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// ⚠️ <b>A REFUSED CALL IS A FACT ABOUT THE SESSION AND IT IS RECORDED
     /// (2026-08-26, previously it reached <c>browserai.log</c> and nothing
     /// else).</b> <i>The agent reached for a tool this build will not forward</i>
-    /// is replay, not diagnostics — and with the session log file gone this
+    /// is replay, not diagnostics -- and with the session log file gone this
     /// record is the only place it survives. The row is written and settled
     /// <c>failed</c> in one go, because there was never an in-flight window:
     /// nothing was forwarded.
@@ -905,7 +905,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// Upstream answers a tool error inside an ordinary JSON-RPC result, so a
     /// navigation that timed out and a navigation that worked are the same shape
     /// at the transport. Reading them the same way would put <i>successful</i>
-    /// beside every timeout in the record — which is the confident-wrong-answer
+    /// beside every timeout in the record -- which is the confident-wrong-answer
     /// class this repository keeps closing.
     /// </para>
     /// </remarks>
@@ -957,8 +957,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// at all the answer is already a failure with no bytes worth
     /// preserving").*** That was a claim about provenance and there was nothing
     /// enforcing it: the scan read every text block of every answer, so a page
-    /// that merely rendered upstream's sentence — in its title, in an issue, in
-    /// release notes — had BrowserAI's own instruction text spliced into it, and
+    /// that merely rendered upstream's sentence -- in its title, in an issue, in
+    /// release notes -- had BrowserAI's own instruction text spliced into it, and
     /// byte-identity was lost on an ordinary successful call. The gate is
     /// <c>isError</c>, and it is the whole provenance check there is: upstream's
     /// <c>Response.serialize()</c> returns
@@ -975,7 +975,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// answered call: a rewritten answer is still an answer that may have
     /// published a pointer").*** <b>There is no <c>Complete</c>.</b> It went with
     /// the artifact machinery in <c>feec42b</c>, and the rewrite branch
-    /// <c>return</c>s immediately after sending — so the acknowledged residual
+    /// <c>return</c>s immediately after sending -- so the acknowledged residual
     /// risk was defended by a mechanism that no longer existed.
     /// </para>
     /// <para>
@@ -1069,9 +1069,9 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// ⚠️ <b>Simplified 2026-08-26 (previously it took an
     /// <c>ArtifactAnswer? completion</c> and, when there was one, spliced one or
     /// two encoded blocks into the child's <c>content</c> array by token
-    /// offset).</b> The splice existed to reconcile two requirements — every byte
+    /// offset).</b> The splice existed to reconcile two requirements -- every byte
     /// the child wrote survives, and a file BrowserAI relocated is reported at
-    /// the path it was relocated to — and it was the right resolution while both
+    /// the path it was relocated to -- and it was the right resolution while both
     /// held. BrowserAI relocates nothing now, so the second requirement has no
     /// subject and the reconciliation has nothing to reconcile.
     /// </para>
@@ -1118,8 +1118,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <param name="log">Where to record: the session's own logger, or the run's when no session owns the call.</param>
     /// <remarks>
     /// <b>The <c>"Request failed (remote): "</c> prefix is never met on this
-    /// path, rather than met and stripped.</b> The SDK does add it — it is real,
-    /// and <c>SdkErrorShapeTests</c> is what keeps that checked — but the bytes
+    /// path, rather than met and stripped.</b> The SDK does add it -- it is real,
+    /// and <c>SdkErrorShapeTests</c> is what keeps that checked -- but the bytes
     /// written here come from the child's frame, so the message that reaches the
     /// caller is the message the child sent.
     /// </remarks>
@@ -1165,13 +1165,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
     }
 
     /// <summary>
-    /// Answers a caller whose call the child never completed — it died, its
+    /// Answers a caller whose call the child never completed -- it died, its
     /// stdout ended, the transport went away.
     /// </summary>
     /// <remarks>
     /// Through the SDK's typed <c>CallToolHandler</c>, an exception of any cause
     /// becomes a JSON-RPC <i>success</i> carrying <c>isError: true</c> and the
-    /// text <c>"An error occurred invoking 'x'."</c> — identical for a child that
+    /// text <c>"An error occurred invoking 'x'."</c> -- identical for a child that
     /// died and for an unknown content type, naming neither. It is answered as a
     /// JSON-RPC <b>error</b> here because it is a transport failure rather than a
     /// tool outcome, and the cause is named.
@@ -1321,7 +1321,7 @@ internal static partial class ProxyLog
     /// ⚠️ <b>THE FULL NAME THE CALLER SENT GOES HERE AND NOWHERE ELSE THAT A
     /// MODEL READS.</b> An unjudged call is refused with a sentence that quotes
     /// nothing, so this record and the session's own log row are where <i>what
-    /// did it try to call</i> survives — on stderr and in a database, neither of
+    /// did it try to call</i> survives -- on stderr and in a database, neither of
     /// which is in anybody's context window.
     /// </para>
     /// <para>
@@ -1329,7 +1329,7 @@ internal static partial class ProxyLog
     /// and would have blocked until this run was killed").</b> That sentence
     /// described <c>browser_annotate</c> and only ever could: the refusal is now
     /// whatever <c>tool-verdicts.json</c> says, and the commonest one by far will
-    /// be a name that file has no row for at all — which has not blocked
+    /// be a name that file has no row for at all -- which has not blocked
     /// anything and was never in any list.
     /// </para>
     /// <para>
@@ -1338,7 +1338,7 @@ internal static partial class ProxyLog
     /// for one process is actually being enforced").</b> There is no such
     /// boundary and there never was one here: the caller owns the session
     /// directory and reads the profile inside it as the same user. Information is
-    /// still the right level — a call that was declined is a call whose absence
+    /// still the right level -- a call that was declined is a call whose absence
     /// somebody will eventually have to explain.
     /// </para>
     /// </remarks>

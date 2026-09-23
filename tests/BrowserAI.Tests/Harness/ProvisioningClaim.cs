@@ -13,12 +13,12 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// <b>This is the only seam into a published binary's provisioning, and it is
-/// not a seam we added — it is the product's own cross-process contract.</b> A
+/// not a seam we added -- it is the product's own cross-process contract.</b> A
 /// BrowserAI that cannot take the mutex does not queue a second download of the
 /// same 203.8 MB; it watches for the marker the holder is about to write
 /// (<see cref="BrowserProvisioner"/>). So a test that takes the mutex first and
 /// then fills the directory itself drives exactly the path a second BrowserAI
-/// process would drive — with no product change, no environment override and no
+/// process would drive -- with no product change, no environment override and no
 /// installer substitute.
 /// </para>
 /// <para>
@@ -27,7 +27,7 @@ namespace BrowserAI.Tests.Harness;
 /// <i>thread</i> that waited on it; a test that acquired one and then awaited
 /// anything would release it from whichever pool thread the continuation landed
 /// on, and <c>ReleaseMutex</c> would throw about "an unsynchronized block of
-/// code" — naming nothing relevant. The same pattern, for the same reason, is in
+/// code" -- naming nothing relevant. The same pattern, for the same reason, is in
 /// <c>RevisionPruneTests.NothingIsPrunedWhileAnotherProcessIsProvisioning</c>.
 /// </para>
 /// <para>

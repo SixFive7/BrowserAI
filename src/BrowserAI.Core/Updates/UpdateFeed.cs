@@ -6,7 +6,7 @@ using System.Globalization;
 namespace BrowserAI.Updates;
 
 /// <summary>
-/// Where updates come from, and on which channel — with the one arrangement
+/// Where updates come from, and on which channel -- with the one arrangement
 /// that bricks a fleet made impossible to express.
 /// </summary>
 /// <remarks>
@@ -25,17 +25,17 @@ namespace BrowserAI.Updates;
 /// </para>
 /// <para>
 /// <b>Three refusals, each from a measured failure</b>
-/// ([kb](../../../kb/packaging/velopack.md#channel--the-charters-reason-was-wrong)):
+/// ([kb](../../../kb/packaging/velopack.md#channel----the-charters-reason-was-wrong)):
 /// a base URL whose last segment is the channel is the bug above and is refused;
 /// an empty channel is refused because <c>ExplicitChannel = ""</c> is
-/// <b>not</b> the same as unset — the code null-coalesces, so it yields
+/// <b>not</b> the same as unset -- the code null-coalesces, so it yields
 /// <c>releases..json</c> and a 404; and a channel that is not already lower-case
 /// is refused because <c>vpk pack</c> lower-cases it while the client does not,
 /// so <c>Beta</c> passes on NTFS and 404s on a case-sensitive object store.
 /// </para>
 /// <para>
 /// <b>A 404 is catchable but is not by itself a misconfiguration signal.</b>
-/// 1.2.0 throws <c>HttpRequestException … 404</c> rather than failing silently —
+/// 1.2.0 throws <c>HttpRequestException … 404</c> rather than failing silently --
 /// but a legitimately empty channel returns the same 404, so nothing here
 /// alarms on one. That discrimination needs a second signal and is not
 /// attempted.
@@ -53,8 +53,8 @@ internal sealed class UpdateFeed
     /// The single track BrowserAI publishes on.
     /// </summary>
     /// <remarks>
-    /// <c>win</c> is Velopack's own default for Windows — the OS short name,
-    /// stamped into <c>sq.version</c> and read back by the locator — so naming it
+    /// <c>win</c> is Velopack's own default for Windows -- the OS short name,
+    /// stamped into <c>sq.version</c> and read back by the locator -- so naming it
     /// explicitly costs nothing and buys the property that matters: an install
     /// that came from some other channel's <c>Setup.exe</c> still checks this
     /// one.
@@ -77,7 +77,7 @@ internal sealed class UpdateFeed
     /// <remarks>
     /// Reported, never requested by this type. It exists so a health check, a
     /// log line and a test can all say the same thing about where the client is
-    /// actually looking — the shipped failure above was invisible precisely
+    /// actually looking -- the shipped failure above was invisible precisely
     /// because nothing ever printed the composed URL.
     /// </remarks>
     public string ManifestUrl => $"{BaseUrl}/releases.{Channel}.json";
@@ -159,7 +159,7 @@ internal sealed class UpdateFeed
     /// <remarks>
     /// <b>Load-bearing for what a green test means.</b> A local-directory source
     /// reads <c>releases.{channel}.json</c> out of the folder and never composes
-    /// a URL, so it cannot fail the way landmine 1 fails — an update lane proven
+    /// a URL, so it cannot fail the way landmine 1 fails -- an update lane proven
     /// only against a directory has proven the packaging and the apply, and
     /// <i>not</i> the feed.
     /// </remarks>

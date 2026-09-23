@@ -12,7 +12,7 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// <b><c>CLAUDE.md</c> calls the clause the load-bearing half of a
-/// correction</b> — it is what tells a reader who learned the old value that it
+/// correction</b> -- it is what tells a reader who learned the old value that it
 /// was reviewed and replaced rather than lost, and it requires the superseded
 /// text to be quoted <i>verbatim</i>. Every gate that reads a document for
 /// claims therefore has to read around it, because the quoted text is a record
@@ -27,13 +27,13 @@ namespace BrowserAI.Tests.Harness;
 /// in the build: two rows of <c>kb/re-verification.md</c> ended up quoting dead
 /// test names <i>without</i> backticks and explaining in prose that the gate was
 /// the reason. **Two conventions that cannot both hold is a defect in one of
-/// them**, and the convention wins — so the reading moved here and both gates
+/// them**, and the convention wins -- so the reading moved here and both gates
 /// ask it the same question.
 /// </para>
 /// <para>
 /// <b>What it deliberately does not match.</b> A <c>previously</c> followed by
-/// anything other than a quotation — <c>previously three arms —</c>,
-/// <c>previously `Foo.Bar`, which was deleted</c> — is prose rather than the
+/// anything other than a quotation -- <c>previously three arms --</c>,
+/// <c>previously `Foo.Bar`, which was deleted</c> -- is prose rather than the
 /// convention, and widening the pattern to cover it would strip live claims out
 /// of any cell that happened to use the word. A correction that wants the
 /// clause's protection writes the clause.

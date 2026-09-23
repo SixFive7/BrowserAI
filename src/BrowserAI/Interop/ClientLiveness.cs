@@ -14,9 +14,9 @@ namespace BrowserAI.Interop;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>A handle, never a ping.</b> There is no <c>ping</c> to send —
+/// <b>A handle, never a ping.</b> There is no <c>ping</c> to send --
 /// <see href="https://modelcontextprotocol.io">MCP</see> removed it at protocol
-/// revision <c>2026-07-28</c> — and a poll would be the wrong shape even if
+/// revision <c>2026-07-28</c> -- and a poll would be the wrong shape even if
 /// there were one: a kernel object is an <i>event</i>, so this costs one thread
 /// pool registration and nothing per second. Holding the handle is also what
 /// stops Windows recycling the pid underneath the watch, which is the same
@@ -25,7 +25,7 @@ namespace BrowserAI.Interop;
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-18 (previously the paragraph above stood alone).</b>
 /// The guarantee it claims begins at the instant the handle is opened and says
-/// nothing whatever about the interval before it — which is the interval that
+/// nothing whatever about the interval before it -- which is the interval that
 /// matters, because the pid comes from a field the kernel never invalidates. So
 /// the handle is necessary and was not sufficient, and
 /// <see cref="ForProcess"/> now proves the identity on that handle before it is
@@ -37,13 +37,13 @@ namespace BrowserAI.Interop;
 /// <b>It is the second of two teardown mechanisms, and neither is a close
 /// tool.</b> stdin EOF is the backstop and fires instantly when the parent
 /// holding the pipe is <c>TerminateProcess</c>d; this covers the case EOF cannot
-/// — a client that started BrowserAI through a wrapper, so that the pipe outlives
+/// -- a client that started BrowserAI through a wrapper, so that the pipe outlives
 /// the process that owns the conversation. The job object remains the guarantee
 /// underneath both: nothing here has to run for a browser to go.
 /// </para>
 /// <para>
 /// <b>It degrades rather than refusing to start.</b> A parent that cannot be
-/// opened — elevated, or already gone — produces a warning and a null watcher,
+/// opened -- elevated, or already gone -- produces a warning and a null watcher,
 /// and BrowserAI serves normally with EOF alone. A BrowserAI that would not start
 /// because it could not watch its client would be worse than one that watches
 /// nothing.
@@ -96,7 +96,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     public int ProcessId { get; }
 
     /// <summary>
-    /// Its creation time, read off the handle this watcher holds — the other
+    /// Its creation time, read off the handle this watcher holds -- the other
     /// half of the identity, because a pid on its own is not one.
     /// </summary>
     public long CreatedFileTime { get; }
@@ -109,8 +109,8 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     /// The parent's pid arrives from <c>InheritedFromUniqueProcessId</c> with no
     /// creation time beside it anywhere, so this passes
     /// <see langword="null"/> for the recorded time and
-    /// <see cref="ForProcess"/> falls back to the weaker — and, for this one
-    /// question, equally exact — test that the process did not start after us.
+    /// <see cref="ForProcess"/> falls back to the weaker -- and, for this one
+    /// question, equally exact -- test that the process did not start after us.
     /// </remarks>
     /// <param name="onExit">What to do when it goes. Runs on a thread-pool thread.</param>
     /// <param name="logger">Where the watcher reports.</param>
@@ -137,7 +137,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     /// bare pid and held whatever answered.</b> The pid comes from
     /// <c>InheritedFromUniqueProcessId</c>, which the kernel writes once at
     /// creation and never invalidates. A client that started BrowserAI through a
-    /// wrapper — the arrangement this whole mechanism exists for — leaves that
+    /// wrapper -- the arrangement this whole mechanism exists for -- leaves that
     /// number pointing at an exited process, and Windows reuses pids in seconds.
     /// The watch then fires when an <b>unrelated</b> process exits, and firing it
     /// takes every session's child, its browser and its job down while the log
@@ -153,7 +153,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     /// proof and the use, which is the window being closed.
     /// </para>
     /// <para>
-    /// ⚠️ <b>And a pid that opens is not a process that is still there — 2026-09-15.</b>
+    /// ⚠️ <b>And a pid that opens is not a process that is still there -- 2026-09-15.</b>
     /// The identity pairing answers <i>is this the launcher</i> and nothing
     /// else; a corpse keeps answering <c>OpenProcess</c> for as long as any
     /// handle anywhere names it. A watch attached to one fires on the line that
@@ -168,8 +168,8 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     /// <param name="processId">The client's pid.</param>
     /// <param name="recordedCreation">
     /// The creation time recorded beside that pid, when the caller has one.
-    /// <see langword="null"/> means there is no record — the pid came from the
-    /// parent field — and the pairing is then
+    /// <see langword="null"/> means there is no record -- the pid came from the
+    /// parent field -- and the pairing is then
     /// <see cref="ProcessLiveness.StartedNoLaterThanThisProcess"/>.
     /// </param>
     /// <param name="onExit">What to do when it goes. Runs on a thread-pool thread.</param>
@@ -220,7 +220,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
             return null;
         }
 
-        // ⚠️ AND A PID THAT OPENS IS NOT A PROCESS THAT IS STILL THERE — added
+        // ⚠️ AND A PID THAT OPENS IS NOT A PROCESS THAT IS STILL THERE -- added
         // 2026-09-15. Windows keeps the process object for as long as ANY handle
         // anywhere names it, so a launcher that has exited goes on answering
         // OpenProcess while somebody holds one; for a launcher that ran in a
@@ -411,7 +411,7 @@ internal static partial class ClientLivenessLog
     /// meaningless.</b> Only <c>WAIT_FAILED</c> (0xFFFFFFFF) sets a last error;
     /// <c>WAIT_ABANDONED</c> (0x00000080) reaches this record carrying whatever
     /// error happened to be left in the thread, which can read as <i>The
-    /// operation completed successfully</i> — a sentence that looks like a
+    /// operation completed successfully</i> -- a sentence that looks like a
     /// defect in the logging rather than a state of the client. The number is
     /// what tells them apart, and it costs one field. <i>Added 2026-09-16.</i>
     /// </remarks>
@@ -458,7 +458,7 @@ internal static partial class ClientLivenessLog
     [LoggerMessage(
         EventId = 73,
         Level = LogLevel.Information,
-        Message = "The MCP client, pid {ProcessId}, has exited, so BrowserAI is closing its own protocol channel — which ends the conversation exactly as stdin EOF would, without waiting for it. Every session's child, its browser and its job go down with this process.")]
+        Message = "The MCP client, pid {ProcessId}, has exited, so BrowserAI is closing its own protocol channel -- which ends the conversation exactly as stdin EOF would, without waiting for it. Every session's child, its browser and its job go down with this process.")]
     public static partial void ClientExited(ILogger logger, int processId);
 
     /// <summary>Asking for teardown threw.</summary>
@@ -484,7 +484,7 @@ internal static partial class ClientLivenessLog
     [LoggerMessage(
         EventId = 78,
         Level = LogLevel.Warning,
-        Message = "The process that started BrowserAI, pid {ProcessId}, could be opened and has already exited, so there is no client-liveness watch. A dead pid goes on answering OpenProcess for as long as anything anywhere still holds a handle to it — the console host does, for a launcher that ran in a console — so this is the same 'nobody to watch' as a pid that cannot be opened at all, arriving by the other route. Teardown falls back to stdin EOF alone.")]
+        Message = "The process that started BrowserAI, pid {ProcessId}, could be opened and has already exited, so there is no client-liveness watch. A dead pid goes on answering OpenProcess for as long as anything anywhere still holds a handle to it -- the console host does, for a launcher that ran in a console -- so this is the same 'nobody to watch' as a pid that cannot be opened at all, arriving by the other route. Teardown falls back to stdin EOF alone.")]
     public static partial void ClientHasAlreadyExited(ILogger logger, int processId);
 
     /// <summary>The pid opened is not the process it was supposed to be.</summary>
@@ -493,7 +493,7 @@ internal static partial class ClientLivenessLog
     [LoggerMessage(
         EventId = 75,
         Level = LogLevel.Warning,
-        Message = "Pid {ProcessId} was opened as the MCP client and is a different process from the one that number named — it started after this one, so it cannot be the process that launched BrowserAI. Windows had reused the number. Nothing is watched: teardown falls back to stdin EOF alone, which is correct, where firing this watch on a stranger's exit would have taken every session's browser down.")]
+        Message = "Pid {ProcessId} was opened as the MCP client and is a different process from the one that number named -- it started after this one, so it cannot be the process that launched BrowserAI. Windows had reused the number. Nothing is watched: teardown falls back to stdin EOF alone, which is correct, where firing this watch on a stranger's exit would have taken every session's browser down.")]
     public static partial void ClientPidIsNotTheClient(ILogger logger, int processId);
 
     // ⚠️ EVENT ID 76 IS RETIRED AND IS NOT TO BE REUSED, 2026-09-22. It is the

@@ -64,7 +64,7 @@ internal enum SuiteFilterDecision
 /// empty instance for whoever asks first.
 /// </param>
 /// <param name="Global">
-/// <see cref="GlobalContext.TestFilter"/> — TUnit's stringification of the
+/// <see cref="GlobalContext.TestFilter"/> -- TUnit's stringification of the
 /// <c>ITestExecutionFilter</c> the platform put on the execute request.
 /// </param>
 /// <param name="Session">
@@ -84,7 +84,7 @@ internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulat
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The defect this closes is not that a filtered run is wrong — it is that a
+/// <b>The defect this closes is not that a filtered run is wrong -- it is that a
 /// filtered run is indistinguishable from a full one in everything the run
 /// publishes about itself.</b> Every number a filtered run prints is true of what
 /// it ran; what is false is the sentence a human writes underneath it, and
@@ -102,7 +102,7 @@ internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulat
 /// <c>ContextProvider</c>, which is what fills
 /// <see cref="GlobalContext.TestFilter"/> and
 /// <see cref="TestSessionContext.TestFilter"/>. So the value below is the filter
-/// the framework actually applied, whatever route it arrived by — a
+/// the framework actually applied, whatever route it arrived by -- a
 /// <c>TreeNodeFilter</c> from <c>--treenode-filter</c>, a
 /// <c>TestNodeUidListFilter</c> from an IDE's selection, or nothing at all.
 /// <b><c>Environment.GetCommandLineArgs()</c> is deliberately not consulted</b>:
@@ -112,12 +112,12 @@ internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulat
 /// </para>
 /// <para>
 /// <b><c>ICommandLineOptions</c> was the first choice and it is unreachable from
-/// a test — established by reading the resolved packages rather than by
+/// a test -- established by reading the resolved packages rather than by
 /// assuming.</b> Decompiled 2026-08-24 at TUnit <b>1.65.0</b> /
 /// <c>Microsoft.Testing.Platform</c> <b>2.3.3</b>: the platform's
 /// <c>ICommandLineOptions</c> is handed to <c>TUnitServiceProvider</c>, which is
 /// <c>internal</c>, holds it in a plain property, and never registers it in the
-/// <c>_services</c> dictionary its own <c>GetService</c> reads — so even the one
+/// <c>_services</c> dictionary its own <c>GetService</c> reads -- so even the one
 /// public seam that surfaces an <c>IServiceProvider</c> to user code
 /// (<c>DataSourceContext.ServiceProvider</c>, reachable only from a data-source
 /// attribute) answers <see langword="null"/> for it. <see cref="TestContext"/>
@@ -132,7 +132,7 @@ internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulat
 /// for <see cref="ForegroundLock"/>'s reason.</b> Every capability names a
 /// command that produces it; being unfiltered is not something a run can go and
 /// acquire. And like that row it reports four states, one of which is <i>this
-/// run could not tell</i> — see <see cref="SuiteFilterVerdict.Unread"/>.
+/// run could not tell</i> -- see <see cref="SuiteFilterVerdict.Unread"/>.
 /// </para>
 /// </remarks>
 internal static class SuiteFilter
@@ -158,7 +158,7 @@ internal static class SuiteFilter
     /// </summary>
     /// <remarks>
     /// <b>It is also the recursion guard.</b> The child is filtered down to one
-    /// method, and the method that launches it is a different one — so a child
+    /// method, and the method that launches it is a different one -- so a child
     /// can never select the launcher and recursion is impossible by
     /// construction. This variable is the second bolt on that door, for the day
     /// a filter fails open: it is set only by the launcher, so a process that
@@ -233,7 +233,7 @@ internal static class SuiteFilter
     /// <remarks>
     /// <b>Pure for <see cref="SuiteEnvironment.Decide"/>'s reason exactly.</b> A
     /// gate run is never filtered, so a classification written only against the
-    /// live reading would have three of its four states unexercised — and the one
+    /// live reading would have three of its four states unexercised -- and the one
     /// it does exercise is the one that proves the least.
     /// </remarks>
     /// <param name="reading">The reading.</param>
@@ -298,14 +298,14 @@ internal static class SuiteFilter
         return Judge(reading) switch
         {
             SuiteFilterVerdict.Filtered =>
-                $"{SuiteEnvironment.ReleaseRunVariable} is set, so this run asked to be a release run — and the platform handed the "
+                $"{SuiteEnvironment.ReleaseRunVariable} is set, so this run asked to be a release run -- and the platform handed the "
                 + $"framework a filter: '{reading.Global}'. A filtered run is a correct run and every number it prints is true of what "
                 + "it ran; it is not a gate. No release may be cut from it, and this is a failing test rather than a line nobody reads "
                 + "because a filtered run's summary is character-for-character the shape a full one's is. "
                 + "Re-run without a filter, or unset the variable and stop calling it a release.",
 
             SuiteFilterVerdict.Unread =>
-                $"{SuiteEnvironment.ReleaseRunVariable} is set, so this run asked to be a release run — and it CANNOT SAY whether it "
+                $"{SuiteEnvironment.ReleaseRunVariable} is set, so this run asked to be a release run -- and it CANNOT SAY whether it "
                 + "was filtered. TUnit's session context was not populated when the reading was taken"
                 + $" (taken={reading.Taken}, sessionContext={reading.SessionContextPopulated}), so a null filter "
                 + "here means 'nothing was read' and not 'nothing was filtered'. That is not a premise a release may rest on. "
@@ -349,7 +349,7 @@ internal static class SuiteFilter
                 + "      block is character-for-character the shape a full run's is. --treenode-filter\n"
                 + "      also reads '|' as an OR INSIDE one path segment and never between whole path\n"
                 + "      patterns, so a filter can select far more or far less than it looks like it\n"
-                + $"      selects — see kb/toolchain.md. {SuiteEnvironment.ReleaseRunVariable}=1 makes this state a failure.",
+                + $"      selects -- see kb/toolchain.md. {SuiteEnvironment.ReleaseRunVariable}=1 makes this state a failure.",
 
             SuiteFilterVerdict.Unread => row + "\n"
                 + "      ⚠️  THIS RUN DID NOT ANSWER whether it was filtered, and 'FULL RUN' is therefore\n"
@@ -387,7 +387,7 @@ internal static class SuiteFilter
 
         const string Source =
             "read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the "
-            + "execute request — never this process's command line";
+            + "execute request -- never this process's command line";
 
         return verdict switch
         {
@@ -443,7 +443,7 @@ internal static class SuiteFilter
     /// distinction is the reason this type exists in the shape it does.</b> The
     /// question <i>does a filter reach the test host's own command line under
     /// <c>dotnet test</c>?</i> was open when this was written, and an instrument
-    /// that answered it wrongly would print <c>FULL RUN</c> over a filtered run —
+    /// that answered it wrongly would print <c>FULL RUN</c> over a filtered run --
     /// the one failure worse than having no row. So the verdict comes from the
     /// platform's <c>ITestExecutionFilter</c>, and this line sits beside it in
     /// the probe's report so that the two can be compared by whoever wants to,

@@ -17,7 +17,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>Microsoft.Windows.Common-Controls</c> 6.0.0.0 dependency the loader binds
 /// version 5, the export is absent, and the call fails at run time with no
 /// compile-time signal of any kind. It presents as <i>the app starts and nothing
-/// happens</i> — which is the hardest shape of failure to diagnose and the one
+/// happens</i> -- which is the hardest shape of failure to diagnose and the one
 /// nothing in this repository could see until 2026-09-16.
 /// </para>
 /// <para>
@@ -29,8 +29,8 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <b>Hand-written P/Invoke, like every other harness that talks to Windows.</b>
-/// <c>NativeMethods.txt</c> is deliberately structs-only — a generated function
-/// there would be a second way to call Windows living in the test assembly — so
+/// <c>NativeMethods.txt</c> is deliberately structs-only -- a generated function
+/// there would be a second way to call Windows living in the test assembly -- so
 /// the four resource calls are declared here.
 /// <c>LOAD_LIBRARY_AS_IMAGE_RESOURCE</c> maps the file for its resources alone:
 /// nothing is relocated, no entry point runs, and it works on a binary for

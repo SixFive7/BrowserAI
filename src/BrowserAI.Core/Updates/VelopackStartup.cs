@@ -17,7 +17,7 @@ namespace BrowserAI.Updates;
 /// ⚠️ <b><see cref="VelopackApp.SetAutoApplyOnStartup"/> is called with
 /// <see langword="false"/>, and it is mandatory.</b> The default is
 /// <see langword="true"/>: on finding a staged package, <c>Run()</c> applies it,
-/// <c>exit(0)</c>s and relaunches — <b>detached, with no inherited stdio</b>. An
+/// <c>exit(0)</c>s and relaunches -- <b>detached, with no inherited stdio</b>. An
 /// MCP client would see its server exit at handshake time and its pipes die,
 /// which is indistinguishable from a crash. A shipped product examined for this
 /// project never calls it and runs the default; that is survivable for the
@@ -26,8 +26,8 @@ namespace BrowserAI.Updates;
 /// <para>
 /// <b>It runs before anything else, including logging, and that ordering is
 /// forced.</b> This call is also what handles the installer's own hook
-/// invocations — <c>--veloapp-install</c> and friends, which are fast-exit
-/// callbacks with 15–60 s timeouts — so anything that runs first runs inside
+/// invocations -- <c>--veloapp-install</c> and friends, which are fast-exit
+/// callbacks with 15-60 s timeouts -- so anything that runs first runs inside
 /// every hook as well. A logger is attached rather than constructed here for the
 /// same reason: the bridge is a delegate over an <see cref="ILogger"/> the
 /// caller already owns.
@@ -44,7 +44,7 @@ namespace BrowserAI.Updates;
 /// <b>Three hooks do one job, and it is the charter's founding promise.</b>
 /// <c>--veloapp-install</c> and <c>--veloapp-updated</c> register BrowserAI with
 /// the MCP client and <c>--veloapp-uninstall</c> removes it, through
-/// <see cref="Registration.HookRegistration"/> — the charter's
+/// <see cref="Registration.HookRegistration"/> -- the charter's
 /// <i>"registered once at system or user scope, available in every repository,
 /// with no per-repo files"</i>
 /// ([DECISIONS](../../../DECISIONS.md#locking-logging-versioning-and-registration)). Before
@@ -75,17 +75,17 @@ namespace BrowserAI.Updates;
 /// unchanged and still binds: the logon scheduled task
 /// [is dropped](../../../kb/windows/detection.md#the-logon-sweep-task), and a hook that
 /// left a <i>helper running</i> under the install root would be killed by
-/// <c>force_stop_package</c> immediately afterwards anyway — it runs after every
+/// <c>force_stop_package</c> immediately afterwards anyway -- it runs after every
 /// hook returns. Registration is not that shape: it starts one short-lived
 /// process that lives outside the install root, waits for it, and returns.
 /// </para>
 /// <para>
 /// <b>What a hook may cost.</b> These are fast-exit callbacks with real
-/// timeouts — <c>--veloapp-install</c> 30 s, <c>--veloapp-updated</c> 15 s,
+/// timeouts -- <c>--veloapp-install</c> 30 s, <c>--veloapp-updated</c> 15 s,
 /// <c>--veloapp-uninstall</c> 60 s
-/// ([kb](../../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)) — and
+/// ([kb](../../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)) -- and
 /// anything slow or interactive in one is a broken install. The registration
-/// call is measured at 613–645 ms with a 10 s budget of its own, and it can
+/// call is measured at 613-645 ms with a 10 s budget of its own, and it can
 /// neither prompt nor block: see <see cref="Registration.McpClientRegistration"/>.
 /// </para>
 /// <para>
@@ -105,7 +105,7 @@ internal static class VelopackStartup
     /// <param name="log">Where Velopack's own output goes.</param>
     /// <remarks>
     /// The lifecycle hooks below take no injected seam. They are served only
-    /// inside a real installed process — every test host reaches
+    /// inside a real installed process -- every test host reaches
     /// <see cref="Registration.HookRegistration"/> directly, which is why that
     /// type carries the overload that takes an image path and a command seam.
     /// </remarks>
@@ -135,8 +135,8 @@ internal static class VelopackStartup
     /// <remarks>
     /// <para>
     /// <b>What the MCP server calls.</b> Velopack never invokes a hook on this
-    /// binary — it invokes all four on the main exe, which is the configuration
-    /// app — so a callback registered here could only ever be reached by
+    /// binary -- it invokes all four on the main exe, which is the configuration
+    /// app -- so a callback registered here could only ever be reached by
     /// somebody passing <c>--veloapp-install</c> to the server by hand. Serving
     /// it would then register, unregister or repair a client's configuration
     /// from a process the installer did not start and is not waiting for.
@@ -182,7 +182,7 @@ internal static class VelopackStartup
     /// offers <c>OnFirstRun</c>, and that callback is <b>not</b> a substitute:
     /// it runs inside the startup call above, before this process has a log,
     /// and it
-    /// does not exit — so a server started by the installer went on to serve
+    /// does not exit -- so a server started by the installer went on to serve
     /// nobody exactly as if the callback had not been registered.
     /// </remarks>
     public const string FirstRunVariable = "VELOPACK_FIRSTRUN";
@@ -194,7 +194,7 @@ internal static class VelopackStartup
     /// <para>
     /// <b>The value is compared rather than merely present.</b> Velopack writes
     /// <c>true</c> and nothing else, and an environment block that carried the
-    /// name with some other value would be somebody else's variable — the safe
+    /// name with some other value would be somebody else's variable -- the safe
     /// reading of which is <i>this is an ordinary start</i>, because the
     /// consequence of <see langword="true"/> is refusing to serve.
     /// </para>
@@ -218,7 +218,7 @@ internal static class VelopackStartup
     /// text is <i>"Failed to initialize WindowsVelopackLocator. This could be
     /// because the program is not installed or packaged properly."</i> Only the
     /// leading clause is matched, so an upstream reword of the second sentence
-    /// does not silently unhook <see cref="IsRoutineNotInstalledNotice"/> — and if
+    /// does not silently unhook <see cref="IsRoutineNotInstalledNotice"/> -- and if
     /// upstream rewords the first, the record goes back to <c>Warning</c>, which
     /// is the safe direction.
     /// </remarks>
@@ -230,8 +230,8 @@ internal static class VelopackStartup
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Running uninstalled is a supported configuration</b> — it is what
-    /// <c>dotnet run</c>, every test host and CI do — and a supported
+    /// <b>Running uninstalled is a supported configuration</b> -- it is what
+    /// <c>dotnet run</c>, every test host and CI do -- and a supported
     /// configuration must not warn. Before 2026-08-18 it did, once per process:
     /// a hundred <c>warn:</c> records per saturation run on the stream this
     /// project relies on for diagnosis, all of them saying that nothing was
@@ -240,7 +240,7 @@ internal static class VelopackStartup
     /// <para>
     /// <b>The two cases ARE distinguishable from outside Velopack, and this is
     /// how far that goes.</b> 1.2.0 emits this sentence at <c>Warn</c> from
-    /// exactly one place — the <c>AppId is null</c> branch at the end of
+    /// exactly one place -- the <c>AppId is null</c> branch at the end of
     /// <c>WindowsVelopackLocator</c>'s constructor. Its other <c>Warn</c>s
     /// (a legacy <c>app-*</c> directory, a deeply nested <c>current\</c>) and all
     /// of its <c>Error</c>s (no valid manifest beside <c>Update.exe</c>, an
@@ -249,7 +249,7 @@ internal static class VelopackStartup
     /// untouched by this predicate. So a genuinely broken package still warns:
     /// upstream's own message admits it cannot tell <i>not installed</i> from
     /// <i>packaged improperly</i>, but the specific record that distinguishes the
-    /// two — <i>"unable to locate a valid manifest file"</i> — is a separate
+    /// two -- <i>"unable to locate a valid manifest file"</i> -- is a separate
     /// <c>Error</c> that is still reported.
     /// </para>
     /// <para>
@@ -307,7 +307,7 @@ internal static class VelopackStartup
 
         log(
             report.IsWhatWasAskedFor ? VelopackLogLevel.Information : VelopackLogLevel.Warning,
-            $"BrowserAI {version} — MCP registration ({intent}): {report.Status}. {report.Detail}",
+            $"BrowserAI {version} -- MCP registration ({intent}): {report.Status}. {report.Detail}",
             null);
 
         // ⚠️ THE ONE PLACE THE DATA ROOT'S FATE IS RECORDED IN A FILE THAT
@@ -320,7 +320,7 @@ internal static class VelopackStartup
         {
             log(
                 disposal.Failures.Count is 0 ? VelopackLogLevel.Information : VelopackLogLevel.Warning,
-                $"BrowserAI {version} — data root ({disposal.DataRoot}): {disposal.Choice}. asked={disposal.Asked} bytes={disposal.Bytes} nodesLeftBehind={disposal.Failures.Count}",
+                $"BrowserAI {version} -- data root ({disposal.DataRoot}): {disposal.Choice}. asked={disposal.Asked} bytes={disposal.Bytes} nodesLeftBehind={disposal.Failures.Count}",
                 null);
         }
     }

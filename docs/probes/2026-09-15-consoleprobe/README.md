@@ -4,7 +4,7 @@
 # 2026-09-15 - a parked read on stdin is woken by nothing
 
 Re-establishes
-[A read parked on standard input is woken by neither cancelling it nor disposing the stream](../../../kb/windows/processes.md#a-read-parked-on-standard-input-is-woken-by-neither-cancelling-it-nor-disposing-the-stream--measured-2026-09-15),
+[A read parked on standard input is woken by neither cancelling it nor disposing the stream](../../../kb/windows/processes.md#a-read-parked-on-standard-input-is-woken-by-neither-cancelling-it-nor-disposing-the-stream----measured-2026-09-15),
 which `DirectStdioServerTransportTests` cites as the reason the server cannot
 simply cancel its way off stdin. Evidence:
 [`docs/evidence/2026-09-15-fix/`](../../../docs/evidence/2026-09-15-fix/README.md).

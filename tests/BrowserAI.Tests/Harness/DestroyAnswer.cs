@@ -14,7 +14,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// ⚠️ <b>It does not promise the tree is gone.</b> Windows will not unlink a file
 /// a browser is still mapping, and the release lags the process by however long
-/// the kernel takes — so <c>destroy</c> answers in two shapes: everything went,
+/// the kernel takes -- so <c>destroy</c> answers in two shapes: everything went,
 /// or <i>"BUT N item(s) could not be removed"</i> followed by the list.
 /// <b>What it promises is that the answer and the disk agree</b>, and that is the
 /// property this type asserts.
@@ -26,7 +26,7 @@ namespace BrowserAI.Tests.Harness;
 /// leave it alone: a call that did not entirely do the thing it is named for
 /// must not be indistinguishable, to a model scanning result shapes, from one
 /// that did. <b>So the flag is part of the contract and is asserted here in both
-/// directions</b> — a survivor arm that reports success is a failure, and so is a
+/// directions</b> -- a survivor arm that reports success is a failure, and so is a
 /// clean destroy that reports an error. Held in one place for the same reason the
 /// heading is: two tests holding one tool to two promises is how the arm CI
 /// reaches and a developer machine does not stopped being checked at all.
@@ -43,7 +43,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>The heading, the cap and the truncation note are read from
 /// <see cref="SessionManager"/> rather than re-typed.</b> A test carrying its own
 /// copy of the product's prose stops recognising the arm the day somebody rewords
-/// it — and then passes, by never reaching the assertions underneath, which is
+/// it -- and then passes, by never reaching the assertions underneath, which is
 /// the green-when-broken failure this suite exists to eliminate.
 /// </para>
 /// </remarks>
@@ -65,12 +65,12 @@ internal static class DestroyAnswer
     /// <remarks>
     /// <para>
     /// <b>The agreement is asserted in both directions.</b> A destroy that left
-    /// the tree standing and said nothing fails — that is the property that
+    /// the tree standing and said nothing fails -- that is the property that
     /// matters, and the only one the old <c>Directory.Exists</c> assertion could
     /// see. So does one that <i>reported</i> survivors it does not have, one
     /// whose survivor list is a tally with nothing named under it, one that
-    /// names a path outside the directory it was aimed at, and — since
-    /// 2026-08-19 — one whose <c>isError</c> disagrees with its own text.
+    /// names a path outside the directory it was aimed at, and -- since
+    /// 2026-08-19 -- one whose <c>isError</c> disagrees with its own text.
     /// </para>
     /// <para>
     /// <b>What it deliberately does not assert is that the tree becomes

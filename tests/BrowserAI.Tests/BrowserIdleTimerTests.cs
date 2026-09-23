@@ -26,7 +26,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>The timer is driven in milliseconds and shipped at ten minutes.</b> The
 /// period is a seam on <see cref="SessionEnvironment"/> and the tests below pass
-/// hundreds of milliseconds — but a test-friendly value leaking into the product
+/// hundreds of milliseconds -- but a test-friendly value leaking into the product
 /// would be undetectable in every other signal, because a browser closed too
 /// eagerly is silently relaunched by the next call. So the shipped constant is
 /// asserted directly, and so is the fact that no file in <c>src/</c> assigns the
@@ -98,7 +98,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// <para>
     /// An ASSIGNMENT, not a mention: <c>SessionManager</c> reads the seam on every
     /// open and must, and the property's own declaration initialises it from
-    /// <see cref="TimeProvider.System"/> — neither matches, because both have
+    /// <see cref="TimeProvider.System"/> -- neither matches, because both have
     /// something other than whitespace between the name and the <c>=</c>.
     /// </para>
     /// </remarks>
@@ -109,7 +109,7 @@ internal sealed partial class BrowserIdleTimerTests
         // The declaration itself, read out of the product's own source. A
         // constructed SessionEnvironment would need a provisioner, a payload and
         // a paths object to answer one question about a default, and the
-        // assignment scan below cannot see an initialiser — `{ get; init; } =`
+        // assignment scan below cannot see an initialiser -- `{ get; init; } =`
         // has something other than whitespace before the `=` and never matches,
         // which is exactly what keeps the scan from flagging the declaration.
         var seam = RepositoryLayout.ProductSourceFiles
@@ -120,7 +120,7 @@ internal sealed partial class BrowserIdleTimerTests
 
         // ⚠️ THE POSITIVE CONTROL, added 2026-09-16, and it is the reason this
         // arm moved at all. The pattern below carried a literal 0x08 where a
-        // word-boundary escape was meant — so it asked for a BACKSPACE before
+        // word-boundary escape was meant -- so it asked for a BACKSPACE before
         // `Clock` and could not match anything in any file. The offender list
         // below was empty by construction rather than by the product being
         // clean, and a scan that cannot match is a green test forever. The match
@@ -148,7 +148,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// <remarks>
     /// <b>An upstream rename must turn the build red rather than turning the
     /// timer into a no-op.</b> A <c>tools/call</c> naming a tool that no longer
-    /// exists is answered with an error the timer logs and nothing else notices —
+    /// exists is answered with an error the timer logs and nothing else notices --
     /// and the browser then stays open forever, which is exactly the defect this
     /// step exists to remove, restored silently by a version bump.
     /// </remarks>
@@ -158,8 +158,8 @@ internal sealed partial class BrowserIdleTimerTests
     {
         await Assert.That(UpstreamSurface.DefaultSurface()).Contains(LiveSession.BrowserCloseTool);
 
-        // Callable at all: the timer bypasses the decision anyway — it is
-        // BrowserAI calling its own child rather than a caller calling a tool —
+        // Callable at all: the timer bypasses the decision anyway -- it is
+        // BrowserAI calling its own child rather than a caller calling a tool --
         // but a close the policy refused would mean a session whose browser can
         // never be closed, and this is where that would be decided.
         //
@@ -196,15 +196,15 @@ internal sealed partial class BrowserIdleTimerTests
     /// <b>Both halves in one test, against one rig, because separately either is
     /// vacuous.</b> "It closes when idle" passes against a timer that closes
     /// unconditionally; "it never closes while busy" passes against a timer that
-    /// never fires. The pair is the behaviour. The child is a double here — what
+    /// never fires. The pair is the behaviour. The child is a double here -- what
     /// is under test is the decision, and the decision is the same code against a
     /// real browser, which the next test drives.
     /// </para>
     /// <para>
     /// ⚠️ <b>Rewritten 2026-08-17 against a <see cref="ManualClock"/> (previously
     /// a wall-clock driving loop with a starvation detector and four retries).</b>
-    /// The old shape asserted that it had achieved a rate — every gap between two
-    /// in-process round trips under the 800 ms period — and on a machine running
+    /// The old shape asserted that it had achieved a rate -- every gap between two
+    /// in-process round trips under the 800 ms period -- and on a machine running
     /// every test at once it could not: one round trip measured <b>1.51 s</b> and
     /// <b>2.27 s</b>, so all four attempts starved and the test failed <b>five
     /// times in twenty runs</b> with the product correct every time. Before that
@@ -216,7 +216,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// <b>Now nothing here reads a wall clock.</b> The clock moves only when this
     /// test moves it, so <i>one tick short of the period</i> means exactly that:
     /// three calls, each followed by an advance of one tick less than a whole
-    /// period, is <b>three periods of elapsed time with no close</b> — which is
+    /// period, is <b>three periods of elapsed time with no close</b> -- which is
     /// impossible unless every call re-armed the timer. Then the clock is moved
     /// past the deadline and the close must arrive.
     /// </para>
@@ -226,7 +226,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// answer, so it may still be open when this test's round trip returns. A
     /// timer that fires then re-arms for a whole period, correctly, so the quiet
     /// half advances the clock until the close lands rather than assuming one
-    /// advance is enough. That is not a retry against flakiness — every advance
+    /// advance is enough. That is not a retry against flakiness -- every advance
     /// that meets an outstanding call is the product keeping its promise, and the
     /// count assertion at the end is what makes it a bounded claim.
     /// </para>
@@ -293,7 +293,7 @@ internal sealed partial class BrowserIdleTimerTests
         // One close, and only one, however long it is left: the timer is one-shot
         // and stays disarmed until the next call. Twenty periods is twenty
         // chances for a timer that wrongly re-armed, and the round trip after
-        // them is a real exchange through the same server and the same child —
+        // them is a real exchange through the same server and the same child --
         // so anything the close path had queued has been through the child's loop
         // by the time the count is read.
         clock.Advance(ShortPeriod * 20);
@@ -320,15 +320,15 @@ internal sealed partial class BrowserIdleTimerTests
     /// defect rather than a gap.</b> The close talks to the child directly and
     /// never touched <c>Lock</c>; while <c>browserai.log</c> existed the event
     /// survived there, and that file is gone. <c>browserai_catch_up</c> tells its
-    /// reader the log is <i>"WHAT WAS DONE HERE — the session's own log … This is
+    /// reader the log is <i>"WHAT WAS DONE HERE -- the session's own log … This is
     /// what BrowserAI did"</i>, an autonomous browser close is something
-    /// BrowserAI did, and it was invisible — so a reader saw an unexplained gap
+    /// BrowserAI did, and it was invisible -- so a reader saw an unexplained gap
     /// in wall-clock time, and the next call silently relaunched a browser.
     /// </para>
     /// <para>
     /// <b>The row is written the way every other row is</b>: <c>in-flight</c>
     /// before the call is forwarded, settled from the child's own answer. That
-    /// ordering is not decoration here either — a close that hangs or meets a
+    /// ordering is not decoration here either -- a close that hangs or meets a
     /// dead child leaves the row unsettled, which is exactly the state
     /// <c>catch_up</c> renders as <i>"no answer was recorded"</i>.
     /// </para>
@@ -442,7 +442,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// ⚠️ <b>Corrected 2026-08-18 (previously a real 800 ms period and
     /// <c>await Task.Delay(ShortPeriod * 3)</c>).</b> The sentence above claimed
     /// "by construction rather than by timing" while the test slept for 2.4 s and
-    /// hoped the request had reached the child inside them — which is a guess at
+    /// hoped the request had reached the child inside them -- which is a guess at
     /// how long a round trip takes, and on a starved machine it is the wrong
     /// guess in the direction that makes the whole thing vacuous: an advance made
     /// before the call was in flight would fire the timer legitimately. Both
@@ -478,15 +478,15 @@ internal sealed partial class BrowserIdleTimerTests
         // the tool name before it starts holding, and the proxy registered its
         // in-flight scope earlier still. Advancing before this point would move
         // the clock past a period during which nothing was in flight, and a close
-        // would then be correct — which is a test that can only fail for the
+        // would then be correct -- which is a test that can only fail for the
         // wrong reason.
         await WaitUntilAsync(
             () => harness.Child.ToolCallsReceived.Contains("browser_navigate"),
             TestDefaults.InProcessHang,
             "the held call never reached the child, so nothing was outstanding to protect");
 
-        // Outstanding for three whole periods — exactly three, because this is
-        // the only thing that moves the clock — and the only thing ending it is
+        // Outstanding for three whole periods -- exactly three, because this is
+        // the only thing that moves the clock -- and the only thing ending it is
         // the line below.
         clock.Advance(ShortPeriod * 3);
 
@@ -499,7 +499,7 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(answer.Error).IsNull();
 
         // And the period restarts from the moment the call was answered, so the
-        // close still comes — a suppressed timer that never re-armed would be
+        // close still comes -- a suppressed timer that never re-armed would be
         // the same defect this step exists to remove. Advanced repeatedly rather
         // than once: the proxy releases its in-flight scope after the caller's
         // answer is on the wire, so an advance that lands while the release is
@@ -527,7 +527,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// §C asks for.
     /// </para>
     /// <para>
-    /// <b>The relaunch is upstream's, and this test is what establishes that</b> —
+    /// <b>The relaunch is upstream's, and this test is what establishes that</b> --
     /// there is no relaunch code in this repository. Playwright creates the
     /// browser lazily on first use, so the call after an idle close simply works.
     /// Measured separately at ~0.41 s
@@ -557,7 +557,7 @@ internal sealed partial class BrowserIdleTimerTests
         // timer was racing them: at full parallelism the relaunch on the last
         // line took longer than the period, so the browser was closed again
         // before it could be counted and the test failed reporting zero
-        // browsers — with the product having done exactly what it promises,
+        // browsers -- with the product having done exactly what it promises,
         // twice. The period is nominal now; nothing waits for it.
         var clock = new ManualClock();
         var period = TimeSpan.FromSeconds(3);
@@ -579,7 +579,7 @@ internal sealed partial class BrowserIdleTimerTests
         // sooner than a period after this answer**, and two full-suite runs are
         // why. A client-side stopwatch measures from the moment the *test* is
         // scheduled to observe the answer, not from the moment the product sent
-        // it — and under this machine's known starvation those differ by
+        // it -- and under this machine's known starvation those differ by
         // seconds: the first version failed at 1.71 s and then at 0.55 s against
         // a 3 s period while the timer was behaving correctly. The reset
         // property is asserted where both clocks are the product's, in the
@@ -599,7 +599,7 @@ internal sealed partial class BrowserIdleTimerTests
         // the browser has actually gone rather than once: the proxy releases its
         // in-flight scope after the caller's answer is on the wire, so an advance
         // that lands while a call is still outstanding re-arms for a whole
-        // period — correctly — and the wait is what absorbs that. What is being
+        // period -- correctly -- and the wait is what absorbs that. What is being
         // waited for afterwards is a real process tree dying, which is real time
         // and is bounded by the teardown patience.
         await WaitUntilAsync(
@@ -614,7 +614,7 @@ internal sealed partial class BrowserIdleTimerTests
         // ⚠️ Confirmed a second time rather than believed the first. The scan
         // behind it opens ~600 processes, and one transient failure to open the
         // browser's own would read as "the browser is gone" while it was
-        // running — the same class of false answer that makes an image-NAME
+        // running -- the same class of false answer that makes an image-NAME
         // match unacceptable, arriving through a legitimate one.
         await Task.Delay(250);
 
@@ -650,8 +650,8 @@ internal sealed partial class BrowserIdleTimerTests
     /// <b>This is the graceful path and it is not the same claim
     /// <c>VerticalSliceTests</c> makes.</b> That one terminates BrowserAI from
     /// outside, so the kernel closing the last job handle is what cleans up. Here
-    /// BrowserAI runs its own shutdown — the session's child gets its stdin
-    /// closed, which trips upstream's <c>setupExitWatchdog</c> — and the
+    /// BrowserAI runs its own shutdown -- the session's child gets its stdin
+    /// closed, which trips upstream's <c>setupExitWatchdog</c> -- and the
     /// assertion is that the graceful path reaches the same end state without
     /// leaning on the 15-second hard exit at the end of it.
     /// </remarks>
@@ -741,8 +741,8 @@ internal sealed partial class BrowserIdleTimerTests
     /// otherwise EOF would be the explanation and the watcher would be unproven.
     /// A wrapper process starts BrowserAI, duplicates the write end of its stdin
     /// into this test, and is then killed: the parent is gone, the pipe is still
-    /// open — a Windows pipe signals EOF only when its <i>last</i> write handle
-    /// closes — and the only remaining route to a teardown is the
+    /// open -- a Windows pipe signals EOF only when its <i>last</i> write handle
+    /// closes -- and the only remaining route to a teardown is the
     /// <c>OpenProcess</c> handle BrowserAI holds on its client.
     /// </para>
     /// <para>
@@ -798,7 +798,7 @@ internal sealed partial class BrowserIdleTimerTests
 
             // ⚠️ The wrapper really is BrowserAI's parent, asserted rather than
             // assumed. A watcher pointed at the wrong process fires at the wrong
-            // moment and looks identical in every other signal — which is
+            // moment and looks identical in every other signal -- which is
             // exactly what happened the first time this test ran.
             await Assert.That((int)report["wrapperPid"]!).IsEqualTo(wrapper.Id);
 
@@ -818,8 +818,8 @@ internal sealed partial class BrowserIdleTimerTests
 
             // ⚠️ The assertion that stops this test passing for the wrong
             // reason. Everything below observes BrowserAI going away; without
-            // this line, a BrowserAI that had already died — of a crash, of a
-            // watcher pointed at the wrong process, of anything — would satisfy
+            // this line, a BrowserAI that had already died -- of a crash, of a
+            // watcher pointed at the wrong process, of anything -- would satisfy
             // it instantly. Found by reading the log of a run that passed in
             // three seconds, 2026-08-16, not by the test failing.
             await Assert.That(ProcessIdentity.IsAlive(browserAi, browserAiCreated)).IsTrue();
@@ -861,7 +861,7 @@ internal sealed partial class BrowserIdleTimerTests
     }
 
     /// <summary>
-    /// The watch is a handle on the client, signalled by its exit — never a ping
+    /// The watch is a handle on the client, signalled by its exit -- never a ping
     /// and never a poll.
     /// </summary>
     /// <remarks>
@@ -869,7 +869,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// <b>The prohibition is asserted as well as the behaviour, because the
     /// behaviour cannot distinguish them.</b> A poll every 200 ms and a kernel
     /// wait both look like "it noticed"; what tells them apart is that there is
-    /// no <c>ping</c> anywhere in the product — and there could not be, since MCP
+    /// no <c>ping</c> anywhere in the product -- and there could not be, since MCP
     /// removed the method at protocol revision <c>2026-07-28</c>, so a
     /// ping-shaped watcher would be watching for an answer that a conforming
     /// client is entitled never to give.
@@ -899,7 +899,7 @@ internal sealed partial class BrowserIdleTimerTests
         using var factory = LoggerFactory.Create(builder => _ = builder.AddProvider(logs));
 
         // cmd.exe with no arguments reads its stdin forever, and the scope holds
-        // the write end — so it stays alive without a timer or a script, exactly
+        // the write end -- so it stays alive without a timer or a script, exactly
         // as PlantedProcess relies on.
         var client = scope.Launch(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
@@ -975,7 +975,7 @@ internal sealed partial class BrowserIdleTimerTests
         {
             if (waited.Elapsed > patience)
             {
-                throw new TimeoutException($"{whatWentWrong} — after {waited.Elapsed.TotalSeconds:F1} s.");
+                throw new TimeoutException($"{whatWentWrong} -- after {waited.Elapsed.TotalSeconds:F1} s.");
             }
 
             await Task.Delay(100);

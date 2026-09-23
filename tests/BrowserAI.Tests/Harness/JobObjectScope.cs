@@ -16,7 +16,7 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// Every process a lifecycle test starts goes in here. When the scope is
-/// disposed — including by an exception unwinding past it — the handle closes
+/// disposed -- including by an exception unwinding past it -- the handle closes
 /// and <c>KILL_ON_JOB_CLOSE</c> takes the whole tree with it. <b>A leaked
 /// process is a defect in the test, not an acceptable cost</b>, and the
 /// mechanism that guarantees it is the same one the product relies on rather
@@ -39,8 +39,8 @@ internal sealed class JobObjectScope : IDisposable
     /// <remarks>
     /// <b>A hang detector on a failure path, and nothing asserts on it.</b> It is
     /// reached only when a test is already failing, and what it protects against
-    /// is a child whose grandchildren inherited the write end of the pipe — a
-    /// real Chromium does exactly that — so EOF may legitimately never arrive.
+    /// is a child whose grandchildren inherited the write end of the pipe -- a
+    /// real Chromium does exactly that -- so EOF may legitimately never arrive.
     /// Whether it was reached is reported rather than swallowed, because "the
     /// drain never finished" and "the process really said nothing" are different
     /// findings and the old message could not tell them apart.
@@ -82,7 +82,7 @@ internal sealed class JobObjectScope : IDisposable
         // ⚠️ The tasks are KEPT, and that is the 2026-08-18 correction. These are
         // pool work items, and the suite runs at `SuiteParallelism.Unbounded`
         // where the pool grows by about one worker a second past
-        // `Environment.ProcessorCount` — so a drain queued behind a hundred other
+        // `Environment.ProcessorCount` -- so a drain queued behind a hundred other
         // items may not have run its first read by the time a failing test asks
         // what the child said. Without a handle on them, `SaidBy` reported "it
         // wrote nothing to either stream" for a child that had written plenty and
@@ -142,7 +142,7 @@ internal sealed class JobObjectScope : IDisposable
     /// <remarks>
     /// The kernel's own membership list rather than a tally the harness keeps,
     /// which is what makes "nothing was started" an assertion about the machine
-    /// instead of about the test's bookkeeping — and it is unaffected by
+    /// instead of about the test's bookkeeping -- and it is unaffected by
     /// whatever else on the machine is starting at the same moment.
     /// </remarks>
     /// <returns>The pids.</returns>

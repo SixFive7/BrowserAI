@@ -57,12 +57,12 @@ internal sealed class SessionToolTests
         // has been `isError: true` since 2026-08-19. Changed here rather than
         // dropped: `IsError(...).IsFalse()` was this test's whole evidence that
         // `browserai_destroy` answers at all, so the evidence moved to the text
-        // — a destroy that REFUSED would never compose the summary line, and a
+        // -- a destroy that REFUSED would never compose the summary line, and a
         // destroy that failed outright would not carry a tally.
         await Assert.That(run.IsError("destroyBeta")).IsTrue();
         await Assert.That(run.Text("destroyBeta")).Contains("Destroyed the session at ");
 
-        // The sixth, whose ANSWER is a refusal — which is the tool working
+        // The sixth, whose ANSWER is a refusal -- which is the tool working
         // rather than failing. It was called while a real Chromium was running
         // out of the browsers root and while this process was driving the
         // session that owns it, so refusing and naming what is live is the whole
@@ -145,7 +145,7 @@ internal sealed class SessionToolTests
     /// to say it knew. Schema 2 made the record an append-only list of
     /// timestamped statements, so the original path is still there beside the new
     /// one and the resume can simply say so. <b>What this test now has to prove is
-    /// that it does</b> — that the answer carries the provenance, not merely that
+    /// that it does</b> -- that the answer carries the provenance, not merely that
     /// it succeeded, because a resume that silently accepted a copy would also
     /// pass an assertion on the outcome alone.
     /// </remarks>
@@ -252,7 +252,7 @@ internal sealed class SessionToolTests
         // Nothing was created by any of them, the wrongly-typed `headed`
         // included. ⚠️ Was `init-badMode` until 2026-08-20; the refusal names
         // the type it got rather than a list of accepted values, because there
-        // is no list — `headed` is a boolean.
+        // is no list -- `headed` is a boolean.
         await Assert.That(Directory.Exists(Path.Combine(run.Root, "bad-headed"))).IsFalse();
         await Assert.That(run.IsError("init-badHeaded")).IsTrue();
         await Assert.That(run.Text("init-badHeaded")).Contains("'headed' must be true or false");
@@ -422,7 +422,7 @@ internal sealed class SessionToolTests
         await Assert.That(run.SessionLog).Contains($"session={alpha}");
 
         // And the durable half: the session's own calls, in its own record, in
-        // order — which is what a log file used to be opened for.
+        // order -- which is what a log file used to be opened for.
         var log = RecordedSession.LogOf(alpha);
 
         await Assert.That(log.Count).IsGreaterThan(0);

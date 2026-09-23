@@ -9,7 +9,7 @@ one day after the `playwright-core` pull-forward made it owed.** The rig is
 the figures it produced are in
 [kb: first-run provisioning](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)
 and
-[Firefox, measured the same way](../../../kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way--2026-08-19).
+[Firefox, measured the same way](../../../kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way----2026-08-19).
 
 **Why it is kept when the 2026-09-16 pair was not.** That run's JSON was scratch
 and went with `.work/`, which left the row standing on a rig and a set of numbers

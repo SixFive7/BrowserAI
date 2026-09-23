@@ -15,7 +15,7 @@ namespace BrowserAI.Storage;
 /// <c>clear_bindings</c> here, and their absence is a decision rather than an
 /// omission: this store runs a dozen statements a session, so re-using a
 /// compiled one buys microseconds and costs the invariant that makes the rest
-/// of this file simple — that a statement's bindings are exactly what this
+/// of this file simple -- that a statement's bindings are exactly what this
 /// caller put there.
 /// </para>
 /// <para>
@@ -47,15 +47,15 @@ internal sealed class SqliteStatement : IDisposable
     /// <para>
     /// ⚠️ <b>The text is encoded here and its length is passed explicitly, and
     /// that is the difference between storing a caller's value and storing a
-    /// prefix of it.</b> The obvious spelling — <c>StringMarshalling.Utf8</c>
-    /// and a byte count of <c>-1</c> — tells SQLite to read to the first zero
+    /// prefix of it.</b> The obvious spelling -- <c>StringMarshalling.Utf8</c>
+    /// and a byte count of <c>-1</c> -- tells SQLite to read to the first zero
     /// byte, and U+0000 encodes as exactly that. A <c>why</c> carrying one
     /// would be truncated at it, silently, in the field whose whole job is to
     /// say what a call was for.
     /// </para>
     /// <para>
     /// <b>The buffer always carries a terminator it does not count</b>, so it
-    /// is never zero-length — and a zero-length array marshals to a pointer
+    /// is never zero-length -- and a zero-length array marshals to a pointer
     /// SQLite would read as SQL <c>NULL</c> rather than as the empty string.
     /// </para>
     /// </remarks>

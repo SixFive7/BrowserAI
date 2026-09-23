@@ -18,8 +18,8 @@ namespace BrowserAI.Tests;
 /// <para>
 /// ⚠️ <b>This file replaces <c>LockRecordTests</c> (2026-08-26), and most of
 /// what that file held is gone rather than migrated.</b> Its subject was a JSON
-/// document's strict parse — an unknown key, a missing key, a statement with no
-/// timestamp, a superseded schema — and those refusals now belong to two other
+/// document's strict parse -- an unknown key, a missing key, a statement with no
+/// timestamp, a superseded schema -- and those refusals now belong to two other
 /// mechanisms that already assert them: <c>LockFileTests</c> for
 /// <c>browserai.lock</c>'s closed property set, and <c>SqliteStorageTests</c> for
 /// the store's version refusal and for the absence of every cap. What is here is
@@ -43,11 +43,11 @@ internal sealed class SessionRecordTests
     /// <para>
     /// ⚠️ <b>THE CONCATENATION IS THE DEFECT AND THIS IS THE TEST FOR IT.</b>
     /// <c>SessionManager.ResumeAsync</c> built the next purpose out of the whole
-    /// of the previous one — <c>$"{record.Purpose} | {appended}"</c> — so value
+    /// of the previous one -- <c>$"{record.Purpose} | {appended}"</c> -- so value
     /// <i>N</i> contained every value before it. Two consequences, and the
     /// second is the one that loses data: the header grew quadratically (57.6
     /// KiB at 50 resumes, 860 KiB at 200), and at the 2,000-character cap the
-    /// <b>tail</b> was cut — which is the clause the caller had just written,
+    /// <b>tail</b> was cut -- which is the clause the caller had just written,
     /// silently, with nothing reporting it.
     /// </para>
     /// <para>
@@ -113,7 +113,7 @@ internal sealed class SessionRecordTests
     /// <para>
     /// ⚠️ <b>The holder field is the one dedup does not bound, and that is
     /// deliberate.</b> <c>(pid, creationFileTime)</c> is never the same twice, so
-    /// a session opened <i>n</i> times has <i>n</i> holder rows — which is what
+    /// a session opened <i>n</i> times has <i>n</i> holder rows -- which is what
     /// makes it a history of acquisitions rather than a note about the current
     /// one.
     /// </para>
@@ -174,7 +174,7 @@ internal sealed class SessionRecordTests
     /// <remarks>
     /// <b>The log half is what makes <c>lastUsed</c> mean anything during a
     /// session.</b> Before the log existed an hour of driving a browser moved no
-    /// timestamp at all, because nothing but an acquisition wrote a statement —
+    /// timestamp at all, because nothing but an acquisition wrote a statement --
     /// so a listing said a busy session had not been touched since it opened.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -275,8 +275,8 @@ internal sealed class SessionRecordTests
     /// <remarks>
     /// <b>This is the ordering the old write-before-forward existed for, and it
     /// is the property rather than an implementation detail.</b> A navigation
-    /// that hangs, a child that dies, a process that is killed — the calls
-    /// anybody investigates — leave exactly this row and nothing else. A row
+    /// that hangs, a child that dies, a process that is killed -- the calls
+    /// anybody investigates -- leave exactly this row and nothing else. A row
     /// written on the way back would be missing from all three.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -320,14 +320,14 @@ internal sealed class SessionRecordTests
 
     /// <summary>
     /// The sanitiser keeps line breaks, drops carriage returns, neutralises
-    /// every other control character and drops the invisible ones — and caps
+    /// every other control character and drops the invisible ones -- and caps
     /// nothing.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Free text written by one agent and replayed into another's context is
-    /// a channel between agents.</b> What keeps it data is no longer a length —
-    /// every cap is gone — it is that it cannot carry the characters a terminal,
+    /// a channel between agents.</b> What keeps it data is no longer a length --
+    /// every cap is gone -- it is that it cannot carry the characters a terminal,
     /// a renderer or a prompt assembler acts on.
     /// </para>
     /// <para>
@@ -378,7 +378,7 @@ internal sealed class SessionRecordTests
     /// <para>
     /// ⚠️ <b>The sanitiser iterated <c>char</c> until 2026-08-26, and
     /// <c>char.GetUnicodeCategory</c> answers <c>Surrogate</c> for either half of
-    /// a supplementary-plane character — never <c>Format</c>.</b> So the
+    /// a supplementary-plane character -- never <c>Format</c>.</b> So the
     /// <c>Cf</c> drop covered the basic plane alone and the whole TAG block came
     /// through, which is the canonical invisible-text smuggling range: measured
     /// 2026-08-26 through the published binary, U+E0001, U+E0048, U+E0049 and
@@ -392,7 +392,7 @@ internal sealed class SessionRecordTests
     /// <para>
     /// <b>The lone surrogate needs its own decision and this is it: dropped.</b>
     /// Half a character is not text, and turning it into a space would leave a
-    /// space nobody typed — the same argument that drops a <c>Cf</c> rather than
+    /// space nobody typed -- the same argument that drops a <c>Cf</c> rather than
     /// neutralising it.
     /// </para>
     /// </remarks>
@@ -424,7 +424,7 @@ internal sealed class SessionRecordTests
     /// </summary>
     /// <remarks>
     /// <b>The tool name is the caller's own string, even when it names nothing
-    /// this build has ever heard of</b> — because <i>the agent reached for a
+    /// this build has ever heard of</b> -- because <i>the agent reached for a
     /// tool that does not exist</i> is a fact about the session, and it is the
     /// one a reader most wants when they are looking at a refusal. It goes
     /// through the same sanitiser as a <c>why</c>: a newline in a recorded tool

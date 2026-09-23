@@ -18,7 +18,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>net use</c>. Measured 2026-08-19 on this machine: a letter defined here
 /// against <c>\Device\LanmanRedirector\…</c> is reported <c>DRIVE_REMOTE</c> by
 /// <c>GetDriveTypeW</c>, and a <c>File.Exists</c> through it against a dead
-/// hostname took <b>22,210 ms</b> — indistinguishable from a mapping made by
+/// hostname took <b>22,210 ms</b> -- indistinguishable from a mapping made by
 /// <c>net use</c>, because it is the same object.
 /// </para>
 /// <para>
@@ -27,7 +27,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>DefineDosDevice</c> writes into this logon session's own DosDevices
 /// directory, so the letter exists for this desktop and vanishes with
 /// <see cref="Dispose"/>. The one thing it does <i>not</i> do is establish an
-/// SMB session — nothing here talks to a server — and nothing in these tests
+/// SMB session -- nothing here talks to a server -- and nothing in these tests
 /// wants one: the product's whole claim is that it decides before any of that.
 /// </para>
 /// <para>
@@ -76,7 +76,7 @@ internal sealed partial class DosDeviceAlias : IDisposable
     /// </summary>
     /// <param name="hostAndShare">
     /// The <c>host\share</c> half of the UNC path. <b>Point it at something that
-    /// fails fast</b> — these tests prove that nothing reaches it, so a dead
+    /// fails fast</b> -- these tests prove that nothing reaches it, so a dead
     /// hostname would only cost the suite twenty-two seconds if a test ever
     /// regressed into touching it.
     /// </param>

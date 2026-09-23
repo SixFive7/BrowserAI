@@ -14,13 +14,13 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b>It cannot be cleaned up only on the way out, and that is measured rather
 /// than anticipated.</b> The containment contract says BrowserAI may be
-/// terminated from outside and run no code afterwards — that is the whole point
-/// of the job object — so a <c>finally</c> is by construction the path that does
+/// terminated from outside and run no code afterwards -- that is the whole point
+/// of the job object -- so a <c>finally</c> is by construction the path that does
 /// not run in the case that matters. A run that is killed leaves its directory
 /// behind, and after nineteen such runs the suite had left nineteen of them.
 /// </para>
 /// <para>
-/// <b>The liveness check is the working-directory lock, not a pid — and the
+/// <b>The liveness check is the working-directory lock, not a pid -- and the
 /// operation that tests it is a rename, not a delete.</b> A pid recorded in the
 /// name would need a creation-time pair to be safe against reuse, and would
 /// still be wrong the moment a pid was recycled; the lock cannot be wrong. The
@@ -36,7 +36,7 @@ namespace BrowserAI.Runtime;
 /// completely</b> and only then fails on the directory node itself. The live
 /// run's generated config, its surface child's profile, its output folder and
 /// its downloads folder were all gone; what survived was an empty directory. So
-/// the sweep did not skip a live run at all — it gutted one and reported
+/// the sweep did not skip a live run at all -- it gutted one and reported
 /// nothing, on every startup, against any instance older than
 /// <see cref="YoungEnoughToStillBeStarting"/>. <c>Directory.Move</c> refuses the
 /// same directory with its contents untouched, and succeeds the moment the
@@ -48,24 +48,24 @@ namespace BrowserAI.Runtime;
 /// ⚠️ <b>Corrected 2026-08-24 (previously "The liveness check is the
 /// working-directory lock … the lock cannot be wrong").</b> The lock cannot be
 /// wrong about what it measures, and what it measured was the wrong process.
-/// <b>Exactly one process ever held this directory as its current directory —
-/// the surface child</b> — while the directory holds the generated config of
+/// <b>Exactly one process ever held this directory as its current directory --
+/// the surface child</b> -- while the directory holds the generated config of
 /// <i>every</i> session in the run, and session children are given the session's
 /// own output root instead. So a surface child that died while the run kept
 /// serving left nothing holding the directory at all; a directory's
 /// <c>GetLastWriteTimeUtc</c> does not move when files inside it are written, so
 /// five minutes later another BrowserAI's startup sweep renamed it aside and
 /// deleted it, taking every live session's config with it. Found independently
-/// by both 2026-08-18 adversarial reviews —
+/// by both 2026-08-18 adversarial reviews --
 /// [locking](../../../docs/reviews/2026-08-18-adversarial-locking.md) B5 and
 /// [processes](../../../docs/reviews/2026-08-18-adversarial-processes.md)
-/// finding 11 — and carried as one hazard because it is one.
+/// finding 11 -- and carried as one hazard because it is one.
 /// </para>
 /// <para>
 /// <b>What removes it is a held marker, and the reason is that a sharing
 /// violation is a fact the kernel enforces rather than an inference.</b>
 /// <see cref="CreateFresh"/> opens <see cref="MarkerFileName"/> inside the
-/// directory it just created and holds it for the whole life of the process —
+/// directory it just created and holds it for the whole life of the process --
 /// the same mechanism <c>Updates.LiveInstances</c>, <c>Sessions.SessionLock</c>
 /// and <see cref="MaintenanceLock"/> all already use, and the kernel releases it
 /// however the process dies. It is taken by <b>BrowserAI itself</b> rather than
@@ -188,7 +188,7 @@ internal static class InstanceDirectory
     /// <b><see cref="TreeDelete"/>, never <c>Directory.Delete(recursive: true)</c>.</b>
     /// This
     /// runs on the clean exit path, on a directory that has just held a running
-    /// browser, and Chromium leaves mapped files behind for a moment after exit —
+    /// browser, and Chromium leaves mapped files behind for a moment after exit --
     /// the race is the normal case rather than the unlucky one. The framework
     /// primitive answers a locked file with one exception naming one node; this
     /// answers with every node that survived, which is what makes a leftover
@@ -276,7 +276,7 @@ internal static class InstanceDirectory
     /// <para>
     /// <b>Everything that is not a sharing violation answers <see langword="false"/>,
     /// and that is deliberate.</b> Absent, denied, on a directory that vanished
-    /// mid-enumeration — none of those is <i>held</i>, and none of them is acted
+    /// mid-enumeration -- none of those is <i>held</i>, and none of them is acted
     /// on here either: <see cref="Claim"/>'s rename is still the claim and still
     /// the last word, and it refuses for any of those reasons just as surely.
     /// Answering <see langword="true"/> on an unreadable marker would make every
@@ -320,9 +320,9 @@ internal static class InstanceDirectory
     /// </summary>
     /// <remarks>
     /// The rename is both halves of the check at once. It fails while any
-    /// process holds the directory as its current directory — which is the
+    /// process holds the directory as its current directory -- which is the
     /// liveness signal, and it fails <i>before</i> a single file has been
-    /// touched — and it succeeds atomically, so a second BrowserAI sweeping the
+    /// touched -- and it succeeds atomically, so a second BrowserAI sweeping the
     /// same root at the same instant meets a path that is no longer there rather
     /// than a tree it is also deleting.
     /// </remarks>
@@ -355,7 +355,7 @@ internal static class InstanceDirectory
 /// <b>Disposing it releases the marker and nothing else.</b> The directory
 /// itself is removed by <see cref="InstanceDirectory.Delete"/> on the clean exit
 /// path, or by the next run's sweep on the path where this process was
-/// terminated from outside and ran no code at all — which is the case the whole
+/// terminated from outside and ran no code at all -- which is the case the whole
 /// sweep exists for.
 /// </para>
 /// <para>
@@ -434,7 +434,7 @@ internal static partial class InstanceDirectoryLog
     /// </summary>
     /// <remarks>
     /// Debug, because it is the ordinary state whenever a second BrowserAI is
-    /// running — and it is a <i>different</i> line from
+    /// running -- and it is a <i>different</i> line from
     /// <see cref="StillHeld"/> on purpose. That one says a rename was refused
     /// and cannot say by what; this one names a live instance.
     /// </remarks>
@@ -444,7 +444,7 @@ internal static partial class InstanceDirectoryLog
     [LoggerMessage(
         EventId = 3,
         Level = LogLevel.Debug,
-        Message = "The instance directory {Directory} belongs to a BrowserAI that is still running — its marker '{Marker}' is open — so nothing in it was touched.")]
+        Message = "The instance directory {Directory} belongs to a BrowserAI that is still running -- its marker '{Marker}' is open -- so nothing in it was touched.")]
     public static partial void HeldByALiveInstance(ILogger logger, string directory, string marker);
 
     /// <summary>

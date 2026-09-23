@@ -10,13 +10,13 @@ namespace BrowserAI.Sessions;
 /// <remarks>
 /// <para>
 /// Everything a session accumulates is a subfolder, so the two files at the root
-/// are the ones that describe it — <c>browserai.lock</c> and
-/// <c>browserai.data</c> — and everything a tool writes goes into
+/// are the ones that describe it -- <c>browserai.lock</c> and
+/// <c>browserai.data</c> -- and everything a tool writes goes into
 /// <c>output\</c>.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-26 (previously "<c>browserai.lock</c>,
-/// <c>browserai.data</c> and the artifact index <c>session.json</c> — and
+/// <c>browserai.data</c> and the artifact index <c>session.json</c> -- and
 /// artifacts get a typed home instead of scattering among Chromium's
 /// internals").</b> <c>session.json</c> is gone and so are the typed homes:
 /// <c>output\</c> is flat, holding what the child wrote under the name the
@@ -24,7 +24,7 @@ namespace BrowserAI.Sessions;
 /// <c>session-&lt;stamp&gt;\</c>) inside it because they are upstream's to make.
 /// <i>The 2026-08-16 correction this replaces read: "<c>browserai.json</c> is
 /// the only file at the root and everything else is a subfolder".</i> What
-/// survives from both is the claim they were each making — <b>no artifact is
+/// survives from both is the claim they were each making -- <b>no artifact is
 /// ever at the session root</b>, so the files that <i>are</i> there describe the
 /// session rather than being things it produced. The generated Playwright config
 /// stays forbidden here for the same reason: it is a per-run artifact and lives
@@ -35,7 +35,7 @@ namespace BrowserAI.Sessions;
 /// <c>&lt;session-dir&gt;\browserai.log</c>).</b> Everything it carried is on
 /// stderr, which <c>ProcessLog.OpenSessionLog</c> already wrote to at every
 /// level, and everything about the session's own calls is in
-/// <c>browserai.data</c> — including, since the same day, the refusals that used
+/// <c>browserai.data</c> -- including, since the same day, the refusals that used
 /// to reach only the file. What the layout still provides is the half that is
 /// real from the moment a directory is claimed: every log record written while a
 /// lock is held carries the session, through <c>SessionLock</c>'s logging
@@ -53,7 +53,7 @@ internal static class SessionLayout
     /// ⚠️ <b>Renamed 2026-08-26 (previously <c>browserai.json</c>, and
     /// <c>lock.json</c> before that).</b> The record and the guard were one file
     /// for as long as the record was JSON, which is what made an append a
-    /// whole-file durable rewrite and a rename — 3.94 ms at 1 KB, 13.62 ms at
+    /// whole-file durable rewrite and a rename -- 3.94 ms at 1 KB, 13.62 ms at
     /// 400 KB, with the name unbound for every one of those windows. They are
     /// two files now: this one says <i>who owns this directory</i> and is
     /// written once, and <see cref="DataFileName"/> says <i>what happened
@@ -75,7 +75,7 @@ internal static class SessionLayout
     /// <para>
     /// <b>There is no compatibility read and no migration.</b> A directory
     /// holding the old <c>browserai.json</c> is refused with the format as the
-    /// reason — see <see cref="OldFormatRefusal"/>.
+    /// reason -- see <see cref="OldFormatRefusal"/>.
     /// </para>
     /// </remarks>
     public const string LockFileName = "browserai.lock";
@@ -88,8 +88,8 @@ internal static class SessionLayout
     /// answer rather than a directory that mysteriously is not a session.
     /// </summary>
     /// <remarks>
-    /// <b>It is a constant because three callers have to recognise it</b> —
-    /// acquisition, every read, and <c>browserai_destroy</c> — and a directory
+    /// <b>It is a constant because three callers have to recognise it</b> --
+    /// acquisition, every read, and <c>browserai_destroy</c> -- and a directory
     /// that one of them recognised and another did not would be taken by the
     /// one that did.
     /// </remarks>
@@ -97,7 +97,7 @@ internal static class SessionLayout
 
     /// <summary>
     /// What a guard being written durably is called before it is renamed over
-    /// <see cref="LockFileName"/> — and therefore what its presence beside an
+    /// <see cref="LockFileName"/> -- and therefore what its presence beside an
     /// absent <c>browserai.lock</c> means.
     /// </summary>
     /// <remarks>
@@ -119,7 +119,7 @@ internal static class SessionLayout
     /// the caller does next.</b> The file is intact and was written by a
     /// BrowserAI; what this build cannot do is read it. So the sentence names
     /// the format, says there is no converter, and names the one recovery there
-    /// is — which is not <c>browserai_destroy</c>, because that tool refuses a
+    /// is -- which is not <c>browserai_destroy</c>, because that tool refuses a
     /// directory it cannot recognise as a session and would leave the caller
     /// with a refusal about a refusal.
     /// </para>
@@ -141,7 +141,7 @@ internal static class SessionLayout
         return File.Exists(legacy)
             ? $"'{location.FullPath}' holds a '{LegacyRecordFileName}', which is the record format BrowserAI used before {DataFileName} and this build does not read. "
                 + $"It is not damaged and nothing was changed. There is no converter: a session in that format cannot be opened, listed, caught up on or destroyed by this build. "
-                + $"Delete the directory yourself if you no longer need it, or move '{LegacyRecordFileName}' aside and call browserai_init to start a session here — the profile beneath it is a browser profile and is not BrowserAI's to read."
+                + $"Delete the directory yourself if you no longer need it, or move '{LegacyRecordFileName}' aside and call browserai_init to start a session here -- the profile beneath it is a browser profile and is not BrowserAI's to read."
             : null;
     }
 
@@ -199,7 +199,7 @@ internal static class SessionLayout
     /// <remarks>
     /// <b>Both halves out of one walk.</b> <c>browserai_list</c> and
     /// <c>browserai_catch_up</c> both report what a session has written to
-    /// <c>output\</c>, and a count without a size — or the reverse — is the
+    /// <c>output\</c>, and a count without a size -- or the reverse -- is the
     /// half of a retention decision that cannot be acted on: forty files is
     /// nothing at four kilobytes each and a problem at four hundred megabytes.
     /// A second enumeration to get the other number would double the one cost

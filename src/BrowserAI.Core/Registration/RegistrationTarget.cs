@@ -14,7 +14,7 @@ namespace BrowserAI.Registration;
 /// the registry, the locator or the environment").</b> It reads the disk now,
 /// twice, and only the disk: it opens the composed sibling and reads eight bytes
 /// of its PE header. The half of the old sentence that survives is the half that
-/// mattered — <b>no Velopack call, no registry, no environment</b> — because
+/// mattered -- <b>no Velopack call, no registry, no environment</b> -- because
 /// every Velopack call throws under <c>dotnet run</c> and under every test host,
 /// which is what would make this untestable without an install. A file the suite
 /// can write is not that: <c>InstalledLayout</c> constructs both arms of the new
@@ -22,9 +22,9 @@ namespace BrowserAI.Registration;
 /// </para>
 /// <para>
 /// ⚠️ <b>The refusal is the feature: never register the execution stub.</b> An
-/// installed Velopack layout is <c>&lt;root&gt;\BrowserAI.exe</c> — a
+/// installed Velopack layout is <c>&lt;root&gt;\BrowserAI.exe</c> -- a
 /// <b>392,704-byte</b> Rust stub compiled
-/// <c>#![windows_subsystem = "windows"]</c> — beside
+/// <c>#![windows_subsystem = "windows"]</c> -- beside
 /// <c>&lt;root&gt;\current\BrowserAI.exe</c>, the <b>17,853,952-byte</b> binary
 /// that actually serves stdio
 /// ([kb](../../../kb/packaging/velopack.md#install--update--rollback-end-to-end)).
@@ -38,7 +38,7 @@ namespace BrowserAI.Registration;
 /// <b>Why the image path is still the input, and what it now buys.</b> Velopack
 /// invokes its fast-exit hooks on <c>--mainExe</c> and on nothing else, so inside
 /// a hook <see cref="Environment.ProcessPath"/> is <c>&lt;root&gt;\current\BrowserAI.exe</c>
-/// — the <b>configuration app</b>. That is the path that says which install this
+/// -- the <b>configuration app</b>. That is the path that says which install this
 /// is; it is not the path a client may be given. The stub never runs a hook, so
 /// the shape check below is a guard against a future caller rather than against
 /// Velopack.
@@ -56,8 +56,8 @@ namespace BrowserAI.Registration;
 /// </para>
 /// <para>
 /// <b>Why a name check would not have been enough.</b> A file called
-/// <c>BrowserAI.Server.exe</c> that is really the configuration app — a
-/// mispacked release, a copy somebody made, a rename — passes every check an
+/// <c>BrowserAI.Server.exe</c> that is really the configuration app -- a
+/// mispacked release, a copy somebody made, a rename -- passes every check an
 /// extension can make and fails at the worst possible moment: a client starts it
 /// expecting stdio, a window appears on the user's screen, and the client waits
 /// for a handshake that a dialog is never going to send. The subsystem is a
@@ -98,7 +98,7 @@ internal sealed record RegistrationTarget
     public required string Command { get; init; }
 
     /// <summary>
-    /// The install root — the directory <b>containing</b> <c>current\</c>.
+    /// The install root -- the directory <b>containing</b> <c>current\</c>.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>Corrected 2026-09-15 (previously "which is where everything that
@@ -138,7 +138,7 @@ internal sealed record RegistrationTarget
 
         if (!Path.IsPathFullyQualified(imagePath))
         {
-            refusal = $"'{imagePath}' is not a fully qualified path. A registered command is resolved by the client, in whatever working directory the client happens to have, so a relative one would name a different file on every launch — or none.";
+            refusal = $"'{imagePath}' is not a fully qualified path. A registered command is resolved by the client, in whatever working directory the client happens to have, so a relative one would name a different file on every launch -- or none.";
             return false;
         }
 
@@ -156,7 +156,7 @@ internal sealed record RegistrationTarget
         {
             // The one refusal that exists to stop a specific 392,704-byte file
             // from reaching a client's configuration.
-            refusal = $"'{imagePath}' is not inside a '{CurrentDirectoryName}' directory, so it is not the binary an installed BrowserAI serves stdio from. The execution stub sits beside that directory, is compiled as a Windows-subsystem binary and exits in 59 ms without waiting — a client registered against it sees its MCP server die at the handshake. Nothing is registered.";
+            refusal = $"'{imagePath}' is not inside a '{CurrentDirectoryName}' directory, so it is not the binary an installed BrowserAI serves stdio from. The execution stub sits beside that directory, is compiled as a Windows-subsystem binary and exits in 59 ms without waiting -- a client registered against it sees its MCP server die at the handshake. Nothing is registered.";
             return false;
         }
 
@@ -176,7 +176,7 @@ internal sealed record RegistrationTarget
 
         if (!File.Exists(server))
         {
-            refusal = $"'{server}' is not there. BrowserAI registers its MCP server, '{ServerFileName}', which ships beside the configuration app that runs the installer's hooks — and this install has the app without the server. Nothing is registered: a client pointed at a file that does not exist reports a server that will not start, with nothing to say which file was missing. Reinstall BrowserAI, or run the installer again over this root.";
+            refusal = $"'{server}' is not there. BrowserAI registers its MCP server, '{ServerFileName}', which ships beside the configuration app that runs the installer's hooks -- and this install has the app without the server. Nothing is registered: a client pointed at a file that does not exist reports a server that will not start, with nothing to say which file was missing. Reinstall BrowserAI, or run the installer again over this root.";
             return false;
         }
 
@@ -184,7 +184,7 @@ internal sealed record RegistrationTarget
 
         if (subsystem is not Runtime.PeSubsystem.WindowsCui)
         {
-            refusal = $"'{server}' is {Runtime.PeSubsystem.Describe(subsystem)}, and BrowserAI's MCP server is a console-subsystem binary because a client speaks to it over stdio. A file of this kind at that name is either a mispacked release or somebody's copy of '{AppFileName}' wearing the server's name — and registering it would put a window on the screen at every session start while the client waited forever for a handshake. Nothing is registered.";
+            refusal = $"'{server}' is {Runtime.PeSubsystem.Describe(subsystem)}, and BrowserAI's MCP server is a console-subsystem binary because a client speaks to it over stdio. A file of this kind at that name is either a mispacked release or somebody's copy of '{AppFileName}' wearing the server's name -- and registering it would put a window on the screen at every session start while the client waited forever for a handshake. Nothing is registered.";
             return false;
         }
 

@@ -12,7 +12,7 @@ provisioning reads. The rig is
 the figures it produced are in
 [kb: first-run provisioning](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)
 and
-[Firefox, measured the same way](../../../kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way--2026-08-19).
+[Firefox, measured the same way](../../../kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way----2026-08-19).
 
 ## What is here
 

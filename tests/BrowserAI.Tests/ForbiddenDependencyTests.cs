@@ -13,7 +13,7 @@ namespace BrowserAI.Tests;
 /// mechanism for an API and the wrong one for a dependency. With no
 /// <c>PackageReference</c> the forbidden type does not resolve, so the analyzer
 /// matches nothing and the entry sits there reading as coverage while providing
-/// none — it could only ever fire after somebody had already added the package
+/// none -- it could only ever fire after somebody had already added the package
 /// <b>and</b> written code against it. The reference is the earlier signal and
 /// the one that costs least to reverse, so the reference is what is asserted.
 /// </para>
@@ -76,8 +76,8 @@ internal sealed class ForbiddenDependencyTests
     /// <b>It is the convenient one, and taking it silently downgrades the
     /// native SQLite this repository pins in its own tree.</b> The meta package
     /// depends on <c>SQLitePCLRaw.bundle_e_sqlite3</c>, which carries its own
-    /// pinned native build — 3.53.0 through bundle 2.1.12 when this was written
-    /// — so a reference added "for convenience" replaces the version
+    /// pinned native build -- 3.53.0 through bundle 2.1.12 when this was written
+    /// -- so a reference added "for convenience" replaces the version
     /// <c>third-party/sqlite</c> holds with an older one, and everything keeps
     /// working. Nothing in a lock file reads as wrong; the amalgamation is
     /// still vendored, the drift row is still accurate, and the binary is
@@ -85,7 +85,7 @@ internal sealed class ForbiddenDependencyTests
     /// </para>
     /// <para>
     /// <b>The <c>.Core</c> package is a different question and is not banned
-    /// here.</b> It carries no native library at all, so it cannot do this —
+    /// here.</b> It carries no native library at all, so it cannot do this --
     /// what it would cost is three managed packages and their notices in front
     /// of a publish that fails on one ILC warning, which is a trade somebody
     /// may legitimately want to make later. This bans the one that fails
@@ -114,7 +114,7 @@ internal sealed class ForbiddenDependencyTests
         var native = Mentioning("SourceGear.sqlite3").ToList();
 
         // ⚠️ THREE SINCE 2026-08-26 (previously two). The test PROBE opens
-        // sessions too, and since the cutover a session is a database — so a
+        // sessions too, and since the cutover a session is a database -- so a
         // CoreCLR probe with no `e_sqlite3.dll` beside it dies on
         // `DllNotFoundException` and reports as a race that nobody won, which is
         // exactly what sixteen contenders did. The count is asserted rather than
@@ -134,7 +134,7 @@ internal sealed class ForbiddenDependencyTests
     /// and that distinction is load-bearing rather than tidy.</b>
     /// <c>Directory.Packages.props</c> names FluentAssertions and
     /// <c>Microsoft.NET.Test.Sdk</c> in a comment, precisely in order to forbid
-    /// them — so a substring scan reports the prohibition itself as a violation,
+    /// them -- so a substring scan reports the prohibition itself as a violation,
     /// which it did on the first run. Writing down why a rule exists must not
     /// violate the rule.
     /// </para>

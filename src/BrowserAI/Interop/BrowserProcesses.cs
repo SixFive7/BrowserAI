@@ -8,7 +8,7 @@ using Microsoft.Win32.SafeHandles;
 namespace BrowserAI.Interop;
 
 /// <summary>
-/// Which live processes are running an executable BrowserAI owns — answered by
+/// Which live processes are running an executable BrowserAI owns -- answered by
 /// <b>full image path</b>, never by image name.
 /// </summary>
 /// <remarks>
@@ -27,9 +27,9 @@ namespace BrowserAI.Interop;
 /// <c>QueryFullProcessImageNameW</c>, and every API on it is documented and
 /// supported.</b> <c>EnumProcesses</c> itself costs ~0.06 ms; the whole cost is
 /// the per-process open, and the ~150 processes this token cannot open are
-/// protected and SYSTEM-owned ones — nothing BrowserAI launched can be in that
+/// protected and SYSTEM-owned ones -- nothing BrowserAI launched can be in that
 /// set, because it runs as the user and non-elevated
-/// ([kb](../../../kb/windows/detection.md#process-image-path--the-fully-documented-detection-path)).
+/// ([kb](../../../kb/windows/detection.md#process-image-path----the-fully-documented-detection-path)).
 /// </para>
 /// <para>
 /// <b>Terminating is <see cref="StrayCandidate"/>'s, and only after a second
@@ -42,7 +42,7 @@ namespace BrowserAI.Interop;
 /// </para>
 /// <para>
 /// <b>Every row carries a creation time.</b> A pid alone is meaningless the
-/// moment the process exits, and Windows reuses pids — so the pair is the
+/// moment the process exits, and Windows reuses pids -- so the pair is the
 /// identity, exactly as it is for <see cref="ProcessLiveness"/>. A process that
 /// exits between the snapshot and the image-path read is dropped rather than
 /// reported with a name that may already belong to a stranger.
@@ -57,7 +57,7 @@ internal static partial class BrowserProcesses
     /// <param name="root">
     /// An absolute directory. Matching is a case-insensitive prefix match on the
     /// process's full image path, with a separator appended so that a root of
-    /// <c>…\browsers</c> cannot match <c>…\browsers-backup</c> — and it is made
+    /// <c>…\browsers</c> cannot match <c>…\browsers-backup</c> -- and it is made
     /// against <b>every spelling of this root</b> a Win32 path reporter could
     /// answer with, never only the one <c>Path.Combine</c> produced. See
     /// <see cref="ImageSpellings"/>.
@@ -75,7 +75,7 @@ internal static partial class BrowserProcesses
         // Every spelling of the root a Win32 path reporter could answer with, not
         // only the one Path.Combine produced. See ImageSpellings: a junction
         // above the root made this list empty for every process on the machine,
-        // and here that empties RevisionPrune's live set — which is the census a
+        // and here that empties RevisionPrune's live set -- which is the census a
         // tree is DELETED on when it comes back empty.
         var prefixes = ImageSpellings.OfDirectory(root).Matched
             .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar) ? spelling : spelling + Path.DirectorySeparatorChar)
@@ -191,7 +191,7 @@ internal static partial class BrowserProcesses
     /// <b><c>NtQuerySystemInformation</c> is deliberately not used</b> even
     /// though it would return every image name in one call: at this cost there
     /// is nothing to buy, and it would put an image-<i>name</i> comparison
-    /// inside the detection path — which is the pattern that erodes into the
+    /// inside the detection path -- which is the pattern that erodes into the
     /// rule this file exists to keep.
     /// </remarks>
     private static int[] ProcessIds()
@@ -294,7 +294,7 @@ internal sealed record PathSpelling(string Composed, string? Reported, string? W
 
 /// <summary>
 /// Every spelling of a set of paths BrowserAI composed that a Win32 path
-/// reporter could answer with — and, where one could not be established, why.
+/// reporter could answer with -- and, where one could not be established, why.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -303,8 +303,8 @@ internal sealed record PathSpelling(string Composed, string? Reported, string? W
 /// with <c>Path.Combine</c>, which never resolves a link;
 /// <c>QueryFullProcessImageNameW</c> answers with the path <b>after</b> the
 /// object manager has done reparse processing. One junction above the install
-/// root — a relocated user profile, a redirected <c>AppData</c>, a
-/// <c>subst</c>ed letter, an 8.3 component — therefore made the two different
+/// root -- a relocated user profile, a redirected <c>AppData</c>, a
+/// <c>subst</c>ed letter, an 8.3 component -- therefore made the two different
 /// strings for every process on the machine, so
 /// <see cref="BrowserProcesses.ScanFor"/> returned <c>candidates=0</c> for good
 /// and <see cref="BrowserProcesses.RunningFrom"/> returned an empty live set for
@@ -321,8 +321,8 @@ internal sealed record PathSpelling(string Composed, string? Reported, string? W
 ///   <item><description>
 ///     <b>Only paths BrowserAI itself composed are ever resolved.</b> Nothing
 ///     here is ever asked of a path a foreign process reported. The direction is
-///     one-way by construction — the wanted set is canonicalised once, before
-///     the scan — so no stranger's process can influence what is opened, and the
+///     one-way by construction -- the wanted set is canonicalised once, before
+///     the scan -- so no stranger's process can influence what is opened, and the
 ///     22-second hazard <see cref="VolumeIdentity"/> is ordered around cannot be
 ///     reached through the process list.
 ///   </description></item>
@@ -336,9 +336,9 @@ internal sealed record PathSpelling(string Composed, string? Reported, string? W
 ///   </description></item>
 ///   <item><description>
 ///     <b>Nothing between a candidate and a kill is touched.</b> A candidate
-///     becomes a stray only when a second, independent guard agrees — its
+///     becomes a stray only when a second, independent guard agrees -- its
 ///     attributed directory holds a <c>browserai.lock</c> whose lock the sweeper
-///     can take itself — and the kill still runs behind the held process handle
+///     can take itself -- and the kill still runs behind the held process handle
 ///     and the creation-time re-check. Widening detection moves the first guard
 ///     and no other.
 ///   </description></item>
@@ -347,14 +347,14 @@ internal sealed record PathSpelling(string Composed, string? Reported, string? W
 /// <b>The leaf is deliberately not resolved, and the gap is named rather than
 /// left to be found.</b> What is resolved is the <i>containing directory</i>,
 /// with the file name re-attached. That is what every alias form this product
-/// actually meets is made of — a link, a substitution or a short name is a
-/// property of a directory component — and it is also what keeps this off a
+/// actually meets is made of -- a link, a substitution or a short name is a
+/// property of a directory component -- and it is also what keeps this off a
 /// running image: opening the executable itself would meet the loader's own
 /// section, whose refusal is not <i>this name does not exist</i> and would
 /// therefore stop <see cref="VolumeIdentity.DeepestExistingFinalName"/>'s walk
 /// with no answer at all, on exactly the machine where a browser is running.
 /// <b>A symlinked leaf is consequently still invisible</b>, and it lands in
-/// <see cref="Unresolved"/>'s sibling condition rather than being reported —
+/// <see cref="Unresolved"/>'s sibling condition rather than being reported --
 /// which is a real, narrow hole in a guard that used to have a wide one.
 /// </para>
 /// </remarks>
@@ -410,7 +410,7 @@ internal sealed class ImageSpellings
     /// <summary>Resolves a set of composed <b>executable</b> paths.</summary>
     /// <remarks>
     /// <b>Each is resolved through its containing directory and the file name is
-    /// re-attached</b> — see this type's remarks for both halves of why. There
+    /// re-attached</b> -- see this type's remarks for both halves of why. There
     /// are two factories rather than one that guesses, because whether a path
     /// names a file or a directory is a fact the caller has and the filesystem
     /// would have to be asked for.
@@ -427,8 +427,8 @@ internal sealed class ImageSpellings
     /// <summary>Resolves one composed <b>directory</b>, leaf included.</summary>
     /// <remarks>
     /// <b>The leaf is resolved here and skipped for an executable</b>, and the
-    /// asymmetry is the point: a directory leaf may itself be the junction — a
-    /// browsers root somebody linked aside is exactly that — while an executable
+    /// asymmetry is the point: a directory leaf may itself be the junction -- a
+    /// browsers root somebody linked aside is exactly that -- while an executable
     /// leaf is a file the loader has mapped, which is the one open that would end
     /// the walk with no answer.
     /// </remarks>
@@ -573,7 +573,7 @@ internal sealed partial class StrayCandidate : IDisposable
     /// <remarks>
     /// <b>The re-check is not redundant with the held handle.</b> The handle is
     /// what makes the pid safe; this is what makes a <i>stale candidate object</i>
-    /// safe — one built before a wait, carried across a decision, or handed in by
+    /// safe -- one built before a wait, carried across a decision, or handed in by
     /// a caller who read the identity from somewhere else. It costs one syscall
     /// and it is the last thing between this product and terminating a stranger.
     /// </remarks>
@@ -581,7 +581,7 @@ internal sealed partial class StrayCandidate : IDisposable
     {
         if (!IsStillTheProcessThatWasFound())
         {
-            refusal = $"PID {ProcessId} is no longer the process that was found — its creation time has changed, so the pid now names something else. Nothing was terminated.";
+            refusal = $"PID {ProcessId} is no longer the process that was found -- its creation time has changed, so the pid now names something else. Nothing was terminated.";
             return false;
         }
 

@@ -11,7 +11,7 @@ Measured 2026-08-15 with a throwaway probe that called
 exists, and **the parts that survived are re-established by
 `BrowserContainmentTests` and `FirefoxTests` in this repository's own suite**,
 named per entry below. Anything not carrying a test name was measured once by the
-spike and is marked as such — the general route is the same either way: ask the
+spike and is marked as such -- the general route is the same either way: ask the
 Win32 API of a live process, never argue from a command line's length.
 
 > ⚠️ **Corrected 2026-08-16 @ build-order step 17 (previously: the whole of this
@@ -19,9 +19,9 @@ Win32 API of a live process, never argue from a command line's length.
 > table was the answer to "can a browser we launch be resurrected").** **It holds
 > for Chromium and not for Firefox**, and the difference is not one of degree:
 > Chromium's registration fails because the command line is too long, and Firefox
-> never goes near that limit — its call site is gated on a preference instead. So
+> never goes near that limit -- its call site is gated on a preference instead. So
 > the length argument covers one family and is silent about the other, and
-> [the measurement below](#the-firefox-half-measured-on-both-sides--2026-08-16)
+> [the measurement below](#the-firefox-half-measured-on-both-sides----2026-08-16)
 > is what fills the gap. The consequence is that BrowserAI does ship a
 > restart-registration lever after all, for Firefox only; see
 > [DECISIONS → Processes, browsers and session modes](../../DECISIONS.md#processes-browsers-and-session-modes).
@@ -38,10 +38,10 @@ directly with a 206-character command line returns `0x00000000`, flags `0x7`
 (`RESTART_NO_CRASH | RESTART_NO_HANG | RESTART_NO_PATCH`), registered command
 line 189 characters. Both ends of the measurement are live. `[FLOATS]`
 
-**The boundary is 1023, not 1024** — `RESTART_MAX_CMD_LINE` counts the NUL.
+**The boundary is 1023, not 1024** -- `RESTART_MAX_CMD_LINE` counts the NUL.
 Reproduced twice: synthetically in an isolated process, and **inside Chrome
 itself** by padding a short command line (1023 → registered, 1024 →
-`ERROR_NOT_FOUND`). Rejection is total and silent — no truncation, no partial
+`ERROR_NOT_FOUND`). Rejection is total and silent -- no truncation, no partial
 registration; the browser runs normally either way. `[STABLE]`
 
 ## Margins, per shippable configuration
@@ -74,7 +74,7 @@ just as a short headless one does. Length is the only variable at that call site
 Chromium calls `RegisterApplicationRestart` in
 `ChromeBrowserMainParts::PreMainMessageLoopRunImpl()`, guarded only by
 `--browser-test`. It passes `RESTART_NO_CRASH | RESTART_NO_HANG |
-RESTART_NO_PATCH` — deliberately **omitting** `RESTART_NO_REBOOT`.
+RESTART_NO_PATCH` -- deliberately **omitting** `RESTART_NO_REBOOT`.
 `GetRestartCommandLine` rebuilds from a sorted, deduplicated `std::map`, drops
 non-switch args and `kFromInstaller`, strips `about_flags` sentinels, and appends
 `--restore-last-session` and `--restart`. `[FLOATS]`
@@ -82,11 +82,11 @@ non-switch args and `kFromInstaller`, strips `about_flags` sentinels, and append
 **Firefox registers too**, in `nsAppRunner.cpp`, with `RESTART_NO_CRASH |
 RESTART_NO_HANG` and the original argv (`argv[0]` replaced by `-os-restarted`),
 so `-profile <dir>` survives. Gated on the pref
-`toolkit.winRegisterApplicationRestart`, default `true`, **observed at runtime** —
+`toolkit.winRegisterApplicationRestart`, default `true`, **observed at runtime** --
 setting it false calls `UnregisterApplicationRestart()`. This is the only place
 resurrection can be prevented outright rather than cleaned up after. `[FLOATS]`
 
-## The Firefox half, measured on both sides — 2026-08-16
+## The Firefox half, measured on both sides -- 2026-08-16
 
 **A Playwright-launched Firefox registers, and the preference turns it off.**
 Both arms measured the same day on the same machine, against the Firefox
@@ -100,14 +100,14 @@ BrowserAI provisions (`firefox-1539`, Firefox 153.0), by asking
 | BrowserAI's generated config | 7 | **0** (all `ERROR_NOT_FOUND`) |
 
 Re-establish with `BrowserContainmentTests.AFirefoxTreeIsContainedAndItsProfileDeletesCleanly`
-— the control, which launches from a hand-written config with no preference —
+-- the control, which launches from a hand-written config with no preference --
 and `FirefoxTests.AFirefoxWeLaunchedIsAttributedToItsSessionAndIsNotRegisteredForRestart`,
 which launches from the product's generator. **Both are assertions**, so a
 change in either direction is a red build.
 
 **The preference does not arrive the way it looks like it does, and this is the
 trap.** `firefoxUserPrefs` is written into the profile's `user.js` only on the
-**BiDi** launcher's path — `BidiFirefox.prepareUserDataDir` → `createProfile` →
+**BiDi** launcher's path -- `BidiFirefox.prepareUserDataDir` → `createProfile` →
 `writePreferences`, read in `coreBundle.js` 2026-08-16. `@playwright/mcp` takes
 the **classic (juggler)** path, whose `prepareUserDataDir` is the base class's
 empty one; there the preferences are delivered over the wire in
@@ -120,7 +120,7 @@ the day it was written. `[FLOATS]`
 > **The consequence, stated rather than glossed: this is an unregistration, not
 > a prevention.** The preference reaches Firefox after its own startup has run,
 > so a Firefox launched through Playwright is registered for a moment and then
-> unregisters itself. **The width of that window is `[UNVERIFIED]`** — it was not
+> unregisters itself. **The width of that window is `[UNVERIFIED]`** -- it was not
 > measured, and measuring it means sampling `GetApplicationRestartSettings` from
 > the instant the process appears. What is measured is the steady state, which
 > is what a reboot or an update hours later would find.
@@ -149,19 +149,19 @@ browser stays fully functional through Playwright. `[FLOATS]`
 The in-process `base::CommandLine` **is** rewritten when Chrome falls back to a
 default profile; the **PEB command line is never rewritten** (the poisoned
 `--user-data-dir` survives verbatim at 1803 chars). So a broken Chrome *can*
-register where a healthy one would too — but the swap is path-for-path, worth ~12
+register where a healthy one would too -- but the swap is path-for-path, worth ~12
 characters (1722 as-launched vs 1710 rewritten). Against a 699-character overflow
 it cannot bridge the gap, and direct measurement agrees: the poisoned Playwright
 browser was **not** registered. `[FLOATS]`
 
 ## Machine state
 
-`HKCU\...\Winlogon\RestartApps = 1` — Settings › Accounts › Sign-in options ›
+`HKCU\...\Winlogon\RestartApps = 1` -- Settings › Accounts › Sign-in options ›
 "Automatically save my restartable apps". `DisableAutomaticRestartSignOn` not
 set, so ARSO is at its default: apps relaunch **into a locked session before
 anyone signs in**, which is why they were invisible. `HKCU\...\RunOnce` present
 but empty (consumed at logon). `HKCU\...\Run` has 12 entries, **no Chrome entry**
-— consistent with `StartupLaunchManager::UpdateLaunchOnStartup` returning early
+-- consistent with `StartupLaunchManager::UpdateLaunchOnStartup` returning early
 whenever `--user-data-dir` is present, so Chrome never writes a Run entry for a
 Playwright profile. `[MACHINE]`
 

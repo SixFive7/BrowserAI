@@ -14,7 +14,7 @@ namespace BrowserAI.Protocol;
 /// <b>This is row 5 of the charter's opening table, not a refinement of it.</b>
 /// The setup BrowserAI replaces warned on <i>any</i> stderr, and
 /// <c>@playwright/mcp</c> prints a benign <c>Session: &lt;path&gt;</c> line on
-/// every healthy start with session logging on — so the warning fired on every
+/// every healthy start with session logging on -- so the warning fired on every
 /// good run, and a reader who has learned to ignore a warning is a reader who
 /// will ignore the real one. Shipping without this does not leave a gap; it
 /// reintroduces a fixed bug in the product built to stop it.
@@ -24,13 +24,13 @@ namespace BrowserAI.Protocol;
 /// from <c>SixFive7/Workspace657</c>, <c>playwright/launch.ps1</c> at commit
 /// <c>a9ac747</c>, and a copy of those two lines is committed beside this file as
 /// <c>StandardErrorClassifier.reference.ps1</c>. This is behaviour being copied
-/// deliberately, so a transcription difference is a silent behaviour change —
+/// deliberately, so a transcription difference is a silent behaviour change --
 /// which is why <c>StandardErrorClassifierTests</c> compares the constants below
 /// against that copy character by character rather than trusting the eye.
 /// </para>
 /// <para>
 /// <b>Two groups, and the asymmetry between them is the whole design.</b> Prefix
-/// words — <c>error</c>, <c>fatal</c>, <c>unknown option</c> — count only at the
+/// words -- <c>error</c>, <c>fatal</c>, <c>unknown option</c> -- count only at the
 /// start of a line, so prose like <i>"no errors"</i> does not trip them. Phrases
 /// specific enough to be unambiguous match anywhere, because the missing-browser
 /// diagnostic reports mid-sentence.
@@ -49,7 +49,7 @@ namespace BrowserAI.Protocol;
 /// <b>A verdict is a log level, not a session error.</b> Nothing here reaches a
 /// caller: <see cref="Sessions.SessionErrors"/> is the catalogue of refusals a
 /// model reads and acts on, and an error-shaped stderr line names no tool, no
-/// recovery and often no session — the child that writes <c>error: unknown
+/// recovery and often no session -- the child that writes <c>error: unknown
 /// option</c> dies before any session exists. It belongs in the log, at a level a
 /// human tailing it would notice, which is exactly what the reference does with
 /// its own <c>WARNING</c> verdict.

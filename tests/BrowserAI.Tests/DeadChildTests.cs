@@ -30,7 +30,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>The layer is the in-process rig, and what it is not evidence about is
 /// stated rather than implied.</b> A session child here is a
 /// <c>FakePlaywrightChild</c> over a pipe, so nothing below says anything about
-/// <c>ChildProcessSession</c> — its launcher, its job object or its process
+/// <c>ChildProcessSession</c> -- its launcher, its job object or its process
 /// handle. <see cref="DirectStdioClientTransportTests"/> carries the real-process
 /// half against a child this suite really starts and really kills.
 /// </para>
@@ -57,7 +57,7 @@ internal sealed class DeadChildTests
     /// <para>
     /// <b>The wait before the resume is not a sleep and not a timeout.</b> A
     /// child mid-exit counts as dead only once the transport says so, which is
-    /// the product's own rule — so the arm waits for the transport to report
+    /// the product's own rule -- so the arm waits for the transport to report
     /// end-of-stream before asking, and a resume issued earlier is entitled to
     /// answer that nothing changed.
     /// </para>
@@ -117,7 +117,7 @@ internal sealed class DeadChildTests
     /// <remarks>
     /// <b>The control for the arm above, and it is not decoration.</b> A
     /// liveness check that answered <i>dead</i> too readily would relaunch a
-    /// working child on every resume — throwing away the browser, the page and
+    /// working child on every resume -- throwing away the browser, the page and
     /// the tab the caller was about to pick up, while reporting a repair.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -154,9 +154,9 @@ internal sealed class DeadChildTests
     /// <para>
     /// ⚠️ <b>The thing this replaces is silence.</b> A request handed to the SDK
     /// after its transport's channel has completed is registered in a
-    /// pending-request table that nothing will ever walk again — the walk that
+    /// pending-request table that nothing will ever walk again -- the walk that
     /// faults it runs once, as the channel completes
-    /// (<see href="../../kb/mcp/sdk.md">kb</see>) — so it waits on the caller's
+    /// (<see href="../../kb/mcp/sdk.md">kb</see>) -- so it waits on the caller's
     /// token and on nothing else. Measured 2026-09-17 against the published
     /// slice at 900,000 ms.
     /// </para>
@@ -216,7 +216,7 @@ internal sealed class DeadChildTests
     /// <b>The control, and the failure it guards against is the obvious way to
     /// get this wrong.</b> A liveness question answered with a clock, or asked
     /// of a child that is merely busy, would turn every long page action into a
-    /// refusal — and a refusal is what a model would act on. The call below is
+    /// refusal -- and a refusal is what a model would act on. The call below is
     /// held open while the child goes on listening, exactly as a navigation that
     /// takes a while does, and it has to come back with the child's own result.
     /// </remarks>
@@ -319,22 +319,22 @@ internal sealed class DeadChildTests
     /// <b>This is a wording guard and it is deliberate.</b> Every other arm in
     /// this file asserts against <c>SessionManager.ChildWasRelaunched</c> the
     /// constant, so all of them stay green through any rewrite of the text the
-    /// constant holds — which is exactly how the sentence below shipped for five
+    /// constant holds -- which is exactly how the sentence below shipped for five
     /// days saying something measurement contradicts.
     /// </para>
     /// <para>
     /// <b>What it is guarding, measured.</b> 2026-09-22 at chromium 1246 and
     /// firefox 1549, eight runs over two sittings: a relaunch after the child
     /// was <i>killed</i> lost at least one persistent store beyond
-    /// <c>sessionStorage</c> every time — the cookie on both Chromium runs,
-    /// <c>localStorage</c> on one Chromium and both Firefox runs — while the
+    /// <c>sessionStorage</c> every time -- the cookie on both Chromium runs,
+    /// <c>localStorage</c> on one Chromium and both Firefox runs -- while the
     /// clean handover through the identical probe lost <c>sessionStorage</c> and
     /// nothing else on 4 of 4. The string nevertheless read <i>"so cookies and
     /// stored state are still there"</i>.
     /// </para>
     /// <para>
     /// ⚠️ <b>And it does NOT say "killed", which is the half Q223 c settled.</b>
-    /// The obvious narrowing — blame the <c>kill</c> — was measured and refused:
+    /// The obvious narrowing -- blame the <c>kill</c> -- was measured and refused:
     /// a child that ends ITSELF with <c>process.exit(0)</c>, a death nobody
     /// caused, loses the same stores as one that is terminated
     /// (<see href="../../docs/probes/2026-09-16-resume/README.md">the rig</see>).

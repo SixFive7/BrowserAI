@@ -12,7 +12,7 @@ saying what it re-establishes and which row cites it. What they produced is in
 ⚠️ **A rig is the shape that produced a number, never the authority for it.**
 Every entry these support is written to stand on its own procedure; read the
 entry first. A rig that no longer runs does not weaken the measurement, and
-editing one to make it run again does not re-take it — only a run does that, and
+editing one to make it run again does not re-take it -- only a run does that, and
 a run gets a date.
 
 ⚠️ **Several of these touch machine-wide state**: the shared provisioned
@@ -21,24 +21,24 @@ README says so where it applies. Read it before running anything.
 
 ## Why this is under `docs/` and not under `build/`
 
-⚠️ **ONE FILE KEEPS THESE HERE NOW, AND IT IS A REAL VIOLATION — *corrected
+⚠️ **ONE FILE KEEPS THESE HERE NOW, AND IT IS A REAL VIOLATION -- *corrected
 2026-09-17 (previously "**Because `build/` is code this repository builds and
 runs, and everything under it is read by the tree-as-text scans that govern
 product code.** These rigs are scratch from before several of those rules, and
 **7 of the 14 directories hold at least one file that would trip
-`NeverByImageNameTests`** — the predicate being a file among the extensions that
+`NeverByImageNameTests`** -- the predicate being a file among the extensions that
 scan reads (`.cs`, `.ps1`, `.psm1`, `.mjs`, `.js`) containing one of its five
 forbidden needles. `Get-Process` in 10 files, `Win32_Process` in 7, and in
 `2026-09-14-firstrun/observe.ps1` a real `GetProcessesByName`; `taskkill` and
 `szExeFile` appear in none", and "⚠️ **Every one of those uses is by pid or by
 parent pid, and not one matches on an image name**, so the rigs satisfy the RULE
-— *never match, count or terminate by name* — and fail the SCAN, which is a
+-- *never match, count or terminate by name* -- and fail the SCAN, which is a
 substring scan that cannot tell the two apart")*.**
 
-**The scan reads the FILTER rather than the API from 2026-09-17** — **Q203**,
+**The scan reads the FILTER rather than the API from 2026-09-17** -- **Q203**,
 implemented in
 [`ProcessSelection`](../../tests/BrowserAI.Tests/Harness/ProcessSelection.cs) with
-synthetic controls pointing both ways — so the fourteen false positives are gone.
+synthetic controls pointing both ways -- so the fourteen false positives are gone.
 **Re-measured through the real scan on the day it landed**, the predicate being
 *a file among the extensions the scan reads whose code text selects a process by
 its image name*:
@@ -49,7 +49,7 @@ its image name*:
 | **New**, a name FILTER rather than the API | **1 of 36** | **1 of 14** |
 
 ⚠️ **The denominators are the 2026-09-17 measurement and are left as measured.**
-*Added 2026-09-21, when a fifteenth rig arrived* —
+*Added 2026-09-21, when a fifteenth rig arrived* --
 [`2026-09-21-webmcp`](2026-09-21-webmcp/README.md), two `.mjs` files taken during
 the `@playwright/mcp` 0.0.82 review. **The NUMERATORS are what the decision below
 rests on and neither moved**: that rig selects no process at all, by name or
@@ -63,7 +63,7 @@ this rig is not one.
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
-counting by name* — the thing
+counting by name* -- the thing
 [the rule's own remark](../../tests/BrowserAI.Tests/NeverByImageNameTests.cs)
 forbids, as against the *observing* it permits. The previous sentence here said
 every use was by pid or parent pid; that was true of fourteen files and false of
@@ -71,34 +71,34 @@ this one.
 
 ⚠️ **And it cannot be re-spelled pid-keyed without changing what the rig
 measured.** Its watch list is `conhost`, `OpenConsole`, `WindowsTerminal`,
-`node`, `chrome`, `firefox`, `headless_shell` and four install names — it is
+`node`, `chrome`, `firefox`, `headless_shell` and four install names -- it is
 watching for a **console host appearing anywhere on the machine**, which is the
 whole finding, and no pid or path form expresses that. Editing it to satisfy the
 scan would make the record no longer the thing that was run, which this file's own
 warning above forbids: *only a run re-takes a measurement, and a run gets a date.*
 
 **So the boundary being kept here is code-we-run against records-of-what-was-run,
-and it is the boundary the scan already draws** — `RepositoryLayout.SourceAndScriptFiles`
+and it is the boundary the scan already draws** -- `RepositoryLayout.SourceAndScriptFiles`
 is `src`, `tests` and `build`, and has never read `docs/`. Nothing here is built,
 nothing in the suite invokes it, and a rig is not sanctioned to be re-run
 unaltered. **This is not a hiding place and must not become one**, and it is now
 one file wide rather than seven rigs wide. *Placed here 2026-09-16, when the
 scratch directory was retired; `build/probes/` existed for one commit, `bc68db0`,
 and went red on exactly this.* **The move to `build/probes/` was performed and
-reverted on 2026-09-17** — thirteen rigs pass the new scan and `observe.ps1` does
+reverted on 2026-09-17** -- thirteen rigs pass the new scan and `observe.ps1` does
 not.
 
 ⚠️ **DECIDED 2026-09-17: ALL FOURTEEN STAY HERE.** *Corrected the same day
 (previously "splitting the collection across two homes, or rewriting the rig, are
 both decisions for whoever owns the rule rather than for the batch that improved
-the scan")* — it was put to whoever owns the rule and the answer was (a), leave
+the scan")* -- it was put to whoever owns the rule and the answer was (a), leave
 them. **The reason is that the blind spot is now one file wide instead of seven
 rigs wide**, and the two alternatives each cost more than that: splitting
 thirteen rigs into `build/probes/` and leaving one behind under `docs/` makes a
 collection you have to look for in two places, and rewriting `observe.ps1` to be
 pid-keyed falsifies the record of method for a scan's benefit, which is the thing
 the warning at the top of this file forbids. **`observe.ps1` is the one true
-positive and is named here so that it stays one** — if a second rig ever trips
+positive and is named here so that it stays one** -- if a second rig ever trips
 the scan, that is a new decision rather than a precedent, and the honest move at
 that point is to ask again rather than to widen this paragraph.
 

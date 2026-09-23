@@ -11,7 +11,7 @@ namespace BrowserAI.Tests.Harness;
 /// ⚠️ <b>This exists because the alternative was choosing a shell.</b> A test
 /// host started from PowerShell walks up from an <c>AppContext.BaseDirectory</c>
 /// spelled <c>C:\…</c>; the same host started from Git Bash gets <c>c:\…</c>.
-/// Windows itself always answers <b>upper-case</b> — <c>GetFinalPathNameByHandleW</c>,
+/// Windows itself always answers <b>upper-case</b> -- <c>GetFinalPathNameByHandleW</c>,
 /// <c>QueryFullProcessImageNameW</c> and the mount manager underneath them all
 /// report the letter that way. So an assertion comparing a path a test composed
 /// against a path the OS re-spelled is green from one shell and red from the
@@ -20,13 +20,13 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>A single-shell run cannot see it, whoever runs it.</b> The hosted CI this
 /// project had between 2026-08-18 and 2026-08-20 ran every step under
-/// <c>pwsh</c>, so it picked the casing that happens to agree and baked it in —
+/// <c>pwsh</c>, so it picked the casing that happens to agree and baked it in --
 /// which is why the defect was reported twice from a machine and never once from
 /// a build. A test parameterised over both values below is red on the wrong
 /// comparison <i>whatever</i> started it. That property is now load-bearing
 /// rather than a bonus: with CI removed, the release gate is the suite run on the
 /// maintainer's machine, and <b>the standing instruction is to run it from
-/// PowerShell and from Git Bash</b> — see
+/// PowerShell and from Git Bash</b> -- see
 /// [the release gate](../../../RELEASING.md#the-release-gate). This type is what
 /// makes a single-shell run catch the defect anyway.
 /// </para>
@@ -41,13 +41,13 @@ namespace BrowserAI.Tests.Harness;
 internal enum DriveLetterCase
 {
     /// <summary>
-    /// <c>C:\…</c> — the spelling Windows itself hands back, so a path composed
+    /// <c>C:\…</c> -- the spelling Windows itself hands back, so a path composed
     /// this way matches an OS-read one byte for byte.
     /// </summary>
     Upper,
 
     /// <summary>
-    /// <c>c:\…</c> — the spelling Git Bash hands the test host, and the one no
+    /// <c>c:\…</c> -- the spelling Git Bash hands the test host, and the one no
     /// Windows API ever returns. A composed path spelled this way <b>never</b>
     /// matches an OS-read one ordinally, which is what makes the wrong
     /// comparison fail on every machine rather than on some of them.

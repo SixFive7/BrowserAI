@@ -20,7 +20,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// The buffer thresholds are raised well above the default 64 KiB because this
 /// layer deliberately carries an oversized payload. With the default, a frame
-/// larger than the pause threshold blocks the writer until the reader drains —
+/// larger than the pause threshold blocks the writer until the reader drains --
 /// which is correct behaviour and still a deadlock whenever the same task is
 /// on both sides of it.
 /// </para>

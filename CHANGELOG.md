@@ -5,7 +5,7 @@
 
 Everything notable that has happened to BrowserAI. The format is
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the versions are
-[semantic](https://semver.org/spec/v2.0.0.html) — three parts, because that is
+[semantic](https://semver.org/spec/v2.0.0.html) -- three parts, because that is
 [the shape `vpk` accepts](kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output).
 
 **A version here is a git tag, and nothing else.** The build derives its version
@@ -16,7 +16,7 @@ bare version and the tag carries the `v`.
 **Entries are written as the work lands, never reconstructed at release time.**
 [The release checklist](RELEASING.md) refuses a release whose
 `[Unreleased]` section is empty, and `build/Get-ReleaseNotes.ps1` is what
-enforces it — a checklist satisfied by fifteen minutes of `git log` archaeology
+enforces it -- a checklist satisfied by fifteen minutes of `git log` archaeology
 has been satisfied in form only.
 
 **Every entry opens with one icon from a fixed palette, then a bold

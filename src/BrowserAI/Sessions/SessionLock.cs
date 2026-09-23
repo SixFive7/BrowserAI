@@ -22,10 +22,10 @@ namespace BrowserAI.Sessions;
 /// for write access is refused by the kernel while every reader is admitted,
 /// and the OS releases it when the holder dies however it dies.
 /// <c>browserai.data</c> says <i>what happened here</i>, and readers go to it
-/// directly — which is why the guard never has to admit anybody to itself.
+/// directly -- which is why the guard never has to admit anybody to itself.
 /// </para>
 /// <para>
-/// ⚠️ <b>THE LOCK IS WRITTEN ONCE, AT ACQUISITION, AND NEVER AGAIN — and that
+/// ⚠️ <b>THE LOCK IS WRITTEN ONCE, AT ACQUISITION, AND NEVER AGAIN -- and that
 /// single change dissolves two hazards at once.</b> The record this replaces
 /// was durably rewritten and renamed on <i>every forwarded call</i>, so its
 /// name was unbound for milliseconds at a time: a prober landing there had to
@@ -47,21 +47,21 @@ namespace BrowserAI.Sessions;
 /// ⚠️ <b>The pre-gate probe is a sound ownership test and an unsound freedom
 /// test, and the whole design is that asymmetry.</b> A sharing violation is the
 /// kernel's answer and no mutex ever made it more true, so a probe that can say
-/// <i>held, by X</i> may refuse immediately. Anything else — a lock file that
-/// opened, no lock file at all, a denied open — <b>must</b> fall through to the
+/// <i>held, by X</i> may refuse immediately. Anything else -- a lock file that
+/// opened, no lock file at all, a denied open -- <b>must</b> fall through to the
 /// unchanged <see cref="MachineMutex.Create"/> →
 /// <c>Acquire(PerDirectoryGate)</c> → <c>TakeOrReport</c> path.
 /// [The adversarial review](../../../docs/reviews/2026-08-18-adversarial-locking.md),
 /// D, is why the constraint is absolute: with the gate skipped on the free path
 /// the rename retry loop becomes the serialiser, and a retry loop is not a lock
-/// — it hands the name to whoever happens to be retrying when the incumbent
+/// -- it hands the name to whoever happens to be retrying when the incumbent
 /// lets go.
 /// </para>
 /// <para>
 /// <b>An append is an <c>INSERT</c>, not a rewrite.</b> A forwarded call adds
 /// one row to <c>browserai.data</c> in autocommit; a purpose change adds one
 /// row to <c>statements</c>. Neither takes the per-directory gate, because
-/// neither replaces a file — the gate exists to make create-or-take atomic and
+/// neither replaces a file -- the gate exists to make create-or-take atomic and
 /// nothing else in this class needs it any more.
 /// </para>
 /// <para>
@@ -70,7 +70,7 @@ namespace BrowserAI.Sessions;
 /// tool calls, so a <c>browserai_set_purpose</c> and a
 /// <c>browserai_destroy</c> naming the same directory arrive at one instance
 /// concurrently. Every writing path and <b>both</b> disposal paths hold
-/// <see cref="_inProcess"/> for their whole body — which is
+/// <see cref="_inProcess"/> for their whole body -- which is
 /// [adversarial review B4](../../../docs/reviews/2026-08-18-adversarial-locking.md)
 /// rather than defensive programming, and which is also what serialises the
 /// <c>INSERT</c>-then-<c>last_insert_rowid</c> pair on one SQLite connection.
@@ -87,8 +87,8 @@ internal sealed class SessionLock : IDisposable
     /// <b>Added 2026-08-24 for
     /// [adversarial review B4](../../../docs/reviews/2026-08-18-adversarial-locking.md),
     /// which is the one finding in that review whose failure does not heal.</b>
-    /// <c>SessionManager</c> serialises nothing — its <c>_live</c> is a
-    /// <c>ConcurrentDictionary</c> and is the only synchronisation there is —
+    /// <c>SessionManager</c> serialises nothing -- its <c>_live</c> is a
+    /// <c>ConcurrentDictionary</c> and is the only synchronisation there is --
     /// so two tool calls naming one session run concurrently by design. A
     /// <see cref="_disposed"/> check <i>outside</i> the exclusion is a decision
     /// taken by reading a field another thread is writing, and narrowing that
@@ -99,13 +99,13 @@ internal sealed class SessionLock : IDisposable
     /// ⚠️ <b>It carries a second job since the store arrived.</b> A
     /// <c>SQLite</c> connection is one connection: <see cref="Append"/> is an
     /// <c>INSERT</c> followed by <c>last_insert_rowid</c>, and two threads
-    /// interleaving there would hand one call the other's row id — after which
+    /// interleaving there would hand one call the other's row id -- after which
     /// a settle lands on somebody else's entry. The pair is atomic because it
     /// runs in here.
     /// </para>
     /// <para>
     /// <b>It is not a fourth lock scope.</b> <see cref="LockScopes"/> names the
-    /// machine-wide scopes — three named kernel objects, in one place — and
+    /// machine-wide scopes -- three named kernel objects, in one place -- and
     /// this is a private field with no name, no kernel object and no reach
     /// outside this instance.
     /// </para>
@@ -152,7 +152,7 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <b>Exposed 2026-08-26 for the one writer that is not a caller.</b> The
     /// idle browser close writes a row of its own and has no caller's logger to
-    /// borrow — it runs from a timer, off any request — so a failure to record it
+    /// borrow -- it runs from a timer, off any request -- so a failure to record it
     /// belongs in the same session-scoped sink as every other failure about this
     /// store. It is deliberately not a general seam: nothing here may be used to
     /// give the lock a second logger.
@@ -162,8 +162,8 @@ internal sealed class SessionLock : IDisposable
     /// <summary>The record as it stood when this lock last wrote a statement.</summary>
     /// <remarks>
     /// <b>Refreshed when a statement is appended and not when a log row is.</b>
-    /// A statement changes what the session <i>is</i> — its purpose, its
-    /// directory — and every answer this product composes reads those; a log
+    /// A statement changes what the session <i>is</i> -- its purpose, its
+    /// directory -- and every answer this product composes reads those; a log
     /// row changes only how much of a log there is, which is counted at the
     /// moment somebody asks.
     /// </remarks>
@@ -171,7 +171,7 @@ internal sealed class SessionLock : IDisposable
 
     /// <summary>
     /// Whether the per-directory mutex was found abandoned when this lock was
-    /// taken — a previous holder died inside create-or-take.
+    /// taken -- a previous holder died inside create-or-take.
     /// </summary>
     /// <remarks>
     /// Surfaced rather than swallowed. The acquisition itself was never in
@@ -181,7 +181,7 @@ internal sealed class SessionLock : IDisposable
     public bool GateWasAbandoned { get; }
 
     /// <summary>
-    /// Takes the directory, or says who has it — immediately, either way.
+    /// Takes the directory, or says who has it -- immediately, either way.
     /// </summary>
     /// <param name="location">The canonicalised session directory.</param>
     /// <param name="request">Browser and purpose for the new record.</param>
@@ -267,7 +267,7 @@ internal sealed class SessionLock : IDisposable
                 return new SessionLockResult(
                     SessionLockOutcome.Busy,
                     $"'{location.FullPath}' is being opened or closed by another BrowserAI, and the queue for it did not clear within {LockScopes.PerDirectoryGate.TotalSeconds.ToString(CultureInfo.InvariantCulture)} seconds. " +
-                    "Only processes trying to TAKE this directory queue here — one that merely wanted to know who holds it would already have been told — so either a process is wedged inside create-or-take, or more BrowserAI processes are opening this one directory at once than that will serve. Nothing was changed. " +
+                    "Only processes trying to TAKE this directory queue here -- one that merely wanted to know who holds it would already have been told -- so either a process is wedged inside create-or-take, or more BrowserAI processes are opening this one directory at once than that will serve. Nothing was changed. " +
                     "Wait and call again, or give this session a directory of its own, which is the arrangement this design expects and which never queues at all.");
             }
 
@@ -312,8 +312,8 @@ internal sealed class SessionLock : IDisposable
     /// <para>
     /// ⚠️ <b>It is written BEFORE the call it describes is forwarded, and that
     /// ordering is the property rather than an implementation detail.</b> A
-    /// navigation that hangs, a child that dies, a process that is killed — the
-    /// calls anybody investigates — still left a row saying what they were for.
+    /// navigation that hangs, a child that dies, a process that is killed -- the
+    /// calls anybody investigates -- still left a row saying what they were for.
     /// A row written on the way back would be missing from exactly those.
     /// </para>
     /// <para>
@@ -325,7 +325,7 @@ internal sealed class SessionLock : IDisposable
     /// <para>
     /// <b>An <c>INSERT</c>, in autocommit, with no gate and no rename.</b> The
     /// record this replaces paid a whole-file <c>WriteThrough</c> plus a rename
-    /// per call — 3.94 ms at 1 KB rising to 13.62 ms at 400 KB, with the record
+    /// per call -- 3.94 ms at 1 KB rising to 13.62 ms at 400 KB, with the record
     /// absent-and-unheld for the whole window
     /// ([HAZARDS](../../../HAZARDS.md#hazard-index)).
     /// </para>
@@ -366,7 +366,7 @@ internal sealed class SessionLock : IDisposable
     /// <para>
     /// <b>A settle after the session is gone is dropped, not thrown.</b>
     /// <c>browserai_destroy</c> tears a session down while calls may still be
-    /// in flight — that is the tool working — and an exception on the way back
+    /// in flight -- that is the tool working -- and an exception on the way back
     /// from the child would replace the child's own answer with a complaint
     /// about bookkeeping.
     /// </para>
@@ -410,8 +410,8 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <b>An acquisition is a call like any other and it can fail after its row
     /// exists.</b> <c>browserai_init</c> writes its purpose before the browser
-    /// is launched — deliberately, so a launch that hangs still left a record of
-    /// what the directory was for — and the launch is exactly the part that
+    /// is launched -- deliberately, so a launch that hangs still left a record of
+    /// what the directory was for -- and the launch is exactly the part that
     /// hangs. Settling here is what stops a session whose child never started
     /// reading back as a call still in flight for the rest of the directory's
     /// life.
@@ -434,8 +434,8 @@ internal sealed class SessionLock : IDisposable
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>This is what killed the concatenation.</b> A resume with a purpose
-    /// used to build the next value out of the whole of the previous one —
-    /// <c>$"{record.Purpose} | {appended}"</c> — which grew quadratically and,
+    /// used to build the next value out of the whole of the previous one --
+    /// <c>$"{record.Purpose} | {appended}"</c> -- which grew quadratically and,
     /// at the 2,000-character cap, silently dropped the tail of the sentence a
     /// caller had just written. A row is a row; "current" means the newest.
     /// </remarks>
@@ -468,8 +468,8 @@ internal sealed class SessionLock : IDisposable
     /// <b>This exists because <c>browserai_destroy</c>'s destructive act has to
     /// happen while the directory is still ours, and its last nodes cannot be
     /// removed while it is.</b> Windows will not unlink a file this process is
-    /// holding open, so <c>browserai.lock</c> — and therefore the directory
-    /// above it — can only go after the handle does. The instant between is
+    /// holding open, so <c>browserai.lock</c> -- and therefore the directory
+    /// above it -- can only go after the handle does. The instant between is
     /// exactly the instant a peer's <see cref="TryAcquire"/> reclaims the
     /// directory and launches a browser into a tree that is about to be
     /// deleted. Every BrowserAI takes the per-directory gate before
@@ -568,9 +568,9 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <para>
     /// <b>This is the sweep's ownership test, and it is deliberately not
-    /// <see cref="TryAcquire"/>.</b> The rule it implements is race R1 —
+    /// <see cref="TryAcquire"/>.</b> The rule it implements is race R1 --
     /// <i>the sweep may only kill a browser whose directory lock it can itself
-    /// acquire, and it holds that lock for the whole kill</i> — which is what
+    /// acquire, and it holds that lock for the whole kill</i> -- which is what
     /// stops one process sweeping away a browser that a second process,
     /// mid-<c>init</c> on the same directory, has just launched.
     /// </para>
@@ -593,20 +593,20 @@ internal sealed class SessionLock : IDisposable
     /// store", with no subject, which read as a property of the sweep).*** <b>It
     /// was true of this method and false of the pass that calls it.</b>
     /// <c>StraySweep.Pass</c> calls <c>SessionIndex.Sweep</c>, which followed
-    /// every entry on the machine through <see cref="ReadRecord"/> — one
+    /// every entry on the machine through <see cref="ReadRecord"/> -- one
     /// <c>SessionStore.OpenForReading</c> per registered session, and the index
     /// is machine-wide. <b>So one process start was one store open per session on
     /// the host</b>, each leaving a <c>-shm</c> and a <c>-wal</c> in a directory
     /// nobody named. Measured 2026-08-26 through the published binary: a second
-    /// BrowserAI that had done nothing but <c>initialize</c> — no
-    /// <c>tools/call</c> at all — put both files back beside a cleanly-closed
+    /// BrowserAI that had done nothing but <c>initialize</c> -- no
+    /// <c>tools/call</c> at all -- put both files back beside a cleanly-closed
     /// session's store.
     /// </para>
     /// <para>
     /// ⚠️ <b>Closed the same day, at the maintainer's decision, and the sentence
     /// above is once again true of the whole path rather than only of this
     /// method.</b> <c>Sweep</c> walks at <c>SessionIndexDepth.Guard</c>: the
-    /// record was never part of its decision — every removable state is settled
+    /// record was never part of its decision -- every removable state is settled
     /// by the directory and the guard, and the record only ever filled an
     /// inventory a sweep does not print. <b>A server start opens no store at
     /// all</b>, and the one entry whose record is read in full is the one the
@@ -712,9 +712,9 @@ internal sealed class SessionLock : IDisposable
     /// ⚠️ <b>READING A SESSION DIRECTORY IS NOT SIDE-EFFECT-FREE, measured
     /// 2026-08-26 rather than reasoned about.</b> Against a crashed holder's
     /// uncheckpointed write-ahead log this read-only open <i>recovers</i> the
-    /// log and answers with the newest rows —
+    /// log and answers with the newest rows --
     /// <c>SQLITE_OPEN_READONLY</c> constrains the database file and not the
-    /// directory — and building the wal-index leaves a <c>-shm</c> beside the
+    /// directory -- and building the wal-index leaves a <c>-shm</c> beside the
     /// store in a directory the caller only asked to look at. Where the caller
     /// may not create that file the open is refused instead, and the session
     /// stays unreadable until somebody opens it for writing, which the next
@@ -793,18 +793,18 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
-    /// Whether anything holds a session directory at the instant of the look —
-    /// <b>held, not held, or neither</b> — without taking anything, without
+    /// Whether anything holds a session directory at the instant of the look --
+    /// <b>held, not held, or neither</b> -- without taking anything, without
     /// opening a process handle and <b>without opening the record</b>.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>One <c>CreateFile</c> on <c>browserai.lock</c> and nothing else.</b>
     /// Measured 2026-08-20 against the file this replaces, over 2,000
-    /// iterations, 3 runs: <b>0.035 ms</b> free and <b>0.049 ms</b> held — the
+    /// iterations, 3 runs: <b>0.035 ms</b> free and <b>0.049 ms</b> held -- the
     /// held arm costs more because it is a managed exception rather than a
     /// return
-    /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20)).
+    /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report----measured-2026-08-20)).
     /// <b>It must never consult the store.</b> A database open is orders of
     /// magnitude dearer, it can create files in a directory nobody asked it to
     /// touch, and the newest holder row cannot answer this question anyway.
@@ -813,12 +813,12 @@ internal sealed class SessionLock : IDisposable
     /// ⚠️ <b>The gate is gone from this path, and the reason is that the file it
     /// asks about is now written once.</b> Between 2026-08-20 and 2026-08-24
     /// <c>browserai_list</c> read a bare probe's *not held* as free and printed
-    /// <i>in use: no</i> about a session another agent was driving — because
+    /// <i>in use: no</i> about a session another agent was driving -- because
     /// every forwarded call rewrote the record, dropping and retaking the
     /// ownership handle. Nothing rewrites <c>browserai.lock</c>. The only
     /// window left is between the rename and the first hold at acquisition,
     /// inside the per-directory gate, and what a reporting caller sees there is
-    /// *free* about a directory somebody is in the middle of taking — a
+    /// *free* about a directory somebody is in the middle of taking -- a
     /// momentary truth that corrects itself rather than a stale one that does
     /// not.
     /// </para>
@@ -836,7 +836,7 @@ internal sealed class SessionLock : IDisposable
     /// <c>Read</c>; a handle whose granted access is outside <c>Read</c> is
     /// exactly what an open sharing only <c>Read</c> is refused by. Detecting
     /// an owner and blocking one are the same capability, so no share mode
-    /// dissolves it — it is absorbed on the other side, at
+    /// dissolves it -- it is absorbed on the other side, at
     /// <see cref="LockFile.TakeAndWrite"/>'s hold, which runs under the gate
     /// and therefore cannot meet an owner.
     /// </para>
@@ -860,7 +860,7 @@ internal sealed class SessionLock : IDisposable
 
     /// <summary>
     /// Answers <i>who holds this directory</i> without taking the
-    /// per-directory gate — or answers nothing at all, and lets the gate
+    /// per-directory gate -- or answers nothing at all, and lets the gate
     /// decide.
     /// </summary>
     /// <remarks>
@@ -869,8 +869,8 @@ internal sealed class SessionLock : IDisposable
     /// held a session took <see cref="LockScopes.PerDirectoryGate"/>, losers
     /// included, and a loser only wants to read a name so it can report it. The
     /// cost is super-linear in the number of contenders: measured on an idle
-    /// machine, 16 contenders produced a slowest refusal of 367 ms, 100 — the
-    /// charter's design point — produced 3,349 ms, and 200 reached the
+    /// machine, 16 contenders produced a slowest refusal of 367 ms, 100 -- the
+    /// charter's design point -- produced 3,349 ms, and 200 reached the
     /// then-five-second gate and came back <c>Busy</c> by queueing alone
     /// ([kb](../../../kb/windows/detection.md#named-mutexes-and-lock-files)).
     /// <b>The gate was being taken to answer a question the kernel had already
@@ -927,7 +927,7 @@ internal sealed class SessionLock : IDisposable
     /// </summary>
     /// <remarks>
     /// <b>Only ever for a refusal, and never for a decision.</b> The purpose is
-    /// what makes <i>this directory is busy</i> actionable — a model reading
+    /// what makes <i>this directory is busy</i> actionable -- a model reading
     /// <i>"held by PID 8124, which is checking out the staging cart"</i> knows
     /// whether to wait or to pick another directory. A record that cannot be
     /// opened costs that clause and nothing else, so every failure here is
@@ -1115,7 +1115,7 @@ internal sealed class SessionLock : IDisposable
                     SessionLockOutcome.Unreadable,
                     $"BrowserAI took '{location.LockFile}' and could not then write '{location.DataFile}' ({refused.Message}), so the session was NOT opened. "
                     + $"Nothing holds '{location.FullPath}': call again, and the acquisition will report reclaiming it from a process that is still running, which is this one. "
-                    + "Check that the volume has space, that the directory is writable, and that it is not on a filesystem without shared memory — a network share is the usual cause.");
+                    + "Check that the volume has space, that the directory is writable, and that it is not on a filesystem without shared memory -- a network share is the usual cause.");
             }
 
             // ⚠️ `in-flight`, AND SETTLED BY THE CALLER RATHER THAN HERE. The
@@ -1169,7 +1169,7 @@ internal sealed class SessionLock : IDisposable
     /// <para>
     /// <b>Nothing is overwritten and nothing is invented.</b> A field whose
     /// value has not changed gains no row, so a session opened a hundred times
-    /// still reports one <c>browser</c> statement — while <c>directory</c>
+    /// still reports one <c>browser</c> statement -- while <c>directory</c>
     /// gains one the moment the tree is moved or copied, which is what lets
     /// <c>resume</c> hand a model the provenance instead of demanding an
     /// acknowledgement for it.
@@ -1229,9 +1229,9 @@ internal sealed class SessionLock : IDisposable
     /// <para>
     /// ⚠️ <b>Two records, one outcome, and the split arrived 2026-08-30.</b>
     /// A process re-taking a directory <i>it itself</i> last held is by far the
-    /// commonest arrival here — every <c>destroy</c> and every
+    /// commonest arrival here -- every <c>destroy</c> and every
     /// <c>set_purpose</c> disposes the live session and re-acquires, so the
-    /// guard on disk names this very process — and it was logged with the same
+    /// guard on disk names this very process -- and it was logged with the same
     /// sentence as a genuine takeover: <i>previous holder was PID n, still
     /// running: True</i>. That is true word by word and false as a whole. It
     /// reads as <i>a live stranger's directory was taken</i>, which is the one
@@ -1240,14 +1240,14 @@ internal sealed class SessionLock : IDisposable
     /// quoted:</b> of the <b>8,423</b> <c>Session lock reclaimed</c> lines the
     /// machine-wide log has carried since the 2026-08-26 logging cutover,
     /// <b>8,418</b> carry <c>still running: True</c>, against <b>zero</b>
-    /// <c>Session lock acquired</c> lines in the same window — and in the two
+    /// <c>Session lock acquired</c> lines in the same window -- and in the two
     /// 2026-08-29 files alone it is <b>2,081 of 2,081</b>. The five that do not
     /// are genuine reclaims from a holder that had died, which is what makes the
     /// discriminator worth having rather than vacuous.
     /// </para>
     /// <para>
     /// <b>The identity is <c>(pid, creationFileTime)</c> and the pid alone is
-    /// not enough</b> — Windows reuses pids within seconds, and a stranger
+    /// not enough</b> -- Windows reuses pids within seconds, and a stranger
     /// wearing this process's number must read as the takeover it is. The
     /// comparison is against the holder this acquisition just wrote rather than
     /// against a freshly-read identity, so the two cannot disagree.
@@ -1261,7 +1261,7 @@ internal sealed class SessionLock : IDisposable
     /// <see cref="SessionLockOutcome.Reclaimed"/> and
     /// <c>HolderRunning</c> stays true, because both are answers about the
     /// directory rather than about who is asking, and a caller that branches on
-    /// them is right to see no difference — the directory <i>was</i> held and
+    /// them is right to see no difference -- the directory <i>was</i> held and
     /// <i>is</i> now ours. The caller-facing sentence is also unchanged and
     /// still says <i>still running but has let the directory go</i>, which for
     /// this shape is accurate and slightly odd; it is left alone rather than
@@ -1346,7 +1346,7 @@ internal sealed class SessionLock : IDisposable
     /// <b><c>holderRunning: true</c> is a statement about the handle, not about
     /// the pid.</b> Both call sites arrive here having just been refused by the
     /// kernel on an open of <c>browserai.lock</c>, and Windows releases a
-    /// handle when its process dies however it dies — so something is alive
+    /// handle when its process dies however it dies -- so something is alive
     /// holding it, and that is a stronger fact than any liveness check on the
     /// recorded <c>(pid, creationFileTime)</c> could produce.
     /// </remarks>
@@ -1423,9 +1423,9 @@ internal sealed record SessionLockRequest
     /// <remarks>
     /// <b>Null means "take the directory and say nothing", and exactly one
     /// caller wants that:</b> <c>browserai_destroy</c>, which takes the record
-    /// in order to delete it. Every other path has something to record —
+    /// in order to delete it. Every other path has something to record --
     /// <c>init</c> its purpose, <c>resume</c> and <c>set_purpose</c> their
-    /// <c>why</c> — and a path that took the directory without saying why it
+    /// <c>why</c> -- and a path that took the directory without saying why it
     /// did would be a gap in the one stream this record exists to keep whole.
     /// </remarks>
     public SessionCall? Entry { get; init; }
@@ -1439,13 +1439,13 @@ internal sealed record SessionLockRequest
     /// <para>
     /// <b>Set by <c>browserai_init</c> and nothing else.</b> `init` means
     /// <i>make a session here</i>, and a directory that already carries a
-    /// record has to be `resume`d instead — otherwise the second call silently
+    /// record has to be `resume`d instead -- otherwise the second call silently
     /// rebinds the session's browser family, adding a `chromium` statement to a
     /// Firefox profile's history or the reverse.
     /// </para>
     /// <para>
     /// ⚠️ <b>It is asked UNDER THE GATE because the ungated ask can miss.</b>
-    /// `init`'s own pre-gate look — `SessionManager.Existing` — reads the store
+    /// `init`'s own pre-gate look -- `SessionManager.Existing` -- reads the store
     /// with no lock held. Under the gate the record has already been read for
     /// the reclaim path, so the same question costs nothing.
     /// </para>
@@ -1471,7 +1471,7 @@ internal sealed record SessionCall(string Tool, string Why);
 /// <remarks>
 /// <b>Three values because a report and a decision need different things.</b>
 /// The pre-gate probe produced all three internally and threw two of them away,
-/// because its only caller could act on one. A reader — <c>browserai_list</c> —
+/// because its only caller could act on one. A reader -- <c>browserai_list</c> --
 /// has the opposite problem: the value it must never print is a confident
 /// <i>free</i> that was really <i>could not tell</i>.
 /// </remarks>
@@ -1483,7 +1483,7 @@ internal enum SessionLiveness
     /// <remarks>
     /// ⚠️ <b>A snapshot and never a claim.</b> It says an open succeeded once,
     /// or that there is no guard at all; it does not say the directory is free,
-    /// and nothing may take a directory on the strength of it —
+    /// and nothing may take a directory on the strength of it --
     /// <see cref="SessionLock.TryAcquire"/> still settles that under the
     /// per-directory gate.
     /// </remarks>
@@ -1601,7 +1601,7 @@ internal sealed class SessionLockResult(
     /// questions and are read from different files.</b> This is the guard: the
     /// identity a refusal names, read from the file whose sharing violation
     /// produced the refusal in the first place. <see cref="Holder"/> is the
-    /// <i>record</i> — what the session is for, when it was created — which a
+    /// <i>record</i> -- what the session is for, when it was created -- which a
     /// contended acquisition may not be able to read at all.
     /// </remarks>
     public LockFileHolder? Guard { get; } = guard;
@@ -1644,7 +1644,7 @@ internal static partial class SessionLog
     /// one outcome.</b> A reclaim is <i>somebody else's directory is now
     /// ours</i>; this is <i>we are back in a directory we never left the
     /// machine holding</i>. Every <c>destroy</c> and every <c>set_purpose</c>
-    /// produces one, so on the machine-wide log this is not the rare case — it
+    /// produces one, so on the machine-wide log this is not the rare case -- it
     /// is very nearly the only case, and until 2026-08-30 every one of them was
     /// logged as a reclaim from a live process. The figures, with the predicate
     /// quoted, are in <see cref="Reclaimed"/>'s own remarks.

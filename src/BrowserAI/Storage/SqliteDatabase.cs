@@ -21,8 +21,8 @@ namespace BrowserAI.Storage;
 /// </para>
 /// <para>
 /// <b>Thread affinity: none is assumed and none is provided.</b> The library is
-/// built serialized — <see cref="Sqlite.RequireASupportedBuild"/> refuses one
-/// that is not — so concurrent calls on one connection are safe at the SQLite
+/// built serialized -- <see cref="Sqlite.RequireASupportedBuild"/> refuses one
+/// that is not -- so concurrent calls on one connection are safe at the SQLite
 /// layer. What this type does not do is serialise a <i>sequence</i>: a
 /// prepare-bind-step run interleaved with another caller's is two conversations
 /// down one wire, and the caller owns that exclusion. In the design this layer
@@ -72,7 +72,7 @@ internal sealed class SqliteDatabase : IDisposable
     /// ⚠️ <b>Read-only constrains the database file and not the directory it
     /// sits in</b>, so this open can still build the shared-memory index a hot
     /// write-ahead log needs, and is refused only where it may not create that
-    /// file — measured, and the consequences are in
+    /// file -- measured, and the consequences are in
     /// <see cref="SessionStore"/>'s own remarks. What it genuinely cannot do is
     /// create the database, which is what makes *this directory has no store*
     /// an answer rather than a side effect.
@@ -88,7 +88,7 @@ internal sealed class SqliteDatabase : IDisposable
     /// <para>
     /// ⚠️ <b>The handle is closed even when the open failed, and the message is
     /// taken off it first.</b> <c>sqlite3_open_v2</c> allocates the connection
-    /// before it tries the file, so a failure normally still yields a handle —
+    /// before it tries the file, so a failure normally still yields a handle --
     /// and that handle is the only thing <c>sqlite3_errmsg</c> can speak from.
     /// Dropping it on the failure path would leak the connection and reduce
     /// every open failure to a bare number.
@@ -124,7 +124,7 @@ internal sealed class SqliteDatabase : IDisposable
     }
 
     /// <summary>
-    /// Runs statements that produce no rows — schema, pragmas that set,
+    /// Runs statements that produce no rows -- schema, pragmas that set,
     /// transaction control.
     /// </summary>
     /// <remarks>
@@ -172,8 +172,8 @@ internal sealed class SqliteDatabase : IDisposable
     /// Asks a statement for its first column, as text, over every row.
     /// </summary>
     /// <remarks>
-    /// The shape every pragma this layer reads has — <c>compile_options</c>,
-    /// <c>journal_mode</c>, <c>user_version</c>, <c>busy_timeout</c> — and the
+    /// The shape every pragma this layer reads has -- <c>compile_options</c>,
+    /// <c>journal_mode</c>, <c>user_version</c>, <c>busy_timeout</c> -- and the
     /// reason there is no generic reader beside it: a store with a dozen fixed
     /// statements does not need one, and the one it would need is the one a
     /// future schema will define for itself.

@@ -15,7 +15,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>The sweep matches on full image path and nothing else</b>, so a test that
 /// wants a candidate has to produce a process whose image path is a string the
 /// test declares. <see cref="PlantedProcess"/> already plants <c>cmd.exe</c> for
-/// that, and <c>cmd.exe</c> cannot publish a <c>Chrome_MessageWindow</c> — which
+/// that, and <c>cmd.exe</c> cannot publish a <c>Chrome_MessageWindow</c> -- which
 /// is the other half of every question here. This plants the probe instead,
 /// which can do both.
 /// </para>
@@ -23,7 +23,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>The whole output directory is copied, and that is forced.</b> The probe is
 /// a framework-dependent apphost: a lone <c>.exe</c> in a strange directory
 /// cannot find its <c>.dll</c>, its <c>runtimeconfig.json</c> or its dependency
-/// closure and dies immediately, silently, before anything looks — the exact
+/// closure and dies immediately, silently, before anything looks -- the exact
 /// failure <see cref="PlantedProcess"/> records having met twice. Four megabytes
 /// and about thirty files, into the run's own scratch tree.
 /// </para>
@@ -112,7 +112,7 @@ internal static class PlantedProbe
     /// </summary>
     /// <remarks>
     /// <b>Not optional.</b> <c>CreateProcessW</c> returns as soon as the process
-    /// object exists, and a scan taken in that instant can legitimately miss it —
+    /// object exists, and a scan taken in that instant can legitimately miss it --
     /// which would have a test asserting that a sweep left something alone while
     /// the sweep never saw it at all.
     /// </remarks>

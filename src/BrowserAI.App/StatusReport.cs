@@ -13,9 +13,9 @@ namespace BrowserAI.App;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Two jobs, and both of them matter.</b> It is a support artifact — the file
+/// <b>Two jobs, and both of them matter.</b> It is a support artifact -- the file
 /// somebody attaches when they say <i>it is not working</i>, carrying every
-/// answer the dialog would have shown without needing a person at the screen —
+/// answer the dialog would have shown without needing a person at the screen --
 /// and it is this application's <b>testable non-interactive path</b>. A window
 /// application whose only entry point opens a window is one the suite cannot
 /// assert anything about at all.
@@ -30,7 +30,7 @@ namespace BrowserAI.App;
 /// <para>
 /// <b>Never <c>stdout</c>.</b> It takes a path. This is a Windows-subsystem
 /// binary with no console at all, so a write to a standard stream goes nowhere
-/// — and the repository-wide ban on <c>System.Console</c> reaches this assembly
+/// -- and the repository-wide ban on <c>System.Console</c> reaches this assembly
 /// as well.
 /// </para>
 /// </remarks>

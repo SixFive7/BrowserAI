@@ -8,14 +8,14 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// Every relative Markdown link in the repository points at something that
-/// exists — in the prose, in the scripts, and in the XML doc comments that make
+/// exists -- in the prose, in the scripts, and in the XML doc comments that make
 /// up most of this product's design record.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>It is a real failure and not a hypothetical one.</b> Measured 2026-08-17
 /// at <c>01b0910</c>: of 151 relative Markdown links in the tracked <c>.cs</c>
-/// files, <b>91 did not resolve</b> — every one the same defect, a file three
+/// files, <b>91 did not resolve</b> -- every one the same defect, a file three
 /// directories below the root writing <c>../../</c> where <c>../../../</c> is
 /// required. They spanned nine directories and 42 files and no build, no test
 /// and no review had ever reported one of them.
@@ -24,7 +24,7 @@ namespace BrowserAI.Tests;
 /// <b>Why it survived a suite of 396 tests: the scans read code, and a link
 /// lives in a comment.</b> <see cref="RepositoryLayout.ReadCodeAsync"/> blanks
 /// comment-only lines deliberately, so that writing down why a rule exists does
-/// not violate the rule — and every scan in this suite used it. A cross
+/// not violate the rule -- and every scan in this suite used it. A cross
 /// reference on a <c>///</c> line was invisible to all of them by construction.
 /// <b>So this test reads the raw file text, and must go on doing so.</b>
 /// <see cref="TheScanReadsRawTextAndNotCode"/> fails if anyone routes it
@@ -34,7 +34,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Written before the documentation restructure, not after.</b> That
 /// restructure moved and deleted several hundred kilobytes of build-session
-/// narrative — the whole implementation plan, its index, a work list that was
+/// narrative -- the whole implementation plan, its index, a work list that was
 /// mostly closed items, and the log of the first release run. Until this existed
 /// there was no way to tell a link the restructure broke from one that had been
 /// broken all along, because nothing counted either.
@@ -44,14 +44,14 @@ namespace BrowserAI.Tests;
 /// honesty of the gap that used to be stated here bought nothing.
 /// <i>Previously: "Resolving one means reproducing the heading-to-slug rule of
 /// whichever renderer is reading, and a wrong slug rule would report failures
-/// that are not real — which is the one outcome worse than the gap."</i> What
+/// that are not real -- which is the one outcome worse than the gap."</i> What
 /// happened instead is that a documentation restructure retitled four headings
 /// and moved <b>53 anchored links across 20 files, four of them under
 /// <c>src\</c></b>. Not one would have gone red. They were found and repaired by
 /// hand, which is the mechanism this repository exists to replace.
 /// <see cref="EveryLinkFragmentResolvesToAHeadingThatExists"/> is that half, and
 /// <see cref="TheSlugRuleIsTheOneGitHubApplies"/> is what keeps the fear above
-/// from coming true — the slug rule is asserted against worked examples rather
+/// from coming true -- the slug rule is asserted against worked examples rather
 /// than trusted.
 /// </para>
 /// </remarks>
@@ -72,7 +72,7 @@ internal sealed partial class DocumentationLinkTests
     /// <para>
     /// <b><see cref="TheAssetExclusionHidesNothing"/> is what keeps this list
     /// from becoming a hiding place.</b> It asserts the repository still tracks
-    /// no file of any of these kinds — so the exclusion is vacuous, and the day
+    /// no file of any of these kinds -- so the exclusion is vacuous, and the day
     /// somebody adds an image, that test goes red and this list must lose the
     /// entry rather than quietly excusing a real broken link.
     /// </para>
@@ -107,7 +107,7 @@ internal sealed partial class DocumentationLinkTests
             // everything needed to fix one without opening anything.
             offenders.Add(
                 $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}:{number}: '{target}' does not exist"
-                + $" — {line.Trim()}");
+                + $" -- {line.Trim()}");
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
@@ -129,7 +129,7 @@ internal sealed partial class DocumentationLinkTests
             if (path.Length is 0)
             {
                 // A same-file fragment resolves against the document it is
-                // written in — and a file with no headings has nothing for it to
+                // written in -- and a file with no headings has nothing for it to
                 // resolve to, so one in a .cs or a .ps1 is reported rather than
                 // waved through. There are none today; this is the rule with no
                 // hiding place in it rather than an exception waiting to be
@@ -148,7 +148,7 @@ internal sealed partial class DocumentationLinkTests
                 document = new FileInfo(Path.GetFullPath(Path.Combine(file.DirectoryName!, path.Replace('/', Path.DirectorySeparatorChar))));
 
                 // A fragment on something that is not Markdown is somebody
-                // else's rule — GitHub's `Program.cs#L42` line anchors are the
+                // else's rule -- GitHub's `Program.cs#L42` line anchors are the
                 // real case. This repository writes none, and guessing at one
                 // would be the wrong-slug-rule failure in a second form.
                 if (!IsMarkdown(document))
@@ -177,7 +177,7 @@ internal sealed partial class DocumentationLinkTests
 
             if (!anchors.Contains(fragment))
             {
-                // The offender list IS the message, as above — and the nearest
+                // The offender list IS the message, as above -- and the nearest
                 // surviving heading is what turns "this is wrong" into "this is
                 // what it was renamed to".
                 var nearest = anchors
@@ -190,14 +190,14 @@ internal sealed partial class DocumentationLinkTests
                     number,
                     line,
                     $"'{Path.GetRelativePath(RepositoryLayout.Root.FullName, document.FullName)}#{fragment}' names no heading"
-                    + (nearest.Count is 0 ? string.Empty : $" — nearest: {string.Join(", ", nearest)}")));
+                    + (nearest.Count is 0 ? string.Empty : $" -- nearest: {string.Join(", ", nearest)}")));
             }
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
         // Not vacuous, and not vacuous in each half separately. Re-measured
-        // 2026-08-18 by the procedure below to **568 fragments — 512 across
+        // 2026-08-18 by the procedure below to **568 fragments -- 512 across
         // documents, 56 within one, and 76 of the 512 written in a `.cs` doc
         // comment** (previously "556: 501, 55, and 77", and "554: 500, 54, and
         // 76" before that, both earlier the same day). That half is the one no
@@ -233,6 +233,14 @@ internal sealed partial class DocumentationLinkTests
 
     [Test]
     [Arguments("The scope boundary", "the-scope-boundary")]
+    // ⚠️ THIS ONE KEEPS ITS EM DASH ON PURPOSE, and is the reason the
+    // 2026-09-23 dash sweep has a named exception. What it pins is that GitHub
+    // DROPS the character rather than hyphenating it -- the branch of the rule
+    // that made 105 anchors move when the prose was swept. Rewriting it to two
+    // hyphens would leave that branch unexercised, which is the only thing this
+    // worked example is for. *(It mirrored CLAUDE.md's own heading until that
+    // sweep; the heading is ASCII now and this example is no longer a quotation
+    // of it.)*
     [Arguments("BrowserAI — working instructions", "browserai--working-instructions")]
     [Arguments("Install → update → rollback, end to end", "install--update--rollback-end-to-end")]
     [Arguments("7. `ApplyUpdatesAndRestart(null)` as a bare restart", "7-applyupdatesandrestartnull-as-a-bare-restart")]
@@ -244,8 +252,8 @@ internal sealed partial class DocumentationLinkTests
     [Arguments("`Setup.exe -- <args>` hangs forever", "setupexe----args-hangs-forever")]
     public async Task TheSlugRuleIsTheOneGitHubApplies(string heading, string expected)
     {
-        // The fear this file used to state — "a wrong slug rule would report
-        // failures that are not real" — is answered here rather than by
+        // The fear this file used to state -- "a wrong slug rule would report
+        // failures that are not real" -- is answered here rather than by
         // confidence. Every case is a heading this repository actually carries
         // or a shape one of them is made of, and the two-hyphen answers are the
         // ones a hand-written rule gets wrong: an em-dash and an arrow are
@@ -269,14 +277,14 @@ internal sealed partial class DocumentationLinkTests
         await Assert.That(anchors.Contains("fixed-3")).IsFalse();
 
         // A heading inside a fenced block is a heading in an example, not a
-        // heading — nothing links to it and nothing may resolve to it.
+        // heading -- nothing links to it and nothing may resolve to it.
         await Assert.That(anchors.Contains("fenced")).IsFalse();
 
         // A hash with no space after it is not a heading either.
         await Assert.That(anchors.Contains("nothashheading")).IsFalse();
 
         // An explicit HTML anchor is honoured, because GitHub honours it. This
-        // repository writes none today — it is here so that writing the first
+        // repository writes none today -- it is here so that writing the first
         // one is not a red build.
         await Assert.That(anchors.Contains("pinned")).IsTrue();
         await Assert.That(anchors.Contains("explicit")).IsTrue();
@@ -341,8 +349,8 @@ internal sealed partial class DocumentationLinkTests
 
         // ⚠️ AND NOTHING OF OURS IS MISSING, checked against a second
         // enumeration that reaches the tree by a different route. Added
-        // 2026-08-18, after the prune list — which matched a directory NAME at
-        // any depth, case-insensitively — quietly took src\BrowserAI\Artifacts\
+        // 2026-08-18, after the prune list -- which matched a directory NAME at
+        // any depth, case-insensitively -- quietly took src\BrowserAI\Artifacts\
         // out of every scan built on this walk, because the repository root has
         // an artifacts\ build-output directory. Five product source files, three
         // tests, no symptom. A prune reports nothing when it removes the wrong
@@ -409,7 +417,7 @@ internal sealed partial class DocumentationLinkTests
 
     /// <summary>
     /// <b>Every reference to an asset in this repository's prose resolves to the
-    /// file it names</b> — Markdown's own image syntax, the plain links, and the
+    /// file it names</b> -- Markdown's own image syntax, the plain links, and the
     /// HTML <c>src</c> and <c>href</c> attributes the prose uses for layout.
     /// </summary>
     /// <remarks>
@@ -418,7 +426,7 @@ internal sealed partial class DocumentationLinkTests
     /// showing one.</b> <see cref="NotThisRepositorysKind"/> takes every asset
     /// extension out of <see cref="EveryRelativeLinkResolvesToSomethingThatExists"/>,
     /// and that was safe for exactly as long as the tree held no asset. It holds
-    /// five now — an icon in three forms, its master and a social preview — and
+    /// five now -- an icon in three forms, its master and a social preview -- and
     /// <c>README.md</c> shows one of them at the top of the page, which is the
     /// first image this project has ever published. Without this arm the whole
     /// set was outside every check the suite makes: a rename would have broken
@@ -427,7 +435,7 @@ internal sealed partial class DocumentationLinkTests
     /// <para>
     /// <b>Markdown files only, and the line is principled rather than
     /// convenient.</b> A <c>.md</c> file's link is a link. A <c>.cs</c> file's
-    /// string literal is data — <c>LosslessPassthroughTests</c> carries an
+    /// string literal is data -- <c>LosslessPassthroughTests</c> carries an
     /// upstream tool result naming a screenshot that this repository is forbidden
     /// to rewrite, and this file carries three controls of its own. Resolving
     /// those would be reading somebody else's document as though it were ours,
@@ -436,8 +444,8 @@ internal sealed partial class DocumentationLinkTests
     /// </para>
     /// <para>
     /// <b>The HTML half is not decoration.</b> An image that has to sit BESIDE a
-    /// heading cannot be written in Markdown at all — there is no width, no
-    /// height and no float in the syntax — so the one image this repository
+    /// heading cannot be written in Markdown at all -- there is no width, no
+    /// height and no float in the syntax -- so the one image this repository
     /// publishes is an <c>&lt;img&gt;</c> tag, and a scan that read only the
     /// Markdown shape would have covered everything except the file it was
     /// written for.
@@ -588,7 +596,7 @@ internal sealed partial class DocumentationLinkTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Beside the file that carries it, and — for a quoted record only — from
+    /// <b>Beside the file that carries it, and -- for a quoted record only -- from
     /// the repository root as well.</b> A document written in this tree points
     /// at its neighbours, and resolving it any other way would let a wrong path
     /// pass because something of that name happens to exist at the top.
@@ -597,7 +605,7 @@ internal sealed partial class DocumentationLinkTests
     /// ⚠️ <b>A ledger is not written in this tree.</b> It is a verbatim snapshot
     /// of a file that was kept in the scratch directory at the repository root
     /// and is sealed against editing, so the paths quoted inside it mean what
-    /// they meant where they were written — <c>assets/icon-128.png</c> is the
+    /// they meant where they were written -- <c>assets/icon-128.png</c> is the
     /// front page's icon and not a missing file beside the ledger. That is the
     /// same principle the remark on
     /// <see cref="EveryAssetReferenceInTheProseResolvesToTheFileItNames"/>
@@ -653,8 +661,8 @@ internal sealed partial class DocumentationLinkTests
     /// </summary>
     /// <remarks>
     /// <b>The attribute rather than the tag</b>, because the tags that can carry
-    /// one are not a closed set — <c>img</c>, <c>a</c>, <c>source</c>,
-    /// <c>image</c> — and a scan anchored on a tag name is one tag away from
+    /// one are not a closed set -- <c>img</c>, <c>a</c>, <c>source</c>,
+    /// <c>image</c> -- and a scan anchored on a tag name is one tag away from
     /// seeing nothing.
     /// </remarks>
     [GeneratedRegex(@"(?:src|href)\s*=\s*(?<quote>[\x22\x27])(?<target>[^\x22\x27]+)\k<quote>")]
@@ -671,8 +679,8 @@ internal sealed partial class DocumentationLinkTests
     /// and never <see cref="RepositoryLayout.ReadCodeAsync"/>, because writing
     /// down <i>why</i> a rule exists must not violate the rule. Quoting a link is
     /// the same act: <c>TODO.md</c> carries the verbatim text of an upstream
-    /// feature request, and that text quotes upstream's own output —
-    /// <c>`- [Snapshot](./page-2026-08-25T09-14-22-104Z.yml)`</c> — as an example
+    /// feature request, and that text quotes upstream's own output --
+    /// <c>`- [Snapshot](./page-2026-08-25T09-14-22-104Z.yml)`</c> -- as an example
     /// of the defect being reported. It is inside a code span, so no renderer
     /// treats it as a link, and this scan reported it as a broken one.
     /// </para>
@@ -680,31 +688,31 @@ internal sealed partial class DocumentationLinkTests
     /// <b>It loses no coverage, and that was measured rather than argued.</b>
     /// Counted over the whole scanned corpus on 2026-08-26: <b>1,304</b> link
     /// targets raw, <b>1,300</b> after blanking, and all <b>four</b> of the
-    /// difference are the same quoted example — upstream's snapshot line, in
+    /// difference are the same quoted example -- upstream's snapshot line, in
     /// <c>TODO.md</c>, in <c>README.md</c> and twice in this file. Not one real
     /// link in the tree is hidden. The pairing is what makes it safe: the pattern
     /// requires an opening and a closing backtick on the same line, so an
     /// unpaired one matches nothing and blanks nothing, and the pattern begins at
-    /// the closing bracket rather than the opening one — so backticks around a
+    /// the closing bracket rather than the opening one -- so backticks around a
     /// link's <i>text</i>, which is the commonest shape in this repository's
     /// prose, sit entirely outside what it looks at. (Spelled in words rather
     /// than shown, for the reason <see cref="MarkdownLink"/>'s own remark gives:
     /// a paragraph here that writes the shape out becomes an occurrence of it,
-    /// and this one did — the scan named this very line.) Blanking is by equal-length
+    /// and this one did -- the scan named this very line.) Blanking is by equal-length
     /// spaces so that every match index still lands in the raw line the offender
     /// message prints.
     /// </para>
     /// <para>
     /// ⚠️ <b>The first version of that measurement said five, and the fifth was
-    /// real.</b> A line in <c>DECISIONS.md</c> carried <b>25</b> backticks — an
-    /// odd number — because a <b>lone carriage return</b> sat inside it where the
+    /// real.</b> A line in <c>DECISIONS.md</c> carried <b>25</b> backticks -- an
+    /// odd number -- because a <b>lone carriage return</b> sat inside it where the
     /// two characters <c>\r</c> belonged, in the path
     /// <c>&lt;browsers root&gt;\reinstall.lock</c>. That split the line, left one
     /// half with unbalanced spans, and shifted every pairing on it, so a genuine
     /// link went dark. It was a pre-existing defect rather than a limit of this
-    /// approach — a CommonMark renderer pairs single backticks left to right
+    /// approach -- a CommonMark renderer pairs single backticks left to right
     /// exactly as this does, so GitHub had been rendering that line wrong all
-    /// along — and it was repaired rather than accommodated. <b>Anything that
+    /// along -- and it was repaired rather than accommodated. <b>Anything that
     /// hides a link is a defect somewhere</b>; the count above is what says which
     /// one, and re-running it is a loop over the corpus rather than a judgement.
     /// </para>
@@ -725,8 +733,8 @@ internal sealed partial class DocumentationLinkTests
     /// <remarks>
     /// <b>The positive control for <see cref="OutsideCodeSpans"/>.</b> A blanking
     /// step that blanked too much would empty the corpus and leave every
-    /// assertion in this class green over nothing — the standing failure mode of
-    /// every scan here — so both directions are asserted against literals, and
+    /// assertion in this class green over nothing -- the standing failure mode of
+    /// every scan here -- so both directions are asserted against literals, and
     /// the real offender that provoked the change is one of them.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -742,13 +750,13 @@ internal sealed partial class DocumentationLinkTests
         // whole of this test's reason and it must stay invisible to the scan.
         await Assert.That(targets("> working directory, for example `- [Snapshot](./page-2026-08-25T09-14-22-104Z.yml)`.")).IsEmpty();
 
-        // An ordinary link is still seen — without this the emptiness above is
+        // An ordinary link is still seen -- without this the emptiness above is
         // satisfied by a blanking step that ate the line.
         //
         // ⚠️ The targets below name an ASSET extension deliberately, and the
         // first draft did not: with `DECISIONS.md` in them, these three literals
         // were themselves read as links by the very scan they are about, and
-        // `EveryRelativeLinkResolvesToSomethingThatExists` named all three —
+        // `EveryRelativeLinkResolvesToSomethingThatExists` named all three --
         // correctly, because `DECISIONS.md` does not resolve from this
         // directory. An asset extension is in `NotThisRepositorysKind`, so the
         // real scan skips it, and no fragment is used because the fragment scan
@@ -816,7 +824,7 @@ internal sealed partial class DocumentationLinkTests
     /// <b>Exposed so the published count and its check come from one
     /// implementation.</b> A second scan written beside the sentence would be a
     /// second definition of "a fragment", and the two would eventually answer
-    /// different questions over the same tree — which is exactly the accident
+    /// different questions over the same tree -- which is exactly the accident
     /// <c>RecordedCountTests</c> exists to stop.
     /// </remarks>
     /// <returns>The count.</returns>
@@ -826,12 +834,12 @@ internal sealed partial class DocumentationLinkTests
     /// <remarks>
     /// The sibling of <see cref="LinksAsync"/>, which throws the fragment away.
     /// Both walk the same raw text for the same reason, and a link with a
-    /// fragment appears in both lists — once for its file half and once for its
+    /// fragment appears in both lists -- once for its file half and once for its
     /// anchor half.
     /// </remarks>
     /// <returns>
-    /// The file, the whole line, the 1-based line number, the file half — empty
-    /// for a same-document link — and the fragment, without its <c>#</c>.
+    /// The file, the whole line, the 1-based line number, the file half -- empty
+    /// for a same-document link -- and the fragment, without its <c>#</c>.
     /// </returns>
     private static async Task<List<(FileInfo File, string Line, int Number, string Path, string Fragment)>> FragmentsAsync()
     {
@@ -848,7 +856,7 @@ internal sealed partial class DocumentationLinkTests
                 {
                     var target = match.Groups["target"].Value;
 
-                    // An absolute URL is somebody else's to keep working — and
+                    // An absolute URL is somebody else's to keep working -- and
                     // that includes its anchor.
                     if (Uri.TryCreate(target, UriKind.Absolute, out _))
                     {
@@ -882,7 +890,7 @@ internal sealed partial class DocumentationLinkTests
     /// <remarks>
     /// <para>
     /// Separated from the file read so that the collision and fencing rules can
-    /// be asserted against a literal rather than against a scratch file — the
+    /// be asserted against a literal rather than against a scratch file -- the
     /// rules are what a mis-port would get wrong, and they are worth stating in
     /// a test that cannot fail for a reason to do with the disk.
     /// </para>
@@ -946,7 +954,7 @@ internal sealed partial class DocumentationLinkTests
     /// <param name="complaint">What is wrong with it.</param>
     /// <returns>The message.</returns>
     private static string Offence(FileInfo file, int number, string line, string complaint) =>
-        $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}:{number}: {complaint} — {line.Trim()}";
+        $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}:{number}: {complaint} -- {line.Trim()}";
 
     /// <summary>Every file in the repository, so the asset claim covers more than the scan does.</summary>
     private static IEnumerable<string> Walk() =>
@@ -976,7 +984,7 @@ internal sealed partial class DocumentationLinkTests
     /// <para>
     /// <b>No paragraph in this file may spell the pattern it matches.</b> The
     /// first draft of this remark quoted the bracket-parenthesis pair to explain
-    /// itself, which made this file an offender in its own scan — with the
+    /// itself, which made this file an offender in its own scan -- with the
     /// ellipsis inside it as the target that did not resolve. It is the same
     /// trap <c>NeverByImageNameTests</c> composes its needles at run time to
     /// avoid, and the honest way out is to describe the syntax rather than to
@@ -998,8 +1006,8 @@ internal sealed partial class DocumentationLinkTests
     /// <b>The whitespace after the hashes is required, and so is the anchor at
     /// the start of the line.</b> Without the first, a Markdown line beginning
     /// <c>#nothing</c> would register an anchor no renderer offers; without the
-    /// second, a hash mid-sentence would. The tree carries no setext heading —
-    /// the underlined form — and no closing hash sequence, verified 2026-08-18
+    /// second, a hash mid-sentence would. The tree carries no setext heading --
+    /// the underlined form -- and no closing hash sequence, verified 2026-08-18
     /// across all 258 headings, so neither is handled.
     /// </remarks>
     [GeneratedRegex(@"^#{1,6}\s+(?<title>.*?)\s*$")]

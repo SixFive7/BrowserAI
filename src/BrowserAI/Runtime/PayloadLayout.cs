@@ -40,7 +40,7 @@ internal sealed class PayloadLayout(string? root = null)
 
     /// <summary>
     /// <c>@playwright/mcp</c>'s entry point, addressed as a file rather than
-    /// through a <c>.cmd</c> shim — a shim would need a shell, and a shell is
+    /// through a <c>.cmd</c> shim -- a shim would need a shell, and a shell is
     /// the process this project spent a whole deviation removing.
     /// </summary>
     public string PlaywrightMcpCli =>
@@ -67,7 +67,7 @@ internal sealed class PayloadLayout(string? root = null)
     /// <b>Inside the payload rather than beside the binary, because the verdicts
     /// describe the <c>cli.js</c> they shipped with.</b> An update replaces the
     /// payload wholesale, so a new binary can never read an old build's
-    /// judgements about a tool set that has moved underneath it — which is the
+    /// judgements about a tool set that has moved underneath it -- which is the
     /// same property the paragraph above gives <c>browsers.json</c>, for the same
     /// reason. Published beside the binary it would survive an update and start
     /// describing an upstream nobody judged.
@@ -86,7 +86,7 @@ internal sealed class PayloadLayout(string? root = null)
     /// ⚠️ <b>Three since 2026-08-26 (previously two).</b> The verdicts file joins
     /// the executable and the CLI because its absence is the same class of
     /// failure and a worse presentation: BrowserAI denies by default, so a payload
-    /// without it does not degrade to permissive — it refuses every call, and
+    /// without it does not degrade to permissive -- it refuses every call, and
     /// without this check nothing anywhere would name the missing file.
     /// </remarks>
     /// <exception cref="FileNotFoundException">Any of them is missing.</exception>

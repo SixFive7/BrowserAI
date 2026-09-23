@@ -28,18 +28,18 @@ namespace BrowserAI.Runtime;
 /// this is a file rather than anything else.</b> An open is refused when the
 /// requested <i>access</i> is outside an existing handle's share mode, <b>or</b>
 /// when the requested <i>share mode</i> is narrower than an existing handle's
-/// granted access — the check runs in both directions, which is exactly what a
+/// granted access -- the check runs in both directions, which is exactly what a
 /// reader/writer lock needs and what a named object would have to simulate:
 /// </para>
 /// <list type="bullet">
 ///   <item><description>
-///     <b>Reader</b> — <see cref="TakeShared"/> opens
+///     <b>Reader</b> -- <see cref="TakeShared"/> opens
 ///     <c>FileAccess.Read</c> / <c>FileShare.Read</c>. Two of them are
 ///     compatible in both directions, so any number succeed together and the
 ///     claims are cumulative with no count to keep anywhere.
 ///   </description></item>
 ///   <item><description>
-///     <b>Writer</b> — <see cref="TryTakeExclusive"/> opens
+///     <b>Writer</b> -- <see cref="TryTakeExclusive"/> opens
 ///     <c>FileAccess.ReadWrite</c> / <c>FileShare.Read</c>. A reader's
 ///     <c>FileShare.Read</c> does not admit <c>Write</c>, so the exclusive open
 ///     is refused while <b>any</b> reader holds it; and a reader's later
@@ -51,8 +51,8 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// ⚠️ <b>The writer shares <c>Read</c> rather than nothing, and the difference
 /// is a sentence rather than a lock.</b> With <c>FileShare.None</c> the
-/// exclusion is identical — the arithmetic above never reaches the writer's own
-/// share mode — but <b>nothing could read the record</b>, so a peer refused by
+/// exclusion is identical -- the arithmetic above never reaches the writer's own
+/// share mode -- but <b>nothing could read the record</b>, so a peer refused by
 /// a reinstall could not say whose reinstall, and could not quote how far in it
 /// is. <see cref="Read"/> opens <c>FileAccess.Read</c> /
 /// <c>FileShare.ReadWrite | Delete</c>, which is wide enough to admit the
@@ -62,10 +62,10 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// <b>The kernel releases a handle however the process dies, and that is the
 /// whole reason this is not a named semaphore.</b> A semaphore does span
-/// threads, which a named mutex does not — <see cref="Sessions.MachineMutex"/>
+/// threads, which a named mutex does not -- <see cref="Sessions.MachineMutex"/>
 /// says why in its own remarks, and this claim is held across a 203.8 MB
 /// download inside an <c>async</c> method whose continuations move between pool
-/// threads — but a semaphore's count is <b>not</b> restored when its holder
+/// threads -- but a semaphore's count is <b>not</b> restored when its holder
 /// dies, so one crashed reinstall would refuse every <c>browserai_init</c> on
 /// the machine until the next reboot. A <see cref="FileStream"/> has no thread
 /// affinity at all and Windows closes it on any death, clean or not.
@@ -81,8 +81,8 @@ namespace BrowserAI.Runtime;
 /// <b>Keyed on the browsers root, exactly as
 /// <see cref="BrowserProvisioner.MutexNameFor(string, string)"/> is, and for the
 /// reason that method already gives.</b> Two BrowserAI installations with
-/// different browsers roots are genuinely independent — their downloads write to
-/// different directories and neither can corrupt the other — so one global name
+/// different browsers roots are genuinely independent -- their downloads write to
+/// different directories and neither can corrupt the other -- so one global name
 /// would make a reinstall in installation A refuse a session in installation B
 /// for no reason at all. A file inside the root <i>is</i> that key, with no hash
 /// and no name to get wrong.
@@ -92,7 +92,7 @@ namespace BrowserAI.Runtime;
 /// accepted.</b> A reinstall whose exclusive open is refused says so at once and
 /// names what is holding the root; it does not publish an intent that would stop
 /// new sessions starting, and it does not wait. A machine that always has one
-/// session open therefore never lets a reinstall through — that is the
+/// session open therefore never lets a reinstall through -- that is the
 /// maintainer's decision and it is not a defect to be mitigated. Waiting on a
 /// browser a human may never close is exactly the shape this product spent a
 /// week removing.
@@ -101,20 +101,20 @@ namespace BrowserAI.Runtime;
 /// <b>The order it is taken in, and why nothing here can deadlock.</b> This lock
 /// is <b>outermost</b>: <c>SessionManager.ReinstallBrowserAsync</c> takes it
 /// first and only then reaches <see cref="BrowserProvisioner"/>, which takes the
-/// per-family provisioning mutexes — one for a family, and chromium, firefox and
+/// per-family provisioning mutexes -- one for a family, and chromium, firefox and
 /// <c>shared</c> in that fixed order for the shared target. <b>No path anywhere
 /// takes a provisioning mutex and then asks for this</b>, so there is no cycle to
-/// close; and every acquisition on both sides is non-blocking — these opens
-/// succeed at once or fail, the mutexes use <c>LockScopes.NeverWaits</c> — so
+/// close; and every acquisition on both sides is non-blocking -- these opens
+/// succeed at once or fail, the mutexes use <c>LockScopes.NeverWaits</c> -- so
 /// even a future edit that inverted the order would produce a refusal rather
 /// than a hang.
 /// </para>
 /// <para>
 /// ⚠️ <b>The file is still called <c>reinstall.lock</c> and the name is now
 /// narrower than what it guards</b>, since every session holds it. It is kept
-/// because a dated measurement names it —
-/// [the cross-user table](../../../kb/windows/detection.md#two-users-and-one-install-root--what-spans-users-and-what-does-not--measured-2026-08-20)
-/// lists <c>&lt;browsers&gt;\reinstall.lock</c> by name — and renaming it would
+/// because a dated measurement names it --
+/// [the cross-user table](../../../kb/windows/detection.md#two-users-and-one-install-root----what-spans-users-and-what-does-not----measured-2026-08-20)
+/// lists <c>&lt;browsers&gt;\reinstall.lock</c> by name -- and renaming it would
 /// leave that measurement describing a file that does not exist, which this
 /// repository treats as worse than a name that has outgrown its meaning.
 /// </para>
@@ -295,7 +295,7 @@ internal sealed class MaintenanceLock : IDisposable
     /// <remarks>
     /// <para>
     /// <b>It takes nothing and blocks nothing.</b> The open is
-    /// <c>FileAccess.Read</c> with <c>FileShare.ReadWrite | Delete</c> — wide
+    /// <c>FileAccess.Read</c> with <c>FileShare.ReadWrite | Delete</c> -- wide
     /// enough to admit a writer's granted access, so it is the one open that
     /// succeeds against a holder of either kind, and narrow enough that it can
     /// never be what excludes anybody.
@@ -306,7 +306,7 @@ internal sealed class MaintenanceLock : IDisposable
     /// reinstall ends, so a root whose last reinstall finished an hour ago still
     /// carries that line. It is quoted only on a path that has already
     /// established the claim is held, and where the session census has already
-    /// been consulted — see <c>SessionManager.ReinstallBrowserAsync</c>, which
+    /// been consulted -- see <c>SessionManager.ReinstallBrowserAsync</c>, which
     /// names open sessions when there are any and quotes this only when there are
     /// none.
     /// </para>
@@ -327,7 +327,7 @@ internal sealed class MaintenanceLock : IDisposable
     /// <remarks>
     /// <para>
     /// <b>Both figures are read off the filesystem, so this works from a
-    /// different process</b> — which is the only case that matters. A peer
+    /// different process</b> -- which is the only case that matters. A peer
     /// refused by a reinstall cannot see that reinstall's
     /// <see cref="BrowserProvisioner"/> at all: the attempt, its stopwatch and
     /// its samples are in another process's memory. What both processes can see
@@ -344,7 +344,7 @@ internal sealed class MaintenanceLock : IDisposable
     /// </para>
     /// <para>
     /// <b>Elapsed is the claim file's last write time</b>, which is the instant
-    /// <see cref="TryTakeExclusive"/> stamped its record — so it is a fact of the
+    /// <see cref="TryTakeExclusive"/> stamped its record -- so it is a fact of the
     /// filesystem rather than a field somebody has to parse out of a sentence.
     /// </para>
     /// <para>
@@ -478,8 +478,8 @@ internal sealed class MaintenanceLock : IDisposable
 /// </summary>
 /// <param name="StagedBytes">
 /// What the download staging directory weighs right now. <b>Zero means the
-/// archive is not on disk</b> — the delete, or an extraction already under
-/// way — and never that nothing is happening.
+/// archive is not on disk</b> -- the delete, or an extraction already under
+/// way -- and never that nothing is happening.
 /// </param>
 /// <param name="Elapsed">How long ago the claim was taken.</param>
 internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan Elapsed);
@@ -489,8 +489,8 @@ internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan E
 /// <para>
 /// <b>The discriminator is the kernel's, not a guess.</b> No code outside
 /// <c>ERROR_SHARING_VIOLATION</c> and <c>ERROR_LOCK_VIOLATION</c> can be produced
-/// by a holder on this open — the exclusion arithmetic in
-/// <see cref="MaintenanceLock"/>'s remarks is what makes that exhaustive — so
+/// by a holder on this open -- the exclusion arithmetic in
+/// <see cref="MaintenanceLock"/>'s remarks is what makes that exhaustive -- so
 /// anything else is a failure to reach the file at all, and the two recoveries
 /// are different: one is waited out, the other is fixed. <b>That is the direction
 /// <see cref="Unreachable"/> needs</b>, and it is sound: a caller who really is
@@ -504,7 +504,7 @@ internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan E
 /// mode alone (<see cref="MaintenanceLock.TakeShared"/>,
 /// <see cref="MaintenanceLock.TryTakeExclusive"/>), and the only byte-range lock
 /// in this product is <c>NativeFile.TakeGate</c>, reachable solely through
-/// <c>OpenForLockedAppend</c> on <b>log</b> files — so <b>no BrowserAI holder can
+/// <c>OpenForLockedAppend</c> on <b>log</b> files -- so <b>no BrowserAI holder can
 /// produce <c>ERROR_LOCK_VIOLATION</c> on this open at all</b>. A 33 here can only
 /// come from a foreign process byte-range-locking the file, and it is routed to
 /// <see cref="Contended"/> and thence to <i>"BrowserAI is replacing the browsers …
@@ -512,9 +512,9 @@ internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan E
 /// </para>
 /// <para>
 /// <b>Left as it is, deliberately, and this is the note rather than the fix.</b>
-/// It is the same trade already taken and written down for code 32 — an AV
+/// It is the same trade already taken and written down for code 32 -- an AV
 /// scanner, a backup agent or an indexer holding <c>reinstall.lock</c> reads as a
-/// reinstall — in <c>SessionManager.TheRootCouldNotBeClaimed</c>'s remarks, and
+/// reinstall -- in <c>SessionManager.TheRootCouldNotBeClaimed</c>'s remarks, and
 /// the recovery a caller is given (wait, then look again) is right for a foreign
 /// holder too. What was wrong was a sentence that made the misdiagnosis
 /// impossible; naming it is what stops the next reader deriving from it.

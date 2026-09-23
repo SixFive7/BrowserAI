@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>This is a test about an instrument rather than about the product, and it
-/// earns its place the way an instrument does — by having failed.</b> On
+/// earns its place the way an instrument does -- by having failed.</b> On
 /// 2026-08-29 a Firefox containment arm stalled out Playwright's own 180 s
 /// <c>initializeServer</c> budget inside a gate run. The dump that arrived
 /// named three capture files and said <c>(unreadable: … because it is being
@@ -22,14 +22,14 @@ namespace BrowserAI.Tests;
 /// beside each. Everything worth knowing about that stall was in those files;
 /// the scratch tree was then deleted, as it is designed to be, and the account
 /// went with it. An instrument that cannot read the evidence is not a weaker
-/// instrument — for that run it was no instrument at all.
+/// instrument -- for that run it was no instrument at all.
 /// </para>
 /// <para>
 /// <b>Both arms are in process and neither needs a browser</b>, because the
 /// defect was never about browsers: it is Windows share-mode arithmetic and a
 /// cached property, and both reproduce against a <see cref="FileStream"/> in
 /// four lines. What the containment arms contribute is the <i>reason</i> this
-/// matters — a dump is taken at the instant a launch did not happen, which is
+/// matters -- a dump is taken at the instant a launch did not happen, which is
 /// exactly the instant every writer in the tree is still holding its handle.
 /// </para>
 /// </remarks>
@@ -53,16 +53,16 @@ internal sealed class LauncherEvidenceTests
     /// </para>
     /// <para>
     /// <b>Watched red 2026-08-30 against the old body</b>, which threw
-    /// <c>IOException</c> — <i>"the process cannot access the file … because it
+    /// <c>IOException</c> -- <i>"the process cannot access the file … because it
     /// is being used by another process"</i>, the same sentence the 2026-08-29
-    /// dump carried — and reported it as <c>(unreadable: …)</c>. Established
+    /// dump carried -- and reported it as <c>(unreadable: …)</c>. Established
     /// first outside the suite against a real <c>node</c> holder and then in
     /// process, so the sharing arithmetic is not being inferred from one API.
     /// </para>
     /// <para>
     /// ⚠️ <b>The red reproduced the phantom too, which was not the
     /// expectation.</b> The length assertion was written to be about provenance
-    /// — the number must have been measured — on the assumption that the cached
+    /// -- the number must have been measured -- on the assumption that the cached
     /// figure would happen to be right, as it had been in a probe minutes
     /// earlier. It was not: the old body printed
     /// <c>--- cli-stderr.log (0 bytes) ---</c> for the 63 bytes this arm had just

@@ -8,7 +8,7 @@ using Microsoft.Win32.SafeHandles;
 namespace BrowserAI.Interop;
 
 /// <summary>
-/// Whether a process recorded earlier is still the process that was recorded —
+/// Whether a process recorded earlier is still the process that was recorded --
 /// answered by <c>(pid, creationFileTime)</c>, never by a pid alone and never by
 /// a name.
 /// </summary>
@@ -17,7 +17,7 @@ namespace BrowserAI.Interop;
 /// <b>This is what turns a stale lock into a sentence instead of a refusal.</b>
 /// <c>browserai.lock</c> keeps its holder record after the holder dies, on purpose,
 /// so a second BrowserAI can say <i>"held by PID 1234 since 14:02, no longer
-/// running — reclaiming"</i> rather than simply failing. That sentence is only
+/// running -- reclaiming"</i> rather than simply failing. That sentence is only
 /// safe if "no longer running" is answered correctly, and a pid on its own
 /// cannot answer it: Windows reuses pids, and a reclaim keyed on a pid alone
 /// eventually reads a stranger as the previous holder.
@@ -25,7 +25,7 @@ namespace BrowserAI.Interop;
 /// <para>
 /// <b>Nothing here matches, counts or terminates by image name, and there is no
 /// terminate at all.</b> <see cref="ClientProcessName"/> reads the parent's
-/// image path for one purpose — writing a human-readable name into the record so
+/// image path for one purpose -- writing a human-readable name into the record so
 /// that a person reading <c>browserai.lock</c> knows which client opened the session.
 /// It is display data. The rule forbids <i>choosing</i> a process by name; it
 /// does not forbid observing one, and the distinction is kept sharp here because
@@ -110,7 +110,7 @@ internal static partial class ProcessLiveness
 
     /// <summary>
     /// Whether the process behind an <b>already-open handle</b> existed before
-    /// this one did — the only identity pairing available for a pid that came
+    /// this one did -- the only identity pairing available for a pid that came
     /// out of <see cref="ParentProcessId"/>.
     /// </summary>
     /// <remarks>
@@ -118,7 +118,7 @@ internal static partial class ProcessLiveness
     /// <b>It is exact for the case it exists for, and the argument is three
     /// sentences.</b> Our parent had to exist at the instant we were created, so
     /// a real parent's creation time is never after ours. A pid recycled from a
-    /// parent that has exited belongs to a process created after that exit —
+    /// parent that has exited belongs to a process created after that exit --
     /// which is after our own creation, because we existed while the parent
     /// still did. So <i>"started after us"</i> and <i>"is not our parent"</i> are
     /// the same set, and this test has no false answer in either direction.
@@ -127,8 +127,8 @@ internal static partial class ProcessLiveness
     /// <b>The handle is the subject, not the pid.</b> Re-opening the pid here
     /// would put a second window between the check and the use, which is the
     /// window being closed. The caller opens once, verifies that handle, and
-    /// holds it — and from the moment it is open Windows will not recycle the
-    /// number underneath it — measured 2026-08-18, 6,030 spawns without a repeat
+    /// holds it -- and from the moment it is open Windows will not recycle the
+    /// number underneath it -- measured 2026-08-18, 6,030 spawns without a repeat
     /// against a control that repeated at 2,010
     /// (<see href="../../../kb/windows/processes.md">kb</see>).
     /// </para>
@@ -159,7 +159,7 @@ internal static partial class ProcessLiveness
     }
 
     /// <summary>
-    /// The image name of the process that started this one — the MCP client —
+    /// The image name of the process that started this one -- the MCP client --
     /// for the record only.
     /// </summary>
     /// <returns>
@@ -210,7 +210,7 @@ internal static partial class ProcessLiveness
     }
 
     /// <summary>
-    /// The pid of the process that started this one — the MCP client.
+    /// The pid of the process that started this one -- the MCP client.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -224,7 +224,7 @@ internal static partial class ProcessLiveness
     /// ⚠️ <b>What comes back is a bare pid, and it is <i>stale by design</i>.</b>
     /// The kernel records the creator's pid at creation and never updates it,
     /// never invalidates it when that process exits, and offers no creation time
-    /// to pair it with — so a pid returned here may already belong to a
+    /// to pair it with -- so a pid returned here may already belong to a
     /// stranger, and there is no record anywhere that would say so. That is why
     /// <see cref="StartedNoLaterThanThisProcess"/> exists and why <b>every
     /// caller must verify the handle it opens before acting on it</b>: a watcher
@@ -255,9 +255,9 @@ internal static partial class ProcessLiveness
     /// <para>
     /// <b>It exists for one question, asked inside a Velopack hook: was the
     /// uninstall silent?</b> Velopack keeps that flag in an atomic inside
-    /// <c>Update.exe</c> and passes nothing to the hook it starts — not an
+    /// <c>Update.exe</c> and passes nothing to the hook it starts -- not an
     /// argument and not an environment variable, read out of 1.2.0's own
-    /// <c>dialogs.rs</c> and <c>run_hook</c> — so the parent's own command line
+    /// <c>dialogs.rs</c> and <c>run_hook</c> -- so the parent's own command line
     /// is the only place the answer exists. <c>Update.exe --uninstall</c> and
     /// <c>Update.exe --uninstall --silent</c> are two different registry values
     /// (<c>UninstallString</c> and <c>QuietUninstallString</c>) and the

@@ -36,7 +36,7 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// <param name="NavigateText">Every text content block of that result, joined.</param>
 /// <param name="ScreenshotEnvelope">
 /// The whole <c>tools/call</c> envelope for a <c>browser_take_screenshot</c>
-/// that named no file — which is upstream's own condition for answering with an
+/// that named no file -- which is upstream's own condition for answering with an
 /// inline image, and the case BrowserAI's routing used to swallow by always
 /// supplying a name. It supplies none now, so the guard is upstream's again.
 /// </param>
@@ -55,7 +55,7 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// <param name="BrowserAiProcessId">The published binary's own pid.</param>
 /// <param name="Survivors">Processes still alive after the published binary was terminated from outside.</param>
 /// <param name="StandardError">
-/// Everything BrowserAI wrote to stderr — <b>as much of it as survived the kill</b>.
+/// Everything BrowserAI wrote to stderr -- <b>as much of it as survived the kill</b>.
 /// ⚠️ Do not assert that a record was written on this: stderr goes through
 /// <c>AddConsole</c>, whose background processor loses whatever it still holds
 /// when the process is terminated, and this run terminates it on purpose. Use
@@ -63,7 +63,7 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// </param>
 /// <param name="ProcessLog">
 /// Every record <b>this run's BrowserAI</b> wrote to the shared process log,
-/// which <c>RollingFileWriter</c> writes unbuffered — so a record that was
+/// which <c>RollingFileWriter</c> writes unbuffered -- so a record that was
 /// logged is on disk whatever happens to the process afterwards.
 /// </param>
 /// <param name="SessionDirectory">The session this run's browser belongs to.</param>
@@ -217,8 +217,8 @@ internal sealed record SliceRun(
 
         // ⚠️ DRAINED, never `StandardErrorSoFar`, and this is read AFTER the
         // waits above rather than before them. Everything that could hold the
-        // write end of that pipe — BrowserAI, and the node and browser processes
-        // that inherited it — is gone by this line, so end-of-file is guaranteed
+        // write end of that pipe -- BrowserAI, and the node and browser processes
+        // that inherited it -- is gone by this line, so end-of-file is guaranteed
         // and waiting for it is an event rather than a duration.
         //
         // Taking the snapshot instead is what put CI red on 2026-08-18: the
@@ -253,7 +253,7 @@ internal sealed record SliceRun(
     /// ⚠️ <b>Reads UPSTREAM's pointer since 2026-08-26 (previously BrowserAI's
     /// own note, matched on the line prefix <c>"  file: "</c>).</b> There is no
     /// note: nothing between the two servers appends to an answer, so the only
-    /// thing naming the file is upstream's own <c>- [Title](./name.png)</c> —
+    /// thing naming the file is upstream's own <c>- [Title](./name.png)</c> --
     /// relative to the child's working directory, which is
     /// <c>&lt;session&gt;\output</c>.
     /// </para>
@@ -263,7 +263,7 @@ internal sealed record SliceRun(
     /// the path would be asserting its own arithmetic; and the claim under test
     /// is that the path the ANSWER names is the path the file is at, which
     /// cannot be checked by producing both ends. That claim is the same one it
-    /// was — what changed is whose sentence carries it.
+    /// was -- what changed is whose sentence carries it.
     /// </para>
     /// </remarks>
     /// <param name="envelope">The whole response envelope.</param>

@@ -905,7 +905,7 @@ $uploadPaths = @(foreach ($name in $uploadSet) {
     $path
 })
 
-# ⚠️ AND THE PACKER'S OWN LIST IS MADE TO AGREE — Q235 b, 2026-09-23.
+# ⚠️ AND THE PACKER'S OWN LIST IS MADE TO AGREE -- Q235 b, 2026-09-23.
 # `vpk pack` writes `assets.<channel>.json` naming everything it produced, and
 # `vpk upload github` uploads EVERY file listed in it. So the portable archive
 # would have been published by the one command nobody here runs, contradicting

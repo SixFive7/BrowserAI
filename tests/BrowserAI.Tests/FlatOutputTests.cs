@@ -27,7 +27,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What is asserted instead is the absence, and the absence has to be
-/// asserted rather than assumed</b> — a routing layer that came back would
+/// asserted rather than assumed</b> -- a routing layer that came back would
 /// otherwise be caught by nothing here, only by the byte-identity arm in
 /// <c>LosslessPassthroughTests</c>, which says the answer is unchanged and not
 /// that the tree is.
@@ -38,7 +38,7 @@ namespace BrowserAI.Tests;
 /// eviction staying off, and the sibling-sessions line an <c>init</c> answer
 /// carries. Each is a session-system fact rather than a traffic one, which is
 /// why each outlived the deletion. ⚠️ *Corrected 2026-08-29 (previously the
-/// third was "the per-root roll-up")* — <c>browserai-sessions.json</c> is
+/// third was "the per-root roll-up")* -- <c>browserai-sessions.json</c> is
 /// deleted, and what survives of that pair is the answer line, which is where
 /// the only reader either had was ever going to read it.
 /// </para>
@@ -82,8 +82,8 @@ internal sealed class FlatOutputTests
 
         await Assert.That(File.Exists(Path.Combine(rig.Session!, SessionLayout.OutputFolderName, "login.png"))).IsTrue();
 
-        // ⚠️ AND `session.json` NEVER APPEARS. It was the artifact index — one
-        // entry per routed file, plus a resolved path for every typed folder —
+        // ⚠️ AND `session.json` NEVER APPEARS. It was the artifact index -- one
+        // entry per routed file, plus a resolved path for every typed folder --
         // and the session directory holds two files that describe it now, both
         // of them the session system's.
         await Assert.That(File.Exists(Path.Combine(rig.Session!, "session.json"))).IsFalse();
@@ -113,7 +113,7 @@ internal sealed class FlatOutputTests
     /// ⚠️ <b>THIS IS A LOSS, ASSERTED SO THAT IT IS RECORDED RATHER THAN
     /// DISCOVERED.</b> Until 2026-08-26 <c>ArtifactRouter.Unique</c> suffixed a
     /// colliding name against both the filesystem and an in-flight reservation
-    /// set, and the answer said what it had been renamed from — the hazard row
+    /// set, and the answer said what it had been renamed from -- the hazard row
     /// <i>two artifacts with the same caller-supplied name in one session is
     /// data loss wearing a success</i>. That machinery is gone with the rest of
     /// the routing, and upstream's own <c>writeFile</c> truncates.
@@ -218,8 +218,8 @@ internal sealed class FlatOutputTests
     /// <para>
     /// ⚠️ <b>Narrowed 2026-08-29 (previously
     /// <c>TheRollUpCoversOnlyTheRootInPlay</c>).</b> That test asserted the same
-    /// scoping twice — once off <c>browserai-sessions.json</c> beside the
-    /// sessions and once off this line — and the file is deleted, so the half
+    /// scoping twice -- once off <c>browserai-sessions.json</c> beside the
+    /// sessions and once off this line -- and the file is deleted, so the half
     /// that read it went with it. <b>What is left is the half that was ever
     /// about a caller</b>, and it is stronger than the sentences it replaces:
     /// the roots are populated in an order that makes each <c>DoesNotContain</c>
@@ -229,7 +229,7 @@ internal sealed class FlatOutputTests
     /// <b>The upward half genuinely died with the file and is not quietly
     /// missing.</b> A roll-up sat at a session's own root and was never
     /// propagated to an ancestor, so the file at the rig root listed only the
-    /// rig's own session — a property of which file got rewritten. The walk
+    /// rig's own session -- a property of which file got rewritten. The walk
     /// behind this line is a path-prefix read, so a root does see the sessions
     /// nested below it, and there is nothing left to assert there.
     /// </para>
@@ -257,7 +257,7 @@ internal sealed class FlatOutputTests
         await Assert.That(second).DoesNotContain("alpha");
         await Assert.That(second).DoesNotContain("rig-session");
 
-        await Assert.That(third).Contains("other sessions under " + left + ": 1 — alpha");
+        await Assert.That(third).Contains("other sessions under " + left + ": 1 -- alpha");
         await Assert.That(third).DoesNotContain("gamma");
         await Assert.That(third).DoesNotContain("rig-session");
     }

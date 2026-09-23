@@ -12,7 +12,7 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// The probe renames its report into place, so the file appears complete or not
-/// at all. This waits for it and reports a timeout as a timeout — a test that
+/// at all. This waits for it and reports a timeout as a timeout -- a test that
 /// silently read an absent file would fail on the assertion instead, naming the
 /// product for the harness's impatience.
 /// </para>
@@ -22,7 +22,7 @@ namespace BrowserAI.Tests.Harness;
 /// step 12: <c>File.ReadAllTextAsync</c> on a report that had already been
 /// renamed into place failed with <i>"the process cannot access the file …
 /// because it is being used by another process"</i>, one run in a dozen. A
-/// freshly-created file is briefly held by something outside this repository —
+/// freshly-created file is briefly held by something outside this repository --
 /// the same live condition <c>SessionLock</c>'s two-second move budget exists
 /// for. The read is therefore <b>retried inside the patience budget</b>, and
 /// opened <c>FileShare.ReadWrite | FileShare.Delete</c> so that neither a writer

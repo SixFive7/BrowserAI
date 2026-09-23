@@ -26,15 +26,15 @@ internal readonly record struct RawResponse(byte[] Frame, JsonObject Envelope)
 /// <para>
 /// <b>Why this exists beside <see cref="RawStdioClient"/> rather than instead
 /// of it.</b> Both are hand-written and neither touches a product or SDK
-/// protocol type, which is the property that makes either an oracle at all —
+/// protocol type, which is the property that makes either an oracle at all --
 /// with both of BrowserAI's transports replaced, a test driven through an
 /// <c>McpClient</c> is testing the code under test using the code under test.
 /// They differ in the two things this layer needs and that one cannot give:
 /// this one speaks over a <b>stream pair</b> rather than starting a process, so
 /// no test here needs Node or a published binary; and it keeps every response's
 /// <b>raw bytes</b>, because <see cref="LosslessPassthroughTests"/> asserts
-/// byte-identity on the exact span of <c>result</c> — found by
-/// <c>Utf8JsonReader</c> token offset, never by re-serialising and comparing —
+/// byte-identity on the exact span of <c>result</c> -- found by
+/// <c>Utf8JsonReader</c> token offset, never by re-serialising and comparing --
 /// and a client that hands back only a parsed object has already thrown the
 /// evidence away.
 /// </para>
@@ -72,14 +72,14 @@ internal sealed class RawPipeClient : IAsyncDisposable
     /// per-exchange name: a test doing forty prompt round trips over
     /// thirty-one seconds died on the fortieth, and died as a bare
     /// <c>OperationCanceledException: The operation was canceled.</c> from
-    /// somewhere inside <c>System.IO.Pipelines</c> — no method, no id, no
+    /// somewhere inside <c>System.IO.Pipelines</c> -- no method, no id, no
     /// elapsed time. Two real-browser tests hit it under full parallelism
     /// because most of their thirty seconds is spent legitimately waiting for a
     /// browser rather than for this pipe.
     /// <para>
     /// Per frame is also the stronger hang detector, not the weaker one: a peer
     /// that has genuinely stopped sends nothing at all, so the silence still
-    /// fails — now with the operation named. <see cref="RawStdioClient"/> was
+    /// fails -- now with the operation named. <see cref="RawStdioClient"/> was
     /// corrected the same way on 2026-08-18; the last whole-conversation budget
     /// in the suite went with it.
     /// </para>
@@ -187,7 +187,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// The two-phase shape exists for cancellation: a test has to get a call
-    /// in flight, cancel it, and then assert on what the far end saw — and a
+    /// in flight, cancel it, and then assert on what the far end saw -- and a
     /// cancelled call is one nothing is ever going to answer, so a version that
     /// waits first can only be written as a timeout.
     /// </remarks>
@@ -327,7 +327,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
     /// response to the request that provoked them sit in the pipe until
     /// something drains it, so a test asserting on
     /// <see cref="FramesReceived"/> without this is asserting on whatever the
-    /// last round trip happened to consume — which is a race, and it passes on
+    /// last round trip happened to consume -- which is a race, and it passes on
     /// a quiet machine.
     /// </remarks>
     /// <param name="condition">Evaluated after every frame.</param>

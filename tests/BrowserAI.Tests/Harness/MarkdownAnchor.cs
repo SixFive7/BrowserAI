@@ -14,7 +14,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Ported from a working implementation rather than derived</b>
 /// (a <c>check-anchors.py</c> in the scratch directory, 2026-08-18; the artifact
-/// was not retained and the scratch directory is gone — re-establish it by
+/// was not retained and the scratch directory is gone -- re-establish it by
 /// scanning the tree for fragment links and resolving each against the target
 /// file's headings, which is what this type does), because the risk the anchor
 /// check carries is a slug rule that is <i>nearly</i> right.
@@ -25,7 +25,7 @@ namespace BrowserAI.Tests.Harness;
 /// The rule: a link becomes its own text, inline HTML disappears, code and
 /// emphasis markers are dropped, then lower-case; keep letters, digits, hyphens
 /// and underscores, turn each space into a hyphen, and drop everything else.
-/// <b>Combining marks are kept</b> because GitHub keeps them — a branch this
+/// <b>Combining marks are kept</b> because GitHub keeps them -- a branch this
 /// corpus does not exercise, since the only non-ASCII characters in any heading
 /// here are an em-dash and an arrow, both dropped.
 /// </para>
@@ -37,7 +37,7 @@ namespace BrowserAI.Tests.Harness;
 /// published release is the one link in this project nothing can re-check after
 /// the fact. <c>ChangelogTests.TheReleaseNotesAnchorIsTheOneTheLinkCheckerComputes</c>
 /// holds the two implementations against each other over the shapes that
-/// distinguish them — the two are not one implementation and cannot be, since
+/// distinguish them -- the two are not one implementation and cannot be, since
 /// one of them is PowerShell, so what is mechanised is that they agree.
 /// </para>
 /// </remarks>
@@ -54,7 +54,7 @@ internal static partial class MarkdownAnchor
         // agrees with GitHub. `Setup.exe -- <args>` in kb/packaging/velopack.md
         // is a heading whose code span holds an angle-bracketed word: to a
         // renderer that is four literal characters, to an HTML stripper it is a
-        // tag. Strip the tags first and the two rules produce different slugs —
+        // tag. Strip the tags first and the two rules produce different slugs --
         // which HAZARDS.md recorded on 2026-08-17 by deliberately writing that
         // link WITHOUT its anchor, the one link in the repository that had to
         // avoid the check. Emptying the span of its angle brackets here, before
@@ -99,7 +99,7 @@ internal static partial class MarkdownAnchor
     /// </summary>
     /// <remarks>
     /// They are removed rather than replaced by a space because GitHub drops
-    /// them as characters — a space would become a hyphen and the slug would be
+    /// them as characters -- a space would become a hyphen and the slug would be
     /// wrong in the other direction.
     /// </remarks>
     /// <param name="span">The matched code span, backticks included.</param>
@@ -136,7 +136,7 @@ internal static partial class MarkdownAnchor
     /// One character class rather than the ported alternation of backtick,
     /// double star and single star: removing every asterisk is exactly what
     /// removing both star forms does, and it cannot be read as ordered.
-    /// <b>An underscore is not in it</b> — GitHub keeps underscores in a slug,
+    /// <b>An underscore is not in it</b> -- GitHub keeps underscores in a slug,
     /// so stripping them here would be a rule that is nearly right.
     /// </remarks>
     [GeneratedRegex("[`*]")]

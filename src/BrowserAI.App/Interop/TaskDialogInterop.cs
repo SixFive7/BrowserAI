@@ -21,7 +21,7 @@ namespace BrowserAI.App.Interop;
 /// headers</b>, which is the single likeliest way to get this wrong: the
 /// natural C# layout inserts padding before every pointer and the whole
 /// structure then means something else, field by field, with no diagnostic at
-/// all — the call simply returns <c>E_INVALIDARG</c>, or worse, succeeds and
+/// all -- the call simply returns <c>E_INVALIDARG</c>, or worse, succeeds and
 /// renders nonsense. <see cref="TaskDialogConfig"/> declares
 /// <see cref="LayoutKind.Sequential"/> with <c>Pack = 1</c>, and its size is
 /// asserted against the documented 160 bytes by the suite rather than trusted.
@@ -39,8 +39,8 @@ internal static partial class TaskDialogInterop
 {
     /// <summary>Everything one page of the dialog is.</summary>
     /// <remarks>
-    /// The two unions in the Windows declaration — icon-or-resource, for the
-    /// main icon and the footer icon — are declared here as the pointer half,
+    /// The two unions in the Windows declaration -- icon-or-resource, for the
+    /// main icon and the footer icon -- are declared here as the pointer half,
     /// because that is the half this product uses: an <c>HICON</c> loaded from
     /// our own resources, with <see cref="Flags.UseHIconMain"/> set to say so.
     /// </remarks>
@@ -150,7 +150,7 @@ internal static partial class TaskDialogInterop
         /// <summary>IDOK.</summary>
         public const int Ok = 1;
 
-        /// <summary>IDCANCEL — what Escape and the close box report.</summary>
+        /// <summary>IDCANCEL -- what Escape and the close box report.</summary>
         public const int Cancel = 2;
 
         /// <summary>IDCLOSE.</summary>
@@ -290,7 +290,7 @@ internal static partial class TaskDialogInterop
     /// </summary>
     /// <remarks>
     /// ⚠️ <b><c>LoadImageW</c> rather than <c>LoadIconWithScaleSize</c>, and
-    /// the reason is not taste — measured 2026-09-16.</b> The comctl32 function
+    /// the reason is not taste -- measured 2026-09-16.</b> The comctl32 function
     /// is the one the documentation points at for this job and it is
     /// <b>exported by ORDINAL only</b>: a <c>LibraryImport</c> naming it fails at
     /// the call with <c>EntryPointNotFoundException: Unable to find an entry

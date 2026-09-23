@@ -17,7 +17,7 @@ namespace BrowserAI.Sessions;
 /// canonicalisation function in front of it.</b> The mutex name, the lock file,
 /// the data file and the session index all key on the same directory, and if any
 /// two of them normalise differently the same directory quietly acquires two
-/// identities — which is a lock that reports success while guarding nothing.
+/// identities -- which is a lock that reports success while guarding nothing.
 /// There is deliberately no second spelling of either half anywhere in the
 /// product, and a test asserts the derived names agree across every alias this
 /// machine can build.
@@ -34,7 +34,7 @@ namespace BrowserAI.Sessions;
 /// are two different jobs. Upper-casing is what makes <c>c:\a</c> and
 /// <c>C:\A</c> one session, and it is applied to the string that gets hashed.
 /// Applying it to the path that is actually opened would be a different claim
-/// — that the filesystem is case-insensitive — and Windows has supported
+/// -- that the filesystem is case-insensitive -- and Windows has supported
 /// per-directory case sensitivity since 1803, so a caller whose directory sits
 /// under a case-sensitive parent would be sent to a path that does not exist.
 /// <see cref="FullPath"/> therefore keeps the casing it was handed, which is
@@ -44,12 +44,12 @@ namespace BrowserAI.Sessions;
 /// ⚠️ <b>Corrected 2026-08-26 (previously "keeps the caller's own casing").</b>
 /// The casing it is handed is the <i>filesystem's</i> now, because
 /// <c>CanonicalPath</c> reads it back through
-/// <c>GetFinalPathNameByHandleW</c> — which reports every component as it is
+/// <c>GetFinalPathNameByHandleW</c> -- which reports every component as it is
 /// stored and the drive letter upper-case, always. Nothing hashed moves:
 /// <see cref="Key"/> case-folds, so the mutex, the index key and the lock file
 /// are the same names they were. What does move is the <i>spelling</i> in every
 /// answer and every record, for a session opened from a shell that spelled the
-/// drive letter lower-case — one <c>directory</c> statement on the next resume,
+/// drive letter lower-case -- one <c>directory</c> statement on the next resume,
 /// and that is the whole of what the identity change looks like from outside.
 /// </para>
 /// </remarks>
@@ -61,7 +61,7 @@ internal sealed class SessionPath
     /// <remarks>
     /// <b>It is here because one Win32 call still keeps it and .NET does not.</b>
     /// <c>CreateProcessW</c>'s <c>lpCurrentDirectory</c> is bounded by it whatever
-    /// the process manifest says, while <c>Directory.CreateDirectory</c> is not —
+    /// the process manifest says, while <c>Directory.CreateDirectory</c> is not --
     /// so a directory can be created, locked and recorded and then be unusable as
     /// the place a browser is started.
     /// </remarks>
@@ -80,14 +80,14 @@ internal sealed class SessionPath
     /// <remarks>
     /// <para>
     /// <b>Derived rather than written, and the derivation is what found the real
-    /// bound.</b> The obvious candidate is <c>\output</c> — the working
+    /// bound.</b> The obvious candidate is <c>\output</c> -- the working
     /// directory every child is started in, which is what
     /// <c>CreateProcessW</c>'s <c>lpCurrentDirectory</c> bounds. It is not the
     /// longest. SQLite composes <c>browserai.data-shm</c> and
     /// <c>browserai.data-wal</c> from the store's path and its Win32 VFS is
     /// bounded in <c>MAX_PATH</c> characters too, so the store fails first:
-    /// measured 2026-08-26, a 254-character session directory took its guard —
-    /// which .NET opens, and .NET is not bounded — and then failed the store
+    /// measured 2026-08-26, a 254-character session directory took its guard --
+    /// which .NET opens, and .NET is not bounded -- and then failed the store
     /// open with <c>SQLITE_CANTOPEN</c>, <i>"unable to open database file
     /// (result 14)"</i>. The profile and the downloads folder are opened by .NET
     /// alone and do not bind.
@@ -95,7 +95,7 @@ internal sealed class SessionPath
     /// <para>
     /// ⚠️ <b>A budget, not a ban on deep paths.</b> A caller may name a
     /// directory of any depth to <c>browserai_list</c>, which creates nothing and
-    /// starts nothing — which is why this predicate lives on this type rather
+    /// starts nothing -- which is why this predicate lives on this type rather
     /// than in <c>CanonicalPath</c>, beside the volume-root one and for
     /// the same reason.
     /// </para>
@@ -128,7 +128,7 @@ internal sealed class SessionPath
     public string FullPath { get; }
 
     /// <summary>
-    /// The case-folded form. This is the identity, and the only thing hashed —
+    /// The case-folded form. This is the identity, and the only thing hashed --
     /// never a filesystem path.
     /// </summary>
     public string Key { get; }
@@ -143,7 +143,7 @@ internal sealed class SessionPath
     public string MutexName { get; }
 
     /// <summary>
-    /// The session index's file name for this directory — the full hash. The
+    /// The session index's file name for this directory -- the full hash. The
     /// index itself is build-order step 11; the <i>key</i> lives here because it
     /// must come out of the same canonicalisation as the other two names, and a
     /// second implementation is exactly how they would drift apart.
@@ -174,18 +174,18 @@ internal sealed class SessionPath
     /// <remarks>
     /// <para>
     /// ⚠️ <b>It normalises nothing, and that is what makes the one-function rule
-    /// true rather than nearly true — 2026-08-26, previously
+    /// true rather than nearly true -- 2026-08-26, previously
     /// <c>Resolve(string directory)</c>, which was <c>Path.GetFullPath</c> plus a
     /// trim.</b> With the normalisation here, <c>browserai_list</c> could not use
     /// this chain at all: a listing is pointed at a volume root on purpose and a
     /// volume root is refused below, so <c>list</c> grew a second
-    /// <c>GetFullPath</c>-plus-upper-case of its own — which is exactly the
+    /// <c>GetFullPath</c>-plus-upper-case of its own -- which is exactly the
     /// second spelling this type's remarks forbid, and it is where the aliased
     /// listing gave a confident wrong answer. Splitting the two questions apart
     /// lets <c>list</c> ask the first and skip the second.
     /// </para>
     /// <para>
-    /// <b>Two predicates are left: the volume root and the length</b> — because
+    /// <b>Two predicates are left: the volume root and the length</b> -- because
     /// <c>C:\</c> is a legitimate <i>subtree</i> and never a session directory,
     /// and because a directory with no room left inside it for
     /// <c>browserai.data</c> is one that can be created and cannot then be
@@ -196,11 +196,11 @@ internal sealed class SessionPath
     /// </para>
     /// <para>
     /// ⚠️ <b>Neither refusal carries a <c>paramName</c>, and that is deliberate
-    /// — corrected 2026-08-26.</b> <c>SessionManager.Resolve</c> interpolates
+    /// -- corrected 2026-08-26.</b> <c>SessionManager.Resolve</c> interpolates
     /// <c>failure.Message</c> straight into
     /// <c>SessionErrors.DirectoryUnusable</c>, and
     /// <c>ArgumentException.Message</c> appends <c>(Parameter 'x')</c> whenever
-    /// one is set — so a caller naming <c>C:\</c> was answered <i>"…must be a
+    /// one is set -- so a caller naming <c>C:\</c> was answered <i>"…must be a
     /// real directory on the volume. <b>(Parameter 'canonical')</b>"</i>,
     /// measured through the published binary that day. <c>canonical</c> is an
     /// internal identifier that means nothing to a model, in the one sentence
@@ -241,7 +241,7 @@ internal sealed class SessionPath
                 $"'{trimmed}' is {trimmed.Length.ToString(CultureInfo.InvariantCulture)} characters, and a session directory may be at most "
                 + $"{LongestSessionDirectory.ToString(CultureInfo.InvariantCulture)}. BrowserAI creates '{SessionLayout.DataFileName}' and "
                 + $"'{SessionLayout.OutputFolderName}' inside the directory you name, and Windows still bounds a database open and a child's working "
-                + $"directory at {MaxPath.ToString(CultureInfo.InvariantCulture)} characters even where .NET does not — so the directory would be "
+                + $"directory at {MaxPath.ToString(CultureInfo.InvariantCulture)} characters even where .NET does not -- so the directory would be "
                 + "created and the session would then fail to open, with a message about the browser rather than about the path. Name a path at least "
                 + $"{(trimmed.Length - LongestSessionDirectory).ToString(CultureInfo.InvariantCulture)} character(s) shorter.");
         }

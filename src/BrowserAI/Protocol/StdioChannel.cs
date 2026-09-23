@@ -21,14 +21,14 @@ namespace BrowserAI.Protocol;
 /// <para>
 /// Those three are why this is a type rather than a convention. The encoding is
 /// set once, here, and <c>System.Console</c> is banned everywhere else in the
-/// process by <c>BannedSymbols.txt</c> at error severity — so there is no
+/// process by <c>BannedSymbols.txt</c> at error severity -- so there is no
 /// second path to the handle for a future change to get wrong.
 /// </para>
 /// <para>
 /// <b>Bytes are the primitive, and that is deliberate.</b>
 /// <see cref="DirectStdioServerTransport"/> hands this type UTF-8 it has
 /// already encoded, because the whole point of owning the server transport is
-/// that a result leaves byte-for-byte as the child produced it — the SDK's own
+/// that a result leaves byte-for-byte as the child produced it -- the SDK's own
 /// server transport re-escapes every backtick, apostrophe, angle bracket and
 /// non-ASCII character, measured at +49.6% on a real result frame
 /// ([kb](../../../kb/mcp/sdk.md#writing-replacement-transports-against-the-public-surface)).
@@ -101,8 +101,8 @@ internal sealed class StdioChannel : IDisposable
     /// without <c>FileOptions.Asynchronous</c>").</i> Measured 2026-08-18 on
     /// .NET 10: it hands back a
     /// <c>System.ConsolePal+WindowsConsoleStream</c>, which is <b>not</b> a
-    /// <c>FileStream</c> at all — with stdout redirected to a file and to a
-    /// pipe alike — so there is no <c>FileOptions</c> flag involved and nothing
+    /// <c>FileStream</c> at all -- with stdout redirected to a file and to a
+    /// pipe alike -- so there is no <c>FileOptions</c> flag involved and nothing
     /// an overlapped open would change. The conclusion is unaffected; the
     /// mechanism named was the wrong type. The caller serialises frames; this
     /// does not.

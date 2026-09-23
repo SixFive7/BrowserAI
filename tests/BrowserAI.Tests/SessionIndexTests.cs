@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The session-index file layout — the third of the three decisions
+/// The session-index file layout -- the third of the three decisions
 /// [DECISIONS → Still open](../../DECISIONS.md#still-open) named as settled on paper
 /// and unexercised.
 /// </summary>
@@ -23,7 +23,7 @@ namespace BrowserAI.Tests;
 /// <b>The index is deliberately weaker than it looks, and each property here is
 /// a property of that weakness.</b> It is never trusted, only followed; it takes
 /// no lock; and it repairs itself. So the assertions are about what it does
-/// <i>not</i> do — it does not authorise, it does not serialise, and above all
+/// <i>not</i> do -- it does not authorise, it does not serialise, and above all
 /// it does not touch anything outside its own directory.
 /// </para>
 /// <para>
@@ -49,7 +49,7 @@ internal sealed class SessionIndexTests
     /// <remarks>
     /// The done-test asks for two. Eight is what the suite pays for, because the
     /// window a rename leaves open is small and two processes can miss each
-    /// other entirely — which would pass while proving nothing.
+    /// other entirely -- which would pass while proving nothing.
     /// </remarks>
     private const int Writers = 8;
 
@@ -162,14 +162,14 @@ internal sealed class SessionIndexTests
     }
 
     /// <summary>
-    /// A session whose record is being renamed into place is kept, not swept —
+    /// A session whose record is being renamed into place is kept, not swept --
     /// the one ungated reader in the product that ACTED on an absence.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>The absence is real and is nobody's fault.</b> A guard arrives by
     /// <c>MoveFileEx</c> with <c>MOVEFILE_REPLACE_EXISTING</c>, and the store
-    /// beside it is created after that — so between the moment the temp file
+    /// beside it is created after that -- so between the moment the temp file
     /// exists and the moment the store does, a directory that IS being taken
     /// holds neither of the two files that say so. <c>SessionIndex</c> read that
     /// instant as <i>never was a session</i>, which is a **removable** state,
@@ -183,8 +183,8 @@ internal sealed class SessionIndexTests
     /// writer sits in its retry loop … the name <c>browserai.json</c> does not
     /// resolve").</b> That window opened on <b>every forwarded call</b>, because
     /// the record was rewritten whole each time. Nothing rewrites either file
-    /// now, so what is left is the first acquisition of a directory — once per
-    /// session rather than once per call — and the discriminator is unchanged
+    /// now, so what is left is the first acquisition of a directory -- once per
+    /// session rather than once per call -- and the discriminator is unchanged
     /// because the shape on disk is.
     /// </para>
     /// <para>
@@ -192,7 +192,7 @@ internal sealed class SessionIndexTests
     /// it produces on disk is exactly this: a directory with neither file and a
     /// <c>browserai.lock.new-…</c> beside them. Composing that state directly
     /// tests the discriminator rather than the scheduler, and the pattern comes
-    /// from <c>SessionLayout.NewLockFilePattern</c> — the same constant the
+    /// from <c>SessionLayout.NewLockFilePattern</c> -- the same constant the
     /// durable write's name is built from, so a rename of the convention cannot
     /// leave this test passing against a pattern nothing produces.
     /// </para>
@@ -365,7 +365,7 @@ internal sealed class SessionIndexTests
     /// ⚠️ <b>The corruption moved with the record (2026-08-26, previously a
     /// misspelled key in <c>browserai.json</c>).</b> The record is a database
     /// now, so what a damaged one looks like is a file whose header SQLite will
-    /// not accept — and the entry state it produces is the same one, for the
+    /// not accept -- and the entry state it produces is the same one, for the
     /// same reason: a session nobody can open is a session nobody can
     /// re-record.
     /// </remarks>
@@ -426,7 +426,7 @@ internal sealed class SessionIndexTests
         var followed = index.Follow();
 
         // Not "gone". Unknown. A session directory on a drive that is not
-        // plugged in, or a share that is not reachable, has not been destroyed —
+        // plugged in, or a share that is not reachable, has not been destroyed --
         // and dropping it from the only inventory there is would lose it for
         // good, because nothing on an absent volume can re-assert its entry.
         await Assert.That(followed.Count).IsEqualTo(1);
@@ -659,13 +659,13 @@ internal sealed class SessionIndexTests
 
     /// <summary>
     /// Following one subtree returns element for element what following
-    /// everything would have returned for it — <b>plus every entry that carries
+    /// everything would have returned for it -- <b>plus every entry that carries
     /// no session to compare</b>.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>This could not be planted red as a statement about the product, and
-    /// that is a property of the fix rather than a gap in the effort — say so
+    /// that is a property of the fix rather than a gap in the effort -- say so
     /// rather than implying otherwise.</b> <c>FollowUnder</c> did not exist
     /// before the change, so no run of any tree can have failed it. It is weaker
     /// than a red test: what it holds is that the two reads cannot drift apart
@@ -678,14 +678,14 @@ internal sealed class SessionIndexTests
     /// <c>expected</c> as <c>Follow().Where(entry =&gt; entry.Session is { }
     /// session &amp;&amp; …)</c> and asserted two).*** That predicate drops
     /// exactly the class where the equivalence <b>fails</b>, so the test named an
-    /// equivalence and excluded its only counter-example — and
+    /// equivalence and excluded its only counter-example -- and
     /// <c>SessionIndex.FollowUnder</c>'s own remark cited it as asserting that
     /// equivalence directly. The truth is narrower and is now what is asserted:
     /// <c>FollowUnder(p)</c> is <c>Follow()</c> filtered by <c>IsUnder</c> <b>for
     /// the entries that resolved to a session</b>, and every entry that could not
     /// be resolved at all is returned whatever subtree it does or does not name.
-    /// The third entry below is one of those — mis-hashed, pointing nowhere near
-    /// <c>left</c> — and it comes back from a read scoped to <c>left</c>. This
+    /// The third entry below is one of those -- mis-hashed, pointing nowhere near
+    /// <c>left</c> -- and it comes back from a read scoped to <c>left</c>. This
     /// arm <b>was</b> watched red in the corrected direction: with it planted and
     /// the old expectation in place, <c>Expected to be equal to 2 but received
     /// 3</c>.
@@ -720,7 +720,7 @@ internal sealed class SessionIndexTests
 
         // ⚠️ THE DIVERGENT CLASS, PLANTED. An entry whose name is not the hash of
         // what it holds is refused above the subtree test, so it carries no
-        // session to compare against the prefix — and it names a directory under
+        // session to compare against the prefix -- and it names a directory under
         // NEITHER root.
         var divergent = Key("mis-hashed and out of both subtrees");
         _ = Directory.CreateDirectory(index.Root);
@@ -758,7 +758,7 @@ internal sealed class SessionIndexTests
     /// Following one subtree opens no record outside it.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Weaker than a red test, for the same reason as the test above</b> —
+    /// ⚠️ <b>Weaker than a red test, for the same reason as the test above</b> --
     /// it names an API that did not exist, so nothing can have watched it fail.
     /// What makes it worth having is the control: the denied session out of
     /// prefix is proved to be a record that <i>would</i> have failed to open, so
@@ -833,7 +833,7 @@ internal sealed class SessionIndexTests
     /// ⚠️ <b>Until 2026-08-26 every BrowserAI startup opened the SQLite store of
     /// every session on the machine.</b> <c>Program.Main</c> starts the stray
     /// sweep, one pass calls <see cref="SessionIndex.Sweep"/>, and that followed
-    /// every entry through <c>SessionLock.ReadRecord</c> — so one process start
+    /// every entry through <c>SessionLock.ReadRecord</c> -- so one process start
     /// was one store open per registered session, each leaving a
     /// <c>browserai.data-shm</c> and a <c>browserai.data-wal</c> in a directory
     /// nobody had named. Measured through the published binary: a cleanly-closed
@@ -846,7 +846,7 @@ internal sealed class SessionIndexTests
     /// the composition needs a second process against the machine-wide index,
     /// and this suite shares one app root, so an end-to-end arm would sweep every
     /// other test's sessions and read as a flake. What is asserted here is the
-    /// property the composition rests on — <c>Sweep</c> opens no store — over a
+    /// property the composition rests on -- <c>Sweep</c> opens no store -- over a
     /// real index and a real record.
     /// </para>
     /// <para>
@@ -935,7 +935,7 @@ internal sealed class SessionIndexTests
     /// definition.</b> <c>SessionListTests</c> asks the same question about the
     /// same twenty-two letters, and a second search written beside this one would
     /// be free to pick a letter in the direction <c>DosDeviceAlias</c> allocates
-    /// from — which is the whole reason this one counts down from Z.
+    /// from -- which is the whole reason this one counts down from Z.
     /// </remarks>
     /// <returns>The letter.</returns>
     internal static char FirstUnmountedDriveLetter()

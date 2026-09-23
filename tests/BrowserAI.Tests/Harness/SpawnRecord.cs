@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// What this run started, written where the <b>next</b> run can read it — so a
+/// What this run started, written where the <b>next</b> run can read it -- so a
 /// run that is killed leaves behind a list of identities rather than a set of
 /// processes nobody can name.
 /// </summary>
@@ -17,8 +17,8 @@ namespace BrowserAI.Tests.Harness;
 /// <b>The gap this closes was the last one in the reclaim pass.</b>
 /// [Testing](../../../TESTING.md#testing-a-hard-requirement-and-the-release-gate) asks that <i>anything the
 /// previous run recorded is terminated by <c>(pid, creationFileTime)</c> from its
-/// own spawn record</i>. The other three bullets — the abandoned mutexes, the
-/// scratch tree, the stray index entries — were built; nothing wrote a record, so
+/// own spawn record</i>. The other three bullets -- the abandoned mutexes, the
+/// scratch tree, the stray index entries -- were built; nothing wrote a record, so
 /// the one bullet that names processes had no input and quietly did nothing. A
 /// run killed mid-test therefore left a process the next run could not identify,
 /// only a directory it could not delete: the leftover surfaced as a
@@ -27,7 +27,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>An identity, never a name.</b> Each row names a pid and the creation time
 /// read at the instant it was started, and reclaiming re-reads that time before
-/// acting — so a pid Windows has recycled is skipped rather than killed. There is
+/// acting -- so a pid Windows has recycled is skipped rather than killed. There is
 /// no image name anywhere in the file and there must never be one; the rule that
 /// nothing is found by image name has no exception for test code, and a record
 /// carrying names is one refactor from being matched on.
@@ -36,7 +36,7 @@ namespace BrowserAI.Tests.Harness;
 /// ⚠️ <b>Every row also names its OWNER, since 2026-08-29, and that is what stops
 /// the pass being a machine-wide kill.</b> Until then a row named only its
 /// subject, so a <i>second</i> harness process reading a <i>live</i> run's record
-/// terminated that run's browsers, probes and slices — with exit code 1, and then
+/// terminated that run's browsers, probes and slices -- with exit code 1, and then
 /// deleted the scratch tree they were using. Measured 2026-08-29 at
 /// <b>18 of 18</b> launches, and it is the mechanism that finally reproduced the
 /// silent Chromium death of 2026-08-26 point for point: silent pipes, five log
@@ -52,29 +52,29 @@ namespace BrowserAI.Tests.Harness;
 /// suite starts a second <c>BrowserAI.Tests.exe</c> inside itself, so there is no
 /// one pid whose death means "the run is over". The owner of a row is therefore
 /// <b>the process that started the recorded process and holds the job object
-/// containing it</b> — <see cref="JobObjectScope"/>'s job lives in that process
+/// containing it</b> -- <see cref="JobObjectScope"/>'s job lives in that process
 /// and closes when it exits. That definition keeps both properties for the same
 /// reason: while the owner lives, the subject is somebody else's business and its
 /// containment is intact; once the owner dies, its job closed, so anything still
 /// running is an orphan and reclaiming it is exactly the job this file exists
 /// for. A run that spans three processes writes three owners and each is judged
-/// on its own, which is <i>stronger</i> than a per-run token — a token would keep
+/// on its own, which is <i>stronger</i> than a per-run token -- a token would keep
 /// a row alive because some unrelated process of the same run was.
 /// </para>
 /// <para>
 /// <b>Why an identity and not a run id at all: a run id cannot be asked whether
 /// it is alive.</b> The pass has exactly one question to answer and only the
 /// operating system can answer it. A <c>(pid, creationFileTime)</c> pair is
-/// answerable — it is this repository's standing identity for a process, the one
-/// <c>browserai.lock</c> and every process-log record already spell — and it
+/// answerable -- it is this repository's standing identity for a process, the one
+/// <c>browserai.lock</c> and every process-log record already spell -- and it
 /// cannot be impersonated by a recycled pid. A GUID in the file would have needed
 /// a second mechanism, a live marker, to become a liveness question again, and
 /// that marker would have had the same staleness problem one level down.
 /// </para>
 /// <para>
 /// <b>What it does not cover, stated rather than discovered.</b> It records the
-/// processes the harness itself starts. A grandchild — a browser a probe
-/// launched, a node the product spawned — is not in the file, and the mechanism
+/// processes the harness itself starts. A grandchild -- a browser a probe
+/// launched, a node the product spawned -- is not in the file, and the mechanism
 /// that contains those is the job object, which takes the whole tree down when
 /// its handle closes. So this is the belt to the job object's brace: it exists
 /// for the case where the job died with the host and something outlived it
@@ -92,7 +92,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// ⚠️ <b>The residual, named rather than left to be found.</b> A pass rewrites
 /// the file with the rows it left alone, and that rewrite is not atomic against
-/// another process appending in the same instant — so a live run can lose the one
+/// another process appending in the same instant -- so a live run can lose the one
 /// row it wrote inside that window. It is a strictly smaller loss than the whole
 /// file, which is what the pass used to take, and closing it needs the
 /// machine-wide interlock that
@@ -116,12 +116,12 @@ internal static class SpawnRecord
     /// </summary>
     /// <remarks>
     /// Read once. A creation time of <c>0</c> means it could not be read at all,
-    /// which <see cref="Add"/> treats as a reason to record nothing — see there.
+    /// which <see cref="Add"/> treats as a reason to record nothing -- see there.
     /// </remarks>
     private static readonly Identity Self = new(Environment.ProcessId, OwnCreationTimeOrZero());
 
     /// <summary>
-    /// <c>&lt;repo&gt;\.work\spawn-record.txt</c> — <b>outside</b> the scratch
+    /// <c>&lt;repo&gt;\.work\spawn-record.txt</c> -- <b>outside</b> the scratch
     /// root on purpose, because the reclaim deletes that tree and would take its
     /// own input with it.
     /// </summary>
@@ -139,7 +139,7 @@ internal static class SpawnRecord
     /// <b>A process that cannot name itself records nothing at all</b>, which is
     /// the same trade one step earlier. An owner column another process cannot
     /// check is worse than an absent row: it would read as an owner that is not
-    /// running, and the row would be terminated by the next pass that met it —
+    /// running, and the row would be terminated by the next pass that met it --
     /// which is the exact failure the column was added to remove.
     /// </para>
     /// </remarks>
@@ -177,18 +177,18 @@ internal static class SpawnRecord
     /// <para>
     /// <b>Two questions per row, in this order, and the order is the point.</b>
     /// First: is the owner still here? A row whose owner is this process, or any
-    /// process still running, describes containment that has not failed — nothing
+    /// process still running, describes containment that has not failed -- nothing
     /// may be done to it, and it is written back so the owner's own next run can
     /// still honour it. Only then: is the subject still that process? A row whose
     /// creation time no longer matches names a process that has already exited,
-    /// and the number now belongs to something else — possibly the developer's
+    /// and the number now belongs to something else -- possibly the developer's
     /// editor. Those are reported as skipped, which is the state the pass expects
     /// to be in on a healthy machine.
     /// </para>
     /// <para>
     /// <b>The self check is first and is not merely the liveness check restated.</b>
     /// This process is alive by construction, so asking the operating system
-    /// about it could only ever confirm what is already known — but the pass runs
+    /// about it could only ever confirm what is already known -- but the pass runs
     /// before anything else and a mechanism that can terminate its own run's
     /// processes if one syscall misbehaves is not one to leave resting on that
     /// syscall.
@@ -295,7 +295,7 @@ internal static class SpawnRecord
     /// [QUESTIONS §8a](../../../QUESTIONS.md), taken
     /// 2026-08-29 with (b).</b> Until now the pass's whole account of itself was
     /// <see cref="ScratchRoot.LastPassReport"/>, an in-memory list, of which only
-    /// a <i>survivor</i> ever reached the coverage block — so a reclaim that
+    /// a <i>survivor</i> ever reached the coverage block -- so a reclaim that
     /// succeeded left <b>no trace at all</b>. That is why nothing could say which
     /// terminator fired on 2026-08-26, and why an exit code of 1 cost two rigs
     /// and eighty launches to not explain.
@@ -311,9 +311,9 @@ internal static class SpawnRecord
     /// </para>
     /// <para>
     /// ⚠️ <b>So the suite now writes outside the repository in two places rather
-    /// than one</b>, and the claims that said otherwise —
+    /// than one</b>, and the claims that said otherwise --
     /// <see cref="ScratchRoot.ProfileScratch"/> and
-    /// <see cref="ScratchDirectory"/> — carry the correction.
+    /// <see cref="ScratchDirectory"/> -- carry the correction.
     /// </para>
     /// <para>
     /// <b>Silence is the signal when nothing was ended.</b> Every run of this
@@ -324,7 +324,7 @@ internal static class SpawnRecord
     /// <para>
     /// <b>Never fatal, for the reason <see cref="Add"/> is not.</b> A reclaim that
     /// could not describe itself has still reclaimed, and a diagnostic that can
-    /// fail a run is a diagnostic that becomes the outage — which is the process
+    /// fail a run is a diagnostic that becomes the outage -- which is the process
     /// log's own founding rule, applied to a writer that is not the product.
     /// </para>
     /// </remarks>
@@ -406,7 +406,7 @@ internal static class SpawnRecord
     /// <remarks>
     /// <b>Rewriting rather than emptying is half of the fix, not tidiness.</b> A
     /// pass that blanked the file would take a live run's rows with it, and the
-    /// day that run really was killed nothing would name what it left behind —
+    /// day that run really was killed nothing would name what it left behind --
     /// which is the recovery this whole file exists for, removed by the thing
     /// that was supposed to protect it.
     /// </remarks>
@@ -435,7 +435,7 @@ internal static class SpawnRecord
     /// <b>Spelled <c>pid@createdFileTime</c>, which is not a new convention.</b>
     /// It is the same pair, in the same characters, that every process-log record
     /// carries in its <c>pid=</c> header and that <c>browserai.lock</c> writes as
-    /// <c>processCreatedFileTime</c> — so a row in this file, a line in the log
+    /// <c>processCreatedFileTime</c> -- so a row in this file, a line in the log
     /// and a lock record all name the same process the same way, and the
     /// announcement can quote one into the other without a second format.
     /// </remarks>
@@ -467,7 +467,7 @@ internal static class SpawnRecord
 /// <remarks>
 /// Source-generated so the message is a single literal that cannot drift from
 /// the arguments beside it, and written at <see cref="LogLevel.Warning"/>
-/// because a machine-wide termination is not routine — it means a run on this
+/// because a machine-wide termination is not routine -- it means a run on this
 /// box was killed and something outlived it.
 /// </remarks>
 internal static partial class ReclaimAnnouncement
