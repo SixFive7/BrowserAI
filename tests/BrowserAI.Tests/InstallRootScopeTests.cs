@@ -13,7 +13,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Half of this file is about the false positive rather than the hazard.</b>
+/// <b>Half of this file is about the false positive and not the hazard.</b>
 /// The refusal's predicate is <i>inside this user's profile</i>, and four
 /// ordinary Windows features make a per-user path fail a string comparison of
 /// that: a junction, a <c>subst</c>ed drive letter, an 8.3 short component and
@@ -26,7 +26,7 @@ namespace BrowserAI.Tests;
 /// <see cref="AJunctionInsideTheProfileThatLeavesItIsRefused"/> is a link
 /// <i>under</i> the profile whose target is outside it: a string comparison
 /// accepts it, and it is a genuinely shared root. That arm is the reason the
-/// check resolves through the filesystem rather than comparing prefixes, and it
+/// check resolves through the filesystem instead of comparing prefixes, and it
 /// is red against any implementation that does the cheap thing.
 /// </para>
 /// </remarks>
@@ -83,7 +83,7 @@ internal sealed class InstallRootScopeTests
         // cannot do: it moves the install root, and what is judged here is the
         // data root, which only the variable above can move. Asserted as an
         // absence as well as a presence, so putting it back is red in both
-        // directions rather than in neither.
+        // directions and not in neither.
         await Assert.That(refusal).DoesNotContain("install-to flag");
 
         // ⚠️ The clause moved 2026-09-15, later the same day (previously "the
@@ -248,7 +248,7 @@ internal sealed class InstallRootScopeTests
 
         // ⚠️ Not a skip and not a branch in the assertion: both spellings must be
         // served, and the only thing the volume's setting changes is whether the
-        // two strings differ. Recorded rather than asserted, because a machine
+        // two strings differ. Recorded, not asserted, because a machine
         // with 8.3 generation off is a supported one.
         await Assert.That(
             $"short name {(string.Equals(shortName, target.Path, StringComparison.OrdinalIgnoreCase) ? "is not generated on this volume" : "differs from the long path")}")
@@ -293,7 +293,7 @@ internal sealed class InstallRootScopeTests
         // starting a real BrowserAI: a test that leaks one leaks whatever it
         // started. It is also the hang detector -- a build in which the check was
         // deleted starts serving and waits on stdin for ever, and what fails
-        // then has to be this assertion rather than the whole run.
+        // then has to be this assertion and not the whole run.
         using var job = JobObject.CreateKillOnClose();
 
         using var process = JobLauncher.Start(job, PublishedSlice.Executable, [], outside.Path, environment);
@@ -343,7 +343,7 @@ internal sealed class InstallRootScopeTests
     /// <b>The hostname is deliberately one that does not resolve</b>, and the
     /// assertion is that the answer arrives anyway: a filesystem call against an
     /// unreachable share costs a measured 22 s, so a check that reached the
-    /// filesystem before deciding would be a 22-second startup stall rather than
+    /// filesystem before deciding would be a 22-second startup stall and not
     /// a refusal. The wall clock is not asserted -- that would be asserting the
     /// speed of the machine -- but the refusal is, and it is the same ordering
     /// `CanonicalPath` is built on.
@@ -437,8 +437,8 @@ internal sealed class InstallRootScopeTests
         await Assert.That(scratch.Refusal).IsNull();
         await Assert.That(scratch.Unestablished).IsNull();
 
-        // The real shipped pair, composed from the product's own data root rather
-        // than spelled here: the install root Velopack puts beside it under the
+        // The real shipped pair, composed from the product's own data root and
+        // not spelled here: the install root Velopack puts beside it under the
         // pack id. If this is ever refused, every installed BrowserAI stops
         // starting.
         var installed = BrowserAiPaths.Real.RootAppDir + ".app";
@@ -454,7 +454,7 @@ internal sealed class InstallRootScopeTests
     /// looked at.
     /// </summary>
     /// <remarks>
-    /// <b>Order is asserted rather than left to whichever check happened to run
+    /// <b>Order is asserted, not left to whichever check happened to run
     /// first.</b> A process that may not keep its browsers where it resolved them
     /// has nothing useful to say about where its binary lives, and a refusal
     /// naming the install root would send somebody to reinstall over a problem a

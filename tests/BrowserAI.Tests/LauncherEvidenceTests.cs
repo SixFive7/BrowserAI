@@ -13,7 +13,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>This is a test about an instrument rather than about the product, and it
+/// <b>This is a test about an instrument and not about the product, and it
 /// earns its place the way an instrument does -- by having failed.</b> On
 /// 2026-08-29 a Firefox containment arm stalled out Playwright's own 180 s
 /// <c>initializeServer</c> budget inside a gate run. The dump that arrived
@@ -68,7 +68,7 @@ internal sealed class LauncherEvidenceTests
     /// <c>--- cli-stderr.log (0 bytes) ---</c> for the 63 bytes this arm had just
     /// written and flushed, character for character the line the 2026-08-29 dump
     /// carried. So this is a staleness assertion as well as a provenance one, and
-    /// it is recorded that way because it was measured that way rather than
+    /// it is recorded that way because it was measured that way, not
     /// argued.
     /// </para>
     /// </remarks>
@@ -79,7 +79,7 @@ internal sealed class LauncherEvidenceTests
         using var scratch = ScratchDirectory.Create("launcher-evidence-held");
 
         // Upstream's own sentence from the 2026-08-29 stall, so the arm carries
-        // the thing that was lost rather than a placeholder.
+        // the thing that was lost and not a placeholder.
         var written = Encoding.UTF8.GetBytes("TimeoutError: async initializeServer: Timeout 180000ms exceeded");
 
         // Declared after the scratch directory, so it is disposed before the
@@ -103,7 +103,7 @@ internal sealed class LauncherEvidenceTests
         await Assert.That(evidence).Contains("TimeoutError: async initializeServer").Because(evidence);
         await Assert.That(evidence).DoesNotContain("used by another process").Because(evidence);
 
-        // The number beside the name, and it is the file's real size rather than
+        // The number beside the name, and it is the file's real size and not
         // whatever the enumeration happened to carry.
         await Assert.That(evidence)
             .Contains($"cli-stderr.log ({written.Length} bytes)")

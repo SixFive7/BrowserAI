@@ -7,8 +7,8 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// What is actually set on the job object, read back from the kernel rather
-/// than from the code that set it.
+/// What is actually set on the job object, read back from the kernel and
+/// not from the code that set it.
 /// </summary>
 /// <remarks>
 /// Every assertion here is aimed at a mistake that leaves the suite green: a
@@ -22,7 +22,7 @@ internal sealed class JobObjectTests
 {
     /// <summary>
     /// The one flag the product is allowed to set, so a second flag arriving
-    /// later fails on the exact value rather than on a bitmask test that still
+    /// later fails on the exact value and not on a bitmask test that still
     /// passes.
     /// </summary>
     private const uint OnlyKillOnJobClose = 0x00002000;
@@ -34,7 +34,7 @@ internal sealed class JobObjectTests
 
         // Equality, not a bit test. `(flags & KillOnJobClose) != 0` would pass
         // with BREAKAWAY_OK sitting beside it, which is the configuration that
-        // actively arms Firefox's escape rather than merely permitting one.
+        // actively arms Firefox's escape and does not merely permit one.
         await Assert.That(job.LimitFlags).IsEqualTo(OnlyKillOnJobClose);
         await Assert.That(job.LimitFlags & JobObject.BreakawayOk).IsEqualTo(0u);
         await Assert.That(job.LimitFlags & JobObject.SilentBreakawayOk).IsEqualTo(0u);

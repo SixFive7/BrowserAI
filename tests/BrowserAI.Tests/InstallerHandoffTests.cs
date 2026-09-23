@@ -177,7 +177,7 @@ internal sealed class InstallerHandoffTests
         // ⚠️ Inside a kill-on-close job, which is the suite's standing rule for
         // starting a real BrowserAI -- and here it is also the hang detector: a
         // build in which this exit was deleted starts serving and waits on its
-        // stdin for ever, and what fails then must be this assertion rather than
+        // stdin for ever, and what fails then must be this assertion and not
         // the whole run.
         using var job = JobObject.CreateKillOnClose();
 
@@ -226,11 +226,11 @@ internal sealed class InstallerHandoffTests
     /// Only together do they mean that neither teardown signal can ever arrive.
     /// </para>
     /// <para>
-    /// <b>This is the wiring rather than a run</b>, and the reason is in the
+    /// <b>This is the wiring and not a run</b>, and the reason is in the
     /// class remarks: the suite may not allocate a console. What it can do is
     /// hold that <c>Program</c> asks both questions, in one condition, at the
     /// place where the watcher's own answer is known -- and that the answer is a
-    /// clean exit rather than a refusal to start.
+    /// clean exit and not a refusal to start.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -243,7 +243,7 @@ internal sealed class InstallerHandoffTests
         // One condition, both halves, in the order they are cheapest to answer.
         await Assert.That(program).Contains("if (client is null && StandardInput.IsAConsole())");
 
-        // It says why, and it exits cleanly rather than refusing to start: an
+        // It says why, and it exits cleanly instead of refusing to start: an
         // installer reading a non-zero exit from a freshly installed binary
         // would be reading a failure that did not happen.
         var at = program.IndexOf("StandardInput.IsAConsole()", StringComparison.Ordinal);
@@ -322,8 +322,8 @@ internal sealed class InstallerHandoffTests
     /// <para>
     /// <b>Both arms, because the variable is not the trigger.</b> Velopack's
     /// post-install launch sets <c>VELOPACK_FIRSTRUN=true</c>, and the real
-    /// install on 2026-09-15 nevertheless reached the no-client decision rather
-    /// than the installer exit -- so something between the launch and the read
+    /// install on 2026-09-15 nevertheless reached the no-client decision and
+    /// not the installer exit -- so something between the launch and the read
     /// unset it, and the exit may not depend on it. The stub
     /// <c>BrowserAI.exe</c> in an install root reaches the app through
     /// <c>Update.exe start</c>, which is console-bearing and does not set the
@@ -355,7 +355,7 @@ internal sealed class InstallerHandoffTests
 
         // The decision first, so that a failure names which one was taken --
         // and waiting for the OTHER outcome as well, so that a lost race is a
-        // named failure in a second rather than a ten-minute one that says only
+        // named failure in a second and not a ten-minute one that says only
         // that a sentence never arrived.
         var decision = startedByTheInstaller
             ? "started by the installer"
@@ -414,8 +414,8 @@ internal sealed class InstallerHandoffTests
 
         await Assert.That(run.Started).IsTrue();
 
-        // ⚠️ EITHER OUTCOME, so that losing this decision costs a second rather
-        // than ten minutes. Both sentences are written by the same few lines of
+        // ⚠️ EITHER OUTCOME, so that losing this decision costs a second and
+        // not ten minutes. Both sentences are written by the same few lines of
         // the product, so whichever arrives is the decision it took.
         var seen = run.WaitUntilItSaysOneOf(
             TestDefaults.ProcessHang,

@@ -21,7 +21,7 @@ namespace BrowserAI.Tests;
 /// process.</b> What is being proven is that containment survives BrowserAI
 /// dying without running any code -- no <c>finally</c>, no shutdown hook, no
 /// handler. That is why the test host starts a launcher process, and why it
-/// terminates that launcher rather than asking it to exit.
+/// terminates that launcher instead of asking it to exit.
 /// </para>
 /// <para>
 /// <b>What answers "is this pid in our job?"</b> is the launcher, because the
@@ -56,7 +56,7 @@ internal sealed class JobContainmentTests
     /// <summary>
     /// How long every member of the tree gets to be gone after the launcher is
     /// terminated. <c>KILL_ON_JOB_CLOSE</c> is a kernel operation, so this is
-    /// scheduling latency rather than a shutdown sequence.
+    /// scheduling latency, not a shutdown sequence.
     /// </summary>
     private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
 
@@ -122,7 +122,7 @@ internal sealed class JobContainmentTests
     /// not a survivor and cannot be an escapee -- but the rig had no way to
     /// express <i>gone</i>, so it expressed <i>unknown</i>, and the host reads
     /// unknown as failure. A re-run was green, which is the signature of a rig
-    /// race rather than a product defect.
+    /// race and not a product defect.
     /// </para>
     /// <para>
     /// ⚠️ <b>This is a classification, not a retry and not a suppression, and
@@ -134,12 +134,12 @@ internal sealed class JobContainmentTests
     /// read a process.
     /// </para>
     /// <para>
-    /// <b>The error numbers are MEASURED here rather than asserted from
+    /// <b>The error numbers are MEASURED here, not asserted from
     /// memory.</b> Two live controls run beside the synthetic ones: a process
     /// this arm starts and waits for is opened after it is gone, and the error
     /// that comes back is compared against the constant the classification keys
     /// on; and the same open against a pid that <i>is</i> alive succeeds, so the
-    /// failing read is a real reading rather than a call that can only ever
+    /// failing read is a real reading and not a call that can only ever
     /// fail. A table of constants with no live control would be a test of what
     /// somebody typed.
     /// </para>
@@ -185,7 +185,7 @@ internal sealed class JobContainmentTests
             .Because("the classification below keys on this number and it must be the one Windows actually returns");
 
         // And the other half of the live control: a pid that IS alive opens, so
-        // the reading above is a reading rather than a call that always fails.
+        // the reading above is a reading and not a call that always fails.
         await Assert.That(ProcessIdentity.OpenProcessErrorFor(Environment.ProcessId))
             .IsEqualTo(0)
             .Because("a probe that can only ever fail proves nothing about the failing case");
@@ -307,11 +307,11 @@ internal sealed class JobContainmentTests
             if (verdict is nameof(ProcessQueryVerdict.Verdict.Exited))
             {
                 // It was gone before the row could be queried, which is
-                // containment holding rather than failing: an exited process is
+                // containment holding and not failing: an exited process is
                 // neither a survivor nor an escapee, and the teardown assertion
                 // below covers it in the only sense that remains. The note says
-                // what happened, so this branch is visible in the report rather
-                // than silent.
+                // what happened, so this branch is visible in the report and
+                // not silent.
                 await Assert.That((string)row["note"]!).Contains("between the walk and the query");
                 continue;
             }
@@ -356,7 +356,7 @@ internal sealed class JobContainmentTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Asserted through the consequence rather than through the handle
+    /// <b>Asserted through the consequence and not through the handle
     /// table.</b> A Windows pipe reaches EOF when its <i>last</i> write handle
     /// closes, which is not the same event as the process that created it
     /// letting go. So the test creates a pipe that belongs to nobody in

@@ -20,7 +20,7 @@ namespace BrowserAI.Tests;
 /// live tally is checked against the sentence <c>HAZARDS.md</c> publishes about
 /// itself by <c>RecordedCountTests</c> -- <i>corrected 2026-08-19, previously
 /// "the sentence in <c>TODO.md</c>"</i>, which is where it lived while it was a
-/// backlog of unadjudicated rows rather than an assertion that there are none.)
+/// backlog of unadjudicated rows and not an assertion that there are none.)
 /// The rule it
 /// states about itself is the rule enforced here, borrowed from the
 /// re-verification index: <b>naming a test that does not exist is worse than
@@ -147,8 +147,8 @@ internal sealed partial class HazardIndexTests
         // Everything above passes vacuously against a parser that has stopped
         // matching -- a renamed column, a row rewritten to seven cells, a table
         // moved to another file. That is the failure mode of every test that
-        // reads a document, and it is silent, so the corpus is asserted rather
-        // than assumed.
+        // reads a document, and it is silent, so the corpus is asserted, not
+        // assumed.
         var rows = HazardIndex.Rows();
 
         await Assert.That(rows.Count).IsGreaterThan(130);
@@ -156,7 +156,7 @@ internal sealed partial class HazardIndexTests
         await Assert.That(rows.Count(row => row.State is HazardIndex.Open)).IsGreaterThan(30);
 
         // Every row lands in exactly one of the two, which is what makes the two
-        // floors above a partition rather than two overlapping counts. Under the
+        // floors above a partition and not two overlapping counts. Under the
         // containment rule they were not: one row satisfied both.
         await Assert.That(rows.Count(row => row.State is HazardIndex.Open) + rows.Count(row => row.State is HazardIndex.Closed))
             .IsEqualTo(rows.Count);

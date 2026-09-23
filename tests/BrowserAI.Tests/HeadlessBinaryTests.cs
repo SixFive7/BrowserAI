@@ -55,7 +55,7 @@ internal sealed class HeadlessBinaryTests
         // would otherwise have asked for the shell.
         await Assert.That(browser.CommandLine).Contains("--headless");
 
-        // ⚠️ The profile, read off the BROWSER'S OWN command line rather than out
+        // ⚠️ The profile, read off the BROWSER'S OWN command line and not out
         // of the config the child reports. The two can disagree in exactly the
         // case that matters: a `UserDataDir` policy set on the machine overrides
         // the switch, and Chromium then runs against a profile nobody chose while
@@ -66,7 +66,7 @@ internal sealed class HeadlessBinaryTests
             .Contains(Path.Combine(run.SessionDirectory, SessionLayout.ProfileFolderName));
 
         // And the shell is not merely unused: it was never provisioned, which is
-        // what makes "the channel is mandatory" a hard failure rather than a
+        // what makes "the channel is mandatory" a hard failure and not a
         // performance note.
         await Assert.That(Directory.Exists(BrowserAiPaths.HeadlessShellDirectory)).IsFalse();
     }
@@ -85,7 +85,7 @@ internal sealed class HeadlessBinaryTests
 
         // The product's own generator and the product's own launch options, with
         // nothing changed but where browsers live. That is what makes this a
-        // test of the config BrowserAI writes rather than of a config invented
+        // test of the config BrowserAI writes and not of a config invented
         // here: delete `browserName` or the channel from BrowserConfiguration
         // and this test goes green while the premise dies.
         var options = ChildLaunch.Create(
