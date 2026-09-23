@@ -5,7 +5,7 @@ namespace BrowserAI.Runtime;
 
 /// <summary>
 /// The exact executables BrowserAI provisions, resolved from the payload's own
-/// <c>browsers.json</c> rather than spelled anywhere.
+/// <c>browsers.json</c> and not spelled anywhere.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -44,7 +44,7 @@ internal static class ProvisionedBrowsers
 
     /// <summary>
     /// The reinstall target that means <b>the components both families share</b>
-    /// rather than a browser.
+    /// and not a browser.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -77,7 +77,7 @@ internal static class ProvisionedBrowsers
     /// from the payload's own <c>browsers.json</c> through
     /// <c>BrowsersManifest.For</c>, exactly as a family's does; what is spelled
     /// here is only which entries in that manifest are shared, which is a fact
-    /// about upstream's installer rather than about any particular release.
+    /// about upstream's installer and not about any particular release.
     /// </remarks>
     public static IReadOnlyList<string> SharedComponents { get; } = ["ffmpeg", "winldd"];
 
@@ -110,7 +110,7 @@ internal static class ProvisionedBrowsers
     /// </remarks>
     public static IReadOnlyList<string> ReinstallTargets { get; } = [.. Families, Shared];
 
-    /// <summary>Whether a reinstall target names the shared components rather than a family.</summary>
+    /// <summary>Whether a reinstall target names the shared components and not a family.</summary>
     /// <param name="target">The value the caller gave.</param>
     /// <returns>Whether it is <see cref="Shared"/>.</returns>
     public static bool IsShared(string? target) =>

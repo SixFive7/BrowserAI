@@ -15,11 +15,11 @@ namespace BrowserAI.Runtime;
 /// browser executable is missing, <c>throwIfExecutableMissing</c> raises
 /// <c>Browser "&lt;target&gt;" is not installed; expected executable at
 /// &lt;path&gt;. Run `npx @playwright/mcp install-browser &lt;target&gt;` to
-/// install</c> -- read out of the resolved bundle 2026-08-16 rather than from
+/// install</c> -- read out of the resolved bundle 2026-08-16 and not from
 /// memory. Every clause of that is true of a normal Playwright install and wrong
 /// here: BrowserAI ships no <c>npx</c>, has no npm project to run it in, and the
 /// package that command would fetch resolves to whatever npm calls latest today
-/// rather than to the revision this build's <c>browsers.json</c> pins. A model
+/// and not to the revision this build's <c>browsers.json</c> pins. A model
 /// that follows it either fails, or succeeds into a second browser tree in a
 /// second location that BrowserAI will never launch.
 /// </para>
@@ -27,20 +27,20 @@ namespace BrowserAI.Runtime;
 /// <b>Only the remediation clause is replaced.</b> The half before it --
 /// <i>which</i> browser, and the exact path it was expected at -- is the useful
 /// half and is upstream's to phrase. The target it names is the resolved
-/// <c>channel</c> rather than the browser family, so the text a caller sees says
+/// <c>channel</c> and not the browser family, so the text a caller sees says
 /// <c>chrome-for-testing</c>; that is what makes an empty browsers root fail
 /// loudly and recognisably instead of falling back to the user's own Chrome, and
 /// it is asserted elsewhere in the suite.
 /// </para>
 /// <para>
-/// ⚠️ <b>This is the one place BrowserAI rewrites a child's answer rather than
-/// forwarding its bytes</b>, and it is worth naming the trade. Byte-identical
+/// ⚠️ <b>This is the one place BrowserAI rewrites a child's answer instead of
+/// forwarding its bytes</b>, and the trade is named here. Byte-identical
 /// passthrough is the property <c>LosslessPassthroughTests</c> exists to
 /// protect; here it is deliberately given up for the one payload that
 /// contains an instruction which would send the caller somewhere harmful. The
 /// rewrite fires only when the child reported an error <b>and</b> the marker is
 /// present -- every other answer goes through untouched -- and the proxy logs the
-/// fact when it does, so a lost byte-identity is a recorded event rather than a
+/// fact when it does, so a lost byte-identity is a recorded event and not a
 /// silent one.
 /// </para>
 /// <para>
@@ -64,7 +64,7 @@ internal static partial class ProvisioningRemediation
     /// enough to run on every result.
     /// </summary>
     /// <remarks>
-    /// Deliberately the <b>subcommand</b> rather than the package name: upstream
+    /// Deliberately the <b>subcommand</b> and not the package name: upstream
     /// builds the same sentence two ways --
     /// <c>npx @playwright/mcp install-browser &lt;t&gt;</c> normally and
     /// <c>playwright-cli install-browser &lt;t&gt;</c> under <c>skillMode</c> --
@@ -97,7 +97,7 @@ internal static partial class ProvisioningRemediation
 
     /// <summary>What BrowserAI says instead.</summary>
     /// <remarks>
-    /// Two routes rather than one, because the two failures behind this message
+    /// Two routes and not one, because the two failures behind this message
     /// have different recoveries. A tree that was never downloaded is fixed by
     /// <c>browserai_init</c>, which starts the download and returns immediately.
     /// A tree that was downloaded and then corrupted -- a quarantined DLL, a
@@ -119,7 +119,7 @@ internal static partial class ProvisioningRemediation
     /// sentence.
     /// </summary>
     /// <remarks>
-    /// Anchored on the backticked command rather than on the package name, so
+    /// Anchored on the backticked command and not on the package name, so
     /// both branches of upstream's ternary are covered by one pattern and by one
     /// triggering test.
     /// </remarks>

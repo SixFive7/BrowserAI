@@ -10,7 +10,7 @@ namespace BrowserAI.Runtime;
 /// <summary>What one prune pass did, and what it deliberately did not do.</summary>
 /// <param name="Removed">The superseded directories that are gone, absolute.</param>
 /// <param name="ReclaimedBytes">
-/// What the pass actually freed, measured before and after rather than assumed --
+/// What the pass actually freed, measured before and after, not assumed --
 /// a tree that half deleted contributes what it gave up.
 /// </param>
 /// <param name="Retained">
@@ -47,7 +47,7 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// <c>.links</c>, a directory a future upstream invents, something a person put
 /// there -- is left alone. <b>The rule is deliberately not "delete what I do not
 /// recognise"</b>: this code runs unattended against a directory under the user's
-/// <c>%LocalAppData%</c>, so an unrecognised name is a reason to stop rather than
+/// <c>%LocalAppData%</c>, so an unrecognised name is a reason to stop and not
 /// a reason to act.
 /// </para>
 /// <para>
@@ -93,7 +93,7 @@ internal sealed record PruneReport(IReadOnlyList<string> Removed, long Reclaimed
 /// retaining is the direction that is already safe.
 /// </para>
 /// <para>
-/// <b>What is left is a real window and it is named rather than papered over.</b>
+/// <b>What is left is a real window and it is named, not papered over.</b>
 /// Nothing on the launch path takes the provisioning mutex --
 /// <c>ChildLaunch.Create</c> and <c>JobLauncher.Start</c> take no mutex at all --
 /// so a launch out of a superseded revision between this census and this delete
@@ -123,8 +123,8 @@ internal static class RevisionPrune
     /// <para>
     /// <b>It is a parameter because the property this pass has to hold is an
     /// <i>order</i>, and no end state can show an order.</b> The census is asked
-    /// once per candidate, immediately before that candidate is deleted, rather
-    /// than once for the whole pass -- and a test can only tell those two apart by
+    /// once per candidate, immediately before that candidate is deleted, and
+    /// not once for the whole pass -- and a test can only tell those two apart by
     /// answering differently on the second question. This is not a seam on a hot
     /// path: <see cref="Run"/> runs once per successful provision, and the only
     /// other injectable in this area, <c>BrowserProvisioner.PruneRevisions</c>,

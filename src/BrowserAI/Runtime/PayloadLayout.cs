@@ -21,7 +21,7 @@ namespace BrowserAI.Runtime;
 /// <para>
 /// Nothing here is searched for and nothing is resolved through <c>PATH</c>.
 /// Both files are named absolutely, and <see cref="Verify"/> exists so a missing
-/// one is reported as a missing file rather than as a launch failure inside
+/// one is reported as a missing file and not as a launch failure inside
 /// <c>CreateProcessW</c>.
 /// </para>
 /// </remarks>
@@ -39,7 +39,7 @@ internal sealed class PayloadLayout(string? root = null)
     public string NodeExecutable => Path.Combine(Root, "node", "node.exe");
 
     /// <summary>
-    /// <c>@playwright/mcp</c>'s entry point, addressed as a file rather than
+    /// <c>@playwright/mcp</c>'s entry point, addressed as a file and not
     /// through a <c>.cmd</c> shim -- a shim would need a shell, and a shell is
     /// the process this project spent a whole deviation removing.
     /// </summary>
@@ -64,7 +64,7 @@ internal sealed class PayloadLayout(string? root = null)
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Inside the payload rather than beside the binary, because the verdicts
+    /// <b>Inside the payload and not beside the binary, because the verdicts
     /// describe the <c>cli.js</c> they shipped with.</b> An update replaces the
     /// payload wholesale, so a new binary can never read an old build's
     /// judgements about a tool set that has moved underneath it -- which is the
