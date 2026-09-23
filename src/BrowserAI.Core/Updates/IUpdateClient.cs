@@ -87,6 +87,9 @@ internal sealed record UpdateCandidate
     /// single-digit MB or the whole payload -- and because a rollback always
     /// reports zero: <c>packages\</c> is pruned to the current full package
     /// during the forward update and deltas are forward-only.
+    /// <para>
+    /// <b>[ASSUMED]</b> That a rollback always reports zero. <b>Stated as fact and used to decide what a caller is told</b>, with nothing behind it. Settle it against a real rollback in the test feed.
+    /// </para>
     /// </remarks>
     public required int DeltaCount { get; init; }
 

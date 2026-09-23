@@ -527,6 +527,8 @@ successful install never re-downloads -- `spawn EFTYPE` forever -- and upstream'
 remediation string points at `npx @playwright/mcp install-browser chromium`, a
 package we do not ship resolving a different revision.
 
+`[ASSUMED]` That `spawn EFTYPE` is forever -- that the condition never clears on its own. **A permanent failure and a slow one are handled differently and nothing here measured which this is.** Settle it by provoking it and retrying on a timer. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+
 **The remediation string's exact shape, because BrowserAI replaces it.** Read
 2026-08-16 in `playwright-core/lib/coreBundle.js`, `throwIfExecutableMissing`:
 
@@ -669,6 +671,8 @@ set** -- enough on its own to trip an error-shaped-stderr classifier.
 a `.links` entry.** Against a browsers tree we installed, the blast radius is
 "deletes our own Chromium", so `PLAYWRIGHT_SKIP_BROWSER_GC=1` is mandatory and
 pruning old revisions becomes the caller's job.
+
+`[ASSUMED]` The blast radius of the stale-browser GC. **What it would delete is stated and was not provoked**, and it is the only claim here whose failure mode is somebody else deleting our files. Settle it against a throwaway browsers root, never the provisioned one. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
 
 ⚠️ **Corrected 2026-08-16 @ `@playwright/mcp` 0.0.79 (previously "A healthy start
 prints `Session: <path>` to stderr, every time").** It prints that line **only

@@ -236,6 +236,12 @@ internal sealed class ChildConnection : IAsyncDisposable
             // this fires only on a disagreement it does not police -- and it is
             // cheap enough to keep, because the failure it guards against is one
             // that produces no error at all on the wire.
+            //
+            // [ASSUMED] That the SDK refuses to negotiate BELOW a pinned version. This
+            // decides how much the explicit check above is doing, and if it is false
+            // the check is the only thing standing there. Settle it by pinning a
+            // version the child cannot meet and reading what comes back. Tagged
+            // 2026-09-23; the list and the predicate are in TODO.md.
             if (!string.Equals(negotiated, ChildProtocolVersion, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(

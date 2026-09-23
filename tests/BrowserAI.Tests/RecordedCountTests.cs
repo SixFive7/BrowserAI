@@ -594,6 +594,8 @@ internal sealed partial class RecordedCountTests
     /// <param name="row">Everything the row says.</param>
     /// <param name="article">The article's path relative to <c>kb/</c>.</param>
     /// <returns>Whether the row cites it.</returns>
+
+
     private static bool Cites(string row, string article) =>
         row.Contains($"({article})", StringComparison.Ordinal)
         || row.Contains($"({article}#", StringComparison.Ordinal);
@@ -753,4 +755,121 @@ internal sealed partial class RecordedCountTests
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
+
+    /// <summary>
+    /// Nothing in the tree carries an <c>[ASSUM</c><c>ED]</c> marker, and the
+    /// count <c>TODO.md</c> publishes is what the scan finds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's instruction, 2026-09-23, verbatim:</b> <i>"tag
+    /// everything ASSUMED now and then start measuring and researching to get the
+    /// number to 0. I want the rule to be that this number needs to remain zero.
+    /// Add a test to check if it is zero."</i>
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>SO THIS ARM IS RED ON PURPOSE UNTIL EVERY ONE OF THEM IS SETTLED, and
+    /// it was planted red by the twenty-seven themselves.</b> That is the one thing
+    /// about it a reader has to know first: a red here is not a regression and not
+    /// a broken test. It is the backlog, made unignorable, which is what the
+    /// instruction asked for. The number falls only when a claim is measured, cited
+    /// to a source, or deleted -- never when somebody rewrites the sentence so the
+    /// marker looks unnecessary.
+    /// </para>
+    /// <para>
+    /// <b>The corpus is the whole repository, minus the three files whose job is to
+    /// DISCUSS the marker.</b> <c>TODO.md</c> publishes the count and names every
+    /// claim; <c>CLAUDE.md</c> states the rule; this file implements it. A scan
+    /// that read those would count the prohibition as a violation, which is the
+    /// shape the <c>[FLOATS]</c> counter is scoped away from for the same reason.
+    /// <b>Both directions are asserted</b>, so a fourth file cannot quietly join
+    /// the exempt set.
+    /// </para>
+    /// <para>
+    /// <b>What a marker means is in the marker.</b> Each one names what is assumed,
+    /// why it is load-bearing, and what would settle it -- so the work is
+    /// enumerable from the tree and not only from a list. The shape is
+    /// <c>kb/</c>'s <c>[STALE]</c>: a stamp beside the claim, never a separate
+    /// file, because a claim and its status kept in two places is how one of them
+    /// goes stale.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoClaimInTheTreeIsStillMarkedAssumed()
+    {
+        var carried = AssumedMarkers();
+        var live = carried.Sum(entry => entry.Count);
+
+        // ⚠️ THE PUBLISHED NUMBER FIRST, so a stale figure in TODO.md is caught
+        // even on the day the last marker goes. It is re-derived from this scan and
+        // never counted out of a diff.
+        var recorded = AssumedCount().Match(
+            await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "TODO.md")));
+
+        await Assert.That(recorded.Success)
+            .IsTrue()
+            .Because("TODO.md's justification-sweep item is the anchor: it publishes the count, and rewording it past this pattern unhooks the check");
+
+        await Assert.That(int.Parse(recorded.Groups["count"].Value, CultureInfo.InvariantCulture))
+            .IsEqualTo(live)
+            .Because($"TODO.md publishes {recorded.Groups["count"].Value} and the scan finds {live.ToString(CultureInfo.InvariantCulture)}. Re-derive it from the scan; never decrement it");
+
+        // Both directions on the exempt set, which is the only part of the corpus
+        // rule that can rot.
+        await Assert.That(string.Join(", ", DiscussesTheMarker.Where(file => !MentionsTheMarker(file)).Order(StringComparer.Ordinal)))
+            .IsEmpty()
+            .Because("a file exempted from this scan that does not mention the marker at all is an exemption nobody needs");
+
+        // And the rule.
+        await Assert.That(string.Join(
+            Environment.NewLine,
+            carried.Select(entry => $"{entry.File}: {entry.Count.ToString(CultureInfo.InvariantCulture)} assumed justification(s) still unsettled")))
+            .IsEmpty()
+            .Because("the maintainer's rule is that this number stays at zero: measure the claim, cite it to a source, or delete it -- see TODO.md");
+    }
+
+    /// <summary>Every file carrying a marker, and how many.</summary>
+    /// <returns>One entry per file that carries at least one, in path order.</returns>
+    private static List<(string File, int Count)> AssumedMarkers() =>
+    [
+        .. RepositoryLayout.AllFiles
+            .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName).Replace('\\', '/'))
+            .Where(name => !name.StartsWith("docs/evidence/", StringComparison.Ordinal)
+                && !name.StartsWith("third-party/", StringComparison.Ordinal)
+                && !name.Contains("/TestResults/", StringComparison.Ordinal)
+                && !NotText.Contains(Path.GetExtension(name), StringComparer.OrdinalIgnoreCase)
+                && !DiscussesTheMarker.Contains(name, StringComparer.Ordinal))
+            .Select(name => (File: name, Count: Assumed().Count(File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, name)))))
+            .Where(entry => entry.Count > 0)
+            .OrderBy(entry => entry.File, StringComparer.Ordinal),
+    ];
+
+    /// <summary>Whether an exempt file really does discuss the marker.</summary>
+    /// <param name="file">The repository-relative path, with forward slashes.</param>
+    /// <returns>Whether the token appears in it at all.</returns>
+    private static bool MentionsTheMarker(string file) =>
+        Assumed().IsMatch(File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, file)))
+        || File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, file)).Contains("ASSUM" + "ED", StringComparison.Ordinal);
+
+    /// <summary>
+    /// The three files whose job is to discuss the marker instead of carrying one.
+    /// </summary>
+    private static string[] DiscussesTheMarker { get; } =
+    [
+        "TODO.md",
+        "CLAUDE.md",
+        "tests/BrowserAI.Tests/RecordedCountTests.cs",
+    ];
+
+    /// <summary>Extensions the walk reaches that hold no prose.</summary>
+    private static string[] NotText { get; } = [".png", ".ico", ".zip", ".nupkg", ".exe", ".dll", ".pdb"];
+
+    /// <summary>The bare marker, spelled in halves so this file carries none.</summary>
+    [GeneratedRegex(@"\[ASSUM" + @"ED\]")]
+    private static partial Regex Assumed();
+
+    /// <summary>The count <c>TODO.md</c> publishes about itself.</summary>
+    [GeneratedRegex(@"(?<count>\d+) assumed justifications named and")]
+    private static partial Regex AssumedCount();
 }

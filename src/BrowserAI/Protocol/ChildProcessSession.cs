@@ -92,6 +92,12 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         // possible byte is already buffered by the time this reader starts.
         // Five lines written by a child that then fails to launch are the only
         // explanation there will ever be.
+        //
+        // [ASSUMED] That nothing a child writes to stderr can be lost. The claim
+        // is broader than both the measurement behind it and the code below it,
+        // which abandons the pump after two seconds. Settle it by writing to
+        // stderr across that boundary and counting what arrives. Tagged
+        // 2026-09-23; the list and the predicate are in TODO.md.
         _standardErrorPump = Task.Run(PumpStandardErrorAsync, CancellationToken.None);
 
         StartReading(process.StandardOutput);

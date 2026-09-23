@@ -85,6 +85,8 @@ with no error anywhere. The SDK's own test base class pins it explicitly, citing
 `instructions` is the only channel that reaches the model before it calls
 anything.
 
+`[ASSUMED]` That schemas are deferred by the client. **It is the whole reason `ServerInstructions` exists**, and the 2026-08-18 capture that could have retired it was performed with the sentence left standing beside it. Settle it from that capture, which is already in hand. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+
 **Server `instructions` and every tool description are truncated silently at
 2 KB.** The tail simply does not exist and nothing a server can see reports it.
 [What *"2KB each"* means is measured below](#what-2kb-each-means----measured-2026-08-18--claude-code-21234).

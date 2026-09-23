@@ -40,6 +40,37 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **Every assumed justification carries a marker, and a test holds the number at zero.**
+  The maintainer's instruction, 2026-09-23, verbatim: *"tag everything ASSUMED now and then
+  start measuring and researching to get the number to 0. I want the rule to be that this
+  number needs to remain zero. Add a test to check if it is zero."*
+
+  The 2026-08-18 justification sweep examined 598 load-bearing justifications and left **27**
+  that are stated as fact, load-bearing, undated and uncited. They have been a list in
+  [`TODO.md`](TODO.md) since; they are now `[ASSUMED]` markers standing beside the claims
+  themselves, each naming what is assumed, why it is load-bearing and what would settle it.
+  The shape is `kb/`'s `[STALE]`: a stamp at the claim and never a separate file, because a
+  claim and its status kept in two places is how one of them goes stale.
+
+  `RecordedCountTests.NoClaimInTheTreeIsStillMarkedAssumed` reads every tracked file and
+  requires the count to be **zero**. ⚠️ **It is red right now and that is the design** -- it was
+  planted red by the twenty-seven themselves, and a red there is the backlog made unignorable,
+  not a regression. The marker comes off three ways only: the claim is **measured**, it is
+  **cited** to a source, or it is **deleted**. Rewriting the sentence so the marker looks
+  unnecessary is none of them.
+
+  **The count `TODO.md` publishes is re-derived from that same scan and is asserted against
+  it**, so a stale figure is a red build. The predicate changed with it -- it used to be one
+  per italicised or named claim in three hand-counted lists, and it is now one per marker --
+  and **the number was 27 before and after**, which is the check that the tagging matched the
+  lists. Three files are exempt because their job is to DISCUSS the marker: `TODO.md`,
+  `CLAUDE.md` and the test itself, with both directions asserted so a fourth cannot quietly
+  join them.
+
+  **Where they are:** 10 in the top-level documents, 9 under `src/`, 8 in `kb/`. Nine of the
+  Markdown ones sit inside a table row or a numbered list, so the marker joins the cell rather
+  than following the table -- a marker after the last row is a marker beside nothing.
+
 - ✅ **A review entry now adjudicates every golden snapshot by name, and a test holds the list.**
   [The marker gate](TESTING.md) has specified two fields since 2026-08-16 and built neither,
   for a reason that has quietly expired: at a baseline there was nothing to adjudicate, so the

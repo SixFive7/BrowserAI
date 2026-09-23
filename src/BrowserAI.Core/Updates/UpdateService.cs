@@ -108,6 +108,9 @@ internal sealed class UpdateService
     /// have, which is a defect, not a slow link. It exists because the
     /// alternative to a wedged background pass is a thread that never ends and
     /// never says so.
+    /// <para>
+    /// <b>[ASSUMED]</b> That nothing which is working can reach the crash tripwire. <b>It covers the download and says nothing about the unbounded `CheckAsync`</b>, which is the call that can sit there. Settle it by naming every path that reaches the tripwire and checking the claim against each.
+    /// </para>
     /// </remarks>
     public static TimeSpan CrashTripwire => TimeSpan.FromMinutes(45);
 

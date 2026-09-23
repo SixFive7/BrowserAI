@@ -180,6 +180,9 @@ internal sealed record ProvisioningTimers
     /// link, it is a dead one -- and unlike the old cap, it holds for a 400 MB
     /// download on a 0.1 Mbps line, which would legitimately take nine hours.
     /// </para>
+    /// <para>
+    /// <b>[ASSUMED]</b> That the update stall budget can be sized off Playwright's own per-socket timeout. <b>It is a different downloader in a different runtime</b>, so the number is borrowed and not derived. Settle it by measuring what the update lane actually does when a connection goes quiet.
+    /// </para>
     /// </remarks>
     public TimeSpan StallCap { get; init; } = TimeSpan.FromMinutes(10);
 

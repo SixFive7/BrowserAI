@@ -133,6 +133,8 @@ Chrome, so google.com/chrome/terms applies"* -- which forbids redistribution. Th
 is a citation, not a measurement, and it is not legal advice; it is recorded
 because it is the single piece of evidence the provisioning decision rests on.
 
+`[ASSUMED]` **A single 2023 statement by an unnamed Google engineer is the entire basis for *Chrome for Testing may not be redistributed*, and therefore for first-run provisioning existing at all.** The largest architectural consequence in this project rests on one unattributable sentence. Settle it from a primary source, or record plainly that none exists. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+
 ### What vendoring a runtime actually costs -- two long-lived cases
 
 Measured **2026-08-16** by reading two unpublished repositories and their git

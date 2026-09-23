@@ -58,6 +58,9 @@ internal sealed class UpdateFeed
     /// explicitly costs nothing and buys the property that matters: an install
     /// that came from some other channel's <c>Setup.exe</c> still checks this
     /// one.
+    /// <para>
+    /// <b>[ASSUMED]</b> That `win` is Velopack's own default channel. <b>The feed file name depends on it and nothing here read it out of Velopack.</b> Settle it from the resolved package, which is what the drift check already resolves.
+    /// </para>
     /// </remarks>
     public const string DefaultChannel = "win";
 

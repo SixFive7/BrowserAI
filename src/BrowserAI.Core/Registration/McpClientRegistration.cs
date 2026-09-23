@@ -91,6 +91,9 @@ internal static class McpClientRegistration
     /// expanded and an argument containing whitespace and <c>&amp;</c> made the
     /// child fail to start outright. A registered path is exactly the kind of
     /// argument that carries spaces.
+    /// <para>
+    /// <b>[ASSUMED]</b> That a `.cmd` shim cannot be started without `cmd.exe`. <b>It cites two kb entries about other subjects</b>, so the citation is a pointer at adjacent measurements and not at this one. Settle it by trying to start one from a process that has no shell.
+    /// </para>
     /// </remarks>
     public const string ClientExecutable = "claude.exe";
 

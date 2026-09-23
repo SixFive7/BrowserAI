@@ -57,6 +57,19 @@ internal sealed class ProcessLog : IDisposable
         // the stack, so no `finally` and no Dispose can be relied on here --
         // this handler is the only thing that runs, and the record it writes is
         // durable the moment it is written.
+        //
+        // [ASSUMED] That an unhandled exception is not guaranteed to unwind the
+        // stack. It is the entire crash-log design -- every choice in this file
+        // follows from it. Settle it by provoking one under this runtime and
+        // watching whether the handler runs. Tagged 2026-09-23; the list and the
+        // predicate are in TODO.md.
+        //
+        // [ASSUMED] That a written record is durable. The word is used four times
+        // across src/ in the sense SURVIVES THIS PROCESS, against a kb entry that
+        // reserves it for SURVIVES THE MACHINE, and the two are different
+        // guarantees wearing one word. Settle it by measuring which one holds
+        // here, or by changing the word. Tagged 2026-09-23; the list and the
+        // predicate are in TODO.md.
         _onUnhandled = (_, e) => CrashLog.Unhandled(log, e.IsTerminating, e.ExceptionObject as Exception);
 
         AppDomain.CurrentDomain.UnhandledException += _onUnhandled;

@@ -1134,3 +1134,5 @@ that should be read-only and is wiped on update.
 
 **Real screenshots are not byte-stable across runs**, so passthrough-fidelity
 assertions need a canned blob from a fake child, not a live capture.
+
+`[ASSUMED]` That screenshots are not byte-stable. **Stated as the reason nothing compares them**, which is a test that does not exist because of an unmeasured sentence. Settle it by taking the same screenshot twice on one revision and comparing the bytes. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*

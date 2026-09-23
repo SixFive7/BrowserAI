@@ -129,12 +129,33 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 `FILE_SHARE_DELETE` row beside it closed in the same change.
 
 - [ ] **The justification sweep's residue: 27 assumed justifications named and
-      not settled.** ⚠️ ***The predicate is one per italicised or named claim in
-      the three lists below, counted 2026-08-26 after the ones settled since.***
-      *Re-counted, not decremented: the three lists hold 29 named claims,
-      two of which the notes below mark done, which is 27. **Previously "28
+      not settled.** ⚠️ ***The predicate changed on 2026-09-23 and the number did
+      not: it is now ONE PER `[ASSUMED]` MARKER IN THE TREE, counted by a scan,
+      and it was 27 before and after.*** *Previously the predicate was one per
+      italicised or named claim in the three lists below, counted by hand
+      2026-08-26 after the ones settled since; the lists hold 29 named claims,
+      two of which the notes below mark done, which is 27. Before that: **"28
       assumed justifications ... counted 2026-08-19"**, and what left the list is
       named where it left it -- the filename refusals, in the `src/` list.*
+
+      ⚠️ **THE MAINTAINER'S INSTRUCTION, 2026-09-23, VERBATIM:** *"tag everything
+      ASSUMED now and then start measuring and researching to get the number to 0.
+      I want the rule to be that this number needs to remain zero. Add a test to
+      check if it is zero."*
+
+      **All 27 are tagged in place**, each marker naming what is assumed, why it is
+      load-bearing and what would settle it, in the shape `kb/` uses for `[STALE]`:
+      a stamp beside the claim and never a separate file. **The test is
+      `RecordedCountTests.NoClaimInTheTreeIsStillMarkedAssumed`**, and it is
+      **RED ON PURPOSE UNTIL THE LAST ONE IS SETTLED** -- planted red by the
+      twenty-seven themselves. A red there is the backlog, not a regression. It
+      also holds the number above against the scan, so this sentence cannot go
+      stale: **the count is re-derived and never decremented**, and it falls only
+      when a claim is measured, cited to a source, or deleted, never when somebody
+      rewrites the sentence so the marker looks unnecessary.
+
+      **The three lists below stay** -- they are what each marker points back at,
+      and they carry the history the markers do not.
       *The item said **24** when it was written on 2026-08-18 and did not state
       what it was counting, so this is a **different question over the same
       list**, not a correction of it -- which is the trap this repository

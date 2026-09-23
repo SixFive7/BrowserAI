@@ -82,6 +82,8 @@ Chromium survives hard kills and our locks release on process death, so the dama
 is a lost session and not corruption -- but it bypasses the job object entirely,
 and a hook must never leave a helper running under the root.
 
+`[ASSUMED]` That the damage from `force_stop_package` really is a lost session and not corruption. **Nothing defends against it because of this sentence, and the sentence was never run.** Settle it by killing a session mid-write through that path and reading what the profile and the session record look like afterwards. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+
 ## The nine landmines, claim and verdict
 
 Each entry is the standing record first -- what was read out of Velopack and out

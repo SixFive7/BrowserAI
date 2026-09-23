@@ -691,6 +691,8 @@ BrowserAI-launched Chrome for Testing runs as the user, non-elevated, and the
 Windows sign-in restore path relaunches as the same user. Nothing we need to see
 is in that set.
 
+`[ASSUMED]` That the 156 denials do not matter. **It infers that the denied set is all SYSTEM from the denial itself**, and leans on a claim marked `[UNVERIFIED]` elsewhere, so the inference rests on an inference. Settle it by enumerating what was denied, under a token that can see it. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+
 13.88 ms on a background thread, once per sweep, with the sweep mutex ensuring
 one process pays it and not ninety-six. Roughly 5× the cost of the
 window-title walk (0.43 ms to enumerate, ~2.7 ms including title reads).
@@ -787,6 +789,8 @@ databases is silent corruption, and headless is the mode upstream defaults to. S
 Chromium's own single-instance protection exists **only in the headed build**,
 and a directory-keyed lock of our own is the only protection that covers both,
 not defence in depth. `[FLOATS]`
+
+`[ASSUMED]` That two concurrent writers to one Chromium profile cause silent corruption. **It is the opposite half of the sentence above and it was not run either**, so this repository asserts both that a killed writer is safe and that a concurrent one is not, on no measurement. Settle it by running two browsers against one profile directory and reading the result. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
 
 **Firefox has no `Chrome_MessageWindow` equivalent**, so its stray detection is a
 different path entirely: `parent.lock` sharing violation → Restart Manager

@@ -138,6 +138,8 @@ established that the calls exist, never what they do. The shape: both calls sit 
 anticipated: the population least likely to have been exercised in testing and
 most likely to be hit in the field. `[STABLE]`
 
+`[ASSUMED]` `Console.ReadKey`'s CONSOLE-ATTACHED arm. **The redirected arm is measured and this one is not**, so the entry is half evidence and half assertion in one sentence. Settle it from a real console host, which is what `docs/probes/2026-09-14-firstrun` was built to watch. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+
 **`Process.ExitCode` throws after `Dispose()`, and
 `Process.GetProcessById(pid).ExitCode` always throws.** .NET is *worse* here than
 PowerShell, which merely returns `$null`. Cache the value as an `int` the moment
