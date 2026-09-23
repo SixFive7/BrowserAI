@@ -9,7 +9,7 @@ namespace BrowserAI.Tests.Harness;
 
 /// <summary>
 /// What this run started, written where the <b>next</b> run can read it -- so a
-/// run that is killed leaves behind a list of identities rather than a set of
+/// run that is killed leaves behind a list of identities and not a set of
 /// processes nobody can name.
 /// </summary>
 /// <remarks>
@@ -27,7 +27,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>An identity, never a name.</b> Each row names a pid and the creation time
 /// read at the instant it was started, and reclaiming re-reads that time before
-/// acting -- so a pid Windows has recycled is skipped rather than killed. There is
+/// acting -- so a pid Windows has recycled is skipped and not killed. There is
 /// no image name anywhere in the file and there must never be one; the rule that
 /// nothing is found by image name has no exception for test code, and a record
 /// carrying names is one refactor from being matched on.
@@ -72,25 +72,25 @@ namespace BrowserAI.Tests.Harness;
 /// that marker would have had the same staleness problem one level down.
 /// </para>
 /// <para>
-/// <b>What it does not cover, stated rather than discovered.</b> It records the
+/// <b>What it does not cover, stated and not discovered.</b> It records the
 /// processes the harness itself starts. A grandchild -- a browser a probe
 /// launched, a node the product spawned -- is not in the file, and the mechanism
 /// that contains those is the job object, which takes the whole tree down when
 /// its handle closes. So this is the belt to the job object's brace: it exists
 /// for the case where the job died with the host and something outlived it
-/// anyway, and it terminates the process it named rather than a tree, because
+/// anyway, and it terminates the process it named and not a tree, because
 /// <c>Process.Kill(entireProcessTree: true)</c> is banned repository-wide for
 /// walking re-parentable links.
 /// </para>
 /// <para>
 /// <b>Appended under a lock, because the suite runs at
 /// <see cref="SuiteParallelism.Unbounded"/></b> and two tests starting probes at
-/// once is the ordinary case rather than the exception. The file is opened for
+/// once is the ordinary case and not the exception. The file is opened for
 /// append and closed immediately: a handle held for the length of a run would be
 /// a handle the next run's reclaim cannot read.
 /// </para>
 /// <para>
-/// ⚠️ <b>The residual, named rather than left to be found.</b> A pass rewrites
+/// ⚠️ <b>The residual, named and not left to be found.</b> A pass rewrites
 /// the file with the rows it left alone, and that rewrite is not atomic against
 /// another process appending in the same instant -- so a live run can lose the one
 /// row it wrote inside that window. It is a strictly smaller loss than the whole
@@ -310,8 +310,8 @@ internal static class SpawnRecord
     /// reading this file.
     /// </para>
     /// <para>
-    /// ⚠️ <b>So the suite now writes outside the repository in two places rather
-    /// than one</b>, and the claims that said otherwise --
+    /// ⚠️ <b>So the suite now writes outside the repository in two places and
+    /// not one</b>, and the claims that said otherwise --
     /// <see cref="ScratchRoot.ProfileScratch"/> and
     /// <see cref="ScratchDirectory"/> -- carry the correction.
     /// </para>
@@ -404,7 +404,7 @@ internal static class SpawnRecord
     /// nothing.
     /// </summary>
     /// <remarks>
-    /// <b>Rewriting rather than emptying is half of the fix, not tidiness.</b> A
+    /// <b>Rewriting instead of emptying is half of the fix, not tidiness.</b> A
     /// pass that blanked the file would take a live run's rows with it, and the
     /// day that run really was killed nothing would name what it left behind --
     /// which is the recovery this whole file exists for, removed by the thing

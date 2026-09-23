@@ -59,7 +59,7 @@ internal readonly record struct CommitChargeReading(ulong? Committed, ulong? Lim
 /// recurred and the reading did not exist for it either.
 /// </para>
 /// <para>
-/// <b>Two readings rather than one, and the pair is the point.</b> A single
+/// <b>Two readings and not one, and the pair is the point.</b> A single
 /// number taken at the end says what the machine looked like once the run had
 /// released everything; a single number at the start says nothing about what the
 /// run itself did. The difference between them is what separates <i>the machine
@@ -72,8 +72,8 @@ internal readonly record struct CommitChargeReading(ulong? Committed, ulong? Lim
 /// whatever else the machine is running, so a bound on one would be a test that
 /// passes or fails depending on the developer's other windows. What
 /// <see cref="SuiteCoverageTests"/> asserts is that the row is produced, that its
-/// bands are classified correctly, and that an unreadable reading says so rather
-/// than printing a zero.
+/// bands are classified correctly, and that an unreadable reading says so
+/// instead of printing a zero.
 /// </para>
 /// <para>
 /// <b>It is a row and not a <see cref="SuiteCapability"/></b>, for the reason
@@ -172,7 +172,7 @@ internal static class CommitCharge
         // ⚠️ The extra lines exist for the same reason ForegroundLock's does: a
         // number printed without its meaning is an assurance the run has not
         // earned. In these two bands the run's own timings are suspect, and the
-        // reader has to be told so in the run's output rather than working it
+        // reader has to be told so in the run's output instead of working it
         // out from a percentage.
         return verdict switch
         {

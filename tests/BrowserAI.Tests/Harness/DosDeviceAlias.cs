@@ -11,7 +11,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>These are the genuine article rather than a stand-in, and that is the
+/// <b>These are the genuine article and not a stand-in, and that is the
 /// whole point of the file.</b> <c>DefineDosDeviceW</c> is what <c>subst</c>
 /// calls, and with <c>DDD_RAW_TARGET_PATH</c> it writes the same kind of object
 /// manager symbolic link that the multiple-UNC provider writes for
@@ -99,10 +99,10 @@ internal sealed partial class DosDeviceAlias : IDisposable
                 return;
             }
 
-            // IntPtr.Zero rather than a null string: measured 2026-08-19, a null
+            // IntPtr.Zero and not a null string: measured 2026-08-19, a null
             // marshalled from a `string` parameter left the definition standing
             // and still returned TRUE, so the letter survived the test that made
-            // it. The removal is asserted below rather than assumed for the same
+            // it. The removal is asserted below and not assumed for the same
             // reason -- a leaked drive letter is a machine-wide side effect, and
             // the next run would meet it as a mystery.
             _ = DefineDosDeviceW(RemoveDefinition, Letter, IntPtr.Zero);
@@ -137,7 +137,7 @@ internal sealed partial class DosDeviceAlias : IDisposable
                         $"DefineDosDeviceW could not define '{letter}' as '{resolved}' (error {Marshal.GetLastPInvokeError()}). This test proves nothing without a real alias.");
                 }
 
-                // Asserted rather than assumed: the whole value of this helper is
+                // Asserted, not assumed: the whole value of this helper is
                 // that the alias is the same object Windows makes, and a letter
                 // that came back holding something else would make every
                 // assertion downstream vacuous.

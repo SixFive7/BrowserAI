@@ -26,7 +26,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>Why this exists at all.</b> A desktop heap spent to the byte kills a
 /// Chromium before it creates a single window: <c>CreateWindowExW</c> is
 /// refused, and <c>WindowImpl::Init</c> in <c>ui/gfx/win/window_impl.cc</c> ends
-/// that path in a <c>NOTREACHED()</c> and a check rather than an error return --
+/// that path in a <c>NOTREACHED()</c> and a check and not an error return --
 /// and a check does not log. What comes out is a browser that died with nothing
 /// on either stream, a five-line log and a clean bill of health from every
 /// system-wide counter, because the resource that ran out is the one nothing can
@@ -43,7 +43,7 @@ namespace BrowserAI.Tests.Harness;
 /// to processes that come and go.
 /// </para>
 /// <para>
-/// <b>The title is 2,048 characters, and that is the measured regime rather than
+/// <b>The title is 2,048 characters, and that is the measured regime and not
 /// a round number.</b> Window text lives in the desktop heap, so the length of
 /// the title <i>is</i> the size of the allocation being attempted -- and the rig
 /// established that a heap with one window of headroom (≈4.4 KB) still kills a
@@ -61,7 +61,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>ERROR_NO_MORE_USER_HANDLES</c>. The long-title regime is the one that
 /// reproduces the shape seen in the wild, so <b>a zero here is the signature and
 /// not a gap in the reading</b>, and it gets a verdict of its own that says so
-/// rather than being folded into "refused, cause unknown".
+/// instead of being folded into "refused, cause unknown".
 /// </para>
 /// <para>
 /// <b>The zero is this call's answer and not a stale one</b>, which is what
@@ -71,11 +71,11 @@ namespace BrowserAI.Tests.Harness;
 /// <see cref="Marshal.GetLastPInvokeError"/> afterwards is what this call set,
 /// including when what it set is nothing. *Verified 2026-08-29 against
 /// Microsoft's own reference for <c>SetLastError</c> and
-/// <c>Marshal.GetLastWin32Error</c>; **read rather than run** -- the generated
+/// <c>Marshal.GetLastWin32Error</c>; **read and not run** -- the generated
 /// stub is not emitted to disk in this build, so nothing here has looked at it.*
 /// </para>
 /// <para>
-/// <b>What it cannot see, said here rather than implied.</b> It reads the
+/// <b>What it cannot see, said here and not implied.</b> It reads the
 /// desktop <i>this thread</i> is on, which is the desktop a browser launched by
 /// this suite inherits -- so it is the right desktop today and would silently
 /// become the wrong one if a launcher ever gave its browsers a desktop of their
@@ -111,7 +111,7 @@ internal static partial class DesktopHeapProbe
     /// <remarks>
     /// <b>Deliberately disjoint strings.</b> None is a substring of another, so
     /// "exactly one of these appears" is a question about which reading was taken
-    /// rather than about how the sentences were worded.
+    /// and not about how the sentences were worded.
     /// </remarks>
     public static IReadOnlyList<string> Verdicts { get; } =
     [
@@ -137,7 +137,7 @@ internal static partial class DesktopHeapProbe
 
     /// <summary>Takes the reading, and says what it means.</summary>
     /// <remarks>
-    /// <b><c>STATIC</c> rather than a class of our own</b>, so that this really
+    /// <b><c>STATIC</c> and not a class of our own</b>, so that this really
     /// is one call: a registration would be a second desktop-heap allocation
     /// taken before the one being measured, and it could fail first and for the
     /// same reason, which would put a second failure mode inside a diagnostic

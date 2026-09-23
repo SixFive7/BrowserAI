@@ -11,7 +11,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Raw rather than a <c>SafeHandle</c>, and the reason is the assertion.</b>
+/// <b>Raw and not a <c>SafeHandle</c>, and the reason is the assertion.</b>
 /// The client-liveness test's central claim is that BrowserAI's stdin never
 /// reached EOF, and the evidence for it is that <i>this</i> process still holds a
 /// write end of that pipe at the moment BrowserAI exits. A <c>SafeHandle</c>

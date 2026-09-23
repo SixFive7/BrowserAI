@@ -21,7 +21,7 @@ namespace BrowserAI.Tests.Harness;
 /// nothing in this repository could see until 2026-09-16.
 /// </para>
 /// <para>
-/// <b>Read out of the built file rather than out of <c>app.manifest</c>.</b> The
+/// <b>Read out of the built file and not out of <c>app.manifest</c>.</b> The
 /// source file is what a person edits; what matters is what the SDK embedded,
 /// and a project that stopped carrying <c>ApplicationManifest</c> would leave the
 /// source file sitting in the tree saying the right thing about a binary that no

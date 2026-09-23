@@ -23,7 +23,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>The mutex is held on a thread of its own, and that is a correctness
-/// requirement rather than a style.</b> A named mutex is owned by the
+/// requirement and not a style.</b> A named mutex is owned by the
 /// <i>thread</i> that waited on it; a test that acquired one and then awaited
 /// anything would release it from whichever pool thread the continuation landed
 /// on, and <c>ReleaseMutex</c> would throw about "an unsynchronized block of
@@ -33,8 +33,8 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b><see cref="Held"/> is not decoration.</b> A claim that silently failed
 /// would let BrowserAI take the mutex and download 203.8 MB while the test
-/// believed it was reading a cache, so the caller asserts it rather than
-/// assuming it.
+/// believed it was reading a cache, so the caller asserts it and does not
+/// assume it.
 /// </para>
 /// </remarks>
 internal sealed class ProvisioningClaim : IDisposable

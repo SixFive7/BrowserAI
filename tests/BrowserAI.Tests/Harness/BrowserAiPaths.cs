@@ -13,8 +13,8 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Resolved through the product's own <see cref="LocalAppDataPaths"/> rather
-/// than rebuilt from <c>%LOCALAPPDATA%</c> here, so the shape of the root and
+/// Resolved through the product's own <see cref="LocalAppDataPaths"/> and
+/// not rebuilt from <c>%LOCALAPPDATA%</c> here, so the shape of the root and
 /// every directory name beneath it come from the product and never from a
 /// literal spelled in the suite.
 /// </para>
@@ -30,11 +30,11 @@ namespace BrowserAI.Tests.Harness;
 /// constructs <see cref="LocalAppDataPaths"/> with <b>no</b> root argument, so
 /// it always answers the per-user default under
 /// <c>%LOCALAPPDATA%</c>. The two disagree exactly when the override is set,
-/// and the members below are the default rather than "what the product used".
+/// and the members below are the default and not "what the product used".
 /// </para>
 /// <para>
 /// ⚠️ <b>That correction narrowed on 2026-09-15, and what it narrowed to is
-/// worth stating: the override is now the ONLY way these can disagree.</b> Until
+/// this: the override is now the ONLY way these can disagree.</b> Until
 /// that date the product also took its root from
 /// <c>VelopackLocator.Current.RootAppDir</c> when it was an installed process,
 /// so this type answered the default while an installed BrowserAI answered
@@ -64,7 +64,7 @@ internal static class BrowserAiPaths
 
     /// <summary>
     /// The variable that moves a published binary's <b>data</b> root, named from
-    /// the product rather than typed here.
+    /// the product and not typed here.
     /// </summary>
     /// <remarks>
     /// The only way to give a real BrowserAI an <b>empty</b> browsers root
@@ -78,7 +78,7 @@ internal static class BrowserAiPaths
     /// object <see cref="BrowsersDirectory"/> comes from.
     /// </summary>
     /// <remarks>
-    /// <b>One route rather than a <c>new LocalAppDataPaths()</c> at each call
+    /// <b>One route and not a <c>new LocalAppDataPaths()</c> at each call
     /// site</b>, so the day the override above is honoured it is honoured
     /// everywhere at once instead of in the places somebody remembered.
     /// </remarks>
@@ -123,7 +123,7 @@ internal static class BrowserAiPaths
     /// defect and reads as a clean machine without it --
     /// <see cref="SuiteEnvironment.StateOf"/> answers
     /// <see cref="CapabilityState.Partial"/> for that shape, which fails in
-    /// every run rather than skipping. The distinction used to be drawn inside
+    /// every run instead of skipping. The distinction used to be drawn inside
     /// the one test that needed it, which is why it was lost when that test's
     /// degraded branch reported <i>passed</i>.
     /// </para>
@@ -169,7 +169,7 @@ internal static class BrowserAiPaths
     /// <summary>The Firefox executable inside that directory.</summary>
     /// <remarks>
     /// Note the layout differs from Chromium's: the inner directory is plain
-    /// <c>firefox</c> rather than a platform-suffixed one, which is also why
+    /// <c>firefox</c> and not a platform-suffixed one, which is also why
     /// upstream's <c>winldd</c> dependency validation actually runs for Firefox
     /// and is a permanent no-op for Chromium.
     /// </remarks>
@@ -198,12 +198,12 @@ internal static class BrowserAiPaths
     /// </summary>
     /// <remarks>
     /// <b>Public from 2026-09-18, so that the suite has one reader of that
-    /// snapshot rather than two.</b> It was private while every caller was a
+    /// snapshot and not two.</b> It was private while every caller was a
     /// path in this type; <c>ThirdPartyNoticeTests</c> asks the same question
     /// about a number in a document, and a second reader would be a second place
     /// the snapshot's shape is known. The file is regenerated from the resolved
     /// payload and diffed by <c>build/UpstreamSnapshots.targets</c> on every
-    /// build, which is what makes it an answer about today rather than about
+    /// build, which is what makes it an answer about today and not about
     /// whenever it was committed.
     /// </remarks>
     /// <param name="browser">The component, as upstream names it.</param>
@@ -217,7 +217,7 @@ internal static class BrowserAiPaths
     /// </summary>
     /// <remarks>
     /// <b>The revision and the browser version move independently, which is why
-    /// both are readable rather than just the one the directory name carries.</b>
+    /// both are readable and not just the one the directory name carries.</b>
     /// A revision bump at an unchanged browser version is a REBUILD of the same
     /// browser -- chromium 1244 to 1245 held 154.0.8037.0 across it, and firefox
     /// 1542 to 1544 held 155.0 -- while a browser version move is a new browser.

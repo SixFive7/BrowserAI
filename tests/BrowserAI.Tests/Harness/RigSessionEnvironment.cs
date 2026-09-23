@@ -27,7 +27,7 @@ namespace BrowserAI.Tests.Harness;
 /// which no assertion in this layer is evidence about.
 /// </para>
 /// <para>
-/// <b>Why it is worth the seam.</b> The lookup that decides which child a call
+/// <b>Why the seam exists.</b> The lookup that decides which child a call
 /// reaches has to be driven across sessions of different modes <i>at the same
 /// time</i>, at a level of contention that would actually expose a race -- a call
 /// routed to a neighbour's child drives the wrong browser and looks like a
@@ -36,10 +36,10 @@ namespace BrowserAI.Tests.Harness;
 /// removed; the lookup it shared with routing did not go anywhere.
 /// Against real children that is three node processes per assertion and a suite
 /// measured in minutes; here it is milliseconds, so the concurrency is exercised
-/// on every run rather than once.
+/// on every run and not once.
 /// </para>
 /// <para>
-/// The paths point into the suite's own scratch root rather than at
+/// The paths point into the suite's own scratch root and not at
 /// <c>%LocalAppData%\BrowserAI</c>, because the session index is machine-wide
 /// state and a rig that reached it would put throwaway directories into a
 /// developer's own <c>browserai_list</c> and leave them there.
@@ -73,7 +73,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         Clock = clock;
 
         // ⚠️ THE ONE RIG THAT STARTS A REAL BROWSER STARTS IT WITHOUT A WINDOW,
-        // and that is decided HERE rather than at the call site so it cannot be
+        // and that is decided HERE and not at the call site so it cannot be
         // forgotten by whoever adds the second one.
         //
         // Measured 2026-08-17, a full 410-test run watched by SetWinEventHook
@@ -96,7 +96,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
         // developer their foreground the moment a real child is behind it.
         //
         // So NO rig opens a window, and the difference between the two kinds of
-        // rig is the child rather than the browser.
+        // rig is the child and not the browser.
         // `FakeChildHarnessTests.NoRigThatStartsARealBrowserOpensItWithAWindow`
         // asserts it.
         DefaultSessionHeaded = false;
@@ -158,7 +158,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
             Paths = paths,
             Payload = RepositoryPayload.Layout,
 
-            // The committed file rather than the payload's copy of it: the two
+            // The committed file and not the payload's copy of it: the two
             // are the same bytes and only one of them exists on a clean clone.
             Verdicts = verdicts ?? RepositoryVerdicts.Committed,
             Provisioner = Provisioner,
@@ -259,7 +259,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// Exposed so a test advances the same instance the product is scheduled
-    /// against rather than one it happens to hold a reference to.
+    /// against and not one it happens to hold a reference to.
     /// </remarks>
     public ManualClock? Clock { get; }
 
@@ -285,7 +285,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
 
     /// <summary>
     /// The directory a chromium install lands in, spelled from the committed
-    /// snapshot rather than as a literal, so a revision bump moves it.
+    /// snapshot and not as a literal, so a revision bump moves it.
     /// </summary>
     public static string ChromiumDirectoryName { get; } = $"chromium-{BrowserAiPaths.ChromiumRevision}";
 
@@ -395,7 +395,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// </param>
     /// <param name="realSessionChildren">
     /// Whether each session gets a real <c>node.exe</c> out of the payload, in a
-    /// real job, against the developer's real browsers root -- rather than an
+    /// real job, against the developer's real browsers root -- and not an
     /// in-process double. True for the one arm that has to observe an actual
     /// browser going away.
     /// </param>
@@ -403,7 +403,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// The tool verdicts this proxy serves under. Defaults to the committed
     /// <c>tool-verdicts.json</c>, which is what the product ships; an arm that
     /// needs a denial or a gap the product does not have hands in a doctored
-    /// copy rather than changing what is shipped.
+    /// copy instead of changing what is shipped.
     /// </param>
     public static RigSessionEnvironment Create(
         Action<FakePlaywrightChild>? configure = null,
@@ -426,7 +426,7 @@ internal sealed class RigSessionEnvironment : IAsyncDisposable
     /// <remarks>
     /// The failure is injected at the one seam and nothing else changes, so the
     /// refusal, the released lock and the record left on disk are all the
-    /// product's own behaviour rather than a double's.
+    /// product's own behaviour and not a double's.
     /// </remarks>
     /// <param name="reason">What the failure says, so the refusal can be matched to it.</param>
     /// <returns>The environment.</returns>

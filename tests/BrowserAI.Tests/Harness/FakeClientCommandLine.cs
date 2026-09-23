@@ -18,7 +18,7 @@ namespace BrowserAI.Tests.Harness;
 /// side of the seam and run here exactly as they do in an installer.
 /// </para>
 /// <para>
-/// ⚠️ <b>Its answers are upstream's own, measured rather than invented.</b>
+/// ⚠️ <b>Its answers are upstream's own, measured, not invented.</b>
 /// Measured 2026-08-16 @ Claude Code 2.1.233: a duplicate <c>add</c> exits
 /// <b>1</b> with <i>"MCP server browserai already exists in user config"</i> and
 /// a <c>remove</c> of an absent name exits <b>1</b> with <i>"No MCP server named
@@ -71,7 +71,7 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
 
     /// <inheritdoc />
     /// <remarks>
-    /// ⚠️ <b>The working directory is RECORDED rather than ignored</b>, because
+    /// ⚠️ <b>The working directory is RECORDED and not ignored</b>, because
     /// for a project-scope registration it is the only thing that decides where
     /// the file lands, and a double that dropped it would let an arm assert a
     /// successful write into a directory nobody named.

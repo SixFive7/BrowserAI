@@ -32,13 +32,13 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>Desktop heap is the one ceiling this cannot see, and it is named as a
-/// gap rather than left to be assumed covered.</b> A Chromium that cannot create
+/// gap and not left to be assumed covered.</b> A Chromium that cannot create
 /// a window station object fails in exactly the way being investigated, and
 /// there is no documented API that reports desktop-heap usage -- it is readable
 /// only with a kernel debugger extension. So a launch failure with these numbers
 /// all healthy does not exonerate the machine. <b>Since 2026-08-29 there is a
 /// reading for it</b>, and it is not a column here: <see cref="DesktopHeapProbe"/>
-/// <i>tries</i> the allocation rather than asking about it, which can only be
+/// <i>tries</i> the allocation instead of asking about it, which can only be
 /// done at the instant of a failure and is therefore taken at the failure site
 /// instead of on every describe.
 /// </para>
@@ -79,7 +79,7 @@ internal static partial class MachineLoad
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Here rather than in <see cref="CommitCharge"/>, because there is one
+    /// <b>Here and not in <see cref="CommitCharge"/>, because there is one
     /// declaration of <c>GetPerformanceInfo</c> in this assembly and there
     /// should stay one.</b> Two <c>[LibraryImport]</c>s naming one export are
     /// two chances to disagree about <c>DllImportSearchPath</c>, and the second
@@ -90,7 +90,7 @@ internal static partial class MachineLoad
     /// Bytes'</c></b>, which is what [the hazard row that asks for
     /// it](../../../HAZARDS.md#hazard-index) names: <c>CommitTotal</c> and
     /// <c>CommitLimit</c> are counts of pages, so both are multiplied by the
-    /// system page size here rather than by an assumed 4,096.
+    /// system page size here and not by an assumed 4,096.
     /// </para>
     /// </remarks>
     /// <returns>The pair in bytes, or <see langword="null"/> when Windows would not answer.</returns>

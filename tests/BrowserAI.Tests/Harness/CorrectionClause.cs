@@ -13,7 +13,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b><c>CLAUDE.md</c> calls the clause the load-bearing half of a
 /// correction</b> -- it is what tells a reader who learned the old value that it
-/// was reviewed and replaced rather than lost, and it requires the superseded
+/// was reviewed and replaced, not lost, and it requires the superseded
 /// text to be quoted <i>verbatim</i>. Every gate that reads a document for
 /// claims therefore has to read around it, because the quoted text is a record
 /// of what a row used to say and not a claim that it still says it.
@@ -23,7 +23,7 @@ namespace BrowserAI.Tests.Harness;
 /// them knew about it.</b> <c>HazardIndexTests</c> stripped it before resolving
 /// the symbols a row names; <c>ReVerificationIndexTests</c> did not, so a
 /// superseded test name quoted in backticks failed that gate while the identical
-/// correction passed the other. The visible cost was in the document rather than
+/// correction passed the other. The visible cost was in the document and not
 /// in the build: two rows of <c>kb/re-verification.md</c> ended up quoting dead
 /// test names <i>without</i> backticks and explaining in prose that the gate was
 /// the reason. **Two conventions that cannot both hold is a defect in one of
@@ -33,7 +33,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>What it deliberately does not match.</b> A <c>previously</c> followed by
 /// anything other than a quotation -- <c>previously three arms --</c>,
-/// <c>previously `Foo.Bar`, which was deleted</c> -- is prose rather than the
+/// <c>previously `Foo.Bar`, which was deleted</c> -- is prose and not the
 /// convention, and widening the pattern to cover it would strip live claims out
 /// of any cell that happened to use the word. A correction that wants the
 /// clause's protection writes the clause.

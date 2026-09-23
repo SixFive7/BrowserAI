@@ -18,7 +18,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>An atomic rename does not make the file openable, and that is measured
-/// rather than anticipated.</b> Observed once on 2026-08-16 during build-order
+/// not anticipated.</b> Observed once on 2026-08-16 during build-order
 /// step 12: <c>File.ReadAllTextAsync</c> on a report that had already been
 /// renamed into place failed with <i>"the process cannot access the file ...
 /// because it is being used by another process"</i>, one run in a dozen. A

@@ -17,7 +17,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>This is mandatory rather than a nicety, and the reason is structural.</b>
+/// <b>This is mandatory and not a nicety, and the reason is structural.</b>
 /// BrowserAI replaces <i>both</i> of the SDK's stdio transports. With both ends
 /// replaced, a test that drives BrowserAI through an <c>McpClient</c> is testing
 /// the code under test using the code under test: a symmetric bug -- the same
@@ -30,7 +30,7 @@ namespace BrowserAI.Tests.Harness;
 /// type and no <c>BrowserAI.Protocol</c> type is on the path: the frames are
 /// built with <see cref="JsonNode"/> and read with <see cref="JsonDocument"/>,
 /// which is the framework. <see cref="JobLauncher"/> <i>is</i> product code and
-/// is used deliberately, because it is process creation rather than protocol: a
+/// is used deliberately, because it is process creation and not protocol: a
 /// test that leaks a browser is a defect, <c>Process.Start</c> cannot put a
 /// child in a job at creation, and the alternative is a safety net with a
 /// measured hole in it.
@@ -53,7 +53,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
 {
     /// <summary>
     /// UTF-8 with no byte-order mark, on all three streams. Declared once here
-    /// rather than at each stream, so the three cannot drift apart.
+    /// and not at each stream, so the three cannot drift apart.
     /// </summary>
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
@@ -185,7 +185,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
             request["params"] = parameters;
         }
 
-        // ⚠️ ONE DEADLINE PER EXCHANGE, armed here rather than in the
+        // ⚠️ ONE DEADLINE PER EXCHANGE, armed here and not in the
         // constructor.
         //
         // Corrected 2026-08-18 (previously a single CancellationTokenSource armed
@@ -306,7 +306,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <c>ProtocolSplitTests.TheChildNegotiatesItsCeilingAndTheProductRecordsWhichVersionThatWas</c>
     /// went red on the runner with the record it wanted missing -- along with
     /// <i>every</i> record after a certain point, session-lock acquisitions
-    /// included, which is what proves it was a truncated read rather than an
+    /// included, which is what proves it was a truncated read and not an
     /// absent log line. The product had written it; the pump had not been
     /// scheduled to read it. On a developer's machine the pool has cores to spare
     /// and the snapshot is always complete, so the assertion looked sound for as
@@ -408,7 +408,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <remarks>
     /// <b>Separated from <see cref="FailureAsync"/> so a timeout can carry the
     /// same evidence under a different exception type.</b> A deadline expiring is
-    /// a <see cref="TimeoutException"/> rather than an
+    /// a <see cref="TimeoutException"/> and not an
     /// <see cref="InvalidOperationException"/>, and before this split it carried
     /// no evidence at all because it never reached this code.
     /// </remarks>

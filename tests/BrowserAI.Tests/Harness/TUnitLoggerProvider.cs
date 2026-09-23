@@ -21,7 +21,7 @@ namespace BrowserAI.Tests.Harness;
 /// instead of an assertion message on its own.
 /// </para>
 /// <para>
-/// Writes are per-test rather than process-wide, so this stays correct with the
+/// Writes are per-test and not process-wide, so this stays correct with the
 /// whole layer running in parallel.
 /// </para>
 /// </remarks>
@@ -39,7 +39,7 @@ internal sealed class TUnitLoggerProvider : ILoggerProvider
         /// Serialises writes across every logger in the process. A
         /// <see cref="TextWriter"/> is not safe to lock on -- it has weak
         /// identity, so a lock taken on it can be taken by unrelated code
-        /// through the same object -- and the writer is TUnit's rather than
+        /// through the same object -- and the writer is TUnit's and not
         /// ours.
         /// </summary>
         private static readonly Lock OutputLock = new();

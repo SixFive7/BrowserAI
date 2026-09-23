@@ -18,11 +18,11 @@ namespace BrowserAI.Tests.Harness;
 /// <c>Get-Process -Id $pid</c> from <c>Get-Process chrome</c>. Those are opposite
 /// things: one names a pid the caller already had, the other picks a stranger out
 /// of the machine by what its executable is called. <b>Q203</b>, decided
-/// 2026-09-17: the scan reads the <b>filter</b> rather than the API.
+/// 2026-09-17: the scan reads the <b>filter</b> and not the API.
 /// </para>
 /// <para>
 /// ⚠️ <b>This is a narrowing, so the shapes it must still catch are enumerated
-/// rather than described</b>, and each has a synthetic control in
+/// and not described</b>, and each has a synthetic control in
 /// <c>NeverByImageNameTests</c> pointing both ways: a violation that must be
 /// caught, and the pid-keyed spelling of the same call that must pass. A
 /// narrowing nobody planted red in both directions is a hole with a test in
@@ -36,10 +36,10 @@ namespace BrowserAI.Tests.Harness;
 /// the repository where the rule does not apply.
 /// </para>
 /// <para>
-/// ⚠️ <b>What it cannot see, stated rather than implied.</b> It reads one line
+/// ⚠️ <b>What it cannot see, stated and not implied.</b> It reads one line
 /// at a time, so a query built on one line and filtered on the next is only
 /// caught by the second line -- which is why the comparison rule is gated on the
-/// <b>file</b> carrying a process-enumeration call rather than on the line. And
+/// <b>file</b> carrying a process-enumeration call and not on the line. And
 /// it reads text, not meaning: a name assembled from variables, or a filter
 /// passed through a parameter, is beyond any scan of this kind. The
 /// <c>BannedApiAnalyzers</c> half still covers the C# call sites it can see, and
@@ -68,7 +68,7 @@ internal static class ProcessSelection
     /// <see cref="FilteredName"/> instead.</b> In PowerShell <c>=</c> is
     /// assignment, and <c>name = $p.Name</c> in a hashtable that <i>emits</i> a
     /// process's name is the exact shape the rule's own remark calls permitted --
-    /// observing a name rather than selecting on one. Treating <c>=</c> as a
+    /// observing a name and not selecting on one. Treating <c>=</c> as a
     /// comparison everywhere made a rig that reports a tree read as a rig that
     /// hunts one.
     /// </remarks>
@@ -164,8 +164,8 @@ internal static class ProcessSelection
                 else if (!line.Contains("/pid", StringComparison.OrdinalIgnoreCase))
                 {
                     // Neither switch is spelled here, so what it kills is
-                    // decided somewhere this scan cannot read. Refused rather
-                    // than assumed, which is the direction an unreadable case
+                    // decided somewhere this scan cannot read. Refused, not
+                    // assumed, which is the direction an unreadable case
                     // has to fall in.
                     offences.Add(new Offence(KillCommand, "neither /IM nor /PID is spelled on this line, so what it selects cannot be read"));
                 }

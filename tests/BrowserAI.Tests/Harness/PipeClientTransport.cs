@@ -14,7 +14,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>It reuses <c>JsonLinesTransport</c> rather than reimplementing framing,
+/// <b>It reuses <c>JsonLinesTransport</c> instead of reimplementing framing,
 /// and the split is exactly where the process boundary is.</b> The product's
 /// client leg is a launcher, a job object, three pipes and a stderr pump
 /// (<see cref="ChildProcessSession"/>) wrapped around framing and serialisation

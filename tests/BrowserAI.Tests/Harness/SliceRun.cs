@@ -27,7 +27,7 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// process tree, which is both cheaper and stronger than five independent runs:
 /// the negotiated version, the tool list, the navigation result, the resolved
 /// browser binary and the sandbox flag are then known to be true <i>of the same
-/// launch</i>, rather than of five launches that might have differed.
+/// launch</i>, and not of five launches that might have differed.
 /// </remarks>
 /// <param name="InitializeResult">The <c>initialize</c> result the raw client received.</param>
 /// <param name="ToolNames">The names <c>tools/list</c> returned, in order.</param>
@@ -42,13 +42,13 @@ internal sealed record ObservedProcess(int ProcessId, long CreatedFileTime, stri
 /// </param>
 /// <param name="ScreenshotFile">
 /// The absolute path that screenshot is at, resolved from UPSTREAM's own
-/// pointer rather than reconstructed. ⚠️ <i>Corrected 2026-08-26 (previously
+/// pointer and not reconstructed. ⚠️ <i>Corrected 2026-08-26 (previously
 /// "the absolute path BrowserAI routed that screenshot to, read out of its own
 /// note").</i> Nothing routes and there is no note.
 /// </param>
 /// <param name="ScreenshotBytes">
 /// What is on disk at that path, captured <b>before</b> the scratch tree is
-/// removed, so a test can compare the answer against the file rather than
+/// removed, so a test can compare the answer against the file and not
 /// against itself.
 /// </param>
 /// <param name="Processes">Every member of the job at the moment the browser was up.</param>
@@ -186,7 +186,7 @@ internal sealed record SliceRun(
         // `if (!params.filename) await response.registerImageResult(...)` -- and
         // it is the case BrowserAI's routing swallowed for the life of the
         // feature, because the routing always supplied one. The answer is
-        // captured whole so the test can assert on the block rather than on a
+        // captured whole so the test can assert on the block and not on a
         // summary of it.
         var screenshot = await client.EnvelopeAsync("tools/call", new JsonObject
         {
@@ -196,7 +196,7 @@ internal sealed record SliceRun(
 
         var screenshotFile = ArtifactPathIn(screenshot, Path.Combine(session, SessionLayout.OutputFolderName));
 
-        // Read here rather than in the test: `scratch` is removed when this
+        // Read here and not in the test: `scratch` is removed when this
         // method returns, so a test that opened the path afterwards would be
         // asserting against a file that had been deleted.
         var screenshotBytes = screenshotFile.Length is not 0 && File.Exists(screenshotFile)
@@ -216,10 +216,10 @@ internal sealed record SliceRun(
             TestDefaults.ProcessHang).ConfigureAwait(false);
 
         // ⚠️ DRAINED, never `StandardErrorSoFar`, and this is read AFTER the
-        // waits above rather than before them. Everything that could hold the
+        // waits above and not before them. Everything that could hold the
         // write end of that pipe -- BrowserAI, and the node and browser processes
         // that inherited it -- is gone by this line, so end-of-file is guaranteed
-        // and waiting for it is an event rather than a duration.
+        // and waiting for it is an event and not a duration.
         //
         // Taking the snapshot instead is what put CI red on 2026-08-18: the
         // pump is a pool work item, the runner had four cores and 431 tests on
@@ -258,7 +258,7 @@ internal sealed record SliceRun(
     /// <c>&lt;session&gt;\output</c>.
     /// </para>
     /// <para>
-    /// <b>Read from the answer rather than rebuilt from the layout.</b> The
+    /// <b>Read from the answer and not rebuilt from the layout.</b> The
     /// generated name carries upstream's own timestamp, so a test that composed
     /// the path would be asserting its own arithmetic; and the claim under test
     /// is that the path the ANSWER names is the path the file is at, which
@@ -282,7 +282,7 @@ internal sealed record SliceRun(
 
         // `- [Screenshot of viewport](C:\...\output\page-<iso>.png)`. The target
         // is taken between the first `](` and the matching `)`, on any line that
-        // starts a Markdown link, and only when it names a file rather than a
+        // starts a Markdown link, and only when it names a file and not a
         // heading anchor -- upstream writes no other link shape into a tool
         // answer.
         //
@@ -291,7 +291,7 @@ internal sealed record SliceRun(
         // returns its second argument unchanged when that argument is rooted, so
         // the same two lines resolve both spellings. The SPELLING is asserted
         // where it is a claim -- `FileAccessRootTests` and
-        // `VerticalSliceTests` -- rather than here, where it is a parse.
+        // `VerticalSliceTests` -- and not here, where it is a parse.
         foreach (var line in text.Split('\n'))
         {
             var opened = line.IndexOf("](", StringComparison.Ordinal);
@@ -375,7 +375,7 @@ internal sealed record SliceRun(
 
 /// <summary>
 /// The repository's assembled payload, for the arms that drive a child directly
-/// rather than through the proxy.
+/// and not through the proxy.
 /// </summary>
 internal static class RepositoryPayload
 {

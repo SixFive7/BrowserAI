@@ -9,7 +9,7 @@ using Microsoft.Win32.SafeHandles;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// Who actually started a process, read from the kernel rather than inferred.
+/// Who actually started a process, read from the kernel and not inferred.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -22,7 +22,7 @@ namespace BrowserAI.Tests.Harness;
 /// place.
 /// </para>
 /// <para>
-/// <c>NtQueryInformationProcess</c> rather than WMI or a toolhelp walk:
+/// <c>NtQueryInformationProcess</c> and not WMI or a toolhelp walk:
 /// ~0.77 µs per call against ~3.3 ms for <c>Process.GetProcessById</c> and
 /// milliseconds for WMI, and it is what <c>dotnet/runtime</c> itself uses. It
 /// is undocumented-but-permanent in the sense that matters here -- the field
@@ -31,7 +31,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// Test-only surface, so it lives in the harness. The product needs a job
-/// object rather than a parent pid, and that arrives at step 6.
+/// object and not a parent pid, and that arrives at step 6.
 /// </para>
 /// </remarks>
 internal static partial class ParentProcess
@@ -63,7 +63,7 @@ internal static partial class ParentProcess
             out _);
 
         // NTSTATUS: anything below zero is a failure, and there is no
-        // GetLastError to consult. Reported rather than defaulted, because a
+        // GetLastError to consult. Reported, not defaulted, because a
         // parent-pid of zero would read as "no shell" and pass the very test
         // this exists to fail.
         return status < 0
@@ -93,7 +93,7 @@ internal static partial class ParentProcess
         }
     }
 
-    // The documented x64 layout, spelled with the real C types rather than a
+    // The documented x64 layout, spelled with the real C types and not a
     // row of nints: ExitStatus and BasePriority are 32-bit and the compiler
     // supplies the same padding the header does, so this is 48 bytes on x64 and
     // 24 on x86 -- both correct.

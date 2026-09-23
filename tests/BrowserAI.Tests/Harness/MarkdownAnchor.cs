@@ -12,7 +12,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Ported from a working implementation rather than derived</b>
+/// <b>Ported from a working implementation and not derived</b>
 /// (a <c>check-anchors.py</c> in the scratch directory, 2026-08-18; the artifact
 /// was not retained and the scratch directory is gone -- re-establish it by
 /// scanning the tree for fragment links and resolving each against the target
@@ -30,7 +30,7 @@ namespace BrowserAI.Tests.Harness;
 /// here are an em-dash and an arrow, both dropped.
 /// </para>
 /// <para>
-/// ⚠️ <b>It lives here, rather than inside the test class that reads it, because
+/// ⚠️ <b>It lives here, and not inside the test class that reads it, because
 /// a second consumer arrived on 2026-09-15.</b>
 /// <c>build/New-ReleaseNotes.ps1</c> computes the same anchor to point a release
 /// body at the changelog section it was generated from, and a link in a
@@ -67,7 +67,7 @@ internal static partial class MarkdownAnchor
 
         var slug = new StringBuilder(text.Length);
 
-        // Lower-cased one character at a time rather than by lower-casing the
+        // Lower-cased one character at a time and not by lower-casing the
         // whole string: CA1308 forbids the second at error severity, and the
         // classification below does not depend on case, so the two are the same
         // answer by a route the analyzer permits.
@@ -98,7 +98,7 @@ internal static partial class MarkdownAnchor
     /// that would otherwise be mistaken for a tag removed.
     /// </summary>
     /// <remarks>
-    /// They are removed rather than replaced by a space because GitHub drops
+    /// They are removed and not replaced by a space because GitHub drops
     /// them as characters -- a space would become a hyphen and the slug would be
     /// wrong in the other direction.
     /// </remarks>
@@ -133,7 +133,7 @@ internal static partial class MarkdownAnchor
     /// looked at.
     /// </summary>
     /// <remarks>
-    /// One character class rather than the ported alternation of backtick,
+    /// One character class and not the ported alternation of backtick,
     /// double star and single star: removing every asterisk is exactly what
     /// removing both star forms does, and it cannot be read as ordered.
     /// <b>An underscore is not in it</b> -- GitHub keeps underscores in a slug,

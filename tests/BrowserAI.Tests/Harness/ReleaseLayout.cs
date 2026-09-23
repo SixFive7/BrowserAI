@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// What a release looks like on disk, read out of the release script rather than
+/// What a release looks like on disk, read out of the release script and not
 /// spelled here.
 /// </summary>
 /// <remarks>
@@ -22,7 +22,7 @@ namespace BrowserAI.Tests.Harness;
 /// installer is exercised at all.
 /// </para>
 /// <para>
-/// <b>The feed manifest is read for the id rather than the installer being
+/// <b>The feed manifest is read for the id instead of the installer being
 /// trusted for it.</b> <c>Releases/</c> is gitignored and accumulates: a
 /// <c>BrowserAI.exe</c> left there by a build from before the current naming has
 /// exactly the name the current one has, and installing it would prove a
@@ -46,7 +46,7 @@ internal static partial class ReleaseLayout
     /// </summary>
     /// <remarks>
     /// <b>The same lever <c>BROWSERAI_RELEASE_PACKAGE</c> is, one level up.</b>
-    /// It names a <i>directory</i> rather than a file, because the capability is
+    /// It names a <i>directory</i> and not a file, because the capability is
     /// two files that have to agree -- the installer and the feed manifest packed
     /// beside it -- and a variable naming only the installer would be a way of
     /// pointing the arm at last month's layout by hand. It exists so that a pack
@@ -173,7 +173,7 @@ internal static partial class ReleaseLayout
     /// Where the second pack lands, which nothing that publishes ever looks at.
     /// </summary>
     /// <remarks>
-    /// A directory of its own rather than a second file beside the first, so
+    /// A directory of its own and not a second file beside the first, so
     /// that a glob over the feed directory for the artifacts to upload cannot
     /// pick one up.
     /// </remarks>
@@ -186,7 +186,7 @@ internal static partial class ReleaseLayout
     public static string TestFeedManifest { get; } = Path.Combine(TestDirectory, $"releases.{Channel}.json");
 
     /// <summary>The full package of each pack, or <see langword="null"/> when one is absent.</summary>
-    /// <param name="test">Whether to look for the test pack rather than the shipping one.</param>
+    /// <param name="test">Whether to look for the test pack and not the shipping one.</param>
     /// <returns>The newest matching <c>.nupkg</c>, or <see langword="null"/>.</returns>
     public static FileInfo? FullPackage(bool test)
     {
@@ -278,7 +278,8 @@ internal static partial class ReleaseLayout
     /// <see langword="null"/> when there is none.
     /// </summary>
     /// <remarks>
-    /// <b>The empty string is a key with no location rather than no key</b>, and
+    /// <b>The empty string means a key with no location, and not that there is
+    /// no key</b>, and
     /// the two are different: the second is a clean machine and the first is an
     /// entry Windows will show in Settings with nothing behind it.
     /// </remarks>
@@ -296,7 +297,7 @@ internal static partial class ReleaseLayout
     /// </summary>
     /// <remarks>
     /// <see langword="false"/> is <i>this machine has no installer of this
-    /// layout</i> rather than <i>something is broken</i> -- a developer who has
+    /// layout</i> and not <i>something is broken</i> -- a developer who has
     /// never run the release script and one whose <c>Releases/</c> holds a build
     /// from before the rename are the same absence to every caller, and both
     /// are answered by running the script.

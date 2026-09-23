@@ -61,7 +61,7 @@ internal sealed record ForegroundLockReading(TimeSpan? Timeout, int Error);
 /// way: a change that reintroduced focus stealing would be <i>refused by
 /// Windows</i> on this machine and would work on a default install, so it
 /// passes on the only machine that runs the suite and fails on a user's screen.
-/// The local answer is <i>clean</i> rather than <i>unknown</i>, which is the
+/// The local answer is <i>clean</i> and not <i>unknown</i>, which is the
 /// dangerous half.
 /// </para>
 /// <para>
@@ -84,7 +84,7 @@ internal sealed record ForegroundLockReading(TimeSpan? Timeout, int Error);
 /// <c>SystemParametersInfoW</c> read and a sentence.
 /// </para>
 /// <para>
-/// <b>A row in the coverage block rather than a
+/// <b>A row in the coverage block and not a
 /// <see cref="SuiteCapability"/>, and the distinction is the same one
 /// <see cref="FirstRunCache"/> draws.</b> Every capability is something a run
 /// can go and produce -- publish the slice, assemble the payload, provision a
@@ -118,7 +118,7 @@ internal static partial class ForegroundLock
     /// </summary>
     /// <remarks>
     /// Read once for <see cref="SuiteEnvironment.IsReleaseRun"/>'s reason: the
-    /// whole run must report one answer rather than whatever the setting said at
+    /// whole run must report one answer and not whatever the setting said at
     /// the moment each caller asked.
     /// </remarks>
     public static ForegroundLockReading Reading => Once.Value;
@@ -129,7 +129,7 @@ internal static partial class ForegroundLock
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Derived rather than written, because the question this type answers is
+    /// <b>Derived and not written, because the question this type answers is
     /// a comparison against it.</b> The lock expires that many milliseconds
     /// after the last user input, so <i>can this machine discriminate?</i>
     /// reduces to <i>can the lock expire inside the time an experiment here is
@@ -140,7 +140,7 @@ internal static partial class ForegroundLock
     /// ⚠️ <b>This is a classification threshold and not an assertion over a
     /// measured duration.</b> Nothing here starts a stopwatch, and the house
     /// rule that forbids a number written at an assertion is satisfied the way
-    /// it asks to be -- by deriving from <c>TestDefaults</c> rather than by
+    /// it asks to be -- by deriving from <c>TestDefaults</c> and not by
     /// choosing a figure that reads plausible.
     /// </para>
     /// </remarks>

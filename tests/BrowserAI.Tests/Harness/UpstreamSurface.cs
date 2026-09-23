@@ -7,7 +7,7 @@ namespace BrowserAI.Tests.Harness;
 
 /// <summary>
 /// The tool names a child exposes for a given capability set, computed from the
-/// committed <c>tools-list.json</c> snapshot rather than typed anywhere.
+/// committed <c>tools-list.json</c> snapshot and not typed anywhere.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -107,7 +107,7 @@ internal static class UpstreamSurface
     /// tool.
     /// </summary>
     /// <remarks>
-    /// <b>Derived from <c>toolsByCapability</c> rather than from
+    /// <b>Derived from <c>toolsByCapability</c> and not from
     /// <c>declaredCapabilities</c>, and the two differ.</b> Upstream declares
     /// <c>core-install</c>, which carries no tool at all -- the snapshot records
     /// it under <c>capabilitiesCarryingNoTool</c> -- so a check that every
@@ -169,7 +169,7 @@ internal static class UpstreamSurface
     {
         using var snapshot = Snapshot();
 
-        // Minified through the node API rather than by stripping characters out
+        // Minified through the node API and not by stripping characters out
         // of the raw text: the snapshot is pretty-printed, and the double it is
         // compared against is a compact literal.
         return System.Text.Json.Nodes.JsonNode.Parse(
@@ -190,7 +190,7 @@ internal static class UpstreamSurface
 
     /// <summary>
     /// The snapshot's whole tool array as a <c>tools/list</c> result, for a
-    /// double that has to answer with the real surface rather than with two
+    /// double that has to answer with the real surface and not with two
     /// invented tools.
     /// </summary>
     /// <remarks>
@@ -202,14 +202,14 @@ internal static class UpstreamSurface
     /// </remarks>
     /// <returns>The literal JSON a fake child can answer <c>tools/list</c> with.</returns>
     /// <remarks>
-    /// ⚠️ <b>Minified, and that is a framing requirement rather than a
+    /// ⚠️ <b>Minified, and that is a framing requirement and not a
     /// preference.</b> The snapshot on disk is pretty-printed, so
     /// <c>GetRawText()</c> hands back a string full of newlines -- and the
     /// double's transport is <b>newline-delimited</b>, so answering with it
     /// splits one result into three hundred unparseable frames, the caller waits
-    /// out its five-minute hang detector, and the failure names the pipe rather
-    /// than the payload. Measured 2026-08-18, on the first test that answered
-    /// <c>tools/list</c> with this over the wire rather than passing it to
+    /// out its five-minute hang detector, and the failure names the pipe and
+    /// not the payload. Measured 2026-08-18, on the first test that answered
+    /// <c>tools/list</c> with this over the wire instead of passing it to
     /// <c>SessionToolSurface.Rewrite</c> in process. Minified through the node
     /// API for the same reason <see cref="ServerCapabilities"/> is: stripping
     /// whitespace by hand would corrupt any string that contains a newline.

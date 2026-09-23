@@ -27,7 +27,7 @@ namespace BrowserAI.Tests.Harness;
 /// rule costs nothing here.
 /// </para>
 /// <para>
-/// <c>ProcessCommandLineInformation</c> rather than a PEB walk:
+/// <c>ProcessCommandLineInformation</c> and not a PEB walk:
 /// <c>NtQueryInformationProcess</c> has answered class 60 with a
 /// <c>UNICODE_STRING</c> since Windows 8.1, it needs only
 /// <c>PROCESS_QUERY_LIMITED_INFORMATION</c>, and it involves no
