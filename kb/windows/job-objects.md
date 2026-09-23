@@ -273,8 +273,8 @@ nothing this repository can produce. It follows from the first half instead of
 from a survey, which is a plausible inference and not a measurement. **It is
 load-bearing** -- it is the "nobody else has solved this" half of the
 build-versus-adopt decision that chose C# for the whole product
-([DECISIONS](../../DECISIONS.md)) -- so it is left standing and labelled rather
-than deleted. To settle it, name the supervisors actually examined and record
+([DECISIONS](../../DECISIONS.md)) -- so it is left standing and labelled instead
+of deleted. To settle it, name the supervisors actually examined and record
 what each one does. `[UNVERIFIED]`
 
 **No credible NuGet job-object wrapper exists** -- the candidates have <6K

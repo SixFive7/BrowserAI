@@ -49,7 +49,7 @@ through the proxy, `handle` injected into every schema, `browser_navigate` to a
 `data:` URL returning a non-error result, recorded node PID gone after dispose.
 `IsReflectionEnabledByDefault=false` confirmed at runtime. Even
 `CallToolAsync(name, Dictionary<string,object?>)` worked. One AOT trap, in *our*
-code rather than the SDK: `JsonArray.Add(x)` binds to the generic overload, which
+code and not the SDK: `JsonArray.Add(x)` binds to the generic overload, which
 is `RequiresDynamicCode` + `RequiresUnreferencedCode`; casting to the `JsonNode`
 overload clears both.
 
@@ -86,7 +86,7 @@ across repeated calls.
 charter omitted: the drop **is** logged at `Warning` (`Tool '{ToolName}' excluded
 from tools/list: {Reason}`), visible only if an `ILoggerFactory` is supplied, and
 the `ToolRejected` hook is `internal` with no public event. `AddKnownTools`
-**throws** on the same input rather than dropping.
+**throws** on the same input instead of dropping it.
 
 **`cmd.exe` wrapping is worse than "an extra process".** Verified via a node
 probe reporting `process.ppid`. Two argument-fidelity failures beyond the shell
@@ -133,8 +133,8 @@ filter. The `IncomingFilters` short-circuit needs no such surgery.
 
 **An unanswered `server/discover` costs the full `DiscoverProbeTimeout` per
 connect** -- 30 s per rig against a fake child until it returned `-32601`. Real
-`@playwright/mcp` 0.0.79 handles it, so this bites our own test doubles rather
-than production.
+`@playwright/mcp` 0.0.79 handles it, so this bites our own test doubles, not
+production.
 
 **Not tested, not claimed:** HTTP transports, resumption, pagination cursors on
 the real child, `structuredContent` on a real tool, stderr back-pressure under
@@ -195,11 +195,11 @@ half is reproducible against any project.
 
 Two further traps visible in the same project. Its csproj carries
 `<NoWarn>$(NoWarn);IL2104;IL3050;IL3053;IL3000</NoWarn>` with a comment
-justifying it, so "clean" there is partly suppression rather than
+justifying it, so "clean" there is partly suppression and not
 soundness -- and it matters before treating another project's zero-warning claim as
 comparable to ours. And the published artifacts on disk carry an mtime of
-**2026-08-14**, so the byte counts above are a re-reading of that publish rather
-than a fresh one; the sizes and the ILC message are what was verified today, not
+**2026-08-14**, so the byte counts above are a re-reading of that publish and not
+a fresh one; the sizes and the ILC message are what was verified today, not
 the wall-clock of the run. Re-establish by publishing and **grepping the build
 output for `will always throw`**, never by reading the exit code. `[FLOATS]` for
 ILC's behaviour; `[MACHINE]` for the sizes and timings.
@@ -210,7 +210,7 @@ shipping in-house application's own AOT notes, written 2026-07-07: *"Full ILC `P
 blocked by the environment, not the code... requires the MSVC native toolchain
 (link.exe, discovered via vswhere), which this development machine does not have
 installed."* That project shipped self-contained-single-file instead. The mechanism
-is confirmed here rather than merely quoted, and **that half anyone can
+is confirmed here, not merely quoted, and **that half anyone can
 reproduce**: after any `PublishAot` build,
 `obj\Release\<tfm>\<rid>\native\link.rsp` is an MSVC linker response file whose
 `/LIBPATH` entries point under
@@ -240,11 +240,11 @@ appears to "revert" -- with no error raised at any point. The fix is
 `UseStringEnumConverter = true` on the context's `[JsonSourceGenerationOptions]`.
 Shipped bug, read 2026-08-16 in an in-house Velopack deployment's own troubleshooting notes
 (*Enum Serialization as Integers -- Fixed in 1.0.3*): `settings.json` held
-`"Channel": 0` rather than `"Channel": "Stable"`, and it was filed --
+`"Channel": 0` instead of `"Channel": "Stable"`, and it was filed --
 under the symptom *"`Channel` resets to `Stable` after restart"*, i.e. reported as
 a settings bug for as long as it took to find the serializer. **Relevant here
 because a source-generated context is mandatory under AOT**, so this is the
-default path rather than an unusual one. `[STABLE]`
+default path, not an unusual one. `[STABLE]`
 
 **The SDK's test fixtures are 1,082 lines** (`ClientServerTestBase` +
 `tests/Common/Utils/*`), Apache-2.0, **unpublished to NuGet**, and they wire a
@@ -274,7 +274,7 @@ code.
 `RuntimeInformation.IsOSPlatform(OSPlatform.Windows)` and
 `Path.GetFileName(command)` is not `cmd.exe`, to `cmd.exe` with
 `["/c", command, ..arguments]`. There is no option, no environment variable and
-no subclass hook. **Now checked rather than remembered:**
+no subclass hook. **Now checked, not remembered:**
 `SdkStdioClientTransportTests.TheSdkTransportStillPutsCmdExeBetweenUsAndTheChild`
 starts a child through the SDK's transport and asserts, via
 `NtQueryInformationProcess`, that the child's parent image is `cmd`.
@@ -312,7 +312,7 @@ own `ILogger` and takes the `ILoggerFactory` twice. This one cannot fail
 silently, which is why it has no re-verification row: a change makes the build
 red or makes a field redundant. That is
 [the stated exemption](../re-verification.md#a-floats-entry-with-no-row-the-one-rule),
-claimed here in place rather than left as a gap. `[FLOATS]`
+claimed here in place and not left as a gap. `[FLOATS]`
 
 **A `RequestContext<T>.Params` is nullable and the tool handlers are two
 delegates.** `McpServerOptions.Handlers` is an `McpServerHandlers` with
@@ -340,8 +340,8 @@ transports and a `[LibraryImport]` job-object launcher -- and driving a real
 The interesting number is that nothing of ours was needed to make AOT work, and
 the interesting trap is one that fails an ordinary build as well as a publish.
 
-**NativeAOT is clean with all of it in one binary, and the number is ours rather
-than a spike's.** `dotnet publish -c Release -r win-x64 --self-contained`:
+**NativeAOT is clean with all of it in one binary, and the number is ours, not
+a spike's.** `dotnet publish -c Release -r win-x64 --self-contained`:
 **zero trim/AOT warnings, no `will always throw` in the output, exit 0,
 10,399,744 bytes (9.92 MiB)**. That is with `ModelContextProtocol` 2.2.0, both
 custom transports, `JobObject`/`JobLauncher`, the rolling file sink and the
@@ -358,7 +358,7 @@ then `Add(someInt)`, which binds to `Add<T>(T)` -- and the result is **two**
 errors at the same call site, `IL2026` (`RequiresUnreferencedCode`) and `IL3050`
 (`RequiresDynamicCode`), on `dotnet build` at the analyzer stage and again on
 `dotnet publish`. The spike recorded it as a publish-time trap; because
-`EnableAotAnalyzer` and `EnableTrimAnalyzer` are set unconditionally rather than
+`EnableAotAnalyzer` and `EnableTrimAnalyzer` are set unconditionally and not
 under a publish-only condition, an everyday build catches it too. The cast to
 `(JsonNode)` clears both. Reverted. `[FLOATS]`
 
@@ -395,7 +395,7 @@ exception` -- so it exists only if an `ILoggerFactory` was supplied.
 > success envelope, every transport-level signal green, and the single bit that
 > says *broken* buried in the body. It is the reason
 > lossless passthrough was built as a piece of work
-> in its own right rather than as a detail of the vertical slice. It also **qualifies the 2026-08-15 spike's
+> in its own right and not as a detail of the vertical slice. It also **qualifies the 2026-08-15 spike's
 > note** that *"a child dying mid-call surfaces as `-32603`, an error rather than
 > a hang"* -- that describes what the **client** throws; what the **caller of the
 > proxy** receives, once the exception has passed through a typed
@@ -435,13 +435,13 @@ and read the property off a fresh instance; do not read it out of the source,
 which is a different question. `[FLOATS]`
 
 **`McpClientOptions.DiscoverProbeTimeout` is 5 seconds at 2.2.0, and the pin is
-what skips the probe -- measured from both sides rather than read.** With
+what skips the probe -- measured from both sides, not read.** With
 `ProtocolVersion` pinned to `2025-11-25`, a double that records every method it
 is asked for sees **no `server/discover` at all**. With `ProtocolVersion` left
 null, the same double sees the probe. And against a double that *drops* the
 method, the connect costs the whole timeout and reports nothing -- the
 30-seconds-per-rig failure of the 2026-08-15 spike, reproduced in 250 ms because
-`TestDefaults` pins the timeout short rather than long. Upstream's own fixtures
+`TestDefaults` pins the timeout short, not long. Upstream's own fixtures
 pin it *longer*, citing
 [csharp-sdk#1701](https://github.com/modelcontextprotocol/csharp-sdk/issues/1701);
 that is the right direction against a real peer over CI latency and the wrong one
@@ -467,7 +467,7 @@ token it was started with, completion because EOF is what it returns on -- and
 **only completing both writers closes the hop.** The consequence the note
 describes is real; the mechanism it implies is not. Re-establish by commenting
 out step 1 or step 2 of `McpTestHarness.DisposeAsync` and running the suite: the
-rig's own liveness assertion turns ten tests red rather than hanging, because the
+rig's own liveness assertion turns ten tests red instead of hanging, because the
 wait on the server task is bounded and the check is read **before** anything is
 disposed. `[FLOATS]`
 
@@ -484,7 +484,7 @@ disposed. `[FLOATS]`
 requests that are pending AT THAT MOMENT and nothing afterwards.** Read from
 `ModelContextProtocol.Core` **2.2.0**'s own IL (`ilspycmd -t
 ModelContextProtocol.McpSessionHandler`, the shipped `lib/net10.0` assembly),
-2026-09-17, which is what makes this an answer rather than an inference from
+2026-09-17, which is what makes this an answer, not an inference from
 behaviour. `[FLOATS]`
 
 The three pieces, each named so a re-read can find them:
@@ -525,13 +525,13 @@ section above and asserted by
 eternal.** `JsonLinesTransport.SendMessageAsync` drops a frame on a disconnected
 transport -- deliberately, because an exception storm during teardown buries
 the reason a session ended -- and logs it at `Warning`. That line goes to the
-**session's** log rather than the machine-wide one, which is why the 2026-09-17
+**session's** log and not the machine-wide one, which is why the 2026-09-17
 process-log window across the hang carries no warning at all and reads as though
 nothing was attempted. The cut is complete; the line was somewhere else.
 
 **What BrowserAI does about it:** `BrowserProxy` asks
 `ChildConnection.ChildHasGone` at the door and refuses the call with
-`SessionErrors.BrowserServerHasGone` rather than forwarding it, and
+`SessionErrors.BrowserServerHasGone` instead of forwarding it, and
 `browserai_resume` relaunches the child. **No timeout was added and none would
 help** -- the wait is not slow, it is never-ending, and a number chosen for it
 would be a promptness assertion on a browser.
@@ -567,7 +567,7 @@ had already recorded the `tools/call` -- and the callback logged nothing at all,
 on either of its two paths.
 
 **Announcing from the `catch (OperationCanceledException)` works and is better on
-every axis**: awaited rather than fire-and-forget, incapable of firing before the
+every axis**: awaited instead of fire-and-forget, incapable of firing before the
 request it names has been sent, and reached by the one path that definitely
 executes. **The first half of the remedy is unchanged and load-bearing** -- the id
 must be one we chose, or there is nothing to name in the notification.
@@ -610,7 +610,7 @@ with logging at `Trace` and reading the order of the two `sending message` lines
 
 **And the child this proxy actually carries emits no progress notifications at
 all, so nothing today can observe that reordering.** Measured 2026-08-19 by
-reading the shipped bundle rather than by inference: across the whole payload
+reading the shipped bundle, not by inference: across the whole payload
 tree, `notifications/progress` appears **four times and all four are the MCP
 SDK's own** -- the `RequestMetaSchema` doc comment, `ProgressNotificationSchema`,
 and two `assertNotificationCapability`/`assertRequestHandlerCapability` switch
@@ -620,8 +620,8 @@ handed *to* a tool handler in the request extra, and nothing in
 `coreBundle.js` calls it. Every `progressToken` use is the SDK's **client-side**
 plumbing -- `_onprogress`, `_taskProgressTokens` -- which is the direction a proxy
 does not travel. **Positive control:** the same search finds `sendNotification`
-and `tools/list` in that file, so a zero for the call site is an absence rather
-than a failed search. `@playwright/mcp` 0.0.79, `playwright-core`
+and `tools/list` in that file, so a zero for the call site is an absence, not
+a failed search. `@playwright/mcp` 0.0.79, `playwright-core`
 1.63.0-alpha-2026-08-05. **What this settles:** the ordering defect above is real
 in the SDK and unreachable through this product's own child, so the
 `IClientTransport` decorator that would fix it would be a component built for a
@@ -631,7 +631,7 @@ golden snapshot can see. Re-establish by searching the resolved payload for
 `notifications/progress` and for `sendNotification` call sites.
 
 **A child's JSON-RPC error and its `data` both survive, and the prefix can be
-avoided rather than stripped.** Re-confirming [the step-8
+avoided, not stripped.** Re-confirming [the step-8
 measurement](#error-shape-and-teardown-seen-from-an-in-process-harness) from the other
 side: `McpProtocolException.Message` is
 `Request failed (remote): <the child's message>`, `ErrorCode` is the child's, and
@@ -650,7 +650,7 @@ proxy's own per-message state; `Context` is a public settable
 `JsonRpcMessageContext?` whose `Items` bag is documented as flowing through the
 filter pipeline. BrowserAI uses neither, keeping its verbatim payloads in a
 `ConditionalWeakTable` keyed on the message -- no SDK state written, and a
-response that is never sent takes its payload with it rather than pinning a
+response that is never sent takes its payload with it instead of pinning a
 megabyte of screenshot. Like
 [the `TransportBase.Logger` entry](#writing-replacement-transports-against-the-public-surface),
 this one has **no re-verification row on purpose**: a change here makes the build

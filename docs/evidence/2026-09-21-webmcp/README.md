@@ -34,8 +34,8 @@ the diff between them the measurement.
 The page is the same in all three runs and is in the rig, not here: two
 tools whose descriptions are deliberately unmistakable strings
 (`PAGE-AUTHORED-DESCRIPTION-ALPHA`, `PAGE-AUTHORED-PARAM-DESCRIPTION`), so a
-reader can see at a glance whether page-authored text reached a model rather
-than having to trust a summary of it.
+reader can see at a glance whether page-authored text reached a model instead
+of having to trust a summary of it.
 
 `through-browserai.log` ends with a real `browserai_destroy`, so the session it
 created is gone and the paths in it name a directory under `.work/` that no

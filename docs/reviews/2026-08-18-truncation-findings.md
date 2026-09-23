@@ -103,8 +103,8 @@ description was 60 characters. Arrived whole, all five markers.
 markers including `MK-PARAMHUGE-END-9F21` at character 20,000.
 
 **Parameter descriptions are not capped at any value this experiment could
-reach.** The documentation's silence about them turns out to be accurate rather
-than an omission.
+reach.** The documentation's silence about them turns out to be accurate, not
+an omission.
 
 ### 3. Bytes or characters? -- **UTF-16 CHARACTERS. Bytes are never counted**
 

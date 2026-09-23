@@ -19,8 +19,8 @@ Two runs per family; the 2026-09-16 pair came back byte-identical for both.
 `browsers.json` so that no revision is ever typed. ⚠️ **Chromium does not
 resolve the way the other three do** -- `playwright-core` builds its URL with
 `cftUrl()`, which is `builds/cft/<browserVersion>/win64/chrome-win64.zip` keyed
-on the browser version, off the bare `https://cdn.playwright.dev` mirror rather
-than the `/dbazure/download/playwright` one. The wire figures are the
+on the browser version, off the bare `https://cdn.playwright.dev` mirror and not
+the `/dbazure/download/playwright` one. The wire figures are the
 `content-length` of a `HEAD` on those URLs, and the URLs were confirmed against
 the string upstream's own installer prints, not trusted as derived.
 

@@ -5,7 +5,7 @@
 
 **Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05, read from the resolved bundle · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · Firefox 153.0 (`firefox-1539`) · Windows 11 Pro 26200.
 
-⚠️ **That line is the baseline the OLDEST entries here were taken at, and it is left standing as one -- *added by addition 2026-09-21, the fourth roll since*.** What the tree resolves today, read from [the payload lock](../../build/payload/package-lock.json) and [the committed `browsers.json` snapshot](../../upstream-snapshots/browsers.json) rather than from memory: `@playwright/mcp` **0.0.82** · `playwright-core` **1.64.0-alpha-1789764292000** (epoch milliseconds rather than a date, and nothing here parses it as one) · Chrome for Testing **154.0.8037.0** (`chromium-1246`) · Firefox **156.0** (`firefox-1549`). **Every dated entry below states the versions it was taken at**, which is what makes this a baseline rather than a claim about any of them; an entry with no versions of its own was taken at the line above.
+⚠️ **That line is the baseline the OLDEST entries here were taken at, and it is left standing as one -- *added by addition 2026-09-21, the fourth roll since*.** What the tree resolves today, read from [the payload lock](../../build/payload/package-lock.json) and [the committed `browsers.json` snapshot](../../upstream-snapshots/browsers.json), not from memory: `@playwright/mcp` **0.0.82** · `playwright-core` **1.64.0-alpha-1789764292000** (epoch milliseconds and not a date, and nothing here parses it as one) · Chrome for Testing **154.0.8037.0** (`chromium-1246`) · Firefox **156.0** (`firefox-1549`). **Every dated entry below states the versions it was taken at**, which is what makes this a baseline, not a claim about any of them; an entry with no versions of its own was taken at the line above.
 Measured on [the reference machine](../README.md#the-reference-machine).
 
 All `[FLOATS]`, all read from the shipped
@@ -20,7 +20,7 @@ browser exits -- so a config that names it for both families does not degrade a
 Firefox session, it makes **every** Firefox session unusable, on the first
 browser call. Chromium takes it and grants it. It is the second key after
 `channel` whose correct value is *absent for one family*, and the first whose
-wrong value is a hard failure rather than an opinion that never arrives.
+wrong value is a hard failure, not an opinion that never arrives.
 
 > `Measured 2026-08-20 @ @playwright/mcp 0.0.79 / playwright-core
 > 1.63.0-alpha-2026-08-05, firefox-1539.` Found by writing the key for both
@@ -54,7 +54,7 @@ now agree, and the default posture on this path is sandboxed.
 
 > `Verified 2026-08-16 @ @playwright/mcp 0.0.79 / playwright-core
 > 1.63.0-alpha-2026-08-05.` Re-measured three ways from the resolved browser
-> command line of a live Chromium rather than from the config: **nothing set →
+> command line of a live Chromium, not from the config: **nothing set →
 > `--no-sandbox` present** (6 processes carried it); **`chromiumSandbox: true` in
 > the config file, no flag → still present** (6 processes); **`--sandbox` on the
 > command line → absent from the browser and from every one of its children** (0
@@ -62,10 +62,10 @@ now agree, and the default posture on this path is sandboxed.
 > runs the first-and-third case through the product and the second directly
 > against the child.
 >
-> **And the mechanism is now measured rather than inferred**, which is what
+> **And the mechanism is now measured, not inferred**, which is what
 > explains the contradiction. Upstream declares **both** `--sandbox` and
-> `--no-sandbox`, and commander gives `sandbox` a default of **`false`** rather
-> than leaving it undefined -- read back twice from the shipped bundle by parsing
+> `--no-sandbox`, and commander gives `sandbox` a default of **`false`** instead
+> of leaving it undefined -- read back twice from the shipped bundle by parsing
 > an empty argv through `tools.decorateMCPCommand`, `opts.sandbox === false`
 > while `opts.headless === undefined`. `configFromCLIOptions` then sets
 > `launchOptions.chromiumSandbox` whenever `cliOptions.sandbox !== undefined`,
@@ -78,7 +78,7 @@ now agree, and the default posture on this path is sandboxed.
 > ⚠️ **Fixed upstream 2026-08-17, and IN the version this build resolves since
 > 2026-09-14.** *Corrected 2026-09-14 (previously "and not yet in a version this
 > build resolves"), and the paragraph below it that began "**Everything measured
-> above still describes the shipped tree**" is now historical rather than
+> above still describes the shipped tree**" is now historical, not
 > current -- it is kept because it is what made the arrival recognisable.*
 > `@playwright/mcp` 0.0.80 pins `playwright-core` 1.63.0-alpha-2026-08-31, and
 > the normaliser is **gone from the shipped bundle**: diffing
@@ -87,7 +87,7 @@ now agree, and the default posture on this path is sandboxed.
 > removal inside `decorateMCPCommand`'s action, and everything downstream of it
 > -- `configFromCLIOptions`, `validateBrowserConfig`'s non-Linux branch and the
 > launcher's `if (options.chromiumSandbox !== true) chromeArguments.push("--no-sandbox")`
-> -- is byte-identical. **The outcome was then measured rather than deduced from
+> -- is byte-identical. **The outcome was then measured, not deduced from
 > that**, which matters because the commander semantics in between are exactly
 > the part nobody should reason about: see the corrected headline above.
 > [microsoft/playwright#42288](https://github.com/microsoft/playwright/pull/42288)
@@ -100,14 +100,14 @@ now agree, and the default posture on this path is sandboxed.
 > 1.63.0-alpha-2026-08-05, and both predate the merge -- re-resolved and confirmed
 > unmoved on 2026-08-19.
 >
-> **What changes when it arrives, and it is a mechanism change rather than an
+> **What changes when it arrives, and it is a mechanism change and not an
 > outcome change on Windows.** `--sandbox` used to work by mapping to
 > `undefined` and falling through to `validateBrowserConfig`'s non-Linux
 > `chromiumSandbox = true`; after the fix commander leaves the flag `undefined`
 > when it is absent and `true` when it is passed, so `configFromCLIOptions` sets
 > the key **explicitly**. BrowserAI passes `--sandbox` on the command line and is
 > therefore sandboxed on both sides of the change -- which is why this is a
-> re-verification row rather than a defect. The half that does invert is the
+> re-verification row, not a defect. The half that does invert is the
 > config-file key, which starts working; nothing in this product sets it.
 >
 > ⚠️ **"Sandboxed" here does not include the network service, and that is a
@@ -168,7 +168,7 @@ comparison; one that comes back empty both ways means the blocks were not found.
 diagnostic.** Recorded 2026-08-19 at the same versions. Upstream parses it with
 `commaSeparatedList`, whose whole body is
 `value.split(",").map(v => v.trim())` -- no enum, no membership check, nothing.
-The neighbouring options show that this is an omission rather than a style:
+The neighbouring options show that this is an omission and not a style:
 `--codegen`, `--console-level` and `--image-responses` are all declared with
 `enumParser.bind(null, "<flag>", [ ... ])` and reject an unknown value loudly.
 
@@ -182,7 +182,7 @@ string and the accepted set are maintained separately and have drifted.
 
 **BrowserAI does not pass `--caps` at all** and
 `ChildLaunch` says why in place: the flag *replaces* the config file's capability
-list rather than merging with it, so passing it would silently wipe what the
+list instead of merging with it, so passing it would silently wipe what the
 generator just wrote. The value of this entry is the pair of directions it fails
 in -- an unknown capability is accepted and does nothing, and a real one is
 undocumented -- so neither the help nor a green exit code is evidence about what a
@@ -240,7 +240,7 @@ The network service's own command line carries `--service-sandbox-type=none`.
 ⚠️ **The token fields above are the capture verbatim; the role column is the
 measuring pass's own assignment** -- the capture recorded pids and token fields
 and no product-side process tree survived it, so the roles are re-derivable only
-by re-running the procedure below, and are stated as the pass's rather than as
+by re-running the procedure below, and are stated as the pass's, not as
 the artefact's.
 
 **The positive control, which is what makes the zeros mean something.** Stock
@@ -266,7 +266,7 @@ launcher started and never by image name:
 | stock Chrome, plain | absent | `sbx=none`, Medium -- **the same outcome by default** |
 | stock Chrome `+` both switches | absent | `sbx=network`, **AppContainer** |
 
-⚠️ **The fourth arm corrects an inference rather than confirming it.** Before it
+⚠️ **The fourth arm corrects an inference instead of confirming it.** Before it
 was run, the absence of any sandbox complaint on the product path was explained
 by `playwright-core` routing the browser's stderr into its own
 `RecentLogsCollector` -- a reason that was established and an observation that was
@@ -293,7 +293,7 @@ or was terminated, restarting service.
 The restart is Chromium's own
 `kRestartNetworkServiceUnsandboxedForFailedLaunch`, and the session then runs
 with an unsandboxed network service for its whole life, with full functional
-recovery and nothing persisted. **Counted rather than assumed: the restart line
+recovery and nothing persisted. **Counted, not assumed: the restart line
 appears once in the plain arm and twice in the forced arm** -- a failed launch
 that is retried before it is given up on, which is not what "restarting service"
 on its own suggests.
@@ -309,7 +309,7 @@ matches verbatim. **BrowserAI writes no ACL anywhere**, so this is a property of
 where a per-user install puts a browser and not of anything this product does to
 it.
 
-**Nothing was changed and both halves are watched rather than fixed** -- see
+**Nothing was changed and both halves are watched, not fixed** -- see
 [the hazard row](../../HAZARDS.md#hazard-index) and
 [the watch item](../../TODO.md#upstream-asks). Granting the two ACEs today would
 change nothing observable, and a regression test for it would assert against a
@@ -346,7 +346,7 @@ binary even headless.
 > `isChromiumAlias` and by `resolveBrowsers`. It is also what upstream's own
 > `--browser chromium` resolves to -- `resolveBrowserParam` returns
 > `{ browserName: "chromium", channel: "chrome-for-testing" }` -- so the channel
-> BrowserAI generates is upstream's own spelling rather than a synonym.
+> BrowserAI generates is upstream's own spelling, not a synonym.
 > Re-establish by grepping the bundle for `chromiumAliases`; a second alias would
 > not break anything, but the *first* one being renamed would break every launch.
 > `[FLOATS]`
@@ -462,7 +462,7 @@ directory"*.
 > snapshots (no trace key in either). This matters because
 > [the session modes](../../ARCHITECTURE.md#sessions) make
 > `tracing` a boolean modifier on every session mode, and it therefore maps to
-> `saveSession` rather than to a trace. Re-establish with the same grep at each
+> `saveSession` and not to a trace. Re-establish with the same grep at each
 > bump; a restored trace option is a reason to revisit the mapping. `[FLOATS]`
 
 **`browser_get_config` answers Markdown with JSON inside it, not JSON.** The tool
@@ -495,7 +495,7 @@ host, so all five attempts hit the same dead server.
 2026-08-16 out of the resolved bundle, applied as
 `+(getFromENV("PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT") || "0") || NET_DEFAULT_TIMEOUT`
 and passed down to `request.setTimeout`. **BrowserAI sets nothing**, so the
-figure stays upstream's rather than being duplicated into a constant of ours that
+figure stays upstream's instead of being duplicated into a constant of ours that
 would drift the day theirs moved; the variable is absent from the installer's
 environment by construction, because
 `src/BrowserAI/Protocol/ChildEnvironment.cs` is an allowlist. The three caps
@@ -505,7 +505,7 @@ loop's business and not ours. Re-establish by grepping `NET_DEFAULT_TIMEOUT` in
 `coreBundle.js`. `[FLOATS]`
 
 **The four download-host variants, named.** Measured 2026-08-16 from the
-resolved payload rather than from memory --
+resolved payload, not from memory --
 `grep -o "PLAYWRIGHT_[A-Z_]*DOWNLOAD_HOST"
 payload/mcp/node_modules/playwright-core/lib/coreBundle.js | sort -u` returns
 exactly `PLAYWRIGHT_DOWNLOAD_HOST`, `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`,
@@ -553,7 +553,7 @@ anything -- which is why the round trip is cheap on a provisioned machine -- but
 the binary has to be there. **This contradicts
 [The provisioning design](../../ARCHITECTURE.md#the-runtime-it-ships)'s claim that the
 tool keeps working during first-run provisioning**, and the plan was corrected
-rather than the measurement: BrowserAI refuses every upstream tool while a
+and not the measurement: BrowserAI refuses every upstream tool while a
 download is running, including this one, because upstream's error would advise
 provisioning a browser that is already being provisioned. Re-establish with
 `cli.js --config <cfg>` against a fresh browsers root and one
@@ -581,7 +581,7 @@ against a directory that exists. What is known about Chromium is the shape of th
 regression, not its size; treat a Chromium figure as `[UNVERIFIED]` until the
 directory name is fixed upstream and the count is taken. The Firefox number
 matters more than it did: `browserai_init` has offered `browser: "firefox"` since
-2026-08-19, so this cost is now paid on a caller's cold start rather than only by
+2026-08-19, so this cost is now paid on a caller's cold start and not only by
 the suite. [HAZARDS](../../HAZARDS.md#hazard-index) carries the row.
 
 ## Environment, merge order and startup output
@@ -604,7 +604,7 @@ there before it was believed about what is there now. The one addition is
 ["relative","absolute"], e.PLAYWRIGHT_MCP_FILE_PATHS)`, so the **outside** set is
 unchanged at three for the first time in three bumps. It arrived with the
 [dated `playwright-core` override](../../DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it)
-rather than with an `@playwright/mcp` roll, which is why this correction is
+and not with an `@playwright/mcp` roll, which is why this correction is
 stamped at a `playwright-core` version that no wrapper release names.
 **Unlike `PLAYWRIGHT_MCP_CODEGEN`, this one WAS added to
 [`ChildEnvironment.Refused`](../../src/BrowserAI/Protocol/ChildEnvironment.cs)**:
@@ -626,7 +626,7 @@ grew for the first time since it was recorded. Neither can reach the child:
 construction.
 
 ⚠️ **`Corrected 2026-09-14 @ playwright-core 1.63.0-alpha-2026-08-31 (previously
-"reads **40** ... **The real total is 42**")`. Re-measured rather than
+"reads **40** ... **The real total is 42**")`. Re-measured, not
 incremented, and the old bundle was the positive control**: the same predicate --
 distinct `PLAYWRIGHT_MCP_*` names matched as `e.PLAYWRIGHT_MCP_...` for the
 mapping, every distinct occurrence for the total -- run over
@@ -639,7 +639,7 @@ answering the same question before it was believed about the new one. Against
 ["none","typescript","python","java","csharp"], e.PLAYWRIGHT_MCP_CODEGEN)`; the
 two outside the mapping are unchanged. **Nothing in BrowserAI needed a change**,
 and that is [the allowlist](../../src/BrowserAI/Protocol/ChildEnvironment.cs)
-holding rather than luck -- a variable nobody named is absent from a child by
+holding, not luck -- a variable nobody named is absent from a child by
 construction, which is the whole reason that list is an allowlist. It was
 deliberately **not** added to `ChildEnvironment.Refused`, which names variables
 that redirect a decision the config generator already took; the code-generation
@@ -700,7 +700,7 @@ difference cannot be a silent behaviour change, and a phrase that fires on no
 current output costs nothing while a deleted one cannot be recovered by anybody
 who did not know it was there. `[FLOATS]`.
 
-> **Why `isError` is a sound gate, read out of the bundle rather than inferred
+> **Why `isError` is a sound gate, read out of the bundle and not inferred
 > from the two measurements above.** `Response.serialize()` returns
 > `...sections.some((section) => section.isError) ? { isError: true } : {}`, and
 > `addSection` sets `isError: title === "Error"` -- so the flag is set by the
