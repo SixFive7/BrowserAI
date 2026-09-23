@@ -1559,7 +1559,7 @@ the one answer that could make a store the better engineering after all.
 
 ---
 
-# ⚠️⚠️ COURSE CORRECTION 2026-08-25 -- TWO GAME-CHANGERS, SUPERSEDING MUCH ABOVE
+# ⚠️⚠️ COURSE CORRECTION 2026-08-25 -- TWO CORRECTIONS, SUPERSEDING MUCH ABOVE
 
 **His stated driver: "increasingly concerned about the abundance of complexity."**
 
@@ -1727,7 +1727,7 @@ FLOATS -- **so every restore shows the pin-vs-float gap in packages.lock.json fo
 free.** Drift row for the vendored amalgamation + a #657 watch (the exit ramp:
 when a win-x64 `.lib` appears upstream, delete the compile step, float again).
 
-**Directions:** A ⭐ vendored amalgamation + ~15 hand-rolled `[LibraryImport]`
+**Directions:** A vendored amalgamation + ~15 hand-rolled `[LibraryImport]`
 declarations, ZERO packages, zero notices · B same link + Microsoft.Data.Sqlite
 .Core stack (3 packages, notices red-until-written, ADO.NET surface) · C
 third-party StoneSteps `.lib` (supply-chain posture -- no) · D loose DLL (he

@@ -274,7 +274,7 @@ never made. The arm shows there is **nothing to route**: with the product's real
 flag list the browser emits no error line at all, because the sandbox is not
 attempted. Routing may well also be true; it is not the explanation.
 
-**The latent half, and it is the half worth writing down.** Were the sandbox ever
+**The latent half.** Were the sandbox ever
 attempted on this tree, it would fail -- which is what arms one and three show
 directly. Chromium's network-service AppContainer runs an `AccessCheck` of
 `chrome.exe` for `GENERIC_READ | GENERIC_EXECUTE` as the package identity, and a
@@ -364,7 +364,7 @@ binary even headless.
 > measurement -- and `browser_navigate` returns `isError: true` with
 > *`Browser "chrome-for-testing" is not installed; expected executable at
 > <root>\chromium-1237\chrome-win64\chrome.exe. Run `npx @playwright/mcp
-> install-browser chrome-for-testing` to install`*. Note the remediation string
+> install-browser chrome-for-testing` to install`*. The remediation string
 > names a package BrowserAI does not ship; replacing it is
 > first-run provisioning's
 > job. `[FLOATS]`
@@ -407,7 +407,7 @@ only to `os.platform() === "linux" && !process.env.DISPLAY`.
 (`!options.profile && !options.persistent && !userDataDir && ...`) lives in
 `resolveCLIConfigForCLI`, the `playwright` CLI daemon path -- not in
 `resolveCLIConfigForMCP`. It is also structurally impossible for us:
-`validateBrowserConfig` throws on `isolated` + `userDataDir`. Note the legacy
+`validateBrowserConfig` throws on `isolated` + `userDataDir`. The legacy
 setup set it explicitly in three of its four modes.
 
 **`outputMaxSize` has no default at any merge stage.** `defaultConfig` contains
@@ -442,7 +442,7 @@ the moment a browser launches, and never cleaned up.**
 > fresh scratch directory adds one. **Setting `browser.userDataDir` avoids the
 > function entirely**, verified by deleting `%LOCALAPPDATA%\ms-playwright-mcp\`
 > and running the whole suite twice: absent both times. Re-establish the same
-> way -- delete it, run the browser-touching tests, and look. Note the constraint
+> way -- delete it, run the browser-touching tests, and look. There is a constraint
 > that comes with the key: `validateBrowserConfig` throws on `isolated` together
 > with `userDataDir`, so the two can never both be set. `[FLOATS]`
 >

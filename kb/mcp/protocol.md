@@ -244,7 +244,7 @@ the operator's own client is using.
 
 **No elevation.** Both `add` and `remove` succeeded from a **non-elevated,
 non-administrator** token (`WindowsPrincipal.IsInRole(Administrator)` = false) --
-they write the invoking user's own file. Worth stating because
+they write the invoking user's own file. Stated because
 [the logon-task assumption was wrong the same way](../windows/detection.md#the-logon-sweep-task):
 `schtasks` and the Task Scheduler COM API both answer `Access is denied` from
 that same token, so *"a per-user operation needs no elevation"* is not something

@@ -32,7 +32,7 @@ each of the three corrupts the stream on first contact. `[STABLE]`
 > WinUpdate one commented *"VS console redirection fix"*. Two authors reaching
 > independently for the same workaround is evidence that **the default really is
 > CP437**; it is not evidence about *when* the entry above was measured, so that
-> gap is unchanged. **Note what they built:** it is exactly the hand-rolled
+> gap is unchanged. **What they built:** it is exactly the hand-rolled
 > `StreamWriter` the entry above warns about, and it emitted no BOM only because
 > the encoding was CP437 rather than UTF-8 -- swap the encoding and the identical
 > code corrupts a JSON-RPC stream on its first byte. Read from source, not run.
@@ -132,7 +132,7 @@ arm -- which is the case the old sentence actually describes, and which would
 block -- was **not** run and is not established. Shipped instance, read
 2026-08-16 in an unpublished C# directory-cleanup tool that runs as a scheduled
 non-interactive job -- two calls, both inside `catch` blocks; that read
-established that the calls exist, never what they do. Note the shape -- both calls sit in the
+established that the calls exist, never what they do. The shape: both calls sit in the
 *unknown-exception* arm, below the specific `UnauthorizedAccessException` and
 `DirectoryNotFoundException` handlers, so they fire only on the cases nobody
 anticipated: the population least likely to have been exercised in testing and
@@ -457,7 +457,7 @@ on the `AllDirectories` overloads: *"`UnauthorizedAccessException` errors may ma
 the enumeration incomplete. You can catch these exceptions by first enumerating
 directories and then enumerating files."* The failure is silent in the worst way --
 a partially-walked tree is indistinguishable from a fully-walked smaller one. A
-robust recursive delete therefore needs a hand-rolled **post-order** walk with
+recursive delete therefore needs a hand-rolled **post-order** walk with
 per-node exception discrimination: deepest child first, so a non-recursive
 `Directory.Delete` always sees an empty directory. Reference implementation, read
 2026-08-16 in that same unpublished cleanup tool -- **the shape is recorded here
@@ -529,7 +529,7 @@ does all three steps -- a temp file **in the same
 directory**, opened `FileShare.None` with `FileOptions.WriteThrough`, then
 `stream.Flush(flushToDisk: true)`, then `File.Move(temp, full, overwrite: true)` --
 with the reasoning recorded inline at lines 229-247 and a `finally` that removes
-the temp on every exit path. Two details worth taking:
+the temp on every exit path. Two details to take:
 
 - **`File.Move(overwrite: true)`, not `File.Replace`.** `Replace` **requires the
   destination to already exist**, and the first write of a lock file or a crash
@@ -579,8 +579,8 @@ happens. Reproduce:
 `SessionLockTests.ARenameCannotReplaceALockFileWhoseOwnHandleIsStillOpen`, which
 walks all three share modes on every run.
 
-> **This is what forces close → rename → re-open under a mutex**, and it is worth
-> stating because the obvious repair does not exist. [The session design](../../ARCHITECTURE.md#sessions)
+> **This is what forces close → rename → re-open under a mutex**, and it is
+> stated because the obvious repair does not exist. [The session design](../../ARCHITECTURE.md#sessions)
 > makes an open handle on `browserai.json` the lock, and [the locking design](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
 > requires the record to arrive by atomic rename. The natural guess is that
 > adding `FILE_SHARE_DELETE` to the lock handle reconciles them -- it does not;
@@ -667,7 +667,7 @@ dangerous of the two because null means *not locked*.
 > today ... every ungated one fails in the safe direction -- the sweep's
 > `SessionDirectoryFrom` ... and `ActOn` ...").** The judgement was right about the
 > two readers it named and wrong as a claim about all of them, and the reason is
-> worth stating: it was written by checking the readers on the *sweep* path,
+> stated here: it was written by checking the readers on the *sweep* path,
 > which is where the danger was expected, and generalised to *every* ungated
 > reader without enumerating them. An [adversarial
 > review](../../docs/reviews/2026-08-18-adversarial-locking.md) enumerated all
@@ -808,7 +808,7 @@ old file or the new one and never a torn one. `[STABLE]` for the mechanism,
 which runs the same 8 × 250 on every build; raise `Writers` and `WritesEach` to
 push it further.
 
-> **Note what the writers do *not* do**, because it is what makes this cheap: no
+> **What the writers do *not* do is what makes this cheap**: no
 > mutex, no read-before-write, no compare. Every writer writes unconditionally,
 > and the content is a pure function of the file's own name, so the winner of any
 > race wrote exactly what every loser was about to. A "skip if already correct"
@@ -938,7 +938,7 @@ writer holds `GENERIC_WRITE`. `FileShare.Read` does not include
 `ERROR_SHARING_VIOLATION` -- *"the process cannot access the file ... because it is
 being used by another process"* -- **even when the writer shared everything**.
 
-That last clause is the trap, and it is worth spelling out because the natural
+That last clause is the trap, and it is spelled out because the natural
 reading of a sharing violation is *the other process is being restrictive*.
 Node's `fs.openSync` goes through libuv, which asks for
 `FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE` indiscriminately and
@@ -1291,7 +1291,7 @@ sentence would have caused is a wrong answer to a *different* question: a
 generator that emits `[DllImport]` (which is what `Microsoft.Windows.CsWin32`
 does, and will keep doing -- [#593](https://github.com/microsoft/CsWin32/issues/593)
 and [#1333](https://github.com/microsoft/CsWin32/issues/1333) are both closed
-*not planned*) is **not** ruled out by AOT. Note that CsWin32 #1333's own
+*not planned*) is **not** ruled out by AOT. CsWin32 #1333's own
 opening post repeats the same misconception, which is a fair guess at where it
 entered this repository. `[STABLE]` -- re-establish by publishing any AOT project
 containing a `[DllImport]` and reading the ILC output. The probe used here was
@@ -1416,7 +1416,7 @@ the family-agnostic refusal in `browserai_reinstall_browser` was already the rig
 shape for both families, and it now rests on a measurement of both rather than on
 a generalisation from one.
 
-**Note the asymmetric layouts, because a re-run has to get them right.** Chromium
+**The layouts are asymmetric, and a re-run has to get them right.** Chromium
 is `chromium-<rev>\chrome-win64\chrome.exe`; Firefox is
 `firefox-<rev>\firefox\firefox.exe`. *The directory holding the executable* is
 `chrome-win64` for one and `firefox` for the other, and it is the inner directory
@@ -1603,7 +1603,7 @@ as alive **forever**. It presented as a containment defect in the product --
 30 seconds of polling, then "the launcher survived" -- and the product was fine.
 The shape is the point: a failed call read as one of the two normal answers is
 worse than an exception, so `ProcessIdentity.IsAlive` refuses to interpret
-`WAIT_FAILED` at all. Note also that `OpenProcess` succeeding proves nothing,
+`WAIT_FAILED` at all. And `OpenProcess` succeeding proves nothing,
 because a handle held by anyone keeps the pid and the object alive after the
 process is gone. Re-establish by removing `SYNCHRONIZE` from the access mask.
 `[STABLE]`

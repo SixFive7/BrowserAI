@@ -224,7 +224,7 @@ Pillow, reading `png\`. The numerals and labels on the sheets use Segoe UI from
 
 ---
 
-## Shortlist, if it helps
+## Shortlist
 
 Best at 16 px, which is where an app icon actually lives: **01**, then **06** and **08**.
 Most distinctive as a mark: **07**. Most honest about what the product is: **08** or **09**.

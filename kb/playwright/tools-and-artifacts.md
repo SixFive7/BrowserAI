@@ -191,7 +191,7 @@ and it is now measured rather than assumed.
 `session()` helper a config carrying `browser.browserName: "firefox"` -- plus the
 `firefoxUserPrefs` launch option in place of `channel`, because upstream's
 `validateBrowserConfig` drops a channel for a non-chromium family -- and diffing
-its `tools/list` against the one the same helper already takes. Note that no
+its `tools/list` against the one the same helper already takes. No
 browser is launched to answer `tools/list`, so the comparison needs the payload
 and not a provisioned Firefox. `[FLOATS]`
 
@@ -811,8 +811,8 @@ does so although `@playwright/mcp`'s own `config.d.ts` **does not declare the
 key**").* It declares it since **0.0.82**, as
 `filePaths?: 'relative' | 'absolute'`, so the key and its typings have caught up
 with each other and `config-schema.d.ts` is no longer the one golden snapshot
-that did not move on adoption. The reason the gap was survivable is unchanged and
-is still worth knowing: `loadConfig` is a bare `JSON.parse` with no schema
+that did not move on adoption. The reason the gap was survivable is unchanged:
+`loadConfig` is a bare `JSON.parse` with no schema
 validation, and the bundle's own config key type map carries
 `filePaths -> string`, so the typings were never what made the key work.
 

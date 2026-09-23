@@ -196,7 +196,7 @@ half is reproducible against any project.
 Two further traps visible in the same project. Its csproj carries
 `<NoWarn>$(NoWarn);IL2104;IL3050;IL3053;IL3000</NoWarn>` with a comment
 justifying it, so "clean" there is partly suppression rather than
-soundness -- worth knowing before treating another project's zero-warning claim as
+soundness -- and it matters before treating another project's zero-warning claim as
 comparable to ours. And the published artifacts on disk carry an mtime of
 **2026-08-14**, so the byte counts above are a re-reading of that publish rather
 than a fresh one; the sizes and the ILC message are what was verified today, not
@@ -215,7 +215,7 @@ reproduce**: after any `PublishAot` build,
 `obj\Release\<tfm>\<rid>\native\link.rsp` is an MSVC linker response file whose
 `/LIBPATH` entries point under
 `C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231`.
-Worth recording because the failure is routinely misdiagnosed as an SDK or package
+Recorded because the failure is routinely misdiagnosed as an SDK or package
 incompatibility, which sends you rewriting code that was never the problem.
 
 > ⚠️ **The environment half of that quote is stale, checked 2026-08-16.** The MSVC
@@ -240,7 +240,7 @@ appears to "revert" -- with no error raised at any point. The fix is
 `UseStringEnumConverter = true` on the context's `[JsonSourceGenerationOptions]`.
 Shipped bug, read 2026-08-16 in an in-house Velopack deployment's own troubleshooting notes
 (*Enum Serialization as Integers -- Fixed in 1.0.3*): `settings.json` held
-`"Channel": 0` rather than `"Channel": "Stable"`, and note how it was filed --
+`"Channel": 0` rather than `"Channel": "Stable"`, and it was filed --
 under the symptom *"`Channel` resets to `Stable` after restart"*, i.e. reported as
 a settings bug for as long as it took to find the serializer. **Relevant here
 because a source-generated context is mandatory under AOT**, so this is the
@@ -327,7 +327,7 @@ stdio transport leaves it null, and a replacement should too. `[FLOATS]`
 **The SDK answers a frame it cannot parse.** `StreamServerTransport` walks the
 top-level object with a `MaxDepth = int.MaxValue` reader looking only for `id`,
 and if it finds one replies `-32700` so the caller fails instead of waiting.
-That is worth knowing because a transport that merely drops the frame leaves the
+That matters because a transport that merely drops the frame leaves the
 caller hanging with nothing but a log line to explain it. BrowserAI's does drop
 it, deliberately and loudly, until the lossless-passthrough layer
 owns error shaping. `[FLOATS]`

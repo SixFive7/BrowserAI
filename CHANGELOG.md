@@ -6261,7 +6261,7 @@ Read [`README.md`](README.md) first.
 
 ### Added
 
-- ✨ **Browser automation for AI agents on Windows, as one MCP server that brings
+- ✨ **Browser automation for AI agents on Windows, as one MCP server that carries
   its own everything.** BrowserAI
   ships its own Node runtime and its own `@playwright/mcp`, downloads its own
   browser on first use, and proxies JSON-RPC to it. Nothing on the machine has

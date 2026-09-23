@@ -69,7 +69,7 @@ Three caveats that bear on the design, none of which the charter had:
   **Updates must go through the update path; `Setup.exe` must never be re-run over
   an existing install.**
 - **Uninstall wipes the whole root** (`remove_dir_contents`) -- browsers included,
-  which is correct but worth stating.
+  which is correct.
 - Transient update space is `<root>\packages\VelopackTemp\`: same volume, outside
   `current\`.
 
@@ -215,7 +215,7 @@ HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI
 chooses the install directory), so the key this product writes is now
 `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI.app`.
 **The measurement below is unchanged** -- it is about ids in Velopack's model, not
-about this id -- and it has one incidental consequence worth recording: the
+about this id -- and it has one incidental consequence: the
 release candidate installed as `BrowserAI` and a v1.0.0 installed as
 `BrowserAI.app` are two ids, so they no longer share an entry. The suite's own
 real-installer arm refuses to run at all when a key for its id already exists
@@ -285,7 +285,7 @@ app, receives the PID via `waitPid`, waits for *actual process death* rather tha
 a close request, and only then launches. The mutex is released by the OS at
 termination, which is strictly before the new process starts.
 
-Two consequences worth carrying:
+Two consequences:
 
 - **The signature is `Start(IVelopackLocator locator = null, uint waitPid = 0,
   string[] startArgs = null)`** -- first positional parameter is the locator,
@@ -504,7 +504,7 @@ one server start.)* Those 48 requests stand against **thousands** of server
 processes the suite started in the same window -- the saturation arm alone starts
 100 per run -- which is the measurement that says non-installed binaries really do
 ask for nothing. **And the flat `1` on the package assets says something else
-worth having: no install anywhere has ever applied an update, because nothing has
+too: no install anywhere has ever applied an update, because nothing has
 ever fetched a package.**
 
 ⚠️ **RE-READ 2026-09-23 ON `v1.1.0`, AND THE DISCRIMINATION HOLDS ON A
@@ -838,7 +838,7 @@ neither applied.** The version stayed at 0.9.0.
 - The second failed its check with Velopack's own
   **`AcquireLockFailedException: Failed to acquire exclusive lock file`** -- a
   `packages\.velopack_lock` held by the first one's download. **That is a second,
-  independent guard nobody wrote here**, and it is worth knowing it exists: it
+  independent guard nobody wrote here**: it
   serialises concurrent *downloads* but says nothing about concurrent processes,
   so it does not replace the gate.
 
@@ -1101,7 +1101,7 @@ un-provoked. Measured twice, each arm:
 | Feature on, `SourceRevisionId` supplied, property `true` | `0.1.0+a273b31c0ffee1234567890abcdef1234567890a` |
 
 So the property in `Directory.Build.props` **is** the thing that stops it, once
-anything arms the feature. Two details cost time and are worth inheriting:
+anything arms the feature. Two details cost time:
 `-getProperty` reports the value only after the targets actually named ran, and
 this decoration hangs off **`GetAssemblyAttributes`** rather than
 `GetAssemblyVersion` or `MinVer` -- asking after either of the latter two returns
@@ -1111,7 +1111,7 @@ target overwrites it, so the *`.`-separated* form the SDK produces when the
 string already carries a `+` (`0.1.0+a273b31` becoming
 `0.1.0+a273b31.<40-char sha>`) could not be reproduced here and is **read from
 the target's own text** rather than measured. That form is the one that shipped
-in an earlier in-house updater, with a consequence worth keeping: a fleet where
+in an earlier in-house updater, with a consequence: a fleet where
 every device downloaded the binary it was **already running**, swapped it,
 restarted, and repeated hourly -- because the updater compared the served version
 against the reported one, and the reported one had gained a suffix the feed's
@@ -1705,7 +1705,7 @@ directory, with the old root renamed aside and deleted on success.
   installer says the application is *already installed* -- so the correct action
   reads as a repair of something broken rather than as *install the new build of
   this number*. There is nothing to configure here: it is Velopack's wording,
-  chosen from the version comparison. It is worth knowing before anybody is told
+  chosen from the version comparison. It matters before anybody is told
   to "just run the installer" after a re-ship. `[FLOATS]`
 
 **Re-establish it** by running any non-silent `Setup.exe` against a root that

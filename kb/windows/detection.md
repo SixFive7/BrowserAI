@@ -27,7 +27,7 @@ ownership test. `[FLOATS]`
 | Lower- or UPPER-case | **HIT** -- the title compare is case-insensitive |
 
 So BrowserAI must convert to backslashes, absolutise, and strip any trailing
-separator. Case need not be normalised. Note the asymmetry: the config passed
+separator. Case need not be normalised. The asymmetry: the config passed
 forward slashes and the **process command line still carries forward slashes**,
 but the window title is backslashes.
 
@@ -378,7 +378,7 @@ titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 > mode -- and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` means it cannot appear on disk
 > later. So an upstream change to binary selection would produce a **failed
 > launch**, which is loud, rather than a silently untrackable browser. It matters
-> only if that decision is ever revisited. Note `chromium.executablePath()`
+> only if that decision is ever revisited. `chromium.executablePath()`
 > reports `chrome.exe` for **both** binaries, so it is not a usable indicator of
 > which one is running.
 
@@ -760,7 +760,7 @@ calls `FirefoxProfileLockedException.For(config)` **before** it writes the confi
 and long before anything spawns; that inspects `parent.lock` with a write-open and
 refuses on the sharing violation, naming the holder through the Restart Manager.
 So a BrowserAI-launched Firefox never reaches upstream's `isProfileLocked` with a
-held profile. Two things are worth saying beside that: the session lock already
+held profile. Two things beside that: the session lock already
 makes the collision unreachable by *ordering*, and the preflight exists precisely
 because coverage by ordering is a guarantee no test states and no refactor
 notices losing; and the preflight reads the **live handle**, never the file's
@@ -853,7 +853,7 @@ were, and a whole sweep pass is otherwise ~27 ms. Two consequences, both built:
 The preflight pays one query per refusal, and only on a refusal: **1,367 ms end
 to end against the three-minute modal it replaces.** `[MACHINE]`
 
-**The layout of `RM_PROCESS_INFO` is a trap worth naming.** `RM_UNIQUE_PROCESS`
+**The layout of `RM_PROCESS_INFO` is a trap.** `RM_UNIQUE_PROCESS`
 is `{ DWORD; FILETIME }` -- 12 bytes, 4-aligned. Declaring the `FILETIME` as a
 64-bit integer aligns the struct to 8 and inserts four bytes of padding after the
 pid, so every field after it is read from the wrong offset and the pid itself
@@ -1045,7 +1045,7 @@ screen"* and it is not that. `[MACHINE]`
 > as a measurement; nothing asserts on them now.
 
 > ⚠️ **The first version of the watcher reported zero shows and was wrong**, and
-> the mistake is worth carrying because it is the shape of every silent detector
+> the mistake is carried here because it is the shape of every silent detector
 > failure in this repository. It de-duplicated by window handle alone, so a
 > window **created hidden and shown a moment later** was recorded once, as a
 > `create`, with `visible: false` -- and the `EVENT_OBJECT_SHOW` that actually put

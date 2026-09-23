@@ -160,7 +160,7 @@ set as an MSBuild property.** `dotnet_analyzer_diagnostic.category-<X>.severity`
 had no effect at all: set to `none` for the TUnit assertion category, the rule
 kept firing at error. The **per-rule** form is honoured in the same build --
 `dotnet_diagnostic.TUnitAssertions0002.severity = none` did suppress it. This is
-documented behaviour rather than a bug, and it is worth a measured entry because
+documented behaviour rather than a bug, and it is recorded as a measurement because
 the failing form fails *silently*: a category line reads as protection, is
 ignored, and nothing reports that. Anything in this repository's
 `.editorconfig` that must actually hold is therefore written per-rule.
@@ -429,7 +429,7 @@ exhausted in three attempts
 ([kb](windows/processes.md#files-durable-writes-and-deletes)). That is the
 argument for the limiter being where it is, made by the limiter.
 
-> **One failure in that set was not a defect and is worth naming, because it is
+> **One failure in that set was not a defect and is named here, because it is
 > the honest limit of this method.** A real Chromium exited with code 1 and no
 > output on either stream, once, while three other agents were saturating the
 > machine -- a browser that could not start, rather than anything the suite
@@ -826,7 +826,7 @@ exception, nothing a `catch` can be placed in front of -- a `try`/`catch` writte
 to make the storage layer's startup report defensive protects against every
 failure except this one.
 
-**Two consequences worth writing down beside it.** The failure is invisible to
+**Two consequences beside it.** The failure is invisible to
 `dotnet test`: a CoreCLR host binds the loose `e_sqlite3.dll` from
 `SourceGear.sqlite3`, which is built *without* `SQLITE_OMIT_AUTOINIT` and
 initialises itself, so the whole class of defect exists only in the artifact.
@@ -857,7 +857,7 @@ down here as one rather than left to read like a measurement in
 
 `[FLOATS]` -- it is GitHub's field and they may move it, in either direction.
 
-**Nothing here tested it, and the reason is worth stating**: testing it means
+**Nothing here tested it, and the reason is stated**: testing it means
 publishing a release with an over-length body and reading the refusal, and the
 only repository this project may publish to is the real one. A scratch
 repository would answer it for the price of creating one.

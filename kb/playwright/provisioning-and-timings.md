@@ -181,8 +181,8 @@ throws. `[FLOATS]`
 >
 > ✅ **Re-measured 2026-09-17 at chromium 1245 and firefox 1548, and the
 > `[STALE]` this section carried for a day is cleared.** The figures below are
-> what those revisions produce. **Chromium did not move at all**, which is worth
-> the sentence it takes: `playwright-core` builds Chromium's URL with `cftUrl()`,
+> what those revisions produce. **Chromium did not move at all**, and this is
+> why: `playwright-core` builds Chromium's URL with `cftUrl()`,
 > keyed on `browserVersion` rather than on the revision, and 1245 carries the
 > **same** `browserVersion` 154.0.8037.0 as 1244 -- so the archive fetched is the
 > same archive, the tree is the same tree to the byte and the file, and the only
@@ -296,13 +296,13 @@ tree; the two shared components are unchanged to the byte and the file.
 > provisioning into an empty root and summing the files: **451,389,780 B across
 > 318 files** -- `chromium-1237` 447,613,809 B (426.88 MiB), `ffmpeg-1011`
 > 3,517,342 B (3.35 MiB), `winldd-1007` 258,560 B (0.25 MiB) and `.links` 69 B.
-> Note that 426.88 is exactly what [the component table](#component-sizes) already
+> 426.88 is exactly what [the component table](#component-sizes) already
 > recorded for full Chromium, so the two halves of this file disagreed by
 > 2.5 MiB. **That component table is about `chromium-1237` and has not been
 > re-measured at 1244**; only the provisioning figures in this section have.
 >
-> **The downstream "≈ 570 MB after first run" survives, and the reason is worth
-> stating because it nearly produced a second wrong number.** That figure adds a
+> **The downstream "≈ 570 MB after first run" survives, and the reason is
+> stated because it nearly produced a second wrong number.** That figure adds a
 > payload quoted in **MB** to browsers quoted in **MiB**, and the payload's
 > components are themselves MiB -- so the honest sum is 116.40 + 430.48 =
 > **546.88 MiB, which is 573 MB**. The recorded ≈ 570 was right by way of two
@@ -667,7 +667,7 @@ against `INIT_CWD` -- inherited from any npm ancestor -- before `cwd`. `[FLOATS]
   ffmpeg-1011\ffmpeg-win64.exe
 ```
 
-Note the asymmetry: the **outer** directory uses underscores, the **inner** one
+The asymmetry: the **outer** directory uses underscores, the **inner** one
 dashes, so a path built consistently is wrong. **No sentinel file is needed to
 launch** -- not `INSTALLATION_COMPLETE`, not `DEPENDENCIES_VALIDATED`; the only
 launch-time check is file accessibility of the executable.
@@ -837,7 +837,7 @@ copied: **318 files, 451,389,838 B**. `[MACHINE]`
 > `src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\`, which is where
 > the suite drives the published binary from. Both numbers are right for what
 > they measured. **A census compared across two machines will differ for the same
-> reason**, which is worth knowing before treating a mismatch as corruption --
+> reason**, which matters before treating a mismatch as corruption --
 > and is why the cache's own completeness check compares a tree against the stamp
 > *it* was published with rather than against a figure written down here.
 
@@ -1111,7 +1111,7 @@ that and does not say "killed". **Q223 c**, and it is what settled Q223 b.
 > builds a function in the host realm, which is the escape node's own
 > documentation says `vm` is not a defence against. **The tool's description is
 > therefore accurate about the risk and misleading about the default scope**, and
-> that is worth knowing for a tool this product forwards with an `allow` verdict.
+> that matters for a tool this product forwards with an `allow` verdict.
 
 > ⚠️ **ONE THING THE SELF-DEATH ARMS DO THAT THE CONTROL DOES NOT, named rather
 > than smoothed over.** A server has **two** `node` children; the control kills
@@ -1572,7 +1572,7 @@ and how much it buys is a property of the day.
 ⚠️ **The profile-disk row is the tight one and the only one worth quoting to
 three figures**: 2.76× on all six rounds. Five of Chromium's six profiles fall
 inside **6 bytes** of each other, with one round 2,051 B larger; Firefox's six
-span 6,347 B. Note the *file* counts run the other way -- Chromium 181 files in
+span 6,347 B. The *file* counts run the other way -- Chromium 181 files in
 13.2 MB, Firefox **66** in 36.4 MB -- so a comparison by file count says the
 opposite of one by bytes, and neither is wrong. ⚠️ **Firefox's profile lost a
 file on this roll and gained bytes**: *corrected 2026-09-17 (previously "Firefox

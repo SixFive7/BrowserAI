@@ -396,7 +396,7 @@ browser-initiated download, *"named by the site rather than by an argument"*
 
 So a page chooses the filename, and a page controls answer text (a snapshot's
 accessibility tree, a console message, an `evaluate` return). A one-character
-download name matches essentially every answer; a chosen name matches an answer
+download name matches almost every answer; a chosen name matches an answer
 that renders it. Once matched, the file is pinned in the output root for the life
 of the session and reported as `LeftWhereTheChildPutIt` instead of being sorted
 into `downloads\`.

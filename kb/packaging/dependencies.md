@@ -137,7 +137,7 @@ because it is the single piece of evidence the provisioning decision rests on.
 
 Measured **2026-08-16** by reading two unpublished repositories and their git
 history. `[MACHINE]` throughout -- true of two repositories, not of the world, and
-**not reproducible from here**. What makes them worth keeping is that the route
+**not reproducible from here**. They are kept because the route
 to re-establish them is generic: anyone can run it against any repository that
 vendors a runtime, including their own. The charter's provision-don't-bundle
 position argues from **licensing alone**; this is the empirical half, and it is
@@ -185,7 +185,7 @@ license file is a licensing gap someone can close in an afternoon; a 2019 Chromi
 still running in 2024 is not a gap anyone can close, because nothing in the system
 was ever going to raise it.
 
-**Kept rather than cut, and the reasoning is worth stating**, because both rest
+**Kept rather than cut, and the reasoning is stated**, because both rest
 entirely on repositories a reader cannot open. They survive because the claim is a
 measurement -- git-log spans, byte counts, a shutdown date -- rather than an
 impression; because the route to re-establish it is generic and stated; and

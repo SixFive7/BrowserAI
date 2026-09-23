@@ -42,7 +42,7 @@ arms.
 Phase 2: a
 6-byte `performance.memory` delta caused by a per-run URL tag of differing length
 landing on the JS heap, and a Compute Pressure `fair`/`nominal` split caused by
-CPU-heavy benchmarks running inside the observation window. Worth recording
+CPU-heavy benchmarks running inside the observation window. Recorded
 because both looked like real signals.
 
 **The switch is not propagated to renderers.** Absent from

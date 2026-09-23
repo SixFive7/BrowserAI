@@ -58,6 +58,15 @@ can audit rather than the silent rewrite of 2026-08-20 that this mechanism exist
 to stop. **The grant is narrow and is not a licence to edit a record for any
 other reason.**
 
+**And ONE body moved a second time, for the WORDING half of the same directive**:
+`2026-08-24-adversarial-since-the-mode-drop.md` said a check *"matches
+essentially every answer"* and now says *"matches almost every answer"* -- one
+stock hedge, one word, and the claim and its strength are untouched. Its seal was
+re-recorded with the same commit. **That edit is INSIDE the sealed prefix and
+made the record shorter**, so the seal reported it as `TRUNCATED` rather than as
+a rewrite, which is the branch that prints no replacement line: read the message,
+do not assume the reseal is offered.
+
 | Finding | State |
 |---|---|
 | locking **A1** -- `destroy` releases the lock before deleting the tree | **fixed**, `SessionDestroyTests` |

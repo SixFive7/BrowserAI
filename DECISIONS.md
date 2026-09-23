@@ -424,7 +424,7 @@ is measured per string and a page controls the strings.
 
 ### The child's environment overrides the config file BrowserAI generates
 
-The merge order is **config file → environment → CLI**, and `@playwright/mcp` reads **40** `PLAYWRIGHT_MCP_*` variables covering essentially every option: `BROWSER`, `HEADLESS`, `USER_DATA_DIR`, `EXECUTABLE_PATH`, `OUTPUT_DIR`, `ISOLATED`, `CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS`, and 30 more -- **42 in total**, [two of them read outside that mapping](kb/playwright/configuration.md#environment-merge-order-and-startup-output).
+The merge order is **config file → environment → CLI**, and `@playwright/mcp` reads **40** `PLAYWRIGHT_MCP_*` variables covering nearly every option: `BROWSER`, `HEADLESS`, `USER_DATA_DIR`, `EXECUTABLE_PATH`, `OUTPUT_DIR`, `ISOLATED`, `CONFIG`, `SECRETS_FILE`, `STORAGE_STATE`, `CAPS`, and 30 more -- **42 in total**, [two of them read outside that mapping](kb/playwright/configuration.md#environment-merge-order-and-startup-output).
 
 So a stray variable in the user's environment silently overrides BrowserAI's opinions -- and **`PLAYWRIGHT_MCP_CAPS` triggers the same replace-not-merge wipe documented below for `--caps`**, meaning there is an environment route to a bug the "never pass `--caps`" rule does not close.
 

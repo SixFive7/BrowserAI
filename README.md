@@ -5,7 +5,7 @@
 
 # BrowserAI
 
-A self-contained, system-installed MCP server that fronts a **pinned** `@playwright/mcp` runtime and exposes browser automation to AI agents through a small, opinionated, centrally-updatable surface.
+A self-contained, system-installed MCP server that fronts a **pinned** `@playwright/mcp` runtime. It exposes browser automation to AI agents through a small, opinionated, centrally-updatable surface.
 
 BrowserAI is a **proxy**. It ships the runtime, owns the lifecycle, and rewrites the tool surface. It does **not** reimplement Playwright, and it does not reimplement Playwright's MCP tool layer. That boundary is the single most important design constraint in this project and is spelled out in [Scope](#scope-proxy-not-implementation) below.
 

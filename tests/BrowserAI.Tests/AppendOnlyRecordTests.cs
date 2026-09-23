@@ -244,7 +244,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// </remarks>
     private static readonly Seal[] Sealed =
     [
-        new("CHANGELOG.md#0.1.0", 3873, "6518b2ef2f98d00790269285acf08be8e9ddfd8cc962633effd5f1d58685fab4", "1c937f4619153bacd5c5e3262769eefd671c0a24257c159434fe572e5819816f"),
+        new("CHANGELOG.md#0.1.0", 3874, "571d67c4b375fd96b97b853a4b720e6c9809b5914e08bf177975b6798c51e1eb", "143f33271fc34cd7328197dbcd964cc8f7d1312b629906b5002cdc56be94837c"),
         new("CHANGELOG.md#1.0.0", 350703, "893dd57ed05ce98f7c3658d23a7d58181a024e6ec45c4436c42e6e2a1f297fb5", "549cffa74c77d4de477315ba9e294a099e396e053399c00ab5a7593fe179bb97"),
         new("CHANGELOG.md#1.1.0", 65956, "8d37120a6f92dc14b5b35773c74686253e1704cc8422028af50276b1b19d2c86", "c159e04acb5c970c7bdb75af18a1b9d35923c01133d9ccd9b8f9ea389e6a878a"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39722, "11eadc9cbdd7726a1101b1faa93cd4904cd158adf789ff6c84567f979b0319b7", "26269fabafee27c8538fb5c788fbc735b1fe2f6f0be6fc4d0cae9a0d9af8ade8"),
@@ -253,7 +253,7 @@ internal sealed partial class AppendOnlyRecordTests
         new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17256, "8c85ea5c577196bdfbbefcb793c884550bd1383e31619c5d9a0347070eb47c5b", "1dd8295ee72f6b38b1cba22acaa0efb5af5edb17ea03e6d94a57196a9fc18250"),
         new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11045, "18a981628ee4560a3449060da8dd321a083c4bb5e7b243fc49faafbbd99b0d44", "dc3c7c5724cfc9916c7996d7164df5f4086ca6726a10d1d3dfaa621b6ec65060"),
         new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29891, "058eeb74c345b287be38eae311291c52a8b742497ee00a2944d94e769b49b874", "a8f3ad0dcb57129c2dc5631025b76ead8aa81d13584ed662e06936051bf809ca"),
-        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32486, "7c224206964e3a21531754ef6920d3f242540abaa7a1209d58c4a0d2e57474bf", "1a136ccfc014c69a504391d17139e99248bbb7b2a47ff0ab71cb46d77e819446"),
+        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32481, "3fdae42aba6ebc5b8898c6e43a239aecee45daf948275ad608a9a922254ff42b", "ef8cd2277801a8b9d076fff259b83a6d21e6c06c5c42b644e9272385e52c896e"),
         new("docs/reviews/2026-08-26-post-course-correction.md", 40013, "60a0f1f583230d1c22a759046d973bf2d8c66d27f905c0d41a148d769671f295", "e72b58ea5503c173718988098bb6e7bf58f01365e64629f48747f06f571b7ac5"),
     ];
 

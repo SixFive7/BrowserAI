@@ -17,6 +17,15 @@ characters a person does not type and for nothing else. **No fact, number, date,
 name or claim moved**, and a ledger that has been swept says exactly what it
 said. The rule below is otherwise unchanged and the grant does not widen it.
 
+**Both snapshots moved a second time on the same day, under the same grant, for
+the WORDING half.** Nine edits between them: eight removed a decorative star
+standing in front of a sentence that was already bold, and one changed a heading
+from *TWO GAME-CHANGERS* to *TWO CORRECTIONS* because the body beneath it labels
+them Correction 1 and Correction 2. **No maintainer-verbatim line was touched**,
+and no fact, number, date, name or claim moved. The heading change moves one
+GitHub anchor, which nothing in the tree links to; that was checked rather than
+assumed.
+
 **It is a record, so it is read-only.** Nothing here is edited after the
 snapshot -- not to fix a typo, not to reconcile it with what the code ended up
 doing. A ledger that disagrees with the tree is telling you something about the
