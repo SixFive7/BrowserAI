@@ -2,7 +2,7 @@
 <!-- SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr -->
 
 <!-- The decision ledger of the 2026-09-15/16 release session and every batch since, appended to live by the architect and snapshotted here at commit 75011ea; nothing below this comment has been edited. This is the FINAL snapshot of that session: re-snapshotted 2026-09-22, previously taken at commit 1592388 on 2026-09-18 and 76 lines shorter, and at commit bc68db0 on 2026-09-16 before that. -->
-<!-- There is no live copy any more. .work/STATE.md was deleted with the rest of the scratch folder in this same commit, so from here the snapshot IS the record; a new session opens a new ledger beside this one rather than appending to this file. -->
+<!-- There is no live copy any more. .work/STATE.md was deleted with the rest of the scratch folder in this same commit, so from here the snapshot IS the record; a new session opens a new ledger beside this one instead of appending to this file. -->
 
 # CURRENT STATE -- read this first, before `IN-FLIGHT.md`
 
@@ -109,7 +109,7 @@ Nine findings plus fourteen things attacked and held.
 - **No worktrees.** Retired 2026-08-24 for three measured reasons: `BROWSERAI_ROOT`
   does not isolate a suite, creation was rejected on 2 of 4 attempts, and the
   remaining work concentrates on test-asserted bookkeeping that a merge must
-  **re-measure** rather than resolve.
+  **re-measure** and not resolve.
 - **One writer in the tree at a time.** Read-only research may run alongside.
 - Never `[Skip]`, never a retry, never a weakened assertion, never cap
   parallelism, never suppress a warning.
@@ -210,7 +210,7 @@ one tree *and* serialise at the suite gate anyway, because suite runs share one
 machine-wide app root. The parallelism that actually pays is read-only
 investigation ahead of a single writer.
 
-**F4's fork was briefed with a challenge rather than as a free choice:** locking
+**F4's fork was briefed with a challenge and not as a free choice:** locking
 finding B2 already refuses a network session directory *by semantics*, so
 direction (a)'s stated cost -- losing share cleanup -- may not exist. Agent C must
 establish whether a share session can be created at all today before choosing.
@@ -233,7 +233,7 @@ were the brief's own prohibition text and quoted docs. So no build/suite collisi
 agent that died before writing a completion record, `bg` never returns to 0 and
 `all-finished` is unreachable. **Do not `TaskStop` on `live=0` alone, and do not
 wait forever on `bg` either** -- if `live` reaches 0 and `bg` stays 1, attribute
-the receipt before deciding, rather than treating either number as authoritative.
+the receipt before deciding, instead of treating either number as authoritative.
 
 ---
 
@@ -289,7 +289,7 @@ F5. Also lifting all nine into `docs/reviews/README.md` (six fixed, three
 recorded as blocked) and fixing the *"a gate acquire would refuse"* doc defect in
 two places. Gate: one PowerShell run + one Git Bash run.
 
-**Decisions I took rather than asked, all implementation-level, all stated to
+**Decisions I took without asking, all implementation-level, all stated to
 him:** F2's gate is `isError` alone; F7 is a delimited substring with eviction
 and no prefix requirement; F5 gets a new catalogue row (27→28) and includes
 `TheRootIsBusy`; F1 gates `catch_up` as well as `list`; F9 filters before
@@ -362,7 +362,7 @@ modes and may deserve rows.
 2. **The probe cost figures were not re-measured.** `ARCHITECTURE.md`,
    `SessionManager.InUse` and `kb/windows/detection.md` now all say the per-entry
    cost is incomplete, that a mutex create/acquire/release/close is in it, and
-   that the numbers must be re-run rather than edited. **Nothing was adjusted by
+   that the numbers must be re-run, not edited. **Nothing was adjusted by
    reasoning.**
 
 ## Heartbeat stopped 2026-08-24 06:57Z -- clean
@@ -406,7 +406,7 @@ Full documents, both on disk and both dense:
   nothing else -- exactly the fields he proposed to keep. Dropping arguments
   deletes them from the machine. **Direction 4 (write them to `browserai.log`) is
   the version where his premise becomes true**, and it dissolves the injection
-  channel rather than moving it, because nothing in `src/` reads that file back.
+  channel instead of moving it, because nothing in `src/` reads that file back.
 - **His Q2 instinct is RIGHT and `DECISIONS.md` is overstated.** *"Every session
   directory would acquire a new identity"* is **not true** -- `Key` is
   upper-cased before hashing, so an unaliased path keeps its exact identity.
@@ -472,8 +472,8 @@ Hazard tally, predicate quoted: *"0 rows are `open` and carry `-` ... 38 are
 
 ## ⚠️ A deviation from my brief, and I judge it correct
 
-I told the agent to **stop and report** if `ICommandLineOptions` was unreachable
-rather than fall back to the command line. It established unreachability properly
+I told the agent to **stop and report** if `ICommandLineOptions` was unreachable,
+and not to fall back to the command line. It established unreachability properly
 (decompiled TUnit 1.65.0 / MTP 2.3.3 -- the service is never registered in the
 dictionary its own `GetService` reads) and then **did not stop**: it found a
 different seam, the filter the framework *actually applied*, off the execution
@@ -636,7 +636,7 @@ entry, not a new 22-second stall. **Do not repeat the stronger claim.**
 (`BrowserProvisioner`) does not go through `SessionPath` at all.
 
 **Five open decisions in it.** Holding presentation until the record-shape design
-is back, so he gets ONE coherent set rather than two overlapping ones.
+is back, so he gets ONE coherent set, not two overlapping ones.
 
 ## Record-shape design BACK -- `.work/design-record-shape.md`
 
@@ -721,7 +721,7 @@ blocks the handshake until a 180 s timeout.
 
 # RUNNING -- bookkeeping, dispatched ~23:20
 
-Three items, taken **by precedent** rather than asked, because he already chose
+Three items, taken **by precedent** without asking, because he already chose
 three rows when this exact question was put to him:
 1. **Register the narrow re-review** under `docs/reviews/` + seal it in
    `AppendOnlyRecordTests` + eleven fixed / two held rows in the status table.
@@ -1441,7 +1441,7 @@ length under the hybrid.
 - **`session.json` already sits at the session root**, so *"one file"* is a
   property of **the record**, not the directory.
 - **The model-readability argument expires with decision 10** (paged `catch_up`
-  deletes the *"go read the file"* pointer). The agent said so rather than
+  deletes the *"go read the file"* pointer). The agent said so instead of
   leaning on it.
 
 # DRIFT CHECK RUN 2026-08-25 -- NO DRIFT, all five resolved
@@ -1489,7 +1489,7 @@ research -- any candidate must be judged against all six, not against the phrase
 6. able to **name the holder** (pid + process creation time) so a reclaim cannot
    name a stranger
 
-Alternatives also under test, judged against this tree's constraints rather than
+Alternatives also under test, judged against this tree's constraints and not
 in the abstract: **LiteDB** (pure C#, would sidestep the native DLL -- but its
 reflection/AOT story must be established), **LMDB**, **RocksDB/LevelDB**,
 **ESENT/ManagedEsent** (already in Windows).
@@ -1530,7 +1530,7 @@ during a live session is a copy of the state at `init`.
 ## ⚠️ THE FINDING THAT DECIDES IT -- property 3 is violated on a schedule TODAY
 
 **`Rewrite` closes the ownership handle on EVERY forwarded browser call.** That
-*is* the hazard, and the 2026-08-24 fix **compensated one reader rather than
+*is* the hazard, and the 2026-08-24 fix **compensated one reader instead of
 closing the window**. **The hybrid is the only direction that removes it**, by
 making the guard and the write path independent -- the separation every database
 gets wrong. Stronger argument for the hybrid than anything given before.
@@ -1636,7 +1636,7 @@ session.json (rec: yes) · Q118 payloads failures-only (rec: yes).
   **Answers established this session:** the error is NOT typed -- measured, it is
   a tool result with `isError: true` and prose (`### Error\n...`), no JSON-RPC
   code. The anchor is the literal **`install-browser`** -- upstream's own CLI
-  subcommand name, an identifier rather than prose, which is why it was chosen
+  subcommand name, an identifier and not prose, which is why it was chosen
   (a reworded sentence breaks silently; a renamed subcommand is a breaking
   change upstream must announce). **Robustness plan: (1) keep the identifier
   anchor + isError gate; (2) a REAL-CHILD CANARY TEST that provokes the actual
@@ -1703,7 +1703,7 @@ Mechanics:
 - **Fable does NOT:** research, file edits in the tree, test runs, builds,
   sweeps, reviews -- all delegated, all on Opus.
 - One in-flight exception noted to him: the Q121 research agent predates the
-  rule and runs on Fable; letting it finish rather than discarding its spend.
+  rule and runs on Fable; letting it finish instead of discarding its spend.
 
 ## Q121 RESEARCH BACK -- `.work/research-sqlite-static-aot.md`. ALL QUESTIONS ANSWERED.
 
@@ -1901,7 +1901,7 @@ LEADS: 1 download VERIFIED lands+stays flat (downloads scratch GUID emptied afte
 
 DO-NOT-TOUCH (verified sound): lock six properties all interleavings constructed; in-flight survives SIGKILL ("no answer was recorded"); byte-identity coverage; deny-by-default door with real unjudged name; env allowlist by construction; flat output + roll-up refresh on destroy; UNC refusal <=1 ms every door; SessionIndex hash-key check.
 
-STATE CORRECTION (mine, per finding 7): the P5 entry above records "Unestablished unexercised (honest -- unreachable without Create failing too)" -- the reviewer measured it REACHABLE at >=65 ancestor levels with a successful create. Corrected here rather than edited in place.
+STATE CORRECTION (mine, per finding 7): the P5 entry above records "Unestablished unexercised (honest -- unreachable without Create failing too)" -- the reviewer measured it REACHABLE at >=65 ancestor levels with a successful create. Corrected here, not edited in place.
 
 FIX-WRITER DISPATCHED (one Opus writer): findings 2-8, 10-16 + 1(a) claim correction + 17(a) answer-rows build-time assertion; 1(b)/9/17(b) held for maintainer, foldable mid-batch via SendMessage; then MOVE+REGISTER+SEAL review under docs/reviews/ (zero-links verified, body final before seal, outcomes in status table); counts predicate-quoted; HALT-A carried; gate 1+1; commit+push. Heartbeat armed.
 
@@ -2013,7 +2013,7 @@ Q146 writer (sole): (b) spawn-record lines carry owner (pid, creation FILETIME);
 
 ## 2026-08-29 ~15:15 -- Q146 LANDED (90aa0a8); Q147 POSED; Q145 DELETION WRITER DISPATCHED
 
-Q146 (32 min): rows now <pid>@<ct> <ownerPid>@<ownerCt>; reclaim kills only when owner is not-this-process AND dead by pid+FILETIME. OWNER = the process that started the child and holds its job object (NOT "the run") -- each of a runs hosts judged independently; stronger than a run token; an identity can be asked if it is alive, a GUID cannot. LOAD-BEARING EXTRAS: spared rows REWRITTEN BACK verbatim (TryRewrite -- blanking would destroy the recovery while sparing the process); unreadable pre-owner rows reported+dropped never acted on; Add refuses to write if own creation time unreadable. (d): WARN per termination via the product ProcessLog stack (subject identity, gone owner, record path, exit const), silent on no-op. Reds 1/2/3a/3b watched (victims = session-hold-gate probes). 8a caveat now moot rather than lucky. Gate 644/0/0 both shells; healthy self-observation: each half announced exactly 3 terminations, all from the new tests own scratch records, none from the real spawn-record. HAZARDS row arrived CLOSED w/ evidence (147 closed; interlock named as reopener). Commit 90aa0a8 (two-half-false ScratchDirectory claim corrected whole); pushed; verified, CLEAN. Residuals named: @0 branch by construction; rewrite/append race named-not-measured ((c) would close); concurrent runs still undefined otherwise.
+Q146 (32 min): rows now <pid>@<ct> <ownerPid>@<ownerCt>; reclaim kills only when owner is not-this-process AND dead by pid+FILETIME. OWNER = the process that started the child and holds its job object (NOT "the run") -- each of a runs hosts judged independently; stronger than a run token; an identity can be asked if it is alive, a GUID cannot. LOAD-BEARING EXTRAS: spared rows REWRITTEN BACK verbatim (TryRewrite -- blanking would destroy the recovery while sparing the process); unreadable pre-owner rows reported+dropped never acted on; Add refuses to write if own creation time unreadable. (d): WARN per termination via the product ProcessLog stack (subject identity, gone owner, record path, exit const), silent on no-op. Reds 1/2/3a/3b watched (victims = session-hold-gate probes). 8a caveat now moot, not lucky. Gate 644/0/0 both shells; healthy self-observation: each half announced exactly 3 terminations, all from the new tests own scratch records, none from the real spawn-record. HAZARDS row arrived CLOSED w/ evidence (147 closed; interlock named as reopener). Commit 90aa0a8 (two-half-false ScratchDirectory claim corrected whole); pushed; verified, CLEAN. Residuals named: @0 branch by construction; rewrite/append race named-not-measured ((c) would close); concurrent runs still undefined otherwise.
 
 Q147 POSED (Q146 tangential): ProcessLogRecords.ForPid matches "pid={id}@" -- pid alone, FILETIME after @ never compared; demonstrated live: pid 76376 read back records written 2026-08-24 by a stranger wearing that number; log machine-wide, 30-day retention. Its own comment says a bare pid does not identify a writer. Directions TBD when posed formally -- writer suggested "worth its own decision".
 
@@ -2118,7 +2118,7 @@ named, the input count and the signed margin.
 
 ONE COMPARISON, NOT TWO: `Measure()` walks the inputs once; `RefusalFor` renders
 it as `EnsureFresh`'s exception, `RowFor` as the row. The tie is ASSERTED LIVE in
-both directions (`refused == Verdict is not Fresh`) rather than left to the
+both directions (`refused == Verdict is not Fresh`) and not left to the
 construction -- the corpus lesson.
 
 FOUR REDS WATCHED (`.work/2026-08-30-q160/plant-red-{1,2,3,4}.log`): row absent
@@ -2154,7 +2154,7 @@ blind spot, a test closes it. Drift check: `lastChecked` already 2026-08-30, ski
 Machine quiet throughout: zero `firefox.exe`, zero FrameLink, zero testhost between
 the halves -- verified by path, positive control = the run's own 16 procs.
 
-COULD NOT CHECK, said here rather than implied: no run tonight had a genuinely
+COULD NOT CHECK, said here and not implied: no run tonight had a genuinely
 stale or absent publish, so the `STALE` and `NOT ESTABLISHED` rows have been
 exercised only from synthetic readings and have no live reading yet.
 
@@ -2345,7 +2345,7 @@ Q179 (SELF-ANSWERED under the release order, open for review): BrowserAI.app-win
 
 ## 2026-09-15 ~12:35 -- TWO STRAY BACKGROUND SHELLS FOUND AND STOPPED (finding)
 
-The stall-guard registry showed two shells still registered after all agents had reported: (1) the upstream-review writers artifact listing of .work/2026-09-14-webp-ask (an ls|head pipeline); (2) the 0.0.81 review writers anchor re-check -- "python - <<EOF EOF" with an EMPTY heredoc followed by a cat-heredoc + python run -- a shape that can sit on stdin. Both owners had completed hours earlier; neither result was needed; both TaskStopped. The heartbeats bg= read 0 throughout -- its count pairs launch receipts against completion records and these evidently escaped that pairing, so "instrument-confirmed empty" was true of the instrument and false of the registry. Lesson for the ledger: on a stall-guard listing, stop strays by id rather than trusting bg=0. CHAIN still BLOCKED on Q176-Q178; Q180 non-blocking; Q179 self-answered (portable zip renamed in the release batch).
+The stall-guard registry showed two shells still registered after all agents had reported: (1) the upstream-review writers artifact listing of .work/2026-09-14-webp-ask (an ls|head pipeline); (2) the 0.0.81 review writers anchor re-check -- "python - <<EOF EOF" with an EMPTY heredoc followed by a cat-heredoc + python run -- a shape that can sit on stdin. Both owners had completed hours earlier; neither result was needed; both TaskStopped. The heartbeats bg= read 0 throughout -- its count pairs launch receipts against completion records and these evidently escaped that pairing, so "instrument-confirmed empty" was true of the instrument and false of the registry. Lesson for the ledger: on a stall-guard listing, stop strays by id instead of trusting bg=0. CHAIN still BLOCKED on Q176-Q178; Q180 non-blocking; Q179 self-answered (portable zip renamed in the release batch).
 
 ## 2026-09-15 ~13:00 -- HE IS BACK. Q176=b, Q177=a, Q178=a, Q180=a, Q179=friendly names ("BrowserAI.zip or BrowserAI.exe, etc."). R-A DISPATCHED.
 
@@ -2361,7 +2361,7 @@ Test-ReleaseVersion.ps1: only candidate -lt highest is a rollback (needs -Rollba
 
 ## 2026-09-15 ~13:50 -- BATCH R-A LANDED (00b3c90 + 85c35af + 801e02c on master, pushed); Q176-Q180 ALL IN; TREE READY FOR R-B
 
-R-A (sole writer, ~80 min). **A. MERGE**: `master` 892de73 -> `review/playwright-0.0.81` clean, NO textual conflict and no semantic one -- the two sides overlap only in `README.md` and `kb/re-verification.md` and only positionally (review moved bundle figures + rows 11/12/17; batch moved install path, test count, marker/row anchor 230/123 -> 231/124 + row 124). **B. RE-RESOLVE**: `Build-Payload.ps1` 12 s, npm `latest` STILL 0.0.81 / playwright-core 1.64.0-alpha-2026-09-14, node v24.21.0, lock byte-identical (git porcelain empty after), MCP SDK 2.2.0 + Velopack 1.2.0 re-read from nuget stable -- **NO DELTA, no STOP list**. **C. DECISIONS**: Q176b (`browser_webmcp_call` deny w/ his why verbatim + `since` 2026-09-15; `browser_webmcp_list` allow; `judgedAgainst` -> 0.0.81/1.64.0-alpha-2026-09-14), Q177a (`timeouts.idle` = 3,600,000 written explicitly + `RequiredSessionOpinions` entry + doc comment saying it cannot fire behind our 10-min timer), Q178a (imageResponses stays `allow`, `only` declined in the record), Q180a (`InstallRootScope.Judge(dataRoot, installRoot)` + `JudgedRoot` enum; refusal names BOTH roots and the lever that moves the one at fault; data root judged first), Q179 (`BrowserAI.exe` + `BrowserAI.zip`, `$defaultChannel` suffix rule so a non-default channel keeps its name, `assets.win.json` rewritten for both, manifest dir + nupkgs + releases.win.json untouched, `ReleaseLayout` reads the rule out of the script). **REDS**: one inverted run, 12 failures incl. all four behaviour arms; 2 more found+fixed after gate #1 (refusal assertion compared raw `why` vs the catalogue's composed sentence; fragment count). **HARNESS**: `RepositoryVerdicts.TheOneDenial` (a `Single` that threw on a 2nd row) -> `TheDenials` + `ADenial` (oldest `since`, not file order) + `Count`; mechanism arms now loop every denial. **COUNTS, all re-measured**: tests 671 -> 675; surface 70/71 -> 71/73 (denominator +2, numerator +1 -- pair judged in opposite directions); withheld 1 -> 2; `SessionPolicyTests.Advertises` 70 -> 71 + new `Withholds` = 2; `VerticalSliceTests` +70 -> +71; `ModelSurfaceTests` base 60 -> 61; fragments 882 (dipped to 881 when a README link went, link restored); HAZARDS tally re-counted through the parser 46/147 -> **45 open / 148 closed**, 0 open-with-dash unchanged; row 269 CLOSED by mechanism. **D. ADJUDICATIONS** appended to `upstream-review.json` notes (one line changed, formatting preserved) + `drift-check.json` `result` closed by replacement. Rows 21/34/38/85 left OWED and said so. **E. GATE**: 675/0/2 both shells, FULL RUN, `C:` + `c:` declared and taken. HALT-A live twice: 388 then 381 lines, 0 complaints, 0 W / 0 E, positive control 4/4 planted shapes and correctly NOT matching the csc `/nowarn:` suppression list. **FOUND**: `git checkout master` + ff rewrote 35 files' mtimes and made the slice STALE with no source change -- 32 slice arms refused; re-published rather than reasoned around. master == origin/master == branch == 801e02c, tree clean.
+R-A (sole writer, ~80 min). **A. MERGE**: `master` 892de73 -> `review/playwright-0.0.81` clean, NO textual conflict and no semantic one -- the two sides overlap only in `README.md` and `kb/re-verification.md` and only positionally (review moved bundle figures + rows 11/12/17; batch moved install path, test count, marker/row anchor 230/123 -> 231/124 + row 124). **B. RE-RESOLVE**: `Build-Payload.ps1` 12 s, npm `latest` STILL 0.0.81 / playwright-core 1.64.0-alpha-2026-09-14, node v24.21.0, lock byte-identical (git porcelain empty after), MCP SDK 2.2.0 + Velopack 1.2.0 re-read from nuget stable -- **NO DELTA, no STOP list**. **C. DECISIONS**: Q176b (`browser_webmcp_call` deny w/ his why verbatim + `since` 2026-09-15; `browser_webmcp_list` allow; `judgedAgainst` -> 0.0.81/1.64.0-alpha-2026-09-14), Q177a (`timeouts.idle` = 3,600,000 written explicitly + `RequiredSessionOpinions` entry + doc comment saying it cannot fire behind our 10-min timer), Q178a (imageResponses stays `allow`, `only` declined in the record), Q180a (`InstallRootScope.Judge(dataRoot, installRoot)` + `JudgedRoot` enum; refusal names BOTH roots and the lever that moves the one at fault; data root judged first), Q179 (`BrowserAI.exe` + `BrowserAI.zip`, `$defaultChannel` suffix rule so a non-default channel keeps its name, `assets.win.json` rewritten for both, manifest dir + nupkgs + releases.win.json untouched, `ReleaseLayout` reads the rule out of the script). **REDS**: one inverted run, 12 failures incl. all four behaviour arms; 2 more found+fixed after gate #1 (refusal assertion compared raw `why` vs the catalogue's composed sentence; fragment count). **HARNESS**: `RepositoryVerdicts.TheOneDenial` (a `Single` that threw on a 2nd row) -> `TheDenials` + `ADenial` (oldest `since`, not file order) + `Count`; mechanism arms now loop every denial. **COUNTS, all re-measured**: tests 671 -> 675; surface 70/71 -> 71/73 (denominator +2, numerator +1 -- pair judged in opposite directions); withheld 1 -> 2; `SessionPolicyTests.Advertises` 70 -> 71 + new `Withholds` = 2; `VerticalSliceTests` +70 -> +71; `ModelSurfaceTests` base 60 -> 61; fragments 882 (dipped to 881 when a README link went, link restored); HAZARDS tally re-counted through the parser 46/147 -> **45 open / 148 closed**, 0 open-with-dash unchanged; row 269 CLOSED by mechanism. **D. ADJUDICATIONS** appended to `upstream-review.json` notes (one line changed, formatting preserved) + `drift-check.json` `result` closed by replacement. Rows 21/34/38/85 left OWED and said so. **E. GATE**: 675/0/2 both shells, FULL RUN, `C:` + `c:` declared and taken. HALT-A live twice: 388 then 381 lines, 0 complaints, 0 W / 0 E, positive control 4/4 planted shapes and correctly NOT matching the csc `/nowarn:` suppression list. **FOUND**: `git checkout master` + ff rewrote 35 files' mtimes and made the slice STALE with no source change -- 32 slice arms refused; re-published, not reasoned around. master == origin/master == branch == 801e02c, tree clean.
 
 FOR R-B: `Releases/` still holds the OLD-layout artifacts (`BrowserAI-win-Setup.exe`, `BrowserAI-win-Portable.zip`, 0.1.x nupkgs) beside what the new pack will write -- publish only `BrowserAI.exe`, `BrowserAI.zip`, the `BrowserAI.app-<v>-full.nupkg` and `releases.win.json`. The two pack arms skip until that pack exists and FAIL under `BROWSERAI_RELEASE_RUN=1`, which is why RELEASING item 8 says pack first. `BrowserAI.exe` now names two different files (the ~53.5 MB installer download and the ~17.9 MB installed binary) -- disambiguated in kb/packaging/velopack.md. A checkout/merge before a gate re-stales the slice: publish AFTER any branch switch.
 
@@ -2559,7 +2559,7 @@ R-G DISPATCHED (opus, writer): fixes for 3,4,5,6,7 (+9 lower items), the two new
 
 MAINTAINER (verbatim): "q196 Go for icon number 03. Put it on the github main page as well. / q197 b / q198 move everything that if referenced, is of value and needs to be persisted under source control. The work dir is supposed to be ephemeral. This is a large scan. Then when you are sure there is nothing in there anymore delete it all. Make sure there is no work in flight (like the icons) before you do so."
 
-PLAN: Q196: candidate 03 (globe with a reading eye) -> Make-Ico.ps1 -Candidate 3 -> assets/BrowserAI.ico; persist the SVG master as assets/icon.svg + assets/icon-256.png; README header image ("github main page" = the repo landing page = README); prepare assets/social-preview.png 1280x640 for the repo Social preview setting (UI-only upload -> the maintainer does that; tell him how). Q197 = b: every entry line = "- <icon> **headline** [read more](https://github.com/SixFive7/BrowserAI/blob/v<version>/CHANGELOG.md?plain=1#L<first>-L<last>)" -- line numbers from the CHANGELOG at the tagged commit (generation happens at HEAD == tag, clean tree -- assert it); the <details> fold is DROPPED (one shape for every release); the size guard stays as a pathological fallback; tests planted red (link present, line range correct against a fixture, no fold). Q198 = the .work persistence scan AFTER the release and after nothing is in flight: grep the tracked tree (kb/, docs/, HAZARDS, RELEASING, TESTING, tests, build) for every `.work/` reference; each referenced artifact of value (probe scripts cited by kb re-establishment procedures, evidence logs/CSVs cited by hazard rows, the icons, the install evidence, the ledger .work/STATE.md itself as the session record) moves under source control (build/probes/, docs/evidence/<date>/, docs/ledger/) with the reference rewritten; ephemeral references rewritten to describe rather than link; then verify no reference remains (positive control), then delete .work ENTIRELY + the GARBAGE list (208.6 MiB); .gitignore keeps .work/ for future ephemeral use. The ledger stays in .work until that final step (it is in flight all session).
+PLAN: Q196: candidate 03 (globe with a reading eye) -> Make-Ico.ps1 -Candidate 3 -> assets/BrowserAI.ico; persist the SVG master as assets/icon.svg + assets/icon-256.png; README header image ("github main page" = the repo landing page = README); prepare assets/social-preview.png 1280x640 for the repo Social preview setting (UI-only upload -> the maintainer does that; tell him how). Q197 = b: every entry line = "- <icon> **headline** [read more](https://github.com/SixFive7/BrowserAI/blob/v<version>/CHANGELOG.md?plain=1#L<first>-L<last>)" -- line numbers from the CHANGELOG at the tagged commit (generation happens at HEAD == tag, clean tree -- assert it); the <details> fold is DROPPED (one shape for every release); the size guard stays as a pathological fallback; tests planted red (link present, line range correct against a fixture, no fold). Q198 = the .work persistence scan AFTER the release and after nothing is in flight: grep the tracked tree (kb/, docs/, HAZARDS, RELEASING, TESTING, tests, build) for every `.work/` reference; each referenced artifact of value (probe scripts cited by kb re-establishment procedures, evidence logs/CSVs cited by hazard rows, the icons, the install evidence, the ledger .work/STATE.md itself as the session record) moves under source control (build/probes/, docs/evidence/<date>/, docs/ledger/) with the reference rewritten; ephemeral references rewritten to describe instead of link; then verify no reference remains (positive control), then delete .work ENTIRELY + the GARBAGE list (208.6 MiB); .gitignore keeps .work/ for future ephemeral use. The ledger stays in .work until that final step (it is in flight all session).
 
 SEQUENCE: R-G (running) -> R-H1 writer: icon 03 + README image + social preview + generator b + two-shell gate -> R-H2 release chain: clear Releases/ (4 files), six-run gate, date + merge [Unreleased] into 1.0.0 + re-seal in ONE commit, tag follows, pack (two publishes, HALT-A x2), replace v1.0.0 (assets + b body), feed poll until fresh, reinstall on his machine via the real installer (dialog visible, no console, Start Menu entry + icon 03, registration -> BrowserAI.Server.exe), one session driven -> R-I persistence scan + wipe + garbage sweep -> re-verification rows 21/34/38/85 remain owed (not blockers).
 
@@ -2591,7 +2591,7 @@ R-I CLEANUP DISPATCHED (opus, writer): phase 1 read-only reference scan of every
 
 R-I RESULT: reference scan with a 5-spelling positive control: 147 hits before -> 814 after (700 inside persisted records); hand-written 114 = (a) 29 rewrites across 9 docs, 2 product files, 5 test files (probes -> docs/probes/<date>-<name>/, evidence -> docs/evidence/<date>-<batch>/) / (b) 40 sealed mentions left, two reviews gained addenda / (c) 4 amended by addition (check-anchors.py; two gate logs; five 2026-08-30 gate logs gone) / (d) 74 live scratch destinations or prose. Persisted beyond references: ten icon candidates -> docs/design/icon-candidates/ (candidate 3 / Q196 named + licensing); install evidence + before-* -> docs/evidence/2026-09-15-install/; candidates.csv -> docs/evidence/2026-09-16-garbage/. Tracked files 348 -> 638. LEDGER SNAPSHOT docs/ledger/2026-09-15-release-session.md at commit bc68db0 (secret-scanned with control; no e-mail). Cuts stated in place (main1.log 12 MB -> 53 lines with 5 lines cut at 4,000 chars; results.json; packfeed binaries -> inventory CSV with sizes+SHA; webp rasters by size; the 54.7 MB release exe; two U+0007 written as \u0007). DEVIATION: rigs under docs/probes/ NOT build/probes/ -- six of eleven trip NeverByImageNameTests (Get-Process, Win32_Process, a GetProcessesByName in observe.ps1) though every use is by pid/parent pid: they satisfy the RULE and fail the substring SCAN, which refuses an exclusion list on purpose; docs/ is the boundary the scan draws (SourceAndScriptFiles = src/tests/build); docs/probes/README.md names the six and says it is not a hiding place => Q203. WIPE: .work 57,490 files / 18,379 dirs / 10,046,013,345 B -> removed 10,045,666,285 B zero failures; final listing .work/STATE.md only (suite recreated test-scratch/suite/first-run-cache during the gate, deleted again -> next run re-downloads 203.8 MB). MACHINE: 444 entries / 220,268,343 B: ms-playwright-mcp 173.6 MB (1,881 files), ms-playwright\b 45.8 MB (27,560 files), two velopack logs, BrowserAI-test-scratch, 436 + 2 empty temp dirs, %TEMP%\velopack; three rows had grown since the inventory (README records deletion-time sizes); nothing ASK/KEEP touched. Six named dead instance dirs were ALREADY GONE; twelve new dead ones (mostly its own runs) left by brief bound; now six (the suite sweeps its own). ROW 66 RE-CHECK HELD: ms-playwright-mcp ABSENT after four browser-touching runs (recorded by addition). GATE: four full runs 741/0/0, final pair UPPER 2m28s + LOWER 2m18s, FULL RUN, FRESH, PRESENT; clearance identical x7 (claude mcp get 647FA6BF... names BrowserAI.Server.exe; BrowserAI.lnk F99795CD...). Red-firsts: Rig.cs flag constant (the one-needle CreateNoWindow scan cannot see the Win32 spelling); DocumentationLinkTests resolving a quoted record from the root. Fragments 960 (was 931). ms-playwright\b back to 132 files after four runs (leak continues; TODO). COMMITS bc68db0 bfff593 89a7e28 6aa1ac4.
 
-Q203 POSED: the probe rigs vs NeverByImageNameTests: a) keep the rigs under docs/probes/ (outside the scan boundary), README names the six and why (current state) / b) teach the scan to read a FILTER rather than an API -- flag `Get-Process -Id`/`-Name`, `Win32_Process` with a Name= clause, `GetProcessesByName` as violations, allow pid/parent-pid forms -- and move the rigs to build/probes/ (REC: the rule is about the predicate, and a scan that cannot tell pid from name refuses correct code) / c) exclusion list (the scan refuses one on purpose -- no). Q200/Q201/Q202 STILL OPEN (recs a/a/a).
+Q203 POSED: the probe rigs vs NeverByImageNameTests: a) keep the rigs under docs/probes/ (outside the scan boundary), README names the six and why (current state) / b) teach the scan to read a FILTER and not an API -- flag `Get-Process -Id`/`-Name`, `Win32_Process` with a Name= clause, `GetProcessesByName` as violations, allow pid/parent-pid forms -- and move the rigs to build/probes/ (REC: the rule is about the predicate, and a scan that cannot tell pid from name refuses correct code) / c) exclusion list (the scan refuses one on purpose -- no). Q200/Q201/Q202 STILL OPEN (recs a/a/a).
 
 DISPATCHED (opus writer): re-verification rows 21/34/38/85 -- re-establish against chromium-1244 / firefox-1544 / webkit-2361 per each row's own procedure; record Verified/Corrected with dates; two-shell gate; the only writer. Live ledger stays in .work/STATE.md until session end; then a final writer appends the tail into docs/ledger/ and empties .work.
 
@@ -2733,7 +2733,7 @@ MAINTAINER (verbatim): "Ok, let's keep the sandbox like it is today and have onl
 
 R-S RESULT: S1 drift 2026-09-21: @playwright/mcp latest = 0.0.82 (2026-09-18T23:38Z) declaring playwright-core AND playwright at 1.64.0-alpha-1789764292000 (13-digit epoch-ms alpha = 2026-09-18T20:44:52Z, published 20:49:55Z; an out-of-band build -- the daily dated alphas continue 09-18/19/20/21); its coreBundle.js carries file-paths 3 / filePaths 8 (identical to the override bundle; 0/2 in 09-14 as the negative control) => IN SUBSTANCE THE WRAPPER HAS PASSED THE OVERRIDE; but both exit instruments (PayloadTests.Orderable, Build-Payload.ps1 Split-Version) share ^(\d+)\.(\d+)\.(\d+)(?:-alpha-(\d{4}-\d{2}-\d{2}))?$ and REFUSE the epoch shape => on a rebuild Build-Payload throws before assembling and TheDatedPlaywrightCoreOverrideIsStillNeeded goes red with FormatException ("adjudicate by hand") -- both green today on the committed lock (0.0.81). Adopting 0.0.82 moves chromium 1245->1246 (same 154.0.8037.0), firefox 1548->1549 with browserVersion 155.0->156.0, webkit 2361->2365; ffmpeg/winldd unmoved. Other upstreams unmoved; SQLite identical. S2 DECISIONS §2 worked example corrected by addition (0.0.79 chain kept as a record of one day + today's chain from the lock and browsers.json); no other site prints the era chain as current (positive control); NEW ARM PayloadTests.TheWorkedExampleStatesTheChainTheCommittedRecordsState (four numbers held to the lock + snapshot; red three ways; BrowserAiPaths.BrowserVersionOf added). GATE 766/0/0 both halves; clearance identical x3; fragments 1041. COMMITS b3f68d2 1255ee0. Left: .work/2026-09-21-social/ (the social-preview screenshot; another agent's) -- session-end wipe; first-run-cache deleted (next run re-downloads ~200 MB).
 
-DECISION (mine, under his standing instruction "when #42497 enters a release, remove our pin"): the condition has arrived in substance -> R-U = the UPSTREAM-REVIEW of 0.0.82 end to end, deleting the override (and retiring the exit test -- its job is done) rather than widening the version ordering (direction 3 rejected: the refusal behaved as designed); rows 21/34/38/85 re-measured at 1246/1549/2365 in the same batch or marked owed; the standing TODO watch item closed. Flagged to him; proceeds after R-T unless he objects. R-T DISPATCHED now (instructions: deletion responsibility, upload roots, destroy takes artifacts, move by hand; budget-aware; DECISIONS: move/copy tools + read-root widening considered and deferred).
+DECISION (mine, under his standing instruction "when #42497 enters a release, remove our pin"): the condition has arrived in substance -> R-U = the UPSTREAM-REVIEW of 0.0.82 end to end, deleting the override (and retiring the exit test -- its job is done) instead of widening the version ordering (direction 3 rejected: the refusal behaved as designed); rows 21/34/38/85 re-measured at 1246/1549/2365 in the same batch or marked owed; the standing TODO watch item closed. Flagged to him; proceeds after R-T unless he objects. R-T DISPATCHED now (instructions: deletion responsibility, upload roots, destroy takes artifacts, move by hand; budget-aware; DECISIONS: move/copy tools + read-root widening considered and deferred).
 
 ## 2026-09-21 ~19:40 -- R-T COMPLETE AND PUSHED (96ae06f). GATE 770/0/0. INSTRUCTIONS AT 2,026 OF 2,048 (98%%). R-U (THE 0.0.82 REVIEW = PIN REMOVAL) DISPATCHED.
 
