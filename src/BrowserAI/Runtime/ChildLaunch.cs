@@ -56,10 +56,10 @@ internal static class ChildLaunch
     /// this flag, <c>--no-sandbox</c> is absent from the browser and from every
     /// one of its children. <b>The flag stays on the command line and the
     /// generator still omits the key</b> -- the sandbox now rests on an explicit
-    /// argument <i>and</i> on upstream's default agreeing with it, rather than
+    /// argument <i>and</i> on upstream's default agreeing with it, and not
     /// on the default alone. Moving it into the config file would make this
     /// product's security posture depend on a default that has just been
-    /// measured to move, which is a decision rather than a tidy-up and has not
+    /// measured to move, which is a decision and not a tidy-up and has not
     /// been taken.
     /// </para>
     /// <para>
@@ -73,7 +73,7 @@ internal static class ChildLaunch
 
     /// <summary>
     /// The environment variable that points the child at the browsers BrowserAI
-    /// provisioned rather than at Playwright's own per-user cache.
+    /// provisioned and not at Playwright's own per-user cache.
     /// </summary>
     public const string BrowsersPathVariable = "PLAYWRIGHT_BROWSERS_PATH";
 
@@ -131,7 +131,7 @@ internal static class ChildLaunch
         // dialog on the Windows desktop and blocks against Playwright's
         // three-minute launch timeout, with nothing on stderr and nothing in the
         // protocol. Refusing here is the difference between an answer and an
-        // invisible hang, and it is HERE rather than in the session layer because
+        // invisible hang, and it is HERE and not in the session layer because
         // this function is the one route to a child: a later step that adds a
         // second caller inherits the guard instead of having to remember it.
         if (FirefoxProfileLockedException.For(config) is { } collision)
@@ -154,7 +154,7 @@ internal static class ChildLaunch
                 SandboxFlag,
 
                 // --caps is deliberately absent and must stay absent: it
-                // REPLACES the config file's capability list rather than
+                // REPLACES the config file's capability list instead of
                 // merging with it, so passing it here would silently wipe the
                 // capabilities the generator just wrote.
             ],

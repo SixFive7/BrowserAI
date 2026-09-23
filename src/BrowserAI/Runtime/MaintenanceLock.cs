@@ -25,7 +25,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>Windows file sharing modes give reader/writer directly, and that is why
-/// this is a file rather than anything else.</b> An open is refused when the
+/// this is a file and not anything else.</b> An open is refused when the
 /// requested <i>access</i> is outside an existing handle's share mode, <b>or</b>
 /// when the requested <i>share mode</i> is narrower than an existing handle's
 /// granted access -- the check runs in both directions, which is exactly what a
@@ -49,8 +49,8 @@ namespace BrowserAI.Runtime;
 ///   </description></item>
 /// </list>
 /// <para>
-/// ⚠️ <b>The writer shares <c>Read</c> rather than nothing, and the difference
-/// is a sentence rather than a lock.</b> With <c>FileShare.None</c> the
+/// ⚠️ <b>The writer shares <c>Read</c> and not nothing, and the difference
+/// is a sentence, not a lock.</b> With <c>FileShare.None</c> the
 /// exclusion is identical -- the arithmetic above never reaches the writer's own
 /// share mode -- but <b>nothing could read the record</b>, so a peer refused by
 /// a reinstall could not say whose reinstall, and could not quote how far in it
@@ -74,7 +74,7 @@ namespace BrowserAI.Runtime;
 /// <b>Held-ness is a sharing violation and never the file's existence</b>, which
 /// is the same rule <c>SessionLock</c> follows for <c>browserai.lock</c> and for
 /// the same reason: a crashed holder leaves the file behind, so existence would
-/// mean <i>somebody died here once</i> rather than <i>somebody is working
+/// mean <i>somebody died here once</i> and not <i>somebody is working
 /// now</i>.
 /// </para>
 /// <para>

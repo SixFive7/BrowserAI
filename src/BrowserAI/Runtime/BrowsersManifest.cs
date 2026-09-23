@@ -42,7 +42,7 @@ internal sealed class BrowsersManifest
 {
     /// <summary>
     /// The sentinel Playwright writes after a successful install, and the only
-    /// evidence that a browser directory is complete rather than partial.
+    /// evidence that a browser directory is complete and not partial.
     /// </summary>
     public const string InstallationCompleteMarker = "INSTALLATION_COMPLETE";
 
@@ -139,8 +139,8 @@ internal sealed record BrowserRevision(string Name, string Revision, string? Bro
     /// 2026-08-17 out of the resolved <c>playwright-core</c> bundle, with the
     /// comment beside it saying why -- <c>webkit</c> is a prefix of
     /// <c>webkit-technology-preview</c>, so a folder name that kept its dashes
-    /// would make an older registry delete the wrong tree. Matching on this rather
-    /// than on the bare name is what stops <see cref="RevisionPrune"/> inheriting
+    /// would make an older registry delete the wrong tree. Matching on this and
+    /// not on the bare name is what stops <see cref="RevisionPrune"/> inheriting
     /// that bug.
     /// </remarks>
     public string DirectoryPrefix => Name.Replace('-', '_') + "-";
