@@ -340,7 +340,16 @@ through the `IRegistrationCommand` seam instead.
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --
-unusable as a CI gate without grepping stdout for `✘`. **The official MCP
+unusable as a CI gate without grepping stdout for `✘`. **Re-measured 2026-09-23 @
+Claude Code 2.1.281** against two synthetic user-scope servers, a command that does
+not exist and a node process that starts and never speaks MCP: both commands exit
+**0** while printing `✘ Failed to connect`, and every failure the client does
+report exits **1** -- a duplicate `add` and a nothing-to-remove `remove` are
+indistinguishable by code, which is why `McpClientRegistration` reads the English.
+⚠️ **Exit 0 also covers a broken CONFIG and not only a broken server**: a
+`.mcp.json` that is not valid JSON exits 0 printing `MCP config diagnostics ✘`.
+*This entry carried no client version until today, which is what the hazard row
+pointing at it said it owed.* `[FLOATS]` **The official MCP
 conformance suite is HTTP-only** (`--url`), so it needs a test-only listener or a
 small bridge to reach a stdio server. **The Inspector CLI cannot spawn `.cmd`
 shims on Windows** -- same root cause as

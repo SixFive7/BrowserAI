@@ -150,7 +150,13 @@ and reports nothing. Re-establish by listing both URLs. `[FLOATS]`
 
 **A single `node.exe` drives the full MCP protocol** -- no npm, no `node_modules`
 belonging to Node, no `.cmd` shims. Verified by execution. Node **v26 is Current
-and not LTS and its `node.exe` is 10 MB larger**. `[FLOATS]`
+and not LTS and its `node.exe` is 10.62 MiB larger** -- measured 2026-09-23:
+`nodejs.org/dist/index.json` gives v26.10.0 with `lts: false` and v24.21.0 as
+`Krypton`, and `node.exe` read out of each official win-x64 archive without
+extracting it is **104,714,056 B against 93,580,104 B**, a delta of 11,133,952 B.
+The payload's own `node.exe` is that second figure to the byte and reports
+v24.21.0. *Corrected 2026-09-23 (previously "its `node.exe` is 10 MB larger"),
+which named no date and no version pair.* `[FLOATS]`
 
 **The vendored JS tree contains zero native binaries** and is portable as-is.
 **It also declares no install script**: verified 2026-08-16 across the resolved

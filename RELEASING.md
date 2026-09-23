@@ -324,11 +324,27 @@ dotnet restore --force-evaluate     # resolve the float
 dotnet restore --locked-mode        # verify what it resolved
 ```
 
-With a lock file present and no `--force-evaluate`, NuGet **does not re-resolve**
-and the float is silently dead ([NU1512](https://learn.microsoft.com/nuget/reference/errors-and-warnings/nu1512);
-warned by default from the .NET 11 SDK). **A one-step locked build passes while
-resolving nothing** -- the `browserName: "chromium"` failure shape, applied to the
-build.
+
+With a lock file present and no `--force-evaluate`, NuGet **does not
+re-resolve** and the float is silently dead. **Measured 2026-09-23 @ SDK
+10.0.401 / NuGet 7.9.0-rc.42413**, against a local-only feed carrying 1.0.0
+and 1.1.0 of one package referenced with a bare float: `dotnet restore
+--locked-mode` exited 0 with **0 warnings and 0 errors**, left the lock and
+the assets file at 1.0.0, and said nothing about the 1.1.0 beside it;
+`--force-evaluate` then took 1.1.0. **A one-step locked build passes while
+resolving nothing** -- the `browserName: "chromium"` failure shape, applied
+to the build.
+*Corrected 2026-09-23 (previously this sentence cited
+[NU1512](https://learn.microsoft.com/nuget/reference/errors-and-warnings/nu1512)
+for it, and added "warned by default from the .NET 11 SDK").* NU1512
+describes the opposite arrangement -- both `RestoreLockedMode` and
+`RestoreForceEvaluate` set, where force-evaluate wins and says so -- and it
+is loud: it was reproduced here with `-p:SdkAnalysisLevel=11.0.100`, which
+is the control proving it is reachable on this SDK and simply does not fire
+in the one-step case. What locked mode is loud about is a lock that
+disagrees with the graph, `NU1004`, exit 1; a float that is never
+re-evaluated produces no disagreement for locked mode to be loud about,
+which is why this one is silent.
 
 The rest of the resolve:
 
