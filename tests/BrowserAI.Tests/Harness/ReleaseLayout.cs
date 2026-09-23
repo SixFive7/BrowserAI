@@ -347,6 +347,63 @@ internal static partial class ReleaseLayout
                     ? TestSetupExecutable
                     : $"{TestSetupExecutable} exists but {Path.GetFileName(TestFeedManifest)} names no package with the id '{TestPackId}', so it was packed under a different layout";
 
+    /// <summary>
+    /// The asset names the release script declares a release publishes, exactly
+    /// as they are written in it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Read out of the script for the same reason <see cref="PackId"/> is.</b>
+    /// The upload set was a judgement until 2026-09-23 — nothing named one, so
+    /// whoever ran <c>gh release create</c> chose the assets by looking at
+    /// <c>Releases/</c>. A suite that typed the three names here would go on
+    /// agreeing with itself after somebody changed the script, which is the one
+    /// thing it must not do about a list whose whole job is to stop being a
+    /// judgement.
+    /// </para>
+    /// <para>
+    /// <b>The templates as written, not the files they resolve to.</b> The names
+    /// carry the script's own variables, so the caller expands them and can then
+    /// assert both halves separately: that the declaration is these three
+    /// templates, and that on the default channel they mean the installer, the
+    /// full package and the feed.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<string> UploadSet { get; } =
+        ReadUploadSet(File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "build", "New-Release.ps1")));
+
+    /// <summary>
+    /// The quoted names inside the script's <c>$uploadSet</c> declaration.
+    /// </summary>
+    /// <remarks>
+    /// A pure function over the text so that a doctored declaration can be
+    /// exercised without writing one into <c>build/</c>.
+    /// </remarks>
+    /// <param name="script">The release script's text.</param>
+    /// <returns>The declared names, in the order they are written.</returns>
+    /// <exception cref="InvalidOperationException">The declaration is not there in the shape this reads.</exception>
+    internal static List<string> ReadUploadSet(string script)
+    {
+        var block = UploadSetBlock().Match(script);
+
+        if (!block.Success)
+        {
+            throw new InvalidOperationException(
+                "build/New-Release.ps1 no longer declares $uploadSet as an @( ) list of double-quoted names, "
+                + "so the suite cannot read what a release publishes out of it — and an upload set nothing reads back is a judgement again.");
+        }
+
+        return [.. QuotedName().Matches(block.Groups["body"].Value).Select(name => name.Groups["name"].Value)];
+    }
+
+    /// <summary>The declaration block, from <c>$uploadSet = @(</c> to the closing parenthesis in column one.</summary>
+    [GeneratedRegex(@"(?ms)^\$uploadSet\s*=\s*@\(\s*?$(?<body>.*?)^\)")]
+    private static partial Regex UploadSetBlock();
+
+    /// <summary>One double-quoted name.</summary>
+    [GeneratedRegex("\"(?<name>[^\"]+)\"")]
+    private static partial Regex QuotedName();
+
     private static string ReadVariable(string name)
     {
         var script = File.ReadAllText(Path.Combine(RepositoryLayout.Root.FullName, "build", "New-Release.ps1"));

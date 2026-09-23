@@ -1422,6 +1422,71 @@ things no copy of which ships.
 
 ## The decision
 
+### What a release publishes
+
+**Three assets: the installer, the full package, and `releases.<channel>.json`.**
+Nothing else on a release, ever, without a decision that says so here.
+
+**It is declared in `build/New-Release.ps1` and read rather than judged.** The
+script does not upload — [item 14](#14-a-human-decides) is a human running
+`gh release create` — so until 2026-09-23 the assets were whatever that person
+picked out of `Releases/`, and `v1.1.0` carried seven because `v1.0.0` had
+carried seven. **That is a judgement wearing the appearance of a procedure.** The
+script now declares `$uploadSet` once, refuses on a declared file that is not on
+disk, prints the `gh release create` line ready to run, and returns the paths as
+`Upload`. **Publish exactly that set.**
+`ReleaseScriptTests.TheUploadSetIsDeclaredOnceAndIsTheInstallerTheFullPackageAndTheFeed`
+holds what is in it and
+`.NothingElseInTheReleaseDirectoryIsPublished` holds that every other file a pack
+leaves behind is classified, so a new artifact is a red build until somebody
+decides about it.
+
+**Why each of the three is there.** The installer is what a person downloads and
+runs. The full package is what every update and every rollback fetches — and
+since the [full-packages-only decision](DECISIONS.md#locking-logging-versioning-and-registration)
+it is the only package a feed ever names. `releases.<channel>.json` is the feed,
+and it is **the one file a Velopack client reads**.
+
+**Why the other four are not, one decision each.** The maintainer answered asset
+by asset on 2026-09-23, verbatim: *"2 drop and update the readme to not mention
+it. / 5+6 execute the test but also double check the velopack documentation and
+code to double check we are not removing load bearing parts for scenarios we
+forgot about. / 7 move it"*.
+
+| Not published | The decision |
+|---|---|
+| `BrowserAI.zip`, the portable archive | *"2 drop and update the readme to not mention it."* It is still packed, still renamed and still local; [README.md](README.md) no longer mentions it |
+| `BrowserAI-<version>-manifest.zip` | *"7 move it."* The resolved set is committed under [`docs/evidence/`](docs/evidence/README.md) per release instead — a copy that survives a clone rather than one that survives a release page. [Item 11](#11-the-resolved-set-is-recorded-beside-the-artifact) says how |
+| `RELEASES` | A **Squirrel-migration shim**: `ReleaseEntryHelper.cs:115`, *"We write a legacy RELEASES file to allow older applications to update to velopack"*. Nothing in Velopack's client library ever composes that name, and this product has no Squirrel predecessor |
+| `assets.<channel>.json` | The **local pack-to-upload hand-off**: `vpk upload` reads it out of `Releases/` with `BuildAssets.Read` to learn what to upload, and nobody fetches it from a release page |
+
+⚠️ **`RELEASES` and `assets.<channel>.json` STAY IN `Releases/` ON DISK.** Not
+publishing a file and not producing one are different changes and only the first
+was decided — a future `vpk upload github` fails without the local
+`assets.<channel>.json`. Nothing in [the clean re-pack](#the-order-the-last-six-steps-are-executed-in--and-it-is-not-the-numbering)
+changes.
+
+**What was checked before dropping them, because the instruction was to check.**
+Velopack's source at tag `1.2.158` (sha `3c7f52c1`): every client source reads
+`releases.{channel}.json` and only that — `SimpleWebSource.cs:43`,
+`SimpleFileSource.cs:37`, `GitBase.cs:82`, Rust `sources/http.rs:39` — and
+`UpdateManager`'s check, download, delta and rollback paths
+(`UpdateManager.cs:240-315`) touch nothing else; `Update.exe` and `Setup.exe`
+never fetch a feed at all; `vpk pack`'s existing-release detection enumerates
+`*.nupkg` on disk (`ReleaseEntryHelper.cs:30-42`); `vpk delta` takes two package
+paths; and [item 12](#12-the-rollback-path-is-publishable)'s rollback goes
+through the JSON. **And it was run rather than only read**
+([kb](kb/packaging/velopack.md#nothing-anywhere-reads-releases-or-assetschanneljson-from-a-release--measured-2026-09-23)):
+a real Velopack client pointed at a feed holding **only** those two files — with
+`RELEASES` naming the package, its SHA-1 and its exact size — reported
+*"No full / applicable release was found to download"*.
+
+⚠️ **NOTHING HAS BEEN REMOVED FROM THE PUBLISHED `v1.1.0` RELEASE.** It carries
+seven assets and still does. Dropping an asset from a release that is already
+standing is a separate decision about something people may already have links
+to, and it has not been taken. This section is about what the **next** release
+publishes.
+
 ### 14. A human decides
 
 Green is **releasable**, not **released**. There is no release pipeline, no

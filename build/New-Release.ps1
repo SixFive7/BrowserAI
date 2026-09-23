@@ -8,8 +8,13 @@
 
 .DESCRIPTION
     Build-order step 19. This is the release script `build/` did not have, and
-    steps 1 and 18 both deferred work to it. It does seven things, in order,
-    and refuses rather than warns at every one of them:
+    steps 1 and 18 both deferred work to it. It does the following, in order,
+    and refuses rather than warns at every one of them.
+
+    (This sentence read "It does seven things" until 2026-09-23 and had been
+    wrong since the eighth item landed. It is not replaced with a new number:
+    a hand-maintained count of the numbered list directly below it is the same
+    defect again, one number later.)
 
       1. `vpk` and the Velopack library must be the SAME version. The CLI writes
          the package format the library reads, and nothing else in this
@@ -80,6 +85,15 @@
          the checklist satisfied this item by copying six files BY HAND, and a
          hand-assembled manifest is one nobody assembles twice.
          (TODO.md, "Emit the resolved-set manifest from build/New-Release.ps1".)
+
+      9. DECLARE THE UPLOAD SET. Which files a release publishes was, until
+         2026-09-23, whatever whoever ran `gh release create` picked out of
+         `Releases/` -- which is how one release's asset list became the next
+         one's by matching rather than by deciding. The set is declared in one
+         place near the end of this script, refuses on a file that is not
+         there, is printed as a ready-to-run `gh release create` line, and comes
+         back as `Upload` on the returned object.
+         (RELEASING.md, "What a release publishes".)
 
     What it deliberately does NOT do: publish, push, tag, or decide that a
     release happens. RELEASING.md item 14 is a human.
@@ -831,6 +845,78 @@ else {
     $bodyShape = ($bodyReport | Select-Object -Last 1)
 }
 
+# --- 10. What a release PUBLISHES, declared once and read rather than judged ----
+# ⚠️ THIS LIST IS THE UPLOAD SET AND THERE IS NO OTHER. Until 2026-09-23
+# nothing in this repository named one: `gh release create` was run by hand at
+# RELEASING item 14, and whoever ran it chose the assets by looking at
+# `Releases/` -- which is how `v1.0.0`'s seven assets became `v1.1.0`'s seven
+# assets, by matching rather than by deciding. Q233, asset by asset, is the
+# maintainer turning that judgement into three decisions, and this list is where
+# they live.
+#
+# WHY EACH ONE IS HERE:
+#   - the installer, because it is what a person downloads and runs;
+#   - the full package, because it is what every update and every rollback
+#     fetches -- and since the full-packages-only decision it is the ONLY package
+#     a feed ever names;
+#   - `releases.<channel>.json`, because it is the feed, and it is the one file
+#     a Velopack client reads.
+#
+# WHY THE OTHER FOUR ARE NOT, each by its own decision rather than by omission:
+#   - `BrowserAI.zip`, the portable archive -- the maintainer, verbatim: *"2 drop
+#     and update the readme to not mention it"*. Still packed, still renamed,
+#     still local.
+#   - `BrowserAI-<version>-manifest.zip` -- *"7 move it"*. The resolved set is
+#     committed under `docs/evidence/` per release instead, which is a copy that
+#     survives a clone rather than one that survives a release page.
+#   - `RELEASES` and `assets.<channel>.json` -- *"5+6 execute the test but also
+#     double check the velopack documentation and code"*. Both were done:
+#     nothing reads either from a release, measured 2026-09-23 against a real
+#     Velopack client, with the control that a feed holding ONLY those two comes
+#     back *"No full / applicable release was found to download"*
+#     (kb/packaging/velopack.md). ⚠️ Both stay ON DISK in `Releases/`:
+#     `vpk upload` reads the LOCAL `assets.<channel>.json` to learn what to
+#     upload, so not publishing a file and not producing it are different
+#     changes, and only the first was decided.
+#
+# Names rather than paths, because a release asset IS a name -- and because a
+# name is what `ReleaseScriptTests` can read back out of this file. Anything
+# added here must also be classified in
+# `ReleaseScriptTests.NothingElseInTheReleaseDirectoryIsPublished`, which is a
+# red build until somebody decides.
+$uploadSet = @(
+    "$downloadId$downloadSuffix.exe"
+    "$packId-$PackVersion-full.nupkg"
+    "releases.$Channel.json"
+)
+
+# A set naming a file that is not there is the manifest defect one directory up:
+# an upload that publishes two of three reads exactly like a complete one.
+# @( ) around the loop deliberately: without it a one-element set collapses to a
+# scalar and `.Count` stops meaning what it reads as.
+$uploadPaths = @(foreach ($name in $uploadSet) {
+    $path = Join-Path $OutputDir $name
+
+    if (-not (Test-Path -LiteralPath $path)) {
+        Write-Error "The upload set names $name and $path does not exist, so this release cannot be published as declared."
+        exit 1
+    }
+
+    $path
+})
+
+Write-Host ''
+Write-Host "This release publishes $($uploadSet.Count) assets and no others:"
+foreach ($path in $uploadPaths) {
+    Write-Host ("  {0}  {1:N0} bytes" -f (Split-Path -Leaf $path), (Get-Item -LiteralPath $path).Length)
+}
+
+# Emitted ready to run, so that publishing is a paste rather than a judgement.
+# The tag is the caller's: this script deliberately does not push, tag or publish.
+Write-Host ''
+Write-Host ("gh release create <tag> --title <title> --notes-file <body> " + (($uploadPaths | ForEach-Object { '"' + $_ + '"' }) -join ' '))
+Write-Host ''
+
 [pscustomobject]@{
     Version          = $PackVersion
     Channel          = $Channel
@@ -848,4 +934,5 @@ else {
     ResolvedSet      = ($manifest | Select-Object -Last 1)
     ReleaseBody      = $bodyFile
     ReleaseBodyShape = $bodyShape
+    Upload           = $uploadPaths
 }

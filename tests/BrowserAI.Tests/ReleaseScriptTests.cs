@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Diagnostics;
+using System.IO.Enumeration;
 using System.Text;
 using System.Text.Json;
 using BrowserAI.Tests.Harness;
@@ -1901,4 +1902,215 @@ internal sealed class ReleaseScriptTests
             System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20, 4)));
     }
 
+    /// <summary>
+    /// A release publishes the installer, the full package and the feed, and the
+    /// script says so in one place rather than a person choosing at upload time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Until 2026-09-23 nothing in this repository named an upload set.</b>
+    /// <c>New-Release.ps1</c> does not upload — the publish is a hand-run
+    /// <c>gh release create</c> at
+    /// [RELEASING item 14](../../RELEASING.md#14-a-human-decides) — so the assets
+    /// were whatever whoever ran it picked out of <c>Releases/</c>, and
+    /// <c>v1.1.0</c> got seven assets because <c>v1.0.0</c> had seven. That is a
+    /// judgement wearing the appearance of a procedure, and this arm is what
+    /// makes it data.
+    /// </para>
+    /// <para>
+    /// <b>Three names, each here for its own reason</b>: the installer is what a
+    /// person runs, the full package is what every update and every rollback
+    /// fetches, and <c>releases.&lt;channel&gt;.json</c> is the feed — the one file
+    /// a Velopack client reads
+    /// ([measured 2026-09-23](../../kb/packaging/velopack.md#nothing-anywhere-reads-releases-or-assetschanneljson-from-a-release--measured-2026-09-23)).
+    /// </para>
+    /// <para>
+    /// <b>And four names are absent, each by a decision rather than by omission</b>
+    /// — the portable zip and the manifest zip by the maintainer's answers to
+    /// Q233, <c>RELEASES</c> and <c>assets.&lt;channel&gt;.json</c> by that
+    /// measurement. They are asserted absent by name, because a set that merely
+    /// happens not to contain something today is not a decision.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-23 with a doctored declaration</b>, run through the
+    /// same reader as the real one rather than by editing <c>build/</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheUploadSetIsDeclaredOnceAndIsTheInstallerTheFullPackageAndTheFeed()
+    {
+        var declared = ReleaseLayout.UploadSet;
+
+        const string Version = "9.9.9";
+        var resolved = declared.Select(name => Resolve(name, Version)).Order(StringComparer.Ordinal).ToArray();
+
+        // Nothing is left unexpanded: a template naming a variable this suite
+        // does not know would resolve to itself, read as a plausible name, and
+        // slip past every comparison below.
+        await Assert.That(string.Join(", ", resolved.Where(name => name.Contains('$', StringComparison.Ordinal)))).IsEmpty();
+
+        // ⚠️ THE FOUR THAT ARE OUT, BY NAME, AND THIS COMES FIRST ON PURPOSE.
+        // Each is a file this script really produces, and each is out for a
+        // reason recorded beside the declaration -- so a set that grew one back
+        // should fail saying WHICH, rather than saying it has four items.
+        string[] notPublished =
+        [
+            $"{ReleaseLayout.DownloadId}{ReleaseLayout.DownloadSuffix}.zip",
+            $"{ReleaseLayout.DownloadId}-{Version}-manifest.zip",
+            "RELEASES",
+            $"assets.{ReleaseLayout.Channel}.json",
+        ];
+
+        await Assert.That(string.Join(", ", notPublished.Intersect(resolved, StringComparer.Ordinal)))
+            .IsEmpty()
+            .Because("each of these left the upload set by a decision, and a release that published one again would be that decision reversed by accident");
+
+        await Assert.That(resolved).IsEquivalentTo([
+            $"{ReleaseLayout.DownloadId}{ReleaseLayout.DownloadSuffix}.exe",
+            $"{ReleaseLayout.PackId}-{Version}-full.nupkg",
+            $"releases.{ReleaseLayout.Channel}.json",
+        ]);
+
+        // And the templates as the script writes them. Asserting these as well
+        // as what they resolve to is what keeps the declaration readable: a set
+        // spelled out in literals would drift from the naming rules above it.
+        await Assert.That(declared).IsEquivalentTo([
+            "$downloadId$downloadSuffix.exe",
+            "$packId-$PackVersion-full.nupkg",
+            "releases.$Channel.json",
+        ]);
+
+        // And nothing belonging to the second pack or to the archive, which are
+        // the two directories under Releases/ that are never published at all.
+        await Assert.That(string.Join(", ", declared.Where(name =>
+            name.Contains("test", StringComparison.OrdinalIgnoreCase)
+            || name.Contains("archive", StringComparison.OrdinalIgnoreCase))))
+            .IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL, through the real reader. A doctored
+        // declaration must come back doctored, and a script that no longer
+        // declares one at all must refuse rather than return nothing — an empty
+        // set would satisfy every "is not published" assertion above.
+        var doctored = ReleaseLayout.ReadUploadSet(
+            "$packId = 'x'\n$uploadSet = @(\n    \"$downloadId$downloadSuffix.exe\"\n    \"$downloadId$downloadSuffix.zip\"\n)\n");
+
+        await Assert.That(doctored).IsEquivalentTo(["$downloadId$downloadSuffix.exe", "$downloadId$downloadSuffix.zip"]);
+
+        await Assert.That(() => ReleaseLayout.ReadUploadSet("$packId = 'x'\n"))
+            .Throws<InvalidOperationException>();
+
+        // The script also has to REFUSE a declared file that is not on disk, and
+        // that refusal is a line rather than a behaviour this suite can run.
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+
+        await Assert.That(script).Contains("The upload set names $name and $path does not exist");
+        await Assert.That(script).Contains("Upload           = $uploadPaths");
+    }
+
+    /// <summary>
+    /// Every top-level file the release directory holds is either published or
+    /// deliberately not, and nothing is unclassified.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the half that catches an artifact nobody has decided about.</b>
+    /// The arm above holds that the declaration says what it should; this one
+    /// holds that the declaration still covers everything a pack leaves behind,
+    /// so a new output — a signature, a checksum file, a second channel — is a red
+    /// build until somebody says whether it is published.
+    /// </para>
+    /// <para>
+    /// <b>It needs a machine that has packed</b>, which is what the capability is
+    /// for. <c>archive/</c> and <c>test-pack/</c> are directories and are out of
+    /// scope by construction: neither is ever published, and the second is the
+    /// suite's own installer.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NothingElseInTheReleaseDirectoryIsPublished()
+    {
+        _ = SuiteEnvironment.RequirePackagedRelease();
+
+        var directory = new DirectoryInfo(ReleaseLayout.Directory);
+        var present = directory.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Select(file => file.Name).ToArray();
+
+        await Assert.That(present.Length).IsGreaterThan(2);
+
+        await Assert.That(string.Join(Environment.NewLine, Unclassified(present)))
+            .IsEmpty()
+            .Because("a file in the release directory that is neither in the upload set nor in the list of things deliberately kept out of it is one nobody has decided about");
+
+        // ⚠️ THE POSITIVE CONTROL, over the same classifier. A stranger must be
+        // named, and the files that are deliberately kept out must not be.
+        await Assert.That(Unclassified(["a-signature-nobody-decided-about.sig"]).Count).IsEqualTo(1);
+        await Assert.That(Unclassified(["a-signature-nobody-decided-about.sig"])[0]).Contains(".sig");
+        await Assert.That(Unclassified(["RELEASES", $"assets.{ReleaseLayout.Channel}.json"])).IsEmpty();
+    }
+
+    /// <summary>
+    /// Expands one declared upload-set name into the file it names.
+    /// </summary>
+    /// <param name="name">The template as the script writes it.</param>
+    /// <param name="version">The version to resolve <c>$PackVersion</c> with.</param>
+    /// <returns>The file name.</returns>
+    private static string Resolve(string name, string version) => name
+        .Replace("$downloadId", ReleaseLayout.DownloadId, StringComparison.Ordinal)
+        .Replace("$downloadSuffix", ReleaseLayout.DownloadSuffix, StringComparison.Ordinal)
+        .Replace("$packId", ReleaseLayout.PackId, StringComparison.Ordinal)
+        .Replace("$PackVersion", version, StringComparison.Ordinal)
+        .Replace("$Channel", ReleaseLayout.Channel, StringComparison.Ordinal);
+
+    /// <summary>
+    /// The names that are neither published nor recorded as deliberately kept
+    /// out of the release.
+    /// </summary>
+    /// <remarks>
+    /// A pure function over names so the control can be planted without writing
+    /// a stranger into <c>Releases/</c>, which is a real directory on the
+    /// maintainer's machine holding a real release.
+    /// </remarks>
+    /// <param name="names">The file names to classify.</param>
+    /// <returns>One line per name nobody has decided about.</returns>
+    private static List<string> Unclassified(IEnumerable<string> names)
+    {
+        var published = ReleaseLayout.UploadSet.Select(name => Resolve(name, "*")).ToArray();
+
+        return
+        [
+            .. names
+                .Where(name => !Matches(name, published) && !Matches(name, KeptOutOfTheRelease))
+                .Select(name => $"{name}: in {ReleaseLayout.Directory} and classified neither way"),
+        ];
+    }
+
+    /// <summary>
+    /// What a pack leaves in the release directory that is deliberately not
+    /// published, each with the decision that put it here.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>the portable archive — Q233, <i>"2 drop and update the readme to not mention it"</i>;</item>
+    /// <item>the resolved-set manifest — Q233, <i>"7 move it"</i>; it is committed under <c>docs/evidence/</c> per release instead;</item>
+    /// <item><c>RELEASES</c> — a Squirrel-migration shim nothing here has a predecessor for, and nothing reads it from a release;</item>
+    /// <item><c>assets.&lt;channel&gt;.json</c> — the local pack-to-upload hand-off <c>vpk upload</c> reads from this directory, and which nobody fetches from a release page;</item>
+    /// <item>a delta package, which no release has carried since the full-packages-only decision and which a feed would have to name before anybody could fetch it.</item>
+    /// </list>
+    /// </remarks>
+    private static string[] KeptOutOfTheRelease { get; } =
+    [
+        $"{ReleaseLayout.DownloadId}{ReleaseLayout.DownloadSuffix}.zip",
+        $"{ReleaseLayout.DownloadId}-*-manifest.zip",
+        "RELEASES",
+        $"assets.{ReleaseLayout.Channel}.json",
+        $"{ReleaseLayout.PackId}-*-delta.nupkg",
+    ];
+
+    /// <summary>Whether a name matches one of a set of patterns whose only wildcard is <c>*</c>.</summary>
+    /// <param name="name">The file name.</param>
+    /// <param name="patterns">The patterns.</param>
+    /// <returns>Whether any matches.</returns>
+    private static bool Matches(string name, IEnumerable<string> patterns) =>
+        patterns.Any(pattern => FileSystemName.MatchesSimpleExpression(pattern, name, ignoreCase: true));
 }
