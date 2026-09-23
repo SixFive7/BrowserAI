@@ -39,7 +39,7 @@ internal enum RegistrationIntent
     /// have them deleted by a background update -- so an entry of ours that still
     /// resolves is left exactly as it is, and only one that resolves to nothing
     /// is re-pointed. A <c>browserai</c> entry outside our install root is
-    /// somebody else's and is reported rather than touched.
+    /// somebody else's and is reported, not touched.
     /// </remarks>
     Update,
 
@@ -64,7 +64,7 @@ internal enum RegistrationStatus
 
     /// <summary>
     /// This machine has no client command line, so there is nothing to register
-    /// with. Ordinary, and logged rather than failed.
+    /// with. Ordinary, and logged, not failed.
     /// </summary>
     ClientNotFound,
 
@@ -112,7 +112,7 @@ internal sealed record RegistrationReport(RegistrationStatus Status, string Deta
 /// that whatever happened is legible afterwards.
 /// </para>
 /// <para>
-/// ⚠️ <b>It cannot throw, and that is a requirement rather than a courtesy.</b>
+/// ⚠️ <b>It cannot throw, and that is a requirement, not a courtesy.</b>
 /// It runs inside a Velopack fast-exit hook: an exception there fails the
 /// install, and an install that fails because a <i>registration</i> failed is a
 /// worse outcome than an installed product nobody registered. Every path returns
@@ -139,7 +139,7 @@ internal static class McpRegistrar
     /// <param name="commands">The seam over starting the client.</param>
     /// <param name="logger">Where the pass reports.</param>
     /// <param name="existing">
-    /// What is registered already, read rather than asked for. Supplied by the
+    /// What is registered already, read and not asked for. Supplied by the
     /// suite; resolved from the client's own user-scope file when omitted.
     /// </param>
     /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
@@ -186,7 +186,7 @@ internal static class McpRegistrar
             var view = (existing ?? (root => McpRegistryView.User(root)))(target.InstallRoot);
 
             // Unreadable and Foreign answer the same way whatever was asked, so
-            // they are decided once rather than three times. Everything below
+            // they are decided once and not three times. Everything below
             // this line is about a registration that is ABSENT or OURS.
             if (NotOursToTouch(logger, client, command, intent, view) is { } notOurs)
             {
@@ -517,7 +517,7 @@ internal static partial class RegistrationLog
     /// <param name="fallback">The one directory searched beyond PATH.</param>
     /// <param name="command">What would have been registered.</param>
     /// <remarks>
-    /// <b>Warning rather than Information.</b> An installed BrowserAI that no
+    /// <b>Warning, not Information.</b> An installed BrowserAI that no
     /// client can reach is the exact state this whole mechanism exists to
     /// prevent, and the fact that it is nobody's fault does not make it a state
     /// anyone should have to guess at.

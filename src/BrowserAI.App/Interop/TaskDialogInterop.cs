@@ -10,7 +10,7 @@ namespace BrowserAI.App.Interop;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Raw <c>TaskDialogIndirect</c> rather than a framework wrapper</b>, because
+/// <b>Raw <c>TaskDialogIndirect</c>, not a framework wrapper</b>, because
 /// there is no framework wrapper this product may use: WPF and WinForms both
 /// have trimming disabled in the SDK and therefore do not build under
 /// <c>PublishAot</c>, and <c>System.Windows.Forms.TaskDialog</c> is part of the
@@ -24,12 +24,12 @@ namespace BrowserAI.App.Interop;
 /// all -- the call simply returns <c>E_INVALIDARG</c>, or worse, succeeds and
 /// renders nonsense. <see cref="TaskDialogConfig"/> declares
 /// <see cref="LayoutKind.Sequential"/> with <c>Pack = 1</c>, and its size is
-/// asserted against the documented 160 bytes by the suite rather than trusted.
+/// asserted against the documented 160 bytes by the suite, not trusted.
 /// </para>
 /// <para>
 /// ⚠️ <b>The callback is <c>[UnmanagedCallersOnly]</c> and every parameter is
 /// blittable.</b> A <see cref="bool"/> anywhere in that signature is a runtime
-/// failure rather than a compile error, because the attribute forbids
+/// failure, not a compile error, because the attribute forbids
 /// marshalling and <see cref="bool"/> is the type that most looks as though it
 /// would not need any. Windows passes <c>BOOL</c>, which is a four-byte
 /// <see cref="int"/>.
@@ -103,7 +103,7 @@ internal static partial class TaskDialogInterop
         /// <summary>Content and footer may carry <c>&lt;a href="..."&gt;</c>.</summary>
         EnableHyperlinks = 0x0001,
 
-        /// <summary>The main icon field is an <c>HICON</c> rather than a resource id.</summary>
+        /// <summary>The main icon field is an <c>HICON</c>, not a resource id.</summary>
         UseHIconMain = 0x0002,
 
         /// <summary>Escape and the close box work even with no cancel button.</summary>
@@ -123,10 +123,10 @@ internal static partial class TaskDialogInterop
         /// </remarks>
         CallbackTimer = 0x0800,
 
-        /// <summary>The dialog sizes itself to its content rather than to a fixed width.</summary>
+        /// <summary>The dialog sizes itself to its content, not to a fixed width.</summary>
         SizeToContent = 0x0100_0000,
 
-        /// <summary>Position relative to the parent window rather than the screen.</summary>
+        /// <summary>Position relative to the parent window, not the screen.</summary>
         PositionRelativeToWindow = 0x1000,
     }
 
@@ -222,7 +222,7 @@ internal static partial class TaskDialogInterop
     /// the SDK's Win32 resource writer uses for the icon group it generates from
     /// the <c>ApplicationIcon</c> property. A build that ever stopped doing so
     /// would leave <see cref="LoadIconW"/> returning null here, which is why the
-    /// caller falls back to the system icon rather than showing nothing.
+    /// caller falls back to the system icon instead of showing nothing.
     /// </remarks>
     public const int ApplicationIconResource = 32512;
 
@@ -289,7 +289,7 @@ internal static partial class TaskDialogInterop
     /// scaling it if it has to.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b><c>LoadImageW</c> rather than <c>LoadIconWithScaleSize</c>, and
+    /// ⚠️ <b><c>LoadImageW</c>, not <c>LoadIconWithScaleSize</c>, and
     /// the reason is not taste -- measured 2026-09-16.</b> The comctl32 function
     /// is the one the documentation points at for this job and it is
     /// <b>exported by ORDINAL only</b>: a <c>LibraryImport</c> naming it fails at
@@ -333,7 +333,7 @@ internal static partial class TaskDialogInterop
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     internal static partial uint GetDpiForSystem();
 
-    /// <summary>A system metric, at a DPI rather than at the process's own.</summary>
+    /// <summary>A system metric, at a DPI, not at the process's own.</summary>
     /// <param name="metric">One of the <c>SM_</c> values.</param>
     /// <param name="dpi">The DPI to answer for.</param>
     /// <returns>The metric.</returns>

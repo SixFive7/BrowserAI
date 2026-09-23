@@ -17,7 +17,7 @@ namespace BrowserAI.Interop;
 /// <b>This is what turns a stale lock into a sentence instead of a refusal.</b>
 /// <c>browserai.lock</c> keeps its holder record after the holder dies, on purpose,
 /// so a second BrowserAI can say <i>"held by PID 1234 since 14:02, no longer
-/// running -- reclaiming"</i> rather than simply failing. That sentence is only
+/// running -- reclaiming"</i> instead of simply failing. That sentence is only
 /// safe if "no longer running" is answered correctly, and a pid on its own
 /// cannot answer it: Windows reuses pids, and a reclaim keyed on a pid alone
 /// eventually reads a stranger as the previous holder.
@@ -135,7 +135,7 @@ internal static partial class ProcessLiveness
     /// <para>
     /// <b>A read that fails answers <see langword="false"/>.</b> An identity that
     /// could not be established is not an identity, and every caller's safe
-    /// direction is to decline to watch rather than to watch a stranger.
+    /// direction is to decline to watch instead of watching a stranger.
     /// </para>
     /// </remarks>
     /// <param name="processHandle">An open handle carrying <c>PROCESS_QUERY_LIMITED_INFORMATION</c>.</param>
@@ -164,7 +164,7 @@ internal static partial class ProcessLiveness
     /// </summary>
     /// <returns>
     /// The name without its extension, or <see langword="null"/> when the parent
-    /// cannot be read. A missing name is recorded as missing rather than guessed.
+    /// cannot be read. A missing name is recorded as missing, not guessed.
     /// </returns>
     public static string? ClientProcessName()
     {
@@ -243,7 +243,7 @@ internal static partial class ProcessLiveness
             out _);
 
         // NTSTATUS: below zero is a failure, and there is no GetLastError to
-        // consult. Reported as "no parent" rather than as pid 0, which is the
+        // consult. Reported as "no parent" and not as pid 0, which is the
         // System process and would name the wrong thing in the record.
         return status < 0 ? 0 : (int)information.InheritedFromUniqueProcessId;
     }
@@ -274,8 +274,8 @@ internal static partial class ProcessLiveness
     /// </remarks>
     /// <returns>
     /// The command line, or <see langword="null"/> when it cannot be read.
-    /// Every caller must treat <see langword="null"/> as <i>unknown</i> rather
-    /// than as an answer.
+    /// Every caller must treat <see langword="null"/> as <i>unknown</i> and
+    /// not as an answer.
     /// </returns>
     public static string? ParentCommandLine()
     {
@@ -347,7 +347,7 @@ internal static partial class ProcessLiveness
     {
         // MAX_PATH is not the limit here -- the app manifest is longPathAware
         // and a client can live anywhere -- so the buffer is sized for the
-        // extended limit rather than for the documented one.
+        // extended limit and not for the documented one.
         var buffer = new char[32768];
         var length = (uint)buffer.Length;
 

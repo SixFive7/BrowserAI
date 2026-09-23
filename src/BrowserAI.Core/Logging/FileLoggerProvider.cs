@@ -23,8 +23,8 @@ namespace BrowserAI.Logging;
 /// <b>Two times per record, and neither replaces the other.</b> The leading
 /// column is when the record was <i>written</i>, taken by the sink inside the
 /// file's write gate immediately before the bytes go down -- so write order and
-/// timestamp order coincide and the file is sorted <b>by construction</b> rather
-/// than by anybody sorting it. <c>made=</c> is when the record was
+/// timestamp order coincide and the file is sorted <b>by construction</b> and
+/// not by anybody sorting it. <c>made=</c> is when the record was
 /// <i>created</i>, stamped here. The two differ only by however long a writer
 /// waited at the gate, which is the one thing a reader investigating contention
 /// wants and the one thing a single timestamp cannot show.
@@ -44,7 +44,7 @@ namespace BrowserAI.Logging;
 /// which is a pair a reader must not feed to a liveness check: it would answer
 /// <i>not running</i> for a process that is. It has never been observed --
 /// <c>GetProcessTimes</c> on the current-process pseudo-handle has no documented
-/// failure -- and it is spelled rather than thrown because a logger that cannot
+/// failure -- and it is spelled instead of thrown because a logger that cannot
 /// construct itself takes the process with it.
 /// </para>
 /// </remarks>

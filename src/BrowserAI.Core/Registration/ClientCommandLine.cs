@@ -24,7 +24,7 @@ namespace BrowserAI.Registration;
 /// path containing a space failing to start at all.
 /// </para>
 /// <para>
-/// <b>It is <see cref="Process"/> rather than
+/// <b>It is <see cref="Process"/> and not
 /// <c>Interop.JobLauncher</c>, and the difference is deliberate.</b> The
 /// job object exists so that a long-lived child and every grandchild it spawns
 /// die with BrowserAI. This process lives for ~650 ms, spawns nothing, and runs
@@ -38,8 +38,8 @@ namespace BrowserAI.Registration;
 /// <b>Both streams are read asynchronously and the working directory is
 /// fixed.</b> Reading one stream to the end while the other fills its pipe is
 /// the classic deadlock, and it would present as a hook that hangs until its
-/// timeout kills the install. The working directory is the user profile rather
-/// than the inherited one for two reasons: a hook's inherited directory can be
+/// timeout kills the install. The working directory is the user profile and
+/// not the inherited one for two reasons: a hook's inherited directory can be
 /// <i>inside the install root Velopack is about to replace</i>, and the client
 /// resolves project-scoped configuration relative to where it was started, which
 /// must have no bearing on a user-scoped registration.

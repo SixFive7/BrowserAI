@@ -84,7 +84,7 @@ internal enum RegistrationOwnership
 /// <param name="Unreadable">
 /// Why the file could not be read, when that is the reason there is no answer.
 /// <see langword="null"/> when the file was read -- including when it simply is
-/// not there, which is an answer rather than a failure.
+/// not there, which is an answer, not a failure.
 /// </param>
 internal sealed record RegistrationView(
     RegistrationScope Scope,

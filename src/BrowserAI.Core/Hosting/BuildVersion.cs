@@ -25,7 +25,7 @@ namespace BrowserAI.Hosting;
 /// <c>0.0.0.0</c> from the assembly version and every 1.x build reports
 /// <c>1.0.0.0</c> -- measured here, on the artifact, at the tag. That is the
 /// *version shows 4 parts* defect another shipped Velopack product filed as an
-/// observed symptom rather than a theory
+/// observed symptom, not a theory
 /// ([kb](../../../kb/packaging/velopack.md)), with the number collapsed
 /// as well as widened, and it was live in this repository before this type
 /// landed: <c>SessionLock</c> stamped every <c>browserai.json</c> from
@@ -37,7 +37,7 @@ namespace BrowserAI.Hosting;
 /// -- or <c>.$(SourceRevisionId)</c> when the string already carries a
 /// <c>+</c> -- to the informational version, and
 /// <c>Directory.Build.props</c> turns that off repository-wide. The version is
-/// a value §G's update path <i>matches</i> rather than compares, and a
+/// a value §G's update path <i>matches</i> instead of comparing, and a
 /// decorated copy can never equal the one a feed serves.
 /// </para>
 /// </remarks>
@@ -76,7 +76,7 @@ internal static class BuildVersion
     /// <para>
     /// <b>Corrected 2026-08-17 (previously "Nothing consumes it yet; §G does, at
     /// build-order step 19").</b> The update path shipped and it consumes the
-    /// rule rather than this property:
+    /// rule and not this property:
     /// <see cref="Updates.UpdateService.StartInBackground"/> calls
     /// <see cref="HasPreReleaseSuffix"/> on the version it was handed, because
     /// the suite has to be able to drive that decision with a version string
@@ -89,7 +89,7 @@ internal static class BuildVersion
 
     /// <summary>Whether a semantic version string carries a pre-release suffix.</summary>
     /// <remarks>
-    /// Split on the first <c>-</c> after the version core rather than parsed:
+    /// Split on the first <c>-</c> after the version core, not parsed:
     /// build metadata is forbidden here, so the only thing a <c>-</c> can
     /// introduce is the pre-release part.
     /// </remarks>

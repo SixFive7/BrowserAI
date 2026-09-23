@@ -31,7 +31,7 @@ namespace BrowserAI.Interop;
 /// whatever another of the ~100 processes had written in between: the record was
 /// torn and interleaved and every call returned success
 /// ([review](../../../docs/reviews/2026-08-18-adversarial-processes.md), finding
-/// 9). The machinery is deleted rather than repaired. Under the lock below there
+/// 9). The machinery is deleted, not repaired. Under the lock below there
 /// is no size bound to exceed and nothing can interleave, so a short write is
 /// resumed at the right offset by construction and
 /// <see cref="System.IO.RandomAccess"/>'s own loop is correct where ours was
@@ -39,7 +39,7 @@ namespace BrowserAI.Interop;
 /// forbids <c>FileMode.Append</c>.
 /// </para>
 /// <para>
-/// <b>A file lock rather than a named object, for the reason
+/// <b>A file lock and not a named object, for the reason
 /// <c>Runtime.MaintenanceLock</c> already gives.</b> The kernel releases it
 /// however the holder dies -- clean exit, <c>TerminateProcess</c>, a bugcheck --
 /// whereas a named semaphore's count is not restored, so one crashed writer
@@ -114,7 +114,7 @@ internal static partial class NativeFile
     /// shape here in which a waiter waits forever.
     /// </para>
     /// <para>
-    /// <c>LockFileEx</c> rather than <c>LockFile</c> or
+    /// <c>LockFileEx</c>, not <c>LockFile</c> or
     /// <see cref="FileStream"/>'s <c>Lock</c>, both of which fail immediately on
     /// a conflict and would need a retry loop -- which is a spin under exactly
     /// the contention the lock exists for.
@@ -151,7 +151,7 @@ internal static partial class NativeFile
     /// is taken on.
     /// </summary>
     /// <remarks>
-    /// <b>Hand-written rather than <see cref="NativeOverlapped"/>, and not by
+    /// <b>Hand-written instead of <see cref="NativeOverlapped"/>, and not by
     /// preference.</b> <c>LibraryImport</c> refuses to marshal the framework's
     /// struct without <c>DisableRuntimeMarshallingAttribute</c> on the whole
     /// assembly (<c>SYSLIB1051</c>), which is a project-wide change to satisfy

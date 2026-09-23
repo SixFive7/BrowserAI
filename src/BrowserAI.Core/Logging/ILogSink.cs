@@ -15,7 +15,7 @@ namespace BrowserAI.Logging;
 /// The per-session log file is gone: everything it carried is on stderr, which the
 /// session's logging stack already wrote to at every level, and what the session
 /// itself did is rows in <c>browserai.data</c>. The seam stays because it is what
-/// keeps the record format in <see cref="FileLoggerProvider"/> rather than in a
+/// keeps the record format in <see cref="FileLoggerProvider"/> and not in a
 /// sink -- a second formatter would drift -- and because a second sink is the shape
 /// this interface exists to make cheap.
 /// </para>

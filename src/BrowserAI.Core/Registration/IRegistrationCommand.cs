@@ -35,7 +35,7 @@ internal interface IRegistrationCommand
     /// <b><see langword="null"/> is an ordinary answer, not a failure.</b> A
     /// machine with no MCP client installed is a machine BrowserAI still
     /// installs correctly on -- it simply has nothing to register with, which is
-    /// a logged fact rather than an error.
+    /// a logged fact, not an error.
     /// </remarks>
     string? Locate(string executableName);
 

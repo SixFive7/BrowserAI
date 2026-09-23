@@ -204,8 +204,8 @@ internal sealed class ProcessLog : IDisposable
 
         // The factory first, so nothing can still be routing records at a sink
         // that is about to close -- then the writer, explicitly, because the
-        // factory does not reach it. See the remarks: this is measured rather
-        // than defensive.
+        // factory does not reach it. See the remarks: this is measured, not
+        // defensive.
         Factory.Dispose();
         _writer.Dispose();
     }

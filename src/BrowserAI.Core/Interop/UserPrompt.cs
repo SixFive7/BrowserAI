@@ -47,7 +47,7 @@ internal static partial class UserPrompt
     private const uint DefaultButtonTwo = 0x00000100;
 
     /// <summary>
-    /// Task-modal rather than application-modal: this process has no window of
+    /// Task-modal, not application-modal: this process has no window of
     /// its own to be modal to.
     /// </summary>
     private const uint TaskModal = 0x00002000;
@@ -73,7 +73,7 @@ internal static partial class UserPrompt
     // System32 only, on every P/Invoke in this repository (CA5392). user32 is a
     // KnownDLL, so the attribute cannot change this one's outcome; the rule is
     // every declaration, and the audit that plants a fake user32.dll beside the
-    // binary and sees nothing happen is the trap rather than the rule.
+    // binary and sees nothing happen is the trap, not the rule.
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("user32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
     private static partial int MessageBoxW(IntPtr hWnd, string lpText, string lpCaption, uint uType);

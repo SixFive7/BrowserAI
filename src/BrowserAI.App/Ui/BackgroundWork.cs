@@ -38,8 +38,8 @@ internal readonly record struct BackgroundPoll<TResult>(bool Finished, TResult? 
 /// <b>The bound is the server's own constant and is never a number written
 /// here.</b> <see cref="DefaultBudget"/> is
 /// <see cref="UpdateService.CrashTripwire"/> -- the same outer deadline the
-/// server's pass runs under, for the same calls. It is a crash tripwire rather
-/// than flow control: nothing healthy reaches it, and the dialog stays fully
+/// server's pass runs under, for the same calls. It is a crash tripwire, not flow
+/// control: nothing healthy reaches it, and the dialog stays fully
 /// usable the whole time, so a person who does not want to wait closes the
 /// window.
 /// </para>
@@ -70,7 +70,7 @@ internal sealed class BackgroundWork<TResult>(TimeSpan budget) : IDisposable
     private readonly Stopwatch _clock = new();
 
     private Task<TResult>? _task;
-#pragma warning disable CA2213 // Cancelled and released rather than disposed: see Retire. Disposing would race the abandoned task's own use of the token.
+#pragma warning disable CA2213 // Cancelled and released, not disposed: see Retire. Disposing would race the abandoned task's own use of the token.
     private CancellationTokenSource? _cancel;
 #pragma warning restore CA2213
     private string _subject = string.Empty;
@@ -187,7 +187,7 @@ internal sealed class BackgroundWork<TResult>(TimeSpan budget) : IDisposable
         $"{_subject} did not finish within {_budget.TotalSeconds.ToString("F0", CultureInfo.CurrentCulture)} seconds and was stopped.";
 
     /// <summary>
-    /// Lets go of the current run: the task is abandoned rather than waited for.
+    /// Lets go of the current run: the task is abandoned, not waited for.
     /// </summary>
     private void Retire()
     {

@@ -44,7 +44,7 @@ namespace BrowserAI.Logging;
 /// </para>
 /// <para>
 /// ⚠️ <b>The file cannot be deleted while any BrowserAI is running, and that is
-/// the machine's log rather than one process's own.</b>
+/// the machine's log and not one process's own.</b>
 /// <see cref="NativeFile.OpenForLockedAppend"/> is asked for no delete sharing
 /// here, which closes
 /// [finding 10](../../../docs/reviews/2026-08-18-adversarial-processes.md) -- with
@@ -62,12 +62,12 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     /// <summary>
     /// Roll to the next indexed file before a record would take it past this
     /// size. Small enough that a reader can open one in an editor, large enough
-    /// that a busy day is a handful of files rather than hundreds.
+    /// that a busy day is a handful of files, not hundreds.
     /// </summary>
     private const long MaxBytesPerFile = 8L * 1024 * 1024;
 
     /// <summary>
-    /// How long a rolled file is kept. The number is ours rather than measured;
+    /// How long a rolled file is kept. The number is ours, not measured;
     /// what matters is that it is enforced somewhere that outlives an update,
     /// which is the half a shipped product's identical policy never had -- its
     /// logs sat inside the directory each update replaced wholesale, so the
@@ -92,7 +92,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     {
         _directory = directory;
 
-        // The UNC refusal, and it has to happen HERE rather than at the first
+        // The UNC refusal, and it has to happen HERE and not at the first
         // write. `SweepExpired()` on the next line enumerates the directory, so
         // a `\\host\share` that is not answering would block the constructor --
         // which runs on the startup path, before anything is serving -- for the
@@ -117,13 +117,13 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     /// path, as opposed to failing a write against a local one.
     /// </summary>
     /// <remarks>
-    /// <b>A distinct fact rather than an absent <see cref="CurrentFile"/>.</b>
+    /// <b>A distinct fact, not an absent <see cref="CurrentFile"/>.</b>
     /// "Nothing is open" is also true of a writer that has not been written to
     /// yet and of one whose last write failed, and the three want different
     /// answers from anyone looking: the first is normal, the second is a disk
     /// problem, and this one is a configuration nobody should be in. Records
     /// still reach stderr through the console provider, so this degrades the
-    /// process log rather than silencing the process.
+    /// process log instead of silencing the process.
     /// </remarks>
     public bool RefusedNetworkDirectory { get; }
 
@@ -162,7 +162,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
                 // Drop the record and keep the process alive. A sink that
                 // throws upward turns a diagnostic into the failure it was
                 // meant to describe. The handle is closed so the next write
-                // re-opens rather than reusing one that has just failed: a
+                // re-opens instead of reusing one that has just failed: a
                 // retry that repeats the failed call is not a recovery. Closing
                 // is also what releases the write gate if the failure was the
                 // release itself, which is the one failure that would otherwise
@@ -175,7 +175,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     // There is deliberately no Flush(). Nothing is buffered anywhere: every
     // record is one unbuffered write against a synchronous handle. That is
     // what makes "a deliberately unhandled exception still leaves its last log
-    // line on disk" a property of the design rather than of the timing, and a
+    // line on disk" a property of the design and not of the timing, and a
     // no-op method named Flush would be a mechanism that only looks like one.
 
     /// <inheritdoc />
@@ -202,7 +202,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     // characters, then the object manager -- sit together.
     //
     // THIS SITE STILL USES ONLY THE SPELLING HALF, deliberately. The directory
-    // here is the PROCESS log's, derived from the install location rather than
+    // here is the PROCESS log's, derived from the install location and not
     // supplied by a caller, and this constructor runs on the startup path before
     // anything is serving. The spelling test is what a value of unknown
     // provenance needs; VolumeIdentity.Of would add a syscall on every start to
@@ -229,7 +229,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     /// </para>
     /// <para>
     /// <b>Except for a record that is bigger than the cap on its own</b>, which
-    /// is written rather than dropped and lands alone in its own file: the
+    /// is written instead of dropped and lands alone in its own file: the
     /// <c>length is 0</c> arm is what stops that record rolling forever without
     /// ever being written. A log may not lose a record for being long.
     /// </para>
@@ -248,7 +248,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
 
         var length = RandomAccess.GetLength(handle);
 
-        // LF rather than CRLF, to match every other file this repository
+        // LF and not CRLF, to match every other file this repository
         // writes. The protocol channel's line ending is StdioChannel's
         // business; this one is only about not surprising a reader.
         var bytes = Encoding.UTF8.GetBytes(FileLoggerProvider.WriteStamp(DateTime.UtcNow) + record + "\n");
@@ -318,7 +318,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
                 {
                     // A file another BrowserAI still holds open cannot be
                     // deleted at all now that delete sharing is withheld, and
-                    // that refusal lands in the catch below rather than
+                    // that refusal lands in the catch below and not
                     // anywhere a reader sees it. It is the accepted half of
                     // finding 10 and not a fault: a file old enough to sweep
                     // and still open belongs to a process whose clock or
@@ -346,7 +346,7 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
         catch (Exception)
 #pragma warning restore CA1031
         {
-            // A handle that will not close is abandoned rather than retried.
+            // A handle that will not close is abandoned, not retried.
         }
         finally
         {
