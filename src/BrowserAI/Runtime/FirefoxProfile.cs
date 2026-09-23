@@ -75,6 +75,35 @@ internal static class FirefoxProfile
     /// </remarks>
     public const string RestartRegistrationPreference = "toolkit.winRegisterApplicationRestart";
 
+    /// <summary>
+    /// The preference that stops Firefox offering to remember a password.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>An agent cannot answer a modal it did not ask for, and a prompt in
+    /// front of a page is a page it cannot read.</b> Firefox asks after a form
+    /// POST that looks like a sign-in, and the ask is a doorhanger over the
+    /// content area of the session's own window. <c>signon.rememberSignons</c>
+    /// is the switch, and it is written through <c>firefoxUserPrefs</c> for the
+    /// same reason <see cref="RestartRegistrationPreference"/> is: upstream
+    /// writes these into the profile's <c>user.js</c> before the browser starts,
+    /// so it is in force on the first navigation and not one page late.
+    /// </para>
+    /// <para>
+    /// """ + W + """ <b>THE BEHAVIOURAL EVIDENCE HERE IS WEAKER THAN CHROMIUM'S, AND IT IS
+    /// WRITTEN DOWN AS WEAKER.</b> Measured 2026-09-23 @ firefox 1549 (156.0):
+    /// the preference reaches the running child and the prompt does not appear
+    /// -- but it did not appear in the CONTROL either, on a fresh profile with
+    /// the preference absent. So what is established is that the switch is set,
+    /// not that setting it is what suppresses anything. The kb entry says the
+    /// same
+    /// ([kb](../../../kb/playwright/configuration.md#the-password-save-prompt-and-what-actually-suppresses-it----measured-2026-09-23)).
+    /// It is written anyway, because a default this product does not control is
+    /// not a decision, and the cost of the pref is one line.
+    /// </para>
+    /// </remarks>
+    public const string RememberSignonsPreference = "signon.rememberSignons";
+
     /// <summary>Where a profile directory's lock file is.</summary>
     /// <param name="profileDirectory">The profile directory -- Playwright's <c>userDataDir</c>.</param>
     /// <returns>The absolute path of <c>parent.lock</c> inside it.</returns>

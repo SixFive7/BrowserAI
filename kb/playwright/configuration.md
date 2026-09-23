@@ -771,6 +771,81 @@ profile isolation collapses silently. Measured absent everywhere on this machine
 that the resolved user-data-dir is what we passed.** `[MACHINE]` for the absence,
 `[FLOATS]` for the mechanism.
 
+## The password-save prompt, and what actually suppresses it -- measured 2026-09-23
+
+`[FLOATS]` chromium 1246 (154.0.8037.0), chromium-headless-shell 1246, firefox
+1549 (156.0), playwright-core 1.64.0-alpha-1789764292000, @playwright/mcp 0.0.82,
+Windows 10.0.26200.
+
+**A sign-in POST makes Chromium offer to save the password, and the offer is a
+top-level window over the page.** An agent driving the session cannot dismiss it:
+it is not in the accessibility snapshot, so the page underneath stays covered and
+the next tool call answers about something nobody can see.
+
+**It happens in HEADLESS Chromium**, which is the finding that makes this
+testable at all without putting a window on somebody's screen. Driven through a
+real generated config against a local form that posts to itself:
+
+| launch | new top-level windows after the POST | prompt |
+|---|---|---|
+| no `args` at all | **2** | yes |
+| `args: ["--enable-automation"]` | **0** | no |
+| `args: ["--enable-automation", "--disable-blink-features=AutomationControlled"]` | **0** | no |
+
+So **`--enable-automation` is what suppresses it** and the second switch changes
+nothing about the prompt. The second switch is written anyway, for a reason that
+is not about passwords at all and is below.
+
+⚠️ **`profile.password_manager_enabled` IS A DEAD KEY AT CHROMIUM 154.** Seeded
+as `{"profile":{"password_manager_enabled":false}}` into the profile's
+`Preferences` before launch, it survives the launch unread -- the file is 7,777
+bytes afterwards and still carries the key -- and the prompt appears anyway,
+three new windows. `credentials_enable_service`, the key most advice names
+beside it, is not in the file at all. Anyone reaching for a preference here is
+reaching for something that stopped working.
+
+⚠️ **ANY BrowserAI ARGUMENT CONTAINING `--disable-blink-features` SILENTLY
+DROPS UPSTREAM'S OWN.** `@playwright/mcp` appends
+`--disable-blink-features=AutomationControlled` to the Chromium command line
+**unless the caller already passes an argument containing that substring** --
+whatever its value. So writing `args` at all, for any reason, removes a switch
+upstream chose, and the removal is invisible: nothing warns, and the browser
+starts. Writing the switch explicitly is what makes the launch come out identical
+either way, and it is why this product's `args` is a pair and not a single entry.
+Read back from `browser_get_config` in every arm.
+
+**`navigator.webdriver` reads `true` at chromium 1246 with or without the
+switch** -- measured in three fingerprint arms including a plain launch with
+neither switch. So `--enable-automation` reveals nothing to a page that a page
+could not already see, and adopting it is not a fingerprint decision.
+⚠️ **[Re-verification row 109](../re-verification.md) says `navigator.webdriver`
+is `false` on Chromium and is STALE as of this measurement**; it is marked there
+and the underlying entry is where the re-check belongs.
+
+**Firefox: the preference is set and the behaviour is NOT established.**
+`signon.rememberSignons: false` through `firefoxUserPrefs` reaches the running
+child and no prompt appeared -- **and no prompt appeared in the control either**,
+on a fresh profile with the preference absent, on the same form and the same
+POST. So what is established is that the switch is set, and nothing about what
+setting it prevents. It is written anyway, because a default this product does
+not control is not a decision, and the cost is one line.
+`PasswordPromptTests.TheFirefoxRememberSignonsPreferenceReachesTheChild` asserts
+exactly the established half and says so.
+
+**Re-establish** by generating a real session config for each family, launching
+the child through the product's own funnel, navigating to a local form that POSTs
+to itself, and sampling `EnumWindows` before and after the submit **filtered by
+the job's pid set**. Two things make it honest: the window set must be sampled
+**after the first navigation**, because a child answers `initialize` without
+starting a browser and every window the browser legitimately owns then reads as
+new; and the arm with the switches removed is the control, without which "no
+window appeared" is indistinguishable from a browser that never started. The rig
+is `.work/password-2026-09-23/`, and
+`PasswordPromptTests.NoWindowOpensOnASignInPostAndAControlChildProvesTheProbeCanSeeOne`
+is the suite's copy of it. **Planted red 2026-09-23** by removing
+`--enable-automation`: the arm named `Chrome_WidgetWin_1`, title *"Save
+password?"*, which it reports and does not assert.
+
 ## Shutdown
 
 **`setupExitWatchdog`** hooks `stdin` close, `SIGINT` and `SIGTERM`, calls

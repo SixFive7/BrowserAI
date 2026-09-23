@@ -439,6 +439,54 @@ internal static class BrowserConfiguration
     /// generated config by splitting on dots has to special-case it.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// The Chromium switches BrowserAI writes, and it is a pair for one reason.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The first one is the whole point.</b> <c>--enable-automation</c> is what
+    /// stops Chromium offering to save a password, and it was measured both ways
+    /// 2026-09-23 @ chromium 1246 (154.0.8037.0), headless, through a real
+    /// generated config and a local login form that posts to itself: with the
+    /// switch absent the POST produced **two new top-level windows** and the
+    /// prompt; with it present, **zero**. An agent cannot answer a modal it did
+    /// not ask for.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THE SECOND ONE IS HERE BECAUSE OMITTING IT WOULD DELETE
+    /// UPSTREAM'S OWN.</b> <c>@playwright/mcp</c> appends
+    /// <c>--disable-blink-features=AutomationControlled</c> to the Chromium
+    /// command line unless the caller already passes an argument containing
+    /// <c>--disable-blink-features</c> -- and any argument containing it,
+    /// whatever its value, silences that append. So writing <c>args</c> at all
+    /// without this entry would silently drop a switch upstream chose, which is a
+    /// change to the browser's fingerprint made by accident. Writing it
+    /// explicitly is how the launch comes out identical either way.
+    /// </para>
+    /// <para>
+    /// <b>The round trip compares the array as ONE opinion</b>, which is why
+    /// <see cref="RequiredSessionOpinions"/> names
+    /// <c>browser.launchOptions.args</c> and not a path per element: the
+    /// flattener produces one key for the array, and an element order that moved
+    /// would be a different value under the same key.
+    /// </para>
+    /// <para>
+    /// <b>What this is NOT.</b> It is not a fingerprint change:
+    /// <c>navigator.webdriver</c> already read <c>true</c> at chromium 1246 in
+    /// every arm, including a plain launch with neither switch, so
+    /// <c>--enable-automation</c> reveals nothing a page could not already see.
+    /// And <c>profile.password_manager_enabled</c> is a DEAD KEY at Chromium 154
+    /// -- seeded <c>false</c> into the profile it survives the launch unread and
+    /// the prompt still appears
+    /// ([kb](../../../kb/playwright/configuration.md#the-password-save-prompt-and-what-actually-suppresses-it----measured-2026-09-23)).
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<string> ChromiumArguments { get; } =
+    [
+        "--enable-automation",
+        "--disable-blink-features=AutomationControlled",
+    ];
+
     /// <param name="browser">The family, as upstream names it.</param>
     /// <returns>The keys that family's config must carry.</returns>
     public static IReadOnlyList<string> RequiredSessionOpinions(string browser) =>
@@ -446,8 +494,12 @@ internal static class BrowserConfiguration
         "browser.browserName",
         "browser.userDataDir",
         .. IsFirefox(browser)
-            ? new[] { $"browser.launchOptions.firefoxUserPrefs.{FirefoxProfile.RestartRegistrationPreference}" }
-            : ["browser.launchOptions.channel"],
+            ? new[]
+            {
+                $"browser.launchOptions.firefoxUserPrefs.{FirefoxProfile.RestartRegistrationPreference}",
+                $"browser.launchOptions.firefoxUserPrefs.{FirefoxProfile.RememberSignonsPreference}",
+            }
+            : ["browser.launchOptions.channel", "browser.launchOptions.args"],
         "browser.launchOptions.headless",
         "browser.launchOptions.downloadsPath",
         "browser.contextOptions.viewport.width",
@@ -674,11 +726,26 @@ internal static class BrowserConfiguration
                 // would be too late.
                 writer.WriteStartObject("firefoxUserPrefs");
                 writer.WriteBoolean(FirefoxProfile.RestartRegistrationPreference, false);
+
+                // The password-save doorhanger. Same delivery and the same
+                // reason: a pref in `user.js` is in force before the first
+                // navigation. See FirefoxProfile.RememberSignonsPreference for
+                // what was and was not established about it.
+                writer.WriteBoolean(FirefoxProfile.RememberSignonsPreference, false);
                 writer.WriteEndObject();
             }
             else
             {
                 writer.WriteString("channel", Channel);
+
+                writer.WriteStartArray("args");
+
+                foreach (var argument in ChromiumArguments)
+                {
+                    writer.WriteStringValue(argument);
+                }
+
+                writer.WriteEndArray();
             }
 
             writer.WriteBoolean("headless", request.Headless);

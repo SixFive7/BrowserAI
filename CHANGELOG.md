@@ -261,6 +261,40 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🔧 **The browser no longer asks a caller to save a password, because a caller cannot answer.**
+  A sign-in POST makes Chromium offer to remember the credential, and the offer is a top-level
+  window over the page -- not in the accessibility snapshot the agent reads, so the page
+  underneath stays covered and the next tool call answers about something nobody can see. Q255.
+  **It happens in HEADLESS Chromium**, which is what makes it testable without putting a window
+  on anybody's screen.
+
+  Chromium: `browser.launchOptions.args` carries **`--enable-automation`**, which is what
+  suppresses it -- measured 2026-09-23 @ chromium 1246 (154.0.8037.0) both ways, through a real
+  generated config against a local form that posts to itself: **two new top-level windows
+  without it, zero with it.** Firefox: **`signon.rememberSignons: false`** through
+  `firefoxUserPrefs`, beside the restart-registration preference and delivered the same way.
+  Both paths are named in `RequiredSessionOpinions`, so a generator that dropped either is red.
+
+  ⚠️ **The args list is a PAIR, and the second entry is there to avoid deleting upstream's
+  own switch.** `@playwright/mcp` appends `--disable-blink-features=AutomationControlled`
+  **unless the caller already passes an argument containing that substring** -- whatever its
+  value. So writing `args` at all, for any reason, silently removes a switch upstream chose.
+  Writing it explicitly is what makes the launch come out identical either way.
+
+  ⚠️ **Two findings that are absences, recorded because the next person will reach for
+  them.** `profile.password_manager_enabled` is a **dead key** at Chromium 154: seeded into the
+  profile it survives the launch unread and the prompt appears anyway. And **`navigator.webdriver`
+  already reads `true`** at chromium 1246 with or without the switch, so this is not a
+  fingerprint change -- which also makes re-verification row 109 stale, and it is marked.
+
+  **Planted red by removing `--enable-automation`**: the arm named `Chrome_WidgetWin_1`, title
+  *"Save password?"* -- which it reports in the failure and does not assert, because which window
+  Chromium opens is upstream's choice. **The control arm is the test**: a second child launched
+  with the switches stripped out MUST show a window, and it is also the clock, so nothing here
+  bounds the wait with a number somebody invented. The Firefox arm asserts only that the
+  preference reached the child, because the behaviour was NOT established -- no prompt appeared
+  in the Firefox control either, and the kb entry says so.
+
 - 📝 **The `webp` zero-byte watch is re-stamped, and it gains the instrument it was missing.**
   The ask that a `webp` screenshot past 16,383 px should error instead of returning an empty
   image has been open since 2026-09-14, and a watch whose last reading is nine days old reads
