@@ -34,7 +34,7 @@ namespace BrowserAI.Tests.Harness;
 /// terminal anywhere.
 /// </para>
 /// <para>
-/// ⚠️ <b>Nothing is redirected, and that is load-bearing and not lazy.</b>
+/// ⚠️ <b>Nothing is redirected, and that is load-bearing, not lazy.</b>
 /// .NET sets <c>STARTF_USESTDHANDLES</c> as soon as <i>any</i> stream is
 /// redirected, and fills the others from the <b>test host's own</b> standard
 /// handles -- which are a console under PowerShell and a pipe under Git Bash

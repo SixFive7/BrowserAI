@@ -910,7 +910,7 @@ internal sealed partial class ProvisioningTests
 
     /// <summary>
     /// The provisioner's timers for an in-process arm: polled fast, and watched
-    /// by a hang detector and not by a budget.
+    /// by a hang detector, not by a budget.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b><c>OuterDeadline</c> corrected 2026-08-18 (previously 30 s).</b>

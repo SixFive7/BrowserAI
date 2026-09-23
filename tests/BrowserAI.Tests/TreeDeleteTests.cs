@@ -160,7 +160,7 @@ internal sealed class TreeDeleteTests
     /// behaviours.
     /// </para>
     /// <para>
-    /// <b>The held file is the control and it is in this arm and not beside
+    /// <b>The held file is the control and it is in this arm, not beside
     /// it</b>: clearing an attribute must not turn into swallowing a sharing
     /// violation, so one tree carries both and the assertions say which node was
     /// removed and which was reported. The read-only <b>directory</b> is here

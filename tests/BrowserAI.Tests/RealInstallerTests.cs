@@ -171,8 +171,8 @@ internal sealed partial class RealInstallerTests
         var startMenuAfter = ReadStartMenuShortcuts();
 
         // Nothing under the SHIPPING title may point into this arm's scratch
-        // root -- which is what a shared title produced, and what is asserted
-        // and not reasoned about.
+        // root -- which is what a shared title produced, and what is asserted,
+        // not reasoned about.
         var repointed = startMenuAfter
             .Where(shortcut => Mentions(shortcut.Value, installRoot.Path))
             .Select(shortcut => shortcut.Key)

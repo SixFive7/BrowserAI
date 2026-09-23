@@ -1306,8 +1306,8 @@ internal sealed class UpdateTests
     /// retention policy that can therefore never once have applied.
     /// </para>
     /// <para>
-    /// <b><c>PayloadLayout</c> is the sanctioned exception and is named
-    /// and not excluded silently.</b> The payload is the one thing that
+    /// <b><c>PayloadLayout</c> is the sanctioned exception and is named,
+    /// not excluded silently.</b> The payload is the one thing that
     /// <i>should</i> be replaced wholesale by an update: it is the vendored copy
     /// of upstream the running build was tested against, and a payload surviving
     /// an update would mean the new binary driving the old upstream.

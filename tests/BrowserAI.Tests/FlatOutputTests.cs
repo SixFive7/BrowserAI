@@ -90,7 +90,7 @@ internal sealed class FlatOutputTests
 
         // The guard, the store, and the store's two WAL companions, which exist
         // for as long as a connection is open and are SQLite's and not
-        // BrowserAI's. Named individually and not filtered out, so a third
+        // BrowserAI's. Named individually, not filtered out, so a third
         // file arriving at the root is a red build.
         await Assert.That(FilesAtTheRootOf(rig.Session!))
             .IsEqualTo(string.Join(

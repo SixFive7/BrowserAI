@@ -1332,7 +1332,7 @@ internal sealed partial class SuiteCoverageTests
         }
 
         // The clearance snapshot is the fifth file and is shared by all four, so
-        // it carries no spelling of its own and is asserted present and not
+        // it carries no spelling of its own and is asserted present, not
         // read for one.
         await Assert.That(File.Exists(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"))).IsTrue();
     }

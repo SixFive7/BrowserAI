@@ -53,7 +53,7 @@ internal sealed class ManualClock : TimeProvider
     /// <remarks>
     /// The unit is deliberately the same as <see cref="TimestampFrequency"/>'s,
     /// so a test can say <i>one tick short of the period</i> and mean exactly
-    /// that and not approximately that.
+    /// that, not approximately that.
     /// </remarks>
     public const long OneTick = 1;
 

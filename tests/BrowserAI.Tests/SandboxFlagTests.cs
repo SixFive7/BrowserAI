@@ -44,7 +44,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>BrowserAI's own behaviour did not change and was deliberately left
 /// alone.</b> <see cref="ChildLaunch.SandboxFlag"/> still goes on the command
 /// line and the generator still omits the key, which the first arm proves
-/// unchanged -- and that is now belt and braces and not the only thing that
+/// unchanged -- and that is now belt and braces, not the only thing that
 /// works. Dropping the flag on the strength of upstream's new default is a
 /// decision nobody has taken: it would make the sandbox depend on a default
 /// that has just been shown to move.

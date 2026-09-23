@@ -59,7 +59,7 @@ internal sealed class StandardErrorClassifierTests
     [Test]
     public async Task TheTwoRegexesAreByteIdenticalToTheReferenceImplementations()
     {
-        // Read and re-parsed here and not shared with the product, so this
+        // Read and re-parsed here, not shared with the product, so this
         // compares two independently obtained strings. The extraction is
         // deliberately dumb -- every line of the excerpt carrying `-match`, the
         // text between its first and last quote -- because a clever parser could
@@ -119,7 +119,7 @@ internal sealed class StandardErrorClassifierTests
     {
         // The reference matches against the WHOLE captured stderr file; this
         // product classifies each line as the pump delivers it. That is a port of
-        // the regexes into a different call shape, so the equivalence is asserted
+        // the regexes into a different call shape, so the equivalence is asserted,
         // not argued: the first pattern is multiline-anchored and the
         // second is unanchored, which is why it holds.
         string[] buffers =

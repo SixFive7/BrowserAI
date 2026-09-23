@@ -251,7 +251,7 @@ internal sealed class SessionListTests
     /// <para>
     /// <b>Nothing rewrites the guard, so the window is gone and the gate with
     /// it.</b> What is left is narrower by orders of magnitude and is asserted
-    /// here and not left to be discovered: between a peer taking the gate
+    /// here, not left to be discovered: between a peer taking the gate
     /// and that peer's own <c>browserai.lock</c> landing, a listing sees the
     /// directory as free. That is a <b>momentary</b> truth -- it was free, and it
     /// is about to stop being -- and the answer's own text already says a

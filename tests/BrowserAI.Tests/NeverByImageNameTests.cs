@@ -88,7 +88,7 @@ internal sealed class NeverByImageNameTests
     /// ⚠️ <b>The fifteenth is real and still keeps that directory out of
     /// <c>build/</c>:</b> <c>2026-09-14-firstrun/observe.ps1</c> calls
     /// <c>GetProcessesByName</c> over a literal watch list, which is matching and
-    /// counting by name and not the observing this rule permits.
+    /// counting by name, not the observing this rule permits.
     /// </para>
     /// <para>
     /// ⚠️ <b>A narrowing needs both directions or it is a hole with a test in

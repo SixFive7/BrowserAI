@@ -2566,7 +2566,7 @@ internal sealed partial class HouseRuleTests
     /// sealed records under an explicit grant, quoted where the seal rule lives.
     /// </para>
     /// <para>
-    /// <b>The heading rule is the trap and is why this is a mechanism and
+    /// <b>The heading rule is the trap and is why this is a mechanism,
     /// not a habit.</b> <see cref="MarkdownAnchor"/> DROPS an em dash and KEEPS
     /// a hyphen, so <c>A</c>, a spaced em dash and <c>B</c> anchor as
     /// <c>a--b</c> while the swept <c>A -- B</c> anchors as <c>a---b</c>. The two

@@ -325,7 +325,7 @@ internal sealed record SessionRun
             bool heldSurvived;
 
             // FileShare.None, so the destroy below meets a file it cannot remove
-            // and has to report it and not fail.
+            // and has to report it, not fail.
             using (var _ = new FileStream(held, FileMode.Create, FileAccess.Write, FileShare.None))
             {
                 answers["destroyBeta"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject

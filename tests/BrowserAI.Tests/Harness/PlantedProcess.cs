@@ -13,7 +13,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>It plants <c>cmd.exe</c>, and the choice is forced and not
+/// <b>It plants <c>cmd.exe</c>, and the choice is forced, not
 /// arbitrary.</b> The obvious candidate was this suite's own
 /// <c>BrowserAI.TestProbe.exe</c>, and copying it does not work: it is a
 /// framework-dependent apphost, so a lone <c>.exe</c> in a strange directory

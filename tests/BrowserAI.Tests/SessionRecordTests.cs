@@ -515,7 +515,7 @@ internal sealed class SessionRecordTests
 
         await Assert.That(thread.Join(TestDefaults.InProcessHang)).IsTrue();
 
-        // 2026 and not 2569, and the offset spelled out and not escaped.
+        // 2026 and not 2569, and the offset spelled out, not escaped.
         await Assert.That(stamp).StartsWith("2026-08-26T11:45:30");
         await Assert.That(stamp).EndsWith("+02:00");
         await Assert.That(parsed).IsEqualTo(moment);

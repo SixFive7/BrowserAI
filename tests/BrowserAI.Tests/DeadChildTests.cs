@@ -360,7 +360,7 @@ internal sealed class DeadChildTests
         // it could still use.
         await Assert.That(note).Contains("profile");
 
-        // And the caller has to be told to go and look and not to assume,
+        // And the caller has to be told to go and look, not to assume,
         // because which store is lost varies by family and nothing predicts it.
         //
         // The predicate is the instruction's SHAPE and not one spelling of

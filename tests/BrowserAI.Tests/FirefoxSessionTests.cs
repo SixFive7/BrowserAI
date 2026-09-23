@@ -293,7 +293,7 @@ internal sealed class FirefoxSessionTests
     /// ⚠️ <b>Corrected 2026-08-19 (previously both enums were asserted against
     /// <c>ProvisionedBrowsers.Families</c>).</b> The reinstall tool's argument
     /// gained a third value, <c>shared</c>, which is <c>ffmpeg</c> and
-    /// <c>winldd</c> and not a browser -- so the two enums are now different
+    /// <c>winldd</c>, not a browser -- so the two enums are now different
     /// lists and this test is the one that says so. Asserting them against the
     /// <i>same</i> list is what would have let <c>shared</c> reach
     /// <c>browserai_init</c> in the widening edit, and a session bound for life

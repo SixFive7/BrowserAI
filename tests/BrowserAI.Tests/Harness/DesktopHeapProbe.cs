@@ -26,7 +26,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>Why this exists at all.</b> A desktop heap spent to the byte kills a
 /// Chromium before it creates a single window: <c>CreateWindowExW</c> is
 /// refused, and <c>WindowImpl::Init</c> in <c>ui/gfx/win/window_impl.cc</c> ends
-/// that path in a <c>NOTREACHED()</c> and a check and not an error return --
+/// that path in a <c>NOTREACHED()</c> and a check, not an error return --
 /// and a check does not log. What comes out is a browser that died with nothing
 /// on either stream, a five-line log and a clean bill of health from every
 /// system-wide counter, because the resource that ran out is the one nothing can

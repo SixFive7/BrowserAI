@@ -28,7 +28,7 @@ namespace BrowserAI.Tests;
 /// person needed a way to open it again.
 /// </para>
 /// <para>
-/// <b>What a scan can and cannot do is stated and not implied.</b> It cannot
+/// <b>What a scan can and cannot do is stated, not implied.</b> It cannot
 /// prove the pack behaves; the
 /// [install → update → rollback cycle](../../kb/packaging/velopack.md#install--update--rollback-end-to-end)
 /// did

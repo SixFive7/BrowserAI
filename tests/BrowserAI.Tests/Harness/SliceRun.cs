@@ -291,7 +291,7 @@ internal sealed record SliceRun(
         // returns its second argument unchanged when that argument is rooted, so
         // the same two lines resolve both spellings. The SPELLING is asserted
         // where it is a claim -- `FileAccessRootTests` and
-        // `VerticalSliceTests` -- and not here, where it is a parse.
+        // `VerticalSliceTests` -- instead of here, where it is a parse.
         foreach (var line in text.Split('\n'))
         {
             var opened = line.IndexOf("](", StringComparison.Ordinal);

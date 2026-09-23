@@ -581,7 +581,7 @@ internal sealed class FirefoxTests
 
         // 1. An index that does not know this session. The browser is foreign to
         //    every session there is, so it is attributed to none of them and
-        //    reported and not touched.
+        //    reported, not touched.
         index.Record(bystander);
 
         var unknown = await SweepAsync(index);

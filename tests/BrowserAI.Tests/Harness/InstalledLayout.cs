@@ -20,7 +20,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <b>The files are real PE headers and not real executables</b>, and that is
-/// the point and not a shortcut: what
+/// the point, not a shortcut: what
 /// <see cref="PeSubsystem"/> reads is eight bytes at three documented offsets, so
 /// a test can construct the exact input it wants to assert about -- a console
 /// binary, a Windows one, a file that is not a PE at all -- without publishing

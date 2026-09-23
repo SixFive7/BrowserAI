@@ -88,7 +88,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>The candidate is a planted copy of the probe, not a browser, and that is a
-/// stronger test and not a weaker one.</b> Detection matches on <i>full
+/// stronger test, not a weaker one.</b> Detection matches on <i>full
 /// image path</i>, so a test that declares the planted copy as "a browser
 /// BrowserAI provisioned" exercises the identical code path a real Chromium
 /// takes -- while making it impossible for a run of this suite to terminate

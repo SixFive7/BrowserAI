@@ -1901,7 +1901,7 @@ internal sealed class SessionLockTests
         await Assert.That(tolerant.Count).IsEqualTo(2).Because(string.Join(" | ", tolerant));
 
         // And the ownership tests are bare. TryHoldUnowned's is the one that may
-        // meet a real owner and must answer and not wait.
+        // meet a real owner and must answer, not wait.
         await Assert.That(bare.Count).IsGreaterThanOrEqualTo(1).Because(string.Join(" | ", bare));
     }
 
