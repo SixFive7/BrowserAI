@@ -82,6 +82,40 @@ release body; nothing else depends on it.
   `DocumentationLinkTests` reported both -- which is that scan working, and is why this one now
   uses the arrangement that file already keeps for its own controls.
 
+- 📝 **The feed and the package stay release assets, and the four alternatives are written down.**
+  The asset trim raised the obvious next question -- if a release carries three files, does it
+  need to carry them at all? -- and it was researched before it was answered rather than after.
+  The answer is that every alternative costs something real and buys nothing this product needs.
+
+  **One fact governs all of them: a published release asset cannot be redirected.** There is no
+  GitHub facility that makes `releases/latest/download/releases.win.json` serve from somewhere
+  else, so any move strands every installed build that has not first updated through the old URL.
+  The only runtime lever is `BROWSERAI_UPDATE_FEED`, which a person sets by hand on one machine.
+  A hosting move is a one-way door for the installed base.
+
+  `DECISIONS.md` carries the five directions not taken with the fact each rests on: GitHub Pages
+  for both, where 1 GB of published site is about **18 packages** and 100 GB a month is about
+  **1,860 downloads** of a 55 MB package, against release assets GitHub documents as having no
+  size or bandwidth limit at all; Pages for the feed alone, where Velopack's code accepts an
+  absolute package URL and its documentation requires the package beside the feed, and `vpk pack`
+  regenerates the feed with bare names on every pack; a second repository's releases, which is
+  the only arrangement that keeps 55 MB per release out of a contributor's clone; a pinned
+  pre-release, which would make the base URL tag-specific; and an external host.
+
+  **And one thing the current arrangement gives for free turned out never to have been measured.**
+  The release alias answers `Cache-Control: no-cache`, so a new release is visible immediately;
+  GitHub Pages answers `max-age=600` from an edge cache. Immediate against up to ten minutes.
+  Harmless for correctness, real all the same, and it would have been spent without anybody
+  noticing.
+
+  The three investigations behind this are committed under `docs/evidence/`, with the digest of
+  each as it was written, so no decision here rests on a scratch directory. The 479 MB clone they
+  were read from is **not** committed: the tag and sha that re-create it are cited instead,
+  because a copy of somebody else's repository is not evidence. The third investigation answers a
+  question nobody can act on -- GitHub's automatic *Source code* links cannot be removed, hidden
+  or deleted, by three independent readings ending in GitHub's own reply that they may not be
+  funding it.
+
 ### Changed
 
 - 📦 **A release publishes three assets, and the release script declares which three.**
@@ -116,12 +150,13 @@ release body; nothing else depends on it.
   file and not producing one are different changes, and only the first was decided: `vpk upload`
   reads the local `assets.<channel>.json` to learn what to upload.
 
-  **And `v1.1.0` was trimmed to the same three after the fact.** Dropping an asset from a
-  release that is already standing is a separate decision about links people may already
-  have; it was put to the maintainer on its own and his answer was to take it. The four
-  deleted -- the portable archive, `RELEASES`, `assets.win.json` and the manifest zip --
-  had a download counter of **0** apiece. `v1.0.0` was deliberately left alone and still
-  carries all seven, so the two releases differ on purpose.
+  **And `v1.1.0` was trimmed to the same three after the fact**, which was its own
+  decision and has its own entry below.
+
+- 📝 **The status paragraph no longer names the portable archive's file.**
+  One mention of the file name survived the README sweep -- not as a download, but inside the
+  status paragraph's account of a planted red, where it was a true sentence about a test. It says
+  the declaration "came back naming it" now. A reader who wants the name can read the test.
 
 ### Removed
 
@@ -139,6 +174,49 @@ release body; nothing else depends on it.
   is still rewritten into `assets.win.json`. Only the upload set changed. Keeping the local
   artifact is what keeps the rename step exercised on every cut rather than only on the cuts
   somebody remembers.
+
+- 🗑️ **`v1.1.0` carries three assets instead of the seven it was published with.**
+  Dropping an asset from a release that is already standing is a separate decision from
+  deciding what the next one publishes: people may already have links. It was put on its own
+  and taken on its own.
+
+  Deleted, one at a time: the portable archive, `RELEASES`, `assets.win.json` and
+  `BrowserAI-1.1.0-manifest.zip`. **Each had a download counter of `0`.** What remains is
+  exactly what the release script now declares -- the installer, the full package and
+  `releases.win.json`.
+
+  **Verified immediately afterwards, because a feed that stops answering is the one way this
+  could have gone wrong**: `releases/latest` still resolves to `v1.1.0`, the feed URL still
+  answers 200 with the one row naming 55,022,716 bytes, and the installer link still answers.
+
+  **`v1.0.0` was deliberately left alone** and still carries all seven, so the two releases
+  differ on purpose rather than by accident. The resolved-set manifest that was deleted here
+  is not lost: it was committed to the repository first, which is now its only surviving
+  copy rather than its second.
+
+### Fixed
+
+- 🐛 **The packer's own asset list no longer disagrees with what a release publishes.**
+  `vpk pack` writes `assets.<channel>.json` naming everything it produced, and `vpk upload github`
+  uploads **every file listed in it**. So the portable archive would have been published by the
+  one command nobody here runs, contradicting the set the release script declares -- and nothing
+  would have said so, because the two mechanisms never meet. It was found by asking what else
+  reads the files that were being dropped.
+
+  `build/Set-UploadAssets.ps1` rewrites the list to the declared set and **re-reads it from disk**
+  to refuse anything else, because what an upload reads is the file rather than the variable that
+  wrote it. It runs from `New-Release.ps1` after the rename and is its own script so the suite can
+  drive it, which it does: the portable archive is planted and both refusals are exercised.
+
+  **One refusal is not obvious and is the reason this is not a one-line filter.** A list with no
+  `Full` entry is a feed with no rows, because `vpk` builds the release manifest out of exactly
+  those -- so a rewrite that dropped the package would publish a manifest advertising nothing,
+  which a client reports as *no update available* and never as an error.
+
+  **Two things the step cannot do, said rather than assumed.** It cannot stop `vpk upload github`
+  adding a legacy `RELEASES` on the default Windows channel, which reads no list at all, and it
+  cannot remove the feed upload, which is wanted. The file itself stays on disk; what changed is
+  what it names.
 
 ## [1.1.0] - 2026-09-23
 
