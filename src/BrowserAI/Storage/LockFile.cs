@@ -39,8 +39,8 @@ namespace BrowserAI.Storage;
 /// window left is between the rename and the first hold at acquisition, and
 /// that one is inside the per-directory gate every acquirer takes. What a
 /// reporting caller can still see in it is *free* about a directory somebody
-/// is in the middle of taking -- a momentary truth that corrects itself, rather
-/// than a stale one that does not.
+/// is in the middle of taking -- a momentary truth that corrects itself, and
+/// not a stale one that does not.
 /// </para>
 /// <para>
 /// <b>The writer is the lock holder, and nothing here enforces that.</b> It is
@@ -60,7 +60,7 @@ internal static class LockFile
     /// 2026-08-26; what changed is which side owns it. The layout moved into
     /// <c>BrowserAI.Core</c> with the live-instance census that needs it, this
     /// storage layer stayed in the server, and the server links the library
-    /// rather than the other way round -- so the alias had to point this way or
+    /// and not the other way round -- so the alias had to point this way or
     /// not compile.
     /// </remarks>
     public const string FileName = Sessions.SessionLayout.LockFileName;
@@ -69,7 +69,7 @@ internal static class LockFile
     /// What a temporary lock file being renamed into place is called.
     /// </summary>
     /// <remarks>
-    /// A pattern rather than a name, so that a sweep looking for the residue of
+    /// A pattern and not a name, so that a sweep looking for the residue of
     /// an interrupted acquisition has something to match. It shares the prefix
     /// deliberately: a stray beside <see cref="FileName"/> reads as what it is.
     /// </remarks>
@@ -101,7 +101,7 @@ internal static class LockFile
     /// <b>The rename is the only one this file will ever see.</b> Everything
     /// the session goes on to say about itself goes into
     /// <see cref="SessionStore"/>, so the window a rename opens is paid once per
-    /// acquisition rather than once per call.
+    /// acquisition and not once per call.
     /// </para>
     /// <para>
     /// ⚠️ <b>The two halves are also callable separately, and one caller does
@@ -244,7 +244,7 @@ internal static class LockFile
         {
             // Free, and this is the half that could not be said before. The
             // file is written once and never renamed again, so an absence is an
-            // absence rather than a record mid-replacement.
+            // absence and not a record mid-replacement.
             return new LockFileAnswer(LockFileState.Free, null);
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
@@ -295,7 +295,7 @@ internal static class LockFile
     /// <b>Indented and newline-terminated, because a person opens this file.</b>
     /// It is roughly a hundred bytes and it is the one thing in the directory
     /// that answers *who has this* without a tool. The newline is spelled
-    /// explicitly rather than left to <c>Environment.NewLine</c>, which is what
+    /// explicitly and not left to <c>Environment.NewLine</c>, which is what
     /// silently made the record this replaces CRLF.
     /// </remarks>
     /// <param name="holder">Who is taking the directory.</param>
@@ -333,7 +333,7 @@ internal static class LockFile
 
     /// <summary>Reads the holder record strictly.</summary>
     /// <remarks>
-    /// <b>An unknown key is a refusal rather than a field dropped in
+    /// <b>An unknown key is a refusal and not a field dropped in
     /// silence.</b> The set of things a lock file may say is closed, and a file
     /// carrying something else is somebody else's file -- which is a different
     /// answer from *this directory is free* and has to stay one.
@@ -396,7 +396,7 @@ internal static class LockFile
 
         if (createdFileTime is not { } created)
         {
-            // ⚠️ Refused rather than defaulted, and the reason is the rule this
+            // ⚠️ Refused and not defaulted, and the reason is the rule this
             // whole record exists for: a pid alone is not an identity, because
             // Windows reuses pids within seconds. A lock file naming only a pid
             // would let a reclaim take a live stranger's directory.
@@ -537,7 +537,7 @@ internal sealed class LockFileHold : IDisposable
 
     /// <summary>Whether the handle is still open.</summary>
     /// <remarks>
-    /// Read off the stream rather than tracked in a field of its own, so that
+    /// Read off the stream and not tracked in a field of its own, so that
     /// *is this session still holding its directory* has one answer and not two
     /// that can drift.
     /// </remarks>
@@ -545,7 +545,7 @@ internal sealed class LockFileHold : IDisposable
 
     /// <summary>What the lock file says, read through the handle already open.</summary>
     /// <remarks>
-    /// <b>Through this handle rather than through a second open</b>, so that a
+    /// <b>Through this handle and not through a second open</b>, so that a
     /// holder asking who it is cannot be answered by a file somebody replaced
     /// underneath it, and so that the read is not subject to the sharing rules
     /// a peer's read is subject to. The position is reset first because the

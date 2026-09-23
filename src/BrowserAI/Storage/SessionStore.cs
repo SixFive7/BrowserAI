@@ -25,7 +25,7 @@ namespace BrowserAI.Storage;
 /// an application-level invariant enforced by the code path that reaches this
 /// type, not a defence: BrowserAI's charter names adversarial and
 /// hostile-caller defence an explicit non-goal, and a second process that
-/// opened this file for writing on purpose would get a SQLite error rather than
+/// opened this file for writing on purpose would get a SQLite error and not
 /// a refusal from here.
 /// </para>
 /// <para>
@@ -36,7 +36,7 @@ namespace BrowserAI.Storage;
 /// </para>
 /// <para>
 /// ⚠️ <b>A CRASHED HOLDER'S WRITE-AHEAD LOG, AND WHAT A READ-ONLY CALLER
-/// ACTUALLY GETS -- measured 2026-08-26 rather than reasoned about, because the
+/// ACTUALLY GETS -- measured 2026-08-26, not reasoned about, because the
 /// answer is not the one the design note predicted.</b> When a holder dies
 /// without closing, the <c>-wal</c> carries committed transactions the
 /// <c>.data</c> file does not, and reading them means <i>building</i> the
@@ -73,7 +73,7 @@ namespace BrowserAI.Storage;
 /// <b>No caps, anywhere.</b> Not on a <c>why</c>, not on a purpose, not on the
 /// number of log rows, not on a failure payload. That is the maintainer's
 /// explicit decision, and the reason it is affordable here and was not before
-/// is that an append is an <c>INSERT</c> rather than a durable rewrite of the
+/// is that an append is an <c>INSERT</c> and not a durable rewrite of the
 /// whole record.
 /// </para>
 /// </remarks>
@@ -86,7 +86,7 @@ internal sealed class SessionStore : IDisposable
     /// an alias for it, for the reason
     /// <see cref="LockFile.FileName"/> gives: the layout moved into
     /// <c>BrowserAI.Core</c> and this layer did not, so the one spelling had to
-    /// move to the side that is linked rather than the side that links.
+    /// move to the side that is linked and not the side that links.
     /// </remarks>
     public const string DataFileName = Sessions.SessionLayout.DataFileName;
 
@@ -97,7 +97,7 @@ internal sealed class SessionStore : IDisposable
     /// <b>There is no converter and there will not be one</b>, which is this
     /// repository's standing position on a record it cannot act on: the version
     /// is checked in a pass of its own so that a version error reads as a
-    /// version error rather than as damage, and the refusal carries the fix.
+    /// version error and not as damage, and the refusal carries the fix.
     /// Making migration cheap is how a record starts carrying fields nobody
     /// decided on.
     /// </remarks>
@@ -131,7 +131,7 @@ internal sealed class SessionStore : IDisposable
     /// <see cref="Sqlite.Busy"/>.
     /// </summary>
     /// <remarks>
-    /// <b>Derived from <see cref="LockScopes.PerDirectoryGate"/> rather than
+    /// <b>Derived from <see cref="LockScopes.PerDirectoryGate"/> and not
     /// chosen.</b> The two answer the same question about the same directory --
     /// *how long may a second caller be made to wait before it is told no* --
     /// and two different numbers would mean a caller admitted by one could be
@@ -164,7 +164,7 @@ internal sealed class SessionStore : IDisposable
         {
             database.SetBusyTimeout(BusyTimeout);
 
-            // A query rather than an Execute: `PRAGMA journal_mode` answers with
+            // A query and not an Execute: `PRAGMA journal_mode` answers with
             // the mode it ended up in, and it is allowed to answer with a
             // different one -- a database on a filesystem that cannot do shared
             // memory stays in its old mode and says so, quietly, which would
@@ -211,7 +211,7 @@ internal sealed class SessionStore : IDisposable
     /// store and recovers the log, and it is refused only where it may not
     /// create that file. The type's own remarks carry the measurement. What it
     /// genuinely cannot do is create the <i>store</i>, which is what makes
-    /// *there is no store here* an answer rather than a directory quietly
+    /// *there is no store here* an answer and not a directory quietly
     /// gaining one.
     /// </remarks>
     /// <param name="path">The store file.</param>
@@ -253,7 +253,7 @@ internal sealed class SessionStore : IDisposable
     /// different: the holder row and the statements that say what this session
     /// now is are one fact, and a reader that saw half of it would see a
     /// session held by somebody for no reason, or a reason with no holder.
-    /// <c>IMMEDIATE</c> rather than a deferred begin, so the write lock is
+    /// <c>IMMEDIATE</c> and not a deferred begin, so the write lock is
     /// taken now and a refusal arrives before any row has been written.
     /// </remarks>
     /// <param name="statements">The statements, in the order they should be stored.</param>
@@ -301,9 +301,9 @@ internal sealed class SessionStore : IDisposable
     /// </summary>
     /// <remarks>
     /// <b>Written before a call is forwarded, which is why the outcome is a
-    /// parameter rather than a return.</b> A call that never comes back still
+    /// parameter and not a return.</b> A call that never comes back still
     /// left a row saying what it was for, and the id is what lets the answer,
-    /// when there is one, land on that row rather than beside it.
+    /// when there is one, land on that row and not beside it.
     /// </remarks>
     /// <param name="at">When the call was made, round-trippable.</param>
     /// <param name="tool">The tool name, verbatim, whatever the caller said.</param>
@@ -360,7 +360,7 @@ internal sealed class SessionStore : IDisposable
 
     /// <summary>Every statement, oldest first.</summary>
     /// <remarks>
-    /// <b><c>ORDER BY rowid</c> is stated rather than assumed.</b> The table has
+    /// <b><c>ORDER BY rowid</c> is stated, not assumed.</b> The table has
     /// no key of its own -- the schema is three text columns -- so *the order they
     /// were written in* is the implicit rowid and nothing else. A bare
     /// <c>SELECT</c> happens to return them that way today and is entitled to
@@ -428,7 +428,7 @@ internal sealed class SessionStore : IDisposable
 
     /// <summary>When the newest call was made, or <see langword="null"/> for a log with nothing in it.</summary>
     /// <remarks>
-    /// <b>The <c>at</c> of the newest row rather than the newest <c>at</c>.</b>
+    /// <b>The <c>at</c> of the newest row and not the newest <c>at</c>.</b>
     /// Rows are written in call order and <c>id</c> is that order, so ordering
     /// by the timestamp column would sort by a string whose value comes from a
     /// clock the caller can move -- and *when did anything last happen here* is
@@ -478,7 +478,7 @@ internal sealed class SessionStore : IDisposable
     /// <b>One <c>Execute</c> and therefore one implicit transaction per
     /// statement, deliberately not wrapped.</b> Every statement here is
     /// <c>IF NOT EXISTS</c> or idempotent, so a half-written schema is
-    /// completed by the next open rather than being a state anybody has to
+    /// completed by the next open and is not a state anybody has to
     /// recover from.
     /// </para>
     /// <para>
@@ -548,7 +548,7 @@ internal sealed class SessionStore : IDisposable
 /// <remarks>
 /// <b>Append-only, and "current" means the newest.</b> Nothing overwrites a
 /// statement; a session that moves, or changes its purpose, gains a row. That
-/// is what lets a record say how it got here rather than only where it ended
+/// is what lets a record say how it got here and not only where it ended
 /// up -- and it is what kills the string concatenation the old record used to
 /// build a purpose out of every purpose before it.
 /// </remarks>

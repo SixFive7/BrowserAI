@@ -12,7 +12,7 @@ namespace BrowserAI.Storage;
 /// <remarks>
 /// <para>
 /// <b>Prepared, used once, and finalized.</b> There is no <c>reset</c> and no
-/// <c>clear_bindings</c> here, and their absence is a decision rather than an
+/// <c>clear_bindings</c> here, and their absence is a decision and not an
 /// omission: this store runs a dozen statements a session, so re-using a
 /// compiled one buys microseconds and costs the invariant that makes the rest
 /// of this file simple -- that a statement's bindings are exactly what this
@@ -56,7 +56,7 @@ internal sealed class SqliteStatement : IDisposable
     /// <para>
     /// <b>The buffer always carries a terminator it does not count</b>, so it
     /// is never zero-length -- and a zero-length array marshals to a pointer
-    /// SQLite would read as SQL <c>NULL</c> rather than as the empty string.
+    /// SQLite would read as SQL <c>NULL</c> and not as the empty string.
     /// </para>
     /// </remarks>
     /// <param name="index">The one-based parameter index.</param>
@@ -147,7 +147,7 @@ internal sealed class SqliteStatement : IDisposable
 
     /// <summary>Reads a column of the current row as text.</summary>
     /// <remarks>
-    /// ⚠️ <b>The length is taken from <c>sqlite3_column_bytes</c> rather than
+    /// ⚠️ <b>The length is taken from <c>sqlite3_column_bytes</c> and not
     /// from the terminator</b>, for the same reason the bind passes one: a
     /// stored value carrying U+0000 is a value, and reading to the first zero
     /// byte would hand back a prefix of it. The accessor is called before the
