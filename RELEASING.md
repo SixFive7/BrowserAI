@@ -654,7 +654,7 @@ this item has nothing to do about it in either direction. What must not happen,
 before this decision and after it, is a `git add -A` taken on trust.
 **Q201**, decided 2026-09-17; Q199 above decided only *which* of the two states to
 commit, which moved the churn instead of ending it, and its record is kept
-because it is what a reader who met the flip-flop needs in order to recognise
+because it is what a reader who met the flip-flop needs to recognise
 that it is gone.
 
 > **Corrected 2026-08-16 on the first run of this checklist (previously: "the
@@ -1322,7 +1322,7 @@ live **outside** a test run, and both must be true at release time:
   to the current full package and deltas are forward-only, so an unarchived
   release is one you cannot roll back to without a fresh full download.
 
-  ⚠️ **SIMPLER SINCE 2026-09-22, AND THE REASON IS A DECISION RATHER THAN A
+  ⚠️ **SIMPLER SINCE 2026-09-22, AND THE REASON IS A DECISION, NOT A
   MECHANISM.** Every release packs **full packages only**
   ([DECISIONS](DECISIONS.md#locking-logging-versioning-and-registration)), so
   "without a fresh full download" is no longer a penalty this item is warning
