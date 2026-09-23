@@ -53,7 +53,7 @@ The sequence, in order, no step skippable:
 5. **A human decides.** Green is necessary and not sufficient: a green build is *releasable*, not *released*.
 6. **Cut it.** `vpk pack`, publish, and record the resolved set alongside the artifact so the release can state exactly what it contains.
 
-**Why manual is right here, and the condition under which it stops being right.** With one person releasing on a single track, a release pipeline is ceremony around a decision that person makes anyway -- and updates are already the most hazard-dense area of this product without adding pipeline-authored releases to them. The honest cost: **the gate is only as good as the person invoking it.** It rests entirely on step 3 being *run* rather than assumed. The day a second person can cut a release, that assumption breaks and the gate has to move into automation.
+**Why manual is right here, and the condition under which it stops being right.** With one person releasing on a single track, a release pipeline is ceremony around a decision that person makes anyway -- and updates are already the most hazard-dense area of this product without adding pipeline-authored releases to them. The honest cost: **the gate is only as good as the person invoking it.** It rests entirely on step 3 being *run*, not assumed. The day a second person can cut a release, that assumption breaks and the gate has to move into automation.
 
 **What manual does not mean.** It does not mean the suite runs when someone remembers. Steps 1-4 are the ordinary build and run on every build, whether or not a release is in view. Manual governs step 5 alone.
 
@@ -64,14 +64,14 @@ governs step 5 alone", and the checklist's numbering was the only order
 recorded anywhere).*** Items 8-13 are **numbered** in the order a reader needs
 them and **executed** in the order below, and on 2026-09-15 a release attempt
 ran them in the numbered order and stopped twice on failures that were artifacts
-of the order rather than defects in anything:
+of the order, not defects in anything:
 
 1. **Pack for the gate, first.** [Item 8](#8-run-everything)'s skipped count must
    be zero, and two arms -- the real-installer one and the notice check that reads
    the packed `.nupkg` -- are capability-gated on a pack existing in `Releases/`.
    With no pack they report *skipped*, and `BROWSERAI_RELEASE_RUN=1` turns each
    into a failure. So the pack exists before the gate runs, and it is a
-   gate artifact rather than the artifact that ships.
+   gate artifact and not the artifact that ships.
 2. **[Item 8](#8-run-everything), at the pre-stamp content.** The gate runs
    against the release content **minus** the changelog stamp, the seal and any
    correction that depends on the release having happened. That delta is what
@@ -79,7 +79,7 @@ of the order rather than defects in anything:
    whose whole output is a stamp.
 3. **[Item 10](#10-the-changelogs-unreleased-section-is-not-empty): stamp, and
    seal in the same commit.** ⚠️ **For the 2026-09-15 re-ship of `1.0.0` the
-   stamp is a MERGE into the existing section rather than a new one** -- the
+   stamp is a MERGE into the existing section, not a new one** -- the
    version already has a section and `Get-ReleaseNotes.ps1 -StampVersion 1.0.0`
    refuses, correctly, so the entries that accumulated under `[Unreleased]` after
    the first cut were moved into the `1.0.0` groups by hand and the section was
@@ -156,7 +156,7 @@ of the order rather than defects in anything:
    test output before packing into it, since that output is regenerated on every
    run and published on none -- one `Remove-Item` where this bullet is a
    paragraph a person has to remember. That is a behaviour change to the release
-   script, which belongs to whoever owns it rather than to the executor of a
+   script, which belongs to whoever owns it and not to the executor of a
    release, and **`ReleaseScriptTests.AReleaseCutOverLocalPreReleasePacksIsRefusedAndNamesWhatToClear`
    names four files and would need to name these too.**")*.** **Q200**, decided
    2026-09-17: [`build/Clear-TestPackFeed.ps1`](build/Clear-TestPackFeed.ps1) runs
@@ -165,7 +165,7 @@ of the order rather than defects in anything:
    `releases.win.json`, `RELEASES`, `assets.win.json`, the two renamed downloads,
    and the two **pre-rename** names a run that died between the pack and the
    rename leaves instead. **So the previous ⚠️ is now a description of a failure
-   mode rather than a step**, and it is kept for the reader who meets that `vpk`
+   mode and not a step**, and it is kept for the reader who meets that `vpk`
    message in an old log. Nothing here is owed by hand.
 
    **It is its own script for the same reason `Test-ReleaseVersion.ps1` is** -- so
@@ -180,7 +180,7 @@ of the order rather than defects in anything:
    ⚠️ **The refusal in `Test-ReleaseVersion.ps1` is NOT redundant now and must
    not be deleted.** It fires on the **shipping** feed, which nothing clears
    automatically and which this checklist still empties by hand four files at a
-   time; and it fires before a pack rather than during one. The script change
+   time; and it fires before a pack, not during one. The script change
    closes the second feed only.
 
    ⚠️ **The cut is REFUSED until this is done, and it says so -- *added
@@ -222,7 +222,7 @@ both green on the very next run once the order was fixed:**
   2026-09-15 that arm also accepts an empty section on the one commit the tag is
   exactly at -- which narrows the window this ordering has to protect, and does
   not remove it: the tag is created at step 4, after the gate.)* ⚠️ **Narrowed
-  again later the same day, and this time the window is closed rather than
+  again later the same day, and this time the window is closed, not
   reduced:** the arm also accepts an empty section when **nothing under `src/` or
   `tests/` has landed since the changelog was last written**, which is true for
   the whole of steps 3 to 6 -- stamp, tag, re-pack, publish -- and stops being true
@@ -247,7 +247,7 @@ both green on the very next run once the order was fixed:**
   > left the release published throughout, and the feed was measured down for
   > **7.7 s** -- the window in which GitHub re-resolves `releases/latest`, not a
   > drafting. So a re-cut at the same version moves the tag and never deletes
-  > it, and the twenty minutes is what deleting costs rather than what tagging
+  > it, and the twenty minutes is what deleting costs, not what tagging
   > costs.
 
 **They cannot both be green in the window the numbered order puts item 8 in** --
@@ -257,7 +257,7 @@ the numbering is a reading order and this is the running one.
 ⚠️ **The cost of getting it wrong is outward-facing and was paid.** The public
 download and update feed answered **404 for about twenty minutes**, 12:05Z-12:25:34Z
 on 2026-09-15. *The end of that window is measured to the second; the start is a
-bound rather than a measurement* -- GitHub's event feed carries no `DeleteEvent`
+bound, not a measurement* -- GitHub's event feed carries no `DeleteEvent`
 for a tag, so the earliest independent artefact is the release commit reaching
 `origin` at 12:04:10Z with the tag deleted immediately after.
 
@@ -341,7 +341,7 @@ The rest of the resolve:
   hand-typed URL.
 
 **Evidence:** the two lock diffs, **taken with `--exit-code` so that "no output"
-is a recorded `0` rather than an absence** -- a bare `git diff` prints nothing
+is a recorded `0` and not an absence** -- a bare `git diff` prints nothing
 whether it found nothing or was never run, which is the failure shape this whole
 file is about:
 
@@ -388,7 +388,7 @@ green is locally the cheapest correct-looking move.
 
 **An override leaves a trace in the release artifact.** The resolved set recorded
 at [item 11](#11-the-resolved-set-is-recorded-beside-the-artifact) states the
-version that actually shipped, copied rather than transcribed. Say what was
+version that actually shipped, copied and not transcribed. Say what was
 held, at what version, and why, **in the manifest, in this item's evidence and in
 the changelog entry** -- a release whose manifest does not say it was overridden is
 a release claiming it was not.
@@ -398,7 +398,7 @@ changelog entry", with no manifest field to put it in).*** The sentence above
 asked the manifest to say something the manifest could not express: the script
 emitted no override field and had no place for one. It takes five parameters now
 and **always** emits the key, so an ordinary release states `"override": null`
-rather than saying nothing:
+instead of saying nothing:
 
 ```powershell
 pwsh -File build/Write-ReleaseManifest.ps1 -Destination <dir> -Version <v> `
@@ -568,7 +568,7 @@ PNG-compressed entry -- and that `icon-256.png` is 256×256; **nothing holds tha
 the drawing in the `.ico` is the drawing in the SVG**, because that is a render
 comparison on every build to answer a question a person answers by looking.
 That is what this line is for. *(Its planted red is a **doctored-file** control
-rather than the old placeholder, and that is stated where it lives: candidate 1
+and not the old placeholder, and that is stated where it lives: candidate 1
 was packed by the same script and has the identical directory shape, so putting
 it back would not move one assertion.)*
 
@@ -621,7 +621,7 @@ release script avoids.
 
 ⚠️ **COMMIT IT -- *corrected 2026-09-16 (previously "**Revert it; do not commit
 it** -- `git checkout -- src/BrowserAI.Core/packages.lock.json` -- because an empty
-section is a restore artifact rather than a resolution anybody reviewed, and a
+section is a restore artifact, not a resolution anybody reviewed, and a
 `git add -A` after a publish carries it into the release commit, which is how it
 reached `HEAD` once already. Nothing enforces this and a test would be red for
 the whole window between this item and item 8")*.** The section is committed
@@ -629,7 +629,7 @@ under **Q199**, decided 2026-09-16: it is what a RID restore genuinely resolves,
 and the revert habit had already failed once -- it reached `HEAD` in a `git add
 -A` and was reverted in `ac244ff` under a sentence calling it an artifact.
 **This item therefore has nothing left to do about that file**, and the window
-the old rule needed protecting is closed rather than narrowed: with the section
+the old rule needed protecting is closed, not narrowed: with the section
 committed, a RID restore leaves the lock file **byte-identical** (measured
 2026-09-16 -- SHA-256 `fab160c4...` either side of a RID restore of both
 executables), so a publish no longer produces a diff for anybody to remember to
@@ -653,7 +653,7 @@ publish nor an [item 8](#8-run-everything) run leaves that file modified**, and
 this item has nothing to do about it in either direction. What must not happen,
 before this decision and after it, is a `git add -A` taken on trust.
 **Q201**, decided 2026-09-17; Q199 above decided only *which* of the two states to
-commit, which moved the churn rather than ending it, and its record is kept
+commit, which moved the churn instead of ending it, and its record is kept
 because it is what a reader who met the flip-flop needs in order to recognise
 that it is gone.
 
@@ -671,7 +671,7 @@ that it is gone.
 > reads every build file, refuses any value other than `false`, **and requires
 > the declaration to be present in `Directory.Build.props`** -- absent would pass
 > a "not true" check while saying nothing to the next reader. Quoting the
-> property here is now corroboration rather than the only thing that looks.
+> property here is now corroboration and not the only thing that looks.
 
 ### 8. Run everything
 
@@ -680,8 +680,8 @@ AND [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) -- *added
 2026-09-23 by addition, Q239 b*.** Three runs each, `BROWSERAI_RELEASE_RUN=1`,
 each forcing and declaring its own drive-letter spelling, each comparing
 [the clearance snapshot](build/Get-ClearanceSnapshot.ps1) either side of every
-run and **stopping on the first difference rather than finishing and reporting
-it**. They are two files rather than one for the reason
+run and **stopping on the first difference instead of finishing and reporting
+it**. They are two files and not one for the reason
 [Testing](TESTING.md#how-the-suite-is-run-detached-teed-and-the-log-polled)
 gives: a shared wrapper would run one instrument twice. Ordinary work uses the
 ordinary pair beside them, which is one run per shell and does **not** set the
@@ -697,13 +697,13 @@ before the stamp and the tag -- see
 [the order the last six steps are executed in](#the-order-the-last-six-steps-are-executed-in----and-it-is-not-the-numbering).
 Run in the numbered order it goes red on two things that are not defects.
 
-Five things to record rather than assume, because each is easy to skim past.
+Five things to record, not assume, because each is easy to skim past.
 *Corrected 2026-08-24 (previously "Three things") -- the list had reached four
 before this and nobody had re-read the number:*
 
 - **The skipped count, which must be zero.** No `Skip`, no quarantine, no
   conditional ignore anywhere in the tree. A `Skip` at release time is a red
-  build wearing a disguise, and flakiness is a defect to fix rather than a state
+  build wearing a disguise, and flakiness is a defect to fix, not a state
   to tolerate.
 - **The suite ran from PowerShell *and* from Git Bash, and both were green.**
   Added 2026-08-20, when CI was removed and this checklist became the only place
@@ -754,7 +754,7 @@ before this and nobody had re-read the number:*
   `PublishedSlice.EnsureFresh` counts among its inputs. So the published binaries
   are stale by the time this item runs **even when nothing under `src/` was
   touched**, and around thirty arms that drive the published binary refuse
-  together rather than failing on anything about the code.
+  together, not fail on anything about the code.
   **Measured 2026-09-22 on this release's pre-flight run: 47 reds**, every one
   reading *the published binary at '...\BrowserAI.Server.exe' is older than 1
   source file(s) ... build\payload\package-lock.json*. The two commands are the
@@ -772,8 +772,8 @@ before this and nobody had re-read the number:*
   the real `Setup.exe` that
   `RealInstallerTests.InstallingTwiceOverOneRootLeavesTheDataRootByteIdentical`
   installs twice over one root. Under `BROWSERAI_RELEASE_RUN=1` an absent
-  capability is a **failing test** rather than a skip, so a release gate run on a
-  tree that has never been packed fails for want of an artefact rather than for
+  capability is a **failing test**, not a skip, so a release gate run on a
+  tree that has never been packed fails for want of an artefact and not for
   anything about the code. Run [item 7's publish and pack](#7-build-clean)
   first; the gate then exercises the installer that is about to be published.
   ⚠️ **The arm refuses to run when an Add/Remove entry for the TEST pack id
@@ -860,12 +860,12 @@ before this and nobody had re-read the number:*
 
   **The coverage block's `release run` row is the check on this**, and it is why
   it exists: it says `YES` or `no` in every run, so a release cut from a run that
-  never saw the variable is visible in its own evidence rather than inferred from
+  never saw the variable is visible in its own evidence, not inferred from
   the command somebody remembers typing.
 
   Under that variable every capability guard -- the published slice, the
   repository payload, a provisioned Chromium, a provisioned Firefox, a packed
-  `.nupkg` -- is a **failure** rather than a skip, so a release cut from a
+  `.nupkg` -- is a **failure**, not a skip, so a release cut from a
   machine that never started a browser is a red run naming what was missing.
   Without it the same guards report **skipped**, which the first bullet above
   already refuses.
@@ -915,7 +915,7 @@ the exit code, and the coverage block, which states what was exercised.
 > was real and its subject was the publish alone. Both are gated now regardless
 > -- a guard nobody accounts for is how this one was missed.
 
-> **This whole checklist rests on this item being *run* rather than assumed.**
+> **This whole checklist rests on this item being *run*, not assumed.**
 > [The release gate](#the-release-gate) says exactly that about its own
 > step 3, and it is the honest cost of the decision to have no automation.
 
@@ -955,7 +955,7 @@ git describe --tags --long
 > release was cut from could not be recorded from it. `git describe --tags
 > --long` prints `<tag>-<commits>-g<sha>`, which is the tag, the distance and
 > the commit in one line -- and the distance is what makes the pre-release
-> suffix legible rather than mysterious.
+> suffix legible instead of mysterious.
 
 ### 10. The changelog's unreleased section is not empty
 
@@ -971,12 +971,12 @@ pwsh -File build/Get-ReleaseNotes.ps1 -StampVersion <the version item 9 recorded
 
 It extracts the `## [Unreleased]` section, **exits non-zero if it holds no list
 items**, and only then stamps the version below the heading. Empty means no
-entries rather than no characters, because a section holding nothing but its
+entries, not no characters, because a section holding nothing but its
 `### Added` subheads is what a changelog nobody wrote looks like. Run it without
 `-StampVersion` first: that is the same refusal with nothing written.
 
 **What the command cannot check is the half that matters** -- that the entries
-were written as the work landed rather than reconstructed here. A changelog
+were written as the work landed and not reconstructed here. A changelog
 assembled from `git log` at this moment satisfies the script and has satisfied
 this item in form only.
 
@@ -1003,11 +1003,11 @@ a body edit still says *REWRITTEN ... revert it*.
 holds both, over a doctored copy of the real 1.0.0 section.
 
 ⚠️ **WHAT THE DATE MEANS, AND WHAT TO DO WHEN THE CLOCK OVERTAKES IT -- *added
-2026-09-23 by addition, because it came up as a question rather than as a
+2026-09-23 by addition, because it came up as a question and not as a
 procedure and cost a round of the gate*.** **The heading carries the date of the
 commit the tag rides on -- the CUT -- and not the day the release reaches
 GitHub.** A release cut on one day and published on the next keeps the date it
-was cut on, and that gap is expected rather than a defect: the tag, the pack, the
+was cut on, and that gap is expected, not a defect: the tag, the pack, the
 body and the gate all belong to the cut.
 
 **Re-stamping to a later day is therefore a NEW CUT, and it costs exactly what
@@ -1028,8 +1028,8 @@ asking. The re-stamp changed **the heading line and nothing else**: the section'
 body digest was byte-identical either side of it, and the character count did not
 move, because `2` and `3` are the same width.
 
-⚠️ **For the 2026-09-15 re-ship of `1.0.0`, the stamp step is a MERGE rather
-than a new section, and both halves of that sentence matter.** The version being
+⚠️ **For the 2026-09-15 re-ship of `1.0.0`, the stamp step is a MERGE, not
+a new section, and both halves of that sentence matter.** The version being
 cut already has a section -- it was stamped on 2026-09-15 and published -- so
 `Get-ReleaseNotes.ps1 -StampVersion 1.0.0` **refuses**, correctly: *"already has
 a section for 1.0.0. Cutting the same version twice would leave two sections
@@ -1075,7 +1075,7 @@ Each entry becomes its one-line headline with its own icon and a **`read more`
 link carrying that entry's own line range** in the changelog as the tag carries
 it -- `CHANGELOG.md?plain=1#L<first>-L<last>`, the source view, which highlights
 exactly those lines. The footer carries the palette legend -- read out of the
-changelog rather than written twice -- and a link to the section at the tag, whose
+changelog and not written twice -- and a link to the section at the tag, whose
 anchor is computed by the same slug rule `DocumentationLinkTests` applies to
 every relative link in the repository.
 
@@ -1087,7 +1087,7 @@ this script joined its wrapped lines with spaces before emitting it -- so a read
 of the release page met one unbroken line.* The shape is **two icon-and-meaning
 pairs per row, six rows for the twelve icons, under a one-word heading row**, and
 the legend in [`CHANGELOG.md`](CHANGELOG.md) carries the same table so the two
-cannot disagree. **A legend that is not a table is refused rather than
+cannot disagree. **A legend that is not a table is refused, not
 flattened** -- the body has no legend of its own, so the read is the only place
 the shape can be held -- and
 `ChangelogTests.TheLegendAtTheTopIsATableListingExactlyTheApprovedPalette` and
@@ -1113,7 +1113,7 @@ running order above already puts it -- step 4 creates the tag, step 5 re-packs
 file: the changelog on disk must match `HEAD`, and a tag `v<version>`, if it
 exists, must be at `HEAD`. Either failing is a refusal naming both the tag's
 commit and `HEAD`, and the fix is to commit the changelog or move the tag. A
-dirty tree **elsewhere** is reported rather than refused -- this runs after a
+dirty tree **elsewhere** is reported, not refused -- this runs after a
 publish that can leave restore artifacts behind, and none of those can move a
 line number in a file that matches `HEAD`. The script's last lines say which
 commit the ranges are true of.
@@ -1122,7 +1122,7 @@ commit the ranges are true of.
 the limit -- 125,000 characters, GitHub's, a `[FLOATS]` fact -- the per-entry
 links are dropped and the body becomes **headlines alone plus the footer**, whose
 section link is then the only way into the detail. It is a pathological fallback
-rather than a second design: at 41,288 characters for the largest release this
+and not a second design: at 41,288 characters for the largest release this
 project has cut, reaching it takes one several times that size.
 
 **Check the rendering before publishing, against GitHub's own renderer:**
@@ -1141,7 +1141,7 @@ is
 [`docs/evidence/2026-09-16-release-body/rendered-0.1.0.html`](docs/evidence/2026-09-16-release-body/README.md);
 for the 2026-09-16 shape, `sample.html` beside it.
 
-**The line anchors were verified on github.com rather than assumed.** `curl`
+**The line anchors were verified on github.com, not assumed.** `curl`
 cannot show it -- the highlight is applied client-side from the fragment, and the
 served HTML carries only the first 1,000 lines of a 3,682-line file. Driven in a
 real browser on 2026-09-16 against
@@ -1176,7 +1176,7 @@ its own.
   ellipsis `U+2026` and the non-breaking space `U+00A0`. It is a **deny list**,
   so the twelve palette icons, `U+FE0F` and any other legitimate symbol are
   allowed without being enumerated in code. A **backticked code span is exempt**,
-  because a span quotes something that exists rather than choosing a style; the
+  because a span quotes something that exists instead of choosing a style; the
   live case is this repository's own `previously "..."` token. **An entry's
   detail is out of scope by construction** -- since 2026-09-16 the body carries
   headlines and a `read more` link, so the detail never reaches a reader of the
@@ -1206,7 +1206,7 @@ that is what makes a rollback meaningful and a regression bisectable
 
 **`build/New-Release.ps1` emits it**, beside the archived `.nupkg`, at
 `<ArchiveDir>/BrowserAI-<version>-manifest/`. It holds exactly these, copied
-rather than transcribed, plus a `manifest.json` stating the version, the tag,
+and not transcribed, plus a `manifest.json` stating the version, the tag,
 the package's SHA-256 and the resolved version each copied file carries:
 
 | In the manifest | From |
@@ -1237,7 +1237,7 @@ directory is committed as
 `docs/evidence/<date>-release-manifest/`, in that directory's own convention,
 with a `README.md` naming what it is and what it was cut from.
 [`docs/evidence/2026-09-23-release-manifest/`](docs/evidence/2026-09-23-release-manifest/README.md)
-is `1.1.0`'s, added after the release rather than before it.
+is `1.1.0`'s, added after the release and not before it.
 
 **Two things about the copy are not the bytes as emitted, and the batch README
 records both.** The release body inside it is `.md` as emitted and is stored
@@ -1247,7 +1247,7 @@ that would falsify the digest the file exists for. And `.gitattributes`
 normalises line endings, so the files a restore wrote with CRLF are stored with
 LF; the batch README carries the as-emitted digest of each one. **Three of the
 five become byte-identical to the committed file they were copied from**, which
-is the copy agreeing with the tree rather than drifting from it.
+is the copy agreeing with the tree, not drifting from it.
 
 **When this happens:** *after* the release, never before. A commit before the tag
 is a commit the tag would have to ride, and the manifest cannot be written until
@@ -1270,7 +1270,7 @@ commit afterwards as it did before.
 > [exception ENDED 2026-09-21](DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
 > `build/payload/package.json` carries no `overrides` block, and every release
 > cut from here on states `"pulledForward": null` unless somebody takes a new
-> exception -- which is a change to that section rather than an application of it.
+> exception -- which is a change to that section, not an application of it.
 > **The key is still emitted on every release**, for the same reason `override`
 > is: a manifest silent about a direction cannot be read as saying *not that
 > either*. `ReleaseScriptTests` covers both states, and since 2026-09-21 **the
@@ -1286,8 +1286,8 @@ commit afterwards as it did before.
 > ⚠️ **Seven since 2026-08-26** *(previously six -- the row above and the word
 > "six" in `build/Write-ReleaseManifest.ps1`)*. `tool-verdicts.json` arrived at
 > the repository root [with the verdict decision](ARCHITECTURE.md#the-verdicts-file-and-why-a-tool-nobody-judged-is-refused)
-> and was left out of this item's charter for a week. It belongs here rather
-> than in the payload's provenance: it is the file that says which tools a
+> and was left out of this item's charter for a week. It belongs here and not
+> in the payload's provenance: it is the file that says which tools a
 > release forwards and which it refuses, and **a release that cannot produce it
 > cannot answer why it refused a tool the next release allows.** The manifest
 > also states the file's own `judgedAgainst` pair, because a row set means
@@ -1308,7 +1308,7 @@ commit afterwards as it did before.
 > step and returns the path as `ResolvedSet`. It lives in its own script for the
 > same reason `Test-ReleaseVersion.ps1` does -- **so the suite can drive it** --
 > and `ReleaseScriptTests` runs it both ways, including that **a missing file
-> refuses rather than writing a partial**, because a manifest holding seven of
+> refuses instead of writing a partial**, because a manifest holding seven of
 > eight reads exactly like a complete one a year later. *(Seven of eight since
 > 2026-09-18, previously six of seven.)*
 
@@ -1330,12 +1330,12 @@ live **outside** a test run, and both must be true at release time:
   archive requirement is **unchanged and matters more, not less**: Velopack
   still prunes `packages\` to the current package, so the archived `.nupkg` is
   the only copy of an older release once the feed has moved past it, and it is
-  now the *whole* of what a rollback needs rather than the base of a chain.
+  now the *whole* of what a rollback needs, not the base of a chain.
 - **The release-validation rule permits a rollback republish.** Written as
   *"monotonic **or** an explicit rollback republish"*. Get this wrong in the
   strict direction and the client accepts a rollback the build refuses to emit --
   a pipeline that has made rolling back impossible while every component
-  individually supports it, which is a real and observed state rather than a
+  individually supports it, which is a real and observed state, not a
   hypothetical one. ⚠️ **Equal is neither of the two**, and the re-pack step is
   where that bites -- see
   [the order the last six steps are executed in](#the-order-the-last-six-steps-are-executed-in----and-it-is-not-the-numbering).
@@ -1375,7 +1375,7 @@ item is still about the package this run publishes. Verified against
   been in `build/payload/package-lock.json` since the first payload build; its
   terms and `NOTICE` are byte-identical to `playwright-core`'s, so what was
   missing was a name. `ThirdPartyNoticeTests` now enumerates the payload lock
-  rather than a typed list, so a fourth package is a red build
+  and not a typed list, so a fourth package is a red build
   ([row 26](kb/re-verification.md)).
 - Velopack's MIT notice.
 - **`ModelContextProtocol`'s and `ModelContextProtocol.Core`'s Apache-2.0
@@ -1406,16 +1406,16 @@ is never copied to a publish output -- and all four ship in
 > cache -- and both ship in `THIRD-PARTY-NOTICES.txt`"*).** The reasoning that
 > put Velopack's text in the artifact applies unchanged to the MCP SDK and to
 > the `Microsoft.Extensions.*` family: same mechanism, same absence, and
-> Apache-2.0 §4(a) is stricter than MIT's notice clause rather than looser. It
+> Apache-2.0 §4(a) is stricter than MIT's notice clause, not looser. It
 > was raised once and deliberately left undecided, because shipping a fifth
 > obligation on one reading would have changed a settled table without anyone
 > deciding it; the repository is public now, so the table was changed
 > deliberately instead. The count in this item is the only
 > place it is written down as prose -- the enforcing list is
 > `ThirdPartyNoticeTests.Obligations`, and the `Microsoft.Extensions.*` half is
-> derived from `src/BrowserAI/packages.lock.json` rather than typed, so a
-> package that enters the closure on a later bump is a red build here rather
-> than a licence nobody noticed had arrived.
+> derived from `src/BrowserAI/packages.lock.json` and not typed, so a
+> package that enters the closure on a later bump is a red build here, not
+> a licence nobody noticed had arrived.
 
 Nothing the user's machine downloads on first run creates an obligation for us --
 we ship no copy of it. That is not a side benefit of first-run provisioning; it
@@ -1432,7 +1432,7 @@ things no copy of which ships.
 
 > ✅ **`ThirdPartyNoticeTests` covers all of it, closed 2026-08-16 the same day
 > the first run found two of four absent (previously: "and no test covers
-> them").** The obligations are **data**, so a fifth is a red build rather than
+> them").** The obligations are **data**, so a fifth is a red build, not
 > a discovery at the next release, and three subjects are asserted because each
 > can be right while the next is wrong: the repository's own notices file, the
 > publish output `vpk` is handed, and the entry list of the packed `.nupkg`
@@ -1450,7 +1450,7 @@ things no copy of which ships.
 **Three assets: the installer, the full package, and `releases.<channel>.json`.**
 Nothing else on a release, ever, without a decision that says so here.
 
-**It is declared in `build/New-Release.ps1` and read rather than judged.** The
+**It is declared in `build/New-Release.ps1` and read, not judged.** The
 script does not upload -- [item 14](#14-a-human-decides) is a human running
 `gh release create` -- so until 2026-09-23 the assets were whatever that person
 picked out of `Releases/`, and `v1.1.0` carried seven because `v1.0.0` had
@@ -1479,7 +1479,7 @@ forgot about. / 7 move it"*.
 | Not published | The decision |
 |---|---|
 | `BrowserAI.zip`, the portable archive | *"2 drop and update the readme to not mention it."* It is still packed, still renamed and still local; [README.md](README.md) no longer mentions it |
-| `BrowserAI-<version>-manifest.zip` | *"7 move it."* The resolved set is committed under [`docs/evidence/`](docs/evidence/README.md) per release instead -- a copy that survives a clone rather than one that survives a release page. [Item 11](#11-the-resolved-set-is-recorded-beside-the-artifact) says how |
+| `BrowserAI-<version>-manifest.zip` | *"7 move it."* The resolved set is committed under [`docs/evidence/`](docs/evidence/README.md) per release instead -- a copy that survives a clone, not one that survives a release page. [Item 11](#11-the-resolved-set-is-recorded-beside-the-artifact) says how |
 | `RELEASES` | A **Squirrel-migration shim**: `ReleaseEntryHelper.cs:115`, *"We write a legacy RELEASES file to allow older applications to update to velopack"*. Nothing in Velopack's client library ever composes that name, and this product has no Squirrel predecessor |
 | `assets.<channel>.json` | The **local pack-to-upload hand-off**: `vpk upload` reads it out of `Releases/` with `BuildAssets.Read` to learn what to upload, and nobody fetches it from a release page |
 
@@ -1509,7 +1509,7 @@ channel -- that upload reads no list at all -- and it cannot remove the
 `releases.<channel>.json` upload, which is wanted and is generated from the
 `Full` entries that survive the rewrite. **A rewrite that left no `Full` entry is
 refused** for exactly that reason: it would publish a manifest advertising
-nothing, which a client reports as *no update available* rather than as an error.
+nothing, which a client reports as *no update available*, not as an error.
 
 **What was checked before dropping them, because the instruction was to check.**
 Velopack's source at tag `1.2.158` (sha `3c7f52c1`): every client source reads
@@ -1520,7 +1520,7 @@ Velopack's source at tag `1.2.158` (sha `3c7f52c1`): every client source reads
 never fetch a feed at all; `vpk pack`'s existing-release detection enumerates
 `*.nupkg` on disk (`ReleaseEntryHelper.cs:30-42`); `vpk delta` takes two package
 paths; and [item 12](#12-the-rollback-path-is-publishable)'s rollback goes
-through the JSON. **And it was run rather than only read**
+through the JSON. **And it was run and not only read**
 ([kb](kb/packaging/velopack.md#nothing-anywhere-reads-releases-or-assetschanneljson-from-a-release----measured-2026-09-23)):
 a real Velopack client pointed at a feed holding **only** those two files -- with
 `RELEASES` naming the package, its SHA-1 and its exact size -- reported
@@ -1534,7 +1534,7 @@ standing is a separate decision about something people may already have links to
 and the maintainer took it: *"Q234 b"*. The four deleted had a download counter
 of **0** apiece. **`v1.0.0` was deliberately left alone** and still carries all
 seven, so the two releases differ and a reader comparing them is seeing a
-decision rather than a mistake. **This section is otherwise about what the next
+decision, not a mistake. **This section is otherwise about what the next
 release publishes**, and a trim is never how one is cut.
 
 ### 14. A human decides
@@ -1566,10 +1566,10 @@ that costs.
 The cost, stated plainly so it is inherited as a decision:
 
 - **The gate is only as good as the person invoking it.** It rests entirely on
-  the run happening rather than being assumed.
+  the run happening and not on its being assumed.
 - The one gap it leaves -- *upstream moved while nobody was looking* -- is covered
   by the [daily drift check](CLAUDE.md#the-daily-drift-check), which is a
-  directive rather than a job, and which fires by construction because this
+  directive and not a job, and which fires by construction because this
   project is built entirely through an agent: the check happens because the work
   happens.
 

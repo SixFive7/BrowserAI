@@ -255,5 +255,5 @@ the pin on our side of the boundary instead of upstream's.
 a release.** Re-resolve everything, fix what that breaks, then do the work that was
 asked for. A release may only be cut from a tree that has been fully re-resolved and
 is green throughout, and nothing is held at an old version without the maintainer
-knowing it was held. These files are what make that a two-command operation rather
-than a search.
+knowing it was held. These files are what make that a two-command operation, not
+a search.

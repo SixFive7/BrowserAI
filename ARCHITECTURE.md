@@ -26,7 +26,7 @@ per open session. Each child is a `node.exe` running the vendored
 `@playwright/mcp`, in its own job object, against its own session directory.
 
 ⚠️ *The name changed on 2026-09-15 (previously `BrowserAI.exe`), and it changed
-because the product became two programs rather than because anything about this
+because the product became two programs, not because anything about this
 diagram did. `BrowserAI.exe` is [the configuration app](#the-mcp-server), which
 a person launches and no client ever does.*
 
@@ -45,7 +45,7 @@ directory carries are what the identity now derives.)*
 **What BrowserAI is, in one sentence:** a session-lifecycle manager and reason
 logger wrapped around a verbatim Playwright pipe. Nothing sits between the two
 servers except the session system and the reason system, and
-[the one exception](#byte-identical-and-the-one-exception) is named rather than
+[the one exception](#byte-identical-and-the-one-exception) is named, not
 implied.
 
 ## The runtime it ships
@@ -74,7 +74,7 @@ the same way, so a session created at one viewport is resumed at another without
 being destroyed first. **Four opinions are hard-coded and are deliberately not
 arguments**: `console.level` is `debug` always -- `error`→`debug` costs **+1
 character** on a navigation response, because the events line is a *pointer*
-rather than the text, and `browser_console_messages` already takes a read level
+and not the text, and `browser_console_messages` already takes a read level
 that can be lowered at the moment of asking; `codegen` is `none`, which strips a
 `### Ran Playwright code` block from every response for a feature this product
 does not have; `snapshot.boxes` is `true`, whose cost is deferred behind a link
@@ -84,7 +84,7 @@ Firefox fails at `initializeServer` with `Unknown permission: clipboard-read` an
 the browser exits, [measured
 2026-08-20](kb/playwright/configuration.md#silent-config-failures). That is the
 second key after `channel` whose correct value is *absent for one family*, and
-the first whose wrong value is fatal rather than an opinion that never arrives.
+the first whose wrong value is fatal, not an opinion that never arrives.
 
 **`serviceWorkers: "block"` ships with `recordHar` or not at all.** A request
 served out of a worker's cache never reaches the network layer the archive is
@@ -92,7 +92,7 @@ written from, so without it the capture is silently incomplete -- in the directi
 that matters, because a worker serves the repeat requests. **Each launch gets its
 own timestamped archive name** under `output\network\`: `recordHar` truncates
 whatever path it is given at every context creation, and the config is
-regenerated per launch, so the overwrite-on-resume is avoidable rather than
+regenerated per launch, so the overwrite-on-resume is avoidable, not
 documentable. `--sandbox` goes on the **command line** and never in the config
 file, because only the command line reaches the browser.
 `ConfigRoundTripTests` reads every one of those leaves back out of the running
@@ -118,8 +118,8 @@ starts ([kb](kb/playwright/provisioning-and-timings.md#what-grows-on-disk-while-
 **Ten minutes is set by upstream's own `__dirlock`**, which legitimately writes
 nothing for up to 470 s before giving up by itself. The crash tripwire went with
 the absolute cap and its job is now done by the same stall detector, which the
-*waiting* process runs against the same bytes. One install per machine rather
-than per process, through a `Global\` mutex keyed on the browsers root **and**
+*waiting* process runs against the same bytes. One install per machine, not
+per process, through a `Global\` mutex keyed on the browsers root **and**
 the family.
 
 **The refusal a browser call meets while that runs is a progress report.** Bytes
@@ -137,7 +137,7 @@ a run that exits 0 without it is a failure whose partial tree is removed.
 
 ⚠️ **TWO EXECUTABLES SINCE 2026-09-15, AND ONE LIBRARY.** *(Previously one, and
 every path in this document that reads `src/BrowserAI/...` for a moved file has
-been re-pointed rather than left dangling.)*
+been re-pointed and not left dangling.)*
 
 | Binary | What it is | Who starts it |
 |---|---|---|
@@ -195,7 +195,7 @@ short-circuits both methods, and the answer is the child's `result` sliced by
 passthrough lossless -- an unknown content type, an unmodelled tool member and a
 non-ASCII character all survive, none of which a typed round trip preserves.
 
-**A call is refused rather than forwarded when the session's child has gone.**
+**A call is refused, not forwarded, when the session's child has gone.**
 ⚠️ *Added 2026-09-17.* `BrowserProxy` asks `ChildConnection.ChildHasGone`
 at the door, after the verdict and provisioning and **before** the `why` check,
 for the reason provisioning is there: a caller whose session has no browser
@@ -221,8 +221,8 @@ in [the verdicts file](#the-verdicts-file-and-why-a-tool-nobody-judged-is-refuse
 writes the log row `in-flight`, **strips `session` and `why` from a clone of the
 request**, and forwards what is left unchanged. Nothing is added to the answer:
 no note, no scan of the text for filenames, no path handling, no filename
-rewrite. `LosslessPassthroughTests` asserts the property as *byte-identical*
-rather than as *byte-identical plus exactly one appended block*, which is what it
+rewrite. `LosslessPassthroughTests` asserts the property as *byte-identical*,
+not as *byte-identical plus exactly one appended block*, which is what it
 asserted while artifact routing existed.
 
 ⚠️ **THE ONE EXCEPTION, and it is named here so that it stays one: the
@@ -242,8 +242,8 @@ successful answer is forwarded untouched --
 And it has a **real-child canary**: an empty browsers root, the genuine error
 provoked against a real child, and both halves asserted --
 `ProvisioningRemediationTests.ARealChildWithNoBrowsersStillSaysTheSentenceTheRewriteIsAnchoredOn`.
-If upstream rewords its advice, that is a red build at the next upstream review
-rather than a rewrite that quietly stopped firing.
+If upstream rewords its advice, that is a red build at the next upstream review,
+not a rewrite that quietly stopped firing.
 
 **The model is told, on a surface the client does not truncate.** The server
 `instructions` carry it: *"Browsers are managed by BrowserAI -- never install any
@@ -288,8 +288,8 @@ The largest area, and the one everything else keys on.
 | Reclaiming what a crash left behind | `src/BrowserAI/Sessions/StraySweep.cs`, `src/BrowserAI/Interop/{MessageWindows, BrowserProcesses}.cs`, `src/BrowserAI/Runtime/ProvisionedBrowsers.cs`, and -- since 2026-08-20 -- `src/BrowserAI.Core/Updates/LiveInstances.cs`'s `ReclaimStaleMarkers`, which the sweep runs at the end of its own pass |
 | The model-facing error text | `src/BrowserAI/Sessions/SessionErrors.cs` |
 
-⚠️ **DELETED 2026-08-26, and the paragraph it replaces is summarised rather
-than kept.** Two paragraphs here described `ArtifactRouter.NoteWhatTheAnswerPublished`
+⚠️ **DELETED 2026-08-26, and the paragraph it replaces is summarised, not
+kept.** Two paragraphs here described `ArtifactRouter.NoteWhatTheAnswerPublished`
 -- the rule that a file the child had named in its own answer was recorded where
 it lay instead of being swept into a typed folder, the set being monotone across
 calls, the delimited match that replaced an undelimited `Contains`, the eviction
@@ -298,7 +298,7 @@ that used to bypass the whole thing. **All of it is gone with artifact routing.*
 Nothing reads the child's answer and nothing moves a file, so a pointer upstream
 publishes resolves because the file is still where upstream put it --
 `FileAccessRootTests.EveryPointerARealChildPublishesResolvesBecauseNothingMovesIt`
-keeps that measured against a real browser rather than assumed. See
+keeps that measured against a real browser, not assumed. See
 [the output directory](#the-sessions-output-directory).
 
 **The session directory is the identity.** One directory holds `browserai.lock`
@@ -325,7 +325,7 @@ that tried to be the guard would either hide the log from every reader or lock
 them out of it.
 
 **Every field of the record is an ordered list of timestamped statements**, and
-that survived the move intact: the record is append-only rather than a snapshot,
+that survived the move intact: the record is append-only, not a snapshot,
 so it says how a session got here and not only where it is. `created` and
 `lastUsed` are not stored because they are exactly the earliest and latest
 statement, and a stored copy could only disagree with what it summarises. **A
@@ -335,7 +335,7 @@ dedup cannot bound because `(pid, creationFileTime)` never repeats. ⚠️ *Corr
 32 statements -- trimmed out of the middle, because `created` is read from the
 first one and a trim at the front would move a session's creation date").*
 **There is no cap and there is no trim**, anywhere: `created` is the oldest
-statement because it is still there rather than because a policy protected it.
+statement because it is still there, not because a policy protected it.
 **There is no converter**, and a directory holding the old `browserai.json` is
 refused with the format as the reason and the recovery in the message --
 `browserai_destroy` says *"I cannot clean this up -- remove the entire directory
@@ -364,7 +364,7 @@ opened with (`LiveSession.Launch`), swaps it in under
 its job handle and ends anything still alive inside it. **Nothing about the
 session's identity moves**: the directory lock is still held, the record is
 untouched and the index entry stays, because this replaces the process behind a
-session rather than the session. The answer carries
+session and not the session. The answer carries
 `SessionManager.ChildWasRelaunched`, which names what did not survive -- no page,
 no tabs -- and a replacement that will not start is
 `SessionErrors.BrowserServerCouldNotBeRelaunched`, which says the session is
@@ -391,7 +391,7 @@ names a recovery and says that repeating the call will fail identically.
 *(the eighth, 2026-09-21)*. **Two** parameters are
 injected into every upstream tool's raw `inputSchema`, appended in that order so
 upstream's own properties keep their positions; a call naming no session is
-refused rather than reaching the run's own child, and a call naming a session
+refused and does not reach the run's own child, and a call naming a session
 with no `why` is refused before anything is forwarded. Both are stripped from a
 **clone** of the request before it goes to the child, which has never heard of
 either -- from a clone because the request object is the SDK's and may still be
@@ -415,14 +415,14 @@ session another live BrowserAI is driving would refuse". Nothing is replaced now
 an entry is an `INSERT` on a connection the holder already has open, so the second
 reason moved from *the write would be refused* to *the write is not this caller's
 to make*). `ModelSurfaceTests` carries a row for it, so adding a `why` later is a
-red build rather than a silent widening.
+red build, not a silent widening.
 
 **`browserai_catch_up` reads the log back against the directory, and the two
 routinely disagree.** `SessionInventory` walks the tree -- total size, a breakdown
 by folder, the last file written, any `.har`, and whether the profile holds a
 cookie store -- and the answer prints it beside the log under two headings so a
 reader knows which source each fact came from. **The disagreement that matters is
-credentials**: cookies arrive from *navigation* rather than from tools, so a
+credentials**: cookies arrive from *navigation*, not from tools, so a
 log-only answer would report *"no credential tools were used"* about a directory
 holding a live signed-in profile. It is **read-only and takes no lock it can be
 refused by**: the store is opened read-only, and the walk opens no file inside the
@@ -435,7 +435,7 @@ hold credentials*, which the file's existence settles.
 own gate at a zero timeout").*** There is no gate on this path: the listing's
 liveness question is one `CreateFile` on `browserai.lock` and never a database
 open at all. **And read-only is not the same as side-effect-free, which was
-measured rather than assumed**: a read-only open against a crashed holder's
+measured, not assumed**: a read-only open against a crashed holder's
 uncheckpointed write-ahead log *recovers* the log and answers with the newest
 rows, because `SQLITE_OPEN_READONLY` constrains the database file and not the
 directory -- and building the wal-index leaves a `-shm` beside the store. It is
@@ -493,9 +493,9 @@ loop"* is a `why`; *"tracking the checkout redirect loop on staging"* is a
 purpose change, and every browser call the session forwarded **and every call it
 refused** are rows in one ordered table in `browserai.data`, written by the
 directory's holder -- so a reader sees *the human changed the purpose here*
-between the calls it explains rather than merging two streams by timestamp. **A
-call whose row cannot be written is refused rather than forwarded**, and
-`SessionLock.Append` throws rather than swallowing.
+between the calls it explains, instead of merging two streams by timestamp. **A
+call whose row cannot be written is refused, not forwarded**, and
+`SessionLock.Append` throws instead of swallowing.
 
 ⚠️ ***Corrected 2026-08-26, in four places (previously "entries in one ordered
 list in `browserai.json`, under the same session-long lock"; "a call BrowserAI
@@ -505,7 +505,7 @@ durable write per call"; and "What is stored for an argument -- every name alway
 `value` and `text` never, an object or array as a shape, everything else cut at
 200 characters -- is `LoggedArgument`'s to say").*** **`browserai.log` is gone**,
 so the record is the only place *the agent reached for a tool this build will not
-forward* survives at all -- which makes the log replay rather than diagnostics, and
+forward* survives at all -- which makes the log replay and not diagnostics, and
 is why the refusal is a row. **No argument is recorded**, and `LoggedArgument` is
 deleted: the caller's `why` is what the row says the call was for, which is a
 better answer to the same question and needs no list of upstream parameter names
@@ -563,7 +563,7 @@ disappearing -- the census was right when it was asked. The claim is
 rules give the reader/writer semantics directly** -- an open is refused when its
 access is outside an existing handle's share mode *or* when its share mode is
 narrower than an existing handle's granted access, which is the check running in
-both directions. **A file rather than a named mutex** because the
+both directions. **A file, not a named mutex** because the
 claim spans a 203.8 MB download inside an `async` method and a named mutex is
 owned by the thread that waited on it, and **not a named semaphore** because a
 semaphore's count is not restored when its holder dies, so one crashed reinstall
@@ -580,17 +580,17 @@ close, and the kernel decides. A reinstall whose exclusive open is refused says 
 at once and names the sessions holding it; it publishes **no intent marker**, it
 starts no drain, and **writer starvation is accepted** -- a machine that always has
 one session open never lets a reinstall through, which is the maintainer's
-decision rather than a defect to be mitigated. **The lock order is fixed and has
+decision and not a defect to be mitigated. **The lock order is fixed and has
 no cycle**: the claim is outermost and the per-family provisioning mutexes are
 taken under it, never the other way round, and every acquisition on both sides is
-non-blocking, so even an inverted order would produce a refusal rather than a
+non-blocking, so even an inverted order would produce a refusal, not a
 hang.
 
 **A caller refused by a reinstall is told how far in it is.** The refusal quotes
 the record the writer wrote and adds what the download staging directory weighs
 and how long the claim has been held -- both read off the filesystem, because the
 peer cannot see the other process's provisioner at all. Zero staged bytes is
-reported as *the delete, or an extraction already under way* rather than as a
+reported as *the delete, or an extraction already under way*, not as a
 stall, which is the honest reading of an empty staging directory.
 
 ⚠️ **Session modes were deleted on 2026-08-20, and the one table with them.**
@@ -621,7 +621,7 @@ them -- it is `core` and always was.
 ⚠️ **The tool-permission policy was removed on 2026-08-18.** *Corrected
 2026-08-18 (previously "**Enforcement is deny-by-default in two dimensions.**
 `SessionToolPolicy` is the single place a call is permitted or refused, with a
-**written-down** policy row per mode rather than one derived from the table's
+**written-down** policy row per mode, not one derived from the table's
 flags -- a permission inferred for a mode nobody considered is a security posture
 arrived at by accident. A tool it does not classify and a mode it has no row for
 both refuse everything.")* Five tool classes, the `(tool, mode)` matrix, both
@@ -647,7 +647,7 @@ release until a human adjudicates what moved. That catches a changed schema and 
 new CLI flag, which deny-by-default on a tool *name* never did.
 
 **One argument is mandatory and one tool is withheld; neither is a permission.**
-`session` is **mandatory**: a call naming none is refused rather than reaching the
+`session` is **mandatory**: a call naming none is refused and never reaches the
 run's own child, because that is *routing* -- a proxy holding N children has to be
 told which one a call belongs to, and a default would silently pick a session
 nobody chose. And `browser_annotate` is **filtered out of `tools/list`**, in every
@@ -656,7 +656,7 @@ Playwright Dashboard and blocks until a human draws, with no self-timeout, and t
 window belongs to a second non-headless browser under a daemon that writes into
 `%TEMP%` and outlives the session. Filtering the surface is in scope by the
 charter where renaming is not, and a caller that names the tool anyway is refused
-rather than forwarded -- a model knows upstream's names from everywhere except this
+not forwarded -- a model knows upstream's names from everywhere except this
 server's list. *Corrected 2026-08-18 (previously "Two refusals survive ...
 `browser_annotate` is refused on a mode that opens no window").*
 
@@ -667,8 +667,8 @@ never answered, against 521 ms for one that did. Upstream bounds the *list* path
 at five seconds and bounds the call path at nothing, so `browser_webmcp_list` is
 allowed and the call is not. It is the `browser_annotate` shape through a wider
 door: that one needed a human at a dashboard, and this one needs only a page.
-⚠️ **What the filter does not close is upstream's and is recorded rather
-than fixed**: `renderTabHeader` writes `- N webmcp tools available on the page`
+⚠️ **What the filter does not close is upstream's and is recorded, not
+fixed**: `renderTabHeader` writes `- N webmcp tools available on the page`
 into every tab header whose count is non-zero, carrying the count and none of the
 page's text, whatever the verdicts file says.
 
@@ -677,7 +677,7 @@ page's text, whatever the verdicts file says.
 That type is deleted. **The judgement is a file now** --
 [`tool-verdicts.json`](tool-verdicts.json), one row per tool, shipped inside the
 payload it describes and read at startup -- and the sentence above is a fact about
-what the file says rather than about what the code decides. ⚠️ **`browser_annotate` was
+what the file says, not about what the code decides. ⚠️ **`browser_annotate` was
 the only `deny` this build shipped until 2026-09-15** *(previously "is still the
 only `deny` this build ships")*; `browser_webmcp_call` is the second, and the
 reasoning that was a doc comment beside a C# constant is now each row's own
@@ -706,9 +706,9 @@ list -- carrying the row's own `why` as the refusal and a `since` as provenance.
 reach").* Seven of the eight never had one and
 [`browserai_page_tool`](#browserai_page_tool-and-how-a-page-tools-name-is-resolved)
 does: it resolves a name against the session child's live tool list and forwards
-a `tools/call` to it. It is still an `answer` row rather than an `allow` one
+a `tools/call` to it. It is still an `answer` row and not an `allow` one
 because it is **ours** -- advertised from `SessionToolSurface.Names`, and let past
-the door by being in that list rather than by anything this file says.
+the door by being in that list, not by anything this file says.
 
 **DENY BY DEFAULT: a name with no row is refused too, and that is the half worth
 arguing.** It reverses a decision taken 2026-08-18 -- and it reverses it for a
@@ -722,7 +722,7 @@ creates the browser context *before* it looks a tool name up -- the CLI factory'
 call naming nothing launches a browser to be told there is nothing to run, and
 answers by echoing the caller's own string into model-facing text.
 
-**What bounds the cost is a red build rather than a promise.** `ToolVerdictTests`
+**What bounds the cost is a red build, not a promise.** `ToolVerdictTests`
 compares the file with `upstream-snapshots/tools-list.json` in **both**
 directions on every run: a tool in the snapshot with no row fails, and a row
 naming a tool the snapshot does not carry fails. A Playwright bump that adds a
@@ -794,12 +794,12 @@ handler the PAGE supplied with no timeout of its own, so a page can hold a call
 open forever -- measured silent at 61 s. `PageToolBudget` is sixty seconds, on a
 linked token, and when it fires the caller is told what is still running, that the
 session goes on working, and that navigating the tab or closing it releases the
-abandoned call. All three of those are measurements rather than reassurances: a
+abandoned call. All three of those are measurements, not reassurances: a
 pending page tool does not block the child, a snapshot answered in 4-7 ms beside
 one, and a navigation released one in 11-13 ms.
 
 **`session` and `why` never reach the page.** The object forwarded to the child
-is built from the caller's `arguments` member rather than stripped out of the
+is built from the caller's `arguments` member, not stripped out of the
 caller's own node, so there is no member for them to survive in -- and upstream
 enforces nothing about a page's `inputSchema`, handing the whole object to the
 page's handler verbatim.
@@ -833,7 +833,7 @@ breaks property 2 -- a reader is locked out of the record it came for.
 `FileShare.Read` is the one predicate this design needs and the one no engine
 offers.
 
-⚠️ **The probe cannot be made harmless, and that is a property rather than an
+⚠️ **The probe cannot be made harmless, and that is a property, not an
 oversight.** To be refused by a holder's `FileShare.Read` it must ask for access
 outside `Read` -- so for the instant its handle lives it would refuse a holder's
 own re-open. *Detecting an owner and blocking one are the same capability.* Its
@@ -845,7 +845,7 @@ handle lived.
 `HouseRuleTests.TheSessionGuardsTwoLoadBearingLiteralsAreTheOnesItIsWrittenWith`
 reads `LockFile.cs` as text and fails a hold that shares writes or a probe that
 asks only to read. Neither perturbation breaks a behavioural test -- both leave a
-file that opens -- which is exactly why the rule is written down rather than left
+file that opens -- which is exactly why the rule is written down and not left
 to a reviewer. *(Q119, 2026-08-26.)*
 
 ### The identity chain
@@ -929,10 +929,10 @@ charter's design point -- and from 4,267 ms to 449 ms at 200
 because with the gate skipped on the free path the rename retry loop becomes the
 serialiser and two processes end up owning one directory -- the failure
 [the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md) found in
-the version that replaced the gate rather than fronting it.
+the version that replaced the gate instead of fronting it.
 
-**That same open has a second caller since 2026-08-20, and it reports rather than
-decides.** `SessionLock.ProbeLiveness` is the one opener; `ProbeForHolder` is a
+**That same open has a second caller since 2026-08-20, and it reports; it does not
+decide.** `SessionLock.ProbeLiveness` is the one opener; `ProbeForHolder` is a
 decision built on it and `browserai_list` is a **report** built on it, so the rule
 *a sharing violation may be read as owned and nothing else may be read as free*
 is stated once. The listing prints **in use: YES / no / UNKNOWN** per entry and
@@ -957,7 +957,7 @@ about a session another agent was driving. `browserai.lock` is written once and
 never rewritten, so **an absent guard now genuinely means free**,
 `ProbeLivenessUnderTheGate` is deleted, and the per-entry cost is the one
 `CreateFile`/`CloseHandle` the figures above measure. **One window is left and it
-is pinned rather than argued away**: a peer between its own rename and its first
+is pinned, not argued away**: a peer between its own rename and its first
 hold, inside the gate, once per session --
 `SessionListTests.APeerInsideCreateOrTakeIsTheOneWindowTheListingCanStillMisreport`.
 
@@ -1002,7 +1002,7 @@ file whose handle is open under any share mode, so acquisition is write → rena
 → hold *inside* the per-directory mutex. ⚠️ *Corrected 2026-08-26 (previously
 "**Writes** are durable and atomic ... create-or-take is close → rename →
 re-open").* **The record's writes are `INSERT`s** and are durable by SQLite's WAL
-rather than by a rename, so the rename window is paid once per acquisition
+and not by a rename, so the rename window is paid once per acquisition
 instead of once per forwarded call -- and there is no close-and-re-open at all,
 which is what dissolved the two hazards that lived in it.
 
@@ -1030,7 +1030,7 @@ history.
 **Both families are offered, and everything below the front door reads the family
 from the session's own record.** `browserai_init` accepts `chromium` or
 `firefox`; provisioning, the config generator, the launch preflight and the stray
-sweep all take it from `browserai.data` rather than assuming one, so a Firefox
+sweep all take it from `browserai.data` instead of assuming one, so a Firefox
 record can never be run as Chromium against a Firefox profile. *Corrected 2026-08-19
 (previously Firefox was built, measured and not offered.)* The per-family
 first-run download sizes a refusal quotes are in
@@ -1070,12 +1070,12 @@ only that file. The console half of `OpenSessionLog` stays and gained
 `IncludeScopes`, because it is the only sink left carrying `session=`. **The
 machine-wide log is unchanged**: startup, updates, provisioning, the stray sweep,
 the server transport, the MCP server, and the proxy refusals that have no session
-directory to be written into. **It is written under a lock rather than instead of
+directory to be written into. **It is written under a lock, not in place of
 one**, and that is unchanged too: `NativeFile.TakeGate` takes an exclusive
 byte-range claim one byte past any possible end of file -- so no concurrent reader
 is ever refused -- and the length read, the write stamp and the bytes all happen
 inside it. Write order and timestamp order therefore coincide, the file is sorted
-by construction, and rotation happens exactly at the cap rather than near it.
+by construction, and rotation happens exactly at the cap, not near it.
 
 **One unnamed, non-inheritable job per child**, carrying `KILL_ON_JOB_CLOSE` and
 nothing else, assigned at creation through `PROC_THREAD_ATTRIBUTE_JOB_LIST`, held
@@ -1095,7 +1095,7 @@ before `Start()`, not after.
 **The stderr classifier is a pinned port.** The two regexes are carried verbatim
 from the launcher this project replaces, with those two lines committed beside the
 C# as `StandardErrorClassifier.reference.ps1` and compared character by character
-on every build, so an edit to either side is red rather than a silent behaviour
+on every build, so an edit to either side is red, not a silent behaviour
 change. **The classification is the log level:** Debug for the benign
 `Session: <path>` line, Warning for an error-shaped one.
 
@@ -1118,7 +1118,7 @@ plain `login.png` is resolved there by upstream and written there by upstream,
 under the name the caller chose. Upstream's own subdirectories appear inside it
 when upstream makes them -- `traces\`, `session-<stamp>\` -- because they are
 upstream's. The one path BrowserAI still chooses is the HTTP Archive's, because
-it is a launch-time config value rather than something a tool names, and the
+it is a launch-time config value and not something a tool names, and the
 choice it makes is the output root.
 
 **Containment is upstream's file-access roots and nothing else.**
@@ -1131,20 +1131,20 @@ overlapping, and the refusal is upstream's own sentence forwarded byte-identical
 published binary against a real Chromium, both directions, by
 `FileAccessRootTests`.
 
-⚠️ **Two properties were lost with the gate and are open hazard rows rather than
+⚠️ **Two properties were lost with the gate and are open hazard rows, not
 oversights.** A second file with a name already taken **overwrites** the first,
 because nothing suffixes any more; and a reserved device name or a trailing
-space or dot is stored as Windows rewrites it rather than being refused. The
+space or dot is stored as Windows rewrites it and is not refused. The
 `init` answer tells the caller about the first. Both are in the
 [hazard index](HAZARDS.md#hazard-index) with what would close them.
 
 ✅ **A third property was lost with it and is BACK since 2026-09-17, upstream's
-rather than ours.** *Added by way of correction; nothing above is retracted.*
+and not ours.** *Added by way of correction; nothing above is retracted.*
 The deleted answer named every artifact absolutely in a note of its own, and
 what replaced it forwards the child's own bytes -- so from 2026-08-26 until this
 date **every pointer in every tool result was relative to the child's working
 directory**, which is a directory the reader of a tool result does not have,
-because that reader is a model rather than a process. That was
+because that reader is a model, not a process. That was
 [upstream ask #1](TODO.md#upstream-asks), filed 2026-08-27, granted as
 [microsoft/playwright#42673](https://github.com/microsoft/playwright/pull/42673)
 and adopted here as `filePaths: "absolute"` in the generated config
@@ -1156,7 +1156,7 @@ them are absolute:
 **The fix is upstream's and the doctrine is unchanged** -- nothing between the two
 servers except the session system and the reason system; BrowserAI writes a
 config key and forwards bytes, which is why this is a correction to a consequence
-rather than to the sentence that caused it.
+and not to the sentence that caused it.
 
 | Concern | Implemented by |
 |---|---|
@@ -1167,7 +1167,7 @@ rather than to the sentence that caused it.
 **`outputMaxSize` is never written, and it matters more now than it did.**
 Upstream's `_enforceOutputBudget()` runs on every tool response and unlinks
 oldest-first across the whole output tree, sparing only the current response's
-own writes -- and a download now lives in that tree permanently rather than being
+own writes -- and a download now lives in that tree permanently and is not
 sorted out of it, so it would be the first thing evicted.
 `FlatOutputTests.NothingBrowserAiGeneratesCanTurnEvictionOn` holds the config
 door and `ChildEnvironmentTests` holds the environment one.
@@ -1224,14 +1224,14 @@ inside the job with zero escapees, and
 `JobContainmentTests.ADescendantTreeIsContainedAndNothingSurvivesTheLauncher`
 waits for every recorded pid to be gone after the launcher dies. An apply still
 kills the BrowserAI processes under the install root; their browsers go with them
-through the job rather than through the installer.
+through the job, not through the installer.
 
 **The one thing still keyed to the install root is the live-instance census**,
 and it is not data: `LiveInstances` asks *is any other process running out of
 this install?*, which is exactly the set `force_stop_package` terminates by image
 path. `Program` hands it `InstallLocation.RootAppDir` and hands the stray sweep
-the data root, in one expression, so the split is visible at the seam rather than
-being a fact about a file.
+the data root, in one expression, so the split is visible at the seam and is not
+a fact about a file.
 
 **Uninstall asks about the data root and keeps it by default.** The
 `--veloapp-uninstall` hook runs *before* Velopack empties the install root: it
@@ -1301,7 +1301,7 @@ the two gates. What implements it:
 | The in-process harness and the scriptable fake child | `tests/BrowserAI.Tests/Harness/{McpTestHarness, FakePlaywrightChild, PipeDuplex, PipeClientTransport, FrameChannel, RawPipeClient, RigSessionEnvironment}.cs` |
 | Session-level oracles | `tests/BrowserAI.Tests/Harness/{SessionRun, UpstreamSurface}.cs` |
 | Out-of-process probes | `tests/BrowserAI.TestProbe/` |
-| The clock the suite advances by hand, so the one timer in the product is asserted on rather than raced | `tests/BrowserAI.Tests/Harness/ManualClock.cs`, `src/BrowserAI/Sessions/SessionEnvironment.cs` (`Clock`) |
+| The clock the suite advances by hand, so the one timer in the product is asserted on and never raced | `tests/BrowserAI.Tests/Harness/ManualClock.cs`, `src/BrowserAI/Sessions/SessionEnvironment.cs` (`Clock`) |
 | How wide the suite runs, and the design point run for real: 100 concurrent BrowserAI processes | `tests/BrowserAI.Tests/{SuiteParallelism, SaturationTests}.cs` |
 | The capability gate that makes a degraded run visible | `tests/BrowserAI.Tests/Harness/SuiteEnvironment.cs`, `tests/BrowserAI.Tests/SuiteCoverageTests.cs` |
 | Whether this machine could have seen a browser take the foreground at all -- read, reported in the coverage block, never repaired | `tests/BrowserAI.Tests/Harness/ForegroundLock.cs`, `tests/BrowserAI.Tests/ForegroundLockTests.cs` |
