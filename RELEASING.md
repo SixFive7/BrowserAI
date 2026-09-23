@@ -675,6 +675,18 @@ that it is gone.
 
 ### 8. Run everything
 
+⚠️ **THE TWO HALVES ARE [`build/Invoke-ReleaseGate.ps1`](build/Invoke-ReleaseGate.ps1)
+AND [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) — *added
+2026-09-23 by addition, Q239 b*.** Three runs each, `BROWSERAI_RELEASE_RUN=1`,
+each forcing and declaring its own drive-letter spelling, each comparing
+[the clearance snapshot](build/Get-ClearanceSnapshot.ps1) either side of every
+run and **stopping on the first difference rather than finishing and reporting
+it**. They are two files rather than one for the reason
+[Testing](TESTING.md#how-the-suite-is-run-detached-teed-and-the-log-polled)
+gives: a shared wrapper would run one instrument twice. Ordinary work uses the
+ordinary pair beside them, which is one run per shell and does **not** set the
+release variable.
+
 All five layers, including the two marked *mandatory before release*. **Not a
 subset, not "the fast ones", not "the ones related to this change".** The layers,
 their cadences and the enumerated tests are in [Testing](TESTING.md) — this item

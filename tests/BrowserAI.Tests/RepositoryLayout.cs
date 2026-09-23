@@ -165,7 +165,7 @@ internal static class RepositoryLayout
     /// the shape an analyzer cannot see.
     /// </remarks>
     public static IReadOnlyList<FileInfo> SourceAndScriptFiles { get; } =
-        SourceFilesUnder(["src", "tests", "build"], ["*.cs", "*.ps1", "*.psm1", "*.mjs", "*.js"]);
+        SourceFilesUnder(["src", "tests", "build"], ["*.cs", "*.ps1", "*.psm1", "*.mjs", "*.js", "*.sh"]);
 
     /// <summary>
     /// Every hand-written file in the repository that can carry a Markdown link:
@@ -259,7 +259,7 @@ internal static class RepositoryLayout
     /// <param name="path">A file name or path.</param>
     /// <returns>Whether it carries prose this repository scans.</returns>
     public static bool IsLinkBearing(string path) =>
-        Path.GetExtension(path) is ".cs" or ".ps1" or ".psm1" or ".mjs" or ".js" or ".md";
+        Path.GetExtension(path) is ".cs" or ".ps1" or ".psm1" or ".mjs" or ".js" or ".sh" or ".md";
 
     /// <summary>
     /// A file's text with whole-line comments removed, so that a scan for a

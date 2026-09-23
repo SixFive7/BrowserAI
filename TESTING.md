@@ -295,6 +295,36 @@ nohup bash -c "BROWSERAI_DRIVE_CASE=lower dotnet test '$root/BrowserAI.slnx' 2>&
                cat .work/suite-coverage.txt >> $log" >/dev/null 2>&1 </dev/null &
 ```
 
+⚠️ **AND SINCE 2026-09-23 THOSE TWO INVOCATIONS ARE FILES IN THE TREE
+RATHER THAN SOMETHING RETYPED FROM THIS SECTION — Q239 b, *added by addition*.**
+Four drivers, two per shell, plus the clearance snapshot they share:
+
+| File | What it is |
+|---|---|
+| [`build/Invoke-OrdinaryGate.ps1`](build/Invoke-OrdinaryGate.ps1) | one run, forces `C:\`, declares `upper` |
+| [`build/invoke-ordinary-gate.sh`](build/invoke-ordinary-gate.sh) | one run, forces `c:/`, declares `lower` |
+| [`build/Invoke-ReleaseGate.ps1`](build/Invoke-ReleaseGate.ps1) | three runs under `BROWSERAI_RELEASE_RUN`, forces `C:\`, declares `upper` |
+| [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) | three runs under `BROWSERAI_RELEASE_RUN`, forces `c:/`, declares `lower` |
+| [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1) | the five readings compared either side of every run, and it never repairs what it finds |
+
+⚠️ **THIS IS NOT THE SHARED WRAPPER SCRIPT `CLAUDE.md` FORBIDS, and the
+difference is the whole reason there are four files.** That rule is about one
+script standing in for both halves, which would run one instrument twice and
+report what two report. Each of these forces and declares **its own** spelling,
+and `SuiteCoverageTests.EveryGateDriverDeclaresTheDriveLetterSpellingItForces`
+reads all four as text and fails if a driver forces one case and declares the
+other, if a shell's half forces the case the other shell's must, or if an
+ordinary half sets the release variable.
+
+**Why they were moved at all, and it is a measured cost rather than a
+preference.** They were recreated from this section every session and lived in
+the ephemeral scratch folder, so the closing wipe took them every time. On
+**2026-09-22 at 19:26** one was launched after a wipe that had removed it: it
+died on its first line, in milliseconds, and **read exactly like a driver that
+was working** — fourteen minutes were lost waiting on it. That is also why each
+driver prints a `starting` line, and why the caller must read the driver's own
+log for it before waiting.
+
 ⚠️ **Between two runs, wait for `.work\test-scratch` to be released rather than
 for the first run to report.** *Added 2026-09-15.* A test host that has printed
 its summary has not necessarily let go: on the 2026-09-15 release gate, **137

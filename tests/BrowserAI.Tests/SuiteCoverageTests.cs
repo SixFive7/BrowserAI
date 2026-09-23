@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using BrowserAI.Tests.Harness;
 
 namespace BrowserAI.Tests;
@@ -209,7 +210,7 @@ internal static class SuiteCoverage
 /// same defect as the one this file closes.
 /// </para>
 /// </remarks>
-internal sealed class SuiteCoverageTests
+internal sealed partial class SuiteCoverageTests
 {
     /// <summary>
     /// A release run refuses what an ordinary run skips, and a partial
@@ -1216,4 +1217,192 @@ internal sealed class SuiteCoverageTests
 
         await Assert.That(summary).Contains(SuiteEnvironment.ReleaseRunVariable);
     }
+
+    /// <summary>
+    /// Every gate driver declares the drive-letter spelling it forces, and the
+    /// two shells force different ones.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The four drivers were recreated from prose every session until
+    /// 2026-09-23, and once they were not there at all.</b> On 2026-09-22 at
+    /// 19:26 a gate driver whose script had been wiped with the scratch folder
+    /// died on its first line, in milliseconds, and read exactly like one that
+    /// was working; fourteen minutes were lost waiting on it. They live in
+    /// <c>build/</c> now, and this arm is what keeps a retyped one honest.
+    /// </para>
+    /// <para>
+    /// <b>What is asserted is the pairing, not the spelling.</b>
+    /// <see cref="TheRunReportsTheDriveLetterSpellingItActuallyReceived"/>
+    /// already fails a run that did not receive what it declared -- but only for
+    /// the run that is happening. This reads the drivers as text and holds that
+    /// each one <i>forces</i> a case and <i>declares</i> the same case, and that
+    /// the PowerShell pair and the Git Bash pair force different ones. A driver
+    /// that declared <c>lower</c> while forcing upper would make every run it
+    /// started red for a reason nobody could see from the run.
+    /// </para>
+    /// <para>
+    /// <b>And the release halves are told from the ordinary ones by the variable
+    /// rather than by the file name</b>, because the difference that matters is
+    /// what the run claims about itself: an ordinary run that set
+    /// <c>BROWSERAI_RELEASE_RUN</c> would print <c>release run YES</c> in its own
+    /// coverage block and be a release nobody cut.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-23</b> against a doctored driver that declared the
+    /// spelling the other shell forces.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryGateDriverDeclaresTheDriveLetterSpellingItForces()
+    {
+        var offences = new List<string>();
+
+        foreach (var driver in GateDrivers)
+        {
+            var text = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "build", driver.File));
+            var declared = Declared(text);
+            var forced = Forced(text, driver.File);
+
+            if (declared is null)
+            {
+                offences.Add($"{driver.File}: declares no BROWSERAI_DRIVE_CASE, so a run it starts asserts nothing about the spelling it received");
+                continue;
+            }
+
+            if (forced is null)
+            {
+                offences.Add($"{driver.File}: declares '{declared}' and forces nothing, so the spelling is whatever started the shell");
+                continue;
+            }
+
+            if (!string.Equals(declared, forced, StringComparison.Ordinal))
+            {
+                offences.Add($"{driver.File}: forces '{forced}' and declares '{declared}'");
+            }
+
+            if (!string.Equals(forced, driver.Expected, StringComparison.Ordinal))
+            {
+                offences.Add($"{driver.File}: forces '{forced}' where this shell's half of the gate must force '{driver.Expected}', so the two halves would be one instrument run twice");
+            }
+
+            // ⚠️ AN ASSIGNMENT, NOT A MENTION. Every one of these files
+            // EXPLAINS in prose whether it is a release half, so a Contains over
+            // the text reports the ordinary halves as release ones -- which it
+            // did, on the first run of this arm.
+            var isRelease = ReleaseRunAssignment().IsMatch(text);
+
+            if (isRelease != driver.Release)
+            {
+                offences.Add(driver.Release
+                    ? $"{driver.File}: is the release half and never sets BROWSERAI_RELEASE_RUN, so a missing capability would skip where it must fail"
+                    : $"{driver.File}: is the ordinary half and sets BROWSERAI_RELEASE_RUN, so its own coverage block would call an ordinary run a release");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL, over the same two readers. A pattern that
+        // stopped matching would report every driver silent and pass nothing,
+        // which reads identically to four correct drivers.
+        await Assert.That(Declared("$env:BROWSERAI_DRIVE_CASE = 'upper'")).IsEqualTo("upper");
+        await Assert.That(Declared("BROWSERAI_DRIVE_CASE=lower dotnet test")).IsEqualTo("lower");
+        await Assert.That(Declared("nothing here")).IsNull();
+
+        await Assert.That(Forced("$x.Substring(0, 1).ToUpperInvariant()", "a.ps1")).IsEqualTo("upper");
+        await Assert.That(Forced("$x.Substring(0, 1).ToLowerInvariant()", "a.ps1")).IsEqualTo("lower");
+        await Assert.That(Forced("tr 'A-Z' 'a-z'", "a.sh")).IsEqualTo("lower");
+        await Assert.That(Forced("tr 'a-z' 'A-Z'", "a.sh")).IsEqualTo("upper");
+        await Assert.That(Forced("nothing here", "a.sh")).IsNull();
+
+        await Assert.That(ReleaseRunAssignment().IsMatch("$env:BROWSERAI_RELEASE_RUN = '1'")).IsTrue();
+        await Assert.That(ReleaseRunAssignment().IsMatch("BROWSERAI_RELEASE_RUN=1 dotnet test")).IsTrue();
+        await Assert.That(ReleaseRunAssignment().IsMatch("BROWSERAI_RELEASE_RUN is deliberately NOT set here")).IsFalse();
+
+        // And the corpus is not empty, which is the other way this could pass
+        // while checking nothing.
+        await Assert.That(GateDrivers.Length).IsEqualTo(4);
+
+        foreach (var driver in GateDrivers)
+        {
+            await Assert.That(File.Exists(Path.Combine(RepositoryLayout.Root.FullName, "build", driver.File)))
+                .IsTrue()
+                .Because($"{driver.File} is one half of a gate and a gate recreated from prose is what this arm exists to end");
+        }
+
+        // The clearance snapshot is the fifth file and is shared by all four, so
+        // it carries no spelling of its own and is asserted present rather than
+        // read for one.
+        await Assert.That(File.Exists(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"))).IsTrue();
+    }
+
+    /// <summary>The four gate drivers, what each must force, and whether it is a release half.</summary>
+    private static (string File, string Expected, bool Release)[] GateDrivers { get; } =
+    [
+        ("Invoke-OrdinaryGate.ps1", "upper", false),
+        ("Invoke-ReleaseGate.ps1", "upper", true),
+        ("invoke-ordinary-gate.sh", "lower", false),
+        ("invoke-release-gate.sh", "lower", true),
+    ];
+
+    /// <summary>What a driver declares in <c>BROWSERAI_DRIVE_CASE</c>, or <see langword="null"/>.</summary>
+    /// <param name="text">The driver's text.</param>
+    /// <returns><c>upper</c>, <c>lower</c>, or <see langword="null"/> when it declares nothing.</returns>
+    private static string? Declared(string text)
+    {
+        var match = DriveCaseDeclaration().Match(text);
+
+        return match.Success ? match.Groups["case"].Value : null;
+    }
+
+    /// <summary>
+    /// Which case a driver forces onto the drive letter, read from the one
+    /// expression that does it in each language.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two spellings because two languages, and neither is a guess.</b> A
+    /// PowerShell half re-cases the first character with
+    /// <c>ToUpperInvariant</c>; a Git Bash half pipes it through <c>tr</c>. The
+    /// direction is read off the expression rather than off the file name, so a
+    /// driver that was copied from the other shell and half-edited is caught.
+    /// </remarks>
+    /// <param name="text">The driver's text.</param>
+    /// <param name="file">Its name, which chooses the language.</param>
+    /// <returns><c>upper</c>, <c>lower</c>, or <see langword="null"/> when it forces nothing.</returns>
+    private static string? Forced(string text, string file)
+    {
+        if (file.EndsWith(".sh", StringComparison.OrdinalIgnoreCase))
+        {
+            var match = ShellCaseForcing().Match(text);
+
+            return match.Success
+                ? match.Groups["from"].Value.StartsWith('A') ? "lower" : "upper"
+                : null;
+        }
+
+        var powershell = PowerShellCaseForcing().Match(text);
+
+        // Mapped rather than lower-cased: CA1308 bans ToLowerInvariant, and a
+        // two-value map is clearer than a normalisation anyway.
+        return powershell.Success
+            ? powershell.Groups["case"].Value is "Upper" ? "upper" : "lower"
+            : null;
+    }
+
+    /// <summary>The declaration, in either shell's assignment syntax.</summary>
+    [GeneratedRegex(@"BROWSERAI_DRIVE_CASE\s*=\s*'?(?<case>upper|lower)'?")]
+    private static partial Regex DriveCaseDeclaration();
+
+    /// <summary>PowerShell's re-casing of the drive letter.</summary>
+    [GeneratedRegex(@"To(?<case>Upper|Lower)Invariant\(\)")]
+    private static partial Regex PowerShellCaseForcing();
+
+    /// <summary>An assignment of the release variable, in either shell's syntax.</summary>
+    [GeneratedRegex(@"(?:\$env:)?BROWSERAI_RELEASE_RUN\s*=\s*'?1'?")]
+    private static partial Regex ReleaseRunAssignment();
+
+    /// <summary>A <c>tr</c> that re-cases the drive letter, with the direction it maps from.</summary>
+    [GeneratedRegex(@"tr\s+'(?<from>A-Z|a-z)'\s+'(?:a-z|A-Z)'")]
+    private static partial Regex ShellCaseForcing();
 }
