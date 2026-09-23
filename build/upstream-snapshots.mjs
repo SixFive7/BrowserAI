@@ -7,7 +7,7 @@
 // four snapshots can only be produced by the child itself, and the fourth --
 // the tool list -- is what a real MCP `tools/list` returns over stdio, not what
 // a static read of the bundle claims. Running under the payload's own node.exe
-// is what makes `resolvedFrom.node` the version that actually ships rather than
+// is what makes `resolvedFrom.node` the version that actually ships and not
 // whatever node happens to be on PATH; the script asserts that below.
 //
 // It writes files and compares nothing. Comparing is Update-UpstreamSnapshots.ps1's
@@ -64,7 +64,7 @@ if (process.execPath.toLowerCase() !== nodeExe.toLowerCase()) {
 // PLAYWRIGHT_MCP_* variables map onto config keys (kb/playwright/configuration.md).
 // A snapshot that silently depends on the operator's environment is worse than
 // no snapshot: it diffs when nothing upstream moved, and agrees when something
-// did. Stripped rather than trusted, and the names are logged so a developer
+// did. Stripped and not trusted, and the names are logged so a developer
 // whose shell would have changed the answer finds out.
 const childEnvironment = {};
 const stripped = [];
@@ -273,7 +273,7 @@ const skillOnly = registry.filter((tool) => tool.skillOnly).map((tool) => tool.n
 // The artifact generator prefixes
 // ---------------------------------------------------------------------------
 
-// Read out of the bundle's SOURCE rather than off the registry, because there
+// Read out of the bundle's SOURCE and not off the registry, because there
 // is nowhere else: every prefix lives inside a handler closure, and
 // `require(coreBundle)` hands back inert tool objects that never ran one.
 //
@@ -322,7 +322,7 @@ function literalsIn(expression) {
 /**
  * Resolves `prefix: this._member` by following the member to the constructor
  * parameter it is assigned from, and that parameter to the literals every
- * `new Class(...)` passes at its position. Throws rather than guessing: an
+ * `new Class(...)` passes at its position. Throws instead of guessing: an
  * unresolvable prefix is precisely the thing this section exists to surface.
  */
 function resolveMember(source, member) {
@@ -491,7 +491,7 @@ const snapshot = {
   },
   declaredCapabilities,
   // A capability declared in config.d.ts that no tool carries does nothing when
-  // set. Recorded rather than asserted: the day upstream gives one a tool, that
+  // set. Recorded and not asserted: the day upstream gives one a tool, that
   // is a diff to adjudicate and not a build to fix.
   capabilitiesCarryingNoTool: declaredCapabilities.filter((capability) => !(capability in toolsByCapability)),
   // Every capability whose name starts with `core` is unconditional --

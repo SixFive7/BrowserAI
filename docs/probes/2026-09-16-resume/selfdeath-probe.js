@@ -3,7 +3,7 @@
 // Q223c: does a browser server that dies of its OWN accord flush what a killed
 // one loses? Path B in resume-probe2.js kills the node child by pid, and
 // kb/playwright/provisioning-and-timings.md records that persistent stores go
-// with it. The open hazard row says the mechanism is a READING rather than a
+// with it. The open hazard row says the mechanism is a READING and not a
 // measurement, and names the one thing that would settle it: a browser that
 // dies without being killed may flush on the way out.
 //
@@ -104,7 +104,7 @@ function aliveVerified(pid, exePath) {
 
 /**
  * Waits for every recorded child to stop being itself, polling INSIDE one
- * PowerShell rather than starting one per poll.
+ * PowerShell instead of starting one per poll.
  *
  * ⚠️ This is one call on purpose, and the reason is measured. A first version
  * polled `aliveVerified` in a JavaScript loop every 500 ms, which starts two
@@ -185,7 +185,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     for (const c of children) killVerified(c.pid, c.exe);
   } else {
     // ⚠️ THE `page.constructor.constructor` HOP IS NOT CLEVERNESS, IT IS THE
-    // ONLY ROUTE, and it is a measured property of upstream rather than a
+    // ONLY ROUTE, and it is a measured property of upstream, not a
     // guess. `browser_run_code_unsafe` describes itself as executing "arbitrary
     // JavaScript in the Playwright server process", and it does -- but through
     // `vm.runInContext` against a context built as `{ page, __end__ }` and

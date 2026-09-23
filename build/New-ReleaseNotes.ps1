@@ -32,11 +32,11 @@
     lands a reader on the exact lines with the source view's own highlight.
 
     ⚠️ THE LINE NUMBERS ARE ONLY TRUE OF ONE FILE, which is why this refuses
-    rather than guesses. They are computed from the changelog on disk and read
+    instead of guessing. They are computed from the changelog on disk and read
     against the changelog the tag carries, so the two must be the same document:
     the working copy must match HEAD, and a tag `v<version>`, if it exists, must
     be at HEAD. Either failing is a refusal naming both. A dirty tree ELSEWHERE
-    is reported rather than refused -- this runs inside `New-Release.ps1` after a
+    is reported and not refused -- this runs inside `New-Release.ps1` after a
     publish that can leave restore artifacts behind, and none of those can move a
     line number in a file that matches HEAD.
 
@@ -45,7 +45,7 @@
     them keep it). A body over the limit falls back to the headlines with no
     per-entry links at all, leaving the footer's section link as the only way in,
     and the script SAYS WHICH SHAPE IT PRODUCED. It is a pathological fallback
-    rather than a second design: the linked shape is roughly a tenth of the size
+    and not a second design: the linked shape is roughly a tenth of the size
     the folded one was, so reaching the limit now takes a release of a size this
     project has never cut.
 
@@ -90,7 +90,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 # The same two lines every script in build/ carries: a redirected stream gets no
-# ANSI colour, and a refusal is the sentence rather than caret art around it.
+# ANSI colour, and a refusal is the sentence and not caret art around it.
 $PSStyle.OutputRendering = 'PlainText'
 $ErrorView = 'NormalView'
 
@@ -107,15 +107,15 @@ if (-not (Test-Path -LiteralPath $Path)) {
 # lines -- silently, and in a document nobody re-reads. The link still resolves,
 # still highlights, and highlights something else.
 #
-# What is asserted is the property itself rather than a proxy for it: the file
+# What is asserted is the property itself and not a proxy for it: the file
 # this reads is byte-for-byte what HEAD holds, and when a tag `v<version>` exists
-# it is at HEAD. A dirty tree ELSEWHERE is reported rather than refused -- this
+# it is at HEAD. A dirty tree ELSEWHERE is reported and not refused -- this
 # script runs inside `New-Release.ps1` step 9, after a publish that can leave
 # restore artifacts in the working tree, and refusing on those would stop a
 # release for something that cannot move one line number.
 #
 # Outside a repository there is nothing to check and nothing to claim. It says
-# so, in the same sentence it says what it produced, rather than passing
+# so, in the same sentence it says what it produced, instead of passing
 # silently.
 function Invoke-Git {
     param([Parameter(Mandatory)] [string[]] $Arguments)
@@ -139,7 +139,7 @@ if ($inRepository) {
     # ⚠️ TRACKED OR NOT IS A STATE, NOT A FAILURE. An untracked changelog has no
     # committed version for anything to be compared against, so there is nothing
     # to claim and nothing to refuse -- which is exactly a fixture under a
-    # gitignored scratch directory. It is announced rather than passed over: the
+    # gitignored scratch directory. It is announced and not passed over: the
     # provenance line says the numbers are pinned to nothing.
     if ($relative.ExitCode -ne 0) {
         $inRepository = $false
@@ -202,7 +202,7 @@ $rest = $content.Substring($heading.Index + $heading.Length)
 $next = [regex]::Match($rest, '(?m)^\#\#[ \t]')
 $section = if ($next.Success) { $rest.Substring(0, $next.Index) } else { $rest }
 
-# --- The legend, read out of the changelog rather than written here ------------
+# --- The legend, read out of the changelog and not written here ----------------
 # Two copies of a palette would eventually disagree, and the one in the file is
 # the one a reader of the changelog sees.
 #
@@ -213,8 +213,8 @@ $section = if ($next.Success) { $rest.Substring(0, $next.Index) } else { $rest }
 # interpunct, and this script FLATTENED it further, joining its wrapped lines
 # with spaces -- so a reader of the release page met one unbroken line. It is
 # read as a Markdown table now and emitted line for line. A legend that is not a
-# table is REFUSED rather than flattened: this is the only place the shape can be
-# held, because the body carries the changelog's legend rather than one of its
+# table is REFUSED and not flattened: this is the only place the shape can be
+# held, because the body carries the changelog's legend and not one of its
 # own.
 $head = $content.Substring(0, [regex]::Match($content, '(?m)^\#\#[ \t]').Index)
 $legendBlock = ($head -split "`n`n" | Where-Object {
@@ -272,7 +272,7 @@ function Get-GitHubAnchor {
 
 # The name the links use. The body always points at the repository's own
 # changelog, whatever file this run was handed -- a fixture is a stand-in for
-# that document rather than a different one.
+# that document and not a different one.
 $ChangelogName = 'CHANGELOG.md'
 
 $anchor = Get-GitHubAnchor -Heading ($heading.Value -replace '^\#\#[ \t]+', '')
@@ -351,7 +351,7 @@ for ($index = 0; $index -lt $lines.Count; $index++) {
     # is nowhere in a folded body for it: every group renders as its heading and
     # its entries. It used to be DROPPED here, silently, and a release body that
     # quietly omits a paragraph somebody wrote is worse than one that refuses.
-    # Refusing rather than carrying is the choice: inventing a rendering for a
+    # Refusing instead of carrying is the choice: inventing a rendering for a
     # shape nothing else in this repository reads would make the changelog's
     # format wider than the one ChangelogTests holds it to.
     if ($line.Trim().Length -gt 0) {
@@ -364,7 +364,7 @@ Complete-Entry
 
 # --- Each entry, split at its headline -----------------------------------------
 # The shape is the changelog's own and is asserted there; a line that does not
-# carry it is a defect in the changelog rather than something to paper over.
+# carry it is a defect in the changelog and not something to paper over.
 $rendered = [System.Collections.Generic.List[object]]::new()
 
 foreach ($g in $groups) {
@@ -421,7 +421,7 @@ function New-Body {
         $out.Add('')
 
         foreach ($item in $g.Items) {
-            # ONE SHAPE, and the link is part of the line rather than a fold
+            # ONE SHAPE, and the link is part of the line and not a fold
             # under it. The two halves are never adjacent in this SOURCE for the
             # reason the footer's own line gives.
             $line = "- $($item.Icon) **$($item.Headline)**"
@@ -442,7 +442,7 @@ function New-Body {
     $out.Add($legend)
     $out.Add('')
     # ⚠️ The two halves of the link are never adjacent in this SOURCE, and that
-    # is deliberate rather than fussy: DocumentationLinkTests reads every file in
+    # is deliberate and not fussy: DocumentationLinkTests reads every file in
     # the tree as text, a `](` in a script is a relative link to it, and
     # `$permalink` is not a path that exists.
     # WARNING: PLAIN WORDS -- 2026-09-17, the maintainer's release directive,

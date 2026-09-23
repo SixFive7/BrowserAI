@@ -70,7 +70,7 @@ const facts = {};
   // Upstream's own defaults, with two exceptions that are both about not
   // damaging this machine: SKIP_BROWSER_GC stops upstream's stale-browser
   // collector deleting the provisioned tree, SKIP_BROWSER_DOWNLOAD makes a
-  // missing browser a loud failure rather than a 767 MiB download.
+  // missing browser a loud failure and not a 767 MiB download.
   const env = Object.assign({}, process.env, {
     PLAYWRIGHT_BROWSERS_PATH: BROWSERS,
     PLAYWRIGHT_SKIP_BROWSER_GC: '1',

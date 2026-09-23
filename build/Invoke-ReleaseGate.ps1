@@ -15,7 +15,7 @@
       - THREE RUNS, because the repetition buys the flake that appears once in
         three. That is how the probe-report race was found on 2026-08-19. On an
         intermediate batch it buys nothing, which is why the ordinary gate is a
-        separate file rather than a switch.
+        separate file and not a switch.
       - BROWSERAI_RELEASE_RUN=1, which turns every capability skip into a
         failure and makes a filtered run refuse itself from the session hook.
 
@@ -46,7 +46,7 @@ $PSStyle.OutputRendering = 'PlainText'
 
 $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 
-# The forced spelling, as an argument rather than a `cd` -- see
+# The forced spelling, as an argument and not a `cd` -- see
 # Invoke-OrdinaryGate.ps1 for why that is the only place it can be forced.
 $forced = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)
 $null = New-Item -ItemType Directory -Force -Path (Join-Path $root '.work' 'suite')

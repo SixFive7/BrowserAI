@@ -12,7 +12,7 @@
 // prunes it)"). It was moved out of .work/ into docs/probes/ when the scratch
 // directory was wiped, so it IS read by every scan over
 // RepositoryLayout.SourceAndScriptFiles now -- which is the reason the
-// sentence above says "honoured" rather than "honoured anyway".
+// sentence above says "honoured" and not "honoured anyway".
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,7 +36,7 @@ namespace HeapRig
 
         public const int STARTF_USESTDHANDLES = 0x00000100;
         // Renamed 2026-09-16 from the Win32 spelling. The name is load-bearing
-        // rather than stylistic: HouseRuleTests.EveryProcessLaunchInTheTree-
+        // and not stylistic: HouseRuleTests.EveryProcessLaunchInTheTree-
         // SuppressesTheConsoleWindow scans with ONE needle so that it covers the
         // managed property and the native flag alike, and
         // src/BrowserAI/Interop/JobLauncher.cs names the same constant the same way

@@ -39,7 +39,7 @@ param(
 )
 
 # One kernel object, so the trip lands within a millisecond of where it was
-# aimed rather than within a file-poll's 100.
+# aimed and not within a file-poll's 100.
 $TripName = 'Local\BaiHeapRigTrip'
 
 $ErrorActionPreference = 'Stop'
@@ -78,7 +78,7 @@ if ($Mode -eq 'Agent') {
 
         # The trip: block on the event and, the instant it is set, take the last
         # few windows. This runs BEFORE the poll loop below, so the agent is
-        # parked on a kernel object rather than spinning a file check.
+        # parked on a kernel object instead of spinning a file check.
         if ($TripCount -gt 0) {
             $gate = [System.Threading.EventWaitHandle]::new($false, [System.Threading.EventResetMode]::ManualReset, $TripName)
             [void]$gate.WaitOne(120000)
@@ -240,8 +240,8 @@ try {
             Set-Content -Path (Join-Path $ipcDir 'release') -Value 'go' -Encoding utf8
         }
 
-        # The 2026-08-29 arm: cross the cliff WHILE it is starting. Spun rather
-        # than slept -- Start-Sleep's granularity is ~15 ms and the window this
+        # The 2026-08-29 arm: cross the cliff WHILE it is starting. Spun and not
+        # slept -- Start-Sleep's granularity is ~15 ms and the window this
         # is aiming at is 10 to 30.
         if ($TripCount -gt 0) {
             $spin = [System.Diagnostics.Stopwatch]::StartNew()
@@ -275,7 +275,7 @@ try {
         $logLines = if (Test-Path $logPath) { @(Get-Content $logPath).Count } else { 0 }
         $lastLine = if ($logLines -gt 0) { (@(Get-Content $logPath))[-1] } else { '' }
 
-        # Seed hypothesis 1, answered with data rather than argument: was a
+        # Seed hypothesis 1, answered with data and not argument: was a
         # crashpad handler up when this died, and did anything reach the
         # database? A dump in reports\ means the handler was connected AND the
         # death went through it.
@@ -310,7 +310,7 @@ try {
     $totalWindows = 0
     if (-not $NoFill -and $FixedCap -gt 0) {
         # The gradient arm: consume an EXACT number of windows, so the free heap
-        # left behind is a number rather than "none".
+        # left behind is a number and not "none".
         Say "filling $FixedCap windows of $TitleChars-character title onto $target ($heapKb KB) ..."
         $filler = Start-Agent 1 $FixedCap
         $fillers = 1

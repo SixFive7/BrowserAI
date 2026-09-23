@@ -6,7 +6,7 @@
 # drive letter and declaring it.
 #
 # TESTING.md owns the invocation; this is that invocation, kept in the tree
-# rather than retyped from it. The two halves of a gate are TWO INSTRUMENTS and
+# instead of retyped from it. The two halves of a gate are TWO INSTRUMENTS and
 # not redundancy: this one hands the test host `c:/...` and declares `lower`,
 # the PowerShell half hands it `C:\...` and declares `upper`, and
 # SuiteCoverageTests.TheRunReportsTheDriveLetterSpellingItActuallyReceived fails
@@ -37,7 +37,7 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 root=$(cd "$here/.." && pwd)
 cd "$root" || exit 1
 
-# THE FORCED SPELLING, AND IT IS AN ARGUMENT RATHER THAN A `cd`. A Git Bash that
+# THE FORCED SPELLING, AND IT IS AN ARGUMENT, NOT A `cd`. A Git Bash that
 # inherits its working directory hands a child `c:\...`; the same shell after ANY
 # `cd` hands it `C:\...`, because MSYS resolves the real path and Windows always
 # answers upper. MSYS re-spells a command path and a `cd` and does NOT touch a
@@ -51,7 +51,7 @@ mkdir -p .work/suite
 echo "=== ORDINARY RUN $tag starting $(date +%H:%M:%S) ==="
 pwsh -NoProfile -File "$windows\\build\\Get-ClearanceSnapshot.ps1" -Tag "$tag-before" >/dev/null
 
-# Wait for the rig tree to be RELEASED rather than for the previous run to have
+# Wait for the rig tree to be RELEASED and not for the previous run to have
 # reported: a test host that has printed its summary has not necessarily let go.
 waited=0
 while [ -d .work/test-scratch ] && [ -n "$(ls -A .work/test-scratch 2>/dev/null)" ] && [ "$waited" -lt 120 ]; do

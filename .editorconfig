@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jori Huisman
 # SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 #
-# Style is law rather than advice. Analyzers run at error severity and a
+# Style is law, not advice. Analyzers run at error severity and a
 # severity is NEVER weakened to make code pass -- fix the code. An opt-out
 # below is a deliberate edit that carries its reason on the line above it, so
 # it is legible in a diff; a bulk relaxation is not available.
@@ -297,7 +297,7 @@ dotnet_naming_rule.parameters_and_locals_are_camel_case.severity = error
 # disappeared, so setting it to `error` is real.
 #
 # CS4014 fires on the same code independently, so this is the second of two
-# mechanisms rather than the only one.
+# mechanisms and not the only one.
 
 [tests/**/*.cs]
 dotnet_diagnostic.TUnitAssertions0002.severity = error

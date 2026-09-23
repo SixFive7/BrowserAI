@@ -8,7 +8,7 @@
 // The difference from `resume-probe.js` is that NOTHING here awaits an answer
 // without a clock on it. The hung call is fired and polled; the wait is bounded
 // at the largest product timeout plus margin, stated on the command line, so
-// "it never returned" is a measurement rather than the probe giving up at a
+// "it never returned" is a measurement and not the probe giving up at a
 // number nobody chose.
 //
 // Nothing here touches %LocalAppData%\BrowserAI.app. The session directory is
@@ -114,7 +114,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   say('resumeMs', resume.ms);
   say('resume', text(resume).slice(0, 600));
 
-  // ---- THE HUNG CALL, fired and polled rather than awaited -----------------
+  // ---- THE HUNG CALL, fired and polled, not awaited ------------------------
   note('firing browser_navigate on server A and NOT awaiting it');
   const hungStarted = Date.now();
   let hung = null;

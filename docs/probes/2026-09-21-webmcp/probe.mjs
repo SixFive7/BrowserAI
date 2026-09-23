@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 // What a page that registers WebMCP tools puts into a tool RESULT, and what
-// `webmcp: false` takes back out, measured against the resolved child rather
-// than read off the bundle.
+// `webmcp: false` takes back out, measured against the resolved child and not
+// read off the bundle.
 //
 // @playwright/mcp 0.0.82 moved `browser_webmcp_list` and `browser_webmcp_call`
 // to `skillOnly`, so neither is on the wire any more -- and in the same release
 // the page's own tool NAMES, DESCRIPTIONS and inputSchemas started being
 // prepended to the snapshot that every snapshot-bearing tool result carries.
 // Those two are easy to read as one change and they point in opposite
-// directions, which is why this measures the second rather than inferring it
+// directions, which is why this measures the second instead of inferring it
 // from the first.
 //
 // It decides nothing. The classification is in the kb entry, taken from what
@@ -38,7 +38,7 @@ const sessionRoot = join(scratchRoot, mode);
 const outputDir = join(sessionRoot, 'output');
 mkdirSync(outputDir, { recursive: true });
 
-// A loopback HTTP server rather than a data: URL, for the same reason as the
+// A loopback HTTP server and not a data: URL, for the same reason as the
 // 2026-09-17 rig: the child blocks `file:` unless allowUnrestrictedFileAccess
 // is on, which BrowserAI writes false.
 //
@@ -91,7 +91,7 @@ const config = {
   saveSession: true,
   filePaths: 'absolute',
   // BrowserAI's own granted set, read off BrowserConfiguration.GrantedCapabilities
-  // rather than invented.
+  // and not invented.
   capabilities: ['config', 'vision', 'devtools', 'storage', 'network', 'pdf', 'testing'],
   ...(mode === 'off' ? { webmcp: false } : {}),
 };
@@ -135,7 +135,7 @@ child.stdout.on('data', (chunk) => {
     const message = JSON.parse(line);
     // Notifications are the other half of the question: `listChanged: true` is
     // new in 0.0.82, and a tool list that changes because a PAGE changed is the
-    // thing to see rather than to assume.
+    // thing to see and not to assume.
     if (message.id === undefined) {
       console.log(`\n>>> NOTIFICATION ${message.method} ${JSON.stringify(message.params ?? {})}`);
       continue;

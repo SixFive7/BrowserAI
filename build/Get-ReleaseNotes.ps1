@@ -29,7 +29,7 @@
 
       * It does not touch a released section. Stamping inserts a new heading
         below `## [Unreleased]` and moves nothing, so the unreleased entries
-        become that version's by position rather than by an edit that could
+        become that version's by position and not by an edit that could
         drop one.
 
 .PARAMETER Path
@@ -42,7 +42,7 @@
 
 .PARAMETER Date
     The release date for a stamped heading, ISO 8601. Defaults to today. A
-    parameter so a test can assert on the whole line rather than on a prefix.
+    parameter so a test can assert on the whole line and not on a prefix.
 
 .EXAMPLE
     pwsh -File build/Get-ReleaseNotes.ps1

@@ -85,13 +85,13 @@ BenchmarkDotNet.Artifacts/
 # .NET Core
 project.lock.json
 project.fragment.lock.json
-# ROOT-ANCHORED, and the anchor is load-bearing rather than tidy. These name the
+# ROOT-ANCHORED, and the anchor is load-bearing and not tidy. These name the
 # SDK's `ArtifactsPath` output folder, which is at the repository root. Left
 # unanchored, `artifacts/` matches a directory of that name at ANY depth -- and
 # on case-insensitive Windows it matched `src/BrowserAI/Artifacts/`, so five
 # product source files were invisible to git while every other signal read
 # healthy. Caught 2026-08-16, at build-order step 14, by `git check-ignore`
-# rather than by anything the build does.
+# and not by anything the build does.
 #
 # !! THIS COMMENT IS NOW THE ONLY THING GUARDING IT, AND A COMMENT IS NOT A
 # MECHANISM. Corrected 2026-08-19 (previously "it is now
@@ -509,7 +509,7 @@ FodyWeavers.xsd
 # Upstream proposes fixing it: github/gitignore#4735, open since 2025-09-23, last
 # touched 2025-07-24, still unmerged when checked 2026-08-19. Re-admitted here in
 # the meantime, below the marker, so a wholesale refresh of the upstream half
-# cannot drop it. If that PR merges, this line becomes redundant rather than
+# cannot drop it. If that PR merges, this line becomes redundant and not
 # wrong, and the upstream half's own negation takes over.
 !.vscode/mcp.json
 
@@ -525,7 +525,7 @@ FodyWeavers.xsd
 #   payload/node/{node.exe,LICENSE}   payload/mcp/node_modules/...
 #   payload/.cache/node-<ver>-win-x64.zip   payload/payload.json
 #
-# so /payload/ is now a real path rather than a guess.
+# so /payload/ is now a real path and not a guess.
 #
 # /staging/ and /.staging/ are GONE, deleted 2026-08-16 at build-order step 19.
 # They were kept "as spare conventions" on the theory that packaging would claim
@@ -590,7 +590,7 @@ TestResults/
 # --- Agent scratch space -----------------------------------------------------
 # CLAUDE.md, "Scratch work": agent-produced temporary files go here. In practice
 # that means multi-gigabyte browser trees and probe output, so leaving it
-# untracked rather than ignored puts the whole lot one `git add -A` away from
+# untracked and not ignored puts the whole lot one `git add -A` away from
 # history. Deliberately not slash-anchored, unlike the paths above -- a leading
 # dot already rules out the source-folder collision this file's header warns
 # about, and every other repo in the estate writes it bare.
@@ -623,7 +623,7 @@ TestResults/
 #
 # Nothing in this project needs a committed certificate today. If a test fixture
 # ever does, negate it by exact path (`!tests/Fixtures/localhost.pfx`), so the
-# exception is visible in the diff rather than implied by a missing rule.
+# exception is visible in the diff and not implied by a missing rule.
 
 # Key stores and certificate containers.
 *.jks
@@ -656,7 +656,7 @@ id_ed25519
 # repository during development -- which will happen -- lands its tree wherever
 # it was pointed. There is no path to anchor to, only names. These are the real
 # names, taken from the plan's session-directory and artifact-management
-# sections rather than guessed:
+# sections and not guessed:
 #
 #   <session-dir>\  browserai.json  session.json  profile\  downloads\
 #                   output\{console,network,page,request,response,result,
@@ -698,7 +698,7 @@ downloads/
 # for a live session's own artifacts: `*.log` (line 153), and `releases.*.json`
 # and `assets.*.json` in the session section. Nothing under `docs/` is ever
 # produced by a build or by a running BrowserAI, so the negation is safe to make
-# whole-subtree rather than pattern by pattern.
+# whole-subtree and not pattern by pattern.
 #
 # ⚠️ This must stay the LAST rule in this file. A negation only survives if no
 # later pattern re-matches the path, so anything appended below it silently

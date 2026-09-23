@@ -37,7 +37,7 @@
 # tempting fix then is to normalize the generator's output, which would make an
 # upstream line-ending change invisible instead.
 #
-# `-text` rather than `binary`: no conversion in either direction, and git still
+# `-text` and not `binary`: no conversion in either direction, and git still
 # renders a readable diff, which is the whole point of the gate.
 upstream-snapshots/** -text
 

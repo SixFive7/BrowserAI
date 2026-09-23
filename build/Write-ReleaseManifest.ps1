@@ -14,9 +14,9 @@
     satisfied item 11 by copying six files BY HAND into what is now
     docs/evidence/2026-08-16-step20-manifest/ --
     and a hand-assembled manifest is one nobody assembles twice, which is why
-    this script exists rather than a paragraph of instructions.
+    this script exists and not a paragraph of instructions.
 
-    Eight files, copied rather than transcribed, plus a manifest.json stating
+    Eight files, copied and not transcribed, plus a manifest.json stating
     the version, the tag it came from, the package and its SHA-256, and the
     resolved version each copied file states. Copied is the operative word: a
     transcribed version number is a number somebody typed, and the whole point
@@ -32,7 +32,7 @@
     every number in it is READ: the shipped version and the declared ones out of
     the payload lock, the pin out of the payload manifest. NPM WRITES NO
     `overrides` BLOCK INTO THE LOCK IT PRODUCES (measured 2026-09-17), which is
-    why build/payload/package.json is copied as the eighth file rather than read
+    why build/payload/package.json is copied as the eighth file instead of read
     and discarded: it is the only record that an override was in force at all.
 
     AND WHETHER IT WAS A CRUNCH OVERRIDE, SINCE 2026-08-26. DECISIONS.md said in
@@ -72,7 +72,7 @@
 
 .PARAMETER Package
     The full .nupkg. Its size and SHA-256 are recorded so the manifest names one
-    exact artifact rather than a version.
+    exact artifact and not a version.
 
 .PARAMETER OverriddenPackage
     Which upstream a HUMAN held back for this release. See DECISIONS.md, "Every
@@ -195,7 +195,7 @@ foreach ($entry in $wanted.GetEnumerator()) {
 }
 
 # --- What each copied file states ---------------------------------------------
-# Read back out of the COPIES, so the manifest states what it holds rather than
+# Read back out of the COPIES, so the manifest states what it holds and not
 # what the repository held a moment ago.
 function Get-LockVersion([string] $lockFile, [string] $package) {
     $lock = Get-Content -LiteralPath (Join-Path $destination $lockFile) -Raw | ConvertFrom-Json
@@ -229,7 +229,7 @@ $npmVersion = {
 # npm `overrides` entry does and which nothing in a release could previously say.
 #
 # ⚠️ THE MANIFEST IS THE ONLY RECORD, and that is the whole reason
-# build/payload/package.json is copied rather than read in passing. Measured
+# build/payload/package.json is copied and not read in passing. Measured
 # 2026-09-17: npm writes NO `overrides` block into the lock it produces -- the
 # lock's root entry carries name, version and dependencies and nothing else -- so
 # the lock states a resolved playwright-core and cannot state that anybody chose
@@ -239,12 +239,12 @@ $npmVersion = {
 # EVERY NUMBER HERE IS READ, from two different files, and they are deliberately
 # different questions. `shipped` is what the lock resolved; `pinnedTo` is what
 # the override asked for -- the two agree today and would not if a later npm
-# resolved differently, which is worth being able to see. `declaredBy` is every
+# resolved differently, which this makes visible. `declaredBy` is every
 # package in the lock that declares a dependency on the overridden name, at the
 # version IT asks for, which is the other half of the exit condition: the day
 # every declarer names a version at or above the pin, the override is deleted.
-# The root project is skipped because it declares the FLOAT (`latest`) rather
-# than a pin, and reporting `latest` beside three exact versions would read as a
+# The root project is skipped because it declares the FLOAT (`latest`) and not
+# a pin, and reporting `latest` beside three exact versions would read as a
 # fourth measurement.
 $pulledForward = $null
 $payloadManifest = Get-Content -LiteralPath (Join-Path $destination 'payload.package.json') -Raw | ConvertFrom-Json -AsHashtable

@@ -17,7 +17,7 @@
       * The CLIENT half is `AllowVersionDowngrade = true`, in
         src/BrowserAI/Updates/VelopackUpdateClient.cs. Its default is false, and
         with it off a rollback is reported to the user as "no updates" -- an
-        older version in the feed is simply not seen.
+        older version in the feed is not seen.
 
       * The PIPELINE half is this. A rule of "strictly increasing" alone makes a
         rollback impossible to PUBLISH while the runtime happily accepts one,
@@ -57,7 +57,7 @@ $PSStyle.OutputRendering = 'PlainText'
 $ErrorView = 'NormalView'
 
 # The same shape the build derives and the packager accepts. `vpk` rejects
-# four-part versions outright, so a fourth part is refused here rather than
+# four-part versions outright, so a fourth part is refused here and not
 # discovered at pack time.
 if ($Version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
     Write-Error "'$Version' is not a version this project can cut. Three parts and an optional pre-release suffix, with no leading 'v' (the tag carries that) and no fourth part (vpk rejects four-part versions outright)."
