@@ -2568,12 +2568,16 @@ internal sealed partial class HouseRuleTests
     /// this arm's first measurement reported 114 offences that were not there.
     /// </para>
     /// <para>
-    /// ⚠️ <b>A CONSEQUENCE STATED HERE SO NOBODY HAS TO FIND IT: the product's own
-    /// words to a user are OUTSIDE this scan.</b> A refusal sentence lives in a
-    /// string literal, and a string literal is code. <c>SessionErrors</c> and
-    /// <c>SessionManager</c> carry the comparison frame in text a caller reads,
-    /// and nothing here sees it. That is the brief this arm was written to, and
-    /// it is a gap somebody may want closed.
+    /// <b>It reads two corpora, because a rule that read one covered half the
+    /// tree.</b> The first is commentary, which is what a maintainer reads. The
+    /// second is string literals over <see cref="IsProductVoice"/>, which is what
+    /// a user, a model and a compiler read: the instructions string, every tool
+    /// and parameter description, every refusal, every log message, the
+    /// banned-symbol reasons, and what the release scripts and the hook say when
+    /// they stop. <i>Corrected 2026-09-23 (previously "A CONSEQUENCE STATED HERE
+    /// SO NOBODY HAS TO FIND IT: the product's own words to a user are OUTSIDE
+    /// this scan ... That is the brief this arm was written to, and it is a gap
+    /// somebody may want closed"), when the maintainer closed it.</i>
     /// </para>
     /// <para>
     /// <b>The exclusions, each a kind.</b> Text inside straight double quotes is
@@ -2600,6 +2604,22 @@ internal sealed partial class HouseRuleTests
     /// class, and both directions on every exclusion. <b>The tells are built from
     /// halves</b> so that this file carries none of them to its own scan.
     /// </para>
+    /// <para>
+    /// <b>And the second corpus was planted red the same day, once per shape it
+    /// reads</b>, by doctoring a real sentence in each: a refusal in
+    /// <c>SessionErrors</c>, the profile-directory refusal in
+    /// <c>InstallRootScope</c>, a <c>Write-Error</c> in <c>New-Release.ps1</c>, a
+    /// banner in <c>invoke-release-gate.sh</c>, an <c>&lt;Error Text&gt;</c> in
+    /// <c>Sqlite.targets</c>, a thrown message in <c>upstream-snapshots.mjs</c>
+    /// and the hook's here-string. <b>Seven of seven were named, and the eighth
+    /// plant proved the two corpora do not overlap</b>: a doctored line in
+    /// <c>build/BannedSymbols.txt</c> was caught by the pass ABOVE, because a
+    /// file with no code in it is all prose to the first reader and is its own
+    /// single literal to the second. <b>The <c>.mjs</c> shape was the one that
+    /// stayed green</b> until the lexer learned that a script's single quotes and
+    /// backticks are strings, which is the silent half of this: a reader that
+    /// returns too little stays synchronised and reports a clean tree.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -2607,6 +2627,7 @@ internal sealed partial class HouseRuleTests
     {
         var offences = new List<string>();
         var scanned = 0;
+        var voices = 0;
 
         foreach (var file in RepositoryLayout.AllFiles)
         {
@@ -2622,6 +2643,44 @@ internal sealed partial class HouseRuleTests
         }
 
         await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // ⚠️ AND A SECOND CORPUS: THE PRODUCT'S OWN VOICE, WHICH IS ITS STRING
+        // LITERALS AND NOT ITS COMMENTS. The pass above reads commentary and
+        // skips every literal, which left every sentence a user, a model and a
+        // maintainer actually read outside the rule -- the instructions string,
+        // every tool and parameter description, every refusal, every log
+        // message, the banned-symbol reasons, and what the release scripts and
+        // the hook say when they stop. Those are read here, through the same
+        // lexer inverted.
+        foreach (var file in RepositoryLayout.AllFiles)
+        {
+            var name = Relative(file).Replace('\\', '/');
+
+            if (!IsProductVoice(name) || IsBinary(file))
+            {
+                continue;
+            }
+
+            voices++;
+            var text = await File.ReadAllTextAsync(file.FullName);
+
+            foreach (var literal in Harness.Commentary.LiteralsOf(text, Path.GetExtension(name)))
+            {
+                offences.AddRange(TellsIn(name, literal));
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // The second reader, in both directions: a literal is read where a
+        // comment is not, and the other way round.
+        await Assert.That(Voiced("X.cs", $"var s = \"a refusal {Frame} a hang\";")).IsNotEmpty();
+        await Assert.That(Voiced("X.cs", $"// a comment {Frame} nothing")).IsEmpty();
+        await Assert.That(Voiced("X.ps1", $"Write-Error \"it stopped {Frame} carried on\"")).IsNotEmpty();
+        await Assert.That(Voiced("X.ps1", $"# a comment {Frame} nothing")).IsEmpty();
+        await Assert.That(Voiced("X.targets", $"<Error Text=\"it is absent {Frame} stale\" />")).IsNotEmpty();
+        await Assert.That(Voiced("X.targets", $"<!-- a comment {Frame} nothing -->")).IsEmpty();
+        await Assert.That(Voiced("X.txt", $"Symbol; error; use the other one {Frame} this")).IsNotEmpty();
 
         // ⚠️ ONE POSITIVE CONTROL PER CLASS. A reader that stopped finding them
         // would report the tree clean, which is what a clean tree looks like.
@@ -2657,9 +2716,82 @@ internal sealed partial class HouseRuleTests
         await Assert.That(TellOffences("kb/mcp/sdk.md", QuotedLive[0].Phrase)).IsEmpty();
         await Assert.That(TellOffences("kb/mcp/protocol.md", QuotedLive[0].Phrase)).IsNotEmpty();
 
-        // Not vacuous over the tree.
+        // The second corpus's file list, in both directions: the product speaks
+        // and the suite does not.
+        await Assert.That(IsProductVoice("src/BrowserAI/Proxy/ServerInstructions.cs")).IsTrue();
+        await Assert.That(IsProductVoice("src/BrowserAI/Sessions/SessionToolSurface.cs")).IsTrue();
+        await Assert.That(IsProductVoice("src/BrowserAI/Sessions/SessionErrors.cs")).IsTrue();
+        await Assert.That(IsProductVoice("src/BrowserAI.App/Program.cs")).IsTrue();
+        await Assert.That(IsProductVoice("src/BrowserAI/BrowserAI.csproj")).IsTrue();
+        await Assert.That(IsProductVoice("src/BrowserAI/BannedSymbols.txt")).IsTrue();
+        await Assert.That(IsProductVoice("build/BannedSymbols.txt")).IsTrue();
+        await Assert.That(IsProductVoice("build/New-Release.ps1")).IsTrue();
+        await Assert.That(IsProductVoice("build/invoke-release-gate.sh")).IsTrue();
+        await Assert.That(IsProductVoice("build/Sqlite.targets")).IsTrue();
+        await Assert.That(IsProductVoice("build/upstream-snapshots.mjs")).IsTrue();
+        await Assert.That(IsProductVoice(".claude/hooks/upstream-review-gate.ps1")).IsTrue();
+
+        await Assert.That(IsProductVoice("tests/BrowserAI.Tests/HouseRuleTests.cs")).IsFalse();
+        await Assert.That(IsProductVoice("tests/BrowserAI.Tests/Harness/SuiteEnvironment.cs")).IsFalse();
+        await Assert.That(IsProductVoice("build/payload/package.json")).IsFalse();
+        await Assert.That(IsProductVoice("tool-verdicts.json")).IsFalse();
+        await Assert.That(IsProductVoice("upstream-review.json")).IsFalse();
+        await Assert.That(IsProductVoice("README.md")).IsFalse();
+
+        // Not vacuous over the tree, in either corpus.
         await Assert.That(scanned).IsGreaterThan(300);
+        await Assert.That(voices).IsGreaterThan(80);
     }
+
+    /// <summary>
+    /// Whether a file's string literals are the product's own voice.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The whole of <c>src/</c>, and outside it by name.</b> Every <c>.cs</c>
+    /// under <c>src/</c>, because the instructions string, the tool and parameter
+    /// descriptions, every refusal and every log message are spread across it and
+    /// a hand-kept list of them would go stale on the first new log event. Its
+    /// project files too, because all three carry an <c>&lt;Error Text&gt;</c>
+    /// that a build stops on. Then the build and the hook, which also stop in
+    /// front of a person, and the two banned-symbol files, whose third field is a
+    /// sentence a compiler prints.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THE SUITE'S OWN MESSAGES ARE NOT IN IT.</b> A test explaining a
+    /// missing capability to whoever is running it is not the product speaking.
+    /// The harness carries the frame in about twenty places and they are
+    /// deliberately left; widening this predicate is what would take them, and
+    /// that is a decision for the maintainer, not a tidy-up.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>AND NEITHER ARE THE THREE JSON RECORDS.</b>
+    /// <c>upstream-review.json</c>, <c>drift-check.json</c> and
+    /// <c>tool-verdicts.json</c> carry a reviewer's reasoning and a dated check's
+    /// own notes. They are a record of what somebody concluded, not text the
+    /// product says, and rewriting one would edit the account. They are excluded
+    /// here by carrying no extension this predicate admits.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The repository-relative path, with forward slashes.</param>
+    /// <returns>Whether its literals are this rule's business.</returns>
+    private static bool IsProductVoice(string name) =>
+        (name.StartsWith("src/", StringComparison.Ordinal)
+            && Path.GetExtension(name) is ".cs" or ".csproj" or ".props" or ".targets")
+        || name is "src/BrowserAI/BannedSymbols.txt"
+            or "build/BannedSymbols.txt"
+            or ".claude/hooks/upstream-review-gate.ps1"
+        || (name.StartsWith("build/", StringComparison.Ordinal)
+            && !name.StartsWith("build/payload/", StringComparison.Ordinal)
+            && Path.GetExtension(name) is ".ps1" or ".psm1" or ".sh" or ".mjs" or ".targets");
+
+    /// <summary>Every tell in one file's string literals.</summary>
+    /// <param name="name">The repository-relative path, with forward slashes.</param>
+    /// <param name="text">Its text.</param>
+    /// <returns>One line per offence.</returns>
+    private static List<string> Voiced(string name, string text) =>
+        [.. Harness.Commentary.LiteralsOf(text, Path.GetExtension(name))
+            .SelectMany(literal => TellsIn(name, literal))];
 
     /// <summary>The comparison frame, in halves so this file does not carry it.</summary>
     private const string Frame = "rather" + " than";
@@ -2742,9 +2874,15 @@ internal sealed partial class HouseRuleTests
     /// <param name="name">The repository-relative path, with forward slashes.</param>
     /// <param name="text">Its text.</param>
     /// <returns>One line per offence.</returns>
-    private static List<string> TellOffences(string name, string text)
+    private static List<string> TellOffences(string name, string text) =>
+        TellsIn(name, Readable(name, text));
+
+    /// <summary>Every tell in a body that has already been reduced to what a person reads.</summary>
+    /// <param name="name">The repository-relative path, with forward slashes.</param>
+    /// <param name="body">The readable text, a comment or a literal.</param>
+    /// <returns>One line per offence.</returns>
+    private static List<string> TellsIn(string name, string body)
     {
-        var body = Readable(name, text);
         var offences = new List<string>();
 
         foreach (var tell in Tells)

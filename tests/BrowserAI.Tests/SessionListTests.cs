@@ -305,7 +305,7 @@ internal sealed class SessionListTests
         // will not last. The sentence beside it is what stops a caller reading it
         // as a reservation.
         await Assert.That(block).Contains("in use: no -- nothing held ");
-        await Assert.That(block).Contains("a snapshot rather than a reservation");
+        await Assert.That(block).Contains("a snapshot, not a reservation");
         await Assert.That(block).DoesNotContain("in use: UNKNOWN");
 
         // ⚠️ THE PRECONDITION, AND IT IS NOT A RETRY. Killing the job stops the
@@ -344,7 +344,7 @@ internal sealed class SessionListTests
         // the shared one refused a volume root and a volume root is exactly what
         // a caller passes to see everything. So a caller who listed a junction
         // over the tree its sessions live in was told, with no error at all,
-        // "No BrowserAI sessions under '…'. That is an answer rather than an
+        // "No BrowserAI sessions under '...'. That is an answer rather than an
         // error." Nothing about that sentence is recoverable in a turn: it is
         // not a refusal, so there is nothing to correct.
         await using var sessions = RigSessionEnvironment.Create();
