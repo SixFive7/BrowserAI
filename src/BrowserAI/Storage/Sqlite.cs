@@ -243,7 +243,7 @@ internal static partial class Sqlite
     /// The amalgamation's own <c>SQLITE_VERSION</c> is what a reader of the tree
     /// would quote and it is one compile step away from what the binary
     /// contains -- a build that linked a stale archive would report the stale
-    /// version here, which is exactly the disagreement worth being able to see.
+    /// version here, which is exactly the disagreement a reader has to be able to see.
     /// </remarks>
     public static string Version => Marshal.PtrToStringUTF8(LibVersion()) ?? UnknownVersion;
 

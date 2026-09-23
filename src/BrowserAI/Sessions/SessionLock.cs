@@ -1645,7 +1645,7 @@ internal static partial class SessionLog
     /// ours</i>; this is <i>we are back in a directory we never left the
     /// machine holding</i>. Every <c>destroy</c> and every <c>set_purpose</c>
     /// produces one, so on the machine-wide log this is not the rare case -- it
-    /// is very nearly the only case, and until 2026-08-30 every one of them was
+    /// is nearly the only case, and until 2026-08-30 every one of them was
     /// logged as a reclaim from a live process. The figures, with the predicate
     /// quoted, are in <see cref="Reclaimed"/>'s own remarks.
     /// </para>

@@ -68,7 +68,7 @@ internal static class PeSubsystem
     /// </summary>
     /// <remarks>
     /// <b>68 for PE32 and PE32+ alike</b>, which is not a coincidence and is
-    /// worth writing down because it looks like one: PE32+ widens
+    /// written down because it looks like one: PE32+ widens
     /// <c>ImageBase</c> from four bytes to eight and drops <c>BaseOfData</c>,
     /// which is four bytes, so the two changes cancel and every field after
     /// <c>ImageBase</c> keeps its offset. Checked against the documented layout

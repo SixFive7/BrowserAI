@@ -1357,7 +1357,7 @@ internal static partial class ProxyLog
     /// <remarks>
     /// Warning, not Information: the refusal is correct, but a caller
     /// repeatedly omitting a required parameter is a client that is not reading
-    /// the schema, and that is worth seeing without turning anything on.
+    /// the schema, and that has to be visible without turning anything on.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="tool">The tool that was refused.</param>

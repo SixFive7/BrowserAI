@@ -540,8 +540,8 @@ internal sealed class BrowserProvisioner : IDisposable
     /// writing into it.
     /// </para>
     /// <para>
-    /// <b>Same volume as the extraction, which is a small improvement it is worth
-    /// naming.</b> The archive and the extracted tree coexist, so a machine
+    /// <b>Same volume as the extraction, which is a small improvement and is
+    /// named here.</b> The archive and the extracted tree coexist, so a machine
     /// running out of room runs out of it once and not in two places.
     /// <i>Corrected 2026-09-17 (previously "<c>SessionManager.RequiredFreeBytes</c>
     /// is sized on archive and tree coexisting; before this the archive could be
@@ -2000,7 +2000,7 @@ internal sealed class BrowserProvisioner : IDisposable
         /// </summary>
         /// <remarks>
         /// <b>Three interlocked reads and not one lock, and they can be
-        /// microseconds apart.</b> That is acceptable and it is worth saying why:
+        /// microseconds apart.</b> That is acceptable, and the reason is this:
         /// the three come from one poll a second, so the worst skew is a byte
         /// count from one second paired with an elapsed time from the next. A
         /// lock here would serialise every caller against a sampler that runs

@@ -225,7 +225,7 @@ internal sealed record SessionContents
     /// </summary>
     /// <remarks>
     /// <b>Distinct from the record's <c>lastUsed</c>, and the difference is
-    /// worth printing.</b> The record moves when BrowserAI writes it; this moves
+    /// printed.</b> The record moves when BrowserAI writes it; this moves
     /// when a <i>browser</i> writes into the profile, which happens continuously
     /// while a page is open and not at all afterwards.
     /// </remarks>

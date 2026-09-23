@@ -171,7 +171,7 @@ internal sealed class SessionIndex
     /// <remarks>
     /// A sweep would remove it anyway -- a pointer to a directory that no longer
     /// exists is removable by definition -- so this only decides <i>when</i>. It
-    /// is worth doing promptly because <c>browserai_list</c> reads the index, and
+    /// is done promptly because <c>browserai_list</c> reads the index, and
     /// a destroyed session lingering in an inventory is exactly the kind of
     /// confident wrong answer this project exists to remove. Never fatal, for the
     /// same reason <see cref="Record"/> is not: the entry is re-derivable and a

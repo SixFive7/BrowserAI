@@ -66,7 +66,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>So the hand-rolled replacement was <i>less</i> safe than the banned call
-/// in exactly this dimension</b>, which is the shape worth stating out loud:
+/// in exactly this dimension</b>, and the shape of it is this:
 /// <c>Directory.Delete(path, recursive: true)</c> checks
 /// <c>FILE_ATTRIBUTE_REPARSE_POINT</c> during its own walk and calls
 /// <c>RemoveDirectory</c> on the link. Neither this file's remarks, nor

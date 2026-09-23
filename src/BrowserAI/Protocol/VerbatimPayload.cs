@@ -24,7 +24,7 @@ namespace BrowserAI.Protocol;
 /// <see cref="System.Text.Json.Utf8JsonWriter.WriteRawValue(ReadOnlySpan{byte}, bool)"/>.
 /// </para>
 /// <para>
-/// A <c>JsonNode</c> round trip gets very close and is not the same thing. It
+/// A <c>JsonNode</c> round trip gets close and is not the same thing. It
 /// preserves order and numeric form, but the escaping is the writer's: a child
 /// that emits <c>é</c> would reach the caller as a raw <c>é</c>. Identical
 /// value, different bytes, and a claim of byte-identity that is true only of
