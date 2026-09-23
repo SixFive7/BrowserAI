@@ -6,7 +6,7 @@
 # Not executed, not imported, and not to be tidied. It exists so that the two
 # regexes in StandardErrorClassifier.cs can be asserted byte-for-byte against
 # the thing they were ported from, which makes a future edit to either side a
-# red build rather than a silent divergence in behaviour.
+# red build and not a silent divergence in behaviour.
 #
 #   Source repository : SixFive7/Workspace657
 #   File              : playwright/launch.ps1

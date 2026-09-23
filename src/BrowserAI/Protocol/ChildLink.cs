@@ -32,7 +32,7 @@ namespace BrowserAI.Protocol;
 /// <see cref="ITransport"/> shape it describes.
 /// </para>
 /// <para>
-/// It <b>refuses</b> a transport it cannot see through rather than degrading.
+/// It <b>refuses</b> a transport it cannot see through instead of degrading.
 /// Silently falling back to a re-serialised result would be a proxy that claims
 /// byte-identity and does not deliver it, with every signal green -- which is the
 /// failure class this project exists to eliminate, produced by the code written

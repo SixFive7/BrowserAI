@@ -15,13 +15,13 @@ namespace BrowserAI.Protocol;
 /// <remarks>
 /// <para>
 /// The SDK's equivalent is <c>internal</c>, so this is written against the
-/// public <c>TransportBase</c> rather than derived from it. What that costs is
+/// public <c>TransportBase</c> and not derived from it. What that costs is
 /// this file; what it buys is that the process BrowserAI holds is the process
 /// it started.
 /// </para>
 /// <para>
 /// <b>This object owns the job handle for the child's whole life</b>, and that
-/// is the containment guarantee rather than a detail of it: if BrowserAI dies --
+/// is the containment guarantee, not a detail of it: if BrowserAI dies --
 /// crash, <c>TerminateProcess</c>, a session limit, a power of ten of other
 /// reasons -- the kernel closes the last handle and every process in the job goes
 /// with it. Nothing has to run for that to happen, which is the point. A cleanup
@@ -35,8 +35,8 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     /// <summary>
     /// Diagnostics, not protocol. A child that writes a byte this decoder
     /// cannot make sense of must not take the session down with it, so unlike
-    /// <see cref="StdioChannel.Utf8NoBom"/> this one substitutes rather than
-    /// throws -- an unreadable log line is a worse log line, and a dead session.
+    /// <see cref="StdioChannel.Utf8NoBom"/> this one substitutes and does not
+    /// throw -- an unreadable log line is a worse log line, and a dead session.
     /// </summary>
     private static readonly UTF8Encoding LenientUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
 
@@ -121,7 +121,7 @@ internal sealed class ChildProcessSession : JsonLinesTransport
     /// <para>
     /// <b>The handle, never a pid lookup.</b> This object owns an open handle to
     /// the child for the child's whole life, which is what makes the answer
-    /// about <i>this</i> process rather than about whatever now wears its
+    /// about <i>this</i> process and not about whatever now wears its
     /// number -- Windows will not recycle a pid while a handle to it exists.
     /// </para>
     /// <para>
@@ -165,7 +165,7 @@ internal sealed class ChildProcessSession : JsonLinesTransport
 
     /// <summary>
     /// The job containing the child and every process it spawns, exposed so the
-    /// suite can assert on the flags that are actually set rather than on the
+    /// suite can assert on the flags that are actually set and not on the
     /// ones the code meant to set.
     /// </summary>
     internal JobObject Job { get; }

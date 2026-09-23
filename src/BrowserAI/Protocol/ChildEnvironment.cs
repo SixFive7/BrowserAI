@@ -11,7 +11,7 @@ namespace BrowserAI.Protocol;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>It has to be an allowlist rather than a strip-list.</b> Upstream reads
+/// <b>It has to be an allowlist and not a strip-list.</b> Upstream reads
 /// <b>47</b> <c>PLAYWRIGHT_MCP_*</c> variables, three of them outside its own
 /// config mapping, and the merge order is config file → environment → CLI -- so
 /// an inherited variable silently overrides a key BrowserAI generated, with no
@@ -22,13 +22,13 @@ namespace BrowserAI.Protocol;
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-17 @ <c>playwright-core</c>
 /// 1.64.0-alpha-2026-09-14 (previously "<b>43</b> ... variables, two of them
-/// outside its own config mapping").</b> <b>Reconciled rather than
+/// outside its own config mapping").</b> <b>Reconciled, not
 /// re-measured, and the difference matters.</b> The figure above is now
 /// [re-verification row 17](../../../kb/re-verification.md)'s, taken on
 /// 2026-09-15 against the bundle that actually ships, with
 /// the previous bundle as the positive control -- it returned 41 + 2 = 43
 /// exactly as this sentence carried, which is what says the old number was
-/// right for its own version rather than wrong. <c>@playwright/mcp</c> 0.0.81
+/// right for its own version and not wrong. <c>@playwright/mcp</c> 0.0.81
 /// added <c>PLAYWRIGHT_MCP_IDLE_TIMEOUT</c>, inside the mapping (41 → 42), and
 /// <c>PLAYWRIGHT_MCP_PROFILE_DIR_NAME</c>, read straight off
 /// <c>process.env</c> in the <c>--extension</c> channel resolver and therefore
@@ -71,17 +71,17 @@ namespace BrowserAI.Protocol;
 /// alpha is reached through the
 /// [dated override](../../../DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
 /// so the number is now about the version that ships and belongs here.
-/// <b>Re-measured rather than taken from that paragraph</b>, with
+/// <b>Re-measured, not taken from that paragraph</b>, with
 /// 1.64.0-alpha-2026-09-14 as the positive control -- it returned 42 + 3 = 45,
 /// exactly what the previous sentence carried -- against 43 + 3 = 46 on the
 /// bundle that ships. The one addition is <c>PLAYWRIGHT_MCP_FILE_PATHS</c>,
-/// inside the mapping, and it is in <see cref="Refused"/> rather than merely
+/// inside the mapping, and it is in <see cref="Refused"/> and not merely
 /// absent, because the config generator writes <c>filePaths</c> explicitly.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-14 @ <c>playwright-core</c>
 /// 1.63.0-alpha-2026-08-31 (previously "<b>42</b> ... variables").</b>
-/// <b>Re-measured rather than incremented</b>, with the old bundle as the
+/// <b>Re-measured, not incremented</b>, with the old bundle as the
 /// positive control: distinct <c>PLAYWRIGHT_MCP_*</c> names read out of
 /// <c>coreBundle.js</c> came back <b>40 in the <c>e.PLAYWRIGHT_MCP_*</c> config
 /// mapping plus 2 outside it = 42</b> on 1.63.0-alpha-2026-08-05, which is
@@ -90,7 +90,7 @@ namespace BrowserAI.Protocol;
 /// inside the mapping; the two outside it are still
 /// <c>PLAYWRIGHT_MCP_PING_TIMEOUT_MS</c> and
 /// <c>PLAYWRIGHT_MCP_EXTENSION_TOKEN</c>. <b>Nothing here needed a code
-/// change, and that is the allowlist working rather than luck</b> -- the new
+/// change, and that is the allowlist working and not luck</b> -- the new
 /// variable is absent from a child by construction because it was never named
 /// in <see cref="InheritedWhenSet"/>. It is deliberately <i>not</i> added to
 /// <see cref="Refused"/>: that list names the variables that redirect a
@@ -109,7 +109,7 @@ namespace BrowserAI.Protocol;
 /// at all. What <see cref="Build"/> returns is passed whole to
 /// <see cref="Interop.JobLauncher"/>, which writes it into the <c>CreateProcessW</c>
 /// environment block under <c>CREATE_UNICODE_ENVIRONMENT</c> -- so the allowlist
-/// is the child's entire block <b>by construction</b> rather than by a call
+/// is the child's entire block <b>by construction</b> and not by a call
 /// somebody has to remember. The hazard above is real and is closed one step
 /// further back than it asks; the sentence describing a <c>Clear()</c> that does
 /// not happen was left behind by the move to <c>CreateProcessW</c> and stood for
@@ -154,7 +154,7 @@ internal static class ChildEnvironment
     /// TLS inspection cannot provision a browser at all -- first-run provisioning
     /// downloads 207.3 MB from three hosts -- <i>corrected 2026-09-17, previously
     /// "203.8 MB", and the live figure is
-    /// <see cref="Runtime.BrowserProvisioner.FirstRunDownloadSizes"/> rather than
+    /// <see cref="Runtime.BrowserProvisioner.FirstRunDownloadSizes"/> and not
     /// this sentence</i> -- and SOCKS is unsupported on that path
     /// regardless
     /// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
@@ -189,7 +189,7 @@ internal static class ChildEnvironment
     /// provision -- without it each <c>browsers.json</c> bump strands ~430 MiB per
     /// machine, forever.
     /// <c>PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD</c> keeps provisioning a decision
-    /// BrowserAI makes rather than a side effect of the child starting.
+    /// BrowserAI makes and not a side effect of the child starting.
     /// </remarks>
     public static FrozenDictionary<string, string> Forced { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -200,7 +200,7 @@ internal static class ChildEnvironment
     /// <summary>
     /// Names that must never reach a child, listed so that adding one to
     /// <see cref="InheritedWhenSet"/>, to <see cref="Forced"/>, or to a caller's
-    /// own additions is a failure rather than a regression.
+    /// own additions is a failure, not a regression.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -233,15 +233,15 @@ internal static class ChildEnvironment
         "DEBUG_FILE",
         "PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE",
 
-        // Named rather than merely absent. `capabilities` REPLACES rather than
-        // merges, so this variable silently wipes the capability list the config
+        // Named, not merely absent. `capabilities` REPLACES and does not
+        // merge, so this variable silently wipes the capability list the config
         // generator writes -- and it is an environment route to the bug that a
         // "never pass --caps" rule does not close. A capability set to nothing is
         // a tool surface that shrank with no error anywhere.
         "PLAYWRIGHT_MCP_CAPS",
 
         // The six that override a key the config generator writes, read out of
-        // the shipped `coreBundle.js`'s own `configFromEnv` rather than from a
+        // the shipped `coreBundle.js`'s own `configFromEnv` and not from a
         // changelog. The first is the one the product cannot afford: it is
         // `allowUnrestrictedFileAccess`, and turning it on gives the child every
         // path on the machine instead of the session's own `output\`.

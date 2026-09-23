@@ -12,7 +12,7 @@ namespace BrowserAI.Protocol;
 /// bytes it arrived as.
 /// </summary>
 /// <param name="Json">The member's value, terminator and surrounding envelope removed.</param>
-/// <param name="IsError">Whether those bytes came from <c>error</c> rather than <c>result</c>.</param>
+/// <param name="IsError">Whether those bytes came from <c>error</c> and not <c>result</c>.</param>
 /// <remarks>
 /// <para>
 /// <b>This type is the whole difference between "semantically lossless" and
@@ -39,7 +39,7 @@ internal readonly record struct VerbatimPayload(byte[] Json, bool IsError);
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Why a side table rather than a field.</b> <c>JsonRpcMessage</c>'s
+/// <b>Why a side table and not a field.</b> <c>JsonRpcMessage</c>'s
 /// constructor is <c>private protected</c> -- <i>"Prevent external
 /// derivations"</i>, read from the shipped 2.2.0 source -- so there is no
 /// subclass to hang a payload on, and the alternative,
@@ -49,7 +49,7 @@ internal readonly record struct VerbatimPayload(byte[] Json, bool IsError);
 /// <para>
 /// The table is keyed on the message instance and holds it weakly, so a
 /// response that is never sent -- a cancelled call, a disposed session -- takes
-/// its payload with it rather than leaving a megabyte of screenshot behind.
+/// its payload with it instead of leaving a megabyte of screenshot behind.
 /// </para>
 /// </remarks>
 internal static class Verbatim

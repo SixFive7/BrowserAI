@@ -26,7 +26,7 @@ namespace BrowserAI.Protocol;
 /// <c>StandardErrorClassifier.reference.ps1</c>. This is behaviour being copied
 /// deliberately, so a transcription difference is a silent behaviour change --
 /// which is why <c>StandardErrorClassifierTests</c> compares the constants below
-/// against that copy character by character rather than trusting the eye.
+/// against that copy character by character instead of trusting the eye.
 /// </para>
 /// <para>
 /// <b>Two groups, and the asymmetry between them is the whole design.</b> Prefix
@@ -39,7 +39,7 @@ namespace BrowserAI.Protocol;
 /// <b>Applied per line here, against the whole buffer there, and the two agree.</b>
 /// The reference reads its captured stderr file whole; BrowserAI's pump is
 /// line-oriented and already exists, so this classifies what that reader already
-/// delivers rather than adding a second reader. The verdicts cannot differ: the
+/// delivers and does not add a second reader. The verdicts cannot differ: the
 /// first pattern is multiline-anchored, so a line that matches within a buffer
 /// matches on its own, and the second is unanchored, so it matches the same text
 /// either way. <c>ATextClassifiesTheSameWholeAsItDoesLineByLine</c> is what keeps

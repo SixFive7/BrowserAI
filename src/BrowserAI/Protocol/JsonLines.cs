@@ -28,7 +28,7 @@ namespace BrowserAI.Protocol;
 /// result</b>.
 /// </para>
 /// <para>
-/// The escaping happens in <see cref="Utf8JsonWriter"/> rather than in the
+/// The escaping happens in <see cref="Utf8JsonWriter"/> and not in the
 /// contract metadata, which is what makes this fixable at all: the writer's own
 /// <see cref="JsonWriterOptions.Encoder"/> governs, so the SDK's source-generated
 /// <see cref="JsonTypeInfo"/> can be reused unchanged and only the escaping
@@ -48,7 +48,7 @@ namespace BrowserAI.Protocol;
 internal static class JsonLines
 {
     /// <summary>
-    /// The SDK's own contract for the message hierarchy, reused rather than
+    /// The SDK's own contract for the message hierarchy, reused and not
     /// re-declared: <c>JsonRpcMessage</c> is polymorphic and carries a custom
     /// converter, so a hand-written contract would be a second implementation of
     /// the protocol's shape that has to be kept in step across every bump.
@@ -78,7 +78,7 @@ internal static class JsonLines
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 
         // A frame is one line. Indentation would put newlines inside it and
-        // break the framing outright, so this is correctness rather than size.
+        // break the framing outright, so this is correctness, not size.
         Indented = false,
     };
 
@@ -100,12 +100,12 @@ internal static class JsonLines
 
     /// <summary>
     /// Writes a response whose payload is spliced in as the bytes it arrived
-    /// as, rather than re-serialised.
+    /// as, and not re-serialised.
     /// </summary>
     /// <param name="writer">A writer from <see cref="CreateWriter"/>.</param>
     /// <param name="id">The id of the request being answered.</param>
     /// <param name="payload">The <c>result</c> or <c>error</c> value, exactly as the child sent it.</param>
-    /// <param name="isError">Whether <paramref name="payload"/> is an <c>error</c> rather than a <c>result</c>.</param>
+    /// <param name="isError">Whether <paramref name="payload"/> is an <c>error</c> and not a <c>result</c>.</param>
     /// <remarks>
     /// The envelope is written by hand because there is no seam in the SDK's
     /// contract through which a raw value can be substituted for a
@@ -253,7 +253,7 @@ internal static class JsonLines
         catch (JsonException)
         {
             // The frame stopped being readable before an id turned up. That is
-            // the case this method reports rather than throws on: it is called
+            // the case this method reports and does not throw on: it is called
             // from a catch block that is already handling a frame nobody could
             // parse.
         }

@@ -94,7 +94,7 @@ internal sealed class DirectStdioClientTransport : IClientTransport
                 // relative paths land. ChildProcessOptions makes it required so
                 // the mistake cannot be made by omission.
                 _options.WorkingDirectory,
-                // The complete block, replacing ours rather than merging into
+                // The complete block, replacing ours and not merging into
                 // it. JobLauncher builds it from exactly these entries and
                 // nothing else, so an allowlist here is a policy that holds.
                 _options.Environment);
@@ -127,7 +127,7 @@ internal sealed class ChildProcessOptions
     public required string Command { get; init; }
 
     /// <summary>
-    /// The working directory, which is required rather than optional because
+    /// The working directory, which is required and not optional because
     /// the failure of leaving it unset is invisible: the child inherits the
     /// caller's.
     /// </summary>
@@ -136,14 +136,14 @@ internal sealed class ChildProcessOptions
     /// <summary>
     /// The child's complete environment, normally from
     /// <see cref="ChildEnvironment.Build"/>. It replaces this process's block
-    /// rather than adding to it.
+    /// instead of adding to it.
     /// </summary>
     public required IReadOnlyDictionary<string, string> Environment { get; init; }
 
     /// <summary>
     /// Arguments, passed verbatim. <see cref="JobLauncher"/> does the quoting,
     /// because the command line reaches <c>CreateProcessW</c> as one buffer
-    /// rather than as a list.
+    /// and not as a list.
     /// </summary>
     public IReadOnlyList<string> Arguments { get; init; } = [];
 
