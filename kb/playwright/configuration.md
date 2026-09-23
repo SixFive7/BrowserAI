@@ -311,7 +311,11 @@ it.
 
 **Nothing was changed and both halves are watched, not fixed** -- see
 [the hazard row](../../HAZARDS.md#hazard-index) and
-[the watch item](../../TODO.md#upstream-asks). Granting the two ACEs today would
+[re-verification row 121](../re-verification.md), which is where the two triggers,
+the re-check and what fires when either lands are now written. *Corrected
+2026-09-23 (previously "[the watch item](../../TODO.md#upstream-asks)")* -- that
+item is deleted and its whole content is in the row; a watch whose content is a
+re-check procedure belongs in the re-check table. Granting the two ACEs today would
 change nothing observable, and a regression test for it would assert against a
 launch that never attempts the sandbox.
 

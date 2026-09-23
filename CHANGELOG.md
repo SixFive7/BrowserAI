@@ -162,6 +162,25 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **The network-service sandbox watch moves out of the backlog and into the re-check table.**
+  [`TODO.md`](TODO.md) carried an item watching two upstream moves that would make the browser's
+  network service ask for a sandbox the provisioned tree cannot give it. Its whole content was a
+  re-check procedure, and re-verification [row 121](kb/re-verification.md) already carried the
+  same fact from the other end -- two places, one of which was always going to go stale. The row
+  now carries all of it: the second trigger spelled out as **Chromium enabling the
+  network-service sandbox by default at a new revision**, why that one is behaviour and not a
+  diff (the `sandbox_win.cc:804` refusal and the `network_service_instance_impl.cc:650` restart
+  appear in stderr with nothing in the bundle to show for it, so the `playwright-core` bump
+  carrying a new revision is when to look), and what fires when either lands -- the ACL grant
+  with its two already-measured ACEs, the regression test becoming writable, and the third
+  upstream ask going to `microsoft/playwright` and not the MCP tracker.
+
+  **The 2026-08-29 decision travels with it**: nothing was changed and nothing was filed,
+  because an ACL grant today changes nothing observable and an ask about a path upstream never
+  takes would be closed as by-design. The two documents that pointed at the item --
+  [`HAZARDS.md`](HAZARDS.md) and the kb entry -- point at the row now, each with a *previously*
+  clause.
+
 - 📝 **Who pulls the release trigger is a decision of record, in the maintainer's own words.**
   [`RELEASING.md`](RELEASING.md) item 14 said that a human decides, which leaves open which
   human and on whose initiative. The maintainer settled both on 2026-09-23, verbatim:
