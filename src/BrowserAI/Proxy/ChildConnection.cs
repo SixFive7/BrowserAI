@@ -92,8 +92,10 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// "browser automation got slow" with no error anywhere.
     /// </para>
     /// <para>
-    /// It is a provenance stamp, not a target: <c>@playwright/mcp</c> 0.0.79 caps
-    /// here, verified 2026-08-16 from both directions. The child never
+    /// It is a provenance stamp, not a target: <c>@playwright/mcp</c> caps here, and
+    /// still does at <b>0.0.82</b> -- re-read 2026-09-23 from the resolved payload,
+    /// *corrected then (previously "0.0.79 caps here, verified 2026-08-16")*, which
+    /// named a version three releases behind what the tree ships. The child never
     /// <i>rejects</i> a version, so a mis-negotiation produces nothing to catch
     /// and <see cref="ConnectAsync"/> asserts on the negotiated value instead.
     /// </para>
@@ -232,16 +234,18 @@ internal sealed class ChildConnection : IAsyncDisposable
 
             ProxyLog.ChildProtocolNegotiated(logger, ChildProtocolVersion, negotiated ?? "<none>");
 
-            // The SDK refuses to negotiate BELOW a pinned version and throws, so
-            // this fires only on a disagreement it does not police -- and it is
-            // cheap enough to keep, because the failure it guards against is one
-            // that produces no error at all on the wire.
-            //
-            // [ASSUMED] That the SDK refuses to negotiate BELOW a pinned version. This
-            // decides how much the explicit check above is doing, and if it is false
-            // the check is the only thing standing there. Settle it by pinning a
-            // version the child cannot meet and reading what comes back. Tagged
-            // 2026-09-23; the list and the predicate are in TODO.md.
+            // The SDK refuses EVERY value but the pinned one, not only a lower
+            // one, so this cannot currently fire -- seven arms, measured
+            // 2026-09-23 @ ModelContextProtocol 2.2.0
+            // ([kb](../../../kb/mcp/protocol.md#the-sdk-refuses-every-protocol-version-but-the-pinned-one----measured-2026-09-23)).
+            // Kept deliberately:
+            // the SDK documents only that it "refuses to downgrade below it", so
+            // an upward or lateral echo is unpoliced BY CONTRACT even though
+            // 2.2.0 polices it in fact, and this is the only place a
+            // mis-negotiation would ever be visible.
+            // *Corrected 2026-09-23 (previously "The SDK refuses to negotiate
+            // BELOW a pinned version and throws, so this fires only on a
+            // disagreement it does not police".)*
             if (!string.Equals(negotiated, ChildProtocolVersion, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(

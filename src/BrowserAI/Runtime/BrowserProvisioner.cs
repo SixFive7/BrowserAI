@@ -181,7 +181,15 @@ internal sealed record ProvisioningTimers
     /// download on a 0.1 Mbps line, which would legitimately take nine hours.
     /// </para>
     /// <para>
-    /// <b>[ASSUMED]</b> That the update stall budget can be sized off Playwright's own per-socket timeout. <b>It is a different downloader in a different runtime</b>, so the number is borrowed and not derived. Settle it by measuring what the update lane actually does when a connection goes quiet.
+    /// <b>And upstream's own per-socket timeout really is what catches a dead
+    /// link here</b>, which is worth stating because the same constant was cited
+    /// for the UPDATE lane and does not belong there. Read 2026-09-23 @
+    /// playwright-core 1.64.0-alpha-1789764292000:
+    /// <c>NET_DEFAULT_TIMEOUT = 3e4</c> at <c>coreBundle.js:9087</c> is read
+    /// exactly once, at line 34415, as <c>downloadSocketTimeout</c> for a
+    /// <i>browser download in Node</i> -- which is this download and nothing
+    /// else. <c>UpdateService.StallBudget</c>
+    /// carries the correction for the lane it does not govern.
     /// </para>
     /// </remarks>
     public TimeSpan StallCap { get; init; } = TimeSpan.FromMinutes(10);

@@ -29,7 +29,8 @@ namespace BrowserAI.Updates;
 /// and opens a log file
 /// ([kb](../../../kb/packaging/velopack.md#5-reading-the-installed-version-must-not-touch-the-network)),
 /// so it is read once here and cached. It does <b>not</b> touch the network --
-/// that landmine never applied to 1.2.0 -- but a startup path that created
+/// that landmine never applied to 1.2.0 and does not apply at the resolved
+/// 1.2.158 either, re-read 2026-09-23 -- but a startup path that created
 /// directories on every call would still be wrong.
 /// </para>
 /// <para>

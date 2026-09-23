@@ -337,6 +337,29 @@ installed binary: the hook exits **0 in 1,367 ms** with `PATH` stripped to
 `system32`, registering through the fallback. The absent-client path is exercised
 through the `IRegistrationCommand` seam instead.
 
+### The SDK refuses EVERY protocol version but the pinned one -- measured 2026-09-23
+
+`[FLOATS]` ModelContextProtocol 2.2.0.
+
+**Against a fake server echoing a chosen `protocolVersion`, with the client
+pinned to BrowserAI's own `2025-11-25`, seven arms:** the exact echo **connected**;
+`2025-06-18`, `2024-11-05`, `2026-07-28`, `1999-01-01` and an explicit `null` all
+threw `ModelContextProtocol.McpException` -- *"Server protocol version mismatch.
+Expected 2025-11-25, got X"* -- out of `McpClient.CreateAsync`; and omitting the
+field threw `JsonException` for a missing required property.
+
+⚠️ **So it is not a downgrade check, it is an equality check -- and the
+CONTRACT is the weaker one.** The SDK's own XML doc for
+`McpClientOptions.ProtocolVersion` promises only that the client *"refuses to
+downgrade below it"*, so an upward or lateral echo is unpoliced by contract even
+though 2.2.0 polices it in fact. `ChildConnection` keeps its explicit check for
+that reason and says in place that it cannot currently fire.
+
+**Re-establish** by driving `McpClient.CreateAsync` at a stdio server that answers
+`initialize` with a chosen `protocolVersion`, one arm per value, with the exact
+echo as the control. The rig is `.work/assumed-2026-09-23/src/probes/`; the output
+is `probe-C-negotiation.txt`.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --

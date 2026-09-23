@@ -1616,6 +1616,39 @@ does not apply because this repository uses no LFS. **Taken to its limit that
 produces a near-empty zip, which is a worse artifact than the real source and
 not a removal.**
 
+## What bounds a stalled download and a stalled check -- measured 2026-09-23
+
+`[FLOATS]` Velopack 1.2.158, .NET 10.0.401, Windows 10.0.26200.
+
+**Velopack downloads through `HttpClientFileDownloader`, whose only bound is
+`client.Timeout = TimeSpan.FromMinutes(SimpleWebSource.Timeout)`** -- 30 minutes
+by default, and BrowserAI takes the default
+(`src/lib-csharp/Sources/SimpleWebSource.cs` ctor,
+`HttpClientFileDownloader.CreateHttpClient`, read 2026-09-23 from
+velopack/velopack@1.2.158).
+
+⚠️ **That timeout does not cover the body read.**
+`DownloadToStreamInternal` reads under `HttpCompletionOption.ResponseHeadersRead`,
+so the clock stops at the response headers. Against a server trickling one byte a
+second with `HttpClient.Timeout` set to **5 s**, the body read ran **60.55 s** and
+ended only when the server closed. **The control is the other half**: the same
+client and the same server, with the response complete, ended at **2.05 s**. So a
+half-dead socket is bounded by nothing underneath, and every stall bound on a
+Velopack download is one this product chooses.
+
+**And a check timeout arrives wearing an `OperationCanceledException`.**
+`GetStringAsync`, which is the call `SimpleWebSource.GetReleaseFeed` makes, ends
+its `HttpClient.Timeout` by throwing **`TaskCanceledException`** -- which *is* an
+`OperationCanceledException`, so a catch that reads cancellation as *somebody
+cancelled us* reads a network timeout as that instead. `UpdateService`'s crash
+tripwire says so in place.
+
+**Re-establish** by pointing a `HttpClient` with a short timeout at a socket that
+sends headers and then trickles, and by timing a `GetStringAsync` against a port
+that accepts and never answers. The rig is
+`.work/assumed-2026-09-23/src/probes/`; the output is `probe-AB-httptimeout.txt`
+in the same batch.
+
 ## Distribution: MSIX and code signing
 
 **MSIX is disqualified on evidence.** A package cannot re-register while any

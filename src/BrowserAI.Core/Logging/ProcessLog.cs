@@ -53,23 +53,21 @@ internal sealed class ProcessLog : IDisposable
 
         var log = factory.CreateLogger("BrowserAI.Crash");
 
-        // The crash path. An unhandled exception is not guaranteed to unwind
-        // the stack, so no `finally` and no Dispose can be relied on here --
-        // this handler is the only thing that runs, and the record it writes is
-        // durable the moment it is written.
-        //
-        // [ASSUMED] That an unhandled exception is not guaranteed to unwind the
-        // stack. It is the entire crash-log design -- every choice in this file
-        // follows from it. Settle it by provoking one under this runtime and
-        // watching whether the handler runs. Tagged 2026-09-23; the list and the
-        // predicate are in TODO.md.
-        //
-        // [ASSUMED] That a written record is durable. The word is used four times
-        // across src/ in the sense SURVIVES THIS PROCESS, against a kb entry that
-        // reserves it for SURVIVES THE MACHINE, and the two are different
-        // guarantees wearing one word. Settle it by measuring which one holds
-        // here, or by changing the word. Tagged 2026-09-23; the list and the
-        // predicate are in TODO.md.
+        // The crash path, and it is about ORDERING and not about unwinding. An
+        // ordinary unhandled exception runs this handler FIRST and then does
+        // unwind, `finally` and Dispose included; Environment.FailFast and a
+        // StackOverflowException run none of the three. Measured 2026-09-23 @
+        // .NET 10.0.401 CoreCLR
+        // ([kb](../../../kb/windows/processes.md#an-unhandled-exception-does-unwind-and-failfast-and-a-stack-overflow-do-not----measured-2026-09-23)).
+        // So a `finally` cannot be relied on, this handler runs before
+        // anything that might, and the record it writes survives the process
+        // dying because RollingFileWriter buffers nothing -- durable in that
+        // sense and not in the power-cut sense the kb reserves the word for
+        // ([kb](../../../kb/windows/processes.md#files-durable-writes-and-deletes)).
+        // *Corrected 2026-09-23 (previously "An unhandled exception is not
+        // guaranteed to unwind the stack ... this handler is the only thing that
+        // runs, and the record it writes is durable the moment it is written".)*
+
         _onUnhandled = (_, e) => CrashLog.Unhandled(log, e.IsTerminating, e.ExceptionObject as Exception);
 
         AppDomain.CurrentDomain.UnhandledException += _onUnhandled;

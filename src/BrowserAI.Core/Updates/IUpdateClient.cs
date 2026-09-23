@@ -85,11 +85,17 @@ internal sealed record UpdateCandidate
     /// <remarks>
     /// Logged because it is the number that decides whether an update costs
     /// single-digit MB or the whole payload -- and because a rollback always
-    /// reports zero: <c>packages\</c> is pruned to the current full package
-    /// during the forward update and deltas are forward-only.
-    /// <para>
-    /// <b>[ASSUMED]</b> That a rollback always reports zero. <b>Stated as fact and used to decide what a caller is told</b>, with nothing behind it. Settle it against a real rollback in the test feed.
-    /// </para>
+    /// reports zero <b>by construction</b>: read 2026-09-23 from
+    /// velopack/velopack@1.2.158, both downgrade paths in
+    /// <c>UpdateManager.CheckForUpdatesAsync</c> return
+    /// <c>new UpdateInfo(latestRemoteFull, true)</c>, the two-argument
+    /// constructor, and never reach <c>CreateDeltaUpdateStrategy</c>;
+    /// <c>UpdateInfo</c>'s <c>DeltasToTarget</c> then defaults to an empty array.
+    /// *Corrected 2026-09-23 (previously "<c>packages\</c> is pruned to the
+    /// current full package during the forward update and deltas are
+    /// forward-only").* That pruning is real -- <c>CleanPackagesExcept</c>, in
+    /// <c>DownloadUpdatesAsync</c>'s <c>finally</c> -- but it is not what makes
+    /// this number zero, and a rollback would report zero without it.
     /// </remarks>
     public required int DeltaCount { get; init; }
 

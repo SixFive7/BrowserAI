@@ -128,7 +128,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 [review](docs/reviews/2026-08-18-adversarial-processes.md) finding 9. The
 `FILE_SHARE_DELETE` row beside it closed in the same change.
 
-- [ ] **The justification sweep's residue: 9 assumed justifications named and
+- [ ] **The justification sweep's residue: 0 assumed justifications named and
       not settled.** ⚠️ ***The predicate changed on 2026-09-23 and the number did
       not: it is now ONE PER `[ASSUMED]` MARKER IN THE TREE, counted by a scan,
       and it was 27 before and after.*** *Previously the predicate was one per

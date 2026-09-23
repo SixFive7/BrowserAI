@@ -91,10 +91,30 @@ internal sealed class UpdateService
     /// How long the download may make no progress at all before it is abandoned.
     /// </summary>
     /// <remarks>
-    /// Reset on every progress callback. 60 s is twice upstream Playwright's own
-    /// per-socket <c>NET_DEFAULT_TIMEOUT</c> of 30 s, so a transport that is
-    /// going to recover has already recovered; anything longer is a socket that
-    /// is not coming back.
+    /// Reset on every progress callback, and it is the <b>only</b> stall bound
+    /// that exists anywhere on this download.
+    /// <para>
+    /// <b>The downloader underneath bounds a half-dead socket at nothing at
+    /// all</b> -- Velopack's only bound is a 30-minute <c>HttpClient.Timeout</c>
+    /// that stops at the response headers, measured 2026-09-23 @ Velopack
+    /// 1.2.158
+    /// ([kb](../../../kb/packaging/velopack.md#what-bounds-a-stalled-download-and-a-stalled-check----measured-2026-09-23)).
+    /// So 60 s is a number this product
+    /// <i>chooses</i>: long enough that a link which is coming back has come
+    /// back, short enough that <see cref="AbsoluteBudget"/> is not the first
+    /// thing to notice.
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-09-23 (previously "60 s is twice upstream Playwright's
+    /// own per-socket <c>NET_DEFAULT_TIMEOUT</c> of 30 s, so a transport that is
+    /// going to recover has already recovered").</i> That constant is real --
+    /// <c>NET_DEFAULT_TIMEOUT = 3e4</c> at
+    /// <c>payload/mcp/node_modules/playwright-core/lib/coreBundle.js:9087</c> @
+    /// playwright-core 1.64.0-alpha-1789764292000 -- but it is read exactly once,
+    /// at line 34415, as the socket timeout for a <i>browser download in Node</i>.
+    /// A different downloader in a different runtime, bounding nothing this
+    /// constant governs.
+    /// </para>
     /// </remarks>
     public static TimeSpan StallBudget => TimeSpan.FromSeconds(60);
 
@@ -103,13 +123,32 @@ internal sealed class UpdateService
     /// </summary>
     /// <remarks>
     /// It is deliberately far outside <see cref="AbsoluteBudget"/> plus
-    /// <see cref="StallBudget"/>: nothing that is working can reach it, so
-    /// reaching it means the two inner timers did not fire when they should
-    /// have, which is a defect, not a slow link. It exists because the
-    /// alternative to a wedged background pass is a thread that never ends and
-    /// never says so.
+    /// <see cref="StallBudget"/>. It exists because the alternative to a wedged
+    /// background pass is a thread that never ends and never says so.
     /// <para>
-    /// <b>[ASSUMED]</b> That nothing which is working can reach the crash tripwire. <b>It covers the download and says nothing about the unbounded `CheckAsync`</b>, which is the call that can sit there. Settle it by naming every path that reaches the tripwire and checking the claim against each.
+    /// ⚠️ <b>What it does NOT cover is the check, and a working pass can
+    /// reach it.</b> <see cref="AbsoluteBudget"/> and <see cref="StallBudget"/>
+    /// are created inside <c>DownloadAsync</c> and bound the download alone;
+    /// <c>IUpdateClient.CheckAsync</c> runs under this deadline and nothing else.
+    /// Velopack 1.2.158's <c>UpdateManager.CheckForUpdatesAsync()</c> takes no
+    /// <see cref="CancellationToken"/> at all and <c>VelopackUpdateClient</c>
+    /// does not wrap it, so the token handed in here is read once on entry and
+    /// never again: a stalled manifest fetch ends only on Velopack's own
+    /// <c>SimpleWebSource.Timeout</c>, <b>30 minutes</b>, taken as the default.
+    /// 30 minutes of check plus a download inside its own 30-minute
+    /// <see cref="AbsoluteBudget"/> is 60 against this 45 -- so reaching this
+    /// deadline is <i>not</i> by itself evidence that an inner timer failed.
+    /// </para>
+    /// <para>
+    /// <b>And a check timeout already arrives wearing this deadline's name.</b>
+    /// <c>GetStringAsync</c> ends its <c>HttpClient.Timeout</c> by throwing a
+    /// <c>TaskCanceledException</c>, which is an
+    /// <see cref="OperationCanceledException"/>, so <c>RunOnceAsync</c>'s second
+    /// catch reports <c>UpdateLog.TripwireFired</c> for a network timeout --
+    /// measured 2026-09-23
+    /// ([kb](../../../kb/packaging/velopack.md#what-bounds-a-stalled-download-and-a-stalled-check----measured-2026-09-23)). <i>Corrected 2026-09-23 (previously "nothing that is working can
+    /// reach it, so reaching it means the two inner timers did not fire when
+    /// they should have, which is a defect, not a slow link").</i>
     /// </para>
     /// </remarks>
     public static TimeSpan CrashTripwire => TimeSpan.FromMinutes(45);

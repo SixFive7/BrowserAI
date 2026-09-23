@@ -83,17 +83,21 @@ internal static class McpClientRegistration
     /// is <see cref="IRegistrationCommand.Locate"/>'s problem.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>An <c>.exe</c> and never a <c>.cmd</c> shim.</b> A shim cannot be
-    /// started without <c>cmd.exe</c>, and routing through a shell is what
+    /// ⚠️ <b>An <c>.exe</c> and never a <c>.cmd</c> shim.</b> A shim cannot
+    /// run <i>without</i> <c>cmd.exe</c> -- not because the launch fails, but
+    /// because Windows supplies the interpreter itself and does not say so:
+    /// <c>CreateProcessW</c> against a <c>.cmd</c> SUCCEEDS and the process that
+    /// runs is <c>cmd.exe</c>. And the shell costs exactly what
     /// [SDK deviation 1](../../../STACK.md#nine-places-where-the-sdk-must-be-deviated-from)
-    /// exists to forbid: measured
-    /// against a node probe, a literal <c>%USERNAME%</c> reached the child
-    /// expanded and an argument containing whitespace and <c>&amp;</c> made the
-    /// child fail to start outright. A registered path is exactly the kind of
-    /// argument that carries spaces.
-    /// <para>
-    /// <b>[ASSUMED]</b> That a `.cmd` shim cannot be started without `cmd.exe`. <b>It cites two kb entries about other subjects</b>, so the citation is a pointer at adjacent measurements and not at this one. Settle it by trying to start one from a process that has no shell.
-    /// </para>
+    /// exists to forbid -- a literal <c>%USERNAME%</c> arrives <b>expanded</b>,
+    /// and an argument with a space or an <c>&amp;</c> is re-quoted into one
+    /// mangled argument -- against a control that delivers all three
+    /// byte-for-byte straight to an <c>.exe</c>. Measured 2026-09-23 @ Windows
+    /// 10.0.26200
+    /// ([kb](../../../kb/windows/processes.md#createprocessw-on-a-cmd-succeeds-and-runs-cmdexe-instead----measured-2026-09-23)).
+    /// A registered path is exactly the kind of argument that carries spaces.
+    /// *Corrected 2026-09-23 (previously "A shim cannot be started without
+    /// <c>cmd.exe</c>", which reads as a launch that fails and is not one.)*
     /// </remarks>
     public const string ClientExecutable = "claude.exe";
 

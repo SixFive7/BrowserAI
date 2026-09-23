@@ -53,14 +53,21 @@ internal sealed class UpdateFeed
     /// The single track BrowserAI publishes on.
     /// </summary>
     /// <remarks>
-    /// <c>win</c> is Velopack's own default for Windows -- the OS short name,
-    /// stamped into <c>sq.version</c> and read back by the locator -- so naming it
-    /// explicitly costs nothing and buys the property that matters: an install
-    /// that came from some other channel's <c>Setup.exe</c> still checks this
-    /// one.
-    /// <para>
-    /// <b>[ASSUMED]</b> That `win` is Velopack's own default channel. <b>The feed file name depends on it and nothing here read it out of Velopack.</b> Settle it from the resolved package, which is what the drift check already resolves.
-    /// </para>
+    /// <c>win</c> is what Velopack falls back to on Windows -- the OS short
+    /// name, <c>VelopackRuntimeInfo.SystemOs.GetOsShortName()</c>, read
+    /// 2026-09-23 from velopack/velopack@1.2.158
+    /// (<c>src/lib-csharp/VelopackRuntimeInfo.cs</c>). <b>It is the fallback and
+    /// not the first answer</b>: <c>UpdateManager.DefaultChannel</c> is
+    /// <c>Locator?.Channel ?? ...GetOsShortName()</c>, so an install stamped with
+    /// another channel resolves to that one, and
+    /// <c>Channel = options?.ExplicitChannel ?? DefaultChannel</c> is what
+    /// overrides it. Naming it here therefore costs nothing on an ordinary
+    /// install and buys the property that matters: an install that came from some
+    /// other channel's <c>Setup.exe</c> still checks this one.
+    /// *Corrected 2026-09-23 (previously "<c>win</c> is Velopack's own default
+    /// for Windows -- the OS short name, stamped into <c>sq.version</c> and read
+    /// back by the locator", which had the locator and the fallback the wrong way
+    /// round and so mis-stated why the override is load-bearing.)*
     /// </remarks>
     public const string DefaultChannel = "win";
 

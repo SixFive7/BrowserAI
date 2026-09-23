@@ -87,17 +87,20 @@ internal sealed class ChildProcessSession : JsonLinesTransport
         ProcessId = process.Id;
         _standardInput = process.StandardInput;
 
-        // Nothing a child writes to stderr can be lost, and it is not a matter
-        // of timing: the pipe exists before the process does, so the earliest
-        // possible byte is already buffered by the time this reader starts.
-        // Five lines written by a child that then fails to launch are the only
-        // explanation there will ever be.
+        // The pipe exists before the process does -- ChildPipes.Create runs
+        // before CreateProcessW in JobLauncher -- so there is no start-up race
+        // here and the earliest possible byte is already buffered when this
+        // reader starts. Five lines written by a child that then fails to launch
+        // are the only explanation there will ever be.
         //
-        // [ASSUMED] That nothing a child writes to stderr can be lost. The claim
-        // is broader than both the measurement behind it and the code below it,
-        // which abandons the pump after two seconds. Settle it by writing to
-        // stderr across that boundary and counting what arrives. Tagged
-        // 2026-09-23; the list and the predicate are in TODO.md.
+        // IT IS NOT A GUARANTEE THAT NOTHING IS LOST, and the loss is at the
+        // other end: StandardErrorDrainTimeout abandons this pump 2 s after the
+        // child exits. Measured 2026-09-23 @ .NET 10.0.401, Windows 11
+        // 10.0.26200, in a rig of this exact shape -- a child that spawns a
+        // grandchild inheriting the stderr write end and then exits lost 4 of 6
+        // lines, against 0 of 5 for a child that writes and exits.
+        // *Corrected 2026-09-23 (previously "Nothing a child writes to stderr can
+        // be lost, and it is not a matter of timing".)*
         _standardErrorPump = Task.Run(PumpStandardErrorAsync, CancellationToken.None);
 
         StartReading(process.StandardOutput);

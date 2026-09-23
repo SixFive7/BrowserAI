@@ -989,6 +989,82 @@ tree was then removed. **Every file such a dump is written to read is one
 somebody is still holding, by construction**: it is taken at the moment a launch
 did *not* happen.
 
+### An unhandled exception DOES unwind, and `FailFast` and a stack overflow do not -- measured 2026-09-23
+
+`[FLOATS]` .NET 10.0.401 CoreCLR, Windows 10.0.26200.
+
+**An ordinary unhandled exception runs the `AppDomain.UnhandledException`
+handler FIRST and then unwinds.** Out of `Main` and off a background thread
+alike, the handler ran, and then every `finally` and every `Dispose` ran too.
+**The control is the same code caught by an outer handler**, which ran all three.
+
+⚠️ **What runs nothing at all is `Environment.FailFast` and a
+`StackOverflowException`.** On both, the handler did not run, no `finally` ran and
+no `Dispose` ran.
+
+**So the property a crash log rests on is ORDERING, not the absence of
+unwinding.** A `finally` cannot be relied on -- two of the three shapes skip it
+entirely -- and the handler runs before anything that might. `ProcessLog` says so
+in place, and `TaskDialogPage` already carried the neighbouring case, that the
+runtime cannot unwind into native frames.
+
+**Re-establish** with a `net10.0` console executable that registers the handler,
+opens something disposable inside a `try`/`finally`, and then throws, calls
+`FailFast` and recurses without a base case, one arm each. The rig is
+`.work/assumed-2026-09-23/src/probes/`; the output is `probe-E-unwind.txt`.
+
+### `CreateProcessW` on a `.cmd` succeeds and runs `cmd.exe` instead -- measured 2026-09-23
+
+`[FLOATS]` Windows 10.0.26200, .NET 10.0.401.
+
+**The launch does not fail. Windows supplies the interpreter and does not say
+so.** `CreateProcessW` against a `.cmd` succeeded with `lpApplicationName` set and
+with a command line alone, and in both arms **the process that ran was
+`C:\WINDOWS\system32\cmd.exe`** -- the child's own `%CMDCMDLINE%` read
+`C:\WINDOWS\system32\cmd.exe /c "..."`. MS Learn states the rule from the other
+end: *"To run a batch file, you must start the command interpreter; set
+lpApplicationName to cmd.exe and set lpCommandLine to ... /c plus the name of the
+batch file."*
+
+⚠️ **And the shell costs exactly what a byte-for-byte argument
+contract cannot afford**, measured in the same run: through the shim a literal
+`%USERNAME%` arrived **expanded**, and `a & b` and a path containing a space were
+re-quoted into one mangled argument with *"The filename, directory name, or volume
+label syntax is incorrect."* on stderr. The control is the identical
+`ProcessStartInfo.ArgumentList` straight to a real `.exe`, which delivered all
+three byte-for-byte.
+
+**Why it matters here:** a registered client path is exactly the kind of argument
+that carries spaces, which is why `McpClientRegistration` registers an `.exe` and
+never a shim.
+
+**Re-establish** with a `.cmd` that echoes `%CMDCMDLINE%` and its arguments, one
+arm through `CreateProcessW` and one through a real executable, with the same
+argument list. The rig is `.work/assumed-2026-09-23/src/probes/`; the output is
+`probe-F-cmdshim.txt`.
+
+**A record on stderr is not durable, and a record in the process log is -- the
+two diagnostic channels differ and only the file's guarantee is written down.**
+Measured 2026-08-18 on two consecutive CI runs. `ProcessLog` wires stderr through
+`AddConsole`; `RollingFileWriter` is one unbuffered `WriteFile` per record against
+a `FILE_APPEND_DATA` handle. A process ended with `TerminateProcess` therefore
+keeps everything the file sink wrote and **loses whatever the console queue still
+held** -- and the two runs lost *different* amounts of the tail, which is the
+signature of a queue and not of a call that never happened.
+
+**That the console provider queues at all is first-party documented, not
+inferred**, which matters because the observation above would otherwise have only
+an explanation nobody had checked. `ConsoleLoggerOptions.QueueFullMode` exists,
+its default is `Wait`, and `ConsoleLoggerQueueFullMode.Wait` is defined as
+*"Blocks the logging threads once the queue limit is reached"* -- a queue that can
+fill, and that blocks *the logging threads* and not the writing one, is
+drained by something else. Verified against MS Learn 2026-08-18. The same page
+gives the other half of the shape: the full mode is `Wait`, **not** `DropWrite`,
+so records are not discarded under pressure and process death is the only way
+this loses one.
+
+*Moved 2026-09-23 from the desktop-heap section, where it was filed by accident and had no honest anchor: nothing in it is about desktop heap, and two comments in `src/` cite this section for exactly this claim.*
+
 ## Saturation: the 100-process design point
 
 **80 concurrent headless Chromium instances start cleanly on this machine, and
@@ -1138,26 +1214,6 @@ level:
 > *Corrected 2026-09-16 (previously "in a scratch directory this machine
 > deletes").* The procedure above is still written to stand without the rig,
 > and that has not changed: read it first.
-
-**A record on stderr is not durable, and a record in the process log is -- the
-two diagnostic channels differ and only the file's guarantee is written down.**
-Measured 2026-08-18 on two consecutive CI runs. `ProcessLog` wires stderr through
-`AddConsole`; `RollingFileWriter` is one unbuffered `WriteFile` per record against
-a `FILE_APPEND_DATA` handle. A process ended with `TerminateProcess` therefore
-keeps everything the file sink wrote and **loses whatever the console queue still
-held** -- and the two runs lost *different* amounts of the tail, which is the
-signature of a queue and not of a call that never happened.
-
-**That the console provider queues at all is first-party documented, not
-inferred**, which matters because the observation above would otherwise have only
-an explanation nobody had checked. `ConsoleLoggerOptions.QueueFullMode` exists,
-its default is `Wait`, and `ConsoleLoggerQueueFullMode.Wait` is defined as
-*"Blocks the logging threads once the queue limit is reached"* -- a queue that can
-fill, and that blocks *the logging threads* and not the writing one, is
-drained by something else. Verified against MS Learn 2026-08-18. The same page
-gives the other half of the shape: the full mode is `Wait`, **not** `DropWrite`,
-so records are not discarded under pressure and process death is the only way
-this loses one.
 
 > **The consequence for tests, and it cost two red CI runs:** an assertion of the
 > form *"the product recorded X"* must read the process log, not stderr, whenever

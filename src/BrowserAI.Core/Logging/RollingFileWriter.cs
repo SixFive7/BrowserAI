@@ -128,7 +128,17 @@ internal sealed class RollingFileWriter : ILogSink, IDisposable
     public bool RefusedNetworkDirectory { get; }
 
     /// <inheritdoc />
-    /// <remarks>There is no buffer, so a record that has been written is already durable.</remarks>
+    /// <remarks>
+    /// There is no buffer, so a record that has been written survives this
+    /// process dying, a <c>TerminateProcess</c> included -- measured 2026-08-18
+    /// across two CI runs. It is <b>not</b> durable in the sense this repository
+    /// reserves the word for: <c>NativeFile.OpenForLockedAppend</c> opens without
+    /// <c>FileOptions.WriteThrough</c> and nothing here calls
+    /// <c>Flush(flushToDisk: true)</c>, so a power cut can still take the tail
+    /// ([kb](../../../kb/windows/processes.md#files-durable-writes-and-deletes)).
+    /// *Corrected 2026-09-23 (previously "so a record that has been written is
+    /// already durable".)*
+    /// </remarks>
     public void Write(string record)
     {
         lock (_gate)
