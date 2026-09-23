@@ -979,6 +979,32 @@ a body edit still says *REWRITTEN … revert it*.
 `AppendOnlyRecordTests.ADateSetAtTheCutIsReportedAsAHeadingRatherThanAsARewrite`
 holds both, over a doctored copy of the real 1.0.0 section.
 
+⚠️ **WHAT THE DATE MEANS, AND WHAT TO DO WHEN THE CLOCK OVERTAKES IT — *added
+2026-09-23 by addition, because it came up as a question rather than as a
+procedure and cost a round of the gate*.** **The heading carries the date of the
+commit the tag rides on — the CUT — and not the day the release reaches
+GitHub.** A release cut on one day and published on the next keeps the date it
+was cut on, and that gap is expected rather than a defect: the tag, the pack, the
+body and the gate all belong to the cut.
+
+**Re-stamping to a later day is therefore a NEW CUT, and it costs exactly what
+one costs.** One commit carrying the date and the re-seal together, then
+`git tag -f` onto it, then **the six runs again** — because the tag must follow
+the final fully-green commit and the commit just moved. Nothing else in the
+release may change in that commit; if anything else does, it is not a re-stamp.
+
+**The case this rule was written from.** `1.1.0` was cut, gated and packed on
+2026-09-22, its last release run finishing at 23:58:36 — inside the stamped day
+by 84 seconds — and the word to publish came on the 23rd. **Nothing was red**:
+no test reads that date, and `build/Get-ReleaseNotes.ps1` merely defaults it to
+today at stamp time and accepts an explicit `-Date`. So the heading was a claim
+nobody was checking, which is the worst kind to leave to judgement. The
+maintainer's answer, verbatim: ***"Q232 c+d and release"*** — re-cut it on the
+day, and write the rule down so the next reader follows a procedure instead of
+asking. The re-stamp changed **the heading line and nothing else**: the section's
+body digest was byte-identical either side of it, and the character count did not
+move, because `2` and `3` are the same width.
+
 ⚠️ **For the 2026-09-15 re-ship of `1.0.0`, the stamp step is a MERGE rather
 than a new section, and both halves of that sentence matter.** The version being
 cut already has a section — it was stamped on 2026-09-15 and published — so

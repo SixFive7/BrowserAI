@@ -38,7 +38,7 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-09-22
+## [1.1.0] - 2026-09-23
 
 A web page can offer its own tools to the browser. From this version they can be
 called. A name invented by a page is still refused at the door; the page's tool
