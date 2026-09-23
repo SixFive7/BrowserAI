@@ -1265,8 +1265,11 @@ check that the hand-written interop matches what Windows actually expects.
    what re-opens everything below.
 2. **The three prerelease transitive packages stay**, and they remain the only
    prerelease versions anywhere in the repository. They are build-time only, so
-   the *GA is a hard floor* rule is not violated in the artifact -- that trade is
-   [its own TODO item](TODO.md) and this decision does not change it.
+   the *GA is a hard floor* rule is not violated in the artifact, and this decision
+   does not change that. *Corrected 2026-09-23 (previously "that trade is [its own
+   TODO item](TODO.md)")* -- the item is deleted with the licence question it was
+   attached to, so this sentence is now where the trade is recorded and not a
+   pointer to somewhere it is recorded better.
 3. **Nothing below is deleted.** Everything after this note is the primary-source
    text, gathered 2026-08-19, and it stays as the record of *why nobody needs to
    answer it* -- which is a different and more useful thing than an entry that was
@@ -1278,6 +1281,23 @@ check that the hand-written interop matches what Windows actually expects.
 emitted at build time into the product, or published in a public repository. At
 that point direction **(b)**, putting questions 1-5 to a lawyer, becomes the next
 step and this entry is already the brief.
+
+⚠️ **THE RULE ITSELF NOW LIVES IN [`DECISIONS.md`](DECISIONS.md), AND THIS ENTRY
+IS NO LONGER WHERE IT IS KEPT.** *Moved 2026-09-23, by addition; nothing above is
+deleted.* A standing rule held only inside a question that has gone moot is a rule
+nobody will find, and this section is written to be read by somebody who wants to
+reverse it -- which is the opposite audience. The `Generated code` row of *Licence,
+release policy and the tool surface* is the decision of record, and it points back
+here for the brief. **It also now has a mechanism**, which this entry never did:
+`ForbiddenDependencyTests.NoProjectUnderSrcReferencesTheCodeGenerator` refuses a
+CsWin32 reference under `src/` and asserts by count the two references that must
+stay, so the layout oracle cannot quietly go either. **[`TODO.md`](TODO.md)'s item
+asking for the licence question to be answered before any move into `src/` is
+deleted in the same commit**: it was asking for a legal reading nobody here may
+supply, in order to permit an act that is now ruled out, and everything it recorded
+that was not already here is nothing: the three prerelease transitive packages, and
+that they are build-time only so the *GA is a hard floor* rule holds in the artifact,
+are consequence 2 above, which used to point at that item and now states it.
 
 ---
 

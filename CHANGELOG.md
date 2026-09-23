@@ -40,6 +40,33 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **No generated code ever ships, and now something enforces it.**
+  The rule was taken by the maintainer on 2026-08-20 and has lived since then inside
+  `QUESTIONS.md` section 12, which is the entry it made moot. A standing rule kept only inside
+  a question nobody has to answer any more is a rule nobody will find, and that section is
+  written for the one reader who wants to REVERSE it. It is now a decision of record in
+  [`DECISIONS.md`](DECISIONS.md), as the `Generated code` row of *Licence, release policy and
+  the tool surface*, with its date and the form the record carries: *no generated code will
+  ever ship*. Nothing under the old heading is deleted -- the terms, the five questions and
+  the recommendation are the brief a reversal needs, and the entry now points at the row.
+
+  **And it gained a mechanism it never had.**
+  `ForbiddenDependencyTests.NoProjectUnderSrcReferencesTheCodeGenerator` reads every build
+  file for an `Include="Microsoft.Windows.CsWin32"` and refuses one under `src/`. The
+  REFERENCE is asserted because generated code leaves no mark in a binary and no file in the
+  tree, so a reference by a shipping project is the only earlier signal there is. **Planted
+  red** by adding that reference to `src/BrowserAI/BrowserAI.csproj` and watched naming the
+  file and the line; the doctored project and the lock file it regenerated were reverted. The
+  two references that must STAY are asserted by count, so deleting the layout oracle is a red
+  build as well: it is the only independent check that the seven hand-written interop structs
+  match Microsoft's own metadata.
+
+  **The `TODO.md` item asking for the licence question to be answered is deleted.** It asked
+  for a legal reading nobody here may supply, in order to permit an act that is ruled out. The
+  one fact it carried that the entry did not state itself -- three prerelease transitive
+  packages, build-time only, so the *GA is a hard floor* rule holds in the artifact -- was
+  already consequence 2 of that section, which used to point at the item and now states it.
+
 - ✅ **The prose scan reads what the product says, and no longer only what its maintainer wrote.**
   `HouseRuleTests.NoMaintainedProseCarriesATell` gained a second corpus.
   `Harness.Commentary.LiteralsOf` is the comment lexer walked the other way, and

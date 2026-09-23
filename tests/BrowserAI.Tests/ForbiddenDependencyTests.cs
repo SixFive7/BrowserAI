@@ -127,6 +127,64 @@ internal sealed class ForbiddenDependencyTests
         await Assert.That(native.Any(line => line.Contains($"src{Path.DirectorySeparatorChar}BrowserAI", StringComparison.Ordinal))).IsFalse();
     }
 
+
+    /// <summary>
+    /// The code generator is referenced by no project under <c>src/</c>, which is
+    /// the mechanism behind a standing decision that no generated code ever ships.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The decision, 2026-08-20.</b> The maintainer ruled that no generated
+    /// code will ever ship -- not as a <i>for now</i> but as a standing rule -- and
+    /// that is what makes the CsWin32 metadata licence question unreachable rather
+    /// than open. The terms are quoted in full in <c>QUESTIONS.md</c> section 12
+    /// and the contradiction they carry is real and unresolved; the only act that
+    /// would engage it has been ruled out. The decision of record is in
+    /// <c>DECISIONS.md</c>.
+    /// </para>
+    /// <para>
+    /// <b>Why the reference is the assertion and not the output.</b> Generated code
+    /// has no distinguishing mark in a compiled binary and no file in the tree, so
+    /// there is nothing downstream to scan. What can be asserted is the one thing
+    /// that has to happen first: the generator has to be referenced by a project
+    /// that ships. <c>PrivateAssets="all"</c> keeps it out of the product's
+    /// closure today, and that attribute is load-bearing, not tidy -- but it is
+    /// only load-bearing where the reference is, so the rule is about WHERE.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-23</b> by adding the reference to
+    /// <c>src/BrowserAI/BrowserAI.csproj</c> and watching the arm name the file
+    /// and the line; the doctored project was then reverted. The two references
+    /// that must stay are asserted by count, so deleting the layout oracle is a
+    /// red build as well -- it is the only independent check that the seven
+    /// hand-written interop structs match what Windows expects, and the absence of
+    /// a shipped generator is not a reason to lose it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoProjectUnderSrcReferencesTheCodeGenerator()
+    {
+        var references = Mentioning("Microsoft.Windows.CsWin32").ToList();
+
+        // THE RULE, and it is stated before its control so that a violation
+        // fails on the sentence that names the offending file instead of on a
+        // count that names a number.
+        await Assert.That(string.Join(
+            Environment.NewLine,
+            references.Where(line => line.StartsWith($"src{Path.DirectorySeparatorChar}", StringComparison.Ordinal))))
+            .IsEmpty()
+            .Because("no generated code ships: DECISIONS.md, decided 2026-08-20, and a reference under src/ is what reverses it");
+
+        // ⚠️ THE CONTROL, because the assertion above is an absence and a scan
+        // that stopped matching would report the tree clean. The generator IS
+        // referenced, in the two places it belongs: the central version, and the
+        // test project that uses it as a layout oracle.
+        await Assert.That(references.Count).IsEqualTo(2);
+        await Assert.That(references.Any(line => line.StartsWith("Directory.Packages.props", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(references.Any(line => line.Contains("BrowserAI.Tests.csproj", StringComparison.Ordinal))).IsTrue();
+    }
+
     /// <summary>Every build file that declares a package, and where it declares it.</summary>
     /// <remarks>
     /// <para>
