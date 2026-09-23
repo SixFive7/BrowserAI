@@ -956,7 +956,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 - [ ] **Watch two upstream moves that would make the network service ask for a
       sandbox our provisioned tree cannot give it -- and file the third ask only
       if one of them lands.** Measured 2026-08-29 and recorded in
-      [kb](kb/playwright/configuration.md#the-network-service-runs-unsandboxed-and-the-cause-is---disable-field-trial-config-rather-than-anything-about-our-tree----measured-2026-08-29):
+      [kb](kb/playwright/configuration.md#the-network-service-runs-unsandboxed-and-the-cause-is---disable-field-trial-config-not-anything-about-our-tree----measured-2026-08-29):
       the browser's network service runs unsandboxed at Medium integrity because
       `--disable-field-trial-config` -- the first element of upstream's
       `chromiumSwitches` -- turns off the field-trial config that would enable

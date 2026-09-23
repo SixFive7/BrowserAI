@@ -33,7 +33,7 @@ internal sealed class SessionPathTests
         var trailing = SessionPath.For(directory + Path.DirectorySeparatorChar);
         var cased = SessionPath.For(directory.ToUpperInvariant());
 
-        // ⚠️ THE `..` SPELLING MOVED RATHER THAN WENT -- 2026-08-26, previously a
+        // ⚠️ THE `..` SPELLING MOVED , NOT WENT -- 2026-08-26, previously a
         // fourth entry here built from `Path.Combine(scratch.Path, "elsewhere",
         // "..", "Session One")`. This type normalises nothing now: it derives
         // names from a path `CanonicalPath` has already answered for, so

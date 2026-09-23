@@ -120,7 +120,7 @@ internal static class LockFile
     {
         Write(path, holder);
 
-        // ⚠️ WAITED OUT RATHER THAN BELIEVED, AND ONLY HERE. The caller holds
+        // ⚠️ WAITED OUT , NOT BELIEVED, AND ONLY HERE. The caller holds
         // the per-directory gate and the file on disk names this process, so no
         // second owner can exist -- becoming one means passing through the gate.
         // A sharing violation on this line is therefore somebody's transient

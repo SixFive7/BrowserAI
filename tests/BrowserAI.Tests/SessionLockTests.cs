@@ -828,7 +828,7 @@ internal sealed class SessionLockTests
             });
 
             // And this is why the refusal can name the holder: a reader still
-            // gets in. Note the share mode -- FileShare.Read alone FAILS here,
+            // gets in. The share mode matters -- FileShare.Read alone FAILS here,
             // because the holder has the file open for WRITE and a reader that
             // does not share write is refused outright. A reader written the
             // obvious way would turn "somebody owns this" into "this file cannot
@@ -1315,7 +1315,7 @@ internal sealed class SessionLockTests
 
         await Assert.That(refused.Message).Contains("the record WAS written");
 
-        // ⚠️ THE HALF THAT MAKES THE SENTENCE A CLAIM RATHER THAN A PHRASING.
+        // ⚠️ THE HALF THAT MAKES THE SENTENCE A CLAIM , NOT A PHRASING.
         // The answer says the guard was written and names this process as its
         // holder, so the file is read back and asked both questions. An answer
         // that merely stopped saying "nothing was changed" would pass every

@@ -28,7 +28,7 @@ namespace BrowserAI.Tests;
 /// find-and-replace.
 /// </para>
 /// <para>
-/// <b>Append-only, deliberately, rather than frozen.</b> A blanket no-edit rule
+/// <b>Append-only, deliberately, and not frozen.</b> A blanket no-edit rule
 /// would be the wrong mechanism: a typo fix in a review is legitimate, and the
 /// review index's status table in <c>docs/reviews/README.md</c> is explicitly
 /// meant to be updated as findings are acted on -- so <c>README.md</c> is not a
@@ -38,7 +38,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️ <b>EVERY SEAL IN THE LIST BELOW MOVED ONCE, ON 2026-09-23, AND THE
-/// GRANT THAT MOVED THEM IS QUOTED HERE RATHER THAN SUMMARISED.</b> The
+/// GRANT THAT MOVED THEM IS QUOTED HERE IN FULL, NOT SUMMARISED.</b> The
 /// maintainer, verbatim: <i>"When it comes to no semantic differences and only
 /// removing traces of AI (both in wording and character use) then I hereby grant
 /// and instruct you the right and instruction to edit sealed documents."</i>
@@ -50,7 +50,27 @@ namespace BrowserAI.Tests;
 /// what separates this from the 2026-08-20 rename sweep that this class exists
 /// to stop: that one was silent and nobody chose it. <b>The grant is narrow.</b>
 /// It is not a licence to edit a record for any other reason, and a second
-/// purpose would be a new grant rather than a precedent.
+/// purpose would be a new grant, not a precedent.
+/// </para>
+/// <para>
+/// ⚠️ <b>AND ALL ELEVEN MOVED A SECOND TIME, ON THE SAME DAY, FOR THE
+/// WORDING HALF OF THE SAME DIRECTIVE, UNDER THE SAME GRANT</b> -- quoted again
+/// because a reader meeting one of these numbers should not have to go looking:
+/// <i>"When it comes to no semantic differences and only removing traces of AI
+/// (both in wording and character use) then I hereby grant and instruct you the
+/// right and instruction to edit sealed documents."</i> What moved was stock
+/// phrasing: the <c>X rather than Y</c> frame, imperative <c>Note that</c>
+/// lead-ins, and in the changelog 103 detail sentences that repeated their own
+/// headline. <b>No fact, number, date, name, claim or quotation moved.</b>
+/// </para>
+/// <para>
+/// ⚠️ <b>HARVEST EVERY REPLACEMENT SEAL BY PARKING EVERY SEAL, NEVER BY
+/// COLLECTING THE COMPLAINTS.</b> A record that got SHORTER takes
+/// <see cref="Explain"/>'s TRUNCATED branch, which prints no replacement line at
+/// all -- so a pass that greps the failures for <c>new(...)</c> silently misses
+/// exactly the records a wording sweep produces. Setting every recorded length
+/// to 1 first makes all of them take the reseal branch. On 2026-09-23 that was
+/// the difference between eleven seals and the five a shard had counted.
 /// </para>
 /// <para>
 /// <b>A deliberate edit is possible and is never silent.</b> The seal carries a
@@ -64,7 +84,7 @@ namespace BrowserAI.Tests;
 /// what it cannot do is decide whether the edit was a typo fix or a sweep.
 /// </para>
 /// <para>
-/// <b>Why a seal rather than the file's git history.</b> <c>git log --numstat</c>
+/// <b>Why a seal and not the file's git history.</b> <c>git log --numstat</c>
 /// would say for free whether a file has ever had a line deleted, and it was the
 /// first design. It fails on both halves: a legitimate typo fix deletes a line,
 /// and the changelog's protection is per-<i>section</i> -- its
@@ -83,7 +103,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// </param>
     /// <param name="Characters">
     /// How many characters were sealed, with line endings normalised to
-    /// <c>\n</c>. Published rather than derived so that a truncation is an
+    /// <c>\n</c>. Published and not derived, so that a truncation is an
     /// arithmetic mismatch a reader can see, and not only a digest that differs.
     /// </param>
     /// <param name="Sha256">The digest of those characters, lower-case hex.</param>
@@ -224,7 +244,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// human ordered the re-shaping in advance, in writing, and that <b>no fact
     /// was rewritten</b> -- where a headline is new, the sentence it replaces is
     /// the first thing in its own detail, word for word, and that was checked
-    /// over all 236 entries mechanically rather than by reading. <b>A second
+    /// over all 236 entries mechanically, not by reading. <b>A second
     /// lift is not a precedent; it is another decision, and it belongs to
     /// whoever owns the rule.</b>
     /// </para>
@@ -244,17 +264,17 @@ internal sealed partial class AppendOnlyRecordTests
     /// </remarks>
     private static readonly Seal[] Sealed =
     [
-        new("CHANGELOG.md#0.1.0", 3874, "571d67c4b375fd96b97b853a4b720e6c9809b5914e08bf177975b6798c51e1eb", "143f33271fc34cd7328197dbcd964cc8f7d1312b629906b5002cdc56be94837c"),
-        new("CHANGELOG.md#1.0.0", 350703, "893dd57ed05ce98f7c3658d23a7d58181a024e6ec45c4436c42e6e2a1f297fb5", "549cffa74c77d4de477315ba9e294a099e396e053399c00ab5a7593fe179bb97"),
-        new("CHANGELOG.md#1.1.0", 65956, "8d37120a6f92dc14b5b35773c74686253e1704cc8422028af50276b1b19d2c86", "c159e04acb5c970c7bdb75af18a1b9d35923c01133d9ccd9b8f9ea389e6a878a"),
-        new("docs/reviews/2026-08-18-adversarial-locking.md", 39722, "11eadc9cbdd7726a1101b1faa93cd4904cd158adf789ff6c84567f979b0319b7", "26269fabafee27c8538fb5c788fbc735b1fe2f6f0be6fc4d0cae9a0d9af8ade8"),
-        new("docs/reviews/2026-08-18-adversarial-processes.md", 28603, "053af96c7e01112c45db5ed7523ed5fbe62c0f0b67302ea4551348b77bcf42b3", "94345e8990ef5e2985abe3909c9b07c760e9d7ffd0637aafec43bb06377f0ad6"),
-        new("docs/reviews/2026-08-18-truncation-findings.md", 14230, "cc7c7cb446918749775b66c1089b4b98d0f841583a2d61d5d9bfd05672eff5fa", "63c900ab900b6b3f1e6a6b1d44e1db6a154cb33b037f008590f48226a3aee35e"),
-        new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17256, "8c85ea5c577196bdfbbefcb793c884550bd1383e31619c5d9a0347070eb47c5b", "1dd8295ee72f6b38b1cba22acaa0efb5af5edb17ea03e6d94a57196a9fc18250"),
-        new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11045, "18a981628ee4560a3449060da8dd321a083c4bb5e7b243fc49faafbbd99b0d44", "dc3c7c5724cfc9916c7996d7164df5f4086ca6726a10d1d3dfaa621b6ec65060"),
-        new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29891, "058eeb74c345b287be38eae311291c52a8b742497ee00a2944d94e769b49b874", "a8f3ad0dcb57129c2dc5631025b76ead8aa81d13584ed662e06936051bf809ca"),
-        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32481, "3fdae42aba6ebc5b8898c6e43a239aecee45daf948275ad608a9a922254ff42b", "ef8cd2277801a8b9d076fff259b83a6d21e6c06c5c42b644e9272385e52c896e"),
-        new("docs/reviews/2026-08-26-post-course-correction.md", 40013, "60a0f1f583230d1c22a759046d973bf2d8c66d27f905c0d41a148d769671f295", "e72b58ea5503c173718988098bb6e7bf58f01365e64629f48747f06f571b7ac5"),
+        new("CHANGELOG.md#0.1.0", 3691, "06cc0bf329ac09ccefe767e0f967a7a8a123f94693be8d044189d7e9a262efa7", "bb565ea0ffbac9ba51823dd1c3737b263bd1e0453c86d2b38ed8fa7b271c2a39"),
+        new("CHANGELOG.md#1.0.0", 342298, "6c7835b29858a31cc2daef7e4549aea62e3816e81399d64e80568e0882fb1cae", "cf24f4aa0bed803a15f2504dc83b179c77568802a8fd98261bf183ec9bb7a520"),
+        new("CHANGELOG.md#1.1.0", 65555, "9aacb1bf3421013dafae5ee5a8624ee7e2b1460836b058a43a8ff681b62ee63c", "7d81b6e9a41df62a3258146255c56ecfb8af9685e78feec1c5f1158b9e1784e5"),
+        new("docs/reviews/2026-08-18-adversarial-locking.md", 39697, "0b7cdccb8d7784118eabe52b86894d10b292c078ed75545ca1adec10d5a0d43b", "9bf8d7cae9df67b961bb7079d327e573c0c8ad994646e7406c1cd604323cfe81"),
+        new("docs/reviews/2026-08-18-adversarial-processes.md", 28565, "19a20cc649fe8bbe28099c206bcfe2736838e8abbeef1b50ce6ec5cd1398b995", "b37235076bc2c506e539a41bc0c43e703ad58b57d637b63b22ad7727bcd28cd1"),
+        new("docs/reviews/2026-08-18-truncation-findings.md", 14209, "ca661b3f8e57cf219598035fc8bcb4368fab16c37904f9589194aad2d1d7dd93", "ffa615e2ae80a9611439819df97a6abfd28fec19279df7a59330f1729cd2d5df"),
+        new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17241, "39b1cb434f655222e2148a1157e224b31bde953423b8802d0695c1c3046552a2", "4760ff6130253c39c89ea814e6bee37ee6f0576949d779140a3e32366aa25d91"),
+        new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11038, "b869118fabf6c940ddc667c3ce53ccd250d487d929b2dc9a5cb4c4af2d1756e0", "29481805fa92aec981b59f66520e93ec7d636100771ec1b7b8e4f0b6f9eabc09"),
+        new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29866, "1b94021cfb026d7d9888ec02c864b5106730779806db31eb5b0b9513a44a435c", "ab874d409a384e7c497fba5ff2503601b63dc9808720d6980894054aa535bb1c"),
+        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32400, "9d114b0932bb163acfaea229b2cdcccc6ec03312e5829e141ac4c9e5edcc8354", "01c4800add58d57b0d2cb0f8330fb706c48c3ae3936a37b640bc4f5bc4b6213a"),
+        new("docs/reviews/2026-08-26-post-course-correction.md", 39984, "f273c440064a0f263ca1d30b14398e878cb1dd4a53c9382541af7387aa308643", "957ca1dc289e00b9ab2457d6249b19ee7b77baa221cd29a9dc0cac57d6e715ce"),
     ];
 
     /// <summary>
@@ -353,8 +373,8 @@ internal sealed partial class AppendOnlyRecordTests
     }
 
     /// <summary>
-    /// A heading line that moved on its own is reported as a heading rather than
-    /// as a rewrite.
+    /// A heading line that moved on its own is reported as a heading and not as
+    /// a rewrite.
     /// </summary>
     /// <remarks>
     /// <para>

@@ -2547,6 +2547,330 @@ internal sealed partial class HouseRuleTests
         [.. FreeSpaceSpellings.Where(needle => code.Contains(needle, StringComparison.Ordinal))];
 
     /// <summary>
+    /// No maintained prose carries a phrase a person here does not write.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The wording half of a repository directive, and the maintainer asked
+    /// for it in as many words:</b> <i>"I want rules so we don't have to do this
+    /// ever again."</i> The sweep that preceded it moved <b>4,880</b> occurrences
+    /// of one comparison frame across five parallel shards, plus 103 changelog
+    /// details that repeated their own headline. This is what stops the next one
+    /// arriving.
+    /// </para>
+    /// <para>
+    /// <b>What it reads is COMMENTARY, never code.</b> A <c>.cs</c>, <c>.ps1</c>,
+    /// <c>.sh</c> or <c>.js</c> file is lexed for its comments; a project file
+    /// for its XML comments; everything else is prose and is read whole. The
+    /// lexer is a lexer and not a pattern, because a URL inside a string literal
+    /// begins with two slashes: reading those as a comment pulled string content
+    /// into the corpus and desynchronised every quotation after it, which is how
+    /// this arm's first measurement reported 114 offences that were not there.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A CONSEQUENCE STATED HERE SO NOBODY HAS TO FIND IT: the product's own
+    /// words to a user are OUTSIDE this scan.</b> A refusal sentence lives in a
+    /// string literal, and a string literal is code. <c>SessionErrors</c> and
+    /// <c>SessionManager</c> carry the comparison frame in text a caller reads,
+    /// and nothing here sees it. That is the brief this arm was written to, and
+    /// it is a gap somebody may want closed.
+    /// </para>
+    /// <para>
+    /// <b>The exclusions, each a kind.</b> Text inside straight double quotes is
+    /// somebody else's words, and a <c>previously</c> clause is this repository
+    /// quoting itself; an inline code span, a doc-comment code element and a
+    /// fenced block are code; a blockquote is a quotation; <c>docs/evidence</c>,
+    /// <c>third-party</c>, <c>LICENSE</c> and the notices are verbatim captures.
+    /// <b>Paragraphs are joined before any of that is applied</b>, because prose
+    /// here wraps at 76 columns and a quotation that wraps is still a quotation.
+    /// </para>
+    /// <para>
+    /// <b>Two phrases the maintainer proposed were dropped, and the reason is
+    /// that this tree uses them for their plain meaning.</b> The verb for opening
+    /// a lock, in a product built around locking, appears sixteen times in that
+    /// sense; and the plural noun for the character <c>_</c> appears nine times,
+    /// in a repository whose slug rule turns on it. Neither can be told from its
+    /// marketing sense by any rule, so neither is in the list. <b>Two more are
+    /// narrowed to the discourse marker</b>, the form with the comma, because
+    /// <i>a comment that said</i> and <i>a user can additionally enumerate</i>
+    /// are both ordinary English.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-23</b> against a doctored document, one control per
+    /// class, and both directions on every exclusion. <b>The tells are built from
+    /// halves</b> so that this file carries none of them to its own scan.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoMaintainedProseCarriesATell()
+    {
+        var offences = new List<string>();
+        var scanned = 0;
+
+        foreach (var file in RepositoryLayout.AllFiles)
+        {
+            var name = Relative(file).Replace('\\', '/');
+
+            if (!IsSwept(name) || IsBinary(file))
+            {
+                continue;
+            }
+
+            scanned++;
+            offences.AddRange(TellOffences(name, await File.ReadAllTextAsync(file.FullName)));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // ⚠️ ONE POSITIVE CONTROL PER CLASS. A reader that stopped finding them
+        // would report the tree clean, which is what a clean tree looks like.
+        await Assert.That(TellOffences("TESTING.md", $"the suite is a gate {Frame} a suggestion")).IsNotEmpty();
+        await Assert.That(TellOffences("TESTING.md", $"{Lead} the order, because it matters")).IsNotEmpty();
+        await Assert.That(TellOffences("TESTING.md", $"{Marker}, the gate is still the gate")).IsNotEmpty();
+        await Assert.That(TellOffences("TESTING.md", $"the run is {Stock} instantaneous")).IsNotEmpty();
+
+        // And the shapes that are not tells.
+        await Assert.That(TellOffences("TESTING.md", "the suite is a gate, not a suggestion")).IsEmpty();
+        await Assert.That(TellOffences("TESTING.md", "a comment that said the peer wakes a blocked read")).IsEmpty();
+        await Assert.That(TellOffences("TESTING.md", "a second user can additionally enumerate the root")).IsEmpty();
+
+        // The exclusions, in both directions, over the same reader.
+        await Assert.That(TellOffences("TESTING.md", $"the note said \"{Frame}\" and meant it")).IsEmpty();
+        await Assert.That(TellOffences("TESTING.md", $"a wrapped quotation \"one half\nand {Frame} the other\" ends here")).IsEmpty();
+        await Assert.That(TellOffences("TESTING.md", $"a code span `{Frame}` is a name")).IsEmpty();
+        await Assert.That(TellOffences("TESTING.md", $"> a blockquote {Frame} a sentence")).IsEmpty();
+        await Assert.That(TellOffences("TESTING.md", $"```\n{Frame}\n```")).IsEmpty();
+        await Assert.That(TellOffences("X.cs", $"/// a doc element <c>{Frame}</c> names it")).IsEmpty();
+
+        // Code files are read for their COMMENTS, and a URL in a literal is not one.
+        await Assert.That(TellOffences("X.cs", $"// a comment {Frame} nothing")).IsNotEmpty();
+        await Assert.That(TellOffences("X.cs", $"var s = \"a literal {Frame} nothing\";")).IsEmpty();
+        await Assert.That(TellOffences("X.cs", "var u = \"https://example.invalid/x\"; // fine")).IsEmpty();
+        await Assert.That(TellOffences("X.ps1", $"# a comment {Frame} nothing")).IsNotEmpty();
+        await Assert.That(TellOffences("X.ps1", $"$x = 'a literal {Frame} nothing'")).IsEmpty();
+        await Assert.That(TellOffences("X.csproj", $"<!-- a comment {Frame} nothing -->")).IsNotEmpty();
+        await Assert.That(TellOffences("X.csproj", $"<Thing Text=\"an attribute {Frame} nothing\" />")).IsEmpty();
+
+        // The two named allowances, and the same sentence in a file that is not
+        // the one named.
+        await Assert.That(TellOffences("kb/mcp/sdk.md", QuotedLive[0].Phrase)).IsEmpty();
+        await Assert.That(TellOffences("kb/mcp/protocol.md", QuotedLive[0].Phrase)).IsNotEmpty();
+
+        // Not vacuous over the tree.
+        await Assert.That(scanned).IsGreaterThan(300);
+    }
+
+    /// <summary>The comparison frame, in halves so this file does not carry it.</summary>
+    private const string Frame = "rather" + " than";
+
+    /// <summary>The imperative lead-in, in halves.</summary>
+    private const string Lead = "Note" + " the";
+
+    /// <summary>A discourse marker, in halves.</summary>
+    private const string Marker = "That" + " said";
+
+    /// <summary>One stock intensifier, in halves.</summary>
+    private const string Stock = "essent" + "ially";
+
+    /// <summary>
+    /// Every phrase this repository does not write, each built from halves.
+    /// </summary>
+    /// <remarks>
+    /// <b>Most of them were already absent when the list was written</b>, which
+    /// is deliberate: a rule that starts green costs nothing to keep and fires
+    /// the first time somebody reaches for one. The four that were present were
+    /// swept in the same change.
+    /// </remarks>
+    private static string[] Tells { get; } =
+    [
+        "rather" + " than",
+        "it's worth" + " noting",
+        "it is worth" + " noting",
+        "in other" + " words",
+        "simply" + " put",
+        "in con" + "clusion",
+        "in sum" + "mary",
+        "to sum" + "marise",
+        "further" + "more",
+        "more" + "over",
+        "ultim" + "ately",
+        "import" + "antly",
+        "cruci" + "ally",
+        "at its" + " core",
+        "as men" + "tioned",
+        "rob" + "ust",
+        "seam" + "less",
+        "lever" + "age",
+        "del" + "ve",
+        "land" + "scape",
+        "a testament" + " to",
+        "stream" + "lined",
+        "game-" + "changer",
+        "cutting-" + "edge",
+        "state-of-the-" + "art",
+        "em" + "power",
+        "let" + "'s",
+        "a wide range" + " of",
+        "a variety" + " of",
+        "numer" + "ous",
+        "essent" + "ially",
+    ];
+
+    /// <summary>
+    /// Phrases that are tells only as a discourse marker, so only the form with
+    /// the comma is refused.
+    /// </summary>
+    private static string[] Markers { get; } = ["that" + " said", "addition" + "ally"];
+
+    /// <summary>
+    /// Sentences a dated correction quotes verbatim, which cannot move without
+    /// making the quotation false.
+    /// </summary>
+    /// <remarks>
+    /// <b>Two, and they are named so that they stay two.</b> The first is quoted
+    /// again 281 lines below itself in the same article; the second is quoted by
+    /// a correction directly beneath it. A third would be a new decision.
+    /// </remarks>
+    private static (string File, string Phrase)[] QuotedLive { get; } =
+    [
+        ("kb/mcp/sdk.md", "an error " + Frame + " a hang"),
+        ("tests/BrowserAI.Tests/BrowserIdleTimerTests.cs", "by construction " + Frame + " by timing"),
+    ];
+
+    /// <summary>Every tell in one file's commentary.</summary>
+    /// <param name="name">The repository-relative path, with forward slashes.</param>
+    /// <param name="text">Its text.</param>
+    /// <returns>One line per offence.</returns>
+    private static List<string> TellOffences(string name, string text)
+    {
+        var body = Readable(name, text);
+        var offences = new List<string>();
+
+        foreach (var tell in Tells)
+        {
+            foreach (var at in Occurrences(body, tell, word: true))
+            {
+                offences.Add($"{name}: '{tell}' -- {Excerpt(body, at)}");
+            }
+        }
+
+        foreach (var marker in Markers)
+        {
+            foreach (var at in Occurrences(body, marker + ",", word: true))
+            {
+                offences.Add($"{name}: '{marker},' as a discourse marker -- {Excerpt(body, at)}");
+            }
+        }
+
+        foreach (Match imperative in ImperativeNote().Matches(body))
+        {
+            offences.Add($"{name}: an imperative '{imperative.Value}' lead-in -- {Excerpt(body, imperative.Index)}");
+        }
+
+        return [.. offences.Where(offence => !IsAllowed(name, body, offence))];
+    }
+
+    /// <summary>Whether an offence is one of the named allowances.</summary>
+    /// <param name="name">The file.</param>
+    /// <param name="body">Its readable text.</param>
+    /// <param name="offence">The offence line.</param>
+    /// <returns>Whether it may stay.</returns>
+    private static bool IsAllowed(string name, string body, string offence) =>
+        QuotedLive.Any(allowed =>
+            name == allowed.File
+            && body.Contains(allowed.Phrase, StringComparison.OrdinalIgnoreCase)
+            && offence.Contains(Frame, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Where a phrase occurs, optionally only on word boundaries.</summary>
+    /// <param name="body">The text.</param>
+    /// <param name="phrase">What to look for.</param>
+    /// <param name="word">Whether letters may not touch either end.</param>
+    /// <returns>Each index.</returns>
+    private static List<int> Occurrences(string body, string phrase, bool word)
+    {
+        var found = new List<int>();
+
+        for (var at = body.IndexOf(phrase, StringComparison.OrdinalIgnoreCase); at >= 0;
+             at = body.IndexOf(phrase, at + 1, StringComparison.OrdinalIgnoreCase))
+        {
+            var before = at is 0 || !char.IsLetter(body[at - 1]);
+            var after = at + phrase.Length >= body.Length || !char.IsLetter(body[at + phrase.Length]);
+
+            if (!word || (before && after))
+            {
+                found.Add(at);
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>Forty characters either side, on one line.</summary>
+    /// <param name="body">The text.</param>
+    /// <param name="at">Where the offence is.</param>
+    /// <returns>The excerpt.</returns>
+    private static string Excerpt(string body, int at) =>
+        body[Math.Max(0, at - 40)..Math.Min(body.Length, at + 40)].Replace('\n', ' ');
+
+    /// <summary>
+    /// The prose a file carries, with code, quotations and captures removed.
+    /// </summary>
+    /// <param name="name">The repository-relative path, with forward slashes.</param>
+    /// <param name="text">Its text.</param>
+    /// <returns>What a reader of this repository actually wrote.</returns>
+    private static string Readable(string name, string text)
+    {
+        var suffix = Path.GetExtension(name);
+        var body = Harness.Commentary.Of(text, suffix);
+
+        if (IsProse(suffix))
+        {
+            body = FencedBlock().Replace(body, string.Empty);
+            body = string.Join('\n', body.Split('\n').Where(line => !line.TrimStart().StartsWith('>')));
+        }
+
+        // Paragraphs wrap at 76 columns here, so a quotation is read whole.
+        body = WrappedLine().Replace(body, " ");
+        body = CodeSpan().Replace(body, " `` ");
+        body = DocElement().Replace(body, " <c/> ");
+        body = Quoted().Replace(body, " \"\" ");
+
+        return body;
+    }
+
+    /// <summary>Whether a file is read whole because it is prose.</summary>
+    /// <param name="suffix">Its extension.</param>
+    /// <returns>Whether it is prose.</returns>
+    private static bool IsProse(string suffix) =>
+        suffix is not (".cs" or ".js" or ".mjs" or ".ps1" or ".psm1" or ".sh"
+            or ".csproj" or ".props" or ".targets" or ".slnx" or ".xml" or ".manifest");
+
+    /// <summary>A fenced block, which is code.</summary>
+    [GeneratedRegex(@"(?ms)^```.*?^```")]
+    private static partial Regex FencedBlock();
+
+    /// <summary>A line break inside a paragraph.</summary>
+    [GeneratedRegex(@"(?<!\n)\n(?!\n)")]
+    private static partial Regex WrappedLine();
+
+    /// <summary>An inline code span: an identifier, a path or a command.</summary>
+    [GeneratedRegex(@"`[^`\n]*`")]
+    private static partial Regex CodeSpan();
+
+    /// <summary>The doc comment's own code element.</summary>
+    [GeneratedRegex(@"<c>.*?</c>")]
+    private static partial Regex DocElement();
+
+    /// <summary>Somebody else's words, in straight double quotes.</summary>
+    [GeneratedRegex("\"[^\"\n]*\"")]
+    private static partial Regex Quoted();
+
+    /// <summary>An imperative lead-in that adds nothing the sentence does not say.</summary>
+    [GeneratedRegex(@"(?<![A-Za-z])Note (that|also|how|the)\b")]
+    private static partial Regex ImperativeNote();
+
+    /// <summary>
     /// No text file in the tree carries a character a person does not type.
     /// </summary>
     /// <remarks>

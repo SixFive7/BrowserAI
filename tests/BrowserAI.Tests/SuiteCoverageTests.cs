@@ -967,7 +967,7 @@ internal sealed partial class SuiteCoverageTests
         // "Test adapter test session failure".
         await Assert.That(exitCode).IsNotEqualTo(0).Because(console);
 
-        // ⚠️ AND IT IS THE REFUSAL RATHER THAN SOMETHING ELSE THAT FAILED IT.
+        // ⚠️ AND IT IS THE REFUSAL , NOT SOMETHING ELSE THAT FAILED IT.
         // ***Corrected 2026-08-24 (previously
         // `Assert.That(console).Contains(SuiteEnvironment.ReleaseRunVariable)`).***
         // That was a tautology under a comment claiming it was the decisive
@@ -1112,7 +1112,7 @@ internal sealed partial class SuiteCoverageTests
     // switch-off. CI was removed at the maintainer's decision that day and the
     // file it read no longer exists.
     //
-    // IT WAS DELETED RATHER THAN RE-POINTED, and the reason is this repository's
+    // IT WAS DELETED , NOT RE-POINTED, and the reason is this repository's
     // own rule that a search returning zero needs a positive control. The old
     // test had one: `steps.Count is 1` proved it had really found the step that
     // runs the suite before it concluded anything from a match or from a missing

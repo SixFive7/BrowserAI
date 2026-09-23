@@ -77,7 +77,7 @@ the same omission this page exists to prevent, one level up.
 | The price of Azure Artifact Signing | Not established | ~$10/mo is a list figure, not a quote obtained. [kb](packaging/velopack.md#distribution-msix-and-code-signing) |
 | Whether redistributing Chrome for Testing is permitted | Not established, and **not answerable here** | The only on-point public statement is adverse and is a **citation, not a measurement, and not legal advice**. It is recorded because the provisioning decision rests on it. [kb](packaging/dependencies.md#third-party-payload-as-shipped) |
 
-## Timings carried rather than measured
+## Timings carried, not measured
 
 | Question | Status | Why, and what it would take |
 |---|---|---|

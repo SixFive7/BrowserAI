@@ -332,7 +332,7 @@ rm -rf /tmp/probe              # scratch config, captures, probes
 
 ---
 
-## Caveats, stated rather than buried
+## Caveats, stated here
 
 - **One client, one version.** Claude Code `2.1.234`, Windows 11 Pro 26200,
   Node v26.7.0. Nothing here is a protocol guarantee and nothing watches it for

@@ -97,7 +97,7 @@ internal static class BrowserConfiguration
     /// ⚠️ <b><c>HarFolder</c> is deleted, 2026-08-26 (previously
     /// <c>"network"</c>, "which is already where BrowserAI's filename routing
     /// files anything a <c>network-</c> prefixed tool produces -- so the archive
-    /// sits beside the request and response bodies it duplicates rather than in
+    /// sits beside the request and response bodies it duplicates , not in
     /// a folder of its own").</b> There is no filename routing and there is no
     /// <c>output\network\</c>: the output directory is flat, and the archive
     /// lands at its root beside everything else the session writes. The name
@@ -769,7 +769,7 @@ internal static class BrowserConfiguration
             writer.WriteString("outputDir", request.OutputDirectory);
             writer.WriteBoolean("saveSession", request.SaveSession);
 
-            // ⚠️ FALSE, WRITTEN RATHER THAN OMITTED, AND THERE IS NO REQUEST
+            // ⚠️ FALSE, WRITTEN , NOT OMITTED, AND THERE IS NO REQUEST
             // FIELD TO TURN IT ON. Upstream's file-access roots are the whole of
             // BrowserAI's containment since 2026-08-26: our own `filename` gate
             // was deleted that day as a weaker duplicate of them, so a config
@@ -801,7 +801,7 @@ internal static class BrowserConfiguration
             // every response, for a feature this product does not have.
             writer.WriteString("codegen", Codegen);
 
-            // ⚠️ THE OPPOSITE OF UPSTREAM'S DEFAULT, WRITTEN RATHER THAN
+            // ⚠️ THE OPPOSITE OF UPSTREAM'S DEFAULT, WRITTEN , NOT
             // OMITTED, AND THE ONE KEY HERE THAT config.d.ts DOES NOT DECLARE.
             // See the constant. Omitting it is not neutral: `relative` is what
             // the child falls back to, and that is the defect this key was

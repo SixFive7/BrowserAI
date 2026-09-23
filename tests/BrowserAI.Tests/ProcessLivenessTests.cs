@@ -215,7 +215,7 @@ internal sealed partial class ProcessLivenessTests
         // The refusal is said out loud, and says WHICH of the two it saw: 78 is
         // "opened, and already gone", where 72 is "could not be opened".
         //
-        // ⚠️ 78 RATHER THAN 76. Corrected 2026-09-22 under Q226 c *(previously
+        // ⚠️ 78 , NOT 76. Corrected 2026-09-22 under Q226 c *(previously
         // `record.EventId.Id is 76`)*: `ClientHasAlreadyExited` moved off 76
         // when that id was retired, because two events held it at once and both
         // of them shipped in v1.0.0. **This arm is the reason the renumber is a

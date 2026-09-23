@@ -382,7 +382,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-26 (previously "The one refusal this proxy still
-    /// makes by name is <c>browser_annotate</c>, and that is liveness rather than
+    /// makes by name is <c>browser_annotate</c>, and that is liveness , not
     /// permission").</b> The refusals this proxy makes by name are now whatever
     /// <c>tool-verdicts.json</c> says they are, plus every name that file does not
     /// carry a row for. <c>browser_annotate</c> is still the only tool this build
@@ -625,7 +625,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // from exactly the calls anybody investigates.
         SessionToolLog.Why(live.Logger, tool, why);
 
-        // ⚠️ THE SAME ORDERING, AND HERE IT IS A REFUSAL RATHER THAN A LOG LINE.
+        // ⚠️ THE SAME ORDERING, AND HERE IT IS A REFUSAL , NOT A LOG LINE.
         // The row goes into browserai.data as `in-flight`, and a call BrowserAI
         // could not record is not forwarded: the whole point of one time-ordered
         // log is that reading it back tells you what the session did, and a gap

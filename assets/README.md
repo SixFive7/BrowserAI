@@ -21,7 +21,7 @@ Anthropic or Claude mark, no Windows logo and no Model Context Protocol mark.
 | [`icon-128.png`](icon-128.png) | What [`../README.md`](../README.md) shows beside its title | The same, at 128 |
 | [`social-preview.png`](social-preview.png) | 1280×640, for the repository's **Social preview** setting | The same pipeline, with the icon and one line of text |
 
-**Each raster is rendered natively at its own size rather than downscaled from
+**Each raster is rendered natively at its own size , not downscaled from
 the 256**, by Chromium's own vector rasteriser, with `omitBackground` so the
 corners stay transparent and `deviceScaleFactor: 1` so 16 means 16. The renderer
 is [`docs/probes/2026-09-16-icon/render-assets.mjs`](../docs/probes/2026-09-16-icon/render-assets.mjs),
@@ -30,7 +30,7 @@ which drives the Chromium already in this machine's
 downloaded and the product's own browsers root is not touched.
 
 ⚠️ **The social preview is the one file here with lettering in it**, and the
-lettering is rasterised system text rather than a path: the card asks for
+lettering is rasterised system text , not a path: the card asks for
 `'Segoe UI', system-ui, sans-serif` and keeps whatever Chromium resolved. No font
 file is redistributed and no glyph is traced, but it is the one asset whose look
 depends on the machine that rendered it. The icon itself has no lettering at all
@@ -44,5 +44,5 @@ every relative image reference in the repository points at a file that is here.
 **Nothing checks that the `.ico` and `icon.svg` are the same drawing** -- that
 would be a render comparison on every build -- so
 [the pre-cut item](../RELEASING.md#7-build-clean) is a line a person reads, and
-the SPDX header on `icon.svg` is a habit rather than a mechanism, because the
+the SPDX header on `icon.svg` is a habit , not a mechanism, because the
 header scan's corpus is this repository's prose kinds and an `.svg` is not one.

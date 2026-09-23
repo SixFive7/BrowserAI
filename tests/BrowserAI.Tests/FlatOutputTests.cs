@@ -110,7 +110,7 @@ internal sealed class FlatOutputTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>THIS IS A LOSS, ASSERTED SO THAT IT IS RECORDED RATHER THAN
+    /// ⚠️ <b>THIS IS A LOSS, ASSERTED SO THAT IT IS RECORDED , NOT
     /// DISCOVERED.</b> Until 2026-08-26 <c>ArtifactRouter.Unique</c> suffixed a
     /// colliding name against both the filesystem and an in-flight reservation
     /// set, and the answer said what it had been renamed from -- the hazard row

@@ -43,7 +43,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️⚠️ <b>EVERY TEST BELOW THAT COMPOSES A PATH RUNS TWICE, ONCE PER
-/// <see cref="DriveLetterCase"/>, AND THAT IS THE MECHANISM RATHER THAN
+/// <see cref="DriveLetterCase"/>, AND THAT IS THE MECHANISM , NOT
 /// THOROUGHNESS.</b> The canonical form is read back out of the filesystem,
 /// which always answers <c>C:</c>, while a path composed in this process carries
 /// whatever casing the invoking shell handed the test host. The
@@ -440,7 +440,7 @@ internal sealed class CanonicalPathTests
         // already canonical.
         //
         // ⚠️⚠️ **AND 8.3 GENERATION IS A PER-VOLUME SETTING, WHICH THIS TEST
-        // FOUND OUT FROM CI RATHER THAN FROM A DOCUMENT.** A volume with no 8.3
+        // FOUND OUT FROM CI , NOT FROM A DOCUMENT.** A volume with no 8.3
         // names is a volume on which this hazard does not exist, and saying so
         // is a real assertion -- so the second branch proves the BACKSTOP
         // instead, which is available on every volume: a path the filesystem
@@ -664,7 +664,7 @@ internal sealed class CanonicalPathTests
 
         await Assert.That(verdict.Refusal).IsNull();
 
-        // ⚠️ CASE-INSENSITIVE, AND THAT IS THE CORRECT COMPARISON RATHER THAN A
+        // ⚠️ CASE-INSENSITIVE, AND THAT IS THE CORRECT COMPARISON , NOT A
         // LOOSENING. The canonical form is read back through
         // GetFinalPathNameByHandleW, which always reports the drive letter
         // upper-case; `canonical` is composed in this process from a root

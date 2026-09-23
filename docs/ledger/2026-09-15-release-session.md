@@ -354,7 +354,7 @@ brief specified only the two in-place amendments, and a new row means re-derivin
 all four numbers in the tally sentence. Those three are real, now-closed failure
 modes and may deserve rows.
 
-## Two things deliberately not done, both recorded in the tree rather than lost
+## Two things deliberately not done, both recorded in the tree
 
 1. **No `kb/mcp/sdk.md` entry** for *the SDK sends no response at all for a
    request cancelled by `notifications/cancelled`* -- verified this session, but
@@ -494,7 +494,7 @@ filtered run printed `FULL RUN` and **11 of the 12 tests in that class stayed
 green.** Only a real child process -- the test host started again against one
 method, with a filter and `BROWSERAI_RELEASE_RUN=1` -- caught it.
 
-## Near-miss worth remembering
+## A near-miss
 
 Polling `ls -t .work/suite/ps-final-*.log` first returned a **07:22 log from an
 earlier session reporting 603 tests.** Caught, re-polled by exact filename. That

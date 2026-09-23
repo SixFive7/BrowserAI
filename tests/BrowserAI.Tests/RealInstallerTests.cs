@@ -219,7 +219,7 @@ internal sealed partial class RealInstallerTests
             {
                 found[Path.GetFileName(file)] = File.ReadAllBytes(file);
             }
-#pragma warning disable CA1031 // A shortcut that cannot be read is recorded as unreadable rather than vanishing from the comparison.
+#pragma warning disable CA1031 // A shortcut that cannot be read is recorded as unreadable, not dropped from the comparison.
             catch (IOException)
 #pragma warning restore CA1031
             {
@@ -996,7 +996,7 @@ internal sealed partial class RealInstallerTests
             // `.exe` before its first `.xml` and the shipping pack does not:
             // `...,ico,exe,xml,...` against `...,ico,xml,exe,...`, same 24
             // declarations, same 1,692 bytes, different order. THIS IS NOT
-            // NONDETERMINISM AND WAS CHECKED RATHER THAN ASSUMED: every shipping
+            // NONDETERMINISM AND WAS CHECKED , NOT ASSUMED: every shipping
             // pack on this machine, 20 of them across both Velopack versions,
             // hashes to the same `92451fc6...`; the suite's pack of the same run is
             // the only outlier. So it is velopack#985's stub rename arriving in a

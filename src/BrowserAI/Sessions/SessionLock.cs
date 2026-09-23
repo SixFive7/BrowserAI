@@ -543,7 +543,7 @@ internal sealed class SessionLock : IDisposable
     /// </summary>
     public void Dispose()
     {
-        // ⚠️ IT WAITS FOR AN IN-FLIGHT WRITE RATHER THAN RACING ONE. Disposing
+        // ⚠️ IT WAITS FOR AN IN-FLIGHT WRITE , NOT RACING ONE. Disposing
         // _gate underneath a writer that is holding it is B4. See _inProcess.
         lock (_inProcess)
         {
@@ -765,7 +765,7 @@ internal sealed class SessionLock : IDisposable
             catch (SqliteException refused)
             {
                 // ⚠️ TWO CODES ARE WAITED OUT AND NOTHING ELSE IS, AND THE LINE
-                // BETWEEN THEM IS WHAT MAKES THIS A WAIT RATHER THAN A RETRY
+                // BETWEEN THEM IS WHAT MAKES THIS A WAIT , NOT A RETRY
                 // LOOP. `SQLITE_BUSY` and `SQLITE_IOERR`'s shared-memory arms are
                 // what a reader meets while a holder is DYING: its handles on the
                 // `-wal` and the `-shm` are closing while this open is mapping
@@ -1118,7 +1118,7 @@ internal sealed class SessionLock : IDisposable
                     + "Check that the volume has space, that the directory is writable, and that it is not on a filesystem without shared memory -- a network share is the usual cause.");
             }
 
-            // ⚠️ `in-flight`, AND SETTLED BY THE CALLER RATHER THAN HERE. The
+            // ⚠️ `in-flight`, AND SETTLED BY THE CALLER , NOT HERE. The
             // acquisition succeeded; what has not happened yet is the browser
             // launch, and a row written `successful` at this line would say a
             // session opened when what it means is that a directory was taken.

@@ -472,7 +472,7 @@ job was to find it.
 
 ---
 
-## 15. `browserai_list` on a drive letter that does not exist answers "no sessions" rather than "no such drive"
+## 15. `browserai_list` on a drive letter that does not exist answers "no sessions" and not "no such drive"
 
 **Evidence** (`.work/p7/drive5-out.txt`):
 

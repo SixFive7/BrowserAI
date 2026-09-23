@@ -842,7 +842,7 @@ publishing, and running
 red is *"The peer closed its stdout before answering 'initialize'"* with the exit
 code beneath it.
 
-## `gh`, for a release body: the size limit is carried rather than measured, and the rendering is checkable -- 2026-09-15
+## `gh`, for a release body: the size limit is carried, not measured, and the rendering is checkable -- 2026-09-15
 
 **BrowserAI cuts a GitHub release body at 125,000 characters, and that number
 has no source in this repository.** It arrived with the 2026-09-15 release, where

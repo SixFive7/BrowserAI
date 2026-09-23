@@ -510,7 +510,7 @@ internal sealed class SessionPolicyTests
     // this arm rested on is gone. Deleting a test for a mechanism that no longer
     // exists is not a skip.
     //
-    // WHAT IT WAS FOR IS PRESERVED RATHER THAN LOST, because the tool can come
+    // WHAT IT WAS FOR IS PRESERVED , NOT LOST, because the tool can come
     // back and the judgement would then be owed again: the deny was LIVENESS
     // and not security -- upstream wraps the list path in a five-second
     // timeout and the call path in nothing, and a page whose handler never
@@ -520,7 +520,7 @@ internal sealed class SessionPolicyTests
     // upstream-review.json, and it was RE-READ in the 0.0.82 bundle and is still
     // true of the code.
     //
-    // ONE THING IT RECORDED IS NOW WORSE RATHER THAN GONE. The arm's remarks
+    // ONE THING IT RECORDED IS NOW WORSE , NOT GONE. The arm's remarks
     // said a deny does not close the tab-header line `- N webmcp tools available
     // on the page`, and that the line "carries the count and none of the page's
     // text". At 0.0.82 the snapshot itself carries the page's tool names,

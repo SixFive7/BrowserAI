@@ -641,7 +641,7 @@ without a RID and that writes the other of the file's two states (`7f30ec57...`)
 leaves the tree clean before the release commit is written")*.**
 [`src/BrowserAI.Core/BrowserAI.Core.csproj`](src/BrowserAI.Core/BrowserAI.Core.csproj)
 declares `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` from 2026-09-17 -- the
-way out that [Testing](TESTING.md#a-publish-rewrites-a-lock-file-and-the-diff-is-committed-rather-than-reverted)
+way out that [Testing](TESTING.md#a-publish-rewrites-a-lock-file-and-the-diff-is-committed-not-reverted)
 had written down and deliberately not taken -- so **every** restore shape resolves
 the same set and writes the same bytes. Measured the day it went in, five reads,
 all `fab160c4...`: `dotnet restore --force-evaluate` over the solution, a
@@ -1547,7 +1547,7 @@ release; they only permit one.
 
 ---
 
-## Two things to inherit rather than rediscover
+## Two things to inherit, not rediscover
 
 ### Nothing makes this gate fire
 

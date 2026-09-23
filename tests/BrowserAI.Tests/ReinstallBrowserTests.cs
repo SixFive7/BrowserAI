@@ -972,7 +972,7 @@ internal sealed class ReinstallBrowserTests
         // The job closed, so the probe was terminated. Nothing ran on its way
         // out -- no finally, no Dispose, no release.
         //
-        // ⚠️ POLLED WITH A HANG DETECTOR RATHER THAN ASSERTED ON THE NEXT LINE,
+        // ⚠️ POLLED WITH A HANG DETECTOR , NOT ASSERTED ON THE NEXT LINE,
         // and the reason is the same one ScratchDirectory.RemoveTreeWhenReleased
         // gives: `TerminateProcess` returning -- and even the process object
         // signalling -- is not proof that the kernel has finished closing that

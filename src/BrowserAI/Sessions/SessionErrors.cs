@@ -30,7 +30,7 @@ namespace BrowserAI.Sessions;
 /// </para>
 /// <para>
 /// <b>Corrected 2026-08-17 (previously "One row of §H.4's catalogue is therefore
-/// deliberately absent rather than written and unreachable: the Firefox profile
+/// deliberately absent , not written and unreachable: the Firefox profile
 /// dialog belongs to step 17").</b> Nothing is absent now.
 /// <see cref="FirefoxProfileLocked"/> exists and <c>FirefoxTests</c> provokes it,
 /// so the exception the sentence described has been closed and not carried;
@@ -843,7 +843,7 @@ internal static class SessionErrors
     /// <para>
     /// ⚠️ <b>Added 2026-08-20, at the maintainer's instruction that a reinstall
     /// report progress "just like the first run provisioning" does.</b> Before
-    /// it, this refusal named the holder and said <i>minutes rather than
+    /// it, this refusal named the holder and said <i>minutes , not
     /// seconds</i> -- which reads identically at 4 s in and at 4 minutes in, so a
     /// caller had no way to tell a reinstall that was working from one that was
     /// not, and its only recourse was to keep calling. That is the same defect
@@ -1133,7 +1133,7 @@ internal static class SessionErrors
     // path, so a row nothing can emit is a red build.
     //
     // What it said: "'X' records that it lives at 'Y', and that directory still
-    // exists -- so this is a COPY rather than a move. Nothing was changed. Pass
+    // exists -- so this is a COPY , not a move. Nothing was changed. Pass
     // acknowledgeCopy=true to take this copy over and rewrite the record."
     //
     // Why it existed and why it stopped: the record was a snapshot, so taking a

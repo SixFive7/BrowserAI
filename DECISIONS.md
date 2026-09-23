@@ -507,7 +507,7 @@ a segment ending in a dot or a space, a reserved device name, an alternate data
 stream, a wildcard or a control character. Measured 2026-08-26 on .NET 10.0.11:
 `Path.GetFullPath(@"C:\work\sess.")` answers `C:\work\sess` and
 `Path.GetFullPath(@"C:\work\NUL")` answers `\\.\NUL`
-([kb](kb/windows/detection.md#pathgetfullpath-rewrites-three-name-shapes-rather-than-rejecting-them----measured-2026-08-26)).
+([kb](kb/windows/detection.md#pathgetfullpath-rewrites-three-name-shapes-instead-of-rejecting-them----measured-2026-08-26)).
 None of those fails; each hands back a directory that is not the one the caller
 asked for, which is the two-spellings failure arriving through the name.
 

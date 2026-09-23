@@ -62,7 +62,7 @@ internal sealed class VerticalSliceTests
         // page's own WebMCP tools to tools/list and notifies when that set
         // moves. BrowserAI's does not, and must not say it does.
         //
-        // WHY NOT, MEASURED RATHER THAN ARGUED: BrowserAI answers tools/list
+        // WHY NOT, MEASURED , NOT ARGUED: BrowserAI answers tools/list
         // from the run's own child, which never navigates and so has no page to
         // collect from. Driven end to end on 2026-09-21 against a page
         // registering two WebMCP tools, BrowserAI's tools/list was 78 before and
@@ -338,7 +338,7 @@ internal sealed class VerticalSliceTests
         await Assert.That((bool?)run.ScreenshotEnvelope["result"]!["isError"] is true).IsFalse();
 
         // The file half. ⚠️ *Corrected 2026-08-26 (previously "a name derived
-        // from the page rather than a timestamp, in the folder its generator
+        // from the page , not a timestamp, in the folder its generator
         // prefix names", asserting the path contained `output\page\`).* There
         // is no generator folder and no derived name: upstream chooses the name,
         // upstream writes the file, and it lands at the output ROOT because that

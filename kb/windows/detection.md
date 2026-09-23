@@ -473,7 +473,7 @@ around each `GetDriveTypeW`; remove both definitions with
 `DefineDosDeviceW(DDD_REMOVE_DEFINITION, letter, IntPtr.Zero)` afterwards. The
 second call is cached -- take the first figure.
 
-## `Path.GetFullPath` rewrites three name shapes rather than rejecting them -- measured 2026-08-26
+## `Path.GetFullPath` rewrites three name shapes instead of rejecting them -- measured 2026-08-26
 
 Measured 2026-08-26, PowerShell 7 on .NET 10.0.11, Windows 11 Pro 26200.
 `[FLOATS]` -- a BCL and Win32 normalisation behaviour.

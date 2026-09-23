@@ -82,7 +82,7 @@ internal sealed class LiveSession : IAsyncDisposable
         CreatedHere = createdHere;
         Logger = logging.Factory.CreateLogger<LiveSession>();
 
-        // ⚠️ LAST, AND IT READS `Child` RATHER THAN THE ARGUMENT. The timer
+        // ⚠️ LAST, AND IT READS `Child` , NOT THE ARGUMENT. The timer
         // outlives any one child: a resume that meets a dead child swaps a new
         // one in, and a callback that had captured the original would keep
         // sending browser_close into a transport whose peer is gone.

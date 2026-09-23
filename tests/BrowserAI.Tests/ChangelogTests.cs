@@ -1675,6 +1675,134 @@ internal sealed partial class ChangelogTests
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
 
+    /// <summary>
+    /// No entry's detail opens by restating its own headline.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The shape a wording pass found 103 times in this one file.</b> An
+    /// entry is a bold headline and then the whole of what happened; when the
+    /// detail opens by saying the headline again in longer words, the reader has
+    /// paid for a sentence twice and the second one carries nothing. It reads as
+    /// padding because it is padding, and it is the most common tell a generated
+    /// changelog has.
+    /// </para>
+    /// <para>
+    /// <b>What is compared is the OPENING, not the whole detail.</b> A detail
+    /// that returns to the headline's subject later is a paragraph doing its job;
+    /// one that begins with the same four words is a restatement. Both sides are
+    /// reduced to lower-case word sequences with emphasis, code spans and
+    /// punctuation stripped, so <c>**A tool's own name**</c> and
+    /// <c>A tool's own name is</c> compare as the same four words.
+    /// </para>
+    /// <para>
+    /// <b>Four is the budget and it is deliberately generous.</b> An entry about
+    /// a named thing legitimately opens with that name, and a two- or three-word
+    /// subject shared between a headline and its first sentence is ordinary
+    /// English. Five words in a row is somebody saying it twice.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-23</b> with a doctored entry whose detail repeats
+    /// its headline, and with the shape that must stay green beside it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoEntrysDetailOpensByRestatingItsHeadline()
+    {
+        var text = await File.ReadAllTextAsync(Changelog);
+        var offences = new List<string>();
+        var read = 0;
+
+        foreach (var (number, line) in EntryBlocks(text))
+        {
+            var shaped = EntryShape().Match(line);
+
+            if (!shaped.Success)
+            {
+                continue;
+            }
+
+            read++;
+            var shared = SharedOpening(shaped.Groups["headline"].Value, line[(shaped.Index + shaped.Length)..]);
+
+            if (shared > RestatementBudget)
+            {
+                offences.Add(
+                    $"CHANGELOG.md:{number.ToString(CultureInfo.InvariantCulture)}: the detail opens with "
+                    + $"{shared.ToString(CultureInfo.InvariantCulture)} of the headline's own words in a row, "
+                    + $"which is the headline said twice -- {Excerpt(line)}");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // The corpus is real: every entry in the file was read.
+        await Assert.That(read).IsGreaterThan(200);
+
+        // ⚠️ THE POSITIVE CONTROL. A comparison that stopped comparing would
+        // report every entry clean, which is what a clean file looks like.
+        await Assert.That(SharedOpening(
+            "The packer's own asset list no longer disagrees with what a release publishes.",
+            " The packer's own asset list no longer disagrees with what a release publishes, because `vpk` writes it."))
+            .IsGreaterThan(RestatementBudget);
+
+        // And the shape that must stay green: a detail that starts somewhere else
+        // and reaches the subject in its own time.
+        await Assert.That(SharedOpening(
+            "The packer's own asset list no longer disagrees with what a release publishes.",
+            " `vpk pack` writes that list naming everything it produced, and `vpk upload` uploads every file in it."))
+            .IsLessThanOrEqualTo(RestatementBudget);
+
+        // A short shared subject is ordinary English and is not a restatement.
+        await Assert.That(SharedOpening("The upload set is data.", " The upload set was a judgement until today."))
+            .IsLessThanOrEqualTo(RestatementBudget);
+    }
+
+    /// <summary>How many words a detail's opening shares with its headline's.</summary>
+    /// <param name="headline">The bold headline, markup and all.</param>
+    /// <param name="detail">Everything after it.</param>
+    /// <returns>The length of the common opening run.</returns>
+    private static int SharedOpening(string headline, string detail)
+    {
+        var left = Words(headline);
+        var right = Words(detail);
+        var shared = 0;
+
+        while (shared < left.Count && shared < right.Count
+            && string.Equals(left[shared], right[shared], StringComparison.Ordinal))
+        {
+            shared++;
+        }
+
+        return shared;
+    }
+
+    /// <summary>One piece of changelog text as case-folded words.</summary>
+    /// <remarks>Upper-cased because CA1308 forbids the other direction at error severity; the comparison does not care which.</remarks>
+    /// <param name="text">The text, markup and all.</param>
+    /// <returns>Its words, in order.</returns>
+    private static List<string> Words(string text) =>
+    [
+        .. WordRun().Matches(text.Replace("`", string.Empty, StringComparison.Ordinal)
+                .Replace("*", string.Empty, StringComparison.Ordinal))
+            .Select(word => word.Value.ToUpperInvariant()),
+    ];
+
+    /// <summary>
+    /// How many of a headline's opening words a detail may repeat.
+    /// </summary>
+    /// <remarks>
+    /// Generous on purpose: an entry about a named thing opens with that name,
+    /// and a three-word subject shared with the first sentence is ordinary
+    /// English. Five in a row is the headline said twice.
+    /// </remarks>
+    private const int RestatementBudget = 4;
+
+    /// <summary>A run of letters, digits or apostrophes.</summary>
+    [GeneratedRegex(@"[A-Za-z0-9']+")]
+    private static partial Regex WordRun();
+
     /// <summary>Three parts and an optional pre-release suffix, with no leading `v`.</summary>
     [GeneratedRegex(@"^\d+\.\d+\.\d+(-[0-9A-Za-z][0-9A-Za-z.\-]*)?$")]
     private static partial Regex BareVersion();

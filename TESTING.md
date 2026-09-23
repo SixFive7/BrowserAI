@@ -954,7 +954,7 @@ would turn it green. This one is not a capability because `published slice`
 question about the same artefact, and the two were conflated by a reader who had
 only the first.
 
-#### A publish rewrites a lock file, and the diff is committed rather than reverted
+#### A publish rewrites a lock file, and the diff is committed, not reverted
 
 ⚠️ **Measured 2026-09-16, and the first version of this note was wrong about
 which publish does it.** A **RID-specific** restore -- `-r win-x64`, which every

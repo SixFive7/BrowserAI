@@ -26,7 +26,7 @@ namespace BrowserAI.Runtime;
 /// revision; the leaf beneath it is a per-family convention Playwright's own
 /// downloader knows and publishes nowhere --
 /// <c>chromium-&lt;rev&gt;\chrome-win64\chrome.exe</c> against
-/// <c>firefox-&lt;rev&gt;\firefox\firefox.exe</c>. Note the asymmetry, and
+/// <c>firefox-&lt;rev&gt;\firefox\firefox.exe</c>. The asymmetry matters, and
 /// build no path that assumes otherwise; it is asserted against the real
 /// provisioned tree by the suite.
 /// </para>

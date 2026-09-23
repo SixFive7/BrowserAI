@@ -356,7 +356,7 @@ internal sealed partial class ErrorCatalogueTests
             SessionErrors.ToolIsDenied(RepositoryVerdicts.ADenial.Name, RepositoryVerdicts.Committed.Find(RepositoryVerdicts.ADenial.Name)!.Why!));
 
         // ⚠️ Row 5's companion, and it was INVERTED on 2026-08-26 (previously
-        // "a tool this build has never heard of is FORWARDED now rather than
+        // "a tool this build has never heard of is FORWARDED now , not
         // refused, so nothing of ours is in that answer at all"). Deny-by-default
         // came back as a verdict and not as a permission -- see
         // ToolVerdicts -- so a name with no row is refused at the door, and this
@@ -900,7 +900,7 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(text).Contains("no session on this machine claims");
 
         // ⚠️ COMPARED CASE-INSENSITIVELY, AND THAT IS THE CORRECT COMPARISON
-        // RATHER THAN A LOOSENING. Windows paths are case-insensitive, and
+        // , NOT A LOOSENING. Windows paths are case-insensitive, and
         // these two strings reach this line by different routes: `planted` is
         // composed in this process from a root that inherits whatever
         // drive-letter case the test host was launched with, while the path

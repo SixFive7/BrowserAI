@@ -176,7 +176,7 @@ internal abstract class JsonLinesTransport : TransportBase
             // and with a pipe stdin alike.
             var woken = await ShutdownPeerAsync().ConfigureAwait(false);
 
-            // ⚠️ ABANDONED RATHER THAN AWAITED, and that is what makes this
+            // ⚠️ ABANDONED , NOT AWAITED, and that is what makes this
             // process's exit independent of its caller. A caller-facing read
             // parked on a console never returns, so awaiting it made the exit
             // conditional on a client -- and an installer is not a client. That

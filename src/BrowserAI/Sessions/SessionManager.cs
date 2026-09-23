@@ -944,7 +944,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// ⚠️ ***Corrected 2026-08-26 (previously "The log is printed newest-last
     /// and truncated from the FRONT. A caller arriving at a session wants the
-    /// recent story; an elision is stated rather than presented as continuity,
+    /// recent story; an elision is stated , not presented as continuity,
     /// and the record's own cap says `may` because it cannot tell whether a trim
     /// has happened").*** Every clause of that was false of the code three lines
     /// below it. <b>The log is printed OLDEST first, nothing is elided, and
@@ -1309,7 +1309,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // found sessions has already proved the tree is there, and `list` is the
         // one door where an absent path produces no refusal at all: measured
         // 2026-08-26, `browserai_list` on an unmounted drive letter answered
-        // "No BrowserAI sessions under 'Q:\'. That is an answer rather than an
+        // "No BrowserAI sessions under 'Q:\'. That is an answer , not an
         // error" in 1 ms, which is TRUE and tells a caller who typed the wrong
         // letter nothing. `CanonicalPath` knows -- `VolumeIdentity.Of` says
         // `NoSuchDrive` -- and drops it, on the ground that an absent letter
@@ -1562,7 +1562,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // instead. A model that reads it cannot reach the retry the objection
         // predicted.
         //
-        // INLINE RATHER THAN IN `SessionErrors`, deliberately, and the
+        // INLINE , NOT IN `SessionErrors`, deliberately, and the
         // directory's own CLAUDE.md is why the question comes up: refusals live
         // in the catalogue. This is not a refusal. Nothing was declined, the
         // work was done, and what is returned is a report composed out of the
@@ -1719,7 +1719,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// anything RUNNING FROM the tree', and that is half the question ... a session
     /// that opened a browser between the check and the delete makes the delete
     /// fail on an open executable, so THAT race produces a refusal with evidence
-    /// rather than a corrupted tree").</b> The second half was too generous. A
+    /// , not a corrupted tree").</b> The second half was too generous. A
     /// browser opened in that window fails the delete <i>on Windows</i>, which is
     /// true and is not the whole race: the peer's session is <b>created</b> in
     /// that window too, and a session whose tree was deleted from under it is not
@@ -2631,7 +2631,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// exception was the worst answer this product could give: a caller who
     /// listed <c>D:\link\work</c> where the sessions live under
     /// <c>C:\real\work</c> was told <i>"No BrowserAI sessions under '...'. That is
-    /// an answer rather than an error"</i> -- confidently, wrongly, and with
+    /// an answer , not an error"</i> -- confidently, wrongly, and with
     /// nothing to correct because it was not a refusal.
     /// </para>
     /// <para>

@@ -67,7 +67,7 @@ internal sealed partial class RunOptionTests
 
         if (width is 0)
         {
-            // ⚠️ REFUSED RATHER THAN CLAMPED. A caller that wrote something
+            // ⚠️ REFUSED , NOT CLAMPED. A caller that wrote something
             // meant something, and a server that silently substituted the
             // default would answer every later question about the page at a size
             // nobody chose.
@@ -93,7 +93,7 @@ internal sealed partial class RunOptionTests
         await Assert.That(BrowserConfiguration.HostLocale)
             .IsEqualTo(System.Globalization.CultureInfo.CurrentCulture.Name);
 
-        // ⚠️ IANA RATHER THAN WINDOWS, which is what Playwright accepts. On a
+        // ⚠️ IANA , NOT WINDOWS, which is what Playwright accepts. On a
         // host whose Windows identifier cannot be converted the key is absent --
         // an absent key is upstream's default, where a Windows identifier would
         // fail the launch.

@@ -292,7 +292,7 @@ internal sealed class SessionLogTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>THIS IS THE ORDERING PROPERTY, AND IT IS WHY THE ROW IS WRITTEN
-    /// BEFORE THE FORWARD RATHER THAN AFTER.</b> A navigation that hangs, a
+    /// BEFORE THE FORWARD , NOT AFTER.</b> A navigation that hangs, a
     /// child that dies, a process that is killed -- the calls anybody
     /// investigates -- leave exactly this row and nothing else. A row written on
     /// the way back would be missing from all three, which is the shape the

@@ -331,7 +331,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
         {
             // Expected: step 1 asked for it.
         }
-#pragma warning disable CA1031 // A faulted server task is reported by the liveness check below rather than thrown from here.
+#pragma warning disable CA1031 // A faulted server task is reported by the liveness check below, not thrown from here.
         catch (Exception)
 #pragma warning restore CA1031
         {

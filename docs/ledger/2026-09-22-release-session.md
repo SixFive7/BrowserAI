@@ -269,7 +269,7 @@ ORIENTATION MEASURED BEFORE ANY EDIT:
 
 ⚠️ **THE ARM THE BRIEF NAMES DOES NOT EXIST.** There is no "real-installer update arm that updates through a scratch feed". `SuiteCapability.ReleaseInstaller` is read by exactly three arms, all in `RealInstallerTests`, and all three INSTALL -- install twice over one root, launch the installed binary, and compare the two packs. **No suite arm applies a Velopack update from any feed**: the update lane's real N→N+1 is a MANUAL procedure (`kb/re-verification.md` rows 24 and 85), because the suite may not run a publish and may not run an installer under the shipping id. So item 3 measures what the suite can actually be pointed at, and says so.
 
-## 2026-09-23 ~16:00 -- ITEM 3 `60379a7`, ITEM 4 `38b2d0f`. RESEARCHER'S FINDINGS ARRIVED MID-ITEM-3 AND MY MEASUREMENT AGREES WITH THEM, SO THE RULE IS FINAL PROSE RATHER THAN A PLACEHOLDER.
+## 2026-09-23 ~16:00 -- ITEM 3 `60379a7`, ITEM 4 `38b2d0f`. RESEARCHER'S FINDINGS ARRIVED MID-ITEM-3 AND MY MEASUREMENT AGREES WITH THEM, SO THE RULE IS FINAL PROSE AND NOT A PLACEHOLDER.
 
 **ITEM 3 `60379a7` -- THE MEASUREMENT.** **`vpk download local` is the lever**: it drives `SimpleFileSource`, the same `IUpdateSource` an `UpdateManager` uses, so a real Velopack client can be pointed at a doctored feed with no new binary. Four feeds:
 

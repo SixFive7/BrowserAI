@@ -112,7 +112,7 @@ now agree, and the default posture on this path is sandboxed.
 >
 > ⚠️ **"Sandboxed" here does not include the network service, and that is a
 > different mechanism entirely** -- see
-> [the entry below](#the-network-service-runs-unsandboxed-and-the-cause-is---disable-field-trial-config-rather-than-anything-about-our-tree----measured-2026-08-29).
+> [the entry below](#the-network-service-runs-unsandboxed-and-the-cause-is---disable-field-trial-config-not-anything-about-our-tree----measured-2026-08-29).
 > Passing `--sandbox` gets a sandboxed renderer, storage service and GPU child
 > and leaves the network service at Medium integrity, because upstream's own
 > `chromiumSwitches` turns off the field-trial config that would have enabled it.
@@ -201,7 +201,7 @@ then removed outright in 0.0.79, where passing it produces `error: unknown
 option` and exit 1. The two failure classes are asymmetric and both are live: a
 **CLI flag fails loudly**, a **JSON config key fails silently**.
 
-### The network service runs unsandboxed, and the cause is `--disable-field-trial-config` rather than anything about our tree -- measured 2026-08-29
+### The network service runs unsandboxed, and the cause is `--disable-field-trial-config`, not anything about our tree -- measured 2026-08-29
 
 **`--sandbox` gets you a sandboxed browser and a sandboxed renderer, storage and
 GPU child. It does not get you a sandboxed *network* service, and nothing

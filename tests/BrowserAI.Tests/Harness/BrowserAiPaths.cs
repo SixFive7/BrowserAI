@@ -145,7 +145,7 @@ internal static class BrowserAiPaths
     /// <b>The revision comes from the committed snapshot, never from a literal.</b>
     /// It moves with every upstream bump, and a hard-coded <c>chromium-1237</c>
     /// here would start passing against whatever happened to be on disk.
-    /// Note the asymmetry the path carries: the outer directory uses an
+    /// The asymmetry the path carries: the outer directory uses an
     /// underscore before the revision and the inner one uses a dash.
     /// </remarks>
     public static string ExpectedChromiumExecutable { get; } = Path.Combine(
@@ -168,7 +168,7 @@ internal static class BrowserAiPaths
 
     /// <summary>The Firefox executable inside that directory.</summary>
     /// <remarks>
-    /// Note the layout differs from Chromium's: the inner directory is plain
+    /// The layout differs from Chromium's: the inner directory is plain
     /// <c>firefox</c> and not a platform-suffixed one, which is also why
     /// upstream's <c>winldd</c> dependency validation actually runs for Firefox
     /// and is a permanent no-op for Chromium.

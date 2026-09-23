@@ -67,6 +67,12 @@ made the record shorter**, so the seal reported it as `TRUNCATED` and not as
 a rewrite, which is the branch that prints no replacement line: read the message,
 do not assume the reseal is offered.
 
+**Every body here moved once more that evening, for the WORDING half**, under the
+same grant: *"When it comes to no semantic differences and only removing traces of AI (both in wording and character use) then I hereby grant and instruct you the right and instruction to edit sealed documents."* The frames went -- `X rather than Y`, imperative
+`Note that` lead-ins -- and nothing else. **All eight seals were re-recorded by
+parking every recorded length at 1 so that each took the reseal branch**, because
+the five that got shorter would otherwise have printed nothing at all.
+
 | Finding | State |
 |---|---|
 | locking **A1** -- `destroy` releases the lock before deleting the tree | **fixed**, `SessionDestroyTests` |

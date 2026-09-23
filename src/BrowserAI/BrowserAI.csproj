@@ -36,7 +36,7 @@
       stubs and the build fails with SYSLIB1062 without this. Not a licence to
       hand-write unsafe code: every use is a P/Invoke declaration under Interop\.
 
-      WHY [LibraryImport] RATHER THAN [DllImport]. Corrected 2026-08-17
+      WHY [LibraryImport] AND NOT [DllImport]. Corrected 2026-08-17
       (previously: "because DllImport relies on runtime IL-stub generation that
       NativeAOT does not do"). THAT REASON IS FALSE ON WINDOWS and was never
       measured. ILC compiles DllImport marshalling stubs ahead of time, exactly

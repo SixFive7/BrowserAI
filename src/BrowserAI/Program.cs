@@ -247,7 +247,7 @@ internal static class Program
         // this reason and this one had not, which is how the general case went
         // on paying for a conversation nobody was having.
         //
-        // ⚠️ THE WATCH IS ATTACHED HERE RATHER THAN MERELY ASKED ABOUT. Whether
+        // ⚠️ THE WATCH IS ATTACHED HERE , NOT MERELY ASKED ABOUT. Whether
         // a handle can be held on the launcher is half the decision, and a
         // predicate beside the watcher would be a second source of truth about
         // the same OpenProcess -- two answers, one of them not the watch this

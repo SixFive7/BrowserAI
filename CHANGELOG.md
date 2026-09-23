@@ -2323,7 +2323,7 @@ Read [`README.md`](README.md) first.
   the script says which shape it produced. The limit itself is a number this
   project carries and nobody here has established -- GitHub's own documentation
   for *Create a release* states no maximum -- which
-  [kb](kb/toolchain.md#gh-for-a-release-body-the-size-limit-is-carried-rather-than-measured-and-the-rendering-is-checkable----2026-09-15)
+  [kb](kb/toolchain.md#gh-for-a-release-body-the-size-limit-is-carried-not-measured-and-the-rendering-is-checkable----2026-09-15)
   says in as many words, with a re-verification row naming the experiment that
   was deliberately not run. The rendering is checked against GitHub's own
   renderer before publishing -- `gh api -X POST markdown -f mode=gfm` -- which
