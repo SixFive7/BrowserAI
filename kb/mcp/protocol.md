@@ -58,13 +58,13 @@ and shipped `2026-07-28` support on the spec's release date. `[FLOATS]`
 
 **`DiscoverProbeTimeout` is 5 seconds by default.** With the client version left
 unpinned, the client probes the child with `server/discover` first; if the child
-drops the unknown method rather than answering, **every child spawn costs a flat
+drops the unknown method instead of answering, **every child spawn costs a flat
 5 s against a ~300 ms baseline**, presenting as "browser automation got slow"
 with no error anywhere. The SDK's own test base class pins it explicitly, citing
 [csharp-sdk#1701](https://github.com/modelcontextprotocol/csharp-sdk/issues/1701)
 -- CI slowness tripped the probe there. `[FLOATS]`
 
-> **Asserted rather than remembered since 2026-08-16.**
+> **Asserted, not remembered, since 2026-08-16.**
 > `FakeChildHarnessTests.TheClientPinIsWhatSkipsTheDiscoverProbe` reads the 5 s
 > default off `McpClientOptions` and then proves the mechanism from three sides
 > against an in-process double: pinned, **no** `server/discover` is sent;
@@ -72,7 +72,7 @@ with no error anywhere. The SDK's own test base class pins it explicitly, citing
 > pays the whole timeout. Our `TestDefaults` pins the probe **short** (250 ms),
 > the opposite of upstream's fixtures, because every peer in that layer is a
 > double that answers instantly -- so a probe running to its timeout is a defect
-> to surface fast rather than latency to tolerate. That is also why the row's
+> to surface fast, not latency to tolerate. That is also why the row's
 > wall-clock half is now [row 16a](../re-verification.md) and stays
 > manual: a deliberately short pin cannot measure the ~300 ms production
 > baseline.
@@ -97,7 +97,7 @@ anything.
 > the same emitted string").* The mode lines were deleted on 2026-08-20 and six
 > further changes have landed in the string since; the 2026-08-18 reading was
 > true when it was taken and none of them came back here. The figure is reported
-> rather than gated -- `ModelSurfaceTests` gates the 2,048 cap -- which is why
+> and not gated -- `ModelSurfaceTests` gates the 2,048 cap -- which is why
 > nothing went red while it aged.
 >
 > ⚠️ **Corrected 2026-08-18 (previously "measured 2026-08-16 at build-order step
@@ -122,7 +122,7 @@ anything.
 > carries `·` (2 bytes) and `-` (3 bytes), so a character count under-reports
 > precisely the string that uses them").* The byte figure is still printed and is
 > still the larger of the two; it is simply not the one that is capped -- see the
-> measurement below. `[FLOATS]` on our own wording rather than on a client
+> measurement below. `[FLOATS]` on our own wording, not on a client
 > version.
 
 ### What *"2KB each"* means -- measured 2026-08-18 @ Claude Code 2.1.234
@@ -145,7 +145,7 @@ A probe MCP stdio server published strings of exact length carrying unique
 end-markers, registered with `claude mcp add --scope user` against a **scratch
 `CLAUDE_CONFIG_DIR`**. The `tools` array in the captured
 `POST /v1/messages?beta=true` body is then byte-for-byte what the model receives,
-so every figure below is read rather than inferred. **Reproduced twice, against
+so every figure below is read, not inferred. **Reproduced twice, against
 `sonnet` and `haiku`, identical both times** -- the cut is client-side and
 model-independent.
 
@@ -162,13 +162,13 @@ model-independent.
 ⚠️ **The suffix is visible to the model and invisible to the server.** It is added
 after the JSON-RPC response has left the server, so nothing a server can observe
 reports it -- **a server cannot detect its own truncation**, which is why the gate
-is a build failure rather than a run-time check. A *model* can see it, so
+is a build failure, not a run-time check. A *model* can see it, so
 *"did this arrive whole?"* is answerable by asking and unanswerable by logging.
 
 **Server `instructions` are capped the same way and delivered somewhere else than
 the obvious place.** They arrive inside a `<system-reminder>` block in the
 **`messages`** array, under a `## <server-name>` heading alongside every other
-connected server's, rather than in the `system` prompt -- cut at 2,048 characters
+connected server's, and not in the `system` prompt -- cut at 2,048 characters
 with the same suffix. A 2,600-character probe `instructions` string lost
 everything past 2,048.
 
@@ -265,7 +265,7 @@ discriminator there is** -- which is why `McpClientRegistration` matches on them
 and why `RegistrationTests.TheClientStillSaysWhatTheExitCodesCannot` asserts both
 against the real client on every run that has one. Getting it wrong is safe in
 one direction only: an unrecognised wording reports the pass as *failed*, which
-is loud, rather than reporting a registration that did not happen as done.
+is loud; it never reports a registration that did not happen as done.
 
 **`claude mcp get` starts the server.** It health-checks, so it reported
 *"✘ Failed to connect"* for a path that does not exist -- **and still exited 0**,
@@ -315,7 +315,7 @@ hook path. Confirmed by reading `<root>\logs\browserai-*.log` after the install:
 all three registration records are on disk, written by the hook's own pid.
 
 ⚠️ **A clientless machine could not be simulated and the gap is named.** The
-fallback directory resolves from the process token rather than from
+fallback directory resolves from the process token, not from
 `%USERPROFILE%`, so it cannot be redirected
 ([kb](../windows/processes.md#the-win32-interop-surface)), and moving the
 operator's installed `claude.exe` aside was refused as too destructive to run. What *was* measured on the real

@@ -11,7 +11,7 @@ touched. The builder is
 [`docs/probes/2026-09-16-garbage/`](../../../docs/probes/2026-09-16-garbage/README.md).
 
 **It is a snapshot of one machine on one day**, not a claim about any other -
-re-run the builder rather than reading ages out of it.
+re-run the builder instead of reading ages out of it.
 
 ## What the sweep actually removed, 2026-09-16
 
@@ -21,10 +21,10 @@ it came away clean. **444 entries, 220,268,343 bytes. Nothing refused, nothing
 failed, nothing already absent.**
 
 ⚠️ **Three rows had moved between the inventory and the sweep, and the numbers
-below are what was measured at the moment of deletion rather than what the CSV
+below are what was measured at the moment of deletion, not what the CSV
 says.** `ms-playwright\b` was **27,560 files / 45,836,998 B**, not 26,891 /
 44,652,496 - it had kept leaking for the five and a half hours in between, which
-is the hazard row's point rather than a discrepancy in it.
+is the hazard row's point, not a discrepancy in it.
 `velopack_BrowserAI.app.test.log` was **651,907 B**, not 281 KiB. And there were
 **436** empty `playwright-artifacts-*` directories, not ~300. Every empty-only
 row was checked for emptiness first and would have been refused and listed had

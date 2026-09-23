@@ -42,7 +42,7 @@ reader started, BEFORE ANY READ:
 The third line is a second BrowserAI process that had done nothing but
 `initialize` -- no `tools/call` at all. The `-wal` and `-shm` are the sweep's.
 
-**Why this is a finding rather than a note.** The tree documents this side
+**Why this is a finding and not a note.** The tree documents this side
 effect three times and every one of them attributes it to a *caller-initiated
 read* of the directory the caller named:
 `src/BrowserAI/Storage/CLAUDE.md` ("Reading a session
@@ -110,7 +110,7 @@ outright: U+200B, U+202E and U+FEFF are invisible by construction"*. This is the
 stated predicate not being implemented, not a hostile-caller defence. It applies
 to `tool` as well, which is recorded verbatim from the caller for refusals.
 
-**What fixing it takes.** Enumerate runes rather than chars --
+**What fixing it takes.** Enumerate runes instead of chars --
 `text.EnumerateRunes()` with `Rune.GetUnicodeCategory(rune)` -- and append the
 rune. A lone unpaired surrogate then needs its own decision (drop it: it is not
 text). Plant red with a supplementary-plane `Cf` first; `SessionLogTests` /
@@ -140,8 +140,8 @@ not told anything is wrong. The mirror case is as bad in the other direction:
 never sent.
 
 **What fixing it takes.** Keep `asked` as a `long` through the comparison
-(`pages` is derived from a `long` already), quote `asked` in the refusal rather
-than the narrowed value, and only narrow after the bound holds. A planted-red
+(`pages` is derived from a `long` already), quote `asked` in the refusal and not
+the narrowed value, and only narrow after the bound holds. A planted-red
 arm at `int.MaxValue + 1` and at `2^32 + 1` is a two-line test; `CatchUpTests`
 already owns the paging boundaries (0, 1, last, beyond-end are all correct
 today -- only the wrap is not).
@@ -236,7 +236,7 @@ where the caller who named it is not the one who waits.
 this account has neither `SeCreateSymbolicLinkPrivilege` nor Developer Mode, so
 both `New-Item -ItemType SymbolicLink` and `cmd /c mklink /D` refused. The
 mechanism is read from the code and the cost from the measurement; the
-composition is not measured, and I am saying so rather than implying otherwise.
+composition is not measured, and I am saying so instead of implying otherwise.
 
 **What fixing it takes.** Three options, and only the first is cheap:
 (a) **Record it.** A hazard row and a corrected clause on
@@ -284,7 +284,7 @@ And the walk climbs 64 levels of failed `CreateFileW` before answering, which is
 **What fixing it takes.** Correct the STATE/P5 record, and plant a test at the
 boundary -- `AncestorWalkLimit` levels versus `AncestorWalkLimit + 2`, which is
 the control this file has never had. `CanonicalPathTests` owns it. Consider
-quoting the caller's own path rather than the ancestor in the note.
+quoting the caller's own path instead of the ancestor in the note.
 
 ---
 
@@ -410,7 +410,7 @@ untouched with no note saying why.
 
 **No live row depends on it** -- every row resolves today, which is why the
 suite is green. It fails in the safe direction (a row naming a private method
-would go red rather than pass silently), so this is a false-red risk and a
+would go red instead of passing silently), so this is a false-red risk and a
 narrower claim than the sibling's, not a hole. **It should be harmonised**: the
 two gates are presented in `CLAUDE.md` as one class of mechanism, and the next
 person who writes a re-verification row against a product type will get a red
@@ -487,7 +487,7 @@ it, because only `Network` and `Substituted` are acted on
 (`src/BrowserAI/Sessions/CanonicalPath.cs:251-278`).
 `SessionManager.cs:1053` prints the empty answer.
 
-The answer is *true* rather than wrong, which is why this is low and not high.
+The answer is *true* and not wrong, which is why this is low and not high.
 But `CanonicalPath`'s own remark justifies dropping `NoSuchDrive` on the ground
 that it *"falls through to the ordinary creation failure -- which already says
 what to do"*, and `list` creates nothing, so for this door there is no such
@@ -516,7 +516,7 @@ while .NET's directory creation is not, so the session directory is creatable
 and its `output\` is not usable as a working directory.
 
 The tree already refuses names Windows would not keep verbatim
-(`UnkeepableName`) precisely so that this class fails at the door rather than
+(`UnkeepableName`) precisely so that this class fails at the door instead of
 half-way in. Length is the one member of that class that is not checked.
 
 **What fixing it takes.** A length predicate in `CanonicalPath.UnkeepableName`
@@ -602,8 +602,8 @@ citation can be replaced with, or joined by, this measurement.
 row *and* a corrected claim.** See finding 6. The cost class re-measured today at
 **22,157 ms** for one filesystem call against a dead share. **Could not be
 provoked end to end**: this account cannot create a directory symlink (no
-privilege, no Developer Mode), so the composition is read from the code rather
-than measured. My verdict against P5's "cost not answer; no row added": it does
+privilege, no Developer Mode), so the composition is read from the code and not
+measured. My verdict against P5's "cost not answer; no row added": it does
 warrant a row, because the code *states* a bound it does not keep, which is a
 stronger defect than an unbounded cost nobody claimed was bounded.
 
@@ -703,7 +703,7 @@ sending nothing but `initialize` puts both back.
 while `Append` documents both and `BrowserProxy.Refused` catches both. It is not
 reachable -- `Settle` holds `_inProcess` and returns early on `_disposed`, and
 both disposal paths take the same lock -- so this is an asymmetry in the
-`catch` filters rather than a defect. Worth one word if the file is being
+`catch` filters, not a defect. Worth one word if the file is being
 touched anyway.
 
 ## Addendum -- 2026-09-16: where the scratch artifacts went

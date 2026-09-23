@@ -66,7 +66,7 @@ The argument is an optional stem filter; omit it to render all ten. It writes
 Chromium's own vector rasteriser (not downscaled from the 256), with `omitBackground: true` so the
 corners stay transparent, and `deviceScaleFactor: 1` so 16 means 16.
 
-If you run it from a script rather than a terminal, launch it with `CreateNoWindow = $true` -- that
+If you run it from a script instead of a terminal, launch it with `CreateNoWindow = $true` -- that
 is what this session did, and it is the house rule for every process this project starts:
 
 ```powershell
@@ -119,13 +119,13 @@ Pillow, reading `png\`. The numerals and labels on the sheets use Segoe UI from
 ### 03 -- Globe with a reading eye  *(gradient, emerald → teal)*
 
 - **Metaphor.** The web, being *read*. The meridians place it as the internet; the eye in the middle
-  is the agent looking at the page rather than a person.
+  is the agent looking at the page, not a person.
 - **Palette.** `#34D399 → #10B981 → #0E7490` sphere, `#ECFEFF` wireframe at 45 %, `#F0FDFA` sclera,
   `#083344` pupil.
 - **Why it is logical.** `browser_snapshot` and `browser_take_screenshot` are the two things this
   server does most. This is an icon about perception, which is the honest emphasis.
 - **At 16 px.** Moderate. It collapses to a green disc with a dark centre -- still distinctive in a
-  taskbar, but the eye reads as a dot rather than an eye. The wireframe is gone by 32 px.
+  taskbar, but the eye reads as a dot, not an eye. The wireframe is gone by 32 px.
 - **Licensing.** Original; no globe clip-art, no browser-vendor colour ring.
 
 ### 04 -- The tab that is a speech bubble  *(flat, plum + coral + cream)*
@@ -145,7 +145,7 @@ Pillow, reading `png\`. The numerals and labels on the sheets use Segoe UI from
 - **Metaphor.** Navigation, plainly. `browser_navigate` is the first call any session makes.
 - **Palette.** Cream `#FAF3E3` tile, copper ring gradient `#F59E0B → #92400E`, needle in `#B45309`
   and `#3B2412`, horizontal needle `#D97706`.
-- **Why it is logical.** It is the one candidate that is warm rather than cool, and the only one
+- **Why it is logical.** It is the one candidate that is warm, not cool, and the only one
   that would not look out of place beside a file manager or a terminal. It reads as a *tool*.
 - **At 16 px.** **Weakest of the ten** and I would not pick it for that reason alone. The ring
   becomes a 1 px circle and the needle a speck; the four ticks disappear entirely. It is beautiful
@@ -172,14 +172,14 @@ Pillow, reading `png\`. The numerals and labels on the sheets use Segoe UI from
   frame, semicircular right caps -- under a detached chrome bar with its three window dots.
 - **Palette.** One colour: rose `#E11D48` with everything else knocked out in `#FFF1F2`.
   **Monochrome-friendly (2 of 3):** it is literally two colours and works as a stencil.
-- **Why it is logical.** It is the only candidate that would work as a *brand* rather than only an
+- **Why it is logical.** It is the only candidate that would work as a *brand* and not only an
   app icon -- favicon, README badge, GitHub avatar -- and it stays legible when someone renders it in
   one colour on a wiki.
 - **At 16 px.** Moderate-to-good. The chrome bar and the B both survive as forms, but the counters
   nearly close and it tips toward "pink square with a pale blob". Widening the counters by ~4 px
   would fix it if this wins.
 - **Licensing.** Original. The "B" is `h`/`a`/`z` path data written by hand -- **no typeface was used
-  and no glyph was rasterised**, which is the point of drawing it rather than setting it.
+  and no glyph was rasterised**, which is the point of drawing it instead of setting it.
 
 ### 08 -- Lens over a page  *(duotone, ink + magenta)*
 
@@ -261,7 +261,7 @@ correct, not a defect. Verified a second time with an independent reader (Pillow
 `sizes [(16,16),(32,32),(48,48),(256,256)]`, transparent corners on the 32 (`alpha=0`) and amber
 `(250,210,103,255)` at its centre, so the alpha and the channel order are both right.
 
-**One bug worth recording, because it produced a file that looked plausible:** returning the DIB
+**One bug, recorded because it produced a file that looked plausible:** returning the DIB
 buffer from a PowerShell function as `return $ms.ToArray()` lets the pipeline unroll the byte array
 into 1,128 separate objects. `.Length` still read 1128, so the directory entries were all correct
 and only the payload was short -- the first attempt wrote a 22,817-byte file whose entries claimed
@@ -271,7 +271,7 @@ and only the payload was short -- the first attempt wrote a 22,817-byte file who
 
 - **I could not check these against the real Windows shell** -- no icon was installed, no `.ico` was
   registered, and nothing was written outside this scratch directory, so the 16 and 32 px renders
-  here are Chromium's rasteriser rather than Windows' own icon scaler. They will be close but not
+  here are Chromium's rasteriser, not Windows' own icon scaler. They will be close but not
   identical; the winner should be looked at once in a real Start Menu before it ships.
 - **I did not build the other nine `.ico` files**, by instruction; `Make-Ico.ps1 -Candidate N` does
   it for any of them the moment one is chosen.

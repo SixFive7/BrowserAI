@@ -4,7 +4,7 @@
 # Adversarial review: session locking, ownership and the sweep
 
 Read-only review, 2026-08-18. Every finding is an interleaving, not a smell. Line
-numbers are from the tree as read; where I am reasoning rather than citing a
+numbers are from the tree as read; where I am reasoning and not citing a
 measurement, the sentence says so.
 
 Ranking is by outcome, not by likelihood:
@@ -66,7 +66,7 @@ addressed by path, so two agents pointed at one directory is the case the lock
 exists for.
 
 **What removes it.** Hold `held` across the walk and the delete, and delete
-`lock.json` *last* rather than releasing first. `TreeDelete.Remove` already reports
+`lock.json` *last* instead of releasing first. `TreeDelete.Remove` already reports
 per-node failures, so `lock.json` refusing to go while we hold it is a solvable
 ordering problem, not a reason to release. Alternatively hold the per-directory
 gate across `:490-:502`; that is a longer hold than the gate is documented for,
@@ -108,7 +108,7 @@ is deleted.
 delete a mapped executable, so `chrome.exe` survives; the `.pak` files, locales and
 ICU data do not. *(Reasoning, not measured: the mapped-image refusal is standard
 Windows behaviour, and `TreeDelete` is per-node with a try/catch, so partial
-deletion of a live tree is the expected shape rather than an all-or-nothing.)*
+deletion of a live tree is the expected shape, not an all-or-nothing.)*
 Every running browser then fails on its next resource load, and every session on
 the machine is affected because the browsers root is shared.
 
@@ -205,7 +205,7 @@ profile**, which is the single safety property the product is built around, and
 neither of them is told.
 
 **Interleaving (b) -- "free, and never locked".** Same setup, but P2's `OpenHeld`
-lands in the *unbound* window rather than the unheld one -- the kb measures the
+lands in the *unbound* window and not the unheld one -- the kb measures the
 observable sequence across one replace as `denied → absent → the new record`
 (`kb/windows/processes.md:374-436`). Then `TakeOrReport:523-527` catches
 `FileNotFoundException` and sets `previous = null`, commented *"Free, and never
@@ -380,7 +380,7 @@ holder that is legitimately waiting out three rename windows makes every peer's
 explanations, which would again be a diagnosis the code cannot support.
 
 **What removes it.** Either assert the sum (`3 × RenameWindow.Budget < PerDirectoryGate`)
-and re-size, or -- better -- give the gate a *deadline* rather than a per-call
+and re-size, or -- better -- give the gate a *deadline* instead of a per-call
 budget: pass a remaining-time value into `RenameWindow.WaitOut` so the whole
 critical section is bounded once. The second also fixes B2 by construction.
 
@@ -494,7 +494,7 @@ renames it aside and deletes it -- taking every live session's generated
 `playwright-mcp-<hash>.json` with it. Subsequent `init`/`resume` on that process
 writes its config into a path whose parent no longer exists.
 
-**Bound.** Degraded rather than wrong: the configs have already been read by the
+**Bound.** Degraded, not wrong: the configs have already been read by the
 running children, so live sessions keep working; only new ones fail.
 **What removes it:** have the BrowserAI process itself hold a handle in its
 instance directory (the same `.live` mechanism `LiveInstances` already uses), so
@@ -574,7 +574,7 @@ conclude they are alone.
 `SessionLock.cs:277-281` describes a real fixed defect, and the fix is correct:
 `Reclaim` re-opens before the original failure is rethrown, and if the re-open
 also fails it throws a *different* exception that names the state
-(`:304-306`) rather than handing back an object that reports ownership it does not
+(`:304-306`) instead of handing back an object that reports ownership it does not
 have. The only residue is that on that second failure `_held` keeps a disposed
 stream and `_disposed` stays 0 -- but every method that touches `_held` is
 reachable only through `Rewrite` (guarded) or `Dispose` (idempotent, and disposing

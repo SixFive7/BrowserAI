@@ -30,7 +30,7 @@ normalisation and nothing else, so there is no digest of an original to record.
 captures it and it is what confirms the derived URLs against the string upstream
 actually prints, but upstream colours that line with ANSI SGR escapes - `0x1B`
 bytes - and `HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte` refuses a C0
-control byte anywhere in this repository's text. **It is dropped rather than
+control byte anywhere in this repository's text. **It is dropped, not
 stripped**, because a doctored capture is worth less than a quoted line: what it
 said, with the escapes removed by hand for reading only, is *"Downloading Chrome
 for Testing 154.0.8037.0 (playwright chromium v1245) from
@@ -42,11 +42,11 @@ Re-running the rig produces it again; the file it writes is `<OutJson>.log`.
 ## What the run found
 
 **Chromium 1244 to 1245 produced no difference at all.** `playwright-core`
-builds Chromium's URL with `cftUrl()`, keyed on `browserVersion` rather than on
+builds Chromium's URL with `cftUrl()`, keyed on `browserVersion` and not on
 the revision, and 1245 carries the same `154.0.8037.0` as 1244 - so the archive
 fetched is the same archive and `chromium-1245` holds **454,699,952 B across 308
 files**, which is what `chromium-1244` held. The installer confirmed that URL as
-a string rather than as something derived, in the line quoted above.
+a string, not as something derived, in the line quoted above.
 
 **Firefox 1544 to 1548 moved by 327 bytes on the wire and 902 on disk**, across
 the same 61 files. `ffmpeg` 1011 and `winldd` 1007 are byte-identical, which is

@@ -23,7 +23,7 @@ decision turned on them. Keeping the rig is the whole point of this directory.
   launch half of the first is visible;
 - **idle CPU** -- `TotalProcessorTime` across a 30-second window with no page
   activity at all. ⚠️ **This axis is RETIRED as not established, 2026-09-18
-  (Q215 = a), and the rig still prints it.** Added here rather than removed
+  (Q215 = a), and the rig still prints it.** Added here instead of removed
   because this directory is a record of what was run: two sign reversals across
   three readings, distributions that overlap completely, and a control --
   Chromium byte-identical across 1244 and 1245 -- that moved **−41%** on this axis
@@ -68,7 +68,7 @@ session. **Nothing here is changed to fix that**, because this directory is a
 record of the method the recorded measurements were taken with, and changing the
 rig would falsify it. What a future run should do is keep the session directory
 when a round returns no processes, and that is a change to make deliberately
-rather than a line to slip in.
+and not a line to slip in.
 
 ⚠️ **`TotalProcessorTime.TotalMilliseconds` is formatted as an integer on
 purpose.** PowerShell's `-f` uses the current culture, and on a machine with a
@@ -76,5 +76,5 @@ comma decimal separator the double arrives as `123,456` and parses as `NaN` on
 the other side of the pipe -- which is how the first run of this probe reported a
 null idle-CPU figure for both families.
 
-| Trips `NeverByImageNameTests` | **No** -- *corrected 2026-09-17 (previously "Yes -- `Get-Process`, filtered on `Path` under the browsers root and never on a name")*. Same code, a different scan: it reads the FILTER rather than the API from 2026-09-17 (Q203), and a bare `Get-Process` piped into a `Path` test names no image |
+| Trips `NeverByImageNameTests` | **No** -- *corrected 2026-09-17 (previously "Yes -- `Get-Process`, filtered on `Path` under the browsers root and never on a name")*. Same code, a different scan: it reads the FILTER, not the API, from 2026-09-17 (Q203), and a bare `Get-Process` piped into a `Path` test names no image |
 |---|---|

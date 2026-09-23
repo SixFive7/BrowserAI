@@ -321,7 +321,7 @@ for (const t of b.tools.filter(t => t.name.includes('probe'))) {
 - `probe_param_huge.huge` intact at 20,000 units
 - `probe_multibyte` cut to 2,061 units (≈ 6 KB), proving characters not bytes
 
-Any deviation means the client changed. Re-measure rather than reason about it.
+Any deviation means the client changed. Re-measure it; do not reason about it.
 
 ### 5. Clean up
 

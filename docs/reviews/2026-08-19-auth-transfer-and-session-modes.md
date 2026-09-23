@@ -145,7 +145,7 @@ the window and a separate bound argument is the tool surface.
 Both ends need the `storage` capability -- the source to export, the target to
 import. Source = headed+storage = `persistent`, which exists. **Target =
 headless+storage = the vetoed cell**, so the fourth mode is the workflow's
-precondition rather than a convenience.
+precondition, not a convenience.
 
 **Expiry cannot be detected by any shape.** `storageState` carries no
 server-side validity. Every route produces the same event: the agent gets a

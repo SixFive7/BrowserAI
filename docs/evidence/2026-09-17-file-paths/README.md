@@ -32,11 +32,11 @@ which is what makes the diff between them the measurement.
 
 `through-browserai.log` ends with a real `browserai_destroy`, so the session it
 created is gone; the paths in it name a directory under `.work/` that no longer
-exists. **That is the point of keeping the log rather than the tree** - the
+exists. **That is the point of keeping the log instead of the tree** - the
 pointers are what was being measured, not the files they named.
 
 ## What is not here
 
 No run drove a **paused-debugger location**, which the pull request's own body
-named. The kb entry records that shape as a reading of the bundle rather than a
+named. The kb entry records that shape as a reading of the bundle, not a
 measurement, and this directory holds nothing that would support it either way.

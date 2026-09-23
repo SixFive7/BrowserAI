@@ -103,8 +103,8 @@ description was 60 characters. Arrived whole, all five markers.
 markers including `MK-PARAMHUGE-END-9F21` at character 20,000.
 
 **Parameter descriptions are not capped at any value this experiment could
-reach.** The documentation's silence about them turns out to be accurate rather
-than an omission.
+reach.** The documentation's silence about them turns out to be accurate, not
+an omission.
 
 ### 3. Bytes or characters? -- **UTF-16 CHARACTERS. Bytes are never counted**
 
@@ -156,7 +156,7 @@ both servers, every `MK-BULK-nn-END` marker intact, including
 For scale: BrowserAI's whole surface is 65 tools / 51,149 B of entries -- under
 15% of what went through untouched.
 
-*Caveat stated rather than hidden:* this establishes no cap **at 348 KB**. A cap
+*Caveat stated outright:* this establishes no cap **at 348 KB**. A cap
 above that was not probed, and a request that large would be a token problem long
 before it was a truncation problem.
 
@@ -233,7 +233,7 @@ because the stale artifact is a trap for the next person.)*
 
 | File | Change |
 |---|---|
-| `src/BrowserAI/Proxy/ClientTruncationBudget.cs` | The ⚠️ ASSUMPTION block replaced by the measurement. `Bytes` → `Characters`; `ParameterDescriptionBytes` → `ParameterDescriptionCharacters`, relabelled a **house limit** rather than a client limit |
+| `src/BrowserAI/Proxy/ClientTruncationBudget.cs` | The ⚠️ ASSUMPTION block replaced by the measurement. `Bytes` → `Characters`; `ParameterDescriptionBytes` → `ParameterDescriptionCharacters`, relabelled a **house limit** and not a client limit |
 | `src/BrowserAI/Proxy/ServerInstructions.cs` | `MaximumBytes` → `MaximumCharacters`; `CharacterCount` added beside `ByteCount` |
 | `src/BrowserAI/Sessions/SessionToolSurface.cs` | `DescriptionMaximumBytes` → `DescriptionMaximumCharacters`; parameter constant likewise, with the honest label |
 | `tests/BrowserAI.Tests/ModelSurfaceTests.cs` | Gate is now the measured predicate -- `Length > 2048`, characters -- instead of `max(chars, bytes)`. Bytes still reported. Entry totals still reported and still unasserted, now as the figure a future per-tool bucket would be judged against |

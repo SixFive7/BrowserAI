@@ -9,7 +9,7 @@ Measured on [the reference machine](../README.md#the-reference-machine).
 Read from Velopack **1.2.0** and its Rust binaries unless noted. `[FLOATS]` --
 this is a floating dependency like any other.
 
-**Two passes are recorded here, merged rather than stacked.** The first was read
+**Two passes are recorded here, merged and not stacked.** The first was read
 out of Velopack's own sources and out of a working in-house deployment. The
 second was a spike on **2026-08-15**: a NativeAOT app packed with `vpk`,
 installed per-user, updated 1.0.0 → 1.0.1, rolled back, and uninstalled, against
@@ -79,7 +79,7 @@ every hook returns** (`windows/util.rs:59`). Two unrelated processes were killed
 by an update launched from a third. Our browsers live under `RootAppDir`, so an
 update terminates every running browser without warning and without our teardown.
 Chromium survives hard kills and our locks release on process death, so the damage
-is a lost session rather than corruption -- but it bypasses the job object entirely,
+is a lost session and not corruption -- but it bypasses the job object entirely,
 and a hook must never leave a helper running under the root.
 
 ## The nine landmines, claim and verdict
@@ -281,7 +281,7 @@ itself, which is the part that bites:
 There is no ordering of "release" and "spawn" that closes both, because the
 process doing the handover is one of the two parties to it. **`Update.exe`
 resolves it by being neither:** it is an external Rust binary that outlives the
-app, receives the PID via `waitPid`, waits for *actual process death* rather than
+app, receives the PID via `waitPid`, waits for *actual process death* and not for
 a close request, and only then launches. The mutex is released by the OS at
 termination, which is strictly before the new process starts.
 
@@ -340,7 +340,7 @@ Everything here was run while building
 the Velopack update lane,
 against **Velopack 1.2.0** and **`vpk` 1.2.0**, on Windows 11 Pro 26200, SDK
 10.0.302. It is the first time this project has packed, installed, updated or
-rolled back its own payload rather than a test app. `[FLOATS]` -- every number
+rolled back its own payload and not a test app. `[FLOATS]` -- every number
 moves with Node, `@playwright/mcp` and the toolchain.
 
 **Re-establish the whole set** with
@@ -371,12 +371,12 @@ it to `install.rs`'s rename-and-delete.*
 > it would take the record of the gap with it.
 >
 > ⚠️ **One clause of this section is still NOT re-established, and it is named
-> rather than left inside a cleared notice:** *what Velopack costs the AOT
+> instead of left inside a cleared notice:** *what Velopack costs the AOT
 > binary, 11,874,816 b → 17,853,952 b*. That pair is a publish taken **either
 > side of adding the package**, and `Velopack` is now referenced by three
 > projects and wired into the update lane, the hooks and the restart handover --
 > so producing the "before" half means building a tree with the update lane
-> removed, which is a different product rather than a different measurement. It
+> removed, which is a different product, not a different measurement. It
 > stays `[STALE]` on its own, in place, with that as the reason.
 >
 > ---
@@ -411,11 +411,11 @@ it to `install.rs`'s rename-and-delete.*
 > **Not one of them has been adjusted, and none may be.** The new shipped total
 > is not 130,434,486 plus 556,032: `vpk` recompresses, the delta is computed
 > against a different full package, and `Setup.exe` and the ratio are outputs of
-> that compression rather than sums. Arithmetic here would produce a
+> that compression, not sums. Arithmetic here would produce a
 > measured-looking number nobody measured, which is the one edit
 > [the kb conventions](../README.md) forbid outright.
 >
-> **Why it was not re-run rather than why it should be:** the re-establishment
+> **Why it was not re-run, and not why it should be:** the re-establishment
 > above is two real release publishes plus an install, the row itself says
 > *manual and must be* because the suite may neither publish nor install, and
 > the batch that took the Node bump was a review-and-records batch with no
@@ -426,7 +426,7 @@ it to `install.rs`'s rename-and-delete.*
 > paragraph would otherwise be**, and it is still not stamped here -- but that is
 > now a choice rather than a refusal by the build, and the difference is the
 > whole of the correction below."* The choice is taken: the marker is at the head
-> of this notice, where a reader meets it before the figures rather than after
+> of this notice, where a reader meets it before the figures and not after
 > them. **It is one edit with the sentence in [`kb/README.md`](../README.md)**,
 > which now publishes *one* article carrying a stamp instead of none -- neither
 > half passes alone, which is the pairing the correction below built. **Nothing
@@ -437,9 +437,9 @@ it to `install.rs`'s rename-and-delete.*
 > `RecordedCountTests.TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold`
 > -- *`Corrected 2026-08-27 (previously
 > "RecordedCountTests.NoKnowledgeBaseArticleCarriesAStaleMarker")`* -- matches the
-> **backticked** marker rather than the bare token, so an article may spell the
+> **backticked** marker and not the bare token, so an article may spell the
 > bracketed form in prose without turning the suite red; and it holds the count
-> against the sentence in [`kb/README.md`](../README.md) rather than against zero,
+> against the sentence in [`kb/README.md`](../README.md) and not against zero,
 > so stamping an entry and moving that sentence pass **as a pair**. The
 > resolution its message names is now one the assertion permits, which it was not
 > before. Both narrowings were watched red and green in both directions before
@@ -455,7 +455,7 @@ it to `install.rs`'s rename-and-delete.*
 > floats marker and answered by narrowing the counter's **scope**; scope could not
 > answer it here, because the article that has to discuss this marker is this one,
 > full of real measurements. The narrowing is by **shape** instead. The
-> say-it-in-words workaround above is left standing rather than rewritten: it is
+> say-it-in-words workaround above is left standing and not rewritten: it is
 > still an accurate account of the figures, and re-cutting a paragraph to use a
 > mechanism the day the mechanism arrives is how a document starts being written
 > for the build.
@@ -521,7 +521,7 @@ for comparison and untouched:
 `releases.win.json` **102** against **1** for every other asset and **2** for
 `BrowserAI.exe`.
 
-⚠️ **AND `v1.1.0` NOW CARRIES THREE ASSETS RATHER THAN SEVEN -- 2026-09-23,
+⚠️ **AND `v1.1.0` NOW CARRIES THREE ASSETS, NOT SEVEN -- 2026-09-23,
 at the maintainer's word (*"Q234 b"*).** `BrowserAI.zip`, `RELEASES`,
 `assets.win.json` and `BrowserAI-1.1.0-manifest.zip` were deleted from the
 published release with `gh release delete-asset`, one at a time, leaving exactly
@@ -535,7 +535,7 @@ untouched and still carries all seven**, which is the control that says the
 deletion was scoped to one release -- and what a reader comparing the two releases
 is looking at.
 
-**The pathological case, named rather than defended against.** A client that
+**The pathological case, named and not defended against.** A client that
 spawns a fresh server process per task, in bursts, produces one 260-byte
 conditional GET per start. The CDN does not care, GitHub documents no rate limit
 on release-asset downloads (abuse detection aside), and what actually degrades is
@@ -644,7 +644,7 @@ either side of both runs here.
 [row 85](../re-verification.md) names -- against Velopack and `vpk` **1.2.0**,
 node **v24.21.0**, `@playwright/mcp` **0.0.82** and `playwright-core`
 **1.64.0-alpha-1789764292000**. *(Everything here floats, and it is stamped once
-at the head of this section rather than again on this table: that marker already
+at the head of this section and not again on this table: that marker already
 says every number in the section moves with Node, `@playwright/mcp` and the
 toolchain, and a second stamp on the same cluster would add an obligation
 without adding a fact. Written in words because the counter reads the token and
@@ -682,12 +682,12 @@ cannot tell a mention from a stamp.)*
 >
 > ⭐ **THREE ARTIFACTS MOVED BY EXACTLY THE SAME NUMBER, +55,061 B**, and it is
 > recorded because it is the kind of coincidence a reader should be able to check
-> rather than wonder about: full `.nupkg` 54,926,688 → 54,981,749,
+> instead of wonder about: full `.nupkg` 54,926,688 → 54,981,749,
 > `Setup.exe` 59,435,360 → 59,490,421 and `-Portable.zip` 54,887,948 →
 > 54,943,009. `Setup.exe` carries the full package and the portable zip is the
 > same content, so all three move with the one compression.
 >
-> ⚠️ **THE DELTA IS A FLOOR RATHER THAN A COST, and this run makes that
+> ⚠️ **THE DELTA IS A FLOOR AND NOT A COST, and this run makes that
 > visible for the first time.** `.3` and `.4` are packs of the **same source
 > tree** -- nothing was edited between them -- and their full packages differ by
 > **6 bytes** (54,981,755 against 54,981,749). So the 138,943 b delta is what
@@ -717,7 +717,7 @@ cannot tell a mention from a stamp.)*
 > `[STALE]` notice at the head of this section, which had stood since 2026-08-27
 > and been renewed twice without being run.**
 >
-> **What moved, and it is four inputs rather than one:**
+> **What moved, and it is four inputs and not one:**
 >
 > - **The two-binary split of 2026-09-15 is the biggest of them.** The old table
 >   is about a single 17,853,952 b `BrowserAI.exe`; what ships now is
@@ -736,7 +736,7 @@ cannot tell a mention from a stamp.)*
 > string, so **both** AOT binaries were rebuilt and differ -- 29.6 MB of changed
 > input against the old 17.9 MB. **138,515 b for twice as much changed binary is
 > the delta lane working**, and the 396× reduction against the old 504× is a
-> larger absolute delta against a larger full package rather than a regression
+> larger absolute delta against a larger full package and not a regression
 > in compression.
 
 > ✅ **Corroborated against the real v1.0.0 cut the day before, which nobody
@@ -744,7 +744,7 @@ cannot tell a mention from a stamp.)*
 > **54,926,948 b** and its `Setup.exe` **59,435,620 b**, against this
 > measurement's 54,926,688 and 59,435,360 -- **260 bytes apart in both**. A
 > re-measurement that landed within 5 ppm of a real release cut from the same
-> tree is measuring the shipped artifact rather than a rig. *What accounts for
+> tree is measuring the shipped artifact and not a rig. *What accounts for
 > the 260 bytes was not established* -- the version strings differ in length and
 > appear in several places, which is the obvious candidate and is not the same
 > thing as a measurement.
@@ -777,7 +777,7 @@ feed holds `Full` rows alone. **The figures below stay measured and stay here**:
 they are what the decision costs, they are what `vpk` still does when asked, and
 they are the numbers anybody revisiting the decision would otherwise have to
 re-establish. **`--delta None` is `vpk`'s own name for it** and was resolved from
-the tool rather than from memory: `vpk pack --help` documents `--delta <MODE>`
+the tool, not from memory: `vpk pack --help` documents `--delta <MODE>`
 without enumerating the modes, and handing it an unparseable value makes it name
 them. `[FLOATS]`
 
@@ -801,7 +801,7 @@ production. Confirmed on the receiving end as well: the client logged
 ⚠️ **A delta-reconstructed full package is not byte-identical to the published
 one.** After applying the delta, `packages\BrowserAI-0.9.1-full.nupkg` was
 **49,043,340 b** against the feed's **49,043,493 b** -- the client rebuilds and
-recompresses rather than downloading. It is verified by hash against the
+recompresses instead of downloading. It is verified by hash against the
 manifest's own recorded checksum for the reconstruction, not against the
 published file, so this is not a defect; it does mean **a size comparison
 between `packages\` and the feed proves nothing.**
@@ -816,8 +816,8 @@ between `packages\` and the feed proves nothing.**
 | Update 0.9.0 → 0.9.1 | Found, `deltas=1`, **downloaded and staged in 5.7 s** from a local directory feed, applied, version moved |
 | Rollback 0.9.1 → 0.9.0 | `rollback=True`, **`deltas=0`** -- a full re-download, because `packages\` had been pruned. Staged in **0.2 s** (same volume). Version moved back |
 | **Browsers beside `current\`** | **Byte-identical across both**, by SHA-256 over every file. 52,428,869 b planted at `<root>\browsers\` |
-| **The process log** | Survived both, and the single file carries **`BrowserAI 0.9.0 started` and `BrowserAI 0.9.1 started`** -- which is the §E claim demonstrated rather than asserted |
-| `packages\` after the update | **Pruned to the new full package only.** The 0.9.0 full was gone, which is why archiving every full `.nupkg` is mandatory rather than tidy |
+| **The process log** | Survived both, and the single file carries **`BrowserAI 0.9.0 started` and `BrowserAI 0.9.1 started`** -- which is the §E claim demonstrated, not asserted |
+| `packages\` after the update | **Pruned to the new full package only.** The 0.9.0 full was gone, which is why archiving every full `.nupkg` is mandatory and not tidy |
 
 ⚠️ **The browsers tree was planted, not provisioned.** 52,428,869 b of known
 bytes at `<root>\browsers\chromium-1237\`, hashed before and after. What that
@@ -926,7 +926,7 @@ automatically. ⚠️ **Target `net10.0-windows`** -- the hook callbacks are
 
 > **Confirmed against the real product 2026-08-16**, not against a spike app:
 > zero trim/AOT warnings and **zero `will always throw`** with Velopack
-> referenced -- read out of ILC's own console output rather than inferred from the
+> referenced -- read out of ILC's own console output and not inferred from the
 > exit code, by `build/New-Release.ps1`. **What Velopack costs the binary:
 > 11,874,816 b → 17,853,952 b**, a **5,979,136 b / +50.4%** increase, measured on
 > the AOT publish either side of adding the package. Against a 130 MB shipped
@@ -952,7 +952,7 @@ timeouts: `--veloapp-install` (30 s), `--veloapp-updated` (15 s),
 > became a standing claim about the product, and it reached
 > [the charter](../../DECISIONS.md) as *"verified"*. **The task is dropped**
 > (the Velopack update lane), so
-> nothing now turns on it; the entry is corrected rather than deleted because a
+> nothing now turns on it; the entry is corrected and not deleted because a
 > reader who remembers *"confirmed"* has to be able to find out what happened to
 > it.
 
@@ -971,7 +971,7 @@ and `BrowserAI.app-win-Portable.zip` to `BrowserAI.zip`, rewrites both names in
 day, previously "the download is renamed after the pack ... moves
 `BrowserAI.app-win-Setup.exe` to `BrowserAI-win-Setup.exe` and rewrites that one
 name": it was one artifact and it kept vpk's `-win-Setup` vocabulary, which says
-what the tool calls the file rather than what it is.)* **The channel leaves the
+what the tool calls the file and not what it is.)* **The channel leaves the
 name only on the default channel** -- `BrowserAI-beta.exe` otherwise -- so two
 packs into one output directory still cannot overwrite each other, which is the
 one property vpk's own naming had. **The `.nupkg`s and `releases.{channel}.json`
@@ -989,7 +989,7 @@ rename with `Required = $true`. What changed is the **upload set**: the
 maintainer's decision, verbatim, is *"2 drop and update the readme to not
 mention it"*, so from the next release the zip is not uploaded to GitHub at all.
 It remains a local artifact of every pack -- which is what keeps the rename
-step exercised on every cut rather than only on the ones somebody remembers.
+step exercised on every cut and not only on the ones somebody remembers.
 **The published `v1.1.0` release carries three assets** -- *corrected
 2026-09-23 the same day (previously "**Nothing has been removed from the
 published `v1.1.0` release**, which carries seven assets")*, when the maintainer
@@ -1024,7 +1024,7 @@ by default, so packing succeeds with a 3-part semver while the running app -- a
 window title, an about box, a log banner -- shows a fourth component that exists
 nowhere in the feed. The two numbers are separate and only one of them is
 constrained by `vpk`. Read 2026-08-16 from an in-house Velopack deployment's own troubleshooting notes
-(*Version Shows 4 Parts*), where it is filed as a shipped symptom rather than a
+(*Version Shows 4 Parts*), where it is filed as a shipped symptom and not a
 theory. Not run here. `[STABLE]` -- this is .NET assembly-version behaviour, not
 Velopack's.
 
@@ -1103,14 +1103,14 @@ un-provoked. Measured twice, each arm:
 So the property in `Directory.Build.props` **is** the thing that stops it, once
 anything arms the feature. Two details cost time:
 `-getProperty` reports the value only after the targets actually named ran, and
-this decoration hangs off **`GetAssemblyAttributes`** rather than
+this decoration hangs off **`GetAssemblyAttributes`** and not
 `GetAssemblyVersion` or `MinVer` -- asking after either of the latter two returns
 an undecorated string and reads as proof of something it did not test. And a
 `-p:InformationalVersion=...` global property does **not** survive: MinVer's own
 target overwrites it, so the *`.`-separated* form the SDK produces when the
 string already carries a `+` (`0.1.0+a273b31` becoming
 `0.1.0+a273b31.<40-char sha>`) could not be reproduced here and is **read from
-the target's own text** rather than measured. That form is the one that shipped
+the target's own text** and not measured. That form is the one that shipped
 in an earlier in-house updater, with a consequence: a fleet where
 every device downloaded the binary it was **already running**, swapped it,
 restarted, and repeated hourly -- because the updater compared the served version
@@ -1187,7 +1187,7 @@ before the app has a log, and it does not exit.
 `VELOPACK_FIRSTRUN=true` before the sweep, the live marker, the instance
 directory and the child -- one log line and a window that flickers. And in
 general, a run whose launcher cannot be opened **and** whose stdin is a console
-has no teardown signal that can ever arrive, so it exits cleanly rather than
+has no teardown signal that can ever arrive, so it exits cleanly instead of
 serving nobody: both halves have to hold, because each on its own is ordinary.
 ⚠️ **The upstream half cannot be fixed from here** -- there is no window or
 no-start option on `Setup.exe`'s command line, and `--silent` skips the start
@@ -1227,18 +1227,18 @@ own log at
 
 ⚠️ **`VELOPACK_FIRSTRUN` did not reach the branch that reads it, and why is
 unresolved.** The product logged `Startup[72]`/`Startup[9]` -- the *general*
-no-client decision -- rather than `Startup[8]`, the installer exit, which sits
+no-client decision -- and not `Startup[8]`, the installer exit, which sits
 thirty lines earlier in `Main`. The same binary **does** take `Startup[8]`, in
 0.313 s, when the variable is set on a start it is not installed for (measured
 the same day through the orphan rig,
 [`docs/evidence/2026-09-15-fix/repro-firstrun.txt`](../../docs/evidence/2026-09-15-fix/README.md)),
 so the read is not broken. What runs in between is `VelopackApp.Run()`, which is
 the only code with the opportunity; **that it clears the variable is INFERRED and
-has not been measured**, and it is recorded here as an open question rather than
+has not been measured**, and it is recorded here as an open question and not
 as a fact. Nothing depends on the answer: see the next paragraph.
 
 **So the exit may never key on the variable alone, and this is a second reason
-rather than a restatement of the first.** The stub `BrowserAI.exe` that Velopack
+and not a restatement of the first.** The stub `BrowserAI.exe` that Velopack
 leaves in the install root reaches the app through `Update.exe start`
 (`start_windows_impl.rs:122-131`), which is console-bearing and sets no
 `VELOPACK_FIRSTRUN` at all -- so a person double-clicking the thing the installer
@@ -1248,8 +1248,8 @@ both is *launcher gone or unopenable **and** stdin is a console*.
 
 ⚠️ **Self-update passes `--norestart` today**
 (`Updates/VelopackUpdateClient.cs`), so an applied update does not produce a
-second console-bearing start. That is one argument away from a regression rather
-than a property of the design.
+second console-bearing start. That is one argument away from a regression and not
+a property of the design.
 
 **What was wrong in the product, and it was not the decision.** The decision was
 correct and the *exit* was not reachable: `JsonLinesTransport.DisposeAsync`
@@ -1285,7 +1285,7 @@ installer nor a window: `cmd.exe /c start /b "" cmd.exe /c start /b "" "<exe>"`,
 with the outer `cmd` started `CreateNoWindow` so the console it allocates has no
 window, and **nothing redirected** -- redirecting any stream makes .NET set
 `STARTF_USESTDHANDLES` and hand the child the *caller's* standard input instead.
-Two `start /b`s rather than one **when the shape being reproduced is a pid that
+Two `start /b`s and not one **when the shape being reproduced is a pid that
 will not open at all**: a process handle keeps a dead pid openable, and the test
 host's own handle on a single intermediate is enough to leave one.
 `BrowserAI.Tests.Harness.OrphanedConsoleStart` is that rig, and it now produces
@@ -1323,7 +1323,7 @@ it (`1.0.1-alpha.0.16`, `BROWSERAI_ROOT` pointed at an empty scratch root,
 is what the shape was always going to do and is *not* what decided the earlier
 red -- a launcher still running at the parent read is a race this rig has never
 been measured to lose. The 0.116 s is smaller than the 0.312 s above for a reason
-that is the rig rather than the product: one `cmd` start on the path instead of
+that is the rig and not the product: one `cmd` start on the path instead of
 two. Re-establish it with
 [`docs/probes/2026-09-15-corpse/Measure-Corpse.ps1`](../../docs/probes/2026-09-15-corpse/README.md),
 or read
@@ -1336,7 +1336,7 @@ new one -- and `Startup[9]`.
 win-x64, Windows 11 Pro 26200.** Evidence:
 [`docs/evidence/2026-09-15-app/`](../../docs/evidence/2026-09-15-app/README.md)
 -- `pack2.log` and the feed's text under `packfeed/`, with the three large
-binaries recorded by size and digest in `packfeed-inventory.csv` rather than
+binaries recorded by size and digest in `packfeed-inventory.csv` instead of
 kept. `[FLOATS]`
 
 **A second executable is an ordinary payload file.** It is signed with the rest,
@@ -1359,7 +1359,7 @@ pack ran clean with both present.
 ⚠️ **The ratio is not comparable with the 0.51 in `build/New-Release.ps1`'s own
 comment**, which is from 2026-08-16 and was taken over a much smaller payload.
 This is the number the script printed on the first two-binary run; re-measure it
-by running the script rather than by adjusting it.
+by running the script and not by adjusting it.
 
 **The configuration app costs 4,693,726 bytes of installer** -- 59,353,329 against
 the 54,659,603 `v1.0.0` was packed at -- which is 8.6%, against a 10,382,848-byte
@@ -1374,7 +1374,7 @@ process started until a visible `#32770` owned by it appeared: **243.2 ms**,
 **167.8 ms**, **154.8 ms**. The first is the cold one. `GetWindowRect` reported
 **556 × 426** device pixels every time, on a per-monitor-v2 process.
 
-**Poll rather than sleep once.** Two by-hand probes of the same binary disagreed
+**Poll; do not sleep once.** Two by-hand probes of the same binary disagreed
 at a fixed 2.5 s wait and agreed at 500 ms when polled -- the window arrives when
 the shell gets round to it, and a fixed wait measures the wait.
 
@@ -1409,7 +1409,7 @@ is from *Learn: windows/console/console-allocation-policy*, floors at Windows 11
   Bash terminal, `BrowserAI.Server.exe --sweep` printed its startup record, the
   `BROWSERAI_ROOT` override warning, the client-watch line and the sweep summary,
   and exited 0 -- identically with and without the element.
-- ⚠️ **The benefit could not be established, and the rig said so rather than
+- ⚠️ **The benefit could not be established, and the rig said so instead of
   reporting a success.** A `DETACHED_PROCESS` `pwsh` starting the server, polled
   at 100 ms for six seconds for any visible `ConsoleWindowClass`,
   `CASCADIA_HOSTING_WINDOW_CLASS` or `PseudoConsoleWindow`, saw **zero** new
@@ -1437,7 +1437,7 @@ Evidence:
 
 ⚠️ **Nothing in this section carries a floating-fact marker, deliberately, and
 this sentence is why.** Nothing in the product reads any of it: these are the
-alternatives to a decision rather than facts a build rests on, so re-reading them
+alternatives to a decision and not facts a build rests on, so re-reading them
 is part of re-opening the question and not a standing debt -- which is the
 [one exemption](../re-verification.md#a-floats-entry-with-no-row-the-one-rule)
 read the other way round. The one fact here the product *does* depend on -- that a
@@ -1489,7 +1489,7 @@ GitHub Pages sites may be no larger than 1 GB."* · *"GitHub Pages sites have a
 **soft** limit of 10 builds per hour."* · *"GitHub Pages source repositories have
 a recommended limit of 1 GB."* · *"GitHub Pages deployments will timeout if they
 take longer than 10 minutes."* The page says nothing about cache duration, which
-is why the TTL above had to be measured rather than read.
+is why the TTL above had to be measured and not read.
 
 **At 55,022,716 bytes a package, 100 GB per month is about 1,860 downloads.** The
 1 GB site cap is about **18 packages live at once**. Release assets carry no
@@ -1505,7 +1505,7 @@ says verbatim: *"Your GitHub Pages site will always be deployed with a GitHub
 Actions workflow run, even if you've configured your GitHub Pages site to be
 built using a different CI tool."* So a GitHub-owned `pages-build-deployment` run
 fires on every push. **Whether that breaks this project's no-hosted-CI stance is a
-decision rather than a fact**, and it is named here rather than resolved. Pages
+decision and not a fact**, and it is named here instead of resolved. Pages
 is not enabled today: `gh api repos/SixFive7/BrowserAI` reads `has_pages: false`
 and `repos/.../pages` is a 404.
 
@@ -1589,8 +1589,8 @@ unanswered.
 `export-ignore` in `.gitattributes`, which GitHub does not document itself for
 zipballs and which was **not** tested here, and the Git LFS archive setting, which
 does not apply because this repository uses no LFS. **Taken to its limit that
-produces a near-empty zip, which is a worse artifact than the real source rather
-than a removal.**
+produces a near-empty zip, which is a worse artifact than the real source and
+not a removal.**
 
 ## Distribution: MSIX and code signing
 
@@ -1611,8 +1611,8 @@ list figure, not a quote obtained.
 In-house evidence, not upstream behaviour, and **not reproducible from this
 repository** -- the application is unpublished. `[MACHINE]` -- true of one
 deployment at one point in time. It is kept because **five of the nine landmines
-above are ones it hit rather than avoided**, which is the only evidence available
-that they bite in production rather than only in a spike, and because what it does
+above are ones it hit and not avoided**, which is the only evidence available
+that they bite in production and not only in a spike, and because what it does
 right is the restart choreography this project copied.
 
 **It runs Velopack 0.0.1298, not 1.2.0** -- the pre-1.0 line, with both behaviour
@@ -1621,7 +1621,7 @@ never as *this is how Velopack behaves*. It ships per-user into a
 `%LocalAppData%\<app>\current\` layout, no elevation, S3-compatible feed, silent
 background check, in production across multiple releases.
 
-**Five of the nine landmines above are ones it hit rather than avoided**, and
+**Five of the nine landmines above are ones it hit and not avoided**, and
 none announced itself:
 
 - **Feed URL composition** bricked auto-update for **three shipped versions**;
@@ -1703,7 +1703,7 @@ directory, with the old root renamed aside and deleted on success.
 - ⚠️ **On a same-version re-ship the button a user is asked to press says
   `Repair`.** The version number on the release page has not moved, and the
   installer says the application is *already installed* -- so the correct action
-  reads as a repair of something broken rather than as *install the new build of
+  reads as a repair of something broken and not as *install the new build of
   this number*. There is nothing to configure here: it is Velopack's wording,
   chosen from the version comparison. It matters before anybody is told
   to "just run the installer" after a re-ship. `[FLOATS]`

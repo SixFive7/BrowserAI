@@ -85,7 +85,7 @@ with no dependency); split `encrypted_value` as 3-byte tag, 12-byte nonce,
 ciphertext, 16-byte tag, and decrypt with the recovered key. **Check
 `app_bound_encrypted_key` and the row's scheme tag first** -- they are what says
 which scheme is in force, and a decrypt that fails without them looks like a
-broken script rather than like ABE.
+broken script, not like ABE.
 
 ## The dialog hazard -- worse than "a dialog appears"
 
@@ -114,7 +114,7 @@ BrowserAI must validate every path it hands the child before launch.**
 > already-running personal Chrome and exits. Running it would have driven the
 > operator's own browser. It follows directly from the fallback and singleton
 > behaviour both measured above, and it is a further argument for launching the
-> Chrome for Testing build BrowserAI **provisions** rather than
+> Chrome for Testing build BrowserAI **provisions** instead of
 > `channel: "chrome"`. **Provisioned, not bundled**: ["our own" means the build
 > BrowserAI manages, never one shipped inside the
 > installer](../../DECISIONS.md#processes-browsers-and-session-modes) -- the installer carries no

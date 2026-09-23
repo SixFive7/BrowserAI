@@ -6,7 +6,7 @@
 **Versions in force** unless an entry says otherwise: Windows 11 Pro 26200 · .NET SDK **10.0.302** and **10.0.400**, runtime **10.0.11** · TUnit **1.65.0** · `Microsoft.Testing.Platform` **2.3.3** · npm **11.19.0** · PowerShell **7** · `Microsoft.CodeAnalysis.BannedApiAnalyzers` as resolved by the build.
 Measured on [the reference machine](README.md#the-reference-machine).
 
-Traps in the tooling that builds this kind of product rather than in the product
+Traps in the tooling that builds this kind of product and not in the product
 itself. Nothing here is about processes or about browsers; it is here because
 every one of these cost a build, and most of them fail quietly.
 
@@ -82,7 +82,7 @@ slice publish `PublishedSlice`'s own refusal prints. The two publishes differ in
 where they put the binary -- `artifacts\publish-<exe stem>` against
 `src\<project>\bin\` -- and not in what restore does to the lock file.
 
-**The tree's rule is to revert it rather than commit it**, and nothing enforces
+**The tree's rule is to revert it and not commit it**, and nothing enforces
 that: an arm holding the file free of that section would be red for the whole
 window between [the publish](../RELEASING.md#7-build-clean) and
 [the run](../RELEASING.md#8-run-everything), which is a gate that cannot pass
@@ -104,7 +104,7 @@ sees this.
 and PowerShell **7**, while building the payload: `package-lock.json`
 `lockfileVersion` 3 opens `"packages": { "": { ... } }`, and parsing it raises *"The
 provided JSON includes a property whose name is an empty string, this is only
-supported using the -AsHashTable switch."* It is a hard parse failure rather than
+supported using the -AsHashTable switch."* It is a hard parse failure and not
 a dropped key, so it surfaces immediately -- but only if something parses the lock
 at all, and the natural first version of a payload build does not. Re-establish
 by piping any npm lock through `ConvertFrom-Json` with and without
@@ -117,7 +117,7 @@ and an empty `node_modules` resolves the `latest` dist-tag, `npm ci` then proves
 the resulting lock reproduces that tree on its own. Deleting the lock first is
 what guarantees the re-resolution. **Whether `npm install` re-resolves a dist-tag
 dependency with a lock already present was not measured** -- the payload build
-never gets into that state, so the question is open rather than answered.
+never gets into that state, so the question is open, not answered.
 `[FLOATS]`
 
 ## Analyzers and diagnostic severity
@@ -134,7 +134,7 @@ message, which quotes the entry's own text. `[FLOATS]`
 ### Diagnostic severity: what actually enforces a rule, and what only looks like it
 
 All four measured 2026-08-16 on SDK **10.0.302**, by planting the failure and
-rebuilding with `--no-incremental` rather than by reading documentation. They
+rebuilding with `--no-incremental` and not by reading documentation. They
 matter here because [a severity is never weakened to make code pass](../CLAUDE.md#rules-a-mechanism-enforces) and a
 severity that is quietly inert is the same defect as a config key
 `loadConfig` discards.
@@ -160,7 +160,7 @@ set as an MSBuild property.** `dotnet_analyzer_diagnostic.category-<X>.severity`
 had no effect at all: set to `none` for the TUnit assertion category, the rule
 kept firing at error. The **per-rule** form is honoured in the same build --
 `dotnet_diagnostic.TUnitAssertions0002.severity = none` did suppress it. This is
-documented behaviour rather than a bug, and it is recorded as a measurement because
+documented behaviour and not a bug, and it is recorded as a measurement because
 the failing form fails *silently*: a category line reads as protection, is
 ignored, and nothing reports that. Anything in this repository's
 `.editorconfig` that must actually hold is therefore written per-rule.
@@ -170,7 +170,7 @@ ignored, and nothing reports that. Anything in this repository's
 `EnforceCodeStyleInBuild` on and IDE0005 escalated, the build fails with a
 diagnostic named `EnableGenerateDocumentationFile` telling you to set the
 property ([dotnet/roslyn#41640](https://github.com/dotnet/roslyn/issues/41640)).
-It is an error rather than a quiet skip, which is the good outcome; the trap is
+It is an error and not a quiet skip, which is the good outcome; the trap is
 that the fix also turns on CS1591, so every publicly visible member then needs
 an XML doc comment or the build is red under `TreatWarningsAsErrors`. `[FLOATS]`
 
@@ -182,7 +182,7 @@ Application` returns **two** entries on a Git-for-Windows machine --
 `cmd\git.exe` and `mingw64\bin\git.exe` are both on `PATH` -- so `$git.Source`
 is one string naming two executables and invoking it fails with *"The term
 'C:\...\mingw64\bin\git.exe C:\...\cmd\git.exe' is not recognized"*. `Select-Object
--First 1` is required rather than tidy. And **PowerShell 7 emits ANSI colour
+-First 1` is required, not tidy. And **PowerShell 7 emits ANSI colour
 escapes even when its output is redirected into a pipe**, which arrives in an
 MSBuild `<Error>` as line noise around the diff it is supposed to be carrying;
 `$PSStyle.OutputRendering = 'PlainText'` is the switch. `[MACHINE]` for the
@@ -210,9 +210,9 @@ tree's example: `$Keep | ForEach-Object { $_ -split ',' }`, a no-op when
 `build/New-Release.ps1` calls it with a real array. It was found the way it
 should have been: the first run of the arm driving it failed on a set that
 matched nothing, and the binding was probed both ways before the fix was
-written rather than after.
+written and not after.
 
-`[STABLE]` -- a documented property of `pwsh`'s own argument handling rather than
+`[STABLE]` -- a documented property of `pwsh`'s own argument handling and not
 a version's behaviour. No re-verification row, for the reason
 [the one exemption](re-verification.md#a-floats-entry-with-no-row-the-one-rule)
 gives: a change to it makes the script's own driven test go red, which is where
@@ -352,11 +352,11 @@ The cause is not established. `--diagnostic` shows the host launched with
 `--server dotnettestcli --dotnet-test-pipe testingplatform.pipe.<guid>` and the
 log ending immediately after `Setting
 PlatformExitProcessOnUnhandledException` -- the same fingerprint as the transient,
-which is consistent with a defect in the `dotnet test` ↔ MTP handshake rather
-than in discovery. **Do not write a cause into this entry without measuring
+which is consistent with a defect in the `dotnet test` ↔ MTP handshake and not
+in discovery. **Do not write a cause into this entry without measuring
 one.** [`TODO.md`](../TODO.md) carries the investigation, and build-order
 step 9's evidence came from `BrowserAI.Tests.exe`, which is stated on that step
-rather than left implicit. `[MACHINE]` -- it is a fact about this machine on this
+and not left implicit. `[MACHINE]` -- it is a fact about this machine on this
 date, and the identical tree behaved differently on the same day.
 
 ### Running 419 tests at once: what starves, and by how much
@@ -374,7 +374,7 @@ failure across all eleven was one of three messages:
 | `Initialization timed out` | 46 | the MCP SDK's unset 60 s `InitializationTimeout` ([kb](mcp/sdk.md#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation)) |
 
 **Not one was a logic fault.** The mechanism is thread-pool starvation and it is
-arithmetic rather than mystery. ***Corrected 2026-08-18*** on the *reason*, not
+arithmetic, not mystery. ***Corrected 2026-08-18*** on the *reason*, not
 the conclusion: the injection rate quoted here was *"roughly **one a second**"*
 while the same platform fact in
 [`windows/processes.md`](windows/processes.md) says *"roughly one thread per
@@ -413,7 +413,7 @@ the whole claim being made is that a busy machine cannot reach them.
 
 > ⚠️ **The range here was once written before it was measured, and was wrong.**
 > An earlier revision said *78-108 s* on the strength of a handful of runs; the
-> twenty it claimed to describe were 66-91 s. Recorded rather than quietly
+> twenty it claimed to describe were 66-91 s. Recorded instead of quietly
 > overwritten, because a plausible number typed ahead of the measurement is
 > indistinguishable from a measured one -- which is the failure this directory's
 > first rule exists to prevent, and it happened here.
@@ -432,7 +432,7 @@ argument for the limiter being where it is, made by the limiter.
 > **One failure in that set was not a defect and is named here, because it is
 > the honest limit of this method.** A real Chromium exited with code 1 and no
 > output on either stream, once, while three other agents were saturating the
-> machine -- a browser that could not start, rather than anything the suite
+> machine -- a browser that could not start, and not anything the suite
 > controls. It did not recur across the 20-run streak that followed on the same
 > tree. A suite that runs 419 tests at once on a shared box will occasionally
 > measure the box.
@@ -445,7 +445,7 @@ same defect wearing a dependency's clothes. Second, *a promptness assertion
 wearing a hang detector's name*: a bound that a busy machine can reach is not
 detecting a hang, and every one of them here reported something other than
 "this machine is busy". `[MACHINE]` for the counts and the wall clock -- the
-reference machine is 32 cores, and a smaller one will starve harder rather than
+reference machine is 32 cores, and a smaller one will starve harder, not
 differently.
 
 ### A filtered run covers less than it asked for, and reports success anyway -- measured 2026-08-24
@@ -591,7 +591,7 @@ and will move when that moves.
 verification.** Only a full run is evidence, which is what
 [the gate](../TESTING.md#continuous-integration) already requires in practice and
 what [`CLAUDE.md`](../CLAUDE.md) now says in the list of rules that need a person.
-**It is in that list rather than the mechanised one, and honestly so.** A
+**It is in that list and not the mechanised one, and honestly so.** A
 filtered run is a correct run: every number it prints is true of what it ran.
 What is false is the sentence somebody writes underneath it, and no test can read
 that sentence. A mechanism that refused filtered runs would forbid the iteration
@@ -622,13 +622,13 @@ BrowserAI.Tests.dll --treenode-filter /*/*/SuiteCoverageTests/ARunThatWasFiltere
                     --server dotnettestcli --dotnet-test-pipe testingplatform.pipe.<guid>
 ```
 
-So `dotnet test` **forwards the filter to the test host as an argument** rather
-than delivering it over the channel it also opens. That answers the question the
+So `dotnet test` **forwards the filter to the test host as an argument** and not
+by delivering it over the channel it also opens. That answers the question the
 `filter` row was designed around and does not change the design, for two reasons
 that are visible in that same line. **`--server dotnettestcli` and
 `--dotnet-test-pipe` say a channel exists**, and an IDE's uid-list selection
 travels a route that has not been measured here at all; and a filter that arrives
-as `TestNodeUidListFilter` rather than `TreeNodeFilter` is a filter either way.
+as `TestNodeUidListFilter` and not `TreeNodeFilter` is a filter either way.
 Reading `GlobalContext.TestFilter` is what the framework **applied**, so it covers
 every route by construction, and it is what `SuiteFilter` reads.
 
@@ -694,7 +694,7 @@ all: `dotnet test` runs an ordinary CoreCLR process whose apartment says nothing
 about what ILC did with the attribute.
 `TaskDialogLayoutTests.ThePublishedConfigurationAppRunsInASingleThreadedApartment`
 runs the published binary and asserts it, so the answer is re-established on
-every release gate rather than on a day somebody remembered to look.
+every release gate and not on a day somebody remembered to look.
 
 Re-establish it by hand with
 `src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe --report out.json`
@@ -762,7 +762,7 @@ would only make a future SQLite release noisy in third-party source nobody here
 maintains. `[MACHINE]` for the compiler, `[STABLE]` for the line endings.
 
 ⚠️ **`Exec` at `StandardOutputImportance="Low"` still raises a canonical warning,
-and this needed a control rather than an assumption.** The compile is run with
+and this needed a control, not an assumption.** The compile is run with
 `EchoOff="true"` and its stdout at `Low`, so the *"0 Warning(s)"* above is only
 evidence if a `cl` warning would have escaped that. `/W4` could not be used as
 the control, because the source is clean at `/W4` and a control that cannot fail
@@ -776,10 +776,10 @@ importance is applied. `[STABLE]`.
 *compiler* property handed to csc and ILC; it does not promote an MSBuild task
 warning, and `MSBuildTreatWarningsAsErrors` is not set here. So a `cl` warning
 would be counted and printed and the publish would still exit 0 -- which is a
-weaker guarantee than the one the ILC output has, and is stated here rather than
+weaker guarantee than the one the ILC output has, and is stated here instead of
 implied.
 
-**No `/Zi`, and the reason is a warning rather than a size.** A `.lib` compiled
+**No `/Zi`, and the reason is a warning, not a size.** A `.lib` compiled
 with `/Zi` records a path to a PDB the ILC link is never given, `link.exe`
 raises **LNK4099**, and a repository whose publish is expected to print zero
 warnings then reports one about a missing debug file. `/Z7` puts the same
@@ -799,7 +799,7 @@ the same `vswhere` query and calls `vcvarsall.bat` itself, which sets `PATH`,
 package, and re-verification row 121 covers it.
 
 ⚠️ **`IntermediateOutputPath` is EMPTY inside a `.targets` imported from the
-project body**, and using it there is silent rather than loud: the archive lands
+project body**, and using it there is silent, not loud: the archive lands
 at the project root and the `NativeLibrary` item points at a relative path.
 `BaseIntermediateOutputPath` is set by `Microsoft.Common.props`, which the SDK
 imports *above* the project body, and is therefore the one to compose from;
@@ -852,7 +852,7 @@ GitHub's limit. GitHub's own REST documentation for *Create a release* was read
 on 2026-09-15 and **says nothing about a maximum at all**: the `body` parameter
 is documented as *"Text describing the contents of the tag."* and no length is
 given. So the number is an **assumption this project acts on**, and it is written
-down here as one rather than left to read like a measurement in
+down here as one instead of left to read like a measurement in
 [`build/New-ReleaseNotes.ps1`](../build/New-ReleaseNotes.ps1)'s parameter list.
 
 `[FLOATS]` -- it is GitHub's field and they may move it, in either direction.
@@ -874,7 +874,7 @@ as headlines alone.
 
 `gh api -X POST markdown -f mode=gfm -F text=@<file>` returns the HTML GitHub
 itself would render, so the shape a release body depends on can be asserted
-before it is published rather than looked at afterwards. Measured 2026-09-15 @
+before it is published instead of looked at afterwards. Measured 2026-09-15 @
 `gh` on this machine, over a generated body:
 
 ```
@@ -886,7 +886,7 @@ before it is published rather than looked at afterwards. Measured 2026-09-15 @
 </li>
 ```
 
-Both properties hold: the `<details>` is **inside** the `<li>` rather than a
+Both properties hold: the `<details>` is **inside** the `<li>` and not a
 sibling after it, and the headline is a `<strong>`. What makes the difference is
 the two-space indent and the blank line on each side of the `<summary>` line --
 without the indent the HTML block ends the list, and without the blank lines the

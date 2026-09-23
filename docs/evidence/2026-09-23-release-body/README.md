@@ -22,7 +22,7 @@ re-derived once GitHub's renderer moves.
 |---|---|
 | Tag | `v1.1.0`, on commit `d3aabf1` |
 | Body | **7,477 bytes**, SHA-256 `d9c0f865bbab4b10da6bcacbf8abe42b140bba7506dc7deee6915c0856f30fb6` |
-| ⚠️ Why `.txt` and not `.md` | **So that it stays byte for byte.** Every `.md` here carries a two-line SPDX header and `HouseRuleTests.EverySourceFileCarriesTheTwoLineSpdxHeader` enforces it; adding one would make this file two lines longer than what was published and falsify the digest above, which is the only thing it is for. It is an opaque artifact rather than a document, the same shape as `THIRD-PARTY-NOTICES.txt`, so it takes the extension that says so |
+| ⚠️ Why `.txt` and not `.md` | **So that it stays byte for byte.** Every `.md` here carries a two-line SPDX header and `HouseRuleTests.EverySourceFileCarriesTheTwoLineSpdxHeader` enforces it; adding one would make this file two lines longer than what was published and falsify the digest above, which is the only thing it is for. It is an opaque artifact and not a document, the same shape as `THIRD-PARTY-NOTICES.txt`, so it takes the extension that says so |
 | Rendered | **9,081 bytes**, SHA-256 `0ee99dc811d9132bbc1e387ce0ac2d7717a135317886004ce07ed37b02477559` |
 | Shape the script reported | `linked 7371` |
 | Release | <https://github.com/SixFive7/BrowserAI/releases/tag/v1.1.0> |

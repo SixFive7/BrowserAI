@@ -35,7 +35,7 @@ parent pid, and not one matches on an image name**, so the rigs satisfy the RULE
 -- *never match, count or terminate by name* -- and fail the SCAN, which is a
 substring scan that cannot tell the two apart")*.**
 
-**The scan reads the FILTER rather than the API from 2026-09-17** -- **Q203**,
+**The scan reads the FILTER, not the API, from 2026-09-17** -- **Q203**,
 implemented in
 [`ProcessSelection`](../../tests/BrowserAI.Tests/Harness/ProcessSelection.cs) with
 synthetic controls pointing both ways -- so the fourteen false positives are gone.
@@ -46,7 +46,7 @@ its image name*:
 | | Files flagged | Rigs flagged |
 |---|--:|--:|
 | **Old**, five substrings anywhere in the file | **15 of 36** | **7 of 14** |
-| **New**, a name FILTER rather than the API | **1 of 36** | **1 of 14** |
+| **New**, a name FILTER and not the API | **1 of 36** | **1 of 14** |
 
 ⚠️ **The denominators are the 2026-09-17 measurement and are left as measured.**
 *Added 2026-09-21, when a fifteenth rig arrived* --
@@ -56,8 +56,8 @@ rests on and neither moved**: that rig selects no process at all, by name or
 otherwise, so the blind spot is still **one file wide** and it is still
 `2026-09-14-firstrun/observe.ps1`. Re-counting the denominators would mean
 re-running the whole scan over the whole directory, which is what a dated row is
-for; incrementing them would be adjusting a measurement rather than taking one.
-**A second true positive would be a new decision rather than a precedent**, and
+for; incrementing them would be adjusting a measurement instead of taking one.
+**A second true positive would be a new decision, not a precedent**, and
 this rig is not one.
 
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
@@ -82,7 +82,7 @@ and it is the boundary the scan already draws** -- `RepositoryLayout.SourceAndSc
 is `src`, `tests` and `build`, and has never read `docs/`. Nothing here is built,
 nothing in the suite invokes it, and a rig is not sanctioned to be re-run
 unaltered. **This is not a hiding place and must not become one**, and it is now
-one file wide rather than seven rigs wide. *Placed here 2026-09-16, when the
+one file wide, not seven rigs wide. *Placed here 2026-09-16, when the
 scratch directory was retired; `build/probes/` existed for one commit, `bc68db0`,
 and went red on exactly this.* **The move to `build/probes/` was performed and
 reverted on 2026-09-17** -- thirteen rigs pass the new scan and `observe.ps1` does
@@ -99,8 +99,8 @@ collection you have to look for in two places, and rewriting `observe.ps1` to be
 pid-keyed falsifies the record of method for a scan's benefit, which is the thing
 the warning at the top of this file forbids. **`observe.ps1` is the one true
 positive and is named here so that it stays one** -- if a second rig ever trips
-the scan, that is a new decision rather than a precedent, and the honest move at
-that point is to ask again rather than to widen this paragraph.
+the scan, that is a new decision and not a precedent, and the honest move at
+that point is to ask again instead of widening this paragraph.
 
 | Probe | Re-establishes | Trips the scan |
 |---|---|:-:|

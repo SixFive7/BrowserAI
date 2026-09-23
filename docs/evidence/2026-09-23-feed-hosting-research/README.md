@@ -32,7 +32,7 @@ evidence, it is a second copy of their repository.
 
 **(1) Each file gained the two-line SPDX header** that
 `HouseRuleTests.EverySourceFileCarriesTheTwoLineSpdxHeader` requires of every
-`.md` here. These are documents meant to be read and rendered rather than opaque
+`.md` here. These are documents meant to be read and rendered, not opaque
 artifacts with a published digest, so they keep the `.md` extension and take the
 header - unlike
 [`../2026-09-23-release-manifest/BrowserAI-1.1.0-release-body.txt`](../2026-09-23-release-manifest/README.md),

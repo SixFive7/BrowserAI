@@ -84,7 +84,7 @@ RESTART_NO_HANG` and the original argv (`argv[0]` replaced by `-os-restarted`),
 so `-profile <dir>` survives. Gated on the pref
 `toolkit.winRegisterApplicationRestart`, default `true`, **observed at runtime** --
 setting it false calls `UnregisterApplicationRestart()`. This is the only place
-resurrection can be prevented outright rather than cleaned up after. `[FLOATS]`
+resurrection can be prevented outright instead of cleaned up after. `[FLOATS]`
 
 ## The Firefox half, measured on both sides -- 2026-08-16
 
@@ -117,7 +117,7 @@ profile contains **no `user.js` at all**, and `browser_get_config` echoes
 be green-when-broken on the day the delivery moved, and was red-when-working on
 the day it was written. `[FLOATS]`
 
-> **The consequence, stated rather than glossed: this is an unregistration, not
+> **The consequence, stated plainly: this is an unregistration, not
 > a prevention.** The preference reaches Firefox after its own startup has run,
 > so a Firefox launched through Playwright is registered for a moment and then
 > unregisters itself. **The width of that window is `[UNVERIFIED]`** -- it was not
@@ -132,7 +132,7 @@ browser stays fully functional through Playwright. `[FLOATS]`
 
 > **What actually resurrected the browsers that motivated this project is
 > `[UNVERIFIED]`.** By
-> elimination it is the Windows sign-in restore path rather than
+> elimination it is the Windows sign-in restore path and not
 > `RegisterApplicationRestart`, which is now excluded by measurement. Observing
 > the sign-in path directly requires a reboot, which was not performed. The story
 > is coherent: the legacy setup ran **headed** system Chrome, which has visible
