@@ -28,7 +28,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>Disposal releases the directory and leaves the record.</b> The holder
 /// record outliving the holder is what makes a stale lock a sentence -- <i>"held
-/// by PID 1234 since 14:02, no longer running -- reclaiming"</i> -- rather than a
+/// by PID 1234 since 14:02, no longer running -- reclaiming"</i> -- and not a
 /// refusal, and reclaim is forever, so a torn-down session stays resumable
 /// against its directory indefinitely.
 /// </para>
@@ -47,7 +47,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <param name="child">The child driving this session. This object owns it.</param>
     /// <param name="launch">
     /// Exactly what that child was launched with, kept so a child that has died can
-    /// be replaced by one started the same way rather than one assembled again from
+    /// be replaced by one started the same way and not one assembled again from
     /// arguments that may since have moved.
     /// </param>
     /// <param name="logging">This session's own logging stack. This object owns it.</param>
@@ -155,7 +155,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <summary>The <c>@playwright/mcp</c> child driving it, which is not the same one for the session's whole life.</summary>
     /// <remarks>
     /// ⚠️ <b>Replaceable since 2026-09-17, and everything that reads it has to
-    /// read it through this property rather than capture it.</b>
+    /// read it through this property and not capture it.</b>
     /// <see cref="ReplaceChildAsync"/> swaps in a child started by
     /// <c>browserai_resume</c> after the original died; a caller holding the old
     /// reference would go on talking to a transport whose peer is gone, which is
@@ -165,7 +165,7 @@ internal sealed class LiveSession : IAsyncDisposable
 
     /// <summary>What this session's child was launched with.</summary>
     /// <remarks>
-    /// <b>Kept rather than recomputed</b>, so a relaunch is the same launch: the
+    /// <b>Kept, not recomputed</b>, so a relaunch is the same launch: the
     /// same payload, the same browsers root, the same generated config file and
     /// the same working directory, down to the bytes on the command line.
     /// </remarks>
@@ -175,7 +175,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// A logger writing into this session's own log, built once.
     /// </summary>
     /// <remarks>
-    /// <b>Cached rather than created per call.</b> Every session-scoped call
+    /// <b>Cached, not created per call.</b> Every session-scoped call
     /// writes its <c>why</c> here, so this is on the hot path of the whole
     /// proxy; <c>CreateLogger</c> allocates and takes the factory's lock.
     /// </remarks>
@@ -197,7 +197,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <remarks>
     /// There is no bearer token, so this is what recovers the guarantee a minted
     /// handle was going to provide: a caller driving a session it did not create
-    /// is told so, at first use, rather than at reclaim time.
+    /// is told so, at first use, and not at reclaim time.
     /// </remarks>
     public bool CreatedHere { get; }
 
@@ -209,7 +209,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// for <see cref="BrowserIdleTimer.Period"/>, and the node child is kept.
     /// </summary>
     /// <remarks>
-    /// It belongs to this lifetime rather than to the manager because everything
+    /// It belongs to this lifetime and not to the manager because everything
     /// it acts on does: one session is one child, one job and one log, and a
     /// timer owned anywhere else would need a way to name a session that has
     /// already gone.
@@ -222,8 +222,8 @@ internal sealed class LiveSession : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The old connection is disposed rather than dropped, and that is the
-    /// containment half rather than tidiness.</b> Disposing it closes the job
+    /// <b>The old connection is disposed and not dropped, and that is the
+    /// containment half, not tidiness.</b> Disposing it closes the job
     /// handle, and closing the job handle is what ends anything still alive
     /// inside it -- a browser tree whose <c>node</c> parent died but which the
     /// kernel has not been told about is exactly the state this method is
@@ -231,7 +231,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>The swap happens first.</b> A call arriving mid-replacement reaches
-    /// the new child rather than the one being torn down, which is the ordering
+    /// the new child and not the one being torn down, which is the ordering
     /// a caller can actually be answered under.
     /// </para>
     /// </remarks>
@@ -261,7 +261,7 @@ internal sealed class LiveSession : IAsyncDisposable
 
         // The timer first, so it cannot send a close into a child that is being
         // torn down -- and so a close already in flight is waited for here
-        // rather than failing noisily against a closed transport.
+        // instead of failing noisily against a closed transport.
         await Idle.DisposeAsync().ConfigureAwait(false);
 
         // The child next. Disposing it closes the child's stdin, which is
@@ -271,7 +271,7 @@ internal sealed class LiveSession : IAsyncDisposable
 
         Lock.Dispose();
 
-        // ⚠️ AFTER THE CHILD, and the order is the guarantee rather than tidiness.
+        // ⚠️ AFTER THE CHILD, and the order is the guarantee, not tidiness.
         // Releasing the claim tells the machine that nothing of this session is
         // running out of the browsers root, so it may not be released while the
         // child -- and therefore the browser -- is still up: a reinstall would
@@ -305,7 +305,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// tears the persistent context down, and every process under the browsers
     /// root goes with it while the node child stays. Called again with no browser
     /// open it answers the same text and is not an error, so a close that races
-    /// anything costs a round trip rather than a failure.
+    /// anything costs a round trip and not a failure.
     /// </para>
     /// <para>
     /// ⚠️ <b>IT WRITES A ROW, and it wrote nothing at all until 2026-08-26.</b>

@@ -24,7 +24,7 @@ namespace BrowserAI.Sessions;
 /// type.</b> <c>ErrorCatalogueTests</c> provokes each row through a real
 /// condition and compares what came back against this file, then asserts that
 /// <i>every</i> public method was matched by one of those provocations. A row
-/// nobody can reach is documentation rather than behaviour, and this is the check
+/// nobody can reach is documentation and not behaviour, and this is the check
 /// that says so -- which is why a row is written here only once something can
 /// provoke it, and never in advance.
 /// </para>
@@ -33,7 +33,7 @@ namespace BrowserAI.Sessions;
 /// deliberately absent rather than written and unreachable: the Firefox profile
 /// dialog belongs to step 17").</b> Nothing is absent now.
 /// <see cref="FirefoxProfileLocked"/> exists and <c>FirefoxTests</c> provokes it,
-/// so the exception the sentence described has been closed rather than carried;
+/// so the exception the sentence described has been closed and not carried;
 /// what survives is the rule that produced it, stated above. The build-order step
 /// numbers it named were coordinates in a planning document that no longer
 /// exists, and <c>git blame</c> answers what they were for.
@@ -42,7 +42,7 @@ namespace BrowserAI.Sessions;
 /// ⚠️ <b><c>purpose</c> is a channel between agents.</b> It is free text one
 /// model wrote and another reads, replayed into a second context -- so every
 /// method that echoes one puts it behind <see cref="Recorded"/>, which caps it,
-/// strips control characters and frames it as <i>recorded data</i> rather than as
+/// strips control characters and frames it as <i>recorded data</i> and not as
 /// text addressed to the reader. An unframed replay is an instruction-injection
 /// surface with a friendly name.
 /// </para>
@@ -61,7 +61,7 @@ internal static class SessionErrors
     /// and both are gone: the record keeps whatever an agent wrote, at whatever
     /// length. What this bounds is how much of somebody else's text a refusal
     /// hands to a model that asked a different question -- which is a decision
-    /// about a sentence rather than about a file, and is why removing every cap
+    /// about a sentence and not about a file, and is why removing every cap
     /// from the record did not touch it.
     /// </remarks>
     public const int ReplayedPurposeLength = 300;
@@ -105,7 +105,7 @@ internal static class SessionErrors
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>A refusal rather than a warning, and the sentence has to justify
+    /// <b>A refusal and not a warning, and the sentence has to justify
     /// that.</b> BrowserAI could have forwarded the call and left the log short
     /// by one, and a model reading a session's log afterwards would have had no
     /// way to know. The whole value of one time-ordered log is that reading it
@@ -222,18 +222,18 @@ internal static class SessionErrors
     /// "'{argument}' = '{value}' is a second spelling of a directory the
     /// filesystem calls something else -- {why} ... Call the same tool again with
     /// {argument}='{accepted}'").</b> That row refused every alias and named the
-    /// spelling to use instead. Every alias it refused is now resolved rather
-    /// than refused -- a <c>\\?\</c> prefix is four characters off the front, a
+    /// spelling to use instead. Every alias it refused is now resolved and no longer
+    /// refused -- a <c>\\?\</c> prefix is four characters off the front, a
     /// <c>subst</c> is one object-manager read, a junction is one directory open
     /// on a volume already proven local -- and each of those answers was already
     /// being computed to build that sentence. What is left is this one shape,
-    /// and it is left deliberately rather than by omission.
+    /// and it is left deliberately and not by omission.
     /// </para>
     /// <para>
     /// <b><c>\\?\</c> and <c>\\.\</c> are not one thing.</b> The first is a
     /// length-and-parsing prefix over an ordinary path. The second is the
     /// <i>device namespace</i>, where <c>\\.\NUL</c> and
-    /// <c>\\.\PhysicalDrive0</c> name devices rather than directories -- it
+    /// <c>\\.\PhysicalDrive0</c> name devices and not directories -- it
     /// reaches past every check the filesystem would otherwise apply, which is
     /// the reason the deleted <c>filename</c> gate refused it in those same
     /// words. A directory argument has no business there.
@@ -241,7 +241,7 @@ internal static class SessionErrors
     /// <para>
     /// <b>One turn to fix, by construction.</b> The accepted form is the same
     /// string minus four characters, so the next call is this call with one
-    /// argument replaced -- which is why it is a parameter rather than advice
+    /// argument replaced -- which is why it is a parameter and not advice
     /// about how to find it.
     /// </para>
     /// </remarks>
@@ -288,15 +288,15 @@ internal static class SessionErrors
     /// nothing was changed, and the name is not in this server's
     /// <c>tools/list</c>. The reason -- and what to do instead -- is the row's own
     /// <c>why</c>, because the reason is a fact about that tool and belongs in
-    /// the file a person adjudicates rather than in a C# literal beside a
+    /// the file a person adjudicates and not in a C# literal beside a
     /// constant.
     /// </para>
     /// <para>
     /// <b>It says the tool is not in the list, first.</b> The reader of this
     /// sentence asked for a tool this server never offered, so it almost
-    /// certainly knows the name from <c>@playwright/mcp</c> rather than from
+    /// certainly knows the name from <c>@playwright/mcp</c> and not from
     /// <c>tools/list</c> -- and a refusal that did not say so reads as a tool that
-    /// broke rather than one that is absent, which is a retry.
+    /// broke and not one that is absent, which is a retry.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-26 (previously
@@ -306,7 +306,7 @@ internal static class SessionErrors
     /// <c>tool-verdicts.json</c> and reach a caller through this method's
     /// <paramref name="why"/>, so the text a caller reads is byte-identical and
     /// the reason has become data. What that buys is a second denial costing a
-    /// row rather than a method: the old shape could only ever describe one
+    /// row and not a method: the old shape could only ever describe one
     /// tool, and it was named after it.
     /// </para>
     /// <para>
@@ -330,7 +330,7 @@ internal static class SessionErrors
         + why;
 
     /// <summary>
-    /// Row 5's companion -- a tool nobody has judged, which is a gap rather than
+    /// Row 5's companion -- a tool nobody has judged, which is a gap and not
     /// a decision.
     /// </summary>
     /// <remarks>
@@ -346,7 +346,7 @@ internal static class SessionErrors
     /// <b>model-facing</b> half.)
     /// </para>
     /// <para>
-    /// <b>It says GAP rather than refusal, because the two have different
+    /// <b>It says GAP and not refusal, because the two have different
     /// fixes.</b> A denied tool answers with its own reason and there is nothing
     /// to be done about it; a tool with no verdict is one this build was never
     /// told about -- a name from another server, a typo, or an upstream tool that
@@ -395,8 +395,8 @@ internal static class SessionErrors
     /// <b>It lists what IS there, because the caller read the name somewhere and
     /// the page has moved on.</b> A page tool exists only while the tab is on the
     /// page that registered it, so the ordinary way to meet this is a navigation
-    /// between reading a snapshot and acting on it -- which is a recovery rather
-    /// than a mistake, and the list is what makes the next call the right one.
+    /// between reading a snapshot and acting on it -- which is a recovery and
+    /// not a mistake, and the list is what makes the next call the right one.
     /// </para>
     /// <para>
     /// <b>Each one is named twice where the two differ.</b> The wire name is
@@ -430,7 +430,7 @@ internal static class SessionErrors
     /// <c>&lt;base&gt;_2</c> -- measured 2026-09-21 -- and the snapshot block
     /// prints the page's name for both. There is nothing on this tool's surface
     /// that can separate them, so the refusal hands the caller the wire names and
-    /// stops rather than choosing one: a page that offers two tools with one name
+    /// stops instead of choosing one: a page that offers two tools with one name
     /// is a page where guessing is the expensive mistake.
     /// </remarks>
     /// <param name="name">The name the caller asked for.</param>
@@ -450,7 +450,7 @@ internal static class SessionErrors
     /// else now.
     /// </summary>
     /// <remarks>
-    /// <b>This is the late-binding hazard refusing rather than firing.</b> The
+    /// <b>This is the late-binding hazard refusing instead of firing.</b> The
     /// same wire name resolves to a different page's code after a navigation --
     /// measured 2026-09-21 -- so a caller that read a tool on one page and calls
     /// it after the tab has moved would run code it never read. Naming both URLs
@@ -470,7 +470,7 @@ internal static class SessionErrors
     /// tab is on.
     /// </summary>
     /// <remarks>
-    /// <b>Refused rather than forwarded, because the check the caller asked for
+    /// <b>Refused and not forwarded, because the check the caller asked for
     /// did not happen.</b> <c>page</c> is the whole of the late-binding
     /// mitigation; a call that carried one and ran anyway would give a caller the
     /// protection it asked for in name only, which is worse than not offering it.
@@ -527,7 +527,7 @@ internal static class SessionErrors
     /// </para>
     /// <para>
     /// <b>And the session is still usable, which is why this reads as a recovery
-    /// rather than as a loss.</b> Measured the same day: with a page tool
+    /// and not as a loss.</b> Measured the same day: with a page tool
     /// pending, <c>browser_snapshot</c> answered in 4-7 ms and a second page tool
     /// in about 520 ms.
     /// </para>
@@ -548,7 +548,7 @@ internal static class SessionErrors
     /// <b>The number is quoted because the wait is the caller's decision.</b> An
     /// agent told "wait a moment" cannot tell a ten-second pause from a
     /// twenty-seven-minute one, and the difference between those is the link
-    /// rather than anything BrowserAI knows. Naming the size and the destination
+    /// and not anything BrowserAI knows. Naming the size and the destination
     /// lets it decide whether to wait, do something else first, or tell a human.
     /// </para>
     /// <para>
@@ -601,7 +601,7 @@ internal static class SessionErrors
     /// <remarks>
     /// <para>
     /// <b>A percentage is quoted for the download and withheld for the
-    /// extraction, and the asymmetry is honest rather than lazy.</b> The measured
+    /// extraction, and the asymmetry is honest, not lazy.</b> The measured
     /// total is a <i>download</i> figure -- the sum of three archives'
     /// <c>content-length</c> -- while the extracted tree is more than twice that
     /// (207.3 MB down against 437.2 MiB on disk for chromium, re-measured
@@ -676,7 +676,7 @@ internal static class SessionErrors
     /// closing a human's browser window.
     /// </para>
     /// <para>
-    /// It is nonetheless a refusal rather than a note, because the operation it
+    /// It is nonetheless a refusal and not a note, because the operation it
     /// blocks is a <b>delete</b>: Windows will not remove a directory holding
     /// open executables, so proceeding would fail halfway and leave a tree that
     /// is neither the old browser nor the new one.
@@ -724,7 +724,7 @@ internal static class SessionErrors
     /// pid here that persists across passes with no session open.
     /// </para>
     /// <para>
-    /// <b>It goes to the log rather than to a caller</b>, unlike every other row
+    /// <b>It goes to the log and not to a caller</b>, unlike every other row
     /// in this file, and it is here anyway for the reason the type exists: it is
     /// a sentence written for whoever has to act on it, and a row nobody can
     /// reach is documentation. The census proves this one is reachable exactly
@@ -769,7 +769,7 @@ internal static class SessionErrors
     /// waiting clears this and will never clear that.
     /// </para>
     /// <para>
-    /// <b>It is an error rather than a wait, on the same reasoning as
+    /// <b>It is an error and not a wait, on the same reasoning as
     /// <c>browserai_destroy</c>'s survivors:</b> the call did not do what was
     /// asked. A block would put an <c>init</c> behind a 203.8 MB download with
     /// nothing to read, which is the thing the whole provisioning design exists
@@ -809,8 +809,8 @@ internal static class SessionErrors
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>A separate row from <see cref="BrowsersAreBeingReinstalled"/> rather
-    /// than a clause inside it, and the test is the recovery.</b> That row's
+    /// ⚠️ <b>A separate row from <see cref="BrowsersAreBeingReinstalled"/> and
+    /// not a clause inside it, and the test is the recovery.</b> That row's
     /// three callers share one row because they share one recovery -- <i>wait,
     /// then call again</i>. This condition's recovery is the opposite: nothing
     /// will change by waiting, and something outside BrowserAI has to be fixed.

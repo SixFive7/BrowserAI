@@ -34,7 +34,7 @@ internal sealed record SessionEnvironment
     /// forwarded, refused or answered here.
     /// </summary>
     /// <remarks>
-    /// <b>Required rather than read from <see cref="Payload"/> on demand, and for
+    /// <b>Required and not read from <see cref="Payload"/> on demand, and for
     /// the reason <see cref="Provisioner"/> is.</b> Loading it lazily at the door
     /// would put a file read -- and a possible failure naming a missing payload --
     /// on the path of a call that has already been accepted; loading it here
@@ -50,7 +50,7 @@ internal sealed record SessionEnvironment
     /// for, and what <c>browserai_reinstall_browser</c> drives.
     /// </summary>
     /// <remarks>
-    /// <b>Required rather than defaulted, and that is on purpose.</b> A
+    /// <b>Required, not defaulted, and that is on purpose.</b> A
     /// provisioner conjured at the call site would point at whatever browsers
     /// root happened to be in scope -- and the one thing that must never happen in
     /// a test is a 203.8 MB download nobody asked for. Handing it in makes the
@@ -67,7 +67,7 @@ internal sealed record SessionEnvironment
     /// Never inside the session directory. <c>browserai.lock</c> and
     /// <c>browserai.data</c> are the only files at a session's root; a third would
     /// make the two that matter missable, and a config file is a per-run artifact
-    /// rather than part of the session's durable state. *(Corrected 2026-08-26,
+    /// and not part of the session's durable state. *(Corrected 2026-08-26,
     /// previously "<c>browserai.json</c> and the session log".)*
     /// </remarks>
     public required string InstanceDirectory { get; init; }
@@ -106,8 +106,8 @@ internal sealed record SessionEnvironment
     /// <b>A seam of exactly the same kind as <see cref="BrowserIdlePeriod"/>, and
     /// it is here because shortening the period was not enough.</b> Every claim
     /// the timer makes is a claim about <i>when</i>, and a test that establishes
-    /// one by letting real time pass is measuring the machine's scheduler rather
-    /// than the product. Measured 2026-08-17 with the suite running all 416 tests
+    /// one by letting real time pass is measuring the machine's scheduler and
+    /// not the product. Measured 2026-08-17 with the suite running all 416 tests
     /// at once: one in-process round trip took <b>1.51 s and 2.27 s</b> against
     /// an 800 ms period, so the driving test concluded -- correctly -- that the
     /// session had gone idle, and went red five times in twenty runs while the
@@ -115,7 +115,7 @@ internal sealed record SessionEnvironment
     /// </para>
     /// <para>
     /// <b>The default is the real clock, and that it stays the real clock is
-    /// asserted rather than assumed.</b> A manual clock leaking into a shipped
+    /// asserted, not assumed.</b> A manual clock leaking into a shipped
     /// build would stop the only timer in the product from ever firing, and
     /// nothing would go red: a browser that is never closed looks exactly like a
     /// browser that is being used. <c>BrowserIdleTimerTests</c> asserts that
@@ -136,7 +136,7 @@ internal sealed record SessionEnvironment
     /// routing has to be driven across sessions of
     /// <i>different</i> modes at once, and doing that against real children costs
     /// three node processes and a browser per assertion -- which is slow enough
-    /// that the concurrency would be tested once rather than at every level of
+    /// that the concurrency would be tested once and not at every level of
     /// contention. Substituted, the same product code runs against in-process
     /// doubles in milliseconds.
     /// </para>
