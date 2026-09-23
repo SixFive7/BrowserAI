@@ -22,20 +22,20 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>The subsystem is the discriminator that cannot be faked by a rename</b>,
-/// which is the whole reason it is read rather than the file name trusted. It is
+/// which is the whole reason it is read and the file name not trusted. It is
 /// a field the linker writes and the loader obeys: subsystem 2 is never given a
 /// console and subsystem 3 always is
 /// (<i>Learn: windows/console/creation-of-a-console</i>).
 /// </para>
 /// <para>
 /// <b>Nothing here is Win32.</b> The layout is public, fixed and documented, so
-/// this is eight bytes read at three offsets rather than a P/Invoke -- which also
+/// this is eight bytes read at three offsets and not a P/Invoke -- which also
 /// means it works on a file that is not loadable, is the wrong architecture, or
 /// is a hand-built header a test wrote, and that last one is what makes the
 /// refusals above assertable over constructed inputs.
 /// </para>
 /// <para>
-/// ⚠️ <b>It answers <see langword="null"/> rather than throwing for anything it
+/// ⚠️ <b>It answers <see langword="null"/> instead of throwing for anything it
 /// cannot read</b> -- absent, too short, not a PE, an unreadable handle. The
 /// caller is a registration decision inside an installer hook, where the
 /// difference between <i>this is the wrong kind of file</i> and <i>this file
@@ -72,7 +72,7 @@ internal static class PeSubsystem
     /// <c>ImageBase</c> from four bytes to eight and drops <c>BaseOfData</c>,
     /// which is four bytes, so the two changes cancel and every field after
     /// <c>ImageBase</c> keeps its offset. Checked against the documented layout
-    /// in both magics rather than measured on one and assumed for the other.
+    /// in both magics, not measured on one and assumed for the other.
     /// </remarks>
     private const int SubsystemOffset = 68;
 
@@ -185,7 +185,7 @@ internal static class PeSubsystem
     /// Fills the buffer from an absolute offset, or throws.
     /// </summary>
     /// <remarks>
-    /// <c>ReadExactly</c> rather than <c>Read</c>: a short read at a file
+    /// <c>ReadExactly</c>, not <c>Read</c>: a short read at a file
     /// boundary would otherwise leave the tail of the buffer at zero and be
     /// indistinguishable from a field that really is zero -- which for
     /// <c>Subsystem</c> is <c>IMAGE_SUBSYSTEM_UNKNOWN</c>, a value that reads

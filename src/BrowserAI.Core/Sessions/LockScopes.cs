@@ -180,7 +180,7 @@ internal static class LockScopes
     /// detector.
     /// </para>
     /// <para>
-    /// <b>A hang detector rather than a budget.</b> It is ~36× the measured
+    /// <b>A hang detector, not a budget.</b> It is ~36× the measured
     /// design-point queue and ~4,800× the ~25 ms one contender spends inside. A
     /// slow machine must not reach it; a holder that has genuinely wedged still
     /// does, which is why it stays bounded.
@@ -208,7 +208,7 @@ internal static class LockScopes
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Three, and they are enumerable rather than estimated.</b>
+    /// <b>Three, and they are enumerable, not estimated.</b>
     /// <c>SessionLock.TakeOrReport</c>, inside the gate: the first
     /// <c>OpenHeld</c>, then <c>WriteDurably</c>'s replace loop -- whose
     /// <c>MoveBudget</c> is this same value -- then the re-open.
@@ -217,7 +217,7 @@ internal static class LockScopes
     /// the failure path.
     /// </para>
     /// <para>
-    /// <b>It is a constant so that adding a fourth is a red build rather than a
+    /// <b>It is a constant so that adding a fourth is a red build and not a
     /// silent 30 s.</b> A new wait inside the critical section has to be counted
     /// here, and counting it fails
     /// <c>SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt</c> until the

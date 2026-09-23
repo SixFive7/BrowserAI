@@ -34,7 +34,7 @@ namespace BrowserAI.Updates;
 /// only assigns fields
 /// ([kb](../../../kb/packaging/velopack.md#5-reading-the-installed-version-must-not-touch-the-network)).
 /// The installed version is still read from
-/// <see cref="InstallLocation"/> rather than from here, because that is the type
+/// <see cref="InstallLocation"/> and not from here, because that is the type
 /// that owns the locator.
 /// </para>
 /// </remarks>
@@ -68,7 +68,7 @@ internal sealed class VelopackUpdateClient : IUpdateClient
         cancellationToken.ThrowIfCancellationRequested();
 
         // CheckForUpdatesAsync takes no token. The caller's timers are what bound
-        // it, and they bound it by abandoning the wait rather than by cancelling
+        // it, and they bound it by abandoning the wait and not by cancelling
         // the request -- which is honest about what this API can do, instead of
         // passing a token that is ignored.
         var info = await _manager.CheckForUpdatesAsync().ConfigureAwait(false);
@@ -137,7 +137,7 @@ internal sealed class VelopackUpdateClient : IUpdateClient
     /// ⚠️ <b>Whatever is under the install root is killed either way.</b>
     /// Velopack's apply ends in <c>force_stop_package</c>, which matches image
     /// path and not name, so a server serving a session goes with it. That is
-    /// what the warning beside the button says out loud rather than leaving to
+    /// what the warning beside the button says out loud instead of leaving it to
     /// be discovered.
     /// </para>
     /// </remarks>

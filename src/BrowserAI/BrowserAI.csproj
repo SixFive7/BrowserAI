@@ -50,7 +50,7 @@
       The rule survives; only its justification was wrong. The real reasons are
       that [LibraryImport] is Microsoft's documented first recommendation for
       .NET 7 and later, that the marshalling it generates is ordinary C# that a
-      human can read and step through rather than a stub the toolchain hides,
+      human can read and step through, not a stub the toolchain hides,
       and that SYSLIB1054 exists to move code toward it.
 
       Recorded at this length because a false reason is worse than no reason:
@@ -79,7 +79,7 @@
         no tag reachable at all            = 0.0.0 with an alpha.0.N suffix
 
       The prefix is `v`, which is the house prefix across the repositories this
-      one shares conventions with. It is a tag prefix rather than a version, so
+      one shares conventions with. It is a tag prefix, not a version, so
       it is not a pin and carries no digits.
 
       On the PRODUCT PROJECT ONLY. Versioning the test project buys nothing: no
@@ -103,7 +103,7 @@
       settled for self-contained single-file instead of AOT for exactly this
       reason, and only worked out why afterwards.
 
-      Set unconditionally rather than under a publish-only condition: the
+      Set unconditionally and not under a publish-only condition: the
       trimming feature switches key off this property, so conditioning it would
       make `dotnet build` and `dotnet publish` behave differently.
     -->

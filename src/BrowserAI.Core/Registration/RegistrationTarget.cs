@@ -32,7 +32,7 @@ namespace BrowserAI.Registration;
 /// ([kb](../../../kb/packaging/velopack.md#3-never-register-the-execution-stub)), so
 /// a client registered against it sees its MCP server die instantly. That is §G
 /// landmine 3, and it is the reason this type refuses a path whose parent
-/// directory is not <c>current</c> rather than merely preferring one that is.
+/// directory is not <c>current</c> instead of merely preferring one that is.
 /// </para>
 /// <para>
 /// <b>Why the image path is still the input, and what it now buys.</b> Velopack
@@ -40,7 +40,7 @@ namespace BrowserAI.Registration;
 /// a hook <see cref="Environment.ProcessPath"/> is <c>&lt;root&gt;\current\BrowserAI.exe</c>
 /// -- the <b>configuration app</b>. That is the path that says which install this
 /// is; it is not the path a client may be given. The stub never runs a hook, so
-/// the shape check below is a guard against a future caller rather than against
+/// the shape check below is a guard against a future caller and not against
 /// Velopack.
 /// </para>
 /// <para>

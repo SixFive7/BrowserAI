@@ -322,7 +322,7 @@ internal static class McpRegistryView
         // file that cannot be read -- is OURS AND STALE, which is the state
         // `Repair` re-points and the state the window offers to register out of.
         // Neither may be launched as an MCP server, and the difference between
-        // "gone" and "wrong" changes the sentence rather than the action.
+        // "gone" and "wrong" changes the sentence and not the action.
         return Runtime.PeSubsystem.IsConsole(full)
             ? RegistrationOwnership.OursAndPresent
             : RegistrationOwnership.OursAndStale;

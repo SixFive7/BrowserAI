@@ -12,7 +12,7 @@ namespace BrowserAI.Updates;
 /// <remarks>
 /// <para>
 /// ⚠️ <b><see cref="ProductionBaseUrl"/> is deliberately unset, and that is a
-/// state rather than an omission.</b> The update feed will be a public GitHub
+/// state and not an omission.</b> The update feed will be a public GitHub
 /// repository -- the maintainer has agreed to make it public -- but **nothing has
 /// been published and what gets published is still open**. Writing a URL here
 /// before one exists would produce a build that checks a 404 on every start and
@@ -24,7 +24,7 @@ namespace BrowserAI.Updates;
 /// <para>
 /// <b>This is the one release-gate assertion that is deferred</b> -- *the real
 /// production feed URL resolves over HTTP and
-/// returns a manifest* -- and it is deferred rather than faked. A local HTTP
+/// returns a manifest* -- and it is deferred, not faked. A local HTTP
 /// server would compose paths the same way and pass, while proving nothing about
 /// the URL nobody has chosen yet.
 /// </para>
@@ -43,7 +43,7 @@ internal static class UpdateConfiguration
     /// <remarks>
     /// <para>
     /// <b>Set 2026-08-17, on the maintainer's instruction to cut v1.0.0.</b> It
-    /// is GitHub's <c>releases/latest/download/</c> alias rather than a
+    /// is GitHub's <c>releases/latest/download/</c> alias and not a
     /// tag-specific path, and that choice is the whole point: the alias
     /// redirects to the newest <b>non-prerelease</b> release, so it never needs
     /// rewriting per version and a build can never be pointed at the feed of the
@@ -78,7 +78,7 @@ internal static class UpdateConfiguration
     /// <b>Never silent.</b> A BrowserAI updating itself from somewhere nobody
     /// expected is exactly the shape of failure this project exists to
     /// eliminate, so an override is logged at Warning, with the composed
-    /// manifest URL rather than the base.
+    /// manifest URL and not the base.
     /// </para>
     /// </remarks>
     public const string FeedVariable = "BROWSERAI_UPDATE_FEED";
