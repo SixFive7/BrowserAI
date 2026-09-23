@@ -23,7 +23,7 @@ standing in front of a sentence that was already bold, and one changed a heading
 from *TWO GAME-CHANGERS* to *TWO CORRECTIONS* because the body beneath it labels
 them Correction 1 and Correction 2. **No maintainer-verbatim line was touched**,
 and no fact, number, date, name or claim moved. The heading change moves one
-GitHub anchor, which nothing in the tree links to; that was checked rather than
+GitHub anchor, which nothing in the tree links to; that was checked, not
 assumed.
 
 **It is a record, so it is read-only.** Nothing here is edited after the
@@ -37,13 +37,13 @@ and that is not an edit** -- *added 2026-09-18, when the first one was*. The rul
 above is about the copy: nothing already here may be rewritten. Taking the copy
 again, from a live file that has only grown, replaces a shorter prefix with a
 longer whole, and the header says which commit each snapshot was taken at.
-**Check it rather than trusting it**: the previous body must be a byte-exact
+**Check it; do not trust it**: the previous body must be a byte-exact
 prefix of the new one -- on the 2026-09-18 re-snapshot it was, growing by 61,187
 bytes and 118 lines, and on the 2026-09-22 one by 41,332 bytes and 76 lines,
 each time with nothing above them touched. **Nothing enforces this** --
 `AppendOnlyRecordTests` seals `docs/reviews/` and released `CHANGELOG` sections,
 and a ledger is deliberately outside it, because a sealed prefix would forbid
-the re-snapshot rather than the edit.
+the re-snapshot instead of the edit.
 
 ⚠️ **A snapshot taken after the live copy is gone is the LAST one, and it says
 so in its own header** -- *added 2026-09-22, when the first one was*. The
@@ -54,7 +54,7 @@ the record, and there is nothing left to re-snapshot it from. **A new session
 does not reopen a closed ledger**: it opens a new file here, named for the day
 it was opened, and this table gains a row. The reason is the rule at the top --
 appending to a closed ledger from a different session's live file would rewrite
-a body rather than extend one, and no prefix check could tell the difference.
+a body instead of extending one, and no prefix check could tell the difference.
 
 ⚠️ **A ledger is not a decision of record.** [`DECISIONS.md`](../../DECISIONS.md)
 is the charter; [`HAZARDS.md`](../../HAZARDS.md) is what is known to be

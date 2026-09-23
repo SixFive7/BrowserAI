@@ -25,8 +25,8 @@ the hazard row, and the question it raised in
 The rig is
 [`docs/probes/2026-09-16-resume/wedge-probe.js`](../../probes/2026-09-16-resume/README.md),
 which is `resume-probe.js` with a clock on the call that hangs: the browser call
-is fired and polled rather than awaited, and the wait is bounded on the command
-line so *it never returned* is a measurement rather than the probe giving up at a
+is fired and polled, not awaited, and the wait is bounded on the command
+line so *it never returned* is a measurement and not the probe giving up at a
 number nobody chose.
 
 ## The cut, and what it was cut from

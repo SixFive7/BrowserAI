@@ -31,7 +31,7 @@ root it names was deleted with everything else.
 1. `InstallLocation` is under `%LocalAppData%\BrowserAI-test-scratch` — it is
    `…\real-install-window-27abcac3035a4d2aaed47b7c6984807f`.
 2. That directory **does not exist**. A key pointing at a directory that is
-   still there is a live install rather than residue, and deleting it would
+   still there is a live install, not residue, and deleting it would
    strand one.
 
 `InstallDate` reads `20260917`, which is the same day, and every key under the
@@ -39,7 +39,7 @@ test id is one the suite wrote.
 
 **What it was cleared with**: `reg delete "HKCU\…\Uninstall\BrowserAI.app.test" /f`
 — the command `ReleaseLayout.ClearTheLeftoverKey` builds and the refusal message
-itself names, rather than a different one chosen here.
+itself names, and not a different one chosen here.
 
 ⚠️ **The real key was read before and after and is byte-identical across all 13
 values** — `Uninstall\BrowserAI.app`, still `InstallLocation
@@ -56,7 +56,7 @@ entries that publish them, and the rigs that produced them are in
 [`2026-09-16-resume`](../../probes/2026-09-16-resume/README.md) and
 [`2026-09-17-cost-ratios`](../../probes/2026-09-17-cost-ratios/README.md). The
 raw JSON each probe emitted was scratch and was deleted with the rest of
-`.work/`; re-running a probe produces new files rather than these.
+`.work/`; re-running a probe produces new files, not these.
 
 ## `sweeper-exit1-20260917-140227.log`
 
@@ -82,7 +82,7 @@ one refuses a starting Chromium, so whatever killed the browser, it was not
 this."* For this shape the desktop heap is therefore **excluded**, and the cause
 is still unnamed.
 
-**What the rest of the gate did**, so the rate is readable rather than implied:
+**What the rest of the gate did**, so the rate is readable and not implied:
 an immediate re-run of the whole suite was **747 / 0 failed / 0 skipped**, and so
 was the Git Bash half after it — **1 red in 3 full runs** that day, on a tree
 whose only product-source change was a doc comment. Nothing was retried in code

@@ -5,7 +5,7 @@
 
 `render-assets.mjs` is what produced every raster in
 [`assets/`](../../../assets/README.md): each size rendered natively by headless
-Chromium rather than downscaled, `omitBackground` on, `deviceScaleFactor: 1`. It
+Chromium and not downscaled, `omitBackground` on, `deviceScaleFactor: 1`. It
 drives the Chromium already in this machine's `%LocalAppData%\ms-playwright`
 cache through `playwright-core`, so nothing is downloaded and the product's own
 browsers root is not touched.

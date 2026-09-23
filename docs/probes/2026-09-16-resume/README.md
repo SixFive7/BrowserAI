@@ -30,9 +30,9 @@ against; a `data:` URL has no storage at all and cannot be used here.
   work is worth being able to re-run.
 - ⚠️ **`wedge-probe.js` is that third shape with a clock on it, added
   2026-09-17** for [Q207 b](../../../QUESTIONS.md). It is `resume-probe.js`'s
-  arrangement, with the hanging browser call **fired and polled rather than
+  arrangement, with the hanging browser call **fired and polled, not
   awaited** and the wait bounded on the command line, so *it never returned* is a
-  measurement rather than the probe giving up at a number nobody chose. It also
+  measurement and not the probe giving up at a number nobody chose. It also
   starts a **second** server 30 s in and resumes the same directory from it,
   which is the half the 2026-09-16 run left open, and it tears down what it
   started: the first server is ended by pid and a third process destroys the
@@ -62,12 +62,12 @@ against; a `data:` URL has no storage at all and cannot be used here.
 
   **Two things about the instrument, both of which cost a run before they were
   understood.** The snippet reaches `process` through
-  `page.constructor.constructor('return process')()` rather than naming it,
+  `page.constructor.constructor('return process')()` instead of naming it,
   because `browser_run_code_unsafe` runs in a `vm` context holding `page` and one
   promise and nothing else -- a first version used `setTimeout` and died on
   `ReferenceError`, reporting a clean run in which the child it meant to end
   never went anywhere. And the wait for the children to go polls **inside one
-  PowerShell** rather than starting one per poll: the obvious loop starts two
+  PowerShell**, and does not start one per poll: the obvious loop starts two
   processes every 500 ms, which under the load of the thing being measured turned
   a 30-second budget into minutes and read as a hang.
 
@@ -82,5 +82,5 @@ index entry. It never touches `%LocalAppData%\BrowserAI.app`.
 needs the server killed by pid and the session destroyed by a later process;
 both are in the transcript of the 2026-09-16 run.
 
-| Trips `NeverByImageNameTests` | **No** -- *corrected 2026-09-17 (previously "Yes -- `Win32_Process` and `Get-Process`, both keyed on a pid and filtered on an executable path BrowserAI owns, never on a name")*. That sentence was right about the code and right about why it tripped; the scan reads the FILTER rather than the API from 2026-09-17 (Q203), so a pid-keyed call no longer trips it and the description above is now the reason it passes |
+| Trips `NeverByImageNameTests` | **No** -- *corrected 2026-09-17 (previously "Yes -- `Win32_Process` and `Get-Process`, both keyed on a pid and filtered on an executable path BrowserAI owns, never on a name")*. That sentence was right about the code and right about why it tripped; the scan reads the FILTER, not the API, from 2026-09-17 (Q203), so a pid-keyed call no longer trips it and the description above is now the reason it passes |
 |---|---|

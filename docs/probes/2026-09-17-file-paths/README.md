@@ -43,21 +43,21 @@ suite run.
 
 ## Three things the rigs have to do, and why
 
-**A loopback HTTP server rather than a file on disk or a `data:` URL.** The child
+**A loopback HTTP server, not a file on disk or a `data:` URL.** The child
 blocks the `file:` protocol unless `allowUnrestrictedFileAccess` is on, which
 BrowserAI writes `false`; and a `data:` URL produces no network request at all,
 so the **binary response body** shape would be unmeasurable against one. The
 server answers a 1x1 PNG so that `browser_network_request --part response-body`
-has to write a file rather than inline the bytes.
+has to write a file instead of inlining the bytes.
 
 **The index is read off upstream's own line, not counted.** The
 `browser_network_requests` block opens with a `### Result` heading, so counting
 lines makes every index one too high and the follow-up call comes back
-*Request #N not found* - which reads like an absent request rather than like a
+*Request #N not found* - which reads like an absent request and not like a
 bug in the rig. It cost one run here.
 
 **`capabilities` is BrowserAI's own granted set**, read off
-`BrowserConfiguration.GrantedCapabilities` rather than invented. `core*` is
+`BrowserConfiguration.GrantedCapabilities`, not invented. `core*` is
 unconditional and naming one does nothing; naming a capability that does not
 exist silently yields a smaller surface, and the tools you wanted come back
 *not found*.
@@ -67,5 +67,5 @@ exist silently yields a smaller surface, and the tools you wanted come back
 **The paused-debugger location.** It is the fourth `_printablePath` call site and
 so is covered by the same helper, and the pull request's own body named it - but
 no run here drove a paused session, so the kb entry records it as a reading of
-the bundle rather than as a measurement. Driving it needs a `page.pause()` and a
+the bundle and not as a measurement. Driving it needs a `page.pause()` and a
 resume, which is a different rig.

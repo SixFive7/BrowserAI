@@ -12,5 +12,5 @@ which are what `browserai_reinstall_browser`'s refusal rests on.
 WARNING - **these rename the shared provisioned browsers root that every
 browser-touching test on this machine reads.** Each restores what it renamed in
 a `finally` and re-asserts the executables are present at the end; one that dies
-half-way breaks the suite rather than failing its own assertion. That is why
+half-way breaks the suite instead of failing its own assertion. That is why
 none of it is automated - see re-verification row 103.

@@ -50,7 +50,7 @@ observable difference between *reported dead* and *nothing is left*. `[FLOATS]`
 > reproducibly, before the change.
 
 **Firefox registers itself for restart and Chromium does not**, asked of the live
-processes with `GetApplicationRestartSettings` rather than argued from a command
+processes with `GetApplicationRestartSettings`, not argued from a command
 line's length. Every Chromium process in the tree answers `0x80070490`
 (`HRESULT_FROM_WIN32(ERROR_NOT_FOUND)`); **exactly one** Firefox process answers
 `S_OK`. That is `toolkit.winRegisterApplicationRestart` doing what
@@ -71,7 +71,7 @@ creates using CreateProcess are also associated with the job."* Escaping require
 or `JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK`. This is the inverse of Linux
 process-group semantics. `[STABLE]`
 
-**A denied breakaway fails the launch rather than escaping.** Measured:
+**A denied breakaway fails the launch; it does not escape.** Measured:
 `CreateProcessW` returns `ERROR_ACCESS_DENIED` (5). libuv's own source gives the
 same reason for avoiding the flag (`src/win/process.c:1124`). **This is the fact
 the whole guarantee rests on** -- a job granting no breakaway flags converts every
@@ -167,7 +167,7 @@ The second is one flag away at all times: redirecting stdio forces
 
 **`PROC_THREAD_ATTRIBUTE_JOB_LIST` beats `CREATE_SUSPENDED`.** Both measured at 0
 escapees, but the attribute makes membership part of process creation, so the
-race window does not exist rather than being closed afterwards -- and it cannot
+race window does not exist at all, instead of being closed afterwards -- and it cannot
 leak a suspended process if we die mid-sequence. `.NET` can express neither;
 `ProcessStartInfo` has no creation-flags surface. A P/Invoke is mandatory.
 Measured with real sandboxed Chromium: 9 processes, 0 escapees. `[STABLE]`
@@ -199,7 +199,7 @@ argument for a job object over enumeration, and it is a different argument from
 the one this section already makes** -- the escapee counts above say enumeration
 *misses* processes, which sounds like something a better sweep could fix. This
 says enumeration **cannot be made complete at any repetition count**, because the
-process set is adversarial rather than merely large. `KILL_ON_JOB_CLOSE` has no
+process set is adversarial, not merely large. `KILL_ON_JOB_CLOSE` has no
 such race: the kernel tears the whole job down at once, and anything respawned
 inside it is already contained. `[STABLE]` for the race, which follows from the
 kernel's own semantics; `[MACHINE]` for the observation, and **the code it was
@@ -258,7 +258,7 @@ to several kilobytes of switches. Paired with `QueryFullProcessImageNameW` this
 is the sanctioned alternative to matching a process by image name: the full path
 is compared against a path BrowserAI owns. Used by `ProcessCommandLine` in the
 suite; it is what makes *"`--no-sandbox` is absent"* an assertion about the
-browser rather than about our config file. `[STABLE]`
+browser, not about our config file. `[STABLE]`
 
 **Node's `child_process` has no job object support at all**, and Node's `spawn`
 cannot execute `.cmd` shims without `shell: true` -- a live Claude Code bug for
@@ -269,7 +269,7 @@ surveyed** -- ***relabelled 2026-08-18 (previously "Every Node process superviso
 on Windows falls back to `taskkill /T /F` or a native addon, and none survives a
 hard kill of the supervisor", stated as fact)***: no supervisor was named, no
 version was recorded and no list was enumerated, so "every" and "none" rest on
-nothing this repository can produce. It follows from the first half rather than
+nothing this repository can produce. It follows from the first half instead of
 from a survey, which is a plausible inference and not a measurement. **It is
 load-bearing** -- it is the "nobody else has solved this" half of the
 build-versus-adopt decision that chose C# for the whole product

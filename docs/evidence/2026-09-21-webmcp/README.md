@@ -31,7 +31,7 @@ Nothing was trimmed: each file is the probe's whole stdout for one run, the
 and in the loopback port and timestamps the run generates, which is what makes
 the diff between them the measurement.
 
-The page is the same in all three runs and is in the rig rather than here: two
+The page is the same in all three runs and is in the rig, not here: two
 tools whose descriptions are deliberately unmistakable strings
 (`PAGE-AUTHORED-DESCRIPTION-ALPHA`, `PAGE-AUTHORED-PARAM-DESCRIPTION`), so a
 reader can see at a glance whether page-authored text reached a model rather

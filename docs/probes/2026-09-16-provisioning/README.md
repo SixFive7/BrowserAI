@@ -22,7 +22,7 @@ resolve the way the other three do** -- `playwright-core` builds its URL with
 on the browser version, off the bare `https://cdn.playwright.dev` mirror rather
 than the `/dbazure/download/playwright` one. The wire figures are the
 `content-length` of a `HEAD` on those URLs, and the URLs were confirmed against
-the string upstream's own installer prints rather than trusted as derived.
+the string upstream's own installer prints, not trusted as derived.
 
 ## What it touches
 
@@ -42,7 +42,7 @@ transfer and needs roughly 1.6 GB of scratch across four runs.
 timestamped per line. Node buffers stdout when it is not a console, so through a
 pipe both lines of a two-line install arrive together at process exit --
 measured here at 5 ms apart for a download that took ten seconds. The phases
-were dropped from the entry rather than carried forward; getting them back needs
+were dropped from the entry and not carried forward; getting them back needs
 a console or an unbuffered channel.
 
 | Trips `NeverByImageNameTests` | No |

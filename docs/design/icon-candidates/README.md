@@ -35,6 +35,6 @@ self-contained and renders identically anywhere. The per-candidate detail is in
 `NOTES.md` describes were left in the scratch directory: they are outputs of
 [`render.mjs`](render.mjs) and [`Make-Ico.ps1`](Make-Ico.ps1) over the SVGs
 beside them, and `HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte` caps
-how many binary files this tree may hold. Re-render them rather than look for
+how many binary files this tree may hold. Re-render them instead of looking for
 them. The contact sheets are kept because they are the artefact the decision
 was actually made on, and nothing in the tree reproduces them.

@@ -12,4 +12,4 @@ only.
 `.exe` (59,353,329 B) and the `.zip` (54,824,804 B), and their copies under
 `archive/` and `test-pack/`. `packfeed-inventory.csv` lists every one of the 21
 files the feed held with its size and SHA-256, so what was cut is identifiable
-rather than merely absent. 392,969,672 bytes in total.
+and not merely absent. 392,969,672 bytes in total.

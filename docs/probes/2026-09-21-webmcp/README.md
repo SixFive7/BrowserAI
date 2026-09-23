@@ -13,7 +13,7 @@ to `skillOnly`, so both left the wire - and in the same release the page's own
 tool names, descriptions and schemas started arriving in the snapshot every
 snapshot-bearing tool result carries, and the page's tools started appearing in
 the child's own `tools/list`. Those two changes are easy to read as one and they
-point in opposite directions, so the second is measured rather than inferred
+point in opposite directions, so the second is measured, not inferred
 from the first.
 
 ## Two rigs, and both are needed
@@ -53,7 +53,7 @@ entry references, and this root holds more than any one rig put there.
 ## The hung-call shape, and the titled tool
 
 Two later measurements used the same two rigs with the page changed, and both are
-recorded here rather than given files of their own, because the change is one
+recorded here instead of being given files of their own, because the change is one
 line of the page each time.
 
 **A page tool that never answers** is
@@ -86,8 +86,8 @@ page sets `document.modelContext`. The two tools' descriptions are deliberately
 unmistakable strings - `PAGE-AUTHORED-DESCRIPTION-ALPHA`,
 `PAGE-AUTHORED-PARAM-DESCRIPTION` - because the question is whether text a PAGE
 wrote reaches a model, and a string nobody could mistake for Playwright's own is
-what makes the answer readable rather than argued.
+what makes the answer readable and not argued.
 
 One tool carries `readOnlyHint` and the other `consequentialHint`, which is how
 the `[readOnly]` and `[consequential]` markers in the output are shown to be the
-page's own annotations passing through rather than something upstream decides.
+page's own annotations passing through, not something upstream decides.
