@@ -26,7 +26,7 @@ namespace BrowserAI.Proxy;
 /// why the budget is a <b>hard build failure at 100%</b> and deliberately has no
 /// warning tier: the maintainer's position is that there is plenty of context, so
 /// a large string costs nothing worth reporting, and the only interesting event
-/// is going over -- which is a broken state rather than a tight one.
+/// is going over -- which is a broken state, not a tight one.
 /// </para>
 /// <para>
 /// <b>"EACH" MEANS EACH STRING. Measured 2026-08-18 @ Claude Code 2.1.234.</b>
@@ -36,7 +36,7 @@ namespace BrowserAI.Proxy;
 /// commissioned and has not reported").</i> The experiment reported. Claude Code
 /// was pointed at a local capture endpoint through <c>ANTHROPIC_BASE_URL</c> and
 /// the <c>tools</c> array it sends to the Messages API was read byte-for-byte, so
-/// the finding is what the model receives rather than what a model recalls:
+/// the finding is what the model receives and not what a model recalls:
 /// </para>
 /// <list type="bullet">
 /// <item><b>Per string, never per tool.</b> A probe tool whose whole serialized
@@ -66,12 +66,12 @@ namespace BrowserAI.Proxy;
 /// <c>[truncated]</c>, 13 characters -- so a truncated string arrives at
 /// <b>2,061</b> characters. A server cannot see this; it happens after the
 /// JSON-RPC response has left. Nothing about it reaches BrowserAI, which is
-/// exactly why the gate is a build failure rather than a run-time check.</item>
+/// exactly why the gate is a build failure and not a run-time check.</item>
 /// </list>
 /// <para>
 /// <b>The same cap applies to the server <c>instructions</c></b>, which the
 /// client delivers to the model inside a <c>&lt;system-reminder&gt;</c> block in
-/// the <i>messages</i> array rather than in the system prompt -- cut at 2,048
+/// the <i>messages</i> array and not in the system prompt -- cut at 2,048
 /// characters with the same suffix. BrowserAI's own is <b>2,026
 /// characters</b>. <i>Corrected 2026-09-21 (previously "1,261 characters",
 /// measured 2026-08-18 and left standing through every change to the string
@@ -96,7 +96,7 @@ internal static class ClientTruncationBudget
     /// <remarks>
     /// 2,048. Stated by the documentation quoted in the remarks above for exactly
     /// these two surfaces, and measured there as a <c>&gt; 2048</c> cut on
-    /// <see cref="string.Length"/> rather than on a byte count.
+    /// <see cref="string.Length"/> and not on a byte count.
     /// <i>Corrected 2026-08-18 (previously named <c>Bytes</c>, and applied to a
     /// UTF-8 byte count).</i> The rename is the point: a byte gate fails a
     /// 2,000-character string that happens to carry em dashes, which the client

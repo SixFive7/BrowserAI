@@ -24,7 +24,7 @@ internal enum ProvisioningState
     /// <summary>
     /// The tree is being made ready, here or in another BrowserAI process.
     /// Browser calls are refused with
-    /// <see cref="Sessions.SessionErrors.ProvisioningInProgress"/> rather than
+    /// <see cref="Sessions.SessionErrors.ProvisioningInProgress"/> and not
     /// blocked.
     /// </summary>
     /// <remarks>
@@ -61,7 +61,7 @@ internal sealed record ProvisioningStatus(string Browser, ProvisioningState Stat
     /// download costs, or <see langword="null"/> when nothing is in flight.
     /// </summary>
     /// <remarks>
-    /// <b>Carried on the status rather than folded into <see cref="Detail"/>,
+    /// <b>Carried on the status and not folded into <see cref="Detail"/>,
     /// because two different sentences render it</b> -- the provisioner's own
     /// state line and <c>SessionErrors.ProvisioningInProgress</c>, which is what
     /// a model reads. A pre-rendered string would make the second one quote the
@@ -71,7 +71,7 @@ internal sealed record ProvisioningStatus(string Browser, ProvisioningState Stat
 }
 
 /// <summary>
-/// How far a provisioning run has got, measured rather than reported by
+/// How far a provisioning run has got, measured, not reported by
 /// upstream.
 /// </summary>
 /// <remarks>
@@ -118,7 +118,7 @@ internal sealed record ProvisioningProgress(long Written, long DownloadBytes, Ti
 /// Playwright's own per-socket stall timeout is
 /// <c>NET_DEFAULT_TIMEOUT = 30_000</c> ms, overridable through
 /// <c>PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT</c> -- read out of the resolved
-/// bundle 2026-08-16 rather than from memory. BrowserAI sets nothing, so the
+/// bundle 2026-08-16 and not from memory. BrowserAI sets nothing, so the
 /// figure stays upstream's; <see cref="BrowserProvisioner.UpstreamStallTimeout"/>
 /// records what we are relying on and
 /// <see cref="BrowserProvisioner.UpstreamStallTimeoutVariable"/> names the
@@ -156,8 +156,8 @@ internal sealed record ProvisioningTimers
     /// behaved identically.
     /// </para>
     /// <para>
-    /// <b>Ten minutes, and the number is set by upstream's own lock rather than
-    /// by taste.</b> <c>registry.install()</c> waits on
+    /// <b>Ten minutes, and the number is set by upstream's own lock and
+    /// not by taste.</b> <c>registry.install()</c> waits on
     /// <c>&lt;browsers root&gt;\__dirlock</c> <i>before</i> it writes anything at
     /// all, and measurement C of 2026-08-19 timed that wait at <b>470 s</b>
     /// before upstream gives up by itself with <c>ELOCKED</c>. So a healthy
@@ -196,7 +196,7 @@ internal sealed record ProvisioningTimers
     /// small companion downloads that follow it (<c>ffmpeg</c>, and
     /// <c>winldd</c> which Windows pulls in with it) -- measured 2026-08-16 at
     /// 1.5 s of the 12 s total, so ten minutes is three orders of magnitude of
-    /// headroom rather than a guess.
+    /// headroom and not a guess.
     /// <para>
     /// <b>It is a total and it stays a total, unlike
     /// <see cref="StallCap"/>.</b> The reason the argument against a total cap
@@ -216,7 +216,7 @@ internal sealed record ProvisioningTimers
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Added 2026-08-20, and it is the fix for a named flake rather than a
+    /// ⚠️ <b>Added 2026-08-20, and it is the fix for a named flake and not a
     /// generalisation.</b> <c>ProvisioningTests.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes</c>
     /// went red once in nine consecutive full-suite runs. It asserted that an
     /// install writing every 25 ms survives a 1-second stall cap, which is a
@@ -231,7 +231,7 @@ internal sealed record ProvisioningTimers
     /// well as on time, so a test that froze the clock and still read a real
     /// directory would still be racing the filesystem. The second seam is
     /// <see cref="BrowserProvisioner.WeighBrowsersRoot"/>, and the two together
-    /// are what make the arm a statement about the product rather than about the
+    /// are what make the arm a statement about the product and not about the
     /// machine.
     /// </para>
     /// <para>
@@ -270,7 +270,7 @@ internal sealed record ProvisioningTimers
 /// provisioned machine, but the executable has to exist
 /// ([kb](../../../kb/playwright/configuration.md#browser-provisioning)). So
 /// <b>every</b> upstream tool is refused meanwhile, that one included, and
-/// letting it through would have bought a worse answer rather than a working
+/// letting it through would have bought a worse answer and not a working
 /// one. What keeps a downloading session inspectable is BrowserAI's <b>own</b>
 /// tools -- <c>browserai_list</c>, <c>browserai_resume</c> and
 /// <c>browserai_set_purpose</c> all answer throughout, because none of them
@@ -289,10 +289,10 @@ internal sealed record ProvisioningTimers
 /// <para>
 /// <b>The installer is upstream's own, run out of the payload.</b>
 /// <c>node.exe cli.js install-browser &lt;browser&gt; --no-shell --no-progress</c>,
-/// so the revision comes from the vendored <c>browsers.json</c> rather than from
+/// so the revision comes from the vendored <c>browsers.json</c> and not from
 /// a URL anybody typed. <c>--no-shell</c> is load-bearing:
 /// <c>chrome-headless-shell</c> is never provisioned, which is what makes the
-/// chromium-alias channel mandatory rather than a preference.
+/// chromium-alias channel mandatory and not a preference.
 /// </para>
 /// <para>
 /// ⚠️ <b><c>PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD</c> does not gate this.</b>
@@ -313,7 +313,7 @@ internal sealed record ProvisioningTimers
 /// </para>
 /// <para>
 /// <b>The install runs on its own thread, and that is a correctness requirement
-/// rather than a performance one.</b> A named mutex is owned by the
+/// and not a performance one.</b> A named mutex is owned by the
 /// <i>thread</i> that waited on it, so a continuation resuming on a different
 /// pool thread makes the release throw about "an unsynchronized block of code" --
 /// naming nothing relevant and pointing nowhere near the cause.

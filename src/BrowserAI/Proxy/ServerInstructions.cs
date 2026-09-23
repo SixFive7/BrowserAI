@@ -11,7 +11,7 @@ namespace BrowserAI.Proxy;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>It carries the choice itself rather than a pointer to it.</b> Claude Code
+/// <b>It carries the choice itself and not a pointer to it.</b> Claude Code
 /// loads tool <i>names</i> and the server <c>instructions</c> eagerly and defers
 /// schemas, so this is the only channel that arrives before the first mistake --
 /// and the first mistake after a restart is calling a browser tool with no
@@ -45,21 +45,21 @@ namespace BrowserAI.Proxy;
 /// </para>
 /// <para>
 /// <b>What took the space is the response-mocking warning, and it is here
-/// rather than on the tool.</b> <c>browser_route</c> became reachable in the
+/// and not on the tool.</b> <c>browser_route</c> became reachable in the
 /// same change. A rule installed with it can make a page lie to a human watching
 /// a headed window -- the browser renders the mock, the address bar keeps the real
 /// origin, and nothing on screen says a rule is in force. Upstream's own
 /// description says what the tool does and cannot say what BrowserAI knows about
 /// the window it is being called against, and every upstream description passes
 /// through this proxy byte for byte, so the warning has to live in the one
-/// string BrowserAI writes itself. It is here rather than in
+/// string BrowserAI writes itself. It is here and not in
 /// <c>browserai_init</c>'s description for the reason the whole file exists:
 /// this arrives before the first call, and a description arrives after the model
 /// has already decided to make one.
 /// </para>
 /// <para>
 /// <b>The <c>fullPage</c> line, added 2026-08-20, is here for the same reason
-/// and is a cost fact rather than a warning.</b> <b>Nothing downscales an image
+/// and is a cost fact, not a warning.</b> <b>Nothing downscales an image
 /// on the way back</b> -- not BrowserAI, which appends what is on disk, and since
 /// <c>playwright-core</c> 1.63.0-alpha-2026-08-31 not upstream either, which
 /// deleted <c>scaleImageToFitMessage</c> outright
@@ -89,7 +89,7 @@ namespace BrowserAI.Proxy;
 /// </para>
 /// <para>
 /// ⚠️ <b>Two clauses were cut on 2026-08-26 to pay for the browser-installation
-/// line, and what was cut is recorded rather than left to a diff.</b> The string
+/// line, and what was cut is recorded and not left to a diff.</b> The string
 /// was <b>2,207</b> characters with the new sentence in and the cap is 2,048, so
 /// something had to go. Cut: <i>"That is deliberate rather than an obstacle: it
 /// turns an accidental collision into a stated intent"</i> -- a justification for
@@ -104,7 +104,7 @@ namespace BrowserAI.Proxy;
 /// </para>
 /// <para>
 /// ⚠️ <b>Six sentences were tightened on 2026-09-21 to pay for the
-/// session-deletion line, and what changed is recorded here rather than left to
+/// session-deletion line, and what changed is recorded here and not left to
 /// a diff.</b> The string was <b>2,022 characters with 26 of headroom</b> --
 /// measured off the published binary's own <c>initialize</c> response, not
 /// estimated -- and the new clause is 105, so something had to give.
@@ -118,7 +118,7 @@ namespace BrowserAI.Proxy;
 /// <i>"takes 'why', and it is required"</i> became <i>"takes a required
 /// 'why'"</i>; the mocking warning lost four words and <b>kept <i>on
 /// screen</i></b>, which is the clause that makes it a warning about what a
-/// human SEES rather than about what a tool does; and the tool roll-call became
+/// human SEES and not about what a tool does; and the tool roll-call became
 /// one sentence so the deletion line could follow it.
 /// <b>2,026 characters, 22 of headroom</b> -- measured the same way, and the next
 /// addition has to find its own space the same way too.
@@ -146,8 +146,8 @@ namespace BrowserAI.Proxy;
 /// would not fit here: the sentence is 176 characters and this string has 22.
 /// </para>
 /// <para>
-/// <b>The browser-installation line, added 2026-08-26, is a pre-emption rather
-/// than a fact.</b> Every published account of a broken Playwright install ends
+/// <b>The browser-installation line, added 2026-08-26, is a pre-emption and
+/// not a fact.</b> Every published account of a broken Playwright install ends
 /// in <c>npx playwright install</c>, and a model that runs it here either fails
 /// or succeeds into a second browser tree in a second location BrowserAI will
 /// never launch from. <see cref="Runtime.ProvisioningRemediation"/> undoes that
@@ -216,7 +216,7 @@ internal static class ServerInstructions
     /// How many UTF-8 bytes <see cref="Text"/> costs on the JSON-RPC wire.
     /// </summary>
     /// <remarks>
-    /// Reported rather than gated: it is what the string costs to transmit, and
+    /// Reported, not gated: it is what the string costs to transmit, and
     /// it is <b>not</b> what the client truncates on -- this string carries
     /// <c>·</c> (2 bytes) and <c>--</c> (3 bytes), so the two figures differ and
     /// the byte one is the larger and the wrong one.
