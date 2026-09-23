@@ -32,7 +32,7 @@ namespace BrowserAI.Tests;
 /// was protecting was <i>the log says what the session DID</i>, and with
 /// <c>browserai.log</c> deleted the record is the only place a refusal survives
 /// at all -- so <i>the agent reached for a tool this build will not forward</i>
-/// became replay rather than diagnostics.
+/// became replay and not diagnostics.
 /// </para>
 /// </remarks>
 internal sealed class SessionLogTests
@@ -99,7 +99,7 @@ internal sealed class SessionLogTests
         await Assert.That(log[3].Why).IsEqualTo("watching where the redirect goes now that the cause is known");
 
         // Non-decreasing in time, which is what makes "in order" a fact about
-        // the record rather than about the order things were appended.
+        // the record and not about the order things were appended.
         foreach (var (earlier, later) in log.Zip(log.Skip(1)))
         {
             await Assert.That(earlier.At).IsLessThanOrEqualTo(later.At);
@@ -216,7 +216,7 @@ internal sealed class SessionLogTests
         await Assert.That(after.Count).IsEqualTo(before + 1);
         await Assert.That(row.Why).IsEqualTo("reaching for a tool this server does not advertise");
 
-        // Failed, settled, and carrying what the caller was told rather than a
+        // Failed, settled, and carrying what the caller was told and not a
         // summary of it.
         await Assert.That(row.Outcome).IsEqualTo(SessionStore.Failed);
         await Assert.That(row.SettledAt).IsNotNull();
@@ -308,7 +308,7 @@ internal sealed class SessionLogTests
     /// actually is.
     /// </para>
     /// <para>
-    /// <b>The child is held open rather than delayed.</b>
+    /// <b>The child is held open and not delayed.</b>
     /// <c>FakeToolBehaviour.HoldUntil</c> keeps the call outstanding without
     /// blocking the child's read loop, so nothing here depends on how long a
     /// machine takes: the release is a <c>TaskCompletionSource</c> this test
@@ -344,8 +344,8 @@ internal sealed class SessionLogTests
 
         try
         {
-            // The child really did receive it, so "in flight" is a fact rather
-            // than a call that never left. Bounded by the suite's own hang
+            // The child really did receive it, so "in flight" is a fact and
+            // not a call that never left. Bounded by the suite's own hang
             // detector and by nothing this test invented.
             var arrived = Stopwatch.StartNew();
 

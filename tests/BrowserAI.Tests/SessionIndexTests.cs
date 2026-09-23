@@ -31,7 +31,7 @@ namespace BrowserAI.Tests;
 /// state, and a test that wrote into it would put throwaway directories into a
 /// developer's own <c>browserai_list</c>. <see cref="ScratchRoot"/> additionally
 /// reclaims any entry in the real index that points into the scratch tree, so a
-/// leak from a run that predates this rule is cleaned rather than inherited.
+/// leak from a run that predates this rule is cleaned and not inherited.
 /// </para>
 /// </remarks>
 internal sealed class SessionIndexTests
@@ -69,7 +69,7 @@ internal sealed class SessionIndexTests
         first.Acquired!.Dispose();
 
         // resume: the same directory, taken again. The entry is re-asserted
-        // rather than written once, which is the whole reason a lost one heals.
+        // and not written once, which is the whole reason a lost one heals.
         var second = SessionLock.TryAcquire(path, Request("the second"), NullLogger.Instance);
         await Assert.That(second.Outcome).IsEqualTo(SessionLockOutcome.Reclaimed);
         index.Record(path);
@@ -116,7 +116,7 @@ internal sealed class SessionIndexTests
         await Assert.That(index.Follow()[0].State).IsEqualTo(SessionIndexEntryState.Session);
 
         // The sweep below can only mean something if the directory really is
-        // gone, so the survivors are asserted rather than discarded.
+        // gone, so the survivors are asserted and not discarded.
         await Assert.That(string.Join(Environment.NewLine, ScratchDirectory.RemoveTree(path.FullPath))).IsEmpty();
 
         var sweep = index.Sweep();
@@ -184,14 +184,14 @@ internal sealed class SessionIndexTests
     /// resolve").</b> That window opened on <b>every forwarded call</b>, because
     /// the record was rewritten whole each time. Nothing rewrites either file
     /// now, so what is left is the first acquisition of a directory -- once per
-    /// session rather than once per call -- and the discriminator is unchanged
+    /// session and not once per call -- and the discriminator is unchanged
     /// because the shape on disk is.
     /// </para>
     /// <para>
     /// <b>The window is not raced for here, and it does not need to be.</b> What
     /// it produces on disk is exactly this: a directory with neither file and a
     /// <c>browserai.lock.new-...</c> beside them. Composing that state directly
-    /// tests the discriminator rather than the scheduler, and the pattern comes
+    /// tests the discriminator and not the scheduler, and the pattern comes
     /// from <c>SessionLayout.NewLockFilePattern</c> -- the same constant the
     /// durable write's name is built from, so a rename of the convention cannot
     /// leave this test passing against a pattern nothing produces.
@@ -383,7 +383,7 @@ internal sealed class SessionIndexTests
         var original = await File.ReadAllBytesAsync(path.DataFile);
 
         // Not a database, and not an empty file either: an empty one would be
-        // created afresh rather than refused, which is a different state.
+        // created afresh and not refused, which is a different state.
         await File.WriteAllBytesAsync(path.DataFile, System.Text.Encoding.UTF8.GetBytes("this is not a database at all, it is a note"));
 
         // THIS IS THE MEASUREMENT THE KEEP RESTS ON. A session whose record
@@ -522,7 +522,7 @@ internal sealed class SessionIndexTests
 
         // The positive control, without which the assertion above is satisfied
         // by an index that cannot follow anything: the same directory, spelled
-        // the way this build spells it, is followed rather than refused.
+        // the way this build spells it, is followed and not refused.
         await File.WriteAllTextAsync(Path.Combine(index.Root, SessionPath.For(real).IndexKey), real);
 
         await Assert.That(index.Follow()[0].State).IsNotEqualTo(SessionIndexEntryState.Unusable);
@@ -606,7 +606,7 @@ internal sealed class SessionIndexTests
             lease.Acquired?.Dispose();
         }
 
-        // And Follow over an unusable root answers empty rather than throwing.
+        // And Follow over an unusable root answers empty instead of throwing.
         await Assert.That(index.Follow().Count).IsEqualTo(0);
     }
 
@@ -616,7 +616,7 @@ internal sealed class SessionIndexTests
         // Both halves are design decisions that a later edit could reverse with
         // no test failing anywhere else, so they are asserted on the source.
         // The lock half is the plan's own reason the store is cheap; the
-        // directory half is what makes an entry a pointer rather than a warrant.
+        // directory half is what makes an entry a pointer and not a warrant.
         var file = RepositoryLayout.ProductSourceFiles
             .Single(candidate => candidate.Name is "SessionIndex.cs");
 
@@ -648,8 +648,8 @@ internal sealed class SessionIndexTests
         // A sibling of current\, never a child: an update replaces that folder.
         await Assert.That(new SessionIndex(paths, NullLogger.Instance).Root).IsEqualTo(paths.IndexDirectory);
 
-        // And the production answer is the one the plan names, computed rather
-        // than typed at a call site.
+        // And the production answer is the one the plan names, computed and
+        // not typed at a call site.
         var real = BrowserAiPaths.Real.IndexDirectory;
         await Assert.That(real).IsEqualTo(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
@@ -665,8 +665,8 @@ internal sealed class SessionIndexTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>This could not be planted red as a statement about the product, and
-    /// that is a property of the fix rather than a gap in the effort -- say so
-    /// rather than implying otherwise.</b> <c>FollowUnder</c> did not exist
+    /// that is a property of the fix and not a gap in the effort -- say so
+    /// instead of implying otherwise.</b> <c>FollowUnder</c> did not exist
     /// before the change, so no run of any tree can have failed it. It is weaker
     /// than a red test: what it holds is that the two reads cannot drift apart
     /// later, which is the claim the fix rests on. The half that <i>was</i> red
@@ -763,7 +763,7 @@ internal sealed class SessionIndexTests
     /// What makes it worth having is the control: the denied session out of
     /// prefix is proved to be a record that <i>would</i> have failed to open, so
     /// the scoped read returning one clean entry is a statement about the open
-    /// rather than about the filter.
+    /// and not about the filter.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -841,8 +841,8 @@ internal sealed class SessionIndexTests
     /// but <c>initialize</c>, and it held four.
     /// </para>
     /// <para>
-    /// <b>This arm is the mechanism under that measurement rather than the
-    /// measurement itself</b>, and the difference is stated rather than glossed:
+    /// <b>This arm is the mechanism under that measurement and not the
+    /// measurement itself</b>, and the difference is stated, not glossed:
     /// the composition needs a second process against the machine-wide index,
     /// and this suite shares one app root, so an end-to-end arm would sweep every
     /// other test's sessions and read as a flake. What is asserted here is the
@@ -888,7 +888,7 @@ internal sealed class SessionIndexTests
             .Because("the sweep stops at the guard, so no store is opened and no wal-index is created");
 
         // ⚠️ THE POSITIVE CONTROL. The record-bearing walk still reads the
-        // record, so this is a sweep that stops at the guard rather than an
+        // record, so this is a sweep that stops at the guard and not an
         // index that stopped reading.
         var followed = index.Follow();
 

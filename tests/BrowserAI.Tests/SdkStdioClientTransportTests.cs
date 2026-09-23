@@ -76,7 +76,7 @@ internal sealed class SdkStdioClientTransportTests
                 }
                 catch (Exception exception) when (exception is System.Text.Json.JsonException or IOException)
                 {
-                    // Caught mid-write; retried rather than failed.
+                    // Caught mid-write; retried, not failed.
                 }
             }
 
