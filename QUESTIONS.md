@@ -18,7 +18,7 @@ stopped describing the tree sends a decision the wrong way. **Sixteen entries we
 checked against the code: nine numbered, five lettered, and the block of settled
 bullets. Six were wrong.** Two of those (6 and 7) were found by accident, which is
 the whole reason the other fourteen were read at all. Every correction is **in place
-with a `previously` clause** rather than a rewrite: a reader who learned the old
+with a `previously` clause**, not a rewrite: a reader who learned the old
 value needs to see that it was reviewed and replaced, not silently swapped. Nothing
 is deleted for being merely settled -- settled entries are marked and kept, because
 *we already decided that* is only useful if the decision is still findable.
@@ -50,7 +50,7 @@ to eliminate.
 **Answered 2026-08-18 @ Claude Code 2.1.234. They are not truncated at all** --
 a parameter description of **20,000 characters** reached the model whole. The
 probe published exactly what the old paragraph below asked for and more, and the
-answer was read off the client's own outbound Messages API request rather than
+answer was read off the client's own outbound Messages API request, not
 off a model's recollection. *Previously: "To settle it: publish a parameter
 description just over 2048 bytes and read what reaches the model. Nobody has done
 that."*
@@ -80,7 +80,7 @@ itself corrected "There is no CI today; adding one is on the queue" on 2026-08-1
 The original text is true again.** **There is no CI today.** Both `previously`
 clauses are kept deliberately: this entry has been wrong in both directions inside
 three days, and a reader who learned either state needs to see that it was
-reviewed and replaced rather than lost. The workflow was removed at the
+reviewed and replaced, not lost. The workflow was removed at the
 maintainer's decision, verbatim: *"Remove CI completely. Let all the tests run on
 my machine only. I want no CI and no github runner. Add to the todo that we will
 add CI back in later. But that requires me adding infrastructure for self-hosted
@@ -91,7 +91,7 @@ removed:** CI ran the full suite including saturation, on Windows, on push and
 pull request. Rationale: 54% of this project's enforcement is TEST or RELEASE
 phase, so a CI that skips the expensive half re-creates the gap it exists to
 close. Cost was roughly two minutes per run. **The reasoning is unchanged by the
-removal** -- it is why the question is *when* CI comes back rather than *whether*.
+removal** -- it is why the question is *when* CI comes back, not *whether*.
 
 **One thing the entry did not price, and the workflow carried it.**
 `BROWSERAI_RELEASE_RUN` was deliberately **not** set in CI -- it is named below as
@@ -178,7 +178,7 @@ with it: `SuiteParallelism` records **20 consecutive green runs at Unbounded as 
 2026-08-18**, against 11 red in 20 before the timing work. Unbounded stays, and the
 remark still says in as many words that it is a race detector and that a future
 reader must not "fix" red runs by capping. The engineering queue was open and is now
-[`TODO.md`](TODO.md), which is an ordinary backlog rather than the exceptional state
+[`TODO.md`](TODO.md), which is an ordinary backlog, not the exceptional state
 this entry was authorising.
 
 ### D. If the timing work cannot reach 20 consecutive green
@@ -191,14 +191,14 @@ removing the test that produced it.
 
 ✅ **It did not come to it. Verified 2026-08-19: 20 of 20 green at Unbounded on
 2026-08-18**, so this contingency never fired and no failure had to be written down
-under it. Kept rather than deleted, because it is the standing answer for the next
+under it. Kept and not deleted, because it is the standing answer for the next
 time the streak is unmet -- the rule it states does not expire with the run that
 happened not to need it.
 
 ### E. `NoSourceFileIsInvisibleToGit` was deleted, and this is not the entry you think it is
 
 **This one is the maintainer's, not mine, and it went against my recommendation.**
-It is filed here rather than in [`DECISIONS.md`](DECISIONS.md) for the same reason
+It is filed here, not in [`DECISIONS.md`](DECISIONS.md) for the same reason
 every other letter is: a reasonable person could have decided it the other way, and
 what matters is that the reversal stays cheap and findable.
 
@@ -221,7 +221,7 @@ landed green.
 2026-08-19. The test is gone, and so is `TrackedFilesAsync`, the harness that shelled
 out to `git ls-files` and existed only to serve it.
 
-**What is now unenforced, stated plainly rather than left to be discovered.**
+**What is now unenforced, stated plainly and not left to be discovered.**
 Nothing compares the files on disk against what git can see. A source file swallowed
 by an ignore rule is invisible again, exactly as it was on 2026-08-15, and every
 surface signal will read healthy while it is: the build succeeds because the compiler
@@ -252,24 +252,24 @@ mechanised again, by a test whose subject is something else.
 
 **It is not the deleted test and does not restore it, and the difference is the
 part worth reading.** The new arm covers `.cs`, `.ps1`, `.psm1`, `.mjs`, `.js`
-and `.md` **across the whole tree** rather than `.cs` under `src/` and `tests/`,
+and `.md` **across the whole tree**, not `.cs` under `src/` and `tests/`,
 so it is wider where it matters most and it is **blind to every other extension**
 -- a swallowed `.json`, `.txt`, `.props` or `.targets` is still invisible, and
 so is a data folder holding no prose. That last gap is exactly what the widening
 recommended above would have closed and what the decision declined. It also
-skips loudly rather than failing on a machine with no git, where the deleted test
+skips loudly instead of failing on a machine with no git, where the deleted test
 would simply have thrown. **So the decision stands as taken**, and what changed is
 that its most expensive consequence -- the 2026-08-15 loss recurring silently
--- now has a mechanism in front of it by accident rather than by design. Nobody
+-- now has a mechanism in front of it by accident, not by design. Nobody
 should read that as permission to stop reading this entry.
 
 **Where the reasoning now lives, so nobody re-adds this believing it was an
 oversight.** Both `.gitignore` comments that used to name the test now say it was
 deliberately deleted, name this entry, and say what the loss of it means; the refresh
 procedure for the upstream half now ends in *run `git check-ignore -v` over `src/` and
-`tests/` by hand* rather than *run the suite*. **That is a comment where there was a
+`tests/` by hand*, not *run the suite*. **That is a comment where there was a
 mechanism, and the comment says so about itself** -- which is precisely what
-[`CLAUDE.md`](CLAUDE.md) means by the second list needing a reader rather than a
+[`CLAUDE.md`](CLAUDE.md) means by the second list needing a reader, not a
 build.
 
 **To reverse:** restore the method and its `TrackedFilesAsync` helper from `d8689cd`.
@@ -328,7 +328,7 @@ decision that stops being findable is one that gets re-litigated.
 ## Added 2026-08-18, after the load-failure investigation
 
 Four decisions raised by the agent that chased the two flakes. None blocks
-anything; all four are recorded rather than taken, because each is a matter of
+anything; all four are recorded and not taken, because each is a matter of
 product voice or of reopening a safety-critical path.
 
 ### 5. The Velopack warning, 100 times per saturation run
@@ -404,7 +404,7 @@ that can name the holder, measured before and after
 entry describes a design in which every loser takes the gate purely to name a holder
 the kernel has already named. Reading the code found a fast refusal in front of the
 gate doing exactly that, so the "deeper fix" was largely a description of shipped
-behaviour rather than a proposal. What actually needed deciding was the opposite
+behaviour, not a proposal. What actually needed deciding was the opposite
 question: what to do about the harm that fast refusal was already causing.
 
 **And the mechanism was not the window this entry predicted.** The entry expected
@@ -419,7 +419,7 @@ it surrendered a directory whose record already named it, and the next contender
 that record as a live session and reclaimed it -- two holder statements in one
 `browserai.json`, 61 ms apart.
 
-**The probe cannot be made harmless, and that is a property rather than a defect.**
+**The probe cannot be made harmless, and that is a property, not a defect.**
 To be refused by a holder's `FileShare.Read` it must ask for access outside `Read`,
 and a handle whose granted access is outside `Read` is exactly what an open sharing
 only `Read` is refused by. **Detecting an owner and blocking one are the same
@@ -430,9 +430,9 @@ owner requires the gate the waiter is holding. Three call sites qualify, and it 
 still bounded at `RenameWindow.Budget`; a handle outlasting thirty seconds is a
 different fault and is still reported. Shipped in `6b32caa`.
 
-**What is left open, stated rather than closed by silence:** one of the two ownership
+**What is left open, stated and not closed by silence:** one of the two ownership
 tests still reads a peer's probe as `Contended`. That is a wrong *sentence*, not a
-wrong owner, and it has its own hazard row rather than being left as unstated residue.
+wrong owner, and it has its own hazard row instead of being left as unstated residue.
 Widening those tests would wait a live owner out for thirty seconds and then report it
 as a peer looking, which is the mechanism inverted.
 
@@ -503,10 +503,10 @@ one whose entire subject is that a message window appears.
 **The question stays open and the recommendation does not change.** One
 occurrence with a 26 ms log is a much better lead than three occurrences with
 none, and it is still not a diagnosis. What would settle it is direction (b) -- a
-deliberate reproduction -- now aimed specifically at **desktop heap** rather than
+deliberate reproduction -- now aimed specifically at **desktop heap**, not
 at CPU: launch into a session station whose heap has been consumed, and see
-whether this exact shape comes out. *Nobody has run that.* Recorded here rather
-than in `.work/`, because the capture that produced it lived in a scratch
+whether this exact shape comes out. *Nobody has run that.* Recorded here,
+not in `.work/`, because the capture that produced it lived in a scratch
 directory this machine deletes. *Corrected 2026-09-16 (previously "lives in")* --
 that capture is
 [`docs/evidence/2026-08-26-chromium-death/`](docs/evidence/2026-08-26-chromium-death/README.md)
@@ -520,7 +520,7 @@ and its logs at
 [`docs/evidence/2026-08-27-desktop-heap/`](docs/evidence/2026-08-27-desktop-heap/README.md)
 -- *corrected 2026-09-16 (previously "at `.work/2026-08-27-desktop-heap`, in a
 scratch directory this machine deletes")*. Everything it established is still
-written down here and in `kb/windows/processes.md` rather than left there, which
+written down here and in `kb/windows/processes.md` and not left there, which
 is the half that was never about where the files were.
 
 **The rig, in two sentences.** A desktop of its own is created inside `WinSta0`
@@ -550,7 +550,7 @@ before and after:
 | 527 processes, 289,927 handles, 63% of RAM free -- every ceiling ruled out | 430 processes, 262,355 handles, 66% free -- **the same clean bill of health, on a machine that is out of the one resource** | ✓ |
 
 ⚠️ **The threshold is far sharper than there was any reason to expect, and the
-silence belongs to the last few kilobytes rather than to the shortage.** Three
+silence belongs to the last few kilobytes, not to the shortage.** Three
 launches at each level:
 
 | Windows held | Free heap | What the browser did |
@@ -571,7 +571,7 @@ something was tight"*.
 with two crash sites and no error return: a branch taken when the window is null
 **and `GetLastError` reported nothing at all**, which ends in `NOTREACHED()`, and
 `CheckWindowCreated(hwnd_, create_window_error)` after it. A `CreateWindowExW`
-that returns null therefore takes Chromium into an immediate crash rather than
+that returns null therefore takes Chromium into an immediate crash, not
 into a recovery path, and **the crash is a check, and a check does not log** --
 which is the whole of why a browser that cannot make a window says nothing
 anywhere.
@@ -582,7 +582,7 @@ of desktop heap does **not** reliably set a last error: filling with
 = 0** on both a 512 KB heap and the 20,480 KB one, while filling with
 one-character titles reported `ERROR_NOT_ENOUGH_MEMORY`. The regime that
 reproduces the wild shape is the *former*, so the site is `NOTREACHED()` on the
-no-error branch rather than the check below it. **INFERRED** -- it joins a
+no-error branch, not the check below it. **INFERRED** -- it joins a
 measured last error to a source branch read in the same session, and nothing
 here has read a stack.
 
@@ -593,15 +593,15 @@ and never a 1: `0x80000003` where the heap was simply full, and **`0xE0000008`**
 -- Chromium's own out-of-memory exception code -- in the arm where the heap was
 handed *back* while the browser was starting, which is what a real desktop's
 heap does all day. A third code in the wild is therefore consistent with
-desktop-heap exhaustion rather than evidence against it. **Said where it
-belongs rather than in a caveat: I could not establish what produces exit code
+desktop-heap exhaustion, not evidence against it. **Said where it
+belongs and not in a caveat: I could not establish what produces exit code
 1, and eighty launches did not produce one.**
 
-**Two further regimes, recorded because they are further from the wild shape
-rather than nearer.** A heap spent on **23,718 small windows** instead of 4,637
+**Two further regimes, recorded because they are further from the wild shape,
+not nearer.** A heap spent on **23,718 small windows** instead of 4,637
 large ones kills the browser earlier still -- 5 of 5, `0x80000003`, and **no log
 file at all** -- and there `CreateWindowExW` refuses with
-`ERROR_NO_MORE_USER_HANDLES` rather than `ERROR_NOT_ENOUGH_MEMORY`. The
+`ERROR_NO_MORE_USER_HANDLES`, not `ERROR_NOT_ENOUGH_MEMORY`. The
 released-mid-startup arm produces the mixed codes above with 6 or 9 log lines,
 and lets the browser live outright when the release lands inside the first
 40 ms. **Only exact exhaustion by large allocations produces the five-line log.**
@@ -628,8 +628,8 @@ from what causes it. Per open question, then:
   separates this from every other reason a browser can die.
 - **(c) Put a desktop-heap column in `MachineLoad.Describe()`.** Honest only up
   to a point: `UOI_HEAPSIZE` reports the *size* and no API reports the *usage*,
-  so the truthful version of this collapses into (b)'s probe, run always rather
-  than only on failure.
+  so the truthful version of this collapses into (b)'s probe, run always,
+  not only on failure.
 - **(d) Harden instead of diagnosing** -- give the suite's browsers a desktop of
   their own with a heap of their own. It removes the failure from the suite and
   removes the suite from the population that would ever see it again, which is
@@ -661,11 +661,11 @@ full when the browser died is commonly not full a second later, because the
 windows that filled it belong to processes that come and go.
 
 **One `CreateWindowExW`, and the deliberate choices in it.** The class is the
-system-global `STATIC` rather than one of our own, so the probe really is one
+system-global `STATIC`, not one of our own, so the probe really is one
 call -- a `RegisterClassExW` would be a second desktop-heap allocation taken
 *before* the one being measured, able to fail first and for the same reason,
 which would put a second failure mode inside a diagnostic written to remove one.
-The title is **2,048 characters**, which is the rig's own regime rather than a
+The title is **2,048 characters**, which is the rig's own regime, not a
 round number: window text lives in the desktop heap, so the title length *is* the
 size of the allocation, and the table above shows a heap with one window of
 headroom (≈4.4 KB) still killing a browser -- a probe that asked for the smallest
@@ -679,16 +679,16 @@ leaked one would consume the resource it was written to measure.
 |---|---|---|
 | created the window | `NOT DESKTOP HEAP` | the heap had room for the allocation an exhausted one refuses a starting Chromium, **so whatever killed the browser it was not this** -- which is information, because it retires the one ceiling none of the other figures can see |
 | refused, `ERROR_NOT_ENOUGH_MEMORY` (8) | `DESKTOP HEAP EXHAUSTED, named by the refusal` | *that is the diagnosis*, at the only moment it can be taken |
-| refused, **`GetLastError` = 0** | `DESKTOP HEAP EXHAUSTED, and the refusal named nothing` | **read as the diagnosis rather than as a gap**, and the message says why in place: a refusal for want of desktop heap does not reliably set a last error, and with a 2,048-character title it reported 0 on both a 512 KB heap and the 20,480 KB one while one-character titles reported `ERROR_NOT_ENOUGH_MEMORY` -- and the long-title regime is the one that reproduces the wild shape |
-| refused, `ERROR_NO_MORE_USER_HANDLES` (1158) | `DESKTOP HEAP EXHAUSTED, named by the refusal` | out of USER handles rather than heap bytes -- the many-small-windows regime, 23,718 against 4,637, which kills earlier still and with no log file at all |
+| refused, **`GetLastError` = 0** | `DESKTOP HEAP EXHAUSTED, and the refusal named nothing` | **read as the diagnosis, not as a gap**, and the message says why in place: a refusal for want of desktop heap does not reliably set a last error, and with a 2,048-character title it reported 0 on both a 512 KB heap and the 20,480 KB one while one-character titles reported `ERROR_NOT_ENOUGH_MEMORY` -- and the long-title regime is the one that reproduces the wild shape |
+| refused, `ERROR_NO_MORE_USER_HANDLES` (1158) | `DESKTOP HEAP EXHAUSTED, named by the refusal` | out of USER handles, not heap bytes -- the many-small-windows regime, 23,718 against 4,637, which kills earlier still and with no log file at all |
 
 Anything else refused reports `REFUSED FOR SOMETHING ELSE` and names the number
 against those three signatures; a probe that could not run at all reports
-`READING NOT TAKEN` rather than a clean bill of health. **The zero is this call's
+`READING NOT TAKEN`, not a clean bill of health. **The zero is this call's
 own answer and not a stale one** -- on .NET, and unlike .NET Framework, the error
 information is cleared to 0 before a `SetLastError` callee is invoked, so a 0
 afterwards is what *this* call set. That is stated in the type, because the whole
-third row rests on it, and it is stated as **read rather than run**: the
+third row rests on it, and it is stated as **read, not run**: the
 behaviour is Microsoft's documented one, verified 2026-08-29, and the generated
 stub is not emitted to disk in this build so nothing here has looked at it.
 
@@ -703,7 +703,7 @@ reading was taken, never what it says**: the verdict is a property of the
 developer's other windows, which is the same bar `MachineLoad` is held to, so it
 requires the heading and *exactly one* of the five verdicts.
 
-⚠️ **Two limits, said here rather than left to be assumed away.** The probe reads
+⚠️ **Two limits, said here and not left to be assumed away.** The probe reads
 the desktop *this thread* is on -- the desktop a suite-launched browser inherits
 today, and silently the wrong one if direction (d) is ever taken and browsers get
 a desktop of their own. And it is one sample: a heap refilled between the death
@@ -719,7 +719,7 @@ directories in a wild profile against a rig one are the first thing to compare;
 *wild-desktop dynamics* -- the interactive desktop's heap is being handed back and
 taken all day, and the rig's is exhausted and static, which is already known to
 change the exit code, since the released-mid-startup arm produced `0xE0000008`;
-*alternate exhaustion points* -- `RegisterClassExW` refusing rather than
+*alternate exhaustion points* -- `RegisterClassExW` refusing, not
 `CreateWindowExW`; and *GPU-child-first death*, since the 4,636-window level got
 as far as starting one. **It ends when its enumerable regimes are exhausted,
 with a report** -- and the unbounded tail is the armed probe above, which is the
@@ -771,7 +771,7 @@ product's sweep is ruled out by its own design**, read from
 attribution runs *process → profile* and the process publishes the path through
 its message window, so a browser that never published one is `Unattributable` --
 *"reported loudly and never acted on"*. The wild browser never published one;
-that is the very thing the failing test reported. **READ rather than run.**
+that is the very thing the failing test reported. **READ, not run.**
 
 **That leaves the harness, and the reproduction is deterministic.**
 `JobObjectScope.Launch` writes every process it starts -- browsers included -- into
@@ -805,7 +805,7 @@ wild shape comes out:
 nothing on either stream -- came out of **two** of them, one at lead 400 and one
 at lead 430, and the neighbouring launches at the same leads gave 14 and 3 lines:
 the target is a ~26 ms window and the jitter of a process start straddles it.
-**Said plainly rather than averaged away**: the exit code is deterministic at
+**Said plainly and not averaged away**: the exit code is deterministic at
 every lead, and the log length is not.
 
 **Point by point against 2026-08-26 19:43, taking the lead-400 launch that
@@ -855,7 +855,7 @@ retired. The +200 ms row is the one worth keeping for itself: **a heap exhausted
 after the browser is up kills its children instead of it** -- twenty-nine dumps,
 a browser still running, and a log that goes on.
 
-**Seed hypothesis 3 was not re-run, and this says so rather than implying
+**Seed hypothesis 3 was not re-run, and this says so instead of implying
 coverage.** The 2026-08-27 rig already mapped the alternate sites -- many small
 windows refuse with `ERROR_NO_MORE_USER_HANDLES` and kill earlier with no log
 file at all, large ones with `GetLastError` = 0 -- and the gradient walked the
@@ -863,7 +863,7 @@ heap from 0 KB to 4.6 MB. Between them those regimes produced 28 deaths and two
 exit codes. Re-running them to look for a 1 would have been the open-ended grind
 the brief forbade, once a 1 was shown to need an external terminator.
 
-⚠️ **What I could not establish, said here rather than at the end: which
+⚠️ **What I could not establish, said here, not at the end: which
 terminator fired on 2026-08-26 at 19:43.** Two produce exactly this trace --
 `taskkill /F`, which anybody or any agent may type at a shell, and the harness's
 own reclaim -- and **nothing durable records either**. `SpawnRecord.Reclaim`'s
@@ -877,7 +877,7 @@ names no second process; it does add one number, that the test failed in
 browser that had just been launched. **There is also an argument against the
 reclaim having been the one**: `EnsureReclaimed` does not only terminate -- it
 `TreeDelete`s every directory under the scratch root -- so a mid-run reclaim
-should have produced a cluster of failures rather than the single one that run
+should have produced a cluster of failures, not the single one that run
 reported. That argument is not decisive, and neither is anything else here.
 
 ✅ **Addendum 2026-08-29: this stays unanswered for 2026-08-26 and stops being
@@ -905,8 +905,8 @@ suite runs eat each other and names *"a browser vanished"* as one of the shapes;
 what was not known is that the eating leaves a **1**, which is indistinguishable
 from a great many other things until somebody measures the alternatives.
 
-**One second host in the tree does not trigger it, and that is measured rather
-than assumed.** `SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease`
+**One second host in the tree does not trigger it, and that is measured,
+not assumed.** `SuiteCoverageTests.AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease`
 starts a real `BrowserAI.Tests.exe` inside a run; with its filter it never
 touches a scratch root, so the record was not emptied and a live browser
 survived, 2 of 2. **That is one filter's behaviour, not a property of the
@@ -925,13 +925,13 @@ more than it looks like it selects.
   A live run's rows are then invisible to a second one, and the pass keeps doing
   its job for a run that really was killed.
 - **(c) Interlock on a machine-wide mutex the way the sweep does**, held for the
-  length of a run rather than the length of the pass, so a second harness process
+  length of a run, not the length of the pass, so a second harness process
   either waits or refuses. Strongest, and it changes what "run the suite twice at
   once" means from *undefined* to *serialised*.
 - **(d) Make the reclaim announce itself.** A pass that terminated something
-  writes it to the process log rather than to an in-memory list, so the next
-  occurrence is one grep rather than one investigation. Cheapest, diagnoses
-  rather than prevents, and composes with any of the above.
+  writes it to the process log, not to an in-memory list, so the next
+  occurrence is one grep, not one investigation. Cheapest, diagnoses
+  without preventing, and composes with any of the above.
 - **(e) Stop recording browsers.** Only the job object would contain them, which
   is what it is for. Loses the recovery the record exists for, in the one case it
   exists for.
@@ -974,7 +974,7 @@ spanning three processes writes three owners and each is judged on its own, whic
 is stronger than a per-run token**: a token would keep a row alive because some
 unrelated process of the same run happened to be.
 
-**And an identity rather than a run id because a run id cannot be asked whether
+**And an identity, not a run id because a run id cannot be asked whether
 it is alive.** The pass has exactly one question and only the operating system can
 answer it. `(pid, creationFileTime)` is answerable, is this repository's standing
 identity for a process -- the pair `browserai.lock` and every process-log record
@@ -991,18 +991,17 @@ record file that predates today, in a gitignored scratch directory.
 **(d) A pass that ended something says so in the process log.** One `WARN` record
 per terminated process, under the category `BrowserAI.Tests.SpawnRecordReclaim`,
 naming the subject, the exit code **read from the constant the call actually
-hands it** rather than written at the message, the owner it found gone, and the
+hands it** and not written at the message, the owner it found gone, and the
 record file it was honouring. A pass that ended nothing writes nothing -- every run
 of this suite runs this pass, so announcing the no-ops would put a line in the
 machine's log on every start and the one grep would stop being one.
 
-**It goes to the process log rather than to a file of the harness's own**, because
+**It goes to the process log, not to a file of the harness's own**, because
 that is the machine-wide, durable, thirty-day record of what processes on this box
 did; it sits outside the scratch tree the same pass is about to delete; and the
 suite's own published slices already write there, which is why
-`ProcessLogRecords` exists to read them back. Two consequences are worth saying
-rather than leaving to be found: the suite now writes outside the repository in
-**two** places rather than one, and the two comments that claimed otherwise carry
+`ProcessLogRecords` exists to read them back. Two consequences, said here and not left to be found: the suite now writes outside the repository in
+**two** places, not one, and the two comments that claimed otherwise carry
 the correction.
 
 **Three reds, each watched on this tree.** *A row owned by a live process
@@ -1016,7 +1015,7 @@ the pre-existing subject test goes red beside it. *The announcement lands and on
 when it should* -- `ATerminatingPassAnnouncesItselfInTheProcessLogAndAPassThatEndedNothingStaysSilent`,
 watched red **both ways**: once with the announcement suppressed, once with the
 no-op pass announcing, the two record paths being what tells them apart. The
-victims are probes rather than browsers, which is not a weakening -- what the old
+victims are probes, not browsers, which is not a weakening -- what the old
 pass did to a browser it did through `TerminateProcess` on a pid read out of a
 file, and that is the same call against the same kind of handle whatever the image
 is.
@@ -1024,8 +1023,8 @@ is.
 **What this closes.** The failure is gone in the direction that mattered: a live
 run's rows are invisible to a second harness process, and the recovery is
 untouched. The caveat two paragraphs above -- *one second host in the tree does not
-trigger it, and that is one filter's behaviour rather than a property* -- is now
-moot rather than lucky, because whatever that host selects, the outer host is
+trigger it, and that is one filter's behaviour, not a property* -- is now
+moot, not lucky, because whatever that host selects, the outer host is
 alive and its rows are not the child's to act on. This was also demonstrated
 against live data on the way in: a red-plant run's own reclaim announced two
 terminations honouring `.work\spawn-record.txt`, naming the dead host that had
@@ -1041,8 +1040,8 @@ remaining candidate, which is a much smaller question than the one this entry
 opened with.
 
 ⚠️ **What was not taken, and what is still true.** (c) -- the machine-wide
-interlock -- was not taken, so *"run the suite twice at once"* is still undefined
-rather than serialised, and everything `CLAUDE.md` says about two suites sharing
+interlock -- was not taken, so *"run the suite twice at once"* is still undefined,
+not serialised, and everything `CLAUDE.md` says about two suites sharing
 an app root still holds: they sweep each other's browsers, race each other's index
 and interleave in one log. One residual belongs to (b) itself and is named in the
 code: **the rewrite is not atomic against a concurrent append**, so a live run can
@@ -1066,7 +1065,7 @@ another process's provisioning mutex, deleting an abandoned tree, downloading,
 extracting, and pruning superseded revisions. The waiting case is the one that
 bites: that process has started nothing, cannot see what the holder is doing, and
 the holder may well be finished. **The sentence beside the word has been fixed**
-and now says it is watching for another process's marker rather than claiming a
+and now says it is watching for another process's marker instead of claiming a
 download (`ProvisioningTests.AProcessWaitingOnAnotherOneDoesNotSayItIsDownloading`).
 The word has not, because renaming what a model reads is product voice.
 
@@ -1123,10 +1122,10 @@ whole surface fits with room to spare -- the largest string is
 **Under a per-tool-total reading it does not fit.** `browserai_init`'s whole
 `tools/list` entry -- name, title, description and the serialized `inputSchema`
 with all seven parameter descriptions -- is **3,428 bytes**, sliced out of the raw
-frame the server wrote rather than re-serialised, and it is the only one
+frame the server wrote and not re-serialised, and it is the only one
 of the 65 over the line. If that reading is right, `browserai_init` is truncated
 today, mid-schema, and trimming its description would move text from one capped
-bucket into the same capped bucket rather than fixing anything.
+bucket into the same capped bucket instead of fixing anything.
 
 **Answered 2026-08-18 @ Claude Code 2.1.234: the cap is PER STRING.** Direction
 (a) was taken and it reported. *Previously: "Nobody has checked, and the gate says
@@ -1150,7 +1149,7 @@ matter more than the original question:
 - **Parameter descriptions are not truncated at all** (question 1 above).
 - **The cut is visible to the model and invisible to the server**: the client
   appends the literal `... [truncated]`. Nothing about it reaches the server, which
-  is why the gate has to be a build failure rather than a run-time check -- but it
+  is why the gate has to be a build failure, not a run-time check -- but it
   also means *"did that arrive whole?"* is a question a model can answer.
 
 **The method is the reusable part**, because it does not depend on a model
@@ -1195,19 +1194,19 @@ Put the details in the error so the model can adjust. The survivor arm now says,
 after the tally and the listing:
 
 - the session **is** destroyed -- its record is gone and the index has forgotten
-  it, so what is listed is residue on disk rather than a session;
+  it, so what is listed is residue on disk, not a session;
 - **do not call `browserai_destroy` again** -- there is no session there for it to
   destroy, and it will refuse;
 - what to do instead -- wait for whatever still holds those files to exit and then
   delete them, or leave them, because nothing in BrowserAI reads them again.
 
-**Why that answers the objection rather than merely softening it.** The objection
+**Why that answers the objection instead of merely softening it.** The objection
 was never *an error is inaccurate*; a call that did not entirely do the thing it
 is named for is not a success, and a model scanning result shapes should be able
 to tell it from one that did. The objection was that the error's **only**
 actionable reading is *retry*. Naming the one action that will not work, and the
 one that will, removes that reading -- so the failure mode the objection predicted
-needs a model to act against an instruction rather than to follow the default. The
+needs a model to act against an instruction, not to follow the default. The
 report the old defence wanted to protect is still there in full: the summary, the
 tally, the listing and the truncation notice are unchanged, and the roll-up
 warning arm is untouched.
@@ -1233,7 +1232,7 @@ and the assertions that pin it: two in `SessionDestroyTests`, two in
 `SessionToolTests`, one in `DestroyAnswer`. The three sentences would stay useful
 either way. Nothing else in the product branches on it, and `FirefoxSessionTests`
 no longer asserts the flag directly at all -- it goes through `DestroyAnswer`,
-which reads the contract rather than a literal.
+which reads the contract, not a literal.
 
 ### 12. The CsWin32 metadata licence -- **MOOT 2026-08-20, and the entry stays**
 
@@ -1252,14 +1251,14 @@ with `PrivateAssets="all"`, which is what keeps it out of the product's closure:
 it is a build-time analyzer for the **test project alone**, and it exists to be a
 *layout oracle*. The product hand-writes its seven interop structs, and CsWin32
 generates the same declarations from Microsoft's own metadata so the suite can
-assert the hand-written sizes and field offsets against the generated ones rather
-than against a comment. Deleting the reference would not remove a dependency from
+assert the hand-written sizes and field offsets against the generated ones,
+not against a comment. Deleting the reference would not remove a dependency from
 anything shipped -- nothing shipped has it -- it would remove the only independent
 check that the hand-written interop matches what Windows actually expects.
 
-**Three consequences worth naming**, because *moot* is not the same as *gone*:
+**Three consequences**, because *moot* is not the same as *gone*:
 
-1. **`PrivateAssets="all"` is now load-bearing rather than tidy.**
+1. **`PrivateAssets="all"` is now load-bearing, not tidy.**
    `ForbiddenDependencyTests` and the notice tests already read the package files
    and `packages.lock.json`; the rule this decision creates is that CsWin32 may
    never appear in `src/BrowserAI/`, and the first commit that puts it there is
@@ -1286,7 +1285,7 @@ step and this entry is already the brief.
 
 **This entry contains no legal opinion and must not acquire one.** It was
 commissioned to replace *"nobody has read the terms"* with the terms themselves, so
-that the open question is a legal question rather than a research task. Everything
+that the open question is a legal question, not a research task. Everything
 below is quoted from a primary source, with the URL and the date it was fetched.
 **Nothing here is a conclusion, and the recommendation at the end is a recommendation
 about who to ask, not about what the answer is.**
@@ -1484,13 +1483,13 @@ door shut.
 **Recommendation: (a) now, and (b) only when something actually wants CsWin32 in
 `src/`.** The gate is already holding -- nothing generated ships, so the exposure is
 zero -- and a legal question answered years before it is acted on will need re-asking
-anyway. **What has changed is that (b) is now a one-hour task rather than a research
+anyway. **What has changed is that (b) is now a one-hour task, not a research
 project**, because the text is above and the questions are written. What must not
 happen is the third option nobody proposed: reading the quotations here as an answer.
 They are not one, and this entry stays open until a lawyer closes it.
 
 ⚠️ **Superseded 2026-08-20 (previously "this entry stays open until a lawyer closes
-it").** The maintainer took **(a)** as permanent rather than as *now*: no generated
+it").** The maintainer took **(a)** as permanent, not as *now*: no generated
 code will ever ship. The entry does not stay open -- it becomes moot, which closes
 it without answering it. See the note under the heading above; the recommendation
 is kept verbatim because it is what was recommended and the decision went further
@@ -1512,7 +1511,7 @@ recommended**, and it recommended C-then-B with A as his alone; he took A. What 
 cost is exactly what the table said it would: `D:\Tools\BrowserAI` is now refused
 for nothing, and the honest predicate -- reading the marker directory's DACL for a
 group ACE -- is still not implemented, so [the hazard row](HAZARDS.md#hazard-index)
-is **narrowed rather than closed** and says so.
+is **narrowed, not closed** and says so.
 
 **The primer below is unchanged**, and everything in it is still true of a root the
 refusal does not reach.
@@ -1569,11 +1568,11 @@ installer's own flag actually writes.
 | **A** | **Refuse a shared root at startup** -- detect that the marker directory's DACL grants a group, or that the root is outside `%LocalAppData%`, and refuse to serve | A configuration somebody deliberately chose stops working, and the detection is a heuristic: *outside `%LocalAppData%`* is not the same predicate as *shared*, and a single-user install at `D:\Tools\BrowserAI` would be refused for nothing | The dangerous case cannot arise. This is your own stated follow-up |
 | **B** | **Refuse only the update apply, and keep serving** -- treat a root this process could not take the gate for as permanently *not alone* | Nothing, and it is a two-line change: `LiveInstances.Join` already returns `null`, and `UpdateService` already treats a null as *do not apply* | Removes exactly the failure measured -- the apply that kills a peer -- and leaves every other shared-root behaviour alone. **It is already the behaviour**; what is missing is that nobody is told |
 | **C** | **Say so, loudly, and change no behaviour** -- a startup warning naming the root, the mutex and what is degraded | A log line nobody reads. It does not stop anything | Cheapest honest option, and the one that makes the arrangement diagnosable instead of invisible. Composable with every other row |
-| **D** | **Give the objects a DACL that spans users** -- create the mutexes with an explicit `Authenticated Users` ACE | A real security decision: any authenticated user could then hold a gate that stalls another user's session opening, and it is a denial-of-service surface that does not exist today. Needs `MutexAcl.Create` and a security descriptor in `MachineMutex` | Makes the arrangement actually work rather than merely fail loudly |
+| **D** | **Give the objects a DACL that spans users** -- create the mutexes with an explicit `Authenticated Users` ACE | A real security decision: any authenticated user could then hold a gate that stalls another user's session opening, and it is a denial-of-service surface that does not exist today. Needs `MutexAcl.Create` and a security descriptor in `MachineMutex` | Makes the arrangement actually work instead of merely fail loudly |
 | **E** | **Key the marker set on the user as well as the root** -- one `live\<sid>\` subdirectory per user | Two users then genuinely cannot see each other, so an apply by one still kills the other's processes. **This is worse than doing nothing** and is listed because it is the obvious-looking fix | Nothing. Named so it is not proposed later |
 
 **Recommendation: C now, B stated explicitly, and A only if you want the
-configuration closed rather than diagnosed.** B is what the product already does
+configuration closed, not diagnosed.** B is what the product already does
 and it closes the measured failure, so the gap is not behaviour -- it is that
 three of the four consumers fail into a log file and nothing tells the operator
 the census has stopped meaning anything. C is what turns that from invisible into
@@ -1617,9 +1616,9 @@ disagreed.**
 
 **What my recommendation bought that this does not, stated so it is not lost.**
 Nothing about the ten tools was measured before they were granted. `browser_route`
-in particular changes what a page *is* rather than what the agent sees, and the
+in particular changes what a page *is*, not what the agent sees, and the
 one measurement that would matter -- what a mocked response does to a human
-watching a headed window -- was reasoned about rather than run. What went in
+watching a headed window -- was reasoned about, not run. What went in
 instead of a measurement is a **warning in the server `instructions`**, which is
 BrowserAI's own string and therefore the only channel available: upstream
 descriptions pass through byte for byte, and [the rewrite path that could have
@@ -1634,7 +1633,7 @@ on the capability by name,
 on the count, and `VerticalSliceTests` off the wire. **Reversing it is not free
 for a caller**, though: an agent that has learned the tools exist will keep
 calling them, and upstream's answer to a tool its child was not launched with is
-*unknown tool* rather than anything a model can act on.
+*unknown tool*, not anything a model can act on.
 
 ⚠️ **`browser_run_code_unsafe` is not one of the ten and this entry must not be
 read as though it were.** It is `core`; it has been reachable in every session
@@ -1656,8 +1655,7 @@ Nothing about the grant changed its availability.
 > **the one-file answer**, **the argument-recording answer**, **the caps answer**
 > and **the refusals-go-to-`browserai.log` answer**.
 >
-> **What survived is the reasoning that decided it, and that is worth saying
-> plainly.** The one-file argument -- *a session directory is moved and copied by
+> **What survived is the reasoning that decided it, said plainly.** The one-file argument -- *a session directory is moved and copied by
 > people, and a second file is a second thing that can be copied without the
 > first* -- was right, and it is what the new design is built to keep: the record
 > and the log are still **one** file, `browserai.data`, and it is still the file
@@ -1692,7 +1690,7 @@ created for one thing and whose log describes another, with nothing to say which
 half is the stranger. **One file cannot be half-copied.** That is a stronger
 property than anything the sibling bought, and my recommendation did not weigh it.
 
-**What it costs, measured against the alternative rather than in the abstract.**
+**What it costs, measured against the alternative, not in the abstract.**
 Every forwarded browser call now rewrites the **whole record**:
 `SessionLock.Rewrite` closes the handle, writes a temp file `WriteThrough`,
 `Flush(flushToDisk: true)`, renames it over `browserai.json`, and re-opens. An
@@ -1741,9 +1739,9 @@ without reversing the decision.**
 `try`/`catch` in `BrowserProxy` and a schema bump. `SessionLogTests` holds the
 behaviour and would move with it. **What would not survive the move is the copy
 property above**, and whoever reverses this should say what they are doing about
-it rather than discovering it later.
+it instead of discovering it later.
 
-> ⚠️ **Reversed 2026-08-26, and the copy property was kept rather than traded
+> ⚠️ **Reversed 2026-08-26, and the copy property was kept, not traded
 > away.** The paragraph above is the right question to have asked and it named
 > the wrong file set. What moved out of the record was the **guard**, not the
 > log: `browserai.data` still carries the statements and the log together, so a
@@ -1764,7 +1762,7 @@ is what `browser_fill_form`'s `fields` and `browser_route`'s `headers` become;
 and *cut at 200 characters with a count of what was dropped* for everything else,
 which is what turns a `browser_evaluate` body from a transcript into a summary.
 **The withheld list is asserted against the golden snapshot**, so an upstream
-rename is a red build rather than a policy that quietly stopped matching.
+rename is a red build, not a policy that quietly stopped matching.
 
 > ⚠️ **REVERSED 2026-08-26: no argument is recorded at all, and `LoggedArgument`
 > is deleted.** *(Previously the whole paragraph above.)* A log row is
@@ -1774,14 +1772,14 @@ rename is a red build rather than a policy that quietly stopped matching.
 > shape summaries, the 200-character cut and the golden-snapshot assertion behind
 > them are all gone.
 >
-> **The reason is the doctrine rather than the cost.** *Nothing between the two
+> **The reason is the doctrine, not the cost.** *Nothing between the two
 > servers except the session system and the reason system*: an argument summary
 > is BrowserAI reading a caller's request and writing its own account of it, and
-> a `<object, 3 keys>` in a log is a fact about a serialiser rather than about
+> a `<object, 3 keys>` in a log is a fact about a serialiser, not about
 > what the agent did. The `why` is a better answer to the same question, it is
 > mandatory on every call that names a session, and nobody has to maintain a list
-> of upstream parameter names to keep it honest. **What is lost is named rather
-> than glossed**: a reader can no longer see *which* selector was typed into, or
+> of upstream parameter names to keep it honest. **What is lost is named and
+> not glossed**: a reader can no longer see *which* selector was typed into, or
 > that a password field was filled at all, from the log alone. F3 -- a review
 > finding about argument recording -- is moot for the same reason.
 
@@ -1820,12 +1818,12 @@ refused call is now a row** -- `outcome = failed`, carrying the refusal itself -
 so the record answers *the agent reached for a tool this build will not forward*,
 which nothing else in the directory could say once the log file went.
 `SessionLogTests.ARefusedCallIsRecordedAsAFailedRowCarryingTheRefusal` holds it,
-and it is an **inverted** test rather than a new one: the arm it replaced
+and it is an **inverted** test, not a new one: the arm it replaced
 asserted that a refusal left no row.
 
 **What did not change**, and it is the half §14 called the sharpest consequence:
-**a call whose row cannot be written is still refused rather than forwarded.**
-`SessionLock.Append` throws rather than swallowing, and `SessionErrors`
+**a call whose row cannot be written is still refused, not forwarded.**
+`SessionLock.Append` throws instead of swallowing, and `SessionErrors`
 still carries the row. The value of one time-ordered record is that reading it
 back tells you what the session did, and a gap nobody is told about is worse than
 a refusal somebody can act on.
@@ -1846,7 +1844,7 @@ a successful call stores no payload at all.
 ### 15. `AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing` measured 5.2 s for a zero-wait acquire -- **CLOSED 2026-08-23: the clock is gone and the gate records the wait it was handed**
 
 **The primer, for whoever reads this without the run.** That test proves the
-live-marker reclaim *skips* rather than *waits* when a peer holds the gate. Both
+live-marker reclaim *skips*, not *waits* when a peer holds the gate. Both
 behaviours return `Skipped`, so the only thing that can tell them apart is a
 clock -- and the test bounds `Stopwatch.Elapsed` by the product's own
 `LockScopes.LiveInstanceGate`, five seconds. Its comment says, in as many words:
@@ -1864,7 +1862,7 @@ consecutive runs from external load alone. **A wall-clock bound of five seconds
 is inside that noise.** Six other full runs on the same tree, three from
 PowerShell and three from Git Bash, were green.
 
-⚠️ **It was not introduced by this work, and that was checked rather than
+⚠️ **It was not introduced by this work, and that was checked, not
 assumed.** Nothing changed can make a zero-wait acquire block. The obvious
 counter-hypothesis is load: the one time-ordered log now writes the **whole
 session record durably -- `WriteThrough`, flush, atomic rename, re-open -- on every
@@ -1874,7 +1872,7 @@ suite at the end of this work ran in **1 m 56 s** at its fastest -- 43 more case
 for the same wall clock. What moved is the machine: the *identical* tree ran in
 **1 m 56 s** and in **5 m 59 s** on the same afternoon, and at the slow end this
 test, both real-`claude.exe` registration arms and a real-Firefox arm failed
-together. The load was external and was identified rather than guessed at --
+together. The load was external and was identified and not guessed at --
 37 processes of the maintainer's own `C:\Program Files\Mozilla Firefox`, plus
 Discord, Outlook and an indexer -- and nothing was terminated to make a number
 look better.
@@ -1896,14 +1894,14 @@ from a five-second wait.
 | # | Direction | What it costs | What it buys |
 |---|---|---|---|
 | **A** | **Correct the comment and leave the bound.** State that the bound is a hang detector against a *product* timeout and that a starved thread can trip it, and accept a rare red | One line, and a test that fails perhaps once in seven full runs -- on a machine where the release gate is six runs | Honesty, and nothing else. The 2026-08-20 observation stops being a surprise to the next reader |
-| **B** | **Bound the acquire rather than the wall clock.** Measure inside `ReclaimStaleMarkers` -- return how the acquire was attempted, or have the test assert `LockScopes.NeverWaits` is what it passes -- and delete the stopwatch | The claim weakens from *it did not wait* to *it asked not to wait*. A future edit that passed a real timeout would still fail, but one that added a `Thread.Sleep` beside the acquire would not | A deterministic assertion with no clock in it, which is what [TESTING.md](TESTING.md) asks for everywhere else |
+| **B** | **Bound the acquire, not the wall clock.** Measure inside `ReclaimStaleMarkers` -- return how the acquire was attempted, or have the test assert `LockScopes.NeverWaits` is what it passes -- and delete the stopwatch | The claim weakens from *it did not wait* to *it asked not to wait*. A future edit that passed a real timeout would still fail, but one that added a `Thread.Sleep` beside the acquire would not | A deterministic assertion with no clock in it, which is what [TESTING.md](TESTING.md) asks for everywhere else |
 | **C** | **Both: assert the argument AND keep a much larger wall-clock backstop** -- say sixty seconds, which no scheduling gap on this machine approaches | Two assertions where there was one, and the backstop stops being evidence about *promptness* -- it only catches an outright hang | Keeps a hang detector while removing the false positive. It is the shape the rest of the suite already uses |
 | **D** | **Run this one test alone.** Exclude it from the parallel set so the clock is honest | Cannot be expressed without a mechanism the suite does not have, and `HouseRuleTests.NoTestInTheTreeIsSkipped` is deliberately hostile to per-test special cases | A clock that means what it says, at the price of a second way to run tests |
 
 **Recommendation: C**, with A's sentence written into it either way. The property
 worth keeping is *the reclaim does not wait*, and the honest way to state it is
 the argument it passes plus a backstop far enough outside the noise to be about
-hangs rather than about scheduling. **B alone is a real weakening** and should
+hangs, not about scheduling. **B alone is a real weakening** and should
 not be taken without saying so in the test. **D is a trap**: it buys a clock at
 the cost of a second execution mode, and the first thing that would follow it is
 a second test wanting the same exemption.
@@ -1922,7 +1920,7 @@ backstop and no second assertion of elapsed time anywhere in that arm. In its
 place `MachineMutex.Acquire` records the timeout it was **handed** --
 `MachineMutex.LastAcquireTimeout`, set before the wait so it lands on every path
 out of the method -- and `LiveInstances.ReclaimStaleMarkers` surfaces it on
-`LiveMarkerReclaim.GateWait`, read back off the gate the pass used rather than
+`LiveMarkerReclaim.GateWait`, read back off the gate the pass used and not
 restated at the construction site. The assertion is now
 `Assert.That(skipped.GateWait).IsEqualTo(LockScopes.NeverWaits)`. A descheduled
 thread cannot move it.
@@ -1932,7 +1930,7 @@ table's recommendation was **C** -- the argument *plus* a sixty-second backstop.
 The maintainer's instruction of 2026-08-23 was explicit in the other direction:
 *"remove the elapsed-time bound entirely"*. So the weakening is taken
 deliberately and it is written into the test in place, in the words the entry
-above asked for: the claim is now **the pass asked not to wait** rather than
+above asked for: the claim is now **the pass asked not to wait**, not
 **the pass did not wait**. An edit that started passing a real timeout is still
 caught; an edit that put a `Thread.Sleep` beside the acquire is not, and neither
 is an outright hang.
@@ -1963,13 +1961,13 @@ across a process boundary: `SessionProbe`'s `session-sweep` mode wraps a
 separate probe processes** launched together, and the suite asserts every loser
 came back inside a second. Process creation is the most contended operation on a
 saturated Windows box, and the arm that was falsified at 5.2 s did strictly less
-work in-process. It also invents its own number -- a bare `1000` rather than
+work in-process. It also invents its own number -- a bare `1000`, not
 anything from `TestDefaults` -- which is the second rule
 [the house doctrine](TESTING.md#every-duration-is-a-hang-detector-or-it-is-a-defect)
 states.
 
 **It has not gone red on this machine and it has not been touched**, because the
-instruction was to report it rather than fix it silently. The rest of the suite
+instruction was to report it and not fix it silently. The rest of the suite
 was swept for the shape and is clean: the only other elapsed-time *assertions*
 left are `SessionLockTests`' 120-second one, whose comment already disclaims
 promptness and whose bound is far outside the noise;
@@ -1984,8 +1982,8 @@ promptness assertions left comments where each one had been, which is why they
 were findable -- but `HouseRuleTests` has two arms and neither of them is *no
 test asserts on a wall clock*. The reclaim arm was added on 2026-08-20, after
 that sweep, by someone who had read the doctrine. **That is what a habit looks
-like**, and it is a candidate for the mechanism column in `CLAUDE.md` rather
-than the reader column.
+like**, and it is a candidate for the mechanism column in `CLAUDE.md`,
+not the reader column.
 
 
 ## Added 2026-09-17, from the wild exit 1 being attributed
@@ -1993,7 +1991,7 @@ than the reader column.
 ### One arm launches a browser the product is entitled to kill, and nothing holds it apart from the arms that start a product server -- **ANSWERED 2026-09-17: (a)**
 
 > ✅ **(a), the keyless `[NotInParallel]`, taken 2026-09-17.** The arm runs
-> beside nothing now, and what it costs is measured rather than estimated: three
+> beside nothing now, and what it costs is measured, not estimated: three
 > runs of the arm alone at **1.528 s / 1.513 s / 1.476 s** of total run time
 > against a **0.747 s / 0.732 s / 0.763 s** zero-test baseline through the same
 > invocation, so roughly **0.75 s** of critical path. **Nothing mechanises it and
@@ -2015,7 +2013,7 @@ window. It has been blamed on desktop-heap exhaustion (retired on the day by
 own spawn-record reclaim (the 2026-08-29 diagnosis, which reproduced that
 signature 18 of 18 and was fixed the same day).
 
-**It was neither.** Read out of the machine-wide process log rather than reasoned
+**It was neither.** Read out of the machine-wide process log and not reasoned
 about:
 
 ```
@@ -2032,13 +2030,13 @@ after the browser's last log line.
 `1`. The harness reclaim is excluded by its own announcements: it ran ten seconds
 earlier and named three other pids.
 
-**Why it is open rather than fixed.** `StraySweepTests
+**Why it is open instead of fixed.** `StraySweepTests
 .TheSweeperFindsARealBrowserItLaunchedItselfInTheInteractiveSession` launches a
 real Chromium against a scratch session directory that carries **no**
 `browserai.lock` -- by construction, because the arm's whole subject is a browser
 the sweeper must find and attribute. By the product's own definition that is a
 stray, so **any** product server starting anywhere on the machine while that
-browser is alive will terminate it. That is deterministic rather than rare, which
+browser is alive will terminate it. That is deterministic, not rare, which
 makes it a suite isolation defect and not a wild death. The arm carries **no**
 `[NotInParallel]` at all: the class's `SweepGroup` key holds apart the arms that
 *run a sweep themselves*, and says nothing about the dozens of arms that start a
@@ -2047,7 +2045,7 @@ product `BrowserAI.Server.exe`, each of which sweeps at startup.
 **The plantable red, so whichever direction is taken can be watched.** Start a
 real browser the way that arm does, against an unlocked scratch session
 directory; start one product server; assert the browser is still alive. Red today
-by construction rather than by timing, which is what makes it plantable at all --
+by construction, not by timing, which is what makes it plantable at all --
 the 2026-08-23 rule against provoking a race by timing does not bite here.
 
 **Directions.**
@@ -2076,14 +2074,14 @@ the 2026-08-23 rule against provoking a race by timing does not bite here.
 **Not offered: changing the product.** A grace period before the sweep may
 terminate an unattributable browser would weaken the guarantee the sweep exists
 for, on a machine, to make a test comfortable. If that is ever wanted it is a
-charter decision rather than a fix.
+charter decision, not a fix.
 
 ### A session whose child died answers one call forever, and nothing on the forward path owns a clock -- **ANSWERED 2026-09-17: (a) and (c), and (c) stopped being a hope**
 
 > ✅ **Both taken 2026-09-17, and (2) was refused.** Direction (3)'s stated cost
 > was that *"it needs the SDK's transport to surface the close in a way this code
 > can act on, which is unverified here"* -- that was established the same day, by
-> reading `ModelContextProtocol.Core` 2.2.0's shipped IL rather than by observing
+> reading `ModelContextProtocol.Core` 2.2.0's shipped IL, not by observing
 > behaviour: `McpSessionHandler` faults every pending request when the
 > transport's channel completes, **once**, and a request registered after that
 > walk is faulted by nothing
@@ -2138,7 +2136,7 @@ surface.
 
 1. **`browserai_resume` asks whether the child is alive, and relaunches it if it
    is not.** It is the direction the hazard row has been nominating since
-   2026-09-16 and it repairs the session rather than reporting on it: a caller
+   2026-09-16 and it repairs the session instead of reporting on it: a caller
    that has lost its browser calls the one tool named for getting it back and
    gets it back. **Cost:** `resume` stops being a pure no-op on a session this
    process already owns, so a caller that resumes for reassurance can now cause a
@@ -2150,7 +2148,7 @@ surface.
    number, and every number on this path is wrong for somebody -- a real
    `browser_navigate` on a slow page, a `browser_pdf_save` of a large document
    and a first-run provisioning wait are all legitimately long, and the house
-   rule is that a duration bound is a hang detector rather than a promptness
+   rule is that a duration bound is a hang detector, not a promptness
    claim. It would also fire on the healthy case the day upstream gets slower.
 3. **Fail the pending request when the transport reports the peer gone.** The
    server already logs it 347 ms in; completing the outstanding requests with
@@ -2158,9 +2156,9 @@ surface.
    three. **Cost:** it needs the SDK's transport to surface the close in a way
    this code can act on, which is unverified here -- what is measured is only
    that `ChildProcessSession` logs it, not that anything reusable is raised. That
-   has to be established before this is a direction rather than a hope.
+   has to be established before this is a direction, not a hope.
 4. **Leave it, and let the record carry it.** Nothing in normal operation kills a
    child under a live server. **Cost:** the four things that do are not rare, the
-   failure is a hang rather than an error, and a model that meets it has no way
+   failure is a hang, not an error, and a model that meets it has no way
    to find out what happened -- which is the failure class this project exists to
    eliminate.
