@@ -20,7 +20,7 @@ namespace BrowserAI.Tests;
 /// is executed here for real, both ways. The <c>vpk pack</c> invocation cannot
 /// be -- it needs the tool, a publish and two minutes -- so what is asserted about
 /// it is that the four decisions with a blast radius are still in the file:
-/// never <c>--msi</c>, the entry executable rather than the stub, a
+/// never <c>--msi</c>, the entry executable and not the stub, a
 /// <b>Start Menu</b> entry and no desktop one, and an ILC scan that looks for
 /// the one thing that is not a diagnostic. <i>Corrected 2026-09-16 (previously
 /// "no shortcuts")</i> -- <c>--shortcuts StartMenuRoot</c> has been passed since
@@ -28,7 +28,7 @@ namespace BrowserAI.Tests;
 /// person needed a way to open it again.
 /// </para>
 /// <para>
-/// <b>What a scan can and cannot do is stated rather than implied.</b> It cannot
+/// <b>What a scan can and cannot do is stated and not implied.</b> It cannot
 /// prove the pack behaves; the
 /// [install → update → rollback cycle](../../kb/packaging/velopack.md#install--update--rollback-end-to-end)
 /// did
@@ -282,7 +282,7 @@ internal sealed class ReleaseScriptTests
 
         // Never the default Desktop,StartMenuRoot: a desktop icon for something
         // opened twice a year is clutter, and the default is what arrives if
-        // the argument is ever dropped rather than changed.
+        // the argument is ever dropped instead of changed.
         await Assert.That(passed).DoesNotContain("Desktop");
 
         await Assert.That(passed).Contains("'--icon', $icon");
@@ -305,7 +305,7 @@ internal sealed class ReleaseScriptTests
     /// 1.2.0: there is no flag for it and an id may not carry a path. So the id
     /// is the only lever there is, and it is what puts the install root at
     /// <c>BrowserAI.app</c> <i>beside</i> the data root at <c>BrowserAI</c>
-    /// rather than on top of it. That matters because <c>Setup.exe</c> renames a
+    /// and not on top of it. That matters because <c>Setup.exe</c> renames a
     /// non-empty install root aside and deletes it, and uninstall empties it --
     /// which, under the old layout, took 768 MB of provisioned browsers and the
     /// session index with it.
@@ -427,20 +427,20 @@ internal sealed class ReleaseScriptTests
         await Assert.That(script).Contains("Move-Item -LiteralPath $packedPath -Destination $downloadPath -Force");
 
         // And the refusal that stops a rename being a silent no-op: an artefact
-        // that was not produced must fail the release rather than leave the
+        // that was not produced must fail the release instead of leaving the
         // previous run's file in place under the right name.
         await Assert.That(script).Contains("so there is no $($download.What) to rename or to publish");
         await Assert.That(script).Contains("Required = $true");
         await Assert.That(script).DoesNotContain("Required = $false");
 
         // The human-facing manifest directory keeps the VERSION, because it is a
-        // record rather than a download -- named for the download id and not for
+        // record and not a download -- named for the download id and not for
         // the pack id, and deliberately not flattened to `BrowserAI`.
         await Assert.That(script).Contains("$manifestDir = Join-Path $ArchiveDir \"$downloadId-$PackVersion-manifest\"");
 
         // And the feed-internal packages do NOT get renamed: these two are the
-        // control, and a sweep that renamed everything would fail here rather
-        // than in the field on somebody's first update.
+        // control, and a sweep that renamed everything would fail here and
+        // not in the field on somebody's first update.
         await Assert.That(script).Contains("$full = Join-Path $OutputDir \"$packId-$PackVersion-full.nupkg\"");
         await Assert.That(script).Contains("$delta = Join-Path $OutputDir \"$packId-$PackVersion-delta.nupkg\"");
     }
@@ -451,7 +451,7 @@ internal sealed class ReleaseScriptTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Driven against a synthetic root rather than the repository's own.</b>
+    /// <b>Driven against a synthetic root and not the repository's own.</b>
     /// One of the seven is <c>payload/payload.json</c>, which exists only after
     /// <c>build/Build-Payload.ps1</c> has run -- so pointing this at the real
     /// root would make the test's own result depend on whether a payload
@@ -463,7 +463,7 @@ internal sealed class ReleaseScriptTests
     /// <para>
     /// <b>Read back out of the copies.</b> The manifest states a version only
     /// where it copied a file stating it, which is what makes the number
-    /// evidence rather than something somebody typed.
+    /// evidence and not something somebody typed.
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-26 (previously
@@ -494,8 +494,8 @@ internal sealed class ReleaseScriptTests
     /// body looks like is `ChangelogTests`' business, over fixtures, where an
     /// exact expected document is readable; running the release script to find
     /// out would cost two NativeAOT publishes. So this holds that the release
-    /// script calls the generator, hands it the version it is packing rather
-    /// than a version of its own, puts the body where the manifest goes, and
+    /// script calls the generator, hands it the version it is packing and
+    /// not a version of its own, puts the body where the manifest goes, and
     /// reports it -- a release whose body is written somewhere nobody looks is
     /// the same defect wearing a script.
     /// </para>
@@ -523,14 +523,14 @@ internal sealed class ReleaseScriptTests
         await Assert.That(invocation).Contains("-Version $PackVersion");
         await Assert.That(invocation).Contains("-Destination");
 
-        // The destination is named a few lines above the call rather than on it,
+        // The destination is named a few lines above the call and not on it,
         // so the step is read as a whole: what matters is that the body lands
         // where the manifest does and not that one expression carries both.
         var step = script[Math.Max(0, call - 400)..Math.Min(script.Length, call + 600)];
 
         await Assert.That(step).Contains("$manifestDir");
 
-        // And a failure stops the release rather than leaving it bodyless.
+        // And a failure stops the release instead of leaving it bodyless.
         await Assert.That(invocation).Contains("if ($LASTEXITCODE -ne 0) { exit 1 }");
 
         // ⚠️ AND IT IS SKIPPED FOR A PRE-RELEASE VERSION, which is not a defect
@@ -542,7 +542,7 @@ internal sealed class ReleaseScriptTests
         // would make the release script unusable for the thing it is used for
         // most. Found by running it: the pack succeeded and the body step exited
         // 1 naming a section nobody had written.
-        // Scoped to the lines immediately above the call rather than to the
+        // Scoped to the lines immediately above the call and not to the
         // whole file: the pre-release SUFFIX is already tested four hundred
         // lines earlier, for a different reason, and a whole-file search would
         // pass on that one and assert nothing about this step.
@@ -552,7 +552,7 @@ internal sealed class ReleaseScriptTests
         await Assert.That(guard).Contains("else");
 
         // Reported, so the shape the size guard chose is in the release record
-        // rather than only on somebody's screen.
+        // and not only on somebody's screen.
         var report = script.IndexOf("[pscustomobject]@{", StringComparison.Ordinal);
         await Assert.That(report).IsGreaterThan(call);
         await Assert.That(script[report..]).Contains("ReleaseBody");
@@ -620,7 +620,7 @@ internal sealed class ReleaseScriptTests
         await Assert.That(manifest).Contains("\"revision\": \"4321\"");
 
         // The verdicts file states what it was judged against, and the manifest
-        // states that rather than the row set: which tools a build forwards is
+        // states that and not the row set: which tools a build forwards is
         // only meaningful beside the upstream it was adjudicated on. The
         // synthetic value is one no real resolve could produce.
         await Assert.That(manifest).Contains("\"@playwright/mcp\": \"0.0.778\"");
@@ -631,7 +631,7 @@ internal sealed class ReleaseScriptTests
         // what an npm `overrides` entry does. Both keys are always present, for
         // the same reason: an absent key is not a statement.
         //
-        // Every number here is READ rather than typed into the script -- the
+        // Every number here is READ and not typed into the script -- the
         // shipped version and the declared ones out of the copied lock, the pin
         // out of the copied `package.json` -- so the fixture makes the three
         // differ. A fixture where they agreed could not tell a real read from a
@@ -651,7 +651,7 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
-    /// A payload with no override in force yields the empty value rather than
+    /// A payload with no override in force yields the empty value instead of
     /// omitting the field.
     /// </summary>
     /// <remarks>
@@ -675,7 +675,7 @@ internal sealed class ReleaseScriptTests
     /// <c>"pulledForward": null</c> and this arm is the one describing what
     /// ships. <b>Neither arm reads the repository's own payload</b> -- both build
     /// a synthetic root -- so the retirement did not move either of them, and
-    /// that is the property worth stating rather than the coincidence: an arm
+    /// that is the property being stated, not the coincidence: an arm
     /// that went green because the tree stopped carrying an override would be
     /// an arm measuring the tree instead of the script.
     /// </para>
@@ -731,7 +731,7 @@ internal sealed class ReleaseScriptTests
     /// in the first and absent in the second.
     /// </para>
     /// <para>
-    /// <b>The marker rather than the line count.</b> A count is a property of the
+    /// <b>The marker and not the line count.</b> A count is a property of the
     /// verbosity, the project and the SDK at once, and the one change it would
     /// not survive is a publish that legitimately prints more -- which is the
     /// direction this is meant to tolerate. <c>Generating native code</c> is
@@ -783,8 +783,8 @@ internal sealed class ReleaseScriptTests
         await Assert.That(refusedOutput).Contains("IlcCompile");
         await Assert.That(refusedOutput).Contains("native");
 
-        // And a log that carries neither marker is refused too, rather than
-        // being read as a pass: an absent log and an incremental one are the
+        // And a log that carries neither marker is refused too, and not
+        // read as a pass: an absent log and an incremental one are the
         // same absence of evidence.
         var silent = Path.Combine(scratch.Path, "silent.log");
 
@@ -842,10 +842,10 @@ internal sealed class ReleaseScriptTests
     /// machine: no <c>BrowserAI.app</c> key after six installer-arm runs.
     /// </para>
     /// <para>
-    /// <b>Built rather than retyped</b>, so a packing decision added to
+    /// <b>Built, not retyped</b>, so a packing decision added to
     /// <c>$packArgs</c> reaches both packs. The suite would otherwise be
     /// exercising an installer built differently from the one that ships, which
-    /// is the failure this whole arm exists to avoid rather than to introduce.
+    /// is the failure this whole arm exists to avoid and not to introduce.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -866,7 +866,7 @@ internal sealed class ReleaseScriptTests
         // Velopack names the Start Menu shortcut `<title>.lnk` and the uninstall
         // removes shortcuts by target, so two packs under one title share one
         // `.lnk` and the suite's uninstall deletes the real install's entry.
-        // Both literals are asserted here rather than only their inequality,
+        // Both literals are asserted here and not only their inequality,
         // because "they differ" is satisfied by renaming the shipping one.
         await Assert.That(script).Contains("$packTitle = 'BrowserAI'");
         await Assert.That(script).Contains("$testPackTitle = 'BrowserAI (suite)'");
@@ -892,7 +892,7 @@ internal sealed class ReleaseScriptTests
         await Assert.That(loop).Contains("$testOutputDir");
 
         // ⚠️ AND THE SECOND FEED IS CLEARED BEFORE IT IS PACKED INTO, which is
-        // the ORDER rather than the call: a clear that ran after the pack would
+        // the ORDER and not the call: a clear that ran after the pack would
         // delete the installer the suite is about to run, and one that never ran
         // lets a gate's pre-release refuse the next release cut -- after the
         // shipping artifacts have already been built. What the step DOES is
@@ -938,14 +938,14 @@ internal sealed class ReleaseScriptTests
     /// exit names the suite's installer while the release itself is already on
     /// disk. It refused the 2026-09-16 cut in precisely that shape. <b>Q200</b>,
     /// decided 2026-09-17: the script clears its own regenerated,
-    /// never-published output rather than a checklist item asking a human to.
+    /// never-published output and not a checklist item asking a human to.
     /// </para>
     /// <para>
-    /// <b>Driven rather than scanned, which is why the step is its own script.</b>
+    /// <b>Driven, not scanned, which is why the step is its own script.</b>
     /// The <c>vpk pack</c> around it cannot be executed here - it needs the tool,
     /// a publish and two minutes - but a deletion over a directory of files can
     /// be, and a <c>Contains</c> over the script text would assert that a line
-    /// was written rather than that it removes anything. So
+    /// was written and not that it removes anything. So
     /// <c>build/Clear-TestPackFeed.ps1</c> is separate for the same reason
     /// <c>Test-ReleaseVersion.ps1</c> and <c>Write-ReleaseManifest.ps1</c> are,
     /// and <see cref="TheSuitesInstallerIsPackedUnderATestIdIntoADirectoryOfItsOwn"/>
@@ -991,7 +991,7 @@ internal sealed class ReleaseScriptTests
 
             // And the pre-rename names, because a run that died between the pack
             // and the rename leaves these instead - and vpk reads the .nupkg
-            // rather than the renamed exe, so either shape refuses the next cut.
+            // and not the renamed exe, so either shape refuses the next cut.
             Path.Combine(testPack, $"{ReleaseLayout.TestPackId}-{ReleaseLayout.Channel}-Setup.exe"),
             Path.Combine(testPack, $"{ReleaseLayout.TestPackId}-{ReleaseLayout.Channel}-Portable.zip"),
         ];
@@ -1123,8 +1123,8 @@ internal sealed class ReleaseScriptTests
             await Assert.That(ReleaseLayout.Judge(Path.Combine(scratch.Path, "went-away"), scratch.Path))
                 .IsEqualTo(ReleaseLayout.UninstallKeyState.Dangling);
 
-            // A key with no location at all reads the same way, rather than
-            // being read as an install somewhere unknown.
+            // A key with no location at all reads the same way, and is not
+            // read as an install somewhere unknown.
             await Assert.That(ReleaseLayout.Judge(string.Empty, scratch.Path))
                 .IsEqualTo(ReleaseLayout.UninstallKeyState.Dangling);
 
@@ -1143,7 +1143,7 @@ internal sealed class ReleaseScriptTests
         }
 
         // The witness names the key and the command, so a machine that has to be
-        // cleaned by hand is told how in the coverage block rather than in a
+        // cleaned by hand is told how in the coverage block and not in a
         // commit message somebody has to find.
         await Assert.That(ReleaseLayout.TestUninstallKey).Contains(ReleaseLayout.TestPackId);
         await Assert.That(ReleaseLayout.ClearTheLeftoverKey).Contains("reg delete");
@@ -1155,7 +1155,7 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
-    /// A missing file refuses the manifest rather than writing a partial one.
+    /// A missing file refuses the manifest instead of writing a partial one.
     /// </summary>
     /// <remarks>
     /// <b>A manifest holding seven of eight files reads exactly like a complete
@@ -1185,7 +1185,7 @@ internal sealed class ReleaseScriptTests
 
     /// <summary>
     /// The manifest states whether the release was a crunch override, in both
-    /// directions -- and an ordinary release says <c>null</c> rather than saying
+    /// directions -- and an ordinary release says <c>null</c> instead of saying
     /// nothing.
     /// </summary>
     /// <remarks>
@@ -1259,10 +1259,10 @@ internal sealed class ReleaseScriptTests
     /// </summary>
     /// <remarks>
     /// <b>The same argument as the missing-file refusal, applied to the claim
-    /// rather than to the evidence.</b> A manifest saying <i>held at 0.0.700</i>
+    /// and not to the evidence.</b> A manifest saying <i>held at 0.0.700</i>
     /// with no newest version, no reason and nobody's name reads, a year later,
-    /// exactly like a complete account of the decision -- so it refuses rather
-    /// than writing one.
+    /// exactly like a complete account of the decision -- so it refuses instead
+    /// of writing one.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -1290,7 +1290,7 @@ internal sealed class ReleaseScriptTests
         await Assert.That(Directory.Exists(destination)).IsFalse();
     }
 
-    /// <summary>The release script emits the manifest rather than leaving it to a person.</summary>
+    /// <summary>The release script emits the manifest instead of leaving it to a person.</summary>
     /// <remarks>
     /// The scan is what ties the two together: the test above proves the script
     /// works, and this proves a release runs it. Item 11 was satisfied by hand
@@ -1353,8 +1353,8 @@ internal sealed class ReleaseScriptTests
         // ⚠️ AND THE THREE playwright-core NUMBERS ARE DELIBERATELY DIFFERENT.
         // The version that SHIPS is the lock's own `node_modules/playwright-core`
         // entry; what the wrapper and `playwright` DECLARE for themselves is a
-        // day earlier; and the pin that caused it sits in `package.json` rather
-        // than anywhere in this file, because npm writes no `overrides` block
+        // day earlier; and the pin that caused it sits in `package.json` and
+        // not anywhere in this file, because npm writes no `overrides` block
         // into the lock it produces. A fixture carrying one number could not tell
         // a manifest that read all three from one that read the first and
         // repeated it.
@@ -1368,7 +1368,7 @@ internal sealed class ReleaseScriptTests
               "node_modules/playwright-core":{"version":"1.99.0-alpha-2026-01-01"}}}
             """);
         // ⚠️ THE ONLY RECORD THAT AN OVERRIDE IS IN FORCE, which is why it is
-        // copied into the manifest rather than read and discarded. The `//`
+        // copied into the manifest and not read and discarded. The `//`
         // comment key is npm's own convention and the real file carries two of
         // them, so the fixture carries one: a parser that chokes on it would
         // choke on the payload's.
@@ -1392,8 +1392,8 @@ internal sealed class ReleaseScriptTests
             {"browsers":[{"name":"chromium","revision":"4321","browserVersion":"999.0.0.0"},
                          {"name":"winldd","revision":"1007"}]}
             """);
-        // ⚠️ 0.0.778 rather than the 0.0.777 above, deliberately. The manifest
-        // reads this file's OWN judgedAgainst rather than the payload lock's
+        // ⚠️ 0.0.778 and not the 0.0.777 above, deliberately. The manifest
+        // reads this file's OWN judgedAgainst and not the payload lock's
         // resolve, and two fixtures carrying one number could not tell the two
         // apart -- which is exactly the mistake a manifest exists to prevent.
         await writeAsync("tool-verdicts.json", """
@@ -1441,7 +1441,7 @@ internal sealed class ReleaseScriptTests
     /// would have passed against a script that had never heard of it.
     /// </para>
     /// <para>
-    /// <b>The mode is <c>None</c> and it was resolved from the tool rather than
+    /// <b>The mode is <c>None</c> and it was resolved from the tool and not
     /// from memory.</b> <c>vpk pack --help</c> documents <c>--delta &lt;MODE&gt;</c>
     /// and does not enumerate the modes; handing it a value it cannot parse makes
     /// it name them: <i>"Cannot parse argument 'ZZZINVALID' for option '--delta'
@@ -1449,13 +1449,13 @@ internal sealed class ReleaseScriptTests
     /// one of the following? None"</i>. Read 2026-09-22 at <c>vpk</c> 1.2.158.
     /// </para>
     /// <para>
-    /// <b>The pack is real and it is small.</b> 162 KB of a real PE rather than
+    /// <b>The pack is real and it is small.</b> 162 KB of a real PE and not
     /// the 143 MB publish, because what is under test is <c>vpk</c>'s delta
     /// behaviour and not this product's bytes. Both arms run in about a second.
     /// It is gated on <see cref="SuiteEnvironment.RequirePackagedRelease"/>: a
     /// machine with no packed release has never run the release script and so
     /// has no <c>vpk</c> either, and under <c>BROWSERAI_RELEASE_RUN=1</c> that is
-    /// a failure rather than a skip.
+    /// a failure and not a skip.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1465,7 +1465,7 @@ internal sealed class ReleaseScriptTests
         _ = SuiteEnvironment.RequirePackagedRelease();
 
         // ---- Half one: the script passes it, read out of the argument array
-        // rather than the whole file, for the reason the sibling arm gives.
+        // and not the whole file, for the reason the sibling arm gives.
         var script = await File.ReadAllTextAsync(ReleaseScript);
         var start = script.IndexOf("$packArgs = @(", StringComparison.Ordinal);
 
@@ -1525,7 +1525,7 @@ internal sealed class ReleaseScriptTests
 
         // ⚠️ THE POSITIVE CONTROL, and this arm is worth nothing without it. The
         // same two packs over the same feed WITHOUT the option do produce a
-        // delta, so "no delta" above is the option working rather than vpk
+        // delta, so "no delta" above is the option working and not vpk
         // having nothing to compare against.
         await Assert.That(DeltaPackagesIn(without)).IsNotEmpty();
         await Assert.That(await DeltaRowsInAsync(without)).IsEqualTo(1);
@@ -1613,7 +1613,7 @@ internal sealed class ReleaseScriptTests
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>The verdict is stdout alone, and the two are separated because
-    /// merging them asserted on the machine rather than on the script.</b> Every
+    /// merging them asserted on the machine and not on the script.</b> Every
     /// script here writes one word to stdout and its reasoning to stderr, so an
     /// exact-equality assertion over the concatenation is also an assertion that
     /// <c>pwsh</c> had nothing of its own to say. It does, on an ordinary
@@ -1699,8 +1699,8 @@ internal sealed class ReleaseScriptTests
     /// 256×256.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The planted red is a doctored file rather than the old
-    /// placeholder</b>, and that is worth saying plainly. Candidate 1, which sat
+    /// ⚠️ <b>The planted red is a doctored file and not the old
+    /// placeholder.</b> Candidate 1, which sat
     /// here until today, was packed by the same script and has the <b>same</b>
     /// directory shape -- four entries, the same sizes, the same payload kinds --
     /// so swapping it back in would not move one assertion here. A check that
@@ -1728,7 +1728,7 @@ internal sealed class ReleaseScriptTests
 
         // ---- the doctored-file controls ------------------------------------
         // Each takes the real bytes and breaks exactly one property, so a check
-        // that stopped reading would fail these rather than passing everything.
+        // that stopped reading would fail these instead of passing everything.
         await Assert.That(string.Join(" ", IconOffences(Doctored(ico, 4, 3)))).Contains("4 entries");
         await Assert.That(string.Join(" ", IconOffences(Doctored(ico, EntryOffset(ico, 3), 0x42)))).Contains("is not PNG-compressed");
         await Assert.That(string.Join(" ", IconOffences(Doctored(ico, 6 + 6, 8)))).Contains("bits per pixel");
@@ -1767,7 +1767,7 @@ internal sealed class ReleaseScriptTests
     /// Everything wrong with an icon file, as sentences.
     /// </summary>
     /// <remarks>
-    /// <b>Read out of the bytes rather than through <c>System.Drawing</c>.</b>
+    /// <b>Read out of the bytes and not through <c>System.Drawing</c>.</b>
     /// The loader answers <i>a 32×32 icon came back</i> for a file with any
     /// usable entry in it at all, which is exactly the question that does not
     /// need asking: what a shell, a task dialog and an Add/Remove list need is
@@ -1838,7 +1838,7 @@ internal sealed class ReleaseScriptTests
             if (size is 256)
             {
                 // The Vista+ PNG-compressed entry, and the reason the file is
-                // 46 KB rather than 300: a 256 DIB is a quarter of a megabyte on
+                // 46 KB and not 300: a 256 DIB is a quarter of a megabyte on
                 // its own.
                 if (!payload.StartsWith(PngSignature))
                 {
@@ -1870,7 +1870,7 @@ internal sealed class ReleaseScriptTests
 
             // The doubled height is not a curiosity: it is how a DIB entry says
             // it carries an AND mask after the colour rows, and a header that
-            // says `size` rather than `size * 2` makes Windows read the bottom
+            // says `size` and not `size * 2` makes Windows read the bottom
             // half of the image as the mask.
             if (BitConverter.ToInt32(ico, offset + 8) != size * 2)
             {
@@ -1886,7 +1886,7 @@ internal sealed class ReleaseScriptTests
     /// </summary>
     /// <remarks>
     /// Eight signature bytes, a four-byte length, the four-byte chunk type, then
-    /// two big-endian dimensions. Read rather than decoded: nothing here needs a
+    /// two big-endian dimensions. Read, not decoded: nothing here needs a
     /// codec, and a reader that cannot be handed a corrupt image is a reader a
     /// control cannot be planted against.
     /// </remarks>
@@ -1906,7 +1906,7 @@ internal sealed class ReleaseScriptTests
 
     /// <summary>
     /// A release publishes the installer, the full package and the feed, and the
-    /// script says so in one place rather than a person choosing at upload time.
+    /// script says so in one place and not a person choosing at upload time.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1927,7 +1927,7 @@ internal sealed class ReleaseScriptTests
     /// ([measured 2026-09-23](../../kb/packaging/velopack.md#nothing-anywhere-reads-releases-or-assetschanneljson-from-a-release----measured-2026-09-23)).
     /// </para>
     /// <para>
-    /// <b>And four names are absent, each by a decision rather than by omission</b>
+    /// <b>And four names are absent, each by a decision and not by omission</b>
     /// -- the portable zip and the manifest zip by the maintainer's answers to
     /// Q233, <c>RELEASES</c> and <c>assets.&lt;channel&gt;.json</c> by that
     /// measurement. They are asserted absent by name, because a set that merely
@@ -1935,7 +1935,7 @@ internal sealed class ReleaseScriptTests
     /// </para>
     /// <para>
     /// <b>Planted red 2026-09-23 with a doctored declaration</b>, run through the
-    /// same reader as the real one rather than by editing <c>build/</c>.
+    /// same reader as the real one and not by editing <c>build/</c>.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1955,7 +1955,7 @@ internal sealed class ReleaseScriptTests
         // ⚠️ THE FOUR THAT ARE OUT, BY NAME, AND THIS COMES FIRST ON PURPOSE.
         // Each is a file this script really produces, and each is out for a
         // reason recorded beside the declaration -- so a set that grew one back
-        // should fail saying WHICH, rather than saying it has four items.
+        // should fail saying WHICH, and not saying it has four items.
         string[] notPublished =
         [
             $"{ReleaseLayout.DownloadId}{ReleaseLayout.DownloadSuffix}.zip",
@@ -1992,7 +1992,7 @@ internal sealed class ReleaseScriptTests
 
         // ⚠️ THE POSITIVE CONTROL, through the real reader. A doctored
         // declaration must come back doctored, and a script that no longer
-        // declares one at all must refuse rather than return nothing -- an empty
+        // declares one at all must refuse and not return nothing -- an empty
         // set would satisfy every "is not published" assertion above.
         var doctored = ReleaseLayout.ReadUploadSet(
             "$packId = 'x'\n$uploadSet = @(\n    \"$downloadId$downloadSuffix.exe\"\n    \"$downloadId$downloadSuffix.zip\"\n)\n");
@@ -2003,7 +2003,7 @@ internal sealed class ReleaseScriptTests
             .Throws<InvalidOperationException>();
 
         // The script also has to REFUSE a declared file that is not on disk, and
-        // that refusal is a line rather than a behaviour this suite can run.
+        // that refusal is a line and not a behaviour this suite can run.
         var script = await File.ReadAllTextAsync(ReleaseScript);
 
         await Assert.That(script).Contains("The upload set names $name and $path does not exist");
@@ -2012,7 +2012,7 @@ internal sealed class ReleaseScriptTests
 
     /// <summary>
     /// The packer's own asset list is rewritten to the declared upload set, and
-    /// what lands on disk is asserted rather than what was intended.
+    /// what lands on disk is asserted and not what was intended.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -2027,7 +2027,7 @@ internal sealed class ReleaseScriptTests
     /// maintainer's answer: make the list agree with the declaration.
     /// </para>
     /// <para>
-    /// <b>Driven rather than scanned, which is why the step is its own script.</b>
+    /// <b>Driven, not scanned, which is why the step is its own script.</b>
     /// A rewrite asserted by reading <c>New-Release.ps1</c> for a line proves the
     /// line was typed, never that anything was rewritten --
     /// <c>Clear-TestPackFeed.ps1</c>'s reason, one step later.
@@ -2074,7 +2074,7 @@ internal sealed class ReleaseScriptTests
         var written = Names(await File.ReadAllTextAsync(path));
 
         // The portable archive first, and by name: a list that kept it should
-        // fail saying WHICH file it kept rather than that two sets differ.
+        // fail saying WHICH file it kept and not that two sets differ.
         await Assert.That(written)
             .DoesNotContain(portable)
             .Because("vpk upload publishes every file this list names, and the portable archive left the upload set by the maintainer's decision");
@@ -2122,7 +2122,7 @@ internal sealed class ReleaseScriptTests
         await Assert.That(noPackageExit).IsNotEqualTo(0);
         await Assert.That(noPackageSays).Contains("Full");
 
-        // And a list that is not there at all is a refusal rather than a no-op,
+        // And a list that is not there at all is a refusal and not a no-op,
         // because an upload set nothing enforces is the state this step ends.
         var (absentExit, _, absentSays) = await RunAsync(
             UploadAssetsScript, "-Path", Path.Combine(scratch.Path, "never.json"), "-Keep", installer);

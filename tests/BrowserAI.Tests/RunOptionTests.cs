@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Asserted on the generated config rather than on the schema.</b> A
+/// <b>Asserted on the generated config and not on the schema.</b> A
 /// parameter a model can see and the product ignores is the failure this file
 /// exists to catch, so every arm below reads the bytes the child is started
 /// with -- through <c>BrowserConfiguration.ForSession</c>, which is what
@@ -27,7 +27,7 @@ namespace BrowserAI.Tests;
 /// every generated key back out of a live browser, and
 /// <c>BrowserConfiguration.RequiredSessionOpinions</c> names the ones whose
 /// disappearance is a red build -- so a key added here and dropped by upstream's
-/// own merge is caught there rather than here.
+/// own merge is caught there and not here.
 /// </para>
 /// </remarks>
 internal sealed partial class RunOptionTests
@@ -87,8 +87,8 @@ internal sealed partial class RunOptionTests
 
         await Assert.That(host["browser.contextOptions.locale"]).IsEqualTo($"\"{BrowserConfiguration.HostLocale}\"");
 
-        // The host locale is the machine's rather than a literal, which is the
-        // whole claim -- asserted against the framework rather than against a
+        // The host locale is the machine's and not a literal, which is the
+        // whole claim -- asserted against the framework and not against a
         // string this file also chose.
         await Assert.That(BrowserConfiguration.HostLocale)
             .IsEqualTo(System.Globalization.CultureInfo.CurrentCulture.Name);
@@ -172,7 +172,7 @@ internal sealed partial class RunOptionTests
     /// There is no filename routing and there are no typed folders, so the
     /// folder that sentence pointed at does not exist -- and the HAR is the one
     /// artifact whose directory BrowserAI still chooses, because it is a
-    /// launch-time config value rather than something a tool names. It goes
+    /// launch-time config value and not something a tool names. It goes
     /// where everything else the session writes goes: <c>output\</c>, flat, as
     /// the child leaves it.
     /// </para>
@@ -233,7 +233,7 @@ internal sealed partial class RunOptionTests
 
         // The console level: always `debug`, and there is no argument. Measured:
         // `error` to `debug` costs +1 character on a navigation response and +5
-        // otherwise, because the events line is a POINTER rather than the text.
+        // otherwise, because the events line is a POINTER and not the text.
         await Assert.That(opinions["console.level"]).IsEqualTo("\"debug\"");
 
         // Code generation: off. It strips a `### Ran Playwright code` block from
@@ -241,14 +241,14 @@ internal sealed partial class RunOptionTests
         await Assert.That(opinions["codegen"]).IsEqualTo("\"none\"");
 
         // Snapshot boxes: on. The cost is deferred -- a response carries a link
-        // rather than the snapshot -- and every session is granted `vision`,
+        // and not the snapshot -- and every session is granted `vision`,
         // whose six coordinate tools are unusable without them.
         await Assert.That(opinions["snapshot.boxes"]).IsEqualTo("true");
 
         // ⚠️ AND THE ONE THAT IS NOT THE SAME FOR EVERY SESSION, measured
         // 2026-08-20: Firefox fails at `initializeServer` with `Unknown
         // permission: clipboard-read` and the browser exits, so writing it for
-        // both families makes every Firefox session unusable rather than
+        // both families makes every Firefox session unusable and not
         // degraded. Family-scoped exactly as `channel` is.
         if (BrowserConfiguration.IsFirefox(browser))
         {
@@ -333,7 +333,7 @@ internal sealed partial class RunOptionTests
     /// The config file the rig generated for one session, read off disk.
     /// </summary>
     /// <remarks>
-    /// <b>Off disk rather than out of the generator</b>, because what is being
+    /// <b>Off disk and not out of the generator</b>, because what is being
     /// asserted is that the argument survived parsing and reached the file the
     /// child is started with -- a check against the generator would pass for a
     /// front door that dropped the argument on the way in.

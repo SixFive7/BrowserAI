@@ -35,8 +35,8 @@ namespace BrowserAI.Tests;
 /// <b>Both arms are needed, and the second is the one that ages -- it aged.</b>
 /// The first asserts what BrowserAI ships. The second used to assert that the
 /// upstream defect was still there, so that the day upstream fixed it this test
-/// would go red and the flag would stop being load-bearing on purpose rather
-/// than by accident. <b>That is exactly what happened</b>, on the
+/// would go red and the flag would stop being load-bearing on purpose and
+/// not by accident. <b>That is exactly what happened</b>, on the
 /// 0.0.79 → 0.0.80 review, and the arm now asserts the fixed behaviour so that
 /// a regression the other way is equally loud.
 /// </para>
@@ -44,7 +44,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>BrowserAI's own behaviour did not change and was deliberately left
 /// alone.</b> <see cref="ChildLaunch.SandboxFlag"/> still goes on the command
 /// line and the generator still omits the key, which the first arm proves
-/// unchanged -- and that is now belt and braces rather than the only thing that
+/// unchanged -- and that is now belt and braces and not the only thing that
 /// works. Dropping the flag on the strength of upstream's new default is a
 /// decision nobody has taken: it would make the sandbox depend on a default
 /// that has just been shown to move.
@@ -80,7 +80,7 @@ internal sealed class SandboxFlagTests
         // The assertion above is a negative and would also pass if upstream
         // simply stopped adding --no-sandbox, so the positive half is asserted
         // too: our flag really is on the child's command line, read back from
-        // the running node process rather than from the argument list we built.
+        // the running node process and not from the argument list we built.
         // EVERY node child, and there are now two of them -- the run's own,
         // which answers tools/list before any session exists, and the session's.
         // Step 13 made `session` mandatory, so the browser above belongs to a
@@ -183,7 +183,7 @@ internal sealed class SandboxFlagTests
         // processes carried --no-sandbox with the config key alone and no flag --
         // so upstream HAS fixed it, the kb note has been corrected, and the
         // assertion now reads the other way. A return to the old behaviour is
-        // red here rather than quiet, which is the same property the arm always
+        // red here and not quiet, which is the same property the arm always
         // had, pointed at the fact that is now true.
         await Assert.That(unsandboxed).IsEqualTo(0);
     }

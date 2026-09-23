@@ -11,7 +11,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// Every version in this project floats, and the resolved set is recorded
-/// rather than declared. There are three records and they are written by three
+/// and not declared. There are three records and they are written by three
 /// different steps: <c>build/payload/package-lock.json</c> by the payload
 /// build, <c>packages.lock.json</c> by NuGet restore, and
 /// <c>upstream-snapshots/tools-list.json</c> by the snapshot generator.

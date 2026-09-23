@@ -26,7 +26,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️ <b>Nothing here may touch the maintainer's own MCP configuration, and that
-/// is asserted rather than intended.</b> The real-client arms point
+/// is asserted, not intended.</b> The real-client arms point
 /// <c>CLAUDE_CONFIG_DIR</c> at a scratch directory under <c>.work\</c> and then
 /// prove the negative: the user's own configuration file does not contain the
 /// path this test registered, and that path carries a GUID, so it cannot be
@@ -48,7 +48,7 @@ namespace BrowserAI.Tests;
 /// whose <c>BROWSERAI_ROOT</c> reached three unrelated arms' browsers. The same
 /// hazard is here: a <c>claude</c> CLI started by anything else during the
 /// window would read this scratch configuration directory. <b>The class carries
-/// it rather than the two arms</b>, so an arm added later inherits the rule
+/// it and not the two arms</b>, so an arm added later inherits the rule
 /// instead of having to remember it, and
 /// <see cref="HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/>
 /// fails the build if this file ever loses it.
@@ -166,7 +166,7 @@ internal sealed class RegistrationTests
     /// <b>The name is not the check and cannot be.</b> Both arms here put a file
     /// at exactly the path the composition produces; what separates them from
     /// the passing case is a field the linker writes, which is why
-    /// <see cref="PeSubsystem"/> reads it rather than trusting the extension.
+    /// <see cref="PeSubsystem"/> reads it instead of trusting the extension.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -191,7 +191,7 @@ internal sealed class RegistrationTests
         await Assert.That(garbageRefusal).Contains("no readable PE header");
     }
 
-    /// <summary>A path that cannot be resolved is refused rather than guessed at.</summary>
+    /// <summary>A path that cannot be resolved is refused and not guessed at.</summary>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task APathThatIsNotAnInstalledBrowserAiIsRefused()
@@ -307,7 +307,7 @@ internal sealed class RegistrationTests
         var server = InstalledLayout.ServerIn(install.Path);
 
         // ⚠️ An update leaves it alone, and since 2026-09-15 it SAYS WHY
-        // rather than reporting it as already registered: this path is not under
+        // instead of reporting it as already registered: this path is not under
         // this install root, so it belongs to another BrowserAI and is reported
         // with its location. Untouched either way, which is the property the
         // name of this arm is about.
@@ -355,9 +355,9 @@ internal sealed class RegistrationTests
     /// <remarks>
     /// <para>
     /// <b>The three arms are the three states an update can meet</b>, and only
-    /// one of them writes. Each is constructed rather than provoked: what is
-    /// registered already is handed in, so the arm is about the judgement rather
-    /// than about a file the client happens to have.
+    /// one of them writes. Each is constructed, not provoked: what is
+    /// registered already is handed in, so the arm is about the judgement and
+    /// not about a file the client happens to have.
     /// </para>
     /// <para>
     /// ⚠️ <b>The foreign arm is the one that would be cheapest to get wrong.</b>
@@ -408,7 +408,7 @@ internal sealed class RegistrationTests
         // ⚠️ Added 2026-09-16. This is the state every pre-split 1.0.0 install
         // is in, and it is the one the update hook used to leave alone: the
         // entry names `current\BrowserAI.exe`, which is there, and which is now
-        // the window rather than the server. A client that starts it gets a
+        // the window and not the server. A client that starts it gets a
         // dialog and no handshake.
         var misdirecting = new FakeClientCommandLine();
         misdirecting.Registered[McpClientRegistration.ServerName] = app;
@@ -485,7 +485,7 @@ internal sealed class RegistrationTests
     /// and uninstalling it <b>deleted</b> one -- which is the exact thing
     /// <see cref="RegistrationOwnership"/>'s own summary, <c>AppState.MayRemove</c>
     /// and the registration row in <c>DECISIONS.md</c> all say this product never
-    /// does. Those three sentences were kept true rather than narrowed.
+    /// does. Those three sentences were kept true, not narrowed.
     /// </para>
     /// <para>
     /// <b>Over constructed inputs, like the update arm above.</b> What is
@@ -649,7 +649,7 @@ internal sealed class RegistrationTests
         // nothing in any log, because nothing failed.
         //
         // What makes an entry OURS is the install root. What makes it PRESENT is
-        // being the SERVER, read out of the file's own PE subsystem rather than
+        // being the SERVER, read out of the file's own PE subsystem and not
         // taken from its name, which is the same discriminator
         // RegistrationTarget uses when it composes the path in the first place.
         var theApp = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
@@ -729,7 +729,7 @@ internal sealed class RegistrationTests
 
         await Assert.That(Path.GetFullPath(McpRegistryView.Expand(portable))).IsEqualTo(expected);
 
-        // A name nothing defines is left exactly as it stands rather than
+        // A name nothing defines is left exactly as it stands instead of
         // collapsing to an empty segment, which would silently produce a path
         // that resolves somewhere.
         await Assert.That(McpRegistryView.Expand("${BROWSERAI_NO_SUCH_VARIABLE}/x"))
@@ -860,7 +860,7 @@ internal sealed class RegistrationTests
     /// </summary>
     /// <remarks>
     /// A hook that throws breaks the install. This is the boundary that makes
-    /// that impossible, so it is asserted rather than reviewed.
+    /// that impossible, so it is asserted, not reviewed.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -917,8 +917,8 @@ internal sealed class RegistrationTests
     /// <b>The data root is a scratch directory here, and it has to be.</b> The
     /// product resolves a constant under <c>%LocalAppData%</c>; a test that let
     /// it do so would write a registration record into the developer's own data
-    /// root -- which is why the overload the suite drives takes the seam rather
-    /// than defaulting it.
+    /// root -- which is why the overload the suite drives takes the seam instead
+    /// of defaulting it.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -929,7 +929,7 @@ internal sealed class RegistrationTests
         using var data = ScratchDirectory.Create("registration-hook-data");
 
         // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // a requirement and not tidiness. HookRegistration.Run has no seam
         // over what is registered already, and the registrar now reads it on
         // EVERY intent -- so without this the hook asks about the maintainer's
         // own ~/.claude.json, finds an entry foreign to this scratch install
@@ -1011,7 +1011,7 @@ internal sealed class RegistrationTests
         using var data = ScratchDirectory.Create("registration-hook-failed-data");
 
         // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // a requirement and not tidiness. HookRegistration.Run has no seam
         // over what is registered already, and the registrar now reads it on
         // EVERY intent -- so without this the hook asks about the maintainer's
         // own ~/.claude.json, finds an entry foreign to this scratch install
@@ -1059,7 +1059,7 @@ internal sealed class RegistrationTests
         using var data = ScratchDirectory.Create("uninstall-silent-data");
 
         // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // a requirement and not tidiness. HookRegistration.Run has no seam
         // over what is registered already, and the registrar now reads it on
         // EVERY intent -- so without this the hook asks about the maintainer's
         // own ~/.claude.json, finds an entry foreign to this scratch install
@@ -1117,7 +1117,7 @@ internal sealed class RegistrationTests
         using var data = ScratchDirectory.Create("uninstall-keep-data");
 
         // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // a requirement and not tidiness. HookRegistration.Run has no seam
         // over what is registered already, and the registrar now reads it on
         // EVERY intent -- so without this the hook asks about the maintainer's
         // own ~/.claude.json, finds an entry foreign to this scratch install
@@ -1164,7 +1164,7 @@ internal sealed class RegistrationTests
     /// from the decision.</b> The hook writes its process log inside the data
     /// root, so a delete performed while that file was open would leave exactly
     /// one directory standing -- the one holding the record of the decision. The
-    /// product closes the log first; this asserts the consequence rather than
+    /// product closes the log first; this asserts the consequence and not
     /// the arrangement.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1175,7 +1175,7 @@ internal sealed class RegistrationTests
         using var data = ScratchDirectory.Create("uninstall-remove-data");
 
         // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // a requirement and not tidiness. HookRegistration.Run has no seam
         // over what is registered already, and the registrar now reads it on
         // EVERY intent -- so without this the hook asks about the maintainer's
         // own ~/.claude.json, finds an entry foreign to this scratch install
@@ -1210,7 +1210,7 @@ internal sealed class RegistrationTests
     /// the founding promise of separating the two directories at all.
     /// </summary>
     /// <remarks>
-    /// <b>By construction rather than by care, and this is what holds the
+    /// <b>By construction and not by care, and this is what holds the
     /// construction.</b> Only <see cref="RegistrationIntent.Uninstall"/> reaches
     /// the disposal; an install and an update come back with no disposal report
     /// at all, so there is no path on which a wrong answer could delete
@@ -1227,7 +1227,7 @@ internal sealed class RegistrationTests
         using var data = ScratchDirectory.Create("upgrade-keeps-data");
 
         // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // a requirement and not tidiness. HookRegistration.Run has no seam
         // over what is registered already, and the registrar now reads it on
         // EVERY intent -- so without this the hook asks about the maintainer's
         // own ~/.claude.json, finds an entry foreign to this scratch install
@@ -1278,7 +1278,7 @@ internal sealed class RegistrationTests
         using var data = ScratchDirectory.Create("uninstall-unused-data");
 
         // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement rather than tidiness. HookRegistration.Run has no seam
+        // a requirement and not tidiness. HookRegistration.Run has no seam
         // over what is registered already, and the registrar now reads it on
         // EVERY intent -- so without this the hook asks about the maintainer's
         // own ~/.claude.json, finds an entry foreign to this scratch install
@@ -1373,7 +1373,7 @@ internal sealed class RegistrationTests
     /// writes the file the client would read, in the directory the client would
     /// read it from, <b>before</b> the scope is anything a child could inherit.
     /// It runs on every build and needs no client, because what it asserts is a
-    /// file on disk rather than a behaviour of somebody else's binary.
+    /// file on disk and not a behaviour of somebody else's binary.
     /// </para>
     /// <para>
     /// ⚠️ <b>Asserted, not measured against the flow.</b> Nothing here shows that
@@ -1476,7 +1476,7 @@ internal sealed class RegistrationTests
     /// <b>This is the proof that the charter's promise is kept</b> -- one
     /// registration, at user scope, available in every repository, with no file
     /// written into any of them. The entry is asserted in the client's own
-    /// configuration file rather than in the client's report of it.
+    /// configuration file and not in the client's report of it.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -1510,7 +1510,7 @@ internal sealed class RegistrationTests
             await Assert.That(written).DoesNotContain(
                 command.Replace(@"\", @"\\", StringComparison.Ordinal) + "\"");
 
-            // Idempotence, against the client rather than against the double.
+            // Idempotence, against the client and not against the double.
             await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, commands, logger).Status)
                 .IsEqualTo(RegistrationStatus.AlreadyRegistered);
             await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, commands, logger).Status)
@@ -1533,8 +1533,8 @@ internal sealed class RegistrationTests
         }
 
         // ⚠️ The negative that matters. The registered path carries this run's
-        // GUID, so its absence from the user's own configuration is proof rather
-        // than an argument -- and it survives the client rewriting that file for
+        // GUID, so its absence from the user's own configuration is proof and
+        // not an argument -- and it survives the client rewriting that file for
         // its own reasons while the test runs, which a hash comparison would not.
         var mine = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
@@ -1581,7 +1581,7 @@ internal sealed class RegistrationTests
     /// <c>["add", "remove", "add"]</c>, described as "an update never removes,
     /// an install always does"). The update in that arm meets a registration
     /// that is not under this install root, and since this day that is reported
-    /// rather than silently accepted, so the update runs no verb at all. What is
+    /// and not silently accepted, so the update runs no verb at all. What is
     /// unchanged is the property the arm asserts: an update does not overwrite.
     /// </remarks>
     private static readonly string[] RemoveAdd = ["remove", "add"];

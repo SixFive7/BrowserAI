@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The sixth authored tool: it refuses rather than coordinates, and when it does
+/// The sixth authored tool: it refuses and does not coordinate, and when it does
 /// act it deletes before it downloads.
 /// </summary>
 /// <remarks>
@@ -48,7 +48,7 @@ internal sealed class ReinstallBrowserTests
 
         await using var sessions = RigSessionEnvironment.Create(
             // ⚠️ No default session since 2026-08-19, and that is the tool's own
-            // new gate rather than a test convenience: a reinstall now refuses
+            // new gate and not a test convenience: a reinstall now refuses
             // while ANY session of that family is open, whether or not a browser
             // is currently running out of the tree. The rig opens one, so with it
             // this arm would measure the refusal instead of the delete.
@@ -79,7 +79,7 @@ internal sealed class ReinstallBrowserTests
         // And then for the mutex, which WaitAsync does not answer for -- see
         // WaitUntilNoInstallIsInFlight. Since 2026-08-18 a reinstall refuses
         // while an install holds it, so without this the call below measures
-        // the refusal rather than the delete.
+        // the refusal and not the delete.
         WaitUntilNoInstallIsInFlight(sessions.Environment.Paths.BrowsersDirectory);
 
         // A complete tree with a file in it that must not survive, so "the
@@ -137,7 +137,7 @@ internal sealed class ReinstallBrowserTests
 
         await Assert.That((bool?)answer["isError"]).IsTrue();
 
-        // It names what is live rather than saying "in use". A model told only
+        // It names what is live instead of saying "in use". A model told only
         // that something is busy has nothing to act on.
         await Assert.That(text).Contains(session);
         await Assert.That(text).Contains("no force option");
@@ -184,7 +184,7 @@ internal sealed class ReinstallBrowserTests
 
         var held = Path.Combine(sessions.ChromiumDirectory, "held-open.bin");
 
-        // Counted from HERE rather than from the start of the test: the rig
+        // Counted from HERE and not from the start of the test: the rig
         // opens a default session, and that init legitimately starts an install
         // against a root this test deliberately left empty.
         var before = Volatile.Read(ref installs);
@@ -337,7 +337,7 @@ internal sealed class ReinstallBrowserTests
         await Assert.That(text).Contains(session);
 
         // ⚠️ It no longer claims that no new session can start meanwhile, and the
-        // deletion is a CORRECTION rather than a loss (previously
+        // deletion is a CORRECTION and not a loss (previously
         // `Contains("no new session can start meanwhile")`). Under the
         // reader/writer claim this call did NOT get the root -- the session has
         // it -- so nothing is stopping a second session starting, and the old
@@ -360,7 +360,7 @@ internal sealed class ReinstallBrowserTests
     /// which is precisely the corruption the provisioning mutex prevents between
     /// two installers and cannot prevent between a delete and an installer. The
     /// claim is taken here exactly as the product takes it, so this is the same
-    /// object rather than a stand-in.
+    /// object and not a stand-in.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -379,7 +379,7 @@ internal sealed class ReinstallBrowserTests
         await Assert.That((bool?)refused["isError"]).IsTrue().Because(text);
         await Assert.That(text).Contains("no second reinstall can begin");
 
-        // It names the holder rather than saying "busy": the claim carries the
+        // It names the holder instead of saying "busy": the claim carries the
         // pid and its start time, which is this repository's rule for naming a
         // process at all.
         await Assert.That(text).Contains($"is reinstalling '{ProvisionedBrowsers.Chromium}'");
@@ -426,7 +426,7 @@ internal sealed class ReinstallBrowserTests
         await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(TextOf(opened));
 
         // ⚠️ A RECORD COPIED ASIDE, AND THEN NOTHING LIVE ANYWHERE, which is a
-        // consequence of the reader/writer claim rather than ceremony: since
+        // consequence of the reader/writer claim and not ceremony: since
         // 2026-08-20 every open session holds the browsers root SHARED, so a
         // reinstall cannot take it exclusively while one exists. Leaving the
         // session open -- which is what this test did until that day -- would now
@@ -462,7 +462,7 @@ internal sealed class ReinstallBrowserTests
         }
 
         // ⚠️ Refused BEFORE anything was created, which is the property that
-        // makes this a lock rather than a message: a directory made and then
+        // makes this a lock and not a message: a directory made and then
         // abandoned is a session record nobody owns.
         await Assert.That(Directory.Exists(Path.Combine(sessions.Root, "must-not-be-created"))).IsFalse();
     }
@@ -484,7 +484,7 @@ internal sealed class ReinstallBrowserTests
     /// caller would meet.
     /// </para>
     /// <para>
-    /// <b>Found by CI rather than locally</b>, because a fake installer that
+    /// <b>Found by CI and not locally</b>, because a fake installer that
     /// finishes in microseconds closes the gap on a fast machine and does not on
     /// a slower one. Waiting on the mutex is waiting for the thing the product
     /// waits for, which is why this is not a sleep.
@@ -522,8 +522,8 @@ internal sealed class ReinstallBrowserTests
     /// reason -- <i>"there is nothing to name"</i> -- expired when
     /// <c>browserai_init</c> began offering a second family. What survives
     /// unchanged is everything else: still no <c>session</c> argument, because
-    /// this tool is machine-scoped rather than session-scoped, and still no force
-    /// flag. The assertion is on the exact argument set rather than on a count,
+    /// this tool is machine-scoped and not session-scoped, and still no force
+    /// flag. The assertion is on the exact argument set and not on a count,
     /// so a second argument appearing is as red as the first one vanishing.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -606,7 +606,7 @@ internal sealed class ReinstallBrowserTests
                 // completeness check would be asserted against a fake that is
                 // less capable than the thing it replaces.
                 //
-                // Built from the browsers root the product hands it, rather than
+                // Built from the browsers root the product hands it, and not
                 // from the rig: this lambda is constructed before the rig exists.
                 return FakeInstaller.SucceedingForAll(BrowserAiPaths.SharedComponentDirectoriesIn(root), TimeSpan.Zero);
             },
@@ -641,7 +641,7 @@ internal sealed class ReinstallBrowserTests
         await Assert.That(text).Contains("Re-provisioned shared");
 
         // ⚠️ EVERY component, and the marker as well as the directory. The
-        // marker is the only evidence a tree is complete rather than merely
+        // marker is the only evidence a tree is complete and not merely
         // present, and it is the thing upstream short-circuits on for thirty
         // days, so a rebuild that left one unmarked would be the exact state
         // this tool exists to repair.
@@ -686,7 +686,7 @@ internal sealed class ReinstallBrowserTests
     /// </para>
     /// <para>
     /// <b>The session here is Firefox and the components are shared, which is
-    /// what makes this arm the decision rather than a restatement.</b> A Firefox
+    /// what makes this arm the decision and not a restatement.</b> A Firefox
     /// session does <b>not</b> block a Chromium reinstall -- the arm below asserts
     /// that too, so this cannot be satisfied by a filter that simply stopped
     /// filtering.
@@ -741,7 +741,7 @@ internal sealed class ReinstallBrowserTests
         // claim is one file at the root of the browsers directory that knows
         // nothing about families -- so the same Firefox session blocks a chromium
         // reinstall too, and the refusal names it. A filter that "simply stopped
-        // filtering" is now the correct behaviour rather than the failure this
+        // filtering" is now the correct behaviour and not the failure this
         // arm guarded against, and what guards the property instead is that the
         // refusal has to NAME the session the caller must close.
         var chromium = TextOf(await CallAsync(rig, SessionToolSurface.ReinstallBrowser, Chromium));
@@ -791,7 +791,7 @@ internal sealed class ReinstallBrowserTests
             await Assert.That(description).Contains(component);
         }
 
-        // And the schema is refused rather than merely undocumented: an init
+        // And the schema is refused and not merely undocumented: an init
         // naming it must fail, and the refusal must list what is accepted.
         var refused = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
@@ -822,7 +822,7 @@ internal sealed class ReinstallBrowserTests
             .Where(SessionToolSurface.IsAuthored)
             .ToList();
 
-        // Both directions, which is what makes this a mechanism rather than a
+        // Both directions, which is what makes this a mechanism and not a
         // count: a tool declared and never routed answers "not a BrowserAI
         // session tool", and a tool routed and never declared is invisible to
         // every caller.
@@ -851,7 +851,7 @@ internal sealed class ReinstallBrowserTests
 
         // Deny-by-default in the authored half of the surface. The prefix match
         // is what routes a call here at all, so a name nobody implemented must
-        // be refused rather than forwarded to the child as an upstream tool.
+        // be refused and not forwarded to the child as an upstream tool.
         var invented = await CallAsync(rig, "browserai_do_something_nobody_built", []);
 
         await Assert.That((bool?)invented["isError"]).IsTrue();
@@ -863,7 +863,7 @@ internal sealed class ReinstallBrowserTests
     /// reinstall is refused until <b>both</b> are gone.
     /// </summary>
     /// <remarks>
-    /// <b>Two rather than one, because one proves nothing about cumulativeness.</b>
+    /// <b>Two and not one, because one proves nothing about cumulativeness.</b>
     /// The maintainer's word for it was <i>"cumulative"</i>, and what that means
     /// on Windows is that any number of <c>FileAccess.Read</c> /
     /// <c>FileShare.Read</c> opens coexist with no count kept anywhere -- so the
@@ -916,7 +916,7 @@ internal sealed class ReinstallBrowserTests
         using var free = MaintenanceLock.TryTakeExclusive(root, ProvisionedBrowsers.Chromium, out _, out _);
 
         // And the control: with both gone it really is available, so the arm
-        // above is about the second session rather than about something that
+        // above is about the second session and not about something that
         // never releases.
         await Assert.That(free).IsNotNull();
     }
@@ -937,7 +937,7 @@ internal sealed class ReinstallBrowserTests
     /// <para>
     /// <b>The probe takes the claim through <c>MaintenanceLock.TakeShared</c></b>,
     /// so what is killed holds the product's own open with the product's own
-    /// share mode rather than a <c>FileStream</c> a test wrote.
+    /// share mode and not a <c>FileStream</c> a test wrote.
     /// </para>
     /// <para>
     /// <b>The kill is the job object closing</b>, which is a
@@ -1031,7 +1031,7 @@ internal sealed class ReinstallBrowserTests
         await Assert.That(claim).IsNotNull();
 
         // Nothing staged yet: the delete comes first, and the sentence must say
-        // which two things it cannot tell apart rather than implying a stall.
+        // which two things it cannot tell apart instead of implying a stall.
         var beforeTheDownload = TextOf(await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = Path.Combine(sessions.Root, "refused-before-the-download"),
@@ -1064,7 +1064,7 @@ internal sealed class ReinstallBrowserTests
         await Assert.That(duringTheDownload).Contains($"is reinstalling '{ProvisionedBrowsers.Chromium}'");
     }
 
-    /// <summary>Waits for a probe's ready file, with a hang detector rather than a budget.</summary>
+    /// <summary>Waits for a probe's ready file, with a hang detector and not a budget.</summary>
     /// <param name="path">The file the probe writes once it holds the claim.</param>
     /// <returns>The wait.</returns>
     private static async Task WaitForFileAsync(string path)
