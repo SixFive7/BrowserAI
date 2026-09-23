@@ -1468,6 +1468,28 @@ was decided — a future `vpk upload github` fails without the local
 `assets.<channel>.json`. Nothing in [the clean re-pack](#the-order-the-last-six-steps-are-executed-in--and-it-is-not-the-numbering)
 changes.
 
+⚠️ **AND THE PACKER'S OWN LIST IS REWRITTEN TO THIS SET, BECAUSE IT WAS A
+SECOND ANSWER TO THE SAME QUESTION — *added 2026-09-23, Q235 b*.** `vpk pack`
+writes `assets.<channel>.json` naming **everything it produced**, and
+`vpk upload github` uploads **every file listed in it** (`BuildAssets.Read` then
+`build.GetFilePaths()`, Velopack 1.2.158). So the portable archive would have
+been published by the one command nobody here runs, contradicting the set above
+— and **nothing would have said so, because the two mechanisms never meet**.
+[`build/Set-UploadAssets.ps1`](build/Set-UploadAssets.ps1) runs from
+`New-Release.ps1` after the rename, rewrites the list to the declared set, and
+**re-reads it from disk** to refuse anything else; it is its own script so the
+suite can drive it, and `ReleaseScriptTests.ThePackersOwnAssetListIsRewrittenToTheDeclaredUploadSet`
+does, with the portable archive planted and the refusals exercised in both
+directions.
+
+**Two things that step cannot do, named so nobody assumes otherwise.** It cannot
+stop `vpk upload github` adding a legacy `RELEASES` on the default Windows
+channel — that upload reads no list at all — and it cannot remove the
+`releases.<channel>.json` upload, which is wanted and is generated from the
+`Full` entries that survive the rewrite. **A rewrite that left no `Full` entry is
+refused** for exactly that reason: it would publish a manifest advertising
+nothing, which a client reports as *no update available* rather than as an error.
+
 **What was checked before dropping them, because the instruction was to check.**
 Velopack's source at tag `1.2.158` (sha `3c7f52c1`): every client source reads
 `releases.{channel}.json` and only that — `SimpleWebSource.cs:43`,

@@ -52,6 +52,8 @@ internal sealed class ReleaseScriptTests
 
     private static string ClearScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Clear-TestPackFeed.ps1");
 
+    private static string UploadAssetsScript => Path.Combine(RepositoryLayout.Root.FullName, "build", "Set-UploadAssets.ps1");
+
     /// <summary>An empty channel accepts anything, because there is nothing to be older than.</summary>
     /// <remarks>
     /// The same 404 an unpublished channel returns is what a misconfigured feed
@@ -2007,6 +2009,142 @@ internal sealed class ReleaseScriptTests
         await Assert.That(script).Contains("The upload set names $name and $path does not exist");
         await Assert.That(script).Contains("Upload           = $uploadPaths");
     }
+
+    /// <summary>
+    /// The packer's own asset list is rewritten to the declared upload set, and
+    /// what lands on disk is asserted rather than what was intended.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Two mechanisms answered one question differently and never met.</b>
+    /// <c>vpk pack</c> writes <c>assets.&lt;channel&gt;.json</c> naming everything
+    /// it produced, and <c>vpk upload github</c> uploads <b>every file listed in
+    /// it</b> -- <c>BuildAssets.Read</c> then <c>build.GetFilePaths()</c>, read at
+    /// Velopack 1.2.158. So the portable archive would have been published by the
+    /// one command nobody here runs, contradicting
+    /// <see cref="TheUploadSetIsDeclaredOnceAndIsTheInstallerTheFullPackageAndTheFeed"/>
+    /// and [RELEASING](../../RELEASING.md#what-a-release-publishes). Q235 b is the
+    /// maintainer's answer: make the list agree with the declaration.
+    /// </para>
+    /// <para>
+    /// <b>Driven rather than scanned, which is why the step is its own script.</b>
+    /// A rewrite asserted by reading <c>New-Release.ps1</c> for a line proves the
+    /// line was typed, never that anything was rewritten --
+    /// <c>Clear-TestPackFeed.ps1</c>'s reason, one step later.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-23 with the filter absent</b>: the step wrote the
+    /// packer's list back unchanged and this arm named `BrowserAI.zip` as still
+    /// listed, which is the defect the step exists for.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>One thing it cannot cover and does not claim to.</b> On the default
+    /// Windows channel <c>vpk upload github</c> also uploads a legacy
+    /// <c>RELEASES</c> of its own accord, from no list at all. Nothing in this
+    /// file can stop that; what stops it is that releases here are published with
+    /// <c>gh release create</c> from the declared set.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePackersOwnAssetListIsRewrittenToTheDeclaredUploadSet()
+    {
+        using var scratch = ScratchDirectory.Create("release-upload-assets");
+
+        const string Version = "9.9.9";
+        var installer = $"{ReleaseLayout.DownloadId}{ReleaseLayout.DownloadSuffix}.exe";
+        var portable = $"{ReleaseLayout.DownloadId}{ReleaseLayout.DownloadSuffix}.zip";
+        var package = $"{ReleaseLayout.PackId}-{Version}-full.nupkg";
+        var feed = $"releases.{ReleaseLayout.Channel}.json";
+        var declared = ReleaseLayout.UploadSet.Select(name => Resolve(name, Version)).ToArray();
+
+        // The shape vpk really writes, taken from the file this repository's own
+        // pack produced: three entries, the portable archive in the middle.
+        var asPacked = $$"""
+            [{"RelativeFileName":"{{installer}}","Type":"Installer"},{"RelativeFileName":"{{portable}}","Type":"Portable"},{"RelativeFileName":"{{package}}","Type":"Full"}]
+            """;
+
+        var path = Path.Combine(scratch.Path, feed.Replace("releases.", "assets.", StringComparison.Ordinal));
+        await File.WriteAllTextAsync(path, asPacked);
+
+        var (exit, _, output) = await RunAsync(UploadAssetsScript, "-Path", path, "-Keep", string.Join(",", declared));
+
+        await Assert.That(exit).IsEqualTo(0);
+
+        var written = Names(await File.ReadAllTextAsync(path));
+
+        // The portable archive first, and by name: a list that kept it should
+        // fail saying WHICH file it kept rather than that two sets differ.
+        await Assert.That(written)
+            .DoesNotContain(portable)
+            .Because("vpk upload publishes every file this list names, and the portable archive left the upload set by the maintainer's decision");
+
+        await Assert.That(written).IsEquivalentTo([installer, package]);
+
+        // It says what it did, because a silent rewrite in a release script is
+        // indistinguishable from a step that did not run.
+        await Assert.That(output).Contains(portable);
+
+        // And it is idempotent: the second cut of a release must not depend on
+        // whether somebody ran this by hand after the first.
+        var (againExit, _, _) = await RunAsync(UploadAssetsScript, "-Path", path, "-Keep", string.Join(",", declared));
+
+        await Assert.That(againExit).IsEqualTo(0);
+        await Assert.That(Names(await File.ReadAllTextAsync(path))).IsEquivalentTo([installer, package]);
+
+        // Written the way everything else here is written.
+        var bytes = await File.ReadAllBytesAsync(path);
+
+        await Assert.That(bytes.Length > 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF).IsFalse();
+        await Assert.That(Encoding.UTF8.GetString(bytes)).DoesNotContain("\r\n");
+
+        // ---- The control, in the other direction ----------------------------
+        // Keeping the portable archive must LEAVE it, or the arm above is
+        // asserting a step that removes everything it was not asked about.
+        var control = Path.Combine(scratch.Path, "assets.control.json");
+        await File.WriteAllTextAsync(control, asPacked);
+
+        var (controlExit, _, _) = await RunAsync(
+            UploadAssetsScript, "-Path", control, "-Keep", string.Join(",", [installer, portable, package]));
+
+        await Assert.That(controlExit).IsEqualTo(0);
+        await Assert.That(Names(await File.ReadAllTextAsync(control))).IsEquivalentTo([installer, portable, package]);
+
+        // ---- The two refusals -----------------------------------------------
+        // A list with no Full entry is a feed with no rows: vpk builds
+        // releases.<channel>.json out of exactly those.
+        var noPackage = Path.Combine(scratch.Path, "assets.nopackage.json");
+        await File.WriteAllTextAsync(noPackage, asPacked);
+
+        var (noPackageExit, _, noPackageSays) = await RunAsync(
+            UploadAssetsScript, "-Path", noPackage, "-Keep", installer);
+
+        await Assert.That(noPackageExit).IsNotEqualTo(0);
+        await Assert.That(noPackageSays).Contains("Full");
+
+        // And a list that is not there at all is a refusal rather than a no-op,
+        // because an upload set nothing enforces is the state this step ends.
+        var (absentExit, _, absentSays) = await RunAsync(
+            UploadAssetsScript, "-Path", Path.Combine(scratch.Path, "never.json"), "-Keep", installer);
+
+        await Assert.That(absentExit).IsNotEqualTo(0);
+        await Assert.That(absentSays).Contains("no asset list");
+
+        // ---- And the release script really calls it -------------------------
+        var script = await File.ReadAllTextAsync(ReleaseScript);
+
+        await Assert.That(script).Contains("Set-UploadAssets.ps1");
+        await Assert.That(script).Contains("-Keep $uploadSet");
+    }
+
+    /// <summary>The file names one <c>assets.&lt;channel&gt;.json</c> holds.</summary>
+    /// <param name="json">The file's text.</param>
+    /// <returns>Each entry's <c>RelativeFileName</c>, in the order written.</returns>
+    private static List<string> Names(string json) =>
+    [
+        .. JsonDocument.Parse(json).RootElement.EnumerateArray()
+            .Select(entry => entry.GetProperty("RelativeFileName").GetString()!),
+    ];
 
     /// <summary>
     /// Every top-level file the release directory holds is either published or

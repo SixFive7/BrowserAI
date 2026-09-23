@@ -905,6 +905,21 @@ $uploadPaths = @(foreach ($name in $uploadSet) {
     $path
 })
 
+# ⚠️ AND THE PACKER'S OWN LIST IS MADE TO AGREE — Q235 b, 2026-09-23.
+# `vpk pack` writes `assets.<channel>.json` naming everything it produced, and
+# `vpk upload github` uploads EVERY file listed in it. So the portable archive
+# would have been published by the one command nobody here runs, contradicting
+# the set declared above, and nothing would have said so: the two mechanisms
+# never meet. This rewrites the list to the declaration and refuses if what lands
+# on disk is not it. The file STAYS -- `vpk upload` needs it; what changes is
+# what it names.
+& (Join-Path $PSScriptRoot 'Set-UploadAssets.ps1') -Path $assets -Keep $uploadSet
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "The packer's own asset list could not be brought in line with the declared upload set, so an upload from it would publish something this release does not."
+    exit 1
+}
+
 Write-Host ''
 Write-Host "This release publishes $($uploadSet.Count) assets and no others:"
 foreach ($path in $uploadPaths) {
