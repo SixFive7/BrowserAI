@@ -5,7 +5,7 @@
 
 # BrowserAI
 
-A Windows MCP server that gives an AI agent a real browser, driven through Playwright's own MCP server and offered under upstream's own tool names. A session is a directory -- profile, screenshots, downloads and log in one place, resumable and outliving the agent that made it; every tool name is judged before it is offered and an unjudged one is refused; a page's own tools are reached through one tool of ours; and one installer carries the whole runtime and a small configuration window, with updates applied automatically from its own release feed.
+A Windows MCP server that gives an AI agent a real browser through Playwright's own MCP server, keeps each session in a directory that outlives the agent and can be resumed or handed to another, and ships as one installer that updates itself.
 
 BrowserAI is a **proxy**. It ships the runtime, owns the lifecycle, and rewrites the tool surface. It does **not** reimplement Playwright, and it does not reimplement Playwright's MCP tool layer. That boundary is the single most important design constraint in this project and is spelled out in [Scope](#scope-proxy-not-implementation) below.
 
