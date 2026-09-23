@@ -65,7 +65,7 @@ independently by both agents, agreeing exactly:
 
 Each row is only explicable if the cross-process path bypasses the message queue
 entirely. Explicit `SendMessageTimeout(WM_GETTEXT)` on the same windows returned
-the *hijacked* strings, locating the divergence in the API rather than the
+the *hijacked* strings, locating the divergence in the API and not the
 WndProc.
 
 **The 43 empties were genuinely nameless windows, not failed reads.** Confirmed
@@ -119,7 +119,7 @@ and is declared unguarded in the public SDK, so the usual worry is unfounded.
 > suite's oracle as well:
 > `TheTwoTitleApisAgreeOnEveryMessageWindowOnThisMachine` in
 > `MessageWindowTests` compares the two on every window it walks, so a divergence
-> appearing is a red build rather than a silent behaviour change.
+> appearing is a red build, not a silent behaviour change.
 > [The sweep's design](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
 > and the work that built it both specified the
 > fallback; this entry was the odd one out.
@@ -145,7 +145,7 @@ it.** A probe process registers its own class, creates a message-only window
 named with a **GUID**, and answers `WM_GETTEXT` with an empty string from its own
 WndProc. Same-process, both `GetWindowTextW` and an explicit
 `SendMessageW(WM_GETTEXT)` come back **empty** -- the probe reports both itself,
-so the suppression is evidence rather than an assumption. Cross-process,
+so the suppression is evidence, not an assumption. Cross-process,
 `GetWindowTextW` returns the GUID, and so does `InternalGetWindowText`. No
 browser, milliseconds, every build:
 `MessageWindowTests.ACrossProcessReadGetsTheRealNameFromAWindowThatSuppressesWmGetText`.
@@ -159,7 +159,7 @@ and would make every sweep report a clean machine forever.
 `MessageWindowTests.EnumWindowsFindsNoMessageWindowsAtAllWhileTheWalkFindsThem`.
 `[STABLE]`
 
-**The exact-title canonicalisation table, re-measured rather than carried
+**The exact-title canonicalisation table, re-measured and not carried
 over** -- same four rows as
 [the original](#detecting-stray-browsers), now asserted on every build against a
 window whose title the test chose:
@@ -184,12 +184,12 @@ window, and the index self-clean -- not just the process half. Re-establish with
 log, or with the probe's `stray-sweep` mode. ⚠️ *Corrected 2026-09-16
 (previously `BrowserAI.exe --sweep`)* -- that name is the configuration app since
 2026-09-15 and does not take the argument, so following the old line **opens a
-window** rather than measuring anything. The procedure was broken, not untidy.
+window** instead of measuring anything. The procedure was broken, not untidy.
 
 **51 of the 64 message windows are nameless, and one of the 13 named ones is not
 a path.** It is `DeviceMonitorMessageWindow`, owned by a Chromium embedder, and
 the sweep's string guard refuses it before any filesystem call -- **a live example
-of the untrusted-title hazard, on this machine, today**, rather than a
+of the untrusted-title hazard, on this machine, today**, and not a
 hypothetical. Re-establish by reading `rejectedTitles` out of the probe's
 `stray-sweep` report. `[MACHINE]`
 
@@ -206,8 +206,8 @@ profile by its message window: **543 ms and 547 ms**, two runs, from
 > on its own within a second or so; a test that then waits for its window waits
 > out the whole deadline against a browser that has already gone. Observed
 > 2026-08-16 -- passed alone, failed under a fully parallel suite. `about:blank`
-> keeps it running, and the test now fails loudly on an exited browser rather
-> than timing out.
+> keeps it running, and the test now fails loudly on an exited browser instead
+> of timing out.
 
 **The legacy `%LOCALAPPDATA%\ms-playwright` tree is not matched, and that is the
 property the whole design exists for.** Five `chrome-headless-shell.exe`
@@ -232,10 +232,10 @@ UAC-filtered administrator** token.
 > the strength of the first measurement below. `LogonSweepTask.cs` and its tests
 > are deleted and BrowserAI's own startup sweep is the only trigger.
 > **The measurements are kept and the section is not**, because both are facts
-> about Windows rather than about our code, and the first is the evidence for the
+> about Windows and not about our code, and the first is the evidence for the
 > decision: deleting it would leave the drop looking like a preference. What has
 > changed is that **nothing in the product consumes either of them**, so treat
-> this section as a record rather than as a specification.
+> this section as a record and not as a specification.
 
 > ⚠️ **Registering a scheduled task non-elevated fails on this machine, and
 > the sweep's own build notes said it had been
@@ -243,7 +243,7 @@ UAC-filtered administrator** token.
 > `Schedule.Service` COM API both answer **`Access is denied` / `0x80070005`**,
 > in the task-library root and in a new `\BrowserAI\` folder alike. A **minimal**
 > task definition -- one logon trigger, one `cmd.exe` action -- fails identically,
-> so it is the machine's policy rather than anything about our XML. The
+> so it is the machine's policy, not anything about our XML. The
 > filesystem is not the gate: `Authenticated Users` do have Write on
 > `C:\Windows\System32\Tasks` and a plain file lands there; the Task Scheduler
 > service refuses the registration itself. `[MACHINE]`
@@ -251,7 +251,7 @@ UAC-filtered administrator** token.
 > **Whether elevation fixes it is `[UNVERIFIED]`** -- a UAC prompt cannot be
 > answered from a non-interactive session, so it was not tried. What this settles
 > is only that the *non-elevated* claim was false. **It stays unverified and
-> that is now final rather than owed**: step 19 dropped the task instead of
+> that is now final, not owed**: step 19 dropped the task instead of
 > elevating for it, so nothing depends on the answer.
 
 **`LogonType` is valid only beside a `UserId`, never beside a `GroupId`.**
@@ -261,7 +261,7 @@ with *"The task XML contains an unexpected node"* and names the `LogonType` line
 A group principal would still have run in the user's own interactive session --
 but only by implication, and *"run only when user is logged on"* is the setting
 whose absence makes a sweeper in session 0 report success forever, so it has to
-be stated rather than implied. ~~The definition therefore names the installing
+be stated and not implied. ~~The definition therefore names the installing
 user.~~ `[STABLE]` for the schema; `[MACHINE]` for the error text.
 
 > **Corrected 2026-08-16 (previously "The definition therefore names the
@@ -282,7 +282,7 @@ with **zero overlap** with the message-only set. `[FLOATS]`
 
 Demonstrated live: one agent's sweep surfaced *the other agent's* browser, in a
 directory it had never been told about -- the forgotten-directory case the sweep
-exists for, observed rather than argued.
+exists for, observed and not argued.
 
 > ⚠️ **Correction to an earlier claim in this file.** "The API is structurally
 > incapable of returning a profile you did not name" is true of the **exact-title
@@ -310,7 +310,7 @@ indistinguishable from a real Chromium singleton. `[STABLE]`
    wherever it appears. It also independently catches the personal-Chrome fallback
    hazard below.
 
-> **The measurement behind the rule, and it is a near miss rather than a
+> **The measurement behind the rule, and it is a near miss and not a
 > principle.** The probe scripts this project grew out of counted and killed
 > Chromium **by image name**. That was harmless where it ran -- the only
 > `chrome.exe` processes on that machine were the probe's own -- and it passed
@@ -324,7 +324,7 @@ indistinguishable from a real Chromium singleton. `[STABLE]`
 > against the set the tool actually owns. This is why ownership here is
 > structural -- a job object for the living, a full image path for survivors -- and
 > why `GetProcessesByName`, `taskkill /IM` and name-filtered WMI are refused by
-> an analyzer rather than by review
+> an analyzer and not by review
 > ([`NeverByImageNameTests`](../../tests/BrowserAI.Tests/NeverByImageNameTests.cs)).
 
 **Two hazards specific to enumeration:** `[FLOATS]`
@@ -377,7 +377,7 @@ titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 > [does not provision it](../../DECISIONS.md#processes-browsers-and-session-modes) -- full Chromium in every
 > mode -- and `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` means it cannot appear on disk
 > later. So an upstream change to binary selection would produce a **failed
-> launch**, which is loud, rather than a silently untrackable browser. It matters
+> launch**, which is loud, and not a silently untrackable browser. It matters
 > only if that decision is ever revisited. `chromium.executablePath()`
 > reports `chrome.exe` for **both** binaries, so it is not a usable indicator of
 > which one is running.
@@ -418,7 +418,7 @@ which is exactly the call being timed. `[MACHINE]` for the timings,
 > cold cache or with a hostname nothing has asked for yet.
 
 **The two cheap ways to ask, and what each can and cannot see.** Both read the
-object manager rather than the filesystem, and neither talks to a server.
+object manager, not the filesystem, and neither talks to a server.
 
 | | `GetDriveTypeW("X:\")` | `QueryDosDeviceW("X:")` |
 |---|---|---|
@@ -438,7 +438,7 @@ it moved, so it has a re-verification row.
 > difference needs GetDriveType -- a filesystem call, which on a disconnected
 > mapping can block for exactly as long as the thing being avoided")`.** That
 > sentence justified leaving mapped drives uncovered, and it was **reasoning
-> rather than a measurement** -- the one thing this knowledge base exists to stop.
+> and not a measurement** -- the one thing this knowledge base exists to stop.
 > It is false as written: `GetDriveTypeW` is not a filesystem call, and it did
 > not block.
 
@@ -490,7 +490,7 @@ Measured 2026-08-26, PowerShell 7 on .NET 10.0.11, Windows 11 Pro 26200.
 | `C:work` | resolved against the process's current directory on `C:` |
 
 > ⚠️ **The first three are why the segment checks run BEFORE `GetFullPath` in
-> `Sessions/CanonicalPath` rather than after.** Nothing here fails: a caller who
+> `Sessions/CanonicalPath` and not after.** Nothing here fails: a caller who
 > asks for `sess.` gets a directory called `sess`, which is the two-spellings
 > failure arriving through the name instead of through the path. The `NUL` row is
 > the sharper one -- a *directory* argument silently becomes a device path.
@@ -503,7 +503,7 @@ whose working directory is known, and print the answers verbatim.
 this is a BCL behaviour, and the two `no` rows are what `Sessions/CanonicalPath`
 resolves for itself. *Corrected 2026-08-26 (previously "what
 `Sessions/SessionDirectoryGuard` exists for"): that type is gone, and those forms
-are now normalised rather than refused.*
+are now normalised and not refused.*
 
 | spelling | resolved by `Path.GetFullPath`? |
 |---|---|
@@ -518,11 +518,11 @@ are now normalised rather than refused.*
 > volume and calling `GetShortPathNameW`: **`C:` shortens, `D:`, `E:` and `F:` do
 > not** -- and neither does the volume the **GitHub Windows runner** checks out
 > onto, which is how this was found. A path with no short name comes back
-> unchanged rather than failing, so a test that builds an 8.3 alias and does not
+> unchanged instead of failing, so a test that builds an 8.3 alias and does not
 > check that it got one is asserting that a path equals itself. `[MACHINE]` for
 > which volumes, `[STABLE]` for the setting being per-volume -- it is
 > `fsutil 8dot3name query <volume>`, and reading it needs administrator rights,
-> which is why the observable check is the round trip rather than the setting.
+> which is why the observable check is the round trip and not the setting.
 
 > ⚠️ **The 8.3 rows correct
 > [the adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md),
@@ -589,7 +589,7 @@ from both shells, each handed the other's spelling, and it carries through
 [Testing](../../TESTING.md#the-two-spellings-are-forced-and-the-run-says-which-one-it-got).
 
 **Which makes an ordinal comparison between a composed path and an OS-read one a
-property of the caller's shell rather than of the product.** Reproduced at
+property of the caller's shell and not of the product.** Reproduced at
 `cc45900` by running the same tree twice with nothing changed but the shell:
 
 | Shell | `dotnet test` |
@@ -608,12 +608,12 @@ why this was reported twice from a machine and never once from a build. What put
 it in front of a single-shell run is `DriveLetterCase`, over which six of
 `SessionDirectoryGuardTests`' arms are parameterised: its `Lower` value composes a
 spelling no Windows API ever returns, so the wrong comparison goes red everywhere
-rather than somewhere. Proof it does not need a shell: the planted arm failed
+and not somewhere. Proof it does not need a shell: the planted arm failed
 *from PowerShell*, with the identical two failures Git Bash had produced.
 
 *Corrected 2026-08-20 (previously "CI cannot see this ... Every step in `build.yml`
 runs under `pwsh`"): CI was removed that day, and the property is about
-single-shell runs rather than about CI.* With CI gone the release gate is the
+single-shell runs and not about CI.* With CI gone the release gate is the
 suite on one machine, so [release checklist item
 8](../../RELEASING.md#8-run-everything) now requires it to be run **from
 PowerShell and from Git Bash**, and both totals recorded. That is belt beside
@@ -625,8 +625,8 @@ before the parameterisation has been extended to cover it.
 Measured 2026-08-24 on this machine, .NET 10 / Windows 11 26200. `[STABLE]` for
 the API behaviour, `[MACHINE]` for the run.
 
-**The sibling of the section above, and the one that was left reasoned rather
-than measured.** That one says Windows re-spells a path's drive letter; this one
+**The sibling of the section above, and the one that was left reasoned and not
+measured.** That one says Windows re-spells a path's drive letter; this one
 says Windows also resolves every reparse point above it, so a composed path and a
 reported path can differ by far more than a letter's case.
 
@@ -642,7 +642,7 @@ So the object manager's resolution is what is reported, and it is reported for a
 process that never named the target at any point. `Path.Combine` resolves
 nothing, which makes the two sides of an image-path comparison the answers to two
 different questions -- and the comparison is *exact*, so the mismatch is total
-rather than partial: **every** process misses, on every pass, for good.
+and not partial: **every** process misses, on every pass, for good.
 
 **What it cost before it was measured.** `BrowserProcesses.ScanFor` returned
 `candidates=0` and `BrowserProcesses.RunningFrom` returned an empty live set on
@@ -692,7 +692,7 @@ Windows sign-in restore path relaunches as the same user. Nothing we need to see
 is in that set.
 
 13.88 ms on a background thread, once per sweep, with the sweep mutex ensuring
-one process pays it rather than ninety-six. Roughly 5× the cost of the
+one process pays it and not ninety-six. Roughly 5× the cost of the
 window-title walk (0.43 ms to enumerate, ~2.7 ms including title reads).
 
 **What it covers that the title walk cannot: a browser that fell back to a
@@ -754,7 +754,7 @@ Playwright's three-minute launch timeout expires.
 2026-08-19. [Re-verification row 22](../re-verification.md) covers the Chromium
 half only, and the Firefox half is what the numbers above add.
 
-**BrowserAI's own path is covered, and it is covered by construction rather than
+**BrowserAI's own path is covered, and it is covered by construction and not
 by ordering.** `Runtime/ChildLaunch.Create` is the one route to a child, and it
 calls `FirefoxProfileLockedException.For(config)` **before** it writes the config
 and long before anything spawns; that inspects `parent.lock` with a write-open and
@@ -805,7 +805,7 @@ the PID-reuse guard, re-verified with `GetProcessTimes` before any kill. Mozilla
 > `src/BrowserAI/Interop/RestartManager.cs` was written from that contract and
 > from the observed behaviour, which is the same route
 > the passthrough work took when it built
-> parse-error recovery from the MCP SDK's behaviour rather than from its
+> parse-error recovery from the MCP SDK's behaviour and not from its
 > Apache-2.0 code. The measurement is unchanged; only the instruction was wrong.
 > [The Firefox preflight and its second detection path](../../ARCHITECTURE.md#locking-ownership-and-the-sweep)
 > carried the same sentence and is corrected too.
@@ -826,15 +826,15 @@ by nobody, reports **zero**. Re-establish with
 which runs on every build and writes its numbers into the run's scratch directory
 as `firefox-attribution.json`.
 
-**`parent.lock` outlives its holder, confirmed rather than carried over.** After
+**`parent.lock` outlives its holder, confirmed and not carried over.** After
 the holding process was terminated, the file was still on disk 15 seconds later
 and the Restart Manager reported no holders for it -- which is the state an
 existence check would misread as "a browser is running", and the reason the
 preflight reads the live handle instead. Asserted in both directions by the same
 test, so a Windows or Mozilla change that started deleting the file is a red
-build rather than a silently stricter product.
+build, not a silently stricter product.
 
-**It costs 638 ms a query, and that is a design constraint rather than a
+**It costs 638 ms a query, and that is a design constraint and not a
 detail.** Measured on this machine 2026-08-16 across two real Firefox profiles,
 recorded as `firefox-attribution-negative.json` in the run's scratch directory by
 `FirefoxTests.AnUnheldLockAttributesNobodyAndAForeignFirefoxIsAttributedToNoSession`.
@@ -860,7 +860,7 @@ pid, so every field after it is read from the wrong offset and the pid itself
 still looks right. Two `uint`s, recombined by hand. `[STABLE]`
 
 **A foreign Firefox is the negative control, and it is a live one.** This arm is
-methodologically load-bearing rather than incidental: it proves the attribution
+methodologically load-bearing, not incidental: it proves the attribution
 path *rejects* a browser it did not launch, instead of merely never meeting one.
 Measured 2026-08-16: **2** foreign profiles under
 `%APPDATA%\Mozilla\Firefox\Profiles`, **1** of them held, by an ordinary
@@ -870,7 +870,7 @@ Restart Manager names it perfectly, and it is
 attributed to **none** of our sessions and is **not** a candidate, because the
 detection guard is a full-path match against the binary BrowserAI provisioned.
 That is the sharper half of this test: the process passes the mechanism the
-attribution path is built on and is rejected by the guard, rather than failing
+attribution path is built on and is rejected by the guard, instead of failing
 the first filter and never reaching the second. `[MACHINE]`
 
 > ⚠️ **The detector is blind to fallback-profile instances, and covering them is
@@ -880,7 +880,7 @@ the first filter and never reaching the second. `[MACHINE]`
 > message window**. A detector extended to match it would identify a personal
 > Chrome as a stray. The answer is not a better matcher: **validate the directory
 > before launch so the fallback never happens**, and launch the Chrome for Testing
-> build BrowserAI provisions rather than `channel: "chrome"`. **Provisioned, not
+> build BrowserAI provisions instead of `channel: "chrome"`. **Provisioned, not
 > bundled** -- ["our own" is the build BrowserAI manages, not one shipped inside
 > the installer](../../DECISIONS.md#processes-browsers-and-session-modes).
 
@@ -897,7 +897,7 @@ the first filter and never reaching the second. `[MACHINE]`
 
 ## Windows object names and window scoping
 
-**You cannot put a path in a mutex name, and .NET throws rather than relocating
+**You cannot put a path in a mutex name, and .NET throws instead of relocating
 the object.** Any backslash after the namespace prefix is refused: re-measured
 2026-08-17 on **.NET 10.0.400**, `new Mutex(false, name)` threw
 `System.IO.DirectoryNotFoundException` -- *"Could not find a part of the path"* --
@@ -921,8 +921,8 @@ a loop and catching. `[STABLE]`
 > **What was not measured is raw `CreateMutexW`**, which is where the relocation
 > story would have to be true if it is true anywhere: the object manager treats
 > a backslash as a path separator, so a name with one in it plausibly names an
-> object in a different directory rather than failing. Nothing in this project
-> calls `CreateMutexW` directly, so the question is left open rather than
+> object in a different directory instead of failing. Nothing in this project
+> calls `CreateMutexW` directly, so the question is left open and not
 > answered. `[UNVERIFIED]` for the Win32 layer; the .NET layer is measured.
 
 **`FindWindowExW(HWND_MESSAGE, ...)` is scoped to a window station and desktop.** A
@@ -940,7 +940,7 @@ article about mutex naming that does not discuss renames at all)*. The general
 claim is **false**: a running executable can be renamed, and so can its parent and
 its grandparent; only deleting the image is refused. The **conclusion** survives
 anyway, for a reason the entry never gave, and it is now measured for both
-provisioned families rather than assumed for either -- a live Chromium **and** a
+provisioned families and not assumed for either -- a live Chromium **and** a
 live Firefox each refuse both renames of their own tree and of the browsers root,
 and every one of those renames succeeds the moment the browser is gone
 ([kb](processes.md#the-same-measurement-for-firefox-and-for-what-both-families-share----2026-08-19)).
@@ -964,8 +964,8 @@ poll. Both filtered to whole top-level windows (`GetAncestor(hwnd, GA_ROOT) ==
 hwnd`, `idObject == OBJID_WINDOW`, `idChild == CHILDID_SELF`); every window that
 already existed was recorded as a baseline and could not be reported as new. Each
 record carries the owning process's image path from
-`QueryFullProcessImageNameW`, so a window can be attributed to a binary rather
-than to a pid. Correlation to a test is by timestamp against TUnit's own
+`QueryFullProcessImageNameW`, so a window can be attributed to a binary and not
+to a pid. Correlation to a test is by timestamp against TUnit's own
 per-test `startTime`/`endTime` in its JSON report. Re-establish by running that
 watcher across `dotnet test` and intersecting the two timelines.
 
@@ -976,7 +976,7 @@ seconds apart, and both fell inside the single interval of
 `BrowserIdleTimerTests.AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks`
 -- the suite's only `realSessionChildren: true` arm, which reached a real Chromium
 through a harness that opened its session in `persistent` mode
-(`Headed: true`). Two windows rather than one because that test lets the idle
+(`Headed: true`). Two windows and not one because that test lets the idle
 timer close the browser and then drives it again. `[MACHINE]`
 
 **Headless Chromium creates window objects and never shows one. This is the
@@ -990,7 +990,7 @@ and 2 `MSCTFIME UI`. The last-but-one is the one that matters:
 **`Chrome_WidgetWin_1` -- the class a visible browser window uses -- is created in
 headless mode too, without `WS_VISIBLE`, and is never shown.** So "the full
 `chrome.exe` runs in every mode, therefore headless must flash a window" is
-false, and a detector that keys on the class rather than on visibility will
+false, and a detector that keys on the class and not on visibility will
 report windows that do not exist on screen. `[FLOATS]`
 
 > **One tool breaks this, and it is not the headless browser changing its mind.**
@@ -1016,7 +1016,7 @@ this class of complaint on a launcher that sets the flag, and the flag is set on
 every launch here. `[STABLE]`
 
 **After making that one arm windowless** -- the rig that starts real children now
-opens its session in `headless`, decided in `RigSessionEnvironment` rather than
+opens its session in `headless`, decided in `RigSessionEnvironment` and not
 at the call site -- the same watcher across a full green 411-test run recorded
 **zero visible windows and zero foreground events**, against 283 top-level
 windows created, with the developer's editor holding the foreground throughout.
@@ -1065,17 +1065,17 @@ them only through the documented exceptions -- the one that fired here being tha
 the foreground window belonged to an **ancestor of the launching process**.
 `[MACHINE]`
 
-⚠️ **The consequence runs the wrong way, and it is a blind spot rather than a
+⚠️ **The consequence runs the wrong way, and it is a blind spot and not a
 comfort: this machine cannot detect a focus-stealing regression.** A change that
 reintroduced one would take the foreground on a default install and be refused
 here, so it passes on the only machine that runs the suite and fails on a user's.
 That is the mirror image of the constraint this repository already keeps -- that a
 number measured here is not claimed to hold elsewhere -- and it is the more
-dangerous half, because the local answer is *clean* rather than *unknown*. **What
+dangerous half, because the local answer is *clean*, not *unknown*. **What
 the value is on a default install was not measured**, here or anywhere in this
 repository; only that this machine's is not it. It is written down as a hazard
-rather than left in this article, because it is a property of the checking rather
-than of the product.
+instead of left in this article, because it is a property of the checking and
+not of the product.
 
 **What it costs the measurement above.** The 2026-08-17 run recorded **zero
 foreground events** across a full green suite, and that zero is weaker evidence
@@ -1107,9 +1107,9 @@ consequence for a launch flag is measured in
 > browser or touches the foreground, because writing to a machine-wide user
 > preference would make every `[MACHINE]` entry on this page incomparable with
 > the next one. ⚠️ **The row prints `24.9 days` where this article says `about
-> 24.8 days`, and that is a rounding rather than a drift**: 2,147,483,647 ms is
+> 24.8 days`, and that is a rounding, not a drift**: 2,147,483,647 ms is
 > **24.855 days**, truncated in the prose here and rounded to one decimal there.
-> The band edge derives from `TestDefaults.BrowserHang` rather than being
+> The band edge derives from `TestDefaults.BrowserHang` and is not
 > written at the comparison, so it moves with the suite's own budget and not
 > with anyone's estimate. `ForegroundLockTests` holds the bands, the boundary
 > and both directions of the warning. **None of this closes the hazard** -- the
@@ -1138,7 +1138,7 @@ releasing, so whatever that holder was mid-way through writing may be torn.
 Catching it and returning a plain success therefore **discards the only warning
 the OS gives that the protected state is suspect** -- the acquisition was never in
 doubt. That library surfaces it as a distinct
-`MutexAcquisition.AcquiredAbandoned` outcome rather than folding it into
+`MutexAcquisition.AcquiredAbandoned` outcome instead of folding it into
 `Acquired`, and its own remarks name swallowing it as one of two things the
 PowerShell version it replaced got wrong. The holder must still be disposed, or the next
 waiter inherits the abandonment. `[STABLE]`
@@ -1244,7 +1244,7 @@ After, `p50 ≈ 0.85 × max` and the fastest and slowest refusals sit within a
 factor of three: no queue, just N processes doing the same two file opens at
 once.
 
-> **The cold race is unchanged, and that is the design rather than a
+> **The cold race is unchanged, and that is the design and not a
 > disappointment.** Run the same N contenders against an **empty** directory --
 > the rig in the entry above, where the winner is one of the N -- and the numbers
 > barely move: 349.8-365.7 → 284.1-396.7 ms at 16, 2,100-2,508 → 1,661-2,747 ms
@@ -1264,13 +1264,13 @@ afterwards. The suite's own arm is
 `SessionLockTests.AContenderThatCanNameTheHolderIsRefusedInFrontOfTheGate`,
 which holds the gate from a third process for the whole call -- so a `TryAcquire`
 that still entered it could only come back `Busy`, and the outcome is the
-discriminator rather than any clock.
+discriminator and not any clock.
 
 **To re-establish**, at any N without a test host: create a session directory and
 a manual-reset `EventWaitHandle`, start N ×
 `BrowserAI.TestProbe.exe session-race <directory> <eventName> <report-i.json> <release.flag>`,
 wait for every `<report-i.json>.ready` to appear -- that handshake is what makes it
-a race rather than a queue -- set the event, then read the reports and group them
+a race and not a queue -- set the event, then read the reports and group them
 by `outcome`. Each one carries `elapsedMilliseconds` and `gateTimeoutMilliseconds`
 beside it. The suite's own arm is
 `SessionLockTests.UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho`,
@@ -1328,7 +1328,7 @@ why nothing ever turned on it: the name must be hashed or canonicalised either
 way, which is what the design does. `Corrected 2026-08-17 (previously
 "Unresolved and flagged rather than reconciled ... `[UNVERIFIED]` as to which
 failure a given name produces")`. What stays open is the raw `CreateMutexW`
-layer, named as open in the entry above rather than left as a disagreement here.
+layer, named as open in the entry above and not left as a disagreement here.
 
 **An unreadable lock file must throw, not read as free.**
 `SessionLockService.ReadLock` returns null for exactly three conditions -- the file
@@ -1354,7 +1354,7 @@ world must be treated as protected. `[MACHINE]` for the design; the underlying
 constraint is `[STABLE]`.
 
 **Deriving a boot id without WMI.** That library takes
-`DateTimeOffset.UtcNow` minus `Environment.TickCount64` rather than
+`DateTimeOffset.UtcNow` minus `Environment.TickCount64` instead of
 `Win32_OperatingSystem.LastBootUpTime`, for two reasons that both bind here:
 LastBootUpTime **costs hundreds of milliseconds on a cold WMI service**, and
 `System.Management` is **not AOT friendly**. `GetTickCount64` counts *biased
@@ -1367,11 +1367,11 @@ samples eight seconds apart differed by **0.12 ms**. The failure direction is
 chosen deliberately -- a spurious *change* reads as "rebooted" and is
 conservative; a boot id that failed to change across a real reboot is the
 dangerous one, and no bucket size can produce it. It cannot survive a **step**
-correction to the system clock, which Windows normally slews rather than steps.
+correction to the system clock, which Windows normally slews and does not step.
 `[STABLE]` for `GetTickCount64` including sleep and for the WMI cost being
 non-trivial -- both reproducible anywhere, the first by suspending a machine and
 comparing, the second by timing a cold `Win32_OperatingSystem` query. `[MACHINE]`
-and **carried rather than re-measured** for the 10.4 ms / 0.12 ms figures: they
+and **carried and not re-measured** for the 10.4 ms / 0.12 ms figures: they
 were taken in that unpublished library on 2026-08-14 and not re-run here, so read
 them as an order of magnitude and not as this project's own numbers.
 
@@ -1390,11 +1390,11 @@ one `CloseHandle`, no directory walk, no process handle and no mutex.
 | Arm | Warm, 2,000 iterations, 3 runs | What it is |
 |---|---:|---|
 | `browserai.json` free | **0.0342 · 0.0351 · 0.0359 ms** | the open succeeds and the handle is closed |
-| `browserai.json` held | **0.0481 · 0.0490 · 0.0493 ms** | a sharing violation, so a **managed exception** rather than a return |
+| `browserai.json` held | **0.0481 · 0.0490 · 0.0493 ms** | a sharing violation, so a **managed exception** and not a return |
 | first probe in a process | 0.85 · 0.95 · 6.32 ms | one-time initialisation; the 6.32 ms run is the one that also JIT-compiled |
 
 **The held arm costs about 40% more than the free arm, and that is the
-exception rather than the filesystem.** The syscall is the same one; what differs
+exception, not the filesystem.** The syscall is the same one; what differs
 is `FileStream` raising and this code catching.
 
 **Against the walk the same loop already performs.** `SessionLayout.SizeOnDisk`
@@ -1417,7 +1417,7 @@ listing's cost was already the walk. `[MACHINE]`
 > estimated here.** The uncontended acquire alone is recorded elsewhere in this
 > article at 0.007-0.009 ms; the create/close pair is not. **Nothing above has
 > been adjusted** -- re-run the procedure below against
-> `ProbeLivenessUnderTheGate` and stamp a new row beside these rather than
+> `ProbeLivenessUnderTheGate` and stamp a new row beside these instead of
 > editing them.
 
 > **Reproduce, and keep the sanity check.** Time the open above in a loop against
@@ -1446,7 +1446,7 @@ the measurement:** the arrangement is now **refused at startup** when the app ro
 is not inside the current user's profile -- `Hosting/InstallRootScope.cs`, the
 maintainer's decision *"L1 a"*. Nothing below changed; the measurement is what it
 always was, and the refusal is what was built on the strength of it. It narrows
-rather than closes: *outside the profile* is not the same predicate as *shared*,
+and does not close: *outside the profile* is not the same predicate as *shared*,
 and a profile directory whose ACL an administrator widened to a group is still
 accepted. The hazard row stays `open` and says so.
 
@@ -1515,7 +1515,7 @@ that same name from the same process:
 
 That is exactly `MachineMutex.Create`'s documented
 `UnauthorizedAccessException` arm -- *"an object of that name exists and this
-token cannot open it"* -- reached for real rather than reasoned about. `[STABLE]`
+token cannot open it"* -- reached for real, not reasoned about. `[STABLE]`
 
 ### 4. The file half spans users under a shared root; the default root's does not
 
