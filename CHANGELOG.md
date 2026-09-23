@@ -38,6 +38,105 @@ release body; nothing else depends on it.
 
 ## [Unreleased]
 
+### Added
+
+- 📦 **The resolved set a release was cut from is committed to the repository, one per release.**
+  `build/New-Release.ps1` has emitted a resolved-set manifest beside every archived package
+  since 2026-08-16 -- the three `packages.lock.json` files, the payload's lock and its
+  `package.json`, `payload.json`, `browsers.json`, `tool-verdicts.json`, and a `manifest.json`
+  stating the version, the tag and the package's SHA-256. It writes it into `Releases/archive/`,
+  which is gitignored, so the only copy anybody could reach was a `BrowserAI-<version>-manifest.zip`
+  uploaded beside the installer. **A clone of this repository could not answer what a release was
+  built from**, and a release whose assets were ever trimmed would have taken the answer with it.
+
+  The directory is now committed under `docs/evidence/<date>-release-manifest/` per release, and
+  the zip leaves the upload set. The maintainer's decision, verbatim: *"7 move it"*.
+  `docs/evidence/2026-09-23-release-manifest/` is `1.1.0`'s, added after the release rather than
+  before it -- a commit before the tag is a commit the tag would have to ride, and the manifest
+  cannot exist until the pack that produces it has run. `RELEASING.md` item 11 says all of that
+  now, including that `git rev-list -n1 <tag>` must name the same commit afterwards as it did
+  before. It does: `d3aabf1`.
+
+  **Two things about the copy are not the bytes as emitted, and both are recorded with their
+  digests.** The release body inside it is stored `.txt` and was emitted `.md`, because every
+  `.md` in this tree carries a two-line SPDX header that a test enforces, and those two lines
+  would falsify the digest the file exists for. And five files a `dotnet restore` wrote with CRLF
+  are stored with LF, because `.gitattributes` normalises what this repository tracks. **Three of
+  those five come out byte-identical to the committed lock files they were copied from**, which
+  was measured rather than assumed.
+
+- ✅ **Every batch under `docs/evidence/` must be a row in that directory's own index.**
+  Nothing builds `docs/evidence/` and nothing in the suite reads it, so a directory that never
+  goes wrong loudly is exactly the kind that needs a scan. The index in its `README.md` is how a
+  kb entry, a hazard row or a review points a reader at a record, and a batch nobody listed is a
+  record nobody will find.
+
+  Planted red before the rule went in, and **it named three batches that were already missing** --
+  `2026-09-21-provisioning-1246`, `2026-09-21-webmcp` and `2026-09-23-release-body`, the oldest
+  of them two days old. Each had its own `README.md` and each was cited from elsewhere in the
+  tree; the one thing missing was the row that makes the collection enumerable. All three rows
+  are in, beside the fourth this batch adds.
+
+  Both of the scan's controls had to be built from halves. Written whole, the synthetic table row
+  and the running-prose counter-example were two real Markdown links in a `.cs` file, and
+  `DocumentationLinkTests` reported both -- which is that scan working, and is why this one now
+  uses the arrangement that file already keeps for its own controls.
+
+### Changed
+
+- 📦 **A release publishes three assets, and the release script declares which three.**
+  `build/New-Release.ps1` does not upload and never has: the publish is a hand-run
+  `gh release create` at `RELEASING.md` item 14. Nothing named an upload set, so the assets were
+  whatever the person running it picked out of `Releases/`, and `v1.1.0` carried seven because
+  `v1.0.0` had carried seven. **That is a judgement wearing the appearance of a procedure**, and
+  it was the only step of a release with no record of what it decided.
+
+  The script now declares `$uploadSet` in one place -- the installer, the full package and
+  `releases.<channel>.json` -- refuses on a declared file that is not on disk, prints the
+  `gh release create` line ready to paste, and returns the paths as `Upload`.
+  `ReleaseScriptTests` holds what is in the set and that every other file a pack leaves behind is
+  classified, so a new artifact is a red build until somebody decides about it. Both were planted
+  red: a doctored declaration that published the portable zip again came back naming
+  `BrowserAI.zip`, and dropping `RELEASES` from the classified list came back naming it against
+  the real directory.
+
+  **Two files left the set on a measurement rather than on a preference.** The maintainer asked
+  for it in as many words: *"5+6 execute the test but also double check the velopack
+  documentation and code to double check we are not removing load bearing parts for scenarios we
+  forgot about."* Velopack's source at tag `1.2.158` says every client source reads
+  `releases.{channel}.json` and only that, nothing in its client library ever composes the name
+  `RELEASES`, and `Update.exe` and `Setup.exe` never fetch a feed at all. Then it was run: a real
+  Velopack client pointed at a feed holding **only** `RELEASES` and `assets.win.json` -- with
+  `RELEASES` naming the package, its SHA-1 and its exact size -- reported *"No full / applicable
+  release was found to download"*. The suite's three real-installer arms ran green against a
+  scratch feed with both files deleted, and red against one with `releases.win.json` deleted
+  instead, which is the control that says the arms were the ones that would have failed.
+
+  ⚠️ **`RELEASES` and `assets.<channel>.json` stay in `Releases/` on disk.** Not publishing a
+  file and not producing one are different changes, and only the first was decided: `vpk upload`
+  reads the local `assets.<channel>.json` to learn what to upload.
+
+  **Nothing has been removed from the published `v1.1.0` release**, which carries seven assets
+  and still does. Dropping an asset from a release that is already standing is a separate
+  decision about links people may already have, and it has not been taken.
+
+### Removed
+
+- 🗑️ **The portable `BrowserAI.zip` is no longer published beside the installer.**
+  The maintainer's decision, verbatim: *"2 drop and update the readme to not mention it."* So
+  `README.md` does not mention it, with no *previously* clause in its place -- a correction
+  clause mentions the file, which is the thing he asked for the README not to do. This entry is
+  the record instead. What it said, in full: *"A `BrowserAI.zip` is published beside the
+  installer, by the same packaging run, for anyone who would rather unpack than install. (Named
+  `BrowserAI-win-Portable.zip` until 2026-09-15.) There is no installer in it to run the
+  registration hook, so registering it is the command above against wherever it was unpacked."*
+
+  **Nothing about the pack changes, and that is deliberate.** `vpk pack` still emits the portable
+  archive, the release script still renames it to `BrowserAI.zip` and still requires it, and it
+  is still rewritten into `assets.win.json`. Only the upload set changed. Keeping the local
+  artifact is what keeps the rename step exercised on every cut rather than only on the cuts
+  somebody remembers.
+
 ## [1.1.0] - 2026-09-23
 
 A web page can offer its own tools to the browser. From this version they can be
