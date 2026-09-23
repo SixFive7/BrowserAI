@@ -686,12 +686,21 @@ numbers, `[STABLE]` for the APIs.
 | Per opened process | 30.6 µs |
 | `EnumProcesses` alone | 0.061 ms -- negligible; the cost is the per-process open |
 
-**The 156 denials do not matter.** They are protected and SYSTEM processes; a
-BrowserAI-launched Chrome for Testing runs as the user, non-elevated, and the
-Windows sign-in restore path relaunches as the same user. Nothing we need to see
-is in that set.
-
-`[ASSUMED]` That the 156 denials do not matter. **It infers that the denied set is all SYSTEM from the denial itself**, and leans on a claim marked `[UNVERIFIED]` elsewhere, so the inference rests on an inference. Settle it by enumerating what was denied, under a token that can see it. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+**The denials do not matter, and the reason is a control and not an
+inference -- measured 2026-09-23 on Windows 10.0.26200.9457 (previously "The
+156 denials do not matter. They are protected and SYSTEM processes").** The
+same three-call path now reads **764 pids, 598 opened, 166 denied, all 166
+`ERROR_ACCESS_DENIED`**, so the count is machine state and moves with what
+is running. ⚠️ **Who owns the denied set cannot be read from here at all**:
+WMI `GetOwner` answers *access denied* for 165 of the 166 and throws for the
+last, from the same non-elevated process that reads `PC657\jori` for itself
+-- so *they are SYSTEM* was never a finding, it was the denial restated.
+What is established is narrower and sufficient: **157 of the 166 are in
+session 0**, the nine in session 1 are Windows' own session processes
+(`csrss`, `winlogon`, `fontdrvhost`, `dwm`) plus vendor services, and **a
+`chrome-headless-shell` launched by this user, non-elevated, was in the
+OPENED set with its full image path read in the same sweep that denied 166
+others**. `[MACHINE]` for the counts.
 
 13.88 ms on a background thread, once per sweep, with the sweep mutex ensuring
 one process pays it and not ninety-six. Roughly 5× the cost of the
@@ -784,13 +793,22 @@ notices one.** Two full `chrome.exe` instances against one profile directory --
 the second is refused with **`Browser is already in use for <dir>`**. Two
 `chrome-headless-shell` instances against the same directory -- **both launched,
 both worked, and no error was raised anywhere**, because it writes no `lockfile`
-and nothing arbitrates. Two browsers writing one profile's cookie and storage
-databases is silent corruption, and headless is the mode upstream defaults to. So
+and nothing arbitrates. ⚠️ **It is silent LOSS, not silent corruption -- corrected 2026-09-23 @
+chromium-headless-shell 1246 (previously "Two browsers writing one profile's
+cookie and storage databases is silent corruption").** Two shells on one
+directory, six interleaved rounds of writes each, both closed gracefully
+with exit code 0: the reopened profile held **240 localStorage keys, all of
+them the first instance's, and none of the second's 240**, with every SQLite
+store under it reporting `PRAGMA integrity_check = ok` and no error raised
+anywhere by either process. One writer's entire contribution disappears
+without a diagnostic, and nothing is malformed. **The conclusion is
+unchanged and now rests on a mechanism that was run**: a directory-keyed
+lock of our own is the only protection covering both builds, because what
+the missing arbitration costs is a whole session's writes and not a
+repairable file. `[FLOATS]`
 Chromium's own single-instance protection exists **only in the headed build**,
-and a directory-keyed lock of our own is the only protection that covers both,
-not defence in depth. `[FLOATS]`
-
-`[ASSUMED]` That two concurrent writers to one Chromium profile cause silent corruption. **It is the opposite half of the sentence above and it was not run either**, so this repository asserts both that a killed writer is safe and that a concurrent one is not, on no measurement. Settle it by running two browsers against one profile directory and reading the result. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+and headless is the mode upstream defaults to, so the lock is not defence in
+depth.
 
 **Firefox has no `Chrome_MessageWindow` equivalent**, so its stray detection is a
 different path entirely: `parent.lock` sharing violation → Restart Manager

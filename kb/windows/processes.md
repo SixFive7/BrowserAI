@@ -126,10 +126,21 @@ application does not have a console or when console input has been redirected.
 Try Console.Read."*, with no delay. **The rule that a `catch` must not call
 console input survives, and the real failure is worse in a different way**: a
 throw inside a `catch` replaces the original exception with a new one, so the
-cause is not merely delayed, it is destroyed. **What was measured and what was
-not**: the redirected-stdin arm was run here; the *console-attached-but-nobody-typing*
-arm -- which is the case the old sentence actually describes, and which would
-block -- was **not** run and is not established. Shipped instance, read
+cause is not merely delayed, it is destroyed. **Both arms are now measured, and they do opposite things -- the
+console-attached one added 2026-09-23 on .NET 10 (SDK 10.0.401), Windows
+10.0.26200.9457 (previously "the *console-attached-but-nobody-typing* arm
+... was **not** run and is not established").** With a real console attached
+and nobody typing, `Console.ReadKey(true)` **blocked for 45 s and was still
+blocked when it was killed** -- `IsInputRedirected=False`, no return, no
+throw, no output, nothing timing out: exactly *"the server is stuck"*, and
+exactly what the original sentence described. With stdin redirected, which
+is BrowserAI's own configuration under an MCP client, the same binary threw
+`InvalidOperationException` **3 ms** in. **So the rule that a `catch` must
+not call console input is load-bearing in both configurations and for two
+different reasons**: redirected, the throw destroys the original exception;
+console-attached, the process stops for good. `[STABLE]` for the APIs,
+`[MACHINE]` for the 45 s, which is a floor and not a measurement of the
+wait. Shipped instance, read
 2026-08-16 in an unpublished C# directory-cleanup tool that runs as a scheduled
 non-interactive job -- two calls, both inside `catch` blocks; that read
 established that the calls exist, never what they do. The shape: both calls sit in the
@@ -137,8 +148,6 @@ established that the calls exist, never what they do. The shape: both calls sit 
 `DirectoryNotFoundException` handlers, so they fire only on the cases nobody
 anticipated: the population least likely to have been exercised in testing and
 most likely to be hit in the field. `[STABLE]`
-
-`[ASSUMED]` `Console.ReadKey`'s CONSOLE-ATTACHED arm. **The redirected arm is measured and this one is not**, so the entry is half evidence and half assertion in one sentence. Settle it from a real console host, which is what `docs/probes/2026-09-14-firstrun` was built to watch. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
 
 **`Process.ExitCode` throws after `Dispose()`, and
 `Process.GetProcessById(pid).ExitCode` always throws.** .NET is *worse* here than

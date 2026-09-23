@@ -81,11 +81,23 @@ with no error anywhere. The SDK's own test base class pins it explicitly, citing
 
 `[FLOATS]` on a client version this project does not control.
 
-**Tool names and server `instructions` load eagerly; schemas are deferred.** So
-`instructions` is the only channel that reaches the model before it calls
-anything.
-
-`[ASSUMED]` That schemas are deferred by the client. **It is the whole reason `ServerInstructions` exists**, and the 2026-08-18 capture that could have retired it was performed with the sentence left standing beside it. Settle it from that capture, which is already in hand. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+**Tool names and server `instructions` load eagerly; schemas are deferred --
+measured 2026-09-23 @ Claude Code 2.1.281, from inside a session with this
+server connected and no tool of it called.** The `instructions` string was
+present in full and **all 79 tool names** arrived as a bare list carrying
+the client's own sentence *"Their schemas are NOT loaded -- calling them
+directly will fail with InputValidationError"*; no description and no
+`inputSchema` existed for any of them until one was fetched on demand, which
+then returned the whole definition. ⚠️ **Two corrections to what this used
+to imply. The split is per TOOL, not per server** -- three tools of another
+server arrived with full schemas unasked while five of that same server
+arrived deferred -- **and `instructions` is not the only channel that
+reaches the model**: the names reach it too, and an eagerly-loaded tool's
+description reaches it as well. What is true is narrower and is what the
+design rests on: **for a tool the client defers, nothing but its name
+reaches the model until something fetches the schema**, so `instructions` is
+the only channel *this server* can count on. `[FLOATS]` on a client version
+this project does not control.
 
 **Server `instructions` and every tool description are truncated silently at
 2 KB.** The tail simply does not exist and nothing a server can see reports it.

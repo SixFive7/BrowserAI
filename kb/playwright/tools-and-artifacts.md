@@ -1132,7 +1132,17 @@ were observed and removed on 2026-08-14** (`[MACHINE]` for the count). The
 registry root sits at `%LocalAppData%\BrowserAI\browsers\`, outside `current\` under the current design -- a tree
 that should be read-only and is wiped on update.
 
-**Real screenshots are not byte-stable across runs**, so passthrough-fidelity
-assertions need a canned blob from a fake child, not a live capture.
-
-`[ASSUMED]` That screenshots are not byte-stable. **Stated as the reason nothing compares them**, which is a test that does not exist because of an unmeasured sentence. Settle it by taking the same screenshot twice on one revision and comparing the bytes. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+⚠️ **A screenshot is byte-stable when the page, the binary and the viewport
+are -- corrected 2026-09-23 @ chromium 1246 / chromium-headless-shell 1246
+(previously "Real screenshots are not byte-stable across runs").** Six
+captures of one fixed `data:` page at 800x600, `deviceScaleFactor: 1`,
+across two separate browser processes, produced a **single** SHA-256 and a
+single byte count, `fullPage` included; a one-character change to the page
+changed the hash, which is the control that says the comparison can see one.
+**What moves is the page or the binary, not the capture**: the same static
+page through the headless shell is a different 3,462 bytes, and a page whose
+content varies varies every time. **So the rule stands on stronger ground
+than it did** -- a passthrough-fidelity assertion still needs a canned blob
+from a fake child, not because a live capture is unstable but because its
+stability is a property of the page and the browser build, and a test that
+depends on both is asserting the wrong thing. `[FLOATS]`

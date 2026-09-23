@@ -78,11 +78,26 @@ under the root and runs on `apply`, `install`, `start`, `uninstall` **and after
 every hook returns** (`windows/util.rs:59`). Two unrelated processes were killed
 by an update launched from a third. Our browsers live under `RootAppDir`, so an
 update terminates every running browser without warning and without our teardown.
-Chromium survives hard kills and our locks release on process death, so the damage
-is a lost session and not corruption -- but it bypasses the job object entirely,
+Chromium survives hard kills and our locks release on process death, so the
+damage is a lost session and not corruption -- **measured 2026-09-23 @
+chromium 1246 (154.0.8037.0) on Windows 10.0.26200.9457, against a kill of
+the shape `force_stop_package` performs and not against Velopack itself**: a
+twelve-process tree terminated with `taskkill /T /F` left a profile that
+reopened on the next launch with **all 19 of its SQLite stores reporting
+`PRAGMA integrity_check = ok`**, and with the session gone -- 0 localStorage
+keys and 0 cookies, against the 40 keys and the cookie that a graceful
+`Browser.close` of the identical write hands straight back. **Our own claim
+is an open handle and nothing else** (`FileAccess.ReadWrite,
+FileShare.Read`, [`LockFile`](../../src/BrowserAI/Storage/LockFile.cs)): a
+second writer refused while the holder lived took the file **68 ms** after
+the holder was terminated outright, and the file outlived the holder while
+the claim on it did not. ⚠️ **The clean `integrity_check` is worth exactly
+the control behind it**: the same check reports *database disk image is
+malformed* on four of five doctored copies of that very `Cookies` file and
+**`ok` on the fifth** -- 1 KiB of garbage written into an unused region --
+so *not corruption* here means *no corruption `integrity_check` can see*.
+`[FLOATS]` on the browser build. But it bypasses the job object entirely,
 and a hook must never leave a helper running under the root.
-
-`[ASSUMED]` That the damage from `force_stop_package` really is a lost session and not corruption. **Nothing defends against it because of this sentence, and the sentence was never run.** Settle it by killing a session mid-write through that path and reading what the profile and the session record look like afterwards. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
 
 ## The nine landmines, claim and verdict
 
@@ -825,9 +840,16 @@ between `packages\` and the feed proves nothing.**
 bytes at `<root>\browsers\chromium-1237\`, hashed before and after. What that
 establishes is the property §A depends on -- *a sibling of `current\` survives an
 update and a rollback* -- and it does not establish anything about a real
-Chromium tree beyond it being files in a directory. A real one was deliberately
-not used: the real tree is 768 MB and lives under `%LocalAppData%\BrowserAI`,
-which is the one directory an installer must never be pointed at.
+Chromium tree beyond it being files in a directory. A real one was deliberately not used: **measured 2026-09-23, the real tree
+is 2,513,947,001 B in 1,233 files (2,397.5 MiB), of which 2,446,370,634 B in
+1,119 files is `browsers\`** holding three Chromium and three Firefox
+revisions, and it lives under `%LocalAppData%\BrowserAI` -- the one
+directory an installer must never be pointed at. *Corrected 2026-09-23
+(previously "the real tree is 768 MB"), which named no date, no revision set
+and no unit convention.* **One revision per provisioned family is
+820,279,796 B (782.3 MiB)** at chromium 1246 / firefox 1549 / ffmpeg 1011 /
+winldd 1007, so which of the two figures to quote depends entirely on which
+question is being asked. `[MACHINE]`
 
 ### The apply gate, against two real instances
 

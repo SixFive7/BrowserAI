@@ -47,7 +47,7 @@ release body; nothing else depends on it.
 
   The 2026-08-18 justification sweep examined 598 load-bearing justifications and left **27**
   that are stated as fact, load-bearing, undated and uncited. They have been a list in
-  [`TODO.md`](TODO.md) since; they are now `[ASSUMED]` markers standing beside the claims
+  [`TODO.md`](TODO.md) since; they are now bracketed `ASSUMED` markers standing beside the claims
   themselves, each naming what is assumed, why it is load-bearing and what would settle it.
   The shape is `kb/`'s `[STALE]`: a stamp at the claim and never a separate file, because a
   claim and its status kept in two places is how one of them goes stale.

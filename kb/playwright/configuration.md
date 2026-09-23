@@ -522,12 +522,26 @@ a Windows environment block is case-insensitive. Held at `playwright-core`
 would add a fifth. `[FLOATS]`
 
 **`INSTALLATION_COMPLETE` short-circuits without validating anything.** Written
-last, so an *interrupted* install self-heals. But a browser corrupted **after** a
-successful install never re-downloads -- `spawn EFTYPE` forever -- and upstream's
-remediation string points at `npx @playwright/mcp install-browser chromium`, a
-package we do not ship resolving a different revision.
-
-`[ASSUMED]` That `spawn EFTYPE` is forever -- that the condition never clears on its own. **A permanent failure and a slow one are handled differently and nothing here measured which this is.** Settle it by provoking it and retrying on a timer. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+last, so an *interrupted* install self-heals. But a browser corrupted **after** a successful install never re-downloads --
+**measured 2026-09-23 @ playwright-core 1.64.0-alpha-1789764292000, node
+v24.21.0, in both directions**: with `INSTALLATION_COMPLETE` present,
+`install chromium-headless-shell` never touched the browser and left a
+0-byte executable exactly where it was, and with the marker removed the same
+command went straight for `Chrome Headless Shell 154.0.8037.0 (playwright
+chromium-headless-shell v1246)`; the short-circuit is
+`downloadBrowserWithProgressBar` returning on the marker before anything
+else happens (`coreBundle.js`,
+`existsAsync(browserDirectoryToMarkerFilePath(...))`). ⚠️ **What the launch
+then reports depends on the corruption and is not always `EFTYPE` --
+corrected 2026-09-23 (previously "`spawn EFTYPE` forever")**: a 0-byte
+executable and a truncated PE both give `browserType.launch: spawn EFTYPE`
+with an `EFTYPE` error code, while **ten bytes of non-PE garbage gives
+`spawn UNKNOWN`**. Both controls held -- a valid unrelated executable in the
+same place spawns and fails later on its arguments, and a *missing* file
+takes the *"Executable doesn't exist ... npx playwright install"* path
+instead -- so a classifier must not key on `EFTYPE`. And upstream's
+remediation string points at `npx @playwright/mcp install-browser chromium`,
+a package we do not ship resolving a different revision. `[FLOATS]`
 
 **The remediation string's exact shape, because BrowserAI replaces it.** Read
 2026-08-16 in `playwright-core/lib/coreBundle.js`, `throwIfExecutableMissing`:
@@ -667,12 +681,27 @@ close.
 **`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` writes a line to stderr when
 set** -- enough on its own to trip an error-shaped-stderr classifier.
 
-**Playwright's stale-browser GC deletes any registry directory not referenced by
-a `.links` entry.** Against a browsers tree we installed, the blast radius is
-"deletes our own Chromium", so `PLAYWRIGHT_SKIP_BROWSER_GC=1` is mandatory and
-pruning old revisions becomes the caller's job.
-
-`[ASSUMED]` The blast radius of the stale-browser GC. **What it would delete is stated and was not provoked**, and it is the only claim here whose failure mode is somebody else deleting our files. Settle it against a throwaway browsers root, never the provisioned one. *Tagged 2026-09-23; the list and the predicate are in `TODO.md`.*
+**Playwright's stale-browser GC deletes any registry directory not
+referenced by a `.links` entry -- measured 2026-09-23 @ playwright-core
+1.64.0-alpha-1789764292000, both directions.** Against a scratch registry
+root with an **empty** `.links`, seven planted browser-shaped directories
+were all deleted with *"Removing unused browser at ..."*, `chromium-1246`
+and `firefox-1549` included, while `not-a-browser\` and `reinstall.lock`
+were untouched -- selection is a basename prefix match
+(`isBrowserDirectory`) and nothing else. The control is the other half: with
+**one** `.links` file pointing at the payload's own `playwright-core`,
+exactly the five revisions its `browsers.json` names survived and only the
+two stale revisions went. Against the real root as it stands that is **8 of
+the 9 entries under `%LocalAppData%\BrowserAI\browsers`, 2,446,370,634 B in
+1,119 files**, with `reinstall.lock` the only survivor -- so the blast
+radius is the whole provisioned tree and not only Chromium. ⚠️ **And
+`PLAYWRIGHT_SKIP_BROWSER_GC=1` does not cover it**: the variable is read at
+the `install` call site and **not** at the `uninstall` one, so an
+`uninstall` run in this root deletes everything regardless -- the same seven
+directories went with the variable set. `PLAYWRIGHT_SKIP_BROWSER_GC=1` is
+therefore necessary and not sufficient, pruning old revisions is the
+caller's job, and `uninstall` must never be run against a root BrowserAI
+owns. `[FLOATS]`
 
 ⚠️ **Corrected 2026-08-16 @ `@playwright/mcp` 0.0.79 (previously "A healthy start
 prints `Session: <path>` to stderr, every time").** It prints that line **only
