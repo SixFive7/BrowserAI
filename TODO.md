@@ -327,32 +327,6 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       or to let row 104 be the thing that re-opens it. Nothing further to
       measure.
 
-- [ ] **Review the *no automated checks* decision once the product is finished.**
-      The [release checklist](RELEASING.md) is the only gate that exists; it works
-      when it is invoked, and nothing makes it fire. That trade is right while the
-      suite's shape and the release cadence are predicted, not observed --
-      many commits without re-running everything, and no hosted CI. **Re-open it
-      against the finished product and a real cadence, not against a guess about
-      them.**
-
-      ⚠️ ***Corrected 2026-08-20 (previously "Half the premise expired on
-      2026-08-18, and this item did not notice. **There is hosted CI**:
-      `build.yml` runs the whole suite, `SaturationTests` included, on every push
-      and every pull request"). The premise expired and then came back.*** Hosted
-      CI existed for two days, 2026-08-18 to 2026-08-20, and was removed at the
-      maintainer's decision. **Both `previously` clauses are here on purpose:** a
-      reader who learned either state needs to know it was reviewed and replaced,
-      not lost, and this entry has now been wrong in both directions
-      within three days. The original sentence is true again -- the release
-      checklist is the only gate that exists and nothing makes it fire -- so what
-      is left to decide is exactly what it always said, and the *whole* of it,
-      not the narrowed remainder. **Nothing here is a task; the whole
-      remainder is the decision.** The condition that ends the arrangement is
-      already named in [the release gate](RELEASING.md#the-release-gate): the day
-      a second person can cut a release, the assumption breaks and the gate has to
-      move into automation. Bringing CI back is
-      [its own item](#continuous-integration), and it is not this one.
-
 ## Residue outside the app root
 
 - [ ] **Find out whether BrowserAI can reap the browser descriptors Playwright

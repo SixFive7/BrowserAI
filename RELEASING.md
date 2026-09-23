@@ -1545,6 +1545,19 @@ release; they only permit one.
 
 **Evidence:** a human said so.
 
+⚠️ **DECIDED 2026-09-23, AND THE DECIDING HUMAN IS NAMED.** This item used to
+say only that a human decides, which leaves open which human and on whose
+initiative. The maintainer settled both, verbatim: *"Only I drive when there is a
+release. You can only suggest to me when it is a good moment."*
+
+So the division is: **an agent may say that the moment looks good and may say
+why** -- the gate is green, the drift check is clean, the `[Unreleased]` section
+has something in it, the tag would be the next one. **An agent may not start a
+release, and a suggestion is not a request for permission to start one.** Items
+1-13 are preparation a human asked for; item 14 is a decision only the maintainer
+takes, and nothing in the preparation converts into it. *Added by addition: the
+paragraphs above are what the item said before and still say.*
+
 ---
 
 ## Two things to inherit, not rediscover

@@ -135,6 +135,24 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **Who pulls the release trigger is a decision of record, in the maintainer's own words.**
+  [`RELEASING.md`](RELEASING.md) item 14 said that a human decides, which leaves open which
+  human and on whose initiative. The maintainer settled both on 2026-09-23, verbatim:
+  *"Only I drive when there is a release. You can only suggest to me when it is a good
+  moment."* An agent may observe that the moment looks good and say why -- the gate is green,
+  the drift check is clean, `[Unreleased]` has something in it -- and an agent may not start a
+  release. Items 1 to 13 are preparation; item 14 is a decision nothing in the preparation
+  converts into. Written into item 14 and into `DECISIONS.md`'s automated-checks row **by
+  addition**, so what both said before still stands above it.
+
+  **The `TODO.md` item asking for that review is deleted, and its whole remainder is that
+  paragraph.** The review was to be taken against a real cadence instead of a predicted one,
+  and what it was for was the arrangement the row describes: a gate nothing makes fire,
+  accepted because the release trigger is manual. The trigger is now manual **by decision and
+  not by default**, which is a stronger footing than the one the review was meant to test.
+  Automation is a different question and keeps its own item: running the gate and cutting a
+  release are different acts.
+
 - 🔧 **Every sentence BrowserAI says to a person is written the way a person writes.**
   The maintainer's directive of 2026-09-23 covers wording and character use, and until now the
   wording half reached commentary only: `Harness.Commentary` lexes the comments out of code, so
