@@ -29,7 +29,7 @@ internal enum PublishFreshnessVerdict
 /// </summary>
 /// <remarks>
 /// <b>A record so that the guard's refusal and the run's coverage row are two
-/// renderings of one reading rather than two comparisons.</b> The failure this
+/// renderings of one reading and not two comparisons.</b> The failure this
 /// closes is not that the check was wrong -- it was right every time -- but that
 /// it said nothing when it passed, so the only sentence available to a reader
 /// with a staleness suspicion was one nobody had measured.
@@ -66,7 +66,7 @@ internal sealed record PublishFreshnessReading(
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The slice is driven from the published binary rather than from
+/// <b>The slice is driven from the published binary and not from
 /// <c>dotnet run</c>, and that is the point of the step it belongs to.</b> The
 /// decisions under test -- <c>PROC_THREAD_ATTRIBUTE_JOB_LIST</c> under
 /// <c>[LibraryImport]</c>, the SDK's serialization under ILC, a
@@ -74,7 +74,7 @@ internal sealed record PublishFreshnessReading(
 /// identically under the JIT and can only fail after native compilation.
 /// </para>
 /// <para>
-/// <b>A stale publish is refused rather than tested.</b> Nothing rebuilds it
+/// <b>A stale publish is refused and not tested.</b> Nothing rebuilds it
 /// automatically: ILC costs about a minute and a test that silently ran last
 /// week's binary would report a green suite for code that was never compiled.
 /// <see cref="EnsureFresh"/> compares its timestamp against every source file
@@ -124,7 +124,7 @@ internal static class PublishedSlice
     /// a clean clone looks like.
     /// </summary>
     /// <remarks>
-    /// Asserted rather than <see cref="IsPresent"/>'s negation, so that "nobody
+    /// Asserted and not <see cref="IsPresent"/>'s negation, so that "nobody
     /// has published" is distinguishable from "the publish ran and the binary or
     /// the payload is missing from it". The second is a real defect and would
     /// otherwise read as a clean clone.
@@ -145,10 +145,10 @@ internal static class PublishedSlice
     /// the walk; it is the only way to watch a tree the walk is right to prune.
     /// </para>
     /// <para>
-    /// <b>The lock rather than the payload, and that is the honest input.</b>
+    /// <b>The lock and not the payload, and that is the honest input.</b>
     /// The thing that actually goes into the publish is the resolved
     /// <c>node_modules</c> tree, which is gitignored, is tens of thousands of
-    /// files, and whose timestamps say when <c>npm ci</c> last ran rather than
+    /// files, and whose timestamps say when <c>npm ci</c> last ran and not
     /// what it resolved. The lock is the committed record of exactly that
     /// resolution: it moves when and only when the payload's resolved set moves,
     /// and it is what the upstream review reads. Watching it means a re-resolve
@@ -186,7 +186,7 @@ internal static class PublishedSlice
     /// tree is not.
     /// </para>
     /// <para>
-    /// <b>A property rather than a local, so that a test can assert what is in
+    /// <b>A property and not a local, so that a test can assert what is in
     /// it.</b> A staleness check is exactly the kind of thing that silently
     /// stops covering something: it fails loudly when it fires and says
     /// nothing at all about what it never looked at.
@@ -231,7 +231,7 @@ internal static class PublishedSlice
     /// ***Corrected 2026-08-30 (previously "Making the run state its own
     /// freshness margin is a change to the coverage block rather than to this
     /// method, and it is not made here.")*** -- it is made now, and it is made
-    /// here rather than beside the block: <see cref="Measure"/> is the one
+    /// here and not beside the block: <see cref="Measure"/> is the one
     /// comparison, <see cref="RefusalFor"/> renders it as this method's refusal
     /// and <see cref="RowFor"/> renders it as the run's
     /// <c>publish freshness</c> row, so the sentence in the log and the sentence
@@ -239,7 +239,7 @@ internal static class PublishedSlice
     /// [Testing](../../../TESTING.md#the-run-states-the-publish-freshness-it-established).
     /// </para>
     /// <para>
-    /// <b>Timestamps rather than content, and that is forced rather than
+    /// <b>Timestamps and not content, and that is forced, not
     /// chosen.</b> The obvious stronger check -- hash the inputs, hash the
     /// binary, refuse a binary that does not belong to them -- has no binary
     /// half to compare against here. Measured 2026-08-30: two publishes of an
@@ -299,16 +299,16 @@ internal static class PublishedSlice
     /// and the block already carries it: <c>published slice</c> reads
     /// <c>PARTIAL</c>, and
     /// <see cref="SuiteCoverageTests.NothingThisRunLacksIsHalfInstalled"/> fails
-    /// the run. Each row answers its own question rather than borrowing another's
+    /// the run. Each row answers its own question instead of borrowing another's
     /// verdict.
     /// </para>
     /// <para>
     /// ⚠️ <b>The input side is the snapshot the run started with, not a fresh
-    /// stat, and that is a property of <see cref="FreshnessInputs"/> rather than
+    /// stat, and that is a property of <see cref="FreshnessInputs"/> and not
     /// a choice made here.</b> Those <see cref="FileInfo"/> instances are created
     /// once when <c>RepositoryLayout</c> initialises and cache their timestamps,
     /// so an edit made <i>while</i> the suite is running is invisible to this
-    /// comparison -- as it always has been. It is stated rather than fixed
+    /// comparison -- as it always has been. It is stated and not fixed
     /// because the row must report what the guard compared: a row that re-stat'd
     /// while the guard did not would be the two-implementations defect wearing
     /// the clothes of an improvement.
@@ -378,7 +378,7 @@ internal static class PublishedSlice
     {
         ArgumentNullException.ThrowIfNull(reading);
 
-        // Driven by the same list EnsureFresh refuses on rather than by the sign
+        // Driven by the same list EnsureFresh refuses on and not by the sign
         // of the margin: a file stamped to the millisecond OF the publish is not
         // newer than it, and the two would part company at exactly that tick.
         return reading.Absence is not null || reading.Published is null || reading.Newest is null
@@ -394,7 +394,7 @@ internal static class PublishedSlice
     /// arranging a stale publish.</b> The alternative is a test that edits a
     /// source file to provoke one, which would leave the tree needing a
     /// re-publish to go green again -- and the guard's message is the thing a
-    /// developer reads at the worst moment, so it is worth exercising on every
+    /// developer reads at the worst moment, so it is exercised on every
     /// ordinary run.
     /// </remarks>
     /// <param name="reading">The reading.</param>
@@ -438,7 +438,7 @@ internal static class PublishedSlice
     /// either sentence named a zone.
     /// </para>
     /// <para>
-    /// <b>The margin is stated rather than left to be subtracted.</b> A reader
+    /// <b>The margin is stated and not left to be subtracted.</b> A reader
     /// with a suspicion has two timestamps and a hypothesis; what settles it is
     /// the difference and its sign, so the row carries the word -- <i>newer</i> or
     /// <i>OLDER</i> -- as well as the number.
@@ -465,8 +465,8 @@ internal static class PublishedSlice
         // ⚠️ The second block appears only in the band where the run's own
         // results are worthless, for the reason ForegroundLock's does: a state
         // word without its consequence is an assurance a reader has to assemble,
-        // and a stale publish means every slice arm in the run refused rather
-        // than ran.
+        // and a stale publish means every slice arm in the run refused and
+        // did not run.
         return verdict is not PublishFreshnessVerdict.Stale
             ? row
             : row + "\n"

@@ -22,7 +22,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>Three of the four added on 2026-08-23 were found the same way: by somebody
-/// noticing, rather than by a run.</b> Console windows flashing over whatever is
+/// noticing, and not by a run.</b> Console windows flashing over whatever is
 /// on screen, six suite runs to a release batch, from two launch sites out of ten
 /// that had not set <c>CreateNoWindow</c>. A wall-clock bound on a call that
 /// cannot block, which survived a hand sweep that deleted five of its siblings.
@@ -37,7 +37,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>The eighth, added 2026-09-15, is the only one a release gate found
-/// rather than a person.</b>
+/// and not a person.</b>
 /// <see cref="EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/> is
 /// the rule a doc comment had already stated and stated wrongly -- it asked for
 /// a shared <i>key</i>, which holds an arm apart from the arms carrying the same
@@ -86,7 +86,7 @@ internal sealed partial class HouseRuleTests
 
         // Not vacuous. A scope that stopped resolving would leave the assertion
         // above green over nothing at all, which is the standing failure mode of
-        // every test that reads the tree rather than the code.
+        // every test that reads the tree and not the code.
         await Assert.That(Scope().Count).IsGreaterThan(200);
     }
 
@@ -96,7 +96,7 @@ internal sealed partial class HouseRuleTests
         // "No release with a skipped, quarantined or conditionally-ignored test.
         // A Skip in the tree at release time is a red build wearing a disguise."
         //
-        // ⚠️ The needle is composed rather than spelled, so this file does not
+        // ⚠️ The needle is composed, not spelled, so this file does not
         // match its own scan -- the trap NeverByImageNameTests assembles its
         // needles to avoid, and one this session fell into twice before
         // learning. Comments are stripped as well, so that the sentence above
@@ -114,22 +114,22 @@ internal sealed partial class HouseRuleTests
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // What this does NOT cover, said rather than implied: a test skipped at
+        // What this does NOT cover, said and not implied: a test skipped at
         // run time because something it depends on failed. TUnit reports that as
         // "Skipped due to failed dependencies", and it is a consequence of a red
-        // test rather than a second defect -- the run summary already carries it,
+        // test and not a second defect -- the run summary already carries it,
         // and the failing dependency is what has to be fixed.
         await Assert.That(RepositoryLayout.SourceAndScriptFiles.Count(file => file.Extension is ".cs")).IsGreaterThan(100);
     }
 
     /// <summary>
     /// <b>Every process this tree starts is started without a console
-    /// window</b>, asserted at each launch site rather than counted per file.
+    /// window</b>, asserted at each launch site and not counted per file.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>Redirecting the streams is not what suppresses the window, and the
-    /// difference was measured rather than assumed</b> -- 2026-08-23, Windows 11
+    /// difference was measured, not assumed</b> -- 2026-08-23, Windows 11
     /// 26200, .NET 10, from a parent with <b>no console of its own</b>, streams
     /// redirected on both arms:
     /// </para>
@@ -150,10 +150,10 @@ internal sealed partial class HouseRuleTests
     /// <b>The console host on Windows 11 is Windows Terminal</b>, so a scan for
     /// the old <c>ConsoleWindowClass</c> finds nothing -- that was measured too,
     /// and it is why the figures above come from a diff of every visible
-    /// top-level window rather than from a class filter.
+    /// top-level window and not from a class filter.
     /// </para>
     /// <para>
-    /// <b>A tree-as-text scan rather than an analyzer, because the rule is not
+    /// <b>A tree-as-text scan and not an analyzer, because the rule is not
     /// expressible as a banned symbol.</b> <c>BannedApiAnalyzers</c> can forbid a
     /// type; it cannot say <i>this type is fine as long as one of its properties
     /// is set</i>, and a real Roslyn analyzer would mean a new project shipped to
@@ -161,7 +161,7 @@ internal sealed partial class HouseRuleTests
     /// buys the same thing here: no exception for test code.
     /// </para>
     /// <para>
-    /// <b>What it cannot see, said rather than implied.</b> (1) A factory
+    /// <b>What it cannot see, said and not implied.</b> (1) A factory
     /// returning a half-built <c>ProcessStartInfo</c> for its caller to finish is
     /// reported as a violation -- deliberately, because the flag must be set where
     /// the object is built or a reader cannot tell either. (2) The flag must be
@@ -271,7 +271,7 @@ internal sealed partial class HouseRuleTests
                 && !line.Contains("extern", StringComparison.Ordinal))
             {
                 // The extern declaration is not a launch, and it is excluded by
-                // what declares it rather than by the file it sits in -- so a
+                // what declares it and not by the file it sits in -- so a
                 // second declaration is excluded for the same reason, and a
                 // second CALL is not excluded at all.
                 found.Add((index, native));
@@ -312,7 +312,7 @@ internal sealed partial class HouseRuleTests
     /// found only because the first was fixed and somebody went looking.
     /// </para>
     /// <para>
-    /// <b>What it deliberately does not catch, stated rather than glossed:</b> a
+    /// <b>What it deliberately does not catch, stated, not glossed:</b> a
     /// promptness claim wearing a named constant. <c>IsLessThan</c> against a
     /// small <c>TestDefaults</c> value is indistinguishable from a hang detector
     /// by text alone, and it is the reason the prose half of the rule still
@@ -399,7 +399,7 @@ internal sealed partial class HouseRuleTests
     /// [the working instructions](../../CLAUDE.md). It cannot
     /// prove the pair is correctly placed and it does not claim to: what it
     /// holds is that a file where a raw value escapes carries one at all, so the
-    /// next escape written without one is a red build rather than a review
+    /// next escape written without one is a red build and not a review
     /// somebody has to happen to do.
     /// </para>
     /// </remarks>
@@ -502,7 +502,7 @@ internal sealed partial class HouseRuleTests
     /// halves of the fix seeing it. What cannot be planted is the <i>race</i>
     /// <b>on demand</b>: it needs one
     /// arm's few-second window to overlap another arm's browser launch, which is a
-    /// scheduler outcome rather than a call, and a test that provoked it by timing
+    /// scheduler outcome and not a call, and a test that provoked it by timing
     /// would be the promptness claim
     /// <see cref="NoAssertionBoundsAMeasuredDurationWithANumberItInvented"/>
     /// forbids. This sits where
@@ -512,7 +512,7 @@ internal sealed partial class HouseRuleTests
     /// </para>
     /// <para>
     /// <b>What it reads is the spelling, which is stricter than TUnit's semantics
-    /// and is said rather than implied.</b> The trimmed line must be exactly the
+    /// and is said, not implied.</b> The trimmed line must be exactly the
     /// keyless attribute; <c>[NotInParallel(Order = 1)]</c> carries no key either
     /// and would still be reported. An attribute written on the same line as the
     /// member, or a key composed at run time, is outside it -- the same line-based
@@ -520,7 +520,7 @@ internal sealed partial class HouseRuleTests
     /// </para>
     /// <para>
     /// ⚠️ <b>The line-based limit bites on the CONSTRUCTION too, and that half was
-    /// measured rather than reasoned -- added 2026-09-22 by addition.</b>
+    /// measured, not reasoned -- added 2026-09-22 by addition.</b>
     /// <see cref="OverridesTheEnvironment"/> needs the type name and the
     /// construction on <i>one</i> line. Adding the onboarding seed to
     /// <see cref="RegistrationTests"/>' factory wrapped it over two, and this
@@ -603,7 +603,7 @@ internal sealed partial class HouseRuleTests
         // The other half of it: a file that opens no scope is not examined at
         // all -- an ordinary arm carrying no attribute is the normal state of
         // every other test file here -- so this is a rule about the scope
-        // rather than about parallelism.
+        // and not about parallelism.
         string[] noScope = ["internal sealed class Synthetic", "{", "    [Test]", "    public async Task AnOrdinaryArm()", "    {", "    }", "}"];
 
         await Assert.That(OverridesTheEnvironment(string.Join('\n', noScope))).IsFalse();
@@ -622,8 +622,8 @@ internal sealed partial class HouseRuleTests
 
     /// <summary>The whole rule, for one file: nothing to say unless it opens a scope.</summary>
     /// <remarks>
-    /// <b>The guard is inside the rule rather than beside it</b>, so the controls
-    /// below exercise what the scan applies rather than a piece of it. Watched
+    /// <b>The guard is inside the rule and not beside it</b>, so the controls
+    /// below exercise what the scan applies and not a piece of it. Watched
     /// red on exactly that distinction: with the two halves separate, the
     /// no-scope control reported the ordinary unserialised arm that every other
     /// test file in this repository has.
@@ -737,7 +737,7 @@ internal sealed partial class HouseRuleTests
     /// a machine nobody has signed in on, and the flow it may run for one opens a
     /// browser window -- on the maintainer's own desktop, since that is where this
     /// suite runs. <b>It has not happened</b>, and the reason it has not is
-    /// recorded rather than assumed: every <c>hasCompletedOnboarding</c> read in
+    /// recorded, not assumed: every <c>hasCompletedOnboarding</c> read in
     /// the client this was established against sits on the REPL, login or nudge
     /// paths and none on the <c>mcp</c> subcommand path. That is a fact about one
     /// build of somebody else's binary, which is exactly the kind of fact this
@@ -748,7 +748,7 @@ internal sealed partial class HouseRuleTests
     /// <see cref="OnboardedClientConfig"/> with the bundle's own source quoted:
     /// <c>hasCompletedOnboarding</c> in <c>$CLAUDE_CONFIG_DIR\.claude.json</c>,
     /// and the value written is the client's own <c>plugin eval</c> sandbox
-    /// recipe rather than something invented here.
+    /// recipe and not something invented here.
     /// </para>
     /// <para>
     /// ⚠️ <b>This holds that the seeding is THERE, never that it works</b> --
@@ -792,7 +792,7 @@ internal sealed partial class HouseRuleTests
         // ⚠️ THE CONTROLS, synthetic because a guarded tree is indistinguishable
         // from a scan whose needle stopped matching. The variable's name is
         // composed so that this file does not put itself in scope.
-        // ⚠️ The scope type's name is composed from `Sandbox` rather than
+        // ⚠️ The scope type's name is composed from `Sandbox` and not
         // written, for the reason that constant exists: spelled out, these four
         // lines put THIS file inside
         // EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing's own
@@ -952,7 +952,7 @@ internal sealed partial class HouseRuleTests
 
         // The other half of it: the same loop over the scoped read, with no
         // filter in the body, is not reported -- so the rule is the position of
-        // the filter rather than the presence of the word.
+        // the filter and not the presence of the word.
         string[] corrected =
         [
             "        foreach (var entry in _index.FollowUnder(prefix))",
@@ -967,7 +967,7 @@ internal sealed partial class HouseRuleTests
         await Assert.That(IndexWalks(corrected)).IsEmpty();
 
         // Not vacuous over the tree either: two loops of this shape as of
-        // 2026-08-24, re-measured rather than estimated -- `SessionManager`'s
+        // 2026-08-24, re-measured, not estimated -- `SessionManager`'s
         // reinstall census and `StraySweep`'s -- and both must stay
         // whole-machine. `SessionIndex.Sweep` is a third whole-machine reader and
         // is deliberately not one of these two: it calls `Follow()` on itself and
@@ -982,7 +982,7 @@ internal sealed partial class HouseRuleTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>W8, and the reason it needs a scan rather than a note.</b>
+    /// ⚠️ <b>W8, and the reason it needs a scan and not a note.</b>
     /// <c>SessionIndex.IsUnder</c>'s own remark says <i>"Do not re-derive it ...
     /// Two spellings of this predicate is the class of defect this repository
     /// keeps re-finding"</i> -- and <c>SessionManager.Beneath</c> was re-deriving
@@ -998,13 +998,13 @@ internal sealed partial class HouseRuleTests
     /// lines. The predicate that <i>consumes</i> a prefix is deliberately not
     /// caught -- <c>IsUnder</c> composes <c>Key + separator</c> with no fold of
     /// its own, because <see cref="BrowserAI.Sessions.SessionPath.Key"/> is
-    /// already folded -- so this is a rule about deriving the prefix rather than
+    /// already folded -- so this is a rule about deriving the prefix and not
     /// about the characters.
     /// </para>
     /// <para>
     /// <b>What it cannot see:</b> a derivation split across more than the window
-    /// below, or one that folds through a helper rather than through
-    /// <c>ToUpperInvariant</c>. Both would be new shapes rather than the one
+    /// below, or one that folds through a helper and not through
+    /// <c>ToUpperInvariant</c>. Both would be new shapes and not the one
     /// that was there.
     /// </para>
     /// </remarks>
@@ -1099,7 +1099,7 @@ internal sealed partial class HouseRuleTests
     /// cannot read.
     /// </para>
     /// <para>
-    /// <b>Watched red twice, against the real regression rather than against the
+    /// <b>Watched red twice, against the real regression and not against the
     /// control.</b> With <c>SessionManager.LiveSessions</c> moved onto the subtree
     /// read this failed naming the file and the member, and the older scan failed
     /// too -- with <i>Expected to be greater than or equal to 2 but received 1</i>,
@@ -1189,7 +1189,7 @@ internal sealed partial class HouseRuleTests
         await Assert.That(NotTakingTheWholeMachineRead(atADepth, "synthetic.cs", "private List<string> LiveSessions()")).IsEmpty();
         await Assert.That(NotTakingTheWholeMachineRead(scopedAtADepth, "synthetic.cs", "private List<string> LiveSessions()").Count).IsEqualTo(1);
 
-        // And a member that is not there at all is a finding rather than a pass,
+        // And a member that is not there at all is a finding and not a pass,
         // because a renamed member would otherwise be silently unchecked.
         await Assert.That(NotTakingTheWholeMachineRead(kept, "synthetic.cs", "private List<string> Renamed()").Count).IsEqualTo(1);
     }
@@ -1357,7 +1357,7 @@ internal sealed partial class HouseRuleTests
     /// <b>A <c>STARTUPINFO</c> field with no flag beside it is not a setting --
     /// it is dead memory that reads like one</b>, and there is no diagnostic
     /// anywhere: the struct takes the value, the call ignores it, and the source
-    /// says what somebody meant rather than what happens. That is how
+    /// says what somebody meant and not what happens. That is how
     /// <c>ShowWindow</c> sat in <c>JobLauncher</c>'s struct unread from the day
     /// it was written until 2026-08-23, with <c>CREATE_NO_WINDOW</c> beside it
     /// looking like the thing that covered it -- which it is not, because
@@ -1378,12 +1378,12 @@ internal sealed partial class HouseRuleTests
     /// perfectly legal on its own.
     /// </para>
     /// <para>
-    /// <b>What it cannot see, stated rather than glossed:</b> a struct built any
+    /// <b>What it cannot see, stated, not glossed:</b> a struct built any
     /// way other than <c>= default(StartupInfo...)</c>. It finds the local from its
     /// declaration and reads the assignments through that name, so an object
     /// initialiser or a <c>new()</c> would be invisible -- which is what the
     /// non-vacuity assertion at the end is for, and why it counts declarations
-    /// rather than only offences.
+    /// and not only offences.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1433,7 +1433,7 @@ internal sealed partial class HouseRuleTests
 
         await Assert.That(Unpaired(StartupInfoSites(promised)[0])).IsNotEmpty();
 
-        // A flag this scan cannot resolve to a number is an offence rather than a
+        // A flag this scan cannot resolve to a number is an offence and not a
         // silent zero -- an unreadable flags expression must not read as clean.
         var opaque = $"{Constants}\n{declared}\n            startupInfo.{Struct}.Flags = SomethingElse;\n{handles}";
 
@@ -1441,7 +1441,7 @@ internal sealed partial class HouseRuleTests
 
         // Not vacuous over the tree: the product's launcher and the breakaway
         // probe, as of 2026-08-23. The probe assigns no gated field and sets no
-        // flags, which is the compliant shape rather than an exemption.
+        // flags, which is the compliant shape and not an exemption.
         await Assert.That(sites).IsGreaterThanOrEqualTo(2);
     }
 
@@ -1476,7 +1476,7 @@ internal sealed partial class HouseRuleTests
     /// duration.
     /// </summary>
     /// <remarks>
-    /// A window rather than a line, because a fluent assertion wraps and its
+    /// A window and not a line, because a fluent assertion wraps and its
     /// bound is routinely two lines below its subject. A window that mentions no
     /// clock is skipped entirely, which is what keeps every ordinary comparison
     /// in the suite out of this.
@@ -1509,15 +1509,15 @@ internal sealed partial class HouseRuleTests
         return found;
     }
 
-    /// <summary>Whether a bound is a number rather than the name of one.</summary>
+    /// <summary>Whether a bound is a number and not the name of one.</summary>
     /// <param name="bound">The bound expression, as written.</param>
     /// <returns><see langword="true"/> if nothing named it.</returns>
     private static bool IsInvented(string bound) =>
         BareNumber().IsMatch(bound) || WrappedNumber().IsMatch(bound);
 
     /// <summary>
-    /// Every place in one file's lines where a raw handle value is stored rather
-    /// than consumed.
+    /// Every place in one file's lines where a raw handle value is stored and
+    /// not consumed.
     /// </summary>
     /// <param name="lines">The file, comment-only lines already removed.</param>
     /// <returns>The escaping lines, trimmed.</returns>
@@ -1696,7 +1696,7 @@ internal sealed partial class HouseRuleTests
             .Where(file => string.Equals(file.Name, GuardFile, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        // Named rather than walked, so a rename or a move is a red build instead
+        // Named, not walked, so a rename or a move is a red build instead
         // of a scan that quietly reads nothing. That is the failure mode of
         // every rule keyed on a file name.
         await Assert.That(guards.Count).IsEqualTo(1);
@@ -1705,7 +1705,7 @@ internal sealed partial class HouseRuleTests
 
         await Assert.That(string.Join(Environment.NewLine, GuardOffences(code))).IsEmpty();
 
-        // ⚠️ BOTH DIRECTIONS, off a synthetic pair rather than off a rewrite of
+        // ⚠️ BOTH DIRECTIONS, off a synthetic pair and not off a rewrite of
         // the real file: the two opens are formatted differently -- one line and
         // five -- so a perturbation spelled against today's layout would go
         // looking for a string that a reflow had moved, and report the reflow as
@@ -1743,8 +1743,8 @@ internal sealed partial class HouseRuleTests
         await Assert.That(harmless).IsNotEqualTo(Correct);
         await Assert.That(GuardOffences(harmless).Count).IsEqualTo(1);
 
-        // And a file the scan cannot find the opens in is two offences rather
-        // than a pass, which is the vacuity every rule of this shape is prone
+        // And a file the scan cannot find the opens in is two offences and
+        // not a pass, which is the vacuity every rule of this shape is prone
         // to.
         await Assert.That(GuardOffences("internal static class LockFile { }").Count).IsEqualTo(2);
     }
@@ -1756,7 +1756,7 @@ internal sealed partial class HouseRuleTests
     /// The two opens, and what each one must ask for.
     /// </summary>
     /// <remarks>
-    /// Keyed on the declaration rather than on a line number, and read out of
+    /// Keyed on the declaration and not on a line number, and read out of
     /// the <c>new FileStream(</c> that follows it, so reformatting the argument
     /// list cannot satisfy this and moving the method cannot vacate it.
     /// </remarks>
@@ -1927,8 +1927,8 @@ internal sealed partial class HouseRuleTests
     /// </list>
     /// <para>
     /// <c>.gitignore</c>, <c>.gitattributes</c> and <c>BrowserAI.slnx</c> could
-    /// carry one and do not. That is a gap rather than a decision, and it is left
-    /// open here rather than closed quietly, because widening the scope is a
+    /// carry one and do not. That is a gap and not a decision, and it is left
+    /// open here instead of closed quietly, because widening the scope is a
     /// change to what the rule means and belongs to whoever owns the rule.
     /// </para>
     /// </remarks>
@@ -2073,7 +2073,7 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// <b>What it cannot see:</b> whether the window it names is the right one,
     /// or whether it is zero at the moment of the call. It holds that the owner
-    /// is read from a dialog rather than written as a constant, which is the
+    /// is read from a dialog and not written as a constant, which is the
     /// assertable half.
     /// </para>
     /// </remarks>
@@ -2204,7 +2204,7 @@ internal sealed partial class HouseRuleTests
     /// rendered as <c>BrowserAI</c> followed by <c>rowsers</c>.
     /// </para>
     /// <para>
-    /// <b>The failure mode is why this is a scan rather than a habit: the byte is
+    /// <b>The failure mode is why this is a scan and not a habit: the byte is
     /// invisible.</b> It renders as nothing in every editor, in every diff and in
     /// every review on GitHub. A reader sees the escape they meant to type where
     /// the file holds one character that is not it, which is not a mistake
@@ -2227,7 +2227,7 @@ internal sealed partial class HouseRuleTests
     /// offenders, which it named at <c>HAZARDS.md</c> line 145,
     /// <c>BrowserIdleTimerTests.cs</c> line 978 and <c>SessionToolTests.cs</c>
     /// line 95; and against the synthetic control below, which is written to disk
-    /// rather than passed as a string so that the reading half is exercised too.
+    /// and not passed as a string so that the reading half is exercised too.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -2394,7 +2394,7 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// <b>Skips loudly without git, and that is the whole answer to the export
     /// objection.</b> The suite must run where there is no repository; git here
-    /// is an oracle rather than a source of truth, so its absence is
+    /// is an oracle and not a source of truth, so its absence is
     /// <see cref="SuiteCapability.Git"/> reading ABSENT in the coverage block and
     /// this arm reporting <i>skipped</i> -- never <i>passed</i>. A release run
     /// fails instead, because a release whose corpus was never checked has every
@@ -2469,7 +2469,7 @@ internal sealed partial class HouseRuleTests
     /// <c>FreeBytesOn</c> seam that made the refusal reachable from a test.
     /// </para>
     /// <para>
-    /// <b>A scan rather than a behaviour arm, because the behaviour is now an
+    /// <b>A scan and not a behaviour arm, because the behaviour is now an
     /// absence and an absence has no seam.</b> A volume with no room is not
     /// something a test can arrange -- that is why the refusal was injected
     /// through <c>SessionEnvironment.FreeBytesOn</c> in the first place -- so once
@@ -2480,8 +2480,8 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// <b>The whole tree, not just <c>src\</c>.</b> A guard re-introduced in the
     /// suite's own harness would be the same decision taken somewhere a product
-    /// scan cannot see, and the rule is that the question is out of scope rather
-    /// than that one project must not ask it.
+    /// scan cannot see, and the rule is that the question is out of scope and
+    /// not that one project must not ask it.
     /// <c>DriveInfo.GetDrives</c> is deliberately NOT a needle -- enumerating
     /// mounted volumes is how <c>SessionIndexTests</c> finds a letter nothing is
     /// mounted on, and it says nothing about free space.
@@ -2518,7 +2518,7 @@ internal sealed partial class HouseRuleTests
         await Assert.That(FreeSpaceNeedles("var whole = drive.Total" + "FreeSpace;")).IsNotEmpty();
         await Assert.That(FreeSpaceNeedles("[LibraryImport] static partial bool GetDiskFree" + "SpaceExW(...);")).IsNotEmpty();
 
-        // And the other direction, so the rule is about free space rather than
+        // And the other direction, so the rule is about free space and not
         // about the type: enumerating the mounted volumes stays legal, and one
         // real caller does it.
         await Assert.That(FreeSpaceNeedles("var mounted = DriveInfo.GetDrives();")).IsEmpty();
@@ -2566,8 +2566,8 @@ internal sealed partial class HouseRuleTests
     /// sealed records under an explicit grant, quoted where the seal rule lives.
     /// </para>
     /// <para>
-    /// <b>The heading rule is the trap and is why this is a mechanism rather
-    /// than a habit.</b> <see cref="MarkdownAnchor"/> DROPS an em dash and KEEPS
+    /// <b>The heading rule is the trap and is why this is a mechanism and
+    /// not a habit.</b> <see cref="MarkdownAnchor"/> DROPS an em dash and KEEPS
     /// a hyphen, so <c>A</c>, a spaced em dash and <c>B</c> anchor as
     /// <c>a--b</c> while the swept <c>A -- B</c> anchors as <c>a---b</c>. The two
     /// sweeps moved <b>398</b> anchors between them. <i>(Written without the
@@ -2640,7 +2640,7 @@ internal sealed partial class HouseRuleTests
 
         await Assert.That(TypedCharacterOffences("TESTING.md", "a sentence -- with two hyphens, \"straight quotes\", an apostrophe's and three full stops...")).IsEmpty();
 
-        // The exclusions, which are the CORPUS predicate rather than the reader:
+        // The exclusions, which are the CORPUS predicate and not the reader:
         // a verbatim capture is never read at all, which is a different thing
         // from being read and forgiven.
         await Assert.That(IsSwept("docs/evidence/2026-09-23-release-manifest/README.md")).IsFalse();
@@ -2669,7 +2669,7 @@ internal sealed partial class HouseRuleTests
 
     /// <summary>The characters, built from their code points.</summary>
     /// <remarks>
-    /// <b>Built rather than typed, because this file is inside the scan below.</b>
+    /// <b>Built, not typed, because this file is inside the scan below.</b>
     /// A rule that states itself with the character it forbids is the shape that
     /// went red twice on the day this was written, and the Write path this
     /// repository is edited through turns a <c>\uXXXX</c> escape into the real

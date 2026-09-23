@@ -75,11 +75,11 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// of downloading; outside it, the test downloads for real and refreshes the
 /// entry. So the genuinely cold path still runs -- at most hourly, and at least
 /// hourly -- and <b>no cached run can extend the TTL</b>, because the stamp
-/// records when the bytes were fetched rather than when they were last used.
+/// records when the bytes were fetched and not when they were last used.
 /// </para>
 /// <para>
 /// ⚠️ <b>A cached run proves less than a CDN run, and the difference is stated
-/// on the test rather than here.</b> Four mechanisms keep that from becoming
+/// on the test and not here.</b> Four mechanisms keep that from becoming
 /// silent, and the first is the one that matters:
 /// </para>
 /// <list type="number">
@@ -101,7 +101,7 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// <item>
 /// <description>
 /// <b>The ceiling is a ceiling.</b> One hour, and an entry stamped in the
-/// future is refused rather than trusted forever, which is what a clock change
+/// future is refused and not trusted forever, which is what a clock change
 /// or a hand-edited stamp would otherwise buy.
 /// </description>
 /// </item>
@@ -120,7 +120,7 @@ internal sealed record FirstRunPlan(FirstRunSource Source, FirstRunCacheEntry? E
 /// <c>MoveFileEx</c>. The destination name carries a GUID, so two publishers
 /// cannot collide and neither has to wait for a lock; a reader either sees a
 /// complete entry or does not see it at all, exactly as the session index
-/// answers the same question with an atomic replace rather than a mutex.
+/// answers the same question with an atomic replace and not a mutex.
 /// </para>
 /// <para>
 /// <b>Completeness is not assumed from the rename.</b>
@@ -162,7 +162,7 @@ internal static class FirstRunCache
     /// the session hook that prints the block.
     /// </summary>
     /// <remarks>
-    /// <b><see cref="Volatile"/> rather than a lock, because there is exactly
+    /// <b><see cref="Volatile"/> and not a lock, because there is exactly
     /// one writer and one reader and they never overlap.</b> The read happens in
     /// an <c>[After(TestSession)]</c> hook, after every test has finished; what
     /// is needed is that the write be <i>visible</i> there, not that it be
@@ -202,7 +202,7 @@ internal static class FirstRunCache
 
     /// <summary>
     /// The decision, as a pure function of its three inputs, so the release
-    /// branch is exercised rather than only written.
+    /// branch is exercised and not only written.
     /// </summary>
     /// <remarks>
     /// Shaped after <see cref="SuiteEnvironment.Decide"/> and for the same
@@ -222,7 +222,7 @@ internal static class FirstRunCache
         && age is { } elapsed
 
         // Negative means the stamp is in the future, which is a clock change or
-        // an edited file rather than a fresh download. Refused, because the
+        // an edited file and not a fresh download. Refused, because the
         // alternative is an entry that never expires.
         && elapsed >= TimeSpan.Zero
         && elapsed <= Ttl
@@ -338,7 +338,7 @@ internal static class FirstRunCache
     /// which is the safe direction; failing the test that just proved
     /// provisioning works would be the unsafe one. What it must never do is
     /// leave a half-written tree under a name a reader trusts, and the rename is
-    /// what makes that impossible rather than unlikely.
+    /// what makes that impossible and not unlikely.
     /// </remarks>
     /// <param name="browsersDirectory">The root the CDN run filled.</param>
     /// <param name="downloadedUtc">When that download happened.</param>
@@ -439,7 +439,7 @@ internal static class FirstRunCache
     }
 
     /// <summary>
-    /// Establishes that one entry is complete, rather than inferring it from the
+    /// Establishes that one entry is complete, instead of inferring it from the
     /// rename that published it.
     /// </summary>
     /// <remarks>
@@ -447,7 +447,7 @@ internal static class FirstRunCache
     /// makes a torn entry unreachable; this is what catches an entry that was
     /// complete once and is not now -- a file deleted out of the cache, a disk
     /// that lost one, a revision that moved under it -- and every refusal it
-    /// returns names what it found rather than saying no.
+    /// returns names what it found instead of saying no.
     /// </remarks>
     /// <param name="candidate">The entry directory.</param>
     /// <returns>The entry and an empty reason, or no entry and the reason.</returns>
@@ -533,7 +533,7 @@ internal static class FirstRunCache
     /// <c>MoveFileEx</c> on a directory with <c>ERROR_ACCESS_DENIED</c> when a
     /// handle is open below it; a real-time scanner opens every file the copy
     /// above has just written, milliseconds after it is written. The publish is
-    /// therefore racing a filter driver rather than a peer, and no amount of
+    /// therefore racing a filter driver and not a peer, and no amount of
     /// locking between publishers can close it.
     /// </para>
     /// <para>
@@ -550,7 +550,7 @@ internal static class FirstRunCache
     /// transient sharing state that resolves on its own, not a sleep inserted to
     /// let a peer finish. The budget is small and the last failure is
     /// <b>rethrown</b>, so a rename that is genuinely blocked still surfaces as
-    /// itself rather than as an empty directory. The product meets the identical
+    /// itself and not as an empty directory. The product meets the identical
     /// condition in <c>InstanceDirectory.Claim</c> and answers it differently and
     /// correctly: there the refusal <i>means</i> "somebody holds it", the
     /// directory is skipped, and the next startup reclaims it -- a retry there
@@ -630,7 +630,7 @@ internal static class FirstRunCache
             var target = Path.Combine(destination, name);
 
             // ⚠️ THE CLAIM FILE IS NOT PART OF A PROVISIONED TREE, and skipping
-            // it is a correctness requirement rather than tidiness. Since
+            // it is a correctness requirement and not tidiness. Since
             // 2026-08-20 every open session holds `<browsers root>\reinstall.lock`
             // shared for its whole life -- see `Runtime/MaintenanceLock` -- so a
             // seed that copied one over it fails with a sharing violation

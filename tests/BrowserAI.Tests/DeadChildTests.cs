@@ -22,13 +22,13 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>Two halves, and they are separate behaviours.</b> A forward that can never
-/// be answered is failed rather than left outstanding, and a resume that meets a
+/// be answered is failed and not left outstanding, and a resume that meets a
 /// dead child relaunches it. Each is asserted on its own, because either alone
 /// is an improvement and the second is what makes the first's advice work.
 /// </para>
 /// <para>
 /// ⚠️ <b>The layer is the in-process rig, and what it is not evidence about is
-/// stated rather than implied.</b> A session child here is a
+/// stated and not implied.</b> A session child here is a
 /// <c>FakePlaywrightChild</c> over a pipe, so nothing below says anything about
 /// <c>ChildProcessSession</c> -- its launcher, its job object or its process
 /// handle. <see cref="DirectStdioClientTransportTests"/> carries the real-process
@@ -43,7 +43,7 @@ internal sealed class DeadChildTests
 
     /// <summary>
     /// A resume that meets a session whose child has died relaunches the child
-    /// and says so, rather than answering that nothing was changed.
+    /// and says so, instead of answering that nothing was changed.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -148,7 +148,7 @@ internal sealed class DeadChildTests
 
     /// <summary>
     /// A call forwarded to a session whose child has gone comes back as a
-    /// refusal, rather than never coming back at all.
+    /// refusal, instead of never coming back at all.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -270,7 +270,7 @@ internal sealed class DeadChildTests
     /// Waits until the session's child has actually received the held call.
     /// </summary>
     /// <remarks>
-    /// The double's own record of what arrived, rather than a duration:
+    /// The double's own record of what arrived, and not a duration:
     /// releasing the hold before the call reached the child would make the arm
     /// a test of two round trips instead of one outstanding call.
     /// <see cref="TestDefaults.InProcessHang"/> bounds it as a hang detector.
@@ -293,7 +293,7 @@ internal sealed class DeadChildTests
     /// </summary>
     /// <remarks>
     /// The session's own transport logs into <see cref="McpTestHarness.Logs"/>,
-    /// so this reads the product's own record of the close rather than guessing
+    /// so this reads the product's own record of the close instead of guessing
     /// at a duration. <see cref="TestDefaults.InProcessHang"/> bounds it as a
     /// hang detector: both ends are in this process.
     /// </remarks>
@@ -349,7 +349,7 @@ internal sealed class DeadChildTests
         var note = SessionManager.ChildWasRelaunched;
 
         // The claim the measurement contradicts. Quoted here in the shape it
-        // shipped in, so that re-introducing it is red rather than reviewed.
+        // shipped in, so that re-introducing it is red and not reviewed.
         await Assert.That(note)
             .DoesNotContain("stored state are still there")
             .Because("a relaunch follows a browser that did not shut down cleanly, and measurement says the cookie"
@@ -360,10 +360,10 @@ internal sealed class DeadChildTests
         // it could still use.
         await Assert.That(note).Contains("profile");
 
-        // And the caller has to be told to go and look rather than to assume,
+        // And the caller has to be told to go and look and not to assume,
         // because which store is lost varies by family and nothing predicts it.
         //
-        // The predicate is the instruction's SHAPE rather than one spelling of
+        // The predicate is the instruction's SHAPE and not one spelling of
         // it -- read-it-back, or verify, or check -- because a guard that
         // demanded an exact phrase would be a guard on the phrase. It was
         // written as `Contains("read them back")` first and went red against a
