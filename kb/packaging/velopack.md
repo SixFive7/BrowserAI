@@ -860,6 +860,19 @@ is a feed that 404s on the first update.
 `ReleaseScriptTests.ThePackIdIsTheInstallDirectoryAndTheDownloadsAreRenamedBack`
 holds every half, with the two package names as the control.
 
+⚠️ **THE PORTABLE ZIP IS STILL PRODUCED AND IS NO LONGER PUBLISHED —
+added 2026-09-23 by addition, and the two halves of that sentence are
+independent.** `vpk pack` still emits `BrowserAI.app-win-Portable.zip`,
+`build/New-Release.ps1` still renames it to `BrowserAI.zip` and still rewrites
+that name in `assets.{channel}.json`, and `ReleaseScriptTests` still holds the
+rename with `Required = $true`. What changed is the **upload set**: the
+maintainer's decision, verbatim, is *"2 drop and update the readme to not
+mention it"*, so from the next release the zip is not uploaded to GitHub at all.
+It remains a local artifact of every pack — which is what keeps the rename
+step exercised on every cut rather than only on the ones somebody remembers.
+**Nothing has been removed from the published `v1.1.0` release**, which
+carries seven assets and is what `gh release view v1.1.0` says.
+
 ⚠️ **`BrowserAI.exe` names THREE different files, and the difference matters
 when reading any other line in this article.** *Corrected 2026-09-15 (previously
 "two different files … the installed binary is `<install root>\current\BrowserAI.exe`,

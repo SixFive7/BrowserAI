@@ -115,6 +115,15 @@ of the order rather than defects in anything:
    `BrowserAI.zip`, are rewritten by the re-pack, so they need no separate
    step.)*
 
+   ⚠️ **"HUMAN-FACING" MEANT "PUBLISHED" WHEN THAT WAS WRITTEN AND NO
+   LONGER DOES — *added 2026-09-23 by addition*.** `BrowserAI.zip` is still
+   packed, still renamed and still cleared and rewritten by this step; what it
+   is not, from the next release, is an asset anybody can download. The
+   maintainer's decision, verbatim: *"2 drop and update the readme to not
+   mention it"*. **The published `v1.1.0` release still carries it** — removing
+   an asset from a standing release is a separate decision and has not been
+   taken.
+
    ⚠️ **AND CLEAR `Releases/test-pack/`'S CONTENTS TOO — *corrected 2026-09-16
    by addition, the same day, after this omission stopped a cut*.** The paragraph
    above is right that the **directory** must survive and silent about what is in
