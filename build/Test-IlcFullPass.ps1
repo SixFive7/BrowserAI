@@ -21,7 +21,7 @@
       full pass          95 lines   `IlcCompile:` + `Generating native code` + the ilc invocation
       incremental        75 lines   `Skipping target "IlcCompile" because all output files are up-to-date`
 
-    The MARKER is asserted rather than the line count. A count is a property of
+    The MARKER is asserted and not the line count. A count is a property of
     the verbosity, the project and the SDK all at once, and the one thing it
     would not survive is the thing this check exists for: a future publish that
     legitimately prints more. `Generating native code` is ILC's own line and is

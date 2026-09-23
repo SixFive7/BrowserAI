@@ -18,8 +18,8 @@
 
        Corrected 2026-09-21 (previously "Since 2026-09-17
        `build/payload/package.json` also carries an npm `overrides` entry for
-       `playwright-core`, which is a DATED EXCEPTION with a written exit rather
-       than a pin. This script reads it, requires the tree to have resolved to
+       `playwright-core`, which is a DATED EXCEPTION with a written exit and not
+       a pin. This script reads it, requires the tree to have resolved to
        it, and REFUSES the build on the day the wrapper's own pin catches up.").
        That exception ENDED on 2026-09-21: @playwright/mcp 0.0.82 declares a
        playwright-core carrying the fix the override was taken for, the
@@ -73,7 +73,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 # Exit codes are checked by name below, so the failure says which step failed
-# rather than which executable did.
+# and not which executable did.
 $PSNativeCommandUseErrorActionPreference = $false
 
 function Assert-ExitCode {
@@ -139,7 +139,7 @@ Copy-Item -LiteralPath (Join-Path $sourceDir 'package.json') -Destination $mcpDi
 # explicit path this script fails loudly on the chrome.exe assertion instead of
 # producing a payload with no browser behind it.
 #
-# PLAYWRIGHT_SKIP_BROWSER_GC is here for a failure that HAPPENED rather than one
+# PLAYWRIGHT_SKIP_BROWSER_GC is here for a failure that HAPPENED and not one
 # that might: on 2026-09-14, rebuilding the payload for the 0.0.79 -> 0.0.80
 # review, the install-browser call below ran upstream's stale-browser collector
 # and it DELETED firefox-1539 -- a complete, provisioned Firefox tree that
@@ -155,7 +155,7 @@ Copy-Item -LiteralPath (Join-Path $sourceDir 'package.json') -Destination $mcpDi
 # the same way, for the same reason. Nothing enforces the pairing; RevisionPrune
 # is what discharges the pruning obligation skipping the GC creates, and it is
 # the product's, so a payload build that strands an old revision here is a
-# scratch tree rather than a user's disk.
+# scratch tree and not a user's disk.
 $env:PLAYWRIGHT_BROWSERS_PATH = $BrowsersPath
 $env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'
 $env:PLAYWRIGHT_SKIP_BROWSER_GC = '1'
@@ -190,7 +190,7 @@ $declaredCore = if ($mcpEntry.ContainsKey('dependencies')) { $mcpEntry['dependen
 # nothing else would say so.
 #
 # THERE WAS A DATED EXCEPTION HERE BETWEEN 2026-09-17 AND 2026-09-21, and it is
-# recorded rather than removed without trace: an `overrides` entry in
+# recorded and not removed without trace: an `overrides` entry in
 # build/payload/package.json pulled playwright-core ONE upstream build forward
 # of the wrapper's own pin, and this script refused to assemble a payload on the
 # day the wrapper caught up. It caught up -- @playwright/mcp 0.0.82 declares
@@ -276,7 +276,7 @@ if ($null -eq $release) {
 $nodeVersion = $release.version
 Write-Host "node: $nodeVersion ($($release.lts), released $($release.date))"
 
-# The zip rather than dist/<version>/win-x64/node.exe: measured 2026-08-16, the
+# The zip and not dist/<version>/win-x64/node.exe: measured 2026-08-16, the
 # bare node.exe has no LICENSE beside it, and the redistribution rules require Node's
 # full LICENSE to ship because it aggregates the OpenSSL, ICU, V8, zlib and
 # c-ares terms. The archive is also ~57 MB smaller than the raw binary.

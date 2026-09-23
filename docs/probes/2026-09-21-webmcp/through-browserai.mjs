@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 // The same WebMCP measurement as `probe.mjs`, taken END TO END through the
-// PUBLISHED BrowserAI server rather than against the child directly.
+// PUBLISHED BrowserAI server and not against the child directly.
 //
 // Why both: probe.mjs establishes that a page can add tools to the CHILD's
 // `tools/list` and put its own text into a tool result. This establishes what a
@@ -151,7 +151,7 @@ console.log(names(after).filter((name) => !names(before).includes(name)).join('\
 
 // And the door: a name the page put on the child's list has no verdict row, so
 // BrowserAI refuses it without starting anything. Asserted by CALLING it,
-// because "deny by default" is a claim about what happens rather than about
+// because "deny by default" is a claim about what happens and not about
 // what a file says.
 show('webmcp_probe_tool_alpha (page-supplied name)', await call('webmcp_probe_tool_alpha', named({})));
 

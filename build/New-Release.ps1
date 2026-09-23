@@ -9,7 +9,7 @@
 .DESCRIPTION
     Build-order step 19. This is the release script `build/` did not have, and
     steps 1 and 18 both deferred work to it. It does the following, in order,
-    and refuses rather than warns at every one of them.
+    and refuses instead of warning at every one of them.
 
     (This sentence read "It does seven things" until 2026-09-23 and had been
     wrong since the eighth item landed. It is not replaced with a new number:
@@ -34,7 +34,7 @@
          build refuses to emit, which is the state a shipping product this
          project studied is in today.
          A republish of an older version is permitted only with
-         -RollbackRepublish, so it is a stated intent rather than an accident.
+         -RollbackRepublish, so it is a stated intent and not an accident.
 
       4. ILC'S RAW OUTPUT MUST BE EMPTY, and only reading it can establish that.
          `SuppressTrimAnalysisWarnings=false` + `TreatWarningsAsErrors`
@@ -89,7 +89,7 @@
       9. DECLARE THE UPLOAD SET. Which files a release publishes was, until
          2026-09-23, whatever whoever ran `gh release create` picked out of
          `Releases/` -- which is how one release's asset list became the next
-         one's by matching rather than by deciding. The set is declared in one
+         one's by matching and not by deciding. The set is declared in one
          place near the end of this script, refuses on a file that is not
          there, is printed as a ready-to-run `gh release create` line, and comes
          back as `Upload` on the returned object.
@@ -183,7 +183,7 @@ if (-not $ArchiveDir) { $ArchiveDir = Join-Path $OutputDir 'archive' }
 # immovable at 1.2.0 (there is no flag that changes it, and an id cannot carry a
 # path). So the id is what puts the install root at
 # `%LocalAppData%\BrowserAI.app`, beside the data root at
-# `%LocalAppData%\BrowserAI` rather than on top of it -- which is the whole
+# `%LocalAppData%\BrowserAI` and not on top of it -- which is the whole
 # preservation decision, because Setup.exe renames a non-empty install root
 # aside and DELETES it, and uninstall empties it.
 $packId = 'BrowserAI.app'
@@ -223,7 +223,7 @@ $downloadId = 'BrowserAI'
 $testPackId = 'BrowserAI.app.test'
 
 # What the pack calls itself. Read out of here by the suite, and used below
-# rather than typed into $packArgs, so that the two packs' titles cannot drift
+# instead of typed into $packArgs, so that the two packs' titles cannot drift
 # apart from the variables the suite compares.
 $packTitle = 'BrowserAI'
 
@@ -246,7 +246,7 @@ $packTitle = 'BrowserAI'
 # carries the word BrowserAI.
 $testPackTitle = 'BrowserAI (suite)'
 
-# What the suite's installer is called. `test-installer` rather than anything
+# What the suite's installer is called. `test-installer` and not anything
 # resembling `BrowserAI.exe`: these two files sit one directory below the ones a
 # person downloads, and a name that could be mistaken for a release artifact is
 # the whole risk of packing twice.
@@ -255,7 +255,7 @@ $testDownloadId = 'BrowserAI.test'
 # ⚠️ THE DOWNLOAD NAMES DROP THE CHANNEL ON THE DEFAULT CHANNEL AND KEEP IT
 # OTHERWISE -- 2026-09-15. `BrowserAI.exe` and `BrowserAI.zip` are what a person
 # should see on a releases page; `-win-Setup` and `-win-Portable` are vpk's
-# vocabulary rather than anybody's. But two channels packed into one output
+# vocabulary and not anybody's. But two channels packed into one output
 # directory would then collide and the second would silently overwrite the
 # first, which is the one property the old names had and this must not lose. So
 # a non-default channel keeps its name: `BrowserAI-beta.exe`.
@@ -270,7 +270,7 @@ $downloadSuffix = if ($Channel -eq $defaultChannel) { '' } else { "-$Channel" }
 # --- 1. vpk and Velopack must agree ------------------------------------------
 # The tool is global, so it is outside packages.lock.json and nothing else in
 # the repository can see it. Read the resolved library version out of the lock
-# file rather than out of Directory.Packages.props, which says `*`.
+# file and not out of Directory.Packages.props, which says `*`.
 $lock = Get-Content -LiteralPath (Join-Path $root 'src' 'BrowserAI' 'packages.lock.json') -Raw | ConvertFrom-Json
 $velopack = $lock.dependencies.PSObject.Properties.Value | ForEach-Object {
     $_.PSObject.Properties | Where-Object Name -eq 'Velopack'
@@ -364,14 +364,14 @@ if (-not $SkipPublish) {
     # last time. There is no property that disables that check; the object file
     # IS the check, so removing it is the lever.
     #
-    # Why that matters here rather than being a performance question: HALT-A,
+    # Why that matters here, and is not a performance question: HALT-A,
     # the ILC-output scan below, reads ILC's own console output. On a skipped
     # pass there is none, so the scan sweeps a log ILC never wrote and reports
     # clean -- a check that cannot fail. Measured 2026-09-15 on this machine at
     # -v:normal: 95 lines with the pass, 75 without, and `Generating native
     # code` present in the first and absent in the second.
     #
-    # Globbed on the framework moniker rather than spelled, because the moniker
+    # Globbed on the framework moniker and not spelled, because the moniker
     # moves with the SDK and a path that stopped matching would silently restore
     # the incremental pass this exists to prevent.
     # ⚠️ BOTH PROJECTS' INTERMEDIATES. A per-project sweep that only knew about
@@ -403,13 +403,13 @@ if (-not $SkipPublish) {
         # holding `BrowserAI.Server.exe` and NOT `BrowserAI.exe`: the second
         # publish removed the first's executable, while leaving its `.pdb`
         # behind. What caught it was the both-present check below, which is the
-        # only reason this is a paragraph rather than an installer that starts a
+        # only reason this is a paragraph and not an installer that starts a
         # Start Menu entry pointing at nothing.
         #
         # Diagnosed no further than that on purpose. A publish that cleans its
         # output directory is entitled to; what is not defensible is two
-        # publishes sharing one, and separating them removes the question rather
-        # than answering it.
+        # publishes sharing one, and separating them removes the question instead
+        # of answering it.
         $stage = Join-Path $root 'artifacts' ("publish-" + [System.IO.Path]::GetFileNameWithoutExtension($publish.Exe))
 
         if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
@@ -428,7 +428,7 @@ if (-not $SkipPublish) {
         }
 
         # -v:normal, because ILC's own console output is what is being read and
-        # a quieter verbosity drops it. Redirected to a file rather than
+        # a quieter verbosity drops it. Redirected to a file and not
         # streamed: a grandchild that inherits the pipe keeps it open after the
         # command has exited, and the declared timeout then never fires.
         & dotnet publish @publishArgs *>&1 | Tee-Object -FilePath $ilcLog | Out-Null
@@ -461,7 +461,7 @@ if (-not $SkipPublish) {
         # full command line, which carries `/nowarn:...,IL2121,...` -- so a bare
         # `\bIL[0-9]{4}\b` matches a SUPPRESSION LIST and fails every publish.
         # Measured 2026-08-16 on the first run of this script. The severity word
-        # is what makes it a diagnostic rather than an argument.
+        # is what makes it a diagnostic and not an argument.
         $ilcComplaints = $ilc | Where-Object {
             $_ -match 'will always throw' -or
             $_ -match '(?i)\b(warning|error)\s+IL[0-9]{4}\b' -or
@@ -477,7 +477,7 @@ if (-not $SkipPublish) {
 
         Write-Host "ILC output for the $($publish.What) is clean ($($ilc.Count) lines read, 0 complaints)."
 
-        # Into the one directory `vpk` packs. Copied rather than published here,
+        # Into the one directory `vpk` packs. Copied and not published here,
         # for the reason above.
         $null = New-Item -ItemType Directory -Force -Path $PackDir
         Copy-Item -Path (Join-Path $stage '*') -Destination $PackDir -Recurse -Force
@@ -594,8 +594,8 @@ $packArgs = @(
     # internet speeds nowadays are so fast that we don't want to exert any
     # effort in creating deltas. Full downloads are always just easier."
     #
-    # `None` is vpk's own name for it and was resolved from the tool rather
-    # than from memory: `vpk pack --help` documents `--delta <MODE>` and does
+    # `None` is vpk's own name for it and was resolved from the tool and not
+    # from memory: `vpk pack --help` documents `--delta <MODE>` and does
     # not enumerate the modes, so handing it one it cannot parse makes it name
     # them -- "Cannot parse argument 'ZZZINVALID' for option '--delta' as
     # expected type 'Velopack.Packaging.Compression.DeltaMode'. Did you mean one
@@ -631,7 +631,7 @@ if ($LASTEXITCODE -ne 0) {
 # it had to become `BrowserAI.app`, and the files a person downloads must not
 # inherit a suffix that exists to answer a question about directories -- nor
 # vpk's own `-Setup` and `-Portable` vocabulary, which says what the tool calls
-# them rather than what they are.
+# them and not what they are.
 #
 # Exactly two artifacts are renamed and the feed-internal ones are the control:
 # the `.nupkg`s and `releases.<channel>.json` keep the id, because Velopack
@@ -687,7 +687,7 @@ if (($null -ne $rewritten) -and ($rewritten -ne $assetText)) {
 # up, and neither can `ReleaseLayout` when it is pointed at the real feed.
 #
 # `$testPackArgs` is `$packArgs` with exactly three elements replaced: the id,
-# the TITLE and the output directory. Built rather than retyped, so a packing
+# the TITLE and the output directory. Built and not retyped, so a packing
 # decision added above reaches both packs and the suite cannot end up exercising
 # an installer built differently from the one that ships.
 #
@@ -716,14 +716,14 @@ $null = New-Item -ItemType Directory -Force -Path $testOutputDir
 # And because the shipping pack is step 6 and this is step 6c, that refusal
 # fires AFTER the release itself has already been built. The non-zero exit names
 # the suite's installer while the release sits finished on disk, which reads as
-# a broken release rather than as a dirty scratch directory. It refused the
+# a broken release and not as a dirty scratch directory. It refused the
 # 2026-09-16 cut in exactly that shape, and the checklist correction written
 # that day asked a human to clear four file names by hand before every cut.
 #
 # Q200, decided 2026-09-17: the script clears its own regenerated,
 # never-published output. In its own file so the suite can DRIVE it -- an
 # inline `Remove-Item` could only ever be asserted by reading this file for a
-# line, which proves the line was typed rather than that anything is removed.
+# line, which proves the line was typed and not that anything is removed.
 & (Join-Path $PSScriptRoot 'Clear-TestPackFeed.ps1') `
     -Directory $testOutputDir -PackId $testPackId -DownloadId $testDownloadId -Channel $Channel
 
@@ -798,9 +798,9 @@ $deltaSize = if (Test-Path -LiteralPath $delta) { (Get-Item -LiteralPath $delta)
 # can drive it. It refuses on a missing file and that refusal must stop the
 # release -- an artifact that cannot state what went into it is not releasable,
 # and a manifest holding five of six files reads exactly like a complete one.
-# Named for the download rather than for the pack id: this directory is read by
+# Named for the download and not for the pack id: this directory is read by
 # a person looking for what went into a release, and `BrowserAI.app-1.0.0-manifest`
-# reads as a directory belonging to the installer rather than to the release.
+# reads as a directory belonging to the installer and not to the release.
 $manifestDir = Join-Path $ArchiveDir "$downloadId-$PackVersion-manifest"
 $manifest = & (Join-Path $PSScriptRoot 'Write-ReleaseManifest.ps1') `
     -Root $root -Destination $manifestDir -Version $PackVersion -Channel $Channel -Package $full
@@ -808,7 +808,7 @@ $manifest = & (Join-Path $PSScriptRoot 'Write-ReleaseManifest.ps1') `
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
 # --- 9. The GitHub release body, generated from the section being cut ----------
-# ⚠️ GENERATED RATHER THAN CUT -- 2026-09-15. The body used to be the stamped
+# ⚠️ GENERATED, NOT CUT -- 2026-09-15. The body used to be the stamped
 # section itself, truncated at whichever heading boundary fell nearest GitHub's
 # 125,000-character field: 110,225 characters of the middle of an argument, with
 # a permalink line stuck on at the cut. It is a document produced by hand at
@@ -819,10 +819,10 @@ if ($LASTEXITCODE -ne 0) { exit 1 }
 # looks is the hand-made one wearing a script. New-ReleaseNotes.ps1 refuses a
 # section it cannot read and says which SHAPE it produced -- folded, or headlines
 # alone when the folded one does not fit -- and that sentence belongs in the
-# release record rather than only on the screen of whoever ran this.
+# release record and not only on the screen of whoever ran this.
 #
 # ⚠️ NOT FOR A PRE-RELEASE VERSION, and that is the branch this script is run
-# down most often rather than an edge case. Every gate that installs a real
+# down most often, not an edge case. Every gate that installs a real
 # installer needs a pack, and a pack is made by running THIS script on whatever
 # MinVer derives from a commit past the tag -- `1.0.1-alpha.0.19` today. No such
 # version has a changelog section and none ever will, so demanding one would
@@ -845,12 +845,12 @@ else {
     $bodyShape = ($bodyReport | Select-Object -Last 1)
 }
 
-# --- 10. What a release PUBLISHES, declared once and read rather than judged ----
+# --- 10. What a release PUBLISHES, declared once and read, not judged -----------
 # ⚠️ THIS LIST IS THE UPLOAD SET AND THERE IS NO OTHER. Until 2026-09-23
 # nothing in this repository named one: `gh release create` was run by hand at
 # RELEASING item 14, and whoever ran it chose the assets by looking at
 # `Releases/` -- which is how `v1.0.0`'s seven assets became `v1.1.0`'s seven
-# assets, by matching rather than by deciding. Q233, asset by asset, is the
+# assets, by matching and not by deciding. Q233, asset by asset, is the
 # maintainer turning that judgement into three decisions, and this list is where
 # they live.
 #
@@ -862,13 +862,13 @@ else {
 #   - `releases.<channel>.json`, because it is the feed, and it is the one file
 #     a Velopack client reads.
 #
-# WHY THE OTHER FOUR ARE NOT, each by its own decision rather than by omission:
+# WHY THE OTHER FOUR ARE NOT, each by its own decision and not by omission:
 #   - `BrowserAI.zip`, the portable archive -- the maintainer, verbatim: *"2 drop
 #     and update the readme to not mention it"*. Still packed, still renamed,
 #     still local.
 #   - `BrowserAI-<version>-manifest.zip` -- *"7 move it"*. The resolved set is
 #     committed under `docs/evidence/` per release instead, which is a copy that
-#     survives a clone rather than one that survives a release page.
+#     survives a clone and not one that survives a release page.
 #   - `RELEASES` and `assets.<channel>.json` -- *"5+6 execute the test but also
 #     double check the velopack documentation and code"*. Both were done:
 #     nothing reads either from a release, measured 2026-09-23 against a real
@@ -879,7 +879,7 @@ else {
 #     upload, so not publishing a file and not producing it are different
 #     changes, and only the first was decided.
 #
-# Names rather than paths, because a release asset IS a name -- and because a
+# Names and not paths, because a release asset IS a name -- and because a
 # name is what `ReleaseScriptTests` can read back out of this file. Anything
 # added here must also be classified in
 # `ReleaseScriptTests.NothingElseInTheReleaseDirectoryIsPublished`, which is a
@@ -926,7 +926,7 @@ foreach ($path in $uploadPaths) {
     Write-Host ("  {0}  {1:N0} bytes" -f (Split-Path -Leaf $path), (Get-Item -LiteralPath $path).Length)
 }
 
-# Emitted ready to run, so that publishing is a paste rather than a judgement.
+# Emitted ready to run, so that publishing is a paste and not a judgement.
 # The tag is the caller's: this script deliberately does not push, tag or publish.
 Write-Host ''
 Write-Host ("gh release create <tag> --title <title> --notes-file <body> " + (($uploadPaths | ForEach-Object { '"' + $_ + '"' }) -join ' '))

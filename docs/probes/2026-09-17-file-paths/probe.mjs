@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 // Which pointer shapes in a tool result become ABSOLUTE under
-// `filePaths: "absolute"`, measured against the resolved child rather than read
+// `filePaths: "absolute"`, measured against the resolved child and not read
 // off the pull request that added the option.
 //
 // Runs the payload's own cli.js over stdio with a generated config, drives one
@@ -30,14 +30,14 @@ const sessionRoot = join(scratchRoot, mode);
 const outputDir = join(sessionRoot, 'output');
 mkdirSync(outputDir, { recursive: true });
 
-// A loopback HTTP server rather than a file on disk or a data: URL. The child
+// A loopback HTTP server and not a file on disk or a data: URL. The child
 // blocks the `file:` protocol unless allowUnrestrictedFileAccess is on -- which
 // BrowserAI writes false -- and a data: URL produces no network request at all,
 // so the BINARY RESPONSE BODY shape would be unmeasurable against one.
 const downloadBody = Buffer.from('probe download body\n');
 
 // A 1x1 PNG: a real binary response body, so `browser_network_request` has to
-// write a file rather than inline the bytes as text.
+// write a file instead of inlining the bytes as text.
 const pngBody = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
   'base64');
@@ -77,7 +77,7 @@ const config = {
   saveSession: true,
   filePaths: mode,
   // BrowserAI's own granted set, read off BrowserConfiguration.GrantedCapabilities
-  // rather than invented. `core*` is unconditional and naming one does nothing.
+  // and not invented. `core*` is unconditional and naming one does nothing.
   capabilities: ['config', 'vision', 'devtools', 'storage', 'network', 'pdf', 'testing'],
 };
 
@@ -181,7 +181,7 @@ show('console_messages (filename)', await call('browser_console_messages', { fil
 show('download (click)', await call('browser_click', { element: 'download link', target: '#d' }));
 
 const listed = show('network_requests', await call('browser_network_requests', { static: true }));
-// The INDEX upstream printed, read off its own line, rather than the position of
+// The INDEX upstream printed, read off its own line, and not the position of
 // the line within the block -- the block opens with a `### Result` heading, and
 // counting lines makes every index one too high.
 const pixelLine = textOf(listed).split('\n').find((line) => line.includes('pixel.png')) ?? '';

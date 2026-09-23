@@ -8,7 +8,7 @@
 ; no exception for test code: a harness that counts chrome.exe is a harness that
 ; will one day be adapted into a sweep that kills one.
 ;
-; It is a STRUCTURAL rule rather than a review item because a review already
+; It is a STRUCTURAL rule and not a review item because a review already
 ; passed on code that violated it. The Chromium probes this project grew out of
 ; counted and killed by image name -- harmless for Chromium on that machine, and
 ; the same code adapted to Firefox would have killed ~40 of the maintainer's own
@@ -48,7 +48,7 @@
 ; was caught by a manual audit, which is not a mechanism. A ban scoped to src/
 ; would not have caught the only violation of this rule this repository has.
 ;
-; It takes ZERO suppressions, and that is worth stating because it is not what
+; It takes ZERO suppressions, and that is stated here because it is not what
 ; anyone expects. TreeDelete itself calls the SINGLE-argument overload -- the
 ; non-recursive one, post-order, at the last step of each level -- which is a
 ; different symbol and is not banned. Banning it would be wrong: it is the
@@ -60,7 +60,7 @@
 ; call does worse and nothing it does BETTER, so a reader comparing the two
 ; would have concluded the replacement was a superset. It was not. The framework
 ; call checks FILE_ATTRIBUTE_REPARSE_POINT while it walks and unlinks a junction
-; rather than descending into it; TreeDelete.Remove did not, and on a
+; instead of descending into it; TreeDelete.Remove did not, and on a
 ; caller-named path -- browserai_destroy takes the directory from the model --
 ; one junction inside a browser profile emptied the target. Fixed the same day
 ; and asserted by TreeDeleteTests with a real junction. The rule for whoever

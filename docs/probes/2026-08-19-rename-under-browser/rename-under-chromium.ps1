@@ -103,7 +103,7 @@ try {
         # WHY. A directory cannot be renamed while any process has it as its
         # current directory, or while anything holds a handle to it without
         # FILE_SHARE_DELETE. Chromium's own cwd is the first suspect, so it is
-        # read rather than assumed.
+        # read and not assumed.
         foreach ($p in $tree) {
             $h = Get-Process -Id $p -ErrorAction SilentlyContinue
             if ($h) { Say ("  tree pid {0} {1}" -f $p, $h.Path) }

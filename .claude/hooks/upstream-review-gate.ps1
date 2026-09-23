@@ -38,7 +38,7 @@ try {
     if ([string]::IsNullOrWhiteSpace($path)) { exit 0 }
     if ((Split-Path -Path $path -Leaf) -ne 'upstream-review.json') { exit 0 }
 
-    # Who is calling? Measured 2026-08-15 by capturing real payloads from both:
+    # The caller, measured 2026-08-15 by capturing real payloads from both:
     # a sub-agent's differs from the main session's by exactly two added keys,
     # `agent_id` and `agent_type`. session_id, transcript_path and prompt_id are
     # inherited verbatim from the spawning session and are useless here.
@@ -49,7 +49,7 @@ try {
     # inert against precisely the caller most likely to trip it. `deny` is honoured,
     # and reaches the agent as a readable tool error it can report upward.
     #
-    # StrictMode is on, so probe for the property rather than dereferencing it.
+    # StrictMode is on, so probe for the property instead of dereferencing it.
     $isSubAgent = [bool]($payload.PSObject.Properties.Name -contains 'agent_id')
 }
 catch {
@@ -86,11 +86,11 @@ file does not adjudicate what moved. See TESTING.md, "The upstream-review gate".
 # under permission_mode 'bypassPermissions', an 'ask' returned to a SUB-AGENT is
 # silently downgraded to allow, so the gate was inert against precisely the caller
 # most likely to trip it -- and against a human it only ever proved a click, not a
-# review. Enforcement moved to the suite, where it is evidence rather than assent:
+# review. Enforcement moved to the suite, where it is evidence and not assent:
 # four snapshots diffed against the resolved payload, and a marker entry that must
 # adjudicate whatever actually moved. See TESTING.md, "The upstream-review gate".
 #
-# What is left here is worth keeping: whoever touches this file gets the procedure
+# What is left here does one job: whoever touches this file gets the procedure
 # in front of them at the moment it is relevant. That is a reminder, and it is now
 # honestly labelled as one.
 #

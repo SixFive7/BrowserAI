@@ -8,7 +8,7 @@
 .DESCRIPTION
     The suite installs a real pack under a test id, and the five things below are
     the ones a run must not disturb. They are read before and after each run and
-    compared; a difference stops the gate rather than being reported at the end.
+    compared; a difference stops the gate instead of being reported at the end.
 
       1. HKCU Uninstall\BrowserAI.app -- the maintainer's own Add/Remove entry,
          every value, because Velopack writes one key per pack id per user and an
@@ -35,7 +35,7 @@
 [CmdletBinding()]
 param([Parameter(Mandatory)] [string] $Tag)
 
-# Continue rather than Stop: a snapshot that throws half way through reports
+# Continue and not Stop: a snapshot that throws half way through reports
 # nothing, and every reading below is allowed to be absent.
 $ErrorActionPreference = 'Continue'
 $PSStyle.OutputRendering = 'PlainText'

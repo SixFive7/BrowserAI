@@ -18,9 +18,9 @@
     meet.
 
     Q235 b, the maintainer's answer. This step makes the packer's own list agree
-    with the declaration, and refuses rather than warns.
+    with the declaration, and refuses instead of warning.
 
-    ⚠️ WHAT IT CANNOT COVER, SAID HERE RATHER THAN LEFT TO BE DISCOVERED.
+    ⚠️ WHAT IT CANNOT COVER, SAID HERE AND NOT LEFT TO BE DISCOVERED.
     `vpk upload github` also uploads two files that are NOT in this list and
     cannot be removed from it: `releases.<channel>.json`, which it generates from
     the `Full` entries that survive here, and -- on the default Windows channel --
@@ -40,7 +40,7 @@
 .PARAMETER Keep
     The declared upload set, as file names. Names in it that the packer never
     produced -- `releases.<channel>.json` is one, because `vpk` generates that
-    itself -- are simply absent from the file and are not an error.
+    itself -- are absent from the file and are not an error.
 
 .EXAMPLE
     pwsh -File build/Set-UploadAssets.ps1 -Path Releases/assets.win.json -Keep BrowserAI.exe,BrowserAI.app-1.1.0-full.nupkg,releases.win.json
@@ -98,11 +98,11 @@ if (-not @($kept | Where-Object { $_.Type -eq 'Full' })) {
 }
 
 # LF and no BOM, like every other file this repository writes. `-Compress` keeps
-# the shape `vpk` itself writes rather than reformatting a file it reads back.
+# the shape `vpk` itself writes instead of reformatting a file it reads back.
 $json = ($kept | Select-Object RelativeFileName, Type | ConvertTo-Json -Compress -AsArray)
 [System.IO.File]::WriteAllText($Path, ($json -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding $false))
 
-# ⚠️ RE-READ FROM DISK RATHER THAN TRUSTING THE VARIABLE. What an upload reads is
+# ⚠️ RE-READ FROM DISK INSTEAD OF TRUSTING THE VARIABLE. What an upload reads is
 # the file, so what is asserted is the file.
 $written = @(Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json)
 $strangers = @($written | Where-Object { $names -notcontains $_.RelativeFileName } | ForEach-Object { $_.RelativeFileName })

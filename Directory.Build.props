@@ -6,8 +6,8 @@
     Shared build settings, declared once. Nothing here is a dependency version;
     every version lives in Directory.Packages.props.
 
-    Native compilation is configured in src/BrowserAI/BrowserAI.csproj rather
-    than here, because AOT and trim analysis must be scoped per-assembly and
+    Native compilation is configured in src/BrowserAI/BrowserAI.csproj and not
+    here, because AOT and trim analysis must be scoped per-assembly and
     never repo-wide (TESTING.md, "What the build itself must fail on").
     A repo-wide setting is permanent and invisible: it applies to every
     assembly added afterwards, including the one it will be wrong for.
@@ -45,7 +45,7 @@
       property alone it emitted 14 errors and failed with MSB3077. Neither, and
       ILLink-true-plus-this-false, both behaved exactly like the first case.
 
-      In other words the "ILC output must be empty" guarantee documented in
+      The "ILC output must be empty" guarantee documented in
       src/BrowserAI/BrowserAI.csproj is carried by THIS line, not by the
       ILLinkTreatWarningsAsErrors beside it. Turning this off to quiet an
       ordinary CS warning would silently also stop trim and AOT warnings
@@ -87,24 +87,24 @@
          .editorconfig carrying a written reason, never a bulk relaxation. -->
     <AnalysisMode>All</AnalysisMode>
     <!-- Makes the IDExxxx code-style rules configured in .editorconfig run on
-         build rather than only inside an IDE. -->
+         build and not only inside an IDE. -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup Label="Never by image name">
     <!--
-      The banned-API analyzer is declared HERE rather than in one project,
+      The banned-API analyzer is declared HERE and not in one project,
       because the rule it carries has no exception for test code: never match,
       count or terminate a process by image name. A project added later must be
-      covered by construction rather than by somebody remembering, which is
+      covered by construction and not by somebody remembering, which is
       what putting it in this file buys. NeverByImageNameTests asserts exactly
       that: every project in the tree reads this file.
 
       The product adds its own bans (Console, Debug) in
       src/BrowserAI/BannedSymbols.txt. Both files carry that name deliberately;
       the analyzer reads every additional file called BannedSymbols.txt and
-      merges them, which is measured rather than assumed
+      merges them, which is measured and not assumed
       (kb/windows/processes.md).
 
       NOTE FOR ANYONE EDITING THE COMMENT ABOVE: an XML comment cannot contain
@@ -147,14 +147,14 @@
       observed doing exactly this records what it cost: a release published as
       0.0.0+<sha> reported itself as 0.0.0+<sha> followed by the 40-character
       sha, the updater MATCHES the served version against the reported one
-      rather than comparing them, so the two could never be equal, and every
+      instead of comparing them, so the two could never be equal, and every
       client in the fleet downloaded the binary it was already running, swapped
       it, restarted, and did it again an hour later. Fleet wide, forever,
       presenting only as "the clients restart every hour".
 
       BrowserAI's update path matches too, so the same
-      trade applies here, and the property is turned off REPOSITORY WIDE rather
-      than in the product project: a global property passed with `-p:` reaches
+      trade applies here, and the property is turned off REPOSITORY WIDE and not
+      in the product project: a global property passed with `-p:` reaches
       every referenced project, and a project still carrying a decorated string
       is linked into the same AOT binary.
 
@@ -163,7 +163,7 @@
       the day something does (SourceLink, a CI step, a build script), it would
       arm silently. The guard is BuildVersionTests, which asserts the shipped
       attribute carries no build metadata at all, so this property being
-      dropped is a red suite rather than an hourly restart.
+      dropped is a red suite and not an hourly restart.
     -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 
@@ -175,7 +175,7 @@
       `Arg_DirectoryNotFound` in place of a sentence naming the path is an
       error catalogue that has been silently emptied.
 
-      Set explicitly to false rather than left at its default, so it cannot
+      Set explicitly to false and not left at its default, so it cannot
       arrive later as somebody's size optimisation.
 
       BOTH HALVES OF THAT TRADE ARE NOW MEASURED, 2026-08-18, and until then

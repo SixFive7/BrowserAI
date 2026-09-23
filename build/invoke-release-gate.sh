@@ -12,7 +12,7 @@
 #   - THREE RUNS, because the repetition buys the flake that appears once in
 #     three. That is how the probe-report race was found on 2026-08-19. On an
 #     intermediate batch it buys nothing, which is why the ordinary gate is a
-#     separate file rather than a switch.
+#     separate file and not a switch.
 #   - BROWSERAI_RELEASE_RUN=1, which turns every capability skip into a failure
 #     and makes a filtered run refuse itself from the session hook.
 #
@@ -33,7 +33,7 @@ here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 root=$(cd "$here/.." && pwd)
 cd "$root" || exit 1
 
-# The forced spelling, as an argument rather than a `cd` -- see
+# The forced spelling, as an argument and not a `cd` -- see
 # invoke-ordinary-gate.sh for why that is the only place it can be forced.
 forced=$(cygpath -m "$root")
 forced="$(printf %s "${forced:0:1}" | tr 'A-Z' 'a-z')${forced:1}"

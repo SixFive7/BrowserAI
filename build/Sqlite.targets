@@ -8,8 +8,8 @@
     The requirement is one file: BrowserAI.exe and no library beside it. Under
     NativeAOT that is four lines of MSBuild, and it costs one thing: nobody
     publishes a win-x64 static SQLite on NuGet, so the .lib is built here from
-    the amalgamation in third-party/sqlite. That absence is measured rather than
-    assumed and it is upstream's own open request, SQLitePCL.raw issue 657; the
+    the amalgamation in third-party/sqlite. That absence is measured, not
+    assumed, and it is upstream's own open request, SQLitePCL.raw issue 657; the
     drift row in drift-check.json carries the watch, and the day a win-x64
     e_sqlite3.lib ships inside SourceGear.sqlite3 this whole file is deleted and
     NativeLibrary points into the restored package instead.
@@ -22,7 +22,7 @@
     PublishAot only, so `dotnet build` and `dotnet test` leave them as inert
     items and the module name falls back to an ordinary runtime load.
 
-    THE MODULE IS NAMED e_sqlite3 RATHER THAN sqlite3, and the archive's own
+    THE MODULE IS NAMED e_sqlite3 AND NOT sqlite3, and the archive's own
     name has nothing to do with it. Resolution is by entry-point symbol through
     the linker, so a sqlite3.lib satisfies a declaration naming e_sqlite3 as
     long as sqlite3_libversion exists in some input. The name is chosen so that
@@ -36,7 +36,7 @@
     written after the only two readers had already looked. That is why the
     library path has to be computable during evaluation, and why it is composed
     out of BaseIntermediateOutputPath (set by Microsoft.Common.props, which the
-    SDK imports above this file) rather than IntermediateOutputPath (set by
+    SDK imports above this file) and not IntermediateOutputPath (set by
     Microsoft.Common.CurrentVersion.targets, which the SDK imports below it and
     which is therefore EMPTY here, silently, producing a relative path that
     lands the archive in the project root).
@@ -45,7 +45,7 @@
   <PropertyGroup>
     <SqliteAmalgamationDirectory>$(MSBuildThisFileDirectory)..\third-party\sqlite\</SqliteAmalgamationDirectory>
 
-    <!-- Path.Combine rather than string concatenation: BaseIntermediateOutputPath
+    <!-- Path.Combine and not string concatenation: BaseIntermediateOutputPath
          is `obj\` by default and may be set absolute, and a naive join would
          then produce a path with two roots in it. RID-scoped because the
          archive is architecture-specific and an x64 one left behind would link
@@ -59,7 +59,7 @@
 
       Every one of these comes from sqlite.org/compile.html's "Recommended
       Compile-time Options", and the one deliberate deviation is the one that
-      would be a correctness bug rather than a size choice: THREADSAFE=0 is
+      would be a correctness bug and not a size choice: THREADSAFE=0 is
       correct only where every call is provably on one thread, and this process
       serves an async message loop with a background sweep, a background update
       check and an idle timer in it. The default serialized mode is kept.
@@ -78,13 +78,13 @@
 
       NOT /Zi, and this is not a preference. A .lib compiled with /Zi carries a
       reference to a PDB the linker is not given, link.exe raises LNK4099, and
-      TreatWarningsAsErrors turns the publish red on a missing debug file rather
-      than on a defect. /Z7 embeds the same information in the object and is the
+      TreatWarningsAsErrors turns the publish red on a missing debug file and not
+      on a defect. /Z7 embeds the same information in the object and is the
       flag to reach for if debug info is ever wanted.
 
       /MT matches what ILC's own C shim compile uses, and ILC forces the
       Universal CRT dynamic at link (/NODEFAULTLIB:libucrt.lib /DEFAULTLIB:ucrt.lib),
-      so the two flavours mesh rather than colliding.
+      so the two flavours mesh instead of colliding.
     -->
     <SqliteCompileOptions>/nologo /c /MT /O2</SqliteCompileOptions>
     <SqliteCompileDefinitions>/DSQLITE_DQS=0 /DSQLITE_DEFAULT_MEMSTATUS=0 /DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 /DSQLITE_LIKE_DOESNT_MATCH_BLOBS /DSQLITE_MAX_EXPR_DEPTH=0 /DSQLITE_OMIT_DECLTYPE /DSQLITE_OMIT_DEPRECATED /DSQLITE_OMIT_PROGRESS_CALLBACK /DSQLITE_OMIT_SHARED_CACHE /DSQLITE_OMIT_AUTOINIT /DSQLITE_USE_ALLOCA /DSQLITE_STRICT_SUBTYPE=1</SqliteCompileDefinitions>
@@ -121,7 +121,7 @@
     project already carries the workload, so vswhere has never returned empty
     here, and nothing can plant that state short of uninstalling the workload
     the publish itself needs. The maintainer accepted the branch as untested on
-    that date rather than requiring a rig for it, so the three messages are
+    that date instead of requiring a rig for it, so the three messages are
     reviewed prose and not a tested path. Read them as such if one ever fires.
   -->
   <Target Name="LocateTheVisualCppToolchainForSqlite" Condition="'$(PublishAot)' == 'true'">

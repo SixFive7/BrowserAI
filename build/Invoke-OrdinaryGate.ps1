@@ -8,7 +8,7 @@
 
 .DESCRIPTION
     TESTING.md owns the invocation; this is that invocation, kept in the tree
-    rather than retyped from it. The two halves of a gate are TWO INSTRUMENTS
+    instead of retyped from it. The two halves of a gate are TWO INSTRUMENTS
     and not redundancy: this one hands the test host `C:\...` and declares
     `upper`, the Git Bash half hands it `c:\...` and declares `lower`, and
     `SuiteCoverageTests.TheRunReportsTheDriveLetterSpellingItActuallyReceived`
@@ -35,7 +35,7 @@
     IT. On 2026-09-22 at 19:26 a driver whose script did not exist died in
     milliseconds and read exactly like one that was working; fourteen minutes
     were lost to waiting on it. That is also why these files are in the tree at
-    all rather than recreated from prose every session.
+    all and not recreated from prose every session.
 
 .PARAMETER Tag
     Names the log and the clearance snapshots. Defaults to `ord-ps-1`.
@@ -46,14 +46,14 @@
 [CmdletBinding()]
 param([string] $Tag = 'ord-ps-1')
 
-# Continue rather than Stop: a red run is data, and this script's job is to
+# Continue and not Stop: a red run is data, and this script's job is to
 # record it and compare the clearance, not to abort on the first non-zero exit.
 $ErrorActionPreference = 'Continue'
 $PSStyle.OutputRendering = 'PlainText'
 
 $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 
-# ⚠️ THE FORCED SPELLING, AND IT IS AN ARGUMENT RATHER THAN A `cd`. An
+# ⚠️ THE FORCED SPELLING, AND IT IS AN ARGUMENT, NOT A `cd`. An
 # explicitly-spelled absolute path lands in MSBuildProjectDirectory, in
 # TargetPath and therefore in the test host's own AppContext.BaseDirectory,
 # whatever the working directory says. A `cd` cannot reach it: Windows always

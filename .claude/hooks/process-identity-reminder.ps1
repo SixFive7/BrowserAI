@@ -7,7 +7,7 @@
 # injects five lines as additionalContext. It decides nothing and blocks nothing --
 # see the note above the output block. The second EDIT-time context channel in this
 # repository; upstream-review-gate.ps1 is the first, and this one is modelled on it
-# deliberately, including the reason its message is a GIST rather than a copy.
+# deliberately, including the reason its message is a GIST and not a copy.
 #
 # Fails OPEN by design: any parse error, missing field or unexpected shape exits 0
 # with no decision. A hook that blocks work because of its own bug would be the same
@@ -36,7 +36,7 @@ try {
     if ([string]::IsNullOrWhiteSpace($path)) { exit 0 }
     if ($path -notmatch '\.cs$') { exit 0 }
 
-    # Two matches rather than one alternation, and that is not a style choice.
+    # Two matches, not one alternation, and that is not a style choice.
     # A bracket-alternation spelled the way it wants to be spelled puts a closing
     # bracket immediately before an opening parenthesis, which is a Markdown link
     # to DocumentationLinkTests -- with the alternation as a target that does not
@@ -68,7 +68,7 @@ native declaration. This directory has its own CLAUDE.md, beside the code. Read 
 # returned to a SUB-AGENT is silently downgraded to allow, so a gate would be inert
 # against precisely the caller most likely to trip it, and against a human it would
 # only ever prove a click. Enforcement lives in the suite, where it is evidence.
-# What is left here is worth keeping: whoever edits these files gets the two rules
+# What is left here does one job: whoever edits these files gets the two rules
 # and the pointer in front of them at the moment they are relevant.
 
 @{

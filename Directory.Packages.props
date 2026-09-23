@@ -9,9 +9,9 @@
     freezes what it resolved into the artifact. `Version="*"` is what performs
     that resolution; it is a floating version, and it excludes prerelease by
     construction, which is how DECISIONS.md's rule 3 ("GA is a hard floor") is
-    enforced mechanically rather than by review.
+    enforced mechanically and not by review.
 
-    The resolved set is RECORDED rather than remembered, in packages.lock.json
+    The resolved set is RECORDED and not remembered, in packages.lock.json
     beside each project. That is a two-step operation, and the two steps are
     mutually exclusive in a single invocation: first a restore that forces
     re-evaluation, which re-resolves the float, then a locked-mode restore,
@@ -21,7 +21,7 @@
     to eliminate, wearing a safety helmet.
 
     The two commands verbatim are in DECISIONS.md, "The five rules that make
-    floating safe". They are named rather than quoted here only because an XML
+    floating safe". They are named and not quoted here only because an XML
     comment cannot contain a double hyphen, which is what both flags begin with.
 
     Central management plus transitive pinning means this is the ONLY file in
@@ -48,7 +48,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="Product">
-    <!-- The MCP protocol implementation. Taken whole rather than as
+    <!-- The MCP protocol implementation. Taken whole and not as
          ModelContextProtocol.Core: the hosting dependency it carries is
          abstractions-only and does not drag in ASP.NET, and dropping to Core
          buys a smaller surface at the cost of AddMcpServer() and assembly
@@ -63,7 +63,7 @@
     <PackageVersion Include="ModelContextProtocol" Version="*" />
     <!-- Logging. The console provider is taken for one setting only:
          LogToStandardErrorThreshold, which is what forces every record to
-         stderr by configuration rather than by rule. The file sink is ours,
+         stderr by configuration and not by rule. The file sink is ours,
          because the framework's queue behaviour at process exit is unverified
          and an unverified flush is the same class of assumption as an unread
          exit code. -->
@@ -80,7 +80,7 @@
          NOTE FOR ANYONE EDITING THIS COMMENT: no double hyphen. One makes
          MSBuild fail to load this file, and restore then reports NU1015 "do not
          have a version specified" for EVERY package in the tree, naming central
-         package management rather than the file that did not load. Hit while
+         package management and not the file that did not load. Hit while
          writing this comment on 2026-08-16, which is the fourth time this trap
          has cost this repository time. -->
     <PackageVersion Include="Velopack" Version="*" />
@@ -124,7 +124,7 @@
       to is recorded in TODO.md; it is referenced here for one job only, in
       tests/BrowserAI.Tests/InteropLayoutTests.cs: to obtain Microsoft's
       definition of the seven structs this product hand-writes, so their sizes
-      and field offsets are checked against the vendor rather than against the
+      and field offsets are checked against the vendor and not against the
       last person who read the header.
 
       PrivateAssets="all" on the reference, exactly as MinVer does, so nothing
@@ -138,7 +138,7 @@
       (checked on nuget.org 2026-08-17, re-verified 2026-08-19: all three carry
       no SPDX licence expression at all). Generated code, doc comments included,
       compiles into whatever references it. Test-only use sidesteps that question
-      rather than answering it.
+      instead of answering it.
 
       The terms themselves are now in the repository, quoted verbatim with their
       URLs and the date they were fetched, in QUESTIONS.md section 12, along
@@ -149,7 +149,7 @@
       licence acceptance. Corrected 2026-08-19 (previously "and the question is
       NOT answered anywhere in this repository"). THE LEGAL QUESTION IS STILL NOT
       ANSWERED AND MUST NOT BE ASSERTED EITHER WAY. What changed is that it is
-      now a question for a lawyer rather than a research task.
+      now a question for a lawyer and not a research task.
     -->
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="*" />
 
@@ -172,7 +172,7 @@
 
       NEVER in the product. The publish output is a single file BECAUSE the
       product references no native package, and the absence of a reference is
-      what keeps that true by construction rather than by anybody remembering.
+      what keeps that true by construction and not by anybody remembering.
 
       NEVER the Microsoft.Data.Sqlite META package anywhere, either. It depends
       on SQLitePCLRaw.bundle_e_sqlite3, which pins its own older native SQLite,
@@ -187,7 +187,7 @@
       tests/BrowserAI.Tests/packages.lock.json on every re-resolve, and the gap
       between that number and drift-check.json's pinned amalgamation is the
       drift signal for a pin no registry can float. It lags sqlite.org by 3 to
-      30 days and skips some releases, so a gap is a prompt to look rather than
+      30 days and skips some releases, so a gap is a prompt to look and not
       a defect on its own.
     -->
     <PackageVersion Include="SourceGear.sqlite3" Version="*" />

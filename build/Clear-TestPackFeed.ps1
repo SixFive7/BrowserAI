@@ -22,11 +22,11 @@
     Because the running order packs the shipping artifacts FIRST, that refusal
     fires after the real pack has already succeeded -- so the non-zero exit
     names the suite's installer while the release itself is sitting finished on
-    disk, which reads as a broken release rather than as a dirty scratch
+    disk, which reads as a broken release and not as a dirty scratch
     directory. It refused the 2026-09-16 cut in precisely that shape.
 
     Q200, decided 2026-09-17: the script clears its own regenerated output
-    rather than a checklist item asking a human to remember.
+    instead of a checklist item asking a human to remember.
 
     WHAT IT DELETES IS EXACTLY WHAT THE NEXT PACK REGENERATES, BY NAME. Not the
     directory. A directory wipe would be a wider promise than this step can
@@ -52,11 +52,11 @@
 
 .PARAMETER Directory
     The test feed's directory -- `Releases/test-pack` under an ordinary cut.
-    Absent or empty is fine and is reported rather than refused.
+    Absent or empty is fine and is reported, not refused.
 
 .PARAMETER PackId
     The pack id the test artifacts carry (`BrowserAI.app.test`). Passed in
-    rather than hard-coded, so the id lives in exactly one place:
+    and not hard-coded, so the id lives in exactly one place:
     New-Release.ps1 hands it its own `$testPackId`.
 
 .PARAMETER DownloadId
@@ -94,7 +94,7 @@ if (-not (Test-Path -LiteralPath $Directory -PathType Container)) {
 # Every name here is one `vpk pack` writes again on the next run. The two
 # `-Setup.exe` / `-Portable.zip` entries are the PRE-RENAME names: a run that
 # died between the pack and the rename leaves those instead, and `vpk` reads the
-# `.nupkg` rather than the renamed executable, so either shape refuses the next
+# `.nupkg` and not the renamed executable, so either shape refuses the next
 # cut and both have to go.
 $regenerated = @(
     "$PackId-*.nupkg"

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 // The same pointer measurement as `probe.mjs`, taken END TO END through the
-// PUBLISHED BrowserAI server rather than against the child directly.
+// PUBLISHED BrowserAI server and not against the child directly.
 //
 // Why both: probe.mjs establishes what upstream does under each value of
 // `filePaths`; this establishes that BrowserAI's generated config actually

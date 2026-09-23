@@ -7,7 +7,7 @@
     assembled payload and diffs them against the committed copies, ON THE
     BUILD, with the diff itself in the failure message.
 
-    Imported by the test project rather than by Directory.Build.props, for two
+    Imported by the test project and not by Directory.Build.props, for two
     reasons. The gate is the suite (CLAUDE.md), so the project that owns the
     suite owns the gate; and a shared import would run it three times per
     build, once per project, for one answer.
@@ -53,7 +53,7 @@
     <!--
       2>&1 folds the generator's progress into the captured output, so a
       failure inside node.exe reaches the error text instead of vanishing.
-      The exit code is inspected rather than trusted to fail the task, because
+      The exit code is inspected and not trusted to fail the task, because
       the diff has to be turned into an <Error> to be readable.
     -->
     <Exec Command="pwsh -NoProfile -NonInteractive -File &quot;$(UpstreamSnapshotScript)&quot; 2>&amp;1"
