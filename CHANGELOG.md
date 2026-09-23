@@ -116,9 +116,12 @@ release body; nothing else depends on it.
   file and not producing one are different changes, and only the first was decided: `vpk upload`
   reads the local `assets.<channel>.json` to learn what to upload.
 
-  **Nothing has been removed from the published `v1.1.0` release**, which carries seven assets
-  and still does. Dropping an asset from a release that is already standing is a separate
-  decision about links people may already have, and it has not been taken.
+  **And `v1.1.0` was trimmed to the same three after the fact.** Dropping an asset from a
+  release that is already standing is a separate decision about links people may already
+  have; it was put to the maintainer on its own and his answer was to take it. The four
+  deleted -- the portable archive, `RELEASES`, `assets.win.json` and the manifest zip --
+  had a download counter of **0** apiece. `v1.0.0` was deliberately left alone and still
+  carries all seven, so the two releases differ on purpose.
 
 ### Removed
 

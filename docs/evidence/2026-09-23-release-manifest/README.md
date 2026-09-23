@@ -37,7 +37,7 @@ before and after.
 | Package | `BrowserAI.app-1.1.0-full.nupkg`, **55,022,716** bytes, SHA-256 `438d0d7b153aaa2dcef74375d85a63ba21c4b5b59c6a802c55848ad2ae2ef621` |
 | `override` / `pulledForward` | **both `null`** - this release took the newest resolve and held nothing back, and shipped nothing ahead of what the payload's packages declare |
 | Written | `2026-09-23T11:30:36.1357756Z` |
-| The asset this replaces | `BrowserAI-1.1.0-manifest.zip`, **20,218** bytes, SHA-256 `d492ee2915e7a54a29e6bda0739cc02c45b4bad17a3d3c42f09aaafe0220281e`, still on the published release |
+| The asset this replaces | `BrowserAI-1.1.0-manifest.zip`, **20,218** bytes, SHA-256 `d492ee2915e7a54a29e6bda0739cc02c45b4bad17a3d3c42f09aaafe0220281e`. *Corrected 2026-09-23 the same day (previously "still on the published release")* — it was deleted from `v1.1.0` when the maintainer gave the word, which makes this directory the only surviving copy rather than the second one |
 
 ## Two departures from the bytes as emitted, both of them the convention's
 

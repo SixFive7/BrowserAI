@@ -120,9 +120,11 @@ of the order rather than defects in anything:
    packed, still renamed and still cleared and rewritten by this step; what it
    is not, from the next release, is an asset anybody can download. The
    maintainer's decision, verbatim: *"2 drop and update the readme to not
-   mention it"*. **The published `v1.1.0` release still carries it** — removing
-   an asset from a standing release is a separate decision and has not been
-   taken.
+   mention it"*. ⚠️ **AND IT HAS BEEN REMOVED FROM THE PUBLISHED `v1.1.0`
+   RELEASE** — *corrected 2026-09-23 the same day (previously "The published
+   `v1.1.0` release still carries it — removing an asset from a standing release
+   is a separate decision and has not been taken")*, when the maintainer took
+   that separate decision. `v1.0.0` still carries it and was left alone.
 
    ⚠️ **AND CLEAR `Releases/test-pack/`'S CONTENTS TOO — *corrected 2026-09-16
    by addition, the same day, after this omission stopped a cut*.** The paragraph
@@ -1481,11 +1483,16 @@ a real Velopack client pointed at a feed holding **only** those two files — wi
 `RELEASES` naming the package, its SHA-1 and its exact size — reported
 *"No full / applicable release was found to download"*.
 
-⚠️ **NOTHING HAS BEEN REMOVED FROM THE PUBLISHED `v1.1.0` RELEASE.** It carries
-seven assets and still does. Dropping an asset from a release that is already
-standing is a separate decision about something people may already have links
-to, and it has not been taken. This section is about what the **next** release
-publishes.
+⚠️ **`v1.1.0` WAS TRIMMED TO THIS SET AFTER THE FACT, AND THAT WAS ITS OWN
+DECISION** — *corrected 2026-09-23 the same day (previously "NOTHING HAS BEEN
+REMOVED FROM THE PUBLISHED `v1.1.0` RELEASE. It carries seven assets and still
+does … it has not been taken")*. Dropping an asset from a release that is already
+standing is a separate decision about something people may already have links to,
+and the maintainer took it: *"Q234 b"*. The four deleted had a download counter
+of **0** apiece. **`v1.0.0` was deliberately left alone** and still carries all
+seven, so the two releases differ and a reader comparing them is seeing a
+decision rather than a mistake. **This section is otherwise about what the next
+release publishes**, and a trim is never how one is cut.
 
 ### 14. A human decides
 

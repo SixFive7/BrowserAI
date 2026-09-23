@@ -507,6 +507,34 @@ ask for nothing. **And the flat `1` on the package assets says something else
 worth having: no install anywhere has ever applied an update, because nothing has
 ever fetched a package.**
 
+⚠️ **RE-READ 2026-09-23 ON `v1.1.0`, AND THE DISCRIMINATION HOLDS ON A
+SECOND RELEASE.** Read immediately before the asset trim below:
+`releases.win.json` **11**, `BrowserAI.app-1.1.0-full.nupkg` **2**, and **0** for
+each of `BrowserAI.exe`, `BrowserAI.zip`, `RELEASES`, `assets.win.json` and the
+manifest zip. **The `2` on the package is the first non-zero package counter this
+project has ever recorded**, so *"nothing has ever fetched a package"* is still
+true of `v1.0.0` and is no longer true of the product. At least one of the two is
+the maintainer's own install staging 1.1.0, which was observed the same day and
+matched the published asset to the byte; **what the second one is has not been
+established** and the counters cannot say. `v1.0.0`'s counters the same minute,
+for comparison and untouched:
+`releases.win.json` **102** against **1** for every other asset and **2** for
+`BrowserAI.exe`.
+
+⚠️ **AND `v1.1.0` NOW CARRIES THREE ASSETS RATHER THAN SEVEN — 2026-09-23,
+at the maintainer's word (*"Q234 b"*).** `BrowserAI.zip`, `RELEASES`,
+`assets.win.json` and `BrowserAI-1.1.0-manifest.zip` were deleted from the
+published release with `gh release delete-asset`, one at a time, leaving exactly
+the [declared upload set](../../RELEASING.md#what-a-release-publishes):
+`BrowserAI.exe`, `BrowserAI.app-1.1.0-full.nupkg` and `releases.win.json`.
+**Four of the four deleted had a download counter of `0`.** Verified immediately
+afterwards: `releases/latest` still resolves to `v1.1.0`,
+`releases/latest/download/releases.win.json` still answers **200** with the one
+`Full` row for 55,022,716 b, and the installer alias still answers. **`v1.0.0` is
+untouched and still carries all seven**, which is the control that says the
+deletion was scoped to one release — and what a reader comparing the two releases
+is looking at.
+
 **The pathological case, named rather than defended against.** A client that
 spawns a fresh server process per task, in bursts, produces one 260-byte
 conditional GET per start. The CDN does not care, GitHub documents no rate limit
@@ -962,8 +990,12 @@ maintainer's decision, verbatim, is *"2 drop and update the readme to not
 mention it"*, so from the next release the zip is not uploaded to GitHub at all.
 It remains a local artifact of every pack — which is what keeps the rename
 step exercised on every cut rather than only on the ones somebody remembers.
-**Nothing has been removed from the published `v1.1.0` release**, which
-carries seven assets and is what `gh release view v1.1.0` says.
+**The published `v1.1.0` release carries three assets** — *corrected
+2026-09-23 the same day (previously "**Nothing has been removed from the
+published `v1.1.0` release**, which carries seven assets")*, when the maintainer
+gave the word and the four were deleted. See
+[the counters](#how-often-the-feed-is-asked-and-by-what--measured-2026-09-22).
+`v1.0.0` still carries all seven and was deliberately left alone.
 
 ⚠️ **`BrowserAI.exe` names THREE different files, and the difference matters
 when reading any other line in this article.** *Corrected 2026-09-15 (previously
