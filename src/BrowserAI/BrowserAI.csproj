@@ -253,7 +253,7 @@
     <Error Condition="'$(MinVerVersion)' == ''"
            Text="MinVer produced no version at all, so this build cannot say what it is. Check that the MinVer package restored and that this project is inside a git working tree." />
     <Error Condition="$(MinVerVersion.StartsWith('0.0.0'))"
-           Text="This build derived the version $(MinVerVersion) from git, and a version beginning 0.0.0 means MinVer found no '$(MinVerTagPrefix)*' tag to count from. A binary that does not know what it is cannot be rolled back to or bisected against, so the build is refused rather than stamped. Fetch the tags: 'git fetch --tags', or on a CI checkout set fetch-depth to 0 (a shallow clone carries no tags and fails exactly here)." />
+           Text="This build derived the version $(MinVerVersion) from git, and a version beginning 0.0.0 means MinVer found no '$(MinVerTagPrefix)*' tag to count from. A binary that does not know what it is cannot be rolled back to or bisected against, so the build is refused, not stamped. Fetch the tags: 'git fetch --tags', or on a CI checkout set fetch-depth to 0 (a shallow clone carries no tags and fails exactly here)." />
   </Target>
 
   <!--

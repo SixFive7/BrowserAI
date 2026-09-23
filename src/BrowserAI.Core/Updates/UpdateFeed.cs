@@ -96,7 +96,7 @@ internal sealed class UpdateFeed
         if (string.IsNullOrWhiteSpace(channel))
         {
             throw new ArgumentException(
-                "The update channel is empty. Velopack treats an empty ExplicitChannel as a channel rather than as 'unset', and composes 'releases..json', which 404s and is reported to the user as 'no update available'. Pass a channel, or take the default.",
+                "The update channel is empty. Velopack treats an empty ExplicitChannel as a channel, not as 'unset', and composes 'releases..json', which 404s and is reported to the user as 'no update available'. Pass a channel, or take the default.",
                 nameof(channel));
         }
 

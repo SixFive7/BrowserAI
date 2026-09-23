@@ -247,7 +247,7 @@ internal static class Program
         // this reason and this one had not, which is how the general case went
         // on paying for a conversation nobody was having.
         //
-        // ⚠️ THE WATCH IS ATTACHED HERE , NOT MERELY ASKED ABOUT. Whether
+        // ⚠️ THE WATCH IS ATTACHED HERE, NOT MERELY ASKED ABOUT. Whether
         // a handle can be held on the launcher is half the decision, and a
         // predicate beside the watcher would be a second source of truth about
         // the same OpenProcess -- two answers, one of them not the watch this
@@ -676,7 +676,7 @@ internal static partial class StartupLog
     [LoggerMessage(
         EventId = 4,
         Level = LogLevel.Warning,
-        Message = "{Variable} is set, so this BrowserAI's app root is {Root} rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.")]
+        Message = "{Variable} is set, so this BrowserAI's app root is {Root}, not the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.")]
     public static partial void AppRootOverridden(ILogger logger, string variable, string root);
 
     /// <summary>
@@ -769,6 +769,6 @@ internal static partial class StartupLog
     [LoggerMessage(
         EventId = 9,
         Level = LogLevel.Warning,
-        Message = "BrowserAI has no client to serve and is exiting: the process that started it (pid={Launcher}) could not be opened or is gone, and standard input is a console rather than a pipe, so neither of the two teardown signals can ever arrive. A client that starts BrowserAI gives it a pipe and stays alive on the other end of it.")]
+        Message = "BrowserAI has no client to serve and is exiting: the process that started it (pid={Launcher}) could not be opened or is gone, and standard input is a console, not a pipe, so neither of the two teardown signals can ever arrive. A client that starts BrowserAI gives it a pipe and stays alive on the other end of it.")]
     public static partial void NoClientToServe(ILogger logger, int launcher);
 }

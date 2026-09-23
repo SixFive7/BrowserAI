@@ -625,7 +625,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // from exactly the calls anybody investigates.
         SessionToolLog.Why(live.Logger, tool, why);
 
-        // ⚠️ THE SAME ORDERING, AND HERE IT IS A REFUSAL , NOT A LOG LINE.
+        // ⚠️ THE SAME ORDERING, AND HERE IT IS A REFUSAL, NOT A LOG LINE.
         // The row goes into browserai.data as `in-flight`, and a call BrowserAI
         // could not record is not forwarded: the whole point of one time-ordered
         // log is that reading it back tells you what the session did, and a gap
@@ -1309,7 +1309,7 @@ internal static partial class ProxyLog
     [LoggerMessage(
         EventId = 8,
         Level = LogLevel.Information,
-        Message = "'{Tool}' named no session; it was refused rather than sent to this run's own child.")]
+        Message = "'{Tool}' named no session; it was refused, not sent to this run's own child.")]
     public static partial void SessionMissing(ILogger logger, string tool);
 
     /// <summary>

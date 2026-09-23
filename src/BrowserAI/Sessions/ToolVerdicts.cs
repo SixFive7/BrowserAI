@@ -226,7 +226,7 @@ internal sealed class ToolVerdicts
 
             if (root.ValueKind is not JsonValueKind.Object)
             {
-                throw Unreadable(origin, $"its root is {root.ValueKind} rather than an object");
+                throw Unreadable(origin, $"its root is {root.ValueKind}, not an object");
             }
 
             if (!root.TryGetProperty(SchemaVersionMember, out var schema)
@@ -398,7 +398,7 @@ internal sealed class ToolVerdicts
     {
         if (row.Value.ValueKind is not JsonValueKind.Object)
         {
-            throw Unreadable(origin, $"'{member}.{row.Name}' is {row.Value.ValueKind} rather than an object");
+            throw Unreadable(origin, $"'{member}.{row.Name}' is {row.Value.ValueKind}, not an object");
         }
 
         if (!row.Value.TryGetProperty(VerdictMember, out var word) || word.ValueKind is not JsonValueKind.String)

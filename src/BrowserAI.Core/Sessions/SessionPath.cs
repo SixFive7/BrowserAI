@@ -226,7 +226,7 @@ internal sealed class SessionPath
         if (trimmed.Length is 0 || trimmed.EndsWith(':'))
         {
             throw new ArgumentException(
-                $"'{canonical}' is a volume root rather than a session directory. A session directory must be a real directory on the volume.");
+                $"'{canonical}' is a volume root, not a session directory. A session directory must be a real directory on the volume.");
         }
 
         // ⚠️ AT THE DOOR, because the alternative is a launch-time surprise
@@ -242,7 +242,7 @@ internal sealed class SessionPath
                 + $"{LongestSessionDirectory.ToString(CultureInfo.InvariantCulture)}. BrowserAI creates '{SessionLayout.DataFileName}' and "
                 + $"'{SessionLayout.OutputFolderName}' inside the directory you name, and Windows still bounds a database open and a child's working "
                 + $"directory at {MaxPath.ToString(CultureInfo.InvariantCulture)} characters even where .NET does not -- so the directory would be "
-                + "created and the session would then fail to open, with a message about the browser rather than about the path. Name a path at least "
+                + "created and the session would then fail to open, with a message about the browser, not about the path. Name a path at least "
                 + $"{(trimmed.Length - LongestSessionDirectory).ToString(CultureInfo.InvariantCulture)} character(s) shorter.");
         }
 

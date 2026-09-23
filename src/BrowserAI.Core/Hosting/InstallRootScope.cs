@@ -251,7 +251,7 @@ internal static class InstallRootScope
                 profile,
                 dataRoot,
                 installRoot,
-                $"drive '{probe[..2]}' is a mapped network drive, so the root is a share rather than per-user storage"));
+                $"drive '{probe[..2]}' is a mapped network drive, so the root is a share, not per-user storage"));
         }
 
         // 3. And only now, one directory open per side. A `subst`ed letter is

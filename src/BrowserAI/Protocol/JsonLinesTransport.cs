@@ -176,7 +176,7 @@ internal abstract class JsonLinesTransport : TransportBase
             // and with a pipe stdin alike.
             var woken = await ShutdownPeerAsync().ConfigureAwait(false);
 
-            // ⚠️ ABANDONED , NOT AWAITED, and that is what makes this
+            // ⚠️ ABANDONED, NOT AWAITED, and that is what makes this
             // process's exit independent of its caller. A caller-facing read
             // parked on a console never returns, so awaiting it made the exit
             // conditional on a client -- and an installer is not a client. That
@@ -523,7 +523,7 @@ internal static partial class TransportLog
     [LoggerMessage(
         EventId = 3,
         Level = LogLevel.Error,
-        Message = "{Transport}: a {Bytes}-byte frame parsed as JSON null rather than a message, and was dropped.")]
+        Message = "{Transport}: a {Bytes}-byte frame parsed as JSON null, not a message, and was dropped.")]
     public static partial void FrameWasNotAMessage(ILogger logger, string transport, long bytes);
 
     [LoggerMessage(
@@ -622,6 +622,6 @@ internal static partial class TransportLog
     [LoggerMessage(
         EventId = 15,
         Level = LogLevel.Information,
-        Message = "{Transport}: the read loop was abandoned rather than awaited -- the peer owns the other end of it, so closing this end cannot wake it and nothing may wait on a read that will never return.")]
+        Message = "{Transport}: the read loop was abandoned, not awaited -- the peer owns the other end of it, so closing this end cannot wake it and nothing may wait on a read that will never return.")]
     public static partial void ReadLoopAbandoned(ILogger logger, string transport);
 }

@@ -229,7 +229,7 @@ internal sealed class ChildConnection : IAsyncDisposable
             if (!string.Equals(negotiated, ChildProtocolVersion, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(
-                    $"The child negotiated protocol '{negotiated ?? "<none>"}' rather than the requested '{ChildProtocolVersion}'. The child caps or echoes silently and never rejects, so this is the only place a mis-negotiation is visible.");
+                    $"The child negotiated protocol '{negotiated ?? "<none>"}', not the requested '{ChildProtocolVersion}'. The child caps or echoes silently and never rejects, so this is the only place a mis-negotiation is visible.");
             }
 
             return new ChildConnection(client, link, logger, idPrefix, relay);

@@ -191,7 +191,7 @@ internal static partial class ShellInterop
             ? FolderPick.Of(path)
             : FolderPick.Broke(
                 "Windows would not give a file-system path for the folder you chose, so nothing was written."
-                + " Pick a folder on a drive rather than a shell location such as This PC or a library.");
+                + " Pick a folder on a drive, not a shell location such as This PC or a library.");
     }
 
     /// <summary>

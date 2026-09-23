@@ -170,7 +170,7 @@ internal static partial class RestartManager
         {
             throw new Win32Exception(
                 ErrorMoreData,
-                $"The Windows Restart Manager reports {needed.ToString(CultureInfo.InvariantCulture)} processes holding '{path}', which is past the {MaximumHolders.ToString(CultureInfo.InvariantCulture)} this build will accept for one file. Something is wrong with the machine rather than with the file.");
+                $"The Windows Restart Manager reports {needed.ToString(CultureInfo.InvariantCulture)} processes holding '{path}', which is past the {MaximumHolders.ToString(CultureInfo.InvariantCulture)} this build will accept for one file. Something is wrong with the machine, not with the file.");
         }
 
         var entries = new RmProcessInfo[needed];

@@ -190,7 +190,7 @@ internal static class ServerInstructions
         $"""
         BrowserAI drives a real browser. Call {SessionToolSurface.Init} first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.
 
-        Every session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run rather than bound to the directory.
+        Every session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run, not bound to the directory.
 
         'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.
 

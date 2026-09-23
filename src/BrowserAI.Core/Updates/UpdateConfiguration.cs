@@ -131,7 +131,7 @@ internal static partial class UpdateConfigurationLog
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Debug,
-        Message = "No update feed is configured, so BrowserAI does not check for updates. This is a state rather than a fault: the production feed has not been published yet.")]
+        Message = "No update feed is configured, so BrowserAI does not check for updates. This is a state, not a fault: the production feed has not been published yet.")]
     public static partial void NoFeedConfigured(ILogger logger);
 
     /// <summary>The feed came from the environment.</summary>
@@ -141,7 +141,7 @@ internal static partial class UpdateConfigurationLog
     [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Warning,
-        Message = "{Variable} is set, so this BrowserAI checks {ManifestUrl} for updates rather than the feed it shipped with.")]
+        Message = "{Variable} is set, so this BrowserAI checks {ManifestUrl} for updates, not the feed it shipped with.")]
     public static partial void FeedOverridden(ILogger logger, string variable, string manifestUrl);
 
     /// <summary>The configured feed is one of the shapes that 404 silently.</summary>

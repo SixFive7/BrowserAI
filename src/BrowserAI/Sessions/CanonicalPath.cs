@@ -427,19 +427,19 @@ internal static class CanonicalPath
             if (segment[^1] is '.' or ' ')
             {
                 return $"'{shown}' ends with a {(segment[^1] is ' ' ? "space" : "dot")}, which Windows silently strips -- "
-                    + $"so the directory would be '{RecordText.Escape(segment.TrimEnd(' ', '.'))}' rather than the name you asked for.";
+                    + $"so the directory would be '{RecordText.Escape(segment.TrimEnd(' ', '.'))}', not the name you asked for.";
             }
 
             if (segment.IndexOf(':', StringComparison.Ordinal) is var stream and >= 0)
             {
-                return $"'{shown}' names an alternate data stream rather than a directory: everything after the ':' is a stream inside '{RecordText.Escape(segment[..stream])}'.";
+                return $"'{shown}' names an alternate data stream, not a directory: everything after the ':' is a stream inside '{RecordText.Escape(segment[..stream])}'.";
             }
 
             var stem = segment.IndexOf('.', StringComparison.Ordinal) is var dot and > 0 ? segment[..dot] : segment;
 
             if (Array.Exists(ReservedDeviceNames, name => string.Equals(name, stem, StringComparison.OrdinalIgnoreCase)))
             {
-                return $"'{shown}' is the reserved device name '{stem.ToUpperInvariant()}', which opens a device rather than a directory whatever follows it.";
+                return $"'{shown}' is the reserved device name '{stem.ToUpperInvariant()}', which opens a device, not a directory whatever follows it.";
             }
 
             foreach (var character in segment)

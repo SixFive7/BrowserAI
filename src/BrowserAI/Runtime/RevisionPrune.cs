@@ -333,7 +333,7 @@ internal static class RevisionPrune
 
         return Environment.NewLine
             + $"⚠️ {holders.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} process(es) are running out of '{candidate}' RIGHT NOW (pid {pids}), "
-            + "so those survivors are a live browser rather than a stuck file -- and the parts of that tree which did delete are gone from underneath it. "
+            + "so those survivors are a live browser, not a stuck file -- and the parts of that tree which did delete are gone from underneath it. "
             + "It was idle when this pass checked and is not now. Expect that browser to fail on its next resource load; close it and run the prune again.";
     }
 

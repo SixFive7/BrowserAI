@@ -900,7 +900,7 @@ internal static partial class SweepLog
     [LoggerMessage(
         EventId = 4,
         Level = LogLevel.Warning,
-        Message = "The stray sweep did not run: '{Mutex}' could not be created. BrowserAI is degraded rather than broken -- sessions still work, but a browser nothing claims will not be found.")]
+        Message = "The stray sweep did not run: '{Mutex}' could not be created. BrowserAI is degraded, not broken -- sessions still work, but a browser nothing claims will not be found.")]
     public static partial void NoSweepLock(ILogger logger, string mutex, Exception failure);
 
     /// <summary>A stray was ended.</summary>

@@ -476,7 +476,7 @@ internal static partial class UpdateLog
     [LoggerMessage(
         EventId = 11,
         Level = LogLevel.Error,
-        Message = "The update pass hit its outer deadline of {TripwireMinutes} minutes after {ElapsedMinutes:F1} minutes. That deadline is a crash tripwire rather than a budget, so reaching it means the absolute and stall timers did not fire when they should have. Nothing was applied.")]
+        Message = "The update pass hit its outer deadline of {TripwireMinutes} minutes after {ElapsedMinutes:F1} minutes. That deadline is a crash tripwire, not a budget, so reaching it means the absolute and stall timers did not fire when they should have. Nothing was applied.")]
     public static partial void TripwireFired(ILogger logger, double tripwireMinutes, double elapsedMinutes);
 
     /// <summary>This process could not announce itself in the live set.</summary>
@@ -573,7 +573,7 @@ internal static partial class UpdateLog
     [LoggerMessage(
         EventId = 19,
         Level = LogLevel.Debug,
-        Message = "Another process holds {Mutex} and is reclaiming live markers; this one skipped rather than waiting.")]
+        Message = "Another process holds {Mutex} and is reclaiming live markers; this one skipped instead of waiting.")]
     public static partial void LiveMarkerReclaimSkipped(ILogger logger, string mutex);
 
     /// <summary>The reclaim could not run, or could not finish.</summary>

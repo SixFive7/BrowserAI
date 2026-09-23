@@ -944,7 +944,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// ⚠️ ***Corrected 2026-08-26 (previously "The log is printed newest-last
     /// and truncated from the FRONT. A caller arriving at a session wants the
-    /// recent story; an elision is stated , not presented as continuity,
+    /// recent story; an elision is stated, not presented as continuity,
     /// and the record's own cap says `may` because it cannot tell whether a trim
     /// has happened").*** Every clause of that was false of the code three lines
     /// below it. <b>The log is printed OLDEST first, nothing is elided, and
@@ -1211,7 +1211,7 @@ internal sealed class SessionManager : IAsyncDisposable
         if (contents.Failure is { } failure)
         {
             _ = text.Append("  ⚠️ the directory could not be read (").Append(failure)
-                .Append("), so this half of the answer is UNKNOWN rather than empty. Do not read it as 'nothing here'.\n");
+                .Append("), so this half of the answer is UNKNOWN, not empty. Do not read it as 'nothing here'.\n");
 
             return;
         }
@@ -1309,7 +1309,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // found sessions has already proved the tree is there, and `list` is the
         // one door where an absent path produces no refusal at all: measured
         // 2026-08-26, `browserai_list` on an unmounted drive letter answered
-        // "No BrowserAI sessions under 'Q:\'. That is an answer , not an
+        // "No BrowserAI sessions under 'Q:\'. That is an answer, not an
         // error" in 1 ms, which is TRUE and tells a caller who typed the wrong
         // letter nothing. `CanonicalPath` knows -- `VolumeIdentity.Of` says
         // `NoSuchDrive` -- and drops it, on the ground that an absent letter
@@ -1331,7 +1331,7 @@ internal sealed class SessionManager : IAsyncDisposable
 
         return found is 0
             ? new ToolOutcome(
-                $"No BrowserAI sessions under '{root}'. That is an answer rather than an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named.",
+                $"No BrowserAI sessions under '{root}'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named.",
                 IsError: false)
             : new ToolOutcome(
                 $"{found.ToString(CultureInfo.InvariantCulture)} session(s) under '{root}':\n\n" + string.Join("\n\n", lines),
@@ -1451,7 +1451,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 $"in use: YES -- something holds '{session.LockFile}' right now. That is the kernel's answer about the file, not about who: the guard names whoever took the directory, so this does not say which process.",
 
             SessionLiveness.NotHeld =>
-                $"in use: no -- nothing held '{session.LockFile}'. It is a snapshot rather than a reservation: another agent can open the session immediately afterwards.",
+                $"in use: no -- nothing held '{session.LockFile}'. It is a snapshot, not a reservation: another agent can open the session immediately afterwards.",
 
             _ =>
                 $"in use: UNKNOWN -- {answer.Why} Treat it as possibly in use; this is not the same answer as 'no'.",
@@ -1562,7 +1562,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // instead. A model that reads it cannot reach the retry the objection
         // predicted.
         //
-        // INLINE , NOT IN `SessionErrors`, deliberately, and the
+        // INLINE, NOT IN `SessionErrors`, deliberately, and the
         // directory's own CLAUDE.md is why the question comes up: refusals live
         // in the catalogue. This is not a refusal. Nothing was declined, the
         // work was done, and what is returned is a report composed out of the
@@ -1573,7 +1573,7 @@ internal sealed class SessionManager : IAsyncDisposable
             : new ToolOutcome(
                 $"{summary}\n\nBUT {failures.Count.ToString(CultureInfo.InvariantCulture)} {SurvivorsHeading}\n"
                 + Listing(failures)
-                + "\n\nThe session itself IS destroyed: its record is gone and BrowserAI's index has forgotten it, so what is listed above is residue on disk rather than a session."
+                + "\n\nThe session itself IS destroyed: its record is gone and BrowserAI's index has forgotten it, so what is listed above is residue on disk, not a session."
                 + $"\nDo NOT call {SessionToolSurface.Destroy} on '{location.FullPath}' again -- there is no session there for it to destroy, and it will refuse."
                 + "\nWhat is left is outside BrowserAI: wait for whatever still holds those files to exit and then delete them yourself, or leave them. Nothing in BrowserAI reads them again.",
                 IsError: true);
@@ -1719,7 +1719,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// anything RUNNING FROM the tree', and that is half the question ... a session
     /// that opened a browser between the check and the delete makes the delete
     /// fail on an open executable, so THAT race produces a refusal with evidence
-    /// , not a corrupted tree").</b> The second half was too generous. A
+    ///, not a corrupted tree").</b> The second half was too generous. A
     /// browser opened in that window fails the delete <i>on Windows</i>, which is
     /// true and is not the whole race: the peer's session is <b>created</b> in
     /// that window too, and a session whose tree was deleted from under it is not
@@ -1996,7 +1996,7 @@ internal sealed class SessionManager : IAsyncDisposable
             {
                 return new ToolOutcome(
                     $"{SessionToolSurface.ReinstallBrowser} was not run: BrowserAI could not enumerate processes to check whether anything is still using '{directory}' ({failure.Message}). Nothing was changed. "
-                    + "It refuses rather than guessing, because deleting a tree that something is running from leaves a directory that is neither the old install nor the new one.",
+                    + "It refuses instead of guessing, because deleting a tree that something is running from leaves a directory that is neither the old install nor the new one.",
                     IsError: true);
             }
         }
@@ -2039,7 +2039,7 @@ internal sealed class SessionManager : IAsyncDisposable
         {
             return new ToolOutcome(
                 $"{SessionToolSurface.ReinstallBrowser} was not run: BrowserAI could not enumerate processes to check whether a browser is still using '{directory}' ({failure.Message}). Nothing was changed. "
-                + "It refuses rather than guessing, because deleting a browser tree that something is running from leaves a directory that is neither the old install nor the new one.",
+                + "It refuses instead of guessing, because deleting a browser tree that something is running from leaves a directory that is neither the old install nor the new one.",
                 IsError: true);
         }
 
@@ -2631,7 +2631,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// exception was the worst answer this product could give: a caller who
     /// listed <c>D:\link\work</c> where the sessions live under
     /// <c>C:\real\work</c> was told <i>"No BrowserAI sessions under '...'. That is
-    /// an answer , not an error"</i> -- confidently, wrongly, and with
+    /// an answer, not an error"</i> -- confidently, wrongly, and with
     /// nothing to correct because it was not a refusal.
     /// </para>
     /// <para>
@@ -3103,7 +3103,7 @@ internal sealed class SessionManager : IAsyncDisposable
             : throw new SessionToolException(
                 $"'viewport' = '{asked}' is not a size BrowserAI accepts. Write it as WIDTHxHEIGHT in CSS pixels -- '{BrowserConfiguration.DefaultViewport}' is the default -- with each side between "
                 + $"{ViewportSize.Smallest.ToString(CultureInfo.InvariantCulture)} and {ViewportSize.Largest.ToString(CultureInfo.InvariantCulture)}. "
-                + "Nothing was created and nothing was changed. It is refused rather than rounded to the nearest thing that works, because a size you did not choose is one every later screenshot is silently taken at.");
+                + "Nothing was created and nothing was changed. It is refused, not rounded to the nearest thing that works, because a size you did not choose is one every later screenshot is silently taken at.");
     }
 }
 
@@ -3276,6 +3276,6 @@ internal static partial class SessionToolLog
     [LoggerMessage(
         EventId = 46,
         Level = LogLevel.Warning,
-        Message = "Whether {Browser} is provisioned could not be determined; the call was allowed through rather than refused on a guess.")]
+        Message = "Whether {Browser} is provisioned could not be determined; the call was allowed through, not refused on a guess.")]
     public static partial void ProvisioningUnreadable(ILogger logger, string browser, Exception failure);
 }

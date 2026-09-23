@@ -1368,7 +1368,7 @@ internal sealed class BrowserProvisioner : IDisposable
                 // holder is doing -- downloading, extracting, or pruning old
                 // revisions, which walks every process on the machine -- is not
                 // knowable from here, so it is not claimed. See AttemptPhase.
-                ? $"Another BrowserAI process holds the provisioning lock for {browser}; this one is watching for its completion marker into '{directory}' rather than starting a second copy, and has been since {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}. Browser tools are refused until the marker appears and BrowserAI's own tools keep working; wait and call the same tool again on the same session, which does not have to be re-created."
+                ? $"Another BrowserAI process holds the provisioning lock for {browser}; this one is watching for its completion marker into '{directory}', not starting a second copy, and has been since {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}. Browser tools are refused until the marker appears and BrowserAI's own tools keep working; wait and call the same tool again on the same session, which does not have to be re-created."
                 : $"{revision.Description} is being downloaded into '{directory}'; started {attempt.Started.ToString("O", CultureInfo.InvariantCulture)}. Browser tools are refused until it lands and BrowserAI's own tools keep working; wait and call the same tool again on the same session, which does not have to be re-created.")
         {
             Progress = attempt.Phase.Reading(downloadBytes),
@@ -2429,7 +2429,7 @@ internal static partial class ProvisioningLog
     [LoggerMessage(
         EventId = 66,
         Level = LogLevel.Information,
-        Message = "Another BrowserAI process is already provisioning {Browser}; watching for its marker rather than downloading a second copy.")]
+        Message = "Another BrowserAI process is already provisioning {Browser}; watching for its marker, not downloading a second copy.")]
     public static partial void AnotherProcessIsInstalling(ILogger logger, string browser);
 
     /// <summary>
@@ -2497,7 +2497,7 @@ internal static partial class ProvisioningLog
     [LoggerMessage(
         EventId = 71,
         Level = LogLevel.Information,
-        Message = "The process that held the {Browser} provisioning mutex let go without completing {Directory}, so this process is installing it rather than waiting for a marker that is not coming.")]
+        Message = "The process that held the {Browser} provisioning mutex let go without completing {Directory}, so this process is installing it, not waiting for a marker that is not coming.")]
     public static partial void TheOtherProcessLetGoWithoutInstalling(ILogger logger, string browser, string directory);
 
     /// <summary>
