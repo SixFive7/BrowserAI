@@ -5,7 +5,7 @@
 
 **Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · Chrome for Testing 152.0.7977.8 (`chromium-1237`) · Firefox 153.0 (`firefox-1539`) · `ffmpeg` revision 1011 · `winldd` revision 1007 · Node v24.19.0 LTS · Windows 11 Pro 26200.
 
-⚠️ **That line is the baseline the OLDEST entries here were taken at, and it is left standing as one -- *added by addition 2026-09-21, the fourth roll since*.** What the tree resolves today, read from [the payload lock](../../build/payload/package-lock.json) and [the committed `browsers.json` snapshot](../../upstream-snapshots/browsers.json) rather than from memory: `@playwright/mcp` **0.0.82** · `playwright-core` **1.64.0-alpha-1789764292000** (epoch milliseconds rather than a date, and nothing here parses it as one) · Chrome for Testing **154.0.8037.0** (`chromium-1246`) · Firefox **156.0** (`firefox-1549`) · `ffmpeg` revision **1011** · `winldd` revision **1007** · Node **v24.21.0** LTS. **Every dated entry below states the versions it was taken at**, which is what makes this a baseline rather than a claim about any of them; an entry with no versions of its own was taken at the line above.
+⚠️ **That line is the baseline the OLDEST entries here were taken at, and it is left standing as one -- *added by addition 2026-09-21, the fourth roll since*.** What the tree resolves today, read from [the payload lock](../../build/payload/package-lock.json) and [the committed `browsers.json` snapshot](../../upstream-snapshots/browsers.json), not from memory: `@playwright/mcp` **0.0.82** · `playwright-core` **1.64.0-alpha-1789764292000** (epoch milliseconds and not a date, and nothing here parses it as one) · Chrome for Testing **154.0.8037.0** (`chromium-1246`) · Firefox **156.0** (`firefox-1549`) · `ffmpeg` revision **1011** · `winldd` revision **1007** · Node **v24.21.0** LTS. **Every dated entry below states the versions it was taken at**, which is what makes this a baseline, not a claim about any of them; an entry with no versions of its own was taken at the line above.
 Measured on [the reference machine](../README.md#the-reference-machine).
 
 ## Component sizes
@@ -26,8 +26,8 @@ size, so every row is `[FLOATS]`.
 `-mx=5`. That is the figure for a **bundled** build, browsers inside the
 installer, and it excludes BrowserAI's own binary. **Nothing ships in that shape
 today.** Browsers are [provisioned on first run](#first-run-provisioning), so the
-installed payload is what `current\` holds, and it has now been **weighed rather
-than added up**: an installed `current\` measures **130,434,952 B = 124.39 MiB
+installed payload is what `current\` holds, and it has now been **weighed and not
+added up**: an installed `current\` measures **130,434,952 B = 124.39 MiB
 across 200 files** (`BrowserAI.exe` 17,853,952 · `payload\` 111,984,018 ·
 `BrowserAI.xml` 596,517 · `sq.version` 465) -- **466 B more** than the *packaged*
 130,434,486 in [row 85](../re-verification.md), which is not a
@@ -41,7 +41,7 @@ Chromium's term is `chromium-1237`; the family is at **1245** and weighs
 machine -- 3,310,172 B more. The `current\` term is the **one-executable**
 layout of 2026-08-17, and since 2026-09-15 an install holds **two** binaries
 plus a second XML, so the figure it names is not the directory the sentence
-describes. **It is left exactly as it was measured rather than adjusted**, which
+describes. **It is left exactly as it was measured and not adjusted**, which
 is what this marker exists instead of: a derived total carries no date of its
 own, which is the failure the 2026-08-17 correction below already records
 against the previous version of this same sentence -- the same defect, in the
@@ -50,7 +50,7 @@ replacement for it.
 > ✅ **RE-DERIVED 2026-09-17, hours later, from two addends measured that day and
 > nothing else.** The `1.0.0` release cut that afternoon installed itself on the
 > reference machine, so `current\` was weighed as the thing the sentence
-> describes rather than reconstructed: **143,574,278 B across 207 files**
+> describes and not reconstructed: **143,574,278 B across 207 files**
 > (`BrowserAI.Server.exe` 19,210,752 · `BrowserAI.exe` 10,412,544 ·
 > `payload\` 112,410,768 across 200 files · `BrowserAI.Server.xml` 1,045,834 ·
 > `BrowserAI.Core.xml` 386,380 · `BrowserAI.xml` 84,908 ·
@@ -80,7 +80,7 @@ after first run, as this file and the charter both once said: it counts
 > derived total carries no date of its own: the sum read as current while one
 > addend was a fortnight old. The replacement is a **weight, not a sum** -- the directory that
 > actually ships, measured whole -- so the next stale term cannot hide inside it.
-> The old figure is retained above in this note rather than deleted, because a
+> The old figure is retained above in this note and not deleted, because a
 > reader who learned `116.40` needs to find out it was reviewed and replaced.
 
 **BrowserAI's own binary is ~17.0 MiB and it moves on every commit.** Three
@@ -90,7 +90,7 @@ publishes present on the machine on **2026-08-17** measured **17,853,952 B**
 -- `PublishAot`, win-x64, self-contained, all three. **Do not treat any of them as
 *the* size.** The spread across three artifacts of the same product on one day is
 the point: this is the most volatile figure in this article, and it floats on
-**our own product** rather than on an upstream, which is why no marker is stamped
+**our own product** and not on an upstream, which is why no marker is stamped
 on it -- the checkable figure is the packaged `current\` above, which is a
 directory somebody can weigh, and it is carried by
 [row 85](../re-verification.md) with the rest of the update lane's
@@ -125,7 +125,7 @@ still `[UNVERIFIED]`, nothing having been built in that configuration.
 
 **Verified 2026-08-16 @ Node v24.19.0 / `@playwright/mcp` 0.0.79, by assembling
 the payload** ([`build/Build-Payload.ps1`](../../build/Build-Payload.ps1)).
-Both rows hold to the byte, and the unit in this table is **MiB** rather than MB:
+Both rows hold to the byte, and the unit in this table is **MiB** and not MB:
 `node.exe` is **92,825,416 B = 88.53 MiB**, and `node_modules` is
 **18,993,773 B = 18.11 MiB** -- of which `playwright-core` is 13.18 MiB,
 `playwright` 4.85 MiB (the [never-loaded wrapper](tools-and-artifacts.md#the-tool-surface-and-the-package-shape))
@@ -150,7 +150,7 @@ and reports nothing. Re-establish by listing both URLs. `[FLOATS]`
 
 **A single `node.exe` drives the full MCP protocol** -- no npm, no `node_modules`
 belonging to Node, no `.cmd` shims. Verified by execution. Node **v26 is Current
-rather than LTS and its `node.exe` is 10 MB larger**. `[FLOATS]`
+and not LTS and its `node.exe` is 10 MB larger**. `[FLOATS]`
 
 **The vendored JS tree contains zero native binaries** and is portable as-is.
 **It also declares no install script**: verified 2026-08-16 across the resolved
@@ -172,8 +172,8 @@ throws. `[FLOATS]`
 > `browserVersion` 154.0.8037.0 as 1245 and 1244, `cftUrl()` is keyed on the
 > version, so the archive, the tree and the wire total are identical to the byte
 > and the file for the third roll running. **Firefox moved properly this time**
-> - 155.0 -> **156.0** is a new Firefox rather than a rebuild - `+1,431,551` B on
-> the wire and `+3,458,122` B on disk, and **two files more** rather than the
+> - 155.0 -> **156.0** is a new Firefox and not a rebuild - `+1,431,551` B on
+> the wire and `+3,458,122` B on disk, and **two files more** instead of the
 > same 61. `ffmpeg` **1011** and `winldd` **1007** did not move. The rig is
 > [`docs/probes/2026-09-16-provisioning`](../../docs/probes/2026-09-16-provisioning/README.md)
 > and the run is
@@ -183,7 +183,7 @@ throws. `[FLOATS]`
 > `[STALE]` this section carried for a day is cleared.** The figures below are
 > what those revisions produce. **Chromium did not move at all**, and this is
 > why: `playwright-core` builds Chromium's URL with `cftUrl()`,
-> keyed on `browserVersion` rather than on the revision, and 1245 carries the
+> keyed on `browserVersion` and not on the revision, and 1245 carries the
 > **same** `browserVersion` 154.0.8037.0 as 1244 -- so the archive fetched is the
 > same archive, the tree is the same tree to the byte and the file, and the only
 > thing that changed is the directory it lands in. **Firefox moved by 902 bytes
@@ -202,7 +202,7 @@ chromium 1246 -- **every byte of it is unchanged from the 2026-09-17 reading at
 1245 and the 2026-09-16 one at 1244**, because all three archives are the same
 archives: the revision moved and `browserVersion` did not, and Chromium's URL is
 keyed on the version. Three rolls have now moved this revision and none has moved
-this number, which is the pattern rather than a coincidence.* *Corrected
+this number, which is the pattern and not a coincidence.* *Corrected
 2026-09-21 (previously "Re-measured 2026-09-17 ... at chromium **1245** ... under
 `playwright-core` 1.64.0-alpha-2026-09-17 and `@playwright/mcp` 0.0.81"): every
 figure in the sentence is unchanged and the versions it was taken at are not.* Arithmetic for slower
@@ -232,8 +232,8 @@ the `init` refusal it drove and `SessionErrors.InsufficientDisk` are gone, and
 **The ~635 MiB arithmetic stays here as arithmetic** -- it is what a reader
 budgeting a machine wants and it is still the honest sum -- but no threshold is
 derived from it, so the open ask to sample free space every 250 ms across a run
-has nothing left to settle and is withdrawn rather than answered. **This file is
-where that number lives** -- the rest of the repository cites it rather than
+has nothing left to settle and is withdrawn, not answered. **This file is
+where that number lives** -- the rest of the repository cites it instead of
 restating it. The component byte counts above **are** measured; re-establish
 those with a `HEAD` on the three URLs below. `[FLOATS]` for the components, and
 the peak is arithmetic that nothing acts on.
@@ -254,8 +254,8 @@ the peak is arithmetic that nothing acts on.
 > `builds/chromium/<revision>/`: `playwright-core` builds its URL with
 > `cftUrl()`, which is `builds/cft/<browserVersion>/win64/chrome-win64.zip`
 > **keyed on the browser version and not on the revision**, off the bare
-> `https://cdn.playwright.dev` mirror rather than the `/dbazure/download/playwright`
-> one the other three use. Confirmed against upstream's own output rather than
+> `https://cdn.playwright.dev` mirror and not the `/dbazure/download/playwright`
+> one the other three use. Confirmed against upstream's own output and not
 > derived: the installer prints the URL it fetched, and it is that string to the
 > byte. The three revision-keyed archives are unaffected.
 
@@ -286,7 +286,7 @@ tree; the two shared components are unchanged to the byte and the file.
 > **`.links` read 69 B on both families this time**, where the 2026-08-19
 > Firefox run recorded 95 B -- it holds the absolute path of the `playwright-core`
 > that asked for the install, so it is a property of where this repository sits
-> on disk rather than of a revision. It is included in the root totals above and
+> on disk and not of a revision. It is included in the root totals above and
 > is the one component of them that another machine will not reproduce; compare
 > the three component subtrees, never the root total.
 
@@ -315,7 +315,7 @@ times. *Corrected 2026-09-21 @ chromium 1246 (previously "**11.29 s and 12.51 s*
 ... measured twice on 2026-09-17 at chromium **1245**"); corrected 2026-09-17 @
 chromium 1245 (previously "**10.81 s and 10.60 s** ... measured twice on
 2026-09-16")* -- and **the bytes did not move at all**, so
-this is the link and the machine on the day rather than anything about the
+this is the link and the machine on the day, not anything about the
 revision, which is exactly what `[MACHINE]` on this figure means. Re-establish by
 timing `node.exe cli.js install-browser chromium --no-shell --no-progress`
 against a fresh directory, with `PLAYWRIGHT_BROWSERS_PATH` pointed at it --
@@ -327,11 +327,11 @@ is the rig. `[FLOATS]` `[MACHINE]`
 > Chromium's download and extraction together take **0.3 s → 11.7 s**, `ffmpeg`
 > a further **0.5 s** and `winldd` **0.4 s**")`. **Faster on a larger download**,
 > which is the link on the day and not a property of the revision -- this is a
-> `[MACHINE]` number and the only transferable half is that it is seconds rather
-> than minutes.
+> `[MACHINE]` number and the only transferable half is that it is seconds
+> and not minutes.
 >
-> ⚠️ **The per-phase boundaries are NOT re-measured and have been dropped rather
-> than carried forward.** They came from the installer's own output timestamped
+> ⚠️ **The per-phase boundaries are NOT re-measured and have been dropped and not
+> carried forward.** They came from the installer's own output timestamped
 > per line, and that reading is not available through a pipe: Node buffers
 > stdout when it is not a console, so both lines of a two-line install arrive
 > together at process exit -- measured here at 5 ms apart for a download that
@@ -344,7 +344,7 @@ is the rig. `[FLOATS]` `[MACHINE]`
 > bound because that run also fetched `chrome-headless-shell`, which is
 > [no longer provisioned](../../DECISIONS.md#processes-browsers-and-session-modes). The two runs above
 > are of what BrowserAI actually downloads, so the figure is now a measurement of
-> the thing rather than of a superset of it.
+> the thing and not of a superset of it.
 
 ### Firefox, measured the same way -- 2026-08-19
 
@@ -371,7 +371,7 @@ provisioning is 129,502,648 B down = 129.5 MB, and 362,121,791 B = 345.35 MiB on
 disk across 69 files**", measured 2026-09-17 at firefox rev **1548** / 155.0,
 with `firefox-1548` at 127,962,223 B down and 358,345,820 B (341.75 MiB) on disk
 across 61 files)`. **This is the first Firefox roll in this table that is a new
-BROWSER rather than a rebuild** -- `browserVersion` 155.0 → **156.0** -- and it
+BROWSER and not a rebuild** -- `browserVersion` 155.0 → **156.0** -- and it
 reads like one: `+1,431,551` B on the wire and `+3,458,122` B on disk, against
 `+327` and `+902` for the 1544 → 1548 roll, with the file count moving 61 → 63
 for the first time since 1539. The two shared components are unchanged to the
@@ -422,7 +422,7 @@ true on 2026-08-19, when `browserai_init` began accepting `browser: "firefox"`.
 
 **Beside an existing Chromium, Firefox downloads the archive and nothing else --
 127,961,896 B = 128.0 MB, not 129.5.** ⚠️ **Half of that is re-measured and half
-is not, and the halves are named rather than blended.** The archive's own size
+is not, and the halves are named and not blended.** The archive's own size
 **is** re-measured, by `HEAD` on 2026-09-16: 127,961,896 B. That it is *the only
 thing fetched* beside an existing Chromium was measured once, on 2026-08-19, by
 a third run -- `ffmpeg-1011` and `winldd-1007` copied into an empty root **with
@@ -455,8 +455,8 @@ figure](#first-run-provisioning) is -- nobody has sampled free space across a ru
 640 MiB for both families: it is sized on the larger, both of Firefox's halves
 are smaller, and a per-family bound would refuse nothing this one permits.")* --
 there is no such constant now; free space is out of scope by the maintainer's
-decision of 2026-09-17, and the figure above is a budget for a reader rather
-than a bound anything enforces. *`Corrected 2026-09-16 (previously "62.4%
+decision of 2026-09-17, and the figure above is a budget for a reader and not
+a bound anything enforces. *`Corrected 2026-09-16 (previously "62.4%
 of the download ... **1 m 42 s at 10 Mbps, 16 m 58 s at 1 Mbps** ... would be
 ~461 MiB")`, all four re-derived from the new measured pair.*
 
@@ -474,7 +474,7 @@ times, against Chromium's 11.28 s and 11.31 s. `[FLOATS]` `[MACHINE]`
 > 6.87 s and 6.75 s** ... against Chromium's 10.81 s and 10.60 s", measured
 > 2026-09-16 at rev 1544)`. Both families are slower in this session and both
 > downloads are within a kilobyte of what they were, so the four seconds' spread
-> across the two sessions is the link and the machine rather than the revisions --
+> across the two sessions is the link and the machine, not the revisions --
 > which is what `[MACHINE]` is here to say.
 
 > ⚠️ `Corrected 2026-09-16 @ firefox 1544 (previously "**End to end it took
@@ -490,7 +490,7 @@ the files, and `HEAD`ing the three URLs under
 `https://cdn.playwright.dev/dbazure/download/playwright/builds/{firefox/1544,ffmpeg/1011,winldd/1007}/`.
 **Chromium is the exception and does not resolve under that prefix** -- it is
 `https://cdn.playwright.dev/builds/cft/<browserVersion>/win64/chrome-win64.zip`,
-keyed on the browser version rather than the revision. The revisions and the
+keyed on the browser version and not the revision. The revisions and the
 browser version come from the payload's own `browsers.json`; never type one.
 [`docs/probes/2026-09-16-provisioning`](../../docs/probes/2026-09-16-provisioning/README.md)
 is the rig for both halves.
@@ -518,7 +518,7 @@ component's own marker after the run. `[FLOATS]`
 --no-progress` into an empty `PLAYWRIGHT_BROWSERS_PATH`, then delete
 `winldd-<rev>` and run it again. **What would falsify it is upstream regrouping
 the two, and it fails in the safe direction here** -- the per-component marker
-check turns a `winldd` that stopped arriving into a reported failure rather than
+check turns a `winldd` that stopped arriving into a reported failure instead of
 into a tree marked complete.
 
 ### Two installers cannot extract into one root -- upstream's `__dirlock` -- 2026-08-19
@@ -556,7 +556,7 @@ shipped product". The concurrency is reachable; the race is not.*
 
 **What is real is a wait, and it belongs to the waiter -- measurement C.** 20
 attempts at a 1.27579 factor comes out at **470 s**, after which upstream fails
-the install outright rather than queueing further. **A first-run chromium
+the install outright instead of queueing further. **A first-run chromium
 download can outlast that**: 207.3 MB in 470 s is 3.5 Mbps (*corrected
 2026-09-17, previously "203.8 MB in 470 s is 3.5 Mbps"*; both sizes give
 3.5 Mbps to two figures, so the rate is unchanged and the size it is derived
@@ -581,7 +581,7 @@ upstream dropping the lockfile, moving it inside the per-executable loop, or
 scoping it to something narrower than the root;
 `PayloadTests.UpstreamStillSerialisesEveryInstallOnOneLockOverTheWholeBrowsersRoot`
 reads the four anchors out of the assembled bundle and asserts their order, so a
-removal is a red build rather than a rediscovery.
+removal is a red build, not a rediscovery.
 
 **⚠️ Chrome for Testing has exactly one mirror, so the retry rotation does not
 help it.** Read 2026-08-16 out of `playwright-core/lib/coreBundle.js`: `cftUrl`
@@ -606,7 +606,7 @@ both names unresolvable for the following minute, six queries three seconds apar
 resolved on the first attempt. It presents as `EAI_AGAIN` then `ENOTFOUND` in the
 installer's output and looks exactly like an outage. `[MACHINE]`
 
-> **What this supersedes, kept so the old numbers are recognisable rather than
+> **What this supersedes, kept so the old numbers are recognisable and not
 > mysterious.** The download was previously stated four ways across the
 > repository -- 202.3 MB, 323.5 MB, ~300 MB, and ~0.9 GB peak disk -- and this
 > file called the size `[UNVERIFIED]` on the grounds that only a run could settle
@@ -635,7 +635,7 @@ running the command above against a fresh directory. `[FLOATS]`
 
 **Installing `ffmpeg` on Windows pulls `winldd` with it**, unasked -- the same
 run produced both `ffmpeg-1011` and `winldd-1007`, which is why a browsers root
-seeded by hand needs all three directories rather than just Chromium's.
+seeded by hand needs all three directories and not just Chromium's.
 `[FLOATS]`
 
 **In-session recovery is proven.** The same child navigates successfully once the
@@ -682,7 +682,7 @@ package directory and contains that directory's absolute path, one per line;
 verified by running the installer from a fresh tree and reading the file it
 produced. It therefore records the machine that **installed** the browser, which
 under [first-run provisioning](#first-run-provisioning) is the user's machine
-rather than a build machine. **Do not delete it:** the stale-browser GC treats a
+and not a build machine. **Do not delete it:** the stale-browser GC treats a
 registry directory with no `.links` entry as prunable, which is what
 `PLAYWRIGHT_SKIP_BROWSER_GC=1` exists to stop. Re-establish with
 `grep -n '\.links' node_modules/playwright-core/lib/coreBundle.js`. `[FLOATS]`
@@ -745,7 +745,7 @@ child** to `<browsers root>\.downloads\<family>` --
 because the provisioning mutex is keyed on the family and two installs run at once
 by design -- which is what makes one recursive weigh of the browsers root cover
 both phases.
-Proven rather than assumed: the redirected chromium run above produced
+Proven, not assumed: the redirected chromium run above produced
 451,389,780 B, byte-identical to the run with the default temp.
 
 **Scanning `%TEMP%` instead would have been wrong, and it was measurably wrong on
@@ -770,7 +770,7 @@ recursively every 250 ms across `node.exe cli.js install-browser <family>
 once without. **The control is the redirected/default pair** -- a single run
 cannot tell "the redirect works" from "the download happened to land here". What
 would falsify it is upstream downloading straight into the registry directory, or
-`extractZip` starting to stream rather than writing whole files, either of which
+`extractZip` starting to stream instead of writing whole files, either of which
 would change *which* directory grows but not *that* one does. `[FLOATS]`
 `[MACHINE]`
 
@@ -792,22 +792,22 @@ that performs it takes 12 to 14 s longer than its seeded form.** Means: 32.44 s
 seeded, against 36.08 s for the pre-cache baseline and 36.84 s for a cold run
 that also publishes. The gap between 13 s of test and 4 s of suite is the
 parallelism: with the suite capped at four concurrent tests and ~130 s of total
-test work, it is **work-bound rather than critical-path-bound**, so removing 13 s
+test work, it is **work-bound and not critical-path-bound**, so removing 13 s
 of work returns about a quarter of it to the clock. A test's own duration is
 therefore not its cost to the suite, and this is the second time that distinction
 has mattered here -- the first being a slice test that took 2.6 ms on a run that
 really did launch a browser. `[MACHINE]`
 
 **What publishing and seeding each cost is not separable from this data**, and is
-recorded as unmeasured rather than divided out: the single cold-with-publish run
+recorded as unmeasured and not divided out: the single cold-with-publish run
 (17.13 s) sits above a baseline whose own spread is 13.77-15.92 s, so the
 451,389,838 B same-volume copy is inside that difference and cannot be read off
 it. The seeded figure of 3.49-3.88 s is a whole first-run sequence -- published
 binary start, `initialize`, `init`, two refusals, a `browserai_list`, the copy,
 and one real navigation against a real Chromium -- not a copy time. `[MACHINE]`
 
-**A cached run really does not reach the network, measured at the adapter rather
-than inferred from the code.** `Get-NetAdapterStatistics` sampled either side of
+**A cached run really does not reach the network, measured at the adapter and not
+inferred from the code.** `Get-NetAdapterStatistics` sampled either side of
 the first-run test alone, 2026-08-17:
 
 | Mode | Bytes received across all adapters |
@@ -839,7 +839,7 @@ copied: **318 files, 451,389,838 B**. `[MACHINE]`
 > they measured. **A census compared across two machines will differ for the same
 > reason**, which matters before treating a mismatch as corruption --
 > and is why the cache's own completeness check compares a tree against the stamp
-> *it* was published with rather than against a figure written down here.
+> *it* was published with and not against a figure written down here.
 
 **Re-establish** by running the suite twice within the hour and reading the
 `first-run bytes` row of the coverage block, or `.work/suite-coverage.txt`, which
@@ -877,7 +877,7 @@ absolute numbers are this machine's.
 `DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT` is `3 * 60 * 1e3`. The slowest observed run
 used **2.2%** of the 180 s the harness then waited. A launch timeout is
 therefore not a knob worth tuning, and a launch that approaches it is not slow --
-it is stuck, and should be read as a failure rather than as a machine having a
+it is stuck, and should be read as a failure and not as a machine having a
 bad day. `[MACHINE]` for the times and counts; `[FLOATS]` for the ratio and the
 headroom, both of which move with a browser revision.
 
@@ -885,7 +885,7 @@ headroom, both of which move with a browser revision.
 > the harness waits the same 180 s").** *The measured times above are unchanged
 > and were not re-run; what changed is the harness they were measured against.*
 > `BrowserContainmentTests.ReportPatience` is now `TestDefaults.BrowserHang`,
-> **thirty minutes**, so the slowest observed run uses 0.22% of it rather than
+> **thirty minutes**, so the slowest observed run uses 0.22% of it and not
 > 2.2%. The reason is the one this paragraph already gives, applied properly: a
 > harness bound *equal* to Playwright's own launch timeout always wins the race
 > against it, so upstream's diagnosis is replaced by *"the budget expired"* in
@@ -900,13 +900,13 @@ ones that pass** -- which is deliberate: a bound can only be called too tight
 against a distribution, and a distribution cannot be reconstructed from the runs
 that failed.
 
-> **Recorded here rather than left in the test output, and the earlier reasoning
+> **Recorded here instead of left in the test output, and the earlier reasoning
 > for leaving it out was wrong.** These numbers were measured before and kept out
 > of the knowledge base on the grounds that an entry marked as floating creates a
 > re-verification obligation. That is backwards: the obligation is the feature,
 > and this is the cheapest kind of row there is -- the fact is asserted by a test
 > that already runs on every build, so the row costs a line and nothing else.
-> [Row 89](../re-verification.md) carries it. *(Written in words rather than in
+> [Row 89](../re-verification.md) carries it. *(Written in words and not in
 > the marker, which is the rule for prose about the convention: the counter reads
 > the token and cannot tell a mention from a stamp.)*
 
@@ -939,7 +939,7 @@ next call brings the browser back in ~0.41 s.** `[MACHINE]` `[FLOATS]`
 > | A `browser_snapshot` after it | 4.2 ms | 4.6 ms |
 >
 > So the shape of the old claim holds -- an idle session falls back to roughly the
-> node child's own footprint -- while the totals are ~496 MB → ~118 MB rather than
+> node child's own footprint -- while the totals are ~496 MB → ~118 MB and not
 > 329 → 110, and the relaunch is **2.2× the recorded figure**. The old numbers
 > carried no date and no version, which is why nobody could tell whether they had
 > moved or had always been wrong.
@@ -950,7 +950,7 @@ after a close simply works: no error, no `"browser is closed"` text on any path,
 and a snapshot immediately afterwards returns the new page. This is the
 measurement [the browser-idle timer](../../ARCHITECTURE.md#sessions)
 rests on -- if the relaunch were not implicit, the timer would be a way of
-breaking a session rather than a way of reclaiming memory.
+breaking a session and not a way of reclaiming memory.
 
 ⚠️ **`browser_close`'s own result text reads as though it closed a tab, and it
 does not.** It answers *"No open tabs. Navigate to a URL to create one."* with
@@ -959,7 +959,7 @@ root is gone afterwards, because closing the last page tears the persistent
 context down and the browser with it. A reader who trusted the wording would
 conclude the timer does nothing. Called again with no browser open it answers the
 same text, is **not** an error, and costs 156-514 ms -- so a close that races
-anything costs a round trip rather than a failure.
+anything costs a round trip and not a failure.
 
 **How to re-establish all of the above:** drive a real child directly --
 `node <payload>/mcp/node_modules/@playwright/mcp/cli.js --config <cfg> --sandbox`
@@ -1038,11 +1038,11 @@ else. Same probe, same `WRITE`, same `READ`, same origin, seconds apart.
 > **IT REPRODUCED ACROSS TWO INDEPENDENT SITTINGS.** An earlier sitting the same
 > evening was **discarded as invalid** -- its driver handed all eight runs one
 > literal session path, `...\resume$tag`, because a heredoc ate a level of
-> backslash escaping -- and is recorded here rather than deleted because its
+> backslash escaping -- and is recorded here and not deleted because its
 > durability column is identical to the valid one, store for store, in all four
 > Path B runs. Eight Path B runs, two sittings, one result.
 >
-> **WHAT IT PROBABLY IS, LABELLED AS A READING RATHER THAN A MEASUREMENT.** Path
+> **WHAT IT PROBABLY IS, LABELLED AS A READING AND NOT A MEASUREMENT.** Path
 > A's server closes its stdin and exits, so the browser is shut down and flushes;
 > Path B kills the node children by pid and the browser dies with them, losing
 > whatever the cookie jar and the `localStorage` backing store had not yet
@@ -1059,7 +1059,7 @@ else. Same probe, same `WRITE`, same `READ`, same origin, seconds apart.
 > process survived it..."*. The measurement says a cookie may not be. **No product
 > change is taken here** -- the wording of a model-facing string is the
 > maintainer's -- and it is [an open hazard row](../../HAZARDS.md#hazard-index)
-> rather than a sentence quietly edited.
+> and not a sentence quietly edited.
 
 #### A browser server that ends ITSELF loses the same stores as one that is killed -- measured 2026-09-22
 
@@ -1097,7 +1097,7 @@ cleanly*, not of *who ended it* -- which is why the corrected string says exactl
 that and does not say "killed". **Q223 c**, and it is what settled Q223 b.
 
 > **What the probe had to do to make a process end itself, recorded because it
-> is a fact about upstream rather than about this measurement.**
+> is a fact about upstream and not about this measurement.**
 > `browser_run_code_unsafe` describes itself as executing *"arbitrary JavaScript
 > in the Playwright server process"* and does so through
 > `vm.runInContext` against a context built as `{ page, __end__ }` **and nothing
@@ -1113,12 +1113,12 @@ that and does not say "killed". **Q223 c**, and it is what settled Q223 b.
 > therefore accurate about the risk and misleading about the default scope**, and
 > that matters for a tool this product forwards with an `allow` verdict.
 
-> ⚠️ **ONE THING THE SELF-DEATH ARMS DO THAT THE CONTROL DOES NOT, named rather
-> than smoothed over.** A server has **two** `node` children; the control kills
+> ⚠️ **ONE THING THE SELF-DEATH ARMS DO THAT THE CONTROL DOES NOT, named and not
+> smoothed over.** A server has **two** `node` children; the control kills
 > both, and `process.exit`/`process.abort` end exactly **one** -- the one
 > BrowserAI's transport is talking to, which answered *"The browser child did not
 > answer 'tools/call': IOException: The server shut down unexpectedly"* -- leaving
-> the other alive, so those arms sat out the probe's full 30 s wait rather than
+> the other alive, so those arms sat out the probe's full 30 s wait instead of
 > finishing in the control's 42 ms. **It changes nothing about the readings**:
 > the browser tree went to zero and the relaunch happened in every arm. What the
 > surviving `node` is was not diagnosed, and is recorded as not diagnosed.
@@ -1138,7 +1138,7 @@ machine.
 
 > ⭐ **FIREFOX RESUMES WITHIN 3% OF CHROMIUM ON PATH A AND WITHIN 2% ON PATH B**,
 > although it is 4.65× slower to first navigate. That is the second reading of
-> the thing the previous entry called the first evidence rather than argument
+> the thing the previous entry called the first evidence and not argument
 > that **a resume is about the DIRECTORY and not about the browser** -- and Path
 > B, which relaunches a real browser, says it too.
 >
@@ -1152,7 +1152,7 @@ machine.
 > under `playwright-core` 1.64.0-alpha-2026-09-14")`. **The cost moved 336 and
 > 367 → 375 and 379 ms, about 9%, and the durability claim is unchanged to the
 > store.** ⭐ **Chromium cannot be the reason it moved**, and that is a control
-> rather than an inference: `chromium-1245` and `chromium-1244` are the same 308
+> and not an inference: `chromium-1245` and `chromium-1244` are the same 308
 > files at the same sizes with `chrome.exe` identical to the byte
 > ([row 21](../re-verification.md)). What did change under the number is the
 > **server**: `5d0d04f` landed between the two readings, and a resume now asks
@@ -1165,7 +1165,7 @@ machine.
 > against 375 and 379 on Chromium -- so the resume cost is **not** a Firefox
 > cost ratio at all: the family that is 4.37× slower to first navigate resumes
 > within 4% of the other. That is what a resume being about the *directory*
-> rather than about the browser looks like, and it is the first evidence for it
+> and not about the browser looks like, and it is the first evidence for it
 > that is not an argument.
 >
 > ⚠️ **The re-establishment procedure said "kill the node child, resume
@@ -1190,7 +1190,7 @@ machine.
 > 1.64.0-alpha-2026-09-14 · @playwright/mcp 0.0.81 (previously "**Resume costs
 > 515 ms and loses only `sessionStorage`.** Measured 2026-08-14")`. The cost
 > moved 515 → **336 and 367 ms**; the durability claim is unchanged and is now
-> asserted store by store rather than listed in prose.
+> asserted store by store and not listed in prose.
 >
 > ⚠️ **The re-establishment procedure said "kill the node child, resume against
 > the directory", and doing exactly that does not produce a resume.** Measured
@@ -1229,7 +1229,7 @@ machine.
 > | browsers under the browsers root | 8, then 0 after the kill, then 0 for fifteen minutes | 8, then **0** after the kill, then **8** again -- a fresh tree under the replacement child |
 > | node children of the server | 2, then 0, then 0 | 2, then **0**, then **1** at the five-second poll |
 >
-> **What this does NOT re-measure, said where it is said rather than in a
+> **What this does NOT re-measure, said where it is said and not in a
 > footnote:** the probe resumes before it navigates, so a forward made
 > *without* a resume was not exercised, and neither was
 > `SessionErrors.BrowserServerHasGone`, the door-refusal that `5d0d04f` added
@@ -1241,7 +1241,7 @@ machine.
 **Nothing bounds it.** Kill a session's `node` child under a **live** BrowserAI,
 resume in the same process, then make one browser call: the call **had not
 returned after 15 minutes**, and 15 minutes was chosen as the largest timeout in
-the product (10 minutes) plus five minutes of margin rather than as a number the
+the product (10 minutes) plus five minutes of margin and not as a number the
 probe felt like waiting. Measured 2026-09-17 against the published slice at
 `1.0.1-alpha.0.25`, chromium **1244**, `playwright-core` 1.64.0-alpha-2026-09-14,
 through
@@ -1284,7 +1284,7 @@ before the kill was even reported complete. **After that it writes nothing at
 all** for the remaining fifteen minutes: no timeout, no refusal, no warning. So
 the transport knows the peer is gone and the pending request is never told.
 
-**Why `browserai_resume` does not help, stated as a mechanism rather than as a
+**Why `browserai_resume` does not help, stated as a mechanism and not as a
 guess:** its question is *do I already own this directory*, and the answer is
 still yes -- the session is in this process's own index and the live marker is
 this process's. Whether the **child** behind it is alive is a different question
@@ -1308,7 +1308,7 @@ surface.
 **Proxying costs ~50 ms on a 500 KB payload.** From an equivalent Node prototype:
 images passed through byte-identical (**509,620** base64 bytes), error shapes
 preserved, ~50 ms added latency, ~300 ms one-off child spawn. It measured a
-**Node** prototype rather than the C# proxy, so it is `[UNVERIFIED]` as a
+**Node** prototype and not the C# proxy, so it is `[UNVERIFIED]` as a
 prediction of BrowserAI's own overhead -- a precedent, not a measurement of this
 product.
 
@@ -1321,12 +1321,12 @@ update 1-3 min. Estimates, not stopwatch figures. `[UNVERIFIED]`
 156.0), clearing the `[STALE]` this section carried since 2026-09-21.** All three
 surviving ratios were re-taken in **one sitting**, Chromium first and then
 Firefox, at six rounds for Chromium and **nine for Firefox of which eight
-produced a browser** -- see the round that did not, below, which is named rather
-than dropped. **Two ratios are unchanged and one moved back up**: RAM **1.19×**
+produced a browser** -- see the round that did not, below, which is named and not
+dropped. **Two ratios are unchanged and one moved back up**: RAM **1.19×**
 and profile disk **2.76×** are identical to three figures, first navigate
 **4.37× → 4.65×**. *Previously* ✅ **RE-ESTABLISHED 2026-09-17 at chromium 1245
 and firefox 1548**, clearing the `[STALE]` this section carried for six hours,
-and taken at **six rounds per family** rather than the stated three -- because
+and taken at **six rounds per family** and not the stated three -- because
 the one axis that had flipped sign is the one three rounds cannot settle, and a
 second set of three costs four minutes. *Previously, and kept because it is what the debt looked like:*
 "⚠️ **`[STALE]` since 2026-09-17, hours after these were taken and against
@@ -1345,8 +1345,8 @@ profile disk").*
 *Corrected 2026-09-18 (previously "and idle CPU has no sign at this sample
 size")* -- that sentence left the axis open and this one closes it: **the axis is
 retired as unmeasurable on a developer machine** (Q215 = a) and is
-[a row in what this project has not established](../not-established.md) rather
-than a ratio in the table below. **The three that remain are measured and
+[a row in what this project has not established](../not-established.md) and
+not a ratio in the table below. **The three that remain are measured and
 unchanged.** Measured 2026-09-17 against Chromium as the unit, **six
 rounds per family**, through the product's own `browserai_init` →
 `browser_navigate` against a local origin, at chromium **1245** / 154.0.8037.0
@@ -1362,19 +1362,19 @@ a browser out of 9 run**. Medians, with the observed range beside each.
 | Resident set, whole browser tree | **494.5** MB (483.5-505.4) | **587.5** MB (584.8-590.9) | **1.19×** |
 | First navigate, cold -- includes the launch | **576** ms (567-597) | **2,679** ms (2,547-2,768) | **4.65×** |
 | Second navigate, browser already up | **85** ms (72-109) | **62** ms (57-70) | **0.72×** |
-| ~~Idle CPU over 30 s, no page activity~~ | **516** ms (405-767) | **704** ms (329-874) | ~~**1.36×**~~ -- **RETIRED 2026-09-18, NOT ESTABLISHED**, and the 2026-09-22 reading is a third confirmation rather than a new number: the two columns **overlap completely again**, Firefox's lowest (329) below Chromium's lowest (405) and Firefox's highest (874) above Chromium's highest (767). The columns stand as readings; the ratio is struck |
+| ~~Idle CPU over 30 s, no page activity~~ | **516** ms (405-767) | **704** ms (329-874) | ~~**1.36×**~~ -- **RETIRED 2026-09-18, NOT ESTABLISHED**, and the 2026-09-22 reading is a third confirmation and not a new number: the two columns **overlap completely again**, Firefox's lowest (329) below Chromium's lowest (405) and Firefox's highest (874) above Chromium's highest (767). The columns stand as readings; the ratio is struck |
 | Profile directory on disk | **13,207,350 B** (181 files) | **36,474,446 B** (66 files) | **2.76×** on all eight |
 | Processes under the browsers root | 8 · 9 · 9 · 8 · 8 · 8 | 7 every round | **0.88×** |
 
 ⚠️ **ONE FIREFOX ROUND IN NINE PRODUCED NO BROWSER AT ALL, and it is named
-here rather than dropped.** Round 2 of the sitting: `browserai_init` answered
+here and not dropped.** Round 2 of the sitting: `browserai_init` answered
 normally in **459 ms**, and then **both** navigations returned only after
 **180,031 ms** and **180,679 ms** -- three minutes each, which is neither
 BrowserAI's own timeout nor anything this product writes. When the rig looked,
 **zero** processes were running under the browsers root, resident set **0**, and
 the profile had reached **1,159,208 B across 25 files** against **~36.47 MB
 across 66** on every healthy round. **THE PRODUCT'S OWN STRAY SWEEP IS EXCLUDED,
-from its own announcements rather than by argument**: every sweep in the whole
+from its own announcements and not by argument**: every sweep in the whole
 sitting -- fifteen of them, including the failing round's own at
 `23:16:43.94` -- reported `candidates=0` and terminated nothing. **What it WAS
 is not established by THIS rig**, because `ratios-probe.js` destroys its session
@@ -1383,7 +1383,7 @@ would have said why was deleted by the measurement.
 
 ✅ **BUT THE SAME SIGNATURE WAS CAUGHT WITH ITS ERROR TEXT ATTACHED LATER THE
 SAME EVENING, in the row 38 resume runs, and the identification is stated as
-INFERRED rather than measured.** A Firefox `browser_navigate` there returned
+INFERRED and not measured.** A Firefox `browser_navigate` there returned
 after **180,023 ms** carrying:
 *`TimeoutError: async initializeServer: Timeout 180000ms exceeded.`* with a call
 log reading `<launching> ...\firefox-1549\firefox\firefox.exe -no-remote
@@ -1395,7 +1395,7 @@ juggler handshake never completed. **180,000 ms is upstream's own
 [this article already documented](#timings-spawn-resume-idle-close-proxy-overhead)
 years of readings ago** -- and the paragraph there says a launch that approaches
 it *"is not slow -- it is stuck"*. That is the number that ended both calls.
-**What makes this an inference rather than a measurement** is that the
+**What makes this an inference and not a measurement** is that the
 cost-ratio round's own error text was destroyed with its session: what matches is
 the family, the evening, the zero process count and the duration to within
 **31 ms of 180,000** on one and **8 ms** on the other. **Rate: 2 stuck launches in
@@ -1460,7 +1460,7 @@ claim, not a more honest one.
 >   Firefox being the **faster** of the two all along once its browser is up.
 > - ⚠️ **Idle CPU 0.77× → 1.31×, the second sign reversal this one axis has
 >   recorded inside a single day.** What follows from that is a conclusion about
->   the axis rather than about either browser.
+>   the axis and not about either browser.
 
 ⚠️ **This run carries a control the morning's could not, and it is the reason
 the paragraph above can say which movements are real: Chromium did not change.**
@@ -1470,7 +1470,7 @@ keyed on `browserVersion` and 154.0.8037.0 did not move with the revision
 ([row 21](../re-verification.md), and again in
 [the licensing read](../packaging/dependencies.md#third-party-payload-as-shipped)).
 **So every movement in Chromium's own column between the two runs is the
-instrument rather than the browser**, which makes the pair a repeatability test
+instrument and not the browser**, which makes the pair a repeatability test
 of this rig:
 
 | Chromium's own column -- one unchanged binary | morning, 3 rounds | evening, 6 rounds | what that says |
@@ -1492,7 +1492,7 @@ axis has read ~24×, 0.77× and 1.31×, and exactly one thing is established by
 all three together: **Firefox does not burn an order of magnitude more idle CPU
 than Chromium.** Which of the two burns more, if either, is **not established**,
 and the reason is the instrument -- `TotalProcessorTime` differenced across one
-30-second window, on a machine with other things on it -- rather than the round
+30-second window, on a machine with other things on it -- and not the round
 count. ✅ **RETIRED 2026-09-18, and of those three answers it is the third.**
 *Corrected 2026-09-18 (previously "⚠️ **What to do about that is not decided
 here**: a longer window, CPU sampled rather than differenced, or the axis
@@ -1501,7 +1501,7 @@ choosing between them belongs to whoever wants the number.")* -- the axis is
 **not established** (Q215 = a) and is listed as such in
 [what this project has not established](../not-established.md).
 
-**Nothing consumes it, and that was checked rather than assumed.** These four
+**Nothing consumes it, and that was checked, not assumed.** These four
 ratios were the whole of the evidence behind Chromium being the default family
 until 2026-09-17, when that decision was re-grounded on the maintainer's own
 reason (Q206) and stopped resting on a measurement at all. A grep over the
@@ -1512,17 +1512,17 @@ readings, in the rig's own README and in two sentences that ARGUE from it --
 doc comment, both of which said *idle CPU reversed sign* while explaining why
 the cost argument no longer carries the default. Both are corrected by addition:
 the conclusion is unchanged and the reason for it is now the sign reversals
-themselves rather than either direction being true.
+themselves and not either direction being true.
 
 **What survives is one sentence, and it is all three measurements together
 support: Firefox does not burn an order of magnitude more idle CPU than
 Chromium.** The recorded ~24× is refuted by both later readings. Which of the
 two burns more, if either, is not established, and **re-opening it needs a
-different instrument rather than more rounds of this one** -- a longer window, or
-CPU sampled rather than differenced, on a machine with nothing else running.
+different instrument and not more rounds of this one** -- a longer window, or
+CPU sampled and not differenced, on a machine with nothing else running.
 
 ⚠️ **The ratio is the transferable half, and this pair of runs is evidence for
-that rather than an assertion of it.** Both families were 15-20% slower to first
+that and not an assertion of it.** Both families were 15-20% slower to first
 navigate in the evening than in the morning -- Chromium 417 → 500 ms on a binary
 that did not change, Firefox 1,923 → 2,184 ms on one that changed five files --
 and **the ratio moved by 5%**, 4.62× → 4.37×. Machine-wide drift divides out of
@@ -1566,7 +1566,7 @@ Chromium 413, 417 and **1,297** ms against Firefox 1,907, 1,923 and **2,962** ms
 490-534 ms, Firefox 2,084-2,339 ms, per-round ratio **4.00× to 4.68×**. Same
 rig, same machine, **the same Chromium binary** -- so a single pair would have
 supported any answer between 1.47× and 7.16× in the morning and nothing outside
-4.00-4.68× in the evening. **Three rounds is a floor rather than a sufficiency**,
+4.00-4.68× in the evening. **Three rounds is a floor and not a sufficiency**,
 and how much it buys is a property of the day.
 
 ⚠️ **The profile-disk row is the tight one and the only one worth quoting to
@@ -1590,9 +1590,9 @@ whoever owns the charter, and it is raised there rather than settled here.")* It
 was raised there and it was answered on 2026-09-17, in the maintainer's words:
 *"the reason for the default is that chrome is the most widely used"*.
 **Chromium stays the default and these four ratios are no longer offered as the
-reason for it** -- the claim that they were the evidence is retired rather than
+reason for it** -- the claim that they were the evidence is retired and not
 re-argued, and [the charter](../../DECISIONS.md) now carries the ground as a
-decision rather than as a measurement. **Nothing here is retracted**: the
+decision and not as a measurement. **Nothing here is retracted**: the
 measurements above stand, and what they no longer do is carry a choice.
 
 **To re-establish:** open one session per family through the product, drive the
