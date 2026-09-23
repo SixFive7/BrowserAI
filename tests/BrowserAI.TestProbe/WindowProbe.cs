@@ -138,7 +138,7 @@ internal static partial class WindowProbe
             return 1;
         }
 
-        // The top-level half: parent NULL rather than HWND_MESSAGE, which is the
+        // The top-level half: parent NULL instead of HWND_MESSAGE, which is the
         // entire difference between the two windows.
         //
         // Its own class, and a GUID in the name so the class is unique to THIS
@@ -204,7 +204,7 @@ internal static partial class WindowProbe
         });
 
         // A pump, so the window behaves like a real one -- and so that a
-        // same-process SendMessage from a test would be answered rather than
+        // same-process SendMessage from a test would be answered instead of
         // hanging. The probe exits on its own after Patience whatever happens to
         // the host, on top of the job object the host holds it in.
         var clock = Stopwatch.StartNew();
@@ -284,8 +284,8 @@ internal static partial class WindowProbe
     /// ⚠️ <b>The rename is retried, added 2026-08-18</b>, for the reason spelled
     /// out on <c>SessionProbe.Publish</c>: a file this process has just closed is
     /// briefly held by something outside this repository, and
-    /// <c>MOVEFILE_REPLACE_EXISTING</c> is refused <c>ACCESS_DENIED</c> rather
-    /// than as a sharing violation. An unretried rename kills the probe and the
+    /// <c>MOVEFILE_REPLACE_EXISTING</c> is refused <c>ACCESS_DENIED</c> and not
+    /// as a sharing violation. An unretried rename kills the probe and the
     /// host reports the wrong cause.
     /// </remarks>
     /// <param name="path">Where the host is looking.</param>

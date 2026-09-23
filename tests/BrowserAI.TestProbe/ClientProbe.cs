@@ -19,7 +19,7 @@ namespace BrowserAI.TestProbe;
 /// <remarks>
 /// <para>
 /// <b>This shape is the only way to test the client-liveness watcher at all, and
-/// the reason is a Windows fact rather than a preference.</b> In the ordinary
+/// the reason is a Windows fact, not a preference.</b> In the ordinary
 /// case the process that starts BrowserAI is also the one holding the write end
 /// of its stdin pipe, so killing it closes that handle and stdin reaches EOF --
 /// and EOF alone would explain the teardown. To observe the <i>watcher</i>, the
@@ -84,7 +84,7 @@ internal static partial class ClientProbe
         // cannot fill a pipe nobody is reading and block.
         _ = Task.Run(() => Drain(process.StandardError));
 
-#pragma warning disable CA2000 // See above: this process is killed rather than unwound, and closing these would close BrowserAI's stdin.
+#pragma warning disable CA2000 // See above: this process is killed, not unwound, and closing these would close BrowserAI's stdin.
         var writer = new StreamWriter(process.StandardInput, new UTF8Encoding(false)) { NewLine = "\n", AutoFlush = true };
         var reader = new StreamReader(process.StandardOutput, new UTF8Encoding(false));
 #pragma warning restore CA2000
@@ -131,7 +131,7 @@ internal static partial class ClientProbe
             ["browserAiPid"] = process.Id,
 
             // BrowserAI's parent, and therefore the pid its client-liveness
-            // watcher must have opened a handle on. Reported rather than assumed:
+            // watcher must have opened a handle on. Reported, not assumed:
             // a watcher pointed at the wrong process fires at the wrong moment
             // and every other signal looks identical.
             ["wrapperPid"] = Environment.ProcessId,
@@ -149,7 +149,7 @@ internal static partial class ClientProbe
 
         // Killed from outside, which is the event under test. Nothing below this
         // line runs, deliberately: a probe that shut anything down cleanly would
-        // be the thing being observed rather than the watcher.
+        // be the thing being observed instead of the watcher.
         Thread.Sleep(Timeout.Infinite);
         return 0;
     }
@@ -167,7 +167,7 @@ internal static partial class ClientProbe
     /// appeared and was refused with <i>"the process cannot access the file ...
     /// because it is being used by another process"</i> -- one occurrence in three
     /// consecutive full runs, and the failure named
-    /// <c>KillingTheClientTearsTheSessionDownWithoutWaitingForEof</c> rather than
+    /// <c>KillingTheClientTearsTheSessionDownWithoutWaitingForEof</c> instead of
     /// the harness.
     /// </para>
     /// <para>

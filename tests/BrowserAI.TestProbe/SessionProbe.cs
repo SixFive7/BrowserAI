@@ -369,7 +369,7 @@ internal static class SessionProbe
     /// killed.
     /// </summary>
     /// <remarks>
-    /// <b>The wait is bounded rather than zero, unlike <see cref="Sweep"/>'s.</b>
+    /// <b>The wait is bounded, not zero, unlike <see cref="Sweep"/>'s.</b>
     /// This probe exists to <i>be</i> the holder -- for the skip path and for the
     /// abandoned-mutex path -- so it must end up holding the object even if
     /// another process on the machine is momentarily using the same name. A
@@ -463,7 +463,7 @@ internal static class SessionProbe
 
     /// <summary>
     /// Runs one real stray sweep in a process of its own, so what it writes to
-    /// <c>stdout</c> can be counted rather than assumed.
+    /// <c>stdout</c> can be counted, not assumed.
     /// </summary>
     /// <remarks>
     /// <b>Out of process because that is the only place the question is
@@ -478,7 +478,7 @@ internal static class SessionProbe
     /// <param name="images">The image paths that count as ours, separated by <c>;</c>.</param>
     /// <param name="gatePatienceMilliseconds">
     /// How long to wait for the machine-wide sweep gate. <b>The caller supplies
-    /// it rather than this file choosing one</b>, because the bound is the
+    /// it instead of this file choosing one</b>, because the bound is the
     /// suite's own hang detector and this project cannot see
     /// <c>TestDefaults</c> -- it references the product and nothing else.
     /// </param>
@@ -562,7 +562,7 @@ internal static class SessionProbe
 
                     // The purpose is a list of timestamped statements and
                     // `lastUsed` is derived from them, so a change appends a row
-                    // rather than assigning a field. The value differs on every
+                    // instead of assigning a field. The value differs on every
                     // round on purpose: a reader has to be able to tell that
                     // what it saw changed under it, and a hundred identical
                     // purposes would prove nothing.
@@ -607,7 +607,7 @@ internal static class SessionProbe
     /// </para>
     /// <para>
     /// The failure to record is deliberately routed through the real
-    /// <see cref="ProcessLog"/> rather than counted here: recording never
+    /// <see cref="ProcessLog"/> and not counted here: recording never
     /// throws, so a counter in this file would have to duplicate the product's
     /// own judgement of what failed. The host reads the log instead, which also
     /// proves the warning is written where somebody would find it.
@@ -707,7 +707,7 @@ internal static class SessionProbe
     /// a holder's death.
     /// </para>
     /// <para>
-    /// <b>It calls <c>MaintenanceLock.TakeShared</c> rather than opening the file
+    /// <b>It calls <c>MaintenanceLock.TakeShared</c> instead of opening the file
     /// itself</b>, so what a host asserts against is the product's own open with
     /// the product's own share mode. A hand-written <c>FileStream</c> here would
     /// be a test of this file.
@@ -765,7 +765,7 @@ internal static class SessionProbe
     /// ⚠️ <b>Added 2026-08-18.</b> A file this process has just closed is briefly
     /// held by something outside this repository, and
     /// <c>MOVEFILE_REPLACE_EXISTING</c> wants DELETE on the destination -- so it
-    /// is refused <c>ACCESS_DENIED</c> rather than as a sharing violation, and an
+    /// is refused <c>ACCESS_DENIED</c> and not as a sharing violation, and an
     /// unretried rename kills the probe. The host then reports <i>"the probe
     /// never wrote its report"</i>, which is true and names the wrong cause.
     /// Measured elsewhere in this suite at one occurrence in twenty full runs.

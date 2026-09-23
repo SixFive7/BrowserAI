@@ -95,7 +95,7 @@ internal static class Program
         // handler attached after Start().
         for (var i = 0; i < standardErrorLines; i++)
         {
-            // Console rather than ILogger, deliberately: what is under test is
+            // Console instead of ILogger, deliberately: what is under test is
             // the pipe, and a logger here would prove the logging stack
             // instead. The console ban is enforced in src/ by an analyzer this
             // test asset does not reference, which is why no suppression is
@@ -173,7 +173,7 @@ internal static class Program
     /// <summary>
     /// Throws past the process boundary. Deliberately not inside a
     /// <c>using</c>: an unhandled exception is not guaranteed to unwind, so a
-    /// last line that survives here proves the crash handler rather than a
+    /// last line that survives here proves the crash handler instead of a
     /// <c>finally</c>.
     /// </summary>
     private static int Crash(string root)

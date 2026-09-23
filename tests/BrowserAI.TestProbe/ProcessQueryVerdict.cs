@@ -23,14 +23,14 @@ namespace BrowserAI.TestProbe;
 /// <para>
 /// ⚠️ <b>It is a classification and not a retry.</b> Nothing here re-queries,
 /// waits, or tries again; the verdict is taken from what Windows said the first
-/// time. And it narrows rather than widens: a query that fails for any reason
+/// time. And it narrows instead of widening: a query that fails for any reason
 /// other than the two below is still <see cref="Verdict.Unreadable"/>, which is
 /// still a red row carrying its note. The whole change is that <i>this process
 /// is no longer there</i> stops being spelled the same way as <i>this process
 /// could not be read</i>.
 /// </para>
 /// <para>
-/// <b>Why each of the two is sound, stated rather than assumed.</b>
+/// <b>Why each of the two is sound, stated and not assumed.</b>
 /// <c>ERROR_INVALID_PARAMETER</c> is what <c>OpenProcess</c> returns for a pid
 /// no live process has -- the pid is the only parameter that can be invalid, and
 /// the walk proved it was well-formed one instant earlier.
