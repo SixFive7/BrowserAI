@@ -119,41 +119,87 @@ internal sealed class UpdateService
     public static TimeSpan StallBudget => TimeSpan.FromSeconds(60);
 
     /// <summary>
+    /// How long the manifest check may take before it is abandoned.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's decision, 2026-09-24, verbatim:</b> <i>"Wrap the check
+    /// in its own timer. So all three timers sit in the tripwire's time."</i>
+    /// </para>
+    /// <para>
+    /// """ + W + """ <b>WITHOUT IT THE CHECK WAS BOUNDED BY NOTHING THIS PRODUCT
+    /// CONTROLS.</b> Velopack 1.2.158's <c>UpdateManager.CheckForUpdatesAsync()</c>
+    /// takes no <see cref="CancellationToken"/> at all, so the token handed to
+    /// <c>IUpdateClient.CheckAsync</c> was read once on entry and never again: a
+    /// stalled manifest fetch ended only on Velopack's own
+    /// <c>HttpClient.Timeout</c>, <b>30 minutes</b>, taken as the default
+    /// ([kb](../../../kb/packaging/velopack.md#what-bounds-a-stalled-download-and-a-stalled-check----measured-2026-09-23)).
+    /// 30 minutes of check plus a download inside its own 30-minute
+    /// <see cref="AbsoluteBudget"/> is 60 against a 45-minute
+    /// <see cref="CrashTripwire"/>, so a pass in which every timer behaved could
+    /// reach the tripwire -- which is exactly what the tripwire is supposed to
+    /// prove cannot happen.
+    /// </para>
+    /// <para>
+    /// <b>15 minutes, and the number is derived and not chosen.</b> The
+    /// arithmetic the tripwire needs is <c>this + AbsoluteBudget &lt;
+    /// CrashTripwire</c>, and at 30 and 45 that leaves 15 as the ceiling. It is
+    /// taken whole and not shaded down, because the check is one small HTTPS
+    /// GET of a JSON feed and 15 minutes is already three orders of magnitude
+    /// above it: **a bound this far out is a hang detector and not a promptness
+    /// claim**, which is the only kind of duration assertion this project allows.
+    /// The margin the tripwire keeps is therefore exactly zero by arithmetic and
+    /// the whole of <see cref="StallBudget"/> in practice, since a download that
+    /// is moving resets that timer and a download that is not never reaches
+    /// <see cref="AbsoluteBudget"/>.
+    /// </para>
+    /// <para>
+    /// """ + W + """ <b>IT IS APPLIED BY WAITING, NOT BY PASSING A TOKEN, because passing
+    /// one does not work.</b> <c>CheckAsync</c> honours cancellation only up to
+    /// the point where it calls Velopack; past that the token is inert. So the
+    /// call is awaited through <c>WaitAsync</c> with this budget's token, which
+    /// ends THIS pass on time and leaves Velopack's own call to finish into
+    /// nothing. That is a deliberate trade: the alternative is a pass that cannot
+    /// be ended at all.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan CheckBudget => TimeSpan.FromMinutes(15);
+
+    /// <summary>
     /// The outer deadline. <b>A crash tripwire, never flow control.</b>
     /// </summary>
     /// <remarks>
-    /// It is deliberately far outside <see cref="AbsoluteBudget"/> plus
-    /// <see cref="StallBudget"/>. It exists because the alternative to a wedged
-    /// background pass is a thread that never ends and never says so.
+    /// It is deliberately far outside <see cref="CheckBudget"/> plus
+    /// <see cref="AbsoluteBudget"/> plus <see cref="StallBudget"/>. It exists
+    /// because the alternative to a wedged background pass is a thread that never
+    /// ends and never says so.
     /// <para>
-    /// ⚠️ <b>What it does NOT cover is the check, and a working pass can
-    /// reach it.</b> <see cref="AbsoluteBudget"/> and <see cref="StallBudget"/>
-    /// are created inside <c>DownloadAsync</c> and bound the download alone;
-    /// <c>IUpdateClient.CheckAsync</c> runs under this deadline and nothing else.
-    /// Velopack 1.2.158's <c>UpdateManager.CheckForUpdatesAsync()</c> takes no
-    /// <see cref="CancellationToken"/> at all and <c>VelopackUpdateClient</c>
-    /// does not wrap it, so the token handed in here is read once on entry and
-    /// never again: a stalled manifest fetch ends only on Velopack's own
-    /// <c>SimpleWebSource.Timeout</c>, <b>30 minutes</b>, taken as the default.
-    /// 30 minutes of check plus a download inside its own 30-minute
-    /// <see cref="AbsoluteBudget"/> is 60 against this 45 -- so reaching this
-    /// deadline is <i>not</i> by itself evidence that an inner timer failed.
+    /// ⚠️ <b>ALL THREE TIMERS SIT INSIDE IT NOW, AND REACHING IT IS A DEFECT
+    /// AGAIN.</b> <i>Corrected 2026-09-24 (previously "What it does NOT cover is
+    /// the check, and a working pass can reach it ... so reaching this deadline is
+    /// not by itself evidence that an inner timer failed"), when the maintainer
+    /// took the decision quoted on <see cref="CheckBudget"/>.</i> The check is
+    /// bounded by <see cref="CheckBudget"/> at 15 minutes and the download by
+    /// <see cref="AbsoluteBudget"/> at 30, so the arithmetic is 45 against this
+    /// 45 and no pass in which every timer behaved can arrive here. It is the
+    /// sentence this constant is named for, and it is true again.
     /// </para>
     /// <para>
-    /// <b>And a check timeout already arrives wearing this deadline's name.</b>
+    /// <b>And a check timeout no longer arrives wearing this deadline's name.</b>
     /// <c>GetStringAsync</c> ends its <c>HttpClient.Timeout</c> by throwing a
     /// <c>TaskCanceledException</c>, which is an
-    /// <see cref="OperationCanceledException"/>, so <c>RunOnceAsync</c>'s second
-    /// catch reports <c>UpdateLog.TripwireFired</c> for a network timeout --
-    /// measured 2026-09-23
-    /// ([kb](../../../kb/packaging/velopack.md#what-bounds-a-stalled-download-and-a-stalled-check----measured-2026-09-23)). <i>Corrected 2026-09-23 (previously "nothing that is working can
-    /// reach it, so reaching it means the two inner timers did not fire when
-    /// they should have, which is a defect, not a slow link").</i>
+    /// <see cref="OperationCanceledException"/>, so before the budget existed
+    /// every network timeout on the check reported as the tripwire firing.
+    /// <c>RunOnceAsync</c> now discriminates: a cancellation whose source is the
+    /// check budget logs <c>UpdateLog.CheckTimedOut</c>, and only a cancellation
+    /// that is neither the lifetime nor the check reaches
+    /// <c>UpdateLog.TripwireFired</c>.
     /// </para>
     /// </remarks>
     public static TimeSpan CrashTripwire => TimeSpan.FromMinutes(45);
 
     private readonly IUpdateClient _client;
+    private readonly UpdateBudgets _budgets;
     private readonly LiveInstances? _live;
     private readonly ILogger _logger;
     private readonly Action _requestShutdown;
@@ -174,7 +220,19 @@ internal sealed class UpdateService
     /// <c>Update.exe</c> is waiting on this pid and will not swap until it is
     /// gone.
     /// </param>
-    public UpdateService(IUpdateClient client, LiveInstances? live, ILogger logger, Action requestShutdown)
+    /// <param name="budgets">
+    /// The four timers, or <see langword="null"/> for the product's own. Nothing
+    /// in the product passes anything else; the parameter exists so a test can
+    /// ask WHICH timer fired without waiting three quarters of an hour to find
+    /// out, and <c>UpdateBudgets.Scaled</c> keeps the relationships between them
+    /// while it does.
+    /// </param>
+    public UpdateService(
+        IUpdateClient client,
+        LiveInstances? live,
+        ILogger logger,
+        Action requestShutdown,
+        UpdateBudgets? budgets = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(logger);
@@ -184,6 +242,7 @@ internal sealed class UpdateService
         _live = live;
         _logger = logger;
         _requestShutdown = requestShutdown;
+        _budgets = budgets ?? UpdateBudgets.Default;
     }
 
     /// <summary>
@@ -243,7 +302,14 @@ internal sealed class UpdateService
         // The tripwire is linked to the process lifetime, so a shutdown ends the
         // pass instead of leaving a background thread holding a download.
         using var tripwire = CancellationTokenSource.CreateLinkedTokenSource(lifetime);
-        tripwire.CancelAfter(CrashTripwire);
+        tripwire.CancelAfter(_budgets.Tripwire);
+
+        // The check's own timer, linked to the tripwire so the outer deadline and
+        // a shutdown both still end it. See CheckBudget for why the call is
+        // AWAITED through this token instead of being handed it: past the point
+        // where CheckAsync calls Velopack, a token is inert.
+        using var check = CancellationTokenSource.CreateLinkedTokenSource(tripwire.Token);
+        check.CancelAfter(_budgets.Check);
 
         var clock = Stopwatch.StartNew();
 
@@ -251,7 +317,9 @@ internal sealed class UpdateService
         {
             UpdateLog.Checking(_logger, _client.ManifestUrl);
 
-            var candidate = await _client.CheckAsync(tripwire.Token).ConfigureAwait(false);
+            var candidate = await _client.CheckAsync(check.Token)
+                .WaitAsync(check.Token)
+                .ConfigureAwait(false);
 
             if (candidate is null)
             {
@@ -305,9 +373,19 @@ internal sealed class UpdateService
             // abandoned on purpose and the package, if any, stays staged.
             return UpdateOutcome.NothingToDo;
         }
+        catch (OperationCanceledException) when (check.IsCancellationRequested && !tripwire.IsCancellationRequested)
+        {
+            // ⚠️ DISCRIMINATED, and the order of the two clauses is the whole
+            // point: the check's source is LINKED to the tripwire, so a tripwire
+            // firing cancels this one too and both flags are set. Asking the
+            // check first without also asking whether the tripwire fired would
+            // report every tripwire as a check timeout.
+            UpdateLog.CheckTimedOut(_logger, _budgets.Check.TotalMinutes, clock.Elapsed.TotalMinutes);
+            return UpdateOutcome.Failed;
+        }
         catch (OperationCanceledException)
         {
-            UpdateLog.TripwireFired(_logger, CrashTripwire.TotalMinutes, clock.Elapsed.TotalMinutes);
+            UpdateLog.TripwireFired(_logger, _budgets.Tripwire.TotalMinutes, clock.Elapsed.TotalMinutes);
             return UpdateOutcome.Failed;
         }
 #pragma warning disable CA1031 // Every failure of an update is the same thing to this process: a log line and a pass that did nothing.
@@ -349,10 +427,10 @@ internal sealed class UpdateService
     private async Task DownloadAsync(UpdateCandidate candidate, CancellationToken tripwire)
     {
         using var absolute = CancellationTokenSource.CreateLinkedTokenSource(tripwire);
-        absolute.CancelAfter(AbsoluteBudget);
+        absolute.CancelAfter(_budgets.Absolute);
 
         using var stall = CancellationTokenSource.CreateLinkedTokenSource(absolute.Token);
-        stall.CancelAfter(StallBudget);
+        stall.CancelAfter(_budgets.Stall);
 
         var lastReported = -1;
 
@@ -362,7 +440,7 @@ internal sealed class UpdateService
             // thing it is watching is an absolute timeout wearing a second name.
             try
             {
-                stall.CancelAfter(StallBudget);
+                stall.CancelAfter(_budgets.Stall);
             }
             catch (ObjectDisposedException)
             {
@@ -511,7 +589,25 @@ internal static partial class UpdateLog
         Message = "The update check failed. Nothing was changed and BrowserAI is unaffected; the next start will try again.")]
     public static partial void PassFailed(ILogger logger, Exception failure);
 
-    /// <summary>The outer deadline fired, which means the inner two did not.</summary>
+    /// <summary>The manifest check outran its own budget.</summary>
+    /// <remarks>
+    /// """ + W + """ <b>ITS OWN EVENT ID, AND THAT IS THE POINT OF THE CHANGE.</b> Before
+    /// 2026-09-24 a stalled or timed-out check reported as <c>TripwireFired</c>,
+    /// event 11, which says the inner timers failed -- so the one line that was
+    /// supposed to mean "this is a defect" was also the line an ordinary network
+    /// timeout produced. Nothing is renumbered: event ids never change, and this
+    /// is a new one.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="budgetMinutes">The check's budget.</param>
+    /// <param name="elapsedMinutes">How long the pass ran before it was abandoned.</param>
+    [LoggerMessage(
+        EventId = 21,
+        Level = LogLevel.Warning,
+        Message = "The update check did not answer within its budget of {BudgetMinutes} minutes and was abandoned after {ElapsedMinutes:F1} minutes. That is a slow or dead feed, not a defect here; nothing was changed and the next start will try again.")]
+    public static partial void CheckTimedOut(ILogger logger, double budgetMinutes, double elapsedMinutes);
+
+    /// <summary>The outer deadline fired, which means the inner three did not.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="tripwireMinutes">The deadline.</param>
     /// <param name="elapsedMinutes">How long the pass actually ran.</param>

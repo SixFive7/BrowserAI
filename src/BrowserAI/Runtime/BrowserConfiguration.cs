@@ -471,10 +471,16 @@ internal static class BrowserConfiguration
     /// would be a different value under the same key.
     /// </para>
     /// <para>
-    /// <b>What this is NOT.</b> It is not a fingerprint change:
-    /// <c>navigator.webdriver</c> already read <c>true</c> at chromium 1246 in
-    /// every arm, including a plain launch with neither switch, so
-    /// <c>--enable-automation</c> reveals nothing a page could not already see.
+    /// <b>What this is NOT.</b> It is not a fingerprint change: <b>43 of 43
+    /// page-visible properties are identical</b> between a launch with
+    /// <c>--enable-automation</c> and one without, measured 2026-09-24.
+    /// <i>Corrected 2026-09-24 (previously "<c>navigator.webdriver</c> already read
+    /// <c>true</c> at chromium 1246 in every arm, including a plain launch with
+    /// neither switch").</i> That reading came from raw <c>playwright-core</c>
+    /// launches without the blink switch; through this product's config the flag
+    /// reads <c>false</c>, because Playwright's <c>--remote-debugging-pipe</c>
+    /// enables Chromium's <c>EnableAutomationControlled</c> feature and the blink
+    /// switch is applied later and wins.
     /// And <c>profile.password_manager_enabled</c> is a DEAD KEY at Chromium 154
     /// -- seeded <c>false</c> into the profile it survives the launch unread and
     /// the prompt still appears

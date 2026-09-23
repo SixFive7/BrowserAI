@@ -281,11 +281,22 @@ release body; nothing else depends on it.
   value. So writing `args` at all, for any reason, silently removes a switch upstream chose.
   Writing it explicitly is what makes the launch come out identical either way.
 
-  ⚠️ **Two findings that are absences, recorded because the next person will reach for
-  them.** `profile.password_manager_enabled` is a **dead key** at Chromium 154: seeded into the
-  profile it survives the launch unread and the prompt appears anyway. And **`navigator.webdriver`
-  already reads `true`** at chromium 1246 with or without the switch, so this is not a
-  fingerprint change -- which also makes re-verification row 109 stale, and it is marked.
+  ⚠️ **One finding that is an absence, recorded because the next person will reach for it.**
+  `profile.password_manager_enabled` is a **dead key** at Chromium 154: seeded into the profile it
+  survives the launch unread and the prompt appears anyway.
+
+  ⚠️ ***Corrected 2026-09-24 (previously "**`navigator.webdriver` already reads `true`** at
+  chromium 1246 with or without the switch, so this is not a fingerprint change -- which also
+  makes re-verification row 109 stale, and it is marked").*** That reading came from a raw
+  `playwright-core` probe launched **without** `--disable-blink-features=AutomationControlled`,
+  and it is not what the product does. Playwright's own `--remote-debugging-pipe` turns
+  Chromium's `EnableAutomationControlled` feature on, and `@playwright/mcp` appends the blink
+  switch, which is applied later and wins -- so **through the product's config the flag reads
+  `false`**, headed and headless, with and without `--enable-automation`.
+  `kb/chromium/fingerprinting.md` and re-verification row 109 were right the whole time and the
+  stale mark is reverted. **The conclusion this was offered in support of survives on better
+  evidence**: 43 of 43 page-visible properties are identical between the two arms, so adopting
+  `--enable-automation` changes nothing a page can see.
 
   **Planted red by removing `--enable-automation`**: the arm named `Chrome_WidgetWin_1`, title
   *"Save password?"* -- which it reports in the failure and does not assert, because which window
@@ -456,6 +467,39 @@ release body; nothing else depends on it.
   copy, not its second.
 
 ### Fixed
+
+- 🐛 **The update check has its own timer, so the crash tripwire means what it says again.**
+  The maintainer's decision, 2026-09-24, verbatim: *"Wrap the check in its own timer. So all
+  three timers sit in the tripwire's time."* Q256. `UpdateService.CheckBudget` is **15 minutes**,
+  derived and not chosen: the tripwire's arithmetic needs `check + absolute < tripwire`, and at
+  30 and 45 that leaves 15 as the ceiling. `TheOuterDeadlineIsATripwireRatherThanASecondBudget`
+  asserts it, so the relationship cannot drift.
+
+  **What was broken was the attribution as much as the bound.** Velopack's
+  `CheckForUpdatesAsync()` takes no `CancellationToken`, so a stalled manifest fetch ended only
+  on its own 30-minute `HttpClient.Timeout` -- and it ends it by throwing
+  `TaskCanceledException`, which is an `OperationCanceledException`. So the one log line that
+  means *our own timers failed* was also the line an ordinary slow feed produced. A check that
+  outruns its budget now logs **event 21**, its own; event 11 is the tripwire's and nothing else
+  reaches it. **No event id changed.**
+
+  ⚠️ **The budget is applied by AWAITING the call through its token, not by passing the token
+  on, because passing it on does not work.** Past the point where `CheckAsync` reaches Velopack
+  a token is inert. The pass ends on time and Velopack's own call finishes into nothing; that
+  cost is accepted because the alternative is a pass that cannot be ended at all.
+
+  **Planted red twice, and the first plant is the stronger finding.** With the fix removed and
+  the probe ignoring its token -- which is Velopack's actual shape -- the pass **never ended at
+  all**: the run had to be killed, which is the defect the sentence above describes and not
+  the mis-attribution the brief predicted. With the fix removed and the probe honouring its
+  token, the arm saw `TripwireFired` and no event 21, which is the mis-attribution. Both
+  watched; both green after.
+
+  The four durations are now a record the service takes, defaulting to the product's own and
+  never anything else in the product. What that buys is a test that can ask **which** timer
+  fired without waiting three quarters of an hour: `UpdateBudgets.Scaled` divides all four by
+  one factor, so the arm runs against the product's own ordering instead of four numbers
+  somebody typed.
 
 - 🐛 **The character scan stops mistaking a comment for a character literal.**
   `HouseRuleTests.NoTextFileCarriesACharacterAPersonDoesNotType` admits a forbidden character

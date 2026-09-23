@@ -1004,6 +1004,22 @@ internal sealed class UpdateTests
     {
         await Assert.That(UpdateService.StallBudget).IsLessThan(UpdateService.AbsoluteBudget);
         await Assert.That(UpdateService.CrashTripwire).IsGreaterThan(UpdateService.AbsoluteBudget + UpdateService.StallBudget);
+
+        // ⚠️ AND THE CHECK IS INSIDE IT TOO, added 2026-09-24. This is the
+        // arithmetic the tripwire's own remarks claim, and until the check had a
+        // budget it was FALSE: 30 minutes of unbounded check plus a 30-minute
+        // download is 60 against a 45-minute tripwire, so a pass in which every
+        // timer behaved could reach the deadline that exists to prove one did not.
+        await Assert.That(UpdateService.CheckBudget + UpdateService.AbsoluteBudget)
+            .IsLessThanOrEqualTo(UpdateService.CrashTripwire)
+            .Because("the tripwire says reaching it means an inner timer failed; that is only true while the inner timers fit inside it");
+
+        // And the budgets record is the product's own four and nothing else, so a
+        // test that scales them is scaling what ships.
+        await Assert.That(UpdateBudgets.Default.Check).IsEqualTo(UpdateService.CheckBudget);
+        await Assert.That(UpdateBudgets.Default.Absolute).IsEqualTo(UpdateService.AbsoluteBudget);
+        await Assert.That(UpdateBudgets.Default.Stall).IsEqualTo(UpdateService.StallBudget);
+        await Assert.That(UpdateBudgets.Default.Tripwire).IsEqualTo(UpdateService.CrashTripwire);
     }
 
     /// <summary>
@@ -1481,6 +1497,123 @@ internal sealed class UpdateTests
     /// message cannot drift apart.
     /// </summary>
     private const string Composition = "new LocalAppDataPaths(";
+
+    /// <summary>
+    /// A check that never answers ends on the CHECK budget and is reported as a
+    /// check timeout, not as the tripwire firing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's decision, 2026-09-24, verbatim:</b> <i>"Wrap the check
+    /// in its own timer. So all three timers sit in the tripwire's time."</i>
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>WHAT WAS BROKEN WAS THE ATTRIBUTION, not only the bound.</b>
+    /// Velopack's <c>CheckForUpdatesAsync()</c> takes no
+    /// <see cref="CancellationToken"/>, so a stalled manifest fetch ended on
+    /// Velopack's own 30-minute <c>HttpClient.Timeout</c> by throwing
+    /// <c>TaskCanceledException</c> -- which is an
+    /// <see cref="OperationCanceledException"/>, so the one log line that means
+    /// <i>this is a defect in our own timers</i> was also the line an ordinary
+    /// network timeout produced. <b>Planted red 2026-09-24</b> against the
+    /// unfixed service, where this arm saw <c>TripwireFired</c>, event 11, at the
+    /// tripwire's own budget.
+    /// </para>
+    /// <para>
+    /// <b>The durations are the product's, divided.</b>
+    /// <c>UpdateBudgets.Scaled</c> takes all four by the same factor, so this arm
+    /// runs against the product's own arithmetic -- check plus absolute inside the
+    /// tripwire -- and not against four numbers written here. Every assertion
+    /// below is expressed in those scaled values, so a change to
+    /// <c>CheckBudget</c> or <c>CrashTripwire</c> carries into this test instead
+    /// of leaving it asserting a number that used to be right.
+    /// </para>
+    /// <para>
+    /// <b>The bound on the elapsed time is a hang detector</b>: it asks only that
+    /// the pass ended before the TRIPWIRE could have, which is the whole claim --
+    /// that the check is bounded by something smaller than the outer deadline.
+    /// Nothing here asserts promptness.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACheckThatNeverAnswersEndsOnItsOwnBudgetAndSaysSo()
+    {
+        // 4,500 takes the product's 15 / 30 / 1 / 45 minutes to 200 ms / 400 ms /
+        // 13 ms / 600 ms. One factor, so the orderings the service depends on are
+        // the product's own.
+        var budgets = UpdateBudgets.Default.Scaled(4_500);
+
+        using var scratch = ScratchDirectory.Create("check-budget");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
+        using var capture = new CapturingLoggerProvider();
+
+        var client = new NeverAnsweringUpdateClient();
+        var service = new UpdateService(client, mine, capture.CreateLogger("BrowserAI.Update"), () => { }, budgets);
+
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var outcome = await service.RunOnceAsync(CancellationToken.None);
+
+        clock.Stop();
+
+        await Assert.That(outcome).IsEqualTo(UpdateOutcome.Failed);
+
+        // ⚠️ THE PRECONDITION. A client whose check returned would end the pass
+        // for a different reason and every assertion below would be about
+        // nothing.
+        await Assert.That(client.Checks).IsEqualTo(1);
+        await Assert.That(client.Downloads).IsEqualTo(0);
+
+        // The attribution, which is the change.
+        await Assert.That(capture.Records.Any(record => record.EventId.Id is 21))
+            .IsTrue()
+            .Because("a check that outran its own budget logs UpdateLog.CheckTimedOut, event 21");
+
+        await Assert.That(capture.Records.Any(record => record.EventId.Id is 11))
+            .IsFalse()
+            .Because("event 11 is TripwireFired and means the inner timers did not fire; a check timeout is not that");
+
+        // And the bound: ended before the tripwire could have, which is the claim.
+        await Assert.That(clock.Elapsed)
+            .IsLessThan(budgets.Tripwire)
+            .Because("the check is bounded by CheckBudget, which is smaller than CrashTripwire; reaching the tripwire would mean it is not");
+    }
+
+    /// <summary>A client whose check never answers, which is the shape Velopack can produce.</summary>
+    /// <remarks>
+    /// <b>It ignores the token on purpose</b>, because that is what Velopack does:
+    /// <c>CheckForUpdatesAsync()</c> takes none, so a token handed to
+    /// <c>CheckAsync</c> is inert past the point where it is passed on. A probe
+    /// that honoured cancellation would be testing a seam the product does not
+    /// have.
+    /// </remarks>
+    private sealed class NeverAnsweringUpdateClient : IUpdateClient
+    {
+        public string ManifestUrl => "file:///never-answers/releases.win.json";
+
+        public int Checks { get; private set; }
+
+        public int Downloads { get; private set; }
+
+        public Task<UpdateCandidate?> CheckAsync(CancellationToken cancellationToken)
+        {
+            Checks++;
+
+            return new TaskCompletionSource<UpdateCandidate?>().Task;
+        }
+
+        public Task DownloadAsync(UpdateCandidate candidate, Action<int> progress, CancellationToken cancellationToken)
+        {
+            Downloads++;
+            return Task.CompletedTask;
+        }
+
+        public void ApplyAfterThisProcessExits(UpdateCandidate candidate)
+        {
+        }
+    }
 
     /// <summary>
     /// A scripted <see cref="IUpdateClient"/>: everything the service asks for,

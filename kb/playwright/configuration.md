@@ -814,13 +814,24 @@ starts. Writing the switch explicitly is what makes the launch come out identica
 either way, and it is why this product's `args` is a pair and not a single entry.
 Read back from `browser_get_config` in every arm.
 
-**`navigator.webdriver` reads `true` at chromium 1246 with or without the
-switch** -- measured in three fingerprint arms including a plain launch with
-neither switch. So `--enable-automation` reveals nothing to a page that a page
-could not already see, and adopting it is not a fingerprint decision.
-⚠️ **[Re-verification row 109](../re-verification.md) says `navigator.webdriver`
-is `false` on Chromium and is STALE as of this measurement**; it is marked there
-and the underlying entry is where the re-check belongs.
+**`--enable-automation` reveals nothing to a page that a page could not already
+see** -- 43 of 43 page-visible properties are identical between a launch with the
+switch and one without, measured 2026-09-24.
+
+⚠️ ***Corrected 2026-09-24 (previously "**`navigator.webdriver` reads `true` at
+chromium 1246 with or without the switch** -- measured in three fingerprint arms
+including a plain launch with neither switch ... [Re-verification row
+109](../re-verification.md) says `navigator.webdriver` is `false` on Chromium and
+is STALE as of this measurement").*** **The flag reads `false` through the
+product's config, headed and headless, with and without `--enable-automation`**,
+and the false reading has a named cause: those three arms were raw
+`playwright-core` launches **without**
+`--disable-blink-features=AutomationControlled`. Playwright's own
+`--remote-debugging-pipe` turns Chromium's `EnableAutomationControlled` feature
+on; `@playwright/mcp` appends the blink switch; the switch is applied later and
+wins. So a probe that skips the wrapper measures a browser this product never
+launches. `kb/chromium/fingerprinting.md` and row 109 were right the whole time,
+and the stale mark placed on that row lasted one day.
 
 **Firefox: the preference is set and the behaviour is NOT established.**
 `signon.rememberSignons: false` through `firefoxUserPrefs` reaches the running

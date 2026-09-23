@@ -1643,6 +1643,20 @@ its `HttpClient.Timeout` by throwing **`TaskCanceledException`** -- which *is* a
 cancelled us* reads a network timeout as that instead. `UpdateService`'s crash
 tripwire says so in place.
 
+⚠️ **WHAT BROWSERAI DOES ABOUT IT, ADDED 2026-09-24 SO THIS ENTRY IS NOT READ AS
+A LIVE GAP.** The maintainer's decision, verbatim: *"Wrap the check in its own
+timer. So all three timers sit in the tripwire's time."* `UpdateService.CheckBudget`
+is 15 minutes, derived and not chosen -- the tripwire's arithmetic needs
+`check + absolute < tripwire`, and at 30 and 45 that leaves 15 as the ceiling.
+**It is applied by AWAITING the call through that budget's token and not by
+handing the token over**, because handing it over is what does not work: past the
+point where `CheckAsync` reaches Velopack the token is inert, which is the
+measurement above. A check that outruns the budget logs its own event, 21, and
+never the tripwire's 11 -- so a slow feed stops reporting as a defect in our own
+timers. **The cost is stated:** the pass ends on time and Velopack's own call
+finishes into nothing, which is the only alternative to a pass that cannot be
+ended at all.
+
 **Re-establish** by pointing a `HttpClient` with a short timeout at a socket that
 sends headers and then trickles, and by timing a `GetStringAsync` against a port
 that accepts and never answers. The rig is
