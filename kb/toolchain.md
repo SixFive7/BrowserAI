@@ -188,6 +188,36 @@ MSBuild `<Error>` as line noise around the diff it is supposed to be carrying;
 `$PSStyle.OutputRendering = 'PlainText'` is the switch. `[MACHINE]` for the
 duplicate git, `[FLOATS]` for the rendering default.
 
+### A `[string[]]` parameter cannot be handed an array through `pwsh -File` — measured 2026-09-23
+
+**Measured 2026-09-23 @ PowerShell 7 on Windows 11 Pro 26200**, with a
+three-line script whose whole body printed `$Keep.Count` and each element:
+
+| Invocation | What the script received |
+|---|---|
+| `pwsh -NoProfile -File probe.ps1 -Keep a,b,c` | **one** element, the string `a,b,c` |
+| `pwsh -NoProfile -File probe.ps1 -Keep a b c` | **one** element, `a` — `b` and `c` are positional and silently dropped |
+
+**`-File` passes arguments as literal strings and does no array binding at all**,
+so a caller outside PowerShell — a test host, a CI step, anything starting
+`pwsh.exe` — has **no** spelling that produces a two-element array. `-Command`
+does, because it parses PowerShell syntax, but a build script run through
+`-Command` is a quoting problem in every shell that calls it.
+
+**So a script meant to be driven takes the comma form and splits it itself**, and
+says so where the parameter is declared. `build/Set-UploadAssets.ps1` is this
+tree's example: `$Keep | ForEach-Object { $_ -split ',' }`, a no-op when
+`build/New-Release.ps1` calls it with a real array. It was found the way it
+should have been: the first run of the arm driving it failed on a set that
+matched nothing, and the binding was probed both ways before the fix was
+written rather than after.
+
+`[STABLE]` — a documented property of `pwsh`'s own argument handling rather than
+a version's behaviour. No re-verification row, for the reason
+[the one exemption](re-verification.md#a-floats-entry-with-no-row-the-one-rule)
+gives: a change to it makes the script's own driven test go red, which is where
+it was found in the first place.
+
 ## git line-ending normalisation
 
 **A committed byte copy and its regenerated twin are not governed by the same
