@@ -35,7 +35,7 @@ date it was made, is in
 
 > Was three. Six more were found by measurement on 2026-08-15, and **two of the
 > original three were wrong in detail**. A spike drove the real child through a
-> published NativeAOT binary; everything below is observed rather than read. Every
+> published NativeAOT binary; everything below is observed, not read. Every
 > measurement, and what building each deviation changed about it, is in
 > [kb: SDK behaviours](kb/mcp/sdk.md#sdk-behaviours-a-proxy-must-work-around) --
 > **which is authoritative where the two disagree.**
@@ -47,7 +47,7 @@ it adds a shell layer, an extra process between BrowserAI and `node` (complicati
 tree ownership and exit-code attribution), and cmd.exe quoting semantics. The
 interface is two members (`Name`, `ConnectAsync`) and the replacement is ~120
 lines -- 164 as built. Port `StdioClientTransportOptions`' stderr and shutdown
-handling rather than reinventing it. The `cmd.exe` claim is checked rather than
+handling instead of reinventing it. The `cmd.exe` claim is checked, not
 remembered: `SdkStdioClientTransportTests` drives the SDK's own transport and
 asserts the child's parent **is** `cmd`, so the day upstream drops the wrapping the
 *rationale* fails a test instead of ageing quietly.
@@ -59,13 +59,13 @@ asserts the child's parent **is** `cmd`, so the day upstream drops the wrapping 
 unfiltered. Using the wrong one shrinks the exposed surface with no error anywhere.
 **Superseded by deviation 4**, which rules out the typed `ListToolsResult` both
 overloads return: `tools/list` is forwarded as a raw `JsonRpcRequest` and answered
-from the child's own bytes, so the trap is *unreachable* rather than avoided --
+from the child's own bytes, so the trap is *unreachable*, not avoided --
 asserted by `LosslessPassthroughTests.TheProductNeverCallsTheOverloadThatDropsToolsSilently`.
 **Two deviations that appear to agree do not:** 2 says which overload to call, 4
 says the shape both of them return is lossy, and 4 wins.
 
 **3. Proxy `tools/call` through `McpServerOptions.Filters.Message.IncomingFilters`,
-short-circuiting rather than calling `next`.** The `ContentBlock` converter
+short-circuiting instead of calling `next`.** The `ContentBlock` converter
 **silently drops unknown properties** and **throws on unknown content *types***,
 failing the whole call at deserialization before any BrowserAI code runs. The
 filter sees `JsonRpcResponse.Result` as a raw `JsonNode?` and never touches
@@ -114,7 +114,7 @@ wins and the notification callback is cancelled before it can run.
 > remedy is not**: built exactly as written, **the callback never runs**, and it
 > fails for the identical reason this paragraph gives for the SDK's own attempt
 > failing. **What is built instead**, and it is better on every axis: announce from
-> the `catch (OperationCanceledException)`. Awaited rather than fire-and-forget,
+> the `catch (OperationCanceledException)`. Awaited, not fire-and-forget,
 > incapable of firing before the request it names has been sent, and reached by the
 > one path that definitely executes. **The first half of the remedy is unchanged and
 > load-bearing** -- the id must be ours, or there is nothing to name. Proven at the
@@ -132,7 +132,7 @@ handler)`, which `McpClient` inherits, and which is what relays
 proxy has no route to the one object that can see the child's raw bytes.
 `ChildLink` is therefore an **`IClientTransport`** decorator, ~30 lines as
 predicted but at the other end of the interface. **One thing the relay does not
-preserve, stated rather than left to be discovered: order.** The SDK's message loop
+preserve, stated here and not left to be discovered: order.** The SDK's message loop
 dispatches inbound notifications fire-and-forget, so two progress notifications
 written by the child in order were observed reaching the caller as 2 then 1. The
 token and the params survive intact; this cannot be fixed from a notification
@@ -143,7 +143,7 @@ but the message is prefixed -- `"upstream exploded"` arrives as `"Request failed
 (remote): upstream exploded"`, and `data` is destructured into `Exception.Data`.
 **Neither half was built as described, and that is the point:** the reconstruction
 is not needed, and the prefix is never met, because the caller is answered from the
-child's own error frame rather than from the exception's message. Both halves of
+child's own error frame, not from the exception's message. Both halves of
 the deviation are answered by not travelling the path that damages them. The SDK
 still does all of it, and `SdkErrorShapeTests.TheSdkStillPrefixesARemoteErrorMessageAndStillKeepsItsData`
 is what keeps that under test -- the product no longer travels that path, so nothing
@@ -154,7 +154,7 @@ rewrite.
 **9. Answer the `server/discover` probe.** A child that ignores it costs the full
 `DiscoverProbeTimeout` **per connect** -- the spike burned 30 s per rig against a
 fake child until it returned `-32601`. Real `@playwright/mcp` 0.0.79 handles it, so
-this is a hazard for our own test doubles rather than for production.
+this is a hazard for our own test doubles, not for production.
 `FakePlaywrightChild` answers it with `-32601`, and
 `FakeChildHarnessTests.TheClientPinIsWhatSkipsTheDiscoverProbe` proves the mechanism
 from three sides -- pinned sends no probe, unpinned does, and unpinned against a
@@ -169,7 +169,7 @@ measured, not inferred.
 > **NativeAOT is proven, not assumed.** `PublishAot=true`, win-x64,
 > self-contained: **zero trim/AOT warnings, no `JsonSerializerContext` of our own
 > required, 9.76 MiB binary.** The published binary drove a real `@playwright/mcp`
-> child over stdio. One AOT trap, in *our* code rather than the SDK:
+> child over stdio. One AOT trap, in *our* code and not the SDK:
 > `JsonArray.Add(x)` binds to the generic overload, which is `RequiresDynamicCode`;
 > cast to `(JsonNode)` to clear it.
 
@@ -179,7 +179,7 @@ measured, not inferred.
 diagnosis.** ILC's final step is a native link, so `PublishAot=true` requires the
 MSVC toolchain -- `link.exe`, located through `vswhere` -- installed by Visual
 Studio's *Desktop development with C++* workload. Without it the publish fails, and
-it fails in a way that reads as an SDK or library incompatibility rather than as a
+it fails in a way that reads as an SDK or library incompatibility, not as a
 missing external tool. The wrong diagnosis leads straight to the wrong fix: pinning
 something back, or abandoning AOT.
 
@@ -195,7 +195,7 @@ machine, are in [kb: SDK](kb/mcp/sdk.md#driving-the-whole-sdk-aot-passthrough-fi
 
 BrowserAI's own AOT spike succeeded, so the toolchain was present on the machine
 that ran it. That is a fact about that machine, not about the next one, which is
-exactly why it belongs in a prerequisite list rather than in a memory.
+exactly why it belongs in a prerequisite list and not in a memory.
 
 ## Versions come from git tags
 
@@ -207,13 +207,13 @@ with the tag. The mechanism, measured against MinVer 7.0.0, is in
 [kb: versions from git tags](kb/packaging/velopack.md#deriving-the-version-from-git-tags-with-minver).
 
 **The house four-part `base.commitcount` convention cannot be carried here**, and
-this is a constraint rather than a preference:
+this is a constraint, not a preference:
 [`vpk` rejects four-part version numbers outright](kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)
 -- semver2, three parts only. That hazard is already recorded as a build-pipeline
 failure; deriving the version in a shape `vpk` accepts is what stops it ever firing.
 
-**A consequence worth stating, because it deletes a design question rather than
-answering it.** There is no need for a magic development-build version number -- no
+**A consequence that should be stated, because it deletes a design question
+instead of answering it.** There is no need for a magic development-build version number -- no
 `0.0.0`, no sentinel, no *"is this a real release"* flag to keep in sync. **An
 untagged build already carries the not-a-release suffix in its own version
 string**, so the rule reduces to one sentence: *never self-update from a build that
@@ -223,7 +223,7 @@ generated by the same mechanism that produced the version.
 
 ## The build configuration
 
-**Settled 2026-08-16, and every item below serves the float rather than
+**Settled 2026-08-16, and every item below serves the float instead of
 restraining it.** That framing is not decoration -- read the wrong way, every one of
 these reads as a pin, and the
 [versioning policy](DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it)
@@ -233,7 +233,7 @@ forbids pins. They are listed here as **requirements**.
 |---|---|---|
 | **An SDK floor that rolls forward** | A machine that is behind fails loudly instead of building subtly differently | A floor with roll-forward takes the **newest installed** SDK. A ceiling would be a pin; a floor is the opposite -- it forbids being stale, not being current |
 | **The MTP runner setting TUnit requires** | TUnit is MTP-only; the runner entry is what makes `dotnet test` work at all | It is not a version. It names a test-platform mode |
-| **One file declaring every package version, all floating, with transitive pinning** | **One place the float lives.** No stale number can hide in a project file, because no project file carries one | The declaration is the float. Transitive pinning makes that one file authoritative for indirect dependencies too, so the resolved set is complete rather than partly implicit |
+| **One file declaring every package version, all floating, with transitive pinning** | **One place the float lives.** No stale number can hide in a project file, because no project file carries one | The declaration is the float. Transitive pinning makes that one file authoritative for indirect dependencies too, so the resolved set is complete, not partly implicit |
 | **Shared build properties declared once** | Language version, nullability, analyzer severity, warnings-as-errors, target framework -- set in one place, inherited everywhere | Nothing here is a dependency version |
 | **`longPathAware=true` in the application manifest** | Session directories are caller-chosen and unbounded; a path over `MAX_PATH` must not be a mystery failure inside a profile tree | Not a version at all |
 | **`src/` and `tests/` layout** | Separates what ships from what proves it, which is what makes publish-only gating expressible | - |
