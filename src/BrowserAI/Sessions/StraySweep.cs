@@ -70,7 +70,7 @@ internal sealed class StraySweep
     /// <param name="logger">Where the pass is recorded. Never <c>stdout</c>.</param>
     /// <param name="profileLockImages">
     /// The subset of <paramref name="browserImages"/> whose profile is
-    /// identified through <c>parent.lock</c> rather than through a message
+    /// identified through <c>parent.lock</c> and not through a message
     /// window -- Firefox, from
     /// <see cref="Runtime.ProvisionedBrowsers.ExecutablesFor"/>. Empty means the
     /// second path is not attempted, which costs attribution and never safety.
