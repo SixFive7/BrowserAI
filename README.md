@@ -278,7 +278,15 @@ This means in-process tool manipulation is *available* if the proxy approach eve
 
 ## Status
 
-**Tagged `v1.0.0` and published. No install is known beyond the maintainer's own.**
+**Tagged `v1.1.0` and published. No install is known beyond the maintainer's own.**
+
+⚠️ ***Corrected 2026-09-23 (previously "**Tagged `v1.0.0` and published.**")*** --
+`v1.1.0` has been the standing release since 2026-09-23T11:50:58Z, `gh release list`
+reads it `Latest`, and until this correction the string `1.1.0` appeared **nowhere in
+this file**. The second sentence is unchanged and is the half that still matters: a
+download is not an install, and no session in the wild has ever been observed. The
+paragraph below is about `v1.0.0` and is left as written, because it is the account of
+a sentence that was wrong rather than a description of what is standing now.
 
 ⚠️ ***Corrected 2026-09-15 (previously "**Tagged `v1.0.0`. Nothing has been
 distributed.**", itself corrected 2026-08-24 from "**Shipped. `v1.0.0`.**")*** --

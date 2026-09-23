@@ -712,6 +712,26 @@ them is the SUITE's**: each names a `playwrightLib` under this repository's own
 `downloadsPath` under `.work\test-scratch`. None names the real install.
 `[MACHINE]`
 
+⚠️ **RE-MEASURED 2026-09-23, AND "EVERY ONE OF THEM" IS NO LONGER TRUE --
+*narrowed by addition; the sentence above stood alone until today*.** The
+directory was emptied between the two readings, so what follows is a fresh week
+rather than a shrinking pile: **3,749 files, 6,619,667 bytes (6.3 MiB)**, oldest
+`2026-09-16T07:04`, newest `2026-09-23T18:13`. **26 of the 3,749 name the
+INSTALLED product**, with `playwrightLib` at
+`%LOCALAPPDATA%\BrowserAI.app\current\payload\mcp\node_modules\playwright-core`
+and `title` `BrowserAI`; the other 3,723 name this repository's tree. So the
+*cache* is still overwhelmingly the suite's and the *claim* was too strong: a
+real install leaves descriptors here too, about one per browser a person opens,
+and nothing reaps those either. **That makes the reaper paragraph below matter
+more rather than less** -- a real install is exactly the case where *cannot
+connect* would be judging somebody else's browsers. `[MACHINE]`
+
+⚠️ **Re-establish it by counting the files and bytes and then grepping their
+CONTENTS for `BrowserAI.app`, not for a Windows path.** The descriptors are JSON,
+so every backslash inside them is doubled: a search for the single-backslash form
+returns **zero** on a directory that really does hold 26 of them, which is what
+the first pass at this re-measurement reported before the shape was noticed.
+
 **Where it comes from, read in `coreBundle.js` at `playwright-core`
 1.64.0-alpha-2026-09-14:** `serverRegistry.ts`'s `registryDirectory()` is
 `defaultCacheDirectory() + "ms-playwright" + "b"`, and
