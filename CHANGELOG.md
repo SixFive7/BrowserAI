@@ -40,6 +40,47 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **All 27 assumed justifications are settled, and the arm that holds the number at zero is green.**
+  Three readers measured or cited every one of them. **19 measured, 8 cited, 0 left
+  unestablishable** -- and the striking part is the direction: **eleven came back against the
+  sentence that carried them.** Concurrent profile writers cause silent LOSS and not
+  corruption; screenshots ARE byte-stable when the page and the binary are; `spawn EFTYPE` is
+  not always `EFTYPE`; the flat MCP namespace does not exist; *Use testing platform server
+  mode* does not exist in Visual Studio 2026; the rename the tool-naming rule rests on
+  understated itself by eight tools; the SDK refuses every protocol version and not only a lower
+  one; `CreateProcessW` on a `.cmd` succeeds; an unhandled exception DOES unwind; `win` is
+  Velopack's fallback and not its first answer; and Google never said what this repository has
+  been quoting it as saying.
+
+  **Two claims were withdrawn and not confirmed, and both because the reason was the
+  denial restated.** *"The 156 denials do not matter, they are protected and SYSTEM
+  processes"* cannot be checked from a non-elevated process at all -- WMI answers *access
+  denied* for 165 of 166 -- so what stands is narrower and sufficient: 157 of the 166 are
+  session 0, and a browser this user launched was in the OPENED set in the same sweep. And
+  *"the price of Azure Artifact Signing"* closes in `kb/not-established.md` against $9.99/month
+  from Microsoft's own page, which refutes in the same sentence the property the figure was
+  carried for.
+
+  ⚠️ **Two of them are worse than they were written.** `PLAYWRIGHT_SKIP_BROWSER_GC=1` guards
+  the `install` call site only, so an `uninstall` in a root BrowserAI owns deletes every
+  unreferenced browser directory **with the variable set** -- 8 of 9 entries, 2,446,370,634 B in
+  1,119 files against the real root. That is a new hazard row. And the crash tripwire's *nothing
+  that is working can reach it* is false twice over: a stalled manifest fetch is bounded by
+  nothing BrowserAI controls, and a network timeout is already logged as a tripwire firing.
+  **The comment is corrected and no code is changed** -- the fix is a decision the maintainer
+  has not taken.
+
+  **Eight measurements became kb entries and eight facts became re-verification rows**, because
+  a measurement in a comment is a measurement nobody re-checks: what bounds a stalled Velopack
+  download and a stalled check, the unwind ordering against `FailFast` and a stack overflow, the
+  `CreateProcessW`-on-`.cmd` interposition, the SDK's version equality check, the GC's two
+  sides, the `EFTYPE`/`UNKNOWN` split, screenshot stability and the client's per-tool schema
+  deferral. One kb entry was re-filed out of the desktop-heap section, where two `src/` comments
+  had been citing a heading it was not under, and three stale version stamps were refreshed.
+
+  `RecordedCountTests.NoClaimInTheTreeIsStillMarkedAssumed` **reports 0**, and `TODO.md`'s count
+  is re-derived from that same scan at every step: 27, 19, 9, 0.
+
 - ✅ **Every assumed justification carries a marker, and a test holds the number at zero.**
   The maintainer's instruction, 2026-09-23, verbatim: *"tag everything ASSUMED now and then
   start measuring and researching to get the number to 0. I want the rule to be that this
