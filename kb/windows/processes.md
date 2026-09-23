@@ -34,7 +34,7 @@ each of the three corrupts the stream on first contact. `[STABLE]`
 > CP437**; it is not evidence about *when* the entry above was measured, so that
 > gap is unchanged. **What they built:** it is exactly the hand-rolled
 > `StreamWriter` the entry above warns about, and it emitted no BOM only because
-> the encoding was CP437 rather than UTF-8 -- swap the encoding and the identical
+> the encoding was CP437 and not UTF-8 -- swap the encoding and the identical
 > code corrupts a JSON-RPC stream on its first byte. Read from source, not run.
 > `[MACHINE]` for the two codebases, **which are not published, so that half is
 > not reproducible from here**; the underlying default is `[STABLE]` and is
@@ -157,7 +157,7 @@ the child exits. `[STABLE]`
 > `WaitForExit` on a `Process` whose handle has been released and reading
 > `.ExitCode`. **This is the entry behind the rule that a child's exit code is
 > cached as an `int` the moment it is available**, and behind treating "the log
-> looks the same either way" as a defect rather than as tidiness.
+> looks the same either way" as a defect and not as tidiness.
 
 **`WaitForExit(int)` does not drain the async readers** -- only `WaitForExit()`
 and `WaitForExitAsync(ct)` do, so the timeout overload truncates stderr.
@@ -196,7 +196,7 @@ left unset passes `null` to `CreateProcess`**, so the child inherits the parent'
 cwd, whatever the MCP client happened to have. **`ArgumentList` and `Arguments`
 are mutually exclusive**; setting both is undefined behaviour. `[STABLE]`
 
-**`Process.ExitCode` throwing after `Dispose()` is now reproduced rather than
+**`Process.ExitCode` throwing after `Dispose()` is now reproduced, not
 quoted**, by
 `DirectStdioClientTransportTests.ProcessExitCodeThrowsAfterDisposeWhichIsWhyTheSessionCachesIt`:
 a probe run to completion, its exit code read (2), the `Process` disposed, and
@@ -247,7 +247,7 @@ changed once already.
 **To re-establish it:** from a parent that has called `FreeConsole`, start any
 console-subsystem child twice with the flag set and unset, and diff
 `EnumWindows` over visible top-level windows around each launch. Read the class
-names rather than filtering for one, or the measurement answers zero both times.
+names instead of filtering for one, or the measurement answers zero both times.
 
 ### A read parked on standard input is woken by neither cancelling it nor disposing the stream -- measured 2026-09-15
 
@@ -297,7 +297,7 @@ after each with a bound. Run it twice -- once with stdin inherited from a
 `cmd.exe` started with `CreateNoWindow` (a console with no window), once with
 stdin redirected to a pipe nothing writes to -- because a measurement taken only
 on the console arm cannot tell a console-specific behaviour from a general one.
-Write the report to a file rather than to stdout: on the console arm there is
+Write the report to a file and not to stdout: on the console arm there is
 nowhere for stdout to go that anybody will read.
 
 ### `SW_SHOWNOACTIVATE` keeps a headed Chromium off the foreground, and Firefox never takes it -- measured 2026-08-24
@@ -306,7 +306,7 @@ nowhere for stdout to go that anybody will read.
 this is the one about a GUI child.** The entry above is about a *console* child's
 window; this one is about a browser's first real window, which `CREATE_NO_WINDOW`
 says nothing about. Measured 2026-08-24 on the reference machine, driving
-`CreateProcessW` directly with a hand-built `STARTUPINFOW` rather than through the
+`CreateProcessW` directly with a hand-built `STARTUPINFOW` instead of through the
 product, against the provisioned browsers. The foreground was read with
 `GetForegroundWindow` and attributed with `GetWindowThreadProcessId`, polled every
 250 ms.
@@ -322,7 +322,7 @@ Chromium's is the half a revision could move.
 ⚠️ **The Chromium row rests on exactly ONE discriminating trial, and the condition
 it needed matters far more than the count.** Three further trials each way
 returned *no steal* on **both** arms and therefore discriminate nothing. The
-reason is machine configuration rather than the browser:
+reason is machine configuration, not the browser:
 [`SPI_GETFOREGROUNDLOCKTIMEOUT` on this machine is 2,147,483,647 ms](detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal----measured-2026-08-24)
 -- about 24.8 days -- so Windows refuses a foreground change in the general case and
 both arms look identical. The one trial that separated them did so through the
@@ -340,7 +340,7 @@ foreground stayed where it was, in the *same* discriminating condition as the
 Chromium trial. So Firefox shows a window on launch and does not take the
 foreground either way, and the flag changes nothing for it.
 
-⚠️ **What the Chromium row does NOT establish, said here rather than left to be
+⚠️ **What the Chromium row does NOT establish, said here instead of left to be
 assumed:** no visible-window control is recorded for it. Its without-flag arm
 proves a window appears at all, and on the with-flag arm *did not take the
 foreground* is not separated from *showed nothing this time*. Whoever repeats
@@ -350,7 +350,7 @@ this should carry the Firefox arm's control across to it.
 value down -- it is what tells a null trial from a negative result afterwards.
 Then put a window owned by an **ancestor of the launching process** in the
 foreground (VS Code, when the launcher is started from its terminal) and confirm
-that with `GetForegroundWindow` + `GetWindowThreadProcessId` rather than by eye.
+that with `GetForegroundWindow` + `GetWindowThreadProcessId` and not by eye.
 Launch the browser twice through `CreateProcessW` with a hand-built
 `STARTUPINFOW` -- `STARTF_USESHOWWINDOW` with `SW_SHOWNOACTIVATE`, then neither --
 polling the foreground every 250 ms for a few seconds and attributing each
@@ -400,7 +400,7 @@ which are Windows' and .NET's own; `[MACHINE]` for nothing here.
 > HARNESS OWN spawn-record reclaim"* and ruled the **product** sweep out *"BY
 > DESIGN (attribution needs the window this browser never published) -- read not
 > run"*. The recurrence on 2026-09-17 was read out of the machine-wide process
-> log rather than reasoned about, and it was the **product sweep**:
+> log, not reasoned about, and it was the **product sweep**:
 >
 > ```
 > 2026-09-17T12:02:54.5368021Z  made=2026-09-17T12:02:54.5367549Z  WARN   pid=80428@134341201739882745  BrowserAI.Sweep[5]  Terminated a stray browser: pid=90216 image=C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1244\chrome-win64\chrome.exe session=C:\Source\SixFive7\BrowserAI\.work\test-scratch\sweep-real-browser-29e865154e604cc18ac7a4f7e16f6421\real. Its session directory was unlocked, so nothing owned it.
@@ -452,7 +452,7 @@ which are Windows' and .NET's own; `[MACHINE]` for nothing here.
 ## Files, durable writes and deletes
 
 **`Directory.GetFiles` is top-level only, and a recursive enumeration aborts on
-the first `UnauthorizedAccessException` rather than skipping the node.** MS Learn,
+the first `UnauthorizedAccessException` instead of skipping the node.** MS Learn,
 on the `AllDirectories` overloads: *"`UnauthorizedAccessException` errors may make
 the enumeration incomplete. You can catch these exceptions by first enumerating
 directories and then enumerating files."* The failure is silent in the worst way --
@@ -461,7 +461,7 @@ recursive delete therefore needs a hand-rolled **post-order** walk with
 per-node exception discrimination: deepest child first, so a non-recursive
 `Directory.Delete` always sees an empty directory. Reference implementation, read
 2026-08-16 in that same unpublished cleanup tool -- **the shape is recorded here
-rather than the path, because a path nobody else can open is not a
+and not the path, because a path nobody else can open is not a
 re-establishment route** -- recurse subdirectories, then yield files, then yield
 the directory itself, with
 `UnauthorizedAccessException` and `DirectoryNotFoundException` caught and logged
@@ -523,7 +523,7 @@ intermediate file buffers in the operating system."* Surviving a power cut needs
 an atomic `File.Move` into place so no reader ever observes a half-written file.
 Verified against MS Learn 2026-08-16. `[STABLE]`
 
-**A working reference implementation was read rather than designed**, verified
+**A working reference implementation was read, not designed**, verified
 2026-08-16 in an unpublished first-party C# test rig: its `WriteAllTextDurable`
 does all three steps -- a temp file **in the same
 directory**, opened `FileShare.None` with `FileOptions.WriteThrough`, then
@@ -539,7 +539,7 @@ the temp on every exit path. Two details to take:
   atomic within one volume, and only cheap within one directory. The rename is
   also retried (5 attempts, escalating sleep) against `IOException` /
   `UnauthorizedAccessException`, because something holding the destination open is
-  a live condition rather than a bug.
+  a live condition, not a bug.
 
 > **Provenance note, 2026-08-16 -- first recorded as a missing file, and that was
 > wrong.** This entry arrived citing `TestRig\rig-lock.ps1:212-245`, which is
@@ -567,7 +567,7 @@ on a purpose change, there is nothing to trade. Reproduce with
 time it. `[MACHINE]`
 
 **A rename cannot replace a file whose handle is open -- under *any* share mode --
-and it fails `ERROR_ACCESS_DENIED` rather than a sharing violation.** Measured
+and it fails `ERROR_ACCESS_DENIED` and not a sharing violation.** Measured
 2026-08-16 across `FileShare.Read`, `FileShare.Read | FileShare.Delete` and
 `FileShare.ReadWrite | FileShare.Delete`: all three refuse
 `File.Move(source, target, overwrite: true)` with HRESULT `0x80070005`, because
@@ -682,13 +682,13 @@ dangerous of the two because null means *not locked*.
 >   `Record` is called from `OpenAsync` only -- so the session stays invisible to
 >   `browserai_list` and to `LiveSessions()` for the rest of its life. Nothing
 >   downstream treats an index entry as authority, so the outcome is a wrong
->   *report* rather than a wrong destructive action, which is what keeps it out of
+>   *report* and not a wrong destructive action, which is what keeps it out of
 >   the first class. ✅ **Closed 2026-08-19 by the discriminator this article
 >   names below**: `SessionIndex.Absent` looks for
 >   `SessionLayout.NewLockFilePattern` beside the gap and answers
 >   `SessionIndexEntryState.RecordInFlight`, which is not removable. The coupling
 >   the paragraph below worried about was avoided by putting the name in
->   `SessionLayout` rather than reaching for it from `RenameWindow`: one helper
+>   `SessionLayout` instead of reaching for it from `RenameWindow`: one helper
 >   composes it, both readers match it.
 > - **`SessionManager.Existing`**, `init`'s existence guard → `null` means *"the
 >   directory is free, proceed"*. The gated `TryAcquire` downstream stops it
@@ -864,7 +864,7 @@ end *at open* and then tracks the position itself, so two writers that opened at
 the same length overwrite each other. `FileShare.ReadWrite` permits the sharing
 and guarantees nothing about it.
 
-One fix is the platform's own guarantee rather than a lock: a handle opened via
+One fix is the platform's own guarantee and not a lock: a handle opened via
 `CreateFileW` with **`FILE_APPEND_DATA` and without `FILE_WRITE_DATA`** has its
 writes placed at the end of the file by the filesystem, atomically, regardless
 of how many other handles are open. **Requesting `GENERIC_WRITE` silently
@@ -886,7 +886,7 @@ the shared log is now written under a cross-process byte-range lock taken with
 written inside one claim. **A lock can block and this one is bounded by
 construction**: the hold is a single write of a few hundred bytes, and the kernel
 releases a byte-range lock however the holder dies -- which is the same property
-that made `MaintenanceLock` a file rather than a semaphore.
+that made `MaintenanceLock` a file, not a semaphore.
 
 ### Locking a log file without locking its readers out -- 2026-08-24
 
@@ -899,7 +899,7 @@ can have: locking beyond the end of file is explicitly legal, costs nothing, and
 overlaps no byte anybody reads, so the lock is a pure semaphore.
 
 Two declaration traps came with it, both build-time and both recorded here
-because each looks like a defect in the code rather than a rule of the toolchain:
+because each looks like a defect in the code and not a rule of the toolchain:
 
 - **`LibraryImport` refuses to marshal `System.Threading.NativeOverlapped`** --
   `error SYSLIB1051`, asking for `DisableRuntimeMarshallingAttribute` on the
@@ -909,8 +909,8 @@ because each looks like a defect in the code rather than a rule of the toolchain
   API will not be generated. Use System.Threading.NativeOverlapped instead` -- so
   the [layout oracle](../../tests/BrowserAI.Tests/NativeMethods.txt) cannot
   supply it, and that one struct is checked against the framework's definition
-  rather than against the Win32 metadata. `[FLOATS]` for both, which are
-  properties of the SDK and of the generator rather than of Windows.
+  and not against the Win32 metadata. `[FLOATS]` for both, which are
+  properties of the SDK and of the generator and not of Windows.
 
 **And the delete half, which is the other direction of the same question.** A
 handle opened **without** `FILE_SHARE_DELETE` refuses `File.Delete` on that path
@@ -963,8 +963,8 @@ somebody is holding is `stream.Length` off a handle you opened yourself.
 `LauncherEvidenceTests.AFileALiveWriterIsHoldingComesBackReadableAndAtItsTrueLength`,
 whose companion arm holds the other end -- a file opened `FileShare.None` by
 anybody is unreadable to a reader sharing everything, which is the correct
-answer and must stay one. The wider version, against a real `node` writer rather
-than a `FileStream`, is two files and four lines: hold the log open with
+answer and must stay one. The wider version, against a real `node` writer and not
+a `FileStream`, is two files and four lines: hold the log open with
 `fs.openSync(path, 'a')` and `fs.writeSync`, then try `File.ReadAllText` and the
 share mode above from another process and compare.
 
@@ -1002,10 +1002,10 @@ saturation test's own 802 produces.
 > **So "the machine was carrying too many browsers" is not the explanation for
 > that test's intermittent death, and it was the leading one.** What this sweep
 > does *not* reproduce is the suite's other axis: it ran on an otherwise-idle
-> machine, so every browser had CPU. The suite starves CPU rather than memory or
+> machine, so every browser had CPU. The suite starves CPU, not memory or
 > handles, and that remains the open candidate -- along with **desktop heap**,
 > which no documented API reports and which none of the columns above would show.
-> Recorded here as a bounded negative result rather than a diagnosis. `[MACHINE]`
+> Recorded here as a bounded negative result, not a diagnosis. `[MACHINE]`
 >
 > ⚠️ ***Corrected 2026-08-27 (previously the sentence ended at "none of the
 > columns above would show")*** -- desktop heap was run deliberately on that date
@@ -1091,7 +1091,7 @@ level:
 > ⚠️ **Extended 2026-08-29, and the `1` is now accounted for elsewhere.** The
 > arm this rig had never run is the other half of the dynamic: pre-fill to a
 > level the browser survives, then take the last three windows at a chosen
-> instant of its startup, so it crosses the cliff **while starting** rather than
+> instant of its startup, so it crosses the cliff **while starting** and not
 > before or after. Ten instants, one launch each, pre-filled to 4,634 -- a level
 > re-calibrated the same day and still living 3 of 3 at 676 to 678 log lines:
 > `+0, +5, +10, +15, +20, +50, +120 ms` gave `0x80000003` with a six-line log;
@@ -1111,7 +1111,7 @@ level:
 > with `UOI_HEAPSIZE`. Start a filler process onto it with `STARTUPINFO.lpDesktop`
 > set to `"WinSta0\\<name>"`, creating `CreateWindowExW(0, "STATIC", <2048-char
 > title>, WS_CHILD, 0,0,0,0, HWND_MESSAGE, ...)` until it is refused, and start a
-> second filler to confirm the first stopped on the heap rather than on its own
+> second filler to confirm the first stopped on the heap and not on its own
 > quota -- a second one that manages zero is the ceiling. Then launch the
 > provisioned `chrome.exe` onto the same desktop with the command line the
 > saturation entry above gives, reading both pipes to end of file on their own
@@ -1135,14 +1135,14 @@ Measured 2026-08-18 on two consecutive CI runs. `ProcessLog` wires stderr throug
 a `FILE_APPEND_DATA` handle. A process ended with `TerminateProcess` therefore
 keeps everything the file sink wrote and **loses whatever the console queue still
 held** -- and the two runs lost *different* amounts of the tail, which is the
-signature of a queue rather than of a call that never happened.
+signature of a queue and not of a call that never happened.
 
-**That the console provider queues at all is first-party documented rather than
+**That the console provider queues at all is first-party documented, not
 inferred**, which matters because the observation above would otherwise have only
 an explanation nobody had checked. `ConsoleLoggerOptions.QueueFullMode` exists,
 its default is `Wait`, and `ConsoleLoggerQueueFullMode.Wait` is defined as
 *"Blocks the logging threads once the queue limit is reached"* -- a queue that can
-fill, and that blocks *the logging threads* rather than the writing one, is
+fill, and that blocks *the logging threads* and not the writing one, is
 drained by something else. Verified against MS Learn 2026-08-18. The same page
 gives the other half of the shape: the full mode is `Wait`, **not** `DropWrite`,
 so records are not discarded under pressure and process death is the only way
@@ -1150,7 +1150,7 @@ this loses one.
 
 > **The consequence for tests, and it cost two red CI runs:** an assertion of the
 > form *"the product recorded X"* must read the process log, not stderr, whenever
-> the process is killed rather than shut down. A developer's machine drains that
+> the process is killed instead of shut down. A developer's machine drains that
 > queue before the kill and stderr looks complete, so the defect is invisible
 > until the suite meets a smaller machine. `ProcessLogRecords.For` is the
 > reader, and it is scoped to one process's whole identity -- `(pid,
@@ -1161,7 +1161,7 @@ this loses one.
 > and the log is kept thirty days: **demonstrated live on 2026-08-29, a read
 > scoped to a live test host's pid came back holding records written on
 > 2026-08-24 by a different process wearing that number.** The pid-only entry
-> point is gone rather than caveated.
+> point is gone, not caveated.
 > `[STABLE]` for the asymmetry, which follows from the two sinks' designs;
 > `[MACHINE]` for the observation that four cores under 431 tests is enough to
 > expose it.
@@ -1175,7 +1175,7 @@ claimed by exactly one process and its `browserai.json` named that process's pid
 every job object was pairwise disjoint; nothing survived teardown; the shared
 process log held no torn record. **82 s** wall, alone on the machine. The 802
 figure is the survivor census from the fault-injection run in which teardown was
-deliberately skipped, so it is a count of what was actually live rather than an
+deliberately skipped, so it is a count of what was actually live, not an
 estimate. `[MACHINE]`
 
 **At that size the machine has no headroom left, and it shows up as other
@@ -1274,14 +1274,14 @@ which generates from the same metadata Windows ships: `STARTUPINFOW` **104**,
 **24**, `IO_COUNTERS` **48**, `JOBOBJECT_BASIC_LIMIT_INFORMATION` **64**,
 `JOBOBJECT_EXTENDED_LIMIT_INFORMATION` **144**; `offsetof(Affinity)` **48**,
 `offsetof(LimitFlags)` **16**, `offsetof(IoInfo)` **64**, agreeing both ways.
-**A size check alone is not sufficient and this was demonstrated rather than
+**A size check alone is not sufficient and this was demonstrated, not
 argued**: reordering `Affinity` after `PriorityClass`/`SchedulingClass` leaves
 the struct at 64 bytes and slides that field to offset 56, so the size assertion
 passes and only the offset assertion fails. `[STABLE]` -- these are the x64
 Windows ABI and do not move. Re-establish by running
-`InteropLayoutTests`, which is now a permanent guard rather than a
+`InteropLayoutTests`, which is now a permanent guard and not a
 re-measurement, and which reads the shipped `private` nested types by reflection
-rather than copies of them.
+instead of copies of them.
 
 **This does not change the rule, only its reason.** `[LibraryImport]` remains
 correct here because it is Microsoft's documented first recommendation for .NET
@@ -1298,7 +1298,7 @@ containing a `[DllImport]` and reading the ILC output. The probe used here was
 38 declarations across `kernel32`, `user32`, `ntdll` and `rstrtmgr` with
 `SetLastError=true`, covering `StringBuilder` marshalling, `SafeHandle` returns,
 struct byref and an `EnumWindows` callback delegate; it published with zero
-warnings and passed all 41 runtime checks. **The shape is recorded rather than
+warnings and passed all 41 runtime checks. **The shape is recorded and not
 the path** -- the probe lived outside the repository and a path nobody else can
 open is not a re-establishment route.
 
@@ -1308,9 +1308,9 @@ environment variable in a child's block moves nothing. Measured 2026-08-16 while
 trying to simulate a machine with no MCP client on it: the child was started with
 `USERPROFILE` pointed at an empty scratch directory and `PATH` cut to `system32`,
 and it still found the client at `<user profile>\.local\bin\claude.exe`, resolved
-from the token rather than from either variable. **The attempt failed and
+from the token, not from either variable. **The attempt failed and
 the run is still evidence** -- it proves the `PATH`-independent fallback in
-`ClientCommandLine` is load-bearing rather than decorative, because with `PATH`
+`ClientCommandLine` is load-bearing and not decorative, because with `PATH`
 stripped that fallback is what completed the registration. `[STABLE]` -- a Win32
 known-folder property. Consequence: **a clientless machine cannot be simulated
 from the environment**; the client-absent path is exercised through the
@@ -1385,7 +1385,7 @@ shape: start the
 provisioned `chrome.exe` headless with a scratch `--user-data-dir`, try both
 renames, then kill it and try both again as the control. **Re-run 2026-08-19 and
 reproduced exactly** -- ten processes, both refusals, both controls -- so the entry
-above is reproducible from what is written rather than only from the day it was
+above is reproducible from what is written and not only from the day it was
 taken.
 
 ### The same measurement for Firefox, and for what both families share -- 2026-08-19
@@ -1413,7 +1413,7 @@ runs, at five and seven processes:
 Same two operations, same two *different* Win32 errors, in the same order, and
 the same control. **So there is no product finding here and nothing to change:**
 the family-agnostic refusal in `browserai_reinstall_browser` was already the right
-shape for both families, and it now rests on a measurement of both rather than on
+shape for both families, and it now rests on a measurement of both and not on
 a generalisation from one.
 
 **The layouts are asymmetric, and a re-run has to get them right.** Chromium
@@ -1428,7 +1428,7 @@ weaker.** Chromium's arm proves the browser is up over its DevTools HTTP endpoin
 brings a Remote Agent up**: `--remote-debugging-port 9413` was passed and
 `http://127.0.0.1:9413/json/version` never answered across 150 attempts over 30 s,
 while the browser was demonstrably alive the whole time. Playwright drives its
-Firefox over the **juggler** pipe rather than CDP, so there is no HTTP endpoint to
+Firefox over the **juggler** pipe and not CDP, so there is no HTTP endpoint to
 ask. The Firefox arm therefore proves liveness by process tree -- the parent plus
 its content and GPU children, four to six of them -- which is a real browser but is
 not a protocol handshake. `[STABLE]` for the refusals; the absent remote agent is
@@ -1447,13 +1447,13 @@ Measured 2026-08-19 with a live browser of each family in turn:
 `ffmpeg-win64.exe` exists only while a recording is in flight and `winldd` is an
 install-time dependency validator. So a shared-component swap under a live browser
 is available where a browser-tree swap is not -- which is a genuine asymmetry in
-what the reinstall tool *could* do, and is recorded rather than acted on. **It does
+what the reinstall tool *could* do, and is recorded, not acted on. **It does
 not license widening `shared`'s refusal**, which is deliberately wider than a
 family's for a different reason: *a process is running from this tree* and *a
 session is using it* are the same question for a browser and are not for `ffmpeg`
 ([DECISIONS](../../DECISIONS.md#open-design-decisions)).
 
-**The mechanism is still `[UNVERIFIED]`, and this run made it stranger rather than
+**The mechanism is still `[UNVERIFIED]`, and this run made it stranger, not
 clearer.** A directory cannot be renamed while a process has it as a current
 directory, or while anything holds a handle to it without `FILE_SHARE_DELETE`;
 which of those the browsers are doing is still not established, and the two
@@ -1472,7 +1472,7 @@ which are the Chromium script's shape with
 the paths and the liveness check changed. **Both restore what they renamed in a
 `finally`, and both re-assert the executables are present at the end** -- they
 rename the *shared* provisioned browsers root that every browser-touching test on
-the machine reads, so a script that dies half-way breaks the suite rather than
+the machine reads, so a script that dies half-way breaks the suite instead of
 failing its own assertion. That is also why none of this is automated: see
 re-verification row 103.
 
@@ -1553,7 +1553,7 @@ attribute says. Reordering so that `System32` ran **first** in a fresh process
 produced the table above. A file that mixed the values would therefore pass or
 fail purely on which declaration happened to be called first.
 
-**What this decided.** `Storage/Sqlite.cs` carries `SafeDirectories` rather than
+**What this decided.** `Storage/Sqlite.cs` carries `SafeDirectories` and not
 the `System32` every declaration under [`Interop/`](../../src/BrowserAI/Interop)
 carries, and the difference is not a style choice: `e_sqlite3` is not an OS
 component, so under a CoreCLR host it can only ever be a loose DLL beside the
@@ -1586,11 +1586,11 @@ is a thread-local that **only another capturing P/Invoke overwrites**, and pure
 managed work -- allocation, a GC, a managed `Dispose` -- leaves it intact. What
 destroys it is a `Dispose`, a log call or a guard that *itself reaches the
 platform*, and `File.Exists` alone is enough. **The rule stands and is now
-measured rather than asserted**; what changes is which intervening statements are
+measured, not asserted**; what changes is which intervening statements are
 actually dangerous. **The second row is the trap nobody was looking for**: the 11
 of this product's 43 declarations that omit `SetLastError = true` make
 `Marshal.GetLastPInvokeError()` return a confident **0**, which reads as success
-rather than as "not captured". `[STABLE]` for the mechanism, `[FLOATS]` for the
+and not as "not captured". `[STABLE]` for the mechanism, `[FLOATS]` for the
 BCL call sites that do the clobbering. Re-establish by calling a failing import
 with capture on, then reading after each candidate statement in turn.
 

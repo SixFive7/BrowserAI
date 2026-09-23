@@ -5,7 +5,7 @@
 
 **Versions in force** unless an entry says otherwise: `@playwright/mcp` 0.0.79 · `playwright-core` 1.63.0-alpha-2026-08-05 · Windows 11 Pro 26200.
 
-⚠️ **That line is the baseline the OLDEST entries here were taken at, and it is left standing as one -- *added by addition 2026-09-21, the fourth roll since*.** What the tree resolves today, read from [the payload lock](../../build/payload/package-lock.json) and [the committed `browsers.json` snapshot](../../upstream-snapshots/browsers.json) rather than from memory: `@playwright/mcp` **0.0.82** · `playwright-core` **1.64.0-alpha-1789764292000** (epoch milliseconds rather than a date, and nothing here parses it as one) · Chrome for Testing **154.0.8037.0** (`chromium-1246`) · Firefox **156.0** (`firefox-1549`). **Every dated entry below states the versions it was taken at**, which is what makes this a baseline rather than a claim about any of them; an entry with no versions of its own was taken at the line above.
+⚠️ **That line is the baseline the OLDEST entries here were taken at, and it is left standing as one -- *added by addition 2026-09-21, the fourth roll since*.** What the tree resolves today, read from [the payload lock](../../build/payload/package-lock.json) and [the committed `browsers.json` snapshot](../../upstream-snapshots/browsers.json), not from memory: `@playwright/mcp` **0.0.82** · `playwright-core` **1.64.0-alpha-1789764292000** (epoch milliseconds and not a date, and nothing here parses it as one) · Chrome for Testing **154.0.8037.0** (`chromium-1246`) · Firefox **156.0** (`firefox-1549`). **Every dated entry below states the versions it was taken at**, which is what makes this a baseline, not a claim about any of them; an entry with no versions of its own was taken at the line above.
 Measured on [the reference machine](../README.md#the-reference-machine).
 
 ## The tool surface and the package shape
@@ -33,15 +33,15 @@ no `capabilities` set. The founding-bug reproduction saw the 24 over a real
 `browserTools` in-process and the 24 and 69 over a real `tools/list`. They now
 regenerate into
 [`upstream-snapshots/tools-list.json`](../../upstream-snapshots/tools-list.json)
-on every build, so a move is a diff rather than a memory. `[FLOATS]`
+on every build, so a move is a diff, not a memory. `[FLOATS]`
 
 ⚠️ **The three numbers in that paragraph are 0.0.79's and are kept as the
 measurement they were; the current ones are **83 / 74 / 27** at
 `@playwright/mcp` 0.0.81 / `playwright-core` 1.64.0-alpha-2026-09-17, re-measured
 2026-09-17.** The `skillOnly` 9 has not moved across any of it. The paragraph is
 not rewritten because the point it makes -- *a golden test written against the
-wrong one of the three fails on day one* -- is about which number you pick rather
-than about what it is today, and
+wrong one of the three fails on day one* -- is about which number you pick and not
+about what it is today, and
 [the per-capability breakdown](#the-per-capability-breakdown-counted) below is
 the entry that carries the live figures.
 
@@ -64,7 +64,7 @@ every number against a real `tools/list`. `[FLOATS]`
 1.64.0-alpha-2026-09-17**, and it is one capability for the third bump running --
 `core` again. It went **23 → 24** with `browser_emulate_media`, which arrived
 through the [dated `playwright-core` override](../../DECISIONS.md#versioning-policy-everything-floats-the-build-freezes-it)
-rather than through an `@playwright/mcp` roll, so the wrapper's version did not
+and not through an `@playwright/mcp` roll, so the wrapper's version did not
 move with it. **Every other capability's count is unchanged to the tool, nothing
 was renamed or removed, and no surviving tool changed a single byte** -- the
 survivors' schemas are identical and their order is preserved, asserted by
@@ -119,11 +119,11 @@ tools" and "the base 24" before that.* `[FLOATS]`
 `browser_keydown`, `browser_keyup`, `browser_check`, `browser_uncheck`
 (`core-input`); `browser_navigate_forward`, `browser_reload`
 (`core-navigation`). They are in the registry, they are never in a `tools/list`,
-and the property is `tool.skillOnly` on the registry entry rather than anything
+and the property is `tool.skillOnly` on the registry entry and not anything
 on the schema. `[FLOATS]`
 
-**What BrowserAI's own capability sets expose, measured over the wire rather
-than added up:** `config` + `vision` + `devtools` gives **47**, adding `storage`
+**What BrowserAI's own capability sets expose, measured over the wire, not
+added up:** `config` + `vision` + `devtools` gives **47**, adding `storage`
 gives **64**, and adding `network`, `pdf` and `testing` on top of that gives
 **74** -- the whole exposable surface, which is what
 [every session now gets](../../ARCHITECTURE.md#sessions). The first two are the
@@ -131,7 +131,7 @@ same numbers the `createConnection` experiment below produced from two
 connections in one process, which is a second, independent route to them.
 ⚠️ *Corrected 2026-08-20 (previously "What BrowserAI's own modes expose ... and
 `persistent` adding `storage` gives **59**"): session modes were deleted, so 42
-and 59 are now historical capability sets rather than things a session can be,
+and 59 are now historical capability sets and not things a session can be,
 and 69 is what a child is launched with.* `[FLOATS]`
 
 > **Re-established a third way 2026-08-16, and it is now the one that runs on
@@ -148,7 +148,7 @@ and 69 is what a child is launched with.* `[FLOATS]`
 > surface assertion built on it would be measuring the helper.
 > `VerticalSliceTests` then compares the **published binary's** real
 > `tools/list` against the computed 59 as one joined string, which is what makes
-> ordering part of the contract rather than an accident. `[FLOATS]`
+> ordering part of the contract, not an accident. `[FLOATS]`
 
 > ⚠️ **Corrected 2026-08-16 (previously: "A per-capability breakdown is not
 > recorded anywhere in this repository ... `[UNVERIFIED]` -- the numbers were never
@@ -176,7 +176,7 @@ and diffing the `tools/list` each answered:
 
 Zero names present in one and absent from the other, and zero shared names whose
 serialised tool object differed. **The mechanism is visible in the source and the
-measurement is what makes it a fact rather than a reading:** `filteredTools`
+measurement is what makes it a fact, not a reading:** `filteredTools`
 ([above](#the-per-capability-breakdown-counted)) filters on `tool.capability` and
 `tool.skillOnly` and consults nothing else -- there is no `browserName` in it.
 
@@ -185,7 +185,7 @@ from one surface child, which is Chromium-configured, and the MCP spec forbids
 the tool set varying per connection -- so a family-dependent surface would mean
 Firefox sessions advertising tools their child does not have, or the reverse.
 Every tool-surface number in this repository is a claim about **both** families,
-and it is now measured rather than assumed.
+and it is now measured, not assumed.
 
 **Re-establish it** by giving [`build/upstream-snapshots.mjs`](../../build/upstream-snapshots.mjs)'s
 `session()` helper a config carrying `browser.browserName: "firefox"` -- plus the
@@ -199,7 +199,7 @@ and not a provisioned Firefox. `[FLOATS]`
 built through the programmatic `createConnection` API produced correctly
 divergent surfaces -- **42 vs 59 tools** -- with no module-global browser state and
 browsers created lazily on first tool call. It is reachable only through that
-API, which is why the charter rejects it on scope rather than on capability.
+API, which is why the charter rejects it on scope and not on capability.
 `[FLOATS]`
 
 **`playwright-core` whitelists `"./lib/coreBundle"` in its `exports` map**, so
@@ -319,7 +319,7 @@ at 0.0.79 before that; corrected 2026-08-20 from three rows,
 58 / 58 / 58 of 58, headed "What BrowserAI's own modes permit"; corrected twice on
 2026-08-18 before that -- from 41 / 41 / 58 to 58 / 59 / 59 of 59, and then to
 58 / 58 / 58 of 58).** **Session modes were deleted and every capability is
-granted to every session**, so there is one row rather than three and the
+granted to every session**, so there is one row instead of three and the
 denominator moved from the 59-tool union to the whole exposable surface:
 `network`, `pdf` and `testing` reached a child for the first time and brought ten
 tools with them. **The 2026-09-15 move is upstream's and not a decision taken
@@ -362,9 +362,9 @@ tool the **page** registers and waits for it with **no timeout at all**, measure
 2026-09-15 at **45,002 ms** against a page whose `invokeTool` never settles,
 against **521 ms** for a well-behaved tool on the same page -- and the list path
 upstream wraps in `withTimeout(5000)` is the control that says the omission is on
-the call path rather than in the rig. `browser_webmcp_list` is `allow` for that
+the call path and not in the rig. `browser_webmcp_list` is `allow` for that
 reason: it is the bounded half of the same capability. ⚠️ **A deny does not
-fully close it**, and that is recorded rather than fixed -- upstream's
+fully close it**, and that is recorded, not fixed -- upstream's
 `renderTabHeader` emits `- N webmcp tools available on the page` on every tab
 header whose count is non-zero, carrying the count and none of the page's text, so
 a model is told they exist whatever `tool-verdicts.json` says.
@@ -401,7 +401,7 @@ until a human draws, and the dashboard window appears on a windowless session
 too, so an unattended run that called it would hang until it was killed -- also
 [measured 2026-08-18](#what-browser_annotate-actually-does----measured-2026-08-18),
 after standing undated for the life of the decision it justified. Later the same
-day that measurement withdrew the tool from the surface entirely rather than
+day that measurement withdrew the tool from the surface entirely instead of
 refusing it per mode, for the reason under the table.
 
 **The `storage` tools are still absent from a windowless session's child**, and
@@ -409,9 +409,9 @@ that is a different mechanism which did not change: a `headless` or `interactive
 session's child is started **without the `storage` capability**, so those 17 tools
 do not exist in that process at all. They are still *advertised*, because the MCP
 spec forbids the tool set varying per connection -- so calling one on such a
-session now reaches the child and gets upstream's *"unknown tool"* rather than a
+session now reaches the child and gets upstream's *"unknown tool"* and not a
 BrowserAI sentence naming the mode that would permit it. That is the one thing the
-removal cost a model, and it is recorded here rather than argued away.
+removal cost a model, and it is recorded here, not argued away.
 `browser_run_code_unsafe` was never coverable that way in any case: it is in
 `core`, which upstream ors in unconditionally, so **it is reachable from every
 mode** -- as it always was from `headless` and `persistent`. `[FLOATS]`
@@ -571,10 +571,10 @@ the bundle** -- 0 occurrences, and the constant `1568` with it -- and the
 rewritten screenshot backend no longer imports `imageUtils` or `webp` at all:
 the image block is pushed straight from the capture. The divergence this
 paragraph existed to record therefore closed by upstream converging on
-BrowserAI rather than the other way round, and the note about not growing a
-resampler is now moot rather than wrong.
+BrowserAI instead of the other way round, and the note about not growing a
+resampler is now moot, not wrong.
 
-**Measured end to end rather than read off the diff**, against the resolved
+**Measured end to end, not read off the diff**, against the resolved
 payload under node v24.21.0 and `chromium-1243`, at the 1920×1080 default: the
 inline block is **byte-identical to the file on disk -- 22,186 b, 1920×1080,
 `identical bytes: true`**. The comparable figures from 2026-08-26, at the same
@@ -614,7 +614,7 @@ both the standard tier's 1,568 px long edge and the high-resolution tier's
 **Which is why there is no size threshold in the routing.** A byte-count gate
 would fire on the page that costs the model nothing extra and stay silent on the
 one that does; the only figure that would justify a gate is the pixel count, and
-that is the caller's viewport rather than anything a proxy should second-guess.
+that is the caller's viewport and not anything a proxy should second-guess.
 Upstream has no threshold either.
 
 **How to re-establish.** Start the published binary, `browserai_init` a
@@ -631,7 +631,7 @@ passing run.
 1.63.0-alpha-2026-08-31, on the RAW CHILD with no BrowserAI process on the
 path.** `browser_take_screenshot` with `type: "webp"` over a document taller
 than **16,383 px** returns an **empty inline image and a zero-byte file**, and
-reports success. The bracket was measured rather than reasoned from the format's
+reports success. The bracket was measured, not reasoned from the format's
 specification, one pixel either side:
 
 | Document height | `type` | Inline bytes | File bytes | `isError` |
@@ -654,7 +654,7 @@ the rig is
 [`docs/probes/2026-09-14-webp-ask/`](../../docs/probes/2026-09-14-webp-ask/README.md).
 
 ⚠️ **The `mimeType` is still `image/webp` and the answer still reads as a
-success**, which is the whole of why this is worth a row rather than a note: a
+success**, which is the whole of why this is worth a row and not a note: a
 caller gets a link to a file, a content block of the right type, and nothing at
 all inside it. A model has no way to tell this from a screenshot of a blank
 page.
@@ -678,9 +678,9 @@ unmerged** at 2026-09-16T00:15:20Z -- read from the API: `state: closed`,
 `merged: false` -- with one comment, by `dcrousso`: *"this is really an upstream
 issue and should be fixed there instead (and also i dont think it's really all
 that likely/common for a screenshot to be that large in the first place)"*. The
-fix is now expected in Chromium rather than in Playwright: **CL 8416650**,
+fix is now expected in Chromium and not in Playwright: **CL 8416650**,
 *"DevTools: report screenshot encoding failures"*, status **NEW** as of
-2026-09-16 -- so it will arrive through a **browser revision** bump rather than a
+2026-09-16 -- so it will arrive through a **browser revision** bump and not a
 `playwright-core` change, and there is no PR on this side left to watch.
 **Nothing about this entry's measurement changes**, and the re-establishment
 procedure below is what settles it either way.
@@ -713,7 +713,7 @@ them is the SUITE's**: each names a `playwrightLib` under this repository's own
 ⚠️ **RE-MEASURED 2026-09-23, AND "EVERY ONE OF THEM" IS NO LONGER TRUE --
 *narrowed by addition; the sentence above stood alone until today*.** The
 directory was emptied between the two readings, so what follows is a fresh week
-rather than a shrinking pile: **3,749 files, 6,619,667 bytes (6.3 MiB)**, oldest
+and not a shrinking pile: **3,749 files, 6,619,667 bytes (6.3 MiB)**, oldest
 `2026-09-16T07:04`, newest `2026-09-23T18:13`. **26 of the 3,749 name the
 INSTALLED product**, with `playwrightLib` at
 `%LOCALAPPDATA%\BrowserAI.app\current\payload\mcp\node_modules\playwright-core`
@@ -721,7 +721,7 @@ and `title` `BrowserAI`; the other 3,723 name this repository's tree. So the
 *cache* is still overwhelmingly the suite's and the *claim* was too strong: a
 real install leaves descriptors here too, about one per browser a person opens,
 and nothing reaps those either. **That makes the reaper paragraph below matter
-more rather than less** -- a real install is exactly the case where *cannot
+more, not less** -- a real install is exactly the case where *cannot
 connect* would be judging somebody else's browsers. `[MACHINE]`
 
 ⚠️ **Re-establish it by counting the files and bytes and then grepping their
@@ -742,7 +742,7 @@ which moves every other Windows path with it.
 descriptor it cannot connect to. BrowserAI never calls `list()`, and a launching
 process that exits does not clean up after itself, so the sweep never happens.
 Whether BrowserAI could call it safely is **not established**: the unlink is keyed
-on *cannot connect*, which is a machine-wide judgement rather than a
+on *cannot connect*, which is a machine-wide judgement and not a
 session-scoped one, so it would reap a peer's descriptors as readily as its own.
 
 Re-establish with a directory listing and a byte total over
@@ -794,12 +794,12 @@ through `Response` at all.
 ⚠️ **The paused-debugger location is the one shape the PR body named that no run
 here drove.** It is the fourth `_printablePath` call site --
 ``- ${pausedDetails.title} at ${this._printablePath(pausedDetails.location.file)}`` --
-so it is covered by construction, and **that is a reading of the bundle rather
-than a measurement**; provoking it needs a paused session, which is a different
-rig. Recorded as owed rather than claimed.
+so it is covered by construction, and **that is a reading of the bundle, not
+a measurement**; provoking it needs a paused session, which is a different
+rig. Recorded as owed, not claimed.
 
 ⚠️ **Two shapes the PR body did *not* name are covered anyway**, and both were
-measured rather than assumed: the **binary response body** line, which goes
+measured, not assumed: the **binary response body** line, which goes
 through `addResult`'s `typeof data !== "string"` branch into the same file-link
 builder, and the **trace links**, which come from `addFileLink`.
 
@@ -887,14 +887,14 @@ the adversary is not a future upstream release, it is the page under test.
 ⚠️ **What is NOT closed is the text.** Every snapshot-bearing tool result now
 carries the page's own tool names, descriptions and schemas, and BrowserAI
 forwards tool results verbatim by design. Upstream's `[UNTRUSTED: ...]` prefix is
-on the dynamic tool DESCRIPTIONS rather than on the snapshot block, which is
+on the dynamic tool DESCRIPTIONS and not on the snapshot block, which is
 labelled only `(page-provided, untrusted)`. **`webmcp: false` removes all of it**
 -- the header line, the snapshot block and the dynamic tools -- and BrowserAI
 writes no `webmcp` key today, so upstream's default is in force.
 
 **Where the collection runs.** `Tab.captureSnapshot` takes an `updateWebMCP`
 argument that the response builder sets to `this._includeSnapshot !== "none"`, so
-it runs on every snapshot-bearing tool call rather than only on
+it runs on every snapshot-bearing tool call and not only on
 `browser_snapshot`. It evaluates `collectToolsInPage` in **every frame** of the
 current tab, in parallel, each bounded by `kFrameTimeout` = **5,000 ms**, and it
 is skipped entirely while a dialog is blocking JavaScript. The page-side contract
@@ -953,7 +953,7 @@ is the rig; its page registers a titled tool already.
 
 ## A hung page tool does not block the child, and is released by navigating away -- measured 2026-09-21
 
-**This is what makes a timeout on a page-tool call a real recovery rather than a
+**This is what makes a timeout on a page-tool call a real recovery and not a
 way of giving up.** The call itself is unbounded upstream -- `callWebMCPTool`
 awaits `Tab.waitForCompletion` around the page's own handler and the evaluate
 under it carries `kNoTimeout`; the 5 s `kFrameTimeout` that arrived in 0.0.82
@@ -976,10 +976,10 @@ A well-behaved page tool answered in **513 ms** and **521 ms** in the two
 measurements taken, so nothing observed sits between about half a second and
 never.
 
-⚠️ **Not measured, and named rather than implied:** the `executeTool` path
+⚠️ **Not measured, and named here instead of implied:** the `executeTool` path
 upstream prefers when a page defines one, N simultaneous hung calls, and whether
 the wait is bounded above by anything at all with nothing navigating. **Also
-read rather than measured:** BrowserAI's own `JsonLinesTransport` holds a write
+read, not measured:** BrowserAI's own `JsonLinesTransport` holds a write
 lock per frame and releases it in a `finally`, and in-flight requests live in a
 `ConcurrentDictionary`, so the block upstream does not have is not reintroduced
 on the way through.
@@ -996,7 +996,7 @@ All read from the shipped bundle or observed against a real child. `[FLOATS]`
 
 **Playwright writes every artifact flat into one directory with a generated
 name**, mixing machine churn with hand-named work. Fixed generator prefixes make
-classification exact rather than heuristic.
+classification exact, not heuristic.
 
 > ⚠️ **Corrected 2026-08-16 @ `@playwright/mcp` 0.0.79 / `playwright-core`
 > 1.63.0-alpha-2026-08-05 (previously: "**Nine fixed generator prefixes**:
@@ -1018,12 +1018,12 @@ classification exact rather than heuristic.
 > `network`, `page`, `request`, `response`, `result`, `storage-state`,
 > `video`** -- regenerated into
 > [`upstream-snapshots/tools-list.json`](../../upstream-snapshots/tools-list.json)
-> under `artifactPrefixes` on every build, so a twelfth is a diff rather than a
+> under `artifactPrefixes` on every build, so a twelfth is a diff, not a
 > memory. Re-establish with
 > `pwsh -File build/Update-UpstreamSnapshots.ps1 -Accept`. `[FLOATS]`
 
 **The empty prefix is the traces template, and `traces\` is upstream's folder
-rather than ours.** The call is
+and not ours.** The call is
 `context.outputFile({ prefix: "", suggestedFilename: "traces", ext: "" }, { origin: "code" })`,
 which resolves to `<outputDir>/traces`. So it is correct that `traces` is *not* a
 generator prefix -- the template supplies its own name -- and wrong to describe the
@@ -1117,7 +1117,7 @@ name upstream chose. `[MACHINE]`
 all eleven typed artifact folders takes **10.39-10.46 ms**. Reclaiming the whole
 tree afterwards costs proportionally more again. At roughly 120 sessions per
 suite run that is about a second each way, which is why BrowserAI creates a typed
-folder on first use rather than up front -- and why a folder that exists in a
+folder on first use instead of up front -- and why a folder that exists in a
 session directory means an artifact of that kind was actually produced.
 `[MACHINE]`
 
@@ -1133,4 +1133,4 @@ registry root sits at `%LocalAppData%\BrowserAI\browsers\`, outside `current\` u
 that should be read-only and is wiped on update.
 
 **Real screenshots are not byte-stable across runs**, so passthrough-fidelity
-assertions need a canned blob from a fake child rather than a live capture.
+assertions need a canned blob from a fake child, not a live capture.
