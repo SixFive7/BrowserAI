@@ -25,7 +25,7 @@ namespace BrowserAI.Tests;
 /// The comparison against <c>StreamServerTransport</c> is deliberate and is not
 /// a test of the SDK. It is what keeps the deviation honest: the day upstream
 /// sets an encoder, that test fails, and the reason recorded for owning a
-/// server transport has to be rewritten rather than quietly carried forward.
+/// server transport has to be rewritten instead of quietly carried forward.
 /// </para>
 /// </remarks>
 internal sealed class DirectStdioServerTransportTests
@@ -105,7 +105,7 @@ internal sealed class DirectStdioServerTransportTests
         await using var rig = new ServerRig();
 
         // Strict on the way out, tolerant on the way in. A caller that frames
-        // with CRLF is answerable rather than mysterious.
+        // with CRLF is answerable, not mysterious.
         await rig.SendRawToServerAsync("\n\r\n"u8.ToArray());
         await rig.SendRawToServerAsync(Encoding.UTF8.GetBytes("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"probe/in\"}\r\n"));
 
@@ -201,13 +201,13 @@ internal sealed class DirectStdioServerTransportTests
     /// killed by pid.
     /// </para>
     /// <para>
-    /// <b>Abandoning the loop is safe, and that was measured rather than
+    /// <b>Abandoning the loop is safe, and that was measured, not
     /// assumed.</b> The parked read sits on a thread-pool thread, which is a
     /// background thread: the same probe returned from <c>Main</c> without
     /// awaiting it and the process exited anyway.
     /// </para>
     /// <para>
-    /// <b>The double is a stream rather than a console</b>, because this suite
+    /// <b>The double is a stream and not a console</b>, because this suite
     /// may not allocate one and does not need to: what the transport is parked
     /// on is a <c>Read</c> that has not returned, and a console is only one way
     /// to arrange that. The end-to-end console shape is
@@ -228,7 +228,7 @@ internal sealed class DirectStdioServerTransportTests
         // returns at once, including on the path where the first never did.
         await using var ownership = transport.ConfigureAwait(false);
 
-        // On the event rather than on a clock: the loop has to be genuinely
+        // On the event and not on a clock: the loop has to be genuinely
         // inside the read before disposal means anything at all.
         await Assert.That(caller.WaitUntilParked(Patience)).IsTrue();
 

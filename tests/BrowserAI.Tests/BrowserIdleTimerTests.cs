@@ -122,7 +122,7 @@ internal sealed partial class BrowserIdleTimerTests
         // arm moved at all. The pattern below carried a literal 0x08 where a
         // word-boundary escape was meant -- so it asked for a BACKSPACE before
         // `Clock` and could not match anything in any file. The offender list
-        // below was empty by construction rather than by the product being
+        // below was empty by construction and not by the product being
         // clean, and a scan that cannot match is a green test forever. The match
         // is therefore asserted before the emptiness is believed.
         await Assert.That(ClockAssignment().IsMatch("            Clock = new ManualClock(),")).IsTrue();
@@ -146,7 +146,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// The tool the timer calls is upstream's, by the name upstream publishes.
     /// </summary>
     /// <remarks>
-    /// <b>An upstream rename must turn the build red rather than turning the
+    /// <b>An upstream rename must turn the build red instead of turning the
     /// timer into a no-op.</b> A <c>tools/call</c> naming a tool that no longer
     /// exists is answered with an error the timer logs and nothing else notices --
     /// and the browser then stays open forever, which is exactly the defect this
@@ -159,7 +159,7 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(UpstreamSurface.DefaultSurface()).Contains(LiveSession.BrowserCloseTool);
 
         // Callable at all: the timer bypasses the decision anyway -- it is
-        // BrowserAI calling its own child rather than a caller calling a tool --
+        // BrowserAI calling its own child, not a caller calling a tool --
         // but a close the policy refused would mean a session whose browser can
         // never be closed, and this is where that would be decided.
         //
@@ -175,8 +175,8 @@ internal sealed partial class BrowserIdleTimerTests
         // same question three times and read as coverage it is not.
         //
         // ⚠️ Corrected 2026-08-26: `Decide` is `ToolVerdicts`' and reads
-        // tool-verdicts.json, which is why this asks the SHIPPED file rather
-        // than a constant -- and under deny-by-default the claim is stronger
+        // tool-verdicts.json, which is why this asks the SHIPPED file and not
+        // a constant -- and under deny-by-default the claim is stronger
         // than it was. The idle timer calls this tool itself, so a build that
         // shipped a verdicts file with no row for it would close no browser and
         // report nothing.
@@ -225,7 +225,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// proxy releases its in-flight scope: <c>BrowserProxy</c> holds it across the
     /// answer, so it may still be open when this test's round trip returns. A
     /// timer that fires then re-arms for a whole period, correctly, so the quiet
-    /// half advances the clock until the close lands rather than assuming one
+    /// half advances the clock until the close lands instead of assuming one
     /// advance is enough. That is not a retry against flakiness -- every advance
     /// that meets an outstanding call is the product keeping its promise, and the
     /// count assertion at the end is what makes it a bounded claim.
@@ -317,7 +317,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>It wrote nothing at all until 2026-08-26, and P2 is what made that a
-    /// defect rather than a gap.</b> The close talks to the child directly and
+    /// defect, not a gap.</b> The close talks to the child directly and
     /// never touched <c>Lock</c>; while <c>browserai.log</c> existed the event
     /// survived there, and that file is gone. <c>browserai_catch_up</c> tells its
     /// reader the log is <i>"WHAT WAS DONE HERE -- the session's own log ... This is
@@ -335,7 +335,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// <para>
     /// <b>The <c>why</c> is BrowserAI's own and it says so.</b> Every other row
     /// carries a caller's sentence; this one has no caller, so it names the timer
-    /// and the period rather than borrowing a voice it does not have.
+    /// and the period instead of borrowing a voice it does not have.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -387,7 +387,7 @@ internal sealed partial class BrowserIdleTimerTests
             "the idle close never reached the child, however far the clock was moved");
 
         // The row is settled on the way back, so the read waits for the outcome
-        // rather than for a duration -- bounded by the suite's own hang detector
+        // and not for a duration -- bounded by the suite's own hang detector
         // and by no number written here.
         await WaitUntilAsync(
             () => RecordedSession.LogOf(session).Any(row =>
@@ -500,8 +500,8 @@ internal sealed partial class BrowserIdleTimerTests
 
         // And the period restarts from the moment the call was answered, so the
         // close still comes -- a suppressed timer that never re-armed would be
-        // the same defect this step exists to remove. Advanced repeatedly rather
-        // than once: the proxy releases its in-flight scope after the caller's
+        // the same defect this step exists to remove. Advanced repeatedly, not
+        // once: the proxy releases its in-flight scope after the caller's
         // answer is on the wire, so an advance that lands while the release is
         // still in flight re-arms for a whole period, correctly.
         await WaitUntilAsync(
@@ -544,7 +544,7 @@ internal sealed partial class BrowserIdleTimerTests
     public async Task AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks()
     {
         // A machine that has never been provisioned proves nothing here, so this
-        // reports as SKIPPED rather than as a pass -- and as a failure under
+        // reports as SKIPPED and not as a pass -- and as a failure under
         // BROWSERAI_RELEASE_RUN, because a release run that never started a
         // browser is the batteries-included premise being silently dead code.
         SuiteEnvironment.RequireProvisionedChromium();
@@ -596,7 +596,7 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(BrowsersIn(child, rig).Count).IsGreaterThan(0);
 
         // Now, and only now, the session goes idle. The clock is advanced until
-        // the browser has actually gone rather than once: the proxy releases its
+        // the browser has actually gone and not once: the proxy releases its
         // in-flight scope after the caller's answer is on the wire, so an advance
         // that lands while a call is still outstanding re-arms for a whole
         // period -- correctly -- and the wait is what absorbs that. What is being
@@ -611,7 +611,7 @@ internal sealed partial class BrowserIdleTimerTests
             TeardownPatience,
             "the browser was still running long after the session went idle");
 
-        // ⚠️ Confirmed a second time rather than believed the first. The scan
+        // ⚠️ Confirmed a second time, not believed the first. The scan
         // behind it opens ~600 processes, and one transient failure to open the
         // browser's own would read as "the browser is gone" while it was
         // running -- the same class of false answer that makes an image-NAME
@@ -621,7 +621,7 @@ internal sealed partial class BrowserIdleTimerTests
         await Assert.That(BrowsersIn(child, rig).Count).IsEqualTo(0);
 
         // The half a browser count cannot make: the node child is still there,
-        // so this was an idle close rather than a teardown.
+        // so this was an idle close, not a teardown.
         await Assert.That(ProcessIdentity.IsAlive(node, nodeCreated)).IsTrue();
         await Assert.That(child.JobProcessIds()).Contains(node);
 
@@ -746,7 +746,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// <c>OpenProcess</c> handle BrowserAI holds on its client.
     /// </para>
     /// <para>
-    /// That the handle is still ours when BrowserAI exits is asserted rather than
+    /// That the handle is still ours when BrowserAI exits is asserted, not
     /// argued, with <c>GetHandleInformation</c>.
     /// </para>
     /// </remarks>
@@ -776,7 +776,7 @@ internal sealed partial class BrowserIdleTimerTests
 
         var wrapperCreated = ProcessIdentity.CreationTimeOf(wrapper.Id);
 
-        // ⚠️ Read through ProbeReport rather than File.Exists plus
+        // ⚠️ Read through ProbeReport and not File.Exists plus
         // File.ReadAllTextAsync, corrected 2026-08-19 after a full-suite run
         // failed here. `File.Exists` is true the instant the NAME appears, which
         // is before the writer has finished with it: the read was refused as a
@@ -796,7 +796,7 @@ internal sealed partial class BrowserIdleTimerTests
         {
             await Assert.That((bool)report["navigated"]!).IsTrue();
 
-            // ⚠️ The wrapper really is BrowserAI's parent, asserted rather than
+            // ⚠️ The wrapper really is BrowserAI's parent, asserted, not
             // assumed. A watcher pointed at the wrong process fires at the wrong
             // moment and looks identical in every other signal -- which is
             // exactly what happened the first time this test ran.
@@ -908,7 +908,7 @@ internal sealed partial class BrowserIdleTimerTests
         var created = ProcessIdentity.CreationTimeOf(client.Id);
         var fires = 0;
 
-        // The creation time is passed rather than left to be assumed: since
+        // The creation time is passed and not left to be assumed: since
         // 2026-08-18 the watcher proves the pid is the process it was told about
         // before it arms anything. ProcessLivenessTests covers the refusals.
         using var watcher = ClientLivenessWatcher.ForProcess(

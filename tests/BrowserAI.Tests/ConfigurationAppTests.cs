@@ -26,7 +26,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// ⚠️ <b>Nothing here starts the app.</b> The arms below read the same state
 /// object <c>--report</c> serialises and the dialog renders, so a divergence
-/// between the two is a red rather than a support artifact that disagrees with
+/// between the two is a red and not a support artifact that disagrees with
 /// the screen.
 /// </para>
 /// </remarks>
@@ -147,7 +147,7 @@ internal sealed class ConfigurationAppTests
         await Assert.That(updated.Instruction).StartsWith("Updated to BrowserAI ");
 
         // A hyperlink asks for a folder or for a URL, and the two are told apart
-        // by the prefix rather than by guessing at the string.
+        // by the prefix and not by guessing at the string.
         await Assert.That(ConfigurationDialog.FolderFrom(ConfigurationDialog.FolderLinkPrefix + install.Path))
             .IsEqualTo(install.Path);
         await Assert.That(ConfigurationDialog.FolderFrom(ConfigurationDialog.GuideUrl)).IsNull();
@@ -267,7 +267,7 @@ internal sealed class ConfigurationAppTests
         await Assert.That(user.GetProperty("ownership").GetString()).IsEqualTo("OursAndPresent");
         await Assert.That(user.GetProperty("unreadable").ValueKind).IsEqualTo(JsonValueKind.Null);
 
-        // Absent is a null rather than a missing property: a reader that has to
+        // Absent is a null, not a missing property: a reader that has to
         // tell "no project file" from "this build did not write the field" has
         // nothing to go on when the field is simply gone.
         await Assert.That(root.GetProperty("projectScope").ValueKind).IsEqualTo(JsonValueKind.Null);
@@ -365,7 +365,7 @@ internal sealed class ConfigurationAppTests
             .IsEqualTo(TaskDialogInterop.Ok);
 
         // A command link whose handler throws: reported, and S_FALSE keeps the
-        // dialog open rather than closing it on a failure nobody saw.
+        // dialog open instead of closing it on a failure nobody saw.
         await Assert.That(host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.OpenLogs, 0))
             .IsEqualTo(TaskDialogInterop.False);
 
@@ -391,7 +391,7 @@ internal sealed class ConfigurationAppTests
         await Assert.That(reported).IsEquivalentTo(["the page factory threw"]);
 
         // The control: a host whose delegates do not throw reports nothing, so
-        // the arms above fail for their own reason rather than because the
+        // the arms above fail for their own reason and not because the
         // reporter fires on every notification.
         reported.Clear();
 
@@ -483,7 +483,7 @@ internal sealed class ConfigurationAppTests
     /// <c>TDN_DIALOG_CREATED</c> and after the dialog closes, and the window in
     /// between -- which is what makes
     /// <see cref="HouseRuleTests.EveryFolderPickerIsOwnedByTheDialogThatOpenedIt"/>
-    /// a statement about a real value rather than about a spelling.
+    /// a statement about a real value and not about a spelling.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -505,7 +505,7 @@ internal sealed class ConfigurationAppTests
 
     /// <summary>
     /// Work the dialog waits for is bounded, and the bound is the server's own
-    /// deadline rather than a number invented for the window.
+    /// deadline, not a number invented for the window.
     /// </summary>
     /// <remarks>
     /// <b>The other half of
@@ -559,7 +559,7 @@ internal sealed class ConfigurationAppTests
             await Assert.That(work.Running).IsTrue();
             await Assert.That(work.Progress).IsEqualTo("Checking for updates...");
 
-            // A second start while one is in flight is refused rather than
+            // A second start while one is in flight is refused instead of
             // stacking two checks on one window.
             await Assert.That(work.Start("again", "The update check", _ => "no")).IsFalse();
 
@@ -660,7 +660,7 @@ internal sealed class ConfigurationAppTests
     }
 
     /// <summary>
-    /// The dialog's icon is asked for at the dialog's DPI rather than at the
+    /// The dialog's icon is asked for at the dialog's DPI and not at the
     /// classic size.
     /// </summary>
     /// <remarks>

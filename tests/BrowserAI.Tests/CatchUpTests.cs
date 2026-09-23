@@ -17,12 +17,12 @@ namespace BrowserAI.Tests;
 /// <b>The test that matters is the disagreement one.</b> The two halves of this
 /// answer come from different places and are expected to differ -- a log-only
 /// answer would say <i>"no credential tools were used"</i> about a directory
-/// full of live session cookies, because cookies arrive from navigation rather
-/// than from tools. So the arm below plants a cookie store the log knows nothing
+/// full of live session cookies, because cookies arrive from navigation and
+/// not from tools. So the arm below plants a cookie store the log knows nothing
 /// about and requires the answer to report it anyway.
 /// </para>
 /// <para>
-/// <b>And the read-only claim is asserted rather than described.</b> The tool
+/// <b>And the read-only claim is asserted, not described.</b> The tool
 /// runs against a session this BrowserAI is driving, and the record is compared
 /// byte for byte before and after: a version that appended its own entry, or took
 /// the per-directory gate, would fail the one case the tool exists for.
@@ -89,7 +89,7 @@ internal sealed class CatchUpTests
         await Assert.That(text).Contains("CREDENTIALS");
         await Assert.That(text).Contains("cookies arrive from navigation");
 
-        // The HAR, named, with what it is rather than only that it exists.
+        // The HAR, named, with what it is and not only that it exists.
         await Assert.That(text).Contains("network-2026-08-20.har");
         await Assert.That(text).Contains("PLAINTEXT CREDENTIALS");
         await Assert.That(text).Contains("in clear text");
@@ -180,12 +180,12 @@ internal sealed class CatchUpTests
     /// <c>why:</c> and then again directly beneath under <c>with: purpose=...</c>,
     /// cut at 200 characters with <c>(+N more characters)</c> after it.
     /// <b>Two adjacent lines, the second one shorter and different</b>: nothing
-    /// in the answer said the second was a truncation of the first rather than a
+    /// in the answer said the second was a truncation of the first and not a
     /// value that disagreed with it.
     /// </para>
     /// <para>
     /// ⚠️ <b>The mechanism that produced it is gone (2026-08-26): log rows carry
-    /// no arguments at all.</b> So this is kept as a regression rather than as
+    /// no arguments at all.</b> So this is kept as a regression and not as
     /// the fix's own test -- what it now holds is that no cut marker of any kind
     /// reaches this answer, which is the property a caller relies on when it
     /// reads a <c>why</c> back and acts on it.
@@ -246,8 +246,8 @@ internal sealed class CatchUpTests
     /// <c>ResumeAndSetPurposeStillRecordPurposeBesideTheirOwnWhy</c>, asserting
     /// a <c>with: purpose=...</c> line on the log entry).</b> Log rows carry no
     /// arguments, so the new purpose is no longer <i>in</i> the entry -- and that
-    /// is the one thing the argument drop genuinely cost, named as a cost rather
-    /// than glossed. What replaces it is the <c>purpose</c> statement history:
+    /// is the one thing the argument drop genuinely cost, named as a cost and
+    /// not glossed. What replaces it is the <c>purpose</c> statement history:
     /// every value the session has been for, each with the instant it was
     /// recorded, so its <b>position in the stream</b> survives as a timestamp
     /// even though it is no longer a line beside the <c>why</c>.
@@ -461,7 +461,7 @@ internal sealed class CatchUpTests
     /// told it was reading the page it asked for.
     /// </para>
     /// <para>
-    /// <b>The mirror case is the one that makes this a refusal rather than a
+    /// <b>The mirror case is the one that makes this a refusal and not a
     /// clamp:</b> <c>2147483648</c> wraps to <c>-2147483648</c>, so the refusal
     /// quoted a number the caller never sent. Both arms are here because a fix
     /// that only widened the comparison would still misquote.
@@ -494,7 +494,7 @@ internal sealed class CatchUpTests
         await Assert.That(TextOf(wrapped)).Contains("outside this session's log");
 
         // int.MaxValue + 1, which wraps NEGATIVE. The refusal has to quote what
-        // arrived rather than what the cast made of it.
+        // arrived and not what the cast made of it.
         var negative = await CallAsync(rig, SessionToolSurface.CatchUp, new JsonObject
         {
             ["session"] = directory,
@@ -581,7 +581,7 @@ internal sealed class CatchUpTests
         await Assert.That(text).Contains("no answer was recorded");
         await Assert.That(text).Contains("loading the page the process died on");
 
-        // The failure beside it, with what failed rather than a summary.
+        // The failure beside it, with what failed and not a summary.
         await Assert.That(text).Contains("FAILED");
         await Assert.That(text).Contains("it failed with: Error: locator.click: no element matches '#submit'");
 

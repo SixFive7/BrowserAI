@@ -13,7 +13,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// These are build-order step 1's done-tests, expressed as tests rather than
+/// These are build-order step 1's done-tests, expressed as tests and not
 /// as a checklist, because a rule that can be a failing test must be one. The
 /// failure they prevent is specific: a hard-coded version in a project file
 /// wins for that project while <c>packages.lock.json</c> honestly records it,
@@ -79,7 +79,7 @@ internal sealed partial class BuildConfigurationTests
         // The three MSBuild diagnostic tasks are stripped for the same reason,
         // one level less obvious: a task that REPORTS a version is not a task
         // that sets one, and both its Text and its Condition are about a value
-        // rather than being one. Narrowed 2026-08-16 at build-order step 18,
+        // without being one. Narrowed 2026-08-16 at build-order step 18,
         // which added a target refusing a version derived from no git tag --
         // `$(MinVerVersion.StartsWith('0.0.0'))`, with `0.0.0` in the message so
         // a reader knows what was refused. This test read both as pins.
@@ -190,7 +190,7 @@ internal sealed partial class BuildConfigurationTests
     /// <b>Both halves are asserted.</b> Absent is not good enough: the default
     /// is already off, so a file that never mentions it passes a "not true"
     /// check and says nothing to the next reader. The literal <c>false</c> is
-    /// what makes a later <c>true</c> a diff rather than an addition.
+    /// what makes a later <c>true</c> a diff and not an addition.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -212,7 +212,7 @@ internal sealed partial class BuildConfigurationTests
 
         await Assert.That(string.Join(Environment.NewLine, enabled)).IsEmpty();
 
-        // And it is stated rather than defaulted, in the one file that applies
+        // And it is stated, not defaulted, in the one file that applies
         // to every project. A deletion here reads as a tidy-up and is not one.
         await Assert.That(declarations.Select(declaration => declaration.File))
             .Contains("Directory.Build.props");
@@ -351,9 +351,9 @@ internal sealed partial class BuildConfigurationTests
         using var global = JsonDocument.Parse(
             await File.ReadAllBytesAsync(Path.Combine(RepositoryLayout.Root.FullName, "global.json")));
 
-        // Read through TryGetProperty rather than GetProperty: a DELETED entry
+        // Read through TryGetProperty and not GetProperty: a DELETED entry
         // is the failure under test, and a KeyNotFoundException out of the JSON
-        // reader names the dictionary rather than the setting. A guard whose
+        // reader names the dictionary and not the setting. A guard whose
         // failure message does not say what to put back is half a guard.
         await Assert.That(Entry(global, "sdk", "rollForward")).IsEqualTo("latestMajor");
         await Assert.That(Entry(global, "sdk", "version")).IsNotEqualTo("<absent>");
@@ -444,7 +444,7 @@ internal sealed partial class BuildConfigurationTests
     /// binds version 5, the export is not there, and the call fails at run time
     /// -- presenting as <i>the application starts and nothing happens</i>. It is
     /// the classic failure of this whole approach, which is why it is asserted
-    /// rather than left to the one manual check that would find it.
+    /// and not left to the one manual check that would find it.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -463,8 +463,8 @@ internal sealed partial class BuildConfigurationTests
         await Assert.That(identities[0].Attribute("publicKeyToken")?.Value).IsEqualTo("6595b64144ccf1df");
         await Assert.That(identities[0].Attribute("type")?.Value).IsEqualTo("win32");
 
-        // And it is the SERVER that does not need one, which is worth asserting
-        // rather than assuming: a dependency there would be a side-by-side load
+        // And it is the SERVER that does not need one, which is asserted and
+        // not assumed: a dependency there would be a side-by-side load
         // for a binary that never draws anything.
         var server = XDocument.Load(
             Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI", "app.manifest"));

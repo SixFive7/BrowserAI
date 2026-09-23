@@ -13,7 +13,7 @@ namespace BrowserAI.Tests;
 /// The end-to-end half -- that a child really is handed this and nothing else --
 /// is in <see cref="DirectStdioClientTransportTests"/>. This half is what makes
 /// the list itself reviewable: a name moved from <c>Refused</c> into
-/// <c>InheritedWhenSet</c> is a deliberate edit that fails here, rather than a
+/// <c>InheritedWhenSet</c> is a deliberate edit that fails here, and not a
 /// behaviour change nobody notices until a download starts failing against one
 /// mirror.
 /// </remarks>
@@ -68,7 +68,7 @@ internal sealed class ChildEnvironmentTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Read out of the shipped bundle rather than from a changelog</b>:
+    /// <b>Read out of the shipped bundle and not from a changelog</b>:
     /// <c>playwright-core</c>'s <c>configFromEnv</c> maps every one of these onto
     /// a config key, and the merge order is config file → environment → CLI, so
     /// an inherited value wins over the key BrowserAI generates.
@@ -94,7 +94,7 @@ internal sealed class ChildEnvironmentTests
 
     /// <summary>
     /// The five names that override a key the generator writes are refused by
-    /// name rather than merely absent.
+    /// name, not merely absent.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>None of these was a hole and none of them is one now -- the finding
@@ -126,7 +126,7 @@ internal sealed class ChildEnvironmentTests
     [Test]
     public async Task TheRefusedNamesAreTheOnesTheDesignNames()
     {
-        // Spelled out rather than counted. Every one of these is a documented
+        // Spelled out, not counted. Every one of these is a documented
         // silent failure -- a collapsed download mirror list, an evicted output
         // file, a browsers path resolved against an npm ancestor's directory,
         // a wiped capability list, or a line on stderr that trips the error
@@ -146,7 +146,7 @@ internal sealed class ChildEnvironmentTests
         // by the closed-world check below -- and these five were covered by
         // nothing until 2026-08-17.
         //
-        // Asserted through Build() rather than against the set, because the
+        // Asserted through Build() and not against the set, because the
         // set is only half the mechanism: an inherited name reaches a child
         // only if this process has it, so the test seeds each one first.
         foreach (var name in TheEgressNames)
@@ -191,7 +191,7 @@ internal sealed class ChildEnvironmentTests
     public async Task ARefusedVariableCannotBeAddedByACaller()
     {
         // The escape hatch a later step reaches for -- "just pass NODE_OPTIONS
-        // through for this one child" -- is closed here rather than by review.
+        // through for this one child" -- is closed here and not by review.
         var thrown = Assert.Throws<ArgumentException>(
             () => ChildEnvironment.Build([new KeyValuePair<string, string>("NODE_OPTIONS", "--max-old-space-size=4096")]));
 

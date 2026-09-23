@@ -30,7 +30,7 @@ namespace BrowserAI.Tests;
 /// refused is the network and the shapes Windows would silently rewrite. The
 /// arms that asserted a refusal for <c>\\?\</c>, a junction and a <c>subst</c>
 /// are therefore assertions about a canonical form here, against the same real
-/// aliases, rather than deletions.
+/// aliases, and not deletions.
 /// </para>
 /// <para>
 /// ⚠️ <b>What is asserted is which branch answered, never the clock.</b> The
@@ -58,7 +58,7 @@ internal sealed class CanonicalPathTests
     /// A share that cannot be reached, chosen so that reaching it is cheap.
     /// </summary>
     /// <remarks>
-    /// <b>An unroutable ADDRESS rather than a hostname that does not resolve,
+    /// <b>An unroutable ADDRESS, not a hostname that does not resolve,
     /// and the difference is twenty-two seconds.</b> Measured 2026-08-19: a
     /// dead hostname fails at DNS and costs <b>22,210 ms</b> through a mapped
     /// letter, while this address failed in <b>12.8 ms</b>
@@ -107,7 +107,7 @@ internal sealed class CanonicalPathTests
         await NormalisesTo(substituted.PathTo("a session"), Path.Combine(canonical, "a session"));
 
         // And a leaf that does not exist yet under the junction, because that is
-        // what `init` actually names: the tail goes back on rather than the
+        // what `init` actually names: the tail goes back on instead of the
         // caller being sent to an ancestor.
         await NormalisesTo(Path.Combine(link, "not", "created", "yet"), Path.Combine(canonical, "not", "created", "yet"));
     }
@@ -126,7 +126,7 @@ internal sealed class CanonicalPathTests
 
         var real = Path.Combine(casing.Spell(scratch.Path), "one real session directory");
 
-        // The session is a LEAF beneath the aliased directory rather than the
+        // The session is a LEAF beneath the aliased directory and not the
         // aliased directory itself, so that every form below -- including the
         // substituted drive, whose root is a volume root -- is a spelling of one
         // and the same session.
@@ -237,7 +237,7 @@ internal sealed class CanonicalPathTests
         await Assert.That(verdict.Canonical).IsNull();
         await Assert.That(verdict.Refusal!).Contains("is on a network path");
 
-        // The half that says it is one turn rather than two: nothing here offers
+        // The half that says it is one turn and not two: nothing here offers
         // a spelling to call back with, because there is no local one.
         await Assert.That(verdict.Refusal).DoesNotContain("Call the same tool again with");
     }
@@ -263,7 +263,7 @@ internal sealed class CanonicalPathTests
         //
         // What this still cannot say is that the open did not ALSO happen, 22
         // seconds before the right answer arrived. That gap is real and is named
-        // here rather than papered over; what stands against it is
+        // here, not papered over; what stands against it is
         // VolumeIdentity's own rule that FinalNameOf is never called on a path
         // Of has not already found local, and the kb row that measures why.
         using var mapped = DosDeviceAlias.MappedTo(UnreachableShare);
@@ -279,7 +279,7 @@ internal sealed class CanonicalPathTests
 
         // The control for the middle assertion: FinalNameOf really does answer
         // for a directory it can open, so "it returned null" above is about the
-        // share rather than about the call being broken.
+        // share and not about the call being broken.
         using var scratch = ScratchDirectory.Create("canonical-final-name-control");
 
         await Assert.That(VolumeIdentity.FinalNameOf(scratch.Path)).IsNotNull();
@@ -294,10 +294,10 @@ internal sealed class CanonicalPathTests
         // the product that says so about a directory. `\\?\` is a length-and-
         // parsing prefix over an ordinary path, so stripping it is free and
         // loses nothing. `\\.\` is the DEVICE NAMESPACE, where `\\.\NUL` and
-        // `\\.\PhysicalDrive0` name devices rather than directories -- and the
+        // `\\.\PhysicalDrive0` name devices and not directories -- and the
         // deleted filename gate refused it for exactly that reason, in those
         // words. Making the directory rule agree with the filename rule removes
-        // an asymmetry rather than adding a rule.
+        // an asymmetry instead of adding a rule.
         using var scratch = ScratchDirectory.Create("canonical-device-namespace");
 
         var real = Path.Combine(casing.Spell(scratch.Path), "device-namespace");
@@ -313,7 +313,7 @@ internal sealed class CanonicalPathTests
         // replaced.
         await Assert.That(refused.Refusal).Contains($"directory='{real}'", StringComparison.OrdinalIgnoreCase);
 
-        // And the pair that makes the distinction a distinction rather than an
+        // And the pair that makes the distinction a distinction and not an
         // inconsistency: the extended prefix over the same directory is not
         // refused at all.
         await Assert.That(CanonicalPath.Of(VolumeIdentity.ExtendedLengthPrefix + real, PathOrigin.Named, "directory").Refusal).IsNull();
@@ -331,14 +331,14 @@ internal sealed class CanonicalPathTests
         // failure arriving by the other door.
         //
         // Measured 2026-08-26 on .NET 10.0.11, Windows 11 Pro 26200, and
-        // asserted here rather than quoted, so a runtime that stopped doing it
-        // shows up as a red test rather than as a stale comment:
+        // asserted here, not quoted, so a runtime that stopped doing it
+        // shows up as a red test and not as a stale comment:
         using var scratch = ScratchDirectory.Create("canonical-hostile-names");
 
         var root = casing.Spell(scratch.Path);
 
         // The positive controls first: this is what the product is protecting
-        // against, produced by the framework rather than described.
+        // against, produced by the framework, not described.
         await Assert.That(Path.GetFullPath(Path.Combine(root, "sess."))).IsEqualTo(Path.Combine(root, "sess"), StringComparison.OrdinalIgnoreCase);
         await Assert.That(Path.GetFullPath(Path.Combine(root, "sess "))).IsEqualTo(Path.Combine(root, "sess"), StringComparison.OrdinalIgnoreCase);
         await Assert.That(Path.GetFullPath(Path.Combine(root, "NUL"))).IsEqualTo(@"\\.\NUL");
@@ -382,7 +382,7 @@ internal sealed class CanonicalPathTests
         await Assert.That(CanonicalPath.Of(mapped.PathTo("session"), PathOrigin.Read, "session").Refusal).IsNull();
 
         // The same string under `Named` is refused, which is what makes the line
-        // above about the ORIGIN rather than about the mapping being invisible.
+        // above about the ORIGIN and not about the mapping being invisible.
         await Assert.That(CanonicalPath.Of(mapped.PathTo("session"), PathOrigin.Named, "session").Refusal).IsNotNull();
 
         using var scratch = ScratchDirectory.Create("canonical-read");
@@ -446,7 +446,7 @@ internal sealed class CanonicalPathTests
         // instead, which is available on every volume: a path the filesystem
         // calls something else is answered with the name it does call it.
         //
-        // Which branch ran is printed rather than inferred, because a two-branch
+        // Which branch ran is printed, not inferred, because a two-branch
         // test whose branch nobody can see is a test that can quietly take the
         // emptier one for ever.
         using var scratch = ScratchDirectory.Create("canonical-short-name");
@@ -476,7 +476,7 @@ internal sealed class CanonicalPathTests
         }
 
         // No short alias on this volume, so the claim is that there is none --
-        // asserted as a whole-string identity rather than as "it did not
+        // asserted as a whole-string identity and not as "it did not
         // contain a tilde", because a partially shortened path is the case a
         // tilde test would let through.
         await Assert.That(shortName).IsEqualTo(real, StringComparison.OrdinalIgnoreCase);
@@ -587,7 +587,7 @@ internal sealed class CanonicalPathTests
     /// </para>
     /// <para>
     /// <b>The note quotes the ancestor the walk gave up on AND the caller's own
-    /// path, and that pairing is asserted rather than left to read well.</b> The
+    /// path, and that pairing is asserted, not left to read well.</b> The
     /// ancestor on its own is an intermediate path that means nothing to a
     /// caller; the caller's own path on its own does not say how far the walk
     /// got. It was considered as a one-or-the-other and kept as both.
@@ -622,13 +622,13 @@ internal sealed class CanonicalPathTests
         await Assert.That(deep.Unestablished!).Contains("would not say what it calls");
         await Assert.That(deep.Unestablished!).Contains(past, StringComparison.OrdinalIgnoreCase);
 
-        // The ancestor the walk gave up on, derived rather than guessed: it
+        // The ancestor the walk gave up on, derived, not guessed: it
         // climbed exactly AncestorWalkLimit levels from a path two deeper, so it
         // stopped two levels above the root.
         await Assert.That(deep.Unestablished!)
             .Contains(Compose(scratch.Path, CanonicalPath.AncestorWalkLimit + 2 - CanonicalPath.AncestorWalkLimit), StringComparison.OrdinalIgnoreCase);
 
-        // And the note reaches a caller rather than stopping at the verdict:
+        // And the note reaches a caller instead of stopping at the verdict:
         // `SessionManager.SpellingNote` is what puts it in an `init` answer, and
         // that path is exercised end to end by SessionToolTests.
         await Assert.That(SessionPath.For(deep.Canonical!).FullPath).IsEqualTo(past, StringComparison.OrdinalIgnoreCase);
