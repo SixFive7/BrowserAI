@@ -23,7 +23,7 @@ namespace BrowserAI;
 /// <remarks>
 /// The order matters. Logging first, because a failure before it exists has
 /// nowhere to be reported. The child next, so a payload or browser problem is a
-/// startup failure with a message rather than a tool call that fails later for
+/// startup failure with a message and not a tool call that fails later for
 /// reasons the caller cannot see. stdout is acquired last, and by then it
 /// belongs to the protocol.
 /// </remarks>
@@ -50,7 +50,7 @@ internal static class Program
     /// over <c>VelopackLocator.Current.RootAppDir</c>").</b> It moves the data
     /// root and <b>never the install root</b>, which is Velopack's to choose and
     /// which this process only ever reads. It is also read inside
-    /// <see cref="LocalAppDataPaths.Overridden"/> now rather than here, because
+    /// <see cref="LocalAppDataPaths.Overridden"/> now and not here, because
     /// <c>Main</c> is not the only entry point into this binary: a Velopack
     /// fast-exit hook never reaches this method's body, and the uninstall hook
     /// offers to delete the data root -- so a second reader that answered
@@ -68,7 +68,7 @@ internal static class Program
     /// <para>
     /// <b>Never silent.</b> A BrowserAI running against a root nobody expects
     /// would look exactly like one that lost its sessions, so an override is
-    /// logged at Warning on the way past. A relative value is ignored rather than
+    /// logged at Warning on the way past. A relative value is ignored and not
     /// resolved, for the same reason a relative <c>PLAYWRIGHT_BROWSERS_PATH</c>
     /// is refused: it would land somewhere nobody chose and report nothing.
     /// </para>
@@ -85,7 +85,7 @@ internal static class Program
     /// it cannot be registered from BrowserAI's own non-elevated token, measured
     /// twice, for a minimal task definition as much as for ours -- so this
     /// argument has exactly one caller left and it is a
-    /// <i>measurement</i> rather than a product path:
+    /// <i>measurement</i> and not a product path:
     /// [re-verification row 78](../../kb/re-verification.md) says to
     /// re-establish the sweep-pass census with
     /// <c>BrowserAI.Server.exe --sweep</c> under a scratch
@@ -124,7 +124,7 @@ internal static class Program
         // point: registering a client's configuration from a process the
         // installer did not start is not something this binary may do.
         //
-        // Velopack's own records are buffered rather than dropped: the log
+        // Velopack's own records are buffered and not dropped: the log
         // cannot exist yet, because WHERE it goes depends on the install root
         // this call is what establishes. They are replayed below.
         var velopack = new List<(VelopackLogLevel Level, string Message, Exception? Failure)>();
@@ -154,7 +154,7 @@ internal static class Program
             Environment.CurrentDirectory,
 
             // ⚠️ THE FIRST CALL INTO THE STATICALLY LINKED SQLITE, and it is
-            // here rather than anywhere later on purpose. If the amalgamation
+            // here and not anywhere later, on purpose. If the amalgamation
             // did not compile, or ILC did not link the archive, this line is
             // where that shows -- on the startup path, in the first record,
             // before a session exists. The alternative is finding out at the
@@ -178,7 +178,7 @@ internal static class Program
 
         foreach (var (level, message, failure) in velopack)
         {
-            // Replayed here rather than at the call site because THIS is where
+            // Replayed here and not at the call site because THIS is where
             // the second half of the question can be answered: InstallLocation
             // cannot speak until VelopackApp.Run() above has set the locator.
             // "Not installed" is a supported configuration -- dotnet run, every
@@ -220,7 +220,7 @@ internal static class Program
         // full exe path sat on the desktop
         // (evidence: docs/evidence/2026-09-14-firstrun/).
         //
-        // It is here rather than three lines lower because everything below
+        // It is here and not three lines lower because everything below
         // costs something a blink must not: the sweep enumerates the machine,
         // the live marker takes a machine-wide mutex, and the child spawn
         // provisions 768 MB on a first run. An install that produced one log
@@ -281,14 +281,14 @@ internal static class Program
         // users share loses the live-instance census silently -- the file locks
         // span users and the Global\ mutexes do not -- and an apply then kills
         // the other user's browsers. Measured 2026-08-20; see InstallRootScope,
-        // whose remarks also name what this narrows rather than closes.
+        // whose remarks also name what this narrows and does not close.
         //
         // It is AFTER the log, deliberately: the log is the only channel a
         // refusal has. stdout is the protocol and Console is banned outright, so
         // a refusal written anywhere else would be a server that exits 1 saying
         // nothing at all.
         // ⚠️ BOTH ROOTS SINCE 2026-09-15, and the install root is read here
-        // rather than below because a judgement that ran after the census was
+        // and not below because a judgement that ran after the census was
         // keyed would be judging a root this process had already committed to.
         // `InstallLocation` is already resolved at this point -- the Velopack
         // log replay above reads it -- so this costs nothing, and it answers
@@ -309,7 +309,7 @@ internal static class Program
 
         // The measurement mode: one pass, synchronously, and nothing else -- no
         // child, no stdio, no server. See SweepArgument for its one remaining
-        // caller, which is a kb re-verification row rather than the product.
+        // caller, which is a kb re-verification row and not the product.
         // ⚠️ THE OTHER ROOT, AND THE ONLY THING LEFT THAT USES IT -- 2026-09-15.
         // The live-marker census asks "is any other process running out of this
         // INSTALL?", because that is the set an apply's force_stop_package
@@ -381,7 +381,7 @@ internal static class Program
             // permissive -- it refuses every browser call, which presents as
             // "nothing works" with no file named anywhere. Both failures name
             // the file and what was wrong with it, and both reach the caller
-            // through the ordinary startup path rather than through a refusal
+            // through the ordinary startup path and not through a refusal
             // per call.
             var verdicts = Sessions.ToolVerdicts.Read(payload.ToolVerdicts);
 
@@ -433,9 +433,9 @@ internal static class Program
             // EOF cannot -- a client that started BrowserAI through a wrapper, so
             // the pipe outlives the process that owns the conversation. It is an
             // OpenProcess handle, never a ping: `ping` was removed at protocol
-            // revision 2026-07-28, and a handle is an event rather than a poll.
+            // revision 2026-07-28, and a handle is an event, not a poll.
             //
-            // ⚠️ It disposes the transport rather than only cancelling.
+            // ⚠️ It disposes the transport and does not only cancel.
             // Measured 2026-08-16 against ModelContextProtocol 2.2.0 over real
             // stdio: cancelling `RunAsync`'s token does NOT end it, because the
             // read is parked in a syscall on the console handle and a token
@@ -443,9 +443,9 @@ internal static class Program
             // about the child leg, and it is just as true here. Closing the
             // channel is what produces the end-of-input this process would have
             // seen if the client had closed its end, so there is one shutdown
-            // path rather than two.
+            // path and not two.
             //
-            // ⚠️ A registration rather than a second closure, and that is what
+            // ⚠️ A registration, not a second closure, and that is what
             // closes the window the move above would otherwise have opened: a
             // client that dies during startup cancels the token before this line
             // runs, and `Register` on an already-cancelled token invokes the
@@ -511,7 +511,7 @@ internal static class Program
 
     /// <summary>
     /// Closes the caller-facing transport once the client has gone, and reports
-    /// rather than discards a failure to do so.
+    /// a failure to do so instead of discarding it.
     /// </summary>
     /// <remarks>
     /// <b>Fire-and-forget with the result observed, which is not the same as
@@ -559,7 +559,7 @@ internal static class Program
 
             // Firefox publishes no message window, so its candidates can only be
             // attributed through a session's own profile lock. Named as a subset
-            // of the images above rather than as a second detection rule: what
+            // of the images above and not as a second detection rule: what
             // counts as ours is still one full-image-path match.
             ProvisionedBrowsers.ExecutablesFor(ProvisionedBrowsers.Firefox, paths.BrowsersDirectory, manifest),
 
@@ -567,7 +567,7 @@ internal static class Program
             // discipline this one already has. ⚠️ It is handed the INSTALL root
             // while everything above it came from the DATA root: the two are
             // siblings since 2026-09-15 and this is the one place both are in
-            // one expression, which is why the split is spelled here rather than
+            // one expression, which is why the split is spelled here and not
             // resolved inside the sweep.
             installRoot);
     }
@@ -662,11 +662,11 @@ internal static partial class StartupLog
     public static partial void Failed(ILogger logger, Exception exception);
 
     /// <summary>
-    /// The app root came from the environment rather than from
+    /// The app root came from the environment and not from
     /// <c>%LocalAppData%</c>.
     /// </summary>
     /// <remarks>
-    /// Warning rather than Information, and it is the first line after startup:
+    /// Warning, not Information, and it is the first line after startup:
     /// a BrowserAI whose sessions, log and 430 MiB of browsers are somewhere
     /// nobody expected looks exactly like one that lost them.
     /// </remarks>
@@ -688,7 +688,7 @@ internal static partial class StartupLog
     /// template is a constant by construction, and the refusal has to name the
     /// root it found, why a shared root is unsafe and what to change -- so it is
     /// composed by <see cref="Hosting.InstallRootScope"/>, where the reasoning
-    /// lives, and carried here whole rather than reassembled out of fields a
+    /// lives, and carried here whole and not reassembled out of fields a
     /// template would fix the order of.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
@@ -704,8 +704,8 @@ internal static partial class StartupLog
     /// serving anyway.
     /// </summary>
     /// <remarks>
-    /// Warning rather than Critical: an unreadable ancestor is a locked-down
-    /// machine rather than a shared root, and refusing on it would stop a
+    /// Warning, not Critical: an unreadable ancestor is a locked-down
+    /// machine and not a shared root, and refusing on it would stop a
     /// background MCP server starting at all. What it must not be is silent --
     /// that is the state the whole 2026-08-20 measurement was about.
     /// </remarks>
@@ -724,7 +724,7 @@ internal static partial class StartupLog
     /// The process still goes down -- the disposals on the way out of
     /// <c>Main</c> run regardless, and the job objects are the guarantee under
     /// all of it. This line exists so that a shutdown which did not go the way
-    /// it was meant to is visible rather than inferred from a missing log.
+    /// it was meant to is visible and not inferred from a missing log.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="exception">Why.</param>
@@ -738,7 +738,7 @@ internal static partial class StartupLog
     /// The installer started this process itself, so there is nothing to serve.
     /// </summary>
     /// <remarks>
-    /// <b>Information rather than Warning: it is the ordinary end of an
+    /// <b>Information, not Warning: it is the ordinary end of an
     /// install</b>, and the line exists because the alternative is an install
     /// whose only trace of having started BrowserAI at all is a window that
     /// flickered. It is also the evidence that the exit happened <i>before</i>

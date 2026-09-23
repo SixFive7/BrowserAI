@@ -42,7 +42,7 @@ namespace BrowserAI.Interop;
 /// underneath both: nothing here has to run for a browser to go.
 /// </para>
 /// <para>
-/// <b>It degrades rather than refusing to start.</b> A parent that cannot be
+/// <b>It degrades instead of refusing to start.</b> A parent that cannot be
 /// opened -- elevated, or already gone -- produces a warning and a null watcher,
 /// and BrowserAI serves normally with EOF alone. A BrowserAI that would not start
 /// because it could not watch its client would be worse than one that watches
@@ -198,7 +198,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
             return null;
         }
 
-        // THE PAIRING, on the handle that is about to be held rather than on a
+        // THE PAIRING, on the handle that is about to be held and not on a
         // second open of the same number.
         if (!GetProcessTimes(handle, out var created, out _, out _, out _))
         {
@@ -263,7 +263,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
             // (0x00000080) reaches this branch carrying whatever error was in
             // the thread from some earlier call, so the message alone can be an
             // unrelated sentence -- or "The operation completed successfully",
-            // which reads as a bug in the logging rather than as a state. The
+            // which reads as a bug in the logging and not as a state. The
             // number is what distinguishes them and it costs one field.
             var unknown = new Win32Exception(Marshal.GetLastPInvokeError()).Message;
 
@@ -335,7 +335,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     }
 
     // System32 only, on every P/Invoke in this repository (CA5392). The raw
-    // nint rather than SafeProcessHandle is deliberate: ownership moves to the
+    // nint instead of SafeProcessHandle is deliberate: ownership moves to the
     // SafeWaitHandle above, and two wrappers over one handle is a double close.
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]
@@ -344,7 +344,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
         [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
         uint dwProcessId);
 
-    // Declared here rather than reached through ProcessLiveness so that the
+    // Declared here and not reached through ProcessLiveness so that the
     // pairing is visible in the same twenty lines as the OpenProcess it pairs
     // with -- which is what ProcessLivenessTests.EveryProcessHandleOpenedInThe
     // ProductIsPairedWithACreationTimeRead reads for.
@@ -412,24 +412,24 @@ internal static partial class ClientLivenessLog
     /// <c>WAIT_ABANDONED</c> (0x00000080) reaches this record carrying whatever
     /// error happened to be left in the thread, which can read as <i>The
     /// operation completed successfully</i> -- a sentence that looks like a
-    /// defect in the logging rather than a state of the client. The number is
+    /// defect in the logging and not a state of the client. The number is
     /// what tells them apart, and it costs one field. <i>Added 2026-09-16.</i>
     /// </remarks>
     /// <param name="logger">Where it goes.</param>
     /// <param name="processId">The client's pid.</param>
     /// <param name="wait">What <c>WaitForSingleObject</c> answered.</param>
     /// <param name="reason">The last error's message, which may belong to something else.</param>
-    // ⚠️ 77 RATHER THAN 76, AND 76 IS WHY THIS COMMENT EXISTS. Corrected
+    // ⚠️ 77, NOT 76, AND 76 IS WHY THIS COMMENT EXISTS. Corrected
     // 2026-09-22: this event was declared with EventId 76, which
     // `ClientHasAlreadyExited` below already held, so two different events in
-    // one class shared one key. Read out of `git log -S` rather than
+    // one class shared one key. Read out of `git log -S` and not
     // remembered: `ClientHasAlreadyExited` took 76 in `ec6d858` on 2026-09-15,
     // and this event took the same 76 in `bf27512` on 2026-09-16, one day
     // later. THE LATER ONE MOVES, so 76 keeps the meaning it had first.
     //
     // ⚠️ BOTH ARE IN v1.0.0, so a log from a shipped binary carries 76 for TWO
     // events and NOTHING can tell them apart but the message text. That is not
-    // repairable from here and is recorded rather than closed. From this
+    // repairable from here and is recorded, not closed. From this
     // version on, 76 is `ClientHasAlreadyExited` and 77 is this.
     //
     // ⚠️ THAT LAST SENTENCE IS NO LONGER TRUE, AND NEITHER IS "THE LATER ONE
@@ -474,11 +474,11 @@ internal static partial class ClientLivenessLog
     /// <summary>The pid opens and the process behind it has already exited.</summary>
     /// <param name="logger">Where it goes.</param>
     /// <param name="processId">The client's pid.</param>
-    // ⚠️ 78 RATHER THAN 76, AND 76 IS RETIRED. Corrected 2026-09-22 under
+    // ⚠️ 78, NOT 76, AND 76 IS RETIRED. Corrected 2026-09-22 under
     // Q226 c, the maintainer's choice *(previously `EventId = 76`, which this
     // event held from `ec6d858` on 2026-09-15 and shared with
     // `ClientWaitCannotBeInterpreted` from 2026-09-16 until both left it)*.
-    // BOTH events moved rather than one, so no release after v1.0.0 emits 76
+    // BOTH events moved, not one, so no release after v1.0.0 emits 76
     // at all and the ambiguity ends where it started. The retirement, the
     // history and the reason are at the foot of this class.
     [LoggerMessage(
@@ -500,7 +500,7 @@ internal static partial class ClientLivenessLog
     // only id in this repository that TWO events held AT THE SAME TIME, and
     // both of them shipped.
     //
-    // The history, read out of `git log -S` rather than remembered:
+    // The history, read out of `git log -S` and not remembered:
     // `ClientHasAlreadyExited` took 76 in `ec6d858` on 2026-09-15, and
     // `ClientWaitCannotBeInterpreted` took the SAME 76 in `bf27512` on
     // 2026-09-16, one day later. Nothing caught it, because until 2026-09-22
@@ -509,11 +509,11 @@ internal static partial class ClientLivenessLog
     //
     // ⚠️ SO A LOG FROM ANY v1.0.0 BINARY CARRIES 76 FOR TWO DIFFERENT EVENTS
     // and nothing but the message text tells them apart. That is not repairable
-    // from here and is recorded rather than closed.
+    // from here and is recorded, not closed.
     //
     // ⚠️ BOTH EVENTS LEFT THE ID AND THE ID IS RETIRED, WHICH IS Q226 c AND THE
     // MAINTAINER'S CHOICE. `ClientWaitCannotBeInterpreted` moved to 77 first,
-    // and `ClientHasAlreadyExited` then moved to 78 rather than keeping 76.
+    // and `ClientHasAlreadyExited` then moved to 78 instead of keeping 76.
     // *Corrected 2026-09-22 by addition (previously the comment above
     // `ClientWaitCannotBeInterpreted` said "THE LATER ONE MOVES, so 76 keeps
     // the meaning it had first" and `ClientHasAlreadyExited` stayed at 76).*
@@ -523,8 +523,8 @@ internal static partial class ClientLivenessLog
     // instead of continuing into every release after it. It costs one id.
     //
     // ⚠️ THE LINE BELOW IS READ BY `ProxyLogTests`, per class since 2026-09-22.
-    // It is the machine-readable half of the prose above, beside it rather than
-    // instead of it. Taking an id off it is how a deliberate reuse would be
+    // It is the machine-readable half of the prose above, beside it and not
+    // in place of it. Taking an id off it is how a deliberate reuse would be
     // recorded, and the prose above is where the reason would go.
     //
     // RETIRED-EVENT-IDS: 76

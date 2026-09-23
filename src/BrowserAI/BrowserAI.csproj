@@ -142,7 +142,7 @@
       THE CURRENT CONFIGURATION IS SAFE AND NOTHING NEEDS CHANGING.
       Directory.Build.props sets TreatWarningsAsErrors true for every project,
       so the publish does fail on ILC warnings today. The property below is kept
-      rather than deleted: it is asserted by BuildConfigurationTests as one of
+      and not deleted: it is asserted by BuildConfigurationTests as one of
       the per-assembly-only knobs, it is harmless, and it is the documented knob
       for this intent even though this toolchain does not appear to honour it on
       its own. What is corrected is the ATTRIBUTION, because someone tuning
@@ -150,8 +150,8 @@
       removing TreatWarningsAsErrors while trusting the property below would
       silently reopen the exact hole this block exists to close.
 
-      TrimmerSingleWarn=false is what makes the report name the member rather
-      than emitting one line per assembly.
+      TrimmerSingleWarn=false is what makes the report name the member instead
+      of emitting one line per assembly.
     -->
     <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
@@ -176,7 +176,7 @@
   </ItemGroup>
 
   <!-- SQLite is compiled from the vendored amalgamation and linked into the
-       executable, so the publish output stays one file. Imported rather than
+       executable, so the publish output stays one file. Imported and not
        inlined for the same reason UpstreamSnapshots.targets is: it is a build
        step with its own toolchain discovery, and it is deleted whole on the day
        upstream ships a win-x64 static library (drift-check.json carries the
@@ -219,7 +219,7 @@
     the file, and `dotnet build` then reports NETSDK1207 from somewhere else
     entirely. Measured twice on 2026-08-16, and hit again writing this target.)
 
-    ResolvedFileToPublish rather than Content: Content copies on build as well,
+    ResolvedFileToPublish and not Content: Content copies on build as well,
     and there is no way to say "publish but not build" for it that survives the
     single-file and AOT publish paths.
   -->
@@ -236,7 +236,7 @@
     from a checklist a human reads to the build that produces the artifact,
     which is why deleting the checklist item did not delete the guarantee.
 
-    It fails the BUILD rather than the publish deliberately. A check that only
+    It fails the BUILD and not the publish, deliberately. A check that only
     fired at publish would leave every test in this suite running against a
     binary whose version nobody had established.
 
@@ -273,7 +273,7 @@
     disclaimer has no upstream file at all.
 
     Found 2026-08-16 by the first run of the pre-release checklist, reading the
-    packed .nupkg rather than the source tree: both were absent from a package
+    packed .nupkg and not the source tree: both were absent from a package
     that was otherwise releasable, and no test looked.
 
     Unconditional, unlike the payload: a publish with no payload/ assembled is
@@ -293,7 +293,7 @@
     The verdicts file travels INSIDE the payload, so the tracked copy at the
     repository root is copied in on every build.
 
-    Here rather than in build/Build-Payload.ps1, and that is the whole of the
+    Here and not in build/Build-Payload.ps1, and that is the whole of the
     reason: the payload build resolves npm and downloads node, so a rule that
     only it applied would mean editing tool-verdicts.json had no effect until
     somebody re-ran a several-minute step, and the suite, which reads the

@@ -20,7 +20,7 @@ namespace BrowserAI.Interop;
 /// <c>CreateProcess</c>. Escaping requires <c>CREATE_BREAKAWAY_FROM_JOB</c> on
 /// the child <i>and</i> a breakaway flag on the job -- and when a child asks for
 /// it from a job that does not permit it, <c>CreateProcessW</c> fails with
-/// <c>ERROR_ACCESS_DENIED</c> rather than escaping. A job granting no breakaway
+/// <c>ERROR_ACCESS_DENIED</c> instead of escaping. A job granting no breakaway
 /// flags therefore converts every escape attempt into a launch failure, which is
 /// the fact the whole containment guarantee rests on.
 /// </para>
@@ -36,7 +36,7 @@ namespace BrowserAI.Interop;
 /// <c>KILL_ON_JOB_CLOSE</c> never fires on our death, and <b>every child
 /// survives</b>. <see cref="CreateKillOnClose"/> passes <c>NULL</c> security
 /// attributes, and <see cref="HandleIsInheritable"/> exists so a test can prove
-/// it rather than trust it.
+/// it and not trust it.
 /// </item>
 /// <item>
 /// <b>A name.</b> An unnamed job has exactly one door -- the handle this object
@@ -88,7 +88,7 @@ internal sealed partial class JobObject : IDisposable
     public static JobObject CreateKillOnClose()
     {
         // NULL security attributes: the handle is not inheritable. NULL name:
-        // the object is anonymous. Both are the point of this call rather than
+        // the object is anonymous. Both are the point of this call and not
         // defaults nobody chose.
         var handle = CreateJobObjectW(nint.Zero, lpName: null);
 
@@ -345,9 +345,9 @@ internal sealed partial class JobObject : IDisposable
     }
 #pragma warning restore CS0649
 
-    // LibraryImport rather than DllImport on every declaration, because it is
+    // LibraryImport and not DllImport on every declaration, because it is
     // Microsoft's documented first recommendation for .NET 7+ and the
-    // marshalling it generates is readable C# rather than a hidden stub.
+    // marshalling it generates is readable C#, not a hidden stub.
     //
     // Corrected 2026-08-17 (previously: "DllImport relies on runtime IL-stub
     // generation, which NativeAOT does not do"). That is false on Windows: ILC

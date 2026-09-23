@@ -39,7 +39,7 @@ namespace BrowserAI.Interop;
 /// documented API contract and belongs to nobody: start a session, register the
 /// one file, ask for the list, end the session. The same route
 /// <see cref="Protocol.JsonLinesTransport"/> took when it implemented
-/// parse-error recovery from the MCP SDK's observed behaviour rather than from
+/// parse-error recovery from the MCP SDK's observed behaviour and not from
 /// its Apache-2.0 source.
 /// </para>
 /// <para>
@@ -52,7 +52,7 @@ namespace BrowserAI.Interop;
 /// <see cref="ProcessLiveness"/>'s pairs.
 /// </para>
 /// <para>
-/// <b>A failure throws rather than returning "nobody".</b> An error path that
+/// <b>A failure throws instead of returning "nobody".</b> An error path that
 /// resolves to the permissive answer is the shape this project exists to
 /// eliminate: "nobody holds it" is what the caller acts on, and a caller that
 /// learns it from a failed query would launch into the collision the query was
@@ -65,9 +65,9 @@ internal static partial class RestartManager
     /// The most holders that will be reported for one file.
     /// </summary>
     /// <remarks>
-    /// A bound rather than an unbounded retry loop: the answer for a browser
+    /// A bound, not an unbounded retry loop: the answer for a browser
     /// profile lock is one process, and a machine that reports thousands is
-    /// something going wrong rather than something to allocate for.
+    /// something going wrong and not something to allocate for.
     /// </remarks>
     public const int MaximumHolders = 256;
 
@@ -101,7 +101,7 @@ internal static partial class RestartManager
         // The session key buffer is written by RmStartSession and must be
         // CCH_RM_SESSION_KEY + 1 wide characters. Passing anything shorter
         // corrupts the caller's stack, which is why the size is a named constant
-        // rather than a literal at the call site.
+        // and not a literal at the call site.
         var key = stackalloc char[SessionKeyLength];
         var started = RmStartSession(out var session, 0, key);
 
@@ -276,8 +276,8 @@ internal static partial class RestartManager
     /// <c>RM_UNIQUE_PROCESS</c> -- a pid and the <c>FILETIME</c> it started at.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>The start time is two <c>uint</c>s rather than a <c>long</c>, and
-    /// that is layout rather than style.</b> <c>FILETIME</c> is two
+    /// ⚠️ <b>The start time is two <c>uint</c>s and not a <c>long</c>, and
+    /// that is layout, not style.</b> <c>FILETIME</c> is two
     /// <c>DWORD</c>s and aligns to 4; a <c>long</c> field would align the struct
     /// to 8 and make the compiler insert four bytes of padding after the pid,
     /// producing a 16-byte struct where Windows writes a 12-byte one. Every
@@ -293,7 +293,7 @@ internal static partial class RestartManager
 
     /// <summary><c>RM_PROCESS_INFO</c>, 668 bytes.</summary>
     /// <remarks>
-    /// The two name buffers are <c>ushort</c> fixed buffers rather than
+    /// The two name buffers are <c>ushort</c> fixed buffers and not
     /// <c>char</c> ones: a fixed buffer of <c>char</c> drags the whole struct
     /// into the marshaller's character-set rules, and this type has to stay
     /// blittable for <c>[LibraryImport]</c> under NativeAOT. They are decoded by
