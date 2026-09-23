@@ -351,6 +351,29 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **The character scan stops mistaking a comment for a character literal.**
+  `HouseRuleTests.NoTextFileCarriesACharacterAPersonDoesNotType` admits a forbidden character
+  inside `'x'` in a test or a probe rig, because that is a C# character literal and the literal
+  is the point -- a control that contains the character, not an occurrence of it. It
+  decided that by reading **the two adjacent characters and nothing else**, so an ordinary
+  comment quoting `'x'` had the same shape and was admitted too. **It hid three elisions
+  written with a real ellipsis**, in `ErrorCatalogueTests`, `ProvisioningTests` and
+  `SessionListTests`, and the scan reported the tree clean for as long as they stood.
+
+  A code shape must now be in CODE, asked of `Harness.Commentary` -- the same lexer the wording
+  scan reads with, so there is one answer to *is this a comment* and not two. The lexer gained
+  `SpansOf` and `IsCommentary`, and `Of` is rebuilt on them, because a reader that needs to
+  know whether a given CHARACTER is inside a comment cannot use the concatenated string: the
+  offsets are gone, and a second walk written for the purpose would be a second answer.
+  **Planted red** with a doctored comment in a real file and watched naming the file, the line
+  and the character.
+
+  **The one occurrence that branch was legitimately carrying is now a named quotation.**
+  `ModelSurfaceTests` has a dated *previously* clause quoting a comment about what an em dash
+  costs IN BYTES, so the character is the subject of the sentence and re-spelling it would make
+  the quotation false. It is admitted for that reason now, and not because the quotation
+  happens to put the dash between two apostrophes.
+
 - 🐛 **Notifications relayed from the child leave in the order the child wrote them.**
   The SDK's message loop starts each inbound message's handling without awaiting it -- its own
   comment says *"Fire and forget the message handling to avoid blocking the transport"* -- so a

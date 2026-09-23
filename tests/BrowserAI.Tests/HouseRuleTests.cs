@@ -3120,6 +3120,15 @@ internal sealed partial class HouseRuleTests
         await Assert.That(TypedCharacterOffences("tests/X.cs", $"var c = '{EmDash}';")).IsEmpty();
         await Assert.That(TypedCharacterOffences("docs/probes/a/rig.js", $"const EMDASH = '{EmDash}';")).IsEmpty();
         await Assert.That(TypedCharacterOffences("src/X.cs", $"var c = '{EmDash}';")).IsNotEmpty();
+
+        // ⚠️ AND THE SAME SHAPE INSIDE A COMMENT IS NOT A LITERAL, which is the
+        // hole closed on 2026-09-23. All three of these read as a character
+        // literal to a reader that looks only at the two adjacent characters.
+        await Assert.That(TypedCharacterOffences("tests/X.cs", $"// an elision written '{Ellipsis}' in a comment")).IsNotEmpty();
+        await Assert.That(TypedCharacterOffences("tests/X.cs", $"/// a doc comment saying '{EmDash}' is a dash")).IsNotEmpty();
+        await Assert.That(TypedCharacterOffences("docs/probes/a/rig.ps1", $"# a shell comment saying '{EnDash}' here")).IsNotEmpty();
+        await Assert.That(TypedCharacterOffences("tests/X.cs", $"[Arguments(\"A {EmDash} B\", \"a--b\")] // in code")).IsEmpty();
+        await Assert.That(TypedCharacterOffences("tests/X.cs", $"// [Arguments(\"A {EmDash} B\")] commented out")).IsNotEmpty();
         await Assert.That(TypedCharacterOffences("tests/X.cs", $"[Arguments(\"A {EmDash} B\", \"a--b\")]")).IsEmpty();
         await Assert.That(TypedCharacterOffences("tests/X.cs", $"// a comment {EmDash} with one")).IsNotEmpty();
         await Assert.That(TypedCharacterOffences("kb/windows/detection.md", $"titled *Untitled {EnDash} Google Chrome for Testing*, four")).IsEmpty();
@@ -3235,12 +3244,27 @@ internal sealed partial class HouseRuleTests
     /// Whether one occurrence is a control that exists to contain the character.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <b>Three shapes.</b> A character literal in a TEST or in a PROBE RIG is a
     /// control -- the first is what a release body is refused for, the second
     /// measured what the character costs in bytes; in the PRODUCT a literal is
     /// output and is swept. An <c>[Arguments]</c> worked example pins the slug
     /// rule. And a quotation is named in full, because a rule with an unnamed
     /// exception has no exception, it has a hole.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THE FIRST TWO ARE CODE SHAPES AND ARE NOW REQUIRED TO BE IN CODE,
+    /// asked of <see cref="Harness.Commentary"/> and not of the two adjacent
+    /// characters.</b> <i>Corrected 2026-09-23 (previously the character-literal
+    /// test read <c>text[at - 1]</c> and <c>text[at + 1]</c> and nothing else).</i>
+    /// A comment that happens to quote <c>'x'</c> has that same shape, so an
+    /// ordinary sentence was admitted as a C# character literal: it hid three
+    /// elisions written with a real ellipsis, in <c>ErrorCatalogueTests</c>,
+    /// <c>ProvisioningTests</c> and <c>SessionListTests</c>, and the scan reported
+    /// the tree clean for as long as they stood. The lexer is the same one the
+    /// prose scan reads with, so there is one answer to <i>is this a comment</i>
+    /// and not two.
+    /// </para>
     /// </remarks>
     /// <param name="name">The repository-relative path, with forward slashes.</param>
     /// <param name="text">The file's text.</param>
@@ -3263,6 +3287,19 @@ internal sealed partial class HouseRuleTests
             return false;
         }
 
+        // ⚠️ BOTH SHAPES BELOW ARE CODE, SO BOTH REQUIRE THIS TO BE CODE, and
+        // that is asked of the same lexer the prose scan uses, not of the
+        // two neighbouring characters. Corrected 2026-09-23: the char-literal
+        // test used to read text[at - 1] and text[at + 1] and nothing else, so an
+        // ordinary COMMENT saying 'x' was admitted as a C# character literal. It
+        // hid three occurrences -- an elision written as a real ellipsis in
+        // ErrorCatalogueTests, ProvisioningTests and SessionListTests -- and the
+        // scan reported the tree clean for as long as they stood.
+        if (Harness.Commentary.IsCommentary(text, Path.GetExtension(name), at))
+        {
+            return false;
+        }
+
         if (at > 0 && at + 1 < text.Length && text[at - 1] is '\'' && text[at + 1] is '\'')
         {
             return true;
@@ -3277,14 +3314,27 @@ internal sealed partial class HouseRuleTests
     /// Text quoted from somewhere else, which stays as its author wrote it.
     /// </summary>
     /// <remarks>
-    /// <b>One, and it is named so that it stays one.</b> Chrome titles its
+    /// <para>
+    /// <b>Two, and they are named so that they stay two.</b> Chrome titles its
     /// windows with an en dash, and the kb entry is reporting two windows it saw.
     /// Re-spelling the title would make the observation say something that was
     /// not on the screen.
+    /// </para>
+    /// <para>
+    /// <b>The second arrived 2026-09-23 with the fix above, and it is the same
+    /// occurrence, admitted for a better reason.</b> <c>ModelSurfaceTests</c>
+    /// carries a dated <i>previously</i> clause quoting a comment that was about
+    /// what an em dash COSTS IN BYTES, so the character is the subject of the
+    /// sentence and re-spelling it would make the quotation false. It used to be
+    /// admitted by the character-literal branch, because the quotation puts the
+    /// dash between two apostrophes -- which is an accident of punctuation and not
+    /// a reason. It is named here instead.
+    /// </para>
     /// </remarks>
     private static (string File, string Phrase)[] QuotedVerbatim { get; } =
     [
         ("kb/windows/detection.md", "Untitled " + EnDash + " Google Chrome for Testing"),
+        ("tests/BrowserAI.Tests/ModelSurfaceTests.cs", "(2 bytes) and '" + EmDash + "' (3 bytes)"),
     ];
 
     /// <summary>

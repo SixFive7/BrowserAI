@@ -45,22 +45,60 @@ internal static class Commentary
     {
         ArgumentNullException.ThrowIfNull(text);
 
+        var found = new StringBuilder();
+
+        foreach (var (start, end) in SpansOf(text, suffix))
+        {
+            _ = found.Append(text[start..end]).Append('\n');
+        }
+
+        return found.ToString();
+    }
+
+    /// <summary>Where the commentary is, as half-open ranges into the text.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The same walk as <see cref="Of"/>, which is built on this one.</b> A
+    /// reader that needs to know whether a given CHARACTER is inside a comment
+    /// cannot use the concatenated string -- the offsets are gone -- and a second
+    /// walk written for the purpose would be a second answer to the same question.
+    /// </para>
+    /// <para>
+    /// For prose the whole file is one span, because a Markdown file has no code
+    /// to skip and every character in it is something a person wrote.
+    /// </para>
+    /// </remarks>
+    /// <param name="text">The file's text.</param>
+    /// <param name="suffix">Its extension, lower-case, with the dot.</param>
+    /// <returns>One range per comment, in order.</returns>
+    public static List<(int Start, int End)> SpansOf(string text, string suffix)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
         return suffix switch
         {
             ".cs" or ".js" or ".mjs" => CStyle(text),
             ".ps1" or ".psm1" => Shell(text, powershell: true),
             ".sh" => Shell(text, powershell: false),
             ".csproj" or ".props" or ".targets" or ".slnx" or ".xml" or ".manifest" => Xml(text),
-            _ => text,
+            _ => [(0, text.Length)],
         };
     }
 
+    /// <summary>Whether one position in a file is inside its commentary.</summary>
+    /// <param name="text">The file's text.</param>
+    /// <param name="suffix">Its extension, lower-case, with the dot.</param>
+    /// <param name="index">The position to ask about.</param>
+    /// <returns>Whether a person reading the comments would read this character.</returns>
+    public static bool IsCommentary(string text, string suffix, int index) =>
+        SpansOf(text, suffix).Any(span => index >= span.Start && index < span.End);
+
     /// <summary>Every <c>//</c> and <c>/* */</c> comment, skipping every literal.</summary>
     /// <param name="text">The file's text.</param>
-    /// <returns>The comments, one per line.</returns>
-    private static string CStyle(string text)
+    /// <returns>One range per comment.</returns>
+    private static List<(int Start, int End)> CStyle(string text)
     {
-        var found = new StringBuilder();
+        var found = new List<(int Start, int End)>();
 
         for (var i = 0; i < text.Length;)
         {
@@ -120,7 +158,7 @@ internal static class Commentary
             {
                 var end = text.IndexOf('\n', i);
                 end = end < 0 ? text.Length : end;
-                _ = found.Append(text[i..end]).Append('\n');
+                found.Add((i, end));
                 i = end;
                 continue;
             }
@@ -129,7 +167,7 @@ internal static class Commentary
             {
                 var end = text.IndexOf("*/", i + 2, StringComparison.Ordinal);
                 end = end < 0 ? text.Length : end + 2;
-                _ = found.Append(text[i..end]).Append('\n');
+                found.Add((i, end));
                 i = end;
                 continue;
             }
@@ -137,16 +175,16 @@ internal static class Commentary
             i++;
         }
 
-        return found.ToString();
+        return found;
     }
 
     /// <summary>Every <c>#</c> comment, and PowerShell's block form.</summary>
     /// <param name="text">The file's text.</param>
     /// <param name="powershell">Whether <c>&lt;# #&gt;</c> and the backtick escape apply.</param>
-    /// <returns>The comments, one per line.</returns>
-    private static string Shell(string text, bool powershell)
+    /// <returns>One range per comment.</returns>
+    private static List<(int Start, int End)> Shell(string text, bool powershell)
     {
-        var found = new StringBuilder();
+        var found = new List<(int Start, int End)>();
 
         for (var i = 0; i < text.Length;)
         {
@@ -156,7 +194,7 @@ internal static class Commentary
             {
                 var end = text.IndexOf("#>", i + 2, StringComparison.Ordinal);
                 end = end < 0 ? text.Length : end + 2;
-                _ = found.Append(text[i..end]).Append('\n');
+                found.Add((i, end));
                 i = end;
                 continue;
             }
@@ -178,7 +216,7 @@ internal static class Commentary
             {
                 var end = text.IndexOf('\n', i);
                 end = end < 0 ? text.Length : end;
-                _ = found.Append(text[i..end]).Append('\n');
+                found.Add((i, end));
                 i = end;
                 continue;
             }
@@ -186,15 +224,15 @@ internal static class Commentary
             i++;
         }
 
-        return found.ToString();
+        return found;
     }
 
     /// <summary>Every XML comment.</summary>
     /// <param name="text">The file's text.</param>
-    /// <returns>The comments, one per line.</returns>
-    private static string Xml(string text)
+    /// <returns>One range per comment.</returns>
+    private static List<(int Start, int End)> Xml(string text)
     {
-        var found = new StringBuilder();
+        var found = new List<(int Start, int End)>();
 
         for (var i = 0; ;)
         {
@@ -202,12 +240,12 @@ internal static class Commentary
 
             if (start < 0)
             {
-                return found.ToString();
+                return found;
             }
 
             var end = text.IndexOf("-->", start + 4, StringComparison.Ordinal);
             end = end < 0 ? text.Length : end + 3;
-            _ = found.Append(text[start..end]).Append('\n');
+            found.Add((start, end));
             i = end;
         }
     }
