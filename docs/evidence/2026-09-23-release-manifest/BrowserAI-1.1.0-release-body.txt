@@ -1,0 +1,55 @@
+A web page can offer its own tools to the browser. From this version they can be called. A name invented by a page is still refused at the door; the page's tool is reached through one tool of ours, and that tool is judged like every other.
+
+The rest is upkeep and repair. Velopack moved for the first time since this project started. The installer is a 64-bit program now, and Windows will show the app's size in Add/Remove Programs, where it showed nothing. One note told a caller its cookies had survived a crash. The measurement says they may not have, and the note says that now.
+
+### Added
+
+- ✨ **A web page's own tools are callable, through one tool of ours that is judged like the rest.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L55-L106)
+- ✅ **The scratch configuration the suite hands the real client is seeded as already onboarded.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L108-L127)
+- ✅ **A log event id must be unique in its class, and the scan found a second collision on its first run.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L129-L155)
+
+### Changed
+
+- 🐛 **Two client-liveness events shared event id 76, so both moved off it and the id is retired.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L159-L183)
+- 📦 **Every release packs full packages only, so an update downloads the whole thing.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L185-L218)
+- 🔧 **The relaunch note stops promising that stored state survived, because it may not have.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L220-L243)
+- ⬆️ **Velopack rolled 1.2.0 to 1.2.158, and the Windows installer is a 64-bit bootstrapper now.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L245-L294)
+- 📝 **A browser server that ends itself loses the same stores as one that is killed.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L296-L314)
+- 📝 **The feed is asked once per server start, and a hundred browsers in one session ask nothing.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L316-L338)
+- 🔧 **`webmcp: true` is written into every generated config rather than left to upstream's default.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L340-L355)
+- 📝 **Dash style for the whole repository is recorded as an open question rather than settled.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L357-L377)
+- 📝 **Three decisions about page-provided tools, with the directions not taken beside them.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L379-L399)
+- 🔧 **A session's deletion, what a destroy takes, its upload root and its move are all said now.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L401-L437)
+- ✅ **Four arms hold the session-lifetime rules on the published binary's own wire.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L439-L453)
+- 💥 **The payload could not be rebuilt until the override's exit was adjudicated.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L455-L493)
+- 📝 **The charter's version-chain example prints the chain that ships, and an arm holds it there.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L495-L536)
+- 📝 **The README licensing tables name Firefox, the third Playwright package, and today's revision.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L539-L575)
+- 📝 **The session ledger is snapshotted again, and a re-snapshot is not an edit.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L577-L599)
+- 🗑️ **The idle-CPU axis is retired as not established, and the other three are unchanged.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L601-L627)
+- 📝 **The third-party notices name the third Playwright package and both browsers we provision.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L629-L654)
+- 📦 **The release manifest records the pulled-forward dependency, and copies the file that pins it.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L656-L677)
+- 📝 **Resume is two paths now, and each was timed at 1245 and 1548.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L679-L703)
+- 📝 **The cost ratios are re-taken at 1245 and 1548, and the idle-CPU axis is withdrawn.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L705-L728)
+- 📝 **Four claims in the payload licensing row did not survive a re-read at 1245 and 1548.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L730-L754)
+- 📝 **Disk after a first run is a measured number again: 598 MB.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L756-L767)
+- ⬆️ **TUnit moved 1.68.4 -> 1.68.17 and this time the testing platform moved with it, 2.4.0 -> 2.4.1.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L769-L791)
+- ⬆️ **The payload rolled to `@playwright/mcp` 0.0.82, and three browser revisions came with it.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L793-L820)
+- 🗑️ **The dated `playwright-core` override is removed, four days after it was taken.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L822-L846)
+- ✅ **The exit test, its positive control and the version ordering underneath them are retired.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L848-L869)
+- 🔒 **A web page can add tools to the child's `tools/list`, and BrowserAI's surface does not move.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L871-L894)
+- 🔧 **Two tools left the surface and nobody here judged them out.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L896-L915)
+- 📝 **Four re-verification rows are marked `[STALE]` and owed, and the reason is on each.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L917-L929)
+- 📝 **The session ledger is snapshotted for the last time, and the scratch folder is empty.** [read more](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md?plain=1#L931-L949)
+
+---
+
+| Icon | Meaning | Icon | Meaning |
+|---|---|---|---|
+| ✨ | new capability | 🐛 | fix |
+| 🔧 | behaviour or configuration change | 🔒 | security or permissions |
+| 🗑️ | removal or deprecation | 💥 | breaking, or the reader must act |
+| 📝 | documentation | ✅ | tests and the gate |
+| 📦 | packaging, installer, release pipeline | ⚡ | performance |
+| ♻️ | refactor with no behaviour change | ⬆️ | dependency move |
+
+The full changelog for this release: [CHANGELOG.md](https://github.com/SixFive7/BrowserAI/blob/v1.1.0/CHANGELOG.md#110---2026-09-23)

@@ -1,0 +1,26 @@
+{
+  "_what_this_is": "What the last payload build resolved. A build artifact, not a target: nothing reads it back to pin anything.",
+  "builtUtc": "2026-09-22T12:13:16.3645204Z",
+  "node": {
+    "version": "v24.21.0",
+    "lts": "Krypton",
+    "date": "2026-09-07",
+    "archive": "node-v24.21.0-win-x64.zip",
+    "sha256": "158f7685b44de51f6c0df1d153526cbcd3e1bc739a8dfc607721cef75de9e541",
+    "bytes": 93580104
+  },
+  "npm": {
+    "@playwright/mcp": "0.0.82",
+    "playwright-core": "1.64.0-alpha-1789764292000",
+    "bytes": 18697570
+  },
+  "browsers": {
+    "root": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers",
+    "installed": false,
+    "chromium": {
+      "revision": "1246",
+      "browserVersion": "154.0.8037.0",
+      "directory": "chromium-1246"
+    }
+  }
+}

@@ -2545,4 +2545,89 @@ internal sealed partial class HouseRuleTests
     /// <returns>The free-space spellings it carries, in the order they are declared.</returns>
     private static List<string> FreeSpaceNeedles(string code) =>
         [.. FreeSpaceSpellings.Where(needle => code.Contains(needle, StringComparison.Ordinal))];
+
+    /// <summary>
+    /// Every batch under <c>docs/evidence/</c> is a row in that directory's own
+    /// index, and every row is a batch that is there.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>An index is the only way into this subtree, so a batch nobody listed
+    /// is a record nobody will find.</b> Nothing builds
+    /// <c>docs/evidence/</c> and nothing in the suite reads it, which is exactly
+    /// why it needs a scan: a directory that is never opened by a build cannot
+    /// go wrong loudly. The table in
+    /// <c>docs/evidence/README.md</c> is what a kb entry, a hazard row or a
+    /// review points a reader at.
+    /// </para>
+    /// <para>
+    /// <b>Watched red 2026-09-23 against the tree as it stood, and it named
+    /// three batches nobody had listed</b> — <c>2026-09-21-provisioning-1246</c>,
+    /// <c>2026-09-21-webmcp</c> and <c>2026-09-23-release-body</c>, the oldest of
+    /// them two days old. Each had its own <c>README.md</c> and each was cited
+    /// from somewhere else in the tree; the one thing missing was the row that
+    /// makes the collection enumerable. That is the shape this arm exists for,
+    /// and it is the shape a person reading the same table twice does not see.
+    /// </para>
+    /// <para>
+    /// <b>Only the FIRST cell of a row counts, and that is the discriminator.</b>
+    /// The same batch is linked from running prose in the paragraph above the
+    /// table, and a scan that counted every link to a <c>README.md</c> would
+    /// read that as a row and report a table it has not checked. The pattern is
+    /// anchored on a line opening with a table pipe, and the control below
+    /// hands it the prose form and requires nothing back.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryEvidenceBatchIsARowInItsIndexAndEveryRowIsABatch()
+    {
+        var evidence = new DirectoryInfo(Path.Combine(RepositoryLayout.Root.FullName, "docs", "evidence"));
+        var index = await File.ReadAllTextAsync(Path.Combine(evidence.FullName, "README.md"));
+
+        var present = evidence.EnumerateDirectories().Select(batch => batch.Name).ToArray();
+        var listed = EvidenceBatchesIn(index);
+
+        await Assert.That(string.Join(", ", present.Except(listed, StringComparer.Ordinal).Order(StringComparer.Ordinal)))
+            .IsEmpty()
+            .Because("a batch under docs/evidence/ that its index does not list is a record nobody will find — add the row");
+
+        await Assert.That(string.Join(", ", listed.Except(present, StringComparer.Ordinal).Order(StringComparer.Ordinal)))
+            .IsEmpty()
+            .Because("docs/evidence/README.md lists a batch directory that is not there");
+
+        // ⚠️ THE POSITIVE CONTROL. A pattern that stopped matching would find no
+        // rows, agree with an empty disk and pass — which is the same shape as
+        // both sides being right.
+        await Assert.That(listed.Count).IsGreaterThan(15);
+        await Assert.That(present.Length).IsGreaterThan(15);
+
+        // ⚠️ BOTH CONTROLS ARE BUILT FROM HALVES, so that no line in this file is
+        // a Markdown link DocumentationLinkTests then tries to resolve against
+        // this directory -- which is exactly what it reported when they were
+        // written whole. Same arrangement that file keeps for its own controls.
+        const string Opens = "](";
+
+        var row = "| [`9999-01-01-synthetic`" + Opens + "9999-01-01-synthetic/README.md) | What it is | Cited by |";
+
+        await Assert.That(EvidenceBatchesIn(row)).IsEquivalentTo(["9999-01-01-synthetic"]);
+
+        // And the other direction: the same link in running prose is not a row,
+        // which is a thing the index really does carry.
+        var prose = "departure is called out in the batch's own README —\n"
+            + "[`2026-08-26-post-course-correction`" + Opens + "2026-08-26-post-course-correction/README.md)\n"
+            + "is the only one, and it is one byte, twice.";
+
+        await Assert.That(EvidenceBatchesIn(prose)).IsEmpty();
+    }
+
+    /// <summary>The batch each table row names, in the order the rows are written.</summary>
+    /// <param name="index">The text of <c>docs/evidence/README.md</c>.</param>
+    /// <returns>One name per row.</returns>
+    private static List<string> EvidenceBatchesIn(string index) =>
+        [.. EvidenceIndexRow().Matches(index).Select(row => row.Groups["batch"].Value)];
+
+    /// <summary>A row of the evidence index: a table line whose first cell is a linked batch name.</summary>
+    [GeneratedRegex(@"(?m)^\|\s*\[`(?<batch>[^`]+)`\]\(")]
+    private static partial Regex EvidenceIndexRow();
 }

@@ -1202,6 +1202,35 @@ the package's SHA-256 and the resolved version each copied file carries:
 **Evidence:** the manifest's path, the resolved version each file states, and
 what its `override` and `pulledForward` keys say.
 
+⚠️ **AND IT IS COMMITTED, ONE DIRECTORY PER RELEASE, UNDER
+[`docs/evidence/`](docs/evidence/README.md) — *added 2026-09-23 by addition*.**
+`<ArchiveDir>` is inside the gitignored `Releases/`, so until today the only copy
+of the resolved set a reader could reach was a `BrowserAI-<version>-manifest.zip`
+uploaded beside the installer — which meant that **a clone of this repository
+could not answer what a release was built from**, and that a release whose assets
+were ever trimmed would take the answer with it. The maintainer's decision on
+that asset, verbatim, is **"7 move it"**: the zip leaves the upload set and the
+directory is committed as
+`docs/evidence/<date>-release-manifest/`, in that directory's own convention,
+with a `README.md` naming what it is and what it was cut from.
+[`docs/evidence/2026-09-23-release-manifest/`](docs/evidence/2026-09-23-release-manifest/README.md)
+is `1.1.0`'s, added after the release rather than before it.
+
+**Two things about the copy are not the bytes as emitted, and the batch README
+records both.** The release body inside it is `.md` as emitted and is stored
+`.txt`, because every `.md` here carries an SPDX header that
+`HouseRuleTests.EverySourceFileCarriesTheTwoLineSpdxHeader` enforces — two lines
+that would falsify the digest the file exists for. And `.gitattributes`
+normalises line endings, so the files a restore wrote with CRLF are stored with
+LF; the batch README carries the as-emitted digest of each one. **Three of the
+five become byte-identical to the committed file they were copied from**, which
+is the copy agreeing with the tree rather than drifting from it.
+
+**When this happens:** *after* the release, never before. A commit before the tag
+is a commit the tag would have to ride, and the manifest cannot be written until
+the pack that produces it has run. `git rev-list -n1 <tag>` must name the same
+commit afterwards as it did before.
+
 > ⚠️ **Eight since 2026-09-18** *(previously seven — the `package.json` row
 > above, the `pulledForward` row, and the word "seven" in
 > `build/Write-ReleaseManifest.ps1` and in

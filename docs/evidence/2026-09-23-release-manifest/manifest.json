@@ -1,0 +1,104 @@
+{
+  "_what_this_is": "The resolved set this release was cut from. RELEASING.md item 11. Copied, never transcribed: every version below was read back out of the file beside it.",
+  "_override": "null means this release took the newest resolve. A block means a HUMAN held an upstream back -- DECISIONS.md, \"Every release builds against the latest Playwright, and only a human may say otherwise\". The key is always present, because an absent key is not a statement.",
+  "_pulledForward": "THE OPPOSITE OF `override`, and the two are never the same thing. `override` is a dependency HELD BACK from what a resolve returned; this is a dependency the payload ships PULLED FORWARD of what the packages in it declare for themselves, which is what an npm `overrides` entry in build/payload/package.json does. null means no override was in force. A block names, per overridden package, the version that SHIPPED (read from payload.package-lock.json), the version the override PINNED TO (read from payload.package.json) and what each package in the lock DECLARES for itself -- and a declared version at or above the pin is the exit condition, the day the override is deleted. The key is always present, for the same reason `override` is. npm writes no `overrides` block into the lock it produces, so the copied payload.package.json beside this file is the only record that one was in force.",
+  "writtenUtc": "2026-09-23T11:30:36.1357756Z",
+  "version": "1.1.0",
+  "tag": "v1.1.0-0-gd3aabf1",
+  "channel": "win",
+  "package": {
+    "name": "BrowserAI.app-1.1.0-full.nupkg",
+    "bytes": 55022716,
+    "sha256": "438d0d7b153aaa2dcef74375d85a63ba21c4b5b59c6a802c55848ad2ae2ef621"
+  },
+  "override": null,
+  "pulledForward": null,
+  "files": {
+    "src-BrowserAI.packages.lock.json": {
+      "from": "src/BrowserAI/packages.lock.json",
+      "bytes": 10379
+    },
+    "tests-BrowserAI.Tests.packages.lock.json": {
+      "from": "tests/BrowserAI.Tests/packages.lock.json",
+      "bytes": 15608
+    },
+    "tests-BrowserAI.TestProbe.packages.lock.json": {
+      "from": "tests/BrowserAI.TestProbe/packages.lock.json",
+      "bytes": 9593
+    },
+    "payload.package-lock.json": {
+      "from": "build/payload/package-lock.json",
+      "bytes": 1815
+    },
+    "payload.package.json": {
+      "from": "build/payload/package.json",
+      "bytes": 2228
+    },
+    "payload.json": {
+      "from": "payload/payload.json",
+      "bytes": 808
+    },
+    "browsers.json": {
+      "from": "upstream-snapshots/browsers.json",
+      "bytes": 1135
+    },
+    "tool-verdicts.json": {
+      "from": "tool-verdicts.json",
+      "bytes": 12513
+    }
+  },
+  "resolved": {
+    "nuget": {
+      "ModelContextProtocol": "2.2.0",
+      "Velopack": "1.2.158",
+      "MinVer": "8.0.0",
+      "TUnit": "1.68.17"
+    },
+    "npm": {
+      "@playwright/mcp": "0.0.82",
+      "playwright-core": "1.64.0-alpha-1789764292000"
+    },
+    "node": {
+      "version": "v24.21.0",
+      "lts": "Krypton",
+      "sha256": "158f7685b44de51f6c0df1d153526cbcd3e1bc739a8dfc607721cef75de9e541"
+    },
+    "toolVerdicts": {
+      "schemaVersion": 1,
+      "judgedAgainst": {
+        "@playwright/mcp": "0.0.82",
+        "playwright-core": "1.64.0-alpha-1789764292000"
+      }
+    },
+    "browsers": {
+      "chromium": {
+        "revision": "1246",
+        "browserVersion": "154.0.8037.0"
+      },
+      "chromium-headless-shell": {
+        "revision": "1246",
+        "browserVersion": "154.0.8037.0"
+      },
+      "firefox": {
+        "revision": "1549",
+        "browserVersion": "156.0"
+      },
+      "webkit": {
+        "revision": "2365",
+        "browserVersion": "26.6"
+      },
+      "ffmpeg": {
+        "revision": "1011",
+        "browserVersion": null
+      },
+      "winldd": {
+        "revision": "1007",
+        "browserVersion": null
+      },
+      "android": {
+        "revision": "1001",
+        "browserVersion": null
+      }
+    }
+  }
+}
