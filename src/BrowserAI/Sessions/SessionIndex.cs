@@ -17,7 +17,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// There is no root to scan, because there is no default session directory -- a
 /// session lives wherever the caller said. That makes this store load-bearing,
-/// and it is therefore built to <b>fail safe rather than to be correct under
+/// and it is therefore built to <b>fail safe and not to be correct under
 /// every race</b>.
 /// </para>
 /// <para>
@@ -35,13 +35,13 @@ namespace BrowserAI.Sessions;
 /// moment <see cref="FollowUnder"/> existed: a subtree read decides which entries
 /// to <i>ask about</i> and never which answers to <i>trust</i>. A filtered entry
 /// is not reported at all, which is a third thing beside <i>ours</i> and <i>not
-/// ours</i> and is why the sentence had to move rather than be dropped.
+/// ours</i> and is why the sentence had to move and not be dropped.
 /// </para>
 /// <para>
 /// <b>No lock, by design.</b> Create and delete are atomic per file, so there is
 /// no read-modify-write to synchronise and nothing for a mutex to protect. A
 /// wrongly-deleted entry is restored by the next <c>init</c> or <c>resume</c>,
-/// which costs one sweep cycle of invisibility rather than an orphaned
+/// which costs one sweep cycle of invisibility and not an orphaned
 /// directory. Locking it would put a machine-wide lock on the hot path of every
 /// session start to close a race whose cost is that cycle.
 /// </para>
@@ -82,7 +82,7 @@ internal sealed class SessionIndex
     /// Nothing holds an index entry open -- this store's own reader shares
     /// <c>Delete</c> -- so contention here means something outside BrowserAI has
     /// the file, and the fail-safe answer is to give up quickly and let the next
-    /// use re-assert rather than to stall a session start.
+    /// use re-assert instead of stalling a session start.
     /// </remarks>
     private static readonly TimeSpan MoveBudget = TimeSpan.FromMilliseconds(500);
 
@@ -121,7 +121,7 @@ internal sealed class SessionIndex
     /// </summary>
     /// <param name="session">The canonicalised session directory.</param>
     /// <remarks>
-    /// Re-asserting rather than writing-once is what makes a lost entry
+    /// Re-asserting and not writing-once is what makes a lost entry
     /// self-heal, and it is what lets this store skip locking entirely. The
     /// write is unconditional -- there is no "already correct, skip it" fast path
     /// -- because the check would cost a read on the same hot path it saves a
@@ -157,7 +157,7 @@ internal sealed class SessionIndex
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
             // Never fatal. The session is real whether or not it is inventoried,
-            // and the next init or resume re-asserts this. Logged rather than
+            // and the next init or resume re-asserts this. Logged and not
             // swallowed: silence is the enemy, a lost line is not.
             SessionIndexLog.CouldNotRecord(_logger, entry, session.FullPath, failure);
         }
@@ -175,7 +175,7 @@ internal sealed class SessionIndex
     /// a destroyed session lingering in an inventory is exactly the kind of
     /// confident wrong answer this project exists to remove. Never fatal, for the
     /// same reason <see cref="Record"/> is not: the entry is re-derivable and a
-    /// stale one is a report rather than a fault.
+    /// stale one is a report and not a fault.
     /// </remarks>
     public void Forget(SessionPath session)
     {
@@ -206,7 +206,7 @@ internal sealed class SessionIndex
     /// browsers root is machine-wide; and <c>StraySweep.AttributeByProfileLock</c>,
     /// whose whole reach is the point of it.
     /// <c>HouseRuleTests.TheThreeWholeMachineIndexReadersStillTakeTheWholeMachineRead</c>
-    /// asserts that, by name, rather than leaving it to a reader.
+    /// asserts that, by name, instead of leaving it to a reader.
     /// </para>
     /// <para>
     /// ⚠️ ***Corrected 2026-08-24, same day (previously "<c>HouseRuleTests</c>
@@ -234,7 +234,7 @@ internal sealed class SessionIndex
     /// every session on the machine had its record opened and strictly parsed --
     /// up to 250 log entries and all their arguments -- to print the four fields
     /// of the few that matched. <c>Beneath</c> runs on every <c>init</c> and
-    /// every <c>resume</c>, so that was a session-open cost rather than a
+    /// every <c>resume</c>, so that was a session-open cost and not a
     /// listing one, and each of those opens inherits <c>RenameWindow</c>'s
     /// budget: one denied or scanner-held record anywhere on the machine could
     /// add it to a call scoped to a completely unrelated tree.
@@ -269,7 +269,7 @@ internal sealed class SessionIndex
     /// and none of it opens the session.
     /// </para>
     /// <para>
-    /// <b>An entry this cannot compare is returned rather than dropped.</b>
+    /// <b>An entry this cannot compare is returned and not dropped.</b>
     /// Every earlier refusal -- unreadable, empty, relative, not a session path,
     /// wrongly named -- carries no path to test against the prefix, and dropping
     /// it would make a subtree read narrower than its caller can see.
@@ -300,7 +300,7 @@ internal sealed class SessionIndex
     /// <para>
     /// ⚠️ ***Corrected 2026-08-24, same day (previously "as
     /// <c>SessionManager.Subtree</c> produces it").*** There are <b>two</b>
-    /// producers and the contract is the shape rather than one of them:
+    /// producers and the contract is the shape and not one of them:
     /// <c>SessionManager.Subtree</c> is one, and <c>SessionManager.Beneath</c>
     /// re-derives the prefix itself -- <c>ToUpperInvariant</c> then a separator --
     /// and in particular skips <c>Subtree</c>'s <c>Path.GetFullPath</c>. That is
@@ -308,9 +308,9 @@ internal sealed class SessionIndex
     /// already-canonical <see cref="SessionPath"/>. <b>It is also a second
     /// spelling of a derivation, which is what <see cref="IsUnder"/>'s own remark
     /// forbids two members below</b>: that remark says the copy in
-    /// <c>SessionManager</c> was deleted rather than left standing, and it is the
+    /// <c>SessionManager</c> was deleted and not left standing, and it is the
     /// <i>predicate</i> that was -- the <i>prefix</i> derivation is still there,
-    /// unmentioned, and pre-dates this method. Naming it here rather than
+    /// unmentioned, and pre-dates this method. Naming it here and not
     /// changing it: collapsing the two is a change to path handling and belongs
     /// with whoever owns that, not to a documentation pass.
     /// </para>
@@ -345,7 +345,7 @@ internal sealed class SessionIndex
     /// path on a volume that is not mounted has not been destroyed; the drive is
     /// simply not there. Removing either would make a directory that still exists
     /// permanently invisible to the only inventory there is, which is this
-    /// project's founding failure shape rather than a tidy index.
+    /// project's founding failure shape and not a tidy index.
     /// <b>Both are asserted</b>, by
     /// <c>SessionIndexTests.AnEntryWhoseRecordCannotBeReadIsKeptBecauseNothingElseCanRestoreIt</c>
     /// and
@@ -492,7 +492,7 @@ internal sealed class SessionIndex
     /// <see cref="SessionPath.Key"/> is the upper-cased full path. Two spellings
     /// of this predicate is the class of defect this repository keeps re-finding,
     /// which is why the copy that used to live in <c>SessionManager</c> was
-    /// deleted rather than left beside this one.
+    /// deleted and not left beside this one.
     /// <para>
     /// ⚠️ <b>And it is true of the PREFIX now too -- corrected 2026-08-26,
     /// previously "That is true of the PREDICATE and not of the PREFIX ...
@@ -501,7 +501,7 @@ internal sealed class SessionIndex
     /// to path handling".</b> That change is this one. <c>Subtree</c> and
     /// <c>Beneath</c> both call <c>CanonicalPath.PrefixOf</c>, and a tree-as-text
     /// scan (<c>HouseRuleTests.ThePrefixIsDerivedInOnePlaceAndTheRestOfTheTreeAsksForIt</c>)
-    /// fails the build on a third derivation rather than leaving the next one to
+    /// fails the build on a third derivation instead of leaving the next one to
     /// be found by reading.
     /// </para>
     /// </remarks>
@@ -534,7 +534,7 @@ internal sealed class SessionIndex
             // flight, because the file being replaced is delete-pending. Without
             // the wait this read did not throw -- it fell into the catch below and
             // reported the entry as `EntryUnreadable`, which is a wrong answer
-            // rather than an exception and therefore the worse of the two
+            // and not an exception and therefore the worse of the two
             // failures. The entry is kept either way, so nothing was ever
             // destroyed by it; what was lost is a session the caller should have
             // been told about.
@@ -543,7 +543,7 @@ internal sealed class SessionIndex
             using var buffer = new MemoryStream();
             stream.CopyTo(buffer);
 
-            // A BOM is stripped rather than refused. This is a pointer, and a
+            // A BOM is stripped and not refused. This is a pointer, and a
             // person who repaired one in an editor should be followed, not
             // lectured.
             pointer = Encoding.UTF8.GetString(buffer.GetBuffer(), 0, (int)buffer.Length).Trim(Bom, ' ', '\t', '\r', '\n');
@@ -576,7 +576,7 @@ internal sealed class SessionIndex
         // build -- and an entry like that is exactly what `Unusable` is for.
         //
         // What that deliberately cannot see is an alias in a path some OTHER
-        // build wrote. It is swept rather than followed, and the next `init` or
+        // build wrote. It is swept and not followed, and the next `init` or
         // `resume` on the real directory records it again, canonically.
         var verdict = CanonicalPath.Of(pointer, PathOrigin.Read, "pointer");
 
@@ -712,8 +712,8 @@ internal sealed class SessionIndex
     /// setting its own purpose.
     /// </para>
     /// <para>
-    /// <b>The temp file is the discriminator, and it is a positive signal rather
-    /// than a timing guess.</b> A durable write creates
+    /// <b>The temp file is the discriminator, and it is a positive signal and
+    /// not a timing guess.</b> A durable write creates
     /// <see cref="SessionLayout.NewLockFilePattern"/> in the same directory
     /// <i>before</i> it renames anything and deletes it only after the rename
     /// has landed, so for the whole of the window in which the name can be
@@ -796,8 +796,8 @@ internal sealed class SessionIndex
     /// <i>keeps</i>: <see cref="SessionIndexEntryState.Session"/> and
     /// <see cref="SessionIndexEntryState.LockUnreadable"/>. A directory whose
     /// <c>browserai.data</c> exists but will not parse therefore reads as
-    /// <c>Session</c> here rather than <c>LockUnreadable</c> -- <b>said plainly
-    /// rather than glossed</b>, because it is the one visible difference, and it
+    /// <c>Session</c> here and not <c>LockUnreadable</c> -- <b>said plainly
+    /// and not glossed</b>, because it is the one visible difference, and it
     /// moves nothing: both are kept, and this walk's only consumer is the sweep.
     /// </para>
     /// <para>
@@ -809,7 +809,7 @@ internal sealed class SessionIndex
     /// are the same two the record-bearing reader makes before it opens anything.
     /// </para>
     /// <para>
-    /// <b>The legacy record is checked here rather than inherited.</b>
+    /// <b>The legacy record is checked here and not inherited.</b>
     /// <c>SessionLock.ReadRecord</c> refuses a directory carrying the old
     /// <c>browserai.json</c> before it opens anything, and that refusal is what
     /// made such a directory <c>LockUnreadable</c> and therefore <b>kept</b>.

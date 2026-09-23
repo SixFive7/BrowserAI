@@ -6,7 +6,7 @@ using System.Globalization;
 namespace BrowserAI.Sessions;
 
 /// <summary>
-/// What a session directory <b>holds</b>, read off the filesystem rather than
+/// What a session directory <b>holds</b>, read off the filesystem and not
 /// off the record.
 /// </summary>
 /// <remarks>
@@ -28,7 +28,7 @@ namespace BrowserAI.Sessions;
 /// -- does not need the count.
 /// </para>
 /// <para>
-/// <b>Every failure is reported as an unknown rather than as a zero.</b> A tree
+/// <b>Every failure is reported as an unknown and not as a zero.</b> A tree
 /// that could not be walked is not an empty tree, and a caller about to call
 /// <c>browserai_destroy</c> on the strength of <i>"nothing here"</i> is exactly
 /// who must not be told that.
@@ -43,7 +43,7 @@ internal static class SessionInventory
     /// A HAR records every request and response the browser made, headers
     /// included -- so a session that holds one holds every bearer token and
     /// session cookie that crossed the wire in clear text. It is matched by
-    /// EXTENSION rather than by location, because a caller may point
+    /// EXTENSION and not by location, because a caller may point
     /// <c>browser_network_requests</c> anywhere inside <c>output\</c> and the
     /// launch-time capture lands at that directory's root.
     /// </remarks>
@@ -170,7 +170,7 @@ internal static class SessionInventory
     /// <b>Both families, by their own file names.</b> Chromium keeps
     /// <c>Network\Cookies</c> under the profile's default directory -- and kept it
     /// at the profile root in older revisions, which is why both are looked for;
-    /// Firefox keeps <c>cookies.sqlite</c>. A search rather than a fixed path,
+    /// Firefox keeps <c>cookies.sqlite</c>. A search and not a fixed path,
     /// because the profile's inner directory name is the browser's business and
     /// not ours.
     /// </remarks>
@@ -245,7 +245,7 @@ internal sealed record SessionContents
 
     /// <summary>Builds the answer for a directory that could not be walked.</summary>
     /// <param name="why">What went wrong.</param>
-    /// <returns>The contents, which report nothing rather than zero.</returns>
+    /// <returns>The contents, which report nothing and not zero.</returns>
     public static SessionContents Unreadable(string why) => new() { Failure = why };
 }
 
@@ -281,13 +281,13 @@ internal sealed record ArtifactKind(string Name)
 /// 2026-08-29 (previously "A fourth spelling ... The three that exist ... are
 /// fixed-unit: <c>browserai_list</c> and the artifact roll-up print MiB to one
 /// place").* The per-root roll-up is deleted, so the enumeration is one shorter
-/// and this is the third rather than the fourth. The two that
+/// and this is the third and not the fourth. The two that
 /// exist are fixed-unit: <c>browserai_list</c> prints
 /// MiB to one place, and the provisioner prints decimal MB because that is the
 /// unit a CDN's <c>content-length</c> is quoted in. Fixed MiB is exactly wrong
 /// for this answer -- a bucket holding three screenshots prints <c>0.0 MiB</c>,
 /// which a caller about to destroy a session reads as <i>nothing here</i>. The
-/// two established figures are deliberately left alone rather than migrated:
+/// two established figures are deliberately left alone and not migrated:
 /// they are published numbers with tests over them, and changing what they say
 /// is a separate decision from adding a place that needed something else.
 /// </remarks>

@@ -54,7 +54,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// <b>Chromium and not Firefox, on the maintainer's stated reason of
     /// 2026-09-17: <i>"the reason for the default is that chrome is the most
-    /// widely used"</i>.</b> A decision rather than a measurement, and written
+    /// widely used"</i>.</b> A decision and not a measurement, and written
     /// down as one -- the four Firefox-against-Chromium cost ratios that used to
     /// be the only ground on offer were re-measured on 2026-09-16 and three of
     /// them collapsed by between 1.7× and 7×, so that argument no longer carries
@@ -63,7 +63,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// while idle CPU reversed sign, so that argument...")</i> -- the fourth axis
     /// reversed sign <b>twice</b>, the second time inside a single day against a
     /// Chromium binary identical to the byte, and it is
-    /// <b>retired as not established</b> rather than counted in either
+    /// <b>retired as not established</b> and not counted in either
     /// direction. Nothing here changes with it: the conclusion rested on the
     /// three that are measured.
     /// </para>
@@ -82,7 +82,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <b>The rest of the product was already family-parameterised.</b>
     /// Provisioning, the config generator, the launch preflight and the stray
     /// sweep all take the family from the session's own <c>browserai.data</c>, so a
-    /// record that names Firefox is honoured on <c>resume</c> rather than
+    /// record that names Firefox is honoured on <c>resume</c> and not
     /// silently run as Chromium against a Firefox profile.
     /// </para>
     /// </remarks>
@@ -126,8 +126,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// caller can tell a truncated list from a complete one by comparing the two.
     /// </para>
     /// <para>
-    /// ⚠️ <b>And since 2026-08-19 the answer says which of the two it is, rather
-    /// than leaving the comparison to be noticed.</b> Previously the tally and
+    /// ⚠️ <b>And since 2026-08-19 the answer says which of the two it is, and
+    /// does not leave the comparison to be noticed.</b> Previously the tally and
     /// the listing were both there and <b>nothing anywhere said the list had been
     /// cut</b>: at 25 survivors a reader saw the number 25 and twenty lines, and
     /// the only evidence of the other five was arithmetic nobody was asked to do.

@@ -850,11 +850,11 @@ internal static class SessionErrors
     /// the first-run refusal had and the same fix.
     /// </para>
     /// <para>
-    /// <b>Zero staged bytes is reported as a phase rather than as a stall, and
+    /// <b>Zero staged bytes is reported as a phase and not as a stall, and
     /// the honesty is the point.</b> A reinstall deletes a tree and then
     /// downloads it, so the staging directory is empty for the whole delete and
     /// again once extraction starts. This clause says which two things it cannot
-    /// tell apart rather than implying either.
+    /// tell apart instead of implying either.
     /// </para>
     /// <para>
     /// <b>No percentage, and that is not an omission.</b> The measured download
@@ -979,7 +979,7 @@ internal static class SessionErrors
     /// </summary>
     /// <remarks>
     /// The holder record outliving the holder is what makes a stale lock a
-    /// sentence rather than a refusal. It is reported and the call proceeds.
+    /// sentence and not a refusal. It is reported and the call proceeds.
     /// </remarks>
     /// <param name="path">The session directory.</param>
     /// <param name="processId">The previous holder.</param>
@@ -1095,7 +1095,7 @@ internal static class SessionErrors
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Added 2026-08-19, because until then this case was an exception
-    /// rather than a refusal.</b> <c>SessionLock.TakeOrReport</c>'s first open --
+    /// and not a refusal.</b> <c>SessionLock.TakeOrReport</c>'s first open --
     /// the read of the previous record, under the per-directory gate -- caught a
     /// missing file, a sharing violation and an unparseable record, and nothing
     /// else. A permanent ACL denial arrives as
@@ -1128,7 +1128,7 @@ internal static class SessionErrors
         + $"Recovery: check who may read that path, or move this session to a directory this user owns. If the file is expendable, deleting it makes the directory a NEW session rather than a broken one -- {SessionToolSurface.Init} then works on it, and the profile, output and downloads beside it are untouched. Repeating the call that just failed will fail identically.";
 
     // ⚠️ Row 15 -- DirectoryIsACopy -- was DELETED on 2026-08-18 along with
-    // `acknowledgeCopy`, and deleted rather than left unreferenced because
+    // `acknowledgeCopy`, and deleted instead of left unreferenced because
     // ErrorCatalogueTests proves every row in this file is reachable from a real
     // path, so a row nothing can emit is a red build.
     //
@@ -1151,7 +1151,7 @@ internal static class SessionErrors
     // that way.
 
     // ⚠️ ROWS 16, 17 AND 18 ARE DELETED, 2026-08-26, AND THE CATALOGUE IS
-    // SHORTER RATHER THAN QUIETER. They were `FilenameNotWithinSession`,
+    // SHORTER AND NOT QUIETER. They were `FilenameNotWithinSession`,
     // `FilenameEscapesTheSession` and `FilenameNotUsable` -- the three refusals
     // BrowserAI's own `filename` gate produced, for an absolute or
     // drive-relative or UNC or rooted or device path, for a `..` climb, and for
@@ -1162,18 +1162,18 @@ internal static class SessionErrors
     // ...`), which BrowserAI forwards byte-identical like every other answer.
     //
     // The catalogue's census would have caught them the other way round -- a
-    // row nobody emits is a red build -- and the deletion is deliberate rather
-    // than forced: a refusal we no longer make is a sentence a model can never
+    // row nobody emits is a red build -- and the deletion is deliberate and
+    // not forced: a refusal we no longer make is a sentence a model can never
     // receive, and leaving it here would read as covered.
     //
-    // What is LOST with them is stated rather than glossed: upstream refuses
+    // What is LOST with them is stated, not glossed: upstream refuses
     // the escape and says nothing about `NUL.png`, a trailing space or a
     // trailing dot, which Windows redirects or rewrites instead of refusing. A
     // screenshot to `NUL.png` inside the output root now reports success and
     // writes nothing. That is an open hazard row, not an oversight.
 
     /// <summary>
-    /// Frames a recorded <c>purpose</c> as data rather than as an instruction,
+    /// Frames a recorded <c>purpose</c> as data and not as an instruction,
     /// capped and stripped.
     /// </summary>
     /// <remarks>
@@ -1193,7 +1193,7 @@ internal static class SessionErrors
     /// quoted sentence and a newline inside the quotes is what would let a
     /// paragraph of somebody else's text read as the server's own lines. Both
     /// this and <see cref="ReplayedPurposeLength"/> are caps on an <b>answer</b>
-    /// rather than on the record, which is why removing the record's caps did
+    /// and not on the record, which is why removing the record's caps did
     /// not touch them.
     /// </remarks>
     /// <param name="purpose">The recorded text.</param>
