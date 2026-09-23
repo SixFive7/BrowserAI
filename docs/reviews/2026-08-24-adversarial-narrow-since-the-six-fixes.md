@@ -8,7 +8,7 @@ carries `file:line`. Scope is the seams `dbf1346` and `a74281a` touched and wher
 meet code that predates them.
 
 > ⚠️ **One span was rewritten when this record was copied out of `.work/` and registered
-> here, and it is named here rather than left to a diff nobody keeps.** Item 9 of
+> here, and it is named here, not left to a diff nobody keeps.** Item 9 of
 > *Attacked and held* enumerated the upstream pointer shapes and spelled a Markdown link
 > inline. `DocumentationLinkTests` reads raw text and does not skip code spans, so that
 > span was a relative link into `docs/reviews/` pointing at a file that does not exist,
@@ -353,7 +353,7 @@ The list is the point: it is what makes the section above worth reading.
 **F7 -- the delimiter**
 
 9. **Every upstream pointer shape recorded in this tree.** A Markdown link with target
-   `./page-....yml` (written out in words rather than spelled inline -- see the note at the
+   `./page-....yml` (written out in words and not spelled inline -- see the note at the
    top of this file),
    `- New console entries: console-....log#L1-L24`, `- Downloaded file x.pdf to \"./x.pdf\"`, and
    a Windows separator arriving as `\\`. All put a non-`[A-Za-z0-9_.-]` character on both sides,
@@ -442,7 +442,7 @@ The list is the point: it is what makes the section above worth reading.
     the refusal fires. Only the console assertion (W11) is empty.
 27. **Pipe safety.** `ReadToEndAsync` on both streams is started before `WaitForExitAsync`, so
     the control cannot wedge on a full pipe; the bound is `TestDefaults.ProcessHang`, a named
-    constant, so it is a hang detector rather than a promptness claim.
+    constant, so it is a hang detector, not a promptness claim.
 
 **House rules and hygiene**
 
@@ -451,7 +451,7 @@ The list is the point: it is what makes the section above worth reading.
     contains `.Follow()`, so there is no false positive in `SessionIndex` itself.
 29. **Scratch discipline.** Both commits keep every produced artifact in `.work/`; nothing new
     was written outside the repository.
-30. **Cost claims are hedged rather than invented.** `ARCHITECTURE.md:544-559`,
+30. **Cost claims are hedged, not invented.** `ARCHITECTURE.md:544-559`,
     `SessionManager.cs:899-908` and `SessionLock.cs:1017-1023` all say the create/close pair is
     unmeasured and refuse to guess, and the 0.035/0.049 ms figures are labelled the file half
     only. That is the rule being followed, not broken.

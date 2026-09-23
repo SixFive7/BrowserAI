@@ -128,7 +128,7 @@ Velopack rollout, and the reason `LiveInstances` exists at all) is between
 lazily opens a `.pak` / `icudtl.dat` that is now gone. Running `.exe` / `.dll`
 images are refused by the image section and land in `failures`; everything Chromium
 opens lazily and closes does not. The outcome is a partially gutted live browser
-tree and a `RevisionWouldNotGo` warning that reads as a stuck file rather than as
+tree and a `RevisionWouldNotGo` warning that reads as a stuck file and not as
 damage.
 
 **Second, independent hole in the same census.** `BrowserProcesses.cs:79-82` skips
@@ -263,7 +263,7 @@ is mid-spawn?"*:
   to the JIT/ILC means the `SafeJobHandle` is finalisable across `CreateProcessW`,
   and its finaliser is a `CloseHandle` on a `KILL_ON_JOB_CLOSE` job. Today every
   caller roots the object (`ChildProcessSession` takes it at `:108`;
-  `NodeInstallerRun` stores `_job`), so this is latent rather than live -- but latent
+  `NodeInstallerRun` stores `_job`), so this is latent and not live -- but latent
   by the caller's grace, not by construction, and `LaunchedProcess` and
   `JobObject.Contains` both bother with `GC.KeepAlive` for weaker cases.
 
@@ -309,7 +309,7 @@ recorded in this tree.
 
 `RollingFileWriter.IsNetworkPath` (`:191-194`) has the identical gap and **states
 it** at `:180-187`, naming `GetDriveType` and why it was rejected. The same sentence
-is missing here, where the input is untrusted rather than configured.
+is missing here, where the input is untrusted, not configured.
 
 ### 9. `NativeFile.Append`'s completion loop breaks the atomicity the file exists to provide
 
@@ -390,9 +390,9 @@ session in the run.
 then `new string(buffer, 0, copied)`. No caller learns that `length` exceeded the cap.
 `[READ]`
 
-The consequence is bounded by the ownership test rather than by anything here: a
+The consequence is bounded by the ownership test and not by anything here: a
 truncated title still has to resolve to a directory holding a takeable `lock.json`, so
-today it resolves in the **refuse** direction. Worth naming because the type's premise
+today it resolves in the **refuse** direction. Named because the type's premise
 is that everything on this path fails safe, and a silent prefix is the one shape of
 that path that is not obviously refusal-only.
 
@@ -439,10 +439,10 @@ answers.
 
 - **Escape by `CREATE_BREAKAWAY_FROM_JOB`.** `JobObject.CreateKillOnClose` sets
   `KILL_ON_JOB_CLOSE` and nothing else, and a breakaway request against a job granting
-  neither breakaway flag turns `CreateProcessW` into `ERROR_ACCESS_DENIED` rather than
+  neither breakaway flag turns `CreateProcessW` into `ERROR_ACCESS_DENIED` instead of
   an escape. `LimitFlags` and `UiRestrictions` are read **back** from the kernel
-  (`JobObject.cs:134-171`) rather than trusted. The remarks correctly identify that
-  `BREAKAWAY_OK` would *cause* a Firefox escape rather than merely permit one, and
+  (`JobObject.cs:134-171`), not trusted. The remarks correctly identify that
+  `BREAKAWAY_OK` would *cause* a Firefox escape instead of merely permitting one, and
   that a UI-restriction class would stop Chromium's sandbox job nesting. I could not
   construct a member that leaves.
 - **The window-pid → candidate-pid join cannot be poisoned.** `Pass` runs `ScanFor`
@@ -495,5 +495,5 @@ answers.
 
 `BrowserProvisioner`'s mid-download crash states beyond the launch path;
 `SessionIndex.Sweep`; `JsonLinesTransport` framing; the artifact router; the
-update / Velopack path past `VelopackStartup`. Named rather than left to read as a
+update / Velopack path past `VelopackStartup`. Named, not left to read as a
 clean bill.

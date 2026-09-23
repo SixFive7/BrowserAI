@@ -144,7 +144,7 @@ reachable from the page, not only from upstream's error.
 **Cost to fix.** Small. The marker check has no context: candidates are gating it
 on the answer's `isError`, on the child having reported the browser missing (a
 state BrowserAI already tracks in `ProvisioningRefusal`), or on requiring the
-whole of upstream's sentence rather than a clause. Separately: the early return
+whole of upstream's sentence instead of a clause. Separately: the early return
 at line 593-599 should not be the only path that skips `Complete`.
 
 ---
@@ -311,12 +311,12 @@ two causes are mutually exclusive by construction"*. That holds for the kernel's
 refusal, not for the census -- `LiveSessions` reads `_live` plus `_index.Follow()`
 (`SessionManager.cs:1551-1578`), so a peer process's session whose index entry was
 swept, or whose record will not parse, is invisible, and the whole diagnosis flips
-rather than losing a line. The code says a session it cannot see "costs the
+instead of losing a line. The code says a session it cannot see "costs the
 refusal a line"; at count zero it costs the refusal its subject.
 
 **How it is reached.** An anti-virus scanner momentarily holding
 `%LocalAppData%\BrowserAI\browsers\reinstall.lock`; a locked-down or roaming
-profile; a full disk. Occasional rather than rare, and it lands on `init` -- the
+profile; a full disk. Occasional, not rare, and it lands on `init` -- the
 first call of every conversation.
 
 **Cost to fix.** Small: `TakeShared` already knows which exception it caught, and
@@ -327,7 +327,7 @@ the two sentences differ only in their opening clause.
 ## F6 -- A malformed `tools/call` argument answers `{"code":-32603,"message":"An error occurred."}` with no catalogue entry
 
 **What breaks.** Two argument shapes escape `AnswerToolsCallAsync` as exceptions
-rather than refusals.
+and not as refusals.
 
 1. **A non-string `session` or `why`.**
    `src/BrowserAI/Proxy/BrowserProxy.cs:425-426` reads both as
@@ -364,7 +364,7 @@ The asymmetry is the finding: `SessionManager.Optional` and `SessionManager.Flag
 which is 58 of the 59 reachable entry points, does not.
 
 **How it is reached.** A model emitting a number or boolean where the schema says
-string. Occasional rather than routine, and it produces the one answer this
+string. Occasional, not routine, and it produces the one answer this
 repository's founding complaint is about: a failure that names nothing and
 suggests nothing, indistinguishable from any other internal error.
 
@@ -458,7 +458,7 @@ needs the log is `LastUsed`, which needs one timestamp
 The same walk backs `LiveSessions()` on every reinstall refusal
 (`SessionManager.cs:1551`) and the index sweep.
 
-This is a cost note rather than a break, and it is bounded -- 250 entries is the
+This is a cost note, not a break, and it is bounded -- 250 entries is the
 cap. It is here because the multiplier is the machine's session count, which this
 repository has already watched reach 346 in three months on the setup it
 replaces, and because the filter runs on the wrong side of the parse. Combined
@@ -487,7 +487,7 @@ rest trustworthy.
 2. **Unbounded log growth by entry count.** `MaximumLogEntries = 250`, trimmed
    from the middle so entry zero -- `browserai_init`'s purpose -- is never dropped
    (`LockRecord.cs:170, 409-420`), and `LogIsAtTheCap` is surfaced in
-   `catch_up`'s answer rather than presented as continuity. The bound holds; only
+   `catch_up`'s answer instead of presented as continuity. The bound holds; only
    the per-entry byte bound does not.
 
 3. **A `why` collision in an upstream schema.** Scanned all 69 tools in
@@ -541,8 +541,8 @@ rest trustworthy.
 8. **The reader/writer maintenance lock's exclusion arithmetic.** Reader
    `Read`/`Read`, writer `ReadWrite`/`Read`, describer `Read`/`ReadWrite|Delete`
    (`MaintenanceLock.cs:172-249`). Both directions of the Windows sharing check
-   do what the remarks claim. A reader whose process is **suspended** rather than
-   dead still holds its handle, so a reinstall is *refused* rather than
+   do what the remarks claim. A reader whose process is **suspended** and not
+   dead still holds its handle, so a reinstall is *refused* instead of
    proceeding into a tree somebody is using -- the failure mode is writer
    starvation, which is the maintainer's stated and accepted decision. The
    misdiagnosis in the refusal *text* is F5; the exclusion itself is sound.
