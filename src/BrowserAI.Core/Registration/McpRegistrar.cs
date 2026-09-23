@@ -143,13 +143,41 @@ internal static class McpRegistrar
     /// suite; resolved from the client's own user-scope file when omitted.
     /// </param>
     /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
+    /// <param name="client">The client to register with, or null for Claude Code.</param>
     public static RegistrationReport Apply(
+        RegistrationIntent intent,
+        string? imagePath,
+        IRegistrationCommand commands,
+        ILogger logger,
+        Func<string, RegistrationView>? existing = null,
+        RegistrationClient? client = null) =>
+        Apply(client ?? RegistrationClient.ClaudeCode, intent, imagePath, commands, logger, existing);
+
+    /// <summary>One pass, against one named client.</summary>
+    /// <remarks>
+    /// ⚠️ <b>THE CLIENT IS A PARAMETER AND THE OWNERSHIP RULE IS NOT.</b> Added
+    /// 2026-09-24 for Q258: everything the two clients disagree about is a member
+    /// of <see cref="RegistrationClient"/>, and everything about whether a
+    /// registration is OURS stays here, once. Two implementations of that decision
+    /// would be two answers to <i>may I delete this</i>.
+    /// </remarks>
+    /// <param name="who">The client to register with.</param>
+    /// <param name="intent">What is being asked.</param>
+    /// <param name="imagePath">This process's own image, which decides the command.</param>
+    /// <param name="commands">The process runner.</param>
+    /// <param name="logger">Where the pass reports.</param>
+    /// <param name="existing">What is registered, for a test to supply.</param>
+    /// <returns>What happened, in the client's own words where it spoke.</returns>
+    /// <exception cref="ArgumentNullException">A required argument is null.</exception>
+    public static RegistrationReport Apply(
+        RegistrationClient who,
         RegistrationIntent intent,
         string? imagePath,
         IRegistrationCommand commands,
         ILogger logger,
         Func<string, RegistrationView>? existing = null)
     {
+        ArgumentNullException.ThrowIfNull(who);
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -162,15 +190,13 @@ internal static class McpRegistrar
             }
 
             var command = target!.Command;
-            var client = commands.Locate(McpClientRegistration.ClientExecutable);
+            var client = who.Locate(commands);
 
             if (client is null)
             {
-                var detail =
-                    $"No '{McpClientRegistration.ClientExecutable}' was found on PATH or at '{ClientCommandLine.FallbackDirectory}', so BrowserAI has not registered itself with anything. " +
-                    $"Install the client and run: {McpClientRegistration.ManualCommandFor(command)}";
+                var detail = who.NotFoundDetail(command);
 
-                RegistrationLog.NoClient(logger, McpClientRegistration.ClientExecutable, ClientCommandLine.FallbackDirectory, command);
+                RegistrationLog.NoClient(logger, who.Executable, ClientCommandLine.FallbackDirectory, command);
                 return new RegistrationReport(RegistrationStatus.ClientNotFound, detail, null, command);
             }
 
@@ -183,21 +209,21 @@ internal static class McpRegistrar
             // (RegistrationOwnership's own summary, AppState.MayRemove, and the
             // registration row in DECISIONS.md), and one intent out of three was
             // keeping them.
-            var view = (existing ?? (root => McpRegistryView.User(root)))(target.InstallRoot);
+            var view = (existing ?? (root => who.UserView(commands, client, root)))(target.InstallRoot);
 
             // Unreadable and Foreign answer the same way whatever was asked, so
             // they are decided once and not three times. Everything below
             // this line is about a registration that is ABSENT or OURS.
-            if (NotOursToTouch(logger, client, command, intent, view) is { } notOurs)
+            if (NotOursToTouch(who, logger, client, command, intent, view) is { } notOurs)
             {
                 return notOurs;
             }
 
             return intent switch
             {
-                RegistrationIntent.Uninstall => Remove(commands, logger, client, command),
-                RegistrationIntent.Install => Reassert(commands, logger, client, command),
-                _ => Repair(commands, logger, client, command, view),
+                RegistrationIntent.Uninstall => Remove(who, commands, logger, client, command),
+                RegistrationIntent.Install => Reassert(who, commands, logger, client, command),
+                _ => Repair(who, commands, logger, client, command, view),
             };
         }
 #pragma warning disable CA1031 // The hook boundary. A registration failure is a log line, a record on disk and an install that still succeeds -- never an exception into the installer.
@@ -208,7 +234,7 @@ internal static class McpRegistrar
 
             return new RegistrationReport(
                 RegistrationStatus.Failed,
-                $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with any client; register it by hand with: {McpClientRegistration.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>")}",
+                $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with {who.DisplayName}; register it by hand with: {who.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>")}",
                 null,
                 imagePath);
         }
@@ -250,6 +276,7 @@ internal static class McpRegistrar
     /// </para>
     /// </remarks>
     private static RegistrationReport Repair(
+        RegistrationClient who,
         IRegistrationCommand commands,
         ILogger logger,
         string client,
@@ -261,18 +288,18 @@ internal static class McpRegistrar
         switch (existing.Ownership)
         {
             case RegistrationOwnership.Absent:
-                return Add(commands, logger, client, command);
+                return Add(who, commands, logger, client, command);
 
             case RegistrationOwnership.OursAndStale:
                 RegistrationLog.Repairing(logger, existing.Command ?? "<none>", command);
-                _ = commands.Run(client, McpClientRegistration.RemoveArguments(), McpClientRegistration.Budget);
-                return Add(commands, logger, client, command);
+                _ = commands.Run(client, who.RemoveArguments(), who.Budget);
+                return Add(who, commands, logger, client, command);
 
             default:
-                RegistrationLog.AlreadyRegistered(logger, McpClientRegistration.ServerName, command);
+                RegistrationLog.AlreadyRegistered(logger, who.ServerName, command);
                 return new RegistrationReport(
                     RegistrationStatus.AlreadyRegistered,
-                    $"'{McpClientRegistration.ServerName}' is already registered at '{existing.Command}' and was left exactly as it is.",
+                    $"'{who.ServerName}' is already registered at '{existing.Command}' and was left exactly as it is.",
                     client,
                     existing.Command);
         }
@@ -307,6 +334,7 @@ internal static class McpRegistrar
     /// path -- and a warning-level line in the installer's own log.
     /// </para>
     /// </remarks>
+    /// <param name="who">The client being registered with.</param>
     /// <param name="logger">Where the refusal is reported.</param>
     /// <param name="client">The client executable that was found.</param>
     /// <param name="command">What this install would have registered.</param>
@@ -314,6 +342,7 @@ internal static class McpRegistrar
     /// <param name="existing">What is registered already.</param>
     /// <returns>The refusal, or <see langword="null"/> when the caller may act.</returns>
     private static RegistrationReport? NotOursToTouch(
+        RegistrationClient who,
         ILogger logger,
         string client,
         string command,
@@ -336,11 +365,11 @@ internal static class McpRegistrar
 
         var advice = intent is RegistrationIntent.Uninstall
             ? "That entry belongs to the other install, and removing it is for that install to do."
-            : $"If this install is the one you want, unregister the other and register this one: {McpClientRegistration.ManualCommandFor(command)}";
+            : $"If this install is the one you want, unregister the other and register this one: {who.ManualCommandFor(command)}";
 
         var foreign =
             $"Another BrowserAI is registered at '{existing.Command}', which is not under this install root. "
-            + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{McpClientRegistration.ServerName}' entry it did not write. "
+            + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{who.ServerName}' entry it did not write. "
             + advice;
 
         RegistrationLog.Refused(logger, foreign);
@@ -357,99 +386,99 @@ internal static class McpRegistrar
     /// add. The newest install is the authority on where BrowserAI is").</b>
     /// That sentence was true of the code and false of the product: <i>whatever
     /// is there</i> included another BrowserAI's entry, and this method deleted
-    /// it and wrote its own over the top. <see cref="Apply"/> now refuses a
+    /// it and wrote its own over the top. <c>Apply</c> now refuses a
     /// foreign entry before this is reached, so the remaining states really are
     /// the ones the sentence assumed -- absent, or ours.
     /// </remarks>
-    private static RegistrationReport Reassert(IRegistrationCommand commands, ILogger logger, string client, string command)
+    private static RegistrationReport Reassert(RegistrationClient who, IRegistrationCommand commands, ILogger logger, string client, string command)
     {
         // Deliberately unexamined. "Nothing to remove" is the ordinary case on a
         // first install, and a remove that failed for any other reason will
         // surface as the add failing, with the client's own words attached.
-        _ = commands.Run(client, McpClientRegistration.RemoveArguments(), McpClientRegistration.Budget);
+        _ = commands.Run(client, who.RemoveArguments(), who.Budget);
 
-        return Add(commands, logger, client, command);
+        return Add(who, commands, logger, client, command);
     }
 
     /// <summary>
     /// An update: add only if absent. An entry that is already there is left
     /// exactly as the user left it.
     /// </summary>
-    private static RegistrationReport EnsurePresent(IRegistrationCommand commands, ILogger logger, string client, string command) =>
-        Add(commands, logger, client, command);
+    private static RegistrationReport EnsurePresent(RegistrationClient who, IRegistrationCommand commands, ILogger logger, string client, string command) =>
+        Add(who, commands, logger, client, command);
 
-    private static RegistrationReport Add(IRegistrationCommand commands, ILogger logger, string client, string command)
+    private static RegistrationReport Add(RegistrationClient who, IRegistrationCommand commands, ILogger logger, string client, string command)
     {
-        var outcome = commands.Run(client, McpClientRegistration.AddArguments(command), McpClientRegistration.Budget);
+        var outcome = commands.Run(client, who.AddArguments(command), who.Budget);
 
         if (outcome.Succeeded)
         {
-            RegistrationLog.Registered(logger, McpClientRegistration.ServerName, command, client);
+            RegistrationLog.Registered(logger, who.ServerName, command, client);
 
             return new RegistrationReport(
                 RegistrationStatus.Registered,
-                $"Registered '{McpClientRegistration.ServerName}' at {McpClientRegistration.UserScope} scope, pointing at '{command}'. It is available in every repository and wrote no file into any of them.",
+                $"Registered '{who.ServerName}' with {who.DisplayName} for this user, pointing at '{command}'. It is available in every repository and wrote no file into any of them.",
                 client,
                 command);
         }
 
-        if (McpClientRegistration.MeansAlreadyRegistered(outcome.ExitCode, outcome.Output))
+        if (who.MeansAlreadyRegistered(outcome.ExitCode, outcome.Output))
         {
-            RegistrationLog.AlreadyRegistered(logger, McpClientRegistration.ServerName, command);
+            RegistrationLog.AlreadyRegistered(logger, who.ServerName, command);
 
             return new RegistrationReport(
                 RegistrationStatus.AlreadyRegistered,
-                $"'{McpClientRegistration.ServerName}' was already registered at {McpClientRegistration.UserScope} scope and was left exactly as it was. An update does not overwrite a registration, because the path does not move and the arguments may not be ours.",
+                $"'{who.ServerName}' was already registered with {who.DisplayName} for this user and was left exactly as it was. An update does not overwrite a registration, because the path does not move and the arguments may not be ours.",
                 client,
                 command);
         }
 
-        return Failed(logger, client, command, outcome, "register");
+        return Failed(who, logger, client, command, outcome, "register");
     }
 
-    private static RegistrationReport Remove(IRegistrationCommand commands, ILogger logger, string client, string command)
+    private static RegistrationReport Remove(RegistrationClient who, IRegistrationCommand commands, ILogger logger, string client, string command)
     {
-        var outcome = commands.Run(client, McpClientRegistration.RemoveArguments(), McpClientRegistration.Budget);
+        var outcome = commands.Run(client, who.RemoveArguments(), who.Budget);
 
         if (outcome.Succeeded)
         {
-            RegistrationLog.Unregistered(logger, McpClientRegistration.ServerName);
+            RegistrationLog.Unregistered(logger, who.ServerName);
 
             return new RegistrationReport(
                 RegistrationStatus.Unregistered,
-                $"Removed '{McpClientRegistration.ServerName}' from {McpClientRegistration.UserScope} scope.",
+                $"Removed '{who.ServerName}' from {who.DisplayName} for this user.",
                 client,
                 command);
         }
 
-        if (McpClientRegistration.MeansNothingToRemove(outcome.ExitCode, outcome.Output))
+        if (who.MeansNothingToRemove(outcome.ExitCode, outcome.Output))
         {
-            RegistrationLog.NothingToUnregister(logger, McpClientRegistration.ServerName);
+            RegistrationLog.NothingToUnregister(logger, who.ServerName);
 
             return new RegistrationReport(
                 RegistrationStatus.NothingToUnregister,
-                $"There was no '{McpClientRegistration.ServerName}' at {McpClientRegistration.UserScope} scope to remove, which is what an uninstall of a BrowserAI somebody had already unregistered looks like.",
+                $"There was no '{who.ServerName}' registered with {who.DisplayName} for this user to remove, which is what an uninstall of a BrowserAI somebody had already unregistered looks like.",
                 client,
                 command);
         }
 
-        return Failed(logger, client, command, outcome, "unregister");
+        return Failed(who, logger, client, command, outcome, "unregister");
     }
 
-    private static RegistrationReport Failed(ILogger logger, string client, string command, CommandOutcome outcome, string verb)
+    private static RegistrationReport Failed(RegistrationClient who, ILogger logger, string client, string command, CommandOutcome outcome, string verb)
     {
         var said = outcome switch
         {
-            { TimedOut: true } => $"it did not finish within {McpClientRegistration.Budget.TotalSeconds:F0}s and was stopped",
+            { TimedOut: true } => $"it did not finish within {who.Budget.TotalSeconds:F0}s and was stopped",
             { Failure: { } failure } => $"it could not be started: {failure}",
             _ => $"it exited {outcome.ExitCode} saying: {(outcome.Output.Length is 0 ? "<nothing>" : outcome.Output)}",
         };
 
         var detail =
             $"BrowserAI could not {verb} itself. '{client}' was found and {said}. " +
-            $"BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {McpClientRegistration.ManualCommandFor(command)}";
+            $"BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {who.ManualCommandFor(command)}";
 
-        RegistrationLog.Failed(logger, verb, client, said, McpClientRegistration.ManualCommandFor(command));
+        RegistrationLog.Failed(logger, verb, client, said, who.ManualCommandFor(command));
 
         return new RegistrationReport(RegistrationStatus.Failed, detail, client, command);
     }

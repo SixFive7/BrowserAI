@@ -66,6 +66,31 @@ internal interface IRegistrationCommand
     /// success about a file in the wrong place.
     /// </remarks>
     CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory);
+
+    /// <summary>The same, with named environment variables forced.</summary>
+    /// <remarks>
+    /// ⚠️ <b>ADDED FOR CODEX, WHERE SCOPE IS AN ENVIRONMENT VARIABLE AND NOT A
+    /// FLAG.</b> <c>codex mcp add</c> takes no <c>--scope</c>: it writes whichever
+    /// configuration <c>CODEX_HOME</c> points at, so for that client the
+    /// environment IS the argument, exactly as the working directory is the
+    /// argument for a Claude Code project registration.
+    /// <b>Only the named variables are set</b> and the rest of the environment is
+    /// inherited, because a registration that ran with a scrubbed environment
+    /// would not be the registration a person gets when they run the same command
+    /// themselves.
+    /// </remarks>
+    /// <param name="executable">The client, absolute.</param>
+    /// <param name="arguments">Its arguments, unquoted and unjoined.</param>
+    /// <param name="budget">How long it gets.</param>
+    /// <param name="workingDirectory">Where to run it, or null for the profile.</param>
+    /// <param name="environment">Variables to force. Empty means inherit everything.</param>
+    /// <returns>What it exited with and said.</returns>
+    CommandOutcome Run(
+        string executable,
+        IReadOnlyList<string> arguments,
+        TimeSpan budget,
+        string? workingDirectory,
+        IReadOnlyDictionary<string, string> environment);
 }
 
 /// <summary>What one invocation of the client did.</summary>

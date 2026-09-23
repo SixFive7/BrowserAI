@@ -119,10 +119,20 @@ internal sealed class ClientCommandLine : IRegistrationCommand
         Run(executable, arguments, budget, workingDirectory: null);
 
     /// <inheritdoc />
-    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory)
+    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory) =>
+        Run(executable, arguments, budget, workingDirectory, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+
+    /// <inheritdoc />
+    public CommandOutcome Run(
+        string executable,
+        IReadOnlyList<string> arguments,
+        TimeSpan budget,
+        string? workingDirectory,
+        IReadOnlyDictionary<string, string> environment)
     {
         ArgumentException.ThrowIfNullOrEmpty(executable);
         ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentNullException.ThrowIfNull(environment);
 
         var startInfo = new ProcessStartInfo(executable)
         {
@@ -143,6 +153,13 @@ internal sealed class ClientCommandLine : IRegistrationCommand
         foreach (var argument in arguments)
         {
             startInfo.ArgumentList.Add(argument);
+        }
+
+        // Named variables only. ProcessStartInfo.Environment starts as a copy of
+        // this process's, so setting one forces it and leaves the rest alone.
+        foreach (var (name, value) in environment)
+        {
+            startInfo.Environment[name] = value;
         }
 
         var said = new StringBuilder();

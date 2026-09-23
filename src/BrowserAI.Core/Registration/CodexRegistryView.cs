@@ -1,0 +1,203 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Text.Json;
+
+namespace BrowserAI.Registration;
+
+/// <summary>
+/// What Codex says is registered, asked of Codex.
+/// </summary>
+/// <remarks>
+/// <para>
+/// ⚠️ <b>IT ASKS THE CLIENT AND NEVER READS THE TOML, AND THAT IS THE WHOLE
+/// DESIGN.</b> <see cref="McpRegistryView"/> reads Claude Code's JSON because the
+/// client offers no read command that answers the ownership question cheaply.
+/// Codex offers one: <c>codex mcp list --json</c> and <c>codex mcp get &lt;name&gt;
+/// --json</c> report the name, whether it is enabled, and the transport with its
+/// command, args and env. So this product never parses
+/// <c>config.toml</c> -- which keeps the charter's shape on the client where
+/// direct writing would have been easiest, and it means a future Codex that
+/// changes its own file format costs nothing here.
+/// </para>
+/// <para>
+/// <b>The ownership rule is the shared one.</b>
+/// <see cref="McpRegistryView.Classify"/> decides ours-by-command-path against the
+/// install root, and it is called and not copied: two implementations of <i>is
+/// this ours</i> are two answers waiting to disagree, and the consequence of
+/// disagreeing is deleting somebody else's registration.
+/// </para>
+/// <para>
+/// ⚠️ <b>A CLIENT THAT COULD NOT BE ASKED IS UNREADABLE AND NOT ABSENT.</b> A
+/// non-zero exit, a timeout or output that is not JSON all answer
+/// <see cref="RegistrationOwnership.Absent"/> with <c>Unreadable</c> set, exactly
+/// as a locked <c>.claude.json</c> does -- because <i>we could not find out</i>
+/// and <i>there is nothing there</i> must not be the same answer to a registrar
+/// that deletes things.
+/// </para>
+/// </remarks>
+internal static class CodexRegistryView
+{
+    /// <summary>What Codex reports at the home it is pointed at.</summary>
+    /// <param name="commands">The process runner.</param>
+    /// <param name="client">The CLI, absolute.</param>
+    /// <param name="installRoot">The install root ownership is judged against.</param>
+    /// <param name="home">The <c>CODEX_HOME</c> to ask about, or null for the user's own.</param>
+    /// <param name="scope">Which scope this reading is of, for the report.</param>
+    /// <returns>What is registered there, and whose it is.</returns>
+    /// <exception cref="ArgumentNullException">The runner is null.</exception>
+    public static RegistrationView Read(
+        IRegistrationCommand commands,
+        string client,
+        string? installRoot,
+        string? home,
+        RegistrationScope scope)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+        ArgumentException.ThrowIfNullOrWhiteSpace(client);
+
+        var where = home is { Length: > 0 }
+            ? Path.Combine(home, CodexRegistration.ConfigFileName)
+            : $"{CodexRegistration.HomeVariable}'s own {CodexRegistration.ConfigFileName}";
+
+        var outcome = commands.Run(
+            client,
+            CodexRegistration.ListArguments(),
+            CodexRegistration.Budget,
+            workingDirectory: null,
+            environment: Environment(home));
+
+        if (!outcome.Succeeded)
+        {
+            var why = outcome.TimedOut
+                ? $"it did not answer within {CodexRegistration.Budget.TotalSeconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)} s"
+                : outcome.Failure ?? $"it exited {outcome.ExitCode.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+            return new RegistrationView(
+                scope,
+                where,
+                null,
+                RegistrationOwnership.Absent,
+                $"'{client} mcp list --json' could not be read ({why}), so what is registered in Codex is unknown. This is not the same as nothing being registered.");
+        }
+
+        return Parse(outcome.Output, where, installRoot, scope);
+    }
+
+    /// <summary>The environment one call runs under.</summary>
+    /// <remarks>
+    /// <b>Only the one variable, and only when a home was named.</b> A project
+    /// registration is the same command with <c>CODEX_HOME</c> moved
+    /// (<see cref="CodexRegistration"/>), and a user registration must inherit the
+    /// caller's own -- writing the default explicitly would override a
+    /// <c>CODEX_HOME</c> the person set deliberately.
+    /// </remarks>
+    /// <param name="home">The home to force, or null to inherit.</param>
+    /// <returns>The overrides, or an empty set.</returns>
+    public static IReadOnlyDictionary<string, string> Environment(string? home) =>
+        home is { Length: > 0 }
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [CodexRegistration.HomeVariable] = home }
+            : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Reads one <c>mcp list --json</c> answer.</summary>
+    /// <remarks>
+    /// <b>Both shapes the client has used are accepted</b>: a bare array of
+    /// servers, and an object carrying one under a <c>servers</c> or
+    /// <c>mcp_servers</c> key. Accepting both is not generosity -- it is the
+    /// difference between a client bump that changes a wrapper and a product that
+    /// silently reports nothing registered.
+    /// </remarks>
+    /// <param name="json">What the client printed.</param>
+    /// <param name="where">The file this reading is about, for the report.</param>
+    /// <param name="installRoot">The install root ownership is judged against.</param>
+    /// <param name="scope">Which scope this reading is of.</param>
+    /// <returns>What is registered, and whose it is.</returns>
+    public static RegistrationView Parse(string json, string where, string? installRoot, RegistrationScope scope)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json ?? string.Empty);
+            var servers = Servers(document.RootElement);
+
+            if (servers is null)
+            {
+                return new RegistrationView(scope, where, null, RegistrationOwnership.Absent, null);
+            }
+
+            foreach (var server in servers.Value.EnumerateArray())
+            {
+                if (server.ValueKind is not JsonValueKind.Object
+                    || !server.TryGetProperty("name", out var name)
+                    || name.ValueKind is not JsonValueKind.String
+                    || !string.Equals(name.GetString(), CodexRegistration.ServerName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var command = CommandOf(server);
+
+                return new RegistrationView(scope, where, command, McpRegistryView.Classify(command, installRoot), null);
+            }
+
+            return new RegistrationView(scope, where, null, RegistrationOwnership.Absent, null);
+        }
+        catch (JsonException failure)
+        {
+            return new RegistrationView(
+                scope,
+                where,
+                null,
+                RegistrationOwnership.Absent,
+                $"'codex mcp list --json' did not print readable JSON ({failure.Message}), so what is registered in Codex is unknown. BrowserAI will not act on a reading it does not have.");
+        }
+    }
+
+    /// <summary>The array of servers, whichever wrapper the client put it in.</summary>
+    /// <param name="root">The parsed root.</param>
+    /// <returns>The array, or null when there is none.</returns>
+    private static JsonElement? Servers(JsonElement root)
+    {
+        if (root.ValueKind is JsonValueKind.Array)
+        {
+            return root;
+        }
+
+        if (root.ValueKind is not JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        foreach (var key in new[] { "servers", "mcp_servers", "mcpServers" })
+        {
+            if (root.TryGetProperty(key, out var wrapped) && wrapped.ValueKind is JsonValueKind.Array)
+            {
+                return wrapped;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The command one server entry names.</summary>
+    /// <remarks>
+    /// The transport carries it, and a flat <c>command</c> is accepted too for the
+    /// same reason the wrapper keys are: a shape that moved must not read as an
+    /// absence.
+    /// </remarks>
+    /// <param name="server">One entry.</param>
+    /// <returns>The command, or null.</returns>
+    private static string? CommandOf(JsonElement server)
+    {
+        if (server.TryGetProperty("transport", out var transport)
+            && transport.ValueKind is JsonValueKind.Object
+            && transport.TryGetProperty("command", out var nested)
+            && nested.ValueKind is JsonValueKind.String)
+        {
+            return nested.GetString();
+        }
+
+        return server.TryGetProperty("command", out var flat) && flat.ValueKind is JsonValueKind.String
+            ? flat.GetString()
+            : null;
+    }
+}

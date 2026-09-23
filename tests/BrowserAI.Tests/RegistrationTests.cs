@@ -1591,7 +1591,7 @@ internal sealed class RegistrationTests
     /// the registrar would otherwise read off the real client's file.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Every arm driving <see cref="McpRegistrar.Apply"/> through a double
+    /// ⚠️ <b>Every arm driving <c>McpRegistrar.Apply</c> through a double
     /// has to pass this -- every intent, not just
     /// <see cref="RegistrationIntent.Update"/>.</b> <i>Widened 2026-09-16
     /// (previously "Every arm driving <c>RegistrationIntent.Update</c> through a

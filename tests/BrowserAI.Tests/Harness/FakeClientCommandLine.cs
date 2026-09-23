@@ -66,6 +66,10 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     public string? Locate(string executableName) => Executable;
 
     /// <inheritdoc />
+    /// <summary>The environment each call was given, in order.</summary>
+    public List<Dictionary<string, string>> Environments { get; } = [];
+
+    /// <inheritdoc />
     public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget) =>
         Run(executable, arguments, budget, workingDirectory: null);
 
@@ -76,11 +80,29 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     /// the file lands, and a double that dropped it would let an arm assert a
     /// successful write into a directory nobody named.
     /// </remarks>
-    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory)
+    public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory) =>
+        Run(executable, arguments, budget, workingDirectory, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// ⚠️ <b>The environment is RECORDED for the same reason the working
+    /// directory is.</b> For Codex the scope IS an environment variable -- there is
+    /// no <c>--scope</c> flag -- so a double that dropped it would let an arm
+    /// assert a project registration that was actually written to the user's own
+    /// home.
+    /// </remarks>
+    public CommandOutcome Run(
+        string executable,
+        IReadOnlyList<string> arguments,
+        TimeSpan budget,
+        string? workingDirectory,
+        IReadOnlyDictionary<string, string> environment)
     {
         ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentNullException.ThrowIfNull(environment);
 
         Directories.Add(workingDirectory);
+        Environments.Add(new Dictionary<string, string>(environment, StringComparer.OrdinalIgnoreCase));
 
         Invocations.Add([.. arguments]);
 
