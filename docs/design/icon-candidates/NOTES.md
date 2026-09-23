@@ -261,7 +261,7 @@ correct, not a defect. Verified a second time with an independent reader (Pillow
 `sizes [(16,16),(32,32),(48,48),(256,256)]`, transparent corners on the 32 (`alpha=0`) and amber
 `(250,210,103,255)` at its centre, so the alpha and the channel order are both right.
 
-**One bug worth recording, because it produced a file that looked plausible:** returning the DIB
+**One bug, recorded because it produced a file that looked plausible:** returning the DIB
 buffer from a PowerShell function as `return $ms.ToArray()` lets the pipeline unroll the byte array
 into 1,128 separate objects. `.Length` still read 1128, so the directory entries were all correct
 and only the payload was short -- the first attempt wrote a 22,817-byte file whose entries claimed

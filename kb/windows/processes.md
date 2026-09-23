@@ -105,7 +105,7 @@ the opposite thing. Verified against MS Learn 2026-08-16. `[STABLE]`
 **`Win32Exception.ErrorCode` is the HRESULT, not the Win32 code.** `ErrorCode` is
 inherited from `ExternalException` and documented as *"the HRESULT of the error"*;
 the Win32 number lives on `NativeErrorCode`. In practice `ErrorCode` reads
-`0x80004005` (`E_FAIL`, *"unspecified failure"*) for essentially every
+`0x80004005` (`E_FAIL`, *"unspecified failure"*) for almost every
 `Win32Exception`, so **an exception filter keyed on it matches everything**. The
 value that actually means "the user cancelled the UAC prompt" is
 `NativeErrorCode == 1223` (`ERROR_CANCELLED`). Shipped bug, read 2026-08-16 in

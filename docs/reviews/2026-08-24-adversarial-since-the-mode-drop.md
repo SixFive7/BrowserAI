@@ -252,7 +252,7 @@ mutating callers that can be given either. That is review A4's premise, still
 live on two tools; the stated fix (refuse at the door) simply is not applied
 there.
 
-Two things narrow it, and both are worth stating because they are why this is
+Two things narrow it, and both are why this is
 ranked here and not higher. `_index.Record` is called only from `OpenAsync`
 (`SessionManager.cs:1753`), so an aliased `set_purpose` cannot publish a
 duplicate index entry. And a live holder's `browserai.json` handle refuses an
@@ -401,7 +401,7 @@ that renders it. Once matched, the file is pinned in the output root for the lif
 of the session and reported as `LeftWhereTheChildPutIt` instead of being sorted
 into `downloads\`.
 
-**Blast radius is genuinely small** and worth saying so: lever 1 still holds by
+**Blast radius is genuinely small**: lever 1 still holds by
 construction -- the child's working directory is the session's `output\`, so the
 file is inside the session tree either way. What is defeated is classification,
 plus an unsorted set that grows.
