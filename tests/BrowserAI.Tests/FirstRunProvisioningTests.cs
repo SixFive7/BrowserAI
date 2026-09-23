@@ -21,11 +21,11 @@ namespace BrowserAI.Tests;
 /// mirror answers, whether the revision in the payload's <c>browsers.json</c>
 /// still resolves, or whether the marker lands where BrowserAI looks for it.
 /// Only a run against an empty root can, and the maintainer's decision of
-/// 2026-08-16 is that provisioning happens for real rather than being seeded from
+/// 2026-08-16 is that provisioning happens for real instead of being seeded from
 /// the spike leftovers under <c>%LOCALAPPDATA%\ms-playwright</c>.
 /// </para>
 /// <para>
-/// <b>It is driven through the published binary rather than in process</b>,
+/// <b>It is driven through the published binary and not in process</b>,
 /// because the property being proven is what a <i>caller</i> experiences: an
 /// <c>init</c> that answers at once, a browser call refused with a size and a
 /// route out, and the same session -- same child, no restart -- navigating once
@@ -33,7 +33,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>The download costs about 204 MB and, on the maintainer's link, about
-/// twelve seconds.</b> That is stated rather than hidden: it is the price of the
+/// twelve seconds.</b> That is stated and not hidden: it is the price of the
 /// only evidence there is that the batteries-included premise is alive.
 /// </para>
 /// <para>
@@ -81,7 +81,7 @@ namespace BrowserAI.Tests;
 /// </item>
 /// </list>
 /// <para>
-/// <b>So the last row is the whole cost, and it is stated rather than
+/// <b>So the last row is the whole cost, and it is stated, not
 /// discovered.</b> A cached run cannot tell you that Playwright's CDN is up,
 /// that <c>cftUrl</c> still resolves, or that <c>install-browser --no-shell</c>
 /// still does what its name says. It can tell you everything BrowserAI does with
@@ -179,7 +179,7 @@ internal sealed class FirstRunProvisioningTests
         });
 
         // ⚠️ The bullet this whole step turns on, and it is asserted on STATE
-        // rather than on a stopwatch.
+        // and not on a stopwatch.
         //
         // Deleted 2026-08-18: `Assert.That(initElapsed).IsLessThan(20 s)`, with
         // the note "a 204 MB download is running and init answered anyway; if it
@@ -192,7 +192,7 @@ internal sealed class FirstRunProvisioningTests
         await Assert.That((bool?)init["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(init)).Contains("browserProvisioning: provisioning");
 
-        // A browser-needing call is refused rather than hanging, and the refusal
+        // A browser-needing call is refused instead of hanging, and the refusal
         // is §H.4 row 6 -- with the size, so a caller can decide what waiting
         // costs it.
         var refused = await CallAsync(client, "browser_navigate", new JsonObject
@@ -271,10 +271,10 @@ internal sealed class FirstRunProvisioningTests
         // download BEGINS, and the only slack this assertion ever had was
         // however long the navigation took. It held on a fast link and lost on a
         // slow one -- seen once in five runs, 2026-08-17 -- and it was a race
-        // rather than a slow test: the fix is to wait for the thing being
+        // and not a slow test: the fix is to wait for the thing being
         // asserted, not to give the whole sequence longer.
         //
-        // It also makes the two assertions beneath it stronger rather than
+        // It also makes the two assertions beneath it stronger, not
         // merely later. ffmpeg is the LAST component this install fetches, so a
         // headless shell that was going to appear would already have appeared by
         // the time ffmpeg's marker lands.
@@ -284,7 +284,7 @@ internal sealed class FirstRunProvisioningTests
         // marker, so chromium's marker still cannot precede ffmpeg's bytes; and
         // a cache carrying a chromium_headless_shell-* is refused outright, so
         // the negative assertion below cannot pass because the cache is missing
-        // something rather than because --no-shell works.
+        // something and not because --no-shell works.
         var ffmpeg = await WaitForAnyMarkerAsync(browsers, "ffmpeg-*", Patience);
 
         await Assert.That(ffmpeg).IsNotNull();
@@ -316,8 +316,8 @@ internal sealed class FirstRunProvisioningTests
     /// <remarks>
     /// <b>The marker, not the directory.</b> A component's directory exists from
     /// the moment its archive starts extracting, so a check on the directory
-    /// alone would swap one race for a narrower one. The pattern is a glob rather
-    /// than a composed name because the revision is upstream's to move and this
+    /// alone would swap one race for a narrower one. The pattern is a glob and
+    /// not a composed name because the revision is upstream's to move and this
     /// assertion is about the component being installed at all.
     /// </remarks>
     /// <param name="root">The browsers root.</param>

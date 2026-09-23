@@ -107,7 +107,7 @@ internal sealed class ForbiddenDependencyTests
         await Assert.That(string.Join(Environment.NewLine, Mentioning("Microsoft.Data.Sqlite"))).IsEmpty();
 
         // The control: the scan can see a SQLite package reference, so the
-        // assertion above is an absence rather than a matcher that stopped
+        // assertion above is an absence and not a matcher that stopped
         // matching. This is also the reference that must never move into the
         // product, because the publish output is a single file by construction
         // of there being no native package in its graph.
@@ -117,7 +117,7 @@ internal sealed class ForbiddenDependencyTests
         // sessions too, and since the cutover a session is a database -- so a
         // CoreCLR probe with no `e_sqlite3.dll` beside it dies on
         // `DllNotFoundException` and reports as a race that nobody won, which is
-        // exactly what sixteen contenders did. The count is asserted rather than
+        // exactly what sixteen contenders did. The count is asserted and not
         // bounded because the thing that must never happen is a FOURTH one under
         // `src\`, and a `>=` would not see it.
         await Assert.That(native.Count).IsEqualTo(3);
@@ -130,8 +130,8 @@ internal sealed class ForbiddenDependencyTests
     /// <summary>Every build file that declares a package, and where it declares it.</summary>
     /// <remarks>
     /// <para>
-    /// <b>It matches the <c>Include=</c> attribute rather than the bare name,
-    /// and that distinction is load-bearing rather than tidy.</b>
+    /// <b>It matches the <c>Include=</c> attribute and not the bare name,
+    /// and that distinction is load-bearing, not tidy.</b>
     /// <c>Directory.Packages.props</c> names FluentAssertions and
     /// <c>Microsoft.NET.Test.Sdk</c> in a comment, precisely in order to forbid
     /// them -- so a substring scan reports the prohibition itself as a violation,

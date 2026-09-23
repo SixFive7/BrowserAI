@@ -40,7 +40,7 @@ internal sealed class FirstRunCacheTests
     /// <b>Deliberately not a real revision.</b> The cache matches
     /// <c>ffmpeg-*</c>, so a revision number here would be a second place for
     /// upstream's to be recorded -- and a stale one reads as a claim about what
-    /// this build installs rather than as the placeholder it is.
+    /// this build installs and not as the placeholder it is.
     /// </remarks>
     private const string PlantedFfmpeg = "ffmpeg-0";
 
@@ -51,7 +51,7 @@ internal sealed class FirstRunCacheTests
         await Assert.That(FirstRunCache.Decide(TimeSpan.FromMinutes(59), isReleaseRun: false, cacheDisabled: false))
             .IsEqualTo(FirstRunSource.Cache);
 
-        // A ceiling rather than a nudge. One minute past and the CDN is asked,
+        // A ceiling, not a nudge. One minute past and the CDN is asked,
         // which is what makes "at most once an hour" also mean "at least once an
         // hour of runs".
         await Assert.That(FirstRunCache.Decide(TimeSpan.FromMinutes(61), isReleaseRun: false, cacheDisabled: false))
@@ -79,7 +79,7 @@ internal sealed class FirstRunCacheTests
     public async Task AStampInTheFutureIsRefusedRatherThanTrustedForever()
     {
         // A clock change, a machine whose time is wrong, or a hand-edited stamp.
-        // Treated as "not fresh" rather than "always fresh": the second reading
+        // Treated as "not fresh" instead of "always fresh": the second reading
         // is the one that would silently retire the cold path.
         await Assert.That(FirstRunCache.Decide(TimeSpan.FromMinutes(-1), isReleaseRun: false, cacheDisabled: false))
             .IsEqualTo(FirstRunSource.Cdn);
@@ -96,7 +96,7 @@ internal sealed class FirstRunCacheTests
         var root = Path.Combine(scratch.Path, "cache");
         var downloaded = DateTimeOffset.UtcNow;
 
-        // Asserted rather than discarded, for the reason given in RefusalFor: a
+        // Asserted, not discarded, for the reason given in RefusalFor: a
         // publish that failed is reported by this sentence and by nothing else.
         await Assert.That(FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, "browsers")), downloaded, root))
             .StartsWith("Cached ");
@@ -113,7 +113,7 @@ internal sealed class FirstRunCacheTests
         // visible -- so the only directory under the root is the entry itself.
         await Assert.That(Directory.EnumerateDirectories(root).Count()).IsEqualTo(1);
 
-        // A second publish supersedes the first rather than accumulating beside
+        // A second publish supersedes the first instead of accumulating beside
         // it. Each entry is ~430 MiB in a real run, so a cache that kept them
         // all would cost more disk than the browsers root it exists to spare.
         await Assert.That(FirstRunCache.Publish(Plant(Path.Combine(scratch.Path, "browsers-again")), downloaded.AddSeconds(1), root))
@@ -150,14 +150,14 @@ internal sealed class FirstRunCacheTests
             .Contains("ffmpeg");
 
         // ⚠️ A headless shell in the cache would make the test's negative
-        // assertion pass because the cache never had one, rather than because
+        // assertion pass because the cache never had one, and not because
         // --no-shell works -- and it would keep passing after --no-shell broke.
         await Assert.That(RefusalFor(scratch, "with-shell", entry =>
             InstallationMarker.Write(Path.Combine(entry, "browsers", $"chromium_headless_shell-{BrowserAiPaths.ChromiumRevision}"))))
             .Contains("chromium_headless_shell");
 
         // A revision bump. The tree is intact and belongs to a build that no
-        // longer exists, which is a cache to replace rather than to use.
+        // longer exists, which is a cache to replace and not to use.
         await Assert.That(RefusalFor(scratch, "old-revision", entry =>
             File.WriteAllText(
                 Path.Combine(entry, FirstRunCache.StampFile),
@@ -231,7 +231,7 @@ internal sealed class FirstRunCacheTests
             .IsEqualTo(BrowserProvisioner.Megabytes(BrowserProvisioner.FirstRunDownloadBytes[SessionManager.DefaultBrowser]))
             .Because("a figure that did not come from the byte count could still read correctly by coincidence");
 
-        // And the shape of the defect, named rather than described: no run of
+        // And the shape of the defect, named, not described: no run of
         // this suite may print a download size that was written at the sentence.
         await Assert.That(sentence.Contains("203.8", StringComparison.Ordinal))
             .IsFalse()
@@ -272,7 +272,7 @@ internal sealed class FirstRunCacheTests
     /// executable, and nothing else.
     /// </summary>
     /// <remarks>
-    /// <b>Three files rather than 318.</b> Everything the cache checks is a
+    /// <b>Three files and not 318.</b> Everything the cache checks is a
     /// name, a marker or a census, and none of it needs a real Chromium -- so
     /// these tests cost milliseconds and the real layout is asserted by the run
     /// that actually downloads it.

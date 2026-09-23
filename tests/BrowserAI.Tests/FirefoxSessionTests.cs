@@ -39,7 +39,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Not in the <c>stray-sweep</c> group, deliberately.</b> That key holds the
 /// tests that <i>run a sweep</i>; this one runs none. Its Firefox is a
-/// grandchild of a published <c>BrowserAI.exe</c> rather than a direct child of
+/// grandchild of a published <c>BrowserAI.exe</c> and not a direct child of
 /// the test host, so it cannot falsify
 /// <c>FirefoxTests.ThePreflightRefusesAHeldProfileBeforeAnyFirefoxOrWindowExists</c>,
 /// whose machine-wide reading is scoped to direct children for exactly this
@@ -81,9 +81,9 @@ internal sealed class FirefoxSessionTests
     /// takes -- so a legitimate outcome failed the test. It passed nine local
     /// runs and failed three consecutive CI runs on a four-core runner, against
     /// Firefox, the family slowest to let go of its profile. <b>The assertion was
-    /// wrong rather than merely strict</b>, and a wrong assertion that only fires
+    /// wrong, not merely strict</b>, and a wrong assertion that only fires
     /// on a slower machine is the worst-shaped one there is: it reads as
-    /// flakiness and gets a retry rather than a reader.
+    /// flakiness and gets a retry instead of a reader.
     /// </para>
     /// <para>
     /// <b>What replaced it is stronger, not weaker, and in four ways the old one
@@ -95,7 +95,7 @@ internal sealed class FirefoxSessionTests
     /// all four, because a gone directory satisfied it whatever the answer said.
     /// Then the two claims that answer makes are checked against the disk it
     /// made them about: the record really is gone, and what survived really was
-    /// a handle on its way out rather than a leak nothing will ever release.
+    /// a handle on its way out and not a leak nothing will ever release.
     /// </para>
     /// <para>
     /// <b>Deliberately not the sibling tests' shape.</b>
@@ -142,7 +142,7 @@ internal sealed class FirefoxSessionTests
         await Assert.That((bool?)created["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(created)).Contains(ProvisionedBrowsers.Firefox);
 
-        // The record, read off disk rather than off the answer: `resume` reads
+        // The record, read off disk and not off the answer: `resume` reads
         // the family back out of this file, and an answer that says firefox over
         // a record that says chromium is the failure this whole feature is
         // arranged around.
@@ -200,7 +200,7 @@ internal sealed class FirefoxSessionTests
         await Assert.That(artifact.StartsWith(session, StringComparison.OrdinalIgnoreCase)).IsTrue();
         await Assert.That(File.Exists(artifact)).IsTrue();
 
-        // A PNG rather than a file of some length: an empty or truncated
+        // A PNG and not a file of some length: an empty or truncated
         // screenshot satisfies "the path exists" and is exactly the
         // success-shaped failure this suite is written against.
         var bytes = await File.ReadAllBytesAsync(artifact);
@@ -216,7 +216,7 @@ internal sealed class FirefoxSessionTests
 
         // ⚠️ THE ANSWER, THE FLAG AND THE DISK MUST AGREE -- IN BOTH DIRECTIONS,
         // and see `DestroyAnswer` for why this is not `Directory.Exists` is
-        // false. The contract lives there rather than here so that this test and
+        // false. The contract lives there and not here so that this test and
         // the deterministic survivor in `SessionDestroyTests` cannot hold destroy
         // to two different promises -- and so that the arm a fast machine never
         // reaches is exercised on every run by one that does.
@@ -252,7 +252,7 @@ internal sealed class FirefoxSessionTests
     /// would quote another browser's number or a placeholder, and neither is
     /// distinguishable from a measurement by anyone reading the refusal. This is
     /// the same shape as the deny-by-default tool classification: a family the
-    /// build does not know the cost of fails the build rather than the caller.
+    /// build does not know the cost of fails the build and not the caller.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -293,7 +293,7 @@ internal sealed class FirefoxSessionTests
     /// ⚠️ <b>Corrected 2026-08-19 (previously both enums were asserted against
     /// <c>ProvisionedBrowsers.Families</c>).</b> The reinstall tool's argument
     /// gained a third value, <c>shared</c>, which is <c>ffmpeg</c> and
-    /// <c>winldd</c> rather than a browser -- so the two enums are now different
+    /// <c>winldd</c> and not a browser -- so the two enums are now different
     /// lists and this test is the one that says so. Asserting them against the
     /// <i>same</i> list is what would have let <c>shared</c> reach
     /// <c>browserai_init</c> in the widening edit, and a session bound for life
@@ -304,7 +304,7 @@ internal sealed class FirefoxSessionTests
     public async Task TheAdvertisedSurfaceOffersBothFamiliesAndMakesReinstallNameOne()
     {
         // The rewrite is what a model receives, so the enum is read out of it
-        // rather than off the class that declares it.
+        // and not off the class that declares it.
         var rewritten = SessionToolSurface.Rewrite([], RepositoryVerdicts.Committed);
         var authored = (rewritten["tools"]?.AsArray() ?? [])
             .ToDictionary(tool => (string)tool!["name"]!, tool => tool!.AsObject(), StringComparer.Ordinal);
@@ -322,7 +322,7 @@ internal sealed class FirefoxSessionTests
             .IsEquivalentTo(ProvisionedBrowsers.ReinstallTargets);
 
         // And the two lists are asserted to DIFFER, so a future edit that made
-        // them one again is red here rather than silently offering a codec as a
+        // them one again is red here instead of silently offering a codec as a
         // session's browser.
         await Assert.That(offered).DoesNotContain(ProvisionedBrowsers.Shared);
         await Assert.That(ProvisionedBrowsers.ReinstallTargets.Count).IsEqualTo(ProvisionedBrowsers.Families.Count + 1);
@@ -357,7 +357,7 @@ internal sealed class FirefoxSessionTests
 
         await Assert.That(text).Contains("Nothing was changed");
 
-        // Case is normalised rather than refused: what is written to browserai.data
+        // Case is normalised, not refused: what is written to browserai.data
         // and read back forever is the canonical spelling.
         var created = await CallAsync(rig.Client, SessionToolSurface.Init, new JsonObject
         {
@@ -380,7 +380,7 @@ internal sealed class FirefoxSessionTests
     /// <b>The settled no-arguments decision moved because its stated reason
     /// expired</b> -- "there is nothing to name" was true of a build with one
     /// family -- and this is the arm that holds the replacement to being a
-    /// refusal rather than a default. A default here deletes and re-downloads a
+    /// refusal and not a default. A default here deletes and re-downloads a
     /// healthy tree and reports success while the broken one stays broken.
     /// </remarks>
     /// <returns>The assertion task.</returns>
