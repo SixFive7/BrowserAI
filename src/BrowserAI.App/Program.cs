@@ -24,7 +24,7 @@ namespace BrowserAI.App;
 /// nothing about the dialog runs on any other path.
 /// </para>
 /// <para>
-/// ⚠️ <b>The hooks are dispatched by Velopack itself rather than by reading
+/// ⚠️ <b>The hooks are dispatched by Velopack itself and not by reading
 /// <c>args</c> here.</b> <c>VelopackApp.Run()</c> recognises its own four
 /// arguments, invokes the callback and <b>exits the process</b> -- so serving a
 /// hook never reaches the line below it. Re-implementing that dispatch would be
@@ -52,7 +52,7 @@ internal static class Program
     /// <remarks>
     /// Read out of 1.2.0's own source (<c>constants.rs</c>:
     /// <c>HOOK_ENV_RESTART</c>), beside the first-run one. It is what turns the
-    /// heading into <i>Updated to ...</i> rather than a guess from a timestamp.
+    /// heading into <i>Updated to ...</i> instead of a guess from a timestamp.
     /// </remarks>
     public const string RestartVariable = "VELOPACK_RESTART";
 
@@ -74,9 +74,9 @@ internal static class Program
     /// log to say why.
     /// </para>
     /// <para>
-    /// <b>Cleared rather than filtered per launch</b>: there is more than one
+    /// <b>Cleared, not filtered per launch</b>: there is more than one
     /// place this process starts something, and a filter that had to be
-    /// remembered at each of them is the shape of the defect rather than its
+    /// remembered at each of them is the shape of the defect and not its
     /// fix. The value is read first, so the dialog still knows it was a first
     /// run.
     /// </para>
@@ -210,7 +210,7 @@ internal sealed class ConfigurationSession(
     private AppState _state = state;
     private string? _note;
     private string? _available;
-#pragma warning disable CA2213 // Borrowed rather than owned: Show() creates the host in a using and clears this in its finally.
+#pragma warning disable CA2213 // Borrowed, not owned: Show() creates the host in a using and clears this in its finally.
     private TaskDialogHost? _host;
 #pragma warning restore CA2213
 
@@ -298,7 +298,7 @@ internal sealed class ConfigurationSession(
 
     /// <summary>Lets go of anything still in flight.</summary>
     /// <remarks>
-    /// The work is abandoned rather than waited for -- a window that is closing
+    /// The work is abandoned, not waited for -- a window that is closing
     /// must not wait for a feed that is not answering, which is the whole reason
     /// the work left this thread.
     /// </remarks>
@@ -503,7 +503,7 @@ internal sealed class ConfigurationSession(
     /// The download and the apply, off the dialog's thread.
     /// </summary>
     /// <remarks>
-    /// <b>The apply is in here rather than on the click, and the reason is that
+    /// <b>The apply is in here and not on the click, and the reason is that
     /// it does not return.</b> <c>ApplyAndRestart</c> hands over to
     /// <c>Update.exe</c> and ends this process, so there is nothing for a UI
     /// thread to do afterwards -- and putting it on the click would mean the

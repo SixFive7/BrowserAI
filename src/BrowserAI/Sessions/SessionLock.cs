@@ -29,7 +29,7 @@ namespace BrowserAI.Sessions;
 /// single change dissolves two hazards at once.</b> The record this replaces
 /// was durably rewritten and renamed on <i>every forwarded call</i>, so its
 /// name was unbound for milliseconds at a time: a prober landing there had to
-/// answer <i>undetermined</i> rather than <i>free</i>, and a peer's transient
+/// answer <i>undetermined</i> and not <i>free</i>, and a peer's transient
 /// handle could refuse the writer's own re-open. Nothing rewrites this file, so
 /// an absence is an absence, the per-call unheld window is gone, and the only
 /// rename left is the one inside the per-directory gate at acquisition.
@@ -72,7 +72,7 @@ namespace BrowserAI.Sessions;
 /// concurrently. Every writing path and <b>both</b> disposal paths hold
 /// <see cref="_inProcess"/> for their whole body -- which is
 /// [adversarial review B4](../../../docs/reviews/2026-08-18-adversarial-locking.md)
-/// rather than defensive programming, and which is also what serialises the
+/// and not defensive programming, and which is also what serialises the
 /// <c>INSERT</c>-then-<c>last_insert_rowid</c> pair on one SQLite connection.
 /// </para>
 /// </remarks>
@@ -174,7 +174,7 @@ internal sealed class SessionLock : IDisposable
     /// taken -- a previous holder died inside create-or-take.
     /// </summary>
     /// <remarks>
-    /// Surfaced rather than swallowed. The acquisition itself was never in
+    /// Surfaced, not swallowed. The acquisition itself was never in
     /// doubt; what an abandoned mutex reports is that the protected state may
     /// be torn, and that is the only warning the OS gives.
     /// </remarks>
@@ -215,7 +215,7 @@ internal sealed class SessionLock : IDisposable
         }
 
         // ⚠️ IN FRONT OF THE GATE, NEVER INSTEAD OF IT. Everything below this
-        // line is unchanged, and that is the design rather than caution -- see
+        // line is unchanged, and that is the design, not caution -- see
         // this type's own remarks.
         if (ProbeForHolder(location, logger) is { } refusal)
         {
@@ -311,13 +311,13 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <para>
     /// ⚠️ <b>It is written BEFORE the call it describes is forwarded, and that
-    /// ordering is the property rather than an implementation detail.</b> A
+    /// ordering is the property and not an implementation detail.</b> A
     /// navigation that hangs, a child that dies, a process that is killed -- the
     /// calls anybody investigates -- still left a row saying what they were for.
     /// A row written on the way back would be missing from exactly those.
     /// </para>
     /// <para>
-    /// <b>It throws rather than swallowing.</b> A call BrowserAI could not
+    /// <b>It throws instead of swallowing.</b> A call BrowserAI could not
     /// record is not forwarded: the whole point of one time-ordered log is that
     /// reading it back tells you what the session did, and a gap nobody is told
     /// about is worse than a refusal somebody can act on.
@@ -360,7 +360,7 @@ internal sealed class SessionLock : IDisposable
     /// <b>A failure payload only on failure.</b> A call that succeeded stores
     /// nothing beyond the fact and the instant: the child's own answer is the
     /// caller's, has already been returned byte-identical, and putting a copy
-    /// of it in the record would make the record the traffic rather than the
+    /// of it in the record would make the record the traffic and not the
     /// reasons.
     /// </para>
     /// <para>
@@ -397,7 +397,7 @@ internal sealed class SessionLock : IDisposable
                 // The answer is already on its way back to the caller. What is
                 // lost is the outcome of one row, which `browserai_catch_up`
                 // renders as "no answer was recorded" -- a true statement about
-                // the record rather than a failed call.
+                // the record and not a failed call.
                 SessionLog.OutcomeNotRecorded(Logger, id, Location.FullPath, refused);
             }
         }
@@ -429,7 +429,7 @@ internal sealed class SessionLock : IDisposable
     }
 
     /// <summary>
-    /// Says what this session is now for, by adding a statement rather than by
+    /// Says what this session is now for, by adding a statement and not by
     /// replacing one.
     /// </summary>
     /// <remarks>
@@ -486,7 +486,7 @@ internal sealed class SessionLock : IDisposable
     /// A1.
     /// </para>
     /// <para>
-    /// <b>A gate that could not be taken narrows the window rather than
+    /// <b>A gate that could not be taken narrows the window instead of
     /// abandoning the delete.</b> Refusing here would leave a directory whose
     /// guard names a holder that has finished with it, and a session nobody
     /// destroys is worse than the race this closes.
@@ -518,7 +518,7 @@ internal sealed class SessionLock : IDisposable
 
                 // The store first: closing the last connection checkpoints and
                 // removes the write-ahead log, so what the delete below meets is
-                // one file rather than three.
+                // one file and not three.
                 _store.Dispose();
                 _hold.Dispose();
                 delete();
@@ -538,7 +538,7 @@ internal sealed class SessionLock : IDisposable
 
     /// <summary>
     /// Releases the directory. Both files stay: a guard that outlives its
-    /// holder is what makes a stale lock a sentence rather than a refusal, and
+    /// holder is what makes a stale lock a sentence and not a refusal, and
     /// the record is the whole of what the session did.
     /// </summary>
     public void Dispose()
@@ -604,7 +604,7 @@ internal sealed class SessionLock : IDisposable
     /// </para>
     /// <para>
     /// ⚠️ <b>Closed the same day, at the maintainer's decision, and the sentence
-    /// above is once again true of the whole path rather than only of this
+    /// above is once again true of the whole path and not only of this
     /// method.</b> <c>Sweep</c> walks at <c>SessionIndexDepth.Guard</c>: the
     /// record was never part of its decision -- every removable state is settled
     /// by the directory and the guard, and the record only ever filled an
@@ -710,7 +710,7 @@ internal sealed class SessionLock : IDisposable
     /// <remarks>
     /// <para>
     /// ⚠️ <b>READING A SESSION DIRECTORY IS NOT SIDE-EFFECT-FREE, measured
-    /// 2026-08-26 rather than reasoned about.</b> Against a crashed holder's
+    /// 2026-08-26, not reasoned about.</b> Against a crashed holder's
     /// uncheckpointed write-ahead log this read-only open <i>recovers</i> the
     /// log and answers with the newest rows --
     /// <c>SQLITE_OPEN_READONLY</c> constrains the database file and not the
@@ -802,7 +802,7 @@ internal sealed class SessionLock : IDisposable
     /// <b>One <c>CreateFile</c> on <c>browserai.lock</c> and nothing else.</b>
     /// Measured 2026-08-20 against the file this replaces, over 2,000
     /// iterations, 3 runs: <b>0.035 ms</b> free and <b>0.049 ms</b> held -- the
-    /// held arm costs more because it is a managed exception rather than a
+    /// held arm costs more because it is a managed exception and not a
     /// return
     /// ([kb](../../../kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report----measured-2026-08-20)).
     /// <b>It must never consult the store.</b> A database open is orders of
@@ -819,14 +819,14 @@ internal sealed class SessionLock : IDisposable
     /// window left is between the rename and the first hold at acquisition,
     /// inside the per-directory gate, and what a reporting caller sees there is
     /// *free* about a directory somebody is in the middle of taking -- a
-    /// momentary truth that corrects itself rather than a stale one that does
+    /// momentary truth that corrects itself and not a stale one that does
     /// not.
     /// </para>
     /// <para>
     /// <b>The three answers are not symmetrical.</b> A sharing violation may be
     /// read as <see cref="SessionLiveness.Held"/>; a denied open or a device
     /// error is <see cref="SessionLiveness.Undetermined"/> and carries a
-    /// reason. <see cref="SessionLiveness.NotHeld"/> is a snapshot rather than
+    /// reason. <see cref="SessionLiveness.NotHeld"/> is a snapshot and not
     /// a claim on the directory, which is why <see cref="ProbeForHolder"/>
     /// still falls through to the gate on it.
     /// </para>
@@ -931,7 +931,7 @@ internal sealed class SessionLock : IDisposable
     /// <i>"held by PID 8124, which is checking out the staging cart"</i> knows
     /// whether to wait or to pick another directory. A record that cannot be
     /// opened costs that clause and nothing else, so every failure here is
-    /// swallowed rather than propagated into an ownership answer the kernel
+    /// swallowed and not propagated into an ownership answer the kernel
     /// already settled.
     /// </remarks>
     /// <param name="location">The session directory.</param>
@@ -1061,14 +1061,14 @@ internal sealed class SessionLock : IDisposable
                     $"BrowserAI could not write '{location.LockFile}' ({failure.Message}), so the directory was not taken and nothing was changed. Check that the volume has space and that the directory is writable.");
             }
 
-            // ⚠️ A SECOND CATCH RATHER THAN A SECOND STATEMENT IN THE FIRST ONE,
+            // ⚠️ A SECOND CATCH AND NOT A SECOND STATEMENT IN THE FIRST ONE,
             // AND THE REASON IS THE SENTENCE ABOVE. The write is a rename of a
             // fully-formed guard over the name: once it returns,
             // `browserai.lock` HAS been replaced and it names this process. A
             // failure here is therefore the one case where "nothing was changed"
             // is false at the moment it is said -- and a caller acting on it
             // reads the reclaim it meets on the next call as somebody else's
-            // crashed session rather than as its own last attempt.
+            // crashed session and not as its own last attempt.
             //
             // It does not try to undo the write, deliberately. Restoring the
             // previous guard means a second durable write along the path that
@@ -1243,13 +1243,13 @@ internal sealed class SessionLock : IDisposable
     /// <c>Session lock acquired</c> lines in the same window -- and in the two
     /// 2026-08-29 files alone it is <b>2,081 of 2,081</b>. The five that do not
     /// are genuine reclaims from a holder that had died, which is what makes the
-    /// discriminator worth having rather than vacuous.
+    /// discriminator worth having and not vacuous.
     /// </para>
     /// <para>
     /// <b>The identity is <c>(pid, creationFileTime)</c> and the pid alone is
     /// not enough</b> -- Windows reuses pids within seconds, and a stranger
     /// wearing this process's number must read as the takeover it is. The
-    /// comparison is against the holder this acquisition just wrote rather than
+    /// comparison is against the holder this acquisition just wrote and not
     /// against a freshly-read identity, so the two cannot disagree.
     /// <c>ClientProcessName</c> is deliberately outside it: it is display-only,
     /// it can be null, and a record's equality including it would make a
@@ -1260,11 +1260,11 @@ internal sealed class SessionLock : IDisposable
     /// <b>Only the record splits.</b> The outcome stays
     /// <see cref="SessionLockOutcome.Reclaimed"/> and
     /// <c>HolderRunning</c> stays true, because both are answers about the
-    /// directory rather than about who is asking, and a caller that branches on
+    /// directory and not about who is asking, and a caller that branches on
     /// them is right to see no difference -- the directory <i>was</i> held and
     /// <i>is</i> now ours. The caller-facing sentence is also unchanged and
     /// still says <i>still running but has let the directory go</i>, which for
-    /// this shape is accurate and slightly odd; it is left alone rather than
+    /// this shape is accurate and slightly odd; it is left alone and not
     /// tuned, because the false story was in the log and moving the refusal text
     /// would be a second change wearing the first one's justification.
     /// </para>
@@ -1431,7 +1431,7 @@ internal sealed record SessionLockRequest
     public SessionCall? Entry { get; init; }
 
     /// <summary>
-    /// Whether finding a record already on disk is a <b>refusal</b> rather than
+    /// Whether finding a record already on disk is a <b>refusal</b> and not
     /// something to reclaim. <see langword="false"/> unless the caller says
     /// otherwise, because reclaiming is what every other path wants.
     /// </summary>
@@ -1639,13 +1639,13 @@ internal static partial class SessionLog
     /// <param name="processId">This process's pid, which is also the guard's.</param>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Its own event rather than a parameter on
+    /// ⚠️ <b>Its own event and not a parameter on
     /// <see cref="Reclaimed"/>, because the two are different events wearing
     /// one outcome.</b> A reclaim is <i>somebody else's directory is now
     /// ours</i>; this is <i>we are back in a directory we never left the
     /// machine holding</i>. Every <c>destroy</c> and every <c>set_purpose</c>
     /// produces one, so on the machine-wide log this is not the rare case -- it
-    /// is very nearly the only case, and until 2026-08-30 every one of them was
+    /// is nearly the only case, and until 2026-08-30 every one of them was
     /// logged as a reclaim from a live process. The figures, with the predicate
     /// quoted, are in <see cref="Reclaimed"/>'s own remarks.
     /// </para>
@@ -1736,7 +1736,7 @@ internal static partial class SessionLog
     /// </summary>
     /// <remarks>
     /// <b>The opposite decision from the one at the caller's door</b>, and it is
-    /// recorded rather than implied: a forwarded call whose row will not write is
+    /// recorded and not implied: a forwarded call whose row will not write is
     /// refused, because a caller can retry. Nobody asked for this close, so
     /// declining it would leave a browser tree up for the life of the session to
     /// protect a log line.

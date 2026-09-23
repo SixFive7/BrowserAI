@@ -19,7 +19,7 @@ namespace BrowserAI.Protocol;
 /// CP437 in the same way on the read side.
 /// </para>
 /// <para>
-/// Those three are why this is a type rather than a convention. The encoding is
+/// Those three are why this is a type and not a convention. The encoding is
 /// set once, here, and <c>System.Console</c> is banned everywhere else in the
 /// process by <c>BannedSymbols.txt</c> at error severity -- so there is no
 /// second path to the handle for a future change to get wrong.
@@ -49,15 +49,15 @@ internal sealed class StdioChannel : IDisposable
     }
 
     /// <summary>
-    /// UTF-8 with no byte-order mark, and throwing on invalid input rather than
+    /// UTF-8 with no byte-order mark, and throwing on invalid input instead of
     /// substituting <c>U+FFFD</c>. A silently replaced character is a corrupted
     /// payload that still parses, which is the harder failure to find.
     /// </summary>
     /// <remarks>
     /// Exposed so that a pipe to a child process is encoded by the same
-    /// instance rather than by a second declaration that agrees today. The one
+    /// instance and not by a second declaration that agrees today. The one
     /// place this rule is deliberately not applied is a child's <b>stderr</b>,
-    /// which carries diagnostics rather than protocol: see
+    /// which carries diagnostics and not protocol: see
     /// <see cref="DirectStdioClientTransport"/>.
     /// </remarks>
     public static UTF8Encoding Utf8NoBom { get; } = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);

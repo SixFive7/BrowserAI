@@ -103,7 +103,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// Nothing in this repository chose that number, nothing documented it, and
     /// the failure it produces -- <c>Initialization timed out</c> -- carries no
     /// elapsed time, no child identity and none of the child's stderr, so it
-    /// reads as a protocol fault rather than as a slow start.
+    /// reads as a protocol fault and not as a slow start.
     /// </para>
     /// <para>
     /// <b>What is on the far side of it is a node process starting.</b> The child
@@ -151,7 +151,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// transport reads as connected to a process that no longer exists.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Neither is a pid lookup, and that is deliberate rather than
+    /// ⚠️ <b>Neither is a pid lookup, and that is deliberate and not
     /// incidental.</b> Asking the machine whether a number is running answers
     /// about whoever wears that number now; the handle answers about the process
     /// this connection started, and a handle held open is what stops the number
@@ -160,7 +160,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// <para>
     /// <b>A child on its way out is alive until one of the two says otherwise.</b>
     /// That is what keeps a resume from tearing down a child that was merely
-    /// slow, and it is why this asks the kernel rather than a timer.
+    /// slow, and it is why this asks the kernel and not a timer.
     /// </para>
     /// </remarks>
     public bool ChildHasGone =>
@@ -172,7 +172,7 @@ internal sealed class ChildConnection : IAsyncDisposable
     /// child, the browser it launched and every helper under it.
     /// </summary>
     /// <remarks>
-    /// <b>The kernel's own membership list rather than a tally anybody keeps</b>,
+    /// <b>The kernel's own membership list and not a tally anybody keeps</b>,
     /// which is what lets the idle close report <c>11 → 1</c> as evidence instead
     /// of asserting that a browser went. It is also the only question about
     /// browser processes this product can ask <i>per session</i>: an image-path
@@ -291,7 +291,7 @@ internal sealed class ChildConnection : IAsyncDisposable
                 Payload = TakePayload(childId, wantError: true),
             };
         }
-#pragma warning disable CA1031 // Anything else is the child failing to answer at all, and the caller must be told rather than left waiting.
+#pragma warning disable CA1031 // Anything else is the child failing to answer at all, and the caller must be told and not left waiting.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
@@ -356,7 +356,7 @@ internal sealed class ChildConnection : IAsyncDisposable
 
 /// <summary>What one request to a child produced.</summary>
 /// <remarks>
-/// Three outcomes rather than two, because they reach the caller as three
+/// Three outcomes and not two, because they reach the caller as three
 /// different frames: the child's result, the child's own JSON-RPC error, and the
 /// child not answering at all. Collapsing the last two would produce the failure
 /// shape this project exists to eliminate -- an error naming no cause.

@@ -84,7 +84,7 @@ internal enum RegistrationOwnership
 /// <param name="Unreadable">
 /// Why the file could not be read, when that is the reason there is no answer.
 /// <see langword="null"/> when the file was read -- including when it simply is
-/// not there, which is an answer rather than a failure.
+/// not there, which is an answer, not a failure.
 /// </param>
 internal sealed record RegistrationView(
     RegistrationScope Scope,
@@ -322,7 +322,7 @@ internal static class McpRegistryView
         // file that cannot be read -- is OURS AND STALE, which is the state
         // `Repair` re-points and the state the window offers to register out of.
         // Neither may be launched as an MCP server, and the difference between
-        // "gone" and "wrong" changes the sentence rather than the action.
+        // "gone" and "wrong" changes the sentence and not the action.
         return Runtime.PeSubsystem.IsConsole(full)
             ? RegistrationOwnership.OursAndPresent
             : RegistrationOwnership.OursAndStale;

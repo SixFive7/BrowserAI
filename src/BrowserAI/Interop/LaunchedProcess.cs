@@ -21,8 +21,8 @@ namespace BrowserAI.Interop;
 /// <para>
 /// Holding the process handle open is what makes every pid recorded here safe to
 /// act on: Windows will not reuse a pid while a handle to it exists, so
-/// "terminate pid 1234" cannot land on a stranger. <b>Measured 2026-08-18</b>
-/// rather than assumed, with the control that makes it mean something: with the
+/// "terminate pid 1234" cannot land on a stranger. <b>Measured 2026-08-18</b>,
+/// not assumed, with the control that makes it mean something: with the
 /// handle released at exit a pid repeated after 2,010 spawns, and with a handle
 /// held there was no repeat in 6,030
 /// (<see href="../../../kb/windows/processes.md">kb</see>).
@@ -97,7 +97,7 @@ internal sealed partial class LaunchedProcess(
             return true;
         }
 
-        // A thread-pool wait registration rather than a blocking wait on a
+        // A thread-pool wait registration and not a blocking wait on a
         // pooled thread: with ~100 concurrent BrowserAI processes, a five-second
         // blocking shutdown wait per child is five seconds of a thread each.
         var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);

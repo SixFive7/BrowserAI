@@ -22,7 +22,7 @@ namespace BrowserAI.Interop;
 /// <c>AssignProcessToJobObject</c> -- was measured leaking <b>2 escapees</b>,
 /// because the child spawns grandchildren in the window before the assignment
 /// lands. <c>PROC_THREAD_ATTRIBUTE_JOB_LIST</c> makes membership part of process
-/// creation, so that window does not exist rather than being closed afterwards.
+/// creation, so that window does not exist and nothing has to close it afterwards.
 /// It also beats <c>CREATE_SUSPENDED</c> → assign → <c>ResumeThread</c>, which
 /// measured equally clean but leaks a suspended process if the parent dies
 /// mid-sequence.
@@ -35,21 +35,21 @@ namespace BrowserAI.Interop;
 /// shape that is correct in both directions.
 /// </para>
 /// <para>
-/// ⚠️ <b>And the declaration says <i>buffer</i> rather than <i>one char</i>
+/// ⚠️ <b>And the declaration says <i>buffer</i> and not <i>one char</i>
 /// since 2026-08-19 (previously <c>ref char lpCommandLine</c> and
 /// <c>ref char lpEnvironment</c>, called as <c>ref commandLine[0]</c>).</b>
 /// Microsoft's own Win32 metadata generates a span for this parameter, and
 /// <c>ref char</c> was weaker than the vendor's in three ways at once: it
 /// carried no length, it made an empty buffer an
-/// <see cref="IndexOutOfRangeException"/> at the indexer rather than a
+/// <see cref="IndexOutOfRangeException"/> at the indexer and not a
 /// <see langword="null"/> the API accepts, and it said nothing about which of
 /// the two buffers Windows writes back into. <c>Span&lt;char&gt;</c> for the
 /// command line and <c>ReadOnlySpan&lt;char&gt;</c> for the environment now say
 /// exactly that: the first is mutated in place -- <b>which is our array, because
-/// the span is pinned rather than copied</b> -- and the second is not.
+/// the span is pinned, not copied</b> -- and the second is not.
 /// <b>Nothing was known to be wrong with the old shape and nothing changed at
 /// the call</b>; it was a signature that presents as a plausible wrong answer
-/// rather than as an error, which is the class this repository spends the most
+/// and not as an error, which is the class this repository spends the most
 /// on. The invariants the old form relied on and never stated are now stated
 /// and asserted: <c>BuildCommandLine</c> and <c>BuildEnvironmentBlock</c> both
 /// return a NUL-terminated, never-empty buffer, and
@@ -70,8 +70,8 @@ namespace BrowserAI.Interop;
 /// process</i>, and with several sessions opening at once the pipe ends of a
 /// launch in flight on another thread are inheritable too -- so each child got
 /// its siblings' stdout and stderr write ends and held them for its whole life.
-/// <c>PROC_THREAD_ATTRIBUTE_HANDLE_LIST</c> makes the inherited set exact rather
-/// than ambient; see <see cref="ProcessAttributeList"/> for what that closed.
+/// <c>PROC_THREAD_ATTRIBUTE_HANDLE_LIST</c> makes the inherited set exact and
+/// not ambient; see <see cref="ProcessAttributeList"/> for what that closed.
 /// </para>
 /// </remarks>
 internal static partial class JobLauncher
@@ -90,7 +90,7 @@ internal static partial class JobLauncher
     private static readonly nuint ProcThreadAttributeJobList = 0x0002000D;
 
     // ProcThreadAttributeHandleList = 2, same encoding: 2 | 0x00020000. It makes
-    // the inherited set EXACT rather than "every inheritable handle in the
+    // the inherited set EXACT and not "every inheritable handle in the
     // process", which is what bInheritHandles alone means.
     private static readonly nuint ProcThreadAttributeHandleList = 0x00020002;
 
@@ -101,7 +101,7 @@ internal static partial class JobLauncher
     /// <param name="command">The executable's absolute path. Nothing resolves it and no shell sees it.</param>
     /// <param name="arguments">Arguments, quoted for <c>CreateProcessW</c> here.</param>
     /// <param name="workingDirectory">The child's working directory. Required, never inherited.</param>
-    /// <param name="environment">The child's complete environment block. It replaces ours rather than adding to it.</param>
+    /// <param name="environment">The child's complete environment block. It replaces ours instead of adding to it.</param>
     /// <returns>The running child, with its three streams.</returns>
     /// <exception cref="Win32Exception">Windows refused some step of the launch, named in the message.</exception>
     public static LaunchedProcess Start(
@@ -153,7 +153,7 @@ internal static partial class JobLauncher
             // CREATE_NO_WINDOW below covers a CONSOLE child and does nothing at
             // all for a GUI child's first window, so this is still the only
             // thing in the launch that speaks to one -- and it is now measured
-            // to be what keeps a headed Chromium off the foreground rather than
+            // to be what keeps a headed Chromium off the foreground and not
             // a precaution against a guess. It stays a no-op on the path the
             // product normally takes, because nothing it starts headless shows a
             // window; the case it is for is a caller asking for a headed
@@ -170,7 +170,7 @@ internal static partial class JobLauncher
             // ([kb](../../../kb/windows/processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it----measured-2026-08-24)).
             //
             // ⚠️ IT IS ONE DISCRIMINATING TRIAL, AND WHOEVER RE-RUNS IT MUST
-            // REPRODUCE THE CONDITION RATHER THAN THE COUNT. Three further trials
+            // REPRODUCE THE CONDITION AND NOT THE COUNT. Three further trials
             // each way answered "no steal" on BOTH arms and discriminate nothing:
             // SPI_GETFOREGROUNDLOCKTIMEOUT on this machine is 2,147,483,647 ms --
             // about 24.8 days -- so Windows refuses a foreground change in the
@@ -183,7 +183,7 @@ internal static partial class JobLauncher
             // ([kb](../../../kb/windows/detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal----measured-2026-08-24)).
             //
             // ⚠️ SW_SHOWNOACTIVATE ALONE IS KNOWN NOT TO BE ENOUGH SOMEWHERE
-            // ELSE, and that measurement is recorded here rather than
+            // ELSE, and that measurement is recorded here and not
             // rediscovered. The StationeersPlus rig measured it stealing focus
             // on 40 samples out of 40, because `wShowWindow` governs only the
             // first ShowWindow(SW_SHOWDEFAULT) and Unity called ShowWindow
@@ -265,7 +265,7 @@ internal static partial class JobLauncher
     /// </summary>
     /// <remarks>
     /// <b>Internal so the two invariants the span signature rests on can be
-    /// asserted rather than read.</b> The buffer is never empty and its last
+    /// asserted, not read.</b> The buffer is never empty and its last
     /// character is NUL -- both true by construction here, and neither stated
     /// anywhere until the declaration stopped carrying a length.
     /// </remarks>
@@ -282,8 +282,8 @@ internal static partial class JobLauncher
             AppendArgument(builder, argument);
         }
 
-        // Null-terminated, because the buffer is passed as a pointer rather
-        // than as a marshalled string.
+        // Null-terminated, because the buffer is passed as a pointer and
+        // not as a marshalled string.
         var buffer = new char[builder.Length + 1];
         builder.CopyTo(0, buffer, 0, builder.Length);
         return buffer;
@@ -512,7 +512,7 @@ internal static partial class JobLauncher
 
                 // Both buffers have to stay at a fixed address until
                 // CreateProcessW returns -- the attribute list stores pointers,
-                // not copies -- so they live on the native heap rather than as
+                // not copies -- so they live on the native heap and not as
                 // pinned managed locals.
                 jobStorage = Marshal.AllocHGlobal(nint.Size);
                 Marshal.WriteIntPtr(jobStorage, job.Handle.DangerousGetHandle());
@@ -562,7 +562,7 @@ internal static partial class JobLauncher
             Free(_handleListStorage);
 
             // The other half of the DangerousAddRef in For, and the reason this
-            // type holds the SafeHandle rather than only the number it named:
+            // type holds the SafeHandle and not only the number it named:
             // the reference is what keeps the handle open across CreateProcessW,
             // and the field is what keeps the handle itself from being
             // collected. The `using` in Start puts this after the launch.
@@ -580,7 +580,7 @@ internal static partial class JobLauncher
 
     /// <summary>
     /// The three pipe pairs, with the inheritance flags that make redirection
-    /// safe rather than a containment hole.
+    /// safe and not a containment hole.
     /// </summary>
     private sealed class ChildPipes : IDisposable
     {

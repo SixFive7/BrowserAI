@@ -46,7 +46,7 @@ internal enum JsonLinesRole
 /// bytes go, and what has to be shut down.
 /// </para>
 /// <para>
-/// The read loop runs on <see cref="PipeReader"/> rather than
+/// The read loop runs on <see cref="PipeReader"/> and not
 /// <see cref="StreamReader"/>. That is not a preference: a
 /// <see cref="StreamReader"/> would decode every frame to a string and the JSON
 /// reader would immediately re-encode it, which is a UTF-16 round trip in the
@@ -96,7 +96,7 @@ internal abstract class JsonLinesTransport : TransportBase
 
         if (!IsConnected)
         {
-            // Dropped rather than thrown, because this is reached during
+            // Dropped, not thrown, because this is reached during
             // teardown when the peer has already gone and an exception storm
             // there hides the reason the session ended. Logged, because a
             // dropped protocol message that nothing records is precisely the
@@ -117,7 +117,7 @@ internal abstract class JsonLinesTransport : TransportBase
             _writer.Reset();
 
             // A message the proxy marked verbatim is written from the bytes the
-            // child produced, envelope and all, rather than serialised from a
+            // child produced, envelope and all, and not serialised from a
             // JsonNode. Anything else takes the ordinary contract path.
             if (Verbatim.TryGet(message, out var payload) && IdOf(message) is { } answering)
             {
@@ -160,11 +160,11 @@ internal abstract class JsonLinesTransport : TransportBase
 
             // Closing the peer's end is what actually wakes a read blocked in a
             // syscall; cancellation alone does not, which is the SDK's own
-            // finding and the reason this is a separate step rather than a
+            // finding and the reason this is a separate step and not a
             // token.
             //
             // ⚠️ AND ONLY A TRANSPORT THAT OWNS THE PEER CAN DO IT, which is
-            // why this now answers rather than returning. Corrected 2026-09-15
+            // why this now answers instead of returning. Corrected 2026-09-15
             // (previously "await ShutdownPeerAsync(); await _readLoop;"): the
             // sentence above is true of the child leg, where this process owns
             // the pipe and closing it really does produce end-of-file, and
@@ -309,7 +309,7 @@ internal abstract class JsonLinesTransport : TransportBase
     /// <remarks>
     /// Strict on the way out, tolerant on the way in. BrowserAI never emits
     /// CRLF -- <see cref="StdioChannel"/> exists to guarantee that -- but a peer
-    /// that does is answerable rather than mysterious, and the alternative is a
+    /// that does is answerable and not mysterious, and the alternative is a
     /// session that dies on a stray byte nobody can see in a log.
     /// </remarks>
     private static RequestId? IdOf(JsonRpcMessage message) => message switch
@@ -379,7 +379,7 @@ internal abstract class JsonLinesTransport : TransportBase
             // Disposal. Not an error, and not a disconnect reason worth
             // reporting: the caller asked for it.
         }
-#pragma warning disable CA1031 // Whatever ended the loop becomes the transport's disconnect reason rather than an unobserved task exception.
+#pragma warning disable CA1031 // Whatever ended the loop becomes the transport's disconnect reason and not an unobserved task exception.
         catch (Exception ex) when (!_shutdown.IsCancellationRequested)
 #pragma warning restore CA1031
         {
@@ -579,7 +579,7 @@ internal static partial class TransportLog
     /// <see cref="StandardErrorClassifier"/> found error-shaped.
     /// </summary>
     /// <remarks>
-    /// <b>Warning rather than Debug is the entire point of the classifier</b>, and
+    /// <b>Warning and not Debug is the entire point of the classifier</b>, and
     /// it is the level the reference implementation's own verdict used. Debug is
     /// where the benign <c>Session: &lt;path&gt;</c> line of every healthy start
     /// belongs; a startup diagnostic logged there is a failure that reported
@@ -607,11 +607,11 @@ internal static partial class TransportLog
     public static partial void ParseErrorNotAnswered(ILogger logger, string transport, Exception exception);
 
     /// <summary>
-    /// The read loop was left parked rather than waited for, because the peer
+    /// The read loop was left parked, not waited for, because the peer
     /// is not this process's to close.
     /// </summary>
     /// <remarks>
-    /// <b>Information rather than Warning: this is the ordinary end of the
+    /// <b>Information, not Warning: this is the ordinary end of the
     /// caller-facing leg</b>, and the record exists because the alternative is a
     /// teardown whose only trace of the decision is the absence of an
     /// end-of-stream line. The thread it leaves parked is a thread-pool thread

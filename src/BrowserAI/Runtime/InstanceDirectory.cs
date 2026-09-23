@@ -12,8 +12,8 @@ namespace BrowserAI.Runtime;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>It cannot be cleaned up only on the way out, and that is measured rather
-/// than anticipated.</b> The containment contract says BrowserAI may be
+/// <b>It cannot be cleaned up only on the way out, and that is measured and
+/// not anticipated.</b> The containment contract says BrowserAI may be
 /// terminated from outside and run no code afterwards -- that is the whole point
 /// of the job object -- so a <c>finally</c> is by construction the path that does
 /// not run in the case that matters. A run that is killed leaves its directory
@@ -63,12 +63,12 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>What removes it is a held marker, and the reason is that a sharing
-/// violation is a fact the kernel enforces rather than an inference.</b>
+/// violation is a fact the kernel enforces and not an inference.</b>
 /// <see cref="CreateFresh"/> opens <see cref="MarkerFileName"/> inside the
 /// directory it just created and holds it for the whole life of the process --
 /// the same mechanism <c>Updates.LiveInstances</c>, <c>Sessions.SessionLock</c>
 /// and <see cref="MaintenanceLock"/> all already use, and the kernel releases it
-/// however the process dies. It is taken by <b>BrowserAI itself</b> rather than
+/// however the process dies. It is taken by <b>BrowserAI itself</b> and not
 /// by any child, so the signal no longer depends on one child staying alive; and
 /// because Windows refuses to rename a directory while any handle is open below
 /// it, the marker also makes <see cref="Claim"/>'s rename refuse, which is the
@@ -95,7 +95,7 @@ internal static class InstanceDirectory
     /// removed one is never confused with a live run's.
     /// </summary>
     /// <remarks>
-    /// A fixed shape rather than a suffix on the original name: a suffix would
+    /// A fixed shape and not a suffix on the original name: a suffix would
     /// grow the path by one segment on every sweep that could not finish, and a
     /// tree that survives because its path is too long is the failure this whole
     /// class is about.
@@ -120,7 +120,7 @@ internal static class InstanceDirectory
     /// whole of its life, and the only positive liveness signal here.
     /// </summary>
     /// <remarks>
-    /// <b>Beside the generated config rather than inside a subfolder</b>, because
+    /// <b>Beside the generated config and not inside a subfolder</b>, because
     /// the thing being proved alive is the directory itself. Its name ends
     /// <c>.live</c> to read the same way <c>Updates.LiveInstances</c>' markers
     /// do; nothing parses it and nothing is ever written into it, since
@@ -174,7 +174,7 @@ internal static class InstanceDirectory
             // posture Updates.LiveInstances.Join takes for the same kind of
             // claim. What is lost is the proof that this directory is live,
             // which puts the run back on the working-directory lock and the age
-            // guard it had before -- degraded, and said out loud, rather than
+            // guard it had before -- degraded, and said out loud, instead of
             // refusing to serve over a bookkeeping file.
             InstanceDirectoryLog.NotMarked(logger, marker, failure);
             return new InstanceDirectoryHold(directory, marker: null);
@@ -189,7 +189,7 @@ internal static class InstanceDirectory
     /// This
     /// runs on the clean exit path, on a directory that has just held a running
     /// browser, and Chromium leaves mapped files behind for a moment after exit --
-    /// the race is the normal case rather than the unlucky one. The framework
+    /// the race is the normal case, not the unlucky one. The framework
     /// primitive answers a locked file with one exception naming one node; this
     /// answers with every node that survived, which is what makes a leftover
     /// attributable instead of merely present.
@@ -229,7 +229,7 @@ internal static class InstanceDirectory
         foreach (var directory in Directory.EnumerateDirectories(root))
         {
             // ⚠️ FIRST, because it is the only question in this loop the kernel
-            // answers rather than one this code infers. A held marker is a live
+            // answers and not one this code infers. A held marker is a live
             // BrowserAI and nothing else can be, so the pass can say WHY it left
             // a directory alone -- which the rename below cannot, since it is
             // refused just as readily by a scanner's handle or a denied ACL.
@@ -283,7 +283,7 @@ internal static class InstanceDirectory
     /// directory this token cannot open permanent.
     /// </para>
     /// <para>
-    /// <b>It is a boolean rather than the three-valued census
+    /// <b>It is a boolean and not the three-valued census
     /// <c>Updates.LiveInstances.Probe</c> answers</b>, because there is nothing
     /// here for a third value to decide: the updater has to weigh <i>could not
     /// tell</i> against <i>alone</i> before an apply that kills processes, and
@@ -323,8 +323,8 @@ internal static class InstanceDirectory
     /// process holds the directory as its current directory -- which is the
     /// liveness signal, and it fails <i>before</i> a single file has been
     /// touched -- and it succeeds atomically, so a second BrowserAI sweeping the
-    /// same root at the same instant meets a path that is no longer there rather
-    /// than a tree it is also deleting.
+    /// same root at the same instant meets a path that is no longer there and
+    /// not a tree it is also deleting.
     /// </remarks>
     /// <param name="directory">The candidate.</param>
     /// <returns>The name it now has, or <see langword="null"/> when something still holds it.</returns>
@@ -398,7 +398,7 @@ internal static partial class InstanceDirectoryLog
     /// A tree was walked and something in it survived.
     /// </summary>
     /// <remarks>
-    /// Warning rather than Information: an instance directory that will not go
+    /// Warning, not Information: an instance directory that will not go
     /// is disk this product is responsible for and is not reclaiming, and the
     /// per-node list is the only thing that says which file held it.
     /// </remarks>

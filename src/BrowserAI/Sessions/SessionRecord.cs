@@ -15,8 +15,8 @@ namespace BrowserAI.Sessions;
 /// <remarks>
 /// <b>The set is closed and it is spelled once.</b> A reader groups by these
 /// strings and a writer emits them, so a spelling that existed in one place and
-/// not the other would produce a history that silently stopped growing rather
-/// than a failure anybody could see.
+/// not the other would produce a history that silently stopped growing and
+/// not a failure anybody could see.
 /// </remarks>
 internal static class RecordFields
 {
@@ -168,7 +168,7 @@ internal sealed class SessionRecord
 }
 
 /// <summary>
-/// One row of the log, rendered rather than stored: the store's own shape with
+/// One row of the log, rendered and not stored: the store's own shape with
 /// its timestamps parsed and its failure payload turned back into text.
 /// </summary>
 /// <param name="Id">The row's id, which is also its order and its page number's basis.</param>
@@ -208,7 +208,7 @@ internal static class SessionRecordReader
 
     /// <summary>An instant as the store holds it, back again.</summary>
     /// <remarks>
-    /// <b>A stamp this build cannot parse is the epoch rather than a
+    /// <b>A stamp this build cannot parse is the epoch and not a
     /// refusal.</b> The record's job is to say what happened; a timestamp that
     /// somebody hand-edited into nonsense costs an ordering, not the whole
     /// history behind it.
@@ -278,7 +278,7 @@ internal static class SessionRecordReader
                     break;
 
                 default:
-                    // Deliberately kept rather than refused. A field this build
+                    // Deliberately kept and not refused. A field this build
                     // does not know is a field a LATER build wrote, and the
                     // schema version is what refuses a record this one cannot
                     // act on -- a strict reader here would turn "one unknown
@@ -376,7 +376,7 @@ internal static class SessionRecordReader
 /// <para>
 /// <b>A <c>purpose</c> and a <c>why</c> are written by one model and replayed
 /// into another's context, so they are a channel between agents.</b> What keeps
-/// them data rather than instructions is not a length -- the maintainer removed
+/// them data and not instructions is not a length -- the maintainer removed
 /// every cap -- it is that they cannot carry the characters a terminal, a
 /// renderer or a prompt assembler acts on.
 /// </para>
@@ -421,7 +421,7 @@ internal static class RecordText
 
     /// <summary>Cleans free text for storage and for replay.</summary>
     /// <remarks>
-    /// <b><see cref="Rune.DecodeFromUtf16"/> rather than
+    /// <b><see cref="Rune.DecodeFromUtf16"/> and not
     /// <c>MemoryExtensions.EnumerateRunes</c>.</b> The enumerator answers U+FFFD
     /// for an unpaired surrogate and also for a genuine U+FFFD somebody typed,
     /// and only one of those is text; decoding by hand is what tells them apart.
@@ -446,7 +446,7 @@ internal static class RecordText
             remaining = remaining[consumed..];
 
             // Half of a surrogate pair, which is what a truncated UTF-16 payload
-            // arrives as. Dropped rather than neutralised, like a Cf.
+            // arrives as. Dropped and not neutralised, like a Cf.
             if (status is not OperationStatus.Done)
             {
                 continue;
@@ -501,7 +501,7 @@ internal static class RecordText
     /// itself twice.
     /// </para>
     /// <para>
-    /// <b>It shows rather than strips, and that is the difference from
+    /// <b>It shows and does not strip, and that is the difference from
     /// <see cref="Sanitise"/>.</b> A caller has to be able to see which
     /// character it typed was the problem, so nothing is dropped -- it is
     /// rendered. <c>\n</c> is escaped here and survives there, because a refusal
@@ -542,7 +542,7 @@ internal static class RecordText
                     or UnicodeCategory.ParagraphSeparator)
             {
                 // The same U+XXXX spelling `CanonicalPath`'s own clauses use, in
-                // angle brackets so it reads as a substitution rather than as
+                // angle brackets so it reads as a substitution and not as
                 // part of the name.
                 _ = shown.Append(CultureInfo.InvariantCulture, $"<U+{rune.Value:X4}>");
                 continue;

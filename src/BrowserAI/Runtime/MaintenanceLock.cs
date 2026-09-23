@@ -25,7 +25,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>Windows file sharing modes give reader/writer directly, and that is why
-/// this is a file rather than anything else.</b> An open is refused when the
+/// this is a file and not anything else.</b> An open is refused when the
 /// requested <i>access</i> is outside an existing handle's share mode, <b>or</b>
 /// when the requested <i>share mode</i> is narrower than an existing handle's
 /// granted access -- the check runs in both directions, which is exactly what a
@@ -49,8 +49,8 @@ namespace BrowserAI.Runtime;
 ///   </description></item>
 /// </list>
 /// <para>
-/// ⚠️ <b>The writer shares <c>Read</c> rather than nothing, and the difference
-/// is a sentence rather than a lock.</b> With <c>FileShare.None</c> the
+/// ⚠️ <b>The writer shares <c>Read</c> and not nothing, and the difference
+/// is a sentence, not a lock.</b> With <c>FileShare.None</c> the
 /// exclusion is identical -- the arithmetic above never reaches the writer's own
 /// share mode -- but <b>nothing could read the record</b>, so a peer refused by
 /// a reinstall could not say whose reinstall, and could not quote how far in it
@@ -74,7 +74,7 @@ namespace BrowserAI.Runtime;
 /// <b>Held-ness is a sharing violation and never the file's existence</b>, which
 /// is the same rule <c>SessionLock</c> follows for <c>browserai.lock</c> and for
 /// the same reason: a crashed holder leaves the file behind, so existence would
-/// mean <i>somebody died here once</i> rather than <i>somebody is working
+/// mean <i>somebody died here once</i> and not <i>somebody is working
 /// now</i>.
 /// </para>
 /// <para>
@@ -106,8 +106,8 @@ namespace BrowserAI.Runtime;
 /// takes a provisioning mutex and then asks for this</b>, so there is no cycle to
 /// close; and every acquisition on both sides is non-blocking -- these opens
 /// succeed at once or fail, the mutexes use <c>LockScopes.NeverWaits</c> -- so
-/// even a future edit that inverted the order would produce a refusal rather
-/// than a hang.
+/// even a future edit that inverted the order would produce a refusal and
+/// not a hang.
 /// </para>
 /// <para>
 /// ⚠️ <b>The file is still called <c>reinstall.lock</c> and the name is now
@@ -125,7 +125,7 @@ internal sealed class MaintenanceLock : IDisposable
     /// The claim file's name, at the root of the browsers directory.
     /// </summary>
     /// <remarks>
-    /// <b>Beside the trees rather than inside one</b>, because the trees are what
+    /// <b>Beside the trees and not inside one</b>, because the trees are what
     /// gets deleted. <see cref="RevisionPrune"/> only removes directories whose
     /// name begins with a manifest prefix, and this is a file, so nothing sweeps
     /// it.
@@ -151,13 +151,13 @@ internal sealed class MaintenanceLock : IDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It creates the file when it is not there, and that is required rather
-    /// than convenient.</b> A reader that treated <i>absent</i> as <i>nothing to
+    /// <b>It creates the file when it is not there, and that is required and
+    /// not convenient.</b> A reader that treated <i>absent</i> as <i>nothing to
     /// take</i> would hold no handle at all, and a reinstall starting a moment
     /// later would find the root free and delete the tree under a live session.
     /// <c>FileMode.OpenOrCreate</c> with <c>FileAccess.Read</c> is a
     /// <c>CreateFileW</c> with <c>OPEN_ALWAYS</c> and <c>GENERIC_READ</c>:
-    /// creating the name is governed by the directory's permissions rather than
+    /// creating the name is governed by the directory's permissions and not
     /// by the access asked for on the file, so no writer is needed to bring it
     /// into existence.
     /// </para>
@@ -228,7 +228,7 @@ internal sealed class MaintenanceLock : IDisposable
     /// <b>The record is one line of plain text and deliberately not JSON.</b>
     /// Nothing parses it; its only consumer is a sentence, so a schema would be a
     /// second thing to keep in step for no reader's benefit. Which of the two
-    /// causes blocked a call is decided by the <i>session census</i> rather than
+    /// causes blocked a call is decided by the <i>session census</i> and not
     /// by reading this file, because the two are mutually exclusive by
     /// construction: a writer cannot hold the claim while any session does.
     /// </para>
@@ -345,14 +345,14 @@ internal sealed class MaintenanceLock : IDisposable
     /// <para>
     /// <b>Elapsed is the claim file's last write time</b>, which is the instant
     /// <see cref="TryTakeExclusive"/> stamped its record -- so it is a fact of the
-    /// filesystem rather than a field somebody has to parse out of a sentence.
+    /// filesystem and not a field somebody has to parse out of a sentence.
     /// </para>
     /// <para>
     /// ⚠️ <b>Zero bytes is not a stall and the renderer must not say it is.</b>
     /// The staging directory is empty during the delete, which comes first, and
     /// again after extraction begins. See
     /// <c>SessionErrors.BrowsersAreBeingReinstalled</c>, which says which of
-    /// those it cannot distinguish rather than implying progress it has not
+    /// those it cannot distinguish instead of implying progress it has not
     /// measured.
     /// </para>
     /// </remarks>
@@ -367,7 +367,7 @@ internal sealed class MaintenanceLock : IDisposable
             var claimed = File.GetLastWriteTimeUtc(PathIn(browsersDirectory));
 
             // The .NET sentinel for "no such file", which is what this answers
-            // rather than throwing. A root with no claim file has no reinstall
+            // and does not throw. A root with no claim file has no reinstall
             // to be timed.
             if (claimed.Year <= 1601)
             {
@@ -449,7 +449,7 @@ internal sealed class MaintenanceLock : IDisposable
         {
             // FileShare.ReadWrite because a writer has it open for WRITE, and a
             // reader that shared less than the holder's own access would be
-            // refused by its own share mode rather than by the holder's.
+            // refused by its own share mode and not by the holder's.
             using var reader = new StreamReader(
                 new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
 
@@ -511,7 +511,7 @@ internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan E
 /// right now"</i> with a progress clause counting from zero.
 /// </para>
 /// <para>
-/// <b>Left as it is, deliberately, and this is the note rather than the fix.</b>
+/// <b>Left as it is, deliberately, and this is the note, not the fix.</b>
 /// It is the same trade already taken and written down for code 32 -- an AV
 /// scanner, a backup agent or an indexer holding <c>reinstall.lock</c> reads as a
 /// reinstall -- in <c>SessionManager.TheRootCouldNotBeClaimed</c>'s remarks, and

@@ -19,7 +19,7 @@ namespace BrowserAI.Hosting;
 /// ... when this process is an installed one").</b> It computes it again, and that
 /// is the whole of the layout decision taken this date: <b>the data root is the
 /// constant <c>%LocalAppData%\BrowserAI</c></b> and the install root is
-/// <c>%LocalAppData%\BrowserAI.app</c>, a sibling rather than a parent. The
+/// <c>%LocalAppData%\BrowserAI.app</c>, a sibling, not a parent. The
 /// locator no longer feeds this class at all. The reason is in
 /// <see cref="IAppPaths"/>: an install root is a directory the installer
 /// destroys, twice over and by design.
@@ -112,7 +112,7 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Read here rather than at each entry point</b>, because there is more
+    /// <b>Read here and not at each entry point</b>, because there is more
     /// than one: <c>Program.Main</c> serves stdio, and
     /// <c>Registration.HookRegistration</c> runs inside an installer callback
     /// that never reaches <c>Main</c>'s body. Two readers would eventually
@@ -121,7 +121,7 @@ internal sealed class LocalAppDataPaths(string? rootAppDir = null) : IAppPaths
     /// from the running product is a root nobody was using.
     /// </para>
     /// <para>
-    /// <b>A relative value is ignored rather than resolved</b>, for the reason a
+    /// <b>A relative value is ignored, not resolved</b>, for the reason a
     /// relative <c>PLAYWRIGHT_BROWSERS_PATH</c> is refused: it would land
     /// somewhere nobody chose and report nothing. Never cached -- the suite sets
     /// this variable in-process around a scope and expects the next read to see

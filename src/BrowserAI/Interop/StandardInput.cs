@@ -21,7 +21,7 @@ namespace BrowserAI.Interop;
 /// 2026-09-14 against the installer's own post-install start.
 /// </para>
 /// <para>
-/// <b><c>GetConsoleMode</c> rather than <c>GetFileType</c>, and the difference
+/// <b><c>GetConsoleMode</c>, not <c>GetFileType</c>, and the difference
 /// is <c>NUL</c>.</b> Both a console and the null device answer
 /// <c>FILE_TYPE_CHAR</c>, and they behave oppositely for the only question being
 /// asked here: <c>NUL</c> reports end-of-file on the first read. Only a console

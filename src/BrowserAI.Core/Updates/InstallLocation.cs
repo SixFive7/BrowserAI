@@ -11,8 +11,8 @@ namespace BrowserAI.Updates;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The seam is a boolean, not an exception handler, and that is measured
-/// rather than designed.</b> The Velopack landmine list this product was built
+/// <b>The seam is a boolean, not an exception handler, and that is measured,
+/// not designed.</b> The Velopack landmine list this product was built
 /// against said <c>NotInstalledException</c> is the normal outcome under
 /// <c>dotnet run</c> and every test host. **That is wrong for 1.2.0**
 /// ([kb](../../../kb/packaging/velopack.md#6-notinstalledexception-under-dotnet-run-and-every-test-host)):
@@ -91,7 +91,7 @@ internal static class InstallLocation
     /// Read for reporting only. It is <b>never</b> the channel an update check
     /// uses: a client installed from a beta <c>Setup.exe</c> inherits <c>beta</c>
     /// in its manifest and stays there silently, which is the real reason
-    /// <c>ExplicitChannel</c> is set rather than inferred
+    /// <c>ExplicitChannel</c> is set, not inferred
     /// ([kb](../../../kb/packaging/velopack.md#channel----the-charters-reason-was-wrong)).
     /// </remarks>
     public static string? InstalledChannel => Resolved.Value.Channel;
@@ -105,8 +105,8 @@ internal static class InstallLocation
     /// this one comes from the package manifest <c>vpk</c> stamped, the other
     /// from the assembly attribute MinVer stamped. A build packed at one version
     /// and compiled at another is exactly the state a shipped product's
-    /// fleet-wide hourly restart loop was, so the disagreement is worth being
-    /// able to see.
+    /// fleet-wide hourly restart loop was, so the disagreement is one a reader
+    /// has to be able to see.
     /// </remarks>
     public static string? InstalledVersion => Resolved.Value.Version;
 

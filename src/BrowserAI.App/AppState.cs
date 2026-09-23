@@ -110,7 +110,7 @@ internal sealed record AppState
     /// ⚠️ <b>Added 2026-09-16, because one of them stopped being true.</b>
     /// <c>OursAndStale</c> used to mean one thing -- the file is gone -- and the
     /// sentence said so. Since the classifier started requiring the file to be
-    /// the <b>server</b> rather than merely present, it also covers the state
+    /// the <b>server</b> and not merely present, it also covers the state
     /// every pre-split install is in: an entry naming
     /// <c>current\BrowserAI.exe</c>, which is there and is this very
     /// application. Telling that person the file "is not there any more" is a

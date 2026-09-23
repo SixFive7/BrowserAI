@@ -27,7 +27,7 @@ namespace BrowserAI.Sessions;
 /// writers -- <c>SessionLock.Replace</c> and <c>SessionIndex.Replace</c> -- have
 /// waited out a busy destination since 2026-08-16, each with the measured budget
 /// and the note explaining that a concurrent reader or a virus scanner is a live
-/// condition rather than a bug. The readers had nothing, which made the pair
+/// condition and not a bug. The readers had nothing, which made the pair
 /// asymmetric in the direction that throws:
 /// <c>SessionLock.ReadRecord</c> and the acquire path's own open both propagated
 /// <see cref="UnauthorizedAccessException"/> out to a caller, past
@@ -42,7 +42,7 @@ namespace BrowserAI.Sessions;
 /// and a read in <c>SessionLockTests.ARewriteIsNeverObservedTorn</c>, the latter
 /// with a reader in a tight loop beside a rewriter doing a hundred renames. Two
 /// sites in two streaks is a property of every record rewrite under contention
-/// rather than of two tests, which is why this is a primitive and not a third
+/// and not of two tests, which is why this is a primitive and not a third
 /// patch.
 /// </para>
 /// <para>
@@ -114,7 +114,7 @@ namespace BrowserAI.Sessions;
 /// outside <c>Read</c>, and a handle whose granted access is outside
 /// <c>Read</c> is exactly what an open sharing only <c>Read</c> is refused by.
 /// Detecting an owner and blocking one are the same capability. So the fix is
-/// on this side, and it is bounded by the precondition rather than by a guess
+/// on this side, and it is bounded by the precondition and not by a guess
 /// about how long a probe lives.
 /// </para>
 /// </remarks>
@@ -129,7 +129,7 @@ internal static class RenameWindow
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>A hang detector rather than a budget, and it is stated once so the two
+    /// <b>A hang detector, not a budget, and it is stated once so the two
     /// sides of the rename cannot drift apart.</b>
     /// <c>SessionLock.MoveBudget</c> is this same value and reads it from here.
     /// </para>
@@ -151,10 +151,10 @@ internal static class RenameWindow
     /// to spend milliseconds. Thirty seconds is three orders of magnitude above
     /// the contention and, more to the point, <b>2,000× the sleep budget the loop
     /// actually asks for</b>, which is the number that matters when what expires
-    /// it is starvation rather than the file. A slow machine must not reach it.
+    /// it is starvation and not the file. A slow machine must not reach it.
     /// </para>
     /// <para>
-    /// It stays bounded rather than becoming open-ended because a <b>permanent</b>
+    /// It stays bounded instead of becoming open-ended because a <b>permanent</b>
     /// denial is a different fault and must still be reported: a file somebody
     /// has opened in a mode that will never permit us is not a window, and
     /// waiting on it forever would be the silent failure this whole repository is
@@ -204,7 +204,7 @@ internal static class RenameWindow
     /// first one would have been met at the gated open before the write.
     /// </para>
     /// <para>
-    /// <b>What is being waited out is therefore a handle rather than an
+    /// <b>What is being waited out is therefore a handle and not an
     /// owner.</b> <c>SessionLock.ProbeForHolder</c> is the one opener in the
     /// product that asks for write access without the gate; it holds the file
     /// for the length of one <c>FileStream</c> construction and disposal, and
@@ -218,7 +218,7 @@ internal static class RenameWindow
     /// <b>Still bounded, and by the same <see cref="Budget"/>.</b> A handle that
     /// outlasts thirty seconds is not a probe passing through -- it is something
     /// on the machine holding the file, which is a different fault and must be
-    /// reported rather than waited on. <c>LockScopes.PerDirectoryGate</c> is
+    /// reported and not waited on. <c>LockScopes.PerDirectoryGate</c> is
     /// larger than this budget and <c>SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt</c>
     /// fails the build if that ordering is ever inverted, so peers queued at the
     /// gate outlast the longest wait taken inside it.
@@ -240,7 +240,7 @@ internal static class RenameWindow
     /// <c>ERROR_SHARING_VIOLATION</c> is the ordinary refusal;
     /// <c>ERROR_LOCK_VIOLATION</c> arrives for a byte-range lock over the same
     /// region, and a handler for one alone misses the other. It lives here
-    /// rather than in <c>SessionLock</c> because it is a fact about what an open
+    /// and not in <c>SessionLock</c> because it is a fact about what an open
     /// refusal means, which is this type's whole subject.
     /// </remarks>
     /// <param name="failure">The refusal.</param>

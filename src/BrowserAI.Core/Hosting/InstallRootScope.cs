@@ -11,7 +11,7 @@ namespace BrowserAI.Hosting;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Why a shared root is unsafe, measured rather than reasoned.</b>
+/// <b>Why a shared root is unsafe, measured, not reasoned.</b>
 /// <c>%LocalAppData%</c> gives every Windows user their own browsers directory,
 /// session index and log. ⚠️ <b>Corrected 2026-09-15 (previously
 /// "<see cref="LocalAppDataPaths.RootVariable"/> <b>and the installer's install-to
@@ -20,7 +20,7 @@ namespace BrowserAI.Hosting;
 /// data root is a constant and the flag moves the install root, which this
 /// judgement does not read. The variable is what is left. The marker directory
 /// left this root the same day and is keyed to the install root -- see the fourth
-/// bullet below, which is where that gap is named rather than closed. What
+/// bullet below, which is where that gap is named and not closed. What
 /// happens when a root really is shared was measured on 2026-08-20
 /// ([kb](../../../kb/windows/detection.md#two-users-and-one-install-root----what-spans-users-and-what-does-not----measured-2026-08-20)):
 /// the <b>file</b> locks keep working across users, because a share mode is
@@ -44,7 +44,7 @@ namespace BrowserAI.Hosting;
 /// </para>
 /// <para>
 /// <b>The predicate is <i>inside the current user's profile</i>, and it is
-/// answered through the filesystem rather than through strings.</b> A junction,
+/// answered through the filesystem and not through strings.</b> A junction,
 /// a <c>subst</c>ed drive letter, an 8.3 short component or the <c>\\?\</c>
 /// prefix all make a legitimate per-user root look external to a string
 /// comparison, and the second half of that is worse: a junction <i>under</i> the
@@ -54,8 +54,8 @@ namespace BrowserAI.Hosting;
 /// and the comparison is on what the filesystem itself calls each of them.
 /// </para>
 /// <para>
-/// ⚠️ <b>It narrows the hazard rather than closing it, and the gap is named
-/// here rather than left to be rediscovered.</b> Four things it does not do:
+/// ⚠️ <b>It narrows the hazard without closing it, and the gap is named
+/// here and not left to be rediscovered.</b> Four things it does not do:
 /// </para>
 /// <list type="bullet">
 ///   <item><description>
@@ -73,8 +73,8 @@ namespace BrowserAI.Hosting;
 ///     served, with a warning naming what could not be established. Refusing
 ///     there would stop a background MCP server from starting at all on a
 ///     locked-down machine, which is a worse failure than the one being
-///     prevented; and the accepted case is exactly today's behaviour rather
-///     than a new exposure.
+///     prevented; and the accepted case is exactly today's behaviour and
+///     not a new exposure.
 ///   </description></item>
 ///   <item><description>
 ///     <b>It is a door, not a guard.</b> Nothing re-checks. A profile
@@ -115,7 +115,7 @@ internal static class InstallRootScope
     /// <remarks>
     /// The same bound <c>Sessions.CanonicalPath.AncestorWalkLimit</c>
     /// uses, and for the same reason: the walk costs one directory open per
-    /// level. It is spelled again rather than shared across the namespace
+    /// level. It is spelled again and not shared across the namespace
     /// boundary because the two are independent budgets that happen to agree --
     /// an app root is a handful of levels deep and a caller's session directory
     /// can be anything.
@@ -134,12 +134,12 @@ internal static class InstallRootScope
     /// resolved them has nothing to say about where its binary lives. Only then
     /// is the install root judged, and only when there is one: an uninstalled
     /// BrowserAI has no install root, and <c>Program</c> passes
-    /// <see langword="null"/> rather than substituting the data root -- which
+    /// <see langword="null"/> instead of substituting the data root -- which
     /// would judge the same path twice and produce a second refusal saying the
     /// same thing in the wrong words.
     /// </para>
     /// <para>
-    /// <b><i>Could not establish</i> from either side is carried out rather than
+    /// <b><i>Could not establish</i> from either side is carried out and not
     /// dropped</b>, and both are carried when both could not be established:
     /// the caller logs it and serves anyway, so losing one of the two would hide
     /// exactly the case somebody would come looking for.
@@ -163,7 +163,7 @@ internal static class InstallRootScope
         }
 
         // The same path judged twice would answer the same thing twice. It is
-        // compared as a string rather than through the filesystem deliberately:
+        // compared as a string and not through the filesystem deliberately:
         // this is an optimisation, not a judgement, and the judgement below does
         // its own resolving either way.
         if (installRoot is not { Length: > 0 }
@@ -275,7 +275,7 @@ internal static class InstallRootScope
         }
 
         // Whatever was trimmed off to find an existing ancestor goes back on, so
-        // a refusal names the root rather than an ancestor of it. The judgement
+        // a refusal names the root and not an ancestor of it. The judgement
         // itself is unaffected either way: a tail that does not exist cannot be
         // a reparse point, so an ancestor inside the profile puts the whole path
         // inside it.
@@ -307,7 +307,7 @@ internal static class InstallRootScope
 
     /// <summary>The final name with the extended-length prefix removed.</summary>
     /// <remarks>
-    /// A UNC final name is answered <see langword="null"/> rather than stripped:
+    /// A UNC final name is answered <see langword="null"/>, not stripped:
     /// <c>\\?\UNC\host\share</c> with the prefix removed reads as a rooted local
     /// path and would then be compared as one. It cannot be inside a local
     /// profile either way, and the caller reports it as unestablished, which is
@@ -401,7 +401,7 @@ internal enum JudgedRoot
 
 /// <summary>What <see cref="InstallRootScope.Judge(string, string?)"/> concluded.</summary>
 /// <remarks>
-/// <b>Three states rather than a boolean</b>, for the reason
+/// <b>Three states instead of a boolean</b>, for the reason
 /// <c>Updates.Liveness</c> has three: <i>could not establish</i> is neither of
 /// the other two, and collapsing it into either loses the only thing that would
 /// let somebody diagnose it. Here it collapses to <i>serve</i> -- see

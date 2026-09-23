@@ -10,10 +10,10 @@ namespace BrowserAI.Registration;
 
 /// <summary>Everything one Velopack lifecycle hook did.</summary>
 /// <remarks>
-/// <b>Two answers rather than one, since 2026-09-15.</b> A hook used to do
+/// <b>Two answers instead of one, since 2026-09-15.</b> A hook used to do
 /// exactly one thing -- point a client at this build, or unpoint it -- and the
 /// uninstall hook now also decides what becomes of the data root. The second
-/// answer is returned rather than only logged because the log it would be
+/// answer is returned and not only logged because the log it would be
 /// written into is inside the directory it is about: on a removal that file is
 /// gone, so the outcome goes to <c>VelopackStartup</c>, which mirrors it into
 /// the installer's own log.
@@ -31,7 +31,7 @@ internal sealed record HookOutcome(RegistrationReport Registration, DataRootDisp
 /// </summary>
 /// <remarks>
 /// <para>
-/// ⚠️ <b>A hook opens its own log rather than using the process's.</b>
+/// ⚠️ <b>A hook opens its own log instead of using the process's.</b>
 /// <c>Program.Main</c> buffers Velopack's own records and replays them once the
 /// install root is known -- which works for an ordinary start and cannot work for
 /// a hook, because <c>VelopackApp.Run()</c> <b>exits the process</b> when it has
@@ -94,7 +94,7 @@ internal static class HookRegistration
     /// <param name="commands">The seam over starting the client.</param>
     /// <param name="paths">
     /// Where the log and the record go, and -- on an uninstall -- what is offered
-    /// for deletion. <b>Required rather than defaulted</b>: a test that forgot
+    /// for deletion. <b>Required, not defaulted</b>: a test that forgot
     /// it would write into the developer's own data root and offer to delete it.
     /// </param>
     /// <param name="silent">

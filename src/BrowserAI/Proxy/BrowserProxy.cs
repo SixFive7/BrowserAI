@@ -25,7 +25,7 @@ namespace BrowserAI.Proxy;
 /// <remarks>
 /// <para>
 /// <b>Nothing on the forwarding path touches an SDK contract type, and that is
-/// the point of the design rather than a stylistic preference.</b> Every loss
+/// the point of the design and not a stylistic preference.</b> Every loss
 /// this design exists to close is silent, and each one is produced by a type that
 /// is doing its job: <c>ContentBlock</c>'s converter drops unknown properties and
 /// throws on an unknown content <i>type</i>, which is correct
@@ -51,7 +51,7 @@ namespace BrowserAI.Proxy;
 /// <b>There is deliberately no typed fallback.</b> <c>Handlers</c> carries
 /// neither a <c>ListToolsHandler</c> nor a <c>CallToolHandler</c>, so if the
 /// filter below ever failed to short-circuit, the caller would get <c>-32601</c>
-/// rather than a quietly lossy answer. A loud wrong answer can be found; a lossy
+/// and not a quietly lossy answer. A loud wrong answer can be found; a lossy
 /// right-looking one cannot.
 /// </para>
 /// </remarks>
@@ -116,7 +116,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     }
 
     /// <summary>
-    /// Completes the handshake over a transport the caller supplies, rather than
+    /// Completes the handshake over a transport the caller supplies, and not
     /// over one this class starts a process for.
     /// </summary>
     /// <remarks>
@@ -124,8 +124,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// it.</b> A proxy has two hops, so a harness that stands a fake child on the
     /// far end has to reach the client leg without a process. Everything that
     /// decides behaviour -- the pinned revision, the negotiation check, the raw
-    /// forwarding path, the <c>tools/list</c> rewrite -- is below this line rather
-    /// than above it, so the harness exercises the same code the product runs.
+    /// forwarding path, the <c>tools/list</c> rewrite -- is below this line and
+    /// not above it, so the harness exercises the same code the product runs.
     /// </remarks>
     /// <param name="transport">The client transport to connect over. The SDK client owns it.</param>
     /// <param name="loggerFactory">Where the proxy and the session log.</param>
@@ -161,7 +161,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // pattern the rule asks for is exactly what is here -- locals
             // declared before the try, nulled the instant ownership moves, and an
             // unconditional disposal in the finally -- but both types are
-            // IAsyncDisposable rather than IDisposable, and the rule's dataflow
+            // IAsyncDisposable and not IDisposable, and the rule's dataflow
             // does not follow an `await x.DisposeAsync()` in a finally.
 #pragma warning disable CA2000
             sessions = new SessionManager(environment, loggerFactory, relay);
@@ -272,7 +272,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// ends would have concluded BrowserAI adds logging.
     /// </para>
     /// <para>
-    /// <b>Why an outgoing filter rather than the options object.</b> Setting
+    /// <b>Why an outgoing filter and not the options object.</b> Setting
     /// <c>Capabilities.Logging = null</c> does nothing -- the constructor overwrites
     /// it -- and the property is <c>[Obsolete(DiagnosticId = "MCP9005")]</c> at
     /// 2.2.0, so naming it at all needs a suppression, which the style rule
@@ -289,7 +289,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <param name="context">The outgoing message.</param>
     private static void UnadvertiseLogging(MessageContext context)
     {
-        // Shape rather than id, and deliberately: `initialize` is the only result
+        // Shape and not id, and deliberately: `initialize` is the only result
         // carrying both of these, the SDK owns the id, and matching on shape needs
         // no state shared between the two filter directions. A `tools/list` result
         // has `tools`; a `tools/call` result has `content`; neither has
@@ -322,7 +322,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// This is the <i>fallback</i> shape only. The frame that actually reaches
     /// the caller is written from the payload verbatim, so this object exists so
     /// that a message which somehow escaped the verbatim path would still be
-    /// semantically right rather than empty.
+    /// semantically right and not empty.
     /// </remarks>
     private static JsonRpcErrorDetail DetailFrom(VerbatimPayload payload)
     {
@@ -386,8 +386,8 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// permission").</b> The refusals this proxy makes by name are now whatever
     /// <c>tool-verdicts.json</c> says they are, plus every name that file does not
     /// carry a row for. <c>browser_annotate</c> is still the only tool this build
-    /// ships a <c>deny</c> for, and it is still liveness rather than permission --
-    /// what changed is that the sentence is a fact about the file rather than
+    /// ships a <c>deny</c> for, and it is still liveness and not permission --
+    /// what changed is that the sentence is a fact about the file and not
     /// about the code.
     /// </para>
     /// <para>
@@ -452,7 +452,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // ⚠️ EVERY AUTHORED TOOL BUT ONE. `browserai_page_tool` is ours by name
         // and a forward by behaviour -- it resolves a name against the session
         // child's live tool list and hands the call to that child -- so it takes
-        // the routing path below rather than this one, and gets the session
+        // the routing path below and not this one, and gets the session
         // resolution, the provisioning and child-liveness refusals, the `why`
         // requirement and the session log row that every forwarded call gets.
         // Answering it here would mean a second copy of all of that, reachable
@@ -494,7 +494,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // and is recorded; with no session there is nothing to route to and
             // nowhere to write a row -- and "this needs a session" would send a
             // caller to supply one for a tool that does not exist, which is a
-            // second wasted turn rather than a recovery.
+            // second wasted turn and not a recovery.
             var refusal = SessionToolSurface.IsInTheAuthoredNamespace(name) && !SessionToolSurface.IsAuthored(name)
                 ? SessionToolSurface.NotOneOfOurs(tool)
                 : SessionErrors.SessionMissing(tool);
@@ -586,7 +586,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // AChildThatDiesMidCallProducesANamedErrorRatherThanASuccess asserts.
         // What is left uncovered is the window between this check and that
         // registration, which is microseconds wide and which nothing in the
-        // suite can plant red -- it is named here rather than implied.
+        // suite can plant red -- it is named here and not implied.
         //
         // BEFORE the `why` check below, for the reason provisioning is:
         // a caller whose session has no browser server behind it has a more
@@ -602,7 +602,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        // ⚠️ REQUIRED, and refused here rather than left to the child. `why` is
+        // ⚠️ REQUIRED, and refused here and not left to the child. `why` is
         // injected into every upstream schema beside `session`, so a caller that
         // omits it is not following a schema it was given -- and the child has
         // never heard of the parameter, so forwarding the call would succeed and
@@ -683,7 +683,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // and it is the only containment there is now (BrowserConfiguration).
         //
         // The child has never heard of `session` or `why`; BrowserAI added both.
-        // Removed from a CLONE rather than from the caller's own node, because
+        // Removed from a CLONE and not from the caller's own node, because
         // the request object is the SDK's and may still be read after this.
         var isPageTool = string.Equals(tool, SessionToolSurface.PageTool, StringComparison.Ordinal);
 
@@ -711,7 +711,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             // the snapshot block printed and the caller read. `PageTools` owns
             // the map and the resolution is re-done from the live tab on every
             // call, because the same wire name is a different page's code after a
-            // navigation. Refusing here rather than forwarding is what keeps that
+            // navigation. Refusing here instead of forwarding is what keeps that
             // hazard from firing.
             PageToolResolution? resolved = null;
 
@@ -754,7 +754,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 // has gone, while this one gets a sentence saying what is still
                 // running and what releases it. `ChildConnection.AskAsync` has
                 // already told the child; the child cannot stop the page's code
-                // and the refusal says so rather than implying a clean stop.
+                // and the refusal says so instead of implying a clean stop.
                 var abandoned = SessionErrors.PageToolDidNotAnswer(
                     resolved!.Name,
                     resolved.WireName,
@@ -773,14 +773,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
             if (answer.Response is { } response)
             {
-                // The one answer BrowserAI rewrites rather than forwards, and the
+                // The one answer BrowserAI rewrites instead of forwarding, and the
                 // trade is deliberate: upstream's "not installed" message ends with
                 // an npx command this product does not ship, which resolves a
                 // different package at a different revision into a directory
                 // BrowserAI never launches from -- and a model will run it. Byte
                 // identity is given up for exactly this payload, only when the
                 // child reported an error and the marker is present, and the fact
-                // is logged rather than absorbed.
+                // is logged and not absorbed.
                 if (Remediate(response) is { } corrected)
                 {
                     ProxyLog.RemediationRewritten(live.Logger, tool, live.Location.FullPath);
@@ -889,7 +889,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <para>
     /// <b>Failure payloads only.</b> A call that worked stores the fact and the
     /// two instants; its answer already went back to the caller byte-identical
-    /// and a copy in the record would make the record the traffic rather than
+    /// and a copy in the record would make the record the traffic and not
     /// the reasons. A call that failed stores what failed, because that is the
     /// one thing nobody can reconstruct afterwards.
     /// </para>
@@ -998,7 +998,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     private JsonObject? Remediate(JsonRpcResponse response)
     {
-        // `GetValueKind()` rather than `GetValue<bool>()`: the latter throws on
+        // `GetValueKind()` and not `GetValue<bool>()`: the latter throws on
         // `"isError": 5`, which a misbehaving child can send.
         if (response.Result is not JsonObject result
             || result["content"] is not JsonArray
@@ -1077,7 +1077,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </para>
     /// <para>
     /// <b>The one thing that can still cost byte-identity is a frame the
-    /// transport did not capture</b>, and it is said out loud rather than
+    /// transport did not capture</b>, and it is said out loud and not
     /// absorbed: the answer is semantically right, because <c>Result</c> is the
     /// child's own <see cref="JsonNode"/>, but its escaping is then ours.
     /// </para>
@@ -1096,7 +1096,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         VerbatimPayload? payload,
         CancellationToken cancellationToken)
     {
-        // A fresh envelope rather than the child's own: JsonRpcMessage.Context
+        // A fresh envelope and not the child's own: JsonRpcMessage.Context
         // carries RelatedTransport, and the SDK's send path routes to it in
         // preference to the session's transport -- so a forwarded object would
         // be sent back to the child it came from.
@@ -1118,7 +1118,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <param name="log">Where to record: the session's own logger, or the run's when no session owns the call.</param>
     /// <remarks>
     /// <b>The <c>"Request failed (remote): "</c> prefix is never met on this
-    /// path, rather than met and stripped.</b> The SDK does add it -- it is real,
+    /// path; it is not met and stripped.</b> The SDK does add it -- it is real,
     /// and <c>SdkErrorShapeTests</c> is what keeps that checked -- but the bytes
     /// written here come from the child's frame, so the message that reaches the
     /// caller is the message the child sent.
@@ -1173,7 +1173,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// becomes a JSON-RPC <i>success</i> carrying <c>isError: true</c> and the
     /// text <c>"An error occurred invoking 'x'."</c> -- identical for a child that
     /// died and for an unknown content type, naming neither. It is answered as a
-    /// JSON-RPC <b>error</b> here because it is a transport failure rather than a
+    /// JSON-RPC <b>error</b> here because it is a transport failure and not a
     /// tool outcome, and the cause is named.
     /// </remarks>
     private static async Task AnswerTransportFailureAsync(
@@ -1355,9 +1355,9 @@ internal static partial class ProxyLog
     /// A session-scoped call arrived without the <c>why</c> its schema requires.
     /// </summary>
     /// <remarks>
-    /// Warning rather than Information: the refusal is correct, but a caller
+    /// Warning, not Information: the refusal is correct, but a caller
     /// repeatedly omitting a required parameter is a client that is not reading
-    /// the schema, and that is worth seeing without turning anything on.
+    /// the schema, and that has to be visible without turning anything on.
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="tool">The tool that was refused.</param>
@@ -1372,7 +1372,7 @@ internal static partial class ProxyLog
     /// A call was refused because its log entry could not be written.
     /// </summary>
     /// <remarks>
-    /// Error rather than Warning: nothing was forwarded and nothing was
+    /// Error, not Warning: nothing was forwarded and nothing was
     /// recorded, and a session whose record cannot be written is one whose
     /// ownership is in doubt.
     /// </remarks>
@@ -1391,7 +1391,7 @@ internal static partial class ProxyLog
     /// do it.
     /// </summary>
     /// <remarks>
-    /// Warning rather than Information: this is the one place the passthrough's
+    /// Warning, not Information: this is the one place the passthrough's
     /// central claim is deliberately not true of an answer, and a trade nobody
     /// can see in the log is one nobody can audit.
     /// </remarks>
@@ -1408,7 +1408,7 @@ internal static partial class ProxyLog
     /// A page tool was still silent when BrowserAI's own budget ran out.
     /// </summary>
     /// <remarks>
-    /// Warning rather than Information: the call is gone from BrowserAI's side
+    /// Warning, not Information: the call is gone from BrowserAI's side
     /// and is not gone from the page's, which is the one state on this path a
     /// reader has to be able to find afterwards.
     /// </remarks>
@@ -1433,10 +1433,10 @@ internal static partial class ProxyLog
     // REUSED, 2026-08-26. They were `InlineImageRestored`, `FilenameRefused`,
     // `NoteNotSpliced` and `ReservationReleased` -- the four records the
     // artifact machinery wrote, all deleted with it"). THE RULE IS NOT WHAT
-    // CHANGED; THE CODE BROKE IT, and this comment is corrected rather than the
+    // CHANGED; THE CODE BROKE IT, and this comment is corrected and not the
     // event renumbered.
     //
-    // The history, read out of `git log -S` rather than remembered:
+    // The history, read out of `git log -S` and not remembered:
     // `ReservationReleased` took 16 in `dbf1346` on 2026-08-24, was deleted
     // with the other three in `feec42b` on 2026-08-26 -- the commit that wrote
     // the sentence above -- and `ChildHasGone` was given 16 in `425a256` on
@@ -1449,7 +1449,7 @@ internal static partial class ProxyLog
     // positive control on the same corpus, 2026-09-22.
     //
     // ✅ THE SECOND HALF OF THAT SENTENCE IS NO LONGER TRUE, and it is
-    // corrected here rather than rewritten. Corrected 2026-09-22 by addition
+    // corrected here and not rewritten. Corrected 2026-09-22 by addition
     // (previously the paragraph above stood alone, and "nothing could" was its
     // last word). `ProxyLogTests.EveryLogEventIdIsUniqueInItsClassAndNoRetiredIdIsInUse`
     // reads every `[LoggerMessage]` in `src\` as text, refuses two events
@@ -1461,7 +1461,7 @@ internal static partial class ProxyLog
     // marker is for, and keeping the marker honest is a person's job.
     //
     // ⚠️ THE LINE BELOW IS READ BY THAT TEST. It is the machine-readable half
-    // of the prose above, beside it rather than instead of it -- the same
+    // of the prose above, beside it and not in place of it -- the same
     // arrangement `drift-check.json` prescribes for sqlite.org's `PRODUCT`
     // line. Taking an id off it is how a deliberate reuse is recorded, and the
     // prose above is where the reason goes. 16 is deliberately NOT on it: it is
@@ -1469,17 +1469,17 @@ internal static partial class ProxyLog
     //
     // RETIRED-EVENT-IDS: 10, 11, 12
     //
-    // WHAT THE REUSE ACTUALLY COSTS, measured rather than assumed, because the
+    // WHAT THE REUSE ACTUALLY COSTS, measured, not assumed, because the
     // sentence above is about somebody's old query. `ReservationReleased` held
     // 16 for TWO DAYS and is in no artifact anybody can fetch today: every
     // asset on the standing `v1.0.0` release object was built on 2026-09-17,
     // after the deletion, and that release's own binaries carry 16 as
     // `ChildHasGone`. WHAT CANNOT BE READ is whether an EARLIER release object
     // carried it -- that object was replaced, so `gh` no longer describes it --
-    // and that gap is named rather than closed.
+    // and that gap is named and not closed.
     //
     // NOT RENUMBERED HERE. Moving `ChildHasGone` to 18 would be the tidy edit
-    // and it is a DECISION rather than a repair: 16 is what the shipped v1.0.0
+    // and it is a DECISION and not a repair: 16 is what the shipped v1.0.0
     // binaries emit for it, so renumbering trades a stale meaning for a second
     // stale meaning, in the same key, for the sake of a rule about the first.
     // It belongs to whoever owns the log surface. The reuse is recorded here so

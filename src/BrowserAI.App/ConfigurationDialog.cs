@@ -229,7 +229,7 @@ internal static class ConfigurationDialog
     /// The prefix a content hyperlink uses to mean <i>open this in Explorer</i>.
     /// </summary>
     /// <remarks>
-    /// <b>A scheme of our own rather than <c>file:</c></b>, because the handler
+    /// <b>A scheme of our own, not <c>file:</c></b>, because the handler
     /// is ours: the click is delivered to this process as a string and this
     /// process decides what it means. A <c>file:</c> URL handed to the shell
     /// would open whatever is registered for it, which on some machines is not

@@ -19,7 +19,7 @@ namespace BrowserAI.Sessions;
 /// describes one. What it declares is BrowserAI's own six tools -- the six in
 /// <see cref="Names"/> -- which no child
 /// knows about, and the <c>session</c> property that is <b>injected into</b> the
-/// child's raw schemas rather than replacing them.
+/// child's raw schemas instead of replacing them.
 /// </para>
 /// <para>
 /// <b>The injection happens on the <see cref="JsonNode"/>, never on a typed
@@ -103,7 +103,7 @@ internal static class SessionToolSurface
     /// <b>It is read-only and takes no lock it can be refused by.</b> The record
     /// is read the way <c>browserai_list</c> reads one -- which since 2026-08-24
     /// means under this directory's own gate at zero timeout, so a record being
-    /// replaced is reported as <i>unknown</i> rather than as free -- and the
+    /// replaced is reported as <i>unknown</i> and not as free -- and the
     /// directory is walked without opening a file inside it.
     /// </para>
     /// </remarks>
@@ -111,7 +111,7 @@ internal static class SessionToolSurface
 
     /// <summary>
     /// Deletes one shared browser tree and downloads it again. The one authored
-    /// tool that is machine-scoped rather than session-scoped.
+    /// tool that is machine-scoped and not session-scoped.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>Corrected 2026-08-19 (previously "It takes no arguments because
@@ -146,14 +146,14 @@ internal static class SessionToolSurface
     /// <remarks>
     /// <para>
     /// ⚠️ <b>It is a tool of ours by name and a forward by behaviour, and that
-    /// combination is the decision rather than an accident.</b> Since
+    /// combination is the decision and not an accident.</b> Since
     /// <c>@playwright/mcp</c> 0.0.82 a page can put tools on the child's own
     /// <c>tools/list</c> -- page-authored names, descriptions and schemas,
     /// unbounded in number and invented by whoever wrote the page. Deny-by-default
     /// refuses every one of them at the door, which is that rule doing exactly
     /// what it was built for; and it left a real capability unreachable. The
     /// judgement (2026-09-21) is that page tools are reachable as a <b>class</b>,
-    /// through this one tool, which <i>is</i> judged, rather than through rows --
+    /// through this one tool, which <i>is</i> judged, and not through rows --
     /// <c>tool-verdicts.json</c> is keyed by name and a page's names are
     /// unbounded, so a row per page tool is not a thing that can exist.
     /// </para>
@@ -168,7 +168,7 @@ internal static class SessionToolSurface
     /// <b>The name it takes is the one a model can actually have read.</b> The
     /// snapshot block prints the page's own tool NAME; upstream's wire name is
     /// that name sanitised. <see cref="PageTools"/> owns the map and says why
-    /// <c>annotations.title</c> is the cross-check rather than the key.
+    /// <c>annotations.title</c> is the cross-check and not the key.
     /// </para>
     /// </remarks>
     public const string PageTool = "browserai_page_tool";
@@ -197,7 +197,7 @@ internal static class SessionToolSurface
 
     /// <summary>The parameter every upstream tool gains.</summary>
     /// <remarks>
-    /// Named <c>session</c> rather than <c>handle</c> because it is not one: it
+    /// Named <c>session</c> and not <c>handle</c> because it is not one: it
     /// is the session directory, which a model can always reconstruct, and which
     /// survives being compacted out of a model's context in a way an opaque
     /// token does not.
@@ -231,7 +231,7 @@ internal static class SessionToolSurface
     /// <remarks>
     /// <para>
     /// <b>On <see cref="Init"/> it is also the entry's <c>why</c>, and that is
-    /// why it has a name in code rather than a literal at three call sites.</b>
+    /// why it has a name in code and not a literal at three call sites.</b>
     /// <c>init</c> takes no separate <see cref="WhyParameter"/> -- the purpose
     /// <i>is</i> why the session exists -- so <c>SessionManager.Entry</c> drops it
     /// from the arguments it records for that one tool. On <see cref="Resume"/>
@@ -251,7 +251,7 @@ internal static class SessionToolSurface
     /// and is never read by BrowserAI.
     /// </summary>
     /// <remarks>
-    /// <b>Required rather than optional, and an empty object is the spelling for
+    /// <b>Required and not optional, and an empty object is the spelling for
     /// a tool that takes nothing.</b> A page's <c>inputSchema</c> is not enforced
     /// anywhere -- upstream hands the whole object to the page's own handler
     /// verbatim, measured 2026-09-21 -- so what this parameter is is the one place
@@ -291,7 +291,7 @@ internal static class SessionToolSurface
     /// 521 ms in the two measurements taken.
     /// </para>
     /// <para>
-    /// <b>It is a real recovery rather than a give-up, and that was measured
+    /// <b>It is a real recovery and not a give-up, and that was measured
     /// before it was chosen.</b> A pending page tool does not block the child:
     /// with one outstanding, <c>browser_snapshot</c> answered in 4-7 ms and a
     /// second page tool in about 520 ms. So the session a caller is told to carry
@@ -352,7 +352,7 @@ internal static class SessionToolSurface
     /// <c>network</c>, <c>pdf</c> and <c>testing</c> capabilities were never
     /// named, so the ten tools below did not exist in any session's child: a
     /// caller naming one reached upstream and upstream answered that it did not
-    /// know the tool. They are listed here rather than derived, because a
+    /// know the tool. They are listed here and not derived, because a
     /// deliberate grant that nothing records reads as a side effect of deleting
     /// something else.
     /// </para>
@@ -421,7 +421,7 @@ internal static class SessionToolSurface
     /// build-and-test-time data.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The residual is real and is stated rather than closed:</b> a call
+    /// ⚠️ <b>The residual is real, and it is stated, not closed:</b> a call
     /// naming an unjudged <c>browserai_</c> name with <b>no</b> resolvable
     /// session still writes nothing, and cannot -- there is no session directory
     /// to write it into, which is the same reason the session-missing and
@@ -495,7 +495,7 @@ internal static class SessionToolSurface
 
         if (result[ToolsMember] is JsonArray tools)
         {
-            // Detached and re-added rather than copied: the nodes are the child's
+            // Detached and re-added, not copied: the nodes are the child's
             // own, so nothing about them is re-serialised except the property
             // this method adds.
             foreach (var tool in tools.ToList())
@@ -506,7 +506,7 @@ internal static class SessionToolSurface
                 {
                     // Dropped before anything is done to it. The name is read
                     // from the child's own node, so a tool upstream renames
-                    // stops being filtered rather than being filtered by a stale
+                    // stops being filtered and is not filtered by a stale
                     // spelling -- and the golden snapshot is what says the
                     // rename happened.
                     //
@@ -545,7 +545,7 @@ internal static class SessionToolSurface
     /// What <c>why</c> asks for, on an upstream browser tool.
     /// </summary>
     /// <remarks>
-    /// <b>Why rather than what, and the description has to do that work.</b> The
+    /// <b>Why and not what, and the description has to do that work.</b> The
     /// tool name already says what the call does, so a restatement of it is a
     /// sentence nobody can use -- <i>"clicking the submit button"</i> beside
     /// <c>browser_click</c> is noise. What no one can reconstruct afterwards is
@@ -621,7 +621,7 @@ internal static class SessionToolSurface
     /// there.
     /// </summary>
     /// <remarks>
-    /// Appended rather than inserted, so upstream's own required names keep
+    /// Appended and not inserted, so upstream's own required names keep
     /// their order -- the same reason the properties are appended.
     /// </remarks>
     /// <param name="required">The schema's <c>required</c> array.</param>

@@ -58,7 +58,7 @@ namespace BrowserAI.Sessions;
 /// specified</i> -- which already says what to do.
 /// </para>
 /// <para>
-/// <b>And what it cannot see</b>, stated here rather than left to be
+/// <b>And what it cannot see</b>, stated here and not left to be
 /// rediscovered:
 /// </para>
 /// <list type="bullet">
@@ -91,7 +91,7 @@ internal static class CanonicalPath
     /// directory that exists.
     /// </summary>
     /// <remarks>
-    /// A bound rather than a loop to the root, because the walk costs one
+    /// A bound, not a loop to the root, because the walk costs one
     /// directory open per level and a caller can name a path of any depth. Past
     /// this the path is served unverified, which is the same answer an unopenable
     /// component gets.
@@ -114,7 +114,7 @@ internal static class CanonicalPath
     /// outright (measured 2026-08-26, .NET 10.0.11). This list was
     /// <c>ArtifactFilename</c>'s until that type was deleted with the filename
     /// gate; it applied to a <c>filename</c> argument and never to a
-    /// <c>directory</c> one, which was an asymmetry rather than a decision.
+    /// <c>directory</c> one, which was an asymmetry and not a decision.
     /// </remarks>
     private static readonly string[] ReservedDeviceNames =
     [
@@ -150,7 +150,7 @@ internal static class CanonicalPath
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>The one derivation, and the reason it is a member rather than two
+    /// ⚠️ <b>The one derivation, and the reason it is a member and not two
     /// lines at each call site.</b> <c>SessionManager.Subtree</c> and
     /// <c>SessionManager.Beneath</c> each derived it -- case-fold, then append a
     /// separator -- while <see cref="SessionIndex"/>'s own remark forbade
@@ -195,7 +195,7 @@ internal static class CanonicalPath
 
                 // \\?\UNC\host\share and \\.\UNC\host\share are the extended
                 // spellings of a UNC path, and they are answered as NETWORK
-                // rather than by stripping: stripping would hand back something
+                // and not by stripping: stripping would hand back something
                 // that earns the network refusal on the very next turn, which
                 // breaks the one rule this catalogue is built on.
                 if (afterPrefix.StartsWith(@"UNC\", StringComparison.OrdinalIgnoreCase))
@@ -214,7 +214,7 @@ internal static class CanonicalPath
                 spelling = afterPrefix;
             }
 
-            // 2. Rooted at a drive letter, decided by hand rather than by
+            // 2. Rooted at a drive letter, decided by hand and not by
             //    Path.IsPathFullyQualified, so that a relative path, a
             //    drive-relative `C:foo` and a rooted-but-unqualified `\foo` all
             //    reach the one refusal that names what an absolute path is. Each
@@ -320,7 +320,7 @@ internal static class CanonicalPath
         }
 
         // Whatever was trimmed off to find an existing ancestor goes back on, so
-        // the answer is the caller's own directory rather than an ancestor of
+        // the answer is the caller's own directory and not an ancestor of
         // it.
         var tail = candidate.Length <= full.Length ? full.AsSpan(candidate.Length) : [];
 
@@ -340,7 +340,7 @@ internal static class CanonicalPath
     /// therefore was not written by this build.
     /// </para>
     /// <para>
-    /// <b>One thing is trimmed rather than refused, and it is deliberate:</b> a
+    /// <b>One thing is trimmed and not refused, and it is deliberate:</b> a
     /// trailing separator. The <c>session</c> argument of every forwarded call
     /// comes back through here, a model that appends one to a path BrowserAI
     /// gave it has not named a different directory, and refusing would turn a
@@ -395,7 +395,7 @@ internal static class CanonicalPath
     /// </summary>
     /// <remarks>
     /// <b>Measured 2026-08-26 on .NET 10.0.11, Windows 11 Pro 26200</b>, which is
-    /// why each of these is a refusal rather than something left to fail later:
+    /// why each of these is a refusal and not something left to fail later:
     /// <c>Path.GetFullPath(@"C:\work\sess.")</c> answers <c>C:\work\sess</c>,
     /// the same with a trailing space answers the same, and
     /// <c>Path.GetFullPath(@"C:\work\NUL")</c> answers <c>\\.\NUL</c> -- a device.
@@ -414,7 +414,7 @@ internal static class CanonicalPath
     {
         foreach (var segment in Segments(spelling))
         {
-            // `.` and `..` are navigation rather than names, and GetFullPath
+            // `.` and `..` are navigation, not names, and GetFullPath
             // collapses them. Testing them for a trailing dot would refuse every
             // ordinary relative-looking spelling of an absolute path.
             if (segment is "." or "..")
@@ -463,7 +463,7 @@ internal static class CanonicalPath
     /// The clause a stored path that is not canonical is refused with.
     /// </summary>
     /// <remarks>
-    /// <b>A clause rather than a catalogue sentence, because nothing a caller
+    /// <b>A clause and not a catalogue sentence, because nothing a caller
     /// asked for was refused.</b> It becomes an index entry's <c>Problem</c> and
     /// a stray sweep's reason for sparing a process -- two places a reader looks
     /// after the fact, neither of them an answer to a tool call.
@@ -533,7 +533,7 @@ internal enum PathOrigin
 
 /// <summary>What <see cref="CanonicalPath.Of"/> made of a path.</summary>
 /// <remarks>
-/// <b>Three outcomes rather than two, and the third is load-bearing.</b>
+/// <b>Three outcomes and not two, and the third is load-bearing.</b>
 /// <see cref="Canonical"/> set with <see cref="Unestablished"/> also set is the
 /// unopenable-ancestor case: the path is served with the caller's own spelling
 /// and the reason it could not be verified travels with it. Collapsing that into

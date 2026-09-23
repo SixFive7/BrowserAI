@@ -14,7 +14,7 @@
     variables and every hook return were enumerated and none of them does.
 
     A Windows-subsystem binary is never allocated a console at all, so making
-    the main exe a window application removes the whole class rather than
+    the main exe a window application removes the whole class instead of
     hiding one instance of it. That the window is then USEFUL is the second
     decision and it followed the first.
 

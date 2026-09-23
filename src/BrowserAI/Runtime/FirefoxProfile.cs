@@ -13,13 +13,13 @@ namespace BrowserAI.Runtime;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The preflight is mandatory rather than defence in depth.</b> Playwright's
+/// <b>The preflight is mandatory, not defence in depth.</b> Playwright's
 /// <c>isProfileLocked</c> checks only Chromium's <c>lockfile</c> and never
 /// Firefox's <c>parent.lock</c>, so a collision is not refused anywhere upstream
 /// -- Firefox raises a <b>native modal on the Windows desktop</b> and the launch
 /// blocks against Playwright's three-minute launch timeout. On a background MCP
 /// server with nobody at the keyboard that is an invisible hang, which is the
-/// founding failure shape of this project rather than an inconvenience.
+/// founding failure shape of this project and not an inconvenience.
 /// </para>
 /// <para>
 /// <b>BrowserAI's own session lock is taken before any child starts, so the
@@ -55,8 +55,8 @@ internal static class FirefoxProfile
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The one place browser resurrection can be prevented outright rather
-    /// than cleaned up after.</b> Firefox calls
+    /// <b>The one place browser resurrection can be prevented outright instead
+    /// of being cleaned up after.</b> Firefox calls
     /// <c>RegisterApplicationRestart</c> in <c>nsAppRunner.cpp</c> with the
     /// original argv, so <c>-profile &lt;dir&gt;</c> survives into whatever
     /// Windows relaunches -- and it observes this pref at runtime, calling
@@ -64,7 +64,7 @@ internal static class FirefoxProfile
     /// </para>
     /// <para>
     /// ⚠️ <b>It is load-bearing for Firefox and would be pointless for
-    /// Chromium, and the difference was measured rather than assumed.</b>
+    /// Chromium, and the difference was measured, not assumed.</b>
     /// Chromium's registration fails on length -- Playwright's command line
     /// overshoots the 1023-character limit -- so a live Chromium answers
     /// <c>ERROR_NOT_FOUND</c> with nothing set. Firefox's registration does not
@@ -189,7 +189,7 @@ internal static class FirefoxProfile
         {
             // The refusal stands either way -- the sharing violation is what
             // decided it, and this only names who. A caller is told that the
-            // holder could not be identified rather than being told there isn't
+            // holder could not be identified, and not that there is not
             // one.
             why = failure.Message;
             return [];
@@ -239,7 +239,7 @@ internal sealed record FirefoxProfileState(
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>An exception rather than a returned refusal, because of where the check
+/// <b>An exception and not a returned refusal, because of where the check
 /// has to be.</b> The guard belongs in the one function every child launch
 /// passes through -- which builds launch options and has no way to express "no
 /// launch" in its return type -- and every other reason that function refuses

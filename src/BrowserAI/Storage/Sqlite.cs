@@ -63,7 +63,7 @@ namespace BrowserAI.Storage;
 /// ⚠️ <b>One search-path value for the whole file, and it has to be repeated on
 /// every declaration because the attribute cannot be put anywhere else.</b>
 /// <c>DefaultDllImportSearchPaths</c> is valid on an assembly or a method and
-/// on nothing in between -- CS0592, measured here rather than assumed -- so the
+/// on nothing in between -- CS0592, measured here, not assumed -- so the
 /// type-level declaration that would have made mixing unexpressible does not
 /// compile, and assembly level would re-point <c>Interop\</c>'s Win32
 /// declarations at the same value. That matters because of the trap P0
@@ -89,16 +89,16 @@ internal static partial class Sqlite
     /// The module every declaration here binds, in both stacks.
     /// </summary>
     /// <remarks>
-    /// A constant rather than a literal per declaration, so that the name the
+    /// A constant and not a literal per declaration, so that the name the
     /// build's <c>DirectPInvoke</c> item switches to a direct call and the name
-    /// the declarations use are one edit rather than two.
+    /// the declarations use are one edit and not two.
     /// </remarks>
     public const string Module = "e_sqlite3";
 
     /// <summary>What is reported when the library answers with no version at all.</summary>
     /// <remarks>
     /// A null here would mean <c>sqlite3_libversion</c> returned a null pointer,
-    /// which cannot happen in a correctly linked build. It is named rather than
+    /// which cannot happen in a correctly linked build. It is named and not
     /// coalesced to an empty string so that the impossible case reads as itself
     /// in the record instead of as an absent field.
     /// </remarks>
@@ -121,13 +121,13 @@ internal static partial class Sqlite
     /// the database's files.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>It is a family rather than a code, and one member of it is
+    /// ⚠️ <b>It is a family and not a code, and one member of it is
     /// transient.</b> Most of the extended codes under it are real disk faults;
     /// the ones this product meets in practice are the shared-memory arms --
     /// a reader mapping or locking the wal-index of a database whose holder is
     /// in the middle of dying, so its handles are closing while the reader is
     /// opening. That one ends on its own, which is why
-    /// <see cref="Sessions.SessionLock.ReadRecord"/> waits it out rather than
+    /// <see cref="Sessions.SessionLock.ReadRecord"/> waits it out instead of
     /// reporting a session unreadable.
     /// </remarks>
     public const int IoError = 10;
@@ -186,7 +186,7 @@ internal static partial class Sqlite
     /// layer binds is a managed array pinned for the duration of the call and
     /// free to move the instant it returns; telling SQLite the bytes are static
     /// hands it a pointer the garbage collector is entitled to invalidate,
-    /// which is a use-after-move that reads as data corruption rather than as a
+    /// which is a use-after-move that reads as data corruption and not as a
     /// crash.
     /// </remarks>
     public static IntPtr Transient { get; } = new(-1);
@@ -217,7 +217,7 @@ internal static partial class Sqlite
     /// with a background sweep, a background update check and an idle timer in
     /// it. What that makes it is not an <i>intended flag</i> but a floor under
     /// every build this code may run against, the loose DLL a test host loads
-    /// included -- so it is asserted where it holds rather than listed where it
+    /// included -- so it is asserted where it holds and not listed where it
     /// would not.
     /// </para>
     /// </remarks>
@@ -239,11 +239,11 @@ internal static partial class Sqlite
 
     /// <summary>The version of the SQLite this binary was linked against.</summary>
     /// <remarks>
-    /// <b>Read from the library rather than from the source it was built from.</b>
+    /// <b>Read from the library and not from the source it was built from.</b>
     /// The amalgamation's own <c>SQLITE_VERSION</c> is what a reader of the tree
     /// would quote and it is one compile step away from what the binary
     /// contains -- a build that linked a stale archive would report the stale
-    /// version here, which is exactly the disagreement worth being able to see.
+    /// version here, which is exactly the disagreement a reader has to be able to see.
     /// </remarks>
     public static string Version => Marshal.PtrToStringUTF8(LibVersion()) ?? UnknownVersion;
 
@@ -268,7 +268,7 @@ internal static partial class Sqlite
     /// somebody else's flags; the archive ILC links is this repository's, built
     /// by <c>build/Sqlite.targets</c> from vendored source. So this is a claim
     /// about <i>the artifact</i> and can only be enforced against one, which is
-    /// why the product reports it and a test asserts it rather than the other
+    /// why the product reports it and a test asserts it and not the other
     /// way round.
     /// </remarks>
     public static IReadOnlyList<string> MissingIntendedCompileOptions =>
@@ -286,7 +286,7 @@ internal static partial class Sqlite
     /// something nothing has asked for. What makes the report load-bearing
     /// anyway is that a test reads it back off the published binary's own
     /// process log, so an archive that was never compiled, or compiled with
-    /// different flags, is a red build rather than a discovery at the moment a
+    /// different flags, is a red build and not a discovery at the moment a
     /// session first writes.
     /// </para>
     /// <para>
@@ -302,7 +302,7 @@ internal static partial class Sqlite
     /// (<see cref="EnsureInitialized"/>, measured). So this method is
     /// defensive about the cases that <i>are</i> exceptions, and the one it
     /// cannot be defensive about is handled by calling
-    /// <see cref="EnsureInitialized"/> rather than by catching afterwards.
+    /// <see cref="EnsureInitialized"/> and not by catching afterwards.
     /// </para>
     /// </remarks>
     public static string BuildReport
@@ -333,11 +333,11 @@ internal static partial class Sqlite
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Required, because <c>SQLITE_OMIT_AUTOINIT</c> is in the compile
-    /// flags -- and the cost of forgetting is a dead process rather than an
+    /// flags -- and the cost of forgetting is a dead process and not an
     /// error.</b> Without that flag every entry point that needs the library
     /// initialised calls this itself; with it, sqlite.org calls the behaviour
     /// undefined, and what this build actually does was measured 2026-08-26
-    /// rather than assumed: the published binary, with this method's body
+    /// and not assumed: the published binary, with this method's body
     /// removed, took an <b>access violation</b> inside the first
     /// <c>sqlite3_open_v2</c> -- <c>0xC0000005</c>, exit code
     /// <c>-1073741819</c> -- and closed its stdout without answering
@@ -346,7 +346,7 @@ internal static partial class Sqlite
     /// </para>
     /// <para>
     /// <b>Idempotent by SQLite's own contract</b>, which is what lets every
-    /// open call it rather than one arranged caller: <c>sqlite3_initialize</c>
+    /// open call it and not one arranged caller: <c>sqlite3_initialize</c>
     /// is a harmless no-op after the first success, and the flag is not what
     /// makes it so.
     /// </para>
@@ -379,13 +379,13 @@ internal static partial class Sqlite
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The one compile-time property asserted at run time rather than
+    /// <b>The one compile-time property asserted at run time and not
     /// reported</b>, because it is the only one whose absence is a correctness
-    /// fault under every host rather than a claim about which archive was
+    /// fault under every host and not a claim about which archive was
     /// linked. <c>SQLITE_THREADSAFE=0</c> removes the mutexes; this process
     /// reaches storage from an async message loop, a background sweep, a
     /// background update check and an idle timer, so a library without them
-    /// corrupts quietly rather than failing.
+    /// corrupts quietly instead of failing.
     /// </para>
     /// <para>
     /// It is also the deviation this repository takes from sqlite.org's own
@@ -401,7 +401,7 @@ internal static partial class Sqlite
         // Serialized (1) and multi-thread (2) both keep the mutexes this
         // process needs; only 0 removes them. Anything the library does not
         // report at all is a build too old or too odd to reason about, and is
-        // refused for saying nothing rather than for saying no.
+        // refused for saying nothing and not for saying no.
         if (CompileOptions.Contains("THREADSAFE=1", StringComparer.Ordinal)
             || CompileOptions.Contains("THREADSAFE=2", StringComparer.Ordinal))
         {
@@ -421,7 +421,7 @@ internal static partial class Sqlite
     /// <c>sqlite3_errmsg</c> is the better message and needs a handle;
     /// <c>sqlite3_errstr</c> is the fallback for the case where the handle is
     /// what failed to exist. Both are used, and which one applies is decided at
-    /// the call site rather than here.
+    /// the call site and not here.
     /// </remarks>
     /// <param name="result">The result code.</param>
     /// <returns>The description, or the number when the library has none.</returns>
@@ -430,7 +430,7 @@ internal static partial class Sqlite
 
     /// <summary>The lazily read, permanently cached compile options.</summary>
     /// <remarks>
-    /// A <see cref="Lazy{T}"/> rather than the double-checked field
+    /// A <see cref="Lazy{T}"/> and not the double-checked field
     /// <see cref="EnsureInitialized"/> uses, because this one has a value and a
     /// value published without a barrier is the defect this type exists not to
     /// have. It opens an in-memory database, which needs
@@ -450,7 +450,7 @@ internal static partial class Sqlite
     {
         // In memory, so the answer costs no file and can be asked before the
         // product knows where its data lives. `PRAGMA compile_options` is a
-        // property of the library rather than of the database it is asked
+        // property of the library and not of the database it is asked
         // through, so the two are equivalent and only one of them needs a path.
         using var database = SqliteDatabase.OpenInMemory();
 
@@ -597,7 +597,7 @@ internal static partial class Sqlite
     /// anything with a second statement in it goes through <see cref="Exec"/>,
     /// so there is no tail anybody would read, and a caller that hands two
     /// statements to a prepare silently runs only the first -- which is the one
-    /// mistake the absent tail makes findable rather than silent, because
+    /// mistake the absent tail makes findable and not silent, because
     /// nothing here ever reports a remainder.
     /// </remarks>
     /// <param name="database">The connection.</param>

@@ -28,7 +28,7 @@ namespace BrowserAI.Updates;
 /// forced.</b> This call is also what handles the installer's own hook
 /// invocations -- <c>--veloapp-install</c> and friends, which are fast-exit
 /// callbacks with 15-60 s timeouts -- so anything that runs first runs inside
-/// every hook as well. A logger is attached rather than constructed here for the
+/// every hook as well. A logger is attached and not constructed here for the
 /// same reason: the bridge is a delegate over an <see cref="ILogger"/> the
 /// caller already owns.
 /// </para>
@@ -58,9 +58,9 @@ namespace BrowserAI.Updates;
 /// else, and the main exe is <c>BrowserAI.exe</c>, which is now the
 /// configuration app. So the server calls <see cref="RunWithoutLifecycleHooks"/>
 /// and the app calls <see cref="RunAndServeLifecycleHooks"/>. They are two
-/// methods rather than a flag because the difference is a <i>capability</i>: a
+/// methods and not a flag because the difference is a <i>capability</i>: a
 /// binary that registers no callbacks cannot serve a hook even if somebody
-/// passes it one by hand, which is the property being asserted rather than a
+/// passes it one by hand, which is the property being asserted and not a
 /// setting being chosen.
 /// </para>
 /// <para>
@@ -116,7 +116,7 @@ internal static class VelopackStartup
         Common(args, log)
 
             // ⚠️ THE THREE THAT DO WORK. Their records are written inside the
-            // callback rather than buffered, because VelopackApp.Run() exits the
+            // callback and not buffered, because VelopackApp.Run() exits the
             // process once it has served a hook and anything buffered dies with
             // it.
             .OnAfterInstallFastCallback(version => Register(RegistrationIntent.Install, Describe(version), log))
@@ -175,7 +175,7 @@ internal static class VelopackStartup
     /// launch at the end of an install.
     /// </summary>
     /// <remarks>
-    /// <b>Read out of 1.2.0's own source rather than guessed</b>
+    /// <b>Read out of 1.2.0's own source, not guessed</b>
     /// (<c>constants.rs</c>: <c>HOOK_ENV_FIRSTRUN</c>, and
     /// <c>shared::start_package</c>, which inserts it with the literal value
     /// <c>"true"</c> into a copy of its own environment block). Velopack also
@@ -192,7 +192,7 @@ internal static class VelopackStartup
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The value is compared rather than merely present.</b> Velopack writes
+    /// <b>The value is compared, not merely present.</b> Velopack writes
     /// <c>true</c> and nothing else, and an environment block that carried the
     /// name with some other value would be somebody else's variable -- the safe
     /// reading of which is <i>this is an ordinary start</i>, because the
@@ -226,7 +226,7 @@ internal static class VelopackStartup
 
     /// <summary>
     /// Whether a Velopack record is the ordinary <i>this binary was not installed
-    /// by Velopack</i> notice rather than a genuine locator failure.
+    /// by Velopack</i> notice and not a genuine locator failure.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -256,7 +256,7 @@ internal static class VelopackStartup
     /// <b>Three conditions, each independently safe.</b> The record must be at
     /// <c>Warning</c> exactly, never <c>Error</c>; it must carry this sentence;
     /// and the process must not be an installed one. The last is corroboration
-    /// from our own side rather than from upstream's text, and it is available
+    /// from our own side and not from upstream's text, and it is available
     /// because <c>Program</c> replays these buffered records <i>after</i>
     /// <see cref="InstallLocation"/> can answer.
     /// </para>
@@ -278,7 +278,7 @@ internal static class VelopackStartup
     /// <param name="version">What Velopack passed the callback.</param>
     /// <returns>The full semantic version, or a placeholder.</returns>
     /// <remarks>
-    /// <c>ToFullString()</c> rather than <c>ToString()</c>, for the same reason
+    /// <c>ToFullString()</c>, not <c>ToString()</c>, for the same reason
     /// <see cref="InstallLocation.InstalledVersion"/> uses it: the pre-release
     /// suffix is what makes <i>never self-update from a build that is not a
     /// release</i> readable off a version string, and the shorter rendering drops

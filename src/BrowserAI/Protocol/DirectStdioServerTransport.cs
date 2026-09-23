@@ -26,7 +26,7 @@ namespace BrowserAI.Protocol;
 /// measured unicode case grew 154 bytes to 218.
 /// </para>
 /// <para>
-/// It writes through <see cref="StdioChannel"/> rather than owning a second
+/// It writes through <see cref="StdioChannel"/> and does not own a second
 /// path to the handle, which is what keeps "nothing else in this process can
 /// reach stdout" true.
 /// </para>
@@ -63,7 +63,7 @@ internal sealed class DirectStdioServerTransport : JsonLinesTransport
         // Console.OpenStandardOutput returns a WindowsConsoleStream and not a
         // FileStream, redirected to a file and to a pipe alike, so the
         // thread-pool fallback comes from Stream's own base implementation
-        // rather than from how a handle was opened. Same conclusion, different
+        // and not from how a handle was opened. Same conclusion, different
         // mechanism.
         // The base class holds the send lock across this, so frames cannot
         // interleave.
@@ -74,7 +74,7 @@ internal sealed class DirectStdioServerTransport : JsonLinesTransport
     /// <inheritdoc />
     /// <remarks>
     /// ⚠️ <b>Always <see langword="false"/>, and it is a statement about who
-    /// owns the wire rather than a caveat.</b> The other end of this process's
+    /// owns the wire and not a caveat.</b> The other end of this process's
     /// standard input belongs to whoever started it. Disposing the stream on
     /// this side closes nothing the caller holds -- and for a console standard
     /// input it does not even close a handle: measured 2026-09-15 on .NET 10,

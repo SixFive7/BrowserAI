@@ -98,7 +98,7 @@ internal static class PageTools
     /// would run in.
     /// </summary>
     /// <remarks>
-    /// <b>Upstream's own marker, measured rather than assumed</b> -- a tab list
+    /// <b>Upstream's own marker, measured, not assumed</b> -- a tab list
     /// line carries the index, then this marker on the current tab, then the
     /// page title in square brackets and the URL in round ones, and a run with
     /// one tab still carries the marker. Measured 2026-09-21 @
@@ -155,7 +155,7 @@ internal static class PageTools
     /// on -- measured 2026-09-21 against a page registering <c>twin</c> twice,
     /// which produced <c>webmcp_twin</c> and <c>webmcp_twin_2</c> with the same
     /// <c>annotations.title</c> on both. Both are matches, and a caller naming
-    /// that tool gets the ambiguity refusal rather than a silently chosen one.
+    /// that tool gets the ambiguity refusal and not a silently chosen one.
     /// </remarks>
     /// <param name="wireName">The name on the child's list.</param>
     /// <param name="expected">What <see cref="WireNameFor"/> produced.</param>
@@ -249,7 +249,7 @@ internal static class PageTools
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Parsed rather than asked for, because there is nothing to ask.</b> No
+    /// <b>Parsed, not asked for, because there is nothing to ask.</b> No
     /// tool in the surface answers <i>what is the current tab's URL</i> as data;
     /// <c>browser_tabs</c> answers it as one Markdown line per tab, and the tab
     /// carrying <see cref="CurrentTabMarker"/> is the one a page-tool call would
@@ -264,7 +264,7 @@ internal static class PageTools
     /// <c>)</c>.
     /// </para>
     /// <para>
-    /// <b>A line it cannot read yields <see langword="null"/> rather than a
+    /// <b>A line it cannot read yields <see langword="null"/> and not a
     /// guess</b>, and the caller refuses the call and says it could not check.
     /// </para>
     /// </remarks>

@@ -42,8 +42,8 @@ internal enum UpdateOutcome
 /// </para>
 /// <list type="number">
 ///   <item><description><see cref="AbsoluteBudget"/> -- the whole download, however fast it is going.</description></item>
-///   <item><description><see cref="StallBudget"/> -- reset on <b>every progress callback</b>. This is the one that catches a link that went away, and it is the reason the progress callback is wired to a timer rather than to a log line.</description></item>
-///   <item><description><see cref="CrashTripwire"/> -- an outer deadline that is <b>not flow control</b>. Nothing is expected to reach it; if anything does, the pass is wedged in a way the other two did not model, and the point is that it says so rather than living forever.</description></item>
+///   <item><description><see cref="StallBudget"/> -- reset on <b>every progress callback</b>. This is the one that catches a link that went away, and it is the reason the progress callback is wired to a timer and not to a log line.</description></item>
+///   <item><description><see cref="CrashTripwire"/> -- an outer deadline that is <b>not flow control</b>. Nothing is expected to reach it; if anything does, the pass is wedged in a way the other two did not model, and the point is that it says so instead of living forever.</description></item>
 /// </list>
 /// <para>
 /// <b>They are sized against a link speed, not against a package size, because
@@ -64,13 +64,13 @@ internal sealed class UpdateService
     /// The whole download, end to end.
     /// </summary>
     /// <remarks>
-    /// Sized against a link rather than a payload: 30 minutes carries
+    /// Sized against a link, not a payload: 30 minutes carries
     /// <b>112.4 MB</b> at ~500 kbit/s, which is slower than any link this
     /// product is usable on -- a first-run browser provisioning of 207.3 MB has
     /// to succeed on the same connection before BrowserAI works at all
     /// (<i>corrected 2026-09-17, previously "203.8 MB"; re-measured 2026-09-16 at
     /// chromium 1244, and the figure the server renders is
-    /// <c>BrowserProvisioner.FirstRunDownloadSizes</c> rather than this
+    /// <c>BrowserProvisioner.FirstRunDownloadSizes</c> and not this
     /// sentence</i>). It is a
     /// bound on a pathology, not a service level.
     /// <para>
@@ -105,7 +105,7 @@ internal sealed class UpdateService
     /// It is deliberately far outside <see cref="AbsoluteBudget"/> plus
     /// <see cref="StallBudget"/>: nothing that is working can reach it, so
     /// reaching it means the two inner timers did not fire when they should
-    /// have, which is a defect rather than a slow link. It exists because the
+    /// have, which is a defect, not a slow link. It exists because the
     /// alternative to a wedged background pass is a thread that never ends and
     /// never says so.
     /// </remarks>
@@ -199,7 +199,7 @@ internal sealed class UpdateService
     public async Task<UpdateOutcome> RunOnceAsync(CancellationToken lifetime)
     {
         // The tripwire is linked to the process lifetime, so a shutdown ends the
-        // pass rather than leaving a background thread holding a download.
+        // pass instead of leaving a background thread holding a download.
         using var tripwire = CancellationTokenSource.CreateLinkedTokenSource(lifetime);
         tripwire.CancelAfter(CrashTripwire);
 
@@ -237,7 +237,7 @@ internal sealed class UpdateService
 
             if (census.State is not Liveness.Alone)
             {
-                // Guarded because the two clauses are composed rather than
+                // Guarded because the two clauses are composed and not
                 // formatted, which CA1873 is right about in general: with the
                 // level off, neither is built.
                 if (_logger.IsEnabled(LogLevel.Information))
@@ -285,7 +285,7 @@ internal sealed class UpdateService
     /// refusal got on the same day.</b> The line this replaces said only that
     /// <i>another BrowserAI is running</i> -- which reads identically whether one
     /// peer is up or forty, and identically again when the census could not be
-    /// taken at all and the apply is therefore permanently blocked rather than
+    /// taken at all and the apply is therefore permanently blocked and not
     /// temporarily. Those two states need different actions from whoever reads
     /// the log, so the line has to distinguish them.
     /// </remarks>
@@ -367,7 +367,7 @@ internal static partial class UpdateLog
     /// <param name="logger">Where to write.</param>
     /// <param name="manifestUrl">The composed manifest URL.</param>
     /// <remarks>
-    /// <b>The composed URL is logged rather than the base URL</b>, because the
+    /// <b>The composed URL is logged and not the base URL</b>, because the
     /// feed-URL landmine is invisible in the base: it only becomes wrong once
     /// Velopack has appended <c>releases.{channel}.json</c> to it. Nothing in
     /// the deployment that lost auto-update for three versions ever printed this
@@ -428,7 +428,7 @@ internal static partial class UpdateLog
     /// <param name="seconds">How long the download that produced it took.</param>
     /// <remarks>
     /// <para>
-    /// Information rather than Warning, and the sentence says why nothing is
+    /// Information, not Warning, and the sentence says why nothing is
     /// wrong: applying would kill every other BrowserAI's browsers, and the
     /// staged package costs nothing to leave where it is.
     /// </para>
@@ -440,7 +440,7 @@ internal static partial class UpdateLog
     /// be taken at all -- which is not a wait, it is a permanent block, and the
     /// two need different actions from whoever finds the line. The size and the
     /// elapsed seconds are the <i>how far in</i> half: the work is done and
-    /// staged, so what is left is the exit of every other instance rather than
+    /// staged, so what is left is the exit of every other instance and not
     /// any more bytes.
     /// </para>
     /// </remarks>

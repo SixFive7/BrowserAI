@@ -13,7 +13,7 @@ namespace BrowserAI.Sessions;
 /// <para>
 /// <b>There is exactly one timer, and this is it.</b> No handle-expiry timer, no
 /// session TTL and no reclaim window -- <b>reclaim is forever</b>, because the
-/// durable thing is the profile rather than the process: a resume after killing
+/// durable thing is the profile and not the process: a resume after killing
 /// the node child preserves cookies, localStorage, IndexedDB, service workers and
 /// CacheStorage, losing only <c>sessionStorage</c>, in ~515 ms
 /// ([kb](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
@@ -32,7 +32,7 @@ namespace BrowserAI.Sessions;
 /// browser back in 416 ms then 409 ms with no error and no
 /// <i>"browser is closed"</i> anywhere. Nothing in BrowserAI relaunches
 /// anything: Playwright creates the browser lazily on first use, so the recovery
-/// is upstream's own behaviour rather than a thing this product had to build
+/// is upstream's own behaviour and not a thing this product had to build
 /// ([kb: timings](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
 /// </para>
 /// <para>
@@ -47,7 +47,7 @@ namespace BrowserAI.Sessions;
 /// navigation that outlives the whole period cannot have the browser closed
 /// underneath it. The residual window -- a call that arrives in the microseconds
 /// between the decision to close and the close being sent -- is <i>narrowed</i> by
-/// a second check rather than eliminated, and it is harmless for the reason above:
+/// a second check and not eliminated, and it is harmless for the reason above:
 /// the caller's next call relaunches the browser and answers normally.
 /// </para>
 /// <para>
@@ -236,7 +236,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
         }
 
         // From `delay`, never from the period: re-arming a stale callback for
-        // what is LEFT must reproduce the existing deadline rather than push it
+        // what is LEFT must reproduce the existing deadline instead of pushing it
         // out by another whole period.
         Deadline = _time.GetTimestamp() + (long)(delay.TotalSeconds * _time.TimestampFrequency);
 
@@ -264,7 +264,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
 
             if (_inFlight > 0)
             {
-                // Driven, not idle. Re-armed rather than closed.
+                // Driven, not idle. Re-armed, not closed.
                 Arm();
                 return;
             }
@@ -274,7 +274,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
             // rearms and dispatched callbacks race by construction, and the
             // window is a few milliseconds wide -- narrow enough that this
             // suite could not provoke it on demand, which is exactly why it is
-            // guarded rather than tested: the symptom would be a ten-minute
+            // guarded and not tested: the symptom would be a ten-minute
             // timer behaving like a two-second one, and nothing would show it,
             // because the caller's next call silently relaunches the browser.
             var remaining = _time.GetElapsedTime(_time.GetTimestamp(), Deadline);
@@ -298,7 +298,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
             {
                 // The second look. A call that arrived between the decision and
                 // this line is still driving the session, so the close is
-                // abandoned rather than raced.
+                // abandoned and not raced.
                 if (_inFlight > 0)
                 {
                     Arm();
@@ -360,7 +360,7 @@ internal sealed class BrowserIdleTimer : IAsyncDisposable
     }
 }
 
-/// <summary>What one idle close did, as evidence rather than as an assumption.</summary>
+/// <summary>What one idle close did, as evidence and not as an assumption.</summary>
 /// <remarks>
 /// <b>The two counts are the whole point.</b> "The browser was closed" is a claim
 /// no log line can support on its own; <c>11 → 1</c> processes left in the child's

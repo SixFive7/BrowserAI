@@ -49,7 +49,7 @@ namespace BrowserAI.Interop;
 /// <c>CreateFileW</c> calls along components it has judged nothing about. A
 /// directory symbolic link or a volume mount point anywhere in that chain,
 /// pointing at a share that has stopped answering, is traversed by the open, and
-/// the cost is the redirector's rather than the object manager's:
+/// the cost is the redirector's, not the object manager's:
 /// <c>Directory.Exists</c> against a dead host re-measured on this machine
 /// 2026-08-26 at <b>22,157 ms</b>, per call. It runs inside
 /// <c>Sessions.CanonicalPath.FinalName</c>, which <c>SessionLock.TryAcquire</c>
@@ -57,7 +57,7 @@ namespace BrowserAI.Interop;
 /// not the one who waits.
 /// </para>
 /// <para>
-/// <b>Recorded rather than fixed, and the reason is written down where the
+/// <b>Recorded, not fixed, and the reason is written down where the
 /// decision is</b> -- [the hazard index](../../../HAZARDS.md#hazard-index). The
 /// composition has <b>not</b> been measured end to end: this account can create
 /// neither a directory symlink nor a mount point, having neither
@@ -69,11 +69,11 @@ namespace BrowserAI.Interop;
 /// [a clock cannot be honest here](../../../TESTING.md#every-duration-is-a-hang-detector-or-it-is-a-defect).
 /// </para>
 /// <para>
-/// <b>Why <c>QueryDosDeviceW</c> rather than only <c>GetDriveTypeW</c>.</b> They
+/// <b>Why <c>QueryDosDeviceW</c> and not only <c>GetDriveTypeW</c>.</b> They
 /// answer different questions and this product needs both. Measured 2026-08-19:
 /// a <c>subst</c>ed letter reports <c>DRIVE_FIXED</c> -- it is genuinely fixed
 /// storage -- while its DOS device target is <c>\??\C:\...</c>, a symbolic link to
-/// another DOS path rather than to a device. That is the discriminator for an
+/// another DOS path and not to a device. That is the discriminator for an
 /// <i>alias</i>. Conversely a mapped letter's target is
 /// <c>\Device\LanmanRedirector\...</c>, but pattern-matching device names means
 /// enumerating every redirector that exists (SMB, WebDAV, NFS, and whatever
@@ -124,8 +124,8 @@ internal static partial class VolumeIdentity
 
     /// <summary>
     /// The object manager's prefix for a DOS path. A drive letter whose target
-    /// starts with this is standing in for another letter's directory rather
-    /// than for a device.
+    /// starts with this is standing in for another letter's directory and
+    /// not for a device.
     /// </summary>
     private const string DosPathPrefix = @"\??\";
 
@@ -202,7 +202,7 @@ internal static partial class VolumeIdentity
         // this type was written around. Every other answer is unchanged: a
         // letter that resolves to nothing is still `NoSuchDrive`, and a letter
         // whose target is a device is still classified by the operating system
-        // rather than by a list of redirector names kept here.
+        // and not by a list of redirector names kept here.
         if (QueryTarget(device) is not { } target)
         {
             return new VolumeReading(VolumeKind.NoSuchDrive, null);
@@ -328,7 +328,7 @@ internal static partial class VolumeIdentity
         // two calls -- a short buffer answers the required length INCLUDING the
         // terminator, a successful one answers the length EXCLUDING it -- so
         // `written >= required` is a buffer that was not big enough after all
-        // rather than a success, and it reads as "cannot say".
+        // and not a success, and it reads as "cannot say".
         var required = GetFinalPathNameByHandleW(handle, null, 0, FinalPathDosNormalised);
 
         if (required is 0)
@@ -379,14 +379,14 @@ internal static partial class VolumeIdentity
     /// this walk carries -- 2026-08-26.</b> It judges the drive letter; this loop
     /// opens up to <paramref name="walkLimit"/> components nothing has judged, so
     /// a directory symlink or a volume mount point pointing at a dead share is
-    /// followed here at the redirector's cost rather than the object manager's.
+    /// followed here at the redirector's cost, not the object manager's.
     /// The bound on this loop is a bound on the number of syscalls, never on what
     /// one of them may cost. See the type's own remarks and the hazard row.
     /// </para>
     /// </remarks>
     /// <param name="path">The path to resolve. Need not exist.</param>
     /// <param name="walkLimit">
-    /// How many levels the walk may climb. A bound rather than a loop to the
+    /// How many levels the walk may climb. A bound, not a loop to the
     /// root, because the walk costs one directory open per level and a caller
     /// can name a path of any depth.
     /// </param>
@@ -443,13 +443,13 @@ internal static partial class VolumeIdentity
     /// good under one junction.
     /// </para>
     /// <para>
-    /// <b>A UNC answer is refused rather than stripped</b>, for the reason
+    /// <b>A UNC answer is refused, not stripped</b>, for the reason
     /// <c>Hosting.InstallRootScope</c> gives at its own copy of this rule:
     /// <c>\\?\UNC\host\share</c> with the prefix removed reads as a rooted local
     /// path and would then be compared as one.
     /// </para>
     /// <para>
-    /// <b>Why a sentence rather than a bare <see langword="null"/>.</b> Every
+    /// <b>Why a sentence and not a bare <see langword="null"/>.</b> Every
     /// caller of this is deciding whether it may act on an <i>absence</i> -- no
     /// candidate found, nothing running out of a tree -- and an absence that
     /// arrives because the question could not be asked is a different fact from
@@ -461,7 +461,7 @@ internal static partial class VolumeIdentity
     /// and that is not an oversight to be tidied. It compares <i>two</i> paths
     /// and answers three ways -- serve, refuse, could-not-establish -- and its
     /// refusals quote the ancestor the walk stopped at, so it needs the halves
-    /// this method composes rather than the composition.
+    /// this method composes, not the composition.
     /// </para>
     /// </remarks>
     /// <param name="path">The path to resolve. Need not exist.</param>
@@ -532,8 +532,8 @@ internal static partial class VolumeIdentity
     }
 
     /// <summary>
-    /// Whether the last failure was <i>this name does not exist</i> rather than
-    /// anything else.
+    /// Whether the last failure was <i>this name does not exist</i> and
+    /// nothing else.
     /// </summary>
     /// <remarks>
     /// <b>The discriminator that decides whether to walk up.</b> A
@@ -551,7 +551,7 @@ internal static partial class VolumeIdentity
     private static unsafe string? QueryTarget(string device)
     {
         // MAX_PATH is not a bound on a symbolic link target, and the API answers
-        // ERROR_INSUFFICIENT_BUFFER rather than truncating -- so the buffer is
+        // ERROR_INSUFFICIENT_BUFFER instead of truncating -- so the buffer is
         // sized once well past any real target and one that will not fit reads
         // as "cannot say", which the caller treats as NoSuchDrive. It is only
         // ever the leading `\??\` that is read, so a long target would have to
@@ -602,7 +602,7 @@ internal readonly record struct VolumeReading(VolumeKind Kind, string? Substitut
 
 /// <summary>What kind of volume a drive letter names.</summary>
 /// <remarks>
-/// <b>Four answers rather than a boolean</b>, because they need different things
+/// <b>Four answers instead of a boolean</b>, because they need different things
 /// said about them: a single flag would have merged <i>this letter is a
 /// share</i> with <i>this letter is another letter's directory</i>, and those
 /// have opposite fixes.

@@ -17,7 +17,7 @@ internal enum MutexAcquisition
     /// releasing.
     /// </summary>
     /// <remarks>
-    /// This is the outcome that has to be a separate value rather than folded
+    /// This is the outcome that has to be a separate value and not folded
     /// into <see cref="Acquired"/>. <c>AbandonedMutexException</c> means the
     /// wait <i>succeeded</i>; what it reports is that whatever the dead holder
     /// was part-way through writing may be torn, which is the only warning the
@@ -34,8 +34,8 @@ internal enum MutexAcquisition
 /// <remarks>
 /// <para>
 /// <b>If the machine-wide object cannot be created there is no lock, and
-/// therefore no session.</b> <see cref="Create"/> lets the failure out rather
-/// than retrying under <c>Local\</c>, and the caller turns that into a hard
+/// therefore no session.</b> <see cref="Create"/> lets the failure out and
+/// does not retry under <c>Local\</c>, and the caller turns that into a hard
 /// blocker whose reason reaches the calling model. The prior art on this machine
 /// does fall back, deliberately and visibly, because a degraded rig beats an
 /// unusable one; BrowserAI refuses because a degraded lock is indistinguishable
@@ -76,7 +76,7 @@ internal sealed class MachineMutex : IDisposable
     /// five-second one that expired both return
     /// <see cref="MutexAcquisition.NotAcquired"/>, so the return value cannot
     /// tell them apart and the only other witness is elapsed wall time -- which
-    /// on a loaded machine measures the scheduler rather than the lock.
+    /// on a loaded machine measures the scheduler, not the lock.
     /// <c>UpdateTests.AReclaimWhosePeerHoldsTheGateSkipsAtOnceAndRemovesNothing</c>
     /// bounded <c>Stopwatch.Elapsed</c> by five seconds and
     /// <b>measured 5.2 s</b> on 2026-08-20 for a zero-timeout acquire, on a
@@ -87,7 +87,7 @@ internal sealed class MachineMutex : IDisposable
     /// is set from the value passed in, so an edit that started passing a real
     /// timeout is caught and an edit that slept beside the acquire is not.
     /// That is a weaker claim than a clock would make if a clock could be
-    /// trusted here, and it is stated rather than glossed at the one assertion
+    /// trusted here, and it is stated, not glossed, at the one assertion
     /// that rests on it.
     /// </para>
     /// </remarks>
@@ -102,7 +102,7 @@ internal sealed class MachineMutex : IDisposable
     /// <exception cref="IOException">The object manager refused the name.</exception>
     /// <exception cref="NotSupportedException">The name cannot be created on this platform.</exception>
     /// <remarks>
-    /// It <b>throws</b> rather than returning a null-and-reason pair, and the
+    /// It <b>throws</b> instead of returning a null-and-reason pair, and the
     /// caller turns the throw into a blocker with the reason in it. There is no
     /// second attempt under any other prefix, here or anywhere else in the
     /// product: the four exception types above are the ways
@@ -115,7 +115,7 @@ internal sealed class MachineMutex : IDisposable
 
         if (!name.StartsWith(LockScopes.GlobalPrefix, StringComparison.Ordinal))
         {
-            // A programming error rather than an environment failure, so it
+            // A programming error, not an environment failure, so it
             // throws a different type: the whole point of this class is that the
             // scope is never negotiable, so a caller cannot report this one as a
             // blocker and carry on.

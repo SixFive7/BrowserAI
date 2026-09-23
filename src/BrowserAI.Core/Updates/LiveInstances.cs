@@ -19,7 +19,7 @@ namespace BrowserAI.Updates;
 /// mean <i>do not apply</i> and the safe direction is the same one -- see
 /// <see cref="LiveInstances.AmIAlone"/>, which still collapses them and is the
 /// guarantee that the updater did not move. For anything that <i>repairs</i>
-/// rather than refrains, the two are opposites: a refusal built on
+/// instead of refraining, the two are opposites: a refusal built on
 /// <see cref="Undetermined"/> is permanent and has nothing to act on, and it
 /// reads on a log line exactly like a refusal built on a peer that is genuinely
 /// there.
@@ -52,7 +52,7 @@ internal enum Liveness
 /// <summary>The census answer, and the reason when there is not one.</summary>
 internal sealed record LivenessAnswer
 {
-    /// <summary>Nothing else is alive, and that was established rather than assumed.</summary>
+    /// <summary>Nothing else is alive, and that was established, not assumed.</summary>
     public static readonly LivenessAnswer IsAlone = new() { State = Liveness.Alone };
 
     /// <summary>Which of the three.</summary>
@@ -131,7 +131,7 @@ internal sealed record LiveMarkerReclaim
     public bool GateWasAbandoned { get; init; }
 
     /// <summary>
-    /// The wait this pass asked the gate for, read back off the gate rather than
+    /// The wait this pass asked the gate for, read back off the gate and not
     /// restated here. <see langword="null"/> when no acquire happened at all --
     /// the directory did not exist, or the gate could not be created.
     /// </summary>
@@ -143,7 +143,7 @@ internal sealed record LiveMarkerReclaim
     /// at <see cref="Sessions.LockScopes.NeverWaits"/> on purpose -- it runs while
     /// a process is starting, and a reclaim is never worth a millisecond of
     /// startup -- so a value other than zero here is the defect, arriving as a
-    /// fact rather than as an inference from a stopwatch on a loaded machine.
+    /// fact and not as an inference from a stopwatch on a loaded machine.
     /// </para>
     /// <para>
     /// See <see cref="Sessions.MachineMutex.LastAcquireTimeout"/> for what this
@@ -185,8 +185,8 @@ internal sealed record LiveMarkerReclaim
 /// <c>FileAccess.ReadWrite, FileShare.Read</c>: another process asking for write
 /// access is refused by the kernel, and a process that was killed, crashed or
 /// was terminated by a job object releases it anyway. A pid file would need a
-/// creation-time pair to survive recycling and would still be a claim rather
-/// than a fact.
+/// creation-time pair to survive recycling and would still be a claim and
+/// not a fact.
 /// </para>
 /// <para>
 /// <b>The census runs inside the per-root mutex, and the join does too.</b>
@@ -270,7 +270,7 @@ internal sealed class LiveInstances : IDisposable
     /// <b>A failure to join is not a failure to start.</b> BrowserAI's job is to
     /// serve stdio; the only thing lost is the ability to update, and an update
     /// that cannot prove it is alone must not happen anyway. So this returns
-    /// null and logs rather than throwing.
+    /// null and logs instead of throwing.
     /// </remarks>
     public static LiveInstances? Join(string installRoot, ILogger logger)
     {
@@ -346,7 +346,7 @@ internal sealed class LiveInstances : IDisposable
     /// <para>
     /// <b>A positive count wins over an uncertainty.</b> Two markers proven held
     /// and one unreadable is <see cref="Liveness.NotAlone"/> with
-    /// <c>Others = 2</c> -- <i>at least two</i> -- rather than
+    /// <c>Others = 2</c> -- <i>at least two</i> -- and not
     /// <see cref="Liveness.Undetermined"/>. Erasing a fact that was established
     /// because a different one was not is a strictly worse answer for every
     /// caller.
@@ -431,7 +431,7 @@ internal sealed class LiveInstances : IDisposable
     /// <c>UpdateTests.EveryCensusAnswerOtherThanAloneStillReadsAsNotAloneToTheUpdater</c>
     /// asserts the mapping over all three values, and
     /// <c>UpdateTests.AnUndeterminedCensusStagesTheUpdateExactlyAsANotAloneOneDoes</c>
-    /// asserts it through <see cref="UpdateService"/> itself rather than through
+    /// asserts it through <see cref="UpdateService"/> itself and not through
     /// this signature.
     /// </para>
     /// <para>
@@ -452,7 +452,7 @@ internal sealed class LiveInstances : IDisposable
     /// <b>Both call sites take the same gate as a join and a census, and both
     /// skip instantly when it is held.</b> One process reclaims and the rest
     /// move on -- the same discipline <c>Sessions.StraySweep</c> already
-    /// applies machine-wide, reused rather than reinvented. The timeout is
+    /// applies machine-wide, reused and not reinvented. The timeout is
     /// <see cref="LockScopes.NeverWaits"/> and not
     /// <see cref="LockScopes.LiveInstanceGate"/> precisely because this may run
     /// while a process is starting: a reclaim is never worth a millisecond of
@@ -473,7 +473,7 @@ internal sealed class LiveInstances : IDisposable
     /// <b>Reclaiming another process's live marker would be a serious bug</b> --
     /// it would make a running instance invisible to every later census and
     /// therefore killable by an apply. The negative is proved with a positive
-    /// control rather than argued:
+    /// control and not argued:
     /// <c>UpdateTests.AHeldMarkerSurvivesTheReclaimAndTheSameMarkerGoesOnceItIsReleased</c>
     /// holds one marker open, runs this, requires it to survive, releases it,
     /// runs this again and requires it to go -- so a pass that removed nothing at
@@ -713,7 +713,7 @@ internal sealed class LiveInstances : IDisposable
     /// construction: <see cref="Join"/> creates a file whose name carries a
     /// GUID, and <see cref="Walk"/> only removes a marker it has itself proven
     /// unheld, so two passes running together reach the same answer more slowly
-    /// rather than a different one.
+    /// and not a different one.
     /// </para>
     /// </remarks>
     /// <param name="installRoot">The install root, never the data root.</param>
@@ -787,7 +787,7 @@ internal sealed class LiveInstances : IDisposable
     /// <param name="directory">The marker directory, which must exist.</param>
     /// <param name="own">
     /// A marker to skip by name, or <see langword="null"/>. Belt to the braces:
-    /// a caller's own marker is held and would be counted rather than removed
+    /// a caller's own marker is held and would be counted and not removed
     /// anyway, but a census must not count itself.
     /// </param>
     /// <returns>The tallies.</returns>
@@ -823,7 +823,7 @@ internal sealed class LiveInstances : IDisposable
 
             if (TryDelete(candidate, out var refusal))
             {
-                // Not held: whoever wrote it is gone. Removed rather than left
+                // Not held: whoever wrote it is gone. Removed and not left
                 // as a growing pile that makes every later walk slower.
                 reclaimed++;
                 continue;
@@ -856,7 +856,7 @@ internal sealed class LiveInstances : IDisposable
     /// general answer.</b> Counting an unreadable marker as a live instance kept
     /// the updater on the safe side, which is why it was written that way; what
     /// it cost was the ability to say <i>this is a permissions problem on this
-    /// path</i> rather than <i>somebody else is running</i>. The safe side is now
+    /// path</i> and not <i>somebody else is running</i>. The safe side is now
     /// preserved by <see cref="Census"/>, which lets an uncertainty decide the
     /// verdict when nothing definite did, and by <see cref="AmIAlone"/>, which
     /// collapses both to <see langword="false"/>.

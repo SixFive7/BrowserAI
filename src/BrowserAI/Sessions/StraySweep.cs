@@ -70,7 +70,7 @@ internal sealed class StraySweep
     /// <param name="logger">Where the pass is recorded. Never <c>stdout</c>.</param>
     /// <param name="profileLockImages">
     /// The subset of <paramref name="browserImages"/> whose profile is
-    /// identified through <c>parent.lock</c> rather than through a message
+    /// identified through <c>parent.lock</c> and not through a message
     /// window -- Firefox, from
     /// <see cref="Runtime.ProvisionedBrowsers.ExecutablesFor"/>. Empty means the
     /// second path is not attempted, which costs attribution and never safety.
@@ -79,7 +79,7 @@ internal sealed class StraySweep
     /// The <b>install</b> root whose live-marker directory this pass also
     /// reclaims, or <see langword="null"/> to skip that half. Its only use here
     /// is <see cref="Updates.LiveInstances.ReclaimStaleMarkers"/>, which is added
-    /// to this pass rather than given a sweeper of its own because this one is
+    /// to this pass and not given a sweeper of its own because this one is
     /// already machine-wide, already mutex-serialised and already skips instantly
     /// when a peer holds the gate -- the three properties a marker reclaim needs
     /// and the reason not to invent a second discipline for it.
@@ -87,7 +87,7 @@ internal sealed class StraySweep
     /// on -- 2026-09-15.</b> The browsers and the index above come from the
     /// <i>data</i> root; the markers are keyed to the install root, because the
     /// question they answer is which processes an apply's
-    /// <c>force_stop_package</c> would kill. The split is passed in rather than
+    /// <c>force_stop_package</c> would kill. The split is passed in and not
     /// derived here so that the seam is visible at the call site
     /// (<c>Program.CreateSweep</c>) instead of being a fact about this file.
     /// </param>
@@ -126,7 +126,7 @@ internal sealed class StraySweep
     /// failure inside the pass, which is to say not at all.
     /// </para>
     /// <para>
-    /// A background thread rather than a pool work item: it must not keep the
+    /// A background thread and not a pool work item: it must not keep the
     /// process alive on the way out, and it must not be something anything else
     /// could accidentally await.
     /// </para>
@@ -174,7 +174,7 @@ internal sealed class StraySweep
     /// <remarks>
     /// <b>This is the product's only entry, and it is the argument-free one on
     /// purpose</b> -- race <b>R9</b> is that a pass which cannot have the gate
-    /// does nothing at all rather than queueing behind the one that has it.
+    /// does nothing at all instead of queueing behind the one that has it.
     /// <c>StraySweepTests.OnlyTheSuiteEverWaitsForTheSweepGate</c> holds that
     /// against <c>src\</c> as text.
     /// </remarks>
@@ -185,7 +185,7 @@ internal sealed class StraySweep
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The overload exists for the suite, and what it buys is
-    /// serialisation rather than luck.</b> The machine-wide gate is held for a
+    /// serialisation, not luck.</b> The machine-wide gate is held for a
     /// few milliseconds by every BrowserAI that starts, this suite starts a
     /// great many of them in parallel, and an arm that needs its own pass to
     /// have <i>run</i> was therefore losing a coin toss roughly once in five
@@ -195,8 +195,8 @@ internal sealed class StraySweep
     /// often.
     /// </para>
     /// <para>
-    /// <b>Nothing in the product may call this</b>, and that is a scan rather
-    /// than a sentence: a waiting sweep at startup would put every one of ~100
+    /// <b>Nothing in the product may call this</b>, and that is a scan and
+    /// not a sentence: a waiting sweep at startup would put every one of ~100
     /// peers into a queue behind the first, which is the thundering herd the
     /// zero timeout exists to prevent.
     /// </para>
@@ -293,7 +293,7 @@ internal sealed class StraySweep
     /// So the characters are asked first and nothing else is asked until they
     /// pass: a drive letter, a colon and a separator. That runs before
     /// <c>Path.GetFullPath</c> as well as before <c>File.Exists</c>, because a
-    /// rejected title must cost microseconds rather than being rejected
+    /// rejected title must cost microseconds and not be rejected
     /// somewhere further in.
     /// </para>
     /// <para>
@@ -366,7 +366,7 @@ internal sealed class StraySweep
             titled++;
 
             // Every title, not only a candidate's: rejecting a hostile one is a
-            // property of the walk rather than of who owns it, and a stranger's
+            // property of the walk and not of who owns it, and a stranger's
             // UNC title would stall this loop just as effectively.
             if (!IsRootedLocalDriveLetterPath(title))
             {
@@ -480,7 +480,7 @@ internal sealed class StraySweep
     /// </para>
     /// <para>
     /// <b>The index is the source of directories, and a null one costs
-    /// attribution rather than safety.</b> Without it there is nothing to ask
+    /// attribution and not safety.</b> Without it there is nothing to ask
     /// about, so every Firefox candidate stays unattributable and is reported --
     /// which is the direction this whole subsystem is allowed to be wrong in.
     /// </para>
@@ -603,7 +603,7 @@ internal sealed class StraySweep
         // ⚠️ READ, AND FIRST, because this string was published by a process
         // that is not ours and is about to decide whether something gets
         // terminated. A title that is not already the spelling BrowserAI records
-        // is SPARED rather than resolved -- the conservative direction for a
+        // is SPARED and not resolved -- the conservative direction for a
         // component whose worst outcome is ending something it should not, and
         // what keeps a stranger's string from driving up to 64 directory opens.
         //
@@ -644,7 +644,7 @@ internal sealed class StraySweep
     /// The last guard and the kill, shared by both attribution paths.
     /// </summary>
     /// <remarks>
-    /// <b>Shared deliberately rather than duplicated per browser family.</b> The
+    /// <b>Shared deliberately and not duplicated per browser family.</b> The
     /// two paths differ only in how they answer <i>which profile</i>; what makes
     /// a candidate safe to terminate is the same for both, and a second copy of
     /// this is a second place for R1's "hold the lock across the whole kill" to
@@ -779,7 +779,7 @@ internal sealed record StraySweepResult
     /// composed.
     /// </summary>
     /// <remarks>
-    /// Evidence rather than a fault: a non-zero here is an aliased install root
+    /// Evidence, not a fault: a non-zero here is an aliased install root
     /// being matched correctly. Before 2026-08-24 the same machine reported
     /// <c>candidates=0</c> on every pass forever and said nothing at all.
     /// </remarks>
@@ -831,8 +831,8 @@ internal sealed record StraySweepResult
     public IReadOnlyList<StraySpared> Spared { get; init; } = [];
 
     /// <summary>
-    /// How many candidates were attributed through a Firefox profile lock rather
-    /// than through a message window.
+    /// How many candidates were attributed through a Firefox profile lock and
+    /// not through a message window.
     /// </summary>
     /// <remarks>
     /// Reported separately because the two paths fail differently: a zero here
@@ -853,8 +853,8 @@ internal sealed record StraySweepResult
     /// </summary>
     /// <remarks>
     /// <see langword="null"/> when the sweep was built without an install root,
-    /// which is a sweep that had no marker directory to be told about rather
-    /// than one that declined to look.
+    /// which is a sweep that had no marker directory to be told about and
+    /// not one that declined to look.
     /// </remarks>
     public LiveMarkerReclaim? LiveMarkers { get; init; }
 
@@ -884,7 +884,7 @@ internal static partial class SweepLog
     /// (race <b>R3</b>).
     /// </summary>
     /// <remarks>
-    /// Warning rather than Debug: the acquisition itself was never in doubt, but
+    /// Warning, not Debug: the acquisition itself was never in doubt, but
     /// a previous sweeper died part-way through a pass, and that pass may have
     /// terminated some of a tree and not the rest.
     /// </remarks>
@@ -940,7 +940,7 @@ internal static partial class SweepLog
     /// attributed to it.
     /// </summary>
     /// <remarks>
-    /// Warning rather than Debug, and the sentence says which way the failure
+    /// Warning, not Debug, and the sentence says which way the failure
     /// resolves: a question that got no answer leaves a candidate reported and
     /// alive, never terminated.
     /// </remarks>
@@ -964,7 +964,7 @@ internal static partial class SweepLog
     /// one by string composition, one by the kernel after reparse processing. An
     /// image whose filesystem spelling is unknown therefore cannot match any
     /// process at all, and the pass that follows reports a clean machine. The
-    /// sentence says which images, so it is actionable rather than merely
+    /// sentence says which images, so it is actionable and not merely
     /// alarming.
     /// </remarks>
     /// <param name="logger">Where to write.</param>

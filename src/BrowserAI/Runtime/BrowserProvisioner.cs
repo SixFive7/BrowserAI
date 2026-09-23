@@ -24,7 +24,7 @@ internal enum ProvisioningState
     /// <summary>
     /// The tree is being made ready, here or in another BrowserAI process.
     /// Browser calls are refused with
-    /// <see cref="Sessions.SessionErrors.ProvisioningInProgress"/> rather than
+    /// <see cref="Sessions.SessionErrors.ProvisioningInProgress"/> and not
     /// blocked.
     /// </summary>
     /// <remarks>
@@ -61,7 +61,7 @@ internal sealed record ProvisioningStatus(string Browser, ProvisioningState Stat
     /// download costs, or <see langword="null"/> when nothing is in flight.
     /// </summary>
     /// <remarks>
-    /// <b>Carried on the status rather than folded into <see cref="Detail"/>,
+    /// <b>Carried on the status and not folded into <see cref="Detail"/>,
     /// because two different sentences render it</b> -- the provisioner's own
     /// state line and <c>SessionErrors.ProvisioningInProgress</c>, which is what
     /// a model reads. A pre-rendered string would make the second one quote the
@@ -71,7 +71,7 @@ internal sealed record ProvisioningStatus(string Browser, ProvisioningState Stat
 }
 
 /// <summary>
-/// How far a provisioning run has got, measured rather than reported by
+/// How far a provisioning run has got, measured, not reported by
 /// upstream.
 /// </summary>
 /// <remarks>
@@ -118,7 +118,7 @@ internal sealed record ProvisioningProgress(long Written, long DownloadBytes, Ti
 /// Playwright's own per-socket stall timeout is
 /// <c>NET_DEFAULT_TIMEOUT = 30_000</c> ms, overridable through
 /// <c>PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT</c> -- read out of the resolved
-/// bundle 2026-08-16 rather than from memory. BrowserAI sets nothing, so the
+/// bundle 2026-08-16 and not from memory. BrowserAI sets nothing, so the
 /// figure stays upstream's; <see cref="BrowserProvisioner.UpstreamStallTimeout"/>
 /// records what we are relying on and
 /// <see cref="BrowserProvisioner.UpstreamStallTimeoutVariable"/> names the
@@ -156,8 +156,8 @@ internal sealed record ProvisioningTimers
     /// behaved identically.
     /// </para>
     /// <para>
-    /// <b>Ten minutes, and the number is set by upstream's own lock rather than
-    /// by taste.</b> <c>registry.install()</c> waits on
+    /// <b>Ten minutes, and the number is set by upstream's own lock and
+    /// not by taste.</b> <c>registry.install()</c> waits on
     /// <c>&lt;browsers root&gt;\__dirlock</c> <i>before</i> it writes anything at
     /// all, and measurement C of 2026-08-19 timed that wait at <b>470 s</b>
     /// before upstream gives up by itself with <c>ELOCKED</c>. So a healthy
@@ -196,7 +196,7 @@ internal sealed record ProvisioningTimers
     /// small companion downloads that follow it (<c>ffmpeg</c>, and
     /// <c>winldd</c> which Windows pulls in with it) -- measured 2026-08-16 at
     /// 1.5 s of the 12 s total, so ten minutes is three orders of magnitude of
-    /// headroom rather than a guess.
+    /// headroom and not a guess.
     /// <para>
     /// <b>It is a total and it stays a total, unlike
     /// <see cref="StallCap"/>.</b> The reason the argument against a total cap
@@ -216,7 +216,7 @@ internal sealed record ProvisioningTimers
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Added 2026-08-20, and it is the fix for a named flake rather than a
+    /// ⚠️ <b>Added 2026-08-20, and it is the fix for a named flake and not a
     /// generalisation.</b> <c>ProvisioningTests.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes</c>
     /// went red once in nine consecutive full-suite runs. It asserted that an
     /// install writing every 25 ms survives a 1-second stall cap, which is a
@@ -231,7 +231,7 @@ internal sealed record ProvisioningTimers
     /// well as on time, so a test that froze the clock and still read a real
     /// directory would still be racing the filesystem. The second seam is
     /// <see cref="BrowserProvisioner.WeighBrowsersRoot"/>, and the two together
-    /// are what make the arm a statement about the product rather than about the
+    /// are what make the arm a statement about the product and not about the
     /// machine.
     /// </para>
     /// <para>
@@ -270,7 +270,7 @@ internal sealed record ProvisioningTimers
 /// provisioned machine, but the executable has to exist
 /// ([kb](../../../kb/playwright/configuration.md#browser-provisioning)). So
 /// <b>every</b> upstream tool is refused meanwhile, that one included, and
-/// letting it through would have bought a worse answer rather than a working
+/// letting it through would have bought a worse answer and not a working
 /// one. What keeps a downloading session inspectable is BrowserAI's <b>own</b>
 /// tools -- <c>browserai_list</c>, <c>browserai_resume</c> and
 /// <c>browserai_set_purpose</c> all answer throughout, because none of them
@@ -289,10 +289,10 @@ internal sealed record ProvisioningTimers
 /// <para>
 /// <b>The installer is upstream's own, run out of the payload.</b>
 /// <c>node.exe cli.js install-browser &lt;browser&gt; --no-shell --no-progress</c>,
-/// so the revision comes from the vendored <c>browsers.json</c> rather than from
+/// so the revision comes from the vendored <c>browsers.json</c> and not from
 /// a URL anybody typed. <c>--no-shell</c> is load-bearing:
 /// <c>chrome-headless-shell</c> is never provisioned, which is what makes the
-/// chromium-alias channel mandatory rather than a preference.
+/// chromium-alias channel mandatory and not a preference.
 /// </para>
 /// <para>
 /// ⚠️ <b><c>PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD</c> does not gate this.</b>
@@ -313,7 +313,7 @@ internal sealed record ProvisioningTimers
 /// </para>
 /// <para>
 /// <b>The install runs on its own thread, and that is a correctness requirement
-/// rather than a performance one.</b> A named mutex is owned by the
+/// and not a performance one.</b> A named mutex is owned by the
 /// <i>thread</i> that waited on it, so a continuation resuming on a different
 /// pool thread makes the release throw about "an unsynchronized block of code" --
 /// naming nothing relevant and pointing nowhere near the cause.
@@ -338,7 +338,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <summary>The variable that would override it, named so its absence is testable.</summary>
     public const string UpstreamStallTimeoutVariable = "PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT";
 
-    /// <summary>The mutex prefix that makes an install machine-wide rather than per process.</summary>
+    /// <summary>The mutex prefix that makes an install machine-wide and not per process.</summary>
     public const string MutexPrefix = $@"{LockScopes.GlobalPrefix}BrowserAI-Provision-";
 
     /// <summary>
@@ -385,7 +385,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Measured, dated, and re-established by asking the CDN rather than by
+    /// <b>Measured, dated, and re-established by asking the CDN and not by
     /// reasoning.</b> Every figure is the sum of the exact <c>content-length</c>
     /// of the three archives that family's install fetches -- the browser, plus
     /// <c>ffmpeg-win64.zip</c> (1,411,741 B) and <c>winldd-win64.zip</c>
@@ -452,7 +452,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <b>The sum of the exact <c>content-length</c> of the three archives that
     /// family's install fetches</b>, which is the same predicate
     /// <see cref="FirstRunDownloadSizes"/> has always quoted -- one family into an
-    /// empty root. It is a <c>long</c> rather than a string because the
+    /// empty root. It is a <c>long</c> and not a string because the
     /// provisioning refusal reports bytes so far <i>against</i> it.
     /// </remarks>
     public static IReadOnlyDictionary<string, long> FirstRunDownloadBytes { get; } =
@@ -465,21 +465,21 @@ internal sealed class BrowserProvisioner : IDisposable
             // retired the dated override. FIREFOX MOVED BY 1,431,551 BYTES AND
             // CHROMIUM DID NOT MOVE AT ALL, FOR THE THIRD ROLL RUNNING: 1246
             // carries the same browserVersion 154.0.8037.0 as 1245 and 1244,
-            // and Chromium's archive is keyed on the version rather than the
+            // and Chromium's archive is keyed on the version and not the
             // revision. Firefox is a genuinely new browser this time, 155.0 ->
             // 156.0, which is why it moved by a megabyte where the last two
             // rolls moved it by hundreds of bytes. The Chromium figure is
-            // RE-MEASURED AND UNCHANGED rather than left alone.
+            // RE-MEASURED AND UNCHANGED and not left alone.
             //
             // ⚠️ Corrected 2026-09-17, later the same day (previously
             // 129_502_321 for Firefox, measured at firefox 1544). Re-measured
             // 2026-09-17 at chromium 1245 / 154.0.8037.0 and firefox 1548 /
             // 155.0 under playwright-core 1.64.0-alpha-2026-09-17. FIREFOX
             // MOVED BY 327 BYTES AND CHROMIUM DID NOT MOVE AT ALL: Chromium's
-            // archive is keyed on browserVersion rather than on the revision,
+            // archive is keyed on browserVersion and not on the revision,
             // and 1245 carries the same 154.0.8037.0 as 1244, so it is the same
             // archive. The Chromium figure is therefore RE-MEASURED AND
-            // UNCHANGED rather than left alone.
+            // UNCHANGED and not left alone.
             //
             // ⚠️ Corrected 2026-09-17 (previously 203_824_344 and 127_247_129,
             // measured at chromium 1237 and firefox 1539). Re-measured
@@ -526,7 +526,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// mutex is keyed on the family and two of them install at once by design;
     /// each run empties only its own. <b>It is redirected by setting
     /// <c>TEMP</c> and <c>TMP</c> for the installer child</b>, which is what
-    /// Node's <c>os.tmpdir()</c> reads on Windows. Proven rather than assumed: the 2026-08-19 measurement ran the
+    /// Node's <c>os.tmpdir()</c> reads on Windows. Proven, not assumed: the 2026-08-19 measurement ran the
     /// real installer with both set and produced a byte-identical tree --
     /// 451,389,780 B for chromium, matching
     /// [the figure taken with the default temp](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)
@@ -540,15 +540,15 @@ internal sealed class BrowserProvisioner : IDisposable
     /// writing into it.
     /// </para>
     /// <para>
-    /// <b>Same volume as the extraction, which is a small improvement it is worth
-    /// naming.</b> The archive and the extracted tree coexist, so a machine
-    /// running out of room runs out of it once rather than in two places.
+    /// <b>Same volume as the extraction, which is a small improvement and is
+    /// named here.</b> The archive and the extracted tree coexist, so a machine
+    /// running out of room runs out of it once and not in two places.
     /// <i>Corrected 2026-09-17 (previously "<c>SessionManager.RequiredFreeBytes</c>
     /// is sized on archive and tree coexisting; before this the archive could be
     /// on a different volume from the tree, so that figure was checked against a
     /// volume only half the work landed on").</i> There is no such figure any
     /// more: the free-space check was removed on the maintainer's instruction,
-    /// and what survives is the layout property rather than the guard it used to
+    /// and what survives is the layout property and not the guard it used to
     /// serve.
     /// </para>
     /// </remarks>
@@ -558,7 +558,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// How large one family's first-run download is, as a sentence fragment.
     /// </summary>
     /// <remarks>
-    /// <b>A family with no measured figure is named rather than given one.</b>
+    /// <b>A family with no measured figure is named and not given one.</b>
     /// The caller is a refusal explaining why a browser is not there yet, and
     /// "an amount nobody has measured" is a worse sentence than a number and a
     /// better one than the wrong number.
@@ -610,7 +610,7 @@ internal sealed class BrowserProvisioner : IDisposable
         _logger = loggerFactory.CreateLogger<BrowserProvisioner>();
         _timers = timers ?? new ProvisioningTimers();
 
-        // Assigned here rather than as a property initialiser, which cannot see
+        // Assigned here and not as a property initialiser, which cannot see
         // the payload. An object initialiser still replaces it, which is what
         // makes it a seam.
         StartInstaller = (browser, root) => new NodeInstallerRun(_payload, browser, root);
@@ -647,7 +647,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <see cref="RevisionPrune.Run"/>'s
     /// own path throws by design -- the process census, the enumeration and the
     /// sizing all catch -- so the <c>catch</c> at the call site is a guard against
-    /// a future edit rather than against a reachable case today, and a guard
+    /// a future edit and not against a reachable case today, and a guard
     /// nothing exercises is the shape this project's audit keeps finding. The
     /// argument is the family whose mutex the calling thread already holds.
     /// </remarks>
@@ -665,7 +665,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// second one racing a real directory that a real double is really writing
     /// to. With both replaced, <i>survives while bytes arrive</i> and <i>dies the
     /// instant they stop</i> become statements a test can make in lockstep
-    /// rather than statements about how busy the machine was.
+    /// and not statements about how busy the machine was.
     /// </para>
     /// <para>
     /// <b>The default is the real measurement and the arithmetic above it is
@@ -675,7 +675,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </para>
     /// <para>
     /// <b>The signature carries the previous sample deliberately.</b> A root
-    /// that cannot be weighed answers with the caller's last figure rather than
+    /// that cannot be weighed answers with the caller's last figure and not
     /// with zero, so the stall clock keeps running instead of being reset by a
     /// failure -- and a substitute has to be handed the same fact to be able to
     /// stand in for that.
@@ -696,7 +696,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// Reports a family's state without starting anything.
     /// </summary>
     /// <remarks>
-    /// The read-only half, for callers that are deciding what to say rather than
+    /// The read-only half, for callers that are deciding what to say and not
     /// what to do -- <c>browserai_list</c>, a status line, a refusal.
     /// </remarks>
     /// <param name="browser">The family, as upstream names it.</param>
@@ -736,7 +736,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <remarks>
     /// Idempotent and safe to call on every <c>init</c>: an installed family
     /// costs one <c>File.Exists</c>, and a download already running is joined
-    /// rather than started again.
+    /// and not started again.
     /// </remarks>
     /// <param name="browser">The family, as upstream names it.</param>
     /// <returns>Where it stands, as of this instant.</returns>
@@ -798,11 +798,11 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Delete-then-download rather than download-beside-and-swap, and Windows
-    /// decides that rather than taste.</b> A directory holding open executables
+    /// <b>Delete-then-download and not download-beside-and-swap, and Windows
+    /// decides that, not taste.</b> A directory holding open executables
     /// cannot be renamed, so the swap that would make this atomic is not
     /// available: the window in which no browser is installed is unavoidable, and
-    /// the caller is told the operation is destructive rather than being sold an
+    /// the caller is told the operation is destructive instead of being sold an
     /// atomicity that does not exist.
     /// </para>
     /// <para>
@@ -911,7 +911,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// Read through the manifest exactly as a family's directory is, so a
     /// revision bump moves these without anybody editing anything, and a payload
     /// whose <c>browsers.json</c> stops naming one of them throws a sentence
-    /// listing what it does name rather than composing a path to nowhere.
+    /// listing what it does name instead of composing a path to nowhere.
     /// </remarks>
     /// <returns>The absolute directories.</returns>
     public IReadOnlyList<string> SharedComponentDirectories() =>
@@ -1017,7 +1017,7 @@ internal sealed class BrowserProvisioner : IDisposable
         _stopping.Dispose();
     }
 
-    /// <summary>Whether a browser directory is complete rather than merely present.</summary>
+    /// <summary>Whether a browser directory is complete and not merely present.</summary>
     /// <remarks>
     /// <b>The marker is the whole check, and Playwright never makes it at
     /// launch.</b> A partial tree without it produces <c>spawn EFTYPE</c>, after
@@ -1056,7 +1056,7 @@ internal sealed class BrowserProvisioner : IDisposable
             ProvisioningLog.Reinstalling(_logger, browser, directory);
 
             // §E's routine, not a second one: a per-node try/catch, so one locked
-            // file costs that file rather than the whole tree.
+            // file costs that file and not the whole tree.
             TreeDelete.Remove(directory, failures);
 
             // A completed attempt would otherwise make Ensure believe the tree it
@@ -1139,7 +1139,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// because each carries its own marker. So the install is one command and the
     /// verdict is two <c>File.Exists</c> -- a run that exits 0 having left one of
     /// them unmarked is the shape that produces <c>spawn EFTYPE</c> later, and it
-    /// is reported here rather than discovered then.
+    /// is reported here and not discovered then.
     /// </remarks>
     /// <param name="directories">Every shared component's tree, absolute.</param>
     /// <returns>The outcome.</returns>
@@ -1238,14 +1238,14 @@ internal sealed class BrowserProvisioner : IDisposable
     /// holder died, therefore what is in the directory is unusable</i>. The holder
     /// keeps this mutex through <see cref="Prune"/>, which walks every process on
     /// the machine and is slow exactly when the machine is busy, so <i>died after
-    /// writing the marker</i> is the reachable case rather than the exotic one --
+    /// writing the marker</i> is the reachable case and not the exotic one --
     /// it is the same interval the 2026-08-17 fix was made in, and the mirror of
     /// the same false inference.
     /// </para>
     /// <para>
     /// <b>The window between the marker appearing and this line is microseconds
-    /// and cannot be staged</b>, which is why the test is of this predicate rather
-    /// than of an interleaving: all four combinations, so removing the second half
+    /// and cannot be staged</b>, which is why the test is of this predicate and
+    /// not of an interleaving: all four combinations, so removing the second half
     /// is red. What an abandoned mutex over a marked tree means is that the holder
     /// died during <see cref="Prune"/>, and the recovery for that is to re-run the
     /// prune -- which the success path below already does.
@@ -1272,7 +1272,7 @@ internal sealed class BrowserProvisioner : IDisposable
         }
         catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
         {
-            // A size that cannot be measured is reported as unknown rather than
+            // A size that cannot be measured is reported as unknown and not
             // as zero, which would read as "there was nothing there".
             return -1;
         }
@@ -1284,8 +1284,8 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It tolerates a tree changing underneath it rather than throwing, and
-    /// that is required rather than defensive.</b> The thing being weighed is
+    /// <b>It tolerates a tree changing underneath it instead of throwing, and
+    /// that is required, not defensive.</b> The thing being weighed is
     /// being written and deleted by another process while this enumeration runs --
     /// upstream unlinks the whole download directory the instant it has finished
     /// extracting -- so <c>IgnoreInaccessible</c> and a swallowed failure are the
@@ -1293,7 +1293,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </para>
     /// <para>
     /// <b>An unreadable root answers with the caller's previous figure</b>, so
-    /// the stall clock keeps running rather than being reset by a failure. A root
+    /// the stall clock keeps running instead of being reset by a failure. A root
     /// nobody can weigh is not progress.
     /// </para>
     /// </remarks>
@@ -1379,7 +1379,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// nobody has measured it.
     /// </summary>
     /// <remarks>
-    /// <b>Zero rather than a guess, and the renderer branches on it.</b> A family
+    /// <b>Zero, not a guess, and the renderer branches on it.</b> A family
     /// added without a measurement gets a progress report that quotes bytes and
     /// elapsed time and no percentage, which is the same rule
     /// <see cref="DownloadSizeFor"/> already follows for the sentence.
@@ -1412,8 +1412,8 @@ internal sealed class BrowserProvisioner : IDisposable
     /// would deadlock against this very call.
     /// </para>
     /// <para>
-    /// <b>The <c>catch</c> is the whole reason this is a method rather than a
-    /// line</b>, and what it prevents was measured rather than assumed. It runs
+    /// <b>The <c>catch</c> is the whole reason this is a method and not a
+    /// line</b>, and what it prevents was measured, not assumed. It runs
     /// inside <see cref="Install"/>'s catch-all, so without it a prune that threw
     /// would be logged as
     /// <see cref="ProvisioningLog.Failed"/> -- <i>"Provisioning chromium failed"</i>
@@ -1422,7 +1422,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// the disk went unreclaimed. Planted 2026-08-17: the status the caller sees
     /// stays <see cref="ProvisioningState.Installed"/>, because
     /// <see cref="Peek"/> reads the completion marker before it reads the cached
-    /// result -- so the damage is a confident wrong answer in the log rather than
+    /// result -- so the damage is a confident wrong answer in the log and not
     /// a wrong answer to the model, which is exactly the kind that survives.
     /// <see cref="PruneLog.PassFailed"/> was written for this and was called from
     /// nowhere until 2026-08-17; the audit of the reconstructed call site is what
@@ -1455,7 +1455,7 @@ internal sealed class BrowserProvisioner : IDisposable
         var started = DateTimeOffset.Now;
         var phase = new AttemptPhase();
 
-        // LongRunning, so this gets a thread of its own rather than a pool
+        // LongRunning, so this gets a thread of its own and not a pool
         // thread: the body takes a named mutex, and a named mutex is owned by
         // the thread that waited on it.
         var task = Task.Factory.StartNew(
@@ -1522,7 +1522,7 @@ internal sealed class BrowserProvisioner : IDisposable
                 // the holder keeps the mutex through Prune, which walks every
                 // process on the machine and is slow exactly when the machine is
                 // busy, so dying after the marker and before the release is the
-                // reachable case rather than the exotic one.
+                // reachable case and not the exotic one.
                 //
                 // An abandoned mutex over a MARKED tree means the holder died
                 // during Prune. The correct recovery is to re-run Prune, which is
@@ -1533,7 +1533,7 @@ internal sealed class BrowserProvisioner : IDisposable
                     // The previous holder died mid-install and left something
                     // unmarked, and re-running on top of it is the same call
                     // again -- so the tree goes first, which is what makes this a
-                    // recovery rather than a retry.
+                    // recovery and not a retry.
                     ProvisioningLog.AbandonedInstallFound(_logger, browser, directory);
                     TreeDelete.Remove(directory, []);
                 }
@@ -1548,7 +1548,7 @@ internal sealed class BrowserProvisioner : IDisposable
                 if (result.Succeeded)
                 {
                     // §A: PLAYWRIGHT_SKIP_BROWSER_GC=1 is mandated, so pruning old
-                    // revisions is BrowserAI's job. Here rather than at startup
+                    // revisions is BrowserAI's job. Here and not at startup
                     // because this is the one moment the answer can have changed --
                     // a revision becomes superseded when a new one lands.
                     Prune(browser);
@@ -1611,7 +1611,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// justified as "the absolute cap is 45 minutes and this is 60, so anything
     /// that reaches it is a bug in the caps above").</b> That justification was
     /// arithmetic against a number that no longer exists: with the installer
-    /// capped on <i>stalling</i> rather than on total time, a holder on a
+    /// capped on <i>stalling</i> and not on total time, a holder on a
     /// 0.3 Mbps link legitimately runs for over an hour, and a sixty-minute
     /// tripwire here would report <i>"has not finished"</i> about a download that
     /// is working. The fourth timer went with it -- <see cref="ProvisioningTimers"/>
@@ -1766,7 +1766,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// ⚠️ <b>The first cap became a <b>stall</b> detector on 2026-08-19
     /// (previously a 45-minute ceiling on the total).</b> The reasoning is on
     /// <see cref="ProvisioningTimers.StallCap"/>; what changed here is that the
-    /// loop now takes a measurement rather than only reading a clock, and the
+    /// loop now takes a measurement instead of only reading a clock, and the
     /// measurement is the same one <see cref="ProvisioningProgress"/> publishes.
     /// </para>
     /// <para>
@@ -1799,7 +1799,7 @@ internal sealed class BrowserProvisioner : IDisposable
                 return $"BrowserAI is shutting down; the download of {browser} was stopped.";
             }
 
-            // The phase boundary, and it is observable rather than inferred:
+            // The phase boundary, and it is observable, not inferred:
             // upstream downloads into the directory named by DownloadDirectoryName
             // and creates this one only when it starts unzipping.
             if (extraction is null && Directory.Exists(directory))
@@ -1876,7 +1876,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <b>It replaced a <c>Stopwatch</c> on 2026-08-20</b>,
     /// which is the same object with the wall clock welded into it. Everything
     /// the caps compare against comes from here, so a test that freezes the
-    /// clock freezes the whole detector rather than half of it.
+    /// clock freezes the whole detector and not half of it.
     /// </remarks>
     /// <param name="Clock">The clock this attempt is measured against.</param>
     /// <param name="Started">The timestamp the attempt began at.</param>
@@ -1906,7 +1906,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// deterministic.
     /// </para>
     /// <para>
-    /// <b>A latching event rather than a wait on the timer itself</b>, because
+    /// <b>A latching event and not a wait on the timer itself</b>, because
     /// the tick can arrive while the loop is between the sample and the wait --
     /// with <see cref="TimeProvider.System"/> that is ordinary scheduling, and
     /// with a manual clock it is the normal case, since a test advances the
@@ -1991,7 +1991,7 @@ internal sealed class BrowserProvisioner : IDisposable
         private int _extracting;
         private long _baseline = -1;
 
-        /// <summary>Whether this attempt is waiting out another process rather than installing.</summary>
+        /// <summary>Whether this attempt is waiting out another process and not installing.</summary>
         public bool IsWaitingForAnotherProcess => Volatile.Read(ref _waitingForAnotherProcess) is not 0;
 
         /// <summary>
@@ -1999,8 +1999,8 @@ internal sealed class BrowserProvisioner : IDisposable
         /// sentence can quote.
         /// </summary>
         /// <remarks>
-        /// <b>Three interlocked reads rather than one lock, and they can be
-        /// microseconds apart.</b> That is acceptable and it is worth saying why:
+        /// <b>Three interlocked reads and not one lock, and they can be
+        /// microseconds apart.</b> That is acceptable, and the reason is this:
         /// the three come from one poll a second, so the worst skew is a byte
         /// count from one second paired with an elapsed time from the next. A
         /// lock here would serialise every caller against a sampler that runs
@@ -2031,7 +2031,7 @@ internal sealed class BrowserProvisioner : IDisposable
             if (Volatile.Read(ref _baseline) < 0)
             {
                 // The first poll is the baseline, and it is taken from the same
-                // sampler rather than from a second measurement: what this
+                // sampler and not from a second measurement: what this
                 // attempt has written is what has appeared SINCE it started, and
                 // on a machine that already holds the other family the root is
                 // not empty.
@@ -2132,7 +2132,7 @@ internal sealed class NodeInstallerRun : IInstallerRun
 
                     // Load-bearing: chrome-headless-shell is never provisioned,
                     // which is what makes the chromium-alias channel in the
-                    // generated config mandatory rather than a preference.
+                    // generated config mandatory and not a preference.
                     "--no-shell",
 
                     // A progress bar on a pipe nobody renders is noise in the log
@@ -2337,7 +2337,7 @@ internal sealed record ReinstallOutcome(
     /// </summary>
     /// <remarks>
     /// <b>Defaulted to <see cref="Directory"/> so the family path is unchanged.</b>
-    /// Added 2026-08-19 with the shared target, and added as a list rather than by
+    /// Added 2026-08-19 with the shared target, and added as a list and not by
     /// making <c>Directory</c> a joined string: <c>Directory</c> is what the
     /// provisioning log records and what a status carries, and a log line naming
     /// two paths at once is not a path.
@@ -2389,7 +2389,7 @@ internal static partial class ProvisioningLog
         Message = "Provisioned {Browser} revision {Revision} in {Seconds} s into {Directory}.")]
     public static partial void Installed(ILogger logger, string browser, string revision, int seconds, string directory);
 
-    /// <summary>Everything the installer wrote, kept for the log rather than discarded.</summary>
+    /// <summary>Everything the installer wrote, kept for the log and not discarded.</summary>
     /// <remarks>
     /// Its lines name the exact CDN URL each component came from, which is the
     /// only record of <i>which mirror</i> a machine actually reached -- the thing
@@ -2475,7 +2475,7 @@ internal static partial class ProvisioningLog
     public static partial void Reinstalling(ILogger logger, string browser, string directory);
 
     /// <summary>
-    /// Provisioning threw rather than failing, which is the one shape the caller
+    /// Provisioning threw instead of failing, which is the one shape the caller
     /// cannot infer from a state.
     /// </summary>
     /// <param name="logger">Where it goes.</param>

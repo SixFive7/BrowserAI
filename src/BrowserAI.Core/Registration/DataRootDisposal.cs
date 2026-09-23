@@ -149,7 +149,7 @@ internal static class DataRootDisposal
 
     /// <summary>Keep or remove, as a function of the two inputs and nothing else.</summary>
     /// <remarks>
-    /// <b>Pure, so that the branch a release depends on is exercised rather than
+    /// <b>Pure, so that the branch a release depends on is exercised and not
     /// only written</b> -- the same reason <c>SuiteEnvironment.Decide</c> is. The
     /// alternative is a decision reachable only from inside a real uninstall,
     /// which is the one context this suite may never enter.
@@ -234,7 +234,7 @@ internal static class DataRootDisposal
     /// <remarks>
     /// <b>Through <see cref="TreeDelete"/> for the two properties the framework
     /// call does not have together</b>: it names every node it could not remove,
-    /// and it unlinks a directory reparse point rather than descending into it.
+    /// and it unlinks a directory reparse point instead of descending into it.
     /// The second matters here more than anywhere else in this product -- a
     /// junction anywhere under a browser profile would otherwise empty whatever
     /// it points at, on a path nobody typed.
@@ -261,13 +261,13 @@ internal static class DataRootDisposal
     /// Whether the data root holds anything a person would mind losing.
     /// </summary>
     /// <remarks>
-    /// <b>The three data directories, asked through the seam rather than by
+    /// <b>The three data directories, asked through the seam and not by
     /// name.</b> A data root that holds only the hook's own log and the
     /// registration record is a BrowserAI that never ran -- the install hook
     /// creates the log on the way in, so the directory always exists by the time
     /// an uninstall asks. What makes the question worth asking is a provisioned
     /// browser tree, a session index or an instance directory, and each of those
-    /// is a member of <see cref="IAppPaths"/> rather than a literal spelled here.
+    /// is a member of <see cref="IAppPaths"/> and not a literal spelled here.
     /// </remarks>
     /// <param name="paths">The data seam.</param>
     /// <returns>Whether to ask.</returns>
@@ -282,10 +282,10 @@ internal static class DataRootDisposal
 
     /// <summary>What a directory tree holds, in bytes.</summary>
     /// <remarks>
-    /// <b>Reparse points are skipped rather than followed</b>, for
+    /// <b>Reparse points are skipped, not followed</b>, for
     /// <c>TreeDelete</c>'s reason: a junction would count somebody else's tree
     /// into a number this hook is about to quote, and a loop would never finish
-    /// inside a 60-second budget. An unreadable file is skipped rather than
+    /// inside a 60-second budget. An unreadable file is skipped and not
     /// thrown on -- the number is for a sentence a person reads, not for an
     /// accounting record.
     /// </remarks>
@@ -361,7 +361,7 @@ internal static partial class DataRootLog
     /// The data root is about to be deleted, at the person's request.
     /// </summary>
     /// <remarks>
-    /// <b>Written before the deletion rather than after it, because this file is
+    /// <b>Written before the deletion and not after it, because this file is
     /// inside the tree.</b> What the removal actually managed is returned to the
     /// caller and written into the installer's own log, which survives either
     /// answer.

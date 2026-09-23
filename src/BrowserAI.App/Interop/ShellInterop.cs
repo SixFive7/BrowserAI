@@ -22,7 +22,7 @@ internal enum FolderPickOutcome
 /// What <see cref="ShellInterop.PickFolder"/> answered.
 /// </summary>
 /// <remarks>
-/// ⚠️ <b>Three states rather than a nullable string, since 2026-09-16.</b> The
+/// ⚠️ <b>Three states instead of a nullable string, since 2026-09-16.</b> The
 /// picker used to answer <see langword="null"/> for <i>cancelled</i> and
 /// <see langword="null"/> for <i>a folder was chosen and Windows would not give
 /// a path for it</i>, and the caller read both as a cancel -- so the second one
@@ -53,8 +53,8 @@ internal readonly record struct FolderPick(FolderPickOutcome Outcome, string? Pa
 /// </summary>
 /// <remarks>
 /// <para>
-/// ⚠️ <b><c>SHBrowseForFolderW</c> rather than <c>IFileOpenDialog</c>, and this
-/// is a decision rather than an oversight.</b> The modern picker is COM, and
+/// ⚠️ <b><c>SHBrowseForFolderW</c> instead of <c>IFileOpenDialog</c>, and this
+/// is a decision, not an oversight.</b> The modern picker is COM, and
 /// COM under NativeAOT means source-generated interop --
 /// <c>[GeneratedComInterface]</c> over <c>IModalWindow</c>,
 /// <c>IFileDialog</c> and <c>IFileOpenDialog</c>, which is twenty-six vtable
@@ -62,11 +62,11 @@ internal readonly record struct FolderPick(FolderPickOutcome Outcome, string? Pa
 /// calling the wrong function at run time with no diagnostic. That is a real
 /// risk to take for a folder picker, and it is a risk this repository cannot
 /// retire the way it retires others: <b>no test here can open a modal window</b>,
-/// so a wrong slot would be found by the maintainer clicking a button rather
-/// than by a run.
+/// so a wrong slot would be found by the maintainer clicking a button, not
+/// by a run.
 /// </para>
 /// <para>
-/// <b>What is given up is small and is stated rather than glossed.</b>
+/// <b>What is given up is small and is stated, not glossed.</b>
 /// <c>BIF_NEWDIALOGSTYLE</c> gives a resizable dialog with a tree, a
 /// <i>New folder</i> button and drag-and-drop; what it does not give is the
 /// Explorer-style navigation pane, the address bar and the places list of the
@@ -212,7 +212,7 @@ internal static partial class ShellInterop
     /// parameter this API has.
     /// </para>
     /// <para>
-    /// <b><c>explore</c> rather than <c>open</c></b>, because the verb decides
+    /// <b><c>explore</c>, not <c>open</c></b>, because the verb decides
     /// whether the navigation pane is there, and a person who clicked
     /// <i>install location</i> is going to look around.
     /// </para>

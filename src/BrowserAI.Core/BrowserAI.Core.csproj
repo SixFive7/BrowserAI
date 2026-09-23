@@ -21,7 +21,7 @@
     session machinery to compile a window that shows a version number.
 
     TWO EDGES HAD TO BE TURNED AROUND to make the cut acyclic, and both are
-    recorded where they landed rather than here: LocalAppDataPaths now owns the
+    recorded where they landed and not here: LocalAppDataPaths now owns the
     name of the data-root environment variable (Program aliases it), and
     Sessions.SessionLayout now owns the session file names (Storage.LockFile and
     Storage.SessionStore alias them). Nothing else changed shape.
@@ -49,7 +49,7 @@
       answers to two different questions, and the cost was a tree that opened
       dirty after every publish and again after every suite run. Q201, decided
       2026-09-17. Q199 had decided only WHICH of the two states to commit, which
-      moved the churn rather than ending it.
+      moved the churn instead of ending it.
 
       There is no third answer to pick from now. Both executables that link this
       library publish self-contained NativeAOT for win-x64, this is a
@@ -79,7 +79,7 @@
     <!--
       A LIBRARY CANNOT SET PublishAot; it sets IsAotCompatible, which turns on
       the same three analyzers and makes an AOT-hostile call a build error HERE
-      rather than a publish error in whichever executable happens to reach it
+      and not a publish error in whichever executable happens to reach it
       first. Both consumers publish NativeAOT, so anything this library cannot
       do under ILC is a defect of this library.
     -->
@@ -115,7 +115,7 @@
   <ItemGroup>
     <!--
       Everything here is internal. The two executables and the suite see it
-      through these grants rather than by promoting a hundred types to public:
+      through these grants and not by promoting a hundred types to public:
       the cut was made to stop duplication, not to publish an API, and a public
       surface would owe XML documentation and semantic versioning to nobody.
     -->

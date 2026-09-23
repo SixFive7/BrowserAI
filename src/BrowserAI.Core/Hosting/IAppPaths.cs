@@ -9,7 +9,7 @@ namespace BrowserAI.Hosting;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The seam exists on day one rather than being bolted on at §G, and the reason
+/// The seam exists on day one instead of being bolted on at §G, and the reason
 /// is mechanical: <c>VelopackLocator.Current</c> throws under <c>dotnet run</c>
 /// and under every test host, so a build that calls it directly cannot be
 /// tested at all.
@@ -48,7 +48,7 @@ namespace BrowserAI.Hosting;
 /// image path.</b> Both are to hand and both are wrong. <c>Setup.exe
 /// --installto</c> and the portable zip put the binary anywhere, so a derived
 /// data root moves house whenever the binary does -- abandoning the browsers and
-/// the session index rather than keeping them. And a Velopack hook runs on
+/// the session index instead of keeping them. And a Velopack hook runs on
 /// <c>&lt;install root&gt;\current\BrowserAI.exe</c>, so a hook deriving a root
 /// from its own image is the one process that would resolve it differently from
 /// the product -- which matters most in the hook that offers to
@@ -65,7 +65,7 @@ namespace BrowserAI.Hosting;
 /// <para>
 /// <b>What is <i>not</i> here, and why.</b> The live-instance markers are keyed
 /// to the <b>install root</b> and live on <see cref="Updates.LiveInstances"/>
-/// rather than on this seam. They are not data: they answer <i>am I the last
+/// and not on this seam. They are not data: they answer <i>am I the last
 /// process running out of this install?</i>, which is a question about the
 /// directory Velopack's <c>force_stop_package</c> matches image paths against.
 /// A census keyed to the data root would answer about the wrong set of
@@ -110,7 +110,7 @@ internal interface IAppPaths
     /// caller had forgotten the path of invisible until they used it again.
     /// </para>
     /// <para>
-    /// <b>On the seam rather than composed at the call site</b>, so that the
+    /// <b>On the seam and not composed at the call site</b>, so that the
     /// suite can point the index at a scratch root. It is machine-wide state: a
     /// test that wrote into the real one would put its own scratch directories
     /// into a developer's <c>browserai_list</c>.
@@ -125,7 +125,7 @@ internal interface IAppPaths
     /// <remarks>
     /// <para>
     /// Outside the install root for the same reason the log is, and per-run
-    /// rather than shared, because the child's working directory <i>is</i> the
+    /// and not shared, because the child's working directory <i>is</i> the
     /// output root -- upstream resolves a relative <c>filename</c> against the
     /// child's cwd, so a bare <c>foo.png</c> lands inside this tree by
     /// construction -- and two runs must not write into one.
@@ -135,13 +135,13 @@ internal interface IAppPaths
     /// and it is one change: the generated config and the child's working
     /// directory move into the session directory, and this member goes with the
     /// per-run concept").</b> Sessions do <b>not</b> replace this, and step 12 is
-    /// where that was settled rather than assumed. Two things still need a
+    /// where that was settled, not assumed. Two things still need a
     /// per-run home. The first is <b>the run's own child</b>: the MCP spec
     /// forbids the tool set varying per connection, so <c>tools/list</c> has to
     /// be answerable before any session exists, and the child that answers it
     /// needs a working directory and a profile of its own. The second is
     /// <b>every session's generated config</b>, which is a per-run artifact
-    /// rather than part of a session's durable state -- and no artifact is ever at
+    /// and not part of a session's durable state -- and no artifact is ever at
     /// a session's root, so a third file there is out. See
     /// <see cref="Sessions.SessionLayout"/> for what the root is allowed to hold
     /// and why.

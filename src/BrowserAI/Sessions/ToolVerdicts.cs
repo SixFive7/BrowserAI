@@ -53,9 +53,9 @@ internal sealed record ToolVerdict(string Name, ToolVerdictKind Kind, string? Wh
 /// </para>
 /// <para>
 /// <b>DENY BY DEFAULT, and the window that opens is bounded by a red build
-/// rather than by a promise.</b> A name with no row is refused at the door --
+/// and not by a promise.</b> A name with no row is refused at the door --
 /// <see cref="Decide"/> -- because the alternative is that the file stops being a
-/// gate and becomes an inventory. What makes that safe rather than a slow
+/// gate and becomes an inventory. What makes that safe and not a slow
 /// capability leak is <c>ToolVerdictTests</c>: every tool in the golden
 /// <c>tools-list.json</c> snapshot must have a row here and every row must name a
 /// tool the snapshot carries, checked in both directions on every run. A
@@ -96,9 +96,9 @@ internal sealed class ToolVerdicts
     /// The only schema this build can read.
     /// </summary>
     /// <remarks>
-    /// Checked rather than ignored: the file travels inside the payload, which an
+    /// Checked and not ignored: the file travels inside the payload, which an
     /// update replaces wholesale, so a binary meeting a shape it does not
-    /// understand should say so rather than read the half it recognises.
+    /// understand should say so instead of reading the half it recognises.
     /// </remarks>
     public const int SchemaVersion = 1;
 
@@ -154,7 +154,7 @@ internal sealed class ToolVerdicts
     /// <c>build/Write-ReleaseManifest.ps1</c> copies the whole file beside the
     /// release so a rollback can read which tools a build forwarded and which
     /// upstream that judgement was made against. <c>SessionToolSurface.Rewrite</c>
-    /// still advertises the authored tools from <c>Names</c> rather than from the
+    /// still advertises the authored tools from <c>Names</c> and not from the
     /// file; the <see cref="Upstream"/> half has always decided every call.
     /// </para>
     /// </remarks>
@@ -280,8 +280,8 @@ internal sealed class ToolVerdicts
     /// disabled</b> -- no entry, no description explaining that it will refuse,
     /// nothing for a model to read and weigh -- because a tool that can never
     /// succeed costs attention and description budget for as long as it is in the
-    /// list. A tool with <i>no</i> row is a different thing: it is a gap rather
-    /// than a decision, so it is still advertised and refused at the door. Two
+    /// list. A tool with <i>no</i> row is a different thing: it is a gap and
+    /// not a decision, so it is still advertised and refused at the door. Two
     /// reasons, and the second is the stronger. A gap is already loud -- the
     /// coverage comparison is red on the same build -- so the advertisement adds
     /// nothing to it. And filtering on <i>absence</i> would make a file that
@@ -306,7 +306,7 @@ internal sealed class ToolVerdicts
     /// for a typo in the other.
     /// </para>
     /// <para>
-    /// <b>An <c>answer</c> row cannot reach here and is refused rather than
+    /// <b>An <c>answer</c> row cannot reach here and is refused and not
     /// allowed if it ever does.</b> <c>SessionToolSurface.IsAuthored</c>
     /// short-circuits the seven authored names before the door, and the loader
     /// refuses an <c>answer</c> row whose name is not one of them -- so the branch
@@ -437,8 +437,8 @@ internal sealed class ToolVerdicts
 
         if (authored && !SessionToolSurface.IsAuthored(row.Name))
         {
-            // Since 2026-08-26 this is an EXACT match rather than the prefix
-            // test it used to be, so the message names the set rather than the
+            // Since 2026-08-26 this is an EXACT match and not the prefix
+            // test it used to be, so the message names the set and not the
             // spelling: a `browserai_` name that is not one of the seven is a row
             // about a tool that does not exist, which used to load.
             throw Unreadable(
@@ -489,7 +489,7 @@ internal sealed class ToolVerdicts
 
 /// <summary>Whether one call may proceed, and why not if it may not.</summary>
 /// <remarks>
-/// A refusal carries its text rather than a code, because the audience is a model
+/// A refusal carries its text and not a code, because the audience is a model
 /// deciding what to do next and every text in the catalogue names a fix.
 /// </remarks>
 internal readonly record struct ToolDecision

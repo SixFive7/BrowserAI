@@ -37,7 +37,7 @@ internal interface IUpdateClient
 
     /// <summary>Downloads and stages a candidate.</summary>
     /// <param name="candidate">What <see cref="CheckAsync"/> returned.</param>
-    /// <param name="progress">Called with 0-100. <b>Every call resets the stall timer</b>, so it must be invoked from the download rather than from a clock.</param>
+    /// <param name="progress">Called with 0-100. <b>Every call resets the stall timer</b>, so it must be invoked from the download and not from a clock.</param>
     /// <param name="cancellationToken">Cancels the download.</param>
     /// <returns>The download.</returns>
     Task DownloadAsync(UpdateCandidate candidate, Action<int> progress, CancellationToken cancellationToken);

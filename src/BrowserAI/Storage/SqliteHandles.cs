@@ -10,7 +10,7 @@ namespace BrowserAI.Storage;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>A <see cref="SafeHandle"/> rather than an <see cref="IntPtr"/>, and the
+/// <b>A <see cref="SafeHandle"/> and not an <see cref="IntPtr"/>, and the
 /// reason is the reason this repository has a house rule about it.</b> A raw
 /// pointer roots nothing, stops no concurrent disposal, and cannot tell a
 /// caller that the thing it names has already gone. Handing the handle type
@@ -85,7 +85,7 @@ internal sealed class SqliteStatementHandle : SafeHandle
     /// <inheritdoc />
     /// <remarks>
     /// ⚠️ <b><c>sqlite3_finalize</c> answers with the last <c>step</c>'s error
-    /// rather than with this call's</b>, and it destroys the statement either
+    /// and not with this call's</b>, and it destroys the statement either
     /// way. Reporting that stale code as a failed release would say the
     /// resource is still held when it is not, so the result is discarded here
     /// and read where it belongs -- at the step that produced it.

@@ -17,14 +17,14 @@ namespace BrowserAI.Runtime;
 /// not, which is what the caller reports.
 /// </para>
 /// <para>
-/// <b>Note also that <c>Directory.GetFiles(path)</c> is top-level only</b> unless
+/// <b><c>Directory.GetFiles(path)</c> is top-level only</b> unless
 /// <c>AllDirectories</c> is passed, so the safe-looking alternative is not a
 /// recursive delete at all -- it silently leaves every subdirectory in place, and
-/// the failure is an empty-looking result rather than an error.
+/// the failure is an empty-looking result, not an error.
 /// </para>
 /// <para>
 /// <b>The framework primitive is the wrong shape, and the reason is that the
-/// caller is told one thing rather than everything.</b>
+/// caller is told one thing and not everything.</b>
 /// <c>Directory.EnumerateFileSystemEntries(root, "*", SearchOption.AllDirectories)</c>
 /// aborts the <i>entire</i> enumeration on the first
 /// <c>UnauthorizedAccessException</c> -- one unreadable subdirectory anywhere and
@@ -66,7 +66,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// <b>So the hand-rolled replacement was <i>less</i> safe than the banned call
-/// in exactly this dimension</b>, which is the shape worth stating out loud:
+/// in exactly this dimension</b>, and the shape of it is this:
 /// <c>Directory.Delete(path, recursive: true)</c> checks
 /// <c>FILE_ATTRIBUTE_REPARSE_POINT</c> during its own walk and calls
 /// <c>RemoveDirectory</c> on the link. Neither this file's remarks, nor
@@ -84,7 +84,7 @@ namespace BrowserAI.Runtime;
 /// <b>Three callers, three different reasons to meet the failure.</b>
 /// <c>browserai_destroy</c> deletes a directory that has just held a running
 /// browser, and Chromium leaves mapped files behind for a moment after exit --
-/// the race is the normal case rather than the unlucky one.
+/// the race is the normal case, not the unlucky one.
 /// <c>browserai_reinstall_browser</c> removes a browser tree that ~100
 /// concurrent processes might still be reading, which is why it refuses while
 /// any session has a live browser -- and refusing is not the same as being safe,
@@ -115,7 +115,7 @@ internal static class TreeDelete
     /// <param name="directory">The directory to remove. A path that does not exist is not a failure.</param>
     /// <param name="failures">
     /// Every node that could not be deleted, one line each, already indented for
-    /// a report. The list is appended to rather than cleared.
+    /// a report. The list is appended to, not cleared.
     /// </param>
     public static void Remove(string directory, List<string> failures)
     {
@@ -161,7 +161,7 @@ internal static class TreeDelete
 
     /// <summary>
     /// Whether a directory is a reparse point -- a junction, a directory symlink
-    /// or a volume mount point -- and must therefore be unlinked rather than
+    /// or a volume mount point -- and must therefore be unlinked and not
     /// walked.
     /// </summary>
     /// <remarks>
@@ -175,12 +175,12 @@ internal static class TreeDelete
     /// changes nothing for the ordinary case.
     /// </para>
     /// <para>
-    /// <b>A volume mount point is unlinked rather than dismounted.</b>
+    /// <b>A volume mount point is unlinked, not dismounted.</b>
     /// <c>RemoveDirectory</c> removes the reparse point and leaves an entry in
     /// the mount manager's database, where the framework primitive calls
     /// <c>DeleteVolumeMountPoint</c> first. That residue is a stale name in a
     /// registry key, not data -- and it is the only respect in which this routine
-    /// still does less than the call it replaced. Named rather than left to be
+    /// still does less than the call it replaced. Named, not left to be
     /// discovered.
     /// </para>
     /// </remarks>
@@ -220,7 +220,7 @@ internal static class TreeDelete
     /// <para>
     /// <b>The attribute is cleared only after a delete has already been
     /// refused</b>, so the ordinary path is one call and unchanged, and a
-    /// genuine sharing violation is still reported rather than retried into
+    /// genuine sharing violation is still reported and not retried into
     /// silence: the retry's own failure is what goes into the list, and the
     /// first failure is returned unchanged when there was no attribute to
     /// clear.
@@ -310,7 +310,7 @@ internal static class TreeDelete
     /// read.
     /// </summary>
     /// <remarks>
-    /// Materialised rather than returned lazily on purpose: the walk deletes
+    /// Materialised and not returned lazily, on purpose: the walk deletes
     /// what it enumerates, and a lazy enumerator over a directory being emptied
     /// under it is undefined.
     /// </remarks>

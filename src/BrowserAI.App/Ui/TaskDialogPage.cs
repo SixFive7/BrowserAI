@@ -60,7 +60,7 @@ internal enum ClickOutcome
 /// <remarks>
 /// <para>
 /// ⚠️ <b>Every string handed to Windows is allocated here and freed here</b>, and
-/// the lifetime is the reason this is a class rather than a method: a page that
+/// the lifetime is the reason this is a class and not a method: a page that
 /// is navigated to must stay valid for the whole time the dialog is showing it,
 /// and a local that went out of scope at the end of the callback would be a
 /// use-after-free that renders correctly most of the time.
@@ -163,7 +163,7 @@ internal sealed class TaskDialogHost : IDisposable
 
     /// <summary>Replaces the whole page with what <c>page</c> now produces.</summary>
     /// <remarks>
-    /// <b><c>TDM_NAVIGATE_PAGE</c> rather than setting texts one at a time</b>,
+    /// <b><c>TDM_NAVIGATE_PAGE</c> instead of setting texts one at a time</b>,
     /// because the buttons change with the state: <i>Register</i> becomes
     /// <i>Unregister</i>, and a task dialog cannot relabel a button that already
     /// exists. Navigating is the documented way to change the set.
@@ -233,7 +233,7 @@ internal sealed class TaskDialogHost : IDisposable
         finally
         {
             // The dialog copies the string during the message, so this is freed
-            // rather than tracked. Documented behaviour of TDM_SET_ELEMENT_TEXT.
+            // and not tracked. Documented behaviour of TDM_SET_ELEMENT_TEXT.
             Marshal.FreeHGlobal(text);
         }
     }
@@ -327,7 +327,7 @@ internal sealed class TaskDialogHost : IDisposable
     /// shipped; if the SDK ever stopped writing the icon group
     /// under the id below, that load answers zero and the dialog would render
     /// with the <i>no icon at all</i> layout -- a different shape, silently. A
-    /// stock icon is a visible wrong rather than an invisible one.
+    /// stock icon is a visible wrong, not an invisible one.
     /// </para>
     /// </remarks>
     private nint OurIcon()
@@ -403,7 +403,7 @@ internal sealed class TaskDialogHost : IDisposable
     /// How large a task dialog's main icon is at a given DPI.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Read from Windows rather than written here.</b> <c>SM_CXICON</c> is
+    /// ⚠️ <b>Read from Windows, not written here.</b> <c>SM_CXICON</c> is
     /// 32 at 96 DPI and scales with the DPI asked for, so the numbers are the
     /// system's and this method has none of its own.
     /// </remarks>
@@ -434,7 +434,7 @@ internal sealed class TaskDialogHost : IDisposable
     /// <summary>
     /// What Windows calls. Blittable parameters only: the attribute forbids
     /// marshalling, so a <see cref="bool"/> anywhere here is a runtime failure
-    /// rather than a compile error.
+    /// and not a compile error.
     /// </summary>
     /// <remarks>
     /// <b>It resolves the instance and forwards; every decision is in

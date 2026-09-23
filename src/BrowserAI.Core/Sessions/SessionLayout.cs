@@ -26,7 +26,7 @@ namespace BrowserAI.Sessions;
 /// the only file at the root and everything else is a subfolder".</i> What
 /// survives from both is the claim they were each making -- <b>no artifact is
 /// ever at the session root</b>, so the files that <i>are</i> there describe the
-/// session rather than being things it produced. The generated Playwright config
+/// session and are not things it produced. The generated Playwright config
 /// stays forbidden here for the same reason: it is a per-run artifact and lives
 /// in the run's instance directory.
 /// </para>
@@ -68,7 +68,7 @@ internal static class SessionLayout
     /// <c>Storage.LockFile.FileName</c> aliases it. This layout moved into
     /// <c>BrowserAI.Core</c> so that the live-instance census can name a mutex
     /// after an install root, and the storage layer stayed in the server, which
-    /// links the library rather than being linked by it. An alias pointing the
+    /// links the library and is not linked by it. An alias pointing the
     /// old way would have been a reference the compiler refuses. Still one
     /// spelling; only its owner changed.
     /// </para>
@@ -85,7 +85,7 @@ internal static class SessionLayout
 
     /// <summary>
     /// The record this build does not read, named so that meeting one is an
-    /// answer rather than a directory that mysteriously is not a session.
+    /// answer and not a directory that mysteriously is not a session.
     /// </summary>
     /// <remarks>
     /// <b>It is a constant because three callers have to recognise it</b> --
@@ -187,7 +187,7 @@ internal static class SessionLayout
 
     /// <summary>What a directory tree adds up to, in bytes.</summary>
     /// <remarks>
-    /// Inaccessible entries are skipped rather than throwing: this number is
+    /// Inaccessible entries are skipped instead of throwing: this number is
     /// reported, never enforced, and a session that cannot be sized should still
     /// answer the call it was asked.
     /// </remarks>

@@ -124,7 +124,7 @@ internal static class McpClientRegistration
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Added 2026-09-15, and the sentence above about it is corrected
-    /// rather than deleted (previously "<c>project</c> writes a
+    /// and not deleted (previously "<c>project</c> writes a
     /// <c>.mcp.json</c> into the repository, which the charter rejects by
     /// name").</b> What the charter rejects is BrowserAI <i>requiring</i> a
     /// per-repository file in order to work -- being installed once and being
@@ -149,9 +149,9 @@ internal static class McpClientRegistration
     /// <remarks>
     /// <b>Sized against the shortest hook, not against the measurement.</b> The
     /// tightest fast-exit budget is <c>--veloapp-updated</c>'s 15 s, and that
-    /// hook makes one call; 10 s leaves the installer time to notice rather than
+    /// hook makes one call; 10 s leaves the installer time to notice instead of
     /// being killed mid-write. The measurement -- 613-645 ms -- is fifteen times
-    /// under it, which is the headroom rather than the target: a budget derived
+    /// under it, which is the headroom, not the target: a budget derived
     /// from the observed duration would go wrong on the first slow machine.
     /// </remarks>
     public static TimeSpan Budget => TimeSpan.FromSeconds(10);
@@ -163,7 +163,7 @@ internal static class McpClientRegistration
     /// <returns>The argument vector, to be passed one element at a time.</returns>
     /// <remarks>
     /// <b><c>--</c> is load-bearing.</b> Everything after it is the command and
-    /// its arguments rather than options, so a path that begins with a dash -- or
+    /// its arguments and not options, so a path that begins with a dash -- or
     /// a future one carrying flags -- cannot be re-read as an option by the
     /// client's own parser.
     /// </remarks>
@@ -247,10 +247,10 @@ internal static class McpClientRegistration
     /// wrong here is safe in the direction that matters -- a wording change makes
     /// this return <see langword="false"/>, which reports the pass as
     /// <see cref="RegistrationStatus.Failed"/> in the log and in the registration
-    /// record, rather than reporting success for something that did not happen.
+    /// record, and not as success for something that did not happen.
     /// <c>RegistrationTests.TheClientStillSaysWhatTheExitCodesCannot</c> asserts
-    /// the wording against the real client, so the drift is a red test rather
-    /// than a discovery in the field.
+    /// the wording against the real client, so the drift is a red test and
+    /// not a discovery in the field.
     /// </remarks>
     public static bool MeansAlreadyRegistered(int exitCode, string output) =>
         exitCode is not 0 && (output ?? string.Empty).Contains(AlreadyExistsNeedle, StringComparison.OrdinalIgnoreCase);

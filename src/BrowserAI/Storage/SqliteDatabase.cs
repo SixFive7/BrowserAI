@@ -51,7 +51,7 @@ internal sealed class SqliteDatabase : IDisposable
 
     /// <summary>
     /// Opens a database in memory, for the questions that are about the library
-    /// rather than about a file.
+    /// and not about a file.
     /// </summary>
     /// <returns>The connection.</returns>
     /// <exception cref="SqliteException">SQLite refused.</exception>
@@ -75,7 +75,7 @@ internal sealed class SqliteDatabase : IDisposable
     /// file -- measured, and the consequences are in
     /// <see cref="SessionStore"/>'s own remarks. What it genuinely cannot do is
     /// create the database, which is what makes *this directory has no store*
-    /// an answer rather than a side effect.
+    /// an answer and not a side effect.
     /// </remarks>
     /// <param name="path">The file.</param>
     /// <returns>The connection.</returns>
@@ -214,7 +214,7 @@ internal sealed class SqliteDatabase : IDisposable
     /// answers <see cref="Sqlite.Busy"/>.
     /// </summary>
     /// <remarks>
-    /// <b>Through the entry point rather than through <c>PRAGMA
+    /// <b>Through the entry point and not through <c>PRAGMA
     /// busy_timeout</c>.</b> They set the same thing, and the pragma is a
     /// statement that can itself be refused by the very contention it is being
     /// set to survive.

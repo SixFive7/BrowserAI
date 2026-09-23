@@ -35,7 +35,7 @@ namespace BrowserAI.Interop;
 /// <b>Terminating is <see cref="StrayCandidate"/>'s, and only after a second
 /// guard agrees.</b> Nothing on the <see cref="RunningFrom"/> path can
 /// terminate anything: its one caller is
-/// <c>browserai_reinstall_browser</c>, which refuses rather than coordinates.
+/// <c>browserai_reinstall_browser</c>, which refuses and does not coordinate.
 /// The sweep's scan does hold a handle with <c>PROCESS_TERMINATE</c>, and a
 /// candidate is still only killed when its attributed directory holds a
 /// <c>browserai.lock</c> whose lock the sweeper can take itself.
@@ -44,7 +44,7 @@ namespace BrowserAI.Interop;
 /// <b>Every row carries a creation time.</b> A pid alone is meaningless the
 /// moment the process exits, and Windows reuses pids -- so the pair is the
 /// identity, exactly as it is for <see cref="ProcessLiveness"/>. A process that
-/// exits between the snapshot and the image-path read is dropped rather than
+/// exits between the snapshot and the image-path read is dropped and not
 /// reported with a name that may already belong to a stranger.
 /// </para>
 /// </remarks>
@@ -146,7 +146,7 @@ internal static partial class BrowserProcesses
             {
                 enumerated++;
 
-                // PROCESS_TERMINATE is asked for here rather than later on
+                // PROCESS_TERMINATE is asked for here and not later, on
                 // purpose: a handle acquired after the decision would be a
                 // second chance for the pid to have become somebody else.
                 var handle = OpenProcess(ProcessQueryLimitedInformation | ProcessTerminate, bInheritHandle: false, (uint)processId);
@@ -225,7 +225,7 @@ internal static partial class BrowserProcesses
 
     private static unsafe string? ImagePathOf(SafeProcessHandle handle)
     {
-        // Sized for the extended limit rather than MAX_PATH: the app manifest is
+        // Sized for the extended limit and not MAX_PATH: the app manifest is
         // longPathAware and the browsers root is the caller's LocalAppData,
         // which can be arbitrarily deep.
         var buffer = new char[32768];
@@ -315,7 +315,7 @@ internal sealed record PathSpelling(string Composed, string? Reported, string? W
 /// <para>
 /// ⚠️ <b>What this widens is what the sweep may MATCH, and it does not widen
 /// what the sweep may TERMINATE.</b> The distinction is the whole reason this
-/// is a type rather than a line:
+/// is a type and not a line:
 /// </para>
 /// <list type="bullet">
 ///   <item><description>
@@ -344,7 +344,7 @@ internal sealed record PathSpelling(string Composed, string? Reported, string? W
 ///   </description></item>
 /// </list>
 /// <para>
-/// <b>The leaf is deliberately not resolved, and the gap is named rather than
+/// <b>The leaf is deliberately not resolved, and the gap is named and not
 /// left to be found.</b> What is resolved is the <i>containing directory</i>,
 /// with the file name re-attached. That is what every alias form this product
 /// actually meets is made of -- a link, a substitution or a short name is a
@@ -354,7 +354,7 @@ internal sealed record PathSpelling(string Composed, string? Reported, string? W
 /// therefore stop <see cref="VolumeIdentity.DeepestExistingFinalName"/>'s walk
 /// with no answer at all, on exactly the machine where a browser is running.
 /// <b>A symlinked leaf is consequently still invisible</b>, and it lands in
-/// <see cref="Unresolved"/>'s sibling condition rather than being reported --
+/// <see cref="Unresolved"/>'s sibling condition instead of being reported --
 /// which is a real, narrow hole in a guard that used to have a wide one.
 /// </para>
 /// </remarks>
@@ -411,7 +411,7 @@ internal sealed class ImageSpellings
     /// <remarks>
     /// <b>Each is resolved through its containing directory and the file name is
     /// re-attached</b> -- see this type's remarks for both halves of why. There
-    /// are two factories rather than one that guesses, because whether a path
+    /// are two factories and not one that guesses, because whether a path
     /// names a file or a directory is a fact the caller has and the filesystem
     /// would have to be asked for.
     /// </remarks>
@@ -497,7 +497,7 @@ internal sealed class StrayScan(
     /// composed.
     /// </summary>
     /// <remarks>
-    /// <b>Evidence rather than a fault.</b> A non-zero here is an aliased install
+    /// <b>Evidence, not a fault.</b> A non-zero here is an aliased install
     /// root working correctly; before 2026-08-24 the same machine produced
     /// <c>candidates=0</c> on every pass forever and said nothing at all.
     /// </remarks>

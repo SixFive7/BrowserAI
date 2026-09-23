@@ -26,7 +26,7 @@ namespace BrowserAI.Sessions;
 /// <b>You cannot put a path in a mutex name.</b> Backslashes are illegal after
 /// the <c>Global\</c> prefix, so the path is hashed:
 /// <c>Path.GetFullPath</c> → <c>TrimEnd('\')</c> → <c>ToUpperInvariant()</c> →
-/// SHA-256 → hex. The real length limit is around 32,000 characters rather than
+/// SHA-256 → hex. The real length limit is around 32,000 characters and not
 /// the documented 260, but hashing is required regardless.
 /// </para>
 /// <para>
@@ -79,7 +79,7 @@ internal sealed class SessionPath
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Derived rather than written, and the derivation is what found the real
+    /// <b>Derived, not written, and the derivation is what found the real
     /// bound.</b> The obvious candidate is <c>\output</c> -- the working
     /// directory every child is started in, which is what
     /// <c>CreateProcessW</c>'s <c>lpCurrentDirectory</c> bounds. It is not the
@@ -95,8 +95,8 @@ internal sealed class SessionPath
     /// <para>
     /// ⚠️ <b>A budget, not a ban on deep paths.</b> A caller may name a
     /// directory of any depth to <c>browserai_list</c>, which creates nothing and
-    /// starts nothing -- which is why this predicate lives on this type rather
-    /// than in <c>CanonicalPath</c>, beside the volume-root one and for
+    /// starts nothing -- which is why this predicate lives on this type and
+    /// not in <c>CanonicalPath</c>, beside the volume-root one and for
     /// the same reason.
     /// </para>
     /// </remarks>
@@ -160,7 +160,7 @@ internal sealed class SessionPath
 
     /// <summary>The absolute path of <c>browserai.data</c> inside this directory.</summary>
     /// <remarks>
-    /// <b>Derived here rather than composed at each call site</b>, for the
+    /// <b>Derived here and not composed at each call site</b>, for the
     /// reason every other name on this type is: two spellings of one path is
     /// how two components come to read different files while both report
     /// success.
@@ -174,7 +174,7 @@ internal sealed class SessionPath
     /// <remarks>
     /// <para>
     /// ⚠️ <b>It normalises nothing, and that is what makes the one-function rule
-    /// true rather than nearly true -- 2026-08-26, previously
+    /// true and not nearly true -- 2026-08-26, previously
     /// <c>Resolve(string directory)</c>, which was <c>Path.GetFullPath</c> plus a
     /// trim.</b> With the normalisation here, <c>browserai_list</c> could not use
     /// this chain at all: a listing is pointed at a volume root on purpose and a

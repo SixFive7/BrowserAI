@@ -39,7 +39,7 @@ namespace BrowserAI.Interop;
 /// spelling of the same read.</b> It is declared unguarded in the public SDK,
 /// documented on MS Learn as copying the window text <i>without sending
 /// <c>WM_GETTEXT</c></i>, and measured to agree with <c>GetWindowTextW</c> on
-/// every one of those ~1,550 windows. Its caveat is availability rather than
+/// every one of those ~1,550 windows. Its caveat is availability and not
 /// semantics, and it is reached only when the documented API returned nothing --
 /// so on this machine, today, it never runs. It is kept because the day
 /// <c>GetWindowTextW</c> starts honouring its own contract is the day the sweep
@@ -74,9 +74,9 @@ internal static partial class MessageWindows
     /// </summary>
     /// <remarks>
     /// A restart happens when a window died between two iterations, which is a
-    /// live condition rather than a fault -- it is exactly what browsers exiting
+    /// live condition and not a fault -- it is exactly what browsers exiting
     /// looks like. Bounded so that a machine churning windows continuously
-    /// produces a report saying the walk was incomplete rather than a loop.
+    /// produces a report saying the walk was incomplete instead of a loop.
     /// </remarks>
     public const int RestartBudget = 5;
 
@@ -117,7 +117,7 @@ internal static partial class MessageWindows
                 if (window == nint.Zero)
                 {
                     // THE DISCRIMINATOR, and the whole reason this is a loop
-                    // rather than a walk. Normal exhaustion returns NULL with
+                    // and not a walk. Normal exhaustion returns NULL with
                     // last error 0; a `previous` handle destroyed between two
                     // iterations returns NULL with ERROR_INVALID_WINDOW_HANDLE
                     // and stops the walk early. Unchecked, the sweep
@@ -173,7 +173,7 @@ internal static partial class MessageWindows
     /// <remarks>
     /// ⚠️ <b>A title longer than <see cref="MaximumTitleLength"/> is silently
     /// truncated to a prefix and no caller learns that it was.</b> Named here
-    /// rather than fixed, on 2026-08-23, because the consequence is bounded by
+    /// and not fixed, on 2026-08-23, because the consequence is bounded by
     /// something outside this method: the only thing done with a title is to
     /// resolve it to a directory and test whether its <c>browserai.lock</c> can
     /// be taken, so a prefix fails that test and lands in the <b>refuse</b>
@@ -215,7 +215,7 @@ internal static partial class MessageWindows
     /// the suite's oracle.
     /// </summary>
     /// <remarks>
-    /// Kept as a separate member rather than folded into
+    /// Kept as a separate member and not folded into
     /// <see cref="TitleOf"/> so the suite can compare the two APIs on every
     /// window it enumerates. Measured zero divergences across ~1,550 windows;
     /// the comparison is what would say so if that ever stopped being true.
@@ -294,7 +294,7 @@ internal sealed record MessageWindow(nint Handle, int ProcessId);
 /// <param name="Windows">Every window of that class, in walk order.</param>
 /// <param name="Restarts">How many times a destroyed handle forced a restart.</param>
 /// <param name="Truncated">
-/// Whether the walk gave up. <b>Reported rather than hidden</b>: an incomplete
+/// Whether the walk gave up. <b>Reported, not hidden</b>: an incomplete
 /// attribution pass must read as incomplete, or the sweep silently reports
 /// fewer strays than exist.
 /// </param>
