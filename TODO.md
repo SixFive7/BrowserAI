@@ -600,45 +600,6 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       **The row still stays open**, and what it is waiting for has changed: the
       review, not the roll.
 
-- [ ] **Ask `@playwright/mcp` for a no-clobber option on output files, and for
-      names Windows will not keep verbatim to be rejected.** Both are losses
-      BrowserAI stopped preventing on 2026-08-26, when its own filename gate was
-      deleted in favour of upstream's file-access roots: the roots stop a write
-      from leaving the session and say nothing about the name inside it. The two
-      hazard rows that record the consequences stay open, and steering is what
-      this side does about them. Verified against the shipped bundle at
-      `@playwright/mcp` 0.0.79 / `playwright-core` 1.63.0-alpha-2026-08-05,
-      2026-08-26: `Response._writeFile` calls `fs.promises.writeFile` with no
-      flag, so the default `w` truncates, and the name it is handed arrives
-      unchecked from `Response.resolveClientFilename`.
-
-      **File this text, unchanged:**
-
-      > **Title:** Option for no-clobber output files and reserved name handling
-      >
-      > Two requests around output filenames, both in `Response._writeFile`:
-      >
-      > 1. The write truncates when the target exists, so a second screenshot
-      >    saved as a.png replaces the first. An option to fail on collision, or
-      >    suffix the name, would avoid silent data loss.
-      >
-      > 2. On Windows, NUL.png and names with a trailing dot or space are
-      >    accepted but stored under a different effective name. Rejecting names
-      >    the OS will not keep verbatim would make results predictable.
-
-      Filed: https://github.com/microsoft/playwright-mcp/issues/1726 (2026-08-27)
-
-      ⚠️ **TRANSFERRED BY UPSTREAM AND THEN DECLINED.** *Added 2026-09-14.*
-      It is now
-      [microsoft/playwright#42496](https://github.com/microsoft/playwright/issues/42496),
-      retitled *"[MCP] Option for no-clobber output files and reserved name
-      handling"*, and `dgozman` **closed it `not_planned` on 2026-09-08** after
-      two comments. **This ask is answered, and the answer is no.** The two
-      hazard rows it was steering for keep their `open` status and lose their
-      recorded closure path; both say so in their own evidence now. Nothing here
-      is to be re-filed: a second report of a declined request is noise, and the
-      rows already state what this side does instead.
-
 - [ ] **Ask `@playwright/mcp` to stop returning an empty image when a WebP
       screenshot exceeds WebP's own dimension limit.** `browser_take_screenshot`
       with `type: "webp"` and `fullPage: true` over a document taller than
