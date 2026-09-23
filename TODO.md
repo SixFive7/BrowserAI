@@ -258,18 +258,38 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       lower one**. Two of the three found exactly that whenever they did follow a
       chain to its end.
 
-- [ ] **Make the marker entry adjudicate what moved -- at the first real bump, not
-      before.** [The gate](TESTING.md#what-the-marker-records) requires each
-      [`upstream-review.json`](upstream-review.json) entry to gain `snapshots` (per
-      snapshot: `unchanged`, or an adjudication) and `reverification` (an outcome
-      for every *manual* row, by name), with a test asserting the entry matches
-      what the build observed. Everything else in that section is built and this
-      deliberately is not: **at a baseline there is nothing to adjudicate**, so
-      satisfying the test today means typing an adjudication of no change for four
-      snapshots and an outcome for roughly forty manual rows -- a review that did
-      not happen, written to make a suite green, which is the one act
-      [the procedure](UPSTREAM-REVIEW.md) exists to forbid. The marker test fires
-      on exactly the event that makes it writable.
+- [ ] **Make the marker entry answer every MANUAL re-verification row by name.**
+      [The gate](TESTING.md#what-the-marker-records) requires each
+      [`upstream-review.json`](upstream-review.json) entry to gain two fields.
+      **`snapshots` is built as of 2026-09-23** and this item is the other one.
+
+      ⚠️ ***Narrowed 2026-09-23 (previously "Make the marker entry adjudicate
+      what moved -- at the first real bump, not before", covering both fields).***
+      The premise the old item rested on expired: it said that at a baseline there
+      is nothing to adjudicate, so the fields could only be satisfied by typing a
+      review that did not happen. **That has not been true since 2026-09-15.**
+      Three real bumps have landed -- `@playwright/mcp` twice, `playwright-core`
+      three times, `Velopack` 1.2.0 to 1.2.158 -- and every one of them adjudicated
+      what moved, in prose, in `notes`. So the `snapshots` block was not written to
+      make a suite green; it was **reduced from the notes those reviews already
+      carried**, one line per golden snapshot per entry, with
+      `UpstreamReviewTests.EveryEntryAdjudicatesEveryGoldenSnapshotByName` holding
+      the file list in both directions.
+
+      **What is left is `reverification`, and its premise has NOT expired.** An
+      outcome for every manual row, by name, is around forty answers per entry, and
+      the reviews that have happened answer a named handful each -- rows 10, 17, 19,
+      21 and a few more -- and not all of them. Writing the rest today means
+      typing forty outcomes nobody measured, which is
+      [the one act the procedure exists to forbid](UPSTREAM-REVIEW.md). **The gap
+      is not the field; it is that a full manual pass has never been run**, and the
+      field is what would make that visible.
+
+      **What to do:** at the next review, answer every manual row or say in the
+      entry which ones were not reached and why, then add the field and the test.
+      The test is the easy half and is written in outline already -- the same
+      both-directions shape as the snapshots arm, over
+      [the manual rows](kb/re-verification.md) instead of over four files.
 
 - [ ] **Decide whether relayed notifications need their order preserved.** The
       child→caller progress relay preserves the `progressToken` and the params byte

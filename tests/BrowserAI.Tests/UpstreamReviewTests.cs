@@ -123,6 +123,111 @@ internal sealed class UpstreamReviewTests
         await Assert.That(string.Join(", ", reviewed.Except(watched, StringComparer.Ordinal))).IsEmpty();
     }
 
+
+    /// <summary>
+    /// Every review entry adjudicates every golden snapshot by name, and the set
+    /// of names is exactly what <c>upstream-snapshots/</c> holds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This is the <c>snapshots</c> half of what
+    /// <see href="TESTING.md">the marker gate</see> specifies, and it is the half
+    /// that could be built.</b> The other half, <c>reverification</c> -- an
+    /// outcome for every manual row, by name -- is deliberately not built, and the
+    /// reason is in <c>TODO.md</c>: there are around forty manual rows, and a test
+    /// demanding an outcome for each of them today could only be satisfied by
+    /// typing forty outcomes nobody measured, which is the act
+    /// <c>UPSTREAM-REVIEW.md</c> exists to forbid.
+    /// </para>
+    /// <para>
+    /// <b>The file list is asserted in BOTH directions, and that is the arm's real
+    /// content.</b> A fifth golden snapshot would force every entry to answer for
+    /// it, and a deleted one cannot linger as a line nobody re-reads. An entry that
+    /// answers three of four is a review that looked at three, and the shape that
+    /// hides it is a block that looks complete because every line in it is right.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>WHAT THIS CANNOT DO, said here so nobody reads it as more than it
+    /// is.</b> It cannot tell whether an adjudication is TRUE. <c>unchanged</c> on
+    /// a snapshot that moved is a false sentence in a JSON string, and no scan
+    /// reaches it; that is what the procedure, the notes and a human reading the
+    /// regenerate-and-diff output are for. What this holds is that every snapshot
+    /// was ANSWERED, which is the failure that actually happens -- a review that
+    /// adjudicates what it noticed and is silent about the rest.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-23</b> by deleting one snapshot line from one entry,
+    /// and watched naming the entry and the missing file.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryEntryAdjudicatesEveryGoldenSnapshotByName()
+    {
+        var golden = new DirectoryInfo(Path.Combine(RepositoryLayout.Root.FullName, "upstream-snapshots"))
+            .EnumerateFiles()
+            .Select(file => file.Name)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        // ⚠️ THE CORPUS CONTROL. An empty directory would make every entry below
+        // vacuously complete, which is what a clean run looks like.
+        await Assert.That(golden.Count).IsEqualTo(4);
+
+        var defective = new List<string>();
+
+        foreach (var (name, adjudications) in SnapshotBlocks())
+        {
+            foreach (var missing in golden.Except(adjudications.Keys, StringComparer.Ordinal))
+            {
+                defective.Add($"{name}: says nothing about '{missing}' -- four snapshots, four lines, every entry, every time");
+            }
+
+            foreach (var stranger in adjudications.Keys.Except(golden, StringComparer.Ordinal))
+            {
+                defective.Add($"{name}: adjudicates '{stranger}', which is not a file under upstream-snapshots/");
+            }
+
+            foreach (var (file, verdict) in adjudications)
+            {
+                if (!verdict.StartsWith("unchanged", StringComparison.Ordinal)
+                    && !verdict.StartsWith("changed", StringComparison.Ordinal))
+                {
+                    defective.Add($"{name}/{file}: a verdict opens with 'unchanged' or 'changed' and this one opens '{verdict.Split(' ')[0]}'");
+                    continue;
+                }
+
+                if (verdict.StartsWith("changed", StringComparison.Ordinal) && verdict.Length < 80)
+                {
+                    defective.Add($"{name}/{file}: 'changed' with no adjudication behind it -- {verdict.Length} characters");
+                }
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, defective)).IsEmpty();
+    }
+
+    /// <summary>Each entry's per-snapshot adjudications.</summary>
+    /// <returns>One pair per upstream, naming the snapshot and its verdict.</returns>
+    private static List<(string Name, Dictionary<string, string> Adjudications)> SnapshotBlocks()
+    {
+        using var review = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(RepositoryLayout.Root.FullName, "upstream-review.json")));
+
+        return
+        [
+            .. review.RootElement.GetProperty("upstreams").EnumerateObject()
+                .Select(entry => (
+                    entry.Name,
+                    entry.Value.TryGetProperty("snapshots", out var block)
+                        ? block.EnumerateObject().ToDictionary(
+                            adjudication => adjudication.Name,
+                            adjudication => adjudication.Value.GetString() ?? string.Empty,
+                            StringComparer.Ordinal)
+                        : [])),
+        ];
+    }
+
     private static string? Resolve(string upstream) => upstream switch
     {
         "@playwright/mcp" or "playwright-core" => ResolvedVersions.FromPayloadLock(upstream),

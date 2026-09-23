@@ -40,6 +40,33 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **A review entry now adjudicates every golden snapshot by name, and a test holds the list.**
+  [The marker gate](TESTING.md) has specified two fields since 2026-08-16 and built neither,
+  for a reason that has quietly expired: at a baseline there was nothing to adjudicate, so the
+  fields could only be satisfied by typing a review that did not happen. **Three real bumps
+  have landed since 2026-09-15** -- `@playwright/mcp` twice, `playwright-core` three times,
+  `Velopack` 1.2.0 to 1.2.158 -- and each adjudicated what moved, in prose, in `notes`. The
+  `snapshots` block is **reduced from those notes**, not written to make a suite green: one
+  line per golden snapshot per entry, `unchanged` or `changed` and the adjudication.
+
+  `UpstreamReviewTests.EveryEntryAdjudicatesEveryGoldenSnapshotByName` holds the block's names
+  against `upstream-snapshots/` **in both directions**, so a fifth snapshot forces every entry
+  to answer for it and a deleted one cannot linger as a line nobody re-reads. **Planted red**
+  by deleting one line from one entry and watched naming the entry and the missing file.
+  A snapshot an entry says is NOT IN PLAY is still answered, because *this upstream cannot move
+  that file* is a claim worth reading and worth being wrong about in public.
+
+  ⚠️ **What it cannot do is say whether an adjudication is TRUE.** `unchanged` on a snapshot
+  that moved is a false sentence in a JSON string and no scan reaches it. What is held is that
+  every snapshot was ANSWERED, which is the failure that actually happens: a review that
+  adjudicates what it noticed and is silent about the rest.
+
+  **The `reverification` half stays unbuilt and the `TODO.md` item now says so and nothing
+  else.** Its premise has not expired: an outcome for every manual row is around forty answers
+  per entry, and the reviews that have happened answer a named handful each. **The gap is not
+  the field; it is that a full manual pass has never been run**, and the field is what would
+  make that visible.
+
 - ✅ **No generated code ever ships, and now something enforces it.**
   The rule was taken by the maintainer on 2026-08-20 and has lived since then inside
   `QUESTIONS.md` section 12, which is the entry it made moot. A standing rule kept only inside

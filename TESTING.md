@@ -1515,12 +1515,27 @@ property the approval prompt never had.
 > snapshot's own coherence checks (`UpstreamSnapshotTests`) and the `Automated by`
 > gate (`ReVerificationIndexTests`) are all built.
 >
-> **The `snapshots` and `reverification` fields are deliberately not built yet, and
+> ⚠️ ***Corrected 2026-09-23: `snapshots` IS BUILT and `reverification` is
+> not, so the paragraph below is now about one field and not two.*** Every entry
+> carries a `snapshots` block -- one line per golden snapshot, `unchanged` or
+> `changed` and the adjudication -- **reduced from the prose those reviews already
+> carried** and not typed to make a suite green. Three real bumps have landed since
+> this note was written and each adjudicated what moved in `notes`, which is what
+> made the field writable.
+> `UpstreamReviewTests.EveryEntryAdjudicatesEveryGoldenSnapshotByName` holds the
+> block's names against `upstream-snapshots/` in **both directions**, so a fifth
+> snapshot forces every entry to answer for it and a deleted one cannot linger.
+> ⚠️ **What it cannot do is tell whether an adjudication is TRUE**: `unchanged`
+> on a snapshot that moved is a false sentence in a JSON string and no scan reaches
+> it. What it holds is that every snapshot was ANSWERED, which is the failure that
+> actually happens.
+>
+> **The `reverification` field is deliberately not built yet, and
 > the reason is not effort.** Today every entry in `upstream-review.json` is a
 > baseline: nothing has moved, so there is nothing to adjudicate. A test demanding
-> those fields now could only be satisfied by writing an adjudication of no change
-> for four snapshots and an outcome for **every manual row** -- around forty of
-> them. That is a review that did not happen, typed out to make a suite green,
+> that field now could only be satisfied by writing an outcome for **every manual
+> row** -- around forty of them, where the reviews that have happened answer a named
+> handful each. That is a review that did not happen, typed out to make a suite green,
 > which is the same act as
 > [editing the marker to make a test pass](CLAUDE.md#rules-a-mechanism-enforces).
 > The fields land with the **first real bump**, when there is something true to
