@@ -44,7 +44,7 @@ about an external source needs the date and version it was true at.
       - **The automation command-line flags.** Playwright launches with a large
         argv of its own; what matters is which of those flags are *observable
         from the page* -- through feature detection, through an absent or present
-        API, or through behaviour -- rather than the argv itself.
+        API, or through behaviour -- not the argv itself.
       - **Screen and window metrics.** `screen.*`, `window.outer*`, the
         device pixel ratio, and what a headless browser reports for a screen it
         does not have.
@@ -56,8 +56,8 @@ about an external source needs the date and version it was true at.
       - **Empty history and a fresh profile.** Zero visited links, no
         autofill, no service workers, and a `localStorage` a site has never
         written to. **BrowserAI's profiles do persist** across a resume -- that
-        was corrected on 2026-08-19 -- so this is a *first-run* difference rather
-        than a permanent one, and its shape over a session's life is part of the
+        was corrected on 2026-08-19 -- so this is a *first-run* difference,
+        not a permanent one, and its shape over a session's life is part of the
         measurement.
 
       **How to do it:** run one page against a real installed browser and against
@@ -72,12 +72,12 @@ about an external source needs the date and version it was true at.
       **Decide nothing until it is measured.** The low-hanging half -- whether the
       user agent and `navigator.webdriver` can be set through the generated child
       config -- was researched separately on 2026-08-19 and is a question for the
-      maintainer rather than an item here.
+      maintainer, not an item here.
 
 ## Adversarial review, 2026-08-18 -- what is left of it
 
-Two adversarial readers were asked to **break** the design by reasoning rather
-than by load, on the maintainer's argument that *"just running 100 concurrent
+Two adversarial readers were asked to **break** the design by reasoning,
+not by load, on the maintainer's argument that *"just running 100 concurrent
 browsers is not enough of a test to find all concurrency bugs."* He was right:
 reading found ~18 findings in about half an hour each, against seven from a night
 of load testing. Full reasoning, with every interleaving spelled out, in
@@ -85,7 +85,7 @@ of load testing. Full reasoning, with every interleaving spelled out, in
 every finding** -- fixed, narrowed, or open.
 
 **The seven wrong-answer defects are fixed**, each with a regression test that
-was watched red first, and each is in `git log` rather than here. Two of them
+was watched red first, and each is in `git log`, not here. Two of them
 could not be reproduced as interleavings at all and are tested as invariants
 instead, which the tests say out loud. What remains below is what the same review
 found and this pass did **not** do; the bounded ones also have rows in the
@@ -98,7 +98,7 @@ they were written. Reading them produced **two fixes** -- B3's shared mutex
 namespace and processes 8's title guard, both cheap only *because* the tree had
 moved underneath them -- **three declines with reasons**, **one finding closed by
 work that had landed since**, and **seven hazard rows**. Two of those seven were
-below, because their remedy was a decision somebody had to take rather than a
+below, because their remedy was a decision somebody had to take, not a
 change somebody had to make; **both have since been taken, and neither is below
 any more**. The other five are hazards and nothing else; they are in the
 [index](HAZARDS.md#hazard-index) and not here, because this file is work settled
@@ -116,13 +116,13 @@ two of them in the change the note below records; the row is `closed` in the
 [`docs/reviews/`](docs/reviews/README.md).
 
 ⚠️ **The other is gone too, taken 2026-08-24, and for that one it is worth
-saying how rather than only that.** *Previously "**Decide what a torn log record
+saying how and not only that.** *Previously "**Decide what a torn log record
 should do**", with four directions and a recommendation of the first --
 throw on a partial write.* **None of the four was chosen.** All four repaired a
 completion loop whose premise was that the shared log is written lock-free; the
 maintainer replaced the premise. Every write to that file now takes a
 cross-process byte-range claim, so there is no per-call size bound to exceed and
-nothing that can interleave -- the torn record is dissolved rather than made loud,
+nothing that can interleave -- the torn record is dissolved, not made loud,
 and neither the truncation nor the new record-length limit any of the four
 directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 [review](docs/reviews/2026-08-18-adversarial-processes.md) finding 9. The
@@ -131,17 +131,17 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 - [ ] **The justification sweep's residue: 27 assumed justifications named and
       not settled.** ⚠️ ***The predicate is one per italicised or named claim in
       the three lists below, counted 2026-08-26 after the ones settled since.***
-      *Re-counted rather than decremented: the three lists hold 29 named claims,
+      *Re-counted, not decremented: the three lists hold 29 named claims,
       two of which the notes below mark done, which is 27. **Previously "28
       assumed justifications ... counted 2026-08-19"**, and what left the list is
       named where it left it -- the filename refusals, in the `src/` list.*
       *The item said **24** when it was written on 2026-08-18 and did not state
       what it was counting, so this is a **different question over the same
-      list** rather than a correction of it -- which is the trap this repository
+      list**, not a correction of it -- which is the trap this repository
       has already fallen into once and now has a rule against. The list is the
       artefact; the number is derived from it and must be re-derived, never
-      decremented.* The sweep ran 2026-08-18; what it *settled* is in `git log`
-      rather than here, and what it did not is below. Three read-only inventories
+      decremented.* The sweep ran 2026-08-18; what it *settled* is in `git log`,
+      not here, and what it did not is below. Three read-only inventories
       plus a first-hand pass over [`Interop/`](src/BrowserAI/Interop), the build
       files and [`build/`](build) examined **598 load-bearing justifications**:
       **309 measured here**, **226 cited to a source**, **63 assumed**. Of the
@@ -178,7 +178,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       the long-path guarantee is claimed -- read off the reference machine as `1`
       (`REG_DWORD`) on Windows 10.0.26200 and stamped `[MACHINE]`
       ([kb](kb/toolchain.md#what-a-nativeaot-publish-emits)) -- with the half that
-      is still unknown named rather than implied: **nothing has run against
+      is still unknown named and not implied: **nothing has run against
       `LongPathsEnabled = 0`**, and the product makes no check and emits no
       diagnostic that would name it.
 
@@ -202,7 +202,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       unmeasurable while the check does not run at all, and saying so is the
       honest form; it gained a [hazard row](HAZARDS.md#hazard-index), because
       offering `browser: "firefox"` moved the measured half onto a shipped path.
-      And the Firefox provisioning pair was **re-measured rather than adjusted**:
+      And the Firefox provisioning pair was **re-measured, not adjusted**:
       it had been the Firefox archive and directory alone beside Chromium's
       whole-run figures, which is a different predicate wearing the same units.
 
@@ -224,9 +224,9 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       entry was *"the `NUL.png` and trailing-dot filename refusals"*, in
       `ArtifactFilename`. **That refusal is deleted** with the whole `filename`
       gate, and what it protected against is now an
-      [open hazard row](HAZARDS.md#hazard-index) rather than an assumed
-      justification. **The same claim about a session DIRECTORY is now measured**
-      rather than assumed: `CanonicalPath` refuses a trailing dot, a trailing
+      [open hazard row](HAZARDS.md#hazard-index), not an assumed
+      justification. **The same claim about a session DIRECTORY is now measured**,
+      not assumed: `CanonicalPath` refuses a trailing dot, a trailing
       space, a reserved device name, an alternate data stream and a wildcard
       before `Path.GetFullPath` can rewrite them, and `C:\work\NUL` was measured
       coming back as `\\.\NUL`. So the justification did not survive by being
@@ -267,7 +267,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       Generated code, doc comments included, compiles into whatever references it.
       Today it is referenced from the test project only, `PrivateAssets="all"`, as
       a struct-layout oracle, and nothing it produces ships -- which **sidesteps the
-      question rather than answering it**. Whether those terms create a notices
+      question instead of answering it**. Whether those terms create a notices
       obligation for *shipped* generated code is not assessed and **must not be
       asserted either way** until it is.
 
@@ -279,8 +279,8 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       SDK EULA (`EULAID:WIN10SDK.RTM.AUG_2018_en-US`), while `win32metadata`'s own
       `README.md` says `Windows.Win32.winmd` -- the only file CsWin32 reads -- is
       **MIT**. The package's declaration and the repository's declaration disagree
-      about the same file, and that disagreement is now the first question rather
-      than an unknown. **This item stays open**, because what remains is a legal
+      about the same file, and that disagreement is now the first question,
+      not an unknown. **This item stays open**, because what remains is a legal
       reading and nobody here may supply one.
 
       A second cost, recorded because it is real: CsWin32 pins three **prerelease**
@@ -330,7 +330,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 - [ ] **Review the *no automated checks* decision once the product is finished.**
       The [release checklist](RELEASING.md) is the only gate that exists; it works
       when it is invoked, and nothing makes it fire. That trade is right while the
-      suite's shape and the release cadence are predicted rather than observed --
+      suite's shape and the release cadence are predicted, not observed --
       many commits without re-running everything, and no hosted CI. **Re-open it
       against the finished product and a real cadence, not against a guess about
       them.**
@@ -341,12 +341,12 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       and every pull request"). The premise expired and then came back.*** Hosted
       CI existed for two days, 2026-08-18 to 2026-08-20, and was removed at the
       maintainer's decision. **Both `previously` clauses are here on purpose:** a
-      reader who learned either state needs to know it was reviewed and replaced
-      rather than lost, and this entry has now been wrong in both directions
+      reader who learned either state needs to know it was reviewed and replaced,
+      not lost, and this entry has now been wrong in both directions
       within three days. The original sentence is true again -- the release
       checklist is the only gate that exists and nothing makes it fire -- so what
-      is left to decide is exactly what it always said, and the *whole* of it
-      rather than the narrowed remainder. **Nothing here is a task; the whole
+      is left to decide is exactly what it always said, and the *whole* of it,
+      not the narrowed remainder. **Nothing here is a task; the whole
       remainder is the decision.** The condition that ends the arrangement is
       already named in [the release gate](RELEASING.md#the-release-gate): the day
       a second person can cut a release, the assumption breaks and the gate has to
@@ -364,7 +364,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       (42.6 MiB)**, oldest 2026-08-14, growing by roughly a thousand a day of
       running the suite. Every record names this repository's own payload and a
       `downloadsPath` under `.work\test-scratch`, so today it is the **suite's**
-      residue rather than any install's -- but the same code runs in the shipped
+      residue, not any install's -- but the same code runs in the shipped
       product, so a heavy user accumulates the same thing with their own paths in
       it. [Hazard row](HAZARDS.md#hazard-index) ·
       [kb](kb/playwright/tools-and-artifacts.md#every-launched-browser-leaves-a-descriptor-in-localappdatams-playwrightb-and-nothing-reaps-it----measured-2026-09-16).
@@ -382,7 +382,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       anything BrowserAI already calls, or whether the MCP child could be asked
       to run it at a point where it is about to exit anyway. (2) Establish what
       it would reap: the unlink is keyed on *cannot connect*, which is a
-      machine-wide judgement rather than a session-scoped one, so a peer's live
+      machine-wide judgement, not a session-scoped one, so a peer's live
       descriptors are the thing to prove safe before anything is called. (3) If
       neither is safe, decide whether BrowserAI removes **only the guids it
       launched itself**, which it knows, and where that would hook -- the same
@@ -410,7 +410,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       [the review](UPSTREAM-REVIEW.md) was run end to end against the roll.
       **`config-schema.d.ts` was the snapshot to read first and it said what step
       3 of the watch item predicted**: `filePaths?: 'relative' | 'absolute'` is
-      declared now, which is a confirmation rather than a change -- BrowserAI had
+      declared now, which is a confirmation, not a change -- BrowserAI had
       been writing the key for four days against typings that did not carry it,
       survivable only because `loadConfig` validates nothing.
 
@@ -437,11 +437,11 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       ⚠️ **One shape named in the PR body was NOT driven: the paused-debugger
       location.** It is the fourth `Response._printablePath` call site and so is
       covered by construction -- which is a reading of the bundle, not a
-      measurement, and it is recorded as owed rather than claimed. Provoking it
+      measurement, and it is recorded as owed, not claimed. Provoking it
       needs a paused session, which is a different rig.
 
       ✅ **What the row WAS still open for, and is not any more: the exit.**
-      *Kept in the past tense rather than deleted, because it is the record of an
+      *Kept in the past tense and not deleted, because it is the record of an
       adoption that rested on an exception and of how that ended -- four days.*
       The version carrying the fix
       was reached through a **dated `playwright-core` override**
@@ -488,7 +488,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       result note and saying so in one sentence, which is a workaround rather
       than a fix")*. The result note is deleted with artifact routing: every
       answer is the child's own bytes, so those six relative pointers now reach a
-      model unaccompanied. **That makes the ask stronger rather than weaker** --
+      model unaccompanied. **That makes the ask stronger, not weaker** --
       there is no workaround left to weigh against it -- and it is the one thing
       an upstream option would fix that nothing on this side can.
 
@@ -519,7 +519,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       trail starts.* It is now
       [microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497),
       retitled *"[MCP] Option for absolute paths in tool result links"* -- **the
-      move was upstream's own doing rather than ours**, which is the one outcome
+      move was upstream's own doing, not ours**, which is the one outcome
       the watch item's options did not name.
 
       ✅ **GRANTED AND MERGED -- *corrected 2026-09-17 (previously "**OPEN and
@@ -533,7 +533,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       [PR #42673](https://github.com/microsoft/playwright/pull/42673) was merged
       by `pavelfeldman` at **2026-09-16T15:38:22Z**, and
       [#42497](https://github.com/microsoft/playwright/issues/42497) closed
-      `completed` one second later, by the merge rather than by a reply --
+      `completed` one second later, by the merge, not by a reply --
       **nobody from this side ever answered `dgozman`'s request for a repro**,
       which is worth recording because it is not why it was granted. Read
       2026-09-17 from the API: `merged: true`, `merged_by: pavelfeldman`,
@@ -549,7 +549,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       `@playwright/mcp`'s own dependencies, never npm `latest` -- and nothing is
       owed until the next `@playwright/mcp` roll.
 
-      **THE ADOPTION PLAN, written now so the roll is a review rather than a
+      **THE ADOPTION PLAN, written now so the roll is a review, not a
       design**, and [the review procedure](UPSTREAM-REVIEW.md) is what executes
       it:
 
@@ -563,10 +563,10 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
          already answers -- which is the same argument every other
          `PLAYWRIGHT_MCP_*` refusal rests on.
       3. **`RequiredSessionOpinions`** gains it, so a config that stops carrying
-         the key is a red build rather than a silent revert to `relative`.
+         the key is a red build, not a silent revert to `relative`.
       4. **Both snapshots move**: `cli-help.txt` for the flag and
          `config-schema.d.ts` for the key, and both are adjudicated under
-         [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) rather than regenerated.
+         [`UPSTREAM-REVIEW.md`](UPSTREAM-REVIEW.md) and not regenerated.
 
       **This row stays open until the roll**, because a resolved ask whose fix
       nobody can install is not a closed item -- it is a scheduled one.
@@ -583,15 +583,15 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
          a thank-you. 1,187 bytes, plain ASCII, LF only; the posted body was
          fetched back and compared against the approved text. The sentence above
          -- *nobody from this side ever answered* -- was true when it was written
-         and is now history rather than state.
-      2. **The pin is being overridden rather than waited out (Q210 = a).** The
+         and is now history, not state.
+      2. **The pin is being overridden instead of waited out (Q210 = a).** The
          maintainer's instruction was to adopt the fix and re-release `v1.0.0`
-         rather than wait for `@playwright/mcp` to roll, so `playwright-core` is
+         and not wait for `@playwright/mcp` to roll, so `playwright-core` is
          to be overridden to **1.64.0-alpha-2026-09-17** underneath
          `@playwright/mcp` 0.0.81, as a **dated exception with a written exit**:
          it is deleted the day `@playwright/mcp` `latest` pins that alpha or
          later. That conflicts with *everything floats, never pin*, so it is
-         recorded as an exception rather than absorbed, and it is taken through
+         recorded as an exception, not absorbed, and it is taken through
          [the review procedure](UPSTREAM-REVIEW.md) with the four steps above
          unchanged. **The same roll brings a new tool, `browser_emulate_media`**,
          which needs a verdict before deny-by-default reddens the suite; the
@@ -705,9 +705,9 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       > be that large in the first place)
 
       **So the path moved and the destination did not.** The fix is now expected
-      in **Chromium** rather than in Playwright -- CL 8416650, *"DevTools: report
+      in **Chromium**, not in Playwright -- CL 8416650, *"DevTools: report
       screenshot encoding failures"*, status **NEW** as of 2026-09-16 -- which
-      means it arrives through a browser revision bump rather than through a
+      means it arrives through a browser revision bump, not through a
       `playwright-core` change, and there is no PR on this side to watch any
       more. **What settles this item is exactly what settled it before**: a
       released build in which a 16,384 px webp screenshot errors instead of
@@ -716,7 +716,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       acceptable; the two hazard rows stand.
 
       ⚠️ **The second half of `dcrousso`'s comment is a judgement about
-      likelihood and is recorded rather than accepted.** This project met it on
+      likelihood and is recorded and not accepted.** This project met it on
       an ordinary full-page screenshot of a long document, which is what the ask
       says.
 
@@ -743,14 +743,14 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       `config-schema.d.ts` exactly as step 3 predicted. **Step 4 was recorded
       differently from how it is written here**: the DECISIONS section records
       the exception as **ENDED** and still counts **two**, because an exception
-      that ran its course is a worked example of how one is allowed to work
-      rather than a slot that reopens -- the correction is stamped there.
+      that ran its course is a worked example of how one is allowed to work,
+      not a slot that reopens -- the correction is stamped there.
       **Step 5 is this.**
 
       ⚠️ **The monitoring worked and not in the shape paragraph (2) below
       predicts.** Neither instrument went red on the day: both **refused to
       order** the epoch-stamped version and said a human must adjudicate, which
-      is their designed behaviour. So the exit was *unreadable* rather than
+      is their designed behaviour. So the exit was *unreadable*, not
       *unfired*, the **drift check** is what reported it, and the two instruments
       made ignoring it impossible in the way that actually matters -- by making
       the payload unbuildable until somebody decided. All three are retired with
@@ -778,18 +778,18 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
          changes: `dependencies` stays `{"@playwright/mcp": "latest"}`.
       2. **Rebuild the payload** with `pwsh -File build/Build-Payload.ps1` and
          confirm it prints `playwright-core: <version> (@playwright/mcp's own
-         exact dependency, not npm latest)` rather than the override line. The
+         exact dependency, not npm latest)` and not the override line. The
          wrapper's pin floats again from that moment, which is the whole point.
       3. **Run [the review](UPSTREAM-REVIEW.md) against the roll**, because a
          roll is a version bump like any other and brings whatever else upstream
          changed with it. `config-schema.d.ts` is the snapshot to read first: it
          did **not** move on adoption, because the typings ship with the wrapper,
-         so the roll is when `filePaths` finally appears in it -- a confirmation
-         rather than a change.
+         so the roll is when `filePaths` finally appears in it -- a confirmation,
+         not a change.
       4. **Record the deletion** in [`upstream-review.json`](upstream-review.json)
          and in the [DECISIONS exception
          section](DECISIONS.md#the-two-exceptions-to-the-versioning-policy),
-         which then describes **one** exception rather than two and says so in
+         which then describes **one** exception, not two and says so in
          its own heading.
       5. **Close this item and close [ask #1](#upstream-asks)**, which stays open
          for this and nothing else.
@@ -827,7 +827,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       line.
 
       **What the answer settles, beyond these two.** The tracker question is
-      decided by upstream's own action rather than by the balance of evidence
+      decided by upstream's own action, not by the balance of evidence
       below: **asks go to `microsoft/playwright` with an `[MCP]` title prefix**,
       which is how the third ask was filed on the same day without this item
       having to be re-read. The "one signal decides for both" premise held
@@ -876,8 +876,8 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       ✅ **IT WAS JUDGED `allow` THE SAME DAY, AND THE PREDICTED COUNT WAS
       WRONG BY ONE IN EVERY PREDICATE IT COULD HAVE MEANT.** *Corrected
       2026-09-17 (previously "That takes `browser_*` from **83 to 84** names with
-      none removed or renamed"), re-counted off the regenerated snapshot rather
-      than from upstream's source.* **None removed and none renamed held
+      none removed or renamed"), re-counted off the regenerated snapshot and
+      not from upstream's source.* **None removed and none renamed held
       exactly**, and the count did not: quoting each predicate before its number,
       the **internal registry** went 82 → 83, the **maximum exposed over MCP**
       73 → 74, the **default surface** 26 → 27, and **what BrowserAI advertises**
@@ -890,14 +890,14 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       for the two Q128 hazard rows -- reused-filename overwrite, and Windows
       names stored under a different effective name. **That path is gone.** The
       rows stay `open`, the steering stands, and both now say in their own
-      evidence that upstream declined rather than that upstream has not answered
+      evidence that upstream declined and not that upstream has not answered
       yet. Nothing is re-filed.
 
       *The record as it stood on 2026-08-27 follows, unchanged.*
 
       They were filed into a tracker whose owner has asked people not to use it,
-      and the call taken on 2026-08-27 was to leave them there and watch rather
-      than re-file. **One signal decides for both** -- they are two instances of
+      and the call taken on 2026-08-27 was to leave them there and watch and
+      not re-file. **One signal decides for both** -- they are two instances of
       the same judgment about the same tracker, filed four seconds apart, so
       whatever happens to either answers the question for the other, and
       watching them apart would only mean taking one decision twice.
@@ -909,8 +909,8 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 
       **Where they go.** [`microsoft/playwright`](https://github.com/microsoft/playwright/issues),
       one issue each, the ask bodies above unchanged, with **`[MCP]` as a title
-      prefix** -- that is the convention there, and it is a *title* prefix rather
-      than a label:
+      prefix** -- that is the convention there, and it is a *title* prefix,
+      not a label:
       [#42363](https://github.com/microsoft/playwright/issues/42363) and
       [#42384](https://github.com/microsoft/playwright/issues/42384) both carry
       it in the title and both carry **no labels at all**, read 2026-08-27. Then
@@ -935,7 +935,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       [playwright-mcp#1716](https://github.com/microsoft/playwright-mcp/issues/1716)
       is ours, filed there on 2026-08-17 -- seven weeks *after* that notice -- and
       closed as fixed **9 h 52 min later** by a Playwright maintainer. A tracker
-      nobody reads does not do that, so the notice is a preference rather than a
+      nobody reads does not do that, so the notice is a preference, not a
       wall, and a first-hand exception ten days old outweighs it until something
       newer says otherwise. ⚠️ **Note which way #1716 cuts:** its fix landed in
       the monorepo, as
@@ -975,7 +975,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
          silently. Re-verification [row 121](kb/re-verification.md) is the
          instrument; this item is what it points at.
       2. **Chromium enabling the network-service sandbox by default**, which
-         would make the switch irrelevant. Visible as **behaviour rather than as
+         would make the switch irrelevant. Visible as **behaviour, not as
          a diff**: the `sandbox\policy\win\sandbox_win.cc:804` refusal and the
          `network_service_instance_impl.cc:650` restart start appearing in a
          directly-launched browser's stderr, and a session gains a startup blip
@@ -991,15 +991,15 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       the same moment and not before -- today it could only assert that an ACE
       exists, which is a weaker claim than the one anybody wants. And the
       **third upstream ask goes to
-      [`microsoft/playwright`](https://github.com/microsoft/playwright/issues)**
-      rather than to the MCP tracker, `[MCP]`-prefixed only if it turns out to
+      [`microsoft/playwright`](https://github.com/microsoft/playwright/issues)**,
+      not to the MCP tracker, `[MCP]`-prefixed only if it turns out to
       be an MCP-layer question, which on the evidence it is not: the switch is
       `playwright-core`'s.
 
       **Why this is a watch and not a fix.** The outcome is not
       BrowserAI-specific -- stock Chrome's own default on this machine is the
       same unsandboxed network service -- and the mechanism is upstream's
-      unconditional flag rather than anything this product does. What is ours is
+      unconditional flag, not anything this product does. What is ours is
       the *latent* half, and it stays latent until one of the two triggers
       above. The hazard row that records it is `open` and carries its evidence.
 
@@ -1019,7 +1019,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       provider.** It needs **self-hosted runner infrastructure** that does not
       exist yet, and the maintainer is **considering leaving GitHub before that
       happens** -- so whatever is written must be portable, and a `.github/`
-      directory is a guess about the answer rather than a step towards it. What
+      directory is a guess about the answer, not a step towards it. What
       was deleted is recoverable in full from
       `git show 7f296b2:.github/workflows/build.yml` if the answer does turn out
       to be Actions; it is a good specification of the steps whatever ends up
@@ -1033,8 +1033,8 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       |---|---|
       | **A different machine -- four cores, cold caches, a service window station with no interactive desktop, and a volume with 8.3 generation off.** It found four defects a developer machine structurally could not: the `browserai_destroy` survivor arm (nine local greens against three consecutive CI reds, Firefox still holding mapped files); the `SessionLock` re-open sharing violation (run `32203064556` attempt 1), whose fix is specified and deliberately not yet made; a `RenameWindow` `ERROR_SHARING_VIOLATION`; and the console-logger queue drain, which cost two red runs and is invisible on a machine fast enough to drain the queue before the kill | **Dies.** Not preservable. This row is the whole of the loss and the rest of the table is bookkeeping |
       | **A contributor's pull request, built before merge.** For a public repository this was the workflow's founding reason: 54% of this project's enforcement is a test or a release-phase check, and a pull request could break any of it with nothing to say so | **Dies.** No local substitute exists -- a maintainer running the suite on his own machine cannot run it on a change he has not pulled |
-      | **`BROWSERAI_EXPECTED_ABSENT`, the capability pin.** The workflow's test step was its only consumer anywhere in the repository | **Dies as a declaration; the mechanism is kept, correct and inert.** Unset means *declares nothing*, which is already the developer-machine behaviour, so `SuiteEnvironment.ReconcileDeclaredAbsence` stays right and `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared` now asserts nothing on every run. **Restoring the third arm is part of this item:** `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` read `build.yml` and was deleted rather than re-pointed, because a version aimed at a file that does not exist can have no positive control |
-      | **The `CanonicalPathTests` branch for a volume with 8.3 generation *off*.** CI's checkout volume had it off; this machine's system volume has it on | **Preservable locally, and nothing routine does it.** Three of this machine's four volumes do not shorten, so running the suite from one exercises the other branch. Until something does, [re-verification row 98](kb/re-verification.md) is verified on one branch per run rather than both |
+      | **`BROWSERAI_EXPECTED_ABSENT`, the capability pin.** The workflow's test step was its only consumer anywhere in the repository | **Dies as a declaration; the mechanism is kept, correct and inert.** Unset means *declares nothing*, which is already the developer-machine behaviour, so `SuiteEnvironment.ReconcileDeclaredAbsence` stays right and `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared` now asserts nothing on every run. **Restoring the third arm is part of this item:** `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` read `build.yml` and was deleted and not re-pointed, because a version aimed at a file that does not exist can have no positive control |
+      | **The `CanonicalPathTests` branch for a volume with 8.3 generation *off*.** CI's checkout volume had it off; this machine's system volume has it on | **Preservable locally, and nothing routine does it.** Three of this machine's four volumes do not shorten, so running the suite from one exercises the other branch. Until something does, [re-verification row 98](kb/re-verification.md) is verified on one branch per run, not both |
       | **The cold CDN download on every push** -- Chromium ~203.8 MB and Firefox ~125.7 MB, uncached on purpose | **Already covered locally, at a lower cadence.** `FirstRunProvisioningTests` runs against an empty root, `FirstRunCache` asks the CDN at most once an hour, and a release run always asks it. What dies is the per-push frequency and a second, independent network path to the CDN |
       | **`dotnet restore --force-evaluate` then `--locked-mode`, and the lock-file drift report** | **Already covered locally, and more strictly.** [Release checklist item 1](RELEASING.md#1-everything-re-resolved-to-latest-and-green) runs both commands and takes both diffs with `--exit-code`, which the workflow's bare `git diff` did not |
       | **`fetch-depth: 0`, so MinVer derives a real version from tags** | **Already covered locally.** A developer clone carries its tags; `New-Release.ps1` refuses a derived `0.0.0` and names this exact fix in its own error text |
