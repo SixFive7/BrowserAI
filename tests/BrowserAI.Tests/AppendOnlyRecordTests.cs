@@ -37,6 +37,22 @@ namespace BrowserAI.Tests;
 /// sentence in the middle does not, and neither does truncating one.
 /// </para>
 /// <para>
+/// ⚠️ <b>EVERY SEAL IN THE LIST BELOW MOVED ONCE, ON 2026-09-23, AND THE
+/// GRANT THAT MOVED THEM IS QUOTED HERE RATHER THAN SUMMARISED.</b> The
+/// maintainer, verbatim: <i>"When it comes to no semantic differences and only
+/// removing traces of AI (both in wording and character use) then I hereby grant
+/// and instruct you the right and instruction to edit sealed documents."</i>
+/// What was done under it is one thing and only one: the five characters a
+/// person does not type -- em and en dashes, ellipsis characters, curly quotes
+/// and a non-breaking space -- were replaced with their ASCII forms in every
+/// record. <b>No fact, number, date, name, claim or quotation of somebody else's
+/// text moved</b>, and the seals were re-recorded in the same commit, which is
+/// what separates this from the 2026-08-20 rename sweep that this class exists
+/// to stop: that one was silent and nobody chose it. <b>The grant is narrow.</b>
+/// It is not a licence to edit a record for any other reason, and a second
+/// purpose would be a new grant rather than a precedent.
+/// </para>
+/// <para>
 /// <b>A deliberate edit is possible and is never silent.</b> The seal carries a
 /// character count and a SHA-256, and changing a sealed record means changing
 /// the numbers here in the same commit -- which is a line in the diff, aimed at
@@ -120,8 +136,8 @@ internal sealed partial class AppendOnlyRecordTests
     /// ⚠️ <b>BOTH CHANGELOG SEALS WERE LIFTED ONCE, ON 2026-09-15, AT THE
     /// MAINTAINER'S EXPLICIT INSTRUCTION (Q193), AND RE-TAKEN AT THE END OF THE
     /// SAME BATCH.</b> <c>Corrected 2026-09-15 (previously sealed at
-    /// <c>CHANGELOG.md#1.0.0</c> 236,567 characters / <c>c8163746…</c> and
-    /// <c>CHANGELOG.md#0.1.0</c> 3,850 characters / <c>4e939d92…</c>)</c>. Every
+    /// <c>CHANGELOG.md#1.0.0</c> 236,567 characters / <c>c8163746...</c> and
+    /// <c>CHANGELOG.md#0.1.0</c> 3,850 characters / <c>4e939d92...</c>)</c>. Every
     /// entry in both sections was re-shaped into
     /// <c>- &lt;icon&gt; **Headline.** &lt;the rest&gt;</c> for the 1.0.0 re-ship, and
     /// the entries that had accumulated under <c>[Unreleased]</c> were merged
@@ -131,7 +147,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// ⚠️ <b>AND AGAIN ON 2026-09-16, FOR THE SECOND CUT OF THE SAME
     /// VERSION.</b> <i>Corrected 2026-09-16 (previously sealed at
     /// <c>CHANGELOG.md#1.0.0</c> <c>281,709</c> characters /
-    /// <c>6ac6a8b6…</c> / <c>1cc93037…</c>)</i>. <c>1.0.0</c> is re-shipped in
+    /// <c>6ac6a8b6...</c> / <c>1cc93037...</c>)</i>. <c>1.0.0</c> is re-shipped in
     /// place on 2026-09-16 at the maintainer's instruction, so the same two
     /// edits the re-ship case requires were taken again and in one commit: the
     /// <b>heading date</b> moved <c>2026-09-15</c> → <c>2026-09-16</c>, which is
@@ -147,10 +163,10 @@ internal sealed partial class AppendOnlyRecordTests
     /// ⚠️ <b>AND A THIRD TIME ON 2026-09-17, FOR THE THIRD IN-PLACE CUT OF
     /// THE SAME VERSION, AND FOR ONE EDIT ONLY.</b> <i>Corrected 2026-09-17
     /// (previously sealed at <c>CHANGELOG.md#1.0.0</c> <c>310,215</c> characters
-    /// / <c>c2dd7dde…</c> / <c>79e46755…</c>)</i>. The order is the
+    /// / <c>c2dd7dde...</c> / <c>79e46755...</c>)</i>. The order is the
     /// maintainer's, in writing and in advance: <i>"Let's work out this and the
-    /// other open issues and then re-release v1.0.0 … the intro text of the
-    /// release post is very much reading like AI. … add to the release rules
+    /// other open issues and then re-release v1.0.0 ... the intro text of the
+    /// release post is very much reading like AI. ... add to the release rules
     /// the following directive: 'Ensure there is no trace of AI both in wording
     /// and character use.'"</i> The <b>preamble</b> is rewritten in plain words
     /// and nothing else in the section is touched: no entry, no heading, no
@@ -165,7 +181,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// ⚠️ <b>AND A FOURTH TIME ON 2026-09-17, LATER THE SAME DAY, FOR THE
     /// FOURTH IN-PLACE CUT OF THE SAME VERSION.</b> <i>Corrected 2026-09-17
     /// (previously sealed at <c>CHANGELOG.md#1.0.0</c> <c>310,216</c> characters
-    /// / <c>06336d69…</c> / <c>47751897…</c>, which was that morning's preamble
+    /// / <c>06336d69...</c> / <c>47751897...</c>, which was that morning's preamble
     /// rewrite)</i>. The order is the maintainer's and is the same one: <i>"Let's
     /// work out this and the other open issues and then re-release v1.0.0.
     /// Because I very much like the way the changelog is reading now."</i>, with
@@ -228,17 +244,17 @@ internal sealed partial class AppendOnlyRecordTests
     /// </remarks>
     private static readonly Seal[] Sealed =
     [
-        new("CHANGELOG.md#0.1.0", 3869, "a8d48179c052fa19ee9d351e6efcb4f571a3ee946a81bd34e02b75b361c243e0", "29edb87771e3936a0b9054fe3c0159b4a6b3b8e64e6e410e99f00d7b0f0afa17"),
-        new("CHANGELOG.md#1.0.0", 349897, "534a3407f93cd94887f9d9e6dd8703fad8287aae1420e12d96a2ccb6faedef11", "ab003af831e5a3cbda529d3478b44c1a0d3366bfe13e1146cd8dbc21db8d26d5"),
-        new("CHANGELOG.md#1.1.0", 65931, "d23b5413aaa2f43084e1a12bfd146526f5dc854b637e6095b209b69b47cfd530", "d3db23a31c92c9474ed8be2c5371b2eb58667639300e133e3c4e6c913a2729e7"),
-        new("docs/reviews/2026-08-18-adversarial-locking.md", 39613, "42770a171c3ceab3c840a29fd1c798b79c59aa9984b30680c7ba00f581a1de94", "5cbc860979f70f949a05d326c412fc84c1e6499b73a080e7b88652b86573bcac"),
-        new("docs/reviews/2026-08-18-adversarial-processes.md", 28536, "1d5e690df3c8b880ea5afc33b9cf435fb3cdda6bc43bc247e3d0116b98e6b1fa", "4605c26694310c9618949d95dee4b66a3f9dea7c8c1067ef68c7e9cda8712b09"),
-        new("docs/reviews/2026-08-18-truncation-findings.md", 13366, "78cb79bc2a5c8419de09d59ce7c13c35839298c0daf34f7d94816401184d84ea", "b8bdc254fbe734137ce90b746aaa7efbce83c708a29430fb869e7eb31652c5c4"),
-        new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17223, "f0fd2b224ac80b033a17b518ca500730b1bfc2ded5ae3a546d6d193cdca3fc30", "3c03a894cc0430fb67c7171d7154ee9361e5249695c59318b7a9543475d27d54"),
-        new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11022, "1a5b9733e0f023de5c0a8a5879ac20298fd7193277b88bac075838c31fea1a65", "9e06d1b010e6b100a27f8f59165b303adda79fb69171eab67869a96f2c16aeb7"),
-        new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29792, "55a40260c260d23240c069ef846929106a0a20c4ea1f34b8bf073590ec8587e1", "67d1959a2c47f9fbd38112d371ab04142a3d68b6a6a7c7a3656e325a775a5fe8"),
-        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32404, "5f8fdaa1289f2a945a9c8ac1da91dcaf76c0067ec6aba82d8edc6a18474446d1", "63667857144f4227feb540f4254d2d4c22344b743606f62724f6215624610992"),
-        new("docs/reviews/2026-08-26-post-course-correction.md", 38497, "88afab61473649f812083baf9482eeb6aa60924c3b34adff4939098cbf0954cf", "0de44412f69d6499f1636eb06c72f11f6201c226b8ec6dd2562c86e17b626ee5"),
+        new("CHANGELOG.md#0.1.0", 3873, "6518b2ef2f98d00790269285acf08be8e9ddfd8cc962633effd5f1d58685fab4", "1c937f4619153bacd5c5e3262769eefd671c0a24257c159434fe572e5819816f"),
+        new("CHANGELOG.md#1.0.0", 350703, "893dd57ed05ce98f7c3658d23a7d58181a024e6ec45c4436c42e6e2a1f297fb5", "549cffa74c77d4de477315ba9e294a099e396e053399c00ab5a7593fe179bb97"),
+        new("CHANGELOG.md#1.1.0", 65956, "8d37120a6f92dc14b5b35773c74686253e1704cc8422028af50276b1b19d2c86", "c159e04acb5c970c7bdb75af18a1b9d35923c01133d9ccd9b8f9ea389e6a878a"),
+        new("docs/reviews/2026-08-18-adversarial-locking.md", 39722, "11eadc9cbdd7726a1101b1faa93cd4904cd158adf789ff6c84567f979b0319b7", "26269fabafee27c8538fb5c788fbc735b1fe2f6f0be6fc4d0cae9a0d9af8ade8"),
+        new("docs/reviews/2026-08-18-adversarial-processes.md", 28603, "053af96c7e01112c45db5ed7523ed5fbe62c0f0b67302ea4551348b77bcf42b3", "94345e8990ef5e2985abe3909c9b07c760e9d7ffd0637aafec43bb06377f0ad6"),
+        new("docs/reviews/2026-08-18-truncation-findings.md", 14230, "cc7c7cb446918749775b66c1089b4b98d0f841583a2d61d5d9bfd05672eff5fa", "63c900ab900b6b3f1e6a6b1d44e1db6a154cb33b037f008590f48226a3aee35e"),
+        new("docs/reviews/2026-08-18-truncation-prompt-for-sibling-project.md", 17256, "8c85ea5c577196bdfbbefcb793c884550bd1383e31619c5d9a0347070eb47c5b", "1dd8295ee72f6b38b1cba22acaa0efb5af5edb17ea03e6d94a57196a9fc18250"),
+        new("docs/reviews/2026-08-19-auth-transfer-and-session-modes.md", 11045, "18a981628ee4560a3449060da8dd321a083c4bb5e7b243fc49faafbbd99b0d44", "dc3c7c5724cfc9916c7996d7164df5f4086ca6726a10d1d3dfaa621b6ec65060"),
+        new("docs/reviews/2026-08-24-adversarial-narrow-since-the-six-fixes.md", 29891, "058eeb74c345b287be38eae311291c52a8b742497ee00a2944d94e769b49b874", "a8f3ad0dcb57129c2dc5631025b76ead8aa81d13584ed662e06936051bf809ca"),
+        new("docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md", 32486, "7c224206964e3a21531754ef6920d3f242540abaa7a1209d58c4a0d2e57474bf", "1a136ccfc014c69a504391d17139e99248bbb7b2a47ff0ab71cb46d77e819446"),
+        new("docs/reviews/2026-08-26-post-course-correction.md", 40013, "60a0f1f583230d1c22a759046d973bf2d8c66d27f905c0d41a148d769671f295", "e72b58ea5503c173718988098bb6e7bf58f01365e64629f48747f06f571b7ac5"),
     ];
 
     /// <summary>
@@ -352,7 +368,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// characters")</i>, by the second cut of the same
     /// version doing exactly what this paragraph describes:
     /// setting the real release date at the cut breaks the seal, and the message
-    /// used to say <i>REWRITTEN … a dated record says what was true when it was
+    /// used to say <i>REWRITTEN ... a dated record says what was true when it was
     /// written</i>. That is the right sentence for a sweep and exactly the wrong
     /// one here -- it reads as <i>revert this</i> for the one edit that must be
     /// made. <i>Added 2026-09-16.</i>

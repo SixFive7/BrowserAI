@@ -46,7 +46,7 @@ internal static class Program
     /// <para>
     /// ⚠️ <b>Narrowed 2026-09-15 (previously "it moves the whole app root" and
     /// "it is read here rather than inside <see cref="LocalAppDataPaths"/>, so it
-    /// stays a decision the host makes once … step 19 swaps that class for one
+    /// stays a decision the host makes once ... step 19 swaps that class for one
     /// over <c>VelopackLocator.Current.RootAppDir</c>").</b> It moves the data
     /// root and <b>never the install root</b>, which is Velopack's to choose and
     /// which this process only ever reads. It is also read inside
@@ -409,7 +409,7 @@ internal static class Program
 
             var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment).ConfigureAwait(false);
 
-            // `await using var x = …` awaits its DisposeAsync on the captured
+            // `await using var x = ...` awaits its DisposeAsync on the captured
             // context, which CA2007 refuses. Holding the ConfiguredAsyncDisposable
             // in its own local is the shape that keeps both the object usable
             // and the disposal context-free.

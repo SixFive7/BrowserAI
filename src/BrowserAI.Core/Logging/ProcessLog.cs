@@ -103,7 +103,7 @@ internal sealed class ProcessLog : IDisposable
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-24 (previously "Three destinations rather than a
-    /// redirect … a session's records belong in the session directory … and
+    /// redirect ... a session's records belong in the session directory ... and
     /// equally in the process log, because the interesting question is often
     /// 'what were the other ninety-five doing'").</b> The second destination is
     /// gone, at the maintainer's decision: <b>anything attributable to a session

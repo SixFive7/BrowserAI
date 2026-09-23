@@ -95,7 +95,7 @@ internal static partial class MessageWindows
     /// <param name="className">
     /// The class to walk. <b>Mandatory</b>: a <see langword="null"/> class
     /// returns nothing at all from this parent, as does
-    /// <c>EnumChildWindows(HWND_MESSAGE, …)</c>, and <c>EnumWindows</c> -- which
+    /// <c>EnumChildWindows(HWND_MESSAGE, ...)</c>, and <c>EnumWindows</c> -- which
     /// finds several hundred top-level windows -- has <i>zero</i> overlap with
     /// this set. A walk that dropped the class would silently find none.
     /// </param>

@@ -5,7 +5,7 @@
 
 **Read this if your MCP server has a check, a lint or a habit that keeps tool
 descriptions under 2 KB.** Yours is probably calibrated on a guess. Mine was. The
-guess is now unnecessary — here is the measurement, and the recipe to re-run it
+guess is now unnecessary -- here is the measurement, and the recipe to re-run it
 yourself in about fifteen minutes at zero cost.
 
 You do not need to know anything about the project this came from.
@@ -22,9 +22,9 @@ verbatim:
 
 **"Each" does not say each *what*.** Two readings, and they imply opposite fixes:
 
-- **Per string** — every `description` and the `instructions` block get their own
+- **Per string** -- every `description` and the `instructions` block get their own
   2 KB. Trimming a description helps.
-- **Per serialized tool** — the whole `tools/list` entry (name + description +
+- **Per serialized tool** -- the whole `tools/list` entry (name + description +
   the entire `inputSchema` including every parameter description) shares one 2 KB
   bucket. Under this reading, **trimming a description just moves text from one
   capped bucket into the same capped bucket** and fixes nothing.
@@ -37,8 +37,8 @@ the second reading.
 ## The answer
 
 **Measured 2026-08-18 against Claude Code `2.1.234` on Windows 11.** Read off the
-client's own outbound `POST /v1/messages` request — the actual `tools` array the
-model receives — not off a model's recollection. Reproduced twice, against
+client's own outbound `POST /v1/messages` request -- the actual `tools` array the
+model receives -- not off a model's recollection. Reproduced twice, against
 `sonnet` and `haiku`, byte-identical, because the cut is client-side.
 
 | Question | Answer |
@@ -49,12 +49,12 @@ model receives — not off a model's recollection. Reproduced twice, against
 | Code units or code points? | **Code units**, and the cut is surrogate-aware |
 | Are `inputSchema.properties[*].description` capped? | **No. Not at all** |
 | Total budget across `tools/list`? | **No** |
-| What does a cut look like? | Hard positional cut, then the literal **`… [truncated]`** appended |
+| What does a cut look like? | Hard positional cut, then the literal **`... [truncated]`** appended |
 
 ### The evidence, probe by probe
 
 **Per string, not per tool.** A probe tool published a 1,500-character
-description plus four 700-character parameter descriptions — every individual
+description plus four 700-character parameter descriptions -- every individual
 string well under the cap, whole serialized entry **4,578 bytes**. It arrived
 **completely intact**. Pushed further: an entry of **17,411 bytes** (eight
 2,000-character parameter descriptions) and one of **20,172 bytes** (a single
@@ -75,7 +75,7 @@ guard counts UTF-8 bytes, it is rejecting text the client would have delivered.
 2,049 cut. The predicate is `> 2048`.
 
 **Code units, not code points.** A description of 1,539 code points spread over
-3,000 UTF-16 units (emoji) was cut — at unit 2,048, which is code point 1,044.
+3,000 UTF-16 units (emoji) was cut -- at unit 2,048, which is code point 1,044.
 Under a code-point cap it would have arrived whole.
 
 **Surrogate-aware.** A probe was built so that UTF-16 index 2,047 is a *high*
@@ -94,14 +94,14 @@ in one request (body 392,983 bytes): nothing dropped, nothing cut, every marker
 present including the last tool of the last server.
 
 **What a cut looks like.** The delivered string is the published string's exact
-prefix followed by the literal `… [truncated]` — U+2026 HORIZONTAL ELLIPSIS,
-space, `[truncated]` — **13 characters, 15 bytes**. So a truncated string arrives
+prefix followed by the literal `... [truncated]` -- U+2026 HORIZONTAL ELLIPSIS,
+space, `[truncated]` -- **13 characters, 15 bytes**. So a truncated string arrives
 at **2,061 characters**. Nothing is dropped wholesale: not the field, not the
 tool.
 
 ⚠️ **The suffix is visible to the model and invisible to your server.** It is
 added after your JSON-RPC response has left. There is no error, no notification,
-no re-request. **A server cannot detect its own truncation.** A *model* can — so
+no re-request. **A server cannot detect its own truncation.** A *model* can -- so
 "did that arrive whole?" is answerable by asking, and unanswerable by logging.
 
 ---
@@ -114,21 +114,21 @@ no re-request. **A server cannot detect its own truncation.** A *model* can — 
 
 2. **If your guard counts UTF-8 bytes: it is miscalibrated in the safe
    direction.** For UTF-8 the byte count is never below the character count, so a
-   byte gate can only produce *false* failures — but it will reject a
+   byte gate can only produce *false* failures -- but it will reject a
    2,000-character description carrying em dashes, curly quotes or emoji that the
    client delivers whole. Switch to `String.length` / UTF-16 code units. That is
    not a relaxation; it is the end of a guess.
 
 3. **If your guard also caps parameter descriptions: the client does not.** Keep
-   the cap if you want — I did — but **relabel it a house limit, not a client
+   the cap if you want -- I did -- but **relabel it a house limit, not a client
    limit**, so nobody later cites it as documented. My reason for keeping it: it
    floats with a client version I do not control, and one shared parameter
    description injected across dozens of tools would become dozens of silent
    truncations the day a release starts cutting schemas.
 
 4. **Stop worrying about whole-entry totals.** They are not a budget. Keep
-   *reporting* them if it is cheap — that is the number a future per-tool bucket
-   would be judged against — but do not fail a build on them.
+   *reporting* them if it is cheap -- that is the number a future per-tool bucket
+   would be judged against -- but do not fail a build on them.
 
 5. **Boundary off-by-one:** a description of exactly 2,048 is fine. 2,049 is not.
 
@@ -144,21 +144,21 @@ Fifteen minutes, no cost, no real API call, no real credential. Everything runs
 on `127.0.0.1`.
 
 **The trick:** Claude Code honours `ANTHROPIC_BASE_URL`. Point it at a local HTTP
-server and you get the full request body — including the `tools` array byte for
-byte — on disk. Answer with a minimal SSE stream and the client is satisfied and
+server and you get the full request body -- including the `tools` array byte for
+byte -- on disk. Answer with a minimal SSE stream and the client is satisfied and
 exits cleanly. The model never runs, so nothing depends on it complying,
 paraphrasing, or refusing.
 
 **Auth, both parts learned the hard way:**
 
-- `ANTHROPIC_API_KEY` with a made-up key **does not work** — the client prints
+- `ANTHROPIC_API_KEY` with a made-up key **does not work** -- the client prints
   `Not logged in · Please run /login` and never sends `/v1/messages`. (It still
   sends `HEAD /api/hello` to your base URL, which is a handy proof that the
   interception itself works.)
 - **`ANTHROPIC_AUTH_TOKEN` with any throwaway string works immediately.** Use
   that.
 
-### 1. The capture server — `capture.js`
+### 1. The capture server -- `capture.js`
 
 ```js
 const http = require('http'), fs = require('fs'), path = require('path');
@@ -206,7 +206,7 @@ http.createServer((req, res) => {
 }).listen(port, '127.0.0.1', () => console.error(`capture on 127.0.0.1:${port}`));
 ```
 
-### 2. The probe MCP server — `probe.js`
+### 2. The probe MCP server -- `probe.js`
 
 Raw JSON-RPC over stdio; no SDK, so there is nothing to install.
 
@@ -239,7 +239,7 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: {
       huge: { type: 'string', description: ascii(20000, [{ at: 20000, text: `PHUGE-END-${S}` }]) } } } },
   // Bytes or characters? 2,669 chars but 7,801 bytes.
-  { name: 'probe_multibyte', description: '—'.repeat(2600) + `MB-END-${S}`,
+  { name: 'probe_multibyte', description: '--'.repeat(2600) + `MB-END-${S}`,
     inputSchema: { type: 'object', properties: {} } },
 ];
 const INSTRUCTIONS = ascii(2600, [{ at: 2000, text: `INSTR-AT2000-${S}` }, { at: 2600, text: `INSTR-END-${S}` }]);
@@ -272,7 +272,7 @@ process.stdin.on('data', d => {
 ### 3. Run it
 
 ⚠️ **`CLAUDE_CONFIG_DIR` must point at a scratch directory.** Without it,
-`claude mcp add` writes into `~/.claude.json` — your own MCP configuration.
+`claude mcp add` writes into `~/.claude.json` -- your own MCP configuration.
 
 ```bash
 mkdir -p /tmp/probe/cfg /tmp/probe/cap /tmp/probe/proj
@@ -287,7 +287,7 @@ ANTHROPIC_AUTH_TOKEN=throwaway \
 claude -p "Reply with the single word OK." --model sonnet
 ```
 
-You should see `CAPTURED` — that is your fake endpoint's reply, which means the
+You should see `CAPTURED` -- that is your fake endpoint's reply, which means the
 request was intercepted. Afterwards, confirm your real config was untouched:
 `grep probe ~/.claude.json` must find nothing.
 
@@ -296,7 +296,7 @@ request was intercepted. Afterwards, confirm your real config was untouched:
 ```js
 // node analyse.js /tmp/probe/cap/body-004.json   (pick the LARGEST body-*.json)
 const fs = require('fs');
-const SUF = '… [truncated]';
+const SUF = '... [truncated]';
 const b = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const B = s => Buffer.byteLength(s || '', 'utf8');
 console.log('tools in request:', b.tools.length,
@@ -316,7 +316,7 @@ for (const t of b.tools.filter(t => t.name.includes('probe'))) {
 - `probe_control` intact ← *if this is missing, the run is void; fix registration
   before reading anything else*
 - `probe_2047` and `probe_2048` intact, `probe_2049` cut to 2,061 units
-- `probe_entry_over` intact — description and all four parameters — with a whole
+- `probe_entry_over` intact -- description and all four parameters -- with a whole
   entry around 4.6 KB
 - `probe_param_huge.huge` intact at 20,000 units
 - `probe_multibyte` cut to 2,061 units (≈ 6 KB), proving characters not bytes
@@ -336,7 +336,7 @@ rm -rf /tmp/probe              # scratch config, captures, probes
 
 - **One client, one version.** Claude Code `2.1.234`, Windows 11 Pro 26200,
   Node v26.7.0. Nothing here is a protocol guarantee and nothing watches it for
-  you — there is no version header, no notification and no server-side signal when
+  you -- there is no version header, no notification and no server-side signal when
   it changes. Put a re-check on whatever list you re-work at dependency-bump time.
 - **The dangerous direction is a release that introduces a per-tool bucket.**
   Servers with large schemas would fail it on day one, silently, with the
@@ -345,5 +345,5 @@ rm -rf /tmp/probe              # scratch config, captures, probes
 - **Not probed:** whether the same cap applies to Claude Code's own built-in tool
   descriptions; whether a total budget exists above 348 KB; whether *any* other
   MCP client behaves this way.
-- **The 348 KB result establishes no cap at 348 KB** — not that no cap exists
+- **The 348 KB result establishes no cap at 348 KB** -- not that no cap exists
   anywhere above it.

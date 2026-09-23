@@ -360,9 +360,9 @@ internal sealed class VerticalSliceTests
         // ⚠️ THE INLINE HALF IS UPSTREAM'S OWN IMAGE SINCE 2026-08-26, AND IT IS
         // THE FILE'S IMAGE AGAIN SINCE 2026-09-15 -- for a different reason than
         // it was before. *Corrected 2026-09-15 (previously "AND IT IS NOT THE
-        // FILE'S BYTES … upstream puts its bytes through
+        // FILE'S BYTES ... upstream puts its bytes through
         // `scaleImageToFitMessage` first, which shrinks anything over 1,568 px
-        // on a side and re-encodes … at the 1920x1080 default the file is the
+        // on a side and re-encodes ... at the 1920x1080 default the file is the
         // full capture and the inline block is scaled DOWN in pixels while being
         // several times LARGER in bytes -- 9,379 on disk against 379,731 inline
         // on 2026-08-26, because a re-encode is not Chromium's own encoder",
@@ -423,7 +423,7 @@ internal sealed class VerticalSliceTests
         // because an absolute path here would mean somebody had started
         // rewriting answers again", asserting `DoesNotContain(SessionDirectory)`).*
         // THE PREMISE WAS THE PART THAT AGED, NOT THE CLAIM. The link is
-        // `- [Screenshot of viewport](C:\…\output\page-….png)` since
+        // `- [Screenshot of viewport](C:\...\output\page-....png)` since
         // `filePaths: "absolute"` was adopted, so an absolute path in the answer
         // is now UPSTREAM'S OWN and says nothing about whether anybody rewrote
         // anything. *Corrected 2026-08-26 before that (previously "the note that

@@ -13,10 +13,10 @@ namespace BrowserAI.Hosting;
 /// prompt cannot be answered by a background MCP server.
 /// </para>
 /// <para>
-/// ⚠️ <b>Corrected 2026-09-15 (previously "The layout under an install root …
+/// ⚠️ <b>Corrected 2026-09-15 (previously "The layout under an install root ...
 /// It never computed the root in the installed case -- it takes one. What step 19
 /// added is <see cref="Updates.InstallLocation"/>, which <i>locates</i> that root
-/// … when this process is an installed one").</b> It computes it again, and that
+/// ... when this process is an installed one").</b> It computes it again, and that
 /// is the whole of the layout decision taken this date: <b>the data root is the
 /// constant <c>%LocalAppData%\BrowserAI</c></b> and the install root is
 /// <c>%LocalAppData%\BrowserAI.app</c>, a sibling rather than a parent. The

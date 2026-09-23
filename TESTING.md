@@ -37,7 +37,7 @@
 >   change a red build instead of a surprise in production.
 >
 >   ⚠️ *Corrected 2026-08-18 (previously "Every tool **classified by session
->   type** … An unclassified tool fails the build -- that rule is what makes an
+>   type** ... An unclassified tool fails the build -- that rule is what makes an
 >   upstream addition a red build instead of a **security incident**").* The
 >   tool-permission policy was removed: it was never a boundary against the
 >   caller, who chooses the session directory and reads the profile inside it as
@@ -194,7 +194,7 @@ The reclaim pass runs before anything else and is idempotent:
   deliberately wrong creation time** -- a reclaim that regressed to matching on the
   number alone would end the run rather than fail it.
 
-  ⚠️ **Corrected 2026-08-29 (previously "one line per process the harness starts …
+  ⚠️ **Corrected 2026-08-29 (previously "one line per process the harness starts ...
   read and *emptied* by the pass").** A row also names its **owner** -- the identity
   of the process that started the recorded process and holds the job object
   containing it -- and the pass terminates a subject only when that owner is
@@ -277,7 +277,7 @@ poll the file.
 
 ```powershell
 $root = (Get-Location).Path
-$root = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)   # C:\… -- forced
+$root = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)   # C:\... -- forced
 $log  = ".work\suite\ps-$(Get-Date -Format yyyyMMdd-HHmmss).log"
 $run  = "`$env:BROWSERAI_DRIVE_CASE='upper'; dotnet test '$root\BrowserAI.slnx' 2>&1 |" +
         " Tee-Object -LiteralPath '$log'; Get-Content .work\suite-coverage.txt | Add-Content -LiteralPath '$log'"
@@ -288,8 +288,8 @@ Start-Process pwsh -PassThru -WindowStyle Hidden -WorkingDirectory $root `
 **From Git Bash:**
 
 ```bash
-root=$(cygpath -m "$PWD")                                              # C:/…
-root="$(printf %s "${root:0:1}" | tr 'A-Z' 'a-z')${root:1}"            # c:/… -- forced
+root=$(cygpath -m "$PWD")                                              # C:/...
+root="$(printf %s "${root:0:1}" | tr 'A-Z' 'a-z')${root:1}"            # c:/... -- forced
 log=.work/suite/bash-$(date +%Y%m%d-%H%M%S).log
 nohup bash -c "BROWSERAI_DRIVE_CASE=lower dotnet test '$root/BrowserAI.slnx' 2>&1 | tee $log
                cat .work/suite-coverage.txt >> $log" >/dev/null 2>&1 </dev/null &
@@ -399,9 +399,9 @@ until grep -q "Test run summary" "$log"; do sleep 5; done; tail -12 "$log"
   would look like a simplification.
 
   ⚠️ ***Corrected 2026-08-24 (previously "The shell the test host inherits is
-  still the shell you started from … `Start-Process pwsh` from PowerShell and
+  still the shell you started from ... `Start-Process pwsh` from PowerShell and
   `bash -c` from Git Bash each pass their own working directory down, so the
-  drive letter still arrives `C:\…` from one and `c:\…` from the other --
+  drive letter still arrives `C:\...` from one and `c:\...` from the other --
   verified 2026-08-23, on the six-run gate that shipped this section, by reading
   the spelling back out of each log").*** The verification was real and the
   property was not: it holds run to run rather than by construction. **On the
@@ -443,8 +443,8 @@ spelling comes from whatever started the shell, so a harness-started Git Bash an
 a human-started one are not the same instrument.
 
 **Measured 2026-08-24 on this machine, which is why `cd` is not the lever.** A
-Git Bash that *inherits* its working directory hands a child `c:\…`; the same
-shell after **any** `cd` -- `/c/…`, `c:/…`, `C:/…`, `c:\…` -- hands it `C:\…`,
+Git Bash that *inherits* its working directory hands a child `c:\...`; the same
+shell after **any** `cd` -- `/c/...`, `c:/...`, `C:/...`, `c:\...` -- hands it `C:\...`,
 because MSYS resolves the real path and Windows always answers upper. So the two
 invocations above force the spelling somewhere `cd` cannot reach it:
 
@@ -488,7 +488,7 @@ Different guarantees, and the first cannot stand in for the second.
 ⚠️ **They differ in a second dimension nobody had measured, found 2026-09-15 by a
 test that asserted the wrong thing.** A test host started by
 `Start-Process pwsh -WindowStyle Hidden` inherits a **console** standard input;
-one started by `nohup bash -c … | tee` inherits a **pipe**. The arm that noticed
+one started by `nohup bash -c ... | tee` inherits a **pipe**. The arm that noticed
 was red from PowerShell and green from Git Bash on the same tree, and it was
 rewritten -- a suite cannot assert either value without asserting a property of
 whoever started it (`InstallerHandoffTests.TheConsoleQuestionIsRepeatableAndHasNoSideEffect`
@@ -1004,8 +1004,8 @@ one pass, each state byte-stable under repetition of its own kind:
 
 | Restore | `src/BrowserAI.Core/packages.lock.json` | SHA-256 |
 |---|---|---|
-| `dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64` | section **present** | `fab160c4…` |
-| `dotnet restore BrowserAI.slnx` -- what `dotnet test` runs | section **absent** | `7f30ec57…` |
+| `dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64` | section **present** | `fab160c4...` |
+| `dotnet restore BrowserAI.slnx` -- what `dotnet test` runs | section **absent** | `7f30ec57...` |
 
 **So committing it does not end the oscillation; it moves which end of it is the
 dirty one** -- and that is still the right way round, which is the argument rather
@@ -1034,19 +1034,19 @@ is **Q201**, decided the same day, and the decision it replaces is Q199 rather
 than contradicting it: Q199 chose *which* of two states to commit, which was the
 only move available while there were two.
 
-**Measured the day it went in, five reads, every one `fab160c4…`** -- the state
+**Measured the day it went in, five reads, every one `fab160c4...`** -- the state
 this table calls *section present*, now written by the restore that used to remove
 it:
 
 | Restore, after the RID is declared | `src/BrowserAI.Core/packages.lock.json` |
 |---|---|
-| `dotnet restore --force-evaluate` (solution) | `fab160c4…` |
-| `dotnet publish src/BrowserAI.App/BrowserAI.App.csproj -c Release -r win-x64 --self-contained` | `fab160c4…` |
-| `dotnet restore` (plain, solution) | `fab160c4…` |
-| `dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate` | `fab160c4…` |
-| `dotnet restore BrowserAI.slnx --force-evaluate` | `fab160c4…` |
+| `dotnet restore --force-evaluate` (solution) | `fab160c4...` |
+| `dotnet publish src/BrowserAI.App/BrowserAI.App.csproj -c Release -r win-x64 --self-contained` | `fab160c4...` |
+| `dotnet restore` (plain, solution) | `fab160c4...` |
+| `dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate` | `fab160c4...` |
+| `dotnet restore BrowserAI.slnx --force-evaluate` | `fab160c4...` |
 
-**`7f30ec57…` is no longer reachable**, and the last two rows are the pair that
+**`7f30ec57...` is no longer reachable**, and the last two rows are the pair that
 disagreed -- each forced to actually re-resolve, because a restore that finds a
 lock file and is not asked to re-evaluate does not rewrite anything and would
 have proved nothing. `dotnet build` of the whole solution after the change: 0
@@ -1097,7 +1097,7 @@ What we build, and what each replaces:
 
 | Component | Purpose | Replaces |
 |---|---|---|
-| `McpTestHarness` | The **two-hop** topology: test client → BrowserAI (server) … BrowserAI (client) → fake child. Two pipe pairs, not one. | `ClientServerTestBase` |
+| `McpTestHarness` | The **two-hop** topology: test client → BrowserAI (server) ... BrowserAI (client) → fake child. Two pipe pairs, not one. | `ClientServerTestBase` |
 | `FakePlaywrightChild` | Scriptable in-process MCP server standing in for `@playwright/mcp`: canned `tools/list`, programmable `tools/call` results, injectable errors, delays, oversized payloads, unknown content types, mid-call death | `TestServerTransport` |
 | `TUnitLoggerProvider` | Routes `ILogger` into TUnit's per-test output | `XunitLoggerProvider` + `DelegatingTestOutputHelper` |
 | `CapturingLoggerProvider` | Captures log records for assertions | `MockLoggerProvider` |
@@ -1151,7 +1151,7 @@ SDK's model of it.
 
 **Settled 2026-08-18**, the maintainer's instruction verbatim: *"Remove any
 timings other than timeouts that catch really hung processes. Even on slow
-systems. … Best case scenario is that we remove all the timing things and have
+systems. ... Best case scenario is that we remove all the timing things and have
 everything push or event driven with only timeouts for VERY good reasons. Like
 relaxed timeouts that catch hung tests or something. But these should have ample
 of room so tests do not hit these even under constrained system resources."*
@@ -1159,7 +1159,7 @@ of room so tests do not hit these even under constrained system resources."*
 Every duration in `tests/` therefore answers one question, and the answer decides
 what happens to it.
 
-| It is… | Then |
+| It is... | Then |
 |---|---|
 | **guessing how long something takes** | Delete it. Replace it with the event it was standing in for: a handle that signals, a process that exits, a file that appears, a frame that arrives, a gate the test releases, a `ManualClock` the test drives |
 | **catching a hang** | Keep it, take it from `TestDefaults`, and give it headroom a starved machine cannot reach. Say on it that it is a hang detector and that nothing may assert on it |
@@ -1194,7 +1194,7 @@ found to have left two of these standing.*
 `HouseRuleTests.NoAssertionBoundsAMeasuredDurationWithANumberItInvented` reads
 the tree for an assertion that bounds a **measured** duration from above, and
 fails if the bound is a number rather than the name of one -- `1000`, or a
-`TimeSpan.From…` around a literal. It carries a synthetic positive control
+`TimeSpan.From...` around a literal. It carries a synthetic positive control
 rebuilt from the exact assertion deleted that day, because the tree is clean and
 a clean tree is indistinguishable from a scan whose needles stopped matching.
 
@@ -1336,7 +1336,7 @@ cannot tell anybody they are forty bytes from silent truncation.
 
 > **The per-string reading is measured, not assumed.** *Corrected 2026-08-18
 > (previously "⚠️ The per-string reading is an assumption and the constant says
-> so … the experiment commissioned to settle it has its data").* The experiment
+> so ... the experiment commissioned to settle it has its data").* The experiment
 > ran @ Claude Code 2.1.234, reading the `tools` array the client sends to the
 > Messages API: **per string, 2,048 UTF-16 characters, cut at `> 2048`**, no
 > per-tool bucket, no whole-surface total, and parameter descriptions not
@@ -1581,7 +1581,7 @@ consequences a reader has to carry:
   *added 2026-09-17 by addition*.** Neither this paragraph nor
   [`CLAUDE.md`](CLAUDE.md)'s said so, and the only place it was written down was
   the refusal it produces: a gate attempt on 2026-09-17 cost **34 reds** reading
-  *the published binary … is older than 7 source file(s), so this test would
+  *the published binary ... is older than 7 source file(s), so this test would
   prove nothing about the code in the tree*. Around thirty arms drive the
   published NativeAOT binary rather than the tree, and `PublishedSlice.EnsureFresh`
   refuses all of them together. The commands are the two that refusal names:
@@ -1602,8 +1602,8 @@ consequences a reader has to carry:
   run -- leaves the published binaries older than something that went into them,
   exactly as a source edit would. **Measured 2026-09-22 on the release gate's own
   pre-flight run: 47 reds**, every one of them
-  *the published binary at '…\BrowserAI.Server.exe' is older than 1 source
-  file(s) … build\payload\package-lock.json*, on a tree whose `src/` nobody had
+  *the published binary at '...\BrowserAI.Server.exe' is older than 1 source
+  file(s) ... build\payload\package-lock.json*, on a tree whose `src/` nobody had
   touched since the previous publish. **Re-publish BOTH slices after a payload
   rebuild**, with the same two commands, and note the ORDER a release runs in:
   [item 1](RELEASING.md#1-everything-re-resolved-to-latest-and-green) re-resolves

@@ -17,7 +17,7 @@ namespace BrowserAI.Tests;
 /// earns its place the way an instrument does -- by having failed.</b> On
 /// 2026-08-29 a Firefox containment arm stalled out Playwright's own 180 s
 /// <c>initializeServer</c> budget inside a gate run. The dump that arrived
-/// named three capture files and said <c>(unreadable: … because it is being
+/// named three capture files and said <c>(unreadable: ... because it is being
 /// used by another process)</c> for every one of them, with <c>(0 bytes)</c>
 /// beside each. Everything worth knowing about that stall was in those files;
 /// the scratch tree was then deleted, as it is designed to be, and the account
@@ -53,9 +53,9 @@ internal sealed class LauncherEvidenceTests
     /// </para>
     /// <para>
     /// <b>Watched red 2026-08-30 against the old body</b>, which threw
-    /// <c>IOException</c> -- <i>"the process cannot access the file … because it
+    /// <c>IOException</c> -- <i>"the process cannot access the file ... because it
     /// is being used by another process"</i>, the same sentence the 2026-08-29
-    /// dump carried -- and reported it as <c>(unreadable: …)</c>. Established
+    /// dump carried -- and reported it as <c>(unreadable: ...)</c>. Established
     /// first outside the suite against a real <c>node</c> holder and then in
     /// process, so the sharing arithmetic is not being inferred from one API.
     /// </para>
@@ -118,7 +118,7 @@ internal sealed class LauncherEvidenceTests
     /// <para>
     /// <b>This is the arm the fix above cannot satisfy by accident.</b> An
     /// exclusive holder refuses every reader, including one sharing everything,
-    /// so <c>(unreadable: …)</c> is the correct and honest answer here and stays.
+    /// so <c>(unreadable: ...)</c> is the correct and honest answer here and stays.
     /// What must not survive is the number that used to sit beside it: the dump
     /// printed <c>(0 bytes)</c> for three files in the same breath as saying it
     /// could not read them, and a reader has no way to tell that figure from one
@@ -126,7 +126,7 @@ internal sealed class LauncherEvidenceTests
     /// </para>
     /// <para>
     /// <b>Watched red 2026-08-30 against the old body</b>, which printed a
-    /// cached byte count beside its own <c>(unreadable: …)</c> for a file it had
+    /// cached byte count beside its own <c>(unreadable: ...)</c> for a file it had
     /// just been refused. The control that keeps this from passing vacuously is
     /// the arm above: if <see cref="LauncherWait.Evidence"/> ever stopped
     /// printing lengths altogether, that one goes red.

@@ -619,8 +619,14 @@ internal sealed partial class ChangelogTests
         // inside a code span are all left alone.
         await Assert.That(Generated(string.Join(" ", Palette.Select(entry => $"{entry.Icon} {entry.Means}")))).IsEmpty();
         await Assert.That(Generated("TUnit moved 1.67.0 → 1.68.4.")).IsEmpty();
-        await Assert.That(Generated("reads around a `previously \"…\"` clause")).IsEmpty();
-        await Assert.That(Generated("reads around a previously \"…\" clause")).IsNotEmpty();
+        // ⚠️ BUILT FROM ITS CODE POINT, because the 2026-09-23 character sweep
+        // replaced the literal one here with three full stops and left these two
+        // controls asserting nothing -- which is exactly the shape a control is
+        // for, and it went red on its own scan the same hour.
+        var ellipsis = ((char)0x2026).ToString();
+
+        await Assert.That(Generated($"reads around a `previously \"{ellipsis}\"` clause")).IsEmpty();
+        await Assert.That(Generated($"reads around a previously \"{ellipsis}\" clause")).IsNotEmpty();
 
         // Not vacuous over the tree: every section and every entry is read.
         await Assert.That(ReleaseBodyText(text).Count).IsGreaterThan(200);
@@ -728,7 +734,7 @@ internal sealed partial class ChangelogTests
 
             if (!shaped.Success)
             {
-                offences.Add($"CHANGELOG.md:{number}: not '- <icon> **Headline.** …' -- {Excerpt(line)}");
+                offences.Add($"CHANGELOG.md:{number}: not '- <icon> **Headline.** ...' -- {Excerpt(line)}");
                 continue;
             }
 
@@ -806,7 +812,7 @@ internal sealed partial class ChangelogTests
     /// <param name="line">The line.</param>
     /// <returns>An excerpt, since an unwrapped entry runs to thousands.</returns>
     private static string Excerpt(string line) =>
-        line.Length <= 80 ? line : line[..80] + "…";
+        line.Length <= 80 ? line : line[..80] + "...";
 
     /// <summary>Group headings that repeat, run out of order, or are not groups at all.</summary>
     /// <param name="changelog">The changelog's text.</param>
@@ -1370,7 +1376,7 @@ internal sealed partial class ChangelogTests
     /// ⚠️ <b>An entry above the first <c>### </c> heading crashed with a message
     /// about a null-valued expression</b> -- <c>$group</c> is
     /// <see langword="null"/> there and <c>Set-StrictMode</c> turns
-    /// <c>$null.Entries.Add(…)</c> into a stack trace naming a variable nobody
+    /// <c>$null.Entries.Add(...)</c> into a stack trace naming a variable nobody
     /// reading a changelog has heard of.
     /// </para>
     /// <para>

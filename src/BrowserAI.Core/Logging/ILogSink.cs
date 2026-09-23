@@ -10,7 +10,7 @@ namespace BrowserAI.Logging;
 /// <para>
 /// ⚠️ <b>There is one, and there were two until 2026-08-26</b> -- <i>previously
 /// "There are two: the machine-wide rolling process log, and one file per session
-/// beside its <c>browserai.json</c> … the two files are read side by side while
+/// beside its <c>browserai.json</c> ... the two files are read side by side while
 /// somebody works out what a session did and what the machine was doing to it"</i>.
 /// The per-session log file is gone: everything it carried is on stderr, which the
 /// session's logging stack already wrote to at every level, and what the session

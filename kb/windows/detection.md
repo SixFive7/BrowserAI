@@ -126,7 +126,7 @@ and is declared unguarded in the public SDK, so the usual worry is unfounded.
 
 > ⚠️ **We are depending on undocumented behaviour of a documented function, and
 > it must be pinned by a test.** `GetWindowTextW`'s contract says: *"If the target
-> window is owned by another process **and has a caption** … If the window does
+> window is owned by another process **and has a caption** ... If the window does
 > not have a caption, the return value is a null string."* A `Chrome_MessageWindow`
 > is created with `dwStyle = 0` and **has no caption**. By the documentation this
 > should return empty. It does not. Stable since NT and not plausibly changeable,
@@ -277,7 +277,7 @@ user.~~ `[STABLE]` for the schema; `[MACHINE]` for the error text.
 **`FindWindowExW(HWND_MESSAGE, prev, "Chrome_MessageWindow", NULL)` walks all 55
 windows in 0.43 ms**; the full sweep including a title read per window costs
 ~2.7 ms. The class name is **mandatory** -- a `NULL` class returns 0, as does
-`EnumChildWindows(HWND_MESSAGE, …)`, and `EnumWindows` finds 632 top-level windows
+`EnumChildWindows(HWND_MESSAGE, ...)`, and `EnumWindows` finds 632 top-level windows
 with **zero overlap** with the message-only set. `[FLOATS]`
 
 Demonstrated live: one agent's sweep surfaced *the other agent's* browser, in a
@@ -349,7 +349,7 @@ titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 
 > ✅ **Settled 2026-08-17. `Corrected 2026-08-17 (previously "That last
 > observation disagrees with the selector logic, and the selector is
-> authoritative … `[UNVERIFIED]` as to which branch the run took")`.** There was
+> authoritative ... `[UNVERIFIED]` as to which branch the run took")`.** There was
 > never a disagreement: `--browser chromium` **is** a channel, and the missing
 > half was the CLI stage that supplies it. Read from the resolved
 > `playwright-core/lib/coreBundle.js`, three functions in a row --
@@ -359,7 +359,7 @@ titled window (2.0 µs read, driven over real stdio JSON-RPC). `[FLOATS]`
 >    `switch`, and `"chromium"` is the one case that substitutes a channel the
 >    caller did not type.
 > 2. `configFromCLIOptions` copies that straight into `launchOptions.channel`.
-> 3. `getExecutableName` tests `options.channel && registry.isChromiumAlias(…)`
+> 3. `getExecutableName` tests `options.channel && registry.isChromiumAlias(...)`
 >    **before** it reaches the `headless ? "chromium-headless-shell" :
 >    "chromium"` line, and `chromiumAliases` is exactly `["chrome-for-testing"]`.
 >
@@ -423,7 +423,7 @@ object manager rather than the filesystem, and neither talks to a server.
 | | `GetDriveTypeW("X:\")` | `QueryDosDeviceW("X:")` |
 |---|---|---|
 | an ordinary local volume | `DRIVE_FIXED` (3) | `\Device\HarddiskVolume3` |
-| a mapped network drive | **`DRIVE_REMOTE` (4)** | `\Device\LanmanRedirector\…` or `\Device\Mup\…` |
+| a mapped network drive | **`DRIVE_REMOTE` (4)** | `\Device\LanmanRedirector\...` or `\Device\Mup\...` |
 | a `subst` | `DRIVE_FIXED` (3) -- **invisible** | **`\??\C:\the\real\path`** |
 | a letter that names nothing | `DRIVE_NO_ROOT_DIR` (1) | fails, `ERROR_FILE_NOT_FOUND` |
 | cost | **0.9 ms** warm | **0.0103-0.0212 ms**, 1,000 calls |
@@ -448,7 +448,7 @@ it moved, so it has a re-verification row.
 PowerShell 7 on .NET 10.0.11, Windows 11 Pro 26200. `[MACHINE]` for the figure,
 `[FLOATS]` for the SMB timeout behind it.
 
-`DefineDosDeviceW(DDD_RAW_TARGET_PATH, "V:", @"\Device\LanmanRedirector\;V:…\10.255.255.1\share")`
+`DefineDosDeviceW(DDD_RAW_TARGET_PATH, "V:", @"\Device\LanmanRedirector\;V:...\10.255.255.1\share")`
 then `DefineDosDeviceW(0, "W:", @"V:\dir")` -- a `subst` standing on a mapped
 drive, both unelevated, neither establishing an SMB session by itself:
 
@@ -509,7 +509,7 @@ are now normalised rather than refused.*
 |---|---|
 | 8.3 short name of an existing path | **yes** -- expanded in full |
 | 8.3 short prefix with a tail that does not exist | **yes** -- prefix expanded, tail preserved verbatim |
-| `\\?\C:\…` and `\\.\…` | no -- passed through untouched |
+| `\\?\C:\...` and `\\.\...` | no -- passed through untouched |
 | a directory junction | no |
 | a `subst` or mapped drive letter | no |
 
@@ -537,7 +537,7 @@ are now normalised rather than refused.*
 Measured over 200 calls on a local volume, `CreateFileW` with no access and
 `FILE_FLAG_BACKUP_SEMANTICS` plus `GetFinalPathNameByHandleW` with
 `VOLUME_NAME_DOS | FILE_NAME_NORMALIZED`. A junction, an 8.3 name, a `\\?\`
-prefix and a `subst`ed letter all came back as the same `\\?\C:\…` true path.
+prefix and a `subst`ed letter all came back as the same `\\?\C:\...` true path.
 `[MACHINE]` for the figure, `[STABLE]` for the resolution behaviour.
 
 ## Windows re-spells a path's drive letter; a process never re-spells its own
@@ -557,17 +557,17 @@ started it**, and stays that way for the life of the process:
 
 | Test host invoked from | `AppContext.BaseDirectory` |
 |---|---|
-| PowerShell / `pwsh` | `C:\Source\…` |
-| Git Bash, working directory **inherited** | `c:\Source\…` |
-| Git Bash, working directory reached by **any `cd`** | `C:\Source\…` |
+| PowerShell / `pwsh` | `C:\Source\...` |
+| Git Bash, working directory **inherited** | `c:\Source\...` |
+| Git Bash, working directory reached by **any `cd`** | `C:\Source\...` |
 
 ⚠️ ***Corrected 2026-08-24 (previously two rows, the second reading simply "Git
-Bash → `c:\Source\…`").*** Re-measured on this machine, .NET 10 / Windows 11
+Bash → `c:\Source\...`").*** Re-measured on this machine, .NET 10 / Windows 11
 26200 -- `[MACHINE]`, and the mechanism `[STABLE]`. The lower-case spelling is
 **not a property of Git Bash**: it is the spelling bash inherited from whatever
 started *it*, passed through untouched. **MSYS re-spells on `cd`**, whatever form
-the argument takes -- `/c/Source/…`, `c:/Source/…`, `C:/Source/…`, `c:\Source\…`
-all leave a child process with `C:\Source\…` -- because it resolves the real path
+the argument takes -- `/c/Source/...`, `c:/Source/...`, `C:/Source/...`, `c:\Source\...`
+all leave a child process with `C:\Source\...` -- because it resolves the real path
 and the mount manager answers upper. It also re-spells a **command** path given
 the same way, and it does **not** touch a path passed as an **argument**.
 
@@ -595,7 +595,7 @@ property of the caller's shell rather than of the product.** Reproduced at
 | Shell | `dotnet test` |
 |---|---|
 | PowerShell | total 484, **0 failed** |
-| Git Bash | total 484, **2 failed** -- both in `SessionDirectoryGuardTests`, both `Expected to contain "directory='c:\…'"` against a refusal that named `C:\…` |
+| Git Bash | total 484, **2 failed** -- both in `SessionDirectoryGuardTests`, both `Expected to contain "directory='c:\...'"` against a refusal that named `C:\...` |
 
 **To re-establish it:** run `dotnet test` from each shell on one commit. The
 cheap version is `[System.IO.Path]::GetFullPath('c:\windows')` beside
@@ -611,7 +611,7 @@ spelling no Windows API ever returns, so the wrong comparison goes red everywher
 rather than somewhere. Proof it does not need a shell: the planted arm failed
 *from PowerShell*, with the identical two failures Git Bash had produced.
 
-*Corrected 2026-08-20 (previously "CI cannot see this … Every step in `build.yml`
+*Corrected 2026-08-20 (previously "CI cannot see this ... Every step in `build.yml`
 runs under `pwsh`"): CI was removed that day, and the property is about
 single-shell runs rather than about CI.* With CI gone the release gate is the
 suite on one machine, so [release checklist item
@@ -620,7 +620,6 @@ PowerShell and from Git Bash**, and both totals recorded. That is belt beside
 `DriveLetterCase`'s braces, and it is what catches the next defect of this shape
 before the parameterisation has been extended to cover it.
 
-<a id="a-process-reports-the-junctions-target-not-the-spelling-it-was-launched-by--measured-2026-08-24"></a>
 ## A process reports the junction's target, not the spelling it was launched by -- measured 2026-08-24
 
 Measured 2026-08-24 on this machine, .NET 10 / Windows 11 26200. `[STABLE]` for
@@ -636,8 +635,8 @@ planted under the **target**, and the process was started through the **link**:
 
 | | |
 |---|---|
-| Launched as | `…\sweep-junctioned-root-<guid>\link\browsers\ours\chrome-win64\chrome.exe` |
-| `QueryFullProcessImageNameW` answers | `…\sweep-junctioned-root-<guid>\real\browsers\ours\chrome-win64\chrome.exe` |
+| Launched as | `...\sweep-junctioned-root-<guid>\link\browsers\ours\chrome-win64\chrome.exe` |
+| `QueryFullProcessImageNameW` answers | `...\sweep-junctioned-root-<guid>\real\browsers\ours\chrome-win64\chrome.exe` |
 
 So the object manager's resolution is what is reported, and it is reported for a
 process that never named the target at any point. `Path.Combine` resolves
@@ -798,7 +797,7 @@ returns `RM_UNIQUE_PROCESS { dwProcessId, ProcessStartTime }`. The start time is
 the PID-reuse guard, re-verified with `GetProcessTimes` before any kill. Mozilla's
 `ProfileUnlockerWin::TryToTerminate` does exactly this. `[STABLE]`
 
-> ⚠️ **Corrected 2026-08-16 @ build-order step 17 (previously "…and is worth
+> ⚠️ **Corrected 2026-08-16 @ build-order step 17 (previously "...and is worth
 > copying line for line").** **It is not copyable at all.** Mozilla's source is
 > **MPL-2.0** and this repository is `LicenseRef-BrowserAI-FSL-1.1-MIT-5yr`, so
 > taking its text would relicense a file of ours under terms the charter does not
@@ -926,7 +925,7 @@ a loop and catching. `[STABLE]`
 > calls `CreateMutexW` directly, so the question is left open rather than
 > answered. `[UNVERIFIED]` for the Win32 layer; the .NET layer is measured.
 
-**`FindWindowExW(HWND_MESSAGE, …)` is scoped to a window station and desktop.** A
+**`FindWindowExW(HWND_MESSAGE, ...)` is scoped to a window station and desktop.** A
 scheduled task configured *"run whether user is logged on or not"* lands in
 session 0 and **sees no message windows at all** -- it would sweep, find nothing,
 and report success forever. Any sweeper must run in the user's interactive
@@ -1327,7 +1326,7 @@ relocation to guard against at that layer -- the guard is correct and its
 justification was not. Both descriptions always agreed on the action, which is
 why nothing ever turned on it: the name must be hashed or canonicalised either
 way, which is what the design does. `Corrected 2026-08-17 (previously
-"Unresolved and flagged rather than reconciled … `[UNVERIFIED]` as to which
+"Unresolved and flagged rather than reconciled ... `[UNVERIFIED]` as to which
 failure a given name produces")`. What stays open is the raw `CreateMutexW`
 layer, named as open in the entry above rather than left as a disagreement here.
 
@@ -1376,7 +1375,6 @@ and **carried rather than re-measured** for the 10.4 ms / 0.12 ms figures: they
 were taken in that unpublished library on 2026-08-14 and not re-run here, so read
 them as an order of magnitude and not as this project's own numbers.
 
-<a id="the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20"></a>
 ## The pre-gate probe as a liveness report -- measured 2026-08-20
 
 `SessionLock.ProbeLiveness` is the open the per-directory gate's short-circuit
@@ -1479,7 +1477,7 @@ The whole privilege list of this token is `SeShutdownPrivilege`,
 `SeChangeNotifyPrivilege`, `SeUndockPrivilege`,
 `SeIncreaseWorkingSetPrivilege` and `SeTimeZonePrivilege`.
 **`SeCreateGlobalPrivilege` is absent**, and
-`new Mutex(false, "Global\\…", out created)` from session 1, non-elevated, still
+`new Mutex(false, "Global\\...", out created)` from session 1, non-elevated, still
 returned `createdNew=True`. So the machine-wide namespace is reachable by an
 ordinary interactive user and the name resolves in one place for every logon
 session -- which is the premise `LockScopes`' refusal to fall back to `Local\`
@@ -1491,7 +1489,7 @@ elsewhere.
 Read off the created handle:
 
 ```
-D:(A;;0x1f0001;;;SY)(A;;0x120001;;;S-1-5-5-0-260717)(A;;0x1f0001;;;S-1-5-21-…-1001)
+D:(A;;0x1f0001;;;SY)(A;;0x120001;;;S-1-5-5-0-260717)(A;;0x1f0001;;;S-1-5-21-...-1001)
 ```
 
 LOCAL SYSTEM full (`0x1F0001` is `MUTEX_ALL_ACCESS`); **the creating logon
@@ -1512,7 +1510,7 @@ that same name from the same process:
 
 | Call | Result |
 |---|---|
-| `new Mutex(false, name, out created)` | `UnauthorizedAccessException` -- *"Access to the path 'Global\\…' is denied."* |
+| `new Mutex(false, name, out created)` | `UnauthorizedAccessException` -- *"Access to the path 'Global\\...' is denied."* |
 | `Mutex.OpenExisting(name)` | the same |
 
 That is exactly `MachineMutex.Create`'s documented
@@ -1529,7 +1527,7 @@ SDDLs measured the same day. `BU` is `BUILTIN\Users`, `AU` is
 | `%LocalAppData%\BrowserAI\live\` | `(A;OICIID;FA;;;SY)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;<user>)` | **nothing** -- no `BU`, `AU` or `WD` ACE |
 | a `.live` marker inside it | `(A;ID;FA;;;SY)(A;ID;FA;;;BA)(A;ID;FA;;;<user>)` | **nothing** |
 | `<browsers>\reinstall.lock` | the same three | **nothing** |
-| a directory created at `C:\…`, the install-to shape | `(A;OICIID;FA;;;BA)(A;OICIID;FA;;;SY)(A;OICIID;0x1200a9;;;BU)(A;ID;0x1301bf;;;AU)(A;OICIIOID;SDGXGWGR;;;AU)` | list it and add to it |
+| a directory created at `C:\...`, the install-to shape | `(A;OICIID;FA;;;BA)(A;OICIID;FA;;;SY)(A;OICIID;0x1200a9;;;BU)(A;ID;0x1301bf;;;AU)(A;OICIIOID;SDGXGWGR;;;AU)` | list it and add to it |
 | a `.live` marker created inside **that** | `(A;ID;FA;;;BA)(A;ID;FA;;;SY)(A;ID;0x1200a9;;;BU)(A;ID;0x1301bf;;;AU)` | **read it, open it for write, and delete it** |
 
 `0x1200A9` is `FILE_GENERIC_READ | FILE_GENERIC_EXECUTE`. `0x1301BF` carries

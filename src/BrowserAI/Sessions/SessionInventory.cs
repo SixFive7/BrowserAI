@@ -278,7 +278,7 @@ internal sealed record ArtifactKind(string Name)
 /// </summary>
 /// <remarks>
 /// <b>A third spelling of a size, and it earns its place.</b> ⚠️ *Corrected
-/// 2026-08-29 (previously "A fourth spelling … The three that exist … are
+/// 2026-08-29 (previously "A fourth spelling ... The three that exist ... are
 /// fixed-unit: <c>browserai_list</c> and the artifact roll-up print MiB to one
 /// place").* The per-root roll-up is deleted, so the enumeration is one shorter
 /// and this is the third rather than the fourth. The two that

@@ -101,8 +101,8 @@ internal static class McpClientRegistration
     /// <remarks>
     /// Split from <see cref="ClientExecutable"/> deliberately: the search needs
     /// the extension and a reader does not, and one constant serving both
-    /// produced a recovery line reading <c>claude.exe mcp add …</c> in one place
-    /// and <c>claude mcp add …</c> in another.
+    /// produced a recovery line reading <c>claude.exe mcp add ...</c> in one place
+    /// and <c>claude mcp add ...</c> in another.
     /// </remarks>
     public const string ClientCommandName = "claude";
 
@@ -182,7 +182,7 @@ internal static class McpClientRegistration
     /// where it is run, and nowhere else. The command for that scope is written
     /// in its portable form, which is why it must reach the client as one
     /// argument through this vector and never be spelled into a shell line:
-    /// both of this machine's shells expand <c>${…}</c> themselves, and what
+    /// both of this machine's shells expand <c>${...}</c> themselves, and what
     /// would then be committed is one person's absolute path.
     /// </remarks>
     public static IReadOnlyList<string> AddArguments(string command, string scope) =>

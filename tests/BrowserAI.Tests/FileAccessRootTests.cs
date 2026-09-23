@@ -247,7 +247,7 @@ internal sealed partial class FileAccessRootTests
         var output = Path.Combine(session, SessionLayout.OutputFolderName);
 
         // ⚠️ ONE LOG, ASSERTED FIRST AND BY ITSELF. Before the sweep was deleted
-        // this directory held `console-….log`, `console-….log-2` and `-3`, and
+        // this directory held `console-....log`, `console-....log-2` and `-3`, and
         // the suffixes are the visible half of the defect: a file BrowserAI
         // renamed is a file no pointer anywhere names.
         var logs = Directory.EnumerateFiles(output, "console-*.log", SearchOption.AllDirectories).ToList();
@@ -307,7 +307,7 @@ internal sealed partial class FileAccessRootTests
         await Assert.That(checked_).IsEqualTo(3);
 
         // ⚠️ AND THE SNAPSHOT LINK, which was the same defect wearing a Markdown
-        // link. It read `./page-….yml` -- relative to the child's working
+        // link. It read `./page-....yml` -- relative to the child's working
         // directory -- until 2026-09-17, and reads an absolute path since.
         var links = SnapshotLink().Matches(navigated);
 

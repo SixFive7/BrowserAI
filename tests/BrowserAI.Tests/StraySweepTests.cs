@@ -48,7 +48,7 @@ namespace BrowserAI.Tests;
 ///   </item>
 ///   <item>
 ///     <term>R5 -- session-0 blindness</term>
-///     <description><c>FindWindowExW(HWND_MESSAGE, …)</c> is scoped to a window station and desktop, so a sweeper outside the interactive session sees no message windows at all -- it would sweep, find nothing, and report success forever. BrowserAI is a stdio child of an interactive client, so it is in the right session by construction, and this test is what stops that being an assumption</description>
+///     <description><c>FindWindowExW(HWND_MESSAGE, ...)</c> is scoped to a window station and desktop, so a sweeper outside the interactive session sees no message windows at all -- it would sweep, find nothing, and report success forever. BrowserAI is a stdio child of an interactive client, so it is in the right session by construction, and this test is what stops that being an assumption</description>
 ///   </item>
 ///   <item>
 ///     <term>R6 -- the store is enumerated while an <c>init</c> adds an entry</term>
@@ -551,7 +551,7 @@ internal sealed class StraySweepTests
     /// </summary>
     /// <param name="line">The line, comments already stripped.</param>
     /// <param name="file">The file it came from, which is half the keying.</param>
-    /// <returns>One entry per <c>Run(…)</c> call the line makes on a sweep.</returns>
+    /// <returns>One entry per <c>Run(...)</c> call the line makes on a sweep.</returns>
     private static string[] SweepPassArguments(string line, string file)
     {
         // Keyed on the expression OR the file, because the background thread's
@@ -676,7 +676,7 @@ internal sealed class StraySweepTests
         // ⚠️ `--enable-logging --log-file --v=1`, added 2026-08-18, and it is a
         // diagnostic rather than a change to what is under test. This arm has
         // failed at least three times in two days with *"exited before it
-        // published a message window … it wrote nothing to either stream"*, and
+        // published a message window ... it wrote nothing to either stream"*, and
         // the reason it stayed open that long is that Chromium's account of a
         // failed start does not go to stderr by default on Windows -- it goes to a
         // log file, and nobody had asked for one. A browser that dies saying
@@ -1156,7 +1156,7 @@ internal sealed class StraySweepTests
     /// ([kb](../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
     /// The loop evaluates <b>every</b> title on the machine rather than only a
     /// candidate's, and the class it walks is forgeable, so one process
-    /// registering <c>Chrome_MessageWindow</c> with a <c>Z:\…</c> title stalls
+    /// registering <c>Chrome_MessageWindow</c> with a <c>Z:\...</c> title stalls
     /// the whole pass -- while holding the machine-wide sweep mutex.
     /// </para>
     /// <para>
@@ -1430,7 +1430,7 @@ internal sealed class StraySweepTests
 
         // ⚠️ CASE-INSENSITIVE ON BOTH SIDES, and this arm was watched failing for
         // exactly that reason before it was: `ours.Real` is composed in this
-        // process from a working directory the shell spelled `c:\…`, and
+        // process from a working directory the shell spelled `c:\...`, and
         // QueryFullProcessImageNameW reports the drive letter upper-case whatever
         // started the host. See DriveLetterCase, and `Sessions\CLAUDE.md`, which
         // records the same defect arriving three times.

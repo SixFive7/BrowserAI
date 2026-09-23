@@ -287,7 +287,7 @@ internal sealed class SessionIndex
     /// not name. The falsifying input is an entry that is empty, relative or
     /// mis-hashed and points nowhere near <c>p</c>: returned here, not returned
     /// by <c>Follow()</c> filtered. The test the old sentence cited built its
-    /// expectation with <c>entry.Session is { } session &amp;&amp; …</c>, which
+    /// expectation with <c>entry.Session is { } session &amp;&amp; ...</c>, which
     /// drops exactly that class, so it excluded the only case where the
     /// equivalence fails; it now plants one and asserts the narrower claim.
     /// <b>Harmless in the product today</b> -- <c>SessionManager.List</c> and
@@ -495,8 +495,8 @@ internal sealed class SessionIndex
     /// deleted rather than left beside this one.
     /// <para>
     /// ⚠️ <b>And it is true of the PREFIX now too -- corrected 2026-08-26,
-    /// previously "That is true of the PREDICATE and not of the PREFIX …
-    /// <c>SessionManager.Beneath</c> still derives the prefix on its own … it is
+    /// previously "That is true of the PREDICATE and not of the PREFIX ...
+    /// <c>SessionManager.Beneath</c> still derives the prefix on its own ... it is
     /// recorded here rather than quietly fixed because collapsing it is a change
     /// to path handling".</b> That change is this one. <c>Subtree</c> and
     /// <c>Beneath</c> both call <c>CanonicalPath.PrefixOf</c>, and a tree-as-text
@@ -985,11 +985,11 @@ internal enum SessionIndexEntryState
 
     /// <summary>
     /// The directory exists, has no <c>browserai.data</c> <b>at this instant</b>,
-    /// and carries a <c>browserai.lock.new-…</c> beside the gap -- so another
+    /// and carries a <c>browserai.lock.new-...</c> beside the gap -- so another
     /// BrowserAI is inside create-or-take on it right now. <b>Kept</b>: a session
     /// being acquired is the opposite of a session that never was.
-    /// ⚠️ <i>Corrected 2026-08-26 (previously "has no <c>browserai.json</c> … and
-    /// carries a <c>browserai.json.new-…</c> beside the gap -- so another BrowserAI
+    /// ⚠️ <i>Corrected 2026-08-26 (previously "has no <c>browserai.json</c> ... and
+    /// carries a <c>browserai.json.new-...</c> beside the gap -- so another BrowserAI
     /// is replacing the record right now").</i> Nothing replaces a record any more;
     /// the store is appended to in place. What is left is the <b>one</b> rename a
     /// session ever performs, of its own guard, at acquisition.

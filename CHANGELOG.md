@@ -233,8 +233,8 @@ and the note says that now.
 ### Added
 
 - ✨ **A web page's own tools are callable, through one tool of ours that is judged like the rest.**
-  `@playwright/mcp` 0.0.82 let a page put tools on the child's `tools/list` — names,
-  descriptions and `inputSchema`s written by whoever wrote the page — and BrowserAI's
+  `@playwright/mcp` 0.0.82 let a page put tools on the child's `tools/list` -- names,
+  descriptions and `inputSchema`s written by whoever wrote the page -- and BrowserAI's
   deny-by-default refused every one of them at the door. That is the rule working exactly
   as designed, against an adversary it was never written for, and it left a real capability
   unreachable: a page's own search, form submit or lookup could be read about and not used.
@@ -242,13 +242,13 @@ and the note says that now.
   `browserai_page_tool` is the eighth authored tool. It takes `session`, `why`, the page's
   own `name` for the tool, an `arguments` object, and an optional `page` URL. It lists the
   session child's current tools, resolves the name to the wire name upstream built from it,
-  and forwards the call — returning the child's answer byte-identical, because what comes
+  and forwards the call -- returning the child's answer byte-identical, because what comes
   back is the page's own words and nothing here rewrites them.
 
   **Page tools are reached as a CLASS rather than through rows, and that is the decision.**
   [`tool-verdicts.json`](tool-verdicts.json) is keyed by name, `ToolVerdictTests` holds it
   against the golden snapshot in both directions, and a page's names are invented by the
-  page — so a row per page tool is not a thing that can exist. What the class judgement
+  page -- so a row per page tool is not a thing that can exist. What the class judgement
   buys back is everything a row would have given: the call is bounded, the name is
   re-resolved against the live tab every time, the caller's `why` is recorded on the
   session, and `session` and `why` never reach the page. **The door is not widened.** A
@@ -260,7 +260,7 @@ and the note says that now.
   **Resolution is by wire name and `annotations.title` is the cross-check, which is the
   opposite way round from how it reads.** Upstream builds the entry with
   `title: tool.title || tool.name`, so a page that sets its own display title puts THAT in
-  the annotations while the snapshot block a model reads goes on printing the name —
+  the annotations while the snapshot block a model reads goes on printing the name --
   measured 2026-09-21 against a page registering `{ name: "raw_name_here", title: "Human
   Title" }`. Matching on the title would have made every titled page tool uncallable. What
   the title is good for is the case where it matches and the wire name is not the one the
@@ -271,11 +271,11 @@ and the note says that now.
   `callWebMCPTool` awaits a handler the page supplied with `kNoTimeout` under it; measured
   silent at 61 s. Sixty seconds is twice Playwright's own default for an operation on a
   page, so a page tool doing one ordinary round trip to its own backend is not cut off, and
-  short enough that a hung call is recovered inside one turn — nothing measured sits
+  short enough that a hung call is recovered inside one turn -- nothing measured sits
   between about half a second and never. **It is a real recovery rather than a give-up, and
   that was measured before the number was chosen**: a pending page tool does not block the
-  child, `browser_snapshot` answered in 4–7 ms beside one, and navigating away released
-  the abandoned call in 11–13 ms. The refusal says all three, because what the timeout
+  child, `browser_snapshot` answered in 4-7 ms beside one, and navigating away released
+  the abandoned call in 11-13 ms. The refusal says all three, because what the timeout
   does NOT do is stop the page's code.
 
   Six refusals, each with a different recovery and each provoked by a real condition in
@@ -287,14 +287,14 @@ and the note says that now.
 
 - ✅ **The scratch configuration the suite hands the real client is seeded as already onboarded.**
   Three arms point `CLAUDE_CONFIG_DIR` at a fresh scratch directory and then start the real
-  client — the sandbox that keeps them off the maintainer's own registration. That
+  client -- the sandbox that keeps them off the maintainer's own registration. That
   emptiness is also, to the client, a first run, and a first run is where onboarding and
   sign-in live. It has never fired; the guard went in anyway, because this suite runs on
   the maintainer's desktop and the failure mode is a browser window appearing on it.
 
   `OnboardedClientConfig.Seed` writes `hasCompletedOnboarding: true` into
   `$CLAUDE_CONFIG_DIR\.claude.json` before any `claude` runs. **The value is the client's
-  own throwaway-config recipe**, read out of the shipped bundle rather than invented here —
+  own throwaway-config recipe**, read out of the shipped bundle rather than invented here --
   the same three keys `claude plugin eval` writes for its sandbox.
   `HouseRuleTests.EveryScratchClientConfigurationIsSeededAsOnboardedBeforeTheClientRuns`
   refuses a site that skips the seam, and was planted red against all three.
@@ -302,7 +302,7 @@ and the note says that now.
   **The guard is asserted, never measured against the flow**, and its
   [hazard row](HAZARDS.md#hazard-index) is `open` saying so: proving it works means running
   the sign-in flow to watch it suppressed, which is the event being guarded against. There
-  is no non-interactive signal to set instead — `claude mcp add` has no such flag, the one
+  is no non-interactive signal to set instead -- `claude mcp add` has no such flag, the one
   onboarding-named variable in the bundle turns onboarding **on**, and the published
   documentation does not document the marker at all.
 
@@ -520,7 +520,7 @@ and the note says that now.
 - 🔧 **`webmcp: true` is written into every generated config rather than left to upstream's default.**
   The key switches on the page-provided tools and the
   `- webmcp tools (page-provided, untrusted):` block that every `browser_snapshot` answer
-  carries. Upstream's default is on, so nothing about what reaches a model changes —
+  carries. Upstream's default is on, so nothing about what reaches a model changes --
   what changes is that a stance is recorded where a reader can find it, the way
   `allowUnrestrictedFileAccess` and `timeouts.idle` already are: an omission records no
   decision, `browser_get_config` cannot read back a key the file never carried, and the day
@@ -531,7 +531,7 @@ and the note says that now.
   behind it now, and the block is the only catalogue there is: with the key `false` there is
   no block, no tab-header count and no dynamic tools, so a caller would have the tool and no
   way to know what to name. What it costs is unchanged and is still
-  [a hazard row](HAZARDS.md#hazard-index) — the page's own words still reach the model,
+  [a hazard row](HAZARDS.md#hazard-index) -- the page's own words still reach the model,
   exactly as before.
 
 - 📝 **Dash style for the whole repository is recorded as an open question rather than settled.**
@@ -559,11 +559,11 @@ and the note says that now.
 - 📝 **Three decisions about page-provided tools, with the directions not taken beside them.**
   [`DECISIONS.md`](DECISIONS.md#a-web-pages-own-tools-are-reached-through-one-tool-of-ours)
   carries the maintainer's framing verbatim, why a fourth verdict class is not a thing that
-  can exist, and **direction A recorded as the follow-on not taken** — a marker rule at
+  can exist, and **direction A recorded as the follow-on not taken** -- a marker rule at
   the door, strictly more capable, costing *every advertised name has a row* the word
   *row*. It also records that **BrowserAI does not declare `listChanged`**: its list does
   not change, because `tools/list` is answered from the run's own child, which never
-  navigates — measured 78 before a page and 78 after — and clients cache the
+  navigates -- measured 78 before a page and 78 after -- and clients cache the
   capability at `initialize`, so declaring it is cheap and in practice irreversible.
   **Direction B is recorded as the direction not taken**: announce it, merge each session's
   page tools into the advertised list, forward the notifications. `VerticalSliceTests`'
@@ -571,17 +571,17 @@ and the note says that now.
 
   [`HAZARDS.md`](HAZARDS.md#hazard-index) gains two rows and amends one. The untrusted-text
   row is amended **by addition**: the block is now the discovery channel, and it reaches the
-  model exactly as it did before. The new rows are late binding — the same wire name is
+  model exactly as it did before. The new rows are late binding -- the same wire name is
   a different page's code after a navigation, mitigated by `page` and by re-resolving every
-  call, closed by neither — and the unbounded upstream call, mitigated by our timeout,
+  call, closed by neither -- and the unbounded upstream call, mitigated by our timeout,
   with the measured fact that the abandoned evaluate stays on the tab until something
   navigates it. Two `[FLOATS]` facts gain
   [re-verification rows](kb/re-verification.md): the name rule and the no-block measurement.
 
 - 🔧 **A session's deletion, what a destroy takes, its upload root and its move are all said now.**
   Four things were already true of the product and said in no string a model reads.
-  BrowserAI deletes nothing on a schedule and nothing at a size — `browserai_init` said
-  that half as *"nothing here expires"* — and a retention policy with no owner is half a
+  BrowserAI deletes nothing on a schedule and nothing at a size -- `browserai_init` said
+  that half as *"nothing here expires"* -- and a retention policy with no owner is half a
   sentence, so a session that signed into something stays signed into it, on disk, until
   somebody notices. `browserai_destroy` said it *"deletes the whole directory"*, which a
   caller reads as a claim about the session rather than about the screenshots it was asked
@@ -603,8 +603,8 @@ and the note says that now.
   bytes.
 
   SIX SENTENCES IN THE `instructions` WERE TIGHTENED TO PAY FOR THE DELETION LINE, AND
-  NOTHING WAS DROPPED. The string was 2,022 characters of the client's 2,048 — measured off
-  the published binary's own `initialize` response — with 26 to spend and a clause that
+  NOTHING WAS DROPPED. The string was 2,022 characters of the client's 2,048 -- measured off
+  the published binary's own `initialize` response -- with 26 to spend and a clause that
   costs 105. Every rule is still in it: the no-default rule, the `why` rule, the
   route/network mocking warning with its `on screen` clause intact, the never-install-browsers
   sentence verbatim, the full-page cost line. What moved is wording, and `ServerInstructions`
@@ -621,7 +621,7 @@ and the note says that now.
   `.TheOnlyFolderAFileCanBeUploadedFromIsNamedWhereTheSessionDirectoryIs`,
   `.DestroyingASessionIsSaidToTakeTheScreenshotsAndDownloadsWithIt` and
   `.MovingASessionDirectoryByHandIsOnTheResumeDescription`, each planted and watched red
-  before the sentences went in — 18 of the 19 required phrases named as absent, and the
+  before the sentences went in -- 18 of the 19 required phrases named as absent, and the
   other two present already, which is the positive control that the scan can find a phrase
   that is there.
 
@@ -629,7 +629,7 @@ and the note says that now.
   strings are assembled from concatenated constants and interpolated tables, and a sentence
   that exists in source and never reaches `tools/list` is the failure being guarded
   against. Phrases rather than whole sentences, because the wording is not the maintainer's
-  the way the browser-installation sentence is — what must survive a re-draft is the rule,
+  the way the browser-installation sentence is -- what must survive a re-draft is the rule,
   not the draft.
 
 - 💥 **The payload could not be rebuilt until the override's exit was adjudicated.**
@@ -924,7 +924,7 @@ and the note says that now.
   been passed since 2026-08-16, two days after the row was read, and no
   `chromium_headless_shell-*` directory exists at any revision. A third Playwright
   package, `playwright`, ships and was never listed, while the notices file says "the two
-  Playwright packages" — its terms and NOTICE text are byte-identical to
+  Playwright packages" -- its terms and NOTICE text are byte-identical to
   `playwright-core`'s, so a name is missing rather than a licence, and that is reported
   rather than fixed because what ships beside the binary is the maintainer's call. And
   Firefox, a provisioned family since 2026-08-19, was never listed either: 61 files and
@@ -938,8 +938,8 @@ and the note says that now.
   moved under it. It is re-derived from two figures taken the same day and
   nothing else, which is the property the old sum lacked: the 1.0.0 release cut
   that afternoon installed itself on the reference machine, so `current\` was
-  weighed as the thing the sentence describes rather than reconstructed —
-  143,574,278 B across 207 files — and `chromium-1245` weighs 454,699,952 B
+  weighed as the thing the sentence describes rather than reconstructed --
+  143,574,278 B across 207 files -- and `chromium-1245` weighs 454,699,952 B
   across 308 files, for 598,274,230 B = 570.56 MiB. The stale stamp is left
   standing above it as the record of what the debt was, and the entry says out
   loud that the total will go stale again on the next build, because the
@@ -1151,8 +1151,8 @@ Read [`README.md`](README.md) first.
   two executables from this release, and the reason is a window nothing could
   suppress. A non-silent `Setup.exe` finishes by starting the main executable
   itself, through `shared::start_package`, with `CREATE_UNICODE_ENVIRONMENT`
-  **and nothing else** — `show_window = true` is hardcoded at
-  `util_windows.rs:106` — and the stub and `Update.exe start` launch it with no
+  **and nothing else** -- `show_window = true` is hardcoded at
+  `util_windows.rs:106` -- and the stub and `Update.exe start` launch it with no
   flags at all. A console-subsystem binary started that way from a windowless
   parent is given a console, and on this machine the default terminal turns that
   into a **1506×1490 Windows Terminal window** over the user's work, serving
@@ -1165,11 +1165,11 @@ Read [`README.md`](README.md) first.
   second decision and it followed the first.
 
 - ✨ **`BrowserAI.exe` is the configuration app, and it opens after the install.** `BrowserAI.exe`
-  is the configuration app — the Velopack main executable, the root stub, the
+  is the configuration app -- the Velopack main executable, the root stub, the
   Start Menu entry, the icon, and the owner of all four installer hooks. It is
   deliberately very small: it shows the installed version, where the install and
   the data live as links that open Explorer, what is registered with Claude
-  Code, and it offers five things, each behind **one explicit click** — check
+  Code, and it offers five things, each behind **one explicit click** -- check
   for updates (and then install one), register for all your Claude Code
   projects, unregister, register in a project you pick, and open the logs.
   **Nothing runs on open except reading state**, and a first run shows what
@@ -1178,22 +1178,22 @@ Read [`README.md`](README.md) first.
 - ✨ **The two registration scopes are offered in OutlookAI's own words.** The
   two scopes are offered in OutlookAI's words, because two products in one
   estate describing one mechanism differently is how a person learns it twice.
-  *"For all my Claude Code projects"* is user scope — one entry in
+  *"For all my Claude Code projects"* is user scope -- one entry in
   `~/.claude.json`, available in every repository, no file in any of them.
-  *"Register in a project…"* is a folder picker and a committed `.mcp.json` at
+  *"Register in a project..."* is a folder picker and a committed `.mcp.json` at
   that folder's root, written with `claude mcp add --scope project` run **in
   that directory**, because that is the only thing that decides where the file
-  lands. The command written there is **portable** —
+  lands. The command written there is **portable** --
   `${LOCALAPPDATA}/BrowserAI.app/current/BrowserAI.Server.exe`, which Claude
-  Code expands itself — and only when that form expands to the install this
+  Code expands itself -- and only when that form expands to the install this
   process is running out of; a non-default install root gets its absolute path
   and the person is told why. Both actions are followed by the restart hint
   verbatim, and the project one adds that Claude Code will ask for approval once
   per project.
 
 - ✨ **`BrowserAI.exe --report <path>` writes a JSON status report and exits.** It
-  is a support artifact — the file somebody attaches when they say *it is not
-  working* — and it is the configuration app's **testable non-interactive
+  is a support artifact -- the file somebody attaches when they say *it is not
+  working* -- and it is the configuration app's **testable non-interactive
   path**: a window application whose only entry point opens a window is one
   nothing can assert about. It renders the same `AppState` the dialog does, so a
   report that disagreed with the screen would be a red rather than a discovery.
@@ -1202,7 +1202,7 @@ Read [`README.md`](README.md) first.
   the library both executables link: the data root, the registration, the update
   feed, the live-instance census and the log. 33 files moved into it verbatim,
   namespaces unchanged. What did **not** move is the proxy, the sessions, the
-  browsers and the storage layer — none of it reachable from a configuration
+  browsers and the storage layer -- none of it reachable from a configuration
   dialog, and linking it into a second AOT binary would pay for the SQLite
   static library, the MCP SDK and the whole session machinery to compile a
   window that shows a version number. Two edges were turned around to make the
@@ -1212,16 +1212,16 @@ Read [`README.md`](README.md) first.
   `Storage.LockFile` / `Storage.SessionStore` alias them.
 
 - ✨ **`Runtime/PeSubsystem` reads a binary's subsystem out of its own PE headers.** `Runtime/PeSubsystem`
-  — eight bytes read at three documented offsets, no Win32 — and
+  -- eight bytes read at three documented offsets, no Win32 -- and
   **`TaskDialogLayoutTests`**, which holds the hand-written `TASKDIALOGCONFIG`
   against Microsoft's own metadata through `CsWin32`: 160 bytes, 22 fields
   compared by offset, with a naturally packed copy of the same fields as the
   positive control at 184. **A size that agrees says nothing about a field that
-  moved** — two swapped pointers leave the total unchanged and turn the window
+  moved** -- two swapped pointers leave the total unchanged and turn the window
   title into the instruction.
 
 - ✅ **`RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow` is new.** `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow`
-  — the arm the whole design was cut for. It installs silently into a scratch
+  -- the arm the whole design was cut for. It installs silently into a scratch
   root, launches `current\BrowserAI.exe` from a parent with no window, and holds
   that the process owns **exactly one visible top-level window**, of class
   `#32770`, no console window of its own, and exits **0** on `WM_CLOSE`. It
@@ -1231,7 +1231,7 @@ Read [`README.md`](README.md) first.
   default terminal set to Windows Terminal a console shows up as a window owned
   by *Windows Terminal's* process, which is exactly what reported a clean screen
   while two windows were on it. What carries that guarantee is the subsystem
-  read out of the binary — the cause rather than the symptom.
+  read out of the binary -- the cause rather than the symptom.
 
 - ✅ **`ConfigurationAppTests` covers the configuration app.** `ConfigurationAppTests`,
   which asserts every sentence, link and button of the dialog without opening
@@ -1243,12 +1243,12 @@ Read [`README.md`](README.md) first.
   exported, and the application starts and nothing happens.
 
 - ✅ **`HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing` is new.** `HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing`
-  — a tree-as-text scan holding that every arm in a file under `tests/` that
+  -- a tree-as-text scan holding that every arm in a file under `tests/` that
   constructs an `EnvironmentScope` carries `[NotInParallel]` **with no key**. A
   keyed one does not satisfy it. **The file is the unit rather than the arm**,
-  deliberately: the scope is usually opened through a helper — this repository's
+  deliberately: the scope is usually opened through a helper -- this repository's
   is a private factory returning one, reached by a target-typed `new(` that a
-  scan looking for `new EnvironmentScope(` walks straight past — so an
+  scan looking for `new EnvironmentScope(` walks straight past -- so an
   arm-by-arm rule would need call graphs out of text, and the arm that forgets
   is by definition the one nobody classified. **Watched red twice against the
   real tree**: with the keyed attribute of this morning restored, naming
@@ -1256,14 +1256,14 @@ Read [`README.md`](README.md) first.
   removed, naming all **20** of its arms one by one. Synthetic keyed, absent,
   keyless-on-the-arm, keyless-on-the-class, through-a-factory and no-scope
   controls run on every pass. **This is the assertable half of a race no timing
-  test can plant** — the race needs one arm's few-second window to overlap
+  test can plant** -- the race needs one arm's few-second window to overlap
   another arm's browser launch, which is a scheduler outcome rather than a call,
   and a test that provoked it by timing would be the promptness claim
   `NoAssertionBoundsAMeasuredDurationWithANumberItInvented` forbids. It sits
   where `EveryRawHandleThatOutlivesItsExpressionIsRefCounted` sits and makes the
   same weaker claim in the same words: the attribute is *there*, never that the
   sandbox is correct. **It is not a second exception to the rule that a
-  behaviour change is watched red** — the scan itself was.
+  behaviour change is watched red** -- the scan itself was.
 
 - ✅ **The corpus every tree-as-text rule reads is now asserted against
   `git ls-files`, in both directions.** `HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds`
@@ -1272,22 +1272,22 @@ Read [`README.md`](README.md) first.
   cannot ask different questions. **The remark it replaces was false by 520
   files**: the walk claimed to yield "the same 215 files as `git ls-files`",
   verified once by hand on 2026-08-17, and while agent worktrees sat under
-  `.claude\worktrees\` — ignored by git, not pruned by the walk — every scan
+  `.claude\worktrees\` -- ignored by git, not pruned by the walk -- every scan
   built on that list read a second checkout as repository content. The fragment
   scan counted **2,378** against a real **797**, and three gate arms went red
   for a reason no message named. **`.claude` is deliberately still not pruned**:
   `settings.json` and `hooks\` are committed, so a prune would have traded one
   blind spot for another. Git is an **oracle** here and never a source of truth
-  — absent, the new `SuiteCapability.Git` reads ABSENT in the coverage block and
+  -- absent, the new `SuiteCapability.Git` reads ABSENT in the coverage block and
   the arm skips loudly, and a release run fails. Planted red both ways before it
   was trusted.
 
 - ✅ **`SaturationTests`' torn-record arm is scoped to the run's own pids.** `SaturationTests`'
   torn-record arm is scoped to the run's own pids, and a second arm plants the
   fault it can no longer plant live. The hundred-process arm reads the
-  machine-wide process log with **no time filter** — deliberately, because NTFS
+  machine-wide process log with **no time filter** -- deliberately, because NTFS
   does not keep an mtime current while a hundred handles are open on the file
-  and a filter there once hid the only file that mattered — so **one torn record
+  and a filter there once hid the only file that mattered -- so **one torn record
   written by any BrowserAI from any checkout failed it on every later run until
   the log rolled, and no checkout could clear it**. A sibling's tear at 03:38
   failed a run two hours later. The strength is unchanged for this run's writes:
@@ -1304,30 +1304,30 @@ Read [`README.md`](README.md) first.
   clean pass, and one of them did so while two of the tests it claimed to cover
   were red. The proof it is not an OR at all is a pair that individually match
   nothing and together match everything. The correct syntax, the counts side by
-  side and a re-establishment procedure are in the article; the rule — **a
-  filtered run is a development convenience, never a verification** — is in
+  side and a re-establishment procedure are in the article; the rule -- **a
+  filtered run is a development convenience, never a verification** -- is in
   [`CLAUDE.md`](CLAUDE.md), in the list of rules that need a person, with the
   reason no mechanism can close it stated there rather than implied.
 
 - 📝 **The 2026-08-24 adversarial review is a dated record rather than a file in
   `.work\`.** It
-  is the read-only pass over the seams where the 2026-08-20/24 changes — the
+  is the read-only pass over the seams where the 2026-08-20/24 changes -- the
   mode removal, the injected `why`, the durable action log,
   `browserai_catch_up`, the reader/writer maintenance lock and the
-  instance-directory marker — meet the code that predates them: nine findings
+  instance-directory marker -- meet the code that predates them: nine findings
   and fourteen things attacked that held. It went into `docs/reviews/` **and
   into the append-only seal in the same change**, which is what
-  `AppendOnlyRecordTests`' second arm exists to force — the newest review is the
+  `AppendOnlyRecordTests`' second arm exists to force -- the newest review is the
   one likeliest to be registered by nobody, and an unsealed record is one
   nothing would notice being rewritten. Nothing in it has been acted on yet, and
   the index's status table says so.
 
 - ✅ **Every run says whether it could have seen a browser take the foreground.** Every
-  run now says whether it could have seen a browser take the foreground —
+  run now says whether it could have seen a browser take the foreground --
   because on this machine it could not. `JobLauncher` sets
   `STARTF_USESHOWWINDOW` with `SW_SHOWNOACTIVATE`, and that is measured; what
   was never checked is whether *this* machine can tell the difference.
-  `SPI_GETFOREGROUNDLOCKTIMEOUT` reads **2,147,483,647 ms — about 24.8 days —**
+  `SPI_GETFOREGROUNDLOCKTIMEOUT` reads **2,147,483,647 ms -- about 24.8 days --**
   here, so Windows refuses a foreground change in the general case and both arms
   of a focus experiment answer *no steal*. The consequence runs the wrong way
   round the usual portability rule: **a change that reintroduced focus stealing
@@ -1335,12 +1335,12 @@ Read [`README.md`](README.md) first.
   *clean* rather than *unknown*.
 
   So the coverage block gained a `foreground lock` row beside `first-run bytes`,
-  carrying the value and one of four states — `CAN SEE` (the lock never
+  carrying the value and one of four states -- `CAN SEE` (the lock never
   applies), `IF IDLE` (it expires inside the budget an experiment here may
-  take), `BLIND` (it outlasts that budget — this machine) and `UNREAD` (Windows
+  take), `BLIND` (it outlasts that budget -- this machine) and `UNREAD` (Windows
   refused the call). In the `BLIND` band it adds three lines saying the run
-  **did not answer** the question, and naming the exception — a foreground
-  window owned by an ancestor of the launching process — that makes a null trial
+  **did not answer** the question, and naming the exception -- a foreground
+  window owned by an ancestor of the launching process -- that makes a null trial
   read as a pass.
 
   **It reports and it never repairs.** Nothing calls
@@ -1353,7 +1353,7 @@ Read [`README.md`](README.md) first.
   inside the time an experiment here may take?*. It is a row and not a
   `SuiteCapability` for the reason `first-run bytes` is: every capability names
   a command that produces it, and the only thing that would turn this one green
-  is a setting the suite may not change — so a capability would make every
+  is a setting the suite may not change -- so a capability would make every
   release from this machine unreachable with no permitted remedy.
   `ForegroundLockTests` holds the bands, the boundary and both directions of the
   warning; `SuiteCoverageTests` holds that the row reaches the block. The hazard
@@ -1370,7 +1370,7 @@ Read [`README.md`](README.md) first.
   `⌈1920/28⌉ × ⌈3637/28⌉ =` **8,970 patches**, and the API downscales that to
   its per-image ceiling of **4,784**. Break-even is a document about 1,960 px
   tall, so *every* full-page shot of a page long enough to want one costs the
-  maximum — and returns less detail than the viewport shot it replaced, because
+  maximum -- and returns less detail than the viewport shot it replaced, because
   BrowserAI diverges before upstream's `scaleImageToFitMessage` and appends what
   is on disk.
 
@@ -1379,16 +1379,16 @@ Read [`README.md`](README.md) first.
   passes through this proxy byte for byte, and the append path that would have
   made this possible was deleted on 2026-08-18.
   `ModelSurfaceTests.TheFullPageScreenshotCostIsInTheInstructionsAndNotOnTheToolsDescription`
-  holds both halves, and was watched red on each of them separately — once with
+  holds both halves, and was watched red on each of them separately -- once with
   the sentence removed, once with it appended to the tool. **The string now
   stands at 2,028 characters of the 2,048 the client silently truncates at**
-  (2,038 bytes, which is not the figure the client counts), leaving **20** —
+  (2,038 bytes, which is not the figure the client counts), leaving **20** --
   measured off the published binary's own `initialize` response, *previously
   1,876 of 2,048*.
 
 - ✅ **The dated records are append-only, and a test says so.** Released
   `CHANGELOG.md` sections and every body under `docs/reviews/` are sealed by
-  `AppendOnlyRecordTests` — prefix, character count and SHA-256 — so an addendum
+  `AppendOnlyRecordTests` -- prefix, character count and SHA-256 -- so an addendum
   may be appended and a body may not be rewritten or truncated. **The failure it
   exists for had already happened**: the `lock.json` → `browserai.json` rename
   swept the whole tree, reached both, and produced a 2026-08-18 review claiming
@@ -1397,8 +1397,8 @@ Read [`README.md`](README.md) first.
   `docs/reviews/README.md`. It was planted by re-applying that exact sweep and
   watched red on four records at once, `CHANGELOG.md#0.1.0` among them.
 
-  **It is deliberately narrow.** `docs/reviews/README.md` is *not* sealed — it
-  carries the status table, which is meant to move as findings are acted on —
+  **It is deliberately narrow.** `docs/reviews/README.md` is *not* sealed -- it
+  carries the status table, which is meant to move as findings are acted on --
   and the changelog's `[Unreleased]` section is not sealed either, because it is
   not a record of anything until a release stamps it. A typo fix in a review
   stays legitimate: it means changing the seal in the same commit, which is a
@@ -1416,7 +1416,7 @@ Read [`README.md`](README.md) first.
   **`viewport` defaults to 1920×1080, and the number that decided it is the
   token cost of a screenshot.** Measured end to end through BrowserAI: 1920×1080
   arrives as **2,691 visual tokens**, 1280×720 as 1,196, and 2560×1440 as
-  **4,784 — exactly the per-image cap, with zero headroom**. What is set is what
+  **4,784 -- exactly the per-image cap, with zero headroom**. What is set is what
   the model receives: BrowserAI's image handling diverges before upstream's
   `scaleImageToFitMessage`, so nothing downscales it on the way back. A value
   that does not parse or is out of bounds is **refused rather than rounded**,
@@ -1425,7 +1425,7 @@ Read [`README.md`](README.md) first.
 
   **`locale` and `timezone` are read from the host machine** rather than
   hard-coded. Upstream leaves them unset, which gives the browser's own `en-US`
-  whatever the machine is — so a site that localises by `Accept-Language` shows
+  whatever the machine is -- so a site that localises by `Accept-Language` shows
   an agent something a person at the same desk would never see. Windows's own
   time-zone identifier is converted to IANA, which is what Playwright accepts;
   where that conversion is unavailable the key is **omitted rather than
@@ -1435,7 +1435,7 @@ Read [`README.md`](README.md) first.
   **`captureNetwork` writes an HTTP Archive, and sets `serviceWorkers: "block"`
   with it.** The block is not optional: a request served out of a worker's cache
   never reaches the network layer the archive is written from, so without it the
-  capture is **silently incomplete** — in the direction that matters, because a
+  capture is **silently incomplete** -- in the direction that matters, because a
   worker serves the repeat requests. The description carries three things a
   caller has to know before turning it on: it **changes what the site does**, it
   takes effect at the **next browser launch** and is never retroactive, and the
@@ -1451,22 +1451,22 @@ Read [`README.md`](README.md) first.
   context created with it fails at `initializeServer` with `Unknown permission:
   clipboard-read` and the browser exits, so writing it for both families makes
   every Firefox session **unusable** rather than degraded. Measured 2026-08-20
-  against the provisioned `firefox-1539` — by writing it for both families and
-  watching a real front-door navigation go red — [recorded in
+  against the provisioned `firefox-1539` -- by writing it for both families and
+  watching a real front-door navigation go red -- [recorded in
   kb](kb/playwright/configuration.md#silent-config-failures) with a
   re-verification row. It is family-scoped exactly as `channel` is.
 
   **`codegen: "none"` and `snapshot.boxes: true` are hard-coded with no
   argument.** `codegen` strips a `### Ran Playwright code` block from every
   response, for a feature this product does not have and no reader exists for.
-  `snapshot.boxes` costs nothing until something reads the snapshot — a response
-  carries a link rather than the text — and every session is granted the
+  `snapshot.boxes` costs nothing until something reads the snapshot -- a response
+  carries a link rather than the text -- and every session is granted the
   `vision` capability, whose six `browser_mouse_*_xy` tools take viewport
   coordinates a snapshot without boxes gives a model no way to compute.
 
 - ✨ **`browserai_catch_up`, the seventh authored tool.** It answers *what were
   we doing here, and what is here now* for one session, from **two sources that
-  routinely disagree** — which is the whole point rather than a caveat. The
+  routinely disagree** -- which is the whole point rather than a caveat. The
   **log** says what BrowserAI *did*: every browser call and every purpose
   change, in order, with what the caller said each was for. The **directory**
   says what is *true now*: age, when it was last touched, total size, and a
@@ -1474,7 +1474,7 @@ Read [`README.md`](README.md) first.
 
   **The disagreement that matters is credentials.** Cookies arrive from
   *navigation* rather than from tools, so a session whose log shows no
-  `browser_cookie_*` call at all can hold a live signed-in profile — a log-only
+  `browser_cookie_*` call at all can hold a live signed-in profile -- a log-only
   answer would say *"no credential tools were used"* about exactly that
   directory. It reports the profile's cookie store when there is one, and names
   any **HTTP Archive** it finds: a HAR records every request and response
@@ -1482,24 +1482,24 @@ Read [`README.md`](README.md) first.
   wire is in it in clear text.
 
   **Its description says when to call it**: on arriving at a session someone
-  else was driving, and before destroying one — because the size and the
+  else was driving, and before destroying one -- because the size and the
   breakdown are the only things that say what is about to be deleted.
 
   ⚠️ **It is the one session-scoped tool with no `why`**, and that is deliberate
   twice over: a tool whose whole purpose is to tell you what happened must not
   itself become the most recent thing that happened, and writing an entry would
-  mean replacing `browserai.json` — which a session another live BrowserAI is
+  mean replacing `browserai.json` -- which a session another live BrowserAI is
   driving refuses through its own `FileShare.Read`, and that is precisely the
   case it exists for. It is **read-only and takes no lock it can be refused
   by**, asserted byte-for-byte against a record a live session is holding.
 
   ⚠️ ***Corrected 2026-08-24 (previously "writing an entry would mean taking the
-  per-directory gate — which a session another live BrowserAI is driving would
-  refuse … It is **read-only and takes no lock at all**").*** Two wrong claims
+  per-directory gate -- which a session another live BrowserAI is driving would
+  refuse ... It is **read-only and takes no lock at all**").*** Two wrong claims
   in one paragraph, both corrected elsewhere in the same commit and missed here:
   `LockScopes.PerDirectoryGate` does not refuse a second writer, it **waits**
-  120 seconds for one — what refuses one is the holder's share mode on
-  `browserai.json`; and since 2026-08-24 `catch_up` does take a lock, briefly —
+  120 seconds for one -- what refuses one is the holder's share mode on
+  `browserai.json`; and since 2026-08-24 `catch_up` does take a lock, briefly --
   `SessionManager.InUse` reaches `SessionLock.ProbeLivenessUnderTheGate`, which
   holds that gate at a **zero** timeout for one open and close, so it can be
   undetermined but never queued.
@@ -1507,7 +1507,7 @@ Read [`README.md`](README.md) first.
 - ✨ **One time-ordered log, inside `browserai.json`.** `browserai_init`'s
   `purpose`, every purpose change on `browserai_resume`, every explicit
   `browserai_set_purpose` and every browser call the session forwarded are
-  entries in the **same ordered list** — so a reader sees *the human changed the
+  entries in the **same ordered list** -- so a reader sees *the human changed the
   purpose here* sitting between the calls it explains, rather than two streams
   nobody merges. `browserai.json` moved to **schema 4**; there is no converter
   and the recovery is the one it has always carried.
@@ -1517,14 +1517,14 @@ Read [`README.md`](README.md) first.
   argument that decided it is one the recommendation did not weigh: a session
   directory is moved and copied by people, `browserai.json` is already the thing
   that makes a copy self-describing, and **one file cannot be half-copied**. The
-  cost is a whole-record durable write — `WriteThrough`, flush, atomic rename,
-  re-open — on **every forwarded browser call**, where an append to a sibling
+  cost is a whole-record durable write -- `WriteThrough`, flush, atomic rename,
+  re-open -- on **every forwarded browser call**, where an append to a sibling
   would have been `O(entry)`. [QUESTIONS.md
-  §14](QUESTIONS.md#14-the-one-time-ordered-log-lives-inside-browseraijson--decided-by-the-maintainer-over-my-recommendation)
+  §14](QUESTIONS.md#14-the-one-time-ordered-log-lives-inside-browseraijson----decided-by-the-maintainer-over-my-recommendation)
   records both sides and what reversing it would cost.
 
   ⚠️ **A call whose entry cannot be written is refused, and never reaches the
-  browser** — `SessionErrors.SessionLogCouldNotBeWritten`, the catalogue's 27th
+  browser** -- `SessionErrors.SessionLogCouldNotBeWritten`, the catalogue's 27th
   row. The value of one log is that reading it back tells you what the session
   did; a gap nobody is told about is worse than a refusal somebody can act on.
   **A call BrowserAI refuses leaves no entry**, which is the same rule from the
@@ -1532,9 +1532,9 @@ Read [`README.md`](README.md) first.
   `browserai.log` beside it.
 
   **What is stored for an argument, since nothing instructed it.** Every
-  argument **name**, always — a reader must see that a password field was filled
+  argument **name**, always -- a reader must see that a password field was filled
   even when the value is not there. Then: `value` and `text` are **never**
-  stored, at any length, recorded as `<withheld, N characters>` — they are the
+  stored, at any length, recorded as `<withheld, N characters>` -- they are the
   two scalar parameters upstream uses for something a person typed or a server
   set, on `browser_cookie_set`, `browser_localstorage_set`,
   `browser_sessionstorage_set` and `browser_type`, and **the list is asserted
@@ -1549,8 +1549,8 @@ Read [`README.md`](README.md) first.
   read back.
 
   **The log is capped at 250 entries and trimmed out of the middle**, keeping
-  entry zero — `browserai_init`, the only statement of why the directory exists
-  — exactly as the statement lists keep their first statement. A record at the
+  entry zero -- `browserai_init`, the only statement of why the directory exists
+  -- exactly as the statement lists keep their first statement. A record at the
   cap says so, and every answer that reads one says entries *may* have been
   elided.
 
@@ -1558,21 +1558,21 @@ Read [`README.md`](README.md) first.
   log's newest entry when there is one: a session driven for an hour without its
   purpose or its holder changing appended nothing to any statement list, so the
   figure used to be *when the session was opened*. `created` is deliberately
-  unchanged — it is the first statement of every field, and the trim never
+  unchanged -- it is the first statement of every field, and the trim never
   removes one.
 
 - ✨ **A required `why` on every call that names a session.** Every upstream
   browser tool, plus `browserai_resume`, `browserai_destroy` and
-  `browserai_set_purpose`. It rides the same path `session` does — the injection
+  `browserai_set_purpose`. It rides the same path `session` does -- the injection
   mutates the `JsonNode` the child sent rather than rebuilding it, so unknown
-  members survive — and it is stripped from a clone of the request before the
+  members survive -- and it is stripped from a clone of the request before the
   call is forwarded, because the child has never heard of it. **The golden
   snapshot is unaffected**: it records what upstream offers, captured from the
   child before the rewrite.
 
   **Not on `browserai_list` or `browserai_reinstall_browser`**, which are
   directory- and machine-scoped: there is no session record to write into. **Not
-  on `browserai_init`**, which asks for a `purpose` instead — two mandatory
+  on `browserai_init`**, which asks for a `purpose` instead -- two mandatory
   free-text fields on one call gets one thoughtful answer and one restatement.
 
   **The description does the steering, and parameter descriptions are
@@ -1580,8 +1580,8 @@ Read [`README.md`](README.md) first.
   is capped at 2,048 characters. It asks for **why rather than what**, because
   the tool name already says what: *"checking whether the login survived the
   redirect"* beats *"clicking the submit button"*. A call that omits it is
-  refused **before anything is forwarded**, and the refusal —
-  `SessionErrors.WhyMissing`, the catalogue's 26th row — says what to write
+  refused **before anything is forwarded**, and the refusal --
+  `SessionErrors.WhyMissing`, the catalogue's 26th row -- says what to write
   rather than only that something is missing, because a model told *"'why' is
   required"* retries with a restatement that satisfies the schema and records
   nothing.
@@ -1594,8 +1594,8 @@ Read [`README.md`](README.md) first.
 
 - ✨ **Ten tools, reachable for the first time in this product's history or its
   predecessor's.** Upstream's
-  `network` capability — `browser_route`, `browser_route_list`,
-  `browser_unroute`, `browser_network_state_set` — its `pdf` capability
+  `network` capability -- `browser_route`, `browser_route_list`,
+  `browser_unroute`, `browser_network_state_set` -- its `pdf` capability
   (`browser_pdf_save`) and its `testing` capability (`browser_generate_locator`,
   `browser_verify_element_visible`, `browser_verify_text_visible`,
   `browser_verify_list_visible`, `browser_verify_value`) had **never been named
@@ -1606,18 +1606,18 @@ Read [`README.md`](README.md) first.
 
   **Recorded as a deliberate grant rather than left as a consequence.** They
   arrived because session modes were deleted, and a side effect nothing names
-  reads as an accident at the next review — so the list is
+  reads as an accident at the next review -- so the list is
   `SessionToolSurface.NewlyGrantedTools`, asserted by name in process by
   `ModelSurfaceTests` and off the wire by `VerticalSliceTests`, against a
   hand-written expectation that fails whichever side moves. The decision went
   against a recommendation to weigh the three new capabilities separately;
   [QUESTIONS.md
-  §13](QUESTIONS.md#13-the-ten-newly-granted-tools--decided-by-the-maintainer-over-my-recommendation)
+  §13](QUESTIONS.md#13-the-ten-newly-granted-tools----decided-by-the-maintainer-over-my-recommendation)
   records what that recommendation was and why it was wrong about the framing.
 
   ⚠️ **`browser_run_code_unsafe` is not among them and never was.** It is
   `core`, so it has been reachable in every session this product has ever opened
-  — `headless` included — and it reaches the cookie jar.
+  -- `headless` included -- and it reaches the cookie jar.
 
 - 📝 **A warning in the server `instructions` that response mocking can make a page
   lie to a human.** `browser_route`
@@ -1633,7 +1633,7 @@ Read [`README.md`](README.md) first.
   three-valued.** It
   carried mode, browser, purpose, dates and size and performed no liveness check
   at all, so a caller could not tell an abandoned session from one another agent
-  was inside — which is the distinction that matters most in the turn before
+  was inside -- which is the distinction that matters most in the turn before
   `browserai_destroy`. Each entry now carries an `in use:` line: **YES** when
   this BrowserAI is driving it or when something holds its `lock.json`, **no**
   when nothing held it at the instant of the look, and **UNKNOWN**, with the
@@ -1643,11 +1643,11 @@ Read [`README.md`](README.md) first.
   process-liveness check.** It needs no process handle, so a token that may not
   open the peer cannot defeat it, and it asks about the resource rather than
   about a pid Windows may have recycled. Cost is **one
-  `CreateFile`/`CloseHandle` per entry** — measured at 0.035 ms free and 0.049
-  ms held, against 0.6–2.3 ms for the `SizeOnDisk` walk the same loop already
+  `CreateFile`/`CloseHandle` per entry** -- measured at 0.035 ms free and 0.049
+  ms held, against 0.6-2.3 ms for the `SizeOnDisk` walk the same loop already
   performs per entry
-  ([kb](kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report--measured-2026-08-20))
-  — and the loop is over the session *index*, which the `directory` argument
+  ([kb](kb/windows/detection.md#the-pre-gate-probe-as-a-liveness-report----measured-2026-08-20))
+  -- and the loop is over the session *index*, which the `directory` argument
   filters rather than walks, so a drive-root listing adds one open per known
   session and never one per file on the volume.
 
@@ -1661,12 +1661,12 @@ Read [`README.md`](README.md) first.
   control.
 
 - ✨ **Liveness is three-valued: `Alone`, `NotAlone(n)` or `Undetermined(why)`.** `LiveInstances`
-  answered `false` for *not alone* and for *could not tell* at once — a failed
+  answered `false` for *not alone* and for *could not tell* at once -- a failed
   join, an expired gate, an unreadable marker. That was written for the updater,
   where both mean *do not apply* and the safe direction is the same one; for
   anything that repairs rather than refrains it is the unsafe direction, because
   the refusal is permanent and has nothing to act on. `Census` now returns the
-  reason — a path, a mutex name, an exception's own message — so a refusal built
+  reason -- a path, a mutex name, an exception's own message -- so a refusal built
   on one can be diagnosed.
 
   **The updater did not move, and that is a guarantee rather than an
@@ -1690,13 +1690,13 @@ Read [`README.md`](README.md) first.
   because the claim spans a 203.8 MB download inside an `async` method and a
   named mutex is owned by the thread that waited on it; **and not a named
   semaphore**, which does span threads, because a semaphore's count is not
-  restored when its holder dies — one crashed reinstall would then refuse every
+  restored when its holder dies -- one crashed reinstall would then refuse every
   `init` on the machine until a reboot. Windows closes a file handle however the
   process ends, which is the crash recovery this needs and cannot write itself.
   Held-ness is a sharing violation and never the file's existence, exactly as
   `lock.json` works.
 
-  **It is mutual against itself** — a second reinstall is refused for the same
+  **It is mutual against itself** -- a second reinstall is refused for the same
   reason a session is, which the maintainer asked for in the same breath:
   *"Including any reinstall sessions."* **And it does not drain.** A reinstall
   that takes the claim and then finds sessions open releases it and refuses
@@ -1712,7 +1712,7 @@ Read [`README.md`](README.md) first.
 
 - 🔒 **The family reinstall's session gate is now unconditional.** It used to be
   asked only *inside* `if (running.Count is not 0)`, so a session that was open
-  with its browser not currently launched let the delete through — and the
+  with its browser not currently launched let the delete through -- and the
   browser it is about to launch lands in a tree being removed. The maintainer's
   decision, verbatim: *"No reinstall if there is any session running system
   wide."* The family filter survives: only a session of the family being
@@ -1721,7 +1721,7 @@ Read [`README.md`](README.md) first.
   every family, as it already did.
 
 - 📝 **`--storage-state` together with `--user-data-dir` is a silent no-op.** `--storage-state`
-  together with `--user-data-dir` is a silent no-op — exit 0, empty stderr, no
+  together with `--user-data-dir` is a silent no-op -- exit 0, empty stderr, no
   state applied. `storageState` is the **only** one of
   `BrowserNewContextParams`' 32 keys absent from
   `BrowserTypeLaunchPersistentContextParams`' 49; `tObject` iterates the
@@ -1740,8 +1740,8 @@ Read [`README.md`](README.md) first.
 - 📝 **Two browsers on one profile directory: Chromium refuses and Firefox hangs.** Two
   browsers on one profile directory: Chromium refuses in 5,036 ms naming the
   cause, Firefox hangs for 180,402 ms with an error that never mentions the
-  profile. Upstream's `isProfileLocked` probes `<userDataDir>\lockfile` —
-  Chromium's name — while Firefox uses `parent.lock`, so the guard never fires
+  profile. Upstream's `isProfileLocked` probes `<userDataDir>\lockfile` --
+  Chromium's name -- while Firefox uses `parent.lock`, so the guard never fires
   and Firefox's own lock blocks the juggler handshake until the launch timeout.
   The 5,036 ms is `isProfileLocked5Times`' own five one-second retries
   succeeding. **BrowserAI's own path is covered** by `ChildLaunch.Create`'s
@@ -1755,17 +1755,17 @@ Read [`README.md`](README.md) first.
   into `Chrome/152.0.0.0` and replaces Firefox's UA outright, with no Playwright
   driving and no init script. Firefox's `navigator.webdriver` stays `true` under
   `dom.webdriver.enabled: false`, while `general.useragent.override` through the
-  same `firefoxUserPrefs` object *does* take effect — which is the control that
+  same `firefoxUserPrefs` object *does* take effect -- which is the control that
   makes the negative mean something. **Nothing was implemented.**
 
 - 📝 **Firefox is owed Chromium's rename measurement, and now has it.** Firefox
-  is owed Chromium's rename measurement, and now has it — plus the two shared
+  is owed Chromium's rename measurement, and now has it -- plus the two shared
   trees and the browsers root, which nobody had asked about at all. The
   browser-tree rename refusal behind `browserai_reinstall_browser` was measured
   against **Chromium only**, and the entry said so. Measured 2026-08-19 the same
   way: a live headless **Firefox 153.0** (playwright firefox v1539) refuses
   `Directory.Move` of `firefox` with a sharing violation and of `firefox-1539`
-  with `ERROR_ACCESS_DENIED`, and both succeed the second the browser is gone —
+  with `ERROR_ACCESS_DENIED`, and both succeed the second the browser is gone --
   **identical to Chromium, error for error and in the same order**, over two
   runs. **So there is no product finding and nothing changed**: the refusal was
   already family-agnostic, and it now rests on a measurement of both families
@@ -1774,19 +1774,19 @@ Read [`README.md`](README.md) first.
   than only from the day it was taken.
 
   **What was new is at the edges.** `ffmpeg-1011` and `winldd-1007` rename
-  **freely** while a browser of either family is live — neither is running,
-  since `ffmpeg-win64.exe` exists only during a recording — while the **browsers
+  **freely** while a browser of either family is live -- neither is running,
+  since `ffmpeg-win64.exe` exists only during a recording -- while the **browsers
   root itself** is refused under both families, with the same error as the
   revision directory. That is *further up* than the 2026-08-18
   running-executable measurement predicts, where a running image's grandparent
   moved without complaint, so whatever a browser holds is not just the directory
   its image sits in. Recorded rather than acted on, and explicitly not a licence
   to narrow `shared`'s wider refusal. **And Playwright's Firefox brings no
-  Remote Agent up** — `--remote-debugging-port` never answers, because
-  Playwright drives it over the juggler pipe — so the Firefox arm proves
+  Remote Agent up** -- `--remote-debugging-port` never answers, because
+  Playwright drives it over the juggler pipe -- so the Firefox arm proves
   liveness by content-process tree where Chromium's uses DevTools, which is a
   weaker signal and is written down as one
-  ([kb](kb/windows/processes.md#the-same-measurement-for-firefox-and-for-what-both-families-share--2026-08-19),
+  ([kb](kb/windows/processes.md#the-same-measurement-for-firefox-and-for-what-both-families-share----2026-08-19),
   re-verification row 103).
 
 - 📝 **The CsWin32 metadata licence terms are in the repository, quoted verbatim.** The
@@ -1794,17 +1794,17 @@ Read [`README.md`](README.md) first.
   question is now a legal one rather than a research task. The
   [`TODO.md`](TODO.md) item had stood on *"whether those terms create a notices
   obligation for shipped generated code is not assessed and must not be asserted
-  either way"* — with nobody having read the terms. They are now in
+  either way"* -- with nobody having read the terms. They are now in
   [QUESTIONS.md
-  §12](QUESTIONS.md#12-the-cswin32-metadata-licence--moot-2026-08-20-and-the-entry-stays):
+  §12](QUESTIONS.md#12-the-cswin32-metadata-licence----moot-2026-08-20-and-the-entry-stays):
   the four packages and their resolved versions, how each declares its licence,
   the operative clauses quoted with URLs and the date fetched, what the text
   does and does not say about generated code, and five ordered questions for a
   lawyer. **The finding that was not expected:** the two metadata packages ship
   the same **byte-identical** Windows 10 SDK EULA
-  (`EULAID:WIN10SDK.RTM.AUG_2018_en-US`, SHA-256 `0e97876e…`), while
-  `win32metadata`'s own `README.md` says `Windows.Win32.winmd` — the only file
-  the generator reads — is **MIT**. Two current Microsoft statements about one
+  (`EULAID:WIN10SDK.RTM.AUG_2018_en-US`, SHA-256 `0e97876e...`), while
+  `win32metadata`'s own `README.md` says `Windows.Win32.winmd` -- the only file
+  the generator reads -- is **MIT**. Two current Microsoft statements about one
   file, and they disagree. **No conclusion is drawn and none may be**: the
   exposure is still zero because CsWin32 is test-only at `PrivateAssets="all"`
   and nothing it emits ships.
@@ -1813,12 +1813,12 @@ Read [`README.md`](README.md) first.
   gained a third value, `shared`, and it is the only route to repairing
   `ffmpeg`. `ffmpeg` and `winldd` are downloaded into the browsers root by
   **both** families, each carries its own `INSTALLATION_COMPLETE`, and a family
-  reinstall deletes only that family's revision directory — so a corrupted
+  reinstall deletes only that family's revision directory -- so a corrupted
   `ffmpeg`, which the `video` artifact type needs, was **permanent through the
   product's own surface**. `shared` deletes both trees and runs one
   `install-browser ffmpeg`, measured 2026-08-19 to rebuild whichever of the two
   is missing because each carries its own marker
-  ([kb](kb/playwright/provisioning-and-timings.md#one-install-browser-ffmpeg-rebuilds-both-shared-components--2026-08-19),
+  ([kb](kb/playwright/provisioning-and-timings.md#one-install-browser-ffmpeg-rebuilds-both-shared-components----2026-08-19),
   re-verification row 100). The completeness check stays **per component**: a
   run that exits 0 having left one unmarked is reported here rather than met
   later as `spawn EFTYPE`.
@@ -1826,7 +1826,7 @@ Read [`README.md`](README.md) first.
   **Its refusal is deliberately stricter than a family's, and that is the
   decision.** A family reinstall is gated on a process running out of that tree,
   and for a family that is the same question as *a session is driving this
-  browser* — `chrome.exe` lives for the session's life and holds its own image
+  browser* -- `chrome.exe` lives for the session's life and holds its own image
   open. For the shared components the two come apart: `ffmpeg-win64.exe` exists
   only while a recording runs, so a process-only gate answers *nothing is using
   it* on a machine full of live sessions and the tree is then deleted under the
@@ -1836,21 +1836,21 @@ Read [`README.md`](README.md) first.
   a turn; a shared tree corrupted by the operation that exists to repair it is
   not.
 
-  **`shared` is not a browser and `browserai_init` still refuses it** — the two
+  **`shared` is not a browser and `browserai_init` still refuses it** -- the two
   accepted sets are now different lists, and
   `FirefoxSessionTests.TheAdvertisedSurfaceOffersBothFamiliesAndMakesReinstallNameOne`
   asserts they differ, because reading one list for both is what would have
   bound a session for life to a codec. **Explicitly rejected:** having a family
-  reinstall also verify and repair the shared components — that re-introduces a
+  reinstall also verify and repair the shared components -- that re-introduces a
   repair tool which can break something working, which is why the argument is
   required at all. Still no force flag.
 
 - ✨ **Firefox is a browser you can ask for.** `browserai_init` accepts `browser:
   "firefox"` beside `chromium`, which stays the default. Everything below the
-  front door was already family-parameterised — provisioning, the config
+  front door was already family-parameterised -- provisioning, the config
   generator, the `parent.lock` preflight, Restart Manager attribution, the
   restart-registration preference and the stray sweep all read the family from
-  the session's own `lock.json` — so what changed is the door, and what was owed
+  the session's own `lock.json` -- so what changed is the door, and what was owed
   before it could open was a **measurement** and a **decision**.
 
   **The measurement: Firefox is 127.2 MB down and 340.15 MiB on disk.**
@@ -1858,14 +1858,14 @@ Read [`README.md`](README.md) first.
   125,706,704 + `ffmpeg-win64.zip` 1,411,741 + `winldd-win64.zip` 128,684) and
   356,674,059 B across 71 files, from two clean provisioning runs into an empty
   root that were byte-identical, in 7.30 s and 6.60 s
-  ([kb](kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way--2026-08-19)).
+  ([kb](kb/playwright/provisioning-and-timings.md#firefox-measured-the-same-way----2026-08-19)).
   The refusal a caller reads while a browser is still downloading quotes this
   figure; before today it would have quoted Chromium's 203.8 MB for a Firefox
   install, which is a measured-looking number measured of something else.
 
   ⚠️ **The Firefox pair that was already recorded was not comparable to
-  Chromium's and has been replaced** — *previously "125,706,704 B down and
-  352,898,062 B — 336.55 MiB — on disk"*. Those were the Firefox archive and the
+  Chromium's and has been replaced** -- *previously "125,706,704 B down and
+  352,898,062 B -- 336.55 MiB -- on disk"*. Those were the Firefox archive and the
   Firefox directory alone, where Chromium's counted a whole provisioning run;
   `install-browser firefox` fetches the same three archives. Re-measured, never
   adjusted.
@@ -1874,15 +1874,15 @@ Read [`README.md`](README.md) first.
   against real children of the resolved payload: 42 tools at BrowserAI's base
   capability set and 59 with `storage`, identical names, identical order,
   byte-identical schemas under `chromium` and `firefox`
-  ([kb](kb/playwright/tools-and-artifacts.md#does-the-surface-differ-by-browser-family--measured-2026-08-19)).
+  ([kb](kb/playwright/tools-and-artifacts.md#does-the-surface-differ-by-browser-family----measured-2026-08-19)).
   It matters because BrowserAI builds its one static tool list from a single
   Chromium-configured surface child and the MCP spec forbids the set varying per
-  connection — so every tool-surface number in this repository is now a measured
+  connection -- so every tool-surface number in this repository is now a measured
   claim about both families rather than an assumed one.
 
   `FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy`
-  drives the front door end to end against a real Firefox — init, navigate,
-  screenshot, destroy — and asserts by **full image path** that the browser that
+  drives the front door end to end against a real Firefox -- init, navigate,
+  screenshot, destroy -- and asserts by **full image path** that the browser that
   came up was Firefox, because every other assertion in it is satisfied just as
   happily by a Chromium.
 
@@ -1890,22 +1890,22 @@ Read [`README.md`](README.md) first.
   drives the published NativeAOT binary over real JSON-RPC with a real
   `@playwright/mcp` child and measures three surfaces: the server
   `instructions`, every tool `description`, and **every parameter `description`
-  inside every `inputSchema`** — the last of which was asserted by nothing, and
+  inside every `inputSchema`** -- the last of which was asserted by nothing, and
   is where BrowserAI's own injected `session` description lands on 59 upstream
   tools at once. Enumerated dynamically, so a tool added next year is covered;
   measured in characters *and* UTF-8 bytes; hard at 100% with no warning tier,
   because under the cut the text simply never reaches the model. Every length is
   printed sorted on a passing run, to `.work/description-budget.txt`. **The
-  reading of the documentation's *"2KB each"* has since been measured** — see
-  the entry below — so the gate now fails on characters rather than on whichever
+  reading of the documentation's *"2KB each"* has since been measured** -- see
+  the entry below -- so the gate now fails on characters rather than on whichever
   count is larger.
 
 - ✅ **`RecordedCountTests`, which generalises the one place counting discipline was
   mechanised.** Every
   count a surviving document publishes about this repository is now checked
   against a live scan, through the *same* implementation that produces the
-  figure: the hazard tally in `TODO.md` — **category by category, not just the
-  total**, because a wrong total is only visible against the sum — the fragment
+  figure: the hazard tally in `TODO.md` -- **category by category, not just the
+  total**, because a wrong total is only visible against the sum -- the fragment
   count in `CLAUDE.md`, the tool-surface numbers in `DECISIONS.md`, and
   `kb/README.md`'s claim that no article carries `[STALE]`, with a positive
   control. Four counts it cannot mechanise are named in the class and say why.
@@ -1913,17 +1913,17 @@ Read [`README.md`](README.md) first.
 - 🐛 **The per-directory session gate refused sessions that nothing was wrong with.** The
   per-directory session gate refused sessions that nothing was wrong with, and
   told the caller so in as many words. `LockScopes.PerDirectoryGate` was five
-  seconds because the section it guards takes milliseconds — but every process
+  seconds because the section it guards takes milliseconds -- but every process
   naming one directory enters that gate *in turn* just to discover the file is
   held, so the wait is behind the whole queue. Measured on an **idle** machine:
   100 contenders, the charter's design point, put the slowest refusal at **3,349
-  ms against a 5,000 ms timeout** — a margin of 1.49× — and 200 contenders
+  ms against a 5,000 ms timeout** -- a margin of 1.49× -- and 200 contenders
   produced **73 `Busy` refusals of 796**, every one at the timeout exactly.
   `Busy` withholds the holder's identity, which is the one thing the lock exists
   to report, and its message asserted *"something is wrong that waiting longer
   will not fix"* about a machine where waiting was the entire remedy. The gate
-  was also **smaller than a wait taken inside it** — `RenameWindow.Budget`
-  became 30 s on 2026-08-18 and is consumed under this mutex — so one entitled
+  was also **smaller than a wait taken inside it** -- `RenameWindow.Budget`
+  became 30 s on 2026-08-18 and is consumed under this mutex -- so one entitled
   reader could starve every peer into a wrong answer. Now sixty seconds, with
   `SessionLockTests.TheGateOutlastsEveryWaitTakenInsideIt` failing the build if
   either number crosses the other, and re-measured at 200 contenders with zero
@@ -1934,11 +1934,11 @@ Read [`README.md`](README.md) first.
 - ✅ **The suite's torn-log check had never matched a log record.** `SaturationTests`'
   record-header expression required two spaces before `pid=`, but
   `FileLoggerProvider` pads level names to five characters and then writes two
-  more — so `INFO` and `WARN` are followed by three, and only `TRACE`, `DEBUG`
+  more -- so `INFO` and `WARN` are followed by three, and only `TRACE`, `DEBUG`
   and `ERROR` ever matched. Against a real hundred-process run: 2,217 records,
   2,117 `INFO` and 100 `WARN`, **zero matches**. The check that proves a hundred
   concurrent appenders cannot corrupt one file was passing by seeing nothing,
-  and the count beside it — meant to stop exactly that — counted every log file
+  and the count beside it -- meant to stop exactly that -- counted every log file
   on the machine, so a developer's months of history satisfied it before the
   test began. On a fresh CI runner it read 6; with the log directory moved aside
   locally, 0. Fixed, scoped to the run's own pids, and the same run now reads
@@ -1947,7 +1947,7 @@ Read [`README.md`](README.md) first.
 - ✅ **A test asserted a durable property on a channel that is not durable.** `ProtocolSplitTests`
   read the protocol-negotiation record from stderr, which `AddConsole` hands to
   a background processor thread, while `SliceRun` ends BrowserAI with
-  `TerminateProcess` on purpose to prove containment — so the queue's tail went
+  `TerminateProcess` on purpose to prove containment -- so the queue's tail went
   with it. Two CI runs lost different amounts, which is a queue and not a
   missing call. It now reads the process log, which `RollingFileWriter` writes
   unbuffered per record, scoped to that run's pid.
@@ -1964,7 +1964,7 @@ Read [`README.md`](README.md) first.
 
 - ✅ **A test asserted that the developer's screen was busy.** The message-window
   test proved `EnumWindows` had really enumerated by requiring more than fifty
-  top-level windows — true of a desktop somebody is using and false on a CI
+  top-level windows -- true of a desktop somebody is using and false on a CI
   agent, where a service window station holds a handful, so it would have gone
   red on a machine where nothing was wrong. The probe now publishes a second
   window that is top-level and never shown, and the assertion is disjointness by
@@ -1972,7 +1972,7 @@ Read [`README.md`](README.md) first.
 
 - 🐛 **A session another BrowserAI was writing to could not be opened.** Every
   `lock.json` is replaced by an atomic rename, and while that rename is in
-  flight Windows refuses every other open of the file — with `ACCESS_DENIED`,
+  flight Windows refuses every other open of the file -- with `ACCESS_DENIED`,
   not the sharing violation the code was watching for. So `browserai_init` or
   `browserai_resume` against a directory a second BrowserAI happened to be
   touching at that instant failed with an unhandled exception, and the session
@@ -1983,8 +1983,8 @@ Read [`README.md`](README.md) first.
 
 - 🐛 **A child that took longer than sixty seconds to start was reported as a
   protocol failure.** BrowserAI
-  never set the MCP SDK's `InitializationTimeout`, so it inherited the default —
-  sixty seconds, chosen by nobody here and documented nowhere — for a handshake
+  never set the MCP SDK's `InitializationTimeout`, so it inherited the default --
+  sixty seconds, chosen by nobody here and documented nowhere -- for a handshake
   whose far side is `node.exe` loading a bundled runtime. On a loaded machine
   that is reachable, and the failure it produced said `Initialization timed out`
   with no elapsed time, no child identity and none of the child's stderr in it.
@@ -1996,8 +1996,8 @@ Read [`README.md`](README.md) first.
   could delete the browser tree and then wait an hour with nothing installed.
   Provisioning that could not take the machine-wide mutex assumed another
   process was mid-download and watched for the marker it would write. The holder
-  is not always downloading — it keeps the mutex through its revision prune,
-  which walks every process on the machine — so a caller that had just deleted
+  is not always downloading -- it keeps the mutex through its revision prune,
+  which walks every process on the machine -- so a caller that had just deleted
   the tree waited out the full 60-minute deadline for a marker nobody was going
   to write. It now watches for the mutex as well, and installs when the holder
   lets go without having completed the tree; a genuine second downloader is
@@ -2009,7 +2009,7 @@ Read [`README.md`](README.md) first.
   reported an outcome and a message; it now reports the holder's pid *and*
   creation time, whether that holder was running, the gate's timeout beside the
   elapsed figure, anything `TryAcquire` threw, and `lock.json` as it stood at
-  that instant — and every assertion in the race carries all sixteen contenders'
+  that instant -- and every assertion in the race carries all sixteen contenders'
   reports rather than the one that tripped. `JobObjectScope.SaidBy` waited for
   nothing and so reported *"it wrote nothing to either stream"* for a drain the
   thread pool had not scheduled; it now drains to end-of-file and tells the two
@@ -2022,12 +2022,12 @@ Read [`README.md`](README.md) first.
   records why a green CI run reports skips, which four they are, that the
   no-skip rule is about `[Skip]` in the tree and is enforced by
   `HouseRuleTests`, and that zero skipped is a release requirement met by
-  cutting from a machine with every capability — never by softening the gate to
+  cutting from a machine with every capability -- never by softening the gate to
   tidy a badge.
 
 - ✅ **The build runs on a machine nobody owns.** There was no `.github/` at all,
   so every test and every release-phase check ran only when somebody remembered
-  to run it locally — invisible, on a public repository, to anyone opening a
+  to run it locally -- invisible, on a public repository, to anyone opening a
   pull request. `.github/workflows/build.yml` builds the payload, provisions
   both browsers, publishes the NativeAOT binary and runs the **whole** suite
   including `SaturationTests`, on every push and pull request. It states its own
@@ -2049,13 +2049,13 @@ Read [`README.md`](README.md) first.
 
 - 📝 **`Interop\`, `Sessions\` and `Runtime\` have working instructions of their own.** `Interop\`,
   `Sessions\` and `Runtime\` have working instructions of their own, twelve
-  lines each, carrying only what the mechanisms cannot say — and a second
+  lines each, carrying only what the mechanisms cannot say -- and a second
   `PreToolUse` hook puts the two invariants no analyzer can fully catch in front
   of whoever edits the first two.
 
 - ✨ **BrowserAI registers itself with your MCP client when it installs, and
   unregisters when it goes.** One
-  registration at *user* scope — available in every repository, with no
+  registration at *user* scope -- available in every repository, with no
   `.mcp.json`, no hook registration and no file added to any project. Installing
   is the whole of setup. It registers `current\BrowserAI.exe` directly, so an
   update replaces the binary without the registration ever needing to change;
@@ -2063,7 +2063,7 @@ Read [`README.md`](README.md) first.
 
 - 📦 **A registration that could not happen says so, and never breaks the install.** No
   MCP client on the machine, a client that refuses, one that hangs, one that
-  cannot be started — each leaves a line in the process log *and*
+  cannot be started -- each leaves a line in the process log *and*
   `mcp-registration.json` beside the installed `current\` folder, naming the
   outcome and the one command to run by hand. Nothing about a failed
   registration is silent, and nothing about it can fail an installation.
@@ -2076,7 +2076,7 @@ Read [`README.md`](README.md) first.
 - 📦 **The version comes from the git tag and is typed nowhere.** A build on
   `v0.1.0` is `0.1.0`; five commits later, with no new tag, it is
   `0.1.1-alpha.0.5`. Nothing to edit, forget, or get out of step with the tag,
-  and an untagged build says so in its own version string — which is the whole
+  and an untagged build says so in its own version string -- which is the whole
   of *never self-update from a build that is not a release*.
 
 - 📦 **A build that cannot work out what version it is now fails.** A shallow
@@ -2100,7 +2100,7 @@ Read [`README.md`](README.md) first.
 - 📦 **Silent background self-update, per-user, with a rollback that works.** BrowserAI
   installs to `%LocalAppData%` with no elevation, checks its feed off the
   message loop so a tool call stays answerable while a package is in flight, and
-  swaps itself between sessions — in normal use there is no *restart to apply*
+  swaps itself between sessions -- in normal use there is no *restart to apply*
   prompt at all. A BrowserAI-only release is a **97,216-byte** delta against a
   46.8 MiB full package.
 
@@ -2111,7 +2111,7 @@ Read [`README.md`](README.md) first.
 
 - 📦 **Rollback is publishable as well as acceptable.** The client allows a
   version downgrade and the release script permits *monotonic **or** an explicit
-  rollback republish* — both halves, because either alone is a rollback that can
+  rollback republish* -- both halves, because either alone is a rollback that can
   be accepted but never emitted, or emitted and never accepted.
 
 - 📦 **`build/New-Release.ps1` builds a release end to end.** `build/New-Release.ps1`,
@@ -2142,7 +2142,7 @@ Read [`README.md`](README.md) first.
   2026-09-16 (Q196): `browser_snapshot` and `browser_take_screenshot` are the two
   things this server does most, so an icon about perception is the honest
   emphasis. [`assets/BrowserAI.ico`](assets/BrowserAI.ico) replaces the candidate
-  1 placeholder and is one file — both executables, the Setup stub, the
+  1 placeholder and is one file -- both executables, the Setup stub, the
   Add/Remove entry and the Start Menu shortcut carry it, and nothing else
   changed. It is four entries: 16, 32 and 48 as 32-bit BGRA `BITMAPINFOHEADER`
   DIBs with an all-zero mask, and 256 as the PNG file verbatim, which is what
@@ -2151,16 +2151,16 @@ Read [`README.md`](README.md) first.
   rasteriser rather than downscaled from the 256. The master is persisted beside
   it as [`assets/icon.svg`](assets/icon.svg), with
   [`assets/icon-256.png`](assets/icon-256.png),
-  [`assets/icon-128.png`](assets/icon-128.png) — which
+  [`assets/icon-128.png`](assets/icon-128.png) -- which
   [`README.md`](README.md) now shows beside its title, the first image this
-  project has ever published — and
+  project has ever published -- and
   [`assets/social-preview.png`](assets/social-preview.png) at 1280×640 for the
   repository's **Social preview** setting, which has no API and reaches the world
   only when the maintainer drags the file into that field.
   [`assets/README.md`](assets/README.md) records what each file is, how it was
   made and what holds it. **Every one of them is original work**: SVG primitives
   drawn from scratch, no `<text>`, no `<image>`, no web font, no third-party
-  mark and no glyph taken from a typeface — the social preview's lettering is
+  mark and no glyph taken from a typeface -- the social preview's lettering is
   rasterised system text and is the one asset whose look depends on the machine
   that rendered it.
 
@@ -2168,13 +2168,13 @@ Read [`README.md`](README.md) first.
   them is narrowed.**
   `DocumentationLinkTests.NotThisRepositorysKind` takes every asset extension out
   of the link scan, and it was justified by an assertion that the repository
-  tracked no such file — which **had already gone quiet**: `assets\BrowserAI.ico`
+  tracked no such file -- which **had already gone quiet**: `assets\BrowserAI.ico`
   was committed on 2026-09-15 and `TheAssetExclusionHidesNothing` never saw it,
   because `assets` was not one of the directories that arm walked. The claim was
   true of everywhere it looked and false of the repository.
   `EveryAssetReferenceInTheProseResolvesToTheFileItNames` now resolves every
   image, every asset-kind link and every HTML `src` and `href` in every `.md`
-  file — the HTML half is not decoration, because an image that has to sit
+  file -- the HTML half is not decoration, because an image that has to sit
   **beside** a heading cannot be written in Markdown at all, so the one image
   this repository publishes is an `<img>` tag a Markdown-only scan would have
   missed entirely. `TheAssetExclusionHidesNothing` now asserts the property the
@@ -2186,20 +2186,20 @@ Read [`README.md`](README.md) first.
 - ✅ **The shipped icon's shape is a gate, and its planted red is a doctored
   file.**
   `ReleaseScriptTests.TheShippedIconIsTheOneTheMaintainerChose` reads the icon
-  directory out of the bytes — four entries, the sizes in order, 32-bit in one
+  directory out of the bytes -- four entries, the sizes in order, 32-bit in one
   plane, a 40-byte `BITMAPINFOHEADER` declaring the **doubled** height a mask
   entry declares, and a PNG-compressed 256 whose own `IHDR` agrees with the
-  directory — and holds the three published rasters at the sizes their names
+  directory -- and holds the three published rasters at the sizes their names
   claim. Not through `System.Drawing`, which answers *a 32×32 icon came back* for
   any file with one usable entry in it: a file missing the 256 looks perfect to a
   loader and blurred on a 4K display. **Candidate 1 had the identical directory
-  shape**, so putting it back would not have moved one assertion — a check that
-  cannot fail against the file it replaced is not evidence — so the controls take
+  shape**, so putting it back would not have moved one assertion -- a check that
+  cannot fail against the file it replaced is not evidence -- so the controls take
   the real bytes and break one property each. The arm was also watched red
   against the real file with its entry count doctored from four to three.
   [`RELEASING.md`](RELEASING.md) item 7 now names candidate 3 and the two files
   that must agree, and says plainly that **nothing holds the drawing in the
-  `.ico` to be the drawing in the SVG** — that is a render comparison on every
+  `.ico` to be the drawing in the SVG** -- that is a render comparison on every
   build to answer a question a person answers by looking.
 
 - ✅ **Nothing in a release body may carry a character a person would not type.**
@@ -2218,7 +2218,7 @@ Read [`README.md`](README.md) first.
   scope is what a release body is actually made of and is stated rather than
   implied: every section preamble, every entry headline, the legend, and a body
   generated from the fixture, which is how the generator's own fixed text is
-  covered. **An entry's detail is out of scope by construction** — since
+  covered. **An entry's detail is out of scope by construction** -- since
   2026-09-16 the body carries headlines and a `read more` link, so the 674 em
   dashes in this file's details never reach a reader of the release page.
   Planted red against the `1.0.0` preamble, which carried three of them.
@@ -2227,8 +2227,8 @@ Read [`README.md`](README.md) first.
   `Repair` on a re-ship.** Measured 2026-09-16
   against the published `v1.0.0` installer and filed in
   [`kb/packaging/velopack.md`](kb/packaging/velopack.md) with re-verification row
-  130. The trigger is `!is_dir_empty(&root_path)` — **the directory, not the
-  version** — so every existing user meets a `#32770` titled *"BrowserAI is
+  130. The trigger is `!is_dir_empty(&root_path)` -- **the directory, not the
+  version** -- so every existing user meets a `#32770` titled *"BrowserAI is
   already installed"* that waits indefinitely; only the affirmative button's
   label varies with the comparison (`Update` / `Downgrade` / **`Repair`** when
   equal), and taking it runs the full install over an emptied root. Two edges
@@ -2275,8 +2275,8 @@ Read [`README.md`](README.md) first.
 - 📝 **The gate now says to publish the slice again after a `src/` change.**
   It always had to be done and the only place it was ever written down was the
   refusal it produces. A gate attempt on 2026-09-17 cost 34 reds reading *the
-  published binary … is older than 7 source file(s), so this test would prove
-  nothing about the code in the tree* — around thirty arms drive the published
+  published binary ... is older than 7 source file(s), so this test would prove
+  nothing about the code in the tree* -- around thirty arms drive the published
   NativeAOT binary rather than the tree, and `PublishedSlice.EnsureFresh`
   refuses all of them together. The two-shell gate paragraph in `CLAUDE.md` and
   in `TESTING.md` now carries the step and the two commands that refusal names,
@@ -2296,7 +2296,7 @@ Read [`README.md`](README.md) first.
   an install has held two binaries since 2026-09-15, so the figure names a
   directory that no longer exists in that shape. The sum is left exactly as it
   was measured and marked `[STALE]` with both reasons, which is what the marker
-  is for — and it is the same defect the correction directly beneath it already
+  is for -- and it is the same defect the correction directly beneath it already
   records against the sentence this one replaced, a derived total carrying no
   date of its own.
 
@@ -2304,20 +2304,20 @@ Read [`README.md`](README.md) first.
 
 - 📦 **A pack built for the gate is not a release, so it is not given a release body.** `New-Release.ps1`
   is run twice for every release the suite is part of: once on the version being
-  cut, and once on whatever MinVer derives from a commit past the tag —
-  `1.0.1-alpha.0.19` today — to produce the pack the capability-gated arms
+  cut, and once on whatever MinVer derives from a commit past the tag --
+  `1.0.1-alpha.0.19` today -- to produce the pack the capability-gated arms
   install. **No pre-release version has a changelog section and none ever
   will**, so the body step is skipped for one, out loud, instead of refusing.
   Found by running the script rather than by reading it: the pack succeeded and
   the new step exited 1 naming a section nobody had written. The stale
-  single-binary pack in `Releases/` was replaced in the same pass — it carried
+  single-binary pack in `Releases/` was replaced in the same pass -- it carried
   `BrowserAI.exe` at 19,221,504 bytes, which is the SERVER under the old name,
-  and both real-installer arms were red against it — and the pack now holds
+  and both real-installer arms were red against it -- and the pack now holds
   `BrowserAI.exe` at 10,382,848 and `BrowserAI.Server.exe` at 19,181,568, which
   is the two-binary layout the installer arms assert.
 
 - ✅ **An empty `[Unreleased]` is legal while a release is being cut, not only once it is tagged.** A
-  release is not a commit — it is a stamp, then a gate, then a tag — and the
+  release is not a commit -- it is a stamp, then a gate, then a tag -- and the
   exemption added earlier on 2026-09-15 keyed on the tag being **exactly at
   HEAD**, which is true only at the end of that. So
   `ChangelogTests.TheChangelogHasAnUnreleasedSectionWithEntriesInIt` was red
@@ -2332,8 +2332,8 @@ Read [`README.md`](README.md) first.
 
 - 📦 **The GitHub release body is generated from the section rather than cut out of it.** The
   published v1.0.0 body was the stamped section truncated at a heading boundary
-  — **110,225 characters** ending mid-argument, opening with four warning icons,
-  with a permalink line stuck on at the cut — because 236,567 characters do not
+  -- **110,225 characters** ending mid-argument, opening with four warning icons,
+  with a permalink line stuck on at the cut -- because 236,567 characters do not
   fit in a field that holds 125,000.
   [`build/New-ReleaseNotes.ps1`](build/New-ReleaseNotes.ps1) reads the entry
   shape above and emits each headline as a line with its detail folded behind a
@@ -2347,12 +2347,12 @@ Read [`README.md`](README.md) first.
   ⚠️ **The size guard changes the document, and for 1.0.0 it is the branch
   taken**: folded is **280,063** characters, headlines alone is **19,340**, and
   the script says which shape it produced. The limit itself is a number this
-  project carries and nobody here has established — GitHub's own documentation
-  for *Create a release* states no maximum — which
-  [kb](kb/toolchain.md#gh-for-a-release-body-the-size-limit-is-carried-rather-than-measured-and-the-rendering-is-checkable--2026-09-15)
+  project carries and nobody here has established -- GitHub's own documentation
+  for *Create a release* states no maximum -- which
+  [kb](kb/toolchain.md#gh-for-a-release-body-the-size-limit-is-carried-rather-than-measured-and-the-rendering-is-checkable----2026-09-15)
   says in as many words, with a re-verification row naming the experiment that
   was deliberately not run. The rendering is checked against GitHub's own
-  renderer before publishing — `gh api -X POST markdown -f mode=gfm` — which
+  renderer before publishing -- `gh api -X POST markdown -f mode=gfm` -- which
   confirms the two properties the fold depends on: the `<details>` inside the
   `<li>`, the headline a `<strong>`.
 
@@ -2366,7 +2366,7 @@ Read [`README.md`](README.md) first.
   entries re-shaped**, 1.0.0 and 0.1.0 alike, into `- <icon> **Headline.** <the
   whole of what happened>`. Nothing was rewritten: where a headline is new, the
   sentence it replaces is the first thing in the detail, word for word, with its
-  bold markers dropped because the bold is the headline's now — checked
+  bold markers dropped because the bold is the headline's now -- checked
   mechanically over every entry rather than by reading. The groups are the
   Keep-a-Changelog set in its fixed order, **once each**: the 1.0.0 section
   carried `Changed` four times, `Added` three, `Fixed` three and `Removed`
@@ -2377,7 +2377,7 @@ Read [`README.md`](README.md) first.
   never seen the project.
 
   **The palette is a legend at the top and the icon is chosen for what the entry
-  IS**, not for the group it sits under — twelve icons, approved as written.
+  IS**, not for the group it sits under -- twelve icons, approved as written.
   Five arms hold the shape, each with synthetic controls the tree can never
   produce: no icon, an icon outside the palette, a headline nobody made bold, a
   headline of two sentences, and one a single character over budget. **The
@@ -2389,14 +2389,14 @@ Read [`README.md`](README.md) first.
   carrying the wrong one.** For
   about two minutes after the 2026-09-15 release replaced its assets,
   `releases/latest/download/releases.win.json` answered **HTTP 200 with the
-  previous manifest** — `Age: 2701`, while `gh api .../releases/latest` was
-  correct throughout — so a post-publish check reading only the status code
+  previous manifest** -- `Age: 2701`, while `gh api .../releases/latest` was
+  correct throughout -- so a post-publish check reading only the status code
   would have reported a feed serving a package nobody could download.
   `UpdateTests.TheProductionFeedUrlResolvesOverHttpAndReturnsAManifest` now
   requires the body to name the pack id this build installs under and a version
   no older than the first ever published under it. Its positive control is the
   body that really was served: the August manifest, pack id `BrowserAI` at
-  1.0.0, recovered verbatim from the archived release evidence — it parses,
+  1.0.0, recovered verbatim from the archived release evidence -- it parses,
   carries `Assets` and meets the version floor, and fails on the id alone.
   [`RELEASING.md`](RELEASING.md#the-release-gate) now says the post-publish
   check is to poll the body until it names the version just published, and that
@@ -2405,7 +2405,7 @@ Read [`README.md`](README.md) first.
 - 📝 **`RELEASING.md`: moving a tag does not draft the release; deleting one does.** Corrected
   by addition after both halves were measured on 2026-09-15: a delete drafted
   the only published release and the public feed answered 404 for about **twenty
-  minutes**; a `git tag -f` plus `git push --force origin refs/tags/…` left the
+  minutes**; a `git tag -f` plus `git push --force origin refs/tags/...` left the
   release published throughout and the feed was down for **7.7 s**, which is
   GitHub re-resolving `releases/latest` rather than a drafting.
 
@@ -2413,14 +2413,14 @@ Read [`README.md`](README.md) first.
   between two suite runs, wait for `.work\test-scratch` to be released rather
   than for the first run to report. On the 2026-09-15 release gate, **137** rig
   directories were still handle-held after run 1 had printed its summary.
-  Nothing enforces it — it is a property of two runs, and no test inside either
+  Nothing enforces it -- it is a property of two runs, and no test inside either
   can see the other.
 
 - ✅ **A suite race the packed release let loose reddened arms that did not hold the variable.** A
   suite race the packed release let loose, and the arm holding the variable was
   not the arm that went red. `RealInstallerTests` opens an `EnvironmentScope`
-  over `BROWSERAI_ROOT` and `CLAUDE_CONFIG_DIR` — both **process-wide**, because
-  the readers are executables the suite composes no command line for — and
+  over `BROWSERAI_ROOT` and `CLAUDE_CONFIG_DIR` -- both **process-wide**, because
+  the readers are executables the suite composes no command line for -- and
   carried `[NotInParallel]` on the MCP client's key. A key holds an arm apart
   from the arms carrying the **same key**; the readers of a process-wide
   variable are **every child every other arm starts**, which hold no key, open
@@ -2434,7 +2434,7 @@ Read [`README.md`](README.md) first.
   the arm needs a pack in `Releases/` to run at all, and this was the second
   full suite in which it did. **The honest denominator is 1 red in 2 live runs;
   that is not a rate and is not offered as one.** The fix is the keyless
-  `[NotInParallel]` — *runs beside nothing at all* — applied uniformly to
+  `[NotInParallel]` -- *runs beside nothing at all* -- applied uniformly to
   **every arm in a file that constructs a scope**, which is `RealInstallerTests`
   and `RegistrationTests`, both on the class so a later arm inherits it rather
   than having to remember it.
@@ -2442,7 +2442,7 @@ Read [`README.md`](README.md) first.
 - ✅ **The same race had a second face, it passed, and nothing would have said
   so.** While
   three foreign children wrote a browser into the installer arm's data root,
-  that arm was asserting the root **byte-identical** — and passing, because it
+  that arm was asserting the root **byte-identical** -- and passing, because it
   hashed only the four files it had planted. It now reads the whole tree after
   each install and after the uninstall, and names anything that is neither
   planted nor written by the install itself: `mcp-registration.json` at the root
@@ -2462,9 +2462,9 @@ Read [`README.md`](README.md) first.
   `.EveryPointerARealChildPublishesResolvesBecauseNothingMovesIt`,
   `FirefoxSessionTests.AFirefoxSessionRunsFromInitThroughAnArtifactToDestroy`)
   with the **identical** message, naming a 203.8 MB download into
-  `real-install-data-1665c0ba…\browsers\chromium-1244`; the new scan, naming the
+  `real-install-data-1665c0ba...\browsers\chromium-1244`; the new scan, naming the
   keyed arm; and **the installer arm itself**, whose data-root assertion listed
-  **sixteen** foreign files — `browsers\reinstall.lock`, three `index\` entries,
+  **sixteen** foreign files -- `browsers\reinstall.lock`, three `index\` entries,
   three `instances\{pid}-{guid}\` directories with their `instance.live` and two
   Playwright configuration files each, and three `live\` markers. Under the old
   hash-what-was-planted check that same directory read *unchanged*. **The race
@@ -2482,7 +2482,7 @@ Read [`README.md`](README.md) first.
   install root and names a file that is gone is re-pointed at
   `current\BrowserAI.Server.exe`; one that still resolves is left exactly as it
   is, arguments and all; and one whose command is **not** under our install root
-  is another BrowserAI's — reported with its location and never adopted,
+  is another BrowserAI's -- reported with its location and never adopted,
   overwritten or removed. Left alone, an entry naming `current\BrowserAI.exe`
   after an update is a file the client can still launch, and launching it shows
   a window.
@@ -2493,13 +2493,13 @@ Read [`README.md`](README.md) first.
   `Environment.ProcessPath` verbatim, so *"the registered path and the running
   binary cannot disagree: they are the same string"*. The hooks run in the
   configuration app now, so what a client is given is the app's directory plus
-  the server's name — and a composed path is a guess until something checks it.
+  the server's name -- and a composed path is a guess until something checks it.
   The sibling **must exist**, and its PE optional header **must declare the
   console subsystem**; either failing is a refusal naming the file, in the
   process log and in `mcp-registration.json`. ⚠️ **A name check would not have
   done**: a file called `BrowserAI.Server.exe` that is really the configuration
   app passes every check an extension can make and fails at the worst possible
-  moment — a client starts it expecting stdio, a window appears, and the client
+  moment -- a client starts it expecting stdio, a window appears, and the client
   waits forever for a handshake a dialog will never send.
 
 - 🔧 **The configuration app clears `VELOPACK_FIRSTRUN` and `VELOPACK_RESTART` from its environment.** The
@@ -2507,8 +2507,8 @@ Read [`README.md`](README.md) first.
   own environment, and this is a defect the two-binary design creates. The
   installer starts the app with `VELOPACK_FIRSTRUN=true`; a child inherits its
   parent's environment block; so clicking *Register* would start `claude.exe`
-  carrying it, and anything **that** process started — including
-  `BrowserAI.Server.exe` — would carry it too. The server exits 0 on that
+  carrying it, and anything **that** process started -- including
+  `BrowserAI.Server.exe` -- would carry it too. The server exits 0 on that
   variable deliberately, because a server the installer started has no client.
   It would then have exited 0 for a client that really was there, on first run,
   presenting as *failed to connect* with nothing in any log to say why. Cleared
@@ -2519,7 +2519,7 @@ Read [`README.md`](README.md) first.
 - 🔧 **The configuration app is a member of the live-instance census for as long as
   its window is open.** Velopack's
   `run_hook` ends in `force_stop_package`, which kills every process whose
-  **image path** is under the install root — the name is never consulted — so an
+  **image path** is under the install root -- the name is never consulted -- so an
   update applied by a *server* while the window is open would take the window
   with it, mid-click. The server's update lane defers while the census is
   non-empty and this marker is what makes it non-empty. The app's own apply is
@@ -2538,8 +2538,8 @@ Read [`README.md`](README.md) first.
   decorated-version scan reads both binaries; and the pack refuses a directory
   holding one of the two.
 
-- 📦 **`--shortcuts StartMenuRoot`, corrected from `None`.** The old reason —
-  *"this is a background stdio server that a human never launches"* — was true
+- 📦 **`--shortcuts StartMenuRoot`, corrected from `None`.** The old reason --
+  *"this is a background stdio server that a human never launches"* -- was true
   of the only binary there was and is false of the one `--mainExe` now names.
   Without an entry the configuration app could be seen exactly once, on the
   install that started it. Never the default `Desktop,StartMenuRoot`: a desktop
@@ -2547,7 +2547,7 @@ Read [`README.md`](README.md) first.
   `Desktop` so a dropped argument cannot restore it.
 
 - 📦 **`assets/BrowserAI.ico` is wired into the pack and into both executables.** `assets/BrowserAI.ico`
-  is wired into the pack and into both executables — the Setup stub, the
+  is wired into the pack and into both executables -- the Setup stub, the
   Add/Remove entry, the Start Menu shortcut and Explorer. ⚠️ **It is a
   placeholder.** Ten candidates were drawn on 2026-09-15 and candidate 1 is in
   the tree so that the packaging is complete and exercised; the chosen one
@@ -2557,12 +2557,12 @@ Read [`README.md`](README.md) first.
 - ✅ **`ChangelogTests` was red on every release commit, and the check was what was wrong.** `ChangelogTests.TheChangelogHasAnUnreleasedSectionWithEntriesInIt`
   was red on every release commit, by construction, and it was the check rather
   than the tree that was wrong. Stamping a release moves every entry under the
-  new version's heading and leaves `## [Unreleased]` **empty** — so the guard
+  new version's heading and leaves `## [Unreleased]` **empty** -- so the guard
   against a changelog nobody wrote was firing on the output of the step that
   writes one, and stayed red on `master` until the next change landed. It now
   accepts an empty section **iff the newest dated section's version is exactly
-  the tag at HEAD** — `git describe --tags --exact-match` semantics, distance
-  zero, so one commit past the release loses the exemption; `## [1.0.0] - …`
+  the tag at HEAD** -- `git describe --tags --exact-match` semantics, distance
+  zero, so one commit past the release loses the exemption; `## [1.0.0] - ...`
   against `v1.0.0`, the heading bare and the tag carrying the `v`, which is the
   sibling arm's rule read from the other end. A tag at HEAD naming some *other*
   version is a disagreement rather than an exemption and stays red, and the
@@ -2571,8 +2571,8 @@ Read [`README.md`](README.md) first.
   exemption**: an export makes exactly the demand this arm made before, which is
   the direction that can only get stricter. Decided by the maintainer as Q183a.
   **Watched both ways on this tree**: red today at `97661d4`, whose
-  `[Unreleased]` is empty and which the `v1.0.0` tag does not point at — *"the
-  tag exactly at HEAD is 'none', and the newest dated section is '1.0.0'"* — and
+  `[Unreleased]` is empty and which the `v1.0.0` tag does not point at -- *"the
+  tag exactly at HEAD is 'none', and the newest dated section is '1.0.0'"* -- and
   green with a throwaway tag at HEAD and the heading aligned to it. Four
   synthetic controls run unconditionally rather than inside the branch they
   describe, which would have made them unfailable on every day but one.
@@ -2585,7 +2585,7 @@ Read [`README.md`](README.md) first.
   order rather than defects**: stamping the changelog empties `[Unreleased]`,
   which the changelog check then refused, and replacing the `v1.0.0` tag turned
   the only published release into a **Draft**, which took
-  `releases/latest/download/releases.win.json` to **404** — *"about 20 minutes,
+  `releases/latest/download/releases.win.json` to **404** -- *"about 20 minutes,
   and the start of that window is a bound rather than a measurement"*. The order
   recorded is: pack for the gate → **item 8 at the pre-stamp content** → item 10
   stamp and seal → item 9 tag → **clean re-pack** → publish → feed verified. Two
@@ -2608,12 +2608,12 @@ Read [`README.md`](README.md) first.
   happened yet"*. A **non-draft** GitHub release has stood at `v1.0.0` since
   2026-08-17T01:54Z carrying `BrowserAI-win-Setup.exe`,
   `BrowserAI-1.0.0-full.nupkg` and `releases.win.json`, downloaded **1**, **0**
-  and **687** times — that last one an installed BrowserAI polling its feed
+  and **687** times -- that last one an installed BrowserAI polling its feed
   rather than a person. **All three were corrected by addition**, because a
   reader who learned the old sentence has to learn it was reviewed and found
   wrong rather than find it quietly gone. **The 2026-08-24 correction was
-  derived from `git tag --list` and a gitignored `Releases/`** — the two places
-  that cannot see a GitHub release — which is how a claim gets re-checked,
+  derived from `git tag --list` and a gitignored `Releases/`** -- the two places
+  that cannot see a GitHub release -- which is how a claim gets re-checked,
   re-stamped and left wrong, and it is why the replacement sentences name `gh
   release view v1.0.0` as their oracle instead. **The half that was load-bearing
   survives, narrowed**: a download is not an install, so every design argument
@@ -2621,7 +2621,7 @@ Read [`README.md`](README.md) first.
   evidence, and no session in the wild has been observed. **Redistribution
   obligations attached on 2026-08-17 rather than today**, and whether the
   artifact published that day carried the six notices `ThirdPartyNoticeTests`
-  enumerates **was not re-checked** — nobody has looked, which is recorded here
+  enumerates **was not re-checked** -- nobody has looked, which is recorded here
   rather than resolved by reasoning.
 
 - 🔒 **One of the two WebMCP tools upstream added is refused, and the other is
@@ -2629,9 +2629,9 @@ Read [`README.md`](README.md) first.
   0.0.81 added `browser_webmcp_list` and `browser_webmcp_call`, both in
   upstream's default surface. **`browser_webmcp_call` is withheld from
   `tools/list` and refused if a caller names it anyway**, on liveness: it runs a
-  tool the *page* supplies and waits for it with no timeout at all — measured
+  tool the *page* supplies and waits for it with no timeout at all -- measured
   2026-09-15 at **45,002 ms** against a page whose tool never answered, where a
-  well-behaved tool on the same page answered in **521 ms** — so an unattended
+  well-behaved tool on the same page answered in **521 ms** -- so an unattended
   run that called it could hang until it was killed, and any page can arrange
   that. **`browser_webmcp_list` is allowed**: upstream bounds it at five
   seconds, it answers in 2 ms, and it is how a caller finds out what a page
@@ -2650,14 +2650,14 @@ Read [`README.md`](README.md) first.
   tightens the containment BrowserAI relies on and needed nothing done; and
   eleven tools' `filename` descriptions now say a relative name resolves against
   the workspace root, which **reads** as a change to where artifacts land and is
-  not one — measured identical on 0.0.80 and 0.0.81 against a probe with the two
+  not one -- measured identical on 0.0.80 and 0.0.81 against a probe with the two
   directories pointed apart. The adjudication, the declines and every
   re-verification row are in [`upstream-review.json`](upstream-review.json).
 
 - 🔧 **The generated child config now writes `timeouts.idle` explicitly.** The
   generated child config now writes `timeouts.idle` explicitly, at upstream's
-  own one-hour default. It cannot fire — BrowserAI closes an idle browser after
-  ten minutes and both timers are reset by a tool call — and it is written
+  own one-hour default. It cannot fire -- BrowserAI closes an idle browser after
+  ten minutes and both timers are reset by a tool call -- and it is written
   precisely because it cannot: an omitted key records no decision and cannot be
   read back out of a running child, so the day upstream moves its default, a
   build here goes red instead of quietly changing behaviour. Nothing a caller
@@ -2665,8 +2665,8 @@ Read [`README.md`](README.md) first.
 
 - 🔒 **BrowserAI refuses to start when its *install* root is outside your Windows profile.** BrowserAI
   now refuses to start when its *install* root is outside your Windows profile,
-  as well as its data root. The live-instance census — which is what decides
-  whether applying an update is safe — is keyed to the install root, and
+  as well as its data root. The live-instance census -- which is what decides
+  whether applying an update is safe -- is keyed to the install root, and
   `Setup.exe --installto` could put it somewhere two Windows users share, where
   the machine-wide mutex behind it silently stops working and an update apply
   then terminates the other user's browsers. The refusal names **both** roots
@@ -2688,17 +2688,17 @@ Read [`README.md`](README.md) first.
   downloads, the index of your session directories, its log and its registration
   record live in `%LocalAppData%\BrowserAI` **beside** it. The download is
   called `BrowserAI.exe`. **Why:** `Setup.exe` renames a non-empty install
-  directory aside and deletes it — which is what running the installer a second
-  time does — and uninstalling empties it, so under the old layout a repair
+  directory aside and deletes it -- which is what running the installer a second
+  time does -- and uninstalling empties it, so under the old layout a repair
   install cost 768 MB of browsers and every session's entry in the index. **What
-  you have to do: nothing, and there is nothing to migrate** — this is the first
+  you have to do: nothing, and there is nothing to migrate** -- this is the first
   release, and no build carrying the old layout has ever been distributed.
 
 - 📦 **Uninstalling now asks whether to delete your data, and keeps it by
   default.** The
   prompt names the directory and how much it holds; *No* is the default and an
-  unattended uninstall — `QuietUninstallString`, `winget`, any script passing
-  `--silent` — keeps without asking. An update never asks and never touches it.
+  unattended uninstall -- `QuietUninstallString`, `winget`, any script passing
+  `--silent` -- keeps without asking. An update never asks and never touches it.
   Reinstalling finds everything exactly as it was.
 
 - 🔧 **BrowserAI no longer keeps running when the installer starts it.** A
@@ -2713,21 +2713,21 @@ Read [`README.md`](README.md) first.
 - 💥 **Every machine re-provisions its browser on first run after this.** Two
   reviews in two days moved the pinned revisions twice, and what ships is the
   second: **Chromium 1237 → 1244** (152.0.7977.8 → 154.0.8037.0) and **Firefox
-  1539 → 1544** (153.0 → 155.0) — 0.0.79 → 0.0.80 took them to 1243 and 1542,
+  1539 → 1544** (153.0 → 155.0) -- 0.0.79 → 0.0.80 took them to 1243 and 1542,
   and 0.0.80 → 0.0.81 took them the rest of the way. Nothing in the payload
-  changed — browsers are provisioned on first run, not built into the installer
-  — but the first session after upgrading downloads again, measured at **203.8
+  changed -- browsers are provisioned on first run, not built into the installer
+  -- but the first session after upgrading downloads again, measured at **203.8
   MB in 23.6 s** on the gate machine, because a cached tree holding 1237 is
   refused rather than reused. **A rollback re-downloads too**, which is the half
   that is easy to leave out: going back to a build pinning 1237 finds 1244 on
-  disk and fetches 1237 again. The old revision does not accumulate —
-  `RevisionPrune` removes it on the next successful provision — so the cost is
+  disk and fetches 1237 again. The old revision does not accumulate --
+  `RevisionPrune` removes it on the next successful provision -- so the cost is
   bandwidth and one slow first call, not disk.
 
 - ⬆️ **`@playwright/mcp` 0.0.80, `playwright-core` 1.63.0-alpha-2026-08-31 and Node
   v24.21.0 adopted.** Upstream's
-  own tree changed in nothing but packaging between 0.0.79 and 0.0.80 — `tests/`
-  and `config.d.ts` are byte-identical — so the whole of it is the Playwright
+  own tree changed in nothing but packaging between 0.0.79 and 0.0.80 -- `tests/`
+  and `config.d.ts` are byte-identical -- so the whole of it is the Playwright
   roll. Of the four golden snapshots, `cli-help.txt` and `config-schema.d.ts`
   did not move a byte; `tools-list.json` gained two tools and `browsers.json`
   the revisions above. Node stayed on the Krypton LTS line, with OpenSSL 3.5.8
@@ -2742,7 +2742,7 @@ Read [`README.md`](README.md) first.
   **BrowserAI's behaviour is unchanged** and deliberately so: it passes
   `--sandbox` on the command line, so its browsers were sandboxed before the fix
   and are sandboxed after it. What changed is that the flag is no longer the
-  *only* thing that works — it is now belt and braces, and it stays, because
+  *only* thing that works -- it is now belt and braces, and it stays, because
   moving the decision into the config file would rest this product's security
   posture on a default that has just been measured to move. This repository had
   carried the pending fix, its mechanism and its predicted outcome since
@@ -2752,7 +2752,7 @@ Read [`README.md`](README.md) first.
   `Microsoft.DotNet.ILCompiler` and `Microsoft.NET.ILLink.Tasks` 10.0.11 →
   10.0.12, **MinVer 7.0.0 → 8.0.0**, and in the test projects TUnit 1.65.68 →
   1.67.0, `Microsoft.Testing.Platform` 2.3.3 → 2.4.0 and CsWin32 0.3.321 →
-  0.3.333. The NativeAOT publish under the new ILCompiler is clean — **zero
+  0.3.333. The NativeAOT publish under the new ILCompiler is clean -- **zero
   warnings and zero ILC, trim or AOT complaints**. MinVer 8's one breaking
   change is that `MinVerDefaultPreReleasePhase` now errors instead of warning;
   this tree has never set it, and the derived version keeps its shape exactly
@@ -2762,13 +2762,13 @@ Read [`README.md`](README.md) first.
   refusing when it did not.** `PublishedSlice.EnsureFresh`
   has compared the published NativeAOT binary against every input that goes into
   it since the beginning, and it did exactly two things: it threw, or it said
-  nothing — while the coverage block's `published slice` row reported `PRESENT`,
+  nothing -- while the coverage block's `published slice` row reported `PRESENT`,
   which is a claim about existence. So twelve green gate logs carried no
   sentence about whether the binary they drove belonged to the tree they were
   reading, and on 2026-08-30 a gate runner with a staleness suspicion reached
   for the nearest figure to hand: **a commit date**. Commit `56383c9`'s
   **01:20:40**, touching `src/BrowserAI/Sessions/SessionLock.cs`, went beside
-  the binary's **01:14:16.500**, and four gate sets — twelve full runs — were
+  the binary's **01:14:16.500**, and four gate sets -- twelve full runs -- were
   reported as having driven a stale binary while passing the check. **Every
   reading in that account was true and the conclusion was false**: that file's
   own timestamp was **01:12:22.665**, before the publish, and `git commit`
@@ -2776,7 +2776,7 @@ Read [`README.md`](README.md) first.
   took an investigation that one printed line would have ended. A `publish
   freshness` row now sits directly below the capability rows, reading `FRESH`,
   `STALE` or `NOT ESTABLISHED`, with both modification times in **UTC to the
-  millisecond** — the misreading turned on a gap of one minute 53.8 seconds, and
+  millisecond** -- the misreading turned on a gap of one minute 53.8 seconds, and
   the two figures put side by side that day were a local-time file stamp and a
   commit date with no zone named in either. **The row and the guard are one
   comparison and not two:** `Measure` walks the inputs once, `RefusalFor`
@@ -2789,7 +2789,7 @@ Read [`README.md`](README.md) first.
   re-opening on the condition it wrote for itself. That row closed on 2026-08-24
   on a cause rather than on a test, so it was obliged to name what would re-open
   it; the 2026-08-30 release gate produced that exact shape and it re-opened;
-  and the re-opening named in turn what would close it — *the quiet-machine gate
+  and the re-opening named in turn what would close it -- *the quiet-machine gate
   the maintainer has ordered coming back green, six for six, with the repaired
   tee never needed*. That gate ran at `5237e9d` on a machine measured quiet by
   process path at seven instants, and came back **651 of 651 in every one of the
@@ -2804,13 +2804,13 @@ Read [`README.md`](README.md) first.
   charge reads 34.2 % to 35.1 % against the failing gate's 49.5 % to 51.2 % and
   returned HEALTHY on both, so it separates this band from the 2026-08-24 kernel
   leak and separates nothing inside it. **And one clean set of six against a
-  shape seen at one in six is about one flake-lifetime** — the row says so in
+  shape seen at one in six is about one flake-lifetime** -- the row says so in
   its own cell rather than leaving a reader to work it out, and the re-opener it
   names is unchanged. The recorded same-slot observation is downgraded rather
   than dropped: both stalls were the sixth run from Git Bash, and this set's
   sixth run from Git Bash was green, so two for two is now two of three. `open`
   falls to 44 and `closed` rises to 147, which are the figures that stood before
-  the row crossed the other way the same morning — **the first row in this table
+  the row crossed the other way the same morning -- **the first row in this table
   to move twice in one day, and the first to return to a status it had already
   left.**
 
@@ -2819,19 +2819,19 @@ Read [`README.md`](README.md) first.
   finding now sits where the substitution gets made. A gate runner put the
   published binary's `LastWriteTime` of 01:14:16.500 beside commit `56383c9`'s
   date of 01:20:40, saw that commit touching
-  `src/BrowserAI/Sessions/SessionLock.cs`, and reported that four gate sets —
-  twelve full runs — had driven a stale binary while passing
+  `src/BrowserAI/Sessions/SessionLock.cs`, and reported that four gate sets --
+  twelve full runs -- had driven a stale binary while passing
   `PublishedSlice.EnsureFresh`. **Every part of that reading is true and the
   conclusion is false.** Both sides of the comparison are modification times,
   `git commit` records when it ran and never touches a working-tree file, and
-  `SessionLock.cs`'s own timestamp was 01:12:22.665 — one minute 53.8 seconds
+  `SessionLock.cs`'s own timestamp was 01:12:22.665 -- one minute 53.8 seconds
   *before* the publish. The batch edited, published, gated and committed in that
   order, which is the order its own commit message says it took. Re-measured
   over the whole freshness corpus on 2026-08-30: **0 of 95 inputs newer than the
   binary**. **What made the misreading available is that the check is silent
-  when it passes** — it throws or it says nothing at all, and the coverage
+  when it passes** -- it throws or it says nothing at all, and the coverage
   block's `published slice PRESENT` row is a claim about existence rather than
-  about freshness — so a log full of green runs offers no sentence to check a
+  about freshness -- so a log full of green runs offers no sentence to check a
   staleness suspicion against, and the nearest thing to hand is a commit date.
   Both halves are written into the doc comment on `EnsureFresh`. Making a run
   state its own freshness margin is a change to the coverage block rather than
@@ -2839,13 +2839,13 @@ Read [`README.md`](README.md) first.
   records why the check is on timestamps at all**, which the file had never
   said: two publishes of an identical input set, taken on 2026-08-30 with
   nothing between them, produced binaries of the same length and **different
-  SHA-256** — so a content hash cannot answer *is this binary from this source*
+  SHA-256** -- so a content hash cannot answer *is this binary from this source*
   for this toolchain, and the modification times are what is left.
 
 - ✅ **A hazard row the parser could not read left both tallies in the same
   instant, and nothing said so.** `HazardIndex.Rows`
   keeps a pipe-leading line only when it splits into exactly eight fields, and
-  discards every other one in silence — which is right for the header, for the
+  discards every other one in silence -- which is right for the header, for the
   separator and for the three-column table above the index explaining what each
   column is for, and catastrophic for a row somebody wrote a bare `|` into. On
   2026-08-30 `FileShare.ReadWrite | FileShare.Delete`, written into an evidence
@@ -2856,7 +2856,7 @@ Read [`README.md`](README.md) first.
   `RecordedCountTests` can only ever see that a number moved, never which row
   went missing. **The red established it is worse than that.** With the guard
   stashed and the offending row planted, all nine tests of the two classes that
-  read this table passed — the tally included — because a row that arrives
+  read this table passed -- the tally included -- because a row that arrives
   malformed never registers in either direction, so no number moves at all and
   there is nothing left to disagree with.
   `HazardIndexTests.EveryLineOfTheTableSplitsIntoTheFieldsTheParserReads` now
@@ -2864,12 +2864,12 @@ Read [`README.md`](README.md) first.
   **the escape it recommends was made true rather than suggested**:
   `HazardIndex.SplitRow` reads `\|` as GitHub-Flavoured Markdown's own literal
   pipe, so the same planted row written that way parses into eight fields and is
-  *counted* — which is the second red, the tally going to 46 `open` against a
+  *counted* -- which is the second red, the tally going to 46 `open` against a
   published 45. Without it the advice would have moved the row from one silent
   skip to another. **The guard is a second walk of the table rather than a
   second reading of it**: `HazardIndex.TableLines` follows the contiguous run of
   pipe-leading lines below the header, `Rows` scans the whole file, the two
-  share the split and nothing else, and their counts are asserted equal — which
+  share the split and nothing else, and their counts are asserted equal -- which
   is the half that catches a skip the field count cannot see, such as a row
   whose `Area` cell is all dashes, or one written with a leading space that ends
   the region early and takes every row below it out of the guard's sight. **No
@@ -2880,26 +2880,26 @@ Read [`README.md`](README.md) first.
   failure dump could not read the files it exists to inline, and the one run
   that needed it printed three sharing violations instead.
   `LauncherWait.Evidence` walks the launcher's scratch tree and reads every file
-  into the failure message — with `File.ReadAllText`, which asks
+  into the failure message -- with `File.ReadAllText`, which asks
   `FileShare.Read`. Windows checks a reader's share mode against the accesses a
   live writer already holds, so a reader that does not permit writing is refused
   **however permissive the writer was**: node's `fs.openSync` shares read, write
   and delete precisely so that a log can be tailed while it is written, and the
-  reader lost to it anyway. On the 2026-08-30 release gate's sixth run — the
-  Firefox stall this instrument had been armed for two hours earlier — all three
-  capture files came back `(unreadable: … used by another process)`, and the
+  reader lost to it anyway. On the 2026-08-30 release gate's sixth run -- the
+  Firefox stall this instrument had been armed for two hours earlier -- all three
+  capture files came back `(unreadable: ... used by another process)`, and the
   scratch tree was then deleted as designed. It opens `FileShare.ReadWrite |
   FileShare.Delete` now, and **the byte count comes off the handle**: the old
   dump printed whatever the directory enumeration had cached, and watching the
-  red proved that number wrong as well as unmeasured — `(0 bytes)` against 63
+  red proved that number wrong as well as unmeasured -- `(0 bytes)` against 63
   real ones, character for character the line the gate printed. A file nothing
-  can open still reads `(unreadable: …)` and now carries **no length at all**,
+  can open still reads `(unreadable: ...)` and now carries **no length at all**,
   because nothing measured one. Both arms of `LauncherEvidenceTests` were
   watched red against the old body. **The driver closes its `cli-stderr.log` tee
   once the child it was teeing ends**, and that is the smaller half and is
   written down as the smaller half: the launcher kills the driver with
   `TerminateProcess`, where no handler of any kind runs, and a browser that
-  never comes up never ends its child — so on the failure worth diagnosing the
+  never comes up never ends its child -- so on the failure worth diagnosing the
   file is still open when the dump reads it, which is why the reader is where
   the fix had to go. The close is on `'close'` rather than `'exit'`, because
   `'exit'` fires while `stderr` may still have chunks to deliver and the tidy-up
@@ -2907,37 +2907,37 @@ Read [`README.md`](README.md) first.
 
 - 📝 **The six-run-gate hazard row is `open` again, on the condition it wrote for
   itself.** It
-  closed 2026-08-24 against a kernel-level memory leak on this machine — a cause
-  outside this repository entirely — and because it closed on a cause rather
+  closed 2026-08-24 against a kernel-level memory leak on this machine -- a cause
+  outside this repository entirely -- and because it closed on a cause rather
   than on a test it was required to name what would re-open it: the same shape,
   inside a gate run, with nothing external to explain it, **on a machine whose
   memory is healthy**, with the commit charge beside the run named as the one
   reading that separates the two. The 2026-08-30 release gate met every clause.
   Run 6 of six went **647 total, 1 failed** on the same Firefox containment arm
-  at **3 m 03 s** — Playwright's own `initializeServer` budget and not one of
-  ours — while the harness had spent 3 minutes of a 30-minute one; containment
+  at **3 m 03 s** -- Playwright's own `initializeServer` budget and not one of
+  ours -- while the harness had spent 3 minutes of a 30-minute one; containment
   held with 0 escapees and all 8 processes in the job; and the commit-charge row
   that landed two hours earlier read **HEALTHY, 49.9 % → 51.1 % of 141,229
   MiB**, against **137.4 GB of a 157.7 GB limit** in the instance the leak
-  explains. **The 2026-08-24 diagnosis is not withdrawn** — it still accounts
+  explains. **The 2026-08-24 diagnosis is not withdrawn** -- it still accounts
   for its own instance, and what the healthy reading falsifies is that cause
   applying to this recurrence. It is the first row in the hazard index ever to
   cross back: rows that are `open` 44 → 45, `closed` 147 → 146, and rows that
-  are `open` while carrying `—` still 0. A row that re-opens because its closure
+  are `open` while carrying `-` still 0. A row that re-opens because its closure
   was written to be falsifiable is that closure working.
 
 - 🔧 **A process re-taking a session directory it last held now says so.** A
   process re-taking a session directory it itself last held now says so, instead
   of reporting a reclaim from a live stranger. `destroy` and `set_purpose` both
   dispose the live session and re-acquire, so the guard on disk names the very
-  process about to take the directory — and every one of those was logged
+  process about to take the directory -- and every one of those was logged
   *"previous holder was PID n, still running: True"*, which is true word by word
   and false as a whole. It names the one event on that path worth waking up for,
   and it had happened five times in eight thousand. Counted 2026-08-30 over the
   machine-wide process log, predicate quoted: since the 2026-08-26 logging
   cutover that file holds **8,423** `Session lock reclaimed` lines, **8,418** of
   them carrying `still running: True`, and **zero** `Session lock acquired`
-  lines — in the two 2026-08-29 files alone it is **2,081 of 2,081**. There is a
+  lines -- in the two 2026-08-29 files alone it is **2,081 of 2,081**. There is a
   distinct record now, with its own event id and no `still running` clause,
   taken on `(pid, creationFileTime)` so a stranger wearing this process's number
   still reads as the takeover it is. **The outcome did not move**: `Reclaimed`
@@ -2948,12 +2948,12 @@ Read [`README.md`](README.md) first.
   suite's coverage block records the machine's commit charge, at both ends of
   the session. The hazard row that closed on 2026-08-24 against a kernel-level
   leak outside this repository closed by naming the one reading that separates
-  that cause from a live one — *the commit charge beside the run* — and then
+  that cause from a live one -- *the commit charge beside the run* -- and then
   nothing took it, so for six days no gate could ask its own question. The row
   reads `HEALTHY` / `TIGHT` / `CRITICAL` / `UNREADABLE`, judged on the worse of
   the two readings, and the two loud bands say in the run's own output why the
   run's timings are not safely attributable to the code. **No assertion reads
-  the numbers** — they are properties of whatever else the machine is running —
+  the numbers** -- they are properties of whatever else the machine is running --
   so the bands are exercised from synthetic readings and the live arm checks
   only that the row is produced.
 
@@ -2961,7 +2961,7 @@ Read [`README.md`](README.md) first.
   browser-containment driver reads its child's `stderr` instead of piping it
   into a buffer nobody drains. It spawned `cli.js` with all three streams piped
   and read only `stdout`, so upstream's account of every launch that did not
-  happen was discarded — which is why the 2026-08-18 dump could name a failure
+  happen was discarded -- which is why the 2026-08-18 dump could name a failure
   and not say why, and why the 2026-08-29 one printed `child-stderr.log (0
   bytes)` and nothing else. It is teed to `cli-stderr.log` in the scratch
   directory the failure dump already walks, so no wiring was needed on the host
@@ -2974,7 +2974,7 @@ Read [`README.md`](README.md) first.
 - ✅ **A payload that re-resolved makes the published binary stale.** A publish
   copies the resolved payload beside the executable, so a re-resolve that moved
   `@playwright/mcp`, `playwright-core` or `node` left every slice arm driving a
-  published tree carrying the old one — reading as fresh, with the lock in the
+  published tree carrying the old one -- reading as fresh, with the lock in the
   tree saying otherwise. `build/payload/package-lock.json` is watched now: it is
   the committed record of exactly that resolution, and it is watched by name
   because the walk prunes every directory called `payload` and is blind to it by
@@ -2986,21 +2986,21 @@ Read [`README.md`](README.md) first.
   of everything about it except its exit code. `QUESTIONS.md` §8 had been open
   for nine days on three sightings and one recurrence that diagnosed itself down
   to a five-line browser log; the reproduction ran on 2026-08-27. A desktop of
-  its own inside `WinSta0` — 20,480 KB, the same allocation `WinSta0\Default`
-  gets, so the interactive desktop was never touched — filled to the byte by one
+  its own inside `WinSta0` -- 20,480 KB, the same allocation `WinSta0\Default`
+  gets, so the interactive desktop was never touched -- filled to the byte by one
   process, and the provisioned Chromium launched onto it with the sweep test's
   own command line. **Eighty launches, twenty-eight deaths**: exit `0x80000003`,
   nothing on either stream, the same five log lines in the same order ending at
   `scheduler_loop_quarantine_config.cc:195`, no message window, and a machine
-  reporting 66% of RAM free. **The threshold is a cliff** — 4,634 windows held
-  and the browser lives 3 of 3, 4,637 and it dies 8 of 8 — so the total silence
+  reporting 66% of RAM free. **The threshold is a cliff** -- 4,634 windows held
+  and the browser lives 3 of 3, 4,637 and it dies 8 of 8 -- so the total silence
   is a property of the last four kilobytes rather than of the shortage. The exit
   code is the one thing that did not come out: the wild figure was `1` and the
   rig produced `0x80000003` and Chromium's own out-of-memory code `0xE0000008`,
   never a `1`, which is said as an unexplained gap rather than smoothed over.
   The measurement is in [kb](kb/windows/processes.md) with a re-establishment
   procedure that stands without the scratch rig, the failure mode is a hazard
-  row, and the entry stays open on a narrower question than it was opened for —
+  row, and the entry stays open on a narrower question than it was opened for --
   **not what kills the browser, but why the wild exit code was 1.** Nothing in
   the product detects or names this yet; that is a decision, and it is stated as
   one.
@@ -3009,7 +3009,7 @@ Read [`README.md`](README.md) first.
   release manifest can say whether the release was a crunch override, and it
   always says something. `DECISIONS.md` stated in bold that *"a release whose
   manifest does not say it was overridden is a release claiming it was not"*
-  while no manifest could express one — so by that sentence's own logic every
+  while no manifest could express one -- so by that sentence's own logic every
   release claimed it was not overridden, including one that was.
   `build/Write-ReleaseManifest.ps1` takes five `-Override*` parameters and
   always emits the key: `"override": null` for an ordinary release, a five-part
@@ -3027,7 +3027,7 @@ Read [`README.md`](README.md) first.
 - ⬆️ **Every release builds against the latest Playwright, and the one override is
   a human's.** Written
   down rather than assumed: a human may force a crunch override and **an agent
-  may never**, and an override has to leave a trace in the release artifact —
+  may never**, and an override has to leave a trace in the release artifact --
   the manifest states the version that shipped, and the checklist item asks for
   what was held, at what version, and why.
 
@@ -3043,7 +3043,7 @@ Read [`README.md`](README.md) first.
   adjudicated and stay open.** A
   reused output name still overwrites and a name Windows will not keep verbatim
   is still stored as Windows rewrites it. The decision is **steer only, plus an
-  upstream ask** — no door refusal on the string alone — and both rows say so
+  upstream ask** -- no door refusal on the string alone -- and both rows say so
   now, in place, without closing.
 
 - 📝 **A just-answered call can read as still in flight, and that is now written
@@ -3051,17 +3051,17 @@ Read [`README.md`](README.md) first.
   log row is settled in a `finally` that runs after the answer is sent, so a
   second agent's `browserai_catch_up` landing in that window is told no answer
   was recorded about a call that has just been answered. The ordering is
-  deliberate — settling first would risk a `successful` row for an answer the
-  caller never received — and the window is a hazard row rather than a fix.
+  deliberate -- settling first would risk a `successful` row for an answer the
+  caller never received -- and the window is a hazard row rather than a fix.
 
 - 🔒 **`browser_start_recording` and `browser_stop_recording` are judged `allow`.** `browser_start_recording`
   and `browser_stop_recording` are judged `allow`, and the advertised surface
   goes 68 → 70. The two tools `@playwright/mcp` 0.0.80 added were withheld from
-  nothing — an unjudged tool is advertised and then refused, so the surface had
+  nothing -- an unjudged tool is advertised and then refused, so the surface had
   already grown and the door had not. They were measured before they were
-  judged: `browser_start_recording` returns in **40–46 ms** and arms a recorder
+  judged: `browser_start_recording` returns in **40-46 ms** and arms a recorder
   rather than waiting for a human, every other tool answers normally while a
-  recording is live, and `browser_stop_recording` returns Playwright code — so
+  recording is live, and `browser_stop_recording` returns Playwright code -- so
   the liveness shape that withholds `browser_annotate` does not reach them.
   `browser_annotate` is still the only withheld tool. `judgedAgainst` moves to
   `@playwright/mcp` 0.0.80 / `playwright-core` 1.63.0-alpha-2026-08-31.
@@ -3071,7 +3071,7 @@ Read [`README.md`](README.md) first.
   the correction hands them a lever they did not have. The `fullPage` sentence
   said an image *"is downscaled to that ceiling"*. Upstream deleted
   `scaleImageToFitMessage`, so **nothing downscales an inline image at any
-  size** — measured through a raw child at three viewports, both page shapes and
+  size** -- measured through a raw child at three viewports, both page shapes and
   three encodings, with the inline block byte-identical to the file in every
   case and a `fullPage` shot of a 20,016 px document coming back at 1280x20016.
   Cost follows pixels with no ceiling anywhere. The new sentence says that, and
@@ -3083,19 +3083,19 @@ Read [`README.md`](README.md) first.
 - 🔧 **The refusal for an unjudged tool used to tell the caller to send it
   again.** It
   ended *"every tool in that list reaches the browser, and a name that is not in
-  it never will"* — and an unjudged name **is** in `tools/list`, because only a
+  it never will"* -- and an unjudged name **is** in `tools/list`, because only a
   `deny` row is filtered out. Read against a list the caller can see its own
   name in, that is an instruction to retry, and a model that believes it retries
   until something else stops it. It now says that being listed is not being
   judged, that retrying will fail the same way until a human adjudicates it, and
   not to retry. The `deny` refusal is unchanged. The state is unreachable in a
-  release — an unjudged tool is a red build — so the window this sentence is
+  release -- an unjudged tool is a red build -- so the window this sentence is
   read in is exactly the one between an upstream roll and its adjudication.
 
 - 📦 **`build/Build-Payload.ps1` sets `PLAYWRIGHT_SKIP_BROWSER_GC=1`, as the product always has.** `build/Build-Payload.ps1`
   sets `PLAYWRIGHT_SKIP_BROWSER_GC=1`, which the product has always set and the
   script never did. Rebuilding the payload for the 0.0.80 review ran upstream's
-  stale-browser collector and it **deleted `firefox-1539`** — a complete
+  stale-browser collector and it **deleted `firefox-1539`** -- a complete
   provisioned tree nothing in that script installs. `ChildEnvironment.Forced`
   has protected every child since it was written; this was the second place that
   starts an upstream process, kept by habit in one of the two.
@@ -3103,8 +3103,8 @@ Read [`README.md`](README.md) first.
 - 📝 **Two upstream asks were transferred by upstream itself.** Two upstream asks
   were transferred by upstream itself, and the watch item that was reserving
   that decision has fired. `playwright-mcp#1725` is now
-  [playwright#42497](https://github.com/microsoft/playwright/issues/42497) —
-  open, triaged, with a maintainer's PR open and set to close it — and
+  [playwright#42497](https://github.com/microsoft/playwright/issues/42497) --
+  open, triaged, with a maintainer's PR open and set to close it -- and
   `playwright-mcp#1726` is now
   [playwright#42496](https://github.com/microsoft/playwright/issues/42496),
   **closed `not_planned`**. The two Q128 hazard rows that were steering toward
@@ -3122,7 +3122,7 @@ Read [`README.md`](README.md) first.
   once, in the `init` or `resume` answer, instead of spending a turn refusing
   and asking the caller to type the answer back. Every one of those answers was
   already being computed to build that refusal, so this costs no syscall at all.
-  **What is still refused is refused everywhere** — at `browserai_destroy`,
+  **What is still refused is refused everywhere** -- at `browserai_destroy`,
   `browserai_set_purpose`, `browserai_catch_up` and `browserai_list` as well as
   at `init` and `resume`: a UNC path, a mapped drive letter, the `\\.\` device
   namespace, and a name Windows would silently rewrite (a segment ending in a
@@ -3133,29 +3133,29 @@ Read [`README.md`](README.md) first.
   lower-case gains one `directory` statement on its next resume, and that is the
   whole of what this looks like from the outside.** Windows reports every path
   with an upper-case drive letter, so `c:\work\sess` becomes `C:\work\sess` in
-  answers and in `browserai.data`. Nothing hashed moves — the identity is
-  case-folded — so no mutex, no index entry and no lock file changes for an
+  answers and in `browserai.data`. Nothing hashed moves -- the identity is
+  case-folded -- so no mutex, no index entry and no lock file changes for an
   ordinary local directory. A session whose own path traverses a junction, a
   `subst` or a `\\?\` spelling **does** change identity: its index entry is
   swept rather than orphaned, and the next `init` or `resume` records it again.
 
 - 🔧 **`browserai_list` pointed at an alias of a tree now finds the sessions under
   it.** It
-  had a path chain of its own — `Path.GetFullPath` plus an upper-cased prefix,
-  with no alias resolution — because the shared one refused a volume root and a
+  had a path chain of its own -- `Path.GetFullPath` plus an upper-cased prefix,
+  with no alias resolution -- because the shared one refused a volume root and a
   volume root is exactly what a caller passes to see everything. So a listing of
   `D:\link\work` where the sessions live under `C:\real\work` answered *"No
-  BrowserAI sessions under '…'. That is an answer rather than an error"*:
+  BrowserAI sessions under '...'. That is an answer rather than an error"*:
   confident, wrong, and not a refusal, so there was nothing to correct.
 
 - ⚡ **`browserai_list` no longer parses every session record on the machine.** `browserai_list`
   no longer opens and strictly parses every session record on the machine to
-  print the few under a prefix — and neither does `init` or `resume`.
+  print the few under a prefix -- and neither does `init` or `resume`.
   [Adversarial review
   F9](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md). The subtree
   filter ran on the wrong side of the parse: `SessionIndex.Follow` opened each
-  entry's `browserai.json` and parsed it strictly — up to 250 log entries and
-  all their arguments — and `IsUnder` was applied to what came back. Each of
+  entry's `browserai.json` and parsed it strictly -- up to 250 log entries and
+  all their arguments -- and `IsUnder` was applied to what came back. Each of
   those opens goes through `RenameWindow.WaitOut`, whose budget is **30
   seconds** and which retries a denial, so one session *anywhere on the machine*
   whose record is denied by an ACL or held by a scanner could add that to a call
@@ -3171,11 +3171,11 @@ Read [`README.md`](README.md) first.
   own sweep, the reinstall census and the stray sweep. *Corrected:
   `SessionIndex`'s contract sentence "Every entry is verified by opening the
   `browserai.json` it points at", which becomes "no entry is ever **reported as
-  a session** without opening it" — a subtree read decides which entries to ask
+  a session** without opening it" -- a subtree read decides which entries to ask
   about and never which answers to trust; and "the only way this store is ever
   read", which is now one of two.* **The header-only-read fork was declined, and
   the reason is the symmetry:** it *could* have been planted red, precisely
-  because it changes what is reported — a record whose log is malformed would
+  because it changes what is reported -- a record whose log is malformed would
   read as a session to the listing and be refused by `TryAcquire`, which is two
   readers of one file that disagree. The fork that is safe is the fork that is
   invisible, so the red-today test is the rule itself:
@@ -3191,20 +3191,20 @@ Read [`README.md`](README.md) first.
   machine-wide log is one shared file under a cross-process write gate, and a
   session's records no longer go into it. Two changes that are one decision.
   **First, scope:** anything attributable to a session is written to that
-  session's own `browserai.log` and to nothing else —
+  session's own `browserai.log` and to nothing else --
   `ProcessLog.OpenSessionLog` no longer adds a second provider over the
   machine-wide writer, and the proxy's per-call refusals are logged through the
   session's own logger where one is in hand. What stays central is what no
   session owns: the stray sweep, which is machine-wide by design because it
   hunts browsers belonging to *any* session, plus startup, updates,
   provisioning, the server transport, the MCP server, and the two proxy refusals
-  with no session directory to be written into — a call naming no session, and a
+  with no session directory to be written into -- a call naming no session, and a
   call naming one that does not exist. ⚠️ **That reduces the shared file's write
   rate; it does not dissolve the contention**, and the lock rather than the
   scoping is what makes the remainder safe. **Second, the lock**, chosen over
   one file per process at the maintainer's decision, verbatim: *"Simple to read,
   simple to write."* `NativeFile.TakeGate` takes an exclusive byte-range claim
-  through `LockFileEx`, one byte past any possible end of file — a lock over the
+  through `LockFileEx`, one byte past any possible end of file -- a lock over the
   data would be enforced against `ReadFile` too and would refuse every
   concurrent reader of the log. A file lock rather than a named object for the
   reason `MaintenanceLock` already gives: the kernel releases it however the
@@ -3212,7 +3212,7 @@ Read [`README.md`](README.md) first.
   the instant is stamped and the bytes are written inside one claim**, so write
   order and timestamp order coincide and the file is sorted *by construction*
   rather than by anybody sorting it. **Every record now carries both of its
-  times** — the leading column is when it reached the file, `made=` is when it
+  times** -- the leading column is when it reached the file, `made=` is when it
   was created, and the two diverge only under contention, which is the one thing
   a single timestamp cannot show. **And it names its writer as
   `pid=<n>@<createdFileTime>`**, never a bare pid: the log keeps thirty days and
@@ -3224,24 +3224,24 @@ Read [`README.md`](README.md) first.
 - 🔧 **Rotation happens exactly at the cap.** *Corrected in `RollingFileWriter`
   (previously "The starting size is read once. It drifts under concurrency,
   which only means the roll happens at approximately the cap rather than exactly
-  at it — and paying a metadata query per record to fix that would be a worse
+  at it -- and paying a metadata query per record to fix that would be a worse
   trade").* The length is now the file's own, read through the open handle
   inside the write gate, so nothing can have appended between the read and the
   decision and there is no per-process counter left to drift. It is not a
-  metadata query — the handle is already open — and no file in the directory
+  metadata query -- the handle is already open -- and no file in the directory
   ever exceeds 8 MiB, with one stated exception: a record larger than the cap on
   its own is written rather than dropped, and lands alone in its own file.
 
 - ♻️ **`BrowserAiPaths` no longer claims to answer "the directory the product would
   actually have used".** It
-  resolves through the product's own `LocalAppDataPaths` — which is the part
-  worth keeping — but constructs it with **no** root argument, so it always
+  resolves through the product's own `LocalAppDataPaths` -- which is the part
+  worth keeping -- but constructs it with **no** root argument, so it always
   answers the per-user default under `%LOCALAPPDATA%`. `Program.Main` honours
   `BROWSERAI_ROOT` and takes it over that default, and
   `PublishedSlice.InheritedEnvironment` copies the whole environment into the
   published child, so the two disagree in exactly the case the suite creates on
   purpose: a test that points a real BrowserAI at an empty browsers root.
-  **Making it honour the override was considered and deliberately not taken** —
+  **Making it honour the override was considered and deliberately not taken** --
   the members are read by assertions about the developer's real provisioned
   tree, and following the variable would re-point them at the rig the variable
   was set to create. The comment changed; the resolution did not.
@@ -3250,7 +3250,7 @@ Read [`README.md`](README.md) first.
   release gate's two shells are now two instruments by construction, and a run
   says which drive-letter spelling it actually received. The gate runs the suite
   from PowerShell and from Git Bash because the two hand the test host different
-  spellings of the drive letter — `C:\…` against `c:\…` — and an assertion
+  spellings of the drive letter -- `C:\...` against `c:\...` -- and an assertion
   comparing a composed path against one Windows re-spelled is green from one and
   red from the other. **That property held run to run rather than by
   construction**: on the 2026-08-24 gate all six runs received `C:`, three of
@@ -3259,15 +3259,15 @@ Read [`README.md`](README.md) first.
 
   Measured the same day: the lower-case spelling is not a property of Git Bash
   but of whatever started it. A bash that **inherits** its working directory
-  hands a child `c:\…`; the same shell after **any** `cd` — `/c/…`, `c:/…`,
-  `C:/…`, `c:\…` alike — hands it `C:\…`, because MSYS resolves the real path
+  hands a child `c:\...`; the same shell after **any** `cd` -- `/c/...`, `c:/...`,
+  `C:/...`, `c:\...` alike -- hands it `C:\...`, because MSYS resolves the real path
   and the mount manager answers upper. So `cd` cannot be the lever. Both
   invocations in
   [Testing](TESTING.md#how-the-suite-is-run-detached-teed-and-the-log-polled)
   now hand `dotnet test` an **absolute, explicitly-spelled** path to the
   solution, which carries the spelling through `MSBuildProjectDirectory` and
   `TargetPath` into the test host's own `AppContext.BaseDirectory` whatever the
-  working directory says — MSYS re-spells a command path and a `cd`, and leaves
+  working directory says -- MSYS re-spells a command path and a `cd`, and leaves
   a path passed as an argument alone.
 
   **The forcing has its own check, because a forcing that silently fails to take
@@ -3276,7 +3276,7 @@ Read [`README.md`](README.md) first.
   every run naming the spelling, the base directory it was read off and whether
   the declaration held, and a run that did not receive what it declared is a
   failing test. Unset declares nothing and asserts nothing, which is what an
-  ordinary developer run has always done — so the fault is planted in both
+  ordinary developer run has always done -- so the fault is planted in both
   directions by a pure arm beside the live one. **This is not `DriveLetterCase`
   restated**: that spells every guard path both ways *inside* a run and covers
   the class of defect; this covers the gate's claim about itself.
@@ -3291,19 +3291,19 @@ Read [`README.md`](README.md) first.
   not in the handler: every response leaves through
   `sanitizeUnicode(this._context.redactSecrets(serializedText))`, one layer
   above it. **Measured 2026-08-20** against the bundled child started with
-  `secrets: {"MY_TOKEN": "sk-live-…", "OTHER": "hunter2"}` — the answer carries
+  `secrets: {"MY_TOKEN": "sk-live-...", "OTHER": "hunter2"}` -- the answer carries
   `"MY_TOKEN": "<secret>MY_TOKEN</secret>"` and neither literal value appears
   anywhere in the frame. Upstream's own `config.d.ts`, in the copy sitting in
   `payload/`, has said so all along.
 
   **This is not an endorsement of setting `secrets`, and the correction must not
-  be read as one.** `redactSecrets` is `text.replaceAll(secretValue, …)` — a
+  be read as one.** `redactSecrets` is `text.replaceAll(secretValue, ...)` -- a
   substring match on the **value**, over the whole response. Measured in the
   same run with a third secret whose value was `chromium`: `"browserName":
   "chromium"` came back as `"browserName": "<secret>COMMON</secret>"` and
   `chromiumSandbox` as `<secret>COMMON</secret>Sandbox`. A short or common value
   corrupts unrelated text, an empty value is skipped outright, and a value the
-  page never renders verbatim is not redacted at all — *"a convenience and not a
+  page never renders verbatim is not redacted at all -- *"a convenience and not a
   security feature"*, in upstream's words. BrowserAI still never writes the key
   and never passes `--secrets`, so on every ordinary call there is nothing to
   redact.
@@ -3312,34 +3312,34 @@ Read [`README.md`](README.md) first.
   `docs/reviews/2026-08-19-auth-transfer-and-session-modes.md` was deliberately
   left standing.** It is a dated record of what this repository believed on the
   day it was written, and correcting it there would destroy the account rather
-  than improve it — which is the rule the append-only seal above now enforces.
+  than improve it -- which is the rule the append-only seal above now enforces.
 
 - 🔒 **BrowserAI refuses to serve out of an app root that is not inside the current
   user's Windows profile.** The
   maintainer's decision of 2026-08-20, answering [`QUESTIONS.md`](QUESTIONS.md)
-  §12 with *"L1 a"* — direction (a), refuse at startup. `%LocalAppData%` gives
+  §12 with *"L1 a"* -- direction (a), refuse at startup. `%LocalAppData%` gives
   every user their own browsers directory, session index, log and `live\`
   markers; `BROWSERAI_ROOT` and the installer's install-to flag both defeat
   that. Measured on 2026-08-20, sharing a root is unsafe in a way nothing
   reports at run time: the **file** locks span users, because a share mode is
   enforced against handles rather than tokens, but the **`Global\` mutexes do
-  not** — the DACL the kernel puts on one names LOCAL SYSTEM, the creating logon
+  not** -- the DACL the kernel puts on one names LOCAL SYSTEM, the creating logon
   session and the creating user, with **no group ACE at all**. The user who
   loses the race cannot join the live set, creates no marker, and is invisible
   to the other's census; that census answers *alone*, and an apply then runs
   `force_stop_package`, which terminates every process under the install root.
 
-  **The check runs before anything creates state** — before the stray sweep, the
-  live marker, the instance directory and every session — so a refused root
+  **The check runs before anything creates state** -- before the stray sweep, the
+  live marker, the instance directory and every session -- so a refused root
   gains a log line and nothing else, and the test asserts exactly that: `logs\`
   is the only thing under the root afterwards. The refusal is a log record and a
   non-zero exit, because `stdout` is the protocol channel and `System.Console`
   is banned outright, and it carries the remedy rather than only the verdict.
 
   **It resolves through the filesystem rather than comparing strings.** Both the
-  root and the profile go through `VolumeIdentity.DeepestExistingFinalName` — a
+  root and the profile go through `VolumeIdentity.DeepestExistingFinalName` -- a
   walk extracted from `SessionDirectoryGuard`, so there is one implementation of
-  *what does the filesystem call this* rather than two — and four arms of
+  *what does the filesystem call this* rather than two -- and four arms of
   `InstallRootScopeTests` are about the false positive: a real `mklink /J`
   junction, a real `subst`ed drive letter, a real 8.3 short name and the
   extended-length prefix. **The arm that matters most points the other way**: a
@@ -3366,7 +3366,7 @@ Read [`README.md`](README.md) first.
   `<browsers root>\reinstall.lock` `FileAccess.Read` / `FileShare.Read` and hold
   it for the session's whole life; `browserai_reinstall_browser` opens it
   `FileAccess.ReadWrite` / `FileShare.Read`. **Windows' sharing rules give the
-  semantics directly** — an open is refused when its access is outside an
+  semantics directly** -- an open is refused when its access is outside an
   existing handle's share mode *or* when its share mode is narrower than an
   existing handle's granted access, so any number of readers coexist with no
   count kept anywhere, and one reader is enough to refuse the writer.
@@ -3374,32 +3374,32 @@ Read [`README.md`](README.md) first.
   **The kernel is the gate now; the session census is only a sentence.** What
   used to decide the refusal was `SessionManager.LiveSessions`, which walked
   this process's sessions and the index; it survives to *name* what the caller
-  must close, and the exclusive open decides. That is strictly stronger — a
+  must close, and the exclusive open decides. That is strictly stronger -- a
   session whose index entry was swept, or whose process this one cannot see,
   still holds a handle.
 
   **The family filter is gone, and its removal is the maintainer's "no matter
   the browser type".** A live Firefox session now refuses a Chromium reinstall.
-  The old reasoning — only a session of that family can hold an executable out
-  of that family's tree — was not wrong and is no longer the question: the claim
+  The old reasoning -- only a session of that family can hold an executable out
+  of that family's tree -- was not wrong and is no longer the question: the claim
   is one file at the root of the browsers directory and knows nothing about
   families, and listing only the matching family would name none of the sessions
   the caller has to close.
 
   **No intent marker, no drain, and writer starvation accepted**, all three his:
   *"I do not want the intent marker. If anything is busy then the reinstall
-  should be refused with the list… But it should not start a drain/preventstart
+  should be refused with the list... But it should not start a drain/preventstart
   process of sorts. Keep it simple. Let the user solve the open sessions
   block."* A machine that always has one session open never lets a reinstall
   through, and that is a decision rather than a defect to be mitigated.
 
   **A reader that dies releases the claim with nothing running to clean up**,
-  which is why this is a file and not a named semaphore — a semaphore's count is
+  which is why this is a file and not a named semaphore -- a semaphore's count is
   not restored on its holder's death, so one crashed session would refuse every
   reinstall until a reboot.
   `ReinstallBrowserTests.AReaderThatDiesReleasesTheRootWithNothingRunningToCleanUp`
-  kills a real process holding the shared claim by closing a job object — a
-  `TerminateProcess` with no unwinding at all — and proves the root goes free.
+  kills a real process holding the shared claim by closing a job object -- a
+  `TerminateProcess` with no unwinding at all -- and proves the root goes free.
 
 - 🔧 **Every refusal a caller meets during a long operation now says how far in it
   is.** The
@@ -3408,19 +3408,19 @@ Read [`README.md`](README.md) first.
   First-run provisioning already reported bytes, elapsed and the observed rate;
   the other two refusals reported nothing.
 
-  **The reinstall refusal** — what `init`, `resume` and a second reinstall meet
-  while one is running — now carries what the download staging directory weighs,
+  **The reinstall refusal** -- what `init`, `resume` and a second reinstall meet
+  while one is running -- now carries what the download staging directory weighs,
   how long the claim has been held, and the rate those two give. Both figures
   are read off the filesystem, because a peer cannot see the reinstalling
   process's own provisioner at all: the staging directory is `<browsers
   root>\.downloads`, which the installer's `TEMP` points at, and the elapsed
   time is the claim file's last write. **Zero staged bytes is reported as a
-  phase and never as a stall** — it is the delete, which comes first, or an
+  phase and never as a stall** -- it is the delete, which comes first, or an
   extraction already under way, and the sentence says which two things it cannot
   tell apart.
 
-  **The update refusal** — an update downloaded, staged and not applied because
-  something else is live — now names *at least N other BrowserAI process(es)*
+  **The update refusal** -- an update downloaded, staged and not applied because
+  something else is live -- now names *at least N other BrowserAI process(es)*
   rather than "another BrowserAI is running", distinguishes that from a census
   that could not be taken at all (a permanent block rather than a queue, and it
   says why), and states that nothing more has to be downloaded, with the package
@@ -3430,15 +3430,15 @@ Read [`README.md`](README.md) first.
   provisioning stall detector runs on an injected clock and an injected byte
   source, and its own flaky test is fixed by that rather than by weakening it.
   `ProvisioningTests.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes`
-  went red once in nine consecutive full-suite runs on 2026-08-20 — the day CI
-  was removed and the local suite became the only gate — with the product
+  went red once in nine consecutive full-suite runs on 2026-08-20 -- the day CI
+  was removed and the local suite became the only gate -- with the product
   behaving perfectly: sixty real writes 25 ms apart against a real one-second
   cap is a ratio, and a ratio between two real clocks is still a race at
   unbounded suite parallelism.
 
   **Both of the detector's inputs are seams, because one alone would not have
   been enough.** `ProvisioningTimers.Clock` is a `TimeProvider`, and the **poll
-  wait** goes through it too — a loop whose arithmetic reads an injected clock
+  wait** goes through it too -- a loop whose arithmetic reads an injected clock
   and whose sleep reads the wall clock cannot be driven, and would look
   deterministic while racing exactly as before.
   `BrowserProvisioner.WeighBrowsersRoot` is the byte source, because the
@@ -3447,8 +3447,8 @@ Read [`README.md`](README.md) first.
   the root weighs, and answering is where the test moves the clock.
 
   **The assertion is stronger rather than weaker**, which was the constraint. It
-  survives **1,000 polls each one tick short of the whole budget** — nearly
-  seven simulated days against a ten-minute cap, in milliseconds of wall clock —
+  survives **1,000 polls each one tick short of the whole budget** -- nearly
+  seven simulated days against a ten-minute cap, in milliseconds of wall clock --
   and `.TheStallCapFiresOnTheFirstPollAfterTheBudgetPassesWithNoBytes` pins the
   other side to the exact poll the detector fires on, which no wall-clock test
   of this could have asserted. Both were watched red against a planted
@@ -3463,7 +3463,7 @@ Read [`README.md`](README.md) first.
   locks in code to browserai.json and don't take into account any legacy setup
   anywhere."* The file had stopped being only a lock long before the name did:
   every field of it is an ordered list of timestamped statements about how the
-  session got here — mode, browser, purpose, holder, client — and
+  session got here -- mode, browser, purpose, holder, client -- and
   `browserai_list` and `browserai_resume` read it for those rather than for
   ownership, so the old name described the smallest thing it does. The
   **handle** is still the lock, and every type that says so keeps its name:
@@ -3473,7 +3473,7 @@ Read [`README.md`](README.md) first.
   **No fallback, no migration and no compatibility read**, which is the half
   worth stating: a directory holding the old name is not a session to this
   build, and `browserai_init` will make a new record beside it rather than
-  adopting it. That is safe only because the old name never shipped — `v0.1.0`
+  adopting it. That is safe only because the old name never shipped -- `v0.1.0`
   and `v0.1.3` are the only tags, and neither is installed anywhere but this
   machine.
 
@@ -3496,10 +3496,10 @@ Read [`README.md`](README.md) first.
   already has.
 
   **Upstream calls it a convenience defence rather than a secure boundary**, in
-  `config.d.ts`'s own words — *"a guardrail to prevent the LLM from accidentally
-  wandering outside its intended workspace … not a secure boundary; a deliberate
+  `config.d.ts`'s own words -- *"a guardrail to prevent the LLM from accidentally
+  wandering outside its intended workspace ... not a secure boundary; a deliberate
   attempt to reach other directories can be easily worked around, so always rely
-  on client-level permissions for true security"* — and BrowserAI's caller
+  on client-level permissions for true security"* -- and BrowserAI's caller
   already holds file tools of its own. That is the same reasoning that removed
   the `(tool, mode)` permission matrix on 2026-08-18: what the guardrail
   withholds is reachable one tool call away, so all it can do here is refuse the
@@ -3511,13 +3511,13 @@ Read [`README.md`](README.md) first.
 
 - 🔧 **Provisioning is stopped when it stops making progress, not when it has taken
   too long.** `ProvisioningTimers.AbsoluteCap`
-  — 45 minutes on the whole install — is replaced by `StallCap`, ten minutes
+  -- 45 minutes on the whole install -- is replaced by `StallCap`, ten minutes
   with **nothing written at all**. A total cap can only ever fire on a link that
   is slow and *working*: 203,824,344 B in 2,700 s is 0.60 Mbps, and a link that
   has died is caught by upstream's own 30-second socket timeout twenty times
   sooner. It punished the one case it could reach. The 60-minute crash tripwire
-  went with it — with no total there is no number a tripwire could be "outside"
-  — and the *waiting* process now runs the same stall detector against the same
+  went with it -- with no total there is no number a tripwire could be "outside"
+  -- and the *waiting* process now runs the same stall detector against the same
   bytes, so a holder on a slow link is no longer reported as stuck at sixty
   minutes.
 
@@ -3526,14 +3526,14 @@ Read [`README.md`](README.md) first.
   every 250 ms across real installs: upstream downloads into
   `os.tmpdir()\playwright-download-XXXXXX\` and creates the revision directory
   only when it starts unzipping, so **nothing under the browsers root grows for
-  the whole download** — a detector reading the root alone would kill every
+  the whole download** -- a detector reading the root alone would kill every
   install on a slow link. BrowserAI now sets `TEMP` and `TMP` for the installer
   child to `<browsers root>\.downloads`. **Every one of the 41 chromium and 27
   firefox samples differed from the one before it**, in both phases.
 
   **Ten minutes is set by upstream's own lock rather than by taste.**
   `registry.install()` waits on `<root>\__dirlock` *before* it writes anything,
-  and that wait was measured at **470 s** before upstream gives up by itself —
+  and that wait was measured at **470 s** before upstream gives up by itself --
   so any cap at or under 7 m 50 s kills a healthy install that is correctly
   queueing behind another. It is deliberately ten times
   `UpdateService.StallBudget`, whose 60 s is right there and wrong here: a
@@ -3547,7 +3547,7 @@ Read [`README.md`](README.md) first.
   report.** Bytes
   written by this attempt against the measured download total, the percentage,
   elapsed, the observed rate, and what the remaining bytes come to at that rate
-  — labelled as arithmetic rather than as a promise. The old sentence quoted the
+  -- labelled as arithmetic rather than as a promise. The old sentence quoted the
   size and said *"wait about ten seconds"*, which read identically at 8 s in and
   at 25 minutes in, so a model had no way to tell a download that was working
   from one that was not and its only recourse was to keep calling.
@@ -3556,26 +3556,26 @@ Read [`README.md`](README.md) first.
   is now derived from a byte count rather than hand-written beside one.
 
 - 📝 **`QUESTIONS.md` had gone stale, and it is the document the maintainer reviews from.** `QUESTIONS.md`
-  had gone stale, and it is the document the maintainer reviews from — so
+  had gone stale, and it is the document the maintainer reviews from -- so
   staleness there costs more than anywhere else. Two entries were found wrong
   **by accident**, which is the only reason the rest were read. Swept entry by
-  entry on 2026-08-19: **sixteen checked — nine numbered, five lettered, and the
-  block of settled bullets — and six were wrong.** Each corrected in place with
+  entry on 2026-08-19: **sixteen checked -- nine numbered, five lettered, and the
+  block of settled bullets -- and six were wrong.** Each corrected in place with
   a `previously` clause; nothing deleted for being merely settled.
 
   **Item 6** said the per-directory gate is **60 seconds**; it is **120**,
   raised on 2026-08-18 because the property that has to hold is the gate against
   the **sum** of the waits taken inside it, not the largest. **Item 7** said the
   deeper probe-before-gate fix *"was NOT taken"*; it was, the next day, and the
-  entry's framing was wrong as well as its verdict — the probe already existed
+  entry's framing was wrong as well as its verdict -- the probe already existed
   as a fast refusal in front of the gate, and the mechanism was not the TOCTOU
   window the entry predicted. A contender cannot **take** a directory inside the
   writer's rename-reopen gap, because taking one needs the gate the writer is
   holding; it can **look**, and `ProbeForHolder`'s `FileAccess.ReadWrite` handle
   is refused by a holder sharing only `Read`. Detecting an owner and blocking
   one are the same capability, so it is absorbed on the gated side instead.
-  **Item 2** said *"there is no CI today"* — there had been for a day.
-  **Judgement call A** said closing the `#anchor` gap was *"on the queue"* — it
+  **Item 2** said *"there is no CI today"* -- there had been for a day.
+  **Judgement call A** said closing the `#anchor` gap was *"on the queue"* -- it
   closed on 2026-08-18. **Judgement calls C and D** still described a
   known-intermittent suite and a contingency for missing 20 consecutive green;
   the suite reached 20 of 20 at `Unbounded` on 2026-08-18 and the contingency
@@ -3587,7 +3587,7 @@ Read [`README.md`](README.md) first.
   call that removed a nine-thousand-file profile and could not remove eleven
   locked files looked, to a model scanning result shapes, exactly like one that
   removed the lot. **The maintainer's call, taken over the recommendation to
-  leave it and over the stated objection that an error invites a retry** — and
+  leave it and over the stated objection that an error invites a retry** -- and
   the refinement that answers the objection is in the text. After the tally and
   the listing, the arm now says the session **is** destroyed (its record gone,
   the index having forgotten it, what is listed being residue on disk), says
@@ -3604,8 +3604,8 @@ Read [`README.md`](README.md) first.
   the contract check, and against Firefox on a four-core runner that is an
   assertion about how fast a browser lets go of its profile. The flag is now
   part of `DestroyAnswer.AccountsForWhatItLeftAsync`, asserted **in both
-  directions** — a survivor arm reporting success and a clean destroy reporting
-  failure are equally red — so no test holds destroy to a promise of its own.
+  directions** -- a survivor arm reporting success and a clean destroy reporting
+  failure are equally red -- so no test holds destroy to a promise of its own.
 
 - ✅ **CI declares which capabilities it expects to be absent, and an undeclared
   absence is a red build.** The
@@ -3613,7 +3613,7 @@ Read [`README.md`](README.md) first.
   has run with `packed release` and `client CLI` ABSENT since the day it
   existed, so a provisioning step that started failing soft would have produced
   a green run, one more `ABSENT` line in a block nobody diffs, and a set of
-  tests that skipped instead of running — the founding failure shape of this
+  tests that skipped instead of running -- the founding failure shape of this
   project, one layer above the gate written to remove it.
   `BROWSERAI_EXPECTED_ABSENT` on the workflow's test step is the declaration;
   `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared`
@@ -3623,7 +3623,7 @@ Read [`README.md`](README.md) first.
   a developer machine behaves exactly as before and a clean clone still runs.
   `.TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` reads `build.yml` itself,
   scoped to the step that runs the suite, so deleting the line is a red build
-  rather than a silent switch-off — and
+  rather than a silent switch-off -- and
   `.TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent` exercises every
   branch in-process, so the mechanism does not first run on the build that needs
   it. Five faults were planted and all five went red: an undeclared absence, an
@@ -3635,7 +3635,7 @@ Read [`README.md`](README.md) first.
   extract into one shared component directory, because upstream serialises every
   install on a lock BrowserAI never knew about. `ReinstallSharedAsync`'s remarks
   called the race *"reachable in the shipped product"*. The **concurrency** is
-  reachable — `BrowserProvisioner.MutexNameFor` hashes the browsers root **and
+  reachable -- `BrowserProvisioner.MutexNameFor` hashes the browsers root **and
   the family**, so a chromium install and a firefox install run at once by
   design, and both lay down `ffmpeg` and `winldd` in the one root. The **race**
   is not: `registry.install()` takes a `proper-lockfile` directory lock at
@@ -3647,7 +3647,7 @@ Read [`README.md`](README.md) first.
   four trees, every one carrying `INSTALLATION_COMPLETE` and no lock left
   behind; three concurrent `install-browser ffmpeg` runs over three rounds came
   back 3/3 green and byte-identical; a held lock stopped an installer **dead for
-  30 s** — no directory, no download, no output — and it completed 8 s after the
+  30 s** -- no directory, no download, no output -- and it completed 8 s after the
   release; an abandoned lock, which is what a killed installer leaves, was
   reclaimed as stale at no measurable cost.
 
@@ -3655,12 +3655,12 @@ Read [`README.md`](README.md) first.
   budget is **470 s**, after which upstream fails the install outright with its
   own `ELOCKED` box, having written nothing. 203.8 MB in 470 s is 3.5 Mbps, so
   on a slower link a firefox install started beside a chromium one **fails
-  rather than queues** — loudly, recoverably, and inside the 45-minute
+  rather than queues** -- loudly, recoverably, and inside the 45-minute
   `AbsoluteCap`, because the wait happens before the browser's directory appears
   and `ExtractionCap` has not started. The remarks are corrected in place with
   what they previously said, the hazard index carries the row, and
   `PayloadTests.UpstreamStillSerialisesEveryInstallOnOneLockOverTheWholeBrowsersRoot`
-  reads the four anchors out of the assembled bundle and asserts their order —
+  reads the four anchors out of the assembled bundle and asserts their order --
   so a `playwright-core` bump that drops the lock or moves it inside the
   per-executable loop is a red build rather than a rediscovery.
 
@@ -3672,7 +3672,7 @@ Read [`README.md`](README.md) first.
 - 📝 **Every row of the [hazard index](HAZARDS.md) is now adjudicated.** Every
   row of the [hazard index](HAZARDS.md) is now adjudicated, and the count of the
   ones that are not is asserted on every build at zero. 55 rows read `open` with
-  `—` for evidence — rows nobody had decided either way, carried since before
+  `-` for evidence -- rows nobody had decided either way, carried since before
   `v1.0.0`. Adjudicating is not closing: **29 gained a named mechanism and
   closed, 26 gained a stated reason and stayed open**, and eight of those
   twenty-six say in as many words that they can never close, because what they
@@ -3680,10 +3680,10 @@ Read [`README.md`](README.md) first.
   Nothing was closed that could not name what goes red if the hazard returns.
 
   **The tally moved from [`TODO.md`](TODO.md) into the index itself**, because
-  the item that carried it was work-not-yet-done and the work is done — and
+  the item that carried it was work-not-yet-done and the work is done -- and
   because **at zero the sentence is a stronger mechanism than the backlog it
   replaced**. Counting down it said *somebody should decide these*; at zero it
-  says **a row that arrives `open` with `—` fails the build**, so a hazard has
+  says **a row that arrives `open` with `-` fails the build**, so a hazard has
   to be adjudicated when it is written down rather than accumulated for a later
   pass. `RecordedCountTests.TheHazardTallyIsWhatTheIndexHolds` reads the
   sentence as its anchor and re-counts through the same `HazardIndex` parser
@@ -3694,15 +3694,15 @@ Read [`README.md`](README.md) first.
   by the product for three days and nobody had read the row: its two neighbours
   closed on 2026-08-16 on one sentence, and
   `LosslessPassthroughTests.AnUnknownContentTypeSurvivesTheTrip` is a test
-  written for exactly this row. And *screenshots are not byte-stable* — the
-  claim the whole canned-blob testing practice rests on — **has never been
+  written for exactly this row. And *screenshots are not byte-stable* -- the
+  claim the whole canned-blob testing practice rests on -- **has never been
   measured**, which is why that row stayed open.
 
   **`RecordedCountTests`' own non-vacuity guards had to be corrected in the same
   pass**, and it is the transferable half: `published.Count > 4` and
   `unadjudicated.Count > 20` were floors placed under the very number they were
   watching be counted *down*, so finishing a third category would have turned
-  the test red **because the work got done** — and the obvious fix then looks
+  the test red **because the work got done** -- and the obvious fix then looks
   like weakening an assertion. They are floors under the corpus now: the table
   still parses, every row lands in exactly one of the two states, and both
   states are populated. None of the three moves when a row is adjudicated.
@@ -3711,7 +3711,7 @@ Read [`README.md`](README.md) first.
   family.** ⚠️
   *Previously it took none, "because there is nothing to name: the install is
   shared by every session on this machine."* **The stated reason expired rather
-  than being overruled** — with two families provisioned there are two trees,
+  than being overruled** -- with two families provisioned there are two trees,
   two revisions and two mutexes, and the caller's broken browser is exactly one
   of them.
 
@@ -3721,7 +3721,7 @@ Read [`README.md`](README.md) first.
   loses a working Chromium for the length of its own re-download, and a network
   failure part-way ends the call with two broken browsers instead of one. A
   repair tool must not be able to break something that was working. **Defaulting
-  to Chromium** is worse still — a broken Firefox, a healthy Chromium deleted
+  to Chromium** is worse still -- a broken Firefox, a healthy Chromium deleted
   and fetched again, and an answer reporting a successful reinstall. Required
   rather than optional-with-no-default follows `mode` on `init`, this product's
   settled shape for an argument whose omission cannot be answered honestly.
@@ -3729,19 +3729,19 @@ Read [`README.md`](README.md) first.
   **The refusal narrowed with it.** The running-process check was always
   per-directory, so naming the family makes it per-family in effect: an open
   Chromium session no longer blocks a Firefox reinstall, and the sessions listed
-  in the refusal are now only those of the family being reinstalled — listing a
+  in the refusal are now only those of the family being reinstalled -- listing a
   live Chromium beside a blocked Firefox reinstall told the caller to close the
   wrong browser. Still no force flag; still no session argument.
 
   `ffmpeg` and `winldd` are shared by both families, each carries its own
-  completion marker, and neither is touched by either family's reinstall — so a
+  completion marker, and neither is touched by either family's reinstall -- so a
   corrupt `ffmpeg` is not repairable through this tool. Recorded as a limitation
   rather than left to be discovered as one.
 
 - 🔒 **A session directory on a network path is refused, and a mapped drive letter
   counts as one.** One
   `File.Exists` against a share that has stopped answering costs a measured
-  **22,210 ms**, and several such calls happen inside the per-directory gate —
+  **22,210 ms**, and several such calls happen inside the per-directory gate --
   so the caller who names the dead share is not the one who waits; every other
   process contending for that directory is. `browserai_init` and
   `browserai_resume` now refuse before anything is created and before the gate
@@ -3750,7 +3750,7 @@ Read [`README.md`](README.md) first.
   ⚠️ **It refuses network *semantics*, not the `\host\share` spelling, and that
   distinction is the whole point.** A `net use Z:` mapping is a rooted local
   drive-letter path by every character in it, resolves through the same
-  redirector and costs the same twenty-two seconds — measured 2026-08-19 through
+  redirector and costs the same twenty-two seconds -- measured 2026-08-19 through
   a real redirector alias, which is the first time this repository has had that
   number for a drive letter rather than for a UNC path
   ([kb](kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
@@ -3758,10 +3758,10 @@ Read [`README.md`](README.md) first.
 
   **The guard cannot pay the cost it prevents.** The network question is
   answered by characters and then by `GetDriveTypeW`, both of which read the
-  object manager rather than the filesystem — `GetDriveTypeW` answered
+  object manager rather than the filesystem -- `GetDriveTypeW` answered
   `DRIVE_REMOTE` in 0.9 ms against a letter whose `File.Exists` had just taken
   22 s. That corrects a sentence this repository had carried since the log
-  writer was built: *"telling the difference needs GetDriveType — a filesystem
+  writer was built: *"telling the difference needs GetDriveType -- a filesystem
   call, which on a disconnected mapping can block for exactly as long as the
   thing being avoided."* It was reasoning rather than a measurement, and it was
   wrong.
@@ -3773,7 +3773,7 @@ Read [`README.md`](README.md) first.
 - 🔒 **A second spelling of one session directory is refused, with the spelling to
   use instead.** `Path.GetFullPath`
   resolves neither `\?\`, junctions, `subst` nor mapped drives, so two spellings
-  of one directory produced **two mutex names and one `lock.json`** — the
+  of one directory produced **two mutex names and one `lock.json`** -- the
   per-directory gate stopped serialising while every signal still read healthy,
   which [the adversarial review](docs/reviews/2026-08-18-adversarial-locking.md)
   traced to two processes driving one browser profile in one interleaving and a
@@ -3801,7 +3801,7 @@ Read [`README.md`](README.md) first.
   **Both tools now say so to the model, and one sentence had to be corrected
   rather than extended.** `browserai_init`'s description said *"Any path is
   accepted and none is validated"* and `browserai_resume`'s said *"This never
-  refuses a directory for what it is"* — neither is true any more. The fact the
+  refuses a directory for what it is"* -- neither is true any more. The fact the
   first sentence was carrying is untouched and is still stated: nothing about
   what the directory **contains** is looked at, so pointing a session at a real
   Chrome profile still works and still does everything the surrounding warning
@@ -3809,9 +3809,9 @@ Read [`README.md`](README.md) first.
   which is what let the phrase move with it.
 
   ⚠️ **One of the review's four aliases turned out not to be one.**
-  `Path.GetFullPath` **does** expand 8.3 short names on .NET 10 — in full for an
+  `Path.GetFullPath` **does** expand 8.3 short names on .NET 10 -- in full for an
   existing path, and prefix-only-with-the-tail-preserved for one `init` has not
-  created yet — so a short spelling arrives already canonical and there is
+  created yet -- so a short spelling arrives already canonical and there is
   nothing to refuse. Measured rather than assumed, and the review is corrected
   in place; its conclusion is untouched, because it needed one unresolved alias
   and has three.
@@ -3820,7 +3820,7 @@ Read [`README.md`](README.md) first.
   *Automated checks* row read *"None. No CI, no scheduled job, no git hook"*
   while `build.yml` was running the whole suite on every push. The fact is
   corrected and the decision is not: what the row argued is now true of the
-  **release checklist** alone, and what is left open is narrower — whether the
+  **release checklist** alone, and what is left open is narrower -- whether the
   release-phase checks CI deliberately does not run (the packed release, the
   real client, `BROWSERAI_RELEASE_RUN=1`) should move into automation too. The
   `TODO.md` item that was waiting on *"a real cadence rather than a guess"* says
@@ -3835,14 +3835,14 @@ Read [`README.md`](README.md) first.
   does**. It has now. Against a live headless Chromium 152.0.7977.8 running as
   ten processes with its own working directory deliberately elsewhere,
   `Directory.Move` of `chrome-win64` was refused with a **sharing violation**
-  and of `chromium-1237` with **`ERROR_ACCESS_DENIED`** — and **both succeeded
+  and of `chromium-1237` with **`ERROR_ACCESS_DENIED`** -- and **both succeeded
   in the same script seconds later with the browser killed first**, which is the
   control that makes the two refusals Chromium's rather than the tree's. So the
   2026-08-18 retraction was right that Windows has no such general rule and
   **too broad in the other direction**. Nothing is relaxed; the position is now
   evidence. ([kb](kb/windows/processes.md#the-win32-interop-surface),
-  re-verification row 103.) The mechanism is `[UNVERIFIED]` — the two refusals
-  carry different Win32 errors, so they are not the same cause — and Firefox was
+  re-verification row 103.) The mechanism is `[UNVERIFIED]` -- the two refusals
+  carry different Win32 errors, so they are not the same cause -- and Firefox was
   not tested.
 
 - 📝 **`@playwright/mcp` emits no progress notifications at all.** `@playwright/mcp`
@@ -3858,9 +3858,9 @@ Read [`README.md`](README.md) first.
   notification nobody sends. Re-verification row 104 is what re-opens it.
 
 - 📝 **`LongPathsEnabled` is recorded where the long-path guarantee is claimed.** `longPathAware`
-  in the manifest is necessary and not sufficient — Win32 honours it only when
+  in the manifest is necessary and not sufficient -- Win32 honours it only when
   the machine-wide registry value is also `1`, and a default install leaves it
-  `0` — so every long-path measurement in `kb/` was conditional on a value
+  `0` -- so every long-path measurement in `kb/` was conditional on a value
   nobody had written down. Read off the reference machine as `1` (`REG_DWORD`)
   on Windows 10.0.26200 and stamped `[MACHINE]`, with the half that is still
   unknown named rather than implied: nothing has run against `LongPathsEnabled =
@@ -3874,32 +3874,32 @@ Read [`README.md`](README.md) first.
   length, an empty buffer that became an `IndexOutOfRangeException` at the
   indexer rather than the `null` the API accepts, and nothing saying which of
   the two buffers Windows writes back into. It is now `Span<char>` for the
-  command line and `ReadOnlySpan<char>` for the environment — pinned, not
+  command line and `ReadOnlySpan<char>` for the environment -- pinned, not
   copied, so the mutation still lands in our array. **Nothing was known to be
   wrong with the old shape and nothing changed at the call site**; it was a
   signature that presents as a plausible wrong answer rather than as an error.
   The invariants it silently relied on are now asserted:
   `InteropLayoutTests.TheTwoBuffersHandedToCreateProcessAreTerminatedAndNeverEmpty`
-  is red if either buffer stops being NUL-terminated or becomes empty — and the
+  is red if either buffer stops being NUL-terminated or becomes empty -- and the
   empty environment block is the one that matters, because it would reach
   Windows as `null` and mean *inherit the parent's environment*, silently.
 
 - 🔧 **`.gitignore`: the three owed items, and one of them was a claim that was not
   true.** The
   upstream `VisualStudio.gitignore` half was re-fetched and compared against
-  upstream HEAD (blob `d5a18de`, unmoved since 2026-04-17) — it has not changed.
+  upstream HEAD (blob `d5a18de`, unmoved since 2026-04-17) -- it has not changed.
   But the marker comment invited a **wholesale paste**, and this half is *not*
   verbatim: `artifacts/` and `.artifacts/` are root-anchored here, because
   unanchored they matched `src/BrowserAI/Artifacts/` on case-insensitive Windows
   and made five product source files invisible to git. The refresh procedure now
-  says paste, re-apply, run the suite —
+  says paste, re-apply, run the suite --
   `BuildConfigurationTests.NoSourceFileIsInvisibleToGit` makes forgetting a red
   build, and the comment stops the next person rediscovering why.
   `.vscode/mcp.json` is re-admitted below the marker, since
   [github/gitignore#4735](https://github.com/github/gitignore/pull/4735) is
   still open; for a project that **is** an MCP server, a workspace registration
   used for testing was silently untracked. `/staging/` was already settled and
-  deleted on 2026-08-16, with the reason recorded in the file — the `TODO.md`
+  deleted on 2026-08-16, with the reason recorded in the file -- the `TODO.md`
   item was stale.
 
 - 💥 **`lock.json` is schema 2: every field is an ordered list of statements.** `lock.json`
@@ -3907,7 +3907,7 @@ Read [`README.md`](README.md) first.
   `acknowledgeCopy` is gone. The record was a snapshot with a history bolted
   onto `purpose` alone; it is now append-only, so a session says **how it got
   here** and not only where it is. `created` and `lastUsed` are no longer stored
-  — they are exactly the earliest and the latest statement, and a stored copy
+  -- they are exactly the earliest and the latest statement, and a stored copy
   could only ever disagree with what it summarises. **A statement is appended
   only when the value changes**, so `mode`, `browser`, `directory` and
   `browserAiVersion` stay one statement long for a session that is not moved,
@@ -3915,14 +3915,14 @@ Read [`README.md`](README.md) first.
   field**, trimmed out of the *middle*: the first statement is never dropped,
   because `created` is read from it and a trim at the front would silently move
   a session's creation date. Worst case is ~70 KB, dominated by 32 purposes at
-  their 2,000-character cap — schema 1's `purposeHistory` had no cap at all.
+  their 2,000-character cap -- schema 1's `purposeHistory` had no cap at all.
   **There is no converter and no back-compatibility**: a version-1 file is
   refused with the fix in the message, and the version is now checked in a pass
   of its own *before* anything else is parsed, because a schema-1 file is
   well-formed JSON whose keys this build still recognises by name and a version
   checked last reported it as damage. **Every refusal the strict parser made
-  still holds** — unknown key at any of the three levels, missing key, unknown
-  schema version, non-round-trippable timestamp — and one is new: an **empty
+  still holds** -- unknown key at any of the three levels, missing key, unknown
+  schema version, non-round-trippable timestamp -- and one is new: an **empty
   statement list**, which has no current value and would otherwise surface as an
   index-out-of-range a long way from the file.
 
@@ -3934,14 +3934,14 @@ Read [`README.md`](README.md) first.
   and that the recorded purpose describes the original's work. That is strictly
   more than the refusal ever conveyed. The `DirectoryIsACopy` row is deleted
   from the error catalogue rather than orphaned, and **BrowserAI now has zero
-  confirmation flags** —
+  confirmation flags** --
   `ModelSurfaceTests.NoAuthoredToolAsksTheCallerToConfirmAnything` keeps it
   there, with the deleted flag's own name as the matcher's positive control.
 
 - 🔧 **A contender asks the kernel who holds a session before it queues for the
   right to ask.** Every
   process that wanted to know who held a directory took
-  `LockScopes.PerDirectoryGate` — losers included, whose entire remaining
+  `LockScopes.PerDirectoryGate` -- losers included, whose entire remaining
   business is to print *held by PID n, since t, for this purpose*. So a refusal
   waited behind the whole queue of peers rather than behind one critical
   section, and the cost is super-linear in contenders.
@@ -3950,11 +3950,11 @@ Read [`README.md`](README.md) first.
   Measured before and after against a directory a live holder already had, 3
   runs at each N on an idle machine: slowest refusal **329 → 30 ms** at 16
   contenders, **2,084 → 203 ms** at the charter's design point of 100, **4,267 →
-  449 ms** at 200 — and the shape changed from `p50 ≈ max/2`, which is a queue
+  449 ms** at 200 -- and the shape changed from `p50 ≈ max/2`, which is a queue
   draining one entrant at a time, to a cluster. **The free path is unchanged and
   that is the design, not caution**: a probe is a sound *ownership* test and an
-  unsound *freedom* test, so anything that is not a sharing violation — absent,
-  mid-rename, `UnauthorizedAccess`, unparseable, or an open that succeeded —
+  unsound *freedom* test, so anything that is not a sharing violation -- absent,
+  mid-rename, `UnauthorizedAccess`, unparseable, or an open that succeeded --
   falls through to the untouched `MachineMutex.Create` → `Acquire` →
   `TakeOrReport`. With the gate skipped there instead, both contenders probe
   free, the loser's rename retry loop becomes the serialiser, and it takes the
@@ -3963,7 +3963,7 @@ Read [`README.md`](README.md) first.
   was built, and
   `SessionLockTests.AProbeThatFindsTheDirectoryFreeStillProvesItAtTheGate` is
   what stops it being built later. **The cold race is deliberately not
-  improved** — with the directory empty at `t=0` every contender correctly
+  improved** -- with the directory empty at `t=0` every contender correctly
   probes *looks free* and every one falls through, so 100 contenders racing an
   unheld directory measure the same as before. The queue that goes away is the
   one that forms around a session somebody already has, which is every moment of
@@ -3971,25 +3971,25 @@ Read [`README.md`](README.md) first.
 
 - 🔧 **`browserProvisioning` now answers `provisioning` where it answered
   `downloading`.** One
-  word covers five phases — waiting on another process's provisioning mutex,
+  word covers five phases -- waiting on another process's provisioning mutex,
   deleting an abandoned tree, downloading, extracting, and pruning superseded
-  revisions — and **only one of them is a download**. The entry below fixed the
+  revisions -- and **only one of them is a download**. The entry below fixed the
   *sentence* on 2026-08-18 and left the word, recording it in
   [`QUESTIONS.md`](QUESTIONS.md) §9 as the maintainer's call; the call is taken,
   and §9 is answered. Nothing about the bucketing moved: every consumer still
   branches on *installed* / *not yet* / *failed*, and the mutex-loser still
-  belongs in the middle — which is why **no fourth word was added** for it,
+  belongs in the middle -- which is why **no fourth word was added** for it,
   since no caller acts differently on the distinction.
   `ProvisioningState.Downloading` is `ProvisioningState.Provisioning`. **Both
   unfinished detail sentences gained an explicit *"wait and call the same tool
   again on the same session"*,** because `downloading` implied that recovery by
-  itself and `provisioning` does not — a rename that leaves the reader with a
+  itself and `provisioning` does not -- a rename that leaves the reader with a
   state and no action is a rename that made things worse. No external consumer
   parses the word; this build has never shipped one.
 
 - 📝 **`CLAUDE.md` is 50 lines instead of 89, and every rule names its mechanism.** It
   is the first thing an agent reads and roughly half its rules had no mechanism
-  at all — indistinguishable, on the page, from the half that did. *Prefer a
+  at all -- indistinguishable, on the page, from the half that did. *Prefer a
   mechanism over a habit* was the best line in it and was buried in the last
   third; it is now the frame, and the rules sit in two lists that say which kind
   they are. The six-line `[STALE]` defence went (it is defined properly in
@@ -4014,13 +4014,13 @@ Read [`README.md`](README.md) first.
 - 🔧 **The stray-browser sweep now has one trigger instead of two.** The logon
   scheduled task is dropped: it cannot be registered without elevation on a
   UAC-filtered administrator token, and a per-user install has no elevation to
-  offer. BrowserAI's own startup sweep already covers the case that matters — a
+  offer. BrowserAI's own startup sweep already covers the case that matters -- a
   stray browser matters when something is about to contend for its profile lock,
   and that is exactly when a client starts.
 
 - ♻️ **One place answers "what version is this binary".** Two implementations
-  disagreed — one read the informational version, the other the assembly version
-  — and the version now has a single source that reads the informational version
+  disagreed -- one read the informational version, the other the assembly version
+  -- and the version now has a single source that reads the informational version
   and never the assembly version.
 
 - 📦 **The SDK is forbidden from decorating the version string.** The SDK is
@@ -4035,7 +4035,7 @@ Read [`README.md`](README.md) first.
   third time the same diff had been met in one night. The section is the empty
   `"net10.0-windows7.0/win-x64": {}` that an `-r win-x64` restore adds. Every
   publish of either executable is RID-specific, and a RID-specific restore
-  records that section for every project it reaches —
+  records that section for every project it reaches --
   [`src/BrowserAI/packages.lock.json`](src/BrowserAI/packages.lock.json) and
   `BrowserAI.App` have carried theirs since they were written, and
   `BrowserAI.Core` is the library both of them publish, so the section is **what
@@ -4044,14 +4044,14 @@ Read [`README.md`](README.md) first.
   remembering, and it had already failed once: the section reached `HEAD` in a
   `git add -A` and was reverted in `ac244ff` under a sentence calling it an
   artifact nobody asked for. **The file has two states and the last restore
-  wins** — measured 2026-09-16 *after* the decision: a RID restore writes the
-  section (`fab160c4…`), a non-RID solution restore removes it (`7f30ec57…`),
+  wins** -- measured 2026-09-16 *after* the decision: a RID restore writes the
+  section (`fab160c4...`), a non-RID solution restore removes it (`7f30ec57...`),
   which is what `dotnet test` performs, and each state is byte-stable under
   repetition of its own kind. So committing it moves which end of the oscillation
   is the dirty one rather than ending it, and **that is still the right way
   round**: the diff that matters is the one a commit follows, a publish is
   followed by a release commit and a suite run is followed by reading a log. The
-  cost is named rather than hidden — `git status` shows the file modified after
+  cost is named rather than hidden -- `git status` shows the file modified after
   every suite run, including all six of a release gate, and the release
   checklist's own re-pack restores with the RID and leaves the tree clean before
   the release commit is written. The way that would end the oscillation outright,
@@ -4173,8 +4173,8 @@ Read [`README.md`](README.md) first.
   was crossed with no effect; `BrowserIdleTimer.DefaultIdlePeriod` has no
   browser left to close; `LockScopes.PerDirectoryGate` is released before the
   call is forwarded. **The process log carries one line and then fifteen minutes
-  of silence** — *"playwright-mcp[surface]: the peer closed its end of the
-  connection"*, 347 ms before the kill even reported complete — so the transport
+  of silence** -- *"playwright-mcp[surface]: the peer closed its end of the
+  connection"*, 347 ms before the kill even reported complete -- so the transport
   knows the peer is gone and the pending request is never told. **A second
   client cannot recover it either**, which is the half the first run left open:
   its `browserai_resume` is refused in 15.3 ms by the ordinary in-use refusal
@@ -4194,13 +4194,13 @@ Read [`README.md`](README.md) first.
   machine-wide process log rather than reasoned about:
   `BrowserAI.Sweep[5]`, `2026-09-17T12:02:54.5368021Z`, *"Terminated a stray
   browser: pid=90216 ... Its session directory was unlocked, so nothing owned
-  it"* — written by a second **product** `BrowserAI.Server.exe` that a different
+  it"* -- written by a second **product** `BrowserAI.Server.exe` that a different
   arm of the same run had started 173 ms earlier, sweeping at startup 84 ms
   after the dead browser's last log line. `StrayCandidate.TryTerminate` calls
   `TerminateProcess(handle, 1)`, which is the `1`. **The harness reclaim is
-  excluded by its own announcements rather than by argument** — the 2026-08-29
+  excluded by its own announcements rather than by argument** -- the 2026-08-29
   fix announced exactly three terminations that run, ten seconds earlier, naming
-  three other pids — which is that fix working in the direction nobody designed
+  three other pids -- which is that fix working in the direction nobody designed
   it for: it was built to stop the harness killing a live run and what it did was
   prove the harness innocent. **The 2026-08-29 exclusion of the product sweep was
   backwards**: it ruled the sweep out because *attribution needs the window this
@@ -4210,8 +4210,8 @@ Read [`README.md`](README.md) first.
   browser is alive kills it: deterministic rather than rare, a suite isolation
   defect rather than a wild death, and posed as a question with three directions
   and a plantable red rather than fixed here. The suite's own spawn record could
-  not be consulted — it lives under `.work\`, which is cleared at the end of every
-  batch — and the machine-wide log is what survived.
+  not be consulted -- it lives under `.work\`, which is cleared at the end of every
+  batch -- and the machine-wide log is what survived.
 
 - 📝 **The 1.0.0 release note opens in plain words now.**
   The preamble is what a reader of the release page meets first, and the one
@@ -4260,7 +4260,7 @@ Read [`README.md`](README.md) first.
   [`dgozman`'s request for a repro was finally answered](https://github.com/microsoft/playwright/issues/42497#issuecomment-5713988873)
   on 2026-09-17, and that the fix is being adopted by overriding `playwright-core`
   to the alpha that carries it rather than by waiting for `@playwright/mcp` to
-  roll — a dated exception with a written exit. The row stays open, and what it
+  roll -- a dated exception with a written exit. The row stays open, and what it
   waits for is the review rather than the roll.
 
 - 📝 **Chromium stays the default browser, on a reason rather than on four numbers that moved.**
@@ -4273,7 +4273,7 @@ Read [`README.md`](README.md) first.
   described as *"the whole of the evidence behind Chromium being the default
   family"*. Re-measured on 2026-09-16 with a preserved rig
   ([re-verification row 34](kb/re-verification.md)), **three of the four
-  collapsed by between 1.7x and 7x and the fourth reversed sign** — RAM 2x to
+  collapsed by between 1.7x and 7x and the fourth reversed sign** -- RAM 2x to
   1.19x, first navigate 10x to 4.62x, profile disk 20x to 2.76x, and idle CPU
   ~24x to **0.77x**, which says Firefox burns *less*. **Nothing about the
   default changes.** The claim that those ratios justified it is retired in the
@@ -4286,18 +4286,18 @@ Read [`README.md`](README.md) first.
   count reconciled.** Three corrections by addition, each re-read from the
   API on 2026-09-17 rather than carried over.
   **(1)** [microsoft/playwright#42497](https://github.com/microsoft/playwright/issues/42497)
-  — absolute paths in tool results — **closed `completed`**, by the merge of
+  -- absolute paths in tool results -- **closed `completed`**, by the merge of
   [PR #42673](https://github.com/microsoft/playwright/pull/42673) at
   2026-09-16T15:38:22Z rather than by a reply. The flag, the `filePaths` config key
   and `PLAYWRIGHT_MCP_FILE_PATHS` are in `playwright-core`
-  **1.64.0-alpha-2026-09-17** (`next`) and in **no released `@playwright/mcp`** —
-  `latest` is 0.0.81, pinning **1.64.0-alpha-2026-09-14 exactly** — so there is no
+  **1.64.0-alpha-2026-09-17** (`next`) and in **no released `@playwright/mcp`** --
+  `latest` is 0.0.81, pinning **1.64.0-alpha-2026-09-14 exactly** -- so there is no
   drift by the build rule and the row becomes *resolved upstream, adoption pending
   the roll*, with the adoption plan written out so the roll is a review and not a
   design.
   **(2)** [PR #42721](https://github.com/microsoft/playwright/pull/42721), the WebP
-  16,383 px fix, was **closed unmerged** at 2026-09-16T00:15:20Z — `dcrousso`:
-  *"this is really an upstream issue and should be fixed there instead"* — so the
+  16,383 px fix, was **closed unmerged** at 2026-09-16T00:15:20Z -- `dcrousso`:
+  *"this is really an upstream issue and should be fixed there instead"* -- so the
   fix is expected in **Chromium** (CL 8416650, status NEW) and will arrive through
   a browser-revision bump rather than a `playwright-core` change. The settlement
   condition is unchanged and the two hazard rows stand.
@@ -4307,28 +4307,28 @@ Read [`README.md`](README.md) first.
   at the version that ships. Both were right about their own version and neither
   could see the other; the comment is reconciled to the row, and
   `RecordedCountTests.TheUpstreamVariableCountInTheDocCommentIsWhatRowSeventeenSays`
-  now holds it there — planted red at *"Expected to be equal to `45` but received
+  now holds it there -- planted red at *"Expected to be equal to `45` but received
   `43`"*.
   **And one thing is written down before it happens:** the next `@playwright/mcp`
   roll brings a new **default-surface** tool, `browser_emulate_media`
   (`capability: 'core'`, taking `browser_*` from 83 to 84 with none removed or
   renamed). [`tool-verdicts.json`](tool-verdicts.json) is deny-by-default and
   refuses a name it has no row for at startup, so **the suite will be red on
-  exactly that pending judgement** — which is the mechanism working, and a verdict
+  exactly that pending judgement** -- which is the mechanism working, and a verdict
   is the maintainer's to give.
 
 - ✅ **`NeverByImageNameTests` reads the filter rather than the API.**
   Fourteen of the fifteen files it was flagging never violated anything. The scan
-  asked whether a file contained one of five substrings — `taskkill`,
-  `GetProcessesByName`, `Win32_Process`, `Get-Process`, `szExeFile` — which cannot
+  asked whether a file contained one of five substrings -- `taskkill`,
+  `GetProcessesByName`, `Win32_Process`, `Get-Process`, `szExeFile` -- which cannot
   tell `Get-Process -Id $pid` from `Get-Process chrome`. Those are opposite things:
   one names a pid the caller already holds, the other picks a stranger out of the
   machine by what its executable is called.
   [`ProcessSelection`](tests/BrowserAI.Tests/Harness/ProcessSelection.cs) now reads
-  the selection — a `-Name` parameter, a bare positional name, `taskkill /IM`,
+  the selection -- a `-Name` parameter, a bare positional name, `taskkill /IM`,
   `GetProcessesByName`, an `szExeFile` read, a `Name` clause inside a WMI query, or
   a `Name` compared with a comparison operator in a file that enumerates processes
-  — and lets every pid form through. **Q203**, decided 2026-09-17. A narrowing
+  -- and lets every pid form through. **Q203**, decided 2026-09-17. A narrowing
   needs both directions, so each shape has a synthetic control that must be caught
   *and* the pid-keyed spelling of the same call that must pass, plus the mixed line
   (a pid filter that also names an image, which is still a violation) and the
@@ -4340,8 +4340,8 @@ Read [`README.md`](README.md) first.
   of 14**.
   ⚠️ **That one is real and the move to `build/probes/` is therefore not
   taken.** `2026-09-14-firstrun/observe.ps1` calls `GetProcessesByName` over a
-  literal watch list — matching and counting by name, which the rule forbids as
-  against the observing it permits — and it cannot be re-spelled pid-keyed,
+  literal watch list -- matching and counting by name, which the rule forbids as
+  against the observing it permits -- and it cannot be re-spelled pid-keyed,
   because what it watches for is a console host appearing anywhere on the machine.
   The move was performed and reverted; `docs/probes/README.md` and
   [`CLAUDE.md`](CLAUDE.md) are corrected by addition, and both said every use was
@@ -4359,13 +4359,13 @@ Read [`README.md`](README.md) first.
   already passed: a row came back with a null `inOurJob` because `OpenProcess`
   returned `ERROR_INVALID_PARAMETER` for a descendant that had exited between the
   toolhelp walk and the per-row query. The rig had one spelling for two opposite
-  answers — *could not be read* and *is no longer there* — and an exited process
+  answers -- *could not be read* and *is no longer there* -- and an exited process
   is neither a survivor nor an escapee. `ProcessQueryVerdict.ForFailedOpen` now
   decides which it was, **once, from what Windows said**: `87` and `5` are
   `Exited`, and **everything else stays `Unreadable`**, keeps its note and still
   reddens the run, so this is a classification rather than a retry or a
-  suppression. `inJobProcessIdList` — the kernel's own membership snapshots taken
-  either side of the walk — is still asserted for every row including an exited
+  suppression. `inJobProcessIdList` -- the kernel's own membership snapshots taken
+  either side of the walk -- is still asserted for every row including an exited
   one, and `escapees`, `jobMembersTheWalkMissed` and the survivor check are
   untouched. **Q202**, decided 2026-09-17. Planted red three ways and watched, with
   the error numbers *measured* rather than quoted. [`HAZARDS.md`](HAZARDS.md)
@@ -4376,61 +4376,61 @@ Read [`README.md`](README.md) first.
   It had two, and the last restore won. `src/BrowserAI.Core/packages.lock.json`
   had **two stable states and the last restore won**: a RID-specific restore (every
   publish, and `build/New-Release.ps1`) wrote a `net10.0-windows7.0/win-x64`
-  section, and a solution restore (what `dotnet test` performs) removed it again —
+  section, and a solution restore (what `dotnet test` performs) removed it again --
   so the tree opened dirty after every publish *and* after every suite run, and
   Q199 could only choose which of the two to commit. Declaring
   `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` on the library ends it at the
-  source: five restore shapes measured on 2026-09-17 all write `fab160c4…`,
+  source: five restore shapes measured on 2026-09-17 all write `fab160c4...`,
   including the two that used to disagree
   (`dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate`
   against `dotnet restore BrowserAI.slnx --force-evaluate`, each forced to
   re-resolve so that a no-op restore could not be mistaken for agreement). The
-  other state, `7f30ec57…`, is no longer reachable. Solution build after the
+  other state, `7f30ec57...`, is no longer reachable. Solution build after the
   change: 0 warnings, 0 errors; the only cost is one directory level in the
   library's own build output, which nothing in this tree reads by path. **Q201**,
   decided 2026-09-17. [`RELEASING.md`](RELEASING.md) item 5 and
-  [`TESTING.md`](TESTING.md) are corrected by addition — both said the file would
+  [`TESTING.md`](TESTING.md) are corrected by addition -- both said the file would
   show modified after a run, and neither is true now.
 
 - ⬆️ **TUnit moved 1.67.0 → 1.68.4 and Microsoft.Testing.Platform deliberately
   did not move at all.** `dotnet restore --force-evaluate` on 2026-09-17 re-resolved
   the float and took TUnit across two releases: 1.68.0 (2026-09-15) and 1.68.4
   (2026-09-16). One change in that span touches this tree and it is an analyzer
-  loosening — [*Fix TUnit0023 false positives for disposal through casts*](https://github.com/thomhurst/TUnit/pull/6818)
-  — which can only turn a red build green, never the reverse; TUnit's analyzers run
+  loosening -- [*Fix TUnit0023 false positives for disposal through casts*](https://github.com/thomhurst/TUnit/pull/6818)
+  -- which can only turn a red build green, never the reverse; TUnit's analyzers run
   at **error** severity here, so a *tightening* would have been the thing to read
   carefully and this is its opposite. Nothing else in 1.68.x is reachable: the
   mocking fix is `TUnit.Mocks`, the video recorder is `TUnit.Playwright` (which
   `ForbiddenDependencyTests.NoProjectDrivesPlaywrightDirectly` forbids outright),
   and 1.68.4 itself is a documentation skill plus a `mockolate` bump.
   **`Microsoft.Testing.Platform` stayed at 2.4.0 even though 2.4.1 exists**, published
-  2026-09-16T14:22Z — three and a half hours *after* TUnit 1.68.4, which declares an
+  2026-09-16T14:22Z -- three and a half hours *after* TUnit 1.68.4, which declares an
   exact `Microsoft.Testing.Platform 2.4.0` dependency, and NuGet resolves the lowest
   applicable version. So the `[After(TestSession)]` hook that writes the coverage
   block and the `ITestExecutionFilter` read behind `BROWSERAI_RELEASE_RUN` are on
-  byte-identical platform code, and the float is not dead — it resolved, and what it
+  byte-identical platform code, and the float is not dead -- it resolved, and what it
   resolved to is 2.4.0. Solution build after the move: 0 warnings, 0 errors.
 
 ### Removed
 
 - 🗑️ **`browserai-sessions.json`, the per-root roll-up, and every mechanism that
   wrote it.** It
-  was the one file this product wrote to a path the caller never chose — the
+  was the one file this product wrote to a path the caller never chose -- the
   *parent* of the session directory it was given, so a session at
   `C:\repo\.browserai` put it at `C:\repo\browserai-sessions.json`, unignored,
   in somebody's repository root, against the promise in
   [`README.md`](README.md), [`ARCHITECTURE.md`](ARCHITECTURE.md) and the
   installer's own registration message that BrowserAI writes no per-repository
-  files. **Nothing read it**: not the product, not a script, not a hook — only a
+  files. **Nothing read it**: not the product, not a script, not a hook -- only a
   test helper that parsed it back to assert what the code had just written. Its
   content was already delivered live and current by the sibling-sessions line in
   the `init`/`resume` answer, from the same index walk, and by `browserai_list`
   at any scope. Gone with it: `SessionRollUp` entire, its schema version and the
   forward-compatibility argument that only a written file could need,
   `SessionManager.RefreshRollUp` and its three call sites, and the `(rolled up
-  in …)` / `COULD NOT BE WRITTEN` clauses those answers carried. **`destroy` no
-  longer walks the machine-wide index at all** — it followed it only to rewrite
-  this file — and the walk that stays returns directories rather than a record
+  in ...)` / `COULD NOT BE WRITTEN` clauses those answers carried. **`destroy` no
+  longer walks the machine-wide index at all** -- it followed it only to rewrite
+  this file -- and the walk that stays returns directories rather than a record
   per sibling, which drops a recursive `SizeOnDisk` enumeration per session from
   every session open. Three promise sentences that were false became true
   without being edited. *The feature was extracted from artifact routing on
@@ -4442,18 +4442,18 @@ Read [`README.md`](README.md) first.
 - 🗑️ **`consoleLevel`, and the four-level choice behind it.** The console level
   is now `debug` **always**, with no argument. Measured: `error`→`debug` costs
   **+1 character** on a navigation response and **+5** otherwise, because the
-  events line in a tool response is a *pointer* — `path#L1-L20` — and never the
+  events line in a tool response is a *pointer* -- `path#L1-L20` -- and never the
   message text, so the whole cost of the most verbose setting is the width of a
   larger line number. And the read-level knob already exists one layer up:
   `browser_console_messages` takes its own level, so a caller that wants only
-  errors asks for only errors **at the moment it asks** — where a capture level
+  errors asks for only errors **at the moment it asks** -- where a capture level
   chosen hours earlier at `init` cannot be raised retroactively.
 
 - 🗑️ **Session modes.** `headless`, `interactive` and `persistent` are gone, and
   so is the `mode` argument on `browserai_init` and the refusal
-  `browserai_resume` made when it was given one. **A mode was two things** —
+  `browserai_resume` made when it was given one. **A mode was two things** --
   whether a window appeared, and which upstream capabilities the session's child
-  was launched with — and the two went different ways. **The window became a
+  was launched with -- and the two went different ways. **The window became a
   per-run argument**, `headed`, on `init` and on `resume`: it is regenerated at
   every child launch beside `tracing` and `debug`, and is **not** written to the
   session record, so a session created headless is watched headed tomorrow
@@ -4464,13 +4464,13 @@ Read [`README.md`](README.md) first.
   already established twice over:** a capability withheld from a session was
   never a boundary against the *caller*. The calling agent chooses the session
   directory, the profile and its cookie database are created inside it, and the
-  agent runs as the same Windows user — [measured
-  2026-08-18](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18)
-  — and could in any case reach whatever a missing capability withheld by
+  agent runs as the same Windows user -- [measured
+  2026-08-18](kb/chromium/profiles.md#chromiums-cookie-store-and-what-it-takes-to-read-one----measured-2026-08-18)
+  -- and could in any case reach whatever a missing capability withheld by
   resuming the same directory as a different mode. What it *cost* was real: a
   `headless` session that needed to read one cookie had to be destroyed and
-  recreated. **The one argument the modes had left was headless-with-storage** —
-  "full credential access with no visible signal" — and it did not survive the
+  recreated. **The one argument the modes had left was headless-with-storage** --
+  "full credential access with no visible signal" -- and it did not survive the
   observations that `headless` already persisted cookies on disk, that
   `browser_run_code_unsafe` is `core` and reaches the cookie jar in every
   session, and that a window is a signal to a **human**, who is absent in the
@@ -4479,18 +4479,18 @@ Read [`README.md`](README.md) first.
   **`browserai.json` moved to schema 3** in the same change, because `mode` was
   a recorded field and a field nobody reads is worse than no field. There is no
   converter and there will not be one: a version-2 record is refused with the
-  recovery it has always carried — delete it and call `browserai_init` on the
+  recovery it has always carried -- delete it and call `browserai_init` on the
   directory again; the profile, output and downloads beside it are untouched and
   the new session goes on using them. **What is lost is the recorded purpose and
   the history.**
 
-  **What went with it:** `SessionMode.cs` entirely — the enum, the one table and
+  **What went with it:** `SessionMode.cs` entirely -- the enum, the one table and
   the six consumers that rendered it; the mode line in `browserai_init`'s and
   `browserai_resume`'s answers; the `mode:` column in `browserai_list`; the mode
   in `browserai_destroy`'s summary and in `browserai_init`'s already-a-session
   refusal; the `mode` field in the per-root roll-up, which moved to schema 2
   with it. `browser` is now the only thing `init` binds permanently and the only
-  argument `resume` refuses — for the reason that always separated it from
+  argument `resume` refuses -- for the reason that always separated it from
   `mode`: a profile on disk belongs to the browser that made it.
 
 - 🗑️ **Continuous integration, completely.** `.github/workflows/build.yml` was
@@ -4504,21 +4504,21 @@ Read [`README.md`](README.md) first.
   gained a requirement in item 8: the suite is run from **PowerShell and from
   Git Bash**, and both totals recorded, because the drive letter's case is
   inherited from the shell and a single-shell run bakes in whichever spelling
-  agrees — which is precisely what the removed CI did, running `pwsh` end to
+  agrees -- which is precisely what the removed CI did, running `pwsh` end to
   end.
 
   **What was audited before deleting it, because "do not lose anything unique"
   was the load-bearing half of the instruction.** Most of what the workflow did
-  is already covered locally and more strictly — the two-step `restore
+  is already covered locally and more strictly -- the two-step `restore
   --force-evaluate` / `--locked-mode` and both lock diffs are release checklist
   item 1 with `--exit-code`; the cold CDN download is
   `FirstRunProvisioningTests` against an empty root, hourly and always on a
   release run; the coverage block is written to stdout and to
   `.work/suite-coverage.txt` on every run; MinVer has its tags in any developer
   clone. **Three things genuinely die**, and they are
-  [`TODO.md`](TODO.md#continuous-integration)'s content: a *different machine* —
+  [`TODO.md`](TODO.md#continuous-integration)'s content: a *different machine* --
   four cores, cold caches, no interactive desktop, a volume with 8.3 generation
-  off — which found four defects this machine structurally cannot, including the
+  off -- which found four defects this machine structurally cannot, including the
   `browserai_destroy` survivor arm that passed nine local runs and failed three
   consecutive CI ones; **a contributor's pull request built before merge**,
   which on a public repository is what the workflow was for; and
@@ -4529,7 +4529,7 @@ Read [`README.md`](README.md) first.
   ran the suite, so deleting the declaration was a red build rather than a
   silent switch-off. **Deleted rather than re-pointed, and the reason is a house
   rule:** a search that returns zero needs a positive control. The old test had
-  one — *this really is the step that runs the suite* — and a re-pointed version
+  one -- *this really is the step that runs the suite* -- and a re-pointed version
   aimed at "any pipeline definition" could have none, so it would pass over an
   empty directory, over a typo in its own path, and over a pipeline shape it
   does not recognise, indistinguishably. **The mechanism itself is kept, correct
@@ -4547,39 +4547,39 @@ Read [`README.md`](README.md) first.
   `src/BrowserAI/Artifacts/` on case-insensitive Windows, and **five product
   source files were ignored while the build, the suite and `git status
   --porcelain` all read green**. **The maintainer's call, over a recommendation
-  to widen it past `*.cs` rather than remove it** — *"I do not think we need
+  to widen it past `*.cs` rather than remove it** -- *"I do not think we need
   this test at all."* Gone with it: `TrackedFilesAsync`, the harness that
   shelled out to git and served nothing else.
 
   **What is now unenforced, said plainly rather than left to be found.** Nothing
   compares the files on disk against what git can see, so a source file
   swallowed by an ignore rule is invisible again exactly as it was on
-  2026-08-15, and every surface signal reads healthy while it is — an ignored
+  2026-08-15, and every surface signal reads healthy while it is -- an ignored
   file is not untracked, so a clean `git status` is what a swallowed file
   *produces*. **64 unanchored directory rules remain** in the upstream half of
   `.gitignore`; the predicate is *a line above the BrowserAI marker that ends in
   `/`, does not begin with `/` and is not a negation*, re-counted 2026-08-19,
   with `/artifacts/` and `/.artifacts/` the only two anchored ones as the
   positive control. ⚠️ *Previously published as "nineteen" with no predicate
-  written down, and no predicate reproduces nineteen — the figure is replaced
+  written down, and no predicate reproduces nineteen -- the figure is replaced
   rather than corrected.* Both `.gitignore` comments that named the test now
   record the deletion and what it costs, and the upstream-refresh procedure ends
   in **run `git check-ignore -v` by hand** where it used to end in *run the
   suite*. Reasoning and reversal in [QUESTIONS.md judgement call
   E](QUESTIONS.md#e-nosourcefileisinvisibletogit-was-deleted-and-this-is-not-the-entry-you-think-it-is).
 
-- 🗑️ **`browser_annotate` is gone from the model-facing surface.** Not refused —
+- 🗑️ **`browser_annotate` is gone from the model-facing surface.** Not refused --
   **absent**: filtered out of `tools/list` in every mode, so it costs a model no
   attention and no description budget for a call that cannot succeed. Filtering
   the surface is in scope by the charter, where renaming is not.
 
   Yesterday's measurement earned a refusal; read again it withdraws the tool.
-  **It has no self-timeout** — the control run stood silent for a full 90 s, and
-  the wait is `await new Promise(resolve => client.on("exit", …))`, whose only
+  **It has no self-timeout** -- the control run stood silent for a full 90 s, and
+  the wait is `await new Promise(resolve => client.on("exit", ...))`, whose only
   bounded arm is the daemon failing to start at 15 s. Its window is a **second,
   non-headless Chromium**. There is **no configuration in which it runs
   headless**, because the dashboard's headedness is `headless:
-  !!process.env.PWTEST_DASHBOARD_APP_BIND_TITLE` — an upstream *test* variable
+  !!process.env.PWTEST_DASHBOARD_APP_BIND_TITLE` -- an upstream *test* variable
   no session config reaches. And it **escapes the session's containment**: a
   `detached`, `unref`'d, per-user-singleton daemon writing its profile into
   `%TEMP%`, of whose 18-process tree a parent walk found **zero** after the
@@ -4588,7 +4588,7 @@ Read [`README.md`](README.md) first.
 
   **A caller that names it anyway is refused rather than forwarded**, because a
   model knows upstream's tool names from everywhere except this server's list,
-  and forwarding one would hang an unattended run — the thing this product
+  and forwarding one would hang an unattended run -- the thing this product
   exists not to do.
 
   **What it would take to bring it back** is recorded in
@@ -4601,7 +4601,7 @@ Read [`README.md`](README.md) first.
   refusal row `SessionErrors.AnnotationWouldHangAWindowlessSession` (replaced by
   `AnnotationIsNotInTheSurface`, which names the absence first); the mode
   parameter on `SessionToolPolicy.Decide`; `SessionToolPolicy.Note` and
-  `SessionToolSurface.AppendModeNote`, the entire description-rewrite path — so
+  `SessionToolSurface.AppendModeNote`, the entire description-rewrite path -- so
   **every upstream description now passes through byte for byte**, which is a
   stronger property than the append-only rule it replaces and is asserted as
   one. The surface is **58** upstream tools where it was 59, in every mode, and
@@ -4609,7 +4609,7 @@ Read [`README.md`](README.md) first.
   from upstream's bundle rather than from what this build calls.
 
 - 📝 **The sweep's two highest-value assumptions are measured.** The sweep's two
-  highest-value assumptions, measured — and both decisions they were holding up
+  highest-value assumptions, measured -- and both decisions they were holding up
   survive. They were the worst kind of unmeasured justification: each already
   justified a decision that had been *taken*, so neither could fail loudly, and
   confirming them was the only thing that could distinguish a sound decision
@@ -4619,11 +4619,11 @@ Read [`README.md`](README.md) first.
   return.** Three runs against a real child on the config this product
   generates: a **visible** `Chrome_WidgetWin_1` at `100,100,1280x800` took the
   **foreground** within 1.2 s every time, and in the control arm the call was
-  still silent 90 s later — the other two returned only in the same 40 ms tick
+  still silent 90 s later -- the other two returned only in the same 40 ms tick
   their window disappeared, which is the human path. **So the only refusal left
-  in the product is earned**, and the sentence behind it — undated, uncited and
+  in the product is earned**, and the sentence behind it -- undated, uncited and
   never measured, and contradicted on its face by this repository's own
-  measurement that headless Chromium shows nothing — now carries a date, four
+  measurement that headless Chromium shows nothing -- now carries a date, four
   versions, a method and a re-verification row. The mechanism is worse than the
   sentence said: the window belongs to a **second, non-headless Chromium** under
   a **detached, per-user-singleton** dashboard daemon, launched headed on an
@@ -4634,7 +4634,7 @@ Read [`README.md`](README.md) first.
   **The DPAPI claim that deleted the whole tool-permission layer holds.** The
   removal rested on *"the agent chooses the session directory, the profile with
   its cookie database sits inside it, and the agent runs as the same Windows
-  user, so DPAPI decrypts for it"* — repeated across six documents and
+  user, so DPAPI decrypts for it"* -- repeated across six documents and
   terminating in a `kb/` line with no date, no version and no method. The
   unasked question was **App-Bound Encryption**, which since Chrome 127 binds
   cookie decryption to the browser's own code identity. Measured against a
@@ -4642,21 +4642,21 @@ Read [`README.md`](README.md) first.
   `os_crypt.app_bound_encrypted_key` **absent**, cookie scheme tag **`v10`** and
   not `v20`, and from a *separate* process as the same user `CryptUnprotectData`
   with no entropy returned the 32-byte key and AES-256-GCM recovered the value.
-  **DPAPI alone — no elevation, no service, no admin.** Stronger than "ABE could
+  **DPAPI alone -- no elevation, no service, no admin.** Stronger than "ABE could
   not apply here": this machine *has* a registered Chrome elevation service,
   from the operator's own install, and the provisioned build still produced a
   DPAPI-only key.
 
   Both are stamped in [`kb/`](kb/README.md) with how to re-establish them, cited
   from the code and from all six documents that used to cite each other, and
-  covered by re-verification rows 94 and 95 — each naming what a bump would
+  covered by re-verification rows 94 and 95 -- each naming what a bump would
   silently invalidate, because both are facts about upstream that today's suite
   would stay green through.
 
 - 📝 **The justification sweep: 598 load-bearing reasons sorted.** The
   justification sweep: 598 load-bearing reasons sorted, 63 assumed, 13 settled
   by measurement and 11 relabelled. Every mechanism in this repository protects
-  a claim about *behaviour* — a test fails, a snapshot diffs, an analyzer
+  a claim about *behaviour* -- a test fails, a snapshot diffs, an analyzer
   errors. A claim about a *reason* is invisible to all of them, and a rule with
   a measured reason reads exactly like a rule with a plausible one. Nothing
   below could ever have gone red.
@@ -4669,14 +4669,14 @@ Read [`README.md`](README.md) first.
   was deliberately elsewhere: `Directory.Move` of the running image's **parent**
   and **grandparent** both succeeded, and renaming the **running `.exe`** itself
   succeeded; only `File.Delete` of it was refused. **The refusal is left
-  standing** — what a browser does when its tree is renamed underneath it has
-  never been measured — but it is no longer resting on an impossibility.
+  standing** -- what a browser does when its tree is renamed underneath it has
+  never been measured -- but it is no longer resting on an impossibility.
 
   **`[DefaultDllImportSearchPaths(System32)]` is inert for 39 of the 43
   declarations it is written over.** With genuine `System32` copies planted
   beside a probe, `kernel32`, `user32` and `ntdll` loaded from `System32` with
-  or without the attribute; only `rstrtmgr.dll` — the one library here that is
-  not a KnownDLL — loaded from the application directory without it. The rule is
+  or without the attribute; only `rstrtmgr.dll` -- the one library here that is
+  not a KnownDLL -- loaded from the application directory without it. The rule is
   kept on every declaration; the trap was the audit, since anyone testing it
   with a fake `kernel32.dll` sees nothing happen and concludes it is decorative.
 
@@ -4688,7 +4688,7 @@ Read [`README.md`](README.md) first.
   carries a guard that does nothing and the suite one that kills the server. The
   ban stands, for better reasons than it had.
 
-  **Also settled by measurement**: a held handle stops pid reuse — with the
+  **Also settled by measurement**: a held handle stops pid reuse -- with the
   handle released a pid repeated after 2,010 spawns, with one held there was no
   repeat in 6,030, and the *control* is what makes that mean anything;
   `Marshal.GetLastPInvokeError()` survives allocation, a GC, a `MemoryStream`
@@ -4720,34 +4720,34 @@ Read [`README.md`](README.md) first.
 
 - ✅ **The client's *"2KB each"* is per string, and the gate was measuring the wrong
   unit.** `ClientTruncationBudget`
-  had said for four days that the per-string reading was an **assumption** — the
+  had said for four days that the per-string reading was an **assumption** -- the
   competing reading being one 2 KB bucket per whole serialized tool, under which
   `browserai_init`'s entry was over the line and silently truncated on every
   session, and under which trimming a description would have moved text from one
   capped bucket into the same capped bucket. It is now measured, @ **Claude Code
   2.1.234**, by pointing the client at a local recorder through
   `ANTHROPIC_BASE_URL` and reading the `tools` array it sends to the Messages
-  API — what the model receives, rather than what a model recalls. **Per string,
+  API -- what the model receives, rather than what a model recalls. **Per string,
   2,048 UTF-16 characters, cut at `> 2048`.** A probe tool with a 4,578-byte
   entry arrived intact, as did entries of 17 KB and 20 KB; a 2,048-character
   description weighing 6,004 bytes arrived whole, so **bytes are never
-  counted**; there is no whole-surface total either — 202 tools and 348,314
+  counted**; there is no whole-surface total either -- 202 tools and 348,314
   bytes of entries went through untouched; and
   `inputSchema.properties[*].description` is **not truncated at all**, 20,000
-  characters included. The cut appends the literal `… [truncated]`, which the
+  characters included. The cut appends the literal `... [truncated]`, which the
   model can see and a server never can. `browserai_init` was never truncated.
   What changed as a result: `ClientTruncationBudget.Bytes` is now `.Characters`
-  and the gate counts characters — a byte gate can only fail strings the client
-  delivers whole — the parameter cap is relabelled a **house limit** rather than
+  and the gate counts characters -- a byte gate can only fail strings the client
+  delivers whole -- the parameter cap is relabelled a **house limit** rather than
   a client limit, and questions 1 and 10 in [`QUESTIONS.md`](QUESTIONS.md) are
   answered. Recorded with the method in
-  [kb](kb/mcp/protocol.md#what-2kb-each-means--measured-2026-08-18--claude-code-21234)
+  [kb](kb/mcp/protocol.md#what-2kb-each-means----measured-2026-08-18--claude-code-21234)
   and re-verification row 92, because every figure in it floats with a client
   version this project does not control.
 
 - 🗑️ **BrowserAI advertised an MCP capability it does not implement.** The SDK's
   `McpServerImpl` gates `Tools`, `Prompts`, `Resources` and `Completion` on
-  configuration, and `ConfigureLogging` on nothing at all — so `initialize`
+  configuration, and `ConfigureLogging` on nothing at all -- so `initialize`
   answered `{"tools":{},"logging":{}}` from a server that has never emitted a
   `notifications/message`, and a client calling `logging/setLevel` got `{}` and
   then silence for ever. `BrowserProxy.UnadvertiseLogging` removes it in an
@@ -4768,11 +4768,11 @@ Read [`README.md`](README.md) first.
 - 🐛 **`browserProvisioning` said `downloading` when this process had started no
   download.** A
   provisioner that loses the machine-wide provisioning mutex is watching for
-  another process's completion marker — and cannot see whether that process is
+  another process's completion marker -- and cannot see whether that process is
   downloading, extracting, or walking every process on the machine inside its
-  revision prune. It rendered *"… is being downloaded into '…'"* anyway. The
+  revision prune. It rendered *"... is being downloaded into '...'"* anyway. The
   attempt now carries a phase and the sentence says what this process is
-  actually doing. **The state word was left alone here** — *and renamed to
+  actually doing. **The state word was left alone here** -- *and renamed to
   `provisioning` later the same day; see Changed, below.* This entry stands as
   written because it is what shipped in this order: the sentence was a claim
   about the world and was fixed first, the word was a product-voice decision and
@@ -4780,7 +4780,7 @@ Read [`README.md`](README.md) first.
 
 - 🐛 **A supported configuration warned on every startup.** `warn: velopack:
   Failed to initialize WindowsVelopackLocator` fired on every start of a binary
-  Velopack did not install — every test host, and the configuration CI runs in —
+  Velopack did not install -- every test host, and the configuration CI runs in --
   a hundred per saturation run, on the stream this project relies on for
   diagnosis. Demoted to `Debug` on three independent conditions; a genuine
   locator failure carries different text at `Error` and is untouched.
@@ -4790,7 +4790,7 @@ Read [`README.md`](README.md) first.
   cell *contained* "open" or "closed", so a row reading `**half closed**` passed
   it for eight days while being in neither tally. It now matches the leading
   word exactly. The row is adjudicated on its evidence: **closed**, with the
-  pre-check's limit stated — the hazard is that disk exhaustion mid-provision is
+  pre-check's limit stated -- the hazard is that disk exhaustion mid-provision is
   *success-shaped*, and the source fix removes the shape.
 
 - 📝 **Four counts in prose were wrong.** Four counts in prose were wrong,
@@ -4799,7 +4799,7 @@ Read [`README.md`](README.md) first.
   tally said 3 rows were `open` while carrying evidence and 57 open in total; it
   was 4 and 58. `DECISIONS.md` said the installer is *"~117 MB"*, which was the
   installed payload rather than the installer: re-measured off the artifact
-  `build/New-Release.ps1` packed for `v1.0.0`, it is **53,567,930 bytes — 51.1
+  `build/New-Release.ps1` packed for `v1.0.0`, it is **53,567,930 bytes -- 51.1
   MiB**.
 
 - 🗑️ **The free-space check is gone, and nothing asks a volume how much room it has.**
@@ -4812,13 +4812,13 @@ Read [`README.md`](README.md) first.
   `SessionErrors.InsufficientDisk` and the injected free-bytes reader the suite
   triggered it through are all deleted; the error catalogue is **25 rows**
   rather than 26. **The removal was planted red first**, two ways: the same
-  condition the old arm provoked — a volume reporting 12 MiB free — asserted
+  condition the old arm provoked -- a volume reporting 12 MiB free -- asserted
   *not* to refuse (*"Expected to not be equal to True but received True"*), and
   a new tree-wide scan,
   `HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas`, which named four files
   before the change and none after. **The old refusal test was deleted rather
   than skipped**: it asserted behaviour that no longer exists, which is not a
-  gap in coverage. **What it costs is written down rather than implied** — a
+  gap in coverage. **What it costs is written down rather than implied** -- a
   machine that runs out of room now finds out partway through a 207.3 MB
   download instead of in a sentence at `init`, which is exactly how any volume
   that could not answer the question in one call already behaved. The ~635 MiB
@@ -4831,13 +4831,13 @@ Read [`README.md`](README.md) first.
 
 - 🐛 **A launcher that had exited but whose pid still opened was read as a live client.** `ClientLivenessWatcher`
   treated `OpenProcess` succeeding as *there is somebody there*. Windows keeps a
-  process object for as long as any handle anywhere names it — the console host
-  holds one for a process that ran in a console — so a launcher that was already
+  process object for as long as any handle anywhere names it -- the console host
+  holds one for a process that ran in a console -- so a launcher that was already
   gone went on answering, the watch attached to an already-signalled handle, and
   `Program.Main` was told the client could be watched: **the no-client fast exit
   was skipped for a corpse**, and the run swept the machine, took the live
-  marker and served nobody. The fix is one question after the identity pairing —
-  `WaitForSingleObject(handle, 0)` — and an already-signalled handle takes the
+  marker and served nobody. The fix is one question after the identity pairing --
+  `WaitForSingleObject(handle, 0)` -- and an already-signalled handle takes the
   same path as a pid that cannot be opened at all, under a record of its own
   (`Startup[76]`) so the log says which of the two routes it took; a wait that
   cannot be interpreted is read as neither. Measured through the one-launcher
@@ -4851,8 +4851,8 @@ Read [`README.md`](README.md) first.
   went red once in four full runs on 2026-09-15, at the whole of
   `TestDefaults.ProcessHang`, and the hazard row written that morning said no
   rig could close it. `OrphanedConsoleStart` now produces either shape on
-  request — `LauncherCorpse.Freed` for a pid nothing holds,
-  `LauncherCorpse.Openable` for one the test host keeps a handle on — so the arm
+  request -- `LauncherCorpse.Freed` for a pid nothing holds,
+  `LauncherCorpse.Openable` for one the test host keeps a handle on -- so the arm
   is deterministic: planted against the published pre-fix binary it failed
   **every** time in under 400 ms rather than once in four. Both arms wait for
   *either* decision now, so losing that race is a named failure in a second
@@ -4874,20 +4874,20 @@ Read [`README.md`](README.md) first.
   `Program.Main` logged *"BrowserAI has no client to serve and is exiting"* 1.89
   s into the first run and then stood for **213.6 s** more, 10 threads, 224
   handles, holding a `node.exe` and a `conhost.exe`, until it was killed by pid.
-  The cause was one `await` — `JsonLinesTransport.DisposeAsync` closed its own
+  The cause was one `await` -- `JsonLinesTransport.DisposeAsync` closed its own
   end of the channel and then waited for its read loop, on the strength of a
   comment that said closing the peer wakes a read blocked in a syscall. That is
   true of the **child** leg, where this process owns the pipe and the child's
   exit closes it, and false of the **caller** leg, where the other end of stdin
   belongs to whoever started us. Measured on .NET 10 against
   `Console.OpenStandardInput()`: once a read has parked, **neither cancelling
-  the token nor disposing the stream completes it** — 3 s each, both still
+  the token nor disposing the stream completes it** -- 3 s each, both still
   `WaitingForActivation`, with a console stdin and with a pipe stdin alike
-  ([kb](kb/windows/processes.md#a-read-parked-on-standard-input-is-woken-by-neither-cancelling-it-nor-disposing-the-stream--measured-2026-09-15)).
+  ([kb](kb/windows/processes.md#a-read-parked-on-standard-input-is-woken-by-neither-cancelling-it-nor-disposing-the-stream----measured-2026-09-15)).
   `ShutdownPeerAsync` now **answers** whether closing the peer ends the read,
   and a loop the peer will never end is **abandoned** rather than awaited: safe,
   because the parked read is on a thread-pool thread and does not hold the
-  process open — measured by returning from `Main` with one parked and watching
+  process open -- measured by returning from `Main` with one parked and watching
   the process exit anyway. A loop that has already finished is still awaited,
   whoever the peer is, so the ordinary shutdown is unchanged and a read loop
   that faulted is still reported. Two arms, both watched red first:
@@ -4901,7 +4901,7 @@ Read [`README.md`](README.md) first.
   run with nobody to serve started a browser server first and worked out that
   nobody was there 506 ms later. On the same install, the `playwright-mcp` child
   was launched, the machine-wide stray sweep ran and the update lane opened
-  **before** the no-client question was asked — so the run with the least reason
+  **before** the no-client question was asked -- so the run with the least reason
   to cost anything cost the most, and left a second orphan behind when it did
   not exit. The decision now sits immediately after the installer exit, before
   the root judgement, the sweep, the live marker, the instance directory and the
@@ -4920,21 +4920,21 @@ Read [`README.md`](README.md) first.
   suite's own installer arm destroyed the maintainer's Add/Remove Programs entry
   on every run that had a pack to install. Velopack writes one uninstall key per
   pack id per user, named for the id and never for the location: an install
-  under `--installto` still rewrites `HKCU\…\Uninstall\BrowserAI.app` to point
+  under `--installto` still rewrites `HKCU\...\Uninstall\BrowserAI.app` to point
   at the scratch root, and `Update.exe uninstall` from that root calls
   `delete_subkey_all(<id>)` **unconditionally**, with no comparison against
   `InstallLocation` anywhere in it. Measured as *no `BrowserAI.app` key after
-  six installer-arm runs* — with no real install present to lose, which is the
+  six installer-arm runs* -- with no real install present to lose, which is the
   only reason nobody noticed. `build/New-Release.ps1` now packs a **second**
   installer from the same publish directory, at the same version, on the same
-  channel, under `BrowserAI.app.test` and into `Releases/test-pack/` —
+  channel, under `BrowserAI.app.test` and into `Releases/test-pack/` --
   `$testPackArgs` is `$packArgs` with the id and the output directory replaced,
   so a packing decision cannot reach one pack and not the other.
   `RealInstallerTests` installs that one and the shipping installer is never
   executed by the suite again; the arm reads the real key before and after and
   asserts it byte-identical (or still absent), reclaims the test id's key in a
   `finally`, and `ReleaseLayout.Judge` refuses the capability when one survives
-  a run — naming the key and the `reg delete` that clears it. A real install is
+  a run -- naming the key and the `reg delete` that clears it. A real install is
   never judged: a key whose `InstallLocation` exists and is not the suite's
   scratch root is `Real`, asserted over constructed inputs rather than by
   writing a registry key to provoke it.
@@ -4945,15 +4945,15 @@ Read [`README.md`](README.md) first.
 - ✅ **The release gate's ILC check could not fail.** `IlcCompile` is an MSBuild
   target with `Inputs` and `Outputs`, so a publish whose managed assemblies have
   not moved skips it and relinks the previous run's native object: the publish
-  succeeds, the binary is good, and HALT-A — the scan of ILC's own console
-  output — sweeps a log ILC never wrote and reports clean. Measured 2026-09-15
+  succeeds, the binary is good, and HALT-A -- the scan of ILC's own console
+  output -- sweeps a log ILC never wrote and reports clean. Measured 2026-09-15
   at `-v:normal`: **75 lines** with the pass skipped against **95** with it, and
   **389** for the release script's own publish into a cleared output directory.
   Clearing `$PackDir` was already there and is not enough; the up-to-date check
   is on `obj\<config>\<tfm>\<rid>\native\BrowserAI.obj`, and no MSBuild property
   disables it. The script now removes every `obj\Release\*\win-x64\native`
   before publishing, and `build/Test-IlcFullPass.ps1` refuses a log carrying no
-  full pass — a separate script precisely so the refusal can be driven, which
+  full pass -- a separate script precisely so the refusal can be driven, which
   `ReleaseScriptTests.APublishLogWithNoIlcPassIsRefusedAndOneWithAPassIsAccepted`
   does with a skipped log, a full log and a log carrying neither. The marker
   rather than a line count: `Generating native code` is ILC's own line.
@@ -4961,13 +4961,13 @@ Read [`README.md`](README.md) first.
 - ✅ **Release checklist item 8's code fence set the release variable and nothing else.** Release
   checklist item 8's own code fence set the release variable and did nothing
   else the item asks for. It handed `dotnet test` no explicitly-spelled absolute
-  path, so both halves inherited whatever spelling started the shell — **the
+  path, so both halves inherited whatever spelling started the shell -- **the
   exact 2026-08-24 failure shape the bullet three above it was written to
   close**, reproduced inside the instrument that bullet points at. It set no
   `BROWSERAI_DRIVE_CASE`, so the `drive letter` row could report only what a run
   happened to get and never whether that was what anyone asked for. And it
   appended no coverage block to the log, so six release logs would have carried
-  no `release run` row, no `first-run bytes` row and no `filter` row — while the
+  no `release run` row, no `first-run bytes` row and no `filter` row -- while the
   two paragraphs immediately below it name that block as the check on all three.
   The fence is now Testing's own two invocations with the release variable set
   inside the detached shell beside the drive-case one, and the previous form is
@@ -4977,7 +4977,7 @@ Read [`README.md`](README.md) first.
   harness's process-log reader answered with a stranger's records, because it
   matched half an identity. `ProcessLogRecords` is what lets a test assert *the
   product recorded X* against the durable file rather than against stderr, and
-  it selected a writer by matching ` pid=<n>@` — the pid alone, with the
+  it selected a writer by matching ` pid=<n>@` -- the pid alone, with the
   creation FILETIME behind the `@` read past and never compared. The type's own
   remarks had said in as many words that a bare pid does not identify a writer;
   the method's name, `ForPid`, was the accurate description of what it did. The
@@ -4989,7 +4989,7 @@ Read [`README.md`](README.md) first.
   both halves plus the separator that ends them, so a FILETIME that merely
   *begins* with the right one is not a match either. **The pid-only entry point
   is gone rather than caveated**, because a reader that can be handed half an
-  identity will be, and neither of the two callers had to be taught anything —
+  identity will be, and neither of the two callers had to be taught anything --
   both already held the identity they were asking about. **The red was planted
   rather than watched live, and that is a property of the subject rather than a
   shortcut**: whether this machine's log holds a stranger wearing this run's pid
@@ -5007,13 +5007,13 @@ Read [`README.md`](README.md) first.
   reads it runs on first use of a scratch root **in each process** rather than
   once per run. A row named its subject and nothing else, so a second harness
   process reading a live run's record ended that run's browsers, probes and
-  slices — and then `TreeDelete`d the scratch tree they were using. **Reproduced
+  slices -- and then `TreeDelete`d the scratch tree they were using. **Reproduced
   18 of 18 on 2026-08-29**, and it is the mechanism that finally explained an
   exit code chased for eleven days as a crash: nothing on this machine crashes
   with a 1, and the kill leaves silent pipes, five browser log lines and no
   message window, which is the same shape a desktop heap spent to the byte
-  leaves. **A row now names its owner** — the identity of the process that
-  started the recorded process and holds the job object containing it — and the
+  leaves. **A row now names its owner** -- the identity of the process that
+  started the recorded process and holds the job object containing it -- and the
   pass terminates a subject only when that owner is neither this process nor any
   process still running, checked by pid *and* creation time so a recycled pid
   cannot impersonate a dead owner. **Owner is not "the run"**, deliberately: a
@@ -5025,10 +5025,10 @@ Read [`README.md`](README.md) first.
   would take the recovery with it. **And the pass says what it did**: one `WARN`
   per terminated process in the machine's process log, naming the identity, the
   owner it found gone, the record it was honouring and the exit code read from
-  the constant the call hands it — silent when it ended nothing, since every run
+  the constant the call hands it -- silent when it ended nothing, since every run
   runs this pass. Three tests, each watched red: the kill with the owner gate
   removed, the recovery with the owner check inverted, and the announcement
-  **both ways** — suppressed, and firing on a pass that ended nothing. The
+  **both ways** -- suppressed, and firing on a pass that ended nothing. The
   machine-wide interlock was considered and **not** taken, so two concurrent
   suite runs remain undefined in every other respect;
   [`QUESTIONS.md`](QUESTIONS.md) §8a records what that leaves.
@@ -5039,10 +5039,10 @@ Read [`README.md`](README.md) first.
   **bare token** anywhere under `kb/`, and asserting unconditionally that
   nothing matched. Both halves were defects. It could not tell a stamp from a
   mention, so an article that merely *discussed* the marker turned the suite red
-  — the entry recording the update lane's owed re-check had to avoid spelling
+  -- the entry recording the update lane's owed re-check had to avoid spelling
   the token at all, and a writer who spelled it in prose reddened a run against
   a correct tree. And being unconditional, it made the kb rule's own escape
-  hatch — *re-run the measurement, or mark the entry* — a red build, while its
+  hatch -- *re-run the measurement, or mark the entry* -- a red build, while its
   message told the reader that the sentence in `kb/README.md` was what had to
   change. **Changing that sentence could not have satisfied it.** Now
   `TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold`: the match is the
@@ -5052,7 +5052,7 @@ Read [`README.md`](README.md) first.
   clause rather than against zero, so **stamping an entry and moving that
   sentence are one edit and pass as a pair**. Neither half passes alone. This is
   the trap [the re-verification index](kb/re-verification.md) already met for
-  the floats marker and answered by narrowing the counter's **scope** — an
+  the floats marker and answered by narrowing the counter's **scope** -- an
   answer not available here, because the article that has to discuss this marker
   is a real article full of real measurements, so the narrowing is by **shape**
   instead. Watched in four directions before it went in: the old scan red on a
@@ -5065,10 +5065,10 @@ Read [`README.md`](README.md) first.
   starts the stray sweep, one pass followed every entry in the machine-wide
   index through `SessionLock.ReadRecord`, and each of those opens left a
   `browserai.data-shm` and a `browserai.data-wal` in a directory nobody had
-  named — measured through the published binary, a cleanly-closed session at two
+  named -- measured through the published binary, a cleanly-closed session at two
   files and four after a stranger sent nothing but `initialize`. The sweep goes
   **probe-first** now: `SessionIndex` walks at a stated depth, and the sweep's
-  is the guard — one `CreateFile` on `browserai.lock`, with two file checks
+  is the guard -- one `CreateFile` on `browserai.lock`, with two file checks
   behind it. Nothing was given up, because the record was never part of the
   sweep's decision: the removable set is bit-identical, and the one entry whose
   record is still read in full is the one a pass is about to act on, where there
@@ -5077,18 +5077,18 @@ Read [`README.md`](README.md) first.
 - 🐛 **An idle browser close left no trace in the only record there is.** The
   timer talks to the child directly, and while `browserai.log` existed the event
   survived there; that file is gone, so an autonomous close became an
-  unexplained gap in wall-clock time followed by a silent relaunch — under a
+  unexplained gap in wall-clock time followed by a silent relaunch -- under a
   heading that tells its reader *"this is what BrowserAI did"*. It writes a row
   now, the way every forwarded call's row is written: `in-flight` before the
   call reaches the child, settled from the child's own answer, with a `why` that
   names the timer rather than borrowing a caller's voice. **A record that will
-  not write does not stop the close** — the one place this tree inverts that
+  not write does not stop the close** -- the one place this tree inverts that
   rule, because there is no caller to refuse to.
 
 - 🐛 **An unjudged `browserai_` name was refused without being recorded.** The
   short-circuit in front of the verdict door was a prefix test, so
   `browserai_zzz` never reached the door: it was refused by the session
-  manager's default arm and, having resolved no session, wrote no log row —
+  manager's default arm and, having resolved no session, wrote no log row --
   while an unjudged *upstream* name was recorded on the session it named. It is
   an exact match against the seven authored tools now, so both are
   deny-by-defaulted at the door and both land in the log. **The `answer` rows of
@@ -5100,9 +5100,9 @@ Read [`README.md`](README.md) first.
 - 🔒 **A `purpose` or a `why` could carry invisible supplementary-plane text into
   another agent's context.** `RecordText.Sanitise`
   iterated `char`, and `char.GetUnicodeCategory` answers `Surrogate` for either
-  half of a supplementary-plane character and never `Format` — so the `Cf` drop
+  half of a supplementary-plane character and never `Format` -- so the `Cf` drop
   its own remarks describe covered the basic plane alone, and the whole TAG
-  block (U+E0020–U+E007F, the canonical invisible-text range) survived a round
+  block (U+E0020-U+E007F, the canonical invisible-text range) survived a round
   trip through the record. It enumerates runes now, and a lone surrogate is
   dropped rather than replayed.
 
@@ -5117,11 +5117,11 @@ Read [`README.md`](README.md) first.
   reading it.** The
   sentence named `U+0007` in words and then carried the byte twice. Every
   catalogue row that quotes a caller's raw spelling now renders it through
-  `RecordText.Escape`, which **shows** a code point rather than stripping it — a
+  `RecordText.Escape`, which **shows** a code point rather than stripping it -- a
   caller has to be able to see which character was the problem.
 
 - 🐛 **A refusal leaked a C# parameter name.** `browserai_init` on a volume root
-  answered *"… must be a real directory on the volume. (Parameter
+  answered *"... must be a real directory on the volume. (Parameter
   'canonical')"*, because `ArgumentException.Message` appends one whenever it is
   set and the catalogue interpolates that message verbatim.
 
@@ -5138,12 +5138,12 @@ Read [`README.md`](README.md) first.
   duplicate tool name inside one half of `tool-verdicts.json` exited the process
   with a message naming neither the file nor the row. The loader checked for a
   name in *both* halves and not for a name twice in *one*, so the frozen
-  dictionary threw instead. It is a named refusal now — and the quieter half was
+  dictionary threw instead. It is a named refusal now -- and the quieter half was
   worse: `TryGetProperty` answers the **last** duplicate, so a doctored file
   could have carried two verdicts for one tool and been read silently.
 
 - 🐛 **`browserai_list` on a drive letter with nothing mounted on it answered "no sessions".** `browserai_list`
-  on a drive letter with nothing mounted on it answered "no sessions" — true,
+  on a drive letter with nothing mounted on it answered "no sessions" -- true,
   and useless to a caller who typed the wrong letter. The empty answer now says
   whether the directory is there at all.
 
@@ -5151,7 +5151,7 @@ Read [`README.md`](README.md) first.
   `PLAYWRIGHT_MCP_*` variables are refused by name rather than merely absent,
   `ALLOW_UNRESTRICTED_FILE_ACCESS` first among them: it switches off the only
   containment this product has left, and the allowlist made it absent by
-  construction while `ChildEnvironment.Refused` did not name it — which is
+  construction while `ChildEnvironment.Refused` did not name it -- which is
   exactly the difference that list exists to record.
 
 - ✅ **A suite arm lost the machine-wide sweep gate to a BrowserAI another test started.** A
@@ -5159,7 +5159,7 @@ Read [`README.md`](README.md) first.
   machine-wide gate to a real BrowserAI another test had just started, once in
   five full runs. The sweep's pass may now be handed a patience, the suite's own
   passes **wait** on the gate instead of asking again in a loop, and a scan over
-  `src\` holds that the product never waits — ninety-nine peers queueing to redo
+  `src\` holds that the product never waits -- ninety-nine peers queueing to redo
   one pass is the thundering herd the zero timeout exists to prevent. Reproduced
   deterministically by holding the gate from another process, which is also how
   the fix was watched.
@@ -5168,13 +5168,13 @@ Read [`README.md`](README.md) first.
   `FileShare.Read` is one writer per directory; the probe's
   `FileAccess.ReadWrite` is what a holder's share mode can refuse. Widening the
   first lets two BrowserAIs drive one profile and narrowing the second reports
-  every driven session as free — and **both perturbations leave a file that
+  every driven session as free -- and **both perturbations leave a file that
   opens**, so every behavioural test in the suite stayed green under each.
 
-- ✅ **The re-verification index's gate now reads around a `previously "…"` clause.** The
-  re-verification index's gate now reads around a `previously "…"` clause, the
+- ✅ **The re-verification index's gate now reads around a `previously "..."` clause.** The
+  re-verification index's gate now reads around a `previously "..."` clause, the
   way the hazard index's already did. A superseded test name quoted the way
-  `CLAUDE.md` requires — verbatim, in backticks — failed one gate and passed the
+  `CLAUDE.md` requires -- verbatim, in backticks -- failed one gate and passed the
   other, so two rows of that index had been left quoting dead names *without*
   backticks and explaining the gate in prose. Both read as corrections again,
   and the clause has one definition both gates ask.
@@ -5187,13 +5187,13 @@ Read [`README.md`](README.md) first.
   taken back at the bottom, with the per-directory gate held throughout. So a
   *busy* session's `browserai.json` is periodically **present and unheld**, and
   the bare probe reads that as a directory nobody has. The listing landed in
-  that window and printed `no` — the one direction that costs a caller a session
+  that window and printed `no` -- the one direction that costs a caller a session
   it was about to `browserai_destroy`. `SessionLock.ProbeLivenessUnderTheGate`
   asks the same question with that directory's own gate held at a **zero**
   timeout: the gate is the discriminator and cannot be wrong, and a gate it
   could not take is `UNKNOWN` with a reason rather than `no`. The zero timeout
   is what keeps the listing out of the queue `ProbeForHolder` was extracted to
-  remove. **`browserai_catch_up` is gated too** — one opener, two callers, and
+  remove. **`browserai_catch_up` is gated too** -- one opener, two callers, and
   two tools printing different `in use:` lines about one session in the same
   second is the failure that extraction's own remarks exist to prevent.
   *Corrected with it: `SessionLock`'s comment that "the gate is what makes the
@@ -5203,11 +5203,11 @@ Read [`README.md`](README.md) first.
   `README.md`'s "`no` when nothing held it at the instant of the look".* ⚠️
   **The per-entry cost figures in `ARCHITECTURE.md`, `SessionManager` and
   [kb](kb/windows/detection.md) are now incomplete and have NOT been adjusted**
-  — a mutex create, acquire, release and close are in the per-entry cost and the
+  -- a mutex create, acquire, release and close are in the per-entry cost and the
   create/close pair is **unmeasured**.
   `SessionListTests.ASessionWhoseGateIsHeldByAPeerIsReportedUnknownRatherThanFree`,
-  planted red. The zero-timeout property could not be planted red at all — a
-  120-second acquire would still return inside the rig's patience — so
+  planted red. The zero-timeout property could not be planted red at all -- a
+  120-second acquire would still return inside the rig's patience -- so
   `SessionLockTests.TheListingProbeTakesTheGateWithoutWaitingForIt` is a
   source-level guard and says in its own remarks that it is the weaker thing.
 
@@ -5215,7 +5215,7 @@ Read [`README.md`](README.md) first.
   review F2](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md). The
   provisioning answer-rewrite returned before `live.Artifacts.Complete`, so a
   call whose answer tripped it **pinned no name, recorded no artifact and
-  carried no note** — and upstream builds the `Error`, `Page`, `Snapshot` and
+  carried no note** -- and upstream builds the `Error`, `Page`, `Snapshot` and
   `Events` sections into **one** result, so an ordinary failed call against a
   live tab carries the page's own `<title>` beside the console and snapshot
   pointers. A page whose title quoted upstream's install advice therefore
@@ -5223,14 +5223,14 @@ Read [`README.md`](README.md) first.
   linked to. That branch now runs `Complete` like every other answered call,
   with the child's own answer going in and the note appended to the node. **The
   scan is also gated on `isError`**, which upstream sets from the presence of an
-  `Error` section and from nothing else — `sections.some(s => s.isError) ? {
+  `Error` section and from nothing else -- `sections.some(s => s.isError) ? {
   isError: true } : {}` beside `isError: title === "Error"`, read out of the
-  resolved bundle and recorded in [kb](kb/playwright/configuration.md) — so the
+  resolved bundle and recorded in [kb](kb/playwright/configuration.md) -- so the
   gate is lossless on the path the rewrite exists for and takes every ordinary
   answer out of reach of page text. *Corrected: `BrowserProxy.Remediate`'s claim
   that "on the paths where it appears at all the answer is already a failure
   with no bytes worth preserving", and `ProvisioningRemediation`'s "the rewrite
-  fires only when the marker is present — every other answer, including every
+  fires only when the marker is present -- every other answer, including every
   other error, goes through untouched".* ⚠️ **The gate does not close the bypass
   on its own and is not claimed to**:
   `ArtifactPointerTests.APointerSurvivesAnAnswerThatAlsoTrippedTheProvisioningRewrite`
@@ -5244,8 +5244,8 @@ Read [`README.md`](README.md) first.
   `MaintenanceLock.TakeShared` caught `IOException` and
   `UnauthorizedAccessException` together and returned one bit, so an ACL denial,
   a full volume and a path that is too long all told the caller *"BrowserAI is
-  replacing the browsers under '…' on this machine right now"* — complete with a
-  progress clause counting from zero — and to wait minutes for a download that
+  replacing the browsers under '...' on this machine right now"* -- complete with a
+  progress clause counting from zero -- and to wait minutes for a download that
   was not running. The kernel had already answered: a sharing violation on this
   open is a holder and **nothing else**, because the reader asks
   `Read`/`FileShare.Read` and a second reader is compatible with it. Both takes
@@ -5274,7 +5274,7 @@ Read [`README.md`](README.md) first.
   name pinned once pinned every later file that shared it, for the session's
   life, with **no answer naming it**. The match is delimited now, and a name is
   dropped once nothing loose in the output root carries it. **The review's own
-  recommended fix — requiring the name to look generator-produced — was declined
+  recommended fix -- requiring the name to look generator-produced -- was declined
   with the reason:** upstream publishes a pointer to a browser-initiated
   download too, `- Downloaded file <name> to "./<name>"` with the *site's*
   unprefixed name, so a prefix rule would move every real download out from
@@ -5282,8 +5282,8 @@ Read [`README.md`](README.md) first.
   recorded in [kb](kb/playwright/tools-and-artifacts.md). *Corrected: the
   "substring rather than a parse" defence, which covered generated names and
   said nothing about the one artifact class this same file records upstream as
-  not naming; and "Monotone on purpose … never removed".* ⚠️ **The residue is
-  stated rather than closed** — a short, word-shaped name a page renders in
+  not naming; and "Monotone on purpose ... never removed".* ⚠️ **The residue is
+  stated rather than closed** -- a short, word-shaped name a page renders in
   prose is still delimited and still pins, and the harm is bounded to
   classification inside the session tree, with the absolute path in the note
   either way.
@@ -5295,14 +5295,14 @@ Read [`README.md`](README.md) first.
   session.** [Adversarial
   review F8](docs/reviews/2026-08-24-adversarial-since-the-mode-drop.md).
   `_reserved` loses an entry only through `Release`, and every release site was
-  on a path that **returns** — so a caller that cancelled a screenshot left
+  on a path that **returns** -- so a caller that cancelled a screenshot left
   `login.png` reserved forever, and the retry came back as `login-2.png` **with
   the answer reporting a rename that no file on disk justified**, which is the
   exact class this product exists to remove. `AnswerToolsCallAsync` is wrapped
   from the plan onward and the three release sites are folded into one
   `finally`. Releasing after a *successful* write is deliberate and safe:
   `Taken` is `_reserved.Contains(candidate) || File.Exists(candidate)`, so a
-  file that is on disk holds its own name — and a file the caller later deletes
+  file that is on disk holds its own name -- and a file the caller later deletes
   stops holding a name it no longer occupies, which the reservation set alone
   could never give. A new `ProxyLog.ReservationReleased` at Debug is the only
   evidence the cancellation path leaves, because the SDK sends no frame at all
@@ -5310,7 +5310,7 @@ Read [`README.md`](README.md) first.
   `ArtifactRouter.Release`'s summary, "for a call that never reached the child",
   and `ARCHITECTURE.md`'s "Never overwrite" paragraph, which was missing the
   clause that a reservation is given back **however** the call ends.* ⚠️ **The
-  test asserts cancellation only and says so** — the idle-timer scope and the
+  test asserts cancellation only and says so** -- the idle-timer scope and the
   remediation regex's 1,000 ms match timeout are covered by the same `finally`,
   neither is deterministically reachable, and a test that provoked one by timing
   is the promptness assertion this suite forbids.
@@ -5322,7 +5322,7 @@ Read [`README.md`](README.md) first.
   repaired. [Adversarial review finding
   9](docs/reviews/2026-08-18-adversarial-processes.md). `NativeFile.Append`
   looped on a short write, and `FILE_APPEND_DATA` atomicity is **per `WriteFile`
-  call** — so the second call landed after whatever another of the ~100
+  call** -- so the second call landed after whatever another of the ~100
   processes had written in between, the record was torn and interleaved, and
   every call returned success. Four directions were recorded for this and **none
   of them was taken**: all four repaired a loop whose premise was a lock-free
@@ -5342,33 +5342,33 @@ Read [`README.md`](README.md) first.
   the machine-wide log, granted for a session's own `browserai.log`, which
   `browserai_destroy` must be able to remove under a live session. ⚠️ **The cost
   is stated where it is decided and was accepted knowingly: the MACHINE's
-  central log — not one process's own file — cannot be deleted or renamed while
+  central log -- not one process's own file -- cannot be deleted or renamed while
   any BrowserAI runs**, `SweepExpired` included, and that pass now tolerates the
   refusal instead of reporting it.
 
 - 🐛 **A `browserai_destroy` racing a `browserai_set_purpose` leaked the session directory.** A
   `browserai_destroy` racing a `browserai_set_purpose` on one session leaked
   that session's directory for the life of the process. Nothing above
-  `SessionManager` serialises tool calls — `_live` is a `ConcurrentDictionary`
-  and is the only synchronisation there is — so two calls naming one session
+  `SessionManager` serialises tool calls -- `_live` is a `ConcurrentDictionary`
+  and is the only synchronisation there is -- so two calls naming one session
   reach one `SessionLock` concurrently, which is the design rather than an
   accident. `Rewrite` tested `_disposed` and *then* took the per-directory gate,
   and `Dispose` disposed that gate underneath it: the rewrite re-opened
   `browserai.json` into a disposed lock, `_gate.Release()` threw, and for the
   rest of the process's life **every** `SessionLock.TryAcquire` on that
-  directory answered `Held`, naming a pid with no session — while the destroy
+  directory answered `Held`, naming a pid with no session -- while the destroy
   reported a partial failure blaming *"something still has them open"*. It is
   the one finding of [the 2026-08-18 adversarial locking
   review](docs/reviews/2026-08-18-adversarial-locking.md) whose failure does not
   heal: nothing releases that handle short of ending the process.
 
   **The fix is a per-session lock that every mutating path and both disposal
-  paths hold for their whole body** — `Rewrite`, `Append`, `ReleaseAndDelete`
+  paths hold for their whole body** -- `Rewrite`, `Append`, `ReleaseAndDelete`
   and `Dispose`, including the caller delegates they invoke. The smaller change,
   taking the gate before the `_disposed` check, was **declined**: the disposal
   disposes the gate itself, so a rewrite blocked on it wakes holding a disposed
   object, and a check that races is still a race. It is not a fourth lock scope
-  — `LockScopes` still names three machine-wide objects in one place, and this
+  -- `LockScopes` still names three machine-wide objects in one place, and this
   one has no name, no kernel object and no reach outside its instance.
 
   **The interleaving is forced rather than raced for, and the seams were already
@@ -5378,7 +5378,7 @@ Read [`README.md`](README.md) first.
   from inside those delegates, so no sleep, retry or stress loop is involved and
   the join can only go one way: against the defect the disposal contends with
   nothing and returns in microseconds, against the fix it cannot return at all.
-  The first was watched red on all three of its assertions — the join, the
+  The first was watched red on all three of its assertions -- the join, the
   `ObjectDisposedException` the rewrite threw, and **the leak itself**, a
   stranger's exclusive open of `browserai.json` refused after the session that
   owned it had been disposed.
@@ -5391,7 +5391,7 @@ Read [`README.md`](README.md) first.
   resolved, reparse processing already done. The comparison between them is
   *exact*, so on any machine with a relocated user profile, a redirected
   `AppData`, a `subst`ed drive letter or an 8.3 component above the root,
-  **every process missed, on every pass, for good** — `candidates=0` forever,
+  **every process missed, on every pass, for good** -- `candidates=0` forever,
   reported as a clean machine. The same mismatch emptied the live set
   `RevisionPrune` deletes a superseded browser tree on, which turned a race into
   a certainty: every superseded tree looked idle while browsers ran out of it.
@@ -5399,11 +5399,11 @@ Read [`README.md`](README.md) first.
   Measured rather than reasoned about, on 2026-08-24 and for the first time: a
   process launched through a real `mklink /J` junction is reported under the
   **target** spelling, having never named it
-  ([kb](kb/windows/detection.md#a-process-reports-the-junctions-target-not-the-spelling-it-was-launched-by--measured-2026-08-24)).
+  ([kb](kb/windows/detection.md#a-process-reports-the-junctions-target-not-the-spelling-it-was-launched-by----measured-2026-08-24)).
 
   **What the sweep may match widened; what it may terminate did not**, and the
   two were kept apart deliberately because this code decides what may be killed.
-  Only paths BrowserAI itself composed are ever resolved — never one a foreign
+  Only paths BrowserAI itself composed are ever resolved -- never one a foreign
   process reported, so the process list cannot steer what gets opened. A
   resolved spelling names *the same file* the composed path already named, so
   the match stays exact, stays full-path, and is still never a prefix and never
@@ -5413,15 +5413,15 @@ Read [`README.md`](README.md) first.
   itself.
 
   **The tripwire is the other half of the fix.** A pass now reports how many
-  executables it watched, how many the filesystem spells differently, and — as a
-  **warning**, not only a census number — every one whose spelling it could not
+  executables it watched, how many the filesystem spells differently, and -- as a
+  **warning**, not only a census number -- every one whose spelling it could not
   establish at all. That is the sibling of `TitledWindows`, which exists for
   exactly this reason one column over: a pass that cannot match anything must
   never read like a machine with nothing on it.
 
   Two residues are named rather than left to be rediscovered. A **symlinked
   executable leaf** is still invisible, because what is resolved is the
-  containing directory — opening a mapped image would end the ancestor walk with
+  containing directory -- opening a mapped image would end the ancestor walk with
   no answer at all on precisely the machine where a browser is running. And a
   root whose spelling cannot be established falls back to the composed one; the
   sweep says so, and the prune census has nowhere to say it.
@@ -5432,14 +5432,14 @@ Read [`README.md`](README.md) first.
   config of *every* live session, and exactly one process ever held it open: the
   surface child, which is given it as a working directory. Session children are
   given the session's own output root instead. So a surface child that died
-  while the run kept serving left the directory unheld — and a directory's
+  while the run kept serving left the directory unheld -- and a directory's
   `GetLastWriteTimeUtc` does not move when files inside it are written, so five
   minutes later another BrowserAI's startup sweep renamed it aside and deleted
   it. Live sessions kept working, because their configs had already been read;
   every new one failed, and the run's own tidy-up then reported nothing at all,
   because a missing directory is deliberately never a failure.
 
-  **BrowserAI now holds a marker inside its own instance directory** —
+  **BrowserAI now holds a marker inside its own instance directory** --
   `instance.live`, opened `ReadWrite`/`FileShare.Read` and held for the whole
   life of the process, the same mechanism the live-instance set and the browsers
   root's maintenance claim already use. It is taken by BrowserAI rather than by
@@ -5455,12 +5455,12 @@ Read [`README.md`](README.md) first.
   two hazard rows for five days before they were recognised as one.
 
 - 🐛 **The pointers BrowserAI handed the model did not resolve.** The pointers
-  BrowserAI handed the model did not resolve — two of them, and they were the
+  BrowserAI handed the model did not resolve -- two of them, and they were the
   same defect twice. Upstream writes two artifacts BrowserAI's inbound routing
   cannot reach, because neither comes from a `filename` argument: the **console
   log** and the **snapshot `.yml`**. It publishes a pointer to each *inside the
-  answer* — a Markdown link to `./page-<stamp>.yml`, and `- New console entries:
-  console-<stamp>.log#L1-L24` — and both are relative to the child's working
+  answer* -- a Markdown link to `./page-<stamp>.yml`, and `- New console entries:
+  console-<stamp>.log#L1-L24` -- and both are relative to the child's working
   directory, which is the output root. **BrowserAI's after-the-fact sweep moved
   both into typed folders**, so every one of those pointers named a file that
   was no longer there.
@@ -5471,7 +5471,7 @@ Read [`README.md`](README.md) first.
   and the next sweep collided with the moved copy and landed it as `-2`. The
   answer then said `console-<stamp>.log#L25-L28` about a file with **24 lines in
   it**, while those four entries sat in `console-<stamp>-2.log` at *its* lines 1
-  to 4. A third call produced `-3`. **Bare upstream does not have this** —
+  to 4. A third call produced `-3`. **Bare upstream does not have this** --
   nothing there moves the file.
 
   **The fix is a mechanical rule rather than a list of prefixes.**
@@ -5486,12 +5486,12 @@ Read [`README.md`](README.md) first.
   ⚠️ **The set is monotone, and that is the half a careless fix would miss.**
   The console log is named only in the answer that *creates* entries and in none
   of the answers that follow, so a set scoped to one call leaves the file
-  movable on the very next call — which reintroduces the whole defect. Both
+  movable on the very next call -- which reintroduces the whole defect. Both
   tests were planted red first and reported the exact symptom above:
   `ArtifactPointerTests.EveryPointerARealChildPublishesResolves` drives a real
   browser and checks every `#Lx-Ly` against the lines of the file it names, and
   `.ANamedFileSurvivesEveryLaterSweepAndAnUnnamedOneIsStillSorted` holds the
-  monotone half and carries the control — a download nothing named is still
+  monotone half and carries the control -- a download nothing named is still
   sorted, so this is a rule about pointers rather than the sweep being switched
   off.
 
@@ -5499,7 +5499,7 @@ Read [`README.md`](README.md) first.
   stale `.live` markers had accumulated, because the only code that reclaimed
   them ran somewhere nothing ever reaches. Reclaim lived inside the updater's
   *am I alone?* census, which `UpdateService` calls only after an update has
-  been found **and** downloaded — which had never once happened on the machine
+  been found **and** downloaded -- which had never once happened on the machine
   this product is developed on. Two days of ordinary work left 755 unheld files
   in `%LocalAppData%\BrowserAI\live\`, and every census that ever did run would
   have had to open all of them.
@@ -5508,8 +5508,8 @@ Read [`README.md`](README.md) first.
   same mutex discipline.** `LiveInstances.ReclaimStaleMarkers` takes the same
   per-root gate a join and a census take, at **zero timeout**: one process
   reclaims and every other pays an acquire and leaves. It runs from the stray
-  sweep — already machine-wide, already mutex-serialised, already skipping
-  instantly when a peer holds its own gate — and from **startup**, on a
+  sweep -- already machine-wide, already mutex-serialised, already skipping
+  instantly when a peer holds its own gate -- and from **startup**, on a
   background thread, so that a sweep declining to run for reasons that have
   nothing to do with markers cannot cost a machine its reclaim. **Nothing waits
   for it**, and it is deliberately not folded into `LiveInstances.Join`'s hold:
@@ -5518,25 +5518,25 @@ Read [`README.md`](README.md) first.
   not join is invisible to a peer's census.
 
   ⚠️ **A marker is stale only when it is NOT HELD; existence is not held-ness**
-  — the same rule `MaintenanceLock` and `SessionLock` state about their own
+  -- the same rule `MaintenanceLock` and `SessionLock` state about their own
   files. Reclaiming a live instance's marker would make that instance invisible
   to every later census and therefore killable by an apply, so the negative is
   proved with a positive control rather than argued:
   `UpdateTests.AHeldMarkerSurvivesTheReclaimAndTheSameMarkerGoesOnceItIsReleased`
   holds one marker open, runs the reclaim, requires it to survive, releases it,
-  runs the reclaim again and requires it to go — so a pass that removed nothing
+  runs the reclaim again and requires it to go -- so a pass that removed nothing
   at all could not pass either half.
   `StraySweepTests.TheSweepReclaimsStaleLiveMarkersAndLeavesAHeldOneAlone` does
   the same through the sweep.
 
 - 📝 **The mode table claimed a persistence property the code has never had.** `README.md`'s
-  third column read *"Stored credentials — No / No / Yes"* and `SessionMode.cs`
+  third column read *"Stored credentials -- No / No / Yes"* and `SessionMode.cs`
   described `interactive` as *"a human can type a password this session will not
   keep"*. **All three modes persist.** `BrowserConfiguration. ForSession` writes
   `browser.userDataDir` as `<session>\profile` in every mode and never writes
   upstream's `isolated` key, so cookies and `localStorage` survive a
   `browserai_resume` in a `headless` session exactly as they do in a
-  `persistent` one. `storage` is a **tool filter, not a persistence switch** —
+  `persistent` one. `storage` is a **tool filter, not a persistence switch** --
   it decides whether the 17 cookie, `localStorage` and `storageState` tools
   exist in that session's child at all. The correction points the safe way: a
   caller who believed a mode discarded credentials would leave a signed-in
@@ -5555,22 +5555,22 @@ Read [`README.md`](README.md) first.
   suite's own specification asks that *anything the previous run recorded is
   terminated by `(pid, creationFileTime)` from its own spawn record*. Nothing
   wrote a record. So a run killed mid-test left a process the next run could not
-  identify — only a directory it could not delete, which surfaced as a locked
+  identify -- only a directory it could not delete, which surfaced as a locked
   file and named the wrong cause. `SpawnRecord` writes `.work\spawn-record.txt`
   from the two places the harness starts processes, and the pass reads it
   **before** it touches the tree, because a live process is what holds the files
   a delete cannot take. Identity is checked again before anything is acted on,
   and the regression test's middle case is the test host's own pid with a
-  deliberately wrong creation time — a reclaim that matched on the number alone
+  deliberately wrong creation time -- a reclaim that matched on the number alone
   would end the run rather than fail it.
 
 - ✅ **The failed-rewrite recovery of `lock.json` has a test.** A rewrite drops
   the handle before the replacement, because Windows will not rename over a file
-  this process holds — so an exception in between left the session *silently
+  this process holds -- so an exception in between left the session *silently
   unowned* while the caller was told only that a write had failed. It shipped
   that way once. The seam turned out to be neither of the two `TODO.md`
   predicted: not an injectable file operation and not a probe process holding
-  the replacement path, but an **ACL** — denying `CreateFiles` on the session
+  the replacement path, but an **ACL** -- denying `CreateFiles` on the session
   directory stops `WriteDurably`'s temp file ever existing, so the rewrite fails
   before any rename, deterministically, with nothing injected. Ownership is then
   asserted from the kernel rather than from the object under test: a stranger's
@@ -5588,18 +5588,18 @@ Read [`README.md`](README.md) first.
 
   **`SessionIndex` deleted a live session's index entry.** A `null` record was
   `NotASession`, which `IsRemovable` includes, so a sweep dropped a session that
-  was doing nothing worse than setting its own purpose — and nothing re-asserts
+  was doing nothing worse than setting its own purpose -- and nothing re-asserts
   an entry, so it stayed invisible to `browserai_list` for the rest of its life.
   `SessionIndex.Absent` now looks for the durable write's own temp file beside
   the gap and answers `RecordInFlight`, which is not removable. **The signal is
   positive rather than a timing guess:** the temp is created before the rename
   and deleted after it lands, so it is on disk for the whole window. It cannot
-  fail dangerously — a temp left by a dead writer keeps an entry one sweep
+  fail dangerously -- a temp left by a dead writer keeps an entry one sweep
   longer.
 
   **`browserai_init` could rebind a closed session's browser family.**
   `SessionManager.Existing` read `null` as *free, proceed*, and the reclaim
-  downstream takes `mode` and `browser` from the request — so an `init` landing
+  downstream takes `mode` and `browser` from the request -- so an `init` landing
   in the window bound a Firefox session's record to Chromium over the profile on
   disk. `SessionLockRequest.RefuseAnExistingRecord` now asks the same question
   inside `TakeOrReport`, where the record has already been read under the gate
@@ -5609,12 +5609,12 @@ Read [`README.md`](README.md) first.
   row's prescribed remedy part company: it is what gives `init` the *same*
   refusal for a lost session, a neatly closed one and one this very process has
   open. Moving it inside would let the pre-gate probe answer first for a live
-  session with a shorter sentence about who holds the file — a regression
+  session with a shorter sentence about who holds the file -- a regression
   `InitAsync`'s own comment records having been made once and reverted.
 
 - 🐛 **Two BrowserAI processes wrote holder statements into one `lock.json`.** Two
   BrowserAI processes wrote holder statements into one `lock.json`, and what let
-  them was a peer's *probe* — the handle it holds while it looks. The probe
+  them was a peer's *probe* -- the handle it holds while it looks. The probe
   opens `lock.json` `FileAccess.ReadWrite` in front of the per-directory gate,
   which is what makes it a sound ownership test; the same access is what an open
   sharing only `Read` is refused by. So a contender passing over the file in the
@@ -5628,7 +5628,7 @@ Read [`README.md`](README.md) first.
   **It is fixed on the gated side because it provably cannot be fixed on the
   probe's.** To be refused by a holder a probe must ask for access outside
   `Read`, and a handle whose granted access is outside `Read` is exactly what an
-  open sharing only `Read` is refused by — *detecting an owner and blocking one
+  open sharing only `Read` is refused by -- *detecting an owner and blocking one
   are the same capability*. `SessionLock.ReopenHeld` now takes the three opens
   that follow this class's own write (`TakeOrReport` after `WriteDurably`,
   `Rewrite` after the same, and `Reclaim` after a rewrite that threw) through
@@ -5636,14 +5636,14 @@ Read [`README.md`](README.md) first.
   out as well as a delete-pending destination. **The licence is a precondition,
   not a guess:** each of the three holds the gate and has just written a record
   naming itself, and becoming an owner means passing through `TakeOrReport`,
-  which needs that gate. Still bounded at `RenameWindow.Budget` — a handle that
+  which needs that gate. Still bounded at `RenameWindow.Budget` -- a handle that
   outlasts thirty seconds is a different fault and is still reported.
 
   **The two ownership tests are deliberately unchanged**, and one of them meets
   the same handle: `TakeOrReport`'s open *before* the write can be facing a real
   owner, so it may not wait, and a peer's probe there still reads as
-  `Contended`. That is narrower — a wrong sentence rather than a wrong owner,
-  correct again on the next call — and it is now a row of its own in the [hazard
+  `Contended`. That is narrower -- a wrong sentence rather than a wrong owner,
+  correct again on the next call -- and it is now a row of its own in the [hazard
   index](HAZARDS.md#hazard-index) rather than an unstated residue.
 
 - ✅ **The suite was red from Git Bash and green from PowerShell on the same commit.** The
@@ -5651,14 +5651,14 @@ Read [`README.md`](README.md) first.
   now the wrong comparison is red in both. Two assertions in
   `SessionDirectoryGuardTests` compared a path composed in the test host against
   the accepted spelling inside a refusal, which comes back through
-  `GetFinalPathNameByHandleW` — and Windows always answers with an
+  `GetFinalPathNameByHandleW` -- and Windows always answers with an
   **upper-case** drive letter while a process keeps whatever casing its shell
-  gave it (`C:\…` from `pwsh`, `c:\…` from Git Bash). Measured at `cc45900`:
+  gave it (`C:\...` from `pwsh`, `c:\...` from Git Bash). Measured at `cc45900`:
   total 484, **2 failed from Git Bash and 0 from PowerShell**.
   `Sessions\CLAUDE.md` predicted this exact defect and recorded that nothing
   asserted it; that is no longer true.
 
-  **Eleven sites carried the shape, and all eleven were test assertions** —
+  **Eleven sites carried the shape, and all eleven were test assertions** --
   eight in `SessionDirectoryGuardTests`, one each in `HeadlessBinaryTests`,
   `StraySweepTests` and `SessionPathTests`, against paths read back through
   `GetFinalPathNameByHandleW`, `QueryFullProcessImageNameW`,
@@ -5667,7 +5667,7 @@ Read [`README.md`](README.md) first.
   for `OrdinalIgnoreCase`, and the one deliberate ordinal path comparison is
   `ArtifactRouting.PrefixOf`, which separates names the product generated from
   names a caller chose. One of the eleven was choosing a *branch* rather than
-  passing an assertion: `An83Spelling…` decided whether this volume generates
+  passing an assertion: `An83Spelling...` decided whether this volume generates
   short names by comparing `GetShortPathNameW`'s answer ordinally, so a
   re-spelled drive letter would have sent it down the arm that then asserts a
   tilde.
@@ -5677,13 +5677,13 @@ Read [`README.md`](README.md) first.
   returns**, so a comparison that is not case-insensitive fails on every machine
   and in every shell. It was planted and watched red *from PowerShell*,
   reproducing the two Git Bash failures exactly. ⚠️ **CI runs `pwsh` end to end
-  and therefore cannot see the shell-dependent form of this at all** — which is
+  and therefore cannot see the shell-dependent form of this at all** -- which is
   why it has been reported twice from a machine and never once from a build.
 
 - 🐛 **A durable write that landed said *nothing was changed*.** A durable write
   that landed and could not be re-opened said *nothing was changed*, which was
   false at the moment it was said. `SessionLock.TryAcquire` closes its handle on
-  `lock.json`, renames a fully-formed record over the name and re-opens it — and
+  `lock.json`, renames a fully-formed record over the name and re-opens it -- and
   the write and the re-open shared one `catch`. So a failure on the second one
   answered *"the directory was not taken and nothing was changed"* about a
   machine where `lock.json` had just been replaced with a record naming this
@@ -5693,7 +5693,7 @@ Read [`README.md`](README.md) first.
   still says nothing was changed, and one that did says the record **was**
   written, who it names, that nothing holds the directory, and what the next
   call will therefore report. **It deliberately does not try to undo the write**
-  — restoring the previous record means a second write along the path that just
+  -- restoring the previous record means a second write along the path that just
   refused us, and the answer would then have to describe a rollback that half
   happened.
   `SessionLockTests.AWriteThatLandedSaysSoAndOnlyAWriteThatDidNotSaysNothingChanged`
@@ -5709,7 +5709,7 @@ Read [`README.md`](README.md) first.
   ever produced. Run 32203064556 attempt 1, 16 contenders on a 4-core hosted
   runner: 2652 acquired and wrote its record, 696 reclaimed the same directory
   **61 ms later**, and 2652 returned `Unreadable` with the sentence *"the
-  directory was not taken and nothing was changed"* — while the record on disk
+  directory was not taken and nothing was changed"* -- while the record on disk
   carried its holder statement and its purpose. It did not reproduce in six
   consecutive local full runs and a CI re-run of the same commit was green.
   **The fix is already specified in [`TODO.md`](TODO.md) and is deliberately not
@@ -5718,8 +5718,8 @@ Read [`README.md`](README.md) first.
   visible in the same evidence: `SessionLock.TryAcquire` put the durable write
   and the reopen in one `catch`, so a failure *after* a successful write claimed
   nothing changed. ⚠️ *Corrected 2026-08-19 (previously "A second, separable and
-  cheaper defect **is** visible …" with no fix): that half **is now fixed** —
-  see the entry below — and only the window itself is still open.* Both halves
+  cheaper defect **is** visible ..." with no fix): that half **is now fixed** --
+  see the entry below -- and only the window itself is still open.* Both halves
   have a [hazard row](HAZARDS.md#hazard-index).
   `SessionLockTests.UnderConcurrentProcessesExactlyOneAcquiresAndEveryOtherIsToldWho`
   caught it, and it was diagnosable only because a whole-set dossier was added
@@ -5729,22 +5729,22 @@ Read [`README.md`](README.md) first.
   probe wrote its report in place, so `File.Exists` was a readiness signal that
   became true in the middle of the write. Found on 2026-08-19 by running the
   whole suite three times in a row to prove it green: one run failed with *"the
-  process cannot access the file … because it is being used by another
+  process cannot access the file ... because it is being used by another
   process"*, and the failure named
   `BrowserIdleTimerTests.KillingTheClientTearsTheSessionDownWithoutWaitingForEof`
-  rather than the harness. ⚠️ **The sharing violation was the lucky half** — a
+  rather than the harness. ⚠️ **The sharing violation was the lucky half** -- a
   reader arriving one instant later would have parsed a truncated report and
   failed on an assertion about the product. `ClientProbe` now writes a
   `.writing` sibling and publishes it with a retried rename, which is the
   convention this project's other two probes already followed and documented,
   and the test reads through `ProbeReport.ReadAsync`, which exists for exactly
-  this. It was the last unguarded reader — `ProbeChild` and
+  this. It was the last unguarded reader -- `ProbeChild` and
   `SdkStdioClientTransportTests` already caught both failures and retried. The
   hazard has a row of its own, closed by the same commit.
 
 - 🐛 **A screenshot comes back inline again, and the defect was ours.** Upstream
   answers `browser_take_screenshot` with an `image` content block as well as a
-  file, guarded by `if (!params.filename)` — and BrowserAI's artifact routing
+  file, guarded by `if (!params.filename)` -- and BrowserAI's artifact routing
   always supplies a `filename`, to give the artifact a name a human can read a
   month later. So **the guard was never true and no screenshot came back inline
   in any mode**, where bare `@playwright/mcp` returns one: the model paid an
@@ -5752,9 +5752,9 @@ Read [`README.md`](README.md) first.
   anywhere reported the difference.
 
   The block is now appended to the same answers this build already rewrites,
-  **read back off disk after the child wrote it** — the same bytes a reader
+  **read back off disk after the child wrote it** -- the same bytes a reader
   following the path in the note would find, with upstream's own
-  `image/<fileType>` media type — under the caller-visible condition upstream
+  `image/<fileType>` media type -- under the caller-visible condition upstream
   tests: *the caller named no file*. The legible filename is kept; the two were
   never actually in tension.
 
@@ -5767,11 +5767,11 @@ Read [`README.md`](README.md) first.
   **No size threshold, because upstream has none** and because a byte count is
   the wrong axis anyway. Measured off the wire against the published binary: the
   same 1280×720 viewport costs 5,105 B on a near-blank page and 52,648 B on one
-  with two dozen paragraphs — a 12× spread on the wire — while the model-side
+  with two dozen paragraphs -- a 12× spread on the wire -- while the model-side
   cost is `⌈w/28⌉ × ⌈h/28⌉` = **1,196 visual tokens either way**. A gate on
   bytes would fire on the page that costs nothing extra and stay silent on the
   one that does
-  ([kb](kb/playwright/tools-and-artifacts.md#the-inline-screenshot-and-what-it-costs--measured-2026-08-18)).
+  ([kb](kb/playwright/tools-and-artifacts.md#the-inline-screenshot-and-what-it-costs----measured-2026-08-18)).
 
   One divergence is recorded rather than fixed: upstream shrinks anything over
   1,568 px on a side or ~1.15 MP first, and BrowserAI sends what is on disk.
@@ -5781,7 +5781,7 @@ Read [`README.md`](README.md) first.
 - 🐛 **Closing the process log did not close its file.** Disposing the logging
   stack was written to close the rolling log handle through the logger factory,
   and the factory never disposes a provider it was handed rather than asked to
-  create — so the handle survived, measured at zero disposals. It cost nothing
+  create -- so the handle survived, measured at zero disposals. It cost nothing
   while the only caller was a process about to exit, and it surfaced the moment
   something short-lived opened a log and read it back. The writer is now closed
   explicitly, and a test fails if that call is removed.
@@ -5793,7 +5793,7 @@ Read [`README.md`](README.md) first.
   to delete a directory a live process is sitting in. Windows refuses to remove
   the *directory* and does not refuse to delete the *files inside it*, so the
   sweep emptied a live run's directory completely, failed on the empty node that
-  was left, and swallowed the exception — every start, against any instance more
+  was left, and swallowed the exception -- every start, against any instance more
   than five minutes old, with nothing written anywhere. The liveness check is
   now a rename, which is refused with the contents untouched and is also an
   atomic claim between two BrowserAIs sweeping the same root.
@@ -5801,12 +5801,12 @@ Read [`README.md`](README.md) first.
 - 🐛 **An instance directory that would not go now says which file held it.** The
   same delete went through the framework primitive, which reports one node out
   of however many survived, inside a catch that discarded even that. It now uses
-  the product's one recursive delete — post-order, per node — and logs every
+  the product's one recursive delete -- post-order, per node -- and logs every
   survivor by name at Warning. The next run's sweep still tries again; what
   changed is that a leftover is attributable.
 
 - 🐛 **A `session.json` that could not be written was silent.** A `session.json`
-  or a session roll-up that could not be written was silent — while the same
+  or a session roll-up that could not be written was silent -- while the same
   answer named its path. Both writes are best-effort by design, because a virus
   scanner holding a file open must not turn a screenshot that was taken into a
   screenshot that failed. Both discarded the answer that said whether it
@@ -5819,14 +5819,14 @@ Read [`README.md`](README.md) first.
   and `ModelContextProtocol.Core` are Apache-2.0 and seventeen
   `Microsoft.Extensions.*` assemblies are MIT; all nineteen are compiled into
   `BrowserAI.exe` exactly as Velopack is, and a NuGet package's licence stays in
-  the machine's package cache — it is never copied to a publish output, so
+  the machine's package cache -- it is never copied to a publish output, so
   *linked in* and *its notice ships* are independent facts and the second was
   false for both. Apache-2.0 §4(a) requires a copy of the licence to reach every
   recipient, which is stricter than MIT's notice clause rather than looser. All
   of it now ships in `THIRD-PARTY-NOTICES.txt` beside the binary. Upstream's MCP
-  `LICENSE` turned out to grant **three** licences rather than one — Apache-2.0,
+  `LICENSE` turned out to grant **three** licences rather than one -- Apache-2.0,
   MIT for contributions whose authors never consented to relicensing, and
-  CC-BY-4.0 for documentation — so it is reproduced whole, and its Apache half
+  CC-BY-4.0 for documentation -- so it is reproduced whole, and its Apache half
   **ends at *END OF TERMS AND CONDITIONS* and omits the appendix its own §4
   points at**, which is upstream's file as published and is left unaltered.
   **The `Microsoft.Extensions.*` list is derived from `packages.lock.json`
@@ -5835,7 +5835,7 @@ Read [`README.md`](README.md) first.
 
 - ✅ **A suite run that exercised nothing reported exactly what a real one
   reports.** With
-  the whole publish directory moved aside — no binary, no browser ever started —
+  the whole publish directory moved aside -- no binary, no browser ever started --
   the suite returned `329 total · 328 succeeded · 1 skipped · exit 0`, character
   for character a healthy run's summary, because thirty-five guards returned
   early after asserting something weaker and every one reported as a pass. They
@@ -5848,7 +5848,7 @@ Read [`README.md`](README.md) first.
 - 📦 **37 MB of every release was a zip nobody reads.** The published artifact
   carried `payload\.cache\node-<ver>-win-x64.zip`, the download cache the
   payload build keeps so a re-run does not re-fetch Node. Excluding it took the
-  full package from **85,348,009** to **49,043,498 bytes** — 42.5% of every
+  full package from **85,348,009** to **49,043,498 bytes** -- 42.5% of every
   download, for a file that is never opened at runtime and compresses to nothing
   because it is already compressed.
 
@@ -5859,7 +5859,7 @@ Read [`README.md`](README.md) first.
 
 - 🐛 **Every session's `lock.json` would have recorded the wrong version.** The
   build stamp was read from the assembly version, which the versioning mechanism
-  fixes at `{Major}.0.0.0` by design — so the whole 0.x line would have written
+  fixes at `{Major}.0.0.0` by design -- so the whole 0.x line would have written
   `0.0.0.0`, and the whole 1.x line `1.0.0.0`, into the one record a support
   question starts from. It now records the version the build was actually
   derived as. Measured on the artifact rather than reasoned about: at `v0.1.0`
@@ -5872,8 +5872,8 @@ Read [`README.md`](README.md) first.
   being necessary the day the suite's pack got its own id; `kb/mcp/protocol.md`
   named the registered path as `current\BrowserAI.exe` and said there was
   *nothing to correct* on an update, both of which the two-binary split made
-  false; and `BrowserAI.exe --sweep` — named in the server's own source, in
-  `kb/windows/detection.md` and in re-verification row 78 — **opens a window**
+  false; and `BrowserAI.exe --sweep` -- named in the server's own source, in
+  `kb/windows/detection.md` and in re-verification row 78 -- **opens a window**
   now instead of measuring anything, so that procedure was broken rather than
   untidy. `kb/packaging/velopack.md` gets the same treatment in two places. The
   new hazard is residue nothing owns: every browser this product launches leaves
@@ -5886,7 +5886,7 @@ Read [`README.md`](README.md) first.
   that ships.** Two properties the whole window depends on were read once, by
   hand, and then trusted. The **`Microsoft.Windows.Common-Controls` 6.0.0.0**
   dependency is the one whose absence makes `TaskDialogIndirect` fail at run time
-  with **no compile-time signal of any kind** — the loader binds version 5, the
+  with **no compile-time signal of any kind** -- the loader binds version 5, the
   export is absent, and it presents as *the app starts and nothing happens*. It
   is now read out of `RT_MANIFEST` id 1 of the built and published binaries,
   together with `longPathAware`, `PerMonitorV2` and `asInvoker`, with the server's
@@ -5900,12 +5900,12 @@ Read [`README.md`](README.md) first.
 
 - 🐛 **The installer's own variables are cleared after Velopack has read them,
   not before.** `VELOPACK_FIRSTRUN` and `VELOPACK_RESTART` are cleared so that
-  no child of the configuration app inherits them — click *Register* with
+  no child of the configuration app inherits them -- click *Register* with
   `VELOPACK_FIRSTRUN` still set and `claude.exe` starts carrying it, and so does
   everything it starts, including the MCP server, which exits 0 on that variable
   by design. But the clearing ran **before** `VelopackApp.Run()`, and `Run()`
   decides whether to invoke `OnFirstRun` and `OnRestarted` by reading exactly
-  those two variables — so both callbacks were unreachable in this binary: two
+  those two variables -- so both callbacks were unreachable in this binary: two
   log lines that could never be written, with a remark beside them describing
   behaviour that did not happen. It runs after `Run()` now and still before
   anything is started, which the hook path never reaches at all because `Run()`
@@ -5913,37 +5913,37 @@ Read [`README.md`](README.md) first.
 
 - 🔧 **The dialog's icon is loaded at the dialog's DPI instead of at the classic
   size.** `LoadIconW` has no size parameter: it answers the 32×32 image out of
-  the group, which a Per-Monitor-V2 process then draws **stretched** — on a 200%
+  the group, which a Per-Monitor-V2 process then draws **stretched** -- on a 200%
   display, thirty-two pixels blown up to sixty-four, beside text that is not.
   The icon ships larger images, so the load is `LoadIconWithScaleSize` at
   `SM_CXICON` for the window's own DPI, with the unscaled load kept as the
   fallback it has always been. The DPI is the window's where there is a window
-  and the system's on the first page, which is built before the window exists —
+  and the system's on the first page, which is built before the window exists --
   so a dialog dragged to a second monitor comes back at that monitor's DPI. The
   loading call is `LoadImageW`, **not** `LoadIconWithScaleSize`: the comctl32
   function the documentation points at for this is exported **by ordinal only**,
   and naming it in a `LibraryImport` fails at the call with
-  `EntryPointNotFoundException` from inside `Show()` — which takes the window
+  `EntryPointNotFoundException` from inside `Show()` -- which takes the window
   with it. That was found by the gate, not by review: the published app exited
   `0xC0000409` and left the reason in its own process log.
 
 - 🐛 **The release-notes generator refuses the two shapes it used to crash on or
   drop.** An entry written above a section's first `### ` heading made
-  `$group` null and `Set-StrictMode` turned `$null.Entries.Add(…)` into *"The
-  property 'Entries' cannot be found on this object"* — a stack trace naming a
+  `$group` null and `Set-StrictMode` turned `$null.Entries.Add(...)` into *"The
+  property 'Entries' cannot be found on this object"* -- a stack trace naming a
   variable nobody reading a changelog has heard of. A paragraph written *under*
   a group heading was worse: neither preamble nor entry, it was silently dropped
   from the body. Both are refused now, in the script's own words, naming the
   line. Refusing rather than carrying the paragraph is the choice: prose already
-  has a place — the section preamble, above the first heading, which the body
-  does render — and inventing a rendering for a shape nothing else reads would
+  has a place -- the section preamble, above the first heading, which the body
+  does render -- and inventing a rendering for a shape nothing else reads would
   widen the format past what `ChangelogTests` holds it to.
 
 - 🔧 **A wait on the client's handle that cannot be interpreted now records the
   value it got.** `WaitForSingleObject` answers one of four things and only
   `WAIT_FAILED` sets a last error; `WAIT_ABANDONED` reaches the same branch
   carrying whatever error was left in the thread, which can read as *The
-  operation completed successfully* — a sentence that looks like a defect in the
+  operation completed successfully* -- a sentence that looks like a defect in the
   logging rather than a state of the client. The record carries the raw value
   beside the message now, under its own event id, so the two are distinguishable
   after the fact.
@@ -5951,8 +5951,8 @@ Read [`README.md`](README.md) first.
 - ✅ **A release date set at the cut is reported as a heading change, not as a
   rewritten record.** A sealed record starts at its own heading, so
   `## [1.0.0] - 2026-09-15` is inside the 281,709 characters
-  `AppendOnlyRecordTests` seals — and setting the real date at the cut breaks
-  the seal. The failure said *REWRITTEN … a dated record says what was true when
+  `AppendOnlyRecordTests` seals -- and setting the real date at the cut breaks
+  the seal. The failure said *REWRITTEN ... a dated record says what was true when
   it was written*, which is the right sentence for a sweep and exactly the wrong
   one for the one edit [the checklist](RELEASING.md) requires: it reads as
   *revert this*. Each seal now carries a second digest, of the same prefix
@@ -5964,15 +5964,15 @@ Read [`README.md`](README.md) first.
 
 - 📦 **A release cut over a local feed still holding this machine's gate packs is
   refused.** `Releases/` is where every gate pack lands, and a gate pack is cut
-  at whatever MinVer derives from a commit past the tag — so between releases
+  at whatever MinVer derives from a commit past the tag -- so between releases
   the local feed holds `1.0.1-alpha.0.19`, `1.0.1-alpha.0.2` and a manifest
   naming them. Cutting `1.0.0` against that is *lower than the published
   version*, and `build/Test-ReleaseVersion.ps1` called it a **rollback** and
-  advised `-RollbackRepublish` — which would have published a release into a
+  advised `-RollbackRepublish` -- which would have published a release into a
   feed whose manifest and asset list name packages nobody ever released. It now
   refuses a **release** candidate whenever the local feed's highest version is a
   **pre-release** newer than it, and the refusal names the four files to delete
-  — `*.nupkg`, `releases.win.json`, `RELEASES`, `assets.win.json` — and the two
+  -- `*.nupkg`, `releases.win.json`, `RELEASES`, `assets.win.json` -- and the two
   directories that must survive, `archive/` and `test-pack/`.
   [`RELEASING.md`](RELEASING.md) step 5 says the same. The rule is narrow by
   construction: a genuine rollback over published releases still reads as one, a
@@ -5984,12 +5984,12 @@ Read [`README.md`](README.md) first.
   `.GetAwaiter().GetResult()` **inside the dialog's callback**, with
   `CancellationToken.None`. `VelopackUpdateClient` builds its `UpdateManager`
   from a bare URL, so Velopack's own `SimpleWebSource` supplies the `HttpClient`
-  timeout — **thirty minutes** — and a feed that answered slowly froze the
+  timeout -- **thirty minutes** -- and a feed that answered slowly froze the
   window for that long: no repaint, no cursor, no close button. The server's
   lane wrapped the identical calls in `UpdateService.CrashTripwire` from the day
   it was written; this one had nothing. Both now run on the thread pool under
   that same constant, and the dialog enables `TDF_CALLBACK_TIMER` and polls on
-  `TDN_TIMER` — so it shows *Checking for updates…*, stays fully usable, and
+  `TDN_TIMER` -- so it shows *Checking for updates...*, stays fully usable, and
   redraws itself with the answer, or with *the update check did not finish
   within N seconds and was stopped* if the deadline passes. The deadline is
   enforced by the poll rather than by the token, because
@@ -5998,13 +5998,13 @@ Read [`README.md`](README.md) first.
 
 - 🐛 **The folder picker is owned by the dialog, and an unresolvable folder
   is no longer a silent cancel.** Two defects in one button. The picker was
-  opened with a **zero owner**, because the dialog's window was private — so it
+  opened with a **zero owner**, because the dialog's window was private -- so it
   was modal to nothing: the task dialog's command links stayed live underneath
   it, a second click re-entered the command handler, and a `TDM_NAVIGATE_PAGE`
   from there rebuilds the page out from under a modal child. `TaskDialogHost`
   exposes its window now and the picker is given it. Separately,
-  `SHGetPathFromIDListW` has **no length parameter** — it assumes `MAX_PATH` and
-  answers `FALSE` for anything longer — and the path was being written into the
+  `SHGetPathFromIDListW` has **no length parameter** -- it assumes `MAX_PATH` and
+  answers `FALSE` for anything longer -- and the path was being written into the
   same 260-character buffer the shell was given for the display name. The picker
   then answered `null`, which the caller read as *cancelled*, so choosing a deep
   folder closed the picker, wrote nothing and said nothing. The call is
@@ -6016,7 +6016,7 @@ Read [`README.md`](README.md) first.
   Every action the configuration app offers runs inside the task dialog's
   `[UnmanagedCallersOnly]` callback, and **an exception out of one of those is a
   `FailFast`, not an exception**: the runtime cannot unwind into native frames,
-  so the process is terminated where it stands — the window vanishes mid-click
+  so the process is terminated where it stands -- the window vanishes mid-click
   with no dialog, no log line and no exit code anything could read. Three calls
   reachable from a click could produce one: `Directory.CreateDirectory` for the
   log directory, `Path.Combine` outside the registry reader's own `try` when
@@ -6024,7 +6024,7 @@ Read [`README.md`](README.md) first.
   project directory. The three delegate invocations are now inside one
   `try`/`catch`, which records the failure to the process log, puts it in the
   dialog's note, re-renders, and returns the `S_OK`/`S_FALSE` the notification
-  requires — so the window stays open and says what happened. The dispatch was
+  requires -- so the window stays open and says what happened. The dispatch was
   lifted out of the unmanaged entry point to make any of this assertable:
   `Callback` resolves the instance and forwards to `Dispatch`, because an
   `[UnmanagedCallersOnly]` method cannot be called from C# at all and a decision
@@ -6033,9 +6033,9 @@ Read [`README.md`](README.md) first.
 - 🔒 **Neither an install nor an uninstall touches a `browserai` entry it did
   not write.** Three sentences in this codebase said
   BrowserAI *"neither adopts, overwrites nor deletes"* an entry belonging to
-  another install — `RegistrationOwnership`'s own summary,
+  another install -- `RegistrationOwnership`'s own summary,
   `AppState.MayRemove`'s remark, and the registration row in
-  [`DECISIONS.md`](DECISIONS.md) — and **one intent out of three was keeping
+  [`DECISIONS.md`](DECISIONS.md) -- and **one intent out of three was keeping
   them.** `Repair`, the update hook's path, read the client's configuration and
   refused what it did not own; `Reassert`, the **install** hook's, ran
   `mcp remove` and then `mcp add` with no check at all, and `Remove`, the
@@ -6043,8 +6043,8 @@ Read [`README.md`](README.md) first.
   BrowserAI beside another one deleted that one's registration and wrote its own
   over the top, and uninstalling this one deleted the other's outright.
   `McpRegistrar.Apply` now reads `McpRegistryView.User` before **every** intent
-  and takes the two refusals — a configuration nobody could read, and an entry
-  outside this install root — in one place for all three. Absent, ours-and-stale
+  and takes the two refusals -- a configuration nobody could read, and an entry
+  outside this install root -- in one place for all three. Absent, ours-and-stale
   and ours-and-present behave exactly as they did. There is no exit code on that
   path and that is deliberate: these run inside Velopack fast-exit callbacks,
   where a non-zero result fails somebody's install, so what carries the outcome
@@ -6054,15 +6054,15 @@ Read [`README.md`](README.md) first.
 - 📦 **The suite's installer is titled `BrowserAI (suite)` and no longer
   owns the real Start Menu entry.** The two packs were split by pack id on
   2026-09-15 to stop the suite's installer arm rewriting and then deleting the
-  real install's Add/Remove entry — and the **title** was left shared, which is
+  real install's Add/Remove entry -- and the **title** was left shared, which is
   the name Velopack actually gives the shortcut (`shortcuts.rs`, read at 1.2.0:
   the link file is `<title>.lnk`, never `<packId>.lnk`). Shortcut creation is
   not gated on `--silent`, and the uninstall removes shortcuts **by target**, so
   the arm wrote `%APPDATA%\Microsoft\Windows\Start Menu\Programs\BrowserAI.lnk`
   pointing at its own scratch root over the real install's entry, and its
   uninstall then deleted it. `build/New-Release.ps1` now replaces **three**
-  elements rather than two when it builds the second pack — the id, the title
-  and the output directory — and the arm reads the user's Start Menu before and
+  elements rather than two when it builds the second pack -- the id, the title
+  and the output directory -- and the arm reads the user's Start Menu before and
   after for the same reason it already read the Add/Remove key: nothing under
   the shipping title may point into the scratch root, `BrowserAI (suite).lnk`
   may not outlive its own uninstall, and the whole set must be byte-identical
@@ -6071,7 +6071,7 @@ Read [`README.md`](README.md) first.
   whole scan.** A byte search over everything git tracks found `0x08` in three
   files, each of them a `\b` that something expanded before the file was written.
   The expensive one was `BrowserIdleTimerTests.ClockAssignment`, whose pattern
-  asked for a **literal backspace** before `Clock` — so
+  asked for a **literal backspace** before `Clock` -- so
   `TheShippedClockIsTheRealOneAndNothingInTheProductReplacesIt`, the arm that
   exists because a test clock leaking into a shipped build stops the only timer
   in the product from ever firing and **nothing anywhere would go red**, was
@@ -6093,7 +6093,7 @@ Read [`README.md`](README.md) first.
   they meant to type where the file holds one character that is not it, and a
   regex that cannot match is a green test forever. A file of one of the prose
   kinds is always read, NUL included; anything else is binary by git's own
-  heuristic — a NUL in the first 8,000 bytes — and is skipped, which today is
+  heuristic -- a NUL in the first 8,000 bytes -- and is skipped, which today is
   `assets\BrowserAI.ico` and nothing else. Both counts are asserted, so a corpus
   quietly re-classifying itself as binary cannot empty the scan, and the control
   is written to disk rather than passed as a string so the reading half is
@@ -6102,16 +6102,16 @@ Read [`README.md`](README.md) first.
 - 🐛 **An "ours" registration that names the wrong binary is stale, not
   present.** `McpRegistryView.Classify` answered `OursAndPresent` for any file
   under our install root that **existed**, and every registration written before
-  the 2026-09-15 two-binary split names `current\BrowserAI.exe` — which is now
+  the 2026-09-15 two-binary split names `current\BrowserAI.exe` -- which is now
   the **configuration app**. So a pre-split 1.0.0 install that later updates kept
   an entry pointing at the window: `McpRegistrar.Repair` leaves an
   ours-and-present entry exactly as it is by design, arguments and all, so the
   client started a dialog and waited forever for a JSON-RPC handshake a window
-  will never send. **There was nothing in any log, because nothing had failed** —
+  will never send. **There was nothing in any log, because nothing had failed** --
   which is the whole reason this survived: the install works, the update works,
   the registration is there, and the server does not answer. *Present* now means
   *is the MCP server*, read out of the file's own PE optional header
-  (`IMAGE_SUBSYSTEM_WINDOWS_CUI`, 3) — the same discriminator
+  (`IMAGE_SUBSYSTEM_WINDOWS_CUI`, 3) -- the same discriminator
   `RegistrationTarget` already used when it composed the path, so there is one
   answer to the question rather than two. Anything else under our root is
   `OursAndStale`, which `Repair` re-points and the window offers *Register* out
@@ -6121,12 +6121,12 @@ Read [`README.md`](README.md) first.
   wrong binary"* when the file is there and *"which is not there any more"* when
   it is not, because telling somebody a file is missing when they can see it is
   the fastest way to lose their trust in a status line. Planted red over
-  constructed inputs — a Windows-subsystem binary at the registered path, then a
-  file that is not a PE — and again on the sentence.
+  constructed inputs -- a Windows-subsystem binary at the registered path, then a
+  file that is not a PE -- and again on the sentence.
 
 - 📦 **A release body is one shape now: a headline a line, each linked to its own
   lines of the changelog.** The maintainer's choice (Q197 b). Every entry is
-  `- <icon> **<headline>** [read more](…/CHANGELOG.md?plain=1#L<first>-L<last>)`,
+  `- <icon> **<headline>** [read more](.../CHANGELOG.md?plain=1#L<first>-L<last>)`,
   a line range into the source view of the changelog **as the tag carries it**,
   which GitHub highlights exactly. The `<details>` fold is gone with the second
   shape that came with it: the fold put the detail in the release a second time,
@@ -6135,15 +6135,15 @@ Read [`README.md`](README.md) first.
   2026-09-16 over the 1.0.0 section as it stands: folded is 288,437 characters
   and would have fallen back to 19,780; linked is 41,288**, a third of GitHub's
   125,000, with a range on every one of the 227 entries. The size guard survives
-  as a pathological fallback — the links are dropped and the footer's section
-  link is the only way in — and the script still says which shape it produced.
+  as a pathological fallback -- the links are dropped and the footer's section
+  link is the only way in -- and the script still says which shape it produced.
   **The line numbers are only true of one file, so the generator refuses anything
   else**: the changelog on disk must match `HEAD`, and a tag `v<version>`, if it
   exists, must be at `HEAD`, or it refuses naming both commits. A dirty tree
   elsewhere is reported rather than refused, because this runs inside
   `New-Release.ps1` after a publish that leaves restore artifacts behind and none
-  of those can move a line number. An untracked changelog — a fixture under
-  scratch — is a state rather than a failure and the run says so. **The highlight
+  of those can move a line number. An untracked changelog -- a fixture under
+  scratch -- is a state rather than a failure and the run says so. **The highlight
   was verified on github.com in a real browser rather than assumed**: `curl`
   cannot show it, because it is applied client-side and the served HTML carries
   only the first 1,000 lines of a 3,682-line file. At
@@ -6159,7 +6159,7 @@ Read [`README.md`](README.md) first.
   `src/BrowserAI.Core/packages.lock.json`. It was first seen after a standalone
   `dotnet publish -r win-x64` and reverted in `ac244ff`; **`build/New-Release.ps1`
   produces the identical diff**, watched on a full pack run on 2026-09-16, so
-  routing publishes through the release script does not avoid it — and publishes
+  routing publishes through the release script does not avoid it -- and publishes
   should go through it anyway, because it is what stages each publish, reads both
   ILC logs and refuses a missing executable by name.
   [`RELEASING.md`](RELEASING.md) and [`TESTING.md`](TESTING.md) now say to revert
@@ -6167,14 +6167,14 @@ Read [`README.md`](README.md) first.
   arm holding the file free of that section would be red for the whole window
   between item 7's publish and item 8's run, which is a gate that cannot pass
   after doing what the checklist just told it to do. The two ways it could be
-  closed — accept the section as the resolution, or restore `--locked-mode` so a
-  rewrite fails instead of happening quietly — are recorded as open. The
+  closed -- accept the section as the resolution, or restore `--locked-mode` so a
+  rewrite fails instead of happening quietly -- are recorded as open. The
   measurement is filed in [`kb/toolchain.md`](kb/toolchain.md) under the NuGet
   section, with both publishes named and the times they were watched at.
 
 - 🐛 **A read-only file no longer defeats the delete every tree delete goes through.**
   `Runtime/TreeDelete` called `File.Delete` on the attribute as it found it, and
-  Windows refuses that with `ERROR_ACCESS_DENIED` — the same code a held handle
+  Windows refuses that with `ERROR_ACCESS_DENIED` -- the same code a held handle
   produces, so the list of nodes it could not remove read like a lock and was an
   attribute. It now clears `FileAttributes.ReadOnly` and deletes again, and only
   after a delete has already been refused, so the ordinary path is one call and
@@ -6183,7 +6183,7 @@ Read [`README.md`](README.md) first.
   downloaded, or a user dropped into a directory `browserai_destroy` is handed,
   was being reported as something the product could not remove when it could.
   **It was found by a release gate going red at the head of its own first run,
-  on a tree nobody had changed** — git writes every loose object read-only, so a
+  on a tree nobody had changed** -- git writes every loose object read-only, so a
   scratch directory holding a real repository survived six refused objects deep,
   and the documented between-runs clear had been removing the evidence with
   `Remove-Item -Force` on every pair of runs for as long as anybody had typed
@@ -6208,7 +6208,7 @@ Read [`README.md`](README.md) first.
   file, the key, and what to record when it is deleted.
 
 - 🐛 **The coverage block stops printing a download size somebody typed.**
-  Every run of the suite said *downloaded 203.8 MB from the CDN* — a literal in
+  Every run of the suite said *downloaded 203.8 MB from the CDN* -- a literal in
   `FirstRunCache`, in the one place on the screen that reads like a measurement,
   beside the elapsed seconds and the file count the run really did observe. The
   2026-09-16 re-measurement moved
@@ -6217,9 +6217,9 @@ Read [`README.md`](README.md) first.
   anything, which is what makes a number written at a sentence worse than one
   nobody wrote down. It is rendered through `DownloadSizeFor` now, the same path
   the provisioning refusal uses. Planted red and watched: *"Expected to contain
-  \"207.3 MB\" … but received \"downloaded 203.8 MB from the CDN because some
+  \"207.3 MB\" ... but received \"downloaded 203.8 MB from the CDN because some
   reason\""*. **The other surviving mentions of the old figure are deliberately
-  untouched** — they are comments and prose, and which of them read as
+  untouched** -- they are comments and prose, and which of them read as
   measurements is a separate decision.
 
 
@@ -6228,14 +6228,14 @@ Read [`README.md`](README.md) first.
   below records the checklist correction that met this failure; this is the fix it
   said belonged to whoever owns the script. `Releases/test-pack/` is a **second
   Velopack feed**, every gate pack writes a pre-release into it, and a gate runs
-  far more often than a release is cut — so at the moment of a cut it holds
+  far more often than a release is cut -- so at the moment of a cut it holds
   versions above the release and `vpk` refuses, *after* the shipping artifacts
   have already been built. [`build/Clear-TestPackFeed.ps1`](build/Clear-TestPackFeed.ps1)
   now runs immediately before the test pack and deletes exactly what that pack
   regenerates: `BrowserAI.app.test-*.nupkg`, `releases.win.json`, `RELEASES`,
   `assets.win.json`, the two renamed downloads, **and the two pre-rename names** a
   run that died between the pack and the rename leaves instead. It is **not** a
-  directory wipe — a file under `test-pack/` that no pack regenerates survives —
+  directory wipe -- a file under `test-pack/` that no pack regenerates survives --
   and an absent or empty directory is reported rather than refused, because the
   first cut on a fresh clone meets both. **Q200**, decided 2026-09-17.
   [`RELEASING.md`](RELEASING.md) item 5's manual step is corrected by addition and
@@ -6246,14 +6246,14 @@ Read [`README.md`](README.md) first.
   one.** `Releases/test-pack/` is a **second Velopack feed**, not just a directory
   the checklist keeps, and every gate pack writes a pre-release into it. At the
   moment a release is cut it therefore holds versions newer than the release, and
-  `vpk` refuses it the same way it refuses one in `Releases/` — *"There is a
+  `vpk` refuses it the same way it refuses one in `Releases/` -- *"There is a
   release in channel win which is equal or greater to the current version
   1.0.0"*. Because the running order packs for the gate first, **this refused
   every release cut, and it refused this one**: it fired *after* the real pack
   had succeeded, so the non-zero exit named the suite's installer while the
   release itself was already on disk. [`RELEASING.md`](RELEASING.md) item 5 is
-  corrected by addition with the file names to clear, and the better fix —
-  `New-Release.ps1` clearing its own regenerated, never-published test output —
+  corrected by addition with the file names to clear, and the better fix --
+  `New-Release.ps1` clearing its own regenerated, never-published test output --
   is written down there as the script owner's to take rather than taken by a
   release executor.
 
@@ -6276,7 +6276,7 @@ Read [`README.md`](README.md) first.
 - ✨ **Three session modes, one table.** `headless`, `interactive` and
   `persistent` differ in what they may do, and the same table renders the server
   instructions, the tool descriptions, the refusal messages and the enforcement
-  — so a mode cannot mean one thing to a model and another to the code.
+  -- so a mode cannot mean one thing to a model and another to the code.
 
 - 🔒 **Every tool call is judged against the mode of the session it names.** Deny-by-default
   in two dimensions: a tool nobody has classified is refused everywhere, and a
@@ -6285,7 +6285,7 @@ Read [`README.md`](README.md) first.
 - ✨ **Artifacts land inside the session, not wherever the browser felt like.** Screenshots,
   PDFs, downloads and traces are routed by type into folders under the session
   directory, never overwrite each other, and every answer says where the file
-  went — as an absolute path and as a session-relative one.
+  went -- as an absolute path and as a session-relative one.
 
 - 🔒 **A path that would escape the session is refused with a sentence saying why.** A
   path that would escape the session is refused with a sentence saying why,
@@ -6302,7 +6302,7 @@ Read [`README.md`](README.md) first.
   minutes"* into a refusal in milliseconds.
 
 - ✨ **Nothing is left running.** Every child and every browser it starts is
-  created inside a job object, so killing BrowserAI — however abruptly — takes
+  created inside a job object, so killing BrowserAI -- however abruptly -- takes
   the whole tree with it. A stray browser from a previous crash is found on
   startup and ended only when the session directory that owns it is provably
   free.

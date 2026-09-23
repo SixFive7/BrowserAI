@@ -897,7 +897,7 @@ internal sealed partial class DocumentationLinkTests
     /// <para>
     /// <b>Fenced blocks are skipped and explicit HTML anchors are honoured.</b>
     /// A <c>## Heading</c> inside a fenced example is an example; an
-    /// <c>&lt;a id="…"&gt;</c> is a real anchor on GitHub. This repository
+    /// <c>&lt;a id="..."&gt;</c> is a real anchor on GitHub. This repository
     /// writes none of the second kind today, and it is handled anyway so that
     /// writing the first one is not a red build.
     /// </para>

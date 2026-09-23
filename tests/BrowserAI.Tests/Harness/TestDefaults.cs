@@ -14,7 +14,7 @@ namespace BrowserAI.Tests.Harness;
 /// ⚠️ <b>Every duration below is a HANG DETECTOR, and none of them is a
 /// promptness assertion.</b> The distinction is the maintainer's instruction of
 /// 2026-08-18, verbatim: <i>"Remove any timings other than timeouts that catch
-/// really hung processes. Even on slow systems … these should have ample of room
+/// really hung processes. Even on slow systems ... these should have ample of room
 /// so tests do not hit these even under constrained system resources."</i>
 /// </para>
 /// <para>
@@ -59,7 +59,7 @@ internal static class TestDefaults
     /// ⚠️ <b>Corrected 2026-08-18 (previously <c>Patience</c>, 30 s).</b> Thirty
     /// seconds was reached routinely at unbounded parallelism: 71 failures in one
     /// twenty-run session read <i>"No frame arrived on this pipe within 30 s
-    /// … The peer is in this process, so this is a deadlock or a dropped write
+    /// ... The peer is in this process, so this is a deadlock or a dropped write
     /// rather than a slow machine"</i> -- a message that was, every single time,
     /// wrong about its own cause. The name moved too: <c>Patience</c> says
     /// nothing about which of the two kinds of duration it is, and that ambiguity

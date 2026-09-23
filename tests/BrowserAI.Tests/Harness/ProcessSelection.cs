@@ -92,7 +92,7 @@ internal static class ProcessSelection
     /// <c>Where-Object</c> and LINQ's <c>.Where(</c>, which between them produced
     /// four offenders in this tree on the first run -- two release scripts
     /// filtering a <c>PSObject</c>'s properties and two test files writing
-    /// <c>.Where(name =&gt; …)</c>, none of which has ever touched a process. WQL
+    /// <c>.Where(name =&gt; ...)</c>, none of which has ever touched a process. WQL
     /// is recognised by its <c>FROM</c> clause instead, which cannot be anything
     /// else.
     /// </remarks>
@@ -183,7 +183,7 @@ internal static class ProcessSelection
 
             if (processFile && marker.Success && FilteredName.IsMatch(line[marker.Index..]))
             {
-                offences.Add(new Offence($"{WmiClass} … Name=", "a query filtered on Name picks processes by image name, which is the same rule wearing a different API"));
+                offences.Add(new Offence($"{WmiClass} ... Name=", "a query filtered on Name picks processes by image name, which is the same rule wearing a different API"));
             }
 
             // ---- A name compared with a comparison operator ------------------

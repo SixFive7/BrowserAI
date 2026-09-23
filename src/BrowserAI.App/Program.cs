@@ -52,7 +52,7 @@ internal static class Program
     /// <remarks>
     /// Read out of 1.2.0's own source (<c>constants.rs</c>:
     /// <c>HOOK_ENV_RESTART</c>), beside the first-run one. It is what turns the
-    /// heading into <i>Updated to …</i> rather than a guess from a timestamp.
+    /// heading into <i>Updated to ...</i> rather than a guess from a timestamp.
     /// </remarks>
     public const string RestartVariable = "VELOPACK_RESTART";
 
@@ -440,7 +440,7 @@ internal sealed class ConfigurationSession(
 
         var version = _state.Version;
 
-        if (!_work.Start("Checking for updates…", "The update check", token => Ask(feed, version, token)))
+        if (!_work.Start("Checking for updates...", "The update check", token => Ask(feed, version, token)))
         {
             return ClickOutcome.Stay;
         }
@@ -489,7 +489,7 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Stay;
         }
 
-        if (!_work.Start("Downloading the update…", "The update download", token => Install(feed, token)))
+        if (!_work.Start("Downloading the update...", "The update download", token => Install(feed, token)))
         {
             return ClickOutcome.Stay;
         }

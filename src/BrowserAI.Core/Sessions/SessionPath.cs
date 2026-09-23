@@ -200,7 +200,7 @@ internal sealed class SessionPath
     /// <c>failure.Message</c> straight into
     /// <c>SessionErrors.DirectoryUnusable</c>, and
     /// <c>ArgumentException.Message</c> appends <c>(Parameter 'x')</c> whenever
-    /// one is set -- so a caller naming <c>C:\</c> was answered <i>"…must be a
+    /// one is set -- so a caller naming <c>C:\</c> was answered <i>"...must be a
     /// real directory on the volume. <b>(Parameter 'canonical')</b>"</i>,
     /// measured through the published binary that day. <c>canonical</c> is an
     /// internal identifier that means nothing to a model, in the one sentence
@@ -232,7 +232,7 @@ internal sealed class SessionPath
         // ⚠️ AT THE DOOR, because the alternative is a launch-time surprise
         // whose recovery is wrong. Measured 2026-08-26: a directory this long
         // was accepted, created and locked, and the session then failed with
-        // either "Could not start '…\node.exe' in '…\output'" or a store that
+        // either "Could not start '...\node.exe' in '...\output'" or a store that
         // would not open -- and row 7's advice, delete the directory and
         // re-provision, is the wrong recovery for a path problem.
         if (trimmed.Length > LongestSessionDirectory)

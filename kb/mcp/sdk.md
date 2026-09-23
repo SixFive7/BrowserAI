@@ -207,7 +207,7 @@ ILC's behaviour; `[MACHINE]` for the sizes and timings.
 **Full ILC needs the MSVC native toolchain -- `link.exe`, discovered via
 `vswhere` -- and its absence presents as a library problem.** Recorded in a
 shipping in-house application's own AOT notes, written 2026-07-07: *"Full ILC `PublishAot`:
-blocked by the environment, not the code… requires the MSVC native toolchain
+blocked by the environment, not the code... requires the MSVC native toolchain
 (link.exe, discovered via vswhere), which this development machine does not have
 installed."* That project shipped self-contained-single-file instead. The mechanism
 is confirmed here rather than merely quoted, and **that half anyone can

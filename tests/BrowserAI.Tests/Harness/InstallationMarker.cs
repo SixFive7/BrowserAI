@@ -19,7 +19,7 @@ namespace BrowserAI.Tests.Harness;
 /// an install against the same empty root at the same moment -- so the fake
 /// installer writes the same file. <c>File.WriteAllText</c> opens
 /// <c>FileShare.Read</c>, so the second writer is refused with <i>"the process
-/// cannot access the file … because it is being used by another process"</i>.
+/// cannot access the file ... because it is being used by another process"</i>.
 /// It reproduced <b>once in ten runs of that class alone</b>, which is a red
 /// build wearing a disguise and had nothing to do with the change that found it.
 /// </para>

@@ -137,7 +137,7 @@ internal sealed partial class ErrorCatalogueTests
     /// ⚠️ <b>Renamed 2026-09-17 (previously
     /// <c>InitRefusesAnExistingSessionAnUnusablePathAndAFullVolume</c>).</b> The
     /// full-volume half is gone with the free-space check itself, at the
-    /// maintainer's decision -- <i>"Checking for free space is out of scope … I do
+    /// maintainer's decision -- <i>"Checking for free space is out of scope ... I do
     /// not want to check for that at all."</i> That half asserted a refusal this
     /// build no longer makes, so it was <b>deleted rather than skipped</b>: a test
     /// for removed behaviour is not a gap in coverage, it is coverage of
@@ -1044,7 +1044,7 @@ internal sealed partial class ErrorCatalogueTests
     /// process on the machine happens to be sweeping.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Corrected 2026-08-26 (previously "asking again … -- a skipped sweep
+    /// ⚠️ <b>Corrected 2026-08-26 (previously "asking again ... -- a skipped sweep
     /// is not a missed one").</b> That is true of the product and was never a
     /// reason for a test that needs its own pass to have run: asking again is a
     /// poll that can lose every time, and the mutex is a queue. The measurement
@@ -1774,9 +1774,9 @@ internal sealed partial class ErrorCatalogueTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Both halves were measured 2026-08-26 through the published
-    /// binary.</b> An <c>init</c> on <c>…\se&lt;U+0007&gt;ss</c> answered with a
+    /// binary.</b> An <c>init</c> on <c>...\se&lt;U+0007&gt;ss</c> answered with a
     /// message that correctly named <c>U+0007</c> in words and then <b>embedded
-    /// the byte twice</b>; an <c>init</c> on <c>C:\</c> answered <i>"…must be a
+    /// the byte twice</b>; an <c>init</c> on <c>C:\</c> answered <i>"...must be a
     /// real directory on the volume. <b>(Parameter 'canonical')</b>"</i>.
     /// </para>
     /// <para>
@@ -1841,7 +1841,7 @@ internal sealed partial class ErrorCatalogueTests
     /// ⚠️ <b>It was accepted, created, locked, and then failed at child launch
     /// with the cause unnamed (measured 2026-08-26, 70 levels).</b> The answer
     /// was <i>"The browser runtime for '…' did not start: IOException: Could not
-    /// start '…\node.exe' in '…\output'"</i>, and the recovery it offered --
+    /// start '...\node.exe' in '...\output'"</i>, and the recovery it offered --
     /// delete the directory and <c>browserai_init</c> again to re-provision -- is
     /// the wrong one: nothing is broken about the install.
     /// </para>

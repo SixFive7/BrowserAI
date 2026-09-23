@@ -16,7 +16,7 @@ namespace BrowserAI.Tests.Harness;
 /// calls, and with <c>DDD_RAW_TARGET_PATH</c> it writes the same kind of object
 /// manager symbolic link that the multiple-UNC provider writes for
 /// <c>net use</c>. Measured 2026-08-19 on this machine: a letter defined here
-/// against <c>\Device\LanmanRedirector\…</c> is reported <c>DRIVE_REMOTE</c> by
+/// against <c>\Device\LanmanRedirector\...</c> is reported <c>DRIVE_REMOTE</c> by
 /// <c>GetDriveTypeW</c>, and a <c>File.Exists</c> through it against a dead
 /// hostname took <b>22,210 ms</b> -- indistinguishable from a mapping made by
 /// <c>net use</c>, because it is the same object.

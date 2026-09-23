@@ -42,7 +42,7 @@ internal sealed record HookOutcome(RegistrationReport Registration, DataRootDisp
 /// <para>
 /// ⚠️ <b>The log and the record go to the DATA root, and the image path decides
 /// only what gets registered -- corrected 2026-09-15 (previously "the install
-/// root is derived from the running image … so the path that is registered and
+/// root is derived from the running image ... so the path that is registered and
 /// the directory the record lands in cannot disagree").</b> They cannot
 /// disagree, and they were both wrong: the install root is the directory
 /// <c>Setup.exe</c> renames aside and deletes and uninstall empties, so a

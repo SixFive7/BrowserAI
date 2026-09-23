@@ -149,7 +149,7 @@ internal sealed class ConfigRoundTripTests
     /// <c>@playwright/mcp</c> <b>0.0.82</b> declares the key, as
     /// <c>filePaths?: 'relative' | 'absolute'</c>. <i>Previously: "The one key in
     /// the generated config with no entry in the typings this project diffs
-    /// … implemented in <c>playwright-core</c>, which the dated override moved
+    /// ... implemented in <c>playwright-core</c>, which the dated override moved
     /// to 1.64.0-alpha-2026-09-17, while <c>config.d.ts</c> ships with
     /// <c>@playwright/mcp</c>, which has not rolled -- so
     /// <c>config-schema.d.ts</c> is the one golden snapshot that did not move on

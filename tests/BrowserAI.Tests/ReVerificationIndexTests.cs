@@ -63,7 +63,7 @@ internal sealed partial class ReVerificationIndexTests
         await Assert.That(string.Join(Environment.NewLine, Offenders(Rows()))).IsEmpty();
 
         // ⚠️ BOTH DIRECTIONS over the clause, off synthetic rows rather than by
-        // doctoring the index: a name inside a `previously "…"` clause is a
+        // doctoring the index: a name inside a `previously "..."` clause is a
         // record of what a row USED to name, and a name outside one is a claim.
         // Only the second is this gate's business.
         var superseded = Offenders([("9", "`ReVerificationIndexTests.TheIndexReportsItsOwnSizeCorrectly`, *previously \"`GoneTests.Vanished`\"*", "")]);
@@ -85,7 +85,7 @@ internal sealed partial class ReVerificationIndexTests
     /// through it.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>The <c>previously "…"</c> clause is stripped first, and it was not
+    /// ⚠️ <b>The <c>previously "..."</c> clause is stripped first, and it was not
     /// until 2026-08-26.</b> <c>HazardIndexTests</c> has read around it since
     /// the day that gate provoked its first correction; this one did not, so a
     /// superseded test name quoted the way <c>CLAUDE.md</c> requires -- verbatim,
@@ -299,7 +299,7 @@ internal sealed partial class ReVerificationIndexTests
     /// risk</b> rather than a hole -- the next person to write a re-verification
     /// row against a private product member, a field or an overload would have
     /// got a red build for a row that was correct. P6's rider L harmonised the
-    /// <c>previously "…"</c> clause between these two gates and left this axis
+    /// <c>previously "..."</c> clause between these two gates and left this axis
     /// untouched with no note saying why; the note is this one, and the axis is
     /// closed rather than described.
     /// </para>

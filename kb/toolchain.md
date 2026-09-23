@@ -21,7 +21,7 @@ framework nobody chose. **The two entry points disagree, and only one is
 useful:** `dotnet build` reports NETSDK1207 from
 `Microsoft.NET.Sdk.FrameworkReferenceResolution.targets(120,5)`, while
 `dotnet msbuild <project> -getProperty:TargetFramework` reports the real cause,
-`MSB4024 … An XML comment cannot contain '--'`, with the line and column. Reach
+`MSB4024 ... An XML comment cannot contain '--'`, with the line and column. Reach
 for `-getProperty` whenever a shared props file has just been edited and the
 error names something unrelated. `[FLOATS]` for the SDK version; `[STABLE]` for
 the XML rule.
@@ -102,7 +102,7 @@ sees this.
 **npm keys a lock file's root package on the empty string, and PowerShell's
 `ConvertFrom-Json` refuses that outright.** Measured 2026-08-16 on npm **11.19.0**
 and PowerShell **7**, while building the payload: `package-lock.json`
-`lockfileVersion` 3 opens `"packages": { "": { … } }`, and parsing it raises *"The
+`lockfileVersion` 3 opens `"packages": { "": { ... } }`, and parsing it raises *"The
 provided JSON includes a property whose name is an empty string, this is only
 supported using the -AsHashTable switch."* It is a hard parse failure rather than
 a dropped key, so it surfaces immediately -- but only if something parses the lock
@@ -181,7 +181,7 @@ output into a build error message.** `Get-Command 'git' -CommandType
 Application` returns **two** entries on a Git-for-Windows machine --
 `cmd\git.exe` and `mingw64\bin\git.exe` are both on `PATH` -- so `$git.Source`
 is one string naming two executables and invoking it fails with *"The term
-'C:\…\mingw64\bin\git.exe C:\…\cmd\git.exe' is not recognized"*. `Select-Object
+'C:\...\mingw64\bin\git.exe C:\...\cmd\git.exe' is not recognized"*. `Select-Object
 -First 1` is required rather than tidy. And **PowerShell 7 emits ANSI colour
 escapes even when its output is redirected into a pipe**, which arrives in an
 MSBuild `<Error>` as line noise around the diff it is supposed to be carrying;
@@ -260,8 +260,8 @@ SDK **10.0.302** / .NET **10.0.11**, TUnit **1.65.0**,
 handshake `dotnet test` alone uses.
 
 > ⚠️ **Corrected 2026-08-16 (previously: "`dotnet test` runs zero tests against
-> this suite … It is not caused by anything in this repository, and that had to
-> be proven rather than assumed. A clean `git worktree` of `b8a6553` … reproduces
+> this suite ... It is not caused by anything in this repository, and that had to
+> be proven rather than assumed. A clean `git worktree` of `b8a6553` ... reproduces
 > it exactly").** It does not reproduce. Re-run the same day against the same
 > machine and the same SDK: `dotnet test BrowserAI.slnx` at `e5f4684` returned
 > **51 passed, exit 0**, and a fresh `git worktree --detach` of **`b8a6553`** --
@@ -473,9 +473,9 @@ this suite, whose sizes were established one at a time first:
 
 | Filter handed to `--treenode-filter` | Discovered | What it actually selected |
 |---|--:|---|
-| `/*/*/SessionPathTests/*\|/*/*/LockRecordTests/*\|…` -- six whole patterns joined by `\|` | **601** | **the entire suite**: every test in the assembly |
-| `/*/*/SessionPathTests/*\|LockRecordTests/*\|…` -- the same six, written without repeating the prefix | **4** | **the first class only** |
-| `/*/*/SessionPathTests\|LockRecordTests\|…/*` -- the alternation inside the class segment | **95** | the six classes, and nothing else |
+| `/*/*/SessionPathTests/*\|/*/*/LockRecordTests/*\|...` -- six whole patterns joined by `\|` | **601** | **the entire suite**: every test in the assembly |
+| `/*/*/SessionPathTests/*\|LockRecordTests/*\|...` -- the same six, written without repeating the prefix | **4** | **the first class only** |
+| `/*/*/SessionPathTests\|LockRecordTests\|.../*` -- the alternation inside the class segment | **95** | the six classes, and nothing else |
 | `/*/*/(SessionPathTests\|LockRecordTests)/*` -- the same, parenthesised | 23 | the two classes named |
 
 **So the correct syntax is one path whose class segment holds the alternation**,
@@ -768,7 +768,7 @@ evidence if a `cl` warning would have escaped that. `/W4` could not be used as
 the control, because the source is clean at `/W4` and a control that cannot fail
 proves nothing. Measured instead on a throwaway project, 2026-08-26: an `Exec`
 with exactly those two settings, whose command echoes
-`probe.c(42,1): warning C4996: …` to stdout, surfaced it as a real MSBuild
+`probe.c(42,1): warning C4996: ...` to stdout, surfaced it as a real MSBuild
 warning **even at `-v:minimal`**. `ToolTask` matches the canonical format before
 importance is applied. `[STABLE]`.
 
@@ -842,7 +842,6 @@ publishing, and running
 red is *"The peer closed its stdout before answering 'initialize'"* with the exit
 code beneath it.
 
-<a id="gh-for-a-release-body-the-size-limit-is-carried-rather-than-measured-and-the-rendering-is-checkable--2026-09-15"></a>
 ## `gh`, for a release body: the size limit is carried rather than measured, and the rendering is checkable -- 2026-09-15
 
 **BrowserAI cuts a GitHub release body at 125,000 characters, and that number
@@ -882,7 +881,7 @@ before it is published rather than looked at afterwards. Measured 2026-09-15 @
 <li>
 <p>✨ <strong>Browser automation for AI agents on Windows, as one MCP server that brings its own everything.</strong></p>
 <details><summary>read more</summary>
-<p>BrowserAI ships its own Node runtime and its own <code class="notranslate">@playwright/mcp</code>, …</p>
+<p>BrowserAI ships its own Node runtime and its own <code class="notranslate">@playwright/mcp</code>, ...</p>
 </details>
 </li>
 ```

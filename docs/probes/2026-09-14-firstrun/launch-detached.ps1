@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Jori Huisman
 # SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-# Launches a process with DETACHED_PROCESS so it has NO console of its own —
+# Launches a process with DETACHED_PROCESS so it has NO console of its own --
 # which is what Explorer does when a user double-clicks Setup.exe. Launching it
 # from this terminal instead would let the installer's console-subsystem
 # grandchild join THIS console, and the "terminal on the user's screen" hazard

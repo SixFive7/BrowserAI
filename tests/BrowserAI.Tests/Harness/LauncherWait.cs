@@ -127,7 +127,7 @@ internal static class LauncherWait
     /// <para>
     /// <b>Measured 2026-08-29, in the run this was written for.</b> A Firefox
     /// arm stalled out Playwright's own 180 s <c>initializeServer</c> budget and
-    /// the dump it produced said <c>(unreadable: … because it is being used by
+    /// the dump it produced said <c>(unreadable: ... because it is being used by
     /// another process)</c> for <b>all three</b> capture files -- the whole
     /// account of the stall, in three files this instrument had just walked, and
     /// none of it in the failure. Reproduced in process 2026-08-30, both
@@ -209,7 +209,7 @@ internal static class LauncherWait
                 // No byte count on this branch, deliberately: nothing opened the
                 // file, so nothing measured it, and a cached number here reads as
                 // a measurement of a file the very next clause says could not be
-                // read. An honest "(unreadable: …)" survives -- what must no
+                // read. An honest "(unreadable: ...)" survives -- what must no
                 // longer be the reason for it is our own share mode.
                 _ = report.Append(Environment.NewLine)
                     .Append("--- ").Append(file.Name).Append(" ---")
@@ -225,7 +225,7 @@ internal static class LauncherWait
 
                 // Truncated, because a browser's stderr can run to megabytes and
                 // a failure message nobody can read is one nobody reads.
-                .Append(text.Length <= 4000 ? text : text[..4000] + "…");
+                .Append(text.Length <= 4000 ? text : text[..4000] + "...");
         }
 
         return report.ToString();

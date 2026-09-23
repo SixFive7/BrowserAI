@@ -48,7 +48,7 @@ namespace BrowserAI.Runtime;
 /// ⚠️ <b><c>allowUnrestrictedFileAccess</c> is written <c>false</c>
 /// EXPLICITLY, and it is the only containment this product has left. Corrected
 /// 2026-08-26 (previously "written <c>true</c> unconditionally, with no argument
-/// to turn it off … the maintainer's answer of 2026-08-20, asked whether it
+/// to turn it off ... the maintainer's answer of 2026-08-20, asked whether it
 /// should be always on, per mode or per call: <i>a always</i>").</b> That answer
 /// was given while BrowserAI had a <c>filename</c> gate of its own -- a validator
 /// that refused <c>..</c>, drive-relative, UNC, rooted and device paths on the
@@ -79,7 +79,7 @@ namespace BrowserAI.Runtime;
 /// output directory, and <c>browser_navigate</c> cannot open a <c>file:</c> URL
 /// at all. Upstream calls the key a convenience defence rather than a secure
 /// boundary, in <c>config.d.ts</c>'s own words -- <i>"a guardrail to prevent the
-/// LLM from accidentally wandering outside its intended workspace … not a secure
+/// LLM from accidentally wandering outside its intended workspace ... not a secure
 /// boundary; a deliberate attempt to reach other directories can be easily
 /// worked around"</i> -- and that is exactly what this product wants it for.
 /// Hostile-caller defence is an explicit non-goal; steering an honest mistake is
@@ -188,7 +188,7 @@ internal static class BrowserConfiguration
     /// artifact the child names -- the screenshot, PDF and storage-state links,
     /// the snapshot link, the console log link, the download line, a binary
     /// response body and the trace files -- arrived as
-    /// <c>output\page-….png</c>, which names nothing a caller can open.
+    /// <c>output\page-....png</c>, which names nothing a caller can open.
     /// BrowserAI used to answer that with a note of its own naming each artifact
     /// absolutely; that note went with artifact routing on 2026-08-26, and from
     /// then until this key those pointers reached a model unaccompanied.
@@ -355,9 +355,9 @@ internal static class BrowserConfiguration
     /// ⚠️ <b>What arrives is what is set, unscaled.</b> A caller that asks for
     /// 2560×1440 gets 2560×1440 worth of tokens rather than something downscaled
     /// on the way out. The argument exists and the description says what it
-    /// costs. <i>Corrected 2026-09-15 (previously "… and that is specific to
+    /// costs. <i>Corrected 2026-09-15 (previously "... and that is specific to
     /// this product. Upstream's <c>scaleImageToFitMessage</c> never runs here --
-    /// BrowserAI's image handling diverges before it -- so …").</i> <b>The
+    /// BrowserAI's image handling diverges before it -- so ...").</i> <b>The
     /// conclusion is unchanged and the reason for it is gone</b>: it was specific
     /// to this product while upstream had a scaler BrowserAI diverged before, and
     /// <c>playwright-core</c> 1.63.0-alpha-2026-08-31 deleted

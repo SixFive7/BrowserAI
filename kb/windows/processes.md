@@ -64,7 +64,7 @@ so every level routes to `Console.Error`.
 
 Read from source 2026-08-16, not run, at **3.1.2** --
 `src/Serilog.Sinks.Console/Sinks/SystemConsole/ConsoleSink.cs:35-38` and
-`…/Platform/WindowsConsole.cs` in the public `serilog/serilog-sinks-console`
+`.../Platform/WindowsConsole.cs` in the public `serilog/serilog-sinks-console`
 repository -- cross-checked against its `main` the same day. **This one is fully
 reproducible**: clone that repository at the tag and read those two files. **The two differ, and the newer one is worse:** 3.1.2 wraps the entire
 P/Invoke body in `#if PINVOKE`, defined only for `net45` and `netcoreapp1.1`
@@ -249,7 +249,6 @@ console-subsystem child twice with the flag set and unset, and diff
 `EnumWindows` over visible top-level windows around each launch. Read the class
 names rather than filtering for one, or the measurement answers zero both times.
 
-<a id="a-read-parked-on-standard-input-is-woken-by-neither-cancelling-it-nor-disposing-the-stream--measured-2026-09-15"></a>
 ### A read parked on standard input is woken by neither cancelling it nor disposing the stream -- measured 2026-09-15
 
 **Measured 2026-09-15 on Windows 11 Pro 26200 with .NET 10**, against
@@ -397,7 +396,7 @@ which are Windows' and .NET's own; `[MACHINE]` for nothing here.
 >
 > ✅ **THE WILD EXIT 1 OF 2026-09-17 IS ATTRIBUTED, AND THE 2026-08-29 READING
 > OF IT WAS WRONG IN BOTH DIRECTIONS** -- added 2026-09-17. That day's ledger
-> concluded *"exit code 1 = external `TerminateProcess(handle,1)` … via the
+> concluded *"exit code 1 = external `TerminateProcess(handle,1)` ... via the
 > HARNESS OWN spawn-record reclaim"* and ruled the **product** sweep out *"BY
 > DESIGN (attribution needs the window this browser never published) -- read not
 > run"*. The recurrence on 2026-09-17 was read out of the machine-wide process
@@ -432,7 +431,7 @@ which are Windows' and .NET's own; `[MACHINE]` for nothing here.
 > reasoning about anything. `[STABLE]`
 >
 > **A handled crash and an unhandled one leave the same exit code.** `chrome.exe
-> --headless=new … --crash-test` writes a real dump into the profile's
+> --headless=new ... --crash-test` writes a real dump into the profile's
 > `Crashpad\reports` *and* exits `0x80000003`, so the presence of a crash handler
 > changes what is recorded and not what the parent reads. A healthy launch starts
 > **two** `--type=crashpad-handler` children and creates
@@ -483,7 +482,7 @@ went. **A hand-rolled post-order walk left the same nodes behind in both cases**
 so the on-disk outcome is not what separates the two primitives. What separates
 them is the report: the framework named one node where the per-node walk named
 **four** and **two**. The enumeration entry above is unaffected --
-`EnumerateFileSystemEntries(…, AllDirectories)` did throw
+`EnumerateFileSystemEntries(..., AllDirectories)` did throw
 `UnauthorizedAccessException` and yielded nothing, re-measured in the same pass.
 To re-establish: build a tree of a top-level file, a subdirectory holding two
 files, and a second subdirectory sorting after it; make one node undeletable
@@ -665,8 +664,8 @@ dangerous of the two because null means *not locked*.
 > before it is trusted. Not taken; see the hazard index.
 
 > ⚠️ **Corrected 2026-08-18 (previously "BrowserAI is safe under the absence
-> today … every ungated one fails in the safe direction -- the sweep's
-> `SessionDirectoryFrom` … and `ActOn` …").** The judgement was right about the
+> today ... every ungated one fails in the safe direction -- the sweep's
+> `SessionDirectoryFrom` ... and `ActOn` ...").** The judgement was right about the
 > two readers it named and wrong as a claim about all of them, and the reason is
 > worth stating: it was written by checking the readers on the *sweep* path,
 > which is where the danger was expected, and generalised to *every* ungated
@@ -764,7 +763,7 @@ was very likely free for most of it.
 **A file that has just been renamed into place can still be briefly unopenable.**
 Observed once on 2026-08-16, roughly one run in a dozen: a probe report written
 temp-then-renamed failed `File.ReadAllTextAsync` on the destination with *"the
-process cannot access the file … because it is being used by another process"*,
+process cannot access the file ... because it is being used by another process"*,
 on a file no BrowserAI process had ever opened. The atomicity of the rename is
 not in question -- what it guarantees is that a reader sees the old bytes or the
 new ones, never that the open succeeds. Something outside this repository holds a
@@ -874,7 +873,7 @@ same eight-by-twenty-five run then loses nothing, repeated three times.
 `[FLOATS]` for the .NET half, which could change with any SDK; `[STABLE]` for the
 Win32 guarantee.
 
-⚠️ **Corrected 2026-08-24 (previously "The fix is …" and "a lock would have
+⚠️ **Corrected 2026-08-24 (previously "The fix is ..." and "a lock would have
 worked while also making logging able to block -- the one thing the observability
 design says the sink may never do"). BrowserAI does not use it any more.** The
 measurement above is untouched and still forbids `FileMode.Append`; what was
@@ -936,7 +935,7 @@ mode, **and** the opener's own share mode must permit every access those handles
 already hold. `File.ReadAllText` opens `FileAccess.Read, FileShare.Read`. A
 writer holds `GENERIC_WRITE`. `FileShare.Read` does not include
 `FILE_SHARE_WRITE`, so the second check fails and the open is refused with
-`ERROR_SHARING_VIOLATION` -- *"the process cannot access the file … because it is
+`ERROR_SHARING_VIOLATION` -- *"the process cannot access the file ... because it is
 being used by another process"* -- **even when the writer shared everything**.
 
 That last clause is the trap, and it is worth spelling out because the natural
@@ -974,7 +973,7 @@ launcher's scratch tree into a containment failure, because that tree is deleted
 when the test unwinds. It read with `File.ReadAllText`. On the 2026-08-30
 release gate's sixth run -- a Firefox stall the driver's `stderr` tee had been
 armed for two hours earlier -- all three capture files came back
-`(unreadable: … used by another process)` with `(0 bytes)` beside each, and the
+`(unreadable: ... used by another process)` with `(0 bytes)` beside each, and the
 tree was then removed. **Every file such a dump is written to read is one
 somebody is still holding, by construction**: it is taken at the moment a launch
 did *not* happen.
@@ -1111,7 +1110,7 @@ level:
 > device named "" and refuses with `ERROR_INVALID_PARAMETER`. Read the size back
 > with `UOI_HEAPSIZE`. Start a filler process onto it with `STARTUPINFO.lpDesktop`
 > set to `"WinSta0\\<name>"`, creating `CreateWindowExW(0, "STATIC", <2048-char
-> title>, WS_CHILD, 0,0,0,0, HWND_MESSAGE, …)` until it is refused, and start a
+> title>, WS_CHILD, 0,0,0,0, HWND_MESSAGE, ...)` until it is refused, and start a
 > second filler to confirm the first stopped on the heap rather than on its own
 > quota -- a second one that manages zero is the ceiling. Then launch the
 > provisioned `chrome.exe` onto the same desktop with the command line the
@@ -1204,7 +1203,7 @@ for the mechanism; the count is `[MACHINE]`.
 
 **`Directory.Move` is refused with `ERROR_ACCESS_DENIED` on a directory whose
 files were written milliseconds earlier, and nobody has identified the holder.**
-***Corrected 2026-08-18 (previously "…and the holder is a scanner rather than a
+***Corrected 2026-08-18 (previously "...and the holder is a scanner rather than a
 process anyone can name", which asserted in the heading what the body concedes
 was never established).*** The refusal rates below are measured; **the cause is
 not**. Windows refuses to rename a directory while any handle is open below it --
@@ -1217,7 +1216,7 @@ is ever something of ours the retry masks a defect. **The tool to settle it
 already ships** -- `Interop/RestartManager.cs` exists to answer *who holds this*;
 call `RmGetList` on the path at the instant of the denial. Measured 2026-08-17 in two independent places under a
 fully parallel suite: the first-run cache's publish-by-rename failed in **five of
-twenty-one** runs with *"Access to the path '…\.staging-&lt;guid&gt;' is
+twenty-one** runs with *"Access to the path '...\.staging-&lt;guid&gt;' is
 denied"*, and `InstanceDirectoryTests`' planted abandoned directory failed to be
 reclaimed in **one of ten**. Neither reproduced once at four-way parallelism.
 **The two correct answers are different, and which one applies depends on what
@@ -1370,7 +1369,7 @@ repository root and running as **ten processes**:
 | Operation, while that Chromium is live | Outcome |
 |---|---|
 | `Directory.Move` of `chrome-win64` -- the directory holding `chrome.exe` | **refused**, `IOException`, *"being used by another process"* (sharing violation) |
-| `Directory.Move` of `chromium-1237` -- the revision directory above it | **refused**, `IOException`, *"Access to the path … is denied"* |
+| `Directory.Move` of `chromium-1237` -- the revision directory above it | **refused**, `IOException`, *"Access to the path ... is denied"* |
 | the same two renames, browser killed first | **both succeeded** |
 
 **The control is the load-bearing half**: with the browser gone both renames
@@ -1389,7 +1388,6 @@ reproduced exactly** -- ten processes, both refusals, both controls -- so the en
 above is reproducible from what is written rather than only from the day it was
 taken.
 
-<a id="the-same-measurement-for-firefox-and-for-what-both-families-share--2026-08-19"></a>
 ### The same measurement for Firefox, and for what both families share -- 2026-08-19
 
 ⚠️ **Corrected 2026-08-19 (previously this entry ended "Measured for Chromium
@@ -1409,7 +1407,7 @@ runs, at five and seven processes:
 | Operation, while that Firefox is live | Outcome |
 |---|---|
 | `Directory.Move` of `firefox` -- the directory holding `firefox.exe` | **refused**, `IOException`, *"being used by another process"* (sharing violation) |
-| `Directory.Move` of `firefox-1539` -- the revision directory above it | **refused**, `IOException`, *"Access to the path … is denied"* |
+| `Directory.Move` of `firefox-1539` -- the revision directory above it | **refused**, `IOException`, *"Access to the path ... is denied"* |
 | the same two renames, browser killed first | **both succeeded** |
 
 Same two operations, same two *different* Win32 errors, in the same order, and
@@ -1443,7 +1441,7 @@ Measured 2026-08-19 with a live browser of each family in turn:
 |---|---|---|
 | `Directory.Move` of `ffmpeg-1011` | **succeeded** | **succeeded** |
 | `Directory.Move` of `winldd-1007` | **succeeded** | **succeeded** |
-| `Directory.Move` of the browsers **root** itself | **refused**, *"Access to the path … is denied"* | **refused**, *"Access to the path … is denied"* |
+| `Directory.Move` of the browsers **root** itself | **refused**, *"Access to the path ... is denied"* | **refused**, *"Access to the path ... is denied"* |
 
 **Neither shared tree is held by a running browser**, because neither is running:
 `ffmpeg-win64.exe` exists only while a recording is in flight and `winldd` is an

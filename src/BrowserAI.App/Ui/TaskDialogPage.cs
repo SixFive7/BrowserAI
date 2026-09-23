@@ -21,10 +21,10 @@ internal sealed record TaskDialogPage
     /// <summary>The large heading.</summary>
     public required string Instruction { get; init; }
 
-    /// <summary>The body, which may carry <c>&lt;a href="…"&gt;</c>.</summary>
+    /// <summary>The body, which may carry <c>&lt;a href="..."&gt;</c>.</summary>
     public required string Content { get; init; }
 
-    /// <summary>The footer, which may carry <c>&lt;a href="…"&gt;</c>.</summary>
+    /// <summary>The footer, which may carry <c>&lt;a href="..."&gt;</c>.</summary>
     public string? Footer { get; init; }
 
     /// <summary>The command links, in order.</summary>

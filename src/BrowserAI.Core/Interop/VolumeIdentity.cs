@@ -39,7 +39,7 @@ namespace BrowserAI.Interop;
 ///   </description></item>
 /// </list>
 /// <para>
-/// ⚠️ ***Corrected 2026-08-26 (previously step 3 ended "…which is what keeps a
+/// ⚠️ ***Corrected 2026-08-26 (previously step 3 ended "...which is what keeps a
 /// bounded call bounded", and the same claim was implied at
 /// <see cref="FinalNameOf"/> and <see cref="DeepestExistingFinalName"/>).***
 /// <b>The answer is bounded; the cost is not, and the code claimed both.</b>
@@ -72,10 +72,10 @@ namespace BrowserAI.Interop;
 /// <b>Why <c>QueryDosDeviceW</c> rather than only <c>GetDriveTypeW</c>.</b> They
 /// answer different questions and this product needs both. Measured 2026-08-19:
 /// a <c>subst</c>ed letter reports <c>DRIVE_FIXED</c> -- it is genuinely fixed
-/// storage -- while its DOS device target is <c>\??\C:\…</c>, a symbolic link to
+/// storage -- while its DOS device target is <c>\??\C:\...</c>, a symbolic link to
 /// another DOS path rather than to a device. That is the discriminator for an
 /// <i>alias</i>. Conversely a mapped letter's target is
-/// <c>\Device\LanmanRedirector\…</c>, but pattern-matching device names means
+/// <c>\Device\LanmanRedirector\...</c>, but pattern-matching device names means
 /// enumerating every redirector that exists (SMB, WebDAV, NFS, and whatever
 /// ships next), so the <i>network</i> question is asked of
 /// <c>GetDriveTypeW</c>, which is the operating system's own classification.
@@ -137,7 +137,7 @@ internal static partial class VolumeIdentity
     /// <para>
     /// <b>Two separators is the whole test</b>, and it is exhaustive over the
     /// spellings that exist: <c>\\host\share</c>, <c>//host/share</c>,
-    /// <c>\\?\C:\…</c>, <c>\\?\UNC\host\share</c> and the device form
+    /// <c>\\?\C:\...</c>, <c>\\?\UNC\host\share</c> and the device form
     /// <c>\\.\</c>. Nothing else in Win32 path syntax begins with two
     /// separators.
     /// </para>
@@ -161,7 +161,7 @@ internal static partial class VolumeIdentity
     /// only.
     /// </summary>
     /// <param name="path">
-    /// A rooted local drive-letter path -- <c>X:\…</c>. Anything else is
+    /// A rooted local drive-letter path -- <c>X:\...</c>. Anything else is
     /// <see cref="VolumeKind.NotADriveLetter"/>, including every spelling
     /// <see cref="IsUncOrDeviceSpelling"/> catches.
     /// </param>
@@ -477,7 +477,7 @@ internal static partial class VolumeIdentity
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
-        // 1. Characters only, and first. `\\?\C:\…` is NOT a share -- it is the
+        // 1. Characters only, and first. `\\?\C:\...` is NOT a share -- it is the
         //    extended spelling of an ordinary local path -- so the prefix is
         //    stripped for the volume question and the caller's own spelling is
         //    what the filesystem is asked about, which CreateFileW accepts

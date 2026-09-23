@@ -26,8 +26,8 @@ namespace BrowserAI.Tests.Harness;
 /// differ. The spelling is inherited from whatever started the run, so a
 /// harness-started Git Bash and a human-started one are not the same instrument:
 /// measured 2026-08-24, a Git Bash that <i>inherits</i> its working directory
-/// hands a child <c>c:\…</c>, and the same shell after any <c>cd</c> -- POSIX
-/// form, Windows form, either case -- hands it <c>C:\…</c>, because MSYS resolves
+/// hands a child <c>c:\...</c>, and the same shell after any <c>cd</c> -- POSIX
+/// form, Windows form, either case -- hands it <c>C:\...</c>, because MSYS resolves
 /// the real path and Windows always answers upper.
 /// </para>
 /// <para>

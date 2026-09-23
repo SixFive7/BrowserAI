@@ -98,7 +98,7 @@ of the order rather than defects in anything:
    nobody rewrote. `AppendOnlyRecordTests` now says so in the failure itself: when
    the heading line is the *only* thing that moved it reports **the HEADING LINE
    changed and nothing else did** with the new seal line to paste, instead of
-   *REWRITTEN … revert it* -- which was the right sentence for a sweep and the
+   *REWRITTEN ... revert it* -- which was the right sentence for a sweep and the
    wrong one for the one edit this checklist requires.
 4. **[Item 9](#9-the-version-is-derived-and-000-is-refused): create the tag**, on
    the commit the gate was run at plus the stamp.
@@ -555,7 +555,7 @@ reviewed pairs plus `ReVerificationIndexTests`' result.
 
 ⚠️ **THE ICON IS THE CHOSEN ONE AND THIS IS THE PRE-CUT CHECK FOR IT.** *Added
 2026-09-15; the placeholder was replaced 2026-09-16.* **Corrected 2026-09-16
-(previously "THE ICON IS A PLACEHOLDER … `assets/BrowserAI.ico` is candidate 1
+(previously "THE ICON IS A PLACEHOLDER ... `assets/BrowserAI.ico` is candidate 1
 of the ten drawn that day").** [`assets/BrowserAI.ico`](assets/BrowserAI.ico) is
 **candidate 3** -- a globe with a reading eye -- chosen by the maintainer on
 2026-09-16 (Q196), and it is wired into both executables, the Setup stub, the
@@ -631,12 +631,12 @@ and the revert habit had already failed once -- it reached `HEAD` in a `git add
 **This item therefore has nothing left to do about that file**, and the window
 the old rule needed protecting is closed rather than narrowed: with the section
 committed, a RID restore leaves the lock file **byte-identical** (measured
-2026-09-16 -- SHA-256 `fab160c4…` either side of a RID restore of both
+2026-09-16 -- SHA-256 `fab160c4...` either side of a RID restore of both
 executables), so a publish no longer produces a diff for anybody to remember to
 revert. ⚠️ **THERE IS ONE STATE NOW, AND IT IS BY CONSTRUCTION -- *corrected 2026-09-17
 (previously "**What it does instead is show that file modified after every
 [item 8](#8-run-everything) run**, because `dotnet test` restores the solution
-without a RID and that writes the other of the file's two states (`7f30ec57…`).
+without a RID and that writes the other of the file's two states (`7f30ec57...`).
 **Nothing needs doing about it here:** step 5's re-pack restores with the RID and
 leaves the tree clean before the release commit is written")*.**
 [`src/BrowserAI.Core/BrowserAI.Core.csproj`](src/BrowserAI.Core/BrowserAI.Core.csproj)
@@ -644,11 +644,11 @@ declares `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` from 2026-09-17 -- the
 way out that [Testing](TESTING.md#a-publish-rewrites-a-lock-file-and-the-diff-is-committed-rather-than-reverted)
 had written down and deliberately not taken -- so **every** restore shape resolves
 the same set and writes the same bytes. Measured the day it went in, five reads,
-all `fab160c4…`: `dotnet restore --force-evaluate` over the solution, a
+all `fab160c4...`: `dotnet restore --force-evaluate` over the solution, a
 `dotnet publish -c Release -r win-x64 --self-contained`, a plain `dotnet restore`,
 `dotnet restore src/BrowserAI/BrowserAI.csproj -r win-x64 --force-evaluate`, and
 `dotnet restore BrowserAI.slnx --force-evaluate` -- the last two being exactly the
-pair that used to disagree. `7f30ec57…` is no longer reachable. **So neither a
+pair that used to disagree. `7f30ec57...` is no longer reachable. **So neither a
 publish nor an [item 8](#8-run-everything) run leaves that file modified**, and
 this item has nothing to do about it in either direction. What must not happen,
 before this decision and after it, is a `git add -A` taken on trust.
@@ -708,8 +708,8 @@ before this and nobody had re-read the number:*
 - **The suite ran from PowerShell *and* from Git Bash, and both were green.**
   Added 2026-08-20, when CI was removed and this checklist became the only place
   the suite is run. **It is not a preference and not redundancy.** The drive
-  letter's case is inherited from the shell that started the test host -- `C:\…`
-  from PowerShell, `c:\…` from Git Bash -- and a run from one shell alone bakes in
+  letter's case is inherited from the shell that started the test host -- `C:\...`
+  from PowerShell, `c:\...` from Git Bash -- and a run from one shell alone bakes in
   whichever spelling happens to agree. That is not hypothetical: the same commit
   was 484 passed from PowerShell and 484 with **two failures** from Git Bash
   ([kb](kb/windows/detection.md#windows-re-spells-a-paths-drive-letter-a-process-never-re-spells-its-own)),
@@ -756,8 +756,8 @@ before this and nobody had re-read the number:*
   touched**, and around thirty arms that drive the published binary refuse
   together rather than failing on anything about the code.
   **Measured 2026-09-22 on this release's pre-flight run: 47 reds**, every one
-  reading *the published binary at '…\BrowserAI.Server.exe' is older than 1
-  source file(s) … build\payload\package-lock.json*. The two commands are the
+  reading *the published binary at '...\BrowserAI.Server.exe' is older than 1
+  source file(s) ... build\payload\package-lock.json*. The two commands are the
   ones that refusal names -- `dotnet publish src/BrowserAI/BrowserAI.csproj -c
   Release -r win-x64 --self-contained` and the same shape over
   `src/BrowserAI.App/BrowserAI.App.csproj` -- and
@@ -783,7 +783,7 @@ before this and nobody had re-read the number:*
   run fails. Clear that key; it is one the suite wrote.
 
   ⚠️ *Corrected 2026-09-16 (previously "refuses to run at all when an
-  Add/Remove entry for the pack id already exists … Uninstall it first, or cut
+  Add/Remove entry for the pack id already exists ... Uninstall it first, or cut
   the release from a machine that does not have one").* **That instruction was
   false from the day the test id landed** and asked a maintainer to uninstall a
   working product for no reason. The capability judges `BrowserAI.app.test`,
@@ -815,7 +815,7 @@ before this and nobody had re-read the number:*
 
   ```powershell
   $root = (Get-Location).Path
-  $root = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)   # C:\… -- forced
+  $root = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)   # C:\... -- forced
   $log  = ".work\suite\release-ps-$(Get-Date -Format yyyyMMdd-HHmmss).log"
   $run  = "`$env:BROWSERAI_RELEASE_RUN='1'; `$env:BROWSERAI_DRIVE_CASE='upper';" +
           " dotnet test '$root\BrowserAI.slnx' 2>&1 | Tee-Object -LiteralPath '$log';" +
@@ -825,8 +825,8 @@ before this and nobody had re-read the number:*
   ```
 
   ```bash
-  root=$(cygpath -m "$PWD")                                              # C:/…
-  root="$(printf %s "${root:0:1}" | tr 'A-Z' 'a-z')${root:1}"            # c:/… -- forced
+  root=$(cygpath -m "$PWD")                                              # C:/...
+  root="$(printf %s "${root:0:1}" | tr 'A-Z' 'a-z')${root:1}"            # c:/... -- forced
   log=.work/suite/release-bash-$(date +%Y%m%d-%H%M%S).log
   nohup bash -c "BROWSERAI_RELEASE_RUN=1 BROWSERAI_DRIVE_CASE=lower dotnet test '$root/BrowserAI.slnx' 2>&1 | tee $log
                  cat .work/suite-coverage.txt >> $log" >/dev/null 2>&1 </dev/null &
@@ -834,7 +834,7 @@ before this and nobody had re-read the number:*
 
   ⚠️ ***Corrected 2026-08-30 (previously a PowerShell block reading `$log =
   ".work\suite\release-$(Get-Date -Format yyyyMMdd-HHmmss).log"` then
-  `Start-Process pwsh … -WorkingDirectory $PWD -ArgumentList '-NoProfile',
+  `Start-Process pwsh ... -WorkingDirectory $PWD -ArgumentList '-NoProfile',
   '-Command', "`$env:BROWSERAI_RELEASE_RUN = '1'; dotnet test 2>&1 | Tee-Object
   -LiteralPath '$log'"`, and a bash block reading `nohup bash -c
   "BROWSERAI_RELEASE_RUN=1 dotnet test 2>&1 | tee $log" >/dev/null 2>&1
@@ -984,7 +984,7 @@ this item in form only.
 the command just wrote is a released section from that moment on, and
 `AppendOnlyRecordTests.EveryDatedRecordIsSealedAndNothingSealedHasVanished`
 fails until it is registered -- by design, so the newest release notes are not the
-one thing nothing protects. Add a `new("CHANGELOG.md#<version>", …)` line to
+one thing nothing protects. Add a `new("CHANGELOG.md#<version>", ...)` line to
 `AppendOnlyRecordTests.Sealed`; the sibling test's failure message prints the
 character count and both digests to use. See
 [the release gate](TESTING.md#the-dated-records-are-append-only).
@@ -998,7 +998,7 @@ sealed, that is the only edit there is. Split them and the gate is red in
 between, on a record nobody rewrote. The failure message tells the two apart
 since 2026-09-16: when the heading line is the only thing that moved it says
 **the HEADING LINE changed and nothing else did**, with the seal line to paste;
-a body edit still says *REWRITTEN … revert it*.
+a body edit still says *REWRITTEN ... revert it*.
 `AppendOnlyRecordTests.ADateSetAtTheCutIsReportedAsAHeadingRatherThanAsARewrite`
 holds both, over a doctored copy of the real 1.0.0 section.
 
@@ -1520,7 +1520,7 @@ a real Velopack client pointed at a feed holding **only** those two files -- wit
 ⚠️ **`v1.1.0` WAS TRIMMED TO THIS SET AFTER THE FACT, AND THAT WAS ITS OWN
 DECISION** -- *corrected 2026-09-23 the same day (previously "NOTHING HAS BEEN
 REMOVED FROM THE PUBLISHED `v1.1.0` RELEASE. It carries seven assets and still
-does … it has not been taken")*. Dropping an asset from a release that is already
+does ... it has not been taken")*. Dropping an asset from a release that is already
 standing is a separate decision about something people may already have links to,
 and the maintainer took it: *"Q234 b"*. The four deleted had a download counter
 of **0** apiece. **`v1.0.0` was deliberately left alone** and still carries all

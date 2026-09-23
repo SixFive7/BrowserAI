@@ -415,8 +415,8 @@ internal sealed class SessionToolTests
 
         // ⚠️ The scope is what makes ~100 interleaved processes readable, and it
         // is rendered by whatever sink carries it: the deleted
-        // `FileLoggerProvider` wrote it as `{session=…}`, and the console
-        // formatter writes `=> session=…` once `IncludeScopes` is on. What is
+        // `FileLoggerProvider` wrote it as `{session=...}`, and the console
+        // formatter writes `=> session=...` once `IncludeScopes` is on. What is
         // asserted is the scope, not either spelling of it.
         await Assert.That(run.SessionLog).Contains("session=");
         await Assert.That(run.SessionLog).Contains($"session={alpha}");

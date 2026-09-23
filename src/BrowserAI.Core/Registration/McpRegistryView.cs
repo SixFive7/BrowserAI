@@ -254,7 +254,7 @@ internal static class McpRegistryView
     /// <para>
     /// <b>Environment references are expanded before the comparison, and only
     /// for it.</b> A project-scope entry is written in the portable form
-    /// <c>${LOCALAPPDATA}/BrowserAI.app/current/…</c> precisely so that it is
+    /// <c>${LOCALAPPDATA}/BrowserAI.app/current/...</c> precisely so that it is
     /// right on a teammate's machine as well as this one; unexpanded, it would
     /// classify as foreign on the very machine that wrote it. What is stored is
     /// never rewritten -- the expansion exists to answer a question, not to

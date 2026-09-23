@@ -97,7 +97,7 @@ directory somebody can weigh, and it is carried by
 numbers.
 
 > ⚠️ **Corrected 2026-08-17 (previously "**BrowserAI's own binary is 9.76 MiB** --
-> 10,233,856 bytes … measured by [the 2026-08-15 spike](../mcp/sdk.md#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation)").**
+> 10,233,856 bytes ... measured by [the 2026-08-15 spike](../mcp/sdk.md#driving-the-whole-sdk-aot-passthrough-filters-and-cancellation)").**
 > The spike's measurement stays true of the spike and is still recorded there;
 > what was wrong was carrying it forward as the product's size. It had already
 > been contradicted in this repository without this line being swept -- the
@@ -222,7 +222,7 @@ and is now ~5 MiB rather than ~15 MiB** -- the arithmetic peak moved 625 →
 635 MiB with the 1237 → 1244 roll, and two more rolls of that size would cross
 it. **The constant is left alone here**, because moving a shipped refusal
 threshold is a decision rather than a re-measurement; it is raised where
-decisions are raised. … Settle it by sampling free space every 250 ms across the
+decisions are raised. ... Settle it by sampling free space every 250 ms across the
 run already timed twice at 10.81 s and 10.60 s.")* The maintainer removed the
 check outright on 2026-09-17, in his words: *"Remove the free space check.
 Checking for free space is out of scope and makes our project more complicated.
@@ -242,8 +242,8 @@ the peak is arithmetic that nothing acts on.
 > 1.64.0-alpha-2026-09-14 · @playwright/mcp 0.0.81 (previously "**Settled
 > 2026-08-15 and re-measured 2026-08-16 by exact `content-length` from the CDN:
 > 203.8 MB down.** `chrome-win64.zip` 202,283,919 B + `ffmpeg-win64.zip`
-> 1,411,741 B + `winldd-win64.zip` 128,684 B = **203,824,344 B** … at chromium
-> **1237** / 152.0.7977.8 … **2 m 43 s at 10 Mbps, 27 m 11 s at 1 Mbps**")`.
+> 1,411,741 B + `winldd-win64.zip` 128,684 B = **203,824,344 B** ... at chromium
+> **1237** / 152.0.7977.8 ... **2 m 43 s at 10 Mbps, 27 m 11 s at 1 Mbps**")`.
 > **Chromium's archive is the only component that moved**: 202,283,919 →
 > 205,733,764 B, `+3,449,845`. `ffmpeg-win64.zip` and `winldd-win64.zip` are
 > byte-identical at the same revisions, which is what a revision that did not
@@ -273,7 +273,7 @@ an empty root that came back identical to each other as well. The directory is
 archive is keyed on `browserVersion`, which did not move.`
 
 ⚠️ `Corrected 2026-09-16 @ chromium 1244 (previously "**On disk it is
-430.48 MiB** … **451,389,780 B across 318 files** -- `chromium-1237`
+430.48 MiB** ... **451,389,780 B across 318 files** -- `chromium-1237`
 447,613,809 B (426.88 MiB)")`. **On disk it is 437.24 MiB**, measured twice by
 provisioning into an empty root and summing the files, **byte-identical across
 both runs**, and again at 1245 on 2026-09-17: **458,475,923 B across 316 files**
@@ -290,7 +290,7 @@ tree; the two shared components are unchanged to the byte and the file.
 > is the one component of them that another machine will not reproduce; compare
 > the three component subtrees, never the root total.
 
-> ⚠️ **Corrected 2026-08-16 @ chromium rev 1237 (previously "433 MiB on disk …
+> ⚠️ **Corrected 2026-08-16 @ chromium rev 1237 (previously "433 MiB on disk ...
 > chromium 428 MiB + ffmpeg 4 + winldd 1").** **On disk it was 430.48 MiB**, and
 > the figure before that was three rounded components added up. Measured twice by
 > provisioning into an empty root and summing the files: **451,389,780 B across
@@ -312,8 +312,8 @@ tree; the two shared components are unchanged to the byte and the file.
 **End to end it takes 11.28 s and 11.31 s on a ~300 Mbps link**, measured twice
 on 2026-09-21 at chromium **1246** into an empty browsers root, exit 0 both
 times. *Corrected 2026-09-21 @ chromium 1246 (previously "**11.29 s and 12.51 s**
-… measured twice on 2026-09-17 at chromium **1245**"); corrected 2026-09-17 @
-chromium 1245 (previously "**10.81 s and 10.60 s** … measured twice on
+... measured twice on 2026-09-17 at chromium **1245**"); corrected 2026-09-17 @
+chromium 1245 (previously "**10.81 s and 10.60 s** ... measured twice on
 2026-09-16")* -- and **the bytes did not move at all**, so
 this is the link and the machine on the day rather than anything about the
 revision, which is exactly what `[MACHINE]` on this figure means. Re-establish by
@@ -323,7 +323,7 @@ against a fresh directory, with `PLAYWRIGHT_BROWSERS_PATH` pointed at it --
 is the rig. `[FLOATS]` `[MACHINE]`
 
 > ⚠️ `Corrected 2026-09-16 @ chromium 1244 (previously "**End to end it takes
-> 12.6 s and 12.0 s on a ~300 Mbps link**, measured twice on 2026-08-16 …
+> 12.6 s and 12.0 s on a ~300 Mbps link**, measured twice on 2026-08-16 ...
 > Chromium's download and extraction together take **0.3 s → 11.7 s**, `ffmpeg`
 > a further **0.5 s** and `winldd` **0.4 s**")`. **Faster on a larger download**,
 > which is the link on the day and not a property of the revision -- this is a
@@ -340,13 +340,12 @@ is the rig. `[FLOATS]` `[MACHINE]`
 > instrument cannot produce.
 
 > ⚠️ **Corrected 2026-08-16 (previously "20.3 s on a 300 Mbps link, measured
-> 2026-08-14 … an upper bound rather than a measurement").** It was an upper
+> 2026-08-14 ... an upper bound rather than a measurement").** It was an upper
 > bound because that run also fetched `chrome-headless-shell`, which is
 > [no longer provisioned](../../DECISIONS.md#processes-browsers-and-session-modes). The two runs above
 > are of what BrowserAI actually downloads, so the figure is now a measurement of
 > the thing rather than of a superset of it.
 
-<a id="firefox-measured-the-same-way--2026-08-19"></a>
 ### Firefox, measured the same way -- 2026-08-19
 
 **Firefox provisioning is 130,934,199 B down = 130.9 MB, and 365,579,913 B =
@@ -397,7 +396,7 @@ rig in the same session, and one of them came back identical.
 ⚠️ `Corrected 2026-09-16 @ firefox 1544 / 155.0 · playwright-core
 1.64.0-alpha-2026-09-14 · @playwright/mcp 0.0.81 (previously "**Firefox
 provisioning is 127,247,129 B down = 127.2 MB, and 356,674,059 B = 340.15 MiB on
-disk across 71 files** … at Firefox rev **1539** / 153.0", with
+disk across 71 files** ... at Firefox rev **1539** / 153.0", with
 `firefox-win64.zip` at 125,706,704 B and `firefox-1539` at 352,898,062 B across
 63 files, and `.links` at 95 B)`. **Firefox's archive is the only component that
 moved**: 125,706,704 → 127,961,896 B, `+2,255,192`; the two shared components
@@ -412,7 +411,7 @@ this repository's own path and not because anything upstream did.
 > *which* files left in either: the counts are recorded, the cause is not.
 
 ⚠️ **Corrected 2026-08-19 (previously "Firefox 153.0 (rev 1539) is 125,706,704 B
-down and 352,898,062 B -- 336.55 MiB -- on disk … BrowserAI creates no Firefox
+down and 352,898,062 B -- 336.55 MiB -- on disk ... BrowserAI creates no Firefox
 sessions").** Both halves needed work. The **numbers were the Firefox archive and
 the Firefox directory alone**, while Chromium's were stated for the whole
 provisioning run -- so the two were not comparable, and the smaller pair was the
@@ -430,7 +429,7 @@ a third run -- `ffmpeg-1011` and `winldd-1007` copied into an empty root **with
 their `INSTALLATION_COMPLETE` markers**, then `install-browser firefox`, which
 printed exactly one `Downloading` line -- and **that third run was NOT repeated
 on 2026-09-16**. `Corrected 2026-09-16 (previously "Firefox downloads
-125,706,704 B and nothing else -- 125.7 MB, not 127.2 … and left the root at the
+125,706,704 B and nothing else -- 125.7 MB, not 127.2 ... and left the root at the
 same 356,674,059 B")` -- the byte count moved with the archive; the *and nothing
 else* is carried forward unrepeated and says so here. So the family still has
 **two honest figures answering different questions** -- 129.5 MB is what a machine
@@ -458,28 +457,28 @@ are smaller, and a per-family bound would refuse nothing this one permits.")* --
 there is no such constant now; free space is out of scope by the maintainer's
 decision of 2026-09-17, and the figure above is a budget for a reader rather
 than a bound anything enforces. *`Corrected 2026-09-16 (previously "62.4%
-of the download … **1 m 42 s at 10 Mbps, 16 m 58 s at 1 Mbps** … would be
+of the download ... **1 m 42 s at 10 Mbps, 16 m 58 s at 1 Mbps** ... would be
 ~461 MiB")`, all four re-derived from the new measured pair.*
 
 **End to end it took 7.25 s and 6.80 s** on the same ~300 Mbps link, exit 0 both
 times, against Chromium's 11.28 s and 11.31 s. `[FLOATS]` `[MACHINE]`
 
 > ⚠️ `Corrected 2026-09-21 @ firefox 1549 (previously "**End to end it took
-> 6.91 s and 6.95 s** … against Chromium's 11.29 s and 12.51 s", measured
+> 6.91 s and 6.95 s** ... against Chromium's 11.29 s and 12.51 s", measured
 > 2026-09-17 at rev 1548)`. **The download really did grow this time** -- 1.4 MB
 > more on the wire -- and the elapsed pair still straddles the old one, which is
 > the `[MACHINE]` tag earning its place: at these sizes the link's variance is
 > larger than a megabyte of payload.
 
 > ⚠️ `Corrected 2026-09-17 @ firefox 1548 (previously "**End to end it took
-> 6.87 s and 6.75 s** … against Chromium's 10.81 s and 10.60 s", measured
+> 6.87 s and 6.75 s** ... against Chromium's 10.81 s and 10.60 s", measured
 > 2026-09-16 at rev 1544)`. Both families are slower in this session and both
 > downloads are within a kilobyte of what they were, so the four seconds' spread
 > across the two sessions is the link and the machine rather than the revisions --
 > which is what `[MACHINE]` is here to say.
 
 > ⚠️ `Corrected 2026-09-16 @ firefox 1544 (previously "**End to end it took
-> 7.30 s and 6.60 s** … Firefox's download and extraction together **1.1 s →
+> 7.30 s and 6.60 s** ... Firefox's download and extraction together **1.1 s →
 > 5.9 s** and **0.3 s → 5.2 s**, `ffmpeg` a further 0.4-0.5 s, `winldd`
 > 0.4 s")`. The per-phase boundaries are dropped for
 > [the same instrument reason as Chromium's](#first-run-provisioning): Node
@@ -496,7 +495,6 @@ browser version come from the payload's own `browsers.json`; never type one.
 [`docs/probes/2026-09-16-provisioning`](../../docs/probes/2026-09-16-provisioning/README.md)
 is the rig for both halves.
 
-<a id="one-install-browser-ffmpeg-rebuilds-both-shared-components--2026-08-19"></a>
 ### One `install-browser ffmpeg` rebuilds both shared components -- 2026-08-19
 
 **`install-browser ffmpeg` downloads `ffmpeg` and `winldd` together, and
@@ -506,8 +504,8 @@ this repository's assembled payload:
 
 | Run | Root before | What it printed | Root after |
 |---|---|---|---|
-| 1 | empty | `Downloading FFmpeg … 1011`, then `Downloading Winldd … 1007` | `ffmpeg-1011` and `winldd-1007`, each with its own `INSTALLATION_COMPLETE` |
-| 2 | `winldd-1007` deleted, `ffmpeg-1011` complete | `Downloading Winldd … 1007` only | both complete again, `ffmpeg-1011` untouched |
+| 1 | empty | `Downloading FFmpeg ... 1011`, then `Downloading Winldd ... 1007` | `ffmpeg-1011` and `winldd-1007`, each with its own `INSTALLATION_COMPLETE` |
+| 2 | `winldd-1007` deleted, `ffmpeg-1011` complete | `Downloading Winldd ... 1007` only | both complete again, `ffmpeg-1011` untouched |
 
 **This is why `browserai_reinstall_browser`'s `shared` target passes one name and
 still checks two markers.** Asking for both by name would re-download whatever
@@ -762,8 +760,8 @@ accumulate there too.
 measurement.** `--no-progress` sets `PLAYWRIGHT_DOWNLOAD_NO_PROGRESS=1`, which
 makes `downloadFile`'s `reportProgress` false, so the parent's
 `getBasicDownloadProgress()` never prints a percentage line: the installer's
-whole stdout for a chromium install is **six lines**, one `Downloading …` and one
-`… downloaded to …` per archive. And `@playwright/mcp` emits no MCP progress
+whole stdout for a chromium install is **six lines**, one `Downloading ...` and one
+`... downloaded to ...` per archive. And `@playwright/mcp` emits no MCP progress
 notifications at all ([kb](../mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames)).
 
 **Re-establish** by sampling `PLAYWRIGHT_BROWSERS_PATH` and the temp directory
@@ -883,7 +881,7 @@ it is stuck, and should be read as a failure rather than as a machine having a
 bad day. `[MACHINE]` for the times and counts; `[FLOATS]` for the ratio and the
 headroom, both of which move with a browser revision.
 
-> ⚠️ **Corrected 2026-08-18 (previously "against a 180 s default patience …
+> ⚠️ **Corrected 2026-08-18 (previously "against a 180 s default patience ...
 > the harness waits the same 180 s").** *The measured times above are unchanged
 > and were not re-run; what changed is the harness they were measured against.*
 > `BrowserContainmentTests.ReportPatience` is now `TestDefaults.BrowserHang`,
@@ -1007,7 +1005,7 @@ against a real published `BrowserAI.Server.exe`, **twice per path per family --
 eight runs, and the first Firefox reading Path B has ever had**. *Corrected
 2026-09-22 (previously "**Path A costs 375 ms and 379 ms on Chromium and 389 ms
 on Firefox, and loses only `sessionStorage`.** Re-measured 2026-09-17 at chromium
-**1245** … twice on Chromium and, **for the first time, once on Firefox** …
+**1245** ... twice on Chromium and, **for the first time, once on Firefox** ...
 **the load-bearing half held exactly, on both families**", whose durability table
 described **Path A only** and was not labelled as doing so).*
 
@@ -1039,7 +1037,7 @@ else. Same probe, same `WRITE`, same `READ`, same origin, seconds apart.
 >
 > **IT REPRODUCED ACROSS TWO INDEPENDENT SITTINGS.** An earlier sitting the same
 > evening was **discarded as invalid** -- its driver handed all eight runs one
-> literal session path, `…\resume$tag`, because a heredoc ate a level of
+> literal session path, `...\resume$tag`, because a heredoc ate a level of
 > backslash escaping -- and is recorded here rather than deleted because its
 > durability column is identical to the valid one, store for store, in all four
 > Path B runs. Eight Path B runs, two sittings, one result.
@@ -1058,7 +1056,7 @@ else. Same probe, same `WRITE`, same `READ`, same origin, seconds apart.
 > returns, and it reads: *"the browser server for this session had died and was
 > relaunched. The session's directory, profile and log are unchanged, **so
 > cookies and stored state are still there** -- but nothing that lived in the old
-> process survived it…"*. The measurement says a cookie may not be. **No product
+> process survived it..."*. The measurement says a cookie may not be. **No product
 > change is taken here** -- the wording of a model-facing string is the
 > maintainer's -- and it is [an open hazard row](../../HAZARDS.md#hazard-index)
 > rather than a sentence quietly edited.
@@ -1150,7 +1148,7 @@ machine.
 
 > ⚠️ `Corrected 2026-09-17 @ chromium 1245 · firefox 1548 · playwright-core
 > 1.64.0-alpha-2026-09-17 (previously "**Resume costs 336 ms and 367 ms, and
-> loses only `sessionStorage`.** Re-measured 2026-09-16 at chromium **1244** …
+> loses only `sessionStorage`.** Re-measured 2026-09-16 at chromium **1244** ...
 > under `playwright-core` 1.64.0-alpha-2026-09-14")`. **The cost moved 336 and
 > 367 → 375 and 379 ms, about 9%, and the durability claim is unchanged to the
 > store.** ⭐ **Chromium cannot be the reason it moved**, and that is a control
@@ -1226,7 +1224,7 @@ machine.
 >
 > | | 2026-09-17, before `5d0d04f` | 2026-09-17, after -- two runs |
 > |---|---|---|
-> | `browserai_resume` after the kill | **7.68 ms**, *"already open in this BrowserAI; nothing was changed"* | **345.77 ms** and **330.92 ms**, carrying `SessionManager.ChildWasRelaunched` verbatim -- *"the browser server for this session had died and was relaunched … no page is open, there are no tabs"* |
+> | `browserai_resume` after the kill | **7.68 ms**, *"already open in this BrowserAI; nothing was changed"* | **345.77 ms** and **330.92 ms**, carrying `SessionManager.ChildWasRelaunched` verbatim -- *"the browser server for this session had died and was relaunched ... no page is open, there are no tabs"* |
 > | the next `browser_navigate` | **never returned in 900,000 ms** | **444 ms** and **426 ms**, `isError` false, a real page and a snapshot |
 > | browsers under the browsers root | 8, then 0 after the kill, then 0 for fifteen minutes | 8, then **0** after the kill, then **8** again -- a fresh tree under the replacement child |
 > | node children of the server | 2, then 0, then 0 | 2, then **0**, then **1** at the five-second poll |
@@ -1258,7 +1256,7 @@ the transcript and the process-log window are
 | node children killed, by pid against a path BrowserAI owns | 2 killed; **all 8 browser processes went with them**, measured either side |
 | `browserai_resume` in the same server | **7.68 ms**, *"This session is already open in this BrowserAI; nothing was changed"* |
 | the next `browser_navigate` | **never returned in 900,000 ms** |
-| a second client's `browserai_resume`, 31 s in | **refused in 15.3 ms**: *"is in use by PID 61684 … Nothing was changed. BrowserAI does not wait for a lock"* |
+| a second client's `browserai_resume`, 31 s in | **refused in 15.3 ms**: *"is in use by PID 61684 ... Nothing was changed. BrowserAI does not wait for a lock"* |
 | the first server, across the whole 15 minutes | alive, 0 node children, 0 browsers |
 
 > **The 7.68 ms no-op corroborates the 2026-09-16 reading of 7.8 ms** and the
@@ -1388,8 +1386,8 @@ SAME EVENING, in the row 38 resume runs, and the identification is stated as
 INFERRED rather than measured.** A Firefox `browser_navigate` there returned
 after **180,023 ms** carrying:
 *`TimeoutError: async initializeServer: Timeout 180000ms exceeded.`* with a call
-log reading `<launching> …\firefox-1549\firefox\firefox.exe -no-remote
--headless -profile … -juggler-pipe about:blank`, then `<launched> pid=147320`,
+log reading `<launching> ...\firefox-1549\firefox\firefox.exe -no-remote
+-headless -profile ... -juggler-pipe about:blank`, then `<launched> pid=147320`,
 then `[pid=147320][err] *** You are running in headless mode.` -- **and nothing
 further**. So Firefox *started* and never finished `initializeServer`; the
 juggler handshake never completed. **180,000 ms is upstream's own
@@ -1409,7 +1407,7 @@ claim, not a more honest one.
 
 > ⚠️ **THE CHROMIUM CONTROL IS STRONGER THAN IT WAS: 1246 IS 1245 IS 1244.**
 > All three revisions hold the same 308 files at the same 308 sizes and
-> `chrome.exe` is SHA-256 `e3390ab4…` in every one
+> `chrome.exe` is SHA-256 `e3390ab4...` in every one
 > ([the licensing read](../packaging/dependencies.md#third-party-payload-as-shipped)
 > re-established that at 1246 on the same day). So Chromium's own column between
 > 2026-09-17 and 2026-09-22 is **entirely the instrument**, and it says how much
@@ -1444,8 +1442,8 @@ claim, not a more honest one.
 
 > ⚠️ `Corrected 2026-09-17 @ chromium 1245 · firefox 1548 · playwright-core
 > 1.64.0-alpha-2026-09-17 (previously "**1.19× RAM, 4.6× first navigate, 0.77×
-> idle CPU, 2.76× profile disk.** Measured 2026-09-17 … **three rounds per
-> family** … at chromium **1244** / 154.0.8037.0 and firefox **1544** / 155.0
+> idle CPU, 2.76× profile disk.** Measured 2026-09-17 ... **three rounds per
+> family** ... at chromium **1244** / 154.0.8037.0 and firefox **1544** / 155.0
 > under `playwright-core` 1.64.0-alpha-2026-09-14", with Chromium 487.5 · 494.7 ·
 > 507.6 MB, 413 · 417 · 1,297 ms, 39 · 57 · 66 ms, 312 · 813 · 843 ms,
 > 13,207,311 B and 8 · 9 · 10 against Firefox 587.0 · 589.8 · 590.2 MB,
@@ -1467,7 +1465,7 @@ claim, not a more honest one.
 ⚠️ **This run carries a control the morning's could not, and it is the reason
 the paragraph above can say which movements are real: Chromium did not change.**
 `chromium-1245` and `chromium-1244` hold the **same 308 files at the same 308
-sizes** and `chrome.exe` is SHA-256 `e3390ab4…` in both, because the archive is
+sizes** and `chrome.exe` is SHA-256 `e3390ab4...` in both, because the archive is
 keyed on `browserVersion` and 154.0.8037.0 did not move with the revision
 ([row 21](../re-verification.md), and again in
 [the licensing read](../packaging/dependencies.md#third-party-payload-as-shipped)).
@@ -1599,7 +1597,7 @@ measurements above stand, and what they no longer do is carry a choice.
 
 **To re-establish:** open one session per family through the product, drive the
 same navigation in each, and compare resident set, wall time to first paint and
-profile-directory size on disk. *Corrected 2026-09-18 (previously "… compare resident
+profile-directory size on disk. *Corrected 2026-09-18 (previously "... compare resident
 set, wall time to first paint, idle CPU over a fixed window with no page
 activity, and profile-directory size on disk")* -- **three axes, not four.** The
 rig still takes an idle-CPU reading and a re-run will print one; it is not a

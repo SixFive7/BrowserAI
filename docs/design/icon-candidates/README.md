@@ -14,7 +14,7 @@ can revisit.
 | File | What it is |
 |---|---|
 | [`NOTES.md`](NOTES.md) | The session's own record: what each candidate is, how it reads at 16 px, the renderer, and a per-candidate licensing line |
-| [`svg/candidate-01.svg`](svg/candidate-01.svg) … [`svg/candidate-10.svg`](svg/candidate-10.svg) | The ten masters, 256×256 |
+| [`svg/candidate-01.svg`](svg/candidate-01.svg) ... [`svg/candidate-10.svg`](svg/candidate-10.svg) | The ten masters, 256×256 |
 | [`contact-sheet.png`](contact-sheet.png), [`contact-sheet-dark.png`](contact-sheet-dark.png) | All ten at 256/48/32/16, light and dark -- Windows draws the taskbar icon over both |
 | [`render.mjs`](render.mjs) | Rasterises every candidate at every size through headless Chromium |
 | [`Make-Ico.ps1`](Make-Ico.ps1) | Packs one candidate's PNGs into a multi-size `.ico`; it is what produced [`assets/BrowserAI.ico`](../../../assets/BrowserAI.ico) |

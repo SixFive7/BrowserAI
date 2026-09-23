@@ -638,7 +638,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // The tool name and the caller's `why`, and nothing else -- no
         // arguments, no answer. ⚠️ *Corrected 2026-08-26 (previously "Recorded
         // from the CALLER's own arguments, before the artifact plan rewrites
-        // `filename` … and the artifact index beside it says where the file
+        // `filename` ... and the artifact index beside it says where the file
         // landed").* Nothing rewrites `filename` and there is no index: the
         // arguments reach the child as the caller spelled them, so there is no
         // second version of them for a record to have to choose between.
@@ -970,7 +970,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </para>
     /// <para>
     /// ⚠️ ***Corrected 2026-08-26 (previously "It does not close the bypass on
-    /// its own, and the caller no longer relies on it to … What makes that
+    /// its own, and the caller no longer relies on it to ... What makes that
     /// harmless is that the rewrite branch now runs `Complete` like every other
     /// answered call: a rewritten answer is still an answer that may have
     /// published a pointer").*** <b>There is no <c>Complete</c>.</b> It went with
@@ -1334,7 +1334,7 @@ internal static partial class ProxyLog
     /// </para>
     /// <para>
     /// <b>Corrected 2026-08-18 (previously "refused by the <c>(tool, mode)</c>
-    /// decision … the record that the security boundary the charter traded away
+    /// decision ... the record that the security boundary the charter traded away
     /// for one process is actually being enforced").</b> There is no such
     /// boundary and there never was one here: the caller owns the session
     /// directory and reads the profile inside it as the same user. Information is

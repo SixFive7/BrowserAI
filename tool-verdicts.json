@@ -50,7 +50,7 @@
     },
     "browser_annotate": {
       "verdict": "deny",
-      "why": "The reason is liveness rather than security: it opens the Playwright Dashboard and waits for a human to draw, it has no self-timeout — one measured call stood silent for a full 90 s and returned only when its window was closed — and the window it opens belongs to a SECOND, non-headless browser under a detached daemon that writes outside the session directory. There is no configuration in which it runs headless. An unattended run that called it would hang until it was killed. To see the page, use browser_snapshot for structure or browser_take_screenshot for pixels; both return immediately. If a human really is at the keyboard and has to mark something up, take a screenshot and have them annotate the file.",
+      "why": "The reason is liveness rather than security: it opens the Playwright Dashboard and waits for a human to draw, it has no self-timeout -- one measured call stood silent for a full 90 s and returned only when its window was closed -- and the window it opens belongs to a SECOND, non-headless browser under a detached daemon that writes outside the session directory. There is no configuration in which it runs headless. An unattended run that called it would hang until it was killed. To see the page, use browser_snapshot for structure or browser_take_screenshot for pixels; both return immediately. If a human really is at the keyboard and has to mark something up, take a screenshot and have them annotate the file.",
       "since": "2026-08-18"
     },
     "browser_handle_dialog": {

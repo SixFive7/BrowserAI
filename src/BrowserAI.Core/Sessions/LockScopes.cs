@@ -121,7 +121,7 @@ internal static class LockScopes
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 to sixty seconds (previously five, described as
-    /// "four orders of magnitude of headroom … exceeding it means something is
+    /// "four orders of magnitude of headroom ... exceeding it means something is
     /// wrong that a longer wait would not fix"). Both halves of that sentence
     /// were false, and the second one was printed at the caller.</b> The headroom
     /// is not against one section -- it is against the <b>queue of every process

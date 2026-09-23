@@ -16,10 +16,10 @@ namespace BrowserAI.Hosting;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-15 (previously "Step 19 swapped the <b>root</b>, not
-/// the class … what actually had to move is where <c>rootAppDir</c> comes from,
+/// the class ... what actually had to move is where <c>rootAppDir</c> comes from,
 /// and that is <see cref="Updates.InstallLocation"/> -- the locator when this
 /// process is an installed one, <c>%LocalAppData%\BrowserAI</c> when it is not
-/// … the two agree only while the install is at its default location, and
+/// ... the two agree only while the install is at its default location, and
 /// <c>Setup.exe --installto</c> makes them disagree silently, which would put
 /// the log and 768 MB of browsers somewhere the running binary is not").</b>
 /// That reasoning was sound and its conclusion was upside down. <b>The data

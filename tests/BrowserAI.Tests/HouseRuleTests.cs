@@ -884,7 +884,7 @@ internal sealed partial class HouseRuleTests
     /// session on the machine, to report the few that matched.
     /// <i>(Corrected 2026-08-26, previously "a strict parse of up to 250 log
     /// entries and all their arguments, opened through
-    /// <c>RenameWindow.WaitOut</c> … whose <c>browserai.json</c> is denied or
+    /// <c>RenameWindow.WaitOut</c> ... whose <c>browserai.json</c> is denied or
     /// held" -- the record is a database, there is no cap on entries and no
     /// argument is stored at all. The cost is smaller and the position of the
     /// filter is the same rule.)</i>
@@ -983,7 +983,7 @@ internal sealed partial class HouseRuleTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>W8, and the reason it needs a scan rather than a note.</b>
-    /// <c>SessionIndex.IsUnder</c>'s own remark says <i>"Do not re-derive it …
+    /// <c>SessionIndex.IsUnder</c>'s own remark says <i>"Do not re-derive it ...
     /// Two spellings of this predicate is the class of defect this repository
     /// keeps re-finding"</i> -- and <c>SessionManager.Beneath</c> was re-deriving
     /// the prefix three lines below a call into that very member, and had been
@@ -1162,8 +1162,8 @@ internal sealed partial class HouseRuleTests
         // ⚠️ AND THE SECOND SPELLING, BOTH DIRECTIONS. Since 2026-08-26 a caller
         // may take the whole-machine read at a stated depth -- the sweep does, so
         // that it opens no session's store -- and scope is what this gate is
-        // about. `Walk(under: null, …)` is the same scope and passes;
-        // `Walk(prefix, …)` is the regression at any depth and does not.
+        // about. `Walk(under: null, ...)` is the same scope and passes;
+        // `Walk(prefix, ...)` is the regression at any depth and does not.
         string[] atADepth =
         [
             "    private List<string> LiveSessions()",
@@ -1215,13 +1215,13 @@ internal sealed partial class HouseRuleTests
         // ⚠️ TWO SPELLINGS OF ONE READ, and the second arrived 2026-08-26 with
         // the sweep going probe-first. What this gate means is that the reader's
         // SCOPE is the whole machine; what it used to test was the single
-        // spelling that then existed. `Walk(under: null, …)` is the same scope at
+        // spelling that then existed. `Walk(under: null, ...)` is the same scope at
         // a shallower depth -- the sweep opens no session's store -- and reading
         // depth as scope would have made the honest fix indistinguishable from
         // the regression this exists to catch.
         return body.Contains(Walk + "()", StringComparison.Ordinal) || body.Contains(WholeMachine, StringComparison.Ordinal)
             ? []
-            : [$"{file}: '{member}' calls neither {Walk}() nor {WholeMachine}…), so a whole-machine reader has been scoped to a subtree"];
+            : [$"{file}: '{member}' calls neither {Walk}() nor {WholeMachine}...), so a whole-machine reader has been scoped to a subtree"];
     }
 
     /// <summary>
@@ -1239,7 +1239,7 @@ internal sealed partial class HouseRuleTests
     /// </summary>
     /// <remarks>
     /// <b>The <c>under: null</c> is the load-bearing half and the depth is not.</b>
-    /// Scope is what this gate is about: <c>Walk(prefix, …)</c> is the regression,
+    /// Scope is what this gate is about: <c>Walk(prefix, ...)</c> is the regression,
     /// whatever depth follows it.
     /// </remarks>
     private const string WholeMachine = "Wal" + "k(under: null";
@@ -1379,7 +1379,7 @@ internal sealed partial class HouseRuleTests
     /// </para>
     /// <para>
     /// <b>What it cannot see, stated rather than glossed:</b> a struct built any
-    /// way other than <c>= default(StartupInfo…)</c>. It finds the local from its
+    /// way other than <c>= default(StartupInfo...)</c>. It finds the local from its
     /// declaration and reads the assignments through that name, so an object
     /// initialiser or a <c>new()</c> would be invisible -- which is what the
     /// non-vacuity assertion at the end is for, and why it counts declarations
@@ -2547,49 +2547,59 @@ internal sealed partial class HouseRuleTests
         [.. FreeSpaceSpellings.Where(needle => code.Contains(needle, StringComparison.Ordinal))];
 
     /// <summary>
-    /// No em dash and no en dash in prose anybody maintains.
+    /// No text file in the tree carries a character a person does not type.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Q241, 2026-09-23, the maintainer's decision</b>, and the sweep that
-    /// answered it moved <b>8,979</b> characters in <b>291</b> files. An em dash
-    /// between words becomes a spaced double hyphen, an en dash in a range
-    /// becomes a hyphen, and a dash that is a whole table cell becomes a single
-    /// hyphen because there it is a token meaning <i>none</i> rather than
-    /// punctuation -- <c>HazardIndex</c> has always read <c>-</c> as that same
-    /// token.
+    /// <b>The character half of a repository directive.</b> The maintainer,
+    /// 2026-09-23, verbatim: <i>"Ensure there is no trace of AI both in wording
+    /// and character use."</i> The wording half needs a reader and says so in
+    /// <c>CLAUDE.md</c>; this is the half a build can hold. Five classes: an em
+    /// dash, an en dash, an ellipsis character, a curly quote of either kind and
+    /// a non-breaking space.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The heading rule is the trap, and it is why this arm exists rather
+    /// <b>It grew out of a dash-only scan on the same day</b>, after the first
+    /// sweep left 722 characters of the other three standing and the maintainer
+    /// answered that both halves were in scope. The sweep that answered it moved
+    /// <b>12,518</b> characters across <b>435</b> file-passes, and it reached the
+    /// sealed records under an explicit grant, quoted where the seal rule lives.
+    /// </para>
+    /// <para>
+    /// <b>The heading rule is the trap and is why this is a mechanism rather
     /// than a habit.</b> <see cref="MarkdownAnchor"/> DROPS an em dash and KEEPS
-    /// a hyphen, so <c>A</c>, a spaced em dash and <c>B</c> anchor as <c>a--b</c>
-    /// while the swept <c>A -- B</c> anchors as <c>a---b</c>. <i>(Written without
-    /// the character, because this file is inside the scan it describes -- the
-    /// same trap the marker-count scan sprang the same day.)</i> The sweep moved
-    /// <b>105</b> anchors and <b>223</b>
-    /// links with them. A dash re-entering a heading now would move an anchor
-    /// again, silently, and every link to it would break at once.
+    /// a hyphen, so <c>A</c>, a spaced em dash and <c>B</c> anchor as
+    /// <c>a--b</c> while the swept <c>A -- B</c> anchors as <c>a---b</c>. The two
+    /// sweeps moved <b>398</b> anchors between them. <i>(Written without the
+    /// character, because this file is inside the scan it describes.)</i>
     /// </para>
     /// <para>
-    /// <b>What is excluded, and every exclusion is a kind rather than a
-    /// convenience.</b> A dated record says what it said when it was written:
-    /// <c>docs/reviews/</c> bodies are sealed, <c>docs/ledger/</c> snapshots are
-    /// never edited after, <c>docs/evidence/</c> is cut from a source with a
-    /// digest, and a released <c>CHANGELOG</c> section is sealed by character
-    /// count. A probe under <c>docs/probes/</c> is a record of how a measurement
-    /// was taken, so its rig is excluded and its README -- which is prose -- is
-    /// not. <c>third-party/</c> is somebody else's source.
+    /// <b>The exclusions are verbatim captures whose bytes ARE the record, and
+    /// nothing else.</b> <c>docs/evidence/</c> is what a measurement was cut
+    /// from, with a digest beside it; <c>third-party/</c> is somebody else's
+    /// source; <c>LICENSE</c> and <c>THIRD-PARTY-NOTICES.txt</c> are terms nobody
+    /// here may re-spell. <b>A dated record is NOT excluded any more</b> --
+    /// <c>docs/reviews/</c>, <c>docs/ledger/</c> and every released
+    /// <c>CHANGELOG</c> section are swept, under the grant, and
+    /// <see cref="AppendOnlyRecordTests"/> carries it.
     /// </para>
     /// <para>
-    /// <b>And four occurrences survive on purpose, because they exist to contain
-    /// the character.</b> Two character literals in
-    /// <c>ChangelogTests.NotTyped</c>, which is the list this repository refuses
-    /// in a release body; one in <c>ModelSurfaceTests</c>, inside a quoted
-    /// <i>previously</i> clause about how many bytes the character costs; and one
-    /// <c>[Arguments]</c> worked example in <c>DocumentationLinkTests</c> that
-    /// pins the very rule above. The fifth is a quotation:
-    /// <c>kb/windows/detection.md</c> quotes a Chrome window title, and Chrome
-    /// writes it with an en dash. <b>It is named here so that it stays one.</b>
+    /// <b>And five occurrences survive because they exist to contain a
+    /// character.</b> Four character literals and one worked example: the list
+    /// <c>ChangelogTests.NotTyped</c> refuses in a release body, a probe that
+    /// measured what an em dash costs in bytes, a quoted <i>previously</i> clause
+    /// in <c>ModelSurfaceTests</c> about that same cost, and the
+    /// <c>[Arguments]</c> example in <c>DocumentationLinkTests</c> that pins the
+    /// heading rule above. The sixth is a quotation: Chrome titles its windows
+    /// with an en dash and <c>kb/windows/detection.md</c> is reporting two
+    /// windows it saw. <b>They are named so that they stay named.</b>
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>One thing the sweep cannot do the same way everywhere, learned by
+    /// breaking the build:</b> an XML comment may not contain a double hyphen, so
+    /// an em dash in a <c>.csproj</c> comment becomes a comma or a single hyphen.
+    /// MSBuild refuses the project otherwise, which is a red no test reaches
+    /// because nothing compiles.
     /// </para>
     /// <para>
     /// <b>Planted red 2026-09-23</b> against a doctored document.
@@ -2597,107 +2607,141 @@ internal sealed partial class HouseRuleTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task NoMaintainedProseCarriesAnEmDashOrAnEnDash()
+    public async Task NoTextFileCarriesACharacterAPersonDoesNotType()
     {
         var offences = new List<string>();
+        var scanned = 0;
 
-        foreach (var file in RepositoryLayout.LinkBearingFiles)
+        foreach (var file in RepositoryLayout.AllFiles)
         {
             var name = Relative(file).Replace('\\', '/');
 
-            if (!IsSwept(name))
+            if (!IsSwept(name) || IsBinary(file))
             {
                 continue;
             }
 
-            offences.AddRange(DashOffences(name, await File.ReadAllTextAsync(file.FullName)));
+            scanned++;
+            offences.AddRange(TypedCharacterOffences(name, await File.ReadAllTextAsync(file.FullName)));
         }
 
         await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
 
-        // ⚠️ THE POSITIVE CONTROL. A reader that stopped finding the characters
-        // would report the tree clean, which is what a clean tree looks like.
-        var em = EmDash.ToString();
-        var en = EnDash.ToString();
+        // ⚠️ THE POSITIVE CONTROL, one per class. A reader that stopped finding
+        // them would report the tree clean, which is what a clean tree looks
+        // like. The characters are built from their code points, because this
+        // file is inside the scan.
+        foreach (var character in new[] { EmDash, EnDash, CurlyOpenSingle, CurlyCloseSingle, CurlyOpenDouble, CurlyCloseDouble, Ellipsis, NoBreakSpace })
+        {
+            await Assert.That(TypedCharacterOffences("TESTING.md", $"a sentence {character} with one in it"))
+                .IsNotEmpty()
+                .Because($"U+{((int)character).ToString("X4", CultureInfo.InvariantCulture)} is one of the five classes and must be found");
+        }
 
-        await Assert.That(DashOffences("TESTING.md", $"a sentence {em} with one in it")).IsNotEmpty();
-        await Assert.That(DashOffences("TESTING.md", $"a range 155{en}243 ms")).IsNotEmpty();
-        await Assert.That(DashOffences("TESTING.md", "a sentence -- with two hyphens")).IsEmpty();
+        await Assert.That(TypedCharacterOffences("TESTING.md", "a sentence -- with two hyphens, \"straight quotes\", an apostrophe's and three full stops...")).IsEmpty();
 
-        // And the exclusions, in both directions. They are the CORPUS predicate
-        // rather than the reader, so they are asserted where they live: a dated
-        // record is never read at all, which is a different thing from being read
-        // and forgiven.
-        await Assert.That(IsSwept("docs/ledger/2026-09-22-release-session.md")).IsFalse();
-        await Assert.That(IsSwept("docs/reviews/2026-08-18-adversarial-locking.md")).IsFalse();
+        // The exclusions, which are the CORPUS predicate rather than the reader:
+        // a verbatim capture is never read at all, which is a different thing
+        // from being read and forgiven.
         await Assert.That(IsSwept("docs/evidence/2026-09-23-release-manifest/README.md")).IsFalse();
         await Assert.That(IsSwept("third-party/sqlite/sqlite3.c")).IsFalse();
+        await Assert.That(IsSwept("LICENSE")).IsFalse();
+        await Assert.That(IsSwept("THIRD-PARTY-NOTICES.txt")).IsFalse();
 
-        // A probe's RIG is a record of how a measurement was taken; its README is
-        // prose about it, and only the second is swept.
-        await Assert.That(IsSwept("docs/probes/2026-09-14-firstrun/observe.ps1")).IsFalse();
-        await Assert.That(IsSwept("docs/probes/2026-09-14-firstrun/README.md")).IsTrue();
+        // And a dated record is in scope now, which is the change of 2026-09-23.
+        await Assert.That(IsSwept("docs/ledger/2026-09-22-release-session.md")).IsTrue();
+        await Assert.That(IsSwept("docs/reviews/2026-08-18-adversarial-locking.md")).IsTrue();
+        await Assert.That(IsSwept("CHANGELOG.md")).IsTrue();
+        await Assert.That(IsSwept("docs/probes/2026-09-14-firstrun/observe.ps1")).IsTrue();
 
-        await Assert.That(IsSwept("kb/packaging/velopack.md")).IsTrue();
-        await Assert.That(IsSwept("src/BrowserAI/Program.cs")).IsTrue();
-        await Assert.That(IsSwept("build/New-Release.ps1")).IsTrue();
+        // The controls that exist to contain a character, in both directions.
+        await Assert.That(TypedCharacterOffences("tests/X.cs", $"var c = '{EmDash}';")).IsEmpty();
+        await Assert.That(TypedCharacterOffences("docs/probes/a/rig.js", $"const EMDASH = '{EmDash}';")).IsEmpty();
+        await Assert.That(TypedCharacterOffences("src/X.cs", $"var c = '{EmDash}';")).IsNotEmpty();
+        await Assert.That(TypedCharacterOffences("tests/X.cs", $"[Arguments(\"A {EmDash} B\", \"a--b\")]")).IsEmpty();
+        await Assert.That(TypedCharacterOffences("tests/X.cs", $"// a comment {EmDash} with one")).IsNotEmpty();
+        await Assert.That(TypedCharacterOffences("kb/windows/detection.md", $"titled *Untitled {EnDash} Google Chrome for Testing*, four")).IsEmpty();
+        await Assert.That(TypedCharacterOffences("kb/windows/processes.md", $"titled *Untitled {EnDash} Google Chrome for Testing*, four")).IsNotEmpty();
 
-        await Assert.That(DashOffences("tests/X.cs", $"var c = '{em}';")).IsEmpty();
-        await Assert.That(DashOffences("src/X.cs", $"var c = '{em}';")).IsNotEmpty();
-        await Assert.That(DashOffences("tests/X.cs", $"[Arguments(\"A {em} B\", \"a--b\")]")).IsEmpty();
-        await Assert.That(DashOffences("tests/X.cs", $"// a comment {em} with one")).IsNotEmpty();
-
-        // A released changelog section is sealed; what is above the newest one is not.
-        var changelog = $"# Changelog\n\na preamble {em} here\n\n## [Unreleased]\n\n- an entry {em} here\n\n## [1.0.0] - 2026-01-01\n\n- sealed {em} here\n";
-
-        await Assert.That(DashOffences("CHANGELOG.md", changelog).Count).IsEqualTo(2);
-
-        // Not vacuous over the tree: the corpus really is being read.
-        await Assert.That(RepositoryLayout.LinkBearingFiles.Count(file => IsSwept(Relative(file).Replace('\\', '/')))).IsGreaterThan(200);
+        // Not vacuous over the tree.
+        await Assert.That(scanned).IsGreaterThan(300);
     }
 
-    /// <summary>The two characters, built from their code points.</summary>
+    /// <summary>The characters, built from their code points.</summary>
     /// <remarks>
     /// <b>Built rather than typed, because this file is inside the scan below.</b>
     /// A rule that states itself with the character it forbids is the shape that
-    /// went red twice on the day this was written: once here, and once when a
-    /// sentence explaining that a section carries no floating-fact marker carried
-    /// the marker.
+    /// went red twice on the day this was written, and the Write path this
+    /// repository is edited through turns a <c>\uXXXX</c> escape into the real
+    /// character, so an escape is not a way out either.
     /// </remarks>
     private const char EmDash = (char)0x2014;
 
     /// <inheritdoc cref="EmDash"/>
     private const char EnDash = (char)0x2013;
 
-    /// <summary>Whether a path is in the set the 2026-09-23 sweep covers.</summary>
+    /// <inheritdoc cref="EmDash"/>
+    private const char CurlyOpenSingle = (char)0x2018;
+
+    /// <inheritdoc cref="EmDash"/>
+    private const char CurlyCloseSingle = (char)0x2019;
+
+    /// <inheritdoc cref="EmDash"/>
+    private const char CurlyOpenDouble = (char)0x201C;
+
+    /// <inheritdoc cref="EmDash"/>
+    private const char CurlyCloseDouble = (char)0x201D;
+
+    /// <inheritdoc cref="EmDash"/>
+    private const char Ellipsis = (char)0x2026;
+
+    /// <inheritdoc cref="EmDash"/>
+    private const char NoBreakSpace = (char)0x00A0;
+
+    /// <summary>What each class is, and what to write instead.</summary>
+    private static (char Character, string Instead)[] NotTyped { get; } =
+    [
+        (EmDash, "an em dash; write two hyphens, or a comma, or two sentences"),
+        (EnDash, "an en dash; write a hyphen, or the word 'to'"),
+        (CurlyOpenSingle, "a curly opening single quote; write a straight apostrophe"),
+        (CurlyCloseSingle, "a curly closing single quote; write a straight apostrophe"),
+        (CurlyOpenDouble, "a curly opening double quote; write a straight double quote"),
+        (CurlyCloseDouble, "a curly closing double quote; write a straight double quote"),
+        (Ellipsis, "an ellipsis character; write three full stops"),
+        (NoBreakSpace, "a non-breaking space; write an ordinary space"),
+    ];
+
+    /// <summary>Whether a file's characters are this repository's to choose.</summary>
+    /// <remarks>
+    /// The excluded set is verbatim captures whose bytes ARE the record, and
+    /// nothing else. A dated record is not one of them: it is swept, under the
+    /// grant quoted on <see cref="AppendOnlyRecordTests"/>.
+    /// </remarks>
     /// <param name="name">The repository-relative path, with forward slashes.</param>
-    /// <returns>Whether its prose is maintained rather than dated.</returns>
+    /// <returns>Whether the scan reads it.</returns>
     private static bool IsSwept(string name) =>
-        !name.StartsWith("docs/reviews/", StringComparison.Ordinal)
-        && !name.StartsWith("docs/ledger/", StringComparison.Ordinal)
-        && !name.StartsWith("docs/evidence/", StringComparison.Ordinal)
+        !name.StartsWith("docs/evidence/", StringComparison.Ordinal)
         && !name.StartsWith("third-party/", StringComparison.Ordinal)
-        && !(name.StartsWith("docs/probes/", StringComparison.Ordinal) && !name.EndsWith(".md", StringComparison.Ordinal));
+        && name is not ("LICENSE" or "THIRD-PARTY-NOTICES.txt")
+
+        // Build output the walk reaches but the repository does not hold. The
+        // layout prunes TestResults at the ROOT and not below it, and a test
+        // host writes one under every test project.
+        && !name.Contains("/TestResults/", StringComparison.Ordinal);
 
     /// <summary>
-    /// Every em or en dash in one file's maintained prose.
+    /// Every character a person does not type in one file, outside the controls.
     /// </summary>
     /// <remarks>
-    /// A pure function over the text so that every exclusion can be exercised in
-    /// both directions without writing a dash into the tree to see it caught.
+    /// A pure function over the text, so every exclusion can be exercised in both
+    /// directions without writing one of these characters into the tree to see it
+    /// caught.
     /// </remarks>
     /// <param name="name">The repository-relative path, with forward slashes.</param>
     /// <param name="text">Its text.</param>
     /// <returns>One line per offence.</returns>
-    private static List<string> DashOffences(string name, string text)
+    private static List<string> TypedCharacterOffences(string name, string text)
     {
-        // A released changelog section is sealed by character count, so only what
-        // is above the newest one is this rule's business.
-        if (name is "CHANGELOG.md" && ReleasedSection().Match(text) is { Success: true } released)
-        {
-            text = text[..released.Index];
-        }
-
         var offences = new List<string>();
         var line = 1;
 
@@ -2709,7 +2753,9 @@ internal sealed partial class HouseRuleTests
                 continue;
             }
 
-            if (text[i] is not (EmDash or EnDash) || IsAControl(name, text, i))
+            var complaint = NotTyped.FirstOrDefault(entry => entry.Character == text[i]).Instead;
+
+            if (complaint is null || IsAControl(name, text, i))
             {
                 continue;
             }
@@ -2717,10 +2763,7 @@ internal sealed partial class HouseRuleTests
             var from = Math.Max(0, i - 40);
             var excerpt = text[from..Math.Min(text.Length, i + 40)].Replace('\n', ' ');
 
-            offences.Add(
-                $"{name}:{line.ToString(CultureInfo.InvariantCulture)}: "
-                + $"{(text[i] == EmDash ? "an em dash; write two hyphens, or a comma, or two sentences" : "an en dash; write a hyphen, or the word 'to'")} "
-                + $"-- {excerpt}");
+            offences.Add($"{name}:{line.ToString(CultureInfo.InvariantCulture)}: {complaint} -- {excerpt}");
         }
 
         return offences;
@@ -2730,27 +2773,30 @@ internal sealed partial class HouseRuleTests
     /// Whether one occurrence is a control that exists to contain the character.
     /// </summary>
     /// <remarks>
-    /// <b>Three shapes, and all three are in tests except the quotation.</b> A
-    /// character literal and an <c>[Arguments]</c> worked example are controls; a
-    /// character literal in the PRODUCT is output and is swept, which is why the
-    /// first two are scoped to <c>tests/</c>. The quotation is named in full
-    /// because a rule with an unnamed exception has no exception, it has a hole.
+    /// <b>Three shapes.</b> A character literal in a TEST or in a PROBE RIG is a
+    /// control -- the first is what a release body is refused for, the second
+    /// measured what the character costs in bytes; in the PRODUCT a literal is
+    /// output and is swept. An <c>[Arguments]</c> worked example pins the slug
+    /// rule. And a quotation is named in full, because a rule with an unnamed
+    /// exception has no exception, it has a hole.
     /// </remarks>
     /// <param name="name">The repository-relative path, with forward slashes.</param>
     /// <param name="text">The file's text.</param>
-    /// <param name="at">Where the dash is.</param>
+    /// <param name="at">Where the character is.</param>
     /// <returns>Whether it may stay.</returns>
     private static bool IsAControl(string name, string text, int at)
     {
         foreach (var (file, phrase) in QuotedVerbatim)
         {
-            if (name == file && text.AsSpan(Math.Max(0, at - phrase.Length), Math.Min(phrase.Length * 2, text.Length - Math.Max(0, at - phrase.Length))).Contains(phrase, StringComparison.Ordinal))
+            if (name == file
+                && text.AsSpan(Math.Max(0, at - phrase.Length), Math.Min(phrase.Length * 2, text.Length - Math.Max(0, at - phrase.Length)))
+                    .Contains(phrase, StringComparison.Ordinal))
             {
                 return true;
             }
         }
 
-        if (!name.StartsWith("tests/", StringComparison.Ordinal))
+        if (!name.StartsWith("tests/", StringComparison.Ordinal) && !name.StartsWith("docs/probes/", StringComparison.Ordinal))
         {
             return false;
         }
@@ -2766,7 +2812,7 @@ internal sealed partial class HouseRuleTests
     }
 
     /// <summary>
-    /// Strings quoted from somewhere else, which stay as their author wrote them.
+    /// Text quoted from somewhere else, which stays as its author wrote it.
     /// </summary>
     /// <remarks>
     /// <b>One, and it is named so that it stays one.</b> Chrome titles its
@@ -2778,10 +2824,6 @@ internal sealed partial class HouseRuleTests
     [
         ("kb/windows/detection.md", "Untitled " + EnDash + " Google Chrome for Testing"),
     ];
-
-    /// <summary>The newest released changelog section, where the seal begins.</summary>
-    [GeneratedRegex(@"(?m)^##\s+\[\d+\.\d+\.\d+\]")]
-    private static partial Regex ReleasedSection();
 
     /// <summary>
     /// Every batch under <c>docs/evidence/</c> is a row in that directory's own

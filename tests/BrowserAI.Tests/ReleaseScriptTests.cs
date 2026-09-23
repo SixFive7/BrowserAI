@@ -126,7 +126,7 @@ internal sealed class ReleaseScriptTests
     /// <c>Releases/</c> accumulates <c>1.0.1-alpha.0.19</c>,
     /// <c>1.0.1-alpha.0.2</c> and a stale feed manifest naming them. Cutting
     /// <c>1.0.0</c> against that is <i>lower than the published version</i>, and
-    /// the script said <b>ROLLBACK … re-run with -RollbackRepublish</b> -- advice
+    /// the script said <b>ROLLBACK ... re-run with -RollbackRepublish</b> -- advice
     /// that would have published a release into a feed whose manifest and
     /// asset list name packages that were never released. <i>Added 2026-09-16.</i>
     /// </para>
@@ -802,7 +802,7 @@ internal sealed class ReleaseScriptTests
     /// <remarks>
     /// <b>The order is the property.</b> Clearing <c>$PackDir</c> was already
     /// there and is not enough: the up-to-date check is on
-    /// <c>obj\…\native\BrowserAI.obj</c>, which lives nowhere near the output
+    /// <c>obj\...\native\BrowserAI.obj</c>, which lives nowhere near the output
     /// directory. There is no MSBuild property that disables that check -- the
     /// object file <i>is</i> the check -- so the removal is the only lever, and a
     /// scan is what keeps it from being deleted as a slow step nobody could
@@ -833,7 +833,7 @@ internal sealed class ReleaseScriptTests
     /// <para>
     /// ⚠️ <b>Velopack writes one Add/Remove Programs key per pack id per user,
     /// named for the id and never for the location.</b> An install under
-    /// <c>--installto</c> still rewrites <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to
+    /// <c>--installto</c> still rewrites <c>HKCU\...\Uninstall\&lt;packId&gt;</c> to
     /// point at the scratch root, and <c>Update.exe uninstall</c> from that root
     /// calls <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally -- no comparison
     /// against <c>InstallLocation</c> anywhere. So an installer arm packed under
@@ -1088,7 +1088,7 @@ internal sealed class ReleaseScriptTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Over constructed inputs, and that is not a shortcut.</b> Planting a
-    /// real <c>HKCU\…\Uninstall\…</c> key to exercise the refusal would be the
+    /// real <c>HKCU\...\Uninstall\...</c> key to exercise the refusal would be the
     /// suite doing the exact thing the refusal exists to prevent -- writing an
     /// uninstall entry outside the one its own scratch install creates. So the
     /// classification is asserted here and the reading of the key is the single

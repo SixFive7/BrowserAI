@@ -131,7 +131,7 @@ internal sealed class VelopackUpdateClient : IUpdateClient
     /// <b>It is Velopack's own pattern for a foreground application</b>, and the
     /// restarted process is started with <c>VELOPACK_RESTART</c> in its
     /// environment, which is how the window that comes back knows to say
-    /// <i>Updated to …</i>.
+    /// <i>Updated to ...</i>.
     /// </para>
     /// <para>
     /// ⚠️ <b>Whatever is under the install root is killed either way.</b>

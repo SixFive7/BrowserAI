@@ -49,7 +49,7 @@ model receives -- not off a model's recollection. Reproduced twice, against
 | Code units or code points? | **Code units**, and the cut is surrogate-aware |
 | Are `inputSchema.properties[*].description` capped? | **No. Not at all** |
 | Total budget across `tools/list`? | **No** |
-| What does a cut look like? | Hard positional cut, then the literal **`… [truncated]`** appended |
+| What does a cut look like? | Hard positional cut, then the literal **`... [truncated]`** appended |
 
 ### The evidence, probe by probe
 
@@ -94,7 +94,7 @@ in one request (body 392,983 bytes): nothing dropped, nothing cut, every marker
 present including the last tool of the last server.
 
 **What a cut looks like.** The delivered string is the published string's exact
-prefix followed by the literal `… [truncated]` -- U+2026 HORIZONTAL ELLIPSIS,
+prefix followed by the literal `... [truncated]` -- U+2026 HORIZONTAL ELLIPSIS,
 space, `[truncated]` -- **13 characters, 15 bytes**. So a truncated string arrives
 at **2,061 characters**. Nothing is dropped wholesale: not the field, not the
 tool.
@@ -296,7 +296,7 @@ request was intercepted. Afterwards, confirm your real config was untouched:
 ```js
 // node analyse.js /tmp/probe/cap/body-004.json   (pick the LARGEST body-*.json)
 const fs = require('fs');
-const SUF = '… [truncated]';
+const SUF = '... [truncated]';
 const b = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const B = s => Buffer.byteLength(s || '', 'utf8');
 console.log('tools in request:', b.tools.length,

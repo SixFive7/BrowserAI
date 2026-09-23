@@ -10,7 +10,7 @@ namespace BrowserAI.Registration;
 /// <remarks>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-15 (previously "The whole of this type is a pure
-/// function of one string, and that is the point … Nothing here reads the disk,
+/// function of one string, and that is the point ... Nothing here reads the disk,
 /// the registry, the locator or the environment").</b> It reads the disk now,
 /// twice, and only the disk: it opens the composed sibling and reads eight bytes
 /// of its PE header. The half of the old sentence that survives is the half that

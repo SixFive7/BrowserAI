@@ -724,7 +724,7 @@ internal sealed partial class ProvisioningTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The status sentence was stating a fact that was not true.</b> Every
-    /// unfinished attempt rendered <i>"… is being downloaded into '…'"</i>,
+    /// unfinished attempt rendered <i>"... is being downloaded into '…'"</i>,
     /// including the one where this process has started nothing at all: it lost
     /// the machine-wide provisioning mutex and is watching for the holder's
     /// marker. What the holder is doing is unknowable from here -- downloading,

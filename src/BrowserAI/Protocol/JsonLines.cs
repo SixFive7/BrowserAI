@@ -23,7 +23,7 @@ namespace BrowserAI.Protocol;
 /// out, and every backtick, apostrophe, angle bracket and non-ASCII character
 /// leaves as a <c>\uXXXX</c> sequence. The decoded value is unchanged; the bytes
 /// are not. A proxy that claims byte-exact passthrough and reserialises
-/// <c>Page URL: …</c> into escape sequences is claiming something it does not
+/// <c>Page URL: ...</c> into escape sequences is claiming something it does not
 /// do, and the inflation is paid in <b>tokens in the model's context on every
 /// result</b>.
 /// </para>

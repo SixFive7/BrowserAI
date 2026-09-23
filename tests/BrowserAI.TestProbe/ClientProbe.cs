@@ -164,7 +164,7 @@ internal static partial class ClientProbe
     /// creates the file, holds it <c>FileAccess.Write</c> while it writes, and
     /// leaves it existing-but-incomplete for as long as that takes. The host was
     /// waiting on <c>File.Exists</c>, so it read at the first instant the name
-    /// appeared and was refused with <i>"the process cannot access the file …
+    /// appeared and was refused with <i>"the process cannot access the file ...
     /// because it is being used by another process"</i> -- one occurrence in three
     /// consecutive full runs, and the failure named
     /// <c>KillingTheClientTearsTheSessionDownWithoutWaitingForEof</c> rather than

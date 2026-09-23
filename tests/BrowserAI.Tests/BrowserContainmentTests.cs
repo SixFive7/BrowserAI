@@ -147,7 +147,7 @@ internal sealed class BrowserContainmentTests
     /// <b>Watched red 2026-08-30 against the committed driver</b>, twice over.
     /// Through this arm, with the two handlers below deleted: <b>1 of 1 failed at
     /// 10 m 00.4 s</b>, the whole of <see cref="TeardownPatience"/>, reporting
-    /// <i>"the driver was still holding … with the child it was teeing long
+    /// <i>"the driver was still holding ... with the child it was teeing long
     /// gone"</i>. And by hand outside the suite, which is where the shape was
     /// established first: the same child, the same four arguments,
     /// <c>File.ReadAllText</c> refused for the whole wait with <i>"because it is
@@ -679,7 +679,7 @@ internal sealed class BrowserContainmentTests
     /// one, and <see cref="FakePlaywrightChild"/> is where a real double lives.
     /// </para>
     /// <para>
-    /// <b><c>fs.writeSync(2, …)</c> rather than <c>process.stderr.write</c>:</b>
+    /// <b><c>fs.writeSync(2, ...)</c> rather than <c>process.stderr.write</c>:</b>
     /// stderr on a pipe is asynchronous in node and <c>process.exit</c> does not
     /// wait for it, so the sentinel would be racing the exit below. That is the
     /// driver's own reasoning about its tee, one level further down.

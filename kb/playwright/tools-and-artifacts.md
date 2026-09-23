@@ -129,7 +129,7 @@ gives **64**, and adding `network`, `pdf` and `testing` on top of that gives
 [every session now gets](../../ARCHITECTURE.md#sessions). The first two are the
 same numbers the `createConnection` experiment below produced from two
 connections in one process, which is a second, independent route to them.
-⚠️ *Corrected 2026-08-20 (previously "What BrowserAI's own modes expose … and
+⚠️ *Corrected 2026-08-20 (previously "What BrowserAI's own modes expose ... and
 `persistent` adding `storage` gives **59**"): session modes were deleted, so 42
 and 59 are now historical capability sets rather than things a session can be,
 and 69 is what a child is launched with.* `[FLOATS]`
@@ -151,14 +151,13 @@ and 69 is what a child is launched with.* `[FLOATS]`
 > ordering part of the contract rather than an accident. `[FLOATS]`
 
 > ⚠️ **Corrected 2026-08-16 (previously: "A per-capability breakdown is not
-> recorded anywhere in this repository … `[UNVERIFIED]` -- the numbers were never
+> recorded anywhere in this repository ... `[UNVERIFIED]` -- the numbers were never
 > observed, not merely lost. Count them from the resolved bundle at the next
 > review rather than from memory.")** They have now been counted from the
 > resolved bundle, which is what build-order step 4 was told to expect. The
 > `[UNVERIFIED]` marker is gone because the numbers were observed, not because
 > anybody reasoned about them.
 
-<a id="does-the-surface-differ-by-browser-family--measured-2026-08-19"></a>
 ### Does the surface differ by browser family? -- measured 2026-08-19
 
 **No, at any capability set: it does not depend on `browserName` at all.**
@@ -172,8 +171,8 @@ and diffing the `tools/list` each answered:
 |---|---:|---|---|---|
 | `chromium` + `config,vision,devtools` | 42 | - | -- | - |
 | `firefox` + `config,vision,devtools` | 42 | identical | identical | identical |
-| `chromium` + `…,storage` | 59 | - | -- | - |
-| `firefox` + `…,storage` | 59 | identical | identical | identical |
+| `chromium` + `...,storage` | 59 | - | -- | - |
+| `firefox` + `...,storage` | 59 | identical | identical | identical |
 
 Zero names present in one and absent from the other, and zero shared names whose
 serialised tool object differed. **The mechanism is visible in the source and the
@@ -270,8 +269,8 @@ disclosing it.** `--secrets <path>` is on the CLI and
 `secrets?: Record<string, string>` is in `config.d.ts`.
 `Verified 2026-08-16 @ @playwright/mcp 0.0.79` from the committed `cli-help.txt`
 and `config-schema.d.ts` snapshots. ⚠️ *Corrected 2026-08-20 (previously "so
-`browser_get_config` can disclose one … the handler serialises the whole config
-with no filtering … the answer is forwarded byte-identical on every ordinary
+`browser_get_config` can disclose one ... the handler serialises the whole config
+with no filtering ... the answer is forwarded byte-identical on every ordinary
 call and refused only if a `secrets` key comes back")* -- the values are replaced
 by `<secret>NAME</secret>` before the response leaves the child, and the refusal
 that clause describes was removed on 2026-08-18. **The key names are still in
@@ -373,7 +372,7 @@ a model is told they exist whatever `tool-verdicts.json` says.
 The decisions and what it would take to reverse either are in
 [DECISIONS](../../DECISIONS.md#licence-release-policy-and-the-tool-surface).
 ⚠️ *Corrected 2026-08-18 (previously "`headless` **58** -- `browser_annotate`,
-whose window appears even here … `interactive` **59** -- nothing; `persistent`
+whose window appears even here ... `interactive` **59** -- nothing; `persistent`
 **59** -- nothing").*
 
 **The ten that arrived on 2026-08-20**, none of which had ever been reachable in
@@ -386,9 +385,9 @@ them** -- it is `core`, so it was in all three of the old modes' surfaces
 including `headless`'s 41.
 
 ⚠️ **Corrected 2026-08-18 (previously "`headless` **41** -- the 17 `storage`
-tools; `browser_annotate` … `interactive` **41** -- the 17 `storage` tools;
+tools; `browser_annotate` ... `interactive` **41** -- the 17 `storage` tools;
 `browser_run_code_unsafe`, which reaches the same cookies through the Playwright
-server process … `persistent` **58** -- `browser_annotate`", and beside the table
+server process ... `persistent` **58** -- `browser_annotate`", and beside the table
 "the classification behind them is 69 names in five classes -- 49 ordinary, 17
 `storage`, and one each of `ArbitraryCode`, `HumanPresent` and `Configuration`").**
 The `(tool, mode)` permission matrix was removed. **It was never a boundary
@@ -453,11 +452,11 @@ blocked says so -- 18 descendants, walked by `ParentProcessId` only:
 ```
 probe node
 └─ node cli.js  (@playwright/mcp, the session's child)
-   ├─ chrome.exe  --headless …  --user-data-dir=<session>\profile     ← the session's own browser
-   ├─ node …\playwright-core\lib\entry\dashboardApp.js --pageId=…      ← the DAEMON, detached
-   │  └─ chrome.exe  (no --headless)  --user-data-dir=%TEMP%\playwright_chromiumdev_profile-…
+   ├─ chrome.exe  --headless ...  --user-data-dir=<session>\profile     ← the session's own browser
+   ├─ node ...\playwright-core\lib\entry\dashboardApp.js --pageId=...      ← the DAEMON, detached
+   │  └─ chrome.exe  (no --headless)  --user-data-dir=%TEMP%\playwright_chromiumdev_profile-...
    │                                                                   ← the window: 1280x800 at 100,100
-   └─ node …\entry\dashboardApp.js --pageId=… --annotate               ← the CLIENT the handler waits on
+   └─ node ...\entry\dashboardApp.js --pageId=... --annotate               ← the CLIENT the handler waits on
 ```
 
 The visible window's owning pid is the second `chrome.exe`, its class is
@@ -487,7 +486,7 @@ variable and nothing else**, so no session-level configuration reaches it and
   connecting to the daemon after **15 s** and exits 1, which the handler turns
   into `Annotation client exited with code 1`. That arm is reached only when the
   dashboard fails to start at all; once it starts, the wait is unbounded by
-  construction -- `await new Promise(resolve => client.on("exit", …))`. `[FLOATS]`
+  construction -- `await new Promise(resolve => client.on("exit", ...))`. `[FLOATS]`
 
 **How to re-establish.** Write the config BrowserAI generates for a `headless`
 session (`capabilities: ["config","vision","devtools"]`,
@@ -523,7 +522,6 @@ deleted and the judgement is data now.* Nothing about
 this entry is superseded by that: it is the evidence the decision rests on, and
 re-implementing the feature starts by re-running it.
 
-<a id="the-inline-screenshot-and-what-it-costs--measured-2026-08-18"></a>
 ## The inline screenshot, and what it costs -- measured 2026-08-18
 
 **Measured 2026-08-18 @ `@playwright/mcp` 0.0.79 / `playwright-core`
@@ -708,7 +706,7 @@ browser.
 44,652,496 bytes (42.6 MiB)**, oldest `2026-08-14T05:36`, newest the same
 morning -- roughly a thousand files a day of running the suite. **Every one of
 them is the SUITE's**: each names a `playwrightLib` under this repository's own
-`bin\Release\…\payload\mcp\node_modules\playwright-core` and a
+`bin\Release\...\payload\mcp\node_modules\playwright-core` and a
 `downloadsPath` under `.work\test-scratch`. None names the real install.
 `[MACHINE]`
 
@@ -770,17 +768,17 @@ not through an `@playwright/mcp` roll.
 
 | Pointer | `filePaths: "relative"` -- before | `filePaths: "absolute"` -- after | Absolute? |
 |---|---|---|:-:|
-| Screenshot link, generated name | `output\page-…Z.png` | `C:\…\output\page-…Z.png` | **yes** |
-| Screenshot link, caller's `filename` | `./probe-shot.png` | `C:\…\probe-shot.png` | **yes** |
-| PDF link | `./probe.pdf` | `C:\…\probe.pdf` | **yes** |
-| Storage-state link | `./probe-storage.json` | `C:\…\probe-storage.json` | **yes** |
-| Snapshot link | `output\page-…Z.yml` | `C:\…\output\page-…Z.yml` | **yes** |
-| Console log link, caller's `filename` | `./probe-console.log` | `C:\…\probe-console.log` | **yes** |
-| Console log pointer in `### Events` | `output\console-…Z.log#L1-L2` | `C:\…\output\console-…Z.log#L1-L2` | **yes** |
-| Download line | `- Downloaded file X to "output\X"` | `- Downloaded file X to "C:\…\output\X"` | **yes** |
-| Binary response body line | `output\response-…Z.png` | `C:\…\output\response-…Z.png` | **yes** |
-| Network-requests link, caller's `filename` | `./probe-network.txt` | `C:\…\probe-network.txt` | **yes** |
-| Trace links -- `Action log`, `Network log`, `Resources`, `Trace` | `output\traces\trace-….trace` | `C:\…\output\traces\trace-….trace` | **yes** |
+| Screenshot link, generated name | `output\page-...Z.png` | `C:\...\output\page-...Z.png` | **yes** |
+| Screenshot link, caller's `filename` | `./probe-shot.png` | `C:\...\probe-shot.png` | **yes** |
+| PDF link | `./probe.pdf` | `C:\...\probe.pdf` | **yes** |
+| Storage-state link | `./probe-storage.json` | `C:\...\probe-storage.json` | **yes** |
+| Snapshot link | `output\page-...Z.yml` | `C:\...\output\page-...Z.yml` | **yes** |
+| Console log link, caller's `filename` | `./probe-console.log` | `C:\...\probe-console.log` | **yes** |
+| Console log pointer in `### Events` | `output\console-...Z.log#L1-L2` | `C:\...\output\console-...Z.log#L1-L2` | **yes** |
+| Download line | `- Downloaded file X to "output\X"` | `- Downloaded file X to "C:\...\output\X"` | **yes** |
+| Binary response body line | `output\response-...Z.png` | `C:\...\output\response-...Z.png` | **yes** |
+| Network-requests link, caller's `filename` | `./probe-network.txt` | `C:\...\probe-network.txt` | **yes** |
+| Trace links -- `Action log`, `Network log`, `Resources`, `Trace` | `output\traces\trace-....trace` | `C:\...\output\traces\trace-....trace` | **yes** |
 | Paused-debugger location | - | -- | **not measured** |
 
 **The mechanism is exactly two call sites, which is what the ask predicted.**
@@ -934,7 +932,7 @@ round from how it reads.** Measured 2026-09-21 @ `@playwright/mcp` **0.0.82** /
 
 **The rule, read from `toMcpToolDefinition` and `sanitizeToolName` in the
 resolved bundle and then measured:** the wire name is `"webmcp_" +
-name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64) || "tool"`, with `_2`, `_3` …
+name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64) || "tool"`, with `_2`, `_3` ...
 appended while the name is already taken; and the annotations carry
 `title: tool.title || tool.name`.
 

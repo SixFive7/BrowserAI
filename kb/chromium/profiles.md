@@ -23,7 +23,6 @@ code path from the file case**: `RecursiveDirectoryCreate` succeeds on an
 existing directory, so there is no fallback; the singleton lock then fails and
 Chrome fails closed. `[FLOATS]`
 
-<a id="chromiums-cookie-store-and-what-it-takes-to-read-one--measured-2026-08-18"></a>
 ## Chromium's cookie store, and what it takes to read one -- measured 2026-08-18
 
 **Measured 2026-08-18 @ Chrome for Testing 152.0.7977.8 (`chromium-1237`) /
@@ -40,7 +39,7 @@ machine doing this. **The argument holds. ABE is not in play here.** `[FLOATS]`
 **The subject was a session BrowserAI configures**, created under the
 repository's own scratch tree and nothing else: a `headless` child on the
 generated config, navigated twice to a **loopback** HTTP server that set
-`Set-Cookie: browserai_probe=…; Max-Age=86400`, confirmed live through
+`Set-Cookie: browserai_probe=...; Max-Age=86400`, confirmed live through
 `document.cookie`, then closed with `browser_close` so the store was flushed.
 **No profile outside that directory was read**, and the reader refuses any path
 outside it by construction.

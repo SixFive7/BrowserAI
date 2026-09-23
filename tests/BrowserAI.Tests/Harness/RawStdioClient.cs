@@ -388,7 +388,7 @@ internal sealed class RawStdioClient : IAsyncDisposable
         _process.Dispose();
     }
 
-    private static string Trim(string line) => line.Length <= 400 ? line : line[..400] + "…";
+    private static string Trim(string line) => line.Length <= 400 ? line : line[..400] + "...";
 
     private async Task SendAsync(JsonNode message, CancellationToken cancellationToken)
     {

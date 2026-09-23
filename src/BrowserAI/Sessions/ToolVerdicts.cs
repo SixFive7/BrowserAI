@@ -136,8 +136,8 @@ internal sealed class ToolVerdicts
     /// <remarks>
     /// <para>
     /// ⚠️ ***Corrected 2026-08-26, later the same day (previously "These rows
-    /// have no run-time effect at all … `SessionToolSurface.IsAuthored`
-    /// short-circuits every `browserai_` name … before `Decide` is reached, so
+    /// have no run-time effect at all ... `SessionToolSurface.IsAuthored`
+    /// short-circuits every `browserai_` name ... before `Decide` is reached, so
     /// removing an `answer` row changes nothing a caller can observe. Their role
     /// is build-and-test-time").*** <b>The short-circuit is an exact match
     /// now</b>, so a <c>browserai_</c> name with no row here reaches

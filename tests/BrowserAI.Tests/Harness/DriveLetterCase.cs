@@ -10,7 +10,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// ⚠️ <b>This exists because the alternative was choosing a shell.</b> A test
 /// host started from PowerShell walks up from an <c>AppContext.BaseDirectory</c>
-/// spelled <c>C:\…</c>; the same host started from Git Bash gets <c>c:\…</c>.
+/// spelled <c>C:\...</c>; the same host started from Git Bash gets <c>c:\...</c>.
 /// Windows itself always answers <b>upper-case</b> -- <c>GetFinalPathNameByHandleW</c>,
 /// <c>QueryFullProcessImageNameW</c> and the mount manager underneath them all
 /// report the letter that way. So an assertion comparing a path a test composed
@@ -41,13 +41,13 @@ namespace BrowserAI.Tests.Harness;
 internal enum DriveLetterCase
 {
     /// <summary>
-    /// <c>C:\…</c> -- the spelling Windows itself hands back, so a path composed
+    /// <c>C:\...</c> -- the spelling Windows itself hands back, so a path composed
     /// this way matches an OS-read one byte for byte.
     /// </summary>
     Upper,
 
     /// <summary>
-    /// <c>c:\…</c> -- the spelling Git Bash hands the test host, and the one no
+    /// <c>c:\...</c> -- the spelling Git Bash hands the test host, and the one no
     /// Windows API ever returns. A composed path spelled this way <b>never</b>
     /// matches an OS-read one ordinally, which is what makes the wrong
     /// comparison fail on every machine rather than on some of them.

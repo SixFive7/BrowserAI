@@ -121,7 +121,7 @@ internal sealed class UpdateTests
     /// <para>
     /// ⚠️ <b>Corrected 2026-09-15 (previously "It is skipped rather than absent,
     /// and rather than faked. <c>UpdateConfiguration.ProductionBaseUrl</c> is
-    /// <c>null</c>: the feed will be a public GitHub repository … and nothing
+    /// <c>null</c>: the feed will be a public GitHub repository ... and nothing
     /// has been published. There is no URL to resolve").</b> There is a URL and
     /// it resolves; the skip is gone and so is the debt it carried.
     /// </para>

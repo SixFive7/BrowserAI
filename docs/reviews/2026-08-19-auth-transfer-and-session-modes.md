@@ -18,15 +18,15 @@ Firefox 153.0 (`firefox-1539`) · Node v24.19.0 · Windows 11 Pro 26200.
 ## The answer: yes, on exactly one route out of three
 
 Measured by driving upstream's own CLI, both families, both directions, with a
-public-HTTPS control. The test site sets an HttpOnly **session** cookie — the
-shape a real login returns — plus a persistent cookie, localStorage,
+public-HTTPS control. The test site sets an HttpOnly **session** cookie -- the
+shape a real login returns -- plus a persistent cookie, localStorage,
 sessionStorage and an IndexedDB record.
 
 | Consume arm | Server saw | persistent cookie | localStorage | IndexedDB |
 |---|---|---|---|---|
 | isolated + `contextOptions.storageState` | **AUTHENTICATED** | yes | yes | no |
 | isolated, no state (control) | anonymous | no | no | no |
-| persistent + `contextOptions.storageState` | **anonymous — silent no-op** | no | no | no |
+| persistent + `contextOptions.storageState` | **anonymous -- silent no-op** | no | no | no |
 | persistent + `browser_set_storage_state` tool | **AUTHENTICATED** | yes | yes | no |
 | persistent on a **copy** of the headed profile | anonymous | yes | yes | yes |
 | persistent on the headed profile **in place** | anonymous | yes | yes | yes |
@@ -58,7 +58,7 @@ cookie. Only clean shutdown was exercised.*
 `storageState` is the **only** key present in `BrowserNewContextParams` (32 keys)
 and absent from `BrowserTypeLaunchPersistentContextParams` (49). Playwright's
 `tObject` validator builds its result by iterating *declared* keys, so an
-undeclared key is dropped with no error — while `createPersistentBrowser`
+undeclared key is dropped with no error -- while `createPersistentBrowser`
 spreads `...contextOptions` straight through, so it looks accepted at every
 layer a user can see. `--storage-state` with `--user-data-dir` returns exit 0
 and an empty stderr. The CLI help's phrase *"for isolated sessions"* is the
@@ -75,19 +75,19 @@ cache and **all cookies** before restoring, so it destroys a populated profile.
 **1. `storage` is a tool filter, not a persistence switch.**
 `BrowserConfiguration.cs:188` sets `userDataDir = <session>\profile` in **all
 three** modes and `isolated` is never set anywhere. Upstream consumes
-`config.capabilities` in exactly one place — `filteredTools(config)` — and
+`config.capabilities` in exactly one place -- `filteredTools(config)` -- and
 nowhere in context creation. So an `interactive` session's profile already keeps
-the cookies a human typed. `SessionMode.cs:82` — *"a human can type a password
-this session will not keep"* — and `README.md`'s **"Stored credentials: No / No
+the cookies a human typed. `SessionMode.cs:82` -- *"a human can type a password
+this session will not keep"* -- and `README.md`'s **"Stored credentials: No / No
 / Yes"** are claims the code does not make. Corroborated by re-verification row
 95, whose cookie-decryption measurement was run against a **`headless`** session.
 
 **2. The advertised tool surface does not vary by mode.** BrowserAI answers
-`tools/list` from its own child, launched with `UnionCapabilities` — one static
+`tools/list` from its own child, launched with `UnionCapabilities` -- one static
 list, 58 upstream plus 6 authored, identical for every mode
 (`SessionPolicyTests.cs:113-118`). The 42-vs-59 figure describes the *session's*
 child. Consequence: a `browser_cookie_list` against a `headless` session is
-advertised, forwarded, and fails inside the child — **asserted nowhere in the
+advertised, forwarded, and fails inside the child -- **asserted nowhere in the
 suite**. Second consequence: a mode change would alter nothing a client sees, so
 `notifications/tools/list_changed` is not required for it.
 
@@ -100,12 +100,12 @@ containment, the idle timer, the sandbox flag, the sweep.
 
 ## Modes versus toggles
 
-**It is a two-bit space with one vetoed cell** — 4 coherent combinations, 0
+**It is a two-bit space with one vetoed cell** -- 4 coherent combinations, 0
 incoherent, 1 excluded. Not a curated subset of a large product space.
 
 The veto's recorded reason (*"the one combination granting full credential
 access with no visible signal"*) is the class of argument the 2026-08-18 removal
-ruled out, which `TODO.md` item 1 already says cannot be both ways — **and
+ruled out, which `TODO.md` item 1 already says cannot be both ways -- **and
 correction 1 above weakens it further: headless already accumulates credentials
 with no visible signal.** The fourth mode would add convenient *export*, not
 retention.
@@ -117,8 +117,8 @@ two capped channels. `browserai_init`'s description is 1,755 of 2,048.
 | Modes | `init` description | Verdict |
 |---:|---:|---|
 | 3 today | 1,755 | 293 spare |
-| **4** | ~1,859 | **189 spare — fits** |
-| 5 | ~1,963 | 85 spare — barely |
+| **4** | ~1,859 | **189 spare -- fits** |
+| 5 | ~1,963 | 85 spare -- barely |
 | 6 | ~2,067 | overflows |
 
 **Why the enum survives the argument:** it makes the invalid combination
@@ -142,7 +142,7 @@ the window and a separate bound argument is the tool surface.
 
 ## What the handoff needs, and what nothing can fix
 
-Both ends need the `storage` capability — the source to export, the target to
+Both ends need the `storage` capability -- the source to export, the target to
 import. Source = headed+storage = `persistent`, which exists. **Target =
 headless+storage = the vetoed cell**, so the fourth mode is the workflow's
 precondition rather than a convenience.
@@ -150,20 +150,20 @@ precondition rather than a convenience.
 **Expiry cannot be detected by any shape.** `storageState` carries no
 server-side validity. Every route produces the same event: the agent gets a
 snapshot of a login form, and unattended the model will plausibly go looking for
-credentials. The cheapest mitigation is provenance — `lock.json` is already
+credentials. The cheapest mitigation is provenance -- `lock.json` is already
 append-only timestamped statements, so recording when a human was last at the
 keyboard is one field and makes the staleness legible without claiming to detect
 it.
 
 ### The untested risk that could invalidate the whole approach
 
-**Chromium's User-Agent differs headed vs headless** — `Chrome/152.0.0.0`
-versus **`HeadlessChrome/152.0.0.0`** — same binary, same profile, only
+**Chromium's User-Agent differs headed vs headless** -- `Chrome/152.0.0.0`
+versus **`HeadlessChrome/152.0.0.0`** -- same binary, same profile, only
 `--headless` differing. `navigator.webdriver` was `false` in both. Firefox's UA
 is byte-identical across headedness and `navigator.webdriver` is `true` in both.
 
 Any IdP binding a session to the UA will reject the transfer. Add IP binding,
-TLS/JA3 fingerprinting, DPoP and device-bound session credentials — none of
+TLS/JA3 fingerprinting, DPoP and device-bound session credentials -- none of
 which `storageState` carries. **This was proven against a loopback origin and
 `httpbin.io`, not against a real identity provider.**
 
@@ -183,18 +183,18 @@ does not redact and would emit `config.secrets` in plaintext.
 
 - **Firefox hangs 180 s on a shared profile directory** where Chromium refuses
   in 5,036 ms with a message naming the cause. Upstream's `isProfileLocked`
-  probes `<userDataDir>\lockfile` — **Chromium's** lock file name — while
+  probes `<userDataDir>\lockfile` -- **Chromium's** lock file name -- while
   Firefox uses `parent.lock`, so the guard never fires and Firefox's own lock
   blocks the juggler handshake until the 180 s launch timeout. The error never
   mentions the profile. Newly reachable because this product now offers Firefox;
   re-verification row 22 covers the Chromium half only.
-- **`--caps bogus` is silently accepted**, exit 0, no diagnostic —
+- **`--caps bogus` is silently accepted**, exit 0, no diagnostic --
   `commaSeparatedList` with no enum validation. The same absence is why
   `--caps storage` works although `cli-help.txt` documents only vision, pdf and
   devtools.
 - **`browser_storage_state`'s `filename` resolves against the client's cwd**,
   not `outputDir`. Without it, output lands in `outputDir`.
-- **File-access roots restrict where a handoff file may live** — outside them,
+- **File-access roots restrict where a handoff file may live** -- outside them,
   `browser_set_storage_state` refuses unless `allowUnrestrictedFileAccess` is
   set. A state file cannot simply sit wherever the human left it, and it is a
   plaintext bearer credential.

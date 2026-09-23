@@ -17,7 +17,7 @@ namespace BrowserAI.Protocol;
 /// <b>The SDK's <c>StdioClientTransport</c> cannot be configured into this
 /// shape.</b> Read from the shipped 2.2.0 source: on Windows it rewrites every
 /// command whose filename is not <c>cmd.exe</c> into
-/// <c>cmd.exe /c &lt;command&gt; …</c>, unconditionally and with no opt-out. The
+/// <c>cmd.exe /c &lt;command&gt; ...</c>, unconditionally and with no opt-out. The
 /// consequences are not cosmetic:
 /// </para>
 /// <list type="number">

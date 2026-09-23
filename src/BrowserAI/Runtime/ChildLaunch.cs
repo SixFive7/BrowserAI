@@ -38,11 +38,11 @@ internal static class ChildLaunch
     /// <i>only</i> thing that does, and this flag was deliberately kept
     /// anyway.</b> <i>Previously: "<b>It cannot be a config key, and that is
     /// measured rather than remembered.</b> Re-measured 2026-08-16 against
-    /// <c>@playwright/mcp</c> 0.0.79 … with <c>"chromiumSandbox": true</c> in
+    /// <c>@playwright/mcp</c> 0.0.79 ... with <c>"chromiumSandbox": true</c> in
     /// the config file and no flag, it is <b>still</b> present", and "The
     /// mechanism, also measured: upstream declares both <c>--sandbox</c> and
     /// <c>--no-sandbox</c>, and commander gives <c>sandbox</c> a default of
-    /// <see langword="false"/> … which is why upstream's intent and upstream's
+    /// <see langword="false"/> ... which is why upstream's intent and upstream's
     /// behaviour disagree."</i> Upstream deleted the normaliser that produced
     /// that disagreement
     /// ([microsoft/playwright#42288](https://github.com/microsoft/playwright/pull/42288)),

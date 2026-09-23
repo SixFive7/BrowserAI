@@ -159,7 +159,7 @@ internal sealed class ModelSurfaceTests
     /// tool; the
     /// [DECISIONS](../../DECISIONS.md#shape-and-packaging) demands the same thing independently, because
     /// <c>init</c> accepts any path -- *"the `init` tool description is a security
-    /// surface … say plainly what pointing at an existing browser profile
+    /// surface ... say plainly what pointing at an existing browser profile
     /// does"*. Retention was stated on <c>resume</c> and on <c>list</c>, which is
     /// everywhere except where it was required.
     /// </para>
@@ -425,7 +425,7 @@ internal sealed class ModelSurfaceTests
         // ⚠️ Re-measured 2026-09-21 off the published binary's own `initialize`
         // response: **2,026 characters and 2,036 bytes**, leaving 22.
         //
-        // Corrected 2026-09-21 (previously "Re-measured 2026-08-18 … **1,261
+        // Corrected 2026-09-21 (previously "Re-measured 2026-08-18 ... **1,261
         // characters and 1,276 bytes**, leaving 772. The three mode lines cost
         // 106, 121 and 92 bytes apiece"). That reading was true of the string as
         // it stood; six changes have landed in it since and none of them came
@@ -434,7 +434,7 @@ internal sealed class ModelSurfaceTests
         // never has been -- the cap above is -- so nothing went red for 34 days.
         //
         // Corrected 2026-08-18 (previously "Measured 2026-08-16: 1,613
-        // characters and **1,628 bytes** … The headroom is 420 bytes … Planting
+        // characters and **1,628 bytes** ... The headroom is 420 bytes ... Planting
         // a fourth mode measured its cost at 223 bytes, leaving 197"). The mode
         // lines used to carry what each mode REFUSES, rendered from the
         // (tool, mode) permission policy, and that policy was removed -- it was
@@ -542,7 +542,7 @@ internal sealed class ModelSurfaceTests
     /// </para>
     /// <para>
     /// ⚠️ <b>Re-measured 2026-09-14 and the required phrases changed with it.</b>
-    /// <i>Previously: "Measured 2026-08-20 … a viewport shot at the 1920x1080
+    /// <i>Previously: "Measured 2026-08-20 ... a viewport shot at the 1920x1080
     /// default arrives as 2,691 visual tokens; <c>fullPage: true</c> over a
     /// 3,637 px document leaves as 1920x3637 = 8,970, and the API downscales
     /// that to its per-image ceiling of 4,784. Break-even is a document about
@@ -677,7 +677,7 @@ internal sealed class ModelSurfaceTests
         // the figure the client counts -- see ClientTruncationBudget).
         //
         // Corrected 2026-08-18 (previously "Measured 2026-08-17, and the first
-        // draft DID NOT FIT … the description now stands at 1,991 of 2,048 …
+        // draft DID NOT FIT ... the description now stands at 1,991 of 2,048 ...
         // **57 bytes of headroom is the finding, and it is not a comfortable
         // number**"). It is comfortable now, and nothing was cut to make it so:
         // this description used to render SessionModes.Table, whose clauses each
@@ -1037,7 +1037,7 @@ internal sealed class ModelSurfaceTests
     /// <para>
     /// <b>The per-string reading is MEASURED -- see
     /// <see cref="ClientTruncationBudget"/>.</b> <i>Corrected 2026-08-18
-    /// (previously "⚠️ The per-string reading is an ASSUMPTION … the experiment
+    /// (previously "⚠️ The per-string reading is an ASSUMPTION ... the experiment
     /// that settles the reading needs the data, and a test must not pretend to
     /// have settled it").</i> The experiment ran on 2026-08-18 against Claude
     /// Code 2.1.234, reading the <c>tools</c> array the client sends to the
@@ -1106,7 +1106,7 @@ internal sealed class ModelSurfaceTests
         // measured: the client counts UTF-16 characters and cuts at > 2048. The
         // two diverge on the first em dash -- `initialize.instructions` is 2,026
         // characters and 2,036 bytes, re-measured 2026-09-21 (previously "1,261
-        // … 1,276") -- and the byte figure is the one that is
+        // ... 1,276") -- and the byte figure is the one that is
         // never consulted, so it is printed and not gated.
         var oversized = measured
             .Where(entry => entry.Gated > BudgetFor(entry.Surface))

@@ -215,7 +215,7 @@ internal static class ConfigurationDialog
         {
             commands.Add(new TaskDialogCommand(
                 Command.RegisterInProject,
-                "Register in a project…\nWrites a .mcp.json in a folder you choose, to be committed with it."));
+                "Register in a project...\nWrites a .mcp.json in a folder you choose, to be committed with it."));
         }
 
         commands.Add(new TaskDialogCommand(

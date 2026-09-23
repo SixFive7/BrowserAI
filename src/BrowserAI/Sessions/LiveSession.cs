@@ -114,7 +114,7 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <para>
     /// ⚠️ <b>It has to be self-attributing, because every other row in the log
     /// was written by a caller.</b> <c>browserai_catch_up</c> presents the log as
-    /// <i>"WHAT WAS DONE HERE -- the session's own log … This is what BrowserAI
+    /// <i>"WHAT WAS DONE HERE -- the session's own log ... This is what BrowserAI
     /// did"</i>, and a reader meeting a <c>browser_close</c> with a caller-shaped
     /// sentence beside it would reasonably conclude an agent had closed the
     /// browser. This one names the timer, so the row reads as the only thing in

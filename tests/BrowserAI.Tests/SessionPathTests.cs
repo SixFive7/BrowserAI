@@ -184,7 +184,7 @@ internal sealed class SessionPathTests
     /// <b>The limit is <c>CreateProcessW</c>'s and not .NET's</b>, which is why
     /// nothing caught it: .NET creates a tree of any depth happily, and the
     /// session then failed at child launch with <i>"Could not start
-    /// '…\node.exe' in '…\output'"</i> and a recovery that told the caller to
+    /// '...\node.exe' in '...\output'"</i> and a recovery that told the caller to
     /// re-provision an install that was never broken.
     /// </para>
     /// </remarks>

@@ -87,7 +87,7 @@ namespace BrowserAI.Hosting;
 ///     keyed to the INSTALL root -- added 2026-09-15 with the layout split. So
 ///     <c>Setup.exe --installto</c> can still put the markers and their
 ///     <c>Global\</c> mutex somewhere two users share, and nothing here says a
-///     word about it … it is <b>open</b> rather than accepted: the row in
+///     word about it ... it is <b>open</b> rather than accepted: the row in
 ///     <c>HAZARDS.md</c> names the three ways out and says the choice belongs to
 ///     the maintainer")</i>. The maintainer took the first of those three ways
 ///     out, and <b>this type now judges both roots</b>.
@@ -212,7 +212,7 @@ internal static class InstallRootScope
         //    directory and an open against an unreachable share costs a measured
         //    22 s. A UNC app root is not under any local profile whatever the
         //    filesystem would say about it, so it is answered here -- but
-        //    `\\?\C:\…` is NOT one: it is the extended spelling of an ordinary
+        //    `\\?\C:\...` is NOT one: it is the extended spelling of an ordinary
         //    local path, and refusing it would refuse a per-user root for its
         //    punctuation.
         var probe = root;

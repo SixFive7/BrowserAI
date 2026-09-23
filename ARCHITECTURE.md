@@ -136,7 +136,7 @@ a run that exits 0 without it is a failure whose partial tree is removed.
 ## The MCP server
 
 ⚠️ **TWO EXECUTABLES SINCE 2026-09-15, AND ONE LIBRARY.** *(Previously one, and
-every path in this document that reads `src/BrowserAI/…` for a moved file has
+every path in this document that reads `src/BrowserAI/...` for a moved file has
 been re-pointed rather than left dangling.)*
 
 | Binary | What it is | Who starts it |
@@ -184,7 +184,7 @@ costs.
 **The protocol version is split deliberately.** `McpServerOptions.ProtocolVersion`
 is `null` upward -- whatever the caller asks for -- while `McpClientOptions.
 ProtocolVersion` is pinned to the child's ceiling downward. The pair is logged as
-`requested=… negotiated=…` and **throws** when they differ, because the child caps
+`requested=... negotiated=...` and **throws** when they differ, because the child caps
 or echoes silently and never rejects, so that assertion is the only place a
 mis-negotiation is visible.
 
@@ -308,7 +308,7 @@ timer; all four were designed and then dropped, because the directory already is
 all of those things.
 
 ⚠️ ***Corrected 2026-08-26 (previously "One directory holds `browserai.json` at
-its root … `browserai.json` is both the lock and the record -- held
+its root ... `browserai.json` is both the lock and the record -- held
 `FileAccess.ReadWrite, FileShare.Read`, carrying the schema version and then
 browser, purpose, the resolved path, the BrowserAI build and a
 `(pid, creationFileTime, clientProcessName)` holder that deliberately outlives its
@@ -374,7 +374,7 @@ still open. `DeadChildTests` drives both directions.
 (previously "`LockRecord.Read` is a hand-written `Utf8JsonReader` parse that
 refuses an unknown key at any of the three levels, a missing key, an **empty
 statement list**, a schema version it does not know, and a timestamp that is not
-round-trippable ISO 8601 … **The version is checked in a pass of its own, before
+round-trippable ISO 8601 ... **The version is checked in a pass of its own, before
 anything else is parsed**").* The rule is unchanged and it is enforced in two
 places now. `LockFile.Parse` refuses a lock file carrying a property BrowserAI
 does not write, one missing the process-creation FILETIME -- **a pid alone is not
@@ -529,8 +529,8 @@ no default and no fallback, an optional `browser` defaulting to `chromium`, and
 the three per-run booleans `headed`, `tracing` and `debug`; `resume` takes the
 same three and reads `browser` from `browserai.data`, **refusing it as an
 argument**, because a profile is browser-specific. *(Corrected 2026-08-20,
-previously "a required directory, purpose and mode … `resume` reads mode and
-browser … and **refuses them as arguments**": session modes were deleted, and
+previously "a required directory, purpose and mode ... `resume` reads mode and
+browser ... and **refuses them as arguments**": session modes were deleted, and
 `browser` is now the only thing `resume` refuses.)*
 `browserai_reinstall_browser` takes a **required** `browser` and nothing else --
 *changed 2026-08-19 (previously no arguments, "because there is nothing to
@@ -657,7 +657,7 @@ window belongs to a second non-headless browser under a daemon that writes into
 `%TEMP%` and outlives the session. Filtering the surface is in scope by the
 charter where renaming is not, and a caller that names the tool anyway is refused
 rather than forwarded -- a model knows upstream's names from everywhere except this
-server's list. *Corrected 2026-08-18 (previously "Two refusals survive …
+server's list. *Corrected 2026-08-18 (previously "Two refusals survive ...
 `browser_annotate` is refused on a mode that opens no window").*
 
 ⚠️ **And since 2026-09-15 a second tool is filtered out on the same
@@ -767,7 +767,7 @@ is that they are reachable as a **class**, through this one judged tool.
 **The name a caller passes is the one a model can actually have read.** The
 snapshot block prints the page's own tool NAME; upstream's wire name is
 `webmcp_` plus that name with every character outside `[A-Za-z0-9_-]` replaced by
-`_`, cut at 64, and `_2`, `_3` … appended on a collision. `PageTools.WireNameFor`
+`_`, cut at 64, and `_2`, `_3` ... appended on a collision. `PageTools.WireNameFor`
 reproduces that function and `PageTools.WireNameMatches` reproduces the collision
 rule. ⚠️ **`annotations.title` is the cross-check and not the key**: upstream
 builds the entry with `title: tool.title || tool.name`, so a page that sets its
@@ -864,9 +864,9 @@ no `Local\` fallback anywhere and a test that fails the build if any other file 
 `src/` constructs a named waitable object.
 
 **Two spellings never reach that function, because every spelling is resolved
-into one first.** ⚠️ *Corrected 2026-08-26 (previously "…because two spellings
+into one first.** ⚠️ *Corrected 2026-08-26 (previously "...because two spellings
 are refused first. `SessionDirectoryGuard` runs at `browserai_init` and
-`browserai_resume`…"). That sentence was false the day it was written*: `destroy`,
+`browserai_resume`..."). That sentence was false the day it was written*: `destroy`,
 `set_purpose`, `catch_up` and every forwarded call reached the identity chain
 without the guard, so two spellings did reach it. `Sessions/CanonicalPath` runs
 at **every** door, before anything is created and before the gate is taken, and
@@ -945,9 +945,9 @@ and a session this process is already driving is answered from its own live-sess
 map without asking the kernel at all.
 
 ⚠️ ***Corrected 2026-08-26 (previously a 2026-08-24 correction reading "The rule
-did come apart… The report now goes through
+did come apart... The report now goes through
 `SessionLock.ProbeLivenessUnderTheGate`, which asks the same question with that
-directory's gate held at a **zero** timeout … a mutex create, a zero-timeout
+directory's gate held at a **zero** timeout ... a mutex create, a zero-timeout
 acquire, a release and a close are now in the per-entry cost").*** **The defect
 that correction closed no longer exists and neither does the code that closed
 it.** It rested on the rewrite: every forwarded call replaced `browserai.json`
@@ -1000,7 +1000,7 @@ the temp file in the target's own directory, because a rename is atomic only
 within one volume and cheap only within one directory. A rename cannot replace a
 file whose handle is open under any share mode, so acquisition is write → rename
 → hold *inside* the per-directory mutex. ⚠️ *Corrected 2026-08-26 (previously
-"**Writes** are durable and atomic … create-or-take is close → rename →
+"**Writes** are durable and atomic ... create-or-take is close → rename →
 re-open").* **The record's writes are `INSERT`s** and are durable by SQLite's WAL
 rather than by a rename, so the rename window is paid once per acquisition
 instead of once per forwarded call -- and there is no close-and-re-open at all,
@@ -1019,7 +1019,7 @@ decides: `EnumProcesses` → `OpenProcess` → `QueryFullProcessImageNameW`, kee
 only processes whose full image path is one of the two binaries BrowserAI
 provisioned, composed from the payload's own revision and never spelled out.
 Attribution may fail and must fail safe: a class-qualified
-`FindWindowExW(HWND_MESSAGE, …)` walk with `ERROR_INVALID_WINDOW_HANDLE` checked
+`FindWindowExW(HWND_MESSAGE, ...)` walk with `ERROR_INVALID_WINDOW_HANDLE` checked
 and the walk restarted, and a candidate no window claims is reported loudly and
 never touched. A stray is a process running our binary **whose** attributed
 directory holds a `browserai.lock` this sweeper can take itself, without writing
@@ -1061,7 +1061,7 @@ answers about whatever file it is handed and is never actionable alone.
 
 ⚠️ ***Corrected 2026-08-26 (previously "Anything attributable to a session is
 written to that session's own `browserai.log` and to nothing else; the
-machine-wide log keeps only what no session owns … *Changed 2026-08-24
+machine-wide log keeps only what no session owns ... *Changed 2026-08-24
 (previously every session record went to both)*").*** **There is no per-session
 log file.** Everything it carried is on stderr, which `ProcessLog.OpenSessionLog`
 already wrote to at every level, and what a session itself did is rows in

@@ -36,7 +36,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-15 (previously "no test in this suite starts
 /// BrowserAI with a real console. It cannot -- every launch site in the tree is
-/// required to set <c>CreateNoWindow</c> … and a test that allocated a console
+/// required to set <c>CreateNoWindow</c> ... and a test that allocated a console
 /// would put a window over whatever is on screen. So the console half of the
 /// second rule is covered by the pure decision and by the wiring scan below,
 /// and the end-to-end evidence for it is the 2026-09-14 probe rather than a run
@@ -275,7 +275,7 @@ internal sealed class InstallerHandoffTests
     /// PowerShell and green from Git Bash</b> on the same tree, in the gate of
     /// 2026-09-15: a test host started by <c>Start-Process pwsh -WindowStyle
     /// Hidden</c> inherits a <b>console</b> standard input, and one started by
-    /// <c>nohup bash -c … | tee</c> inherits a <b>pipe</b>. Two instruments, as
+    /// <c>nohup bash -c ... | tee</c> inherits a <b>pipe</b>. Two instruments, as
     /// the two halves of this gate are meant to be -- and a suite that asserted
     /// either value would be asserting a property of whoever started it.
     /// </para>

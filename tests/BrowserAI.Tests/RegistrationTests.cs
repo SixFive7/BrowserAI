@@ -38,7 +38,7 @@ namespace BrowserAI.Tests;
 /// a <c>ClientGroup</c> key on the two arms that open a scope: "they both write
 /// one process-wide environment variable -- <c>CLAUDE_CONFIG_DIR</c> -- and
 /// then start a process that reads it. Two at once would each register into the
-/// other's scratch directory … every member writes the same variable and
+/// other's scratch directory ... every member writes the same variable and
 /// nothing else in the suite starts the client".)</i> Every sentence of that was
 /// true and the conclusion did not follow: a key holds an arm apart from the
 /// arms carrying the <b>same key</b>, and a process-wide variable is read by
@@ -110,7 +110,7 @@ internal sealed class RegistrationTests
     /// <para>
     /// ⚠️ <b>The guarantee this replaces was stronger and is gone, 2026-09-15
     /// (previously: "BrowserAI registers the executable it is itself running
-    /// from … the registered path and the running binary cannot disagree: they
+    /// from ... the registered path and the running binary cannot disagree: they
     /// are the same string").</b> The hooks run on the Velopack main exe, and
     /// from this day the main exe is the configuration app. So the path handed
     /// to a client is <b>composed</b> -- the running image's directory plus the
@@ -905,7 +905,7 @@ internal sealed class RegistrationTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Re-pointed 2026-09-15 (previously "beside <c>current\</c> rather
-    /// than inside it … an update replaces that directory wholesale").</b> The
+    /// than inside it ... an update replaces that directory wholesale").</b> The
     /// right rule, aimed one level too low. A sibling of <c>current\</c> is still
     /// inside the install root, and the two events a person reads this file
     /// after are the two that empty it: a repair install, which renames the root

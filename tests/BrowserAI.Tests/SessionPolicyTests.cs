@@ -93,7 +93,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// ⚠️ <b>Amended 2026-08-18, later the same day (previously "<c>browser_annotate</c>
-/// is refused on a windowless session … permitted on the two modes that open
+/// is refused on a windowless session ... permitted on the two modes that open
 /// one").</b> The same measurement said the daemon is detached, per-user and
 /// writes into <c>%TEMP%</c>, and that the call is unbounded on every mode -- so
 /// the tool is withheld from <c>tools/list</c> in every mode and refused if a

@@ -320,7 +320,7 @@ internal sealed partial class BrowserIdleTimerTests
     /// defect rather than a gap.</b> The close talks to the child directly and
     /// never touched <c>Lock</c>; while <c>browserai.log</c> existed the event
     /// survived there, and that file is gone. <c>browserai_catch_up</c> tells its
-    /// reader the log is <i>"WHAT WAS DONE HERE -- the session's own log … This is
+    /// reader the log is <i>"WHAT WAS DONE HERE -- the session's own log ... This is
     /// what BrowserAI did"</i>, an autonomous browser close is something
     /// BrowserAI did, and it was invisible -- so a reader saw an unexplained gap
     /// in wall-clock time, and the next call silently relaunched a browser.

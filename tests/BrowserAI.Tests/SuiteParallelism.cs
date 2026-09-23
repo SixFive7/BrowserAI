@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-17 (previously <c>4</c>, "chosen because it was
-/// measured … the resource being contended is not CPU, it is the machine's
+/// measured ... the resource being contended is not CPU, it is the machine's
 /// capacity to start browsers").</b> That cap was added against a 1-in-7 mass
 /// failure whose cause was <i>never established</i> -- its own note said so,
 /// twice. It was a workaround, and it was hiding four defects. This one is not

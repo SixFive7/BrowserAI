@@ -16,7 +16,7 @@ namespace BrowserAI.Tests.Harness;
 /// written, and CI is what proved it.</b> The two diagnostic channels are not
 /// equivalent and only one of them is durable, which
 /// <c>ProcessLog</c>'s own remarks already said before anything relied on it:
-/// <see cref="Logging.RollingFileWriter"/> "buffers nothing … a record that has
+/// <see cref="Logging.RollingFileWriter"/> "buffers nothing ... a record that has
 /// been logged is already on disk", whereas stderr goes through
 /// <c>AddConsole</c>, which hands records to a background processor thread. A
 /// process killed with <c>TerminateProcess</c> -- which is exactly what

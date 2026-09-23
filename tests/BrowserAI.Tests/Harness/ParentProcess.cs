@@ -16,7 +16,7 @@ namespace BrowserAI.Tests.Harness;
 /// This is the assertion build-order step 5 turns on: a child spawned through
 /// BrowserAI's transport must have <b>BrowserAI as its direct parent</b>. The
 /// failure it is aimed at is silent by nature -- the SDK's own stdio transport
-/// rewrites every Windows command into <c>cmd.exe /c …</c>, and the resulting
+/// rewrites every Windows command into <c>cmd.exe /c ...</c>, and the resulting
 /// shell is invisible to everything except a parent-pid query. A test that
 /// merely checked "the child started and answered" passes with the shell in
 /// place.

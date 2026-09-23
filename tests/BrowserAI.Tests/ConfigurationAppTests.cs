@@ -550,14 +550,14 @@ internal sealed class ConfigurationAppTests
 
         try
         {
-            await Assert.That(work.Start("Checking for updates…", "The update check", _ =>
+            await Assert.That(work.Start("Checking for updates...", "The update check", _ =>
             {
                 gate.Task.GetAwaiter().GetResult();
                 return "never seen";
             })).IsTrue();
 
             await Assert.That(work.Running).IsTrue();
-            await Assert.That(work.Progress).IsEqualTo("Checking for updates…");
+            await Assert.That(work.Progress).IsEqualTo("Checking for updates...");
 
             // A second start while one is in flight is refused rather than
             // stacking two checks on one window.
@@ -584,7 +584,7 @@ internal sealed class ConfigurationAppTests
             await Assert.That(poll.Refusal!).Contains("did not finish within");
             await Assert.That(poll.Refusal!).StartsWith("The update check");
 
-            // And it is over: the dialog is not left saying "Checking…" for ever.
+            // And it is over: the dialog is not left saying "Checking..." for ever.
             await Assert.That(work.Running).IsFalse();
         }
         finally
@@ -602,7 +602,7 @@ internal sealed class ConfigurationAppTests
     {
         using var work = new BackgroundWork<string>(TimeSpan.FromMinutes(1));
 
-        await Assert.That(work.Start("Checking…", "The update check", _ => "BrowserAI 9.9.9 is available.")).IsTrue();
+        await Assert.That(work.Start("Checking...", "The update check", _ => "BrowserAI 9.9.9 is available.")).IsTrue();
 
         var clock = System.Diagnostics.Stopwatch.StartNew();
         BackgroundPoll<string> poll = default;
@@ -638,7 +638,7 @@ internal sealed class ConfigurationAppTests
     {
         using var work = new BackgroundWork<string>(TimeSpan.FromMinutes(1));
 
-        await Assert.That(work.Start("Checking…", "The update check", _ => throw new InvalidOperationException("the feed answered 404"))).IsTrue();
+        await Assert.That(work.Start("Checking...", "The update check", _ => throw new InvalidOperationException("the feed answered 404"))).IsTrue();
 
         var clock = System.Diagnostics.Stopwatch.StartNew();
         BackgroundPoll<string> poll = default;

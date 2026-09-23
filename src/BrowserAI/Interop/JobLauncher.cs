@@ -331,7 +331,7 @@ internal static partial class JobLauncher
     }
 
     /// <summary>
-    /// Builds the <c>name=value\0…\0\0</c> block <c>CREATE_UNICODE_ENVIRONMENT</c>
+    /// Builds the <c>name=value\0...\0\0</c> block <c>CREATE_UNICODE_ENVIRONMENT</c>
     /// expects, sorted the way Windows expects to find it.
     /// </summary>
     /// <remarks>

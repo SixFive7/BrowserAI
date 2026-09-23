@@ -19,7 +19,7 @@ namespace BrowserAI.Runtime;
 /// These locks are cumulative. And reinstalling the browser should be an
 /// exclusive lock."</i> And on what happens when the exclusive open fails:
 /// <i>"I do not want the intent marker. If anything is busy then the reinstall
-/// should be refused with the list… But it should not start a drain/preventstart
+/// should be refused with the list... But it should not start a drain/preventstart
 /// process of sorts. Keep it simple. Let the user solve the open sessions
 /// block."</i>
 /// </para>
@@ -507,7 +507,7 @@ internal readonly record struct MaintenanceProgress(long StagedBytes, TimeSpan E
 /// <c>OpenForLockedAppend</c> on <b>log</b> files -- so <b>no BrowserAI holder can
 /// produce <c>ERROR_LOCK_VIOLATION</c> on this open at all</b>. A 33 here can only
 /// come from a foreign process byte-range-locking the file, and it is routed to
-/// <see cref="Contended"/> and thence to <i>"BrowserAI is replacing the browsers …
+/// <see cref="Contended"/> and thence to <i>"BrowserAI is replacing the browsers ...
 /// right now"</i> with a progress clause counting from zero.
 /// </para>
 /// <para>

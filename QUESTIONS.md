@@ -317,7 +317,7 @@ decision that stops being findable is one that gets re-litigated.
   staying mandatory -- that is *routing* -- and `browser_annotate` being withheld
   from `tools/list` in every mode, as a **liveness** decision with no security
   claim. *Corrected 2026-08-18, later the same day (previously "earned the one
-  refusal that survived it … one `browser_annotate` refusal wherever no window was
+  refusal that survived it ... one `browser_annotate` refusal wherever no window was
   promised").* See [ARCHITECTURE](ARCHITECTURE.md#sessions) and
   [§trade-offs](DECISIONS.md#the-init-design-weakens-a-security-boundary).
 - **Git history is accepted as-is.** Nothing in it justifies a rewrite; the
@@ -364,7 +364,7 @@ message carries is the product's voice, and that is yours.
 
 ### 6. The per-directory gate at 120 seconds
 
-⚠️ **Corrected 2026-08-19 (previously "at 60 seconds … That is 2× `RenameWindow.Budget`
+⚠️ **Corrected 2026-08-19 (previously "at 60 seconds ... That is 2× `RenameWindow.Budget`
 and roughly 18× the measured queue at the charter's 100-process design point").**
 `LockScopes.PerDirectoryGate` is **`TimeSpan.FromSeconds(120)`**, and has been since
 `71a3d81` on 2026-08-18 -- *"The gate outlasts the SUM of the waits taken inside it,
@@ -385,7 +385,7 @@ value, and is the one sentence of the original entry that survived both raises.
 ### 7. The deeper fix -- **TAKEN 2026-08-18, and the entry below was wrong twice over**
 
 ⚠️ **Corrected 2026-08-19. Previously titled "The deeper fix that was NOT taken",
-and it said: "A loser holds the gate only to name the holder … A contender that
+and it said: "A loser holds the gate only to name the holder ... A contender that
 probed *before* taking the gate would remove the queue entirely, and with it the
 whole class of defect. It was not taken because it has TOCTOU subtleties and
 reopens the most safety-critical path in the product. This is the real fix, and it
@@ -474,11 +474,11 @@ about a rate. **The whole of what the browser said**, from its own log,
 timestamps as written:
 
 ```
-[68076:77224:0826/194308.000:VERBOSE1:…\policy_service_impl.cc:632] Taking initial snapshot of POLICY_DOMAIN_CHROME policies
-[68076:77224:0826/194308.004:VERBOSE1:…\variations_field_trial_creator.cc:603] Applying FieldTrialTestingConfig
-[68076:77224:0826/194308.007:VERBOSE1:…\variations_field_trial_creator.cc:399] VariationsSetupComplete
-[68076:77224:0826/194308.026:VERBOSE1:…\scheduler_loop_quarantine_config.cc:195] No entry found for browser/global.
-[68076:77224:0826/194308.026:VERBOSE1:…\scheduler_loop_quarantine_config.cc:195] No entry found for browser/*.
+[68076:77224:0826/194308.000:VERBOSE1:...\policy_service_impl.cc:632] Taking initial snapshot of POLICY_DOMAIN_CHROME policies
+[68076:77224:0826/194308.004:VERBOSE1:...\variations_field_trial_creator.cc:603] Applying FieldTrialTestingConfig
+[68076:77224:0826/194308.007:VERBOSE1:...\variations_field_trial_creator.cc:399] VariationsSetupComplete
+[68076:77224:0826/194308.026:VERBOSE1:...\scheduler_loop_quarantine_config.cc:195] No entry found for browser/global.
+[68076:77224:0826/194308.026:VERBOSE1:...\scheduler_loop_quarantine_config.cc:195] No entry found for browser/*.
 ```
 
 **Exit code 1. Nothing on stdout, nothing on stderr, both pipes at EOF.** It died
@@ -607,7 +607,7 @@ and lets the browser live outright when the release lands inside the first
 40 ms. **Only exact exhaustion by large allocations produces the five-line log.**
 
 **One fidelity note, stated because it looked like a rig artefact and is not.**
-Every launch on the rig desktop writes *"Sandbox cannot access executable …
+Every launch on the rig desktop writes *"Sandbox cannot access executable ...
 Access is denied"* to stderr -- and so does every launch on `WinSta0\Default`,
 measured in the same session as the control. It belongs to the provisioned tree,
 not to the rig.
@@ -750,7 +750,7 @@ rest of the table measures.
 
 **The `CHECK`-crash row is the control that ends seed hypothesis 1**, and it was
 run first because the whole crashpad theory turns on it: `chrome.exe
---headless=new … --crash-test` crashes the browser process on purpose, and it
+--headless=new ... --crash-test` crashes the browser process on purpose, and it
 exits **`0x80000003`** *while* writing a real minidump into the profile's
 `Crashpad\reports`. **A handled crash and an unhandled one leave the same exit
 code**, so a crashpad handler cannot be what the wild machine had and the rig
@@ -1008,7 +1008,7 @@ the correction.
 **Three reds, each watched on this tree.** *A row owned by a live process
 survives* -- `ARowOwnedByALiveProcessSurvivesAReclaimRunFromSomewhereElse`, watched
 red with the owner gate removed, and the failure is the measured behaviour
-verbatim: `terminated 84972@… : left over from a previous run owned by 9016@…`
+verbatim: `terminated 84972@... : left over from a previous run owned by 9016@...`
 while 9016 was still running. *A row whose owner is gone is still reclaimed* --
 `ARowWhoseOwnerIsGoneIsStillReclaimed`, whose owner is a real process that was
 started and then killed, watched red with the owner check inverted, at which point
@@ -1130,7 +1130,7 @@ bucket into the same capped bucket rather than fixing anything.
 
 **Answered 2026-08-18 @ Claude Code 2.1.234: the cap is PER STRING.** Direction
 (a) was taken and it reported. *Previously: "Nobody has checked, and the gate says
-so rather than hiding the assumption behind a passing test … Recommendation: (a),
+so rather than hiding the assumption behind a passing test ... Recommendation: (a),
 and it is already commissioned."*
 
 A probe tool whose **whole entry was 4,578 bytes** -- a 1,500-character
@@ -1149,7 +1149,7 @@ matter more than the original question:
 - The predicate is **`> 2048`** exactly -- 2,047 intact, 2,048 intact, 2,049 cut.
 - **Parameter descriptions are not truncated at all** (question 1 above).
 - **The cut is visible to the model and invisible to the server**: the client
-  appends the literal `… [truncated]`. Nothing about it reaches the server, which
+  appends the literal `... [truncated]`. Nothing about it reaches the server, which
   is why the gate has to be a build failure rather than a run-time check -- but it
   also means *"did that arrive whole?"* is a question a model can answer.
 
@@ -1235,7 +1235,6 @@ either way. Nothing else in the product branches on it, and `FirefoxSessionTests
 no longer asserts the flag directly at all -- it goes through `DestroyAnswer`,
 which reads the contract rather than a literal.
 
-<a id="12-the-cswin32-metadata-licence--moot-2026-08-20-and-the-entry-stays"></a>
 ### 12. The CsWin32 metadata licence -- **MOOT 2026-08-20, and the entry stays**
 
 ⚠️ **SETTLED PERMANENTLY, 2026-08-20, at the maintainer's decision: no generated
@@ -1378,7 +1377,7 @@ not in the original; nothing is elided inside a quoted sentence.
 > • For any Distributable Code having a filename extension of .lib, distribute only the results of running such Distributable Code through a linker with your program;
 > • Distribute Distributable Code included in a setup program only as part of that setup program without modification;
 > • Require distributors and external end users to agree to terms that protect it at least as much as this agreement;
-> […]
+> [...]
 > • Display your valid copyright notice on your programs; and
 > • Indemnify, defend, and hold harmless Microsoft from any claims, including attorneys' fees, related to the distribution or use of your programs.
 
@@ -1387,17 +1386,17 @@ this is the clause that bears on an MIT-converting licence:**
 
 > iii. Distribution Restrictions. You may not
 > • Alter any copyright, trademark or patent notice in the Distributable Code;
-> […]
+> [...]
 > • Distribute Distributable Code to run on a platform other than the Microsoft operating system platform;
-> […]
+> [...]
 > • Modified or distribute the source code of any Distributable Code so that any part of it becomes subject to an Excluded License. And Excluded License is on that requir3es, as a condition of use, modification or distribution, that
 > • The code be disclosed or distributed in source code form; or
 > • Others have the right to modify it.
 
 **The scope clause, §7:**
 
-> The software is licensed, not sold. This agreement only gives you some rights to use the software. Microsoft reserves all other rights. […] You may not
-> […]
+> The software is licensed, not sold. This agreement only gives you some rights to use the software. Microsoft reserves all other rights. [...] You may not
+> [...]
 > • publish the software for others to copy;
 > • rent, lease or lend the software;
 > • transfer the software or this agreement to any third party; or
@@ -1589,7 +1588,6 @@ before it needs code.** E is a trap.
 
 ## Added 2026-08-20, from the session-modes deletion
 
-<a id="13-the-ten-newly-granted-tools--decided-by-the-maintainer-over-my-recommendation"></a>
 ### 13. The ten newly-granted tools -- **DECIDED BY THE MAINTAINER, over my recommendation**
 
 ⚠️ **Taken, in the maintainer's words: _"Every capability is granted to every
@@ -1644,7 +1642,6 @@ this product has ever opened, `headless` included, and it reaches the cookie jar
 ([measured 2026-08-14](DECISIONS.md#licence-release-policy-and-the-tool-surface)).
 Nothing about the grant changed its availability.
 
-<a id="14-the-one-time-ordered-log-lives-inside-browseraijson--decided-by-the-maintainer-over-my-recommendation"></a>
 ### 14. The one time-ordered log lives inside `browserai.json` -- **DECIDED BY THE MAINTAINER, over my recommendation**
 
 > ⚠️ **REVERSED 2026-08-26, by the same maintainer, and the whole section below
@@ -1677,7 +1674,7 @@ a sibling append-only file; build it as decided."_** It was implemented:
 `LockRecord.Log` was one ordered array carrying `browserai_init`'s purpose, every
 purpose change, and every browser call the session forwarded, and the record
 moved to **schema 4**. ⚠️ *Corrected 2026-08-26 (previously "It is implemented:
-`LockRecord.Log` **is** one ordered array …").* `LockRecord` is deleted; the log
+`LockRecord.Log` **is** one ordered array ...").* `LockRecord` is deleted; the log
 is the `log` table in `browserai.data`, the statements are the `statements`
 table, and `PRAGMA user_version` is 1.
 

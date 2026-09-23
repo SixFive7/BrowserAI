@@ -10,12 +10,12 @@
 // Three modes over one arrangement, so the only thing that varies is HOW the
 // child goes:
 //
-//   kill  — Stop-Process by pid, identity verified against a path BrowserAI
+//   kill  -- Stop-Process by pid, identity verified against a path BrowserAI
 //           owns. The control: this is exactly resume-probe2.js's Path B.
-//   exit  — the child calls process.exit(0) on ITSELF, through
+//   exit  -- the child calls process.exit(0) on ITSELF, through
 //           browser_run_code_unsafe, which upstream documents as running in the
 //           Playwright server process. Node's own exit path runs.
-//   abort — the child calls process.abort() on itself. A real abnormal
+//   abort -- the child calls process.abort() on itself. A real abnormal
 //           termination by its own hand, with no exit handlers at all.
 //
 // `exit` and `abort` are both deaths BrowserAI did not cause and did not ask

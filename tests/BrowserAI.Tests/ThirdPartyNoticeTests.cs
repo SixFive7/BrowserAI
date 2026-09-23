@@ -107,7 +107,7 @@ internal sealed class ThirdPartyNoticeTests
     [
         // ⚠️ The date moves when the text is genuinely re-fetched, and only
         // then. 2026-08-16 -> 2026-09-22 with the 1.2.0 -> 1.2.158 bump, whose
-        // LICENSE came back byte-identical: 1,091 bytes, SHA-256 91845db8…, at
+        // LICENSE came back byte-identical: 1,091 bytes, SHA-256 91845db8..., at
         // the new package's own nuspec repository commit. **The version
         // placeholder is what makes this bite** -- the date alone would let a
         // re-stamp with no re-fetch look identical to a real one, which is
@@ -440,7 +440,7 @@ internal sealed class ThirdPartyNoticeTests
     /// cannot.
     /// </para>
     /// <para>
-    /// ⚠️ <b>A <c>previously "…"</c> span is cut out before the revisions are
+    /// ⚠️ <b>A <c>previously "..."</c> span is cut out before the revisions are
     /// read, and that exemption is the point rather than a concession.</b> A
     /// correction stamp records what a cell used to say, and that clause is the
     /// load-bearing half: it is what tells a reader who learned 1237 that the

@@ -18,7 +18,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-29 (previously "Everything the suite writes lands
-/// under <c>.work\</c> … and never in <c>%TEMP%</c> or beside the product's real
+/// under <c>.work\</c> ... and never in <c>%TEMP%</c> or beside the product's real
 /// <c>%LocalAppData%\BrowserAI</c>").</b> The second half was never true of what
 /// the suite <i>starts</i> -- a published slice writes its records into the real
 /// process log, which is what <see cref="ProcessLogRecords"/> reads -- and since

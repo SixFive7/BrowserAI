@@ -39,7 +39,7 @@
       name: the product's own [LibraryImport] declarations bind the module
       e_sqlite3, which under a publish is a symbol linked into the binary and
       under CoreCLR is a DLL that has to exist beside the exe. This probe drives
-      SessionLock, and since the cutover SessionLock opens a database — so
+      SessionLock, and since the cutover SessionLock opens a database, so
       without this every probe mode that takes a session dies on
       `DllNotFoundException` and reports as a race that nobody won. Versions
       live in Directory.Packages.props and nowhere else.

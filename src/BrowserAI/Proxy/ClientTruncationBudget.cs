@@ -31,8 +31,8 @@ namespace BrowserAI.Proxy;
 /// <para>
 /// <b>"EACH" MEANS EACH STRING. Measured 2026-08-18 @ Claude Code 2.1.234.</b>
 /// <i>Corrected 2026-08-18 (previously "⚠️ EACH DOES NOT SAY EACH WHAT, AND
-/// NOBODY HAS CHECKED … the per-string reading is taken because it is the
-/// conservative one to be wrong about … an experiment to settle it empirically is
+/// NOBODY HAS CHECKED ... the per-string reading is taken because it is the
+/// conservative one to be wrong about ... an experiment to settle it empirically is
 /// commissioned and has not reported").</i> The experiment reported. Claude Code
 /// was pointed at a local capture endpoint through <c>ANTHROPIC_BASE_URL</c> and
 /// the <c>tools</c> array it sends to the Messages API was read byte-for-byte, so
@@ -62,7 +62,7 @@ namespace BrowserAI.Proxy;
 /// <item><b>No total budget.</b> 202 tools totalling <b>348,314 bytes</b> of tool
 /// entries went in one request with nothing dropped and nothing cut.</item>
 /// <item><b>The cut is visible to the model and invisible to us.</b> The client
-/// appends the literal <c>"… [truncated]"</c> -- U+2026, a space, and
+/// appends the literal <c>"... [truncated]"</c> -- U+2026, a space, and
 /// <c>[truncated]</c>, 13 characters -- so a truncated string arrives at
 /// <b>2,061</b> characters. A server cannot see this; it happens after the
 /// JSON-RPC response has left. Nothing about it reaches BrowserAI, which is
@@ -111,7 +111,7 @@ internal static class ClientTruncationBudget
     /// <remarks>
     /// <b>The client does not truncate these -- measured, 20,000 characters
     /// through intact.</b> <i>Corrected 2026-08-18 (previously "⚠️ ASSUMED, NOT
-    /// DOCUMENTED … this applies the same number to them because it is the only
+    /// DOCUMENTED ... this applies the same number to them because it is the only
     /// number anybody has").</i> The number is kept, and kept enforced, for two
     /// reasons that are not the old one: it is a client-version fact that floats
     /// and could be tightened by any release, and this is the surface BrowserAI

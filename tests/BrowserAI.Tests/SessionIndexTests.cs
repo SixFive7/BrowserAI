@@ -180,7 +180,7 @@ internal sealed class SessionIndexTests
     /// <para>
     /// ⚠️ <b>The window narrowed with the cutover and did not close (2026-08-26,
     /// previously "a rename over a file with an open handle is refused, so the
-    /// writer sits in its retry loop … the name <c>browserai.json</c> does not
+    /// writer sits in its retry loop ... the name <c>browserai.json</c> does not
     /// resolve").</b> That window opened on <b>every forwarded call</b>, because
     /// the record was rewritten whole each time. Nothing rewrites either file
     /// now, so what is left is the first acquisition of a directory -- once per
@@ -190,7 +190,7 @@ internal sealed class SessionIndexTests
     /// <para>
     /// <b>The window is not raced for here, and it does not need to be.</b> What
     /// it produces on disk is exactly this: a directory with neither file and a
-    /// <c>browserai.lock.new-…</c> beside them. Composing that state directly
+    /// <c>browserai.lock.new-...</c> beside them. Composing that state directly
     /// tests the discriminator rather than the scheduler, and the pattern comes
     /// from <c>SessionLayout.NewLockFilePattern</c> -- the same constant the
     /// durable write's name is built from, so a rename of the convention cannot
@@ -676,7 +676,7 @@ internal sealed class SessionIndexTests
     /// <para>
     /// ⚠️ ***Corrected 2026-08-24 (previously the whole of it built
     /// <c>expected</c> as <c>Follow().Where(entry =&gt; entry.Session is { }
-    /// session &amp;&amp; …)</c> and asserted two).*** That predicate drops
+    /// session &amp;&amp; ...)</c> and asserted two).*** That predicate drops
     /// exactly the class where the equivalence <b>fails</b>, so the test named an
     /// equivalence and excluded its only counter-example -- and
     /// <c>SessionIndex.FollowUnder</c>'s own remark cited it as asserting that

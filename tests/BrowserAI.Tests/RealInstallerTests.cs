@@ -42,7 +42,7 @@ namespace BrowserAI.Tests;
 /// one is never executed by the suite at all -- 2026-09-15.</b> Velopack writes
 /// one Add/Remove Programs key per pack id per user, named for the id and never
 /// for the location: `--installto` still rewrites
-/// <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to the scratch root, and
+/// <c>HKCU\...\Uninstall\&lt;packId&gt;</c> to the scratch root, and
 /// <c>Update.exe uninstall</c> from that root calls
 /// <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally, with no comparison
 /// against <c>InstallLocation</c>. So this arm under the shipping id destroys a
@@ -79,7 +79,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b><c>[NotInParallel]</c> with no key, which in TUnit means this runs
 /// beside nothing at all.</b> <i>Corrected 2026-09-15 (previously
 /// <c>[NotInParallel(RegistrationTests.ClientGroup)]</c>, "it shares the MCP
-/// client's serialisation key … because the hooks start the real client and
+/// client's serialisation key ... because the hooks start the real client and
 /// that variable is process-wide").</i> A key serialises this arm against the
 /// other arms holding the <b>same</b> key, and the readers of a process-wide
 /// environment variable are not those arms -- <b>they are every arm in the suite
@@ -998,7 +998,7 @@ internal sealed partial class RealInstallerTests
             // declarations, same 1,692 bytes, different order. THIS IS NOT
             // NONDETERMINISM AND WAS CHECKED RATHER THAN ASSUMED: every shipping
             // pack on this machine, 20 of them across both Velopack versions,
-            // hashes to the same `92451fc6…`; the suite's pack of the same run is
+            // hashes to the same `92451fc6...`; the suite's pack of the same run is
             // the only outlier. So it is velopack#985's stub rename arriving in a
             // second place, and comparing these bytes would be comparing an
             // ordering the title difference caused.

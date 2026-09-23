@@ -59,8 +59,8 @@ internal sealed class SessionManager : IAsyncDisposable
     /// be the only ground on offer were re-measured on 2026-09-16 and three of
     /// them collapsed by between 1.7× and 7×, so that argument no longer carries
     /// this choice. See <c>DECISIONS.md</c>.
-    /// <i>Corrected 2026-09-18 (previously "…collapsed by between 1.7× and 7×
-    /// while idle CPU reversed sign, so that argument…")</i> -- the fourth axis
+    /// <i>Corrected 2026-09-18 (previously "...collapsed by between 1.7× and 7×
+    /// while idle CPU reversed sign, so that argument...")</i> -- the fourth axis
     /// reversed sign <b>twice</b>, the second time inside a single day against a
     /// Chromium binary identical to the byte, and it is
     /// <b>retired as not established</b> rather than counted in either
@@ -162,9 +162,9 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-09-22, and the sentence it replaces was measurably
-    /// false</b> <i>(previously "…The session's directory, profile and log are
+    /// false</b> <i>(previously "...The session's directory, profile and log are
     /// unchanged, so cookies and stored state are still there -- but nothing that
-    /// lived in the old process survived it…")</i>. The profile really is intact
+    /// lived in the old process survived it...")</i>. The profile really is intact
     /// on disk; <b>what is on disk is not what was written</b>. Measured
     /// 2026-09-22 at chromium 1246 and firefox 1549: a relaunch loses persistent
     /// stores a clean handover keeps, and <b>every single run lost at least one
@@ -1362,7 +1362,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// ⚠️ ***Corrected 2026-08-26 (previously "under this directory's own gate
-    /// at zero timeout … the gate is what separates nobody has this from
+    /// at zero timeout ... the gate is what separates nobody has this from
     /// somebody is mid-rewrite").*** The gate is gone from this path and the
     /// defect it was closing is gone with the file it was about. Between
     /// 2026-08-20 and 2026-08-24 the listing read a bare probe's *not held* as
@@ -1675,7 +1675,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </list>
     /// <para>
     /// <b>Required rather than optional-with-no-default.</b> <i>Corrected
-    /// 2026-08-20 (previously "following <c>mode</c> on <c>init</c> … the
+    /// 2026-08-20 (previously "following <c>mode</c> on <c>init</c> ... the
     /// precedent already settled in this file").</i> That precedent went with
     /// session modes; the rule it stated survives on its own, which is that an
     /// argument whose omission cannot be answered honestly is required. The
@@ -1716,7 +1716,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-19 (previously "The check here answers 'is
-    /// anything RUNNING FROM the tree', and that is half the question … a session
+    /// anything RUNNING FROM the tree', and that is half the question ... a session
     /// that opened a browser between the check and the delete makes the delete
     /// fail on an open executable, so THAT race produces a refusal with evidence
     /// rather than a corrupted tree").</b> The second half was too generous. A
@@ -1738,7 +1738,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-18 (previously "No extra lock is taken around the
-    /// check-then-delete, and the reason is that the delete is itself the guard …
+    /// check-then-delete, and the reason is that the delete is itself the guard ...
     /// Taking the provisioning mutex here instead would deadlock against the
     /// installer, which takes it on its own thread").</b> Both halves were wrong.
     /// The delete guards against running <b>executables</b> and the case that
@@ -2117,7 +2117,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// <para>
     /// ⚠️ <b>The family filter is gone, removed 2026-08-20 at the maintainer's
     /// decision</b> *(previously "Filtered by family since 2026-08-19, and the
-    /// filter is what makes the refusal actionable … listing a live Chromium
+    /// filter is what makes the refusal actionable ... listing a live Chromium
     /// session beside a blocked Firefox reinstall would tell the caller to close
     /// the wrong browser")*. His words were <i>"any init or resume should take a
     /// system level lock. No matter the browser type"</i>, and the lock is one
@@ -2630,7 +2630,7 @@ internal sealed class SessionManager : IAsyncDisposable
     /// what a caller passes to <c>list</c> to see everything. The cost of the
     /// exception was the worst answer this product could give: a caller who
     /// listed <c>D:\link\work</c> where the sessions live under
-    /// <c>C:\real\work</c> was told <i>"No BrowserAI sessions under '…'. That is
+    /// <c>C:\real\work</c> was told <i>"No BrowserAI sessions under '...'. That is
     /// an answer rather than an error"</i> -- confidently, wrongly, and with
     /// nothing to correct because it was not a refusal.
     /// </para>

@@ -94,7 +94,7 @@ internal static class ScratchRoot
     /// 2026-08-20 the product refuses at startup when its app root is outside
     /// the current user's profile -- see
     /// <see cref="BrowserAI.Hosting.InstallRootScope"/> -- so a test that hands
-    /// it <c>&lt;repo&gt;\.work\…</c> through
+    /// it <c>&lt;repo&gt;\.work\...</c> through
     /// <see cref="BrowserAiPaths.AppRootOverride"/> is handed a process that
     /// exits 1 before it serves anything.
     /// </para>

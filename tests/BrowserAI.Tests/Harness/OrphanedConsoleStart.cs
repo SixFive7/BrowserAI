@@ -61,7 +61,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-15 (previously "Two <c>start /b</c>s rather than
-/// one, because a handle keeps a dead pid openable … a rig in which the test
+/// one, because a handle keeps a dead pid openable ... a rig in which the test
 /// host itself launched the product's parent produced a <i>watchable</i>
 /// launcher and the product shut down cleanly, measured 2026-09-15 at
 /// <c>docs/evidence/2026-09-15-fix/repro-red-2.txt</c>").</b> That measurement was real

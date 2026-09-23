@@ -2166,7 +2166,7 @@ internal sealed class SessionLockTests
     /// exactly the length of one acquisition, so its presence is direct evidence
     /// that a rename was in flight at this instant rather than an inference
     /// about how wide a window is. <i>(Corrected 2026-08-26, previously
-    /// "<c>browserai.json.new-&lt;guid&gt;</c> … the length of one rewrite" --
+    /// "<c>browserai.json.new-&lt;guid&gt;</c> ... the length of one rewrite" --
     /// there are no rewrites left, so the one rename is acquisition's.)</i>
     /// </remarks>
     /// <param name="lockFile">The lock file that read as no record.</param>

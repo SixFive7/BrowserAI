@@ -75,7 +75,7 @@ internal static partial class ReleaseLayout
     /// <para>
     /// ⚠️ <b>Velopack writes one Add/Remove Programs key per pack id per user,
     /// named for the id and never for the location.</b> An install under
-    /// <c>--installto</c> still rewrites <c>HKCU\…\Uninstall\&lt;packId&gt;</c> to
+    /// <c>--installto</c> still rewrites <c>HKCU\...\Uninstall\&lt;packId&gt;</c> to
     /// point at the scratch root, and <c>Update.exe uninstall</c> from that root
     /// calls <c>delete_subkey_all(&lt;id&gt;)</c> unconditionally -- there is no
     /// comparison against <c>InstallLocation</c> anywhere in it. So an installer
@@ -91,7 +91,7 @@ internal static partial class ReleaseLayout
     /// the title and the output directory replaced. What the arm exercises is
     /// therefore the same code path under names that cannot collide with
     /// anybody's install. <i>Corrected 2026-09-16 (previously "The id is the only
-    /// delta … with the id and the output directory replaced")</i> -- see
+    /// delta ... with the id and the output directory replaced")</i> -- see
     /// <see cref="TestPackTitle"/> for what a shared title did to the Start Menu.
     /// </para>
     /// </remarks>
@@ -114,7 +114,7 @@ internal static partial class ReleaseLayout
     /// <c>&lt;title&gt;.lnk</c>), shortcut creation is not gated on a silent
     /// install, and the uninstall removes shortcuts by target. Two packs sharing
     /// one title therefore share one <c>.lnk</c>: the suite's installer arm
-    /// rewrote <c>%APPDATA%\…\Start Menu\Programs\BrowserAI.lnk</c> to point at
+    /// rewrote <c>%APPDATA%\...\Start Menu\Programs\BrowserAI.lnk</c> to point at
     /// its scratch root, and its uninstall then deleted it -- destroying a real
     /// install's Start Menu entry exactly the way the shared pack id destroyed
     /// the real Add/Remove entry. <i>Found 2026-09-16 by review, after the id

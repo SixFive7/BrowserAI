@@ -10,7 +10,7 @@ Nothing was written to the repository tree, to an install root, to the registry 
 > This file and what it describes were moved into the repository when the scratch
 > directory was wiped; the SVG masters, both contact sheets, `render.mjs` and
 > `Make-Ico.ps1` are beside it, the forty per-size rasters and the two proof
-> `.ico` files were not retained, and every absolute `.work\…` path below is
+> `.ico` files were not retained, and every absolute `.work\...` path below is
 > where a thing *was*. The second half still holds: nothing was written to an
 > install root, to the registry or to `~/.claude.json`. The body is left exactly
 > as it was written -- see [`README.md`](README.md) for what is here now.
@@ -21,7 +21,7 @@ is why every candidate is shown at 16, 32 and 48 px beside its 256 px master, on
 dark sheet: Windows draws the taskbar icon over both.
 
 - Contact sheets: `contact-sheet.png` (light), `contact-sheet-dark.png` (dark)
-- Masters: `svg/candidate-01.svg` … `svg/candidate-10.svg`
+- Masters: `svg/candidate-01.svg` ... `svg/candidate-10.svg`
 - Renders: `png/candidate-NN-{256,048,032,016}.png`
 - Proof icon: `candidate-01.ico`
 

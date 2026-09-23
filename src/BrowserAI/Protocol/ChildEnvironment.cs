@@ -21,7 +21,7 @@ namespace BrowserAI.Protocol;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-17 @ <c>playwright-core</c>
-/// 1.64.0-alpha-2026-09-14 (previously "<b>43</b> … variables, two of them
+/// 1.64.0-alpha-2026-09-14 (previously "<b>43</b> ... variables, two of them
 /// outside its own config mapping").</b> <b>Reconciled rather than
 /// re-measured, and the difference matters.</b> The figure above is now
 /// [re-verification row 17](../../../kb/re-verification.md)'s, taken on
@@ -42,7 +42,7 @@ namespace BrowserAI.Protocol;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-21 @ <c>playwright-core</c>
-/// 1.64.0-alpha-1789764292000 (previously "<b>46</b> … variables, three of them
+/// 1.64.0-alpha-1789764292000 (previously "<b>46</b> ... variables, three of them
 /// outside its own config mapping").</b> The one addition is
 /// <c>PLAYWRIGHT_MCP_WEBMCP</c>, which arrived with <c>@playwright/mcp</c>
 /// 0.0.82's page-registered tool collection and is read <b>inside</b>
@@ -63,7 +63,7 @@ namespace BrowserAI.Protocol;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-17 @ <c>playwright-core</c>
-/// 1.64.0-alpha-2026-09-17 (previously "<b>45</b> … variables, three of them
+/// 1.64.0-alpha-2026-09-17 (previously "<b>45</b> ... variables, three of them
 /// outside its own config mapping").</b> The paragraph that stood here said the
 /// next figure was already known and deliberately not written in, because the
 /// alpha carrying it "is not what any released <c>@playwright/mcp</c> pins".
@@ -80,7 +80,7 @@ namespace BrowserAI.Protocol;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-09-14 @ <c>playwright-core</c>
-/// 1.63.0-alpha-2026-08-31 (previously "<b>42</b> … variables").</b>
+/// 1.63.0-alpha-2026-08-31 (previously "<b>42</b> ... variables").</b>
 /// <b>Re-measured rather than incremented</b>, with the old bundle as the
 /// positive control: distinct <c>PLAYWRIGHT_MCP_*</c> names read out of
 /// <c>coreBundle.js</c> came back <b>40 in the <c>e.PLAYWRIGHT_MCP_*</c> config

@@ -530,7 +530,7 @@ internal sealed partial class SaturationTests
             foreach (var header in headers.Where(header => header.Index is not 0))
             {
                 found.Add(
-                    $"a record header starts at offset {header.Index.ToString(CultureInfo.InvariantCulture)} of a line, so two processes' bytes are interleaved: {(line.Length <= 300 ? line : line[..300] + "…")}");
+                    $"a record header starts at offset {header.Index.ToString(CultureInfo.InvariantCulture)} of a line, so two processes' bytes are interleaved: {(line.Length <= 300 ? line : line[..300] + "...")}");
 
                 if (found.Count is 10)
                 {
@@ -664,7 +664,7 @@ internal sealed partial class SaturationTests
     /// of the message catalogue.
     /// </para>
     /// <para>
-    /// ⚠️⚠️ <b>Corrected 2026-08-18 (previously <c>…\s\S+\s\spid=\d+</c>, with
+    /// ⚠️⚠️ <b>Corrected 2026-08-18 (previously <c>...\s\S+\s\spid=\d+</c>, with
     /// TWO spaces before <c>pid=</c>), and it had never matched a single
     /// <c>INFO</c> or <c>WARN</c> record in its life.</b>
     /// <c>FileLoggerProvider.Abbreviate</c> pads every level name to five
@@ -688,7 +688,7 @@ internal sealed partial class SaturationTests
     /// <para>
     /// ⚠️ <b>And the 2026-08-17 note above was a misdiagnosis of this same
     /// defect.</b> It recorded "the header count came back as 12 against a
-    /// hundred peers … on a log that was perfectly intact" and blamed a
+    /// hundred peers ... on a log that was perfectly intact" and blamed a
     /// last-write-time filter. Twelve was the number of <c>DEBUG</c> records in
     /// the file. Removing the filter raised the number by reading more history
     /// and left the cause untouched -- which is why the same test failed again the
@@ -697,7 +697,7 @@ internal sealed partial class SaturationTests
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-24 (previously
-    /// <c>…T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s+pid=\d+</c>).</b> A record now carries
+    /// <c>...T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s+pid=\d+</c>).</b> A record now carries
     /// <b>two</b> times -- the leading column is when it was <i>written</i>, taken
     /// inside the file's write gate, and <c>made=</c> is when it was created --
     /// and the writer is <c>pid=&lt;n&gt;@&lt;createdFileTime&gt;</c> rather than

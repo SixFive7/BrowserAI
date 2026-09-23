@@ -944,7 +944,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// </para>
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-19 (previously "A pre-existing hazard this makes
-    /// visible rather than creates … two family installs racing into one shared
+    /// visible rather than creates ... two family installs racing into one shared
     /// component directory is reachable in the shipped product and is not
     /// addressed here").</b> The <i>reachability</i> half was right and the
     /// <i>hazard</i> half was not, and the difference was never measured before
@@ -1962,7 +1962,7 @@ internal sealed class BrowserProvisioner : IDisposable
     /// <para>
     /// ⚠️ <b>This exists because the detail sentence was stating a fact that was
     /// not true.</b> Every path that has not finished rendered
-    /// <i>"… is being downloaded into '…'"</i>, including the one where this
+    /// <i>"... is being downloaded into '...'"</i>, including the one where this
     /// process is <b>not</b> downloading anything: it lost the machine-wide
     /// provisioning mutex and is watching for the holder's marker. The holder may
     /// be downloading, or extracting, or walking every process on the machine
@@ -2313,7 +2313,7 @@ internal sealed class NodeInstallerRun : IInstallerRun
 /// ⚠️ <b>Added 2026-08-18, with the provisioning mutex.</b> Before it, "nothing
 /// was deleted" and "everything deleted and the download failed" were the same
 /// shape -- no failures, and a status that is not <c>Installed</c> -- so the
-/// caller was told <i>"'…' was deleted (0.0 MiB) and the download that should
+/// caller was told <i>"'...' was deleted (0.0 MiB) and the download that should
 /// have replaced it did not complete, so there is no browser installed now"</i>
 /// about a tree that is entirely intact. An answer that asserts a destructive
 /// act which did not happen is the failure class this product exists to remove,

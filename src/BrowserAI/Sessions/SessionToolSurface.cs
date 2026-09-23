@@ -39,7 +39,7 @@ namespace BrowserAI.Sessions;
 /// <b>Every upstream tool carrying a <c>deny</c> verdict is dropped on the way
 /// through</b>, and the charter allows it in as many words: <i>filter,
 /// re-describe, inject <c>session</c></i> is in scope and renaming is not.
-/// <i>Corrected 2026-08-26 (previously "Exactly one upstream tool is dropped …
+/// <i>Corrected 2026-08-26 (previously "Exactly one upstream tool is dropped ...
 /// which one, and the measurement behind it, is
 /// <c>SessionToolPolicy.IsWithheldFromTheSurface</c>'s to say").</i> There is
 /// still exactly one, and it is no longer a fact about the code: which tools are

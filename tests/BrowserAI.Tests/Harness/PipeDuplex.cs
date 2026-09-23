@@ -14,7 +14,7 @@ namespace BrowserAI.Tests.Harness;
 /// <b>A proxy needs two of these, and that is the whole reason the SDK's own
 /// fixtures are not vendored.</b> <c>ClientServerTestBase</c> wires one
 /// client↔server pair; BrowserAI is a client on one side and a server on the
-/// other, so the topology is test client → BrowserAI … BrowserAI → fake child
+/// other, so the topology is test client → BrowserAI ... BrowserAI → fake child
 /// and there are two hops to own.
 /// </para>
 /// <para>

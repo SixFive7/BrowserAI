@@ -540,7 +540,7 @@ internal static class FirstRunCache
     /// <b>Measured 2026-08-17 with the suite running every test at once:</b>
     /// <c>FirstRunCacheTests</c> failed in <b>five of twenty-one</b> full-suite
     /// runs, always inside milliseconds of the copy, and always with
-    /// <i>"Access to the path '…\.staging-&lt;guid&gt;' is denied"</i>. It never
+    /// <i>"Access to the path '...\.staging-&lt;guid&gt;' is denied"</i>. It never
     /// failed once in the same twenty-one runs at four-way parallelism, because
     /// the scanner was never that far behind.
     /// </para>

@@ -100,7 +100,7 @@ internal static partial class TaskDialogInterop
         /// <summary>No flag.</summary>
         None = 0,
 
-        /// <summary>Content and footer may carry <c>&lt;a href="…"&gt;</c>.</summary>
+        /// <summary>Content and footer may carry <c>&lt;a href="..."&gt;</c>.</summary>
         EnableHyperlinks = 0x0001,
 
         /// <summary>The main icon field is an <c>HICON</c> rather than a resource id.</summary>

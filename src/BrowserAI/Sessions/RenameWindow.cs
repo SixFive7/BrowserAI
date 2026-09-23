@@ -102,7 +102,7 @@ namespace BrowserAI.Sessions;
 /// ⚠️ <b><see cref="UnauthorizedAccessException"/> for an entitled reader,
 /// and a sharing violation only where no owner is possible. Corrected
 /// 2026-08-19 (previously "Only <see cref="UnauthorizedAccessException"/>, never
-/// <see cref="IOException"/> … a sharing violation on one of these opens means
+/// <see cref="IOException"/> ... a sharing violation on one of these opens means
 /// the holder opened the file in a mode that excludes us").</b> That reading is
 /// right for the two rows above it and wrong for the third, and the difference
 /// cost a lock: <c>SessionLock.ProbeForHolder</c> opens <c>browserai.lock</c>

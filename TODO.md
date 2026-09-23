@@ -104,7 +104,7 @@ any more**. The other five are hazards and nothing else; they are in the
 [index](HAZARDS.md#hazard-index) and not here, because this file is work settled
 in intent and they are not settled.
 
-⚠️ ***Corrected 2026-08-24 (previously "Two of those seven are below … The other
+⚠️ ***Corrected 2026-08-24 (previously "Two of those seven are below ... The other
 five are hazards and nothing else").*** The second item was *"decide whether
 `SessionLock` gets a per-session lock"*, and it is decided: the maintainer took
 direction 1 -- a per-session lock every mutating path and both disposal paths take
@@ -133,7 +133,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       the three lists below, counted 2026-08-26 after the ones settled since.***
       *Re-counted rather than decremented: the three lists hold 29 named claims,
       two of which the notes below mark done, which is 27. **Previously "28
-      assumed justifications … counted 2026-08-19"**, and what left the list is
+      assumed justifications ... counted 2026-08-19"**, and what left the list is
       named where it left it -- the filename refusals, in the `src/` list.*
       *The item said **24** when it was written on 2026-08-18 and did not state
       what it was counting, so this is a **different question over the same
@@ -683,7 +683,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       watch item below had already decided asks go -- and by the time this one was
       posted the watch item's signal had fired for a second reason, so it was
       never a judgement call. The posted body is byte-identical to the draft
-      above (sha256 `9011ed28b20db5e0…`, re-read from the live issue 2026-09-15),
+      above (sha256 `9011ed28b20db5e0...`, re-read from the live issue 2026-09-15),
       and the ask text carries **zero non-ASCII bytes**, checked with a control
       that planted U+2014 and U+00A0 and found them.
 

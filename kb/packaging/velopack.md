@@ -99,7 +99,7 @@ as *"no update available"* and nothing else. The channel belongs in
 differently and passes where production 404s.
 
 > **Verdict, 2026-08-15: still real, consequence wrong.** 1.2.0 throws
-> `HttpRequestException … 404`. Not silent, not "unrecoverable in the field" --
+> `HttpRequestException ... 404`. Not silent, not "unrecoverable in the field" --
 > catchable, so a health check can detect it.
 
 > **Qualified 2026-08-16: a 404 is not by itself a misconfiguration signal.** The
@@ -661,12 +661,12 @@ cannot tell a mention from a stamp.)*
 
 > ⚠️ `Corrected 2026-09-22 @ Velopack 1.2.0 · node v24.21.0 ·
 > @playwright/mcp 0.0.82 · playwright-core 1.64.0-alpha-1789764292000
-> (previously "Publish directory on disk 262,007,766 … **What ships** (pdb
+> (previously "Publish directory on disk 262,007,766 ... **What ships** (pdb
 > excluded) **143,503,406** -- `payload\node` 93,740,659 ·
 > `BrowserAI.Server.exe` 19,202,560 · `payload\mcp` 18,619,618 ·
 > `BrowserAI.exe` 10,411,520 · the three `.xml` 1,497,348 · notices 22,610 ·
-> `payload` other 9,091 … **Full `.nupkg`** **54,926,688** … ratio **0.3828**
-> … **Delta** **138,515** … **0.2522%** … `Setup.exe` 59,435,360 …
+> `payload` other 9,091 ... **Full `.nupkg`** **54,926,688** ... ratio **0.3828**
+> ... **Delta** **138,515** ... **0.2522%** ... `Setup.exe` 59,435,360 ...
 > `-Portable.zip` 54,887,948", measured 2026-09-17 at `1.0.1-reverify.1` and
 > `.2`)`. **This clears the `[STALE]` renewed on 2026-09-21, and the trigger was
 > the one row 85 names.**
@@ -708,12 +708,12 @@ cannot tell a mention from a stamp.)*
 > measuring different things on purpose.
 
 > ⚠️ `Corrected 2026-09-17 @ Velopack 1.2.0 · node v24.21.0 · @playwright/mcp
-> 0.0.81 (previously "Publish directory on disk 206,427,574 … **What ships**
+> 0.0.81 (previously "Publish directory on disk 206,427,574 ... **What ships**
 > (pdb excluded) **130,434,486** -- `BrowserAI.exe` 17,853,952 · `payload\node`
-> 92,985,968 · `payload\mcp` 18,997,245 · `BrowserAI.xml` 596,517 … **Full
-> `.nupkg`** **49,043,498** … Compression ratio **0.376** … **Delta `.nupkg`,
-> N→N+1** **97,216** … **0.198% of the full package -- a 504× reduction** …
-> `Setup.exe` 53,505,061 … `-Portable.zip` 49,042,468")`. **This closes the
+> 92,985,968 · `payload\mcp` 18,997,245 · `BrowserAI.xml` 596,517 ... **Full
+> `.nupkg`** **49,043,498** ... Compression ratio **0.376** ... **Delta `.nupkg`,
+> N→N+1** **97,216** ... **0.198% of the full package -- a 504× reduction** ...
+> `Setup.exe` 53,505,061 ... `-Portable.zip` 49,042,468")`. **This closes the
 > `[STALE]` notice at the head of this section, which had stood since 2026-08-27
 > and been renewed twice without being run.**
 >
@@ -939,8 +939,8 @@ timeouts: `--veloapp-install` (30 s), `--veloapp-updated` (15 s),
 `OnRestarted` do not exit.
 
 > ⚠️ **Corrected 2026-08-16 (previously "Hooks can register the logon sweep task
-> -- confirmed … `schtasks /Create /XML` from the install hook succeeded with
-> `LogonType=InteractiveToken` … The task survived update and rollback … and the
+> -- confirmed ... `schtasks /Create /XML` from the install hook succeeded with
+> `LogonType=InteractiveToken` ... The task survived update and rollback ... and the
 > uninstall hook removed it").** **The observation was real and the subject was
 > wrong**, which is the more expensive of the two ways to be wrong. What the
 > spike established is what is left above: the hooks' identity, session and
@@ -968,7 +968,7 @@ directory -- so the downloads are renamed after the pack, 2026-09-15.**
 and `BrowserAI.app-win-Portable.zip` to `BrowserAI.zip`, rewrites both names in
 `assets.{channel}.json`, and renames the human-facing manifest directory under
 `Releases\archive\` to `BrowserAI-{version}-manifest`. *(Corrected later the same
-day, previously "the download is renamed after the pack … moves
+day, previously "the download is renamed after the pack ... moves
 `BrowserAI.app-win-Setup.exe` to `BrowserAI-win-Setup.exe` and rewrites that one
 name": it was one artifact and it kept vpk's `-win-Setup` vocabulary, which says
 what the tool calls the file rather than what it is.)* **The channel leaves the
@@ -999,7 +999,7 @@ gave the word and the four were deleted. See
 
 ⚠️ **`BrowserAI.exe` names THREE different files, and the difference matters
 when reading any other line in this article.** *Corrected 2026-09-15 (previously
-"two different files … the installed binary is `<install root>\current\BrowserAI.exe`,
+"two different files ... the installed binary is `<install root>\current\BrowserAI.exe`,
 ~17.9 MB, which is what `--mainExe` names, what registration points a client at,
 and what the sizes table below means").* The **download** is the self-extracting
 installer, 59,353,329 bytes as of 2026-09-15, which exists only until it has been
@@ -1106,7 +1106,7 @@ anything arms the feature. Two details cost time and are worth inheriting:
 this decoration hangs off **`GetAssemblyAttributes`** rather than
 `GetAssemblyVersion` or `MinVer` -- asking after either of the latter two returns
 an undecorated string and reads as proof of something it did not test. And a
-`-p:InformationalVersion=…` global property does **not** survive: MinVer's own
+`-p:InformationalVersion=...` global property does **not** survive: MinVer's own
 target overwrites it, so the *`.`-separated* form the SDK produces when the
 string already carries a `+` (`0.1.0+a273b31` becoming
 `0.1.0+a273b31.<40-char sha>`) could not be reproduced here and is **read from
@@ -1136,7 +1136,7 @@ Found 2026-08-15. `[FLOATS]`
 
 `setup.rs` declares `EXE_ARGS` without `.value_parser(value_parser!(OsString))`
 but reads `get_many::<OsString>`, so passing start arguments panics with
-*"Mismatch between definition and access of EXE_ARGS … Could not downcast"*. **The
+*"Mismatch between definition and access of EXE_ARGS ... Could not downcast"*. **The
 process never exits**, installs nothing, and leaves one log line. `update.rs` has
 the value parser and is unaffected. Any scripted install passing start arguments
 hangs forever -- the purest instance of this project's own failure class, found in
@@ -1451,7 +1451,7 @@ counted as a use of it. It went red here first, at 22 against a recorded 21.)*
 
 ⚠️ **And one fact governs every alternative at once: a published release asset
 cannot be redirected.** There is no GitHub facility that makes
-`…/releases/latest/download/releases.win.json` serve from somewhere else, so any
+`.../releases/latest/download/releases.win.json` serve from somewhere else, so any
 move strands every already-installed build that has not first updated through the
 old URL. The only runtime lever is `BROWSERAI_UPDATE_FEED`
 (`UpdateConfiguration.Resolve`), which is a thing a person sets by hand on one
@@ -1483,7 +1483,7 @@ noticing.
 
 ### What GitHub Pages would cost, as documented 2026-09-23
 
-From `docs.github.com/en/pages/…/github-pages-limits`, verbatim: *"Published
+From `docs.github.com/en/pages/.../github-pages-limits`, verbatim: *"Published
 GitHub Pages sites may be no larger than 1 GB."* · *"GitHub Pages sites have a
 **soft** bandwidth limit of 100 GB per month."* · *"GitHub Pages sites have a
 **soft** limit of 10 builds per hour."* · *"GitHub Pages source repositories have
@@ -1500,18 +1500,18 @@ the bandwidth used to deliver them."*
 
 ⚠️ **"No CI" is not quite available either.** A publishing source can be a
 branch with no workflow authored, but
-`docs.github.com/en/pages/…/configuring-a-publishing-source-for-your-github-pages-site`
+`docs.github.com/en/pages/.../configuring-a-publishing-source-for-your-github-pages-site`
 says verbatim: *"Your GitHub Pages site will always be deployed with a GitHub
 Actions workflow run, even if you've configured your GitHub Pages site to be
 built using a different CI tool."* So a GitHub-owned `pages-build-deployment` run
 fires on every push. **Whether that breaks this project's no-hosted-CI stance is a
 decision rather than a fact**, and it is named here rather than resolved. Pages
 is not enabled today: `gh api repos/SixFive7/BrowserAI` reads `has_pages: false`
-and `repos/…/pages` is a 404.
+and `repos/.../pages` is a 404.
 
 ### A 55 MB package per release is permanent, and a clone pays for every branch
 
-`docs.github.com/…/about-large-files-on-github`, verbatim: *"If you attempt to add
+`docs.github.com/.../about-large-files-on-github`, verbatim: *"If you attempt to add
 or update a file that is larger than 50 MiB, you will receive a warning from
 Git."* · *"GitHub blocks files larger than 100 MiB."* · *"We recommend
 repositories remain small, ideally less than 1 GB, and less than 5 GB is strongly
@@ -1532,7 +1532,7 @@ repository that was **18.1 MiB** on 2026-09-23:
 ⚠️ **An orphan `gh-pages` branch does not avoid this**, which is the half that
 looks like an escape and is not. `git-scm.com/docs/git-clone` on
 `--single-branch`, verbatim: *"Clone only the history leading to the tip of a
-single branch … Further fetches into the resulting repository will only update
+single branch ... Further fetches into the resulting repository will only update
 the remote-tracking branch for the branch this option was used for."* -- i.e. the
 **default** clone fetches every branch's objects. Everyone who clones BrowserAI
 would pay for every package ever published unless they passed `--single-branch`,

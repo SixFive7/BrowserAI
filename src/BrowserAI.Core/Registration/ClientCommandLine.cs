@@ -19,7 +19,7 @@ namespace BrowserAI.Registration;
 /// ampersands or percent signs it contains. This is
 /// [SDK deviation 1](../../../STACK.md#nine-places-where-the-sdk-must-be-deviated-from)
 /// applied to a one-shot command:
-/// the SDK's own transport rewrites every command into <c>cmd.exe /c …</c>, and
+/// the SDK's own transport rewrites every command into <c>cmd.exe /c ...</c>, and
 /// the measured cost was a literal <c>%USERNAME%</c> arriving expanded and a
 /// path containing a space failing to start at all.
 /// </para>

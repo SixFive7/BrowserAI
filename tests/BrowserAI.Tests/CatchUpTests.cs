@@ -177,7 +177,7 @@ internal sealed class CatchUpTests
     /// <c>browserai_init</c> is the one call whose <c>why</c> and whose
     /// <c>purpose</c> are the same string -- it takes no separate <c>why</c>, so
     /// the purpose <i>is</i> the why. The entry printed it in full under
-    /// <c>why:</c> and then again directly beneath under <c>with: purpose=…</c>,
+    /// <c>why:</c> and then again directly beneath under <c>with: purpose=...</c>,
     /// cut at 200 characters with <c>(+N more characters)</c> after it.
     /// <b>Two adjacent lines, the second one shorter and different</b>: nothing
     /// in the answer said the second was a truncation of the first rather than a
@@ -244,7 +244,7 @@ internal sealed class CatchUpTests
     /// <para>
     /// ⚠️ <b>Corrected 2026-08-26 (previously
     /// <c>ResumeAndSetPurposeStillRecordPurposeBesideTheirOwnWhy</c>, asserting
-    /// a <c>with: purpose=…</c> line on the log entry).</b> Log rows carry no
+    /// a <c>with: purpose=...</c> line on the log entry).</b> Log rows carry no
     /// arguments, so the new purpose is no longer <i>in</i> the entry -- and that
     /// is the one thing the argument drop genuinely cost, named as a cost rather
     /// than glossed. What replaces it is the <c>purpose</c> statement history:

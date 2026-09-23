@@ -157,7 +157,7 @@ anywhere, so it is on the persistent side by construction. What this entry is fo
 is the next reader who reaches for `--storage-state` to seed a signed-in session:
 it will look like it worked.
 
-**Re-establish** by counting the keys in the two `tObject({…})` blocks in
+**Re-establish** by counting the keys in the two `tObject({...})` blocks in
 `playwright-core/lib/coreBundle.js` and diffing them, then reading `tObject`'s own
 body. **The control is the reverse difference** -- a diff that comes back with
 `storageState` alone in one direction and 18 keys in the other is a real
@@ -170,7 +170,7 @@ diagnostic.** Recorded 2026-08-19 at the same versions. Upstream parses it with
 `value.split(",").map(v => v.trim())` -- no enum, no membership check, nothing.
 The neighbouring options show that this is an omission rather than a style:
 `--codegen`, `--console-level` and `--image-responses` are all declared with
-`enumParser.bind(null, "<flag>", [ … ])` and reject an unknown value loudly.
+`enumParser.bind(null, "<flag>", [ ... ])` and reject an unknown value loudly.
 
 **It is also why `--caps storage` works although the help documents only three
 values.** `--caps <caps>` is described as *"comma-separated list of additional
@@ -248,7 +248,7 @@ Google Chrome 152.0.7977.65 out of `C:\Program Files`, given
 `--disable-field-trial-config --enable-features=NetworkServiceSandbox`, produced
 a network service with `--service-sandbox-type=network`, `TokenIsAppContainer`
 **1**, `TokenIsSandboxed` **1**, AppContainer number 34, package SID
-`S-1-15-2-3750051434-…-2070849743`, Low integrity and **nine** capability SIDs --
+`S-1-15-2-3750051434-...-2070849743`, Low integrity and **nine** capability SIDs --
 a genuine AppContainer, on the same machine, in the same session, minutes apart.
 So the reading instrument can see a sandboxed network service; it did not see
 one on the product path because there was not one.
@@ -283,10 +283,10 @@ tree under `%LOCALAPPDATA%` grants neither `ALL APPLICATION PACKAGES` nor
 carries on:
 
 ```
-[…:ERROR:sandbox\policy\win\sandbox_win.cc:804] Sandbox cannot access executable
+[...:ERROR:sandbox\policy\win\sandbox_win.cc:804] Sandbox cannot access executable
 C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe.
 Check filesystem permissions are valid. See https://bit.ly/31yqMJR.: Access is denied. (0x5)
-[…:ERROR:content\browser\network_service_instance_impl.cc:650] Network service crashed
+[...:ERROR:content\browser\network_service_instance_impl.cc:650] Network service crashed
 or was terminated, restarting service.
 ```
 
@@ -354,7 +354,7 @@ binary even headless.
 > **Confirmed end to end 2026-08-16:** a launch with
 > `browserName: "chromium"`, `channel: "chrome-for-testing"` and
 > `headless: true` resolved
-> `…\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe`, with `--headless`
+> `...\BrowserAI\browsers\chromium-1237\chrome-win64\chrome.exe`, with `--headless`
 > on its command line and no `chromium_headless_shell-1237` directory present at
 > all. Asserted every run by `HeadlessBinaryTests`.
 >
@@ -371,11 +371,11 @@ binary even headless.
 
 > ✅ **`--browser chromium` supplies a channel, so it takes the alias branch.**
 > `Corrected 2026-08-17 (previously "This selector is authoritative, and one
-> observation disagrees with it … `[UNVERIFIED]` as to which branch the 0.0.79
+> observation disagrees with it ... `[UNVERIFIED]` as to which branch the 0.0.79
 > run took")`. `resolveBrowserParam` is the stage between the CLI and this
 > selector, and for the single value `"chromium"` it substitutes
 > `channel: "chrome-for-testing"` -- which `isChromiumAlias` then matches, so
-> `getExecutableName` returns before it ever reaches its `headless ? …` line.
+> `getExecutableName` returns before it ever reaches its `headless ? ...` line.
 > [kb: detection](../windows/detection.md#enumeration-works----and-it-moves-the-safety-boundary)
 > recorded `--headless --browser chromium` spawning full `chrome.exe`, and that
 > is what this selector predicts once the stage above it is read. **Nothing is
@@ -396,7 +396,7 @@ only to `os.platform() === "linux" && !process.env.DISPLAY`.
 > **It is a default, not an override, and the distinction is load-bearing.**
 > Read from the resolved bundle 2026-08-16, the assignment is guarded:
 > `if (browser.launchOptions.headless === void 0) browser.launchOptions.headless
-> = …`. So a config file's `headless: true` **survives** on Windows -- confirmed
+> = ...`. So a config file's `headless: true` **survives** on Windows -- confirmed
 > by a launch whose browser command line carried `--headless`. Read the entry
 > above as *"no key means a window appears"*, never as *"upstream overwrites
 > your key"*. Unlike `chromiumSandbox`, commander leaves `opts.headless`
@@ -539,7 +539,7 @@ chosen by a ternary on `config.skillMode` between
 `config.browser.launchOptions?.channel ?? config.browser.browserName` -- so a
 BrowserAI caller is told to install **`chrome-for-testing`**, which is not a
 `browserName` at all. `src/BrowserAI/Runtime/ProvisioningRemediation.cs` matches
-the whole `Run \`…install-browser…\` to install` clause, so **both** branches of
+the whole `Run \`...install-browser...\` to install` clause, so **both** branches of
 that ternary are covered by one pattern; a reword upstream would make the strip
 stop firing silently, which is why this shape has
 [a row of its own](../re-verification.md). `[FLOATS]`
@@ -548,7 +548,7 @@ stop firing silently, which is why this shape has
 2026-08-16 @ `@playwright/mcp` 0.0.79, twice, by driving `cli.js` directly with
 `PLAYWRIGHT_BROWSERS_PATH` at an **empty** directory: the call answers
 `isError: true` with `Browser "chrome-for-testing" is not installed; expected
-executable at …`, from `throwIfExecutableMissing`. It does **not** launch
+executable at ...`, from `throwIfExecutableMissing`. It does **not** launch
 anything -- which is why the round trip is cheap on a provisioned machine -- but
 the binary has to be there. **This contradicts
 [The provisioning design](../../ARCHITECTURE.md#the-runtime-it-ships)'s claim that the
@@ -595,7 +595,7 @@ is 46**: `PLAYWRIGHT_MCP_PING_TIMEOUT_MS`, `PLAYWRIGHT_MCP_EXTENSION_TOKEN` and
 test must derive the count from the resolved bundle and never carry a literal.
 
 ⚠️ **`Corrected 2026-09-17 @ playwright-core 1.64.0-alpha-2026-09-17 (previously
-"reads **42** … and 32 more … **The real total is 45**")`. Re-measured with the
+"reads **42** ... and 32 more ... **The real total is 45**")`. Re-measured with the
 PREVIOUS bundle as the positive control, which returned 42 + 3 = 45 exactly as
 this paragraph recorded** -- so the predicate was proved able to find what was
 there before it was believed about what is there now. The one addition is
@@ -613,7 +613,7 @@ decision the config already took, which is the test every other refusal in that
 list passes and the code-generation language did not.
 
 ⚠️ **`Corrected 2026-09-15 @ playwright-core 1.64.0-alpha-2026-09-14 (previously
-"reads **41** … and 31 more … **The real total is 43**", with two outside the
+"reads **41** ... and 31 more ... **The real total is 43**", with two outside the
 mapping)`. Re-measured with the PREVIOUS bundle as the positive control, which
 returned 41 + 2 = 43 exactly as this paragraph recorded -- so the predicate was
 proved able to find what was there before it was believed about what is there
@@ -626,9 +626,9 @@ grew for the first time since it was recorded. Neither can reach the child:
 construction.
 
 ⚠️ **`Corrected 2026-09-14 @ playwright-core 1.63.0-alpha-2026-08-31 (previously
-"reads **40** … **The real total is 42**")`. Re-measured rather than
+"reads **40** ... **The real total is 42**")`. Re-measured rather than
 incremented, and the old bundle was the positive control**: the same predicate --
-distinct `PLAYWRIGHT_MCP_*` names matched as `e.PLAYWRIGHT_MCP_…` for the
+distinct `PLAYWRIGHT_MCP_*` names matched as `e.PLAYWRIGHT_MCP_...` for the
 mapping, every distinct occurrence for the total -- run over
 1.63.0-alpha-2026-08-05's own `coreBundle.js` returned **40 + 2 = 42**, which is
 the figure this paragraph had carried since it was written, so the counter was
@@ -691,7 +691,7 @@ unknown option '--output-mode'` and the process exits **1**. The missing browser
 **does not**: against an empty browsers root, `initialize` succeeds, `tools/list`
 succeeds, `browser_navigate` returns a JSON-RPC **success** whose body is
 `isError: true` carrying `Browser "chrome-for-testing" is not installed; expected
-executable at …`, the process exits **0**, and stderr is **empty**. That is the
+executable at ...`, the process exits **0**, and stderr is **empty**. That is the
 founding failure shape arriving from upstream, and it means the second ported
 regex's `is not installed` phrase has no stderr occurrence to match in this
 version. It is kept regardless: the regexes are

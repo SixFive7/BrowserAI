@@ -213,7 +213,7 @@ internal sealed class FirefoxTests
         //
         // Measured 2026-08-17, on an unmodified tree: two failures in five full
         // runs, and with the pids resolved to image paths the intruder was
-        // literally `…\browsers\chromium-1237\chrome-win64\chrome.exe` -- once as
+        // literally `...\browsers\chromium-1237\chrome-win64\chrome.exe` -- once as
         // a single arrival, once as five at a time, which is a Chromium tree
         // coming up. The file's own note here used to read "that one caught a
         // Firefox another test in this file was launching in parallel, and the

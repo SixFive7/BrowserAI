@@ -29,7 +29,7 @@ internal enum RegistrationIntent
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>Corrected 2026-09-15 (previously "<c>current\</c> is replaced
-    /// wholesale but its path does not move, so there is nothing to correct …
+    /// wholesale but its path does not move, so there is nothing to correct ...
     /// Only an <i>absent</i> entry is written, which self-heals a registration
     /// somebody removed").</b> The premise stopped being true the day the server
     /// was renamed: the path inside <c>current\</c> <i>can</i> move now, and

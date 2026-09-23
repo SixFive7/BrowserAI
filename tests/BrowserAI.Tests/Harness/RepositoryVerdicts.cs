@@ -128,7 +128,7 @@ internal static class RepositoryVerdicts
     /// asserted against <see cref="Count"/>, so a shipped denial added to test a
     /// mechanism would move four documented numbers with it. A rig copy tests
     /// the mechanism and leaves the product's judgement alone. *(Was "cannot use
-    /// <c>browser_annotate</c> … <c>withheld == 1</c>" until 2026-09-15, when
+    /// <c>browser_annotate</c> ... <c>withheld == 1</c>" until 2026-09-15, when
     /// the second real denial landed and the count stopped being a literal.)*
     /// </remarks>
     /// <param name="tool">The tool to deny.</param>

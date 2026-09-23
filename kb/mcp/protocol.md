@@ -25,7 +25,7 @@ nothing to catch and the negotiated value must be asserted. `[FLOATS]`
 > **The product half landed 2026-08-16, with the first published-AOT vertical
 > slice.**
 > `BrowserProxy.ConnectAsync` pins `McpClientOptions.ProtocolVersion`, logs
-> `requested=… negotiated=…`, and throws if the two differ; `ProtocolSplitTests`
+> `requested=... negotiated=...`, and throws if the two differ; `ProtocolSplitTests`
 > asserts the logged pair against the ceiling the snapshot recorded, so the pin
 > and the measurement can no longer drift apart silently.
 
@@ -48,7 +48,7 @@ asks both ends the same question in the same run. `[FLOATS]`
 and `notifications/initialized`, adds `server/discover`, replaces server→client
 requests with the MRTR retry pattern, and deprecates Roots, Sampling and Logging.
 **SEP-2567 removed protocol-level sessions outright**, and *Tools § Capabilities*
-states the tool set "MAY change over time … but MUST NOT vary per-connection or
+states the tool set "MAY change over time ... but MUST NOT vary per-connection or
 as a side effect of other requests on the connection." `ping` was removed at
 `2026-07-28`. SEP-2567 also names `destroy_*` and `list_*` as the documented
 companions to a creation tool. `[STABLE]` -- a published revision does not move.
@@ -92,7 +92,7 @@ anything.
 > **What BrowserAI actually spends of that, re-measured 2026-09-21 off the
 > published binary's own `initialize` response: 2,026 characters and `2,036`
 > bytes, leaving 22.** *Corrected 2026-09-21 (previously "re-measured
-> 2026-08-18 … 1,261 characters and `1,276` bytes, leaving 772. The three mode
+> 2026-08-18 ... 1,261 characters and `1,276` bytes, leaving 772. The three mode
 > lines cost **106, 121 and 92 bytes** apiece, plus a newline each, measured from
 > the same emitted string").* The mode lines were deleted on 2026-08-20 and six
 > further changes have landed in the string since; the 2026-08-18 reading was
@@ -101,9 +101,9 @@ anything.
 > nothing went red while it aged.
 >
 > ⚠️ **Corrected 2026-08-18 (previously "measured 2026-08-16 at build-order step
-> 13: 1,613 characters and `1,628` bytes, leaving 420 … the difference is almost
+> 13: 1,613 characters and `1,628` bytes, leaving 420 ... the difference is almost
 > entirely the mode lines carrying what each mode *refuses* as well as what it
-> grants -- which is the half a model needs to choose correctly … **Planting a
+> grants -- which is the half a model needs to choose correctly ... **Planting a
 > fourth mode measured its cost at 223 bytes**, so the headroom absorbs exactly
 > one more mode and a fifth would need the lines shortened").** The `refuses`
 > half was rendered from the `(tool, mode)` permission policy, and that policy
@@ -125,7 +125,6 @@ anything.
 > measurement below. `[FLOATS]` on our own wording rather than on a client
 > version.
 
-<a id="what-2kb-each-means--measured-2026-08-18--claude-code-21234"></a>
 ### What *"2KB each"* means -- measured 2026-08-18 @ Claude Code 2.1.234
 
 The documented sentence is *"Claude Code truncates tool descriptions and server
@@ -158,7 +157,7 @@ model-independent.
 | Code units, or code points? | **UTF-16 code units**, and the cut is surrogate-aware | 1,539 code points spread over 3,000 units was cut. Where unit 2,048 would split a surrogate pair the cut backs off to **2,047**, and the delivered string is well-formed |
 | Are `inputSchema.properties[*].description` strings truncated? | **No. Not at all** | A parameter description of **20,000** characters arrived whole, on a tool whose own description was 39 characters |
 | Is there a total budget across `tools/list`? | **No** | **202 tools totalling 348,314 B** of tool entries went in one request (body 392,983 B): nothing dropped, nothing cut, every end-marker present |
-| What does truncation look like? | A hard positional cut with **`… [truncated]`** appended -- U+2026, a space, `[truncated]`; 13 characters -- so a truncated string arrives at **2,061** | Every cut string in every run ended in exactly that, and the surviving prefix was identical to the published one |
+| What does truncation look like? | A hard positional cut with **`... [truncated]`** appended -- U+2026, a space, `[truncated]`; 13 characters -- so a truncated string arrives at **2,061** | Every cut string in every run ended in exactly that, and the surviving prefix was identical to the published one |
 
 ⚠️ **The suffix is visible to the model and invisible to the server.** It is added
 after the JSON-RPC response has left the server, so nothing a server can observe
@@ -196,7 +195,7 @@ number; what has aged is the two measurements inside it.
 
 1. Write a capture server: an HTTP listener on `127.0.0.1` that writes each
    request body to a file and replies to `/v1/messages` with a minimal
-   `message_start` … `message_stop` SSE sequence, and to `count_tokens` with
+   `message_start` ... `message_stop` SSE sequence, and to `count_tokens` with
    `{"input_tokens":1}`. Redact `authorization` before writing anything.
 2. Write a probe MCP stdio server -- raw JSON-RPC over stdin/stdout answering
    `initialize`, `tools/list` and `tools/call` -- publishing descriptions of exact

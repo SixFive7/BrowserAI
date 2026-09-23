@@ -25,7 +25,7 @@ namespace BrowserAI.Proxy;
 /// paragraph nobody has ever read. <c>ModelSurfaceTests</c> gates on
 /// <b>characters</b>, matching <see cref="ClientTruncationBudget"/> and
 /// <see cref="MaximumCharacters"/> below.
-/// <i>Corrected 2026-08-18 (previously "Hard cap 2 KB … <c>ModelSurfaceTests</c>
+/// <i>Corrected 2026-08-18 (previously "Hard cap 2 KB ... <c>ModelSurfaceTests</c>
 /// measures it in <b>bytes</b> rather than characters -- <c>·</c> and <c>--</c> are
 /// two and three bytes of UTF-8 apiece, so a character count would under-report
 /// exactly the string that uses them").</i> That was the unit this file's own
@@ -113,7 +113,7 @@ namespace BrowserAI.Proxy;
 /// has to live with"</i> became <i>"Nothing chosen at init binds a later
 /// call"</i>; <i>"records the session"</i> became <i>"records the run"</i>,
 /// which is the more accurate of the two because tracing is per-run;
-/// <i>"You must supply an absolute directory … You must also supply a
+/// <i>"You must supply an absolute directory ... You must also supply a
 /// one-sentence 'purpose'"</i> became one sentence asking for both;
 /// <i>"takes 'why', and it is required"</i> became <i>"takes a required
 /// 'why'"</i>; the mocking warning lost four words and <b>kept <i>on
@@ -181,7 +181,7 @@ internal static class ServerInstructions
     /// apart. <i>Corrected 2026-08-18 (previously <c>MaximumBytes</c>, over a
     /// UTF-8 byte count).</i> The client counts UTF-16 characters and never
     /// bytes; it delivers this string inside a <c>&lt;system-reminder&gt;</c> in
-    /// the messages array, cut at 2,048 with <c>"… [truncated]"</c> appended.
+    /// the messages array, cut at 2,048 with <c>"... [truncated]"</c> appended.
     /// </remarks>
     public const int MaximumCharacters = ClientTruncationBudget.Characters;
 

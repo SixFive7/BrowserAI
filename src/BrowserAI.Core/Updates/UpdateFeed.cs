@@ -35,7 +35,7 @@ namespace BrowserAI.Updates;
 /// </para>
 /// <para>
 /// <b>A 404 is catchable but is not by itself a misconfiguration signal.</b>
-/// 1.2.0 throws <c>HttpRequestException … 404</c> rather than failing silently --
+/// 1.2.0 throws <c>HttpRequestException ... 404</c> rather than failing silently --
 /// but a legitimately empty channel returns the same 404, so nothing here
 /// alarms on one. That discrimination needs a second signal and is not
 /// attempted.

@@ -302,7 +302,7 @@ internal sealed partial class HazardIndexTests
     {
         var plain = hazard.Replace("*", string.Empty, StringComparison.Ordinal);
 
-        return plain.Length > 70 ? string.Concat(plain.AsSpan(0, 70), "…") : plain;
+        return plain.Length > 70 ? string.Concat(plain.AsSpan(0, 70), "...") : plain;
     }
 
     /// <summary>

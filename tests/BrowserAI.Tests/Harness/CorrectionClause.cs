@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace BrowserAI.Tests.Harness;
 
 /// <summary>
-/// This repository's <c>(previously "…")</c> clause, and the one definition of
+/// This repository's <c>(previously "...")</c> clause, and the one definition of
 /// it the document gates share.
 /// </summary>
 /// <remarks>
@@ -41,7 +41,7 @@ namespace BrowserAI.Tests.Harness;
 /// </remarks>
 internal static partial class CorrectionClause
 {
-    /// <summary>Removes every <c>previously "…"</c> clause from a document cell.</summary>
+    /// <summary>Removes every <c>previously "..."</c> clause from a document cell.</summary>
     /// <param name="text">The cell, corrections and all.</param>
     /// <returns>What the cell claims now.</returns>
     public static string Strip(string text)
@@ -53,7 +53,7 @@ internal static partial class CorrectionClause
 
     /// <summary>Whether a cell carries the clause at all.</summary>
     /// <param name="text">The cell.</param>
-    /// <returns>Whether a <c>previously "…"</c> clause is in it.</returns>
+    /// <returns>Whether a <c>previously "..."</c> clause is in it.</returns>
     public static bool IsCarriedBy(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
@@ -62,7 +62,7 @@ internal static partial class CorrectionClause
     }
 
     /// <summary>
-    /// The <c>(previously "…")</c> half of this repository's correction
+    /// The <c>(previously "...")</c> half of this repository's correction
     /// convention, which quotes the superseded text verbatim.
     /// </summary>
     [GeneratedRegex(@"previously\s*""[^""]*""")]

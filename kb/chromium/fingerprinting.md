@@ -117,9 +117,9 @@ reading both values back through `browser_evaluate`, at `@playwright/mcp` 0.0.79
 
 | Arm | `navigator.userAgent` | `navigator.webdriver` |
 |---|---|---|
-| chromium, nothing set | `… HeadlessChrome/152.0.0.0 Safari/537.36` | `false` |
-| chromium, `browser.contextOptions.userAgent` set | `… Chrome/152.0.0.0 Safari/537.36` -- **the value we asked for** | `false` |
-| firefox, nothing set | `… rv:153.0) Gecko/20100101 Firefox/153.0` | **`true`** |
+| chromium, nothing set | `... HeadlessChrome/152.0.0.0 Safari/537.36` | `false` |
+| chromium, `browser.contextOptions.userAgent` set | `... Chrome/152.0.0.0 Safari/537.36` -- **the value we asked for** | `false` |
+| firefox, nothing set | `... rv:153.0) Gecko/20100101 Firefox/153.0` | **`true`** |
 | firefox, `browser.contextOptions.userAgent` set to a distinct string | `BrowserAI-probe/1.0 distinct-context-option` -- **the value we asked for** | **`true`** |
 | firefox, `firefoxUserPrefs["dom.webdriver.enabled"] = false` | unchanged | **`true`** -- the pref does nothing |
 | firefox, `firefoxUserPrefs["general.useragent.override"]` set -- **the control** | `BrowserAI-probe/1.0 distinct-pref` | `true` |

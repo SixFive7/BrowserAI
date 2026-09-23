@@ -88,6 +88,6 @@ internal static class JsonSpan
     private static string Preview(byte[] frame)
     {
         var text = FrameChannel.TextOf(frame);
-        return text.Length <= 400 ? text : text[..400] + "…";
+        return text.Length <= 400 ? text : text[..400] + "...";
     }
 }

@@ -46,7 +46,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-24 (previously "The liveness check is the
-/// working-directory lock … the lock cannot be wrong").</b> The lock cannot be
+/// working-directory lock ... the lock cannot be wrong").</b> The lock cannot be
 /// wrong about what it measures, and what it measured was the wrong process.
 /// <b>Exactly one process ever held this directory as its current directory --
 /// the surface child</b> -- while the directory holds the generated config of

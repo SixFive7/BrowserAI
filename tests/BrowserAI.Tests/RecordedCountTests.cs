@@ -587,7 +587,7 @@ internal sealed partial class RecordedCountTests
     /// <remarks>
     /// The links are relative to <c>kb/</c>, so the article's own relative path
     /// is what appears inside the brackets, optionally followed by a
-    /// <c>#anchor</c>. Matched as <c>(path)</c> or <c>(path#…)</c> rather than by
+    /// <c>#anchor</c>. Matched as <c>(path)</c> or <c>(path#...)</c> rather than by
     /// containment, because <c>mcp/sdk.md</c> is a substring of nothing here
     /// today and would be the day somebody adds <c>mcp/sdk.md.old</c>.
     /// </remarks>

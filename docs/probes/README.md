@@ -4,7 +4,7 @@
 # docs/probes
 
 **The rigs that produced a measurement.** Where a kb entry, a hazard row or a
-re-verification row says *re-establish it with …*, this is the thing it names.
+re-verification row says *re-establish it with ...*, this is the thing it names.
 One directory per measurement, named `<date>-<name>`, each with a `README.md`
 saying what it re-establishes and which row cites it. What they produced is in
 [`docs/evidence/`](../evidence/README.md).

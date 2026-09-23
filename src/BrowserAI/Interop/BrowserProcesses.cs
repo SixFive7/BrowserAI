@@ -57,7 +57,7 @@ internal static partial class BrowserProcesses
     /// <param name="root">
     /// An absolute directory. Matching is a case-insensitive prefix match on the
     /// process's full image path, with a separator appended so that a root of
-    /// <c>…\browsers</c> cannot match <c>…\browsers-backup</c> -- and it is made
+    /// <c>...\browsers</c> cannot match <c>...\browsers-backup</c> -- and it is made
     /// against <b>every spelling of this root</b> a Win32 path reporter could
     /// answer with, never only the one <c>Path.Combine</c> produced. See
     /// <see cref="ImageSpellings"/>.
