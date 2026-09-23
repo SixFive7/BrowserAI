@@ -40,7 +40,7 @@ internal sealed partial class PayloadTests
     /// </summary>
     private const string WorkedExampleAnchor = "What the payload ships today, read from";
 
-    /// <summary>A Markdown code fence, named rather than spelled at each use.</summary>
+    /// <summary>A Markdown code fence, named and not spelled at each use.</summary>
     private const string Fence = "```";
 
     /// <summary>
@@ -144,14 +144,14 @@ internal sealed partial class PayloadTests
     /// <see cref="BrowserAiPaths.RevisionOf"/> and
     /// <see cref="BrowserAiPaths.BrowserVersionOf"/>, which is the suite's one
     /// reader of that snapshot. Both files are regenerated from the resolved
-    /// payload, which is what makes this an answer about today rather than about
+    /// payload, which is what makes this an answer about today and not about
     /// whenever the prose was written.
     /// </para>
     /// <para>
     /// <b>The sentence is the anchor and rewording it fails the build.</b> That
     /// is <c>RecordedCountTests</c>' trade taken deliberately: a check keyed on
     /// prose can be unhooked by editing the prose, so the unhooking is made loud
-    /// rather than silent. <b>The 0.0.79 chain printed above it is deliberately
+    /// and not silent. <b>The 0.0.79 chain printed above it is deliberately
     /// NOT read</b> -- it is a true record of one day, and holding a record to
     /// today's manifest would demand it be rewritten at every roll, which is the
     /// same exemption <c>ThirdPartyNoticeTests</c> gives a correction stamp's
@@ -232,7 +232,7 @@ internal sealed partial class PayloadTests
     {
         // The one claim in the payload table that nothing checked. "Zero native
         // binaries; the tree is portable JS" is what makes the JS half of the
-        // payload a per-file delta of text rather than an architecture-specific
+        // payload a per-file delta of text and not an architecture-specific
         // artifact -- and it is upstream's property, not ours, so it can be
         // undone by a dependency upstream adds without a word to us. A `.node`
         // arriving in `mcp\` would also cross the batteries-included boundary:
@@ -258,9 +258,9 @@ internal sealed partial class PayloadTests
     {
         // Measured 2026-08-17 @ @playwright/mcp 0.0.79 / playwright-core
         // 1.63.0-alpha-2026-08-05: the tree is not JS alone. It carries exactly
-        // one `.wasm`, and a `.wasm` is portable bytecode rather than a native
+        // one `.wasm`, and a `.wasm` is portable bytecode and not a native
         // binary -- so the premise survives and the wording above it did not.
-        // Named rather than allowed by extension, because the interesting event
+        // Named, not allowed by extension, because the interesting event
         // is a *second* one arriving: upstream adding a WASM codec is how a
         // "portable JS tree" acquires a component nobody reviewed.
         SuiteEnvironment.RequireRepositoryPayload();
@@ -290,7 +290,7 @@ internal sealed partial class PayloadTests
         using var manifest = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(layout.Root, "payload.json")));
 
         // 1 -- node.exe is the version the resolver returned, asked of the
-        // binary rather than read back out of the manifest beside it. A
+        // binary and not read back out of the manifest beside it. A
         // manifest agreeing with itself proves nothing about the executable.
         var recorded = manifest.RootElement.GetProperty("node").GetProperty("version").GetString();
         var (versionExit, versionOutput) = await RunAsync(layout.NodeExecutable, "--version");
@@ -312,7 +312,7 @@ internal sealed partial class PayloadTests
         // anyone runs an installer with PLAYWRIGHT_BROWSERS_PATH pointed at the
         // staging tree -- the exact conflation §A carries a correction for. The
         // second is the obligation: Node's LICENSE ships or the payload is not
-        // redistributable, and it comes out of the archive rather than from a
+        // redistributable, and it comes out of the archive and not from a
         // standalone URL that does not exist.
         await Assert.That(Directory.Exists(Path.Combine(layout.Root, "mcp", ".links"))).IsFalse();
         await Assert.That(Directory.Exists(Path.Combine(layout.Root, "node", ".links"))).IsFalse();
@@ -323,13 +323,13 @@ internal sealed partial class PayloadTests
     public async Task TheBrowsersRootHoldsFullChromiumAndNoHeadlessShell()
     {
         // Step 3's fourth done-test, and the one with a decision inside it.
-        // `--no-shell` is load-bearing rather than tidy: full Chromium in every
+        // `--no-shell` is load-bearing, not tidy: full Chromium in every
         // mode is settled, and a shell directory appearing here means something
         // asked for one -- 268.49 MB nobody chose, on every machine.
         //
         // The path also pins the asymmetry §A names: the outer directory uses
         // underscores and the inner one dashes, so a path built on the wrong
-        // guess fails here rather than at a browser launch.
+        // guess fails here and not at a browser launch.
         SuiteEnvironment.RequireProvisionedChromium();
 
         await Assert.That(File.Exists(BrowserAiPaths.ExpectedChromiumExecutable)).IsTrue();
@@ -342,7 +342,7 @@ internal sealed partial class PayloadTests
     public async Task UpstreamStillSerialisesEveryInstallOnOneLockOverTheWholeBrowsersRoot()
     {
         // ⚠️ THIS IS THE MECHANISM A CORRECTED COMMENT NOW RESTS ON, and it is
-        // upstream's property rather than ours, so a `playwright-core` bump can
+        // upstream's property and not ours, so a `playwright-core` bump can
         // take it away without a word.
         //
         // BrowserAI's provisioning mutex is keyed on (browsers root, FAMILY)
@@ -361,8 +361,8 @@ internal sealed partial class PayloadTests
         // mechanism is removed.
         //
         // Read out of the ASSEMBLED payload, which is the code that actually
-        // runs, rather than out of a package the build might resolve
-        // differently. Source order rather than execution order is what an
+        // runs, and not out of a package the build might resolve
+        // differently. Source order and not execution order is what an
         // assertion over text can establish, and for this straight-line
         // function they are the same thing.
         SuiteEnvironment.RequireRepositoryPayload();
@@ -421,18 +421,18 @@ internal sealed partial class PayloadTests
     /// because that re-resolve had come back byte for byte.
     /// </para>
     /// <para>
-    /// <b>Asserted over the corpus rather than over the check</b>, for the same
+    /// <b>Asserted over the corpus and not over the check</b>, for the same
     /// reason as
     /// <see cref="SqliteTests.TheFreshnessCheckWatchesTheVendoredAmalgamation"/>:
     /// a staleness check is silent by construction about what it never looked
     /// at, and passing is exactly what it does when a file is outside it.
     /// </para>
     /// <para>
-    /// <b>And over the corpus rather than over the tree, because the tree is
+    /// <b>And over the corpus and not over the tree, because the tree is
     /// pruned.</b> <see cref="RepositoryLayout"/> drops any directory named
     /// <c>payload</c> during the walk, so no corpus it produces can contain this
     /// file however the enumeration is widened -- which is why the second arm
-    /// below asserts the exact relative path rather than a pattern.
+    /// below asserts the exact relative path and not a pattern.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -508,8 +508,8 @@ internal sealed partial class PayloadTests
             .GetString();
     }
 
-    // ⚠️ RETIRED 2026-09-21, and named here so the deletion is a record rather
-    // than an absence. Three members stood between these two comments --
+    // ⚠️ RETIRED 2026-09-21, and named here so the deletion is a record and
+    // not an absence. Three members stood between these two comments --
     // `OverriddenPlaywrightCore`, which read `overrides.playwright-core` out of
     // build/payload/package.json; `TheOverrideHasExpired`, which compared the
     // wrapper's declared pin against it; and `Orderable`, which turned a
@@ -520,7 +520,7 @@ internal sealed partial class PayloadTests
     //
     // THE ORDERING IS NOT COMING BACK WIDER. @playwright/mcp 0.0.82 pins
     // `1.64.0-alpha-1789764292000`, a 13-digit epoch-milliseconds alpha that
-    // `Orderable` refused by design rather than guessed at, and that refusal was
+    // `Orderable` refused by design and not guessed at, and that refusal was
     // correct: an unorderable shape silently called 'lower' keeps an override
     // alive past its own exit. Nothing in this tree ranks a playwright-core
     // version now. Every comparison left is for IDENTITY, against another

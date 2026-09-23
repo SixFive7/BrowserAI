@@ -16,14 +16,14 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>The sentence under test is upstream's own, reproduced from its builder
-/// rather than invented here.</b> <c>throwIfExecutableMissing</c> composes
+/// and not invented here.</b> <c>throwIfExecutableMissing</c> composes
 /// <c>`${label} is not installed${location}. Run \`${command}\` to install`</c>,
 /// where <c>command</c> is <c>npx @playwright/mcp install-browser
 /// &lt;target&gt;</c> and <c>target</c> is the resolved <b>channel</b> -- so a
-/// BrowserAI caller sees <c>chrome-for-testing</c> rather than
+/// BrowserAI caller sees <c>chrome-for-testing</c> and not
 /// <c>chromium</c>. Every clause of that advice is wrong here: BrowserAI ships
 /// no <c>npx</c>, has no npm project to run it in, and the package it would
-/// fetch resolves to whatever npm calls latest rather than to the revision this
+/// fetch resolves to whatever npm calls latest and not to the revision this
 /// build pins.
 /// </para>
 /// <para>
@@ -51,11 +51,11 @@ internal sealed class ProvisioningRemediationTests
         await Assert.That(rewritten).IsNotNull();
 
         // Gone: the imperative. What survives is a prohibition -- "do NOT run
-        // npx" -- which is deliberately kept rather than trimmed to make the
+        // npx" -- which is deliberately kept and not trimmed to make the
         // text scan clean: a model already knows the standard Playwright advice
         // from everywhere else, so saying nothing about it leaves the memory
-        // unchallenged. The assertion is therefore on the INSTRUCTION rather
-        // than on the word.
+        // unchallenged. The assertion is therefore on the INSTRUCTION and
+        // not on the word.
         await Assert.That(rewritten!).DoesNotContain("Run `npx");
         await Assert.That(rewritten).DoesNotContain("` to install");
         await Assert.That(rewritten).Contains("Do NOT run npx");
@@ -139,7 +139,7 @@ internal sealed class ProvisioningRemediationTests
         var text = TextOf(answer);
 
         // The whole point: a model reading this answer must not be TOLD to run
-        // npx, and it is the proxy rather than the child that decides so.
+        // npx, and it is the proxy and not the child that decides so.
         await Assert.That(text).DoesNotContain("Run `npx");
         await Assert.That(text).Contains("Do NOT run npx");
         await Assert.That(text).Contains(SessionToolSurface.ReinstallBrowser);
@@ -216,8 +216,8 @@ internal sealed class ProvisioningRemediationTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>THE CANARY, and the thing it watches is upstream's WORDING rather
-    /// than BrowserAI's code.</b> Every other test in this file drives
+    /// ⚠️ <b>THE CANARY, and the thing it watches is upstream's WORDING and
+    /// not BrowserAI's code.</b> Every other test in this file drives
     /// <see cref="UpstreamMessage"/>, which is a constant somebody typed out of
     /// the bundle on 2026-08-16. If upstream rewords its advice, every one of
     /// them stays green while the rewrite silently stops firing in production --
@@ -227,7 +227,7 @@ internal sealed class ProvisioningRemediationTests
     /// and not the prose inside an answer.
     /// </para>
     /// <para>
-    /// <b>The child is started directly rather than through BrowserAI, and it
+    /// <b>The child is started directly and not through BrowserAI, and it
     /// has to be.</b> Through the product, an empty browsers root never reaches
     /// upstream at all -- <c>SessionManager.ProvisioningRefusal</c> answers the
     /// call itself and starts a download, which is the correct behaviour and the
@@ -306,8 +306,8 @@ internal sealed class ProvisioningRemediationTests
 
         var text = TextOf(answer);
 
-        // ⚠️ THE GATE THE PROXY USES, asserted against the real thing rather
-        // than against a constant. F2's fix rests on upstream setting `isError`
+        // ⚠️ THE GATE THE PROXY USES, asserted against the real thing and
+        // not against a constant. F2's fix rests on upstream setting `isError`
         // on exactly the answers that carry an Error section; if it ever stops,
         // the rewrite stops with it and nothing else says so.
         await Assert.That((bool?)answer["isError"])
@@ -320,7 +320,7 @@ internal sealed class ProvisioningRemediationTests
             .Because($"upstream no longer spells its install advice with '{ProvisioningRemediation.Marker}'. It said: {text}");
 
         // And the whole clause, so the regex still has something to replace
-        // rather than only the marker still being present somewhere.
+        // and not only the marker still being present somewhere.
         var rewritten = ProvisioningRemediation.Rewrite(text, browsers);
 
         await Assert.That(rewritten)

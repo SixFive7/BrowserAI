@@ -36,7 +36,7 @@ namespace BrowserAI.Tests;
 /// check, so it was not reworded.
 /// </para>
 /// <para>
-/// <b>The count is scoped to the articles, and that is a fix rather than a
+/// <b>The count is scoped to the articles, and that is a fix and not a
 /// convenience.</b> It used to sweep every tracked <c>.md</c> in the
 /// repository, which meant five sentences of prose <i>about</i> the convention --
 /// in <c>CLAUDE.md</c>, <c>TODO.md</c> and the plan -- were counted as if they
@@ -52,7 +52,7 @@ internal sealed partial class ReVerificationIndexTests
 
     /// <summary>
     /// The two pages under <c>kb/</c> that are not articles: they discuss the
-    /// convention rather than stamping facts with it, so their occurrences of
+    /// convention instead of stamping facts with it, so their occurrences of
     /// the token are mentions and must not be counted.
     /// </summary>
     private static readonly string[] NotArticles = ["README.md", "re-verification.md"];
@@ -62,7 +62,7 @@ internal sealed partial class ReVerificationIndexTests
     {
         await Assert.That(string.Join(Environment.NewLine, Offenders(Rows()))).IsEmpty();
 
-        // ⚠️ BOTH DIRECTIONS over the clause, off synthetic rows rather than by
+        // ⚠️ BOTH DIRECTIONS over the clause, off synthetic rows and not by
         // doctoring the index: a name inside a `previously "..."` clause is a
         // record of what a row USED to name, and a name outside one is a claim.
         // Only the second is this gate's business.
@@ -146,10 +146,10 @@ internal sealed partial class ReVerificationIndexTests
     public async Task TheRecordedFloatsMarkerCountIsWhatTheTreeHolds()
     {
         // "Across the articles", counted literally: the Markdown under kb/,
-        // minus the two pages that are about the convention rather than stamped
-        // with it. Recorded here rather than left as a habit because the note in
+        // minus the two pages that are about the convention and not stamped
+        // with it. Recorded here and not left as a habit because the note in
         // that file has already been wrong twice, both times by arithmetic
-        // rather than by counting.
+        // and not by counting.
         var acrossTheArticles = MarkersAcrossTheArticles();
         var recorded = RecordedCounts();
 
@@ -161,7 +161,7 @@ internal sealed partial class ReVerificationIndexTests
     public async Task TheTwoPagesExcludedFromTheCountAreTheOnlyOnesThatDiscussTheConvention()
     {
         // The exclusion list is justified by a fact about the tree, so the fact
-        // is asserted rather than remembered: both files must exist, and both
+        // is asserted, not remembered: both files must exist, and both
         // must really carry the token, or the list is hiding an article.
         var excluded = NotArticles
             .Select(name => Path.Combine(RepositoryLayout.Root.FullName, "kb", name))
@@ -198,7 +198,7 @@ internal sealed partial class ReVerificationIndexTests
 
     /// <summary>One article's <c>[FLOATS]</c> markers.</summary>
     /// <remarks>
-    /// <b>The corpus-wide count is the sum of this, rather than a second scan.</b>
+    /// <b>The corpus-wide count is the sum of this, and not a second scan.</b>
     /// Two implementations of "what is a marker" are two answers waiting to
     /// disagree, and this file already carries the note about a count that swept
     /// the wrong corpus and was wrong by five.
@@ -210,7 +210,7 @@ internal sealed partial class ReVerificationIndexTests
     /// <summary>Every knowledge-base article: the Markdown under <c>kb/</c> that stamps facts.</summary>
     /// <remarks>
     /// <para>
-    /// <b>Internal rather than private so the marker corpus has one definition.</b>
+    /// <b>Internal and not private so the marker corpus has one definition.</b>
     /// <c>RecordedCountTests.TheStaleMarkerCountInTheArticleIndexIsWhatTheArticlesHold</c>
     /// checks a second claim about the same corpus -- how many articles carry a
     /// <c>[STALE]</c> stamp, against the number
@@ -249,7 +249,7 @@ internal sealed partial class ReVerificationIndexTests
     /// row count, and a second parser for the same table would be free to
     /// disagree with this one -- which is exactly how that table came to be
     /// wrong. <c>Content</c> is the four content cells joined, so a citation is
-    /// counted wherever in the row it was written rather than only in
+    /// counted wherever in the row it was written and not only in
     /// <c>Fact</c>.
     /// </remarks>
     /// <returns>The rows, in file order.</returns>
@@ -296,12 +296,12 @@ internal sealed partial class ReVerificationIndexTests
     /// inherited members, and used <c>GetMethod</c>, which throws
     /// <c>AmbiguousMatchException</c> on an overload set. No live row depended on
     /// any of the three and every row resolved, so this was a <b>false-red
-    /// risk</b> rather than a hole -- the next person to write a re-verification
+    /// risk</b> and not a hole -- the next person to write a re-verification
     /// row against a private product member, a field or an overload would have
     /// got a red build for a row that was correct. P6's rider L harmonised the
     /// <c>previously "..."</c> clause between these two gates and left this axis
     /// untouched with no note saying why; the note is this one, and the axis is
-    /// closed rather than described.
+    /// closed, not described.
     /// </para>
     /// <para>
     /// <b>One axis is deliberately NOT harmonised, and the direction is the

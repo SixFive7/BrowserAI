@@ -15,7 +15,7 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// First-run provisioning: <c>init</c> does not wait for it, browser calls are
-/// refused rather than blocked, and the same child works once it lands.
+/// refused, not blocked, and the same child works once it lands.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -66,7 +66,7 @@ internal sealed partial class ProvisioningTests
         //
         // Never released. The install is therefore provably still running when
         // the assertions below are made, whatever the machine is doing, and
-        // "init did not wait for it" is an ordered fact rather than a race
+        // "init did not wait for it" is an ordered fact and not a race
         // against a clock.
         var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -83,7 +83,7 @@ internal sealed partial class ProvisioningTests
 
         // The whole design in one assertion, and it is an assertion about STATE:
         // the install cannot have completed, so an init that had waited for it
-        // could not have returned at all. The state is a word rather than a
+        // could not have returned at all. The state is a word and not a
         // sentence to parse, and it is the word §A names.
         await Assert.That(TextOf(answer)).Contains("browserProvisioning: provisioning");
 
@@ -138,7 +138,7 @@ internal sealed partial class ProvisioningTests
         // download.
         await Assert.That(sessions.SessionChildren.Sum(child => child.MethodsReceived.Count(method => method is "tools/call"))).IsEqualTo(0);
 
-        // ⚠️ browser_get_config too, and this is a CORRECTION to §A rather than
+        // ⚠️ browser_get_config too, and this is a CORRECTION to §A and not
         // an implementation choice. Measured 2026-08-16 @ 0.0.79, twice,
         // against the child directly: the tool resolves the browser executable
         // before it answers and fails `throwIfExecutableMissing` when the root
@@ -168,8 +168,8 @@ internal sealed partial class ProvisioningTests
     {
         // The install lands when this test says so and not a millisecond
         // earlier: with a duration instead, a fast machine finishes the download
-        // before the first call arrives and the test fails on the refusal rather
-        // than on the recovery it is about. Observed 2026-08-16.
+        // before the first call arrives and the test fails on the refusal and
+        // not on the recovery it is about. Observed 2026-08-16.
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         await using var sessions = RigSessionEnvironment.Create(
@@ -227,7 +227,7 @@ internal sealed partial class ProvisioningTests
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
         await Assert.That(status.Detail).Contains(BrowsersManifest.InstallationCompleteMarker);
 
-        // And the partial tree is gone rather than left to be mistaken for one.
+        // And the partial tree is gone and not left to be mistaken for one.
         await Assert.That(Directory.Exists(directory)).IsFalse();
     }
 
@@ -257,12 +257,12 @@ internal sealed partial class ProvisioningTests
 
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Failed);
 
-        // It says what it measured rather than how long it waited: the old
+        // It says what it measured and not how long it waited: the old
         // absolute cap could only report elapsed time, which was the same
         // sentence for a link that was working and one that had died.
         await Assert.That(status.Detail).Contains("wrote nothing at all under");
 
-        // The installer was STOPPED rather than merely abandoned. A watcher that
+        // The installer was STOPPED and not merely abandoned. A watcher that
         // gave up without closing the job would leave a 200 MB download running
         // with nobody left to receive it -- which is the exact shape a cap exists
         // to prevent, and it is invisible in the status.
@@ -271,7 +271,7 @@ internal sealed partial class ProvisioningTests
 
     /// <summary>
     /// How many polls the unbounded arm below drives. Simulated, so the number
-    /// is a claim about the detector rather than a cost.
+    /// is a claim about the detector and not a cost.
     /// </summary>
     /// <remarks>
     /// A thousand polls each one tick short of a ten-minute budget is <b>six
@@ -292,7 +292,7 @@ internal sealed partial class ProvisioningTests
     /// it fired on exactly one case -- a link that was slow and working.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Rewritten 2026-08-20, and it is the fix for this test rather than a
+    /// ⚠️ <b>Rewritten 2026-08-20, and it is the fix for this test and not a
     /// tidy-up</b> *(previously: sixty real writes 25 ms apart against a real
     /// 1-second stall cap, justified as "a RATIO, not a duration, and that is
     /// what makes it safe at unbounded suite parallelism")*. The ratio reasoning
@@ -356,7 +356,7 @@ internal sealed partial class ProvisioningTests
                 ExtractionCap = TimeSpan.FromDays(3_650),
 
                 // A tenth of the budget, so one advance below fires the poll
-                // ticker ten times rather than six hundred. Nothing depends on
+                // ticker ten times and not six hundred. Nothing depends on
                 // the figure; it only bounds how much work a manual clock does
                 // per advance.
                 Poll = TimeSpan.FromMinutes(1),
@@ -375,7 +375,7 @@ internal sealed partial class ProvisioningTests
                 if (Interlocked.Increment(ref polls) == UnboundedPolls)
                 {
                     // Nearly seven simulated days in and still alive: let the
-                    // install land so the state below is `Installed` rather than
+                    // install land so the state below is `Installed` and not
                     // a run this test abandoned.
                     _ = release.TrySetResult();
                 }
@@ -431,7 +431,7 @@ internal sealed partial class ProvisioningTests
         FakeInstaller? started = null;
 
         // Three polls of real progress, then silence. The three are there so the
-        // stall is a TRANSITION rather than the initial state, which is the shape
+        // stall is a TRANSITION and not the initial state, which is the shape
         // a real dead socket has.
         const int Moving = 3;
 
@@ -456,7 +456,7 @@ internal sealed partial class ProvisioningTests
                 // One tick short of the budget while it is working, one tick
                 // past it once it stops. So the first silent poll is also the
                 // first poll at which the detector may fire, and "the instant
-                // they stop" is a fact about this run rather than a hope.
+                // they stop" is a fact about this run and not a hope.
                 clock.Advance(poll <= Moving
                     ? cap - TimeSpan.FromTicks(ManualClock.OneTick)
                     : cap + TimeSpan.FromTicks(ManualClock.OneTick));
@@ -508,7 +508,7 @@ internal sealed partial class ProvisioningTests
         _ = await CallAsync(rig, SessionToolSurface.Init, Init(sessions, "reads-a-progress-report"));
 
         // The watcher polls every 20 ms and the sentence is composed from its
-        // last sample, so this waits for a sample to exist rather than for a
+        // last sample, so this waits for a sample to exist and not for a
         // duration.
         var text = await Eventually(
             async () => TextOf(await CallAsync(rig, "browser_navigate", Navigate(directory))),
@@ -518,7 +518,7 @@ internal sealed partial class ProvisioningTests
         {
             // Bytes written by THIS attempt, against the measured download total,
             // as a percentage, with elapsed and a rate.
-            // ⚠️ The total is read from the product rather than spelled here, so a
+            // ⚠️ The total is read from the product and not spelled here, so a
             // re-measured browser revision moves this assertion with the constant
             // instead of reddening it. Corrected 2026-09-17 (previously the
             // literal "0.0 MB of 203.8 MB downloaded (0%)", which went red on the
@@ -581,7 +581,7 @@ internal sealed partial class ProvisioningTests
         var root = Path.Combine(scratch.Path, "browsers");
         var directory = Path.Combine(root, RigSessionEnvironment.ChromiumDirectoryName);
 
-        // Counted per test rather than off FakeInstaller's own total: the suite
+        // Counted per test and not off FakeInstaller's own total: the suite
         // runs in parallel and other tests are creating doubles at the same
         // moment, so a global counter measures the run instead of this pair.
         var starts = 0;
@@ -615,7 +615,7 @@ internal sealed partial class ProvisioningTests
         await Assert.That(both[1].State).IsEqualTo(ProvisioningState.Installed);
 
         // One download, not two. The loser watches for the winner's marker
-        // rather than fetching a second copy of 203.8 MB into the same
+        // instead of fetching a second copy of 203.8 MB into the same
         // directory, which is precisely how a half-extracted tree acquires an
         // INSTALLATION_COMPLETE.
         await Assert.That(starts).IsEqualTo(1);
@@ -628,7 +628,7 @@ internal sealed partial class ProvisioningTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>This is the regression test for a sixty-minute product hang, and it
-    /// was found by running the suite with every test at once rather than by
+    /// was found by running the suite with every test at once and not by
     /// review.</b> Failing to take the mutex was read as <i>somebody is
     /// downloading and a marker is coming</i>. It is not the same statement: the
     /// holder keeps the mutex through its revision prune, which walks every
@@ -645,7 +645,7 @@ internal sealed partial class ProvisioningTests
     /// <see cref="ProvisioningClaim"/> -- the product's own cross-process
     /// contract, taken from a thread of its own exactly as another BrowserAI
     /// process would take it -- and then released with the tree still incomplete,
-    /// which is the condition rather than one route to it.
+    /// which is the condition and not one route to it.
     /// </para>
     /// <para>
     /// <b>And it asserts the install happened here.</b> "It returned Installed"
@@ -686,7 +686,7 @@ internal sealed partial class ProvisioningTests
 
             var provisioning = provisioner.WaitAsync(SessionManager.DefaultBrowser);
 
-            // It must be watching rather than installing: the mutex is held, and
+            // It must be watching and not installing: the mutex is held, and
             // a provisioner that started an install here would be the second
             // downloader the mutex exists to prevent.
             await Assert.That(Volatile.Read(ref starts)).IsEqualTo(0);
@@ -696,8 +696,8 @@ internal sealed partial class ProvisioningTests
             // ⚠️ The bound is the provisioner's OWN outer deadline, not a
             // budget written here, and that is what makes this test bearable in
             // a suite that runs everything at once: Quick() sets it to 30 s, so
-            // a regression comes back as `Failed` after thirty seconds rather
-            // than hanging. Measured against the injected fault on 2026-08-17 --
+            // a regression comes back as `Failed` after thirty seconds instead
+            // of hanging. Measured against the injected fault on 2026-08-17 --
             // the pre-fix inference restored, this test failed at 30.4 s with
             // "Expected to be equal to Installed but received Failed". In a
             // shipped build the same path is sixty minutes with no browser
@@ -740,7 +740,7 @@ internal sealed partial class ProvisioningTests
     /// belongs in the middle -- so what changed is only that the word no longer
     /// names one of the five phases it covers. <c>QUESTIONS.md</c> §9 carries the
     /// decision. The sentence remains the discriminator, which is why this test
-    /// still reads it rather than the word.
+    /// still reads it and not the word.
     /// </para>
     /// <para>
     /// <b>And the sentence now has to carry the recovery, which is the half a
@@ -775,7 +775,7 @@ internal sealed partial class ProvisioningTests
             // Starts the attempt, which loses the mutex on its own thread. Ensure
             // answers immediately by design, so the phase it reports is whatever
             // the background thread has reached -- which is why this reads Peek in
-            // a loop rather than asserting on the first answer.
+            // a loop instead of asserting on the first answer.
             var started = provisioner.Ensure(SessionManager.DefaultBrowser);
 
             await Assert.That(started.State).IsEqualTo(ProvisioningState.Provisioning);
@@ -824,7 +824,7 @@ internal sealed partial class ProvisioningTests
     [Test]
     public async Task TheMutexNameIsPerBrowsersRootRatherThanPerBrowser()
     {
-        // ⚠️ Found by the suite rather than by review. Keyed on the family
+        // ⚠️ Found by the suite and not by review. Keyed on the family
         // alone, every rig in this suite serialised against every other one, and
         // the losers sat watching for a marker in their OWN root that the winner
         // was never going to write -- reported as "downloading" until the outer
@@ -853,7 +853,7 @@ internal sealed partial class ProvisioningTests
             [new KeyValuePair<string, string>(ChildLaunch.BrowsersPathVariable, @"C:\browsers")]);
 
         // Upstream's per-socket stall timeout is 30 s and BrowserAI sets
-        // nothing, so the figure stays upstream's rather than being duplicated
+        // nothing, so the figure stays upstream's instead of being duplicated
         // into a constant of ours that would drift the day theirs moved.
         await Assert.That(environment.ContainsKey(BrowserProvisioner.UpstreamStallTimeoutVariable)).IsFalse();
         await Assert.That(BrowserProvisioner.UpstreamStallTimeout).IsEqualTo(TimeSpan.FromSeconds(30));
@@ -910,7 +910,7 @@ internal sealed partial class ProvisioningTests
 
     /// <summary>
     /// The provisioner's timers for an in-process arm: polled fast, and watched
-    /// by a hang detector rather than by a budget.
+    /// by a hang detector and not by a budget.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b><c>OuterDeadline</c> corrected 2026-08-18 (previously 30 s).</b>
@@ -932,7 +932,7 @@ internal sealed partial class ProvisioningTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Asserted on the predicate rather than on an interleaving, because the
+    /// <b>Asserted on the predicate and not on an interleaving, because the
     /// interleaving cannot be staged.</b> The tree becomes complete when the
     /// holder writes its marker, and the holder abandons the mutex when it dies;
     /// reaching <c>Install</c> with both true at once means landing in the
@@ -947,7 +947,7 @@ internal sealed partial class ProvisioningTests
     /// </para>
     /// <para>
     /// The arm that <i>is</i> reachable end to end -- abandoned over an unmarked
-    /// tree -- is asserted below, so the branch is known to be wired rather than
+    /// tree -- is asserted below, so the branch is known to be wired and not
     /// merely correct in isolation.
     /// </para>
     /// </remarks>
@@ -1009,8 +1009,8 @@ internal sealed partial class ProvisioningTests
 
         await Assert.That(status.State).IsEqualTo(ProvisioningState.Installed);
 
-        // The unmarked residue went, which is what makes this a recovery rather
-        // than a re-run on top of somebody's wreckage.
+        // The unmarked residue went, which is what makes this a recovery and
+        // not a re-run on top of somebody's wreckage.
         await Assert.That(File.Exists(residue)).IsFalse();
         await Assert.That(File.Exists(Path.Combine(directory, BrowsersManifest.InstallationCompleteMarker))).IsTrue();
     }
@@ -1060,7 +1060,7 @@ internal sealed partial class ProvisioningTests
     /// detector expires.
     /// </summary>
     /// <remarks>
-    /// <b>A gate rather than a duration.</b> The sentence under test is composed
+    /// <b>A gate and not a duration.</b> The sentence under test is composed
     /// from the watcher's last sample, and the watcher runs on a thread of its
     /// own -- so "sleep and then assert" would be asserting the scheduler at
     /// unbounded suite parallelism. What this waits for is the condition.
@@ -1136,7 +1136,7 @@ internal sealed partial class ProvisioningTests
     /// </para>
     /// <para>
     /// <b>It reads the published sentence as its anchor.</b> Rewording the
-    /// article's measurement clause fails this test rather than silently
+    /// article's measurement clause fails this test instead of silently
     /// unhooking it, which is the rule <c>RecordedCountTests</c> is built on.
     /// </para>
     /// </remarks>
@@ -1185,7 +1185,7 @@ internal sealed partial class ProvisioningTests
         await Assert.That(BrowserProvisioner.DownloadSizeFor(ProvisionedBrowsers.Firefox))
             .IsEqualTo($"{firefox.Groups["mb"].Value} MB");
 
-        // ⚠️ Not vacuous, and proved off synthetic text rather than by doctoring
+        // ⚠️ Not vacuous, and proved off synthetic text and not by doctoring
         // the article: the two anchors must really read a number, and must read
         // DIFFERENT ones, or a regex that matched the same clause twice would
         // satisfy every assertion above.
