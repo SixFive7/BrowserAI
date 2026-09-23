@@ -1425,6 +1425,173 @@ neither was separated here. The candidates are that the intermediate detached
 `pwsh` is itself given a console the child then joins, or that a `--sweep` run is
 over before the window is mapped.
 
+## Where the feed and the package are hosted, and the four places they could have gone instead — read 2026-09-23
+
+**Decided 2026-09-23, Q237 = f: they stay release assets.** The question was
+raised by the asset trim — if a release is going to carry three files, does it
+need to carry them at all? — and the answer is that every alternative costs
+something real and buys nothing this product needs. What follows is what was read
+to get there, kept because the argument is only re-checkable if the facts are.
+Evidence:
+[`docs/evidence/2026-09-23-feed-hosting-research/`](../../docs/evidence/2026-09-23-feed-hosting-research/README.md).
+
+⚠️ **Nothing in this section carries a floating-fact marker, deliberately, and
+this sentence is why.** Nothing in the product reads any of it: these are the
+alternatives to a decision rather than facts a build rests on, so re-reading them
+is part of re-opening the question and not a standing debt — which is the
+[one exemption](../re-verification.md#a-floats-entry-with-no-row-the-one-rule)
+read the other way round. The one fact here the product *does* depend on — that a
+client reads `releases.{channel}.json` and nothing else — is marked and carries
+[row 137](../re-verification.md) of its own.
+
+*(Written without the marker token itself on purpose: the counter that keeps
+[the holes table](../re-verification.md) honest reads the literal string wherever
+it appears in an article, so prose about the convention inside an article is
+counted as a use of it. It went red here first, at 22 against a recorded 21.)*
+
+⚠️ **And one fact governs every alternative at once: a published release asset
+cannot be redirected.** There is no GitHub facility that makes
+`…/releases/latest/download/releases.win.json` serve from somewhere else, so any
+move strands every already-installed build that has not first updated through the
+old URL. The only runtime lever is `BROWSERAI_UPDATE_FEED`
+(`UpdateConfiguration.Resolve`), which is a thing a person sets by hand on one
+machine. **A hosting move is therefore a one-way door for the installed base**,
+and that is true of all four alternatives below.
+
+### The release alias is never cached, and GitHub Pages is cached for 600 seconds — measured 2026-09-23
+
+`curl -sSI` on this project's own feed URL, redirect not followed so no asset was
+fetched and no counter moved:
+
+```
+HTTP/1.1 302 Found
+Location: https://github.com/SixFive7/BrowserAI/releases/download/v1.1.0/releases.win.json
+Cache-Control: no-cache
+```
+
+**`no-cache`: the alias is never cached, and a new release is visible
+immediately.** Against that, `https://pages.github.com/` and
+`https://docs.velopack.io/` — itself a Pages site — both answer
+`Cache-Control: max-age=600` from a Fastly edge (`Via: 1.1 varnish`,
+`x-proxy-cache: HIT`). So a Pages-hosted feed is **up to ten minutes stale**.
+
+**Harmless for correctness and real all the same.** A stale feed reports the
+previous version, which a client treats as *no update available*; nothing here
+depends on the difference today. It is recorded because *immediate* is what the
+current arrangement gives for free, and a move would spend it without anybody
+noticing.
+
+### What GitHub Pages would cost, as documented 2026-09-23
+
+From `docs.github.com/en/pages/…/github-pages-limits`, verbatim: *"Published
+GitHub Pages sites may be no larger than 1 GB."* · *"GitHub Pages sites have a
+**soft** bandwidth limit of 100 GB per month."* · *"GitHub Pages sites have a
+**soft** limit of 10 builds per hour."* · *"GitHub Pages source repositories have
+a recommended limit of 1 GB."* · *"GitHub Pages deployments will timeout if they
+take longer than 10 minutes."* The page says nothing about cache duration, which
+is why the TTL above had to be measured rather than read.
+
+**At 55,022,716 bytes a package, 100 GB per month is about 1,860 downloads.** The
+1 GB site cap is about **18 packages live at once**. Release assets carry no
+equivalent limit —
+`docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github`,
+verbatim: *"We don't limit the total size of the binary files in the release or
+the bandwidth used to deliver them."*
+
+⚠️ **"No CI" is not quite available either.** A publishing source can be a
+branch with no workflow authored, but
+`docs.github.com/en/pages/…/configuring-a-publishing-source-for-your-github-pages-site`
+says verbatim: *"Your GitHub Pages site will always be deployed with a GitHub
+Actions workflow run, even if you've configured your GitHub Pages site to be
+built using a different CI tool."* So a GitHub-owned `pages-build-deployment` run
+fires on every push. **Whether that breaks this project's no-hosted-CI stance is a
+decision rather than a fact**, and it is named here rather than resolved. Pages
+is not enabled today: `gh api repos/SixFive7/BrowserAI` reads `has_pages: false`
+and `repos/…/pages` is a 404.
+
+### A 55 MB package per release is permanent, and a clone pays for every branch
+
+`docs.github.com/…/about-large-files-on-github`, verbatim: *"If you attempt to add
+or update a file that is larger than 50 MiB, you will receive a warning from
+Git."* · *"GitHub blocks files larger than 100 MiB."* · *"We recommend
+repositories remain small, ideally less than 1 GB, and less than 5 GB is strongly
+recommended."* A 55 MB `.nupkg` is **over the warning and under the block**, so it
+commits, with a warning on every push.
+
+**A `.nupkg` is a zip, so git delta-compresses successive versions to
+approximately nothing**: each release adds ~55 MB permanently. Against a
+repository that was **18.1 MiB** on 2026-09-23:
+
+| Releases committed | Repository |
+|--:|---|
+| 1 | ~73 MB |
+| 10 | ~570 MB |
+| 18 | ~1 GB — the *ideally less than* line, and the Pages source-repository recommendation |
+| 90 | ~5 GB — the *strongly recommended* line |
+
+⚠️ **An orphan `gh-pages` branch does not avoid this**, which is the half that
+looks like an escape and is not. `git-scm.com/docs/git-clone` on
+`--single-branch`, verbatim: *"Clone only the history leading to the tip of a
+single branch … Further fetches into the resulting repository will only update
+the remote-tracking branch for the branch this option was used for."* — i.e. the
+**default** clone fetches every branch's objects. Everyone who clones BrowserAI
+would pay for every package ever published unless they passed `--single-branch`,
+`--depth` or `--filter=blob:none`. **The only way to keep packages out of a
+contributor's clone is a different repository.**
+
+### A feed may name an absolute package URL in Velopack's code and may not in its documentation
+
+The two disagree, and the disagreement is the risk. `SimpleWebSource.cs:76-83` @
+**1.2.158** takes `releaseEntry.FileName` as an absolute URL when it is one and
+appends it to the base URL when it is not — its own comment says so. But
+`docs.velopack.io/distributing/overview` says, verbatim: *"You must distribute
+these packages in the same folder as the `releases.{channel}.json` file for
+updates to work."* and *"This file should be distributed in the same folder as
+the `nupkg` files are deployed."*
+
+**So the documented contract is *beside* and the implemented behaviour is *beside
+or absolute*.** Velopack floats in this repository, so relying on the undocumented
+half is relying on a branch the vendor has not promised to keep.
+
+⚠️ **And `vpk` never writes an absolute `FileName` anyway.**
+`VelopackAsset.cs:84` is `FileName = Path.GetFileName(filePath)`, and
+`ReleaseEntryHelper.UpdateReleaseFilesAsync` regenerates
+`releases.{channel}.json` from the `.nupkg`s on **every pack** — so a
+hand-written absolute URL is silently reverted by the next run of
+`build/New-Release.ps1`. A split feed is therefore not a configuration; it is a
+post-processing step somebody has to remember, on the one file a client cannot do
+without.
+
+### The automatic Source code links on a release cannot be removed — read 2026-09-23
+
+Asked because a release trimmed to three assets still shows five things, and two
+of them are not ours to choose.
+`docs.github.com/en/repositories/releasing-projects-on-github/about-releases`,
+verbatim: *"GitHub will automatically include links to download a zip file and a
+tarball containing the contents of the repository at the point of the tag's
+creation."* — *automatically include*, with no setting, flag or opt-out anywhere
+on the page.
+
+**Three independent readings say the same thing.** The REST API's `POST` and
+`PATCH` release bodies carry no parameter that controls them, and `zipball_url`
+and `tarball_url` are *required* response fields. They are **not members of
+`assets[]`** — measured on this repository's own `v1.1.0`, where they sit as
+top-level URL fields — so `gh release delete-asset` and every asset endpoint
+cannot reach them. And GitHub's own answer, on
+[community discussion 6003](https://github.com/orgs/community/discussions/6003),
+from MylesBorins on **2021-10-06**, verbatim: *"We are looking at a number of
+improvements that we could make to artifacts / assets, but we may not be funding
+this effort in the immediate future (to set expectations)"*. Still open, with
+comments as recent as April 2026, beside three later duplicates that are
+unanswered.
+
+**What can be changed is what the archives CONTAIN, not whether they appear** —
+`export-ignore` in `.gitattributes`, which GitHub does not document itself for
+zipballs and which was **not** tested here, and the Git LFS archive setting, which
+does not apply because this repository uses no LFS. **Taken to its limit that
+produces a near-empty zip, which is a worse artifact than the real source rather
+than a removal.**
+
 ## Distribution: MSIX and code signing
 
 **MSIX is disqualified on evidence.** A package cannot re-register while any
