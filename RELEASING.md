@@ -1156,6 +1156,15 @@ reading like AI."* It sits beside the icon and layout rules above and applies to
 everything a reader of the release page meets -- the preamble, every headline,
 the legend and the footer.
 
+⚠️ **IT IS A REPOSITORY RULE SINCE 2026-09-23 AND THIS IS NO LONGER WHERE
+IT LIVES** -- *added by addition; the paragraph above stood alone as a RELEASE
+rule until then.* [`CLAUDE.md`](CLAUDE.md) carries the directive for the whole
+tree, the character half as a scan over every tracked text file and the wording
+half as a rule that needs a reader. **What is below is still true and is now the
+narrower case**: a release body is the one place where getting it wrong is
+published under the maintainer's name, and it is the only place with a test of
+its own.
+
 **The two halves are not enforced the same way, and this says which is which.**
 
 - **The CHARACTER half is a test.**
