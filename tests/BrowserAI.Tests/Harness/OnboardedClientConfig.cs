@@ -77,14 +77,14 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// ⚠️ <b>THERE IS NO NON-INTERACTIVE SIGNAL TO SET INSTEAD, and that was
-/// searched for rather than assumed.</b> <c>claude mcp --help</c> and
+/// searched for, not assumed.</b> <c>claude mcp --help</c> and
 /// <c>claude mcp add --help</c>, run 2026-09-22 against a seeded scratch
 /// directory, carry no such flag: <c>add</c>'s options are
 /// <c>--callback-port</c>, <c>--client-id</c>, <c>--client-secret</c>,
 /// <c>-e/--env</c>, <c>-H/--header</c>, <c>-h/--help</c>, <c>-s/--scope</c> and
 /// <c>-t/--transport</c>. The only onboarding-named environment variable in the
 /// bundle is <c>CLAUDE_CODE_POWERUP_ONBOARDING</c>, and the line quoted above
-/// shows it is a <b>force-on</b> rather than a suppressor -- <c>"banner"</c> or
+/// shows it is a <b>force-on</b> and not a suppressor -- <c>"banner"</c> or
 /// <c>"step"</c> shows onboarding even when the configuration says it is
 /// complete. A grep for <c>CLAUDE_CODE_NONINTERACTIVE</c> over the bundle
 /// returned <b>zero</b>, with <c>CLAUDE_CONFIG_DIR</c> at 74 hits and
@@ -128,10 +128,10 @@ internal static class OnboardedClientConfig
     /// the seeding cannot be separated from the use.
     /// </summary>
     /// <remarks>
-    /// It returns the path rather than <see langword="void"/> on purpose: every
+    /// It returns the path and not <see langword="void"/> on purpose: every
     /// site that points the client at a directory writes that path into an
     /// environment block, and threading it through here makes the seeding part
-    /// of the expression the scan reads rather than a line above it that can be
+    /// of the expression the scan reads and not a line above it that can be
     /// deleted on its own.
     /// </remarks>
     /// <param name="directory">The scratch configuration directory.</param>

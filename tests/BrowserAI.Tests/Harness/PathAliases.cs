@@ -13,7 +13,7 @@ namespace BrowserAI.Tests.Harness;
 /// <remarks>
 /// <para>
 /// <b>Both are real and neither needs a privilege.</b> That is what lets the
-/// tests that use them assert on the product rather than on a stand-in -- a
+/// tests that use them assert on the product and not on a stand-in -- a
 /// predicate checked only against strings a test invented is a predicate checked
 /// against its author's idea of an alias.
 /// </para>
@@ -29,7 +29,7 @@ internal static partial class PathAliases
     /// Creates a directory junction, which the BCL has no API for.
     /// </summary>
     /// <remarks>
-    /// <c>cmd /c mklink /J</c> rather than <c>CreateSymbolicLink</c>: a junction
+    /// <c>cmd /c mklink /J</c> and not <c>CreateSymbolicLink</c>: a junction
     /// needs no privilege, so this works for an ordinary user and in CI, and it
     /// is the link kind actually found inside a relocated browser profile.
     /// </remarks>
@@ -66,11 +66,11 @@ internal static partial class PathAliases
     /// <c>C:\PROGRA~1</c> is for <c>C:\Program Files</c>.
     /// </summary>
     /// <remarks>
-    /// <b>Read out of the filesystem rather than constructed</b>, because 8.3
+    /// <b>Read out of the filesystem and not constructed</b>, because 8.3
     /// generation is a per-volume setting: the name is whatever this volume
     /// assigned, and a hand-written <c>~1</c> would be a string that merely looks
     /// like one. A volume with 8.3 generation disabled answers with the long path
-    /// unchanged, which is a fact a caller has to notice rather than something to
+    /// unchanged, which is a fact a caller has to notice and not something to
     /// paper over -- so the answer is returned as it comes and the assertion that
     /// it differs belongs to the test.
     /// </remarks>

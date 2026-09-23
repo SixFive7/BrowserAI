@@ -43,7 +43,7 @@ internal sealed class VerticalSliceTests
         // a single notifications/message for. A client that called
         // logging/setLevel got {} and then silence for ever.
         //
-        // Asserted as the WHOLE object rather than as "logging is absent",
+        // Asserted as the WHOLE object and not as "logging is absent",
         // because the next capability the SDK adds a guardless Configure* for
         // would be advertised the same silent way.
         //
@@ -86,7 +86,7 @@ internal sealed class VerticalSliceTests
         // The control on the sentence above, and it is the reason this arm stopped
         // comparing the two: the child really does advertise something BrowserAI
         // does not, so a proxy that started copying the child's capabilities
-        // wholesale would be caught here rather than passing by agreement.
+        // wholesale would be caught here instead of passing by agreement.
         await Assert.That(UpstreamSurface.ServerCapabilities())
             .IsNotEqualTo(run.InitializeResult["capabilities"]?.ToJsonString())
             .Because(
@@ -95,19 +95,19 @@ internal sealed class VerticalSliceTests
                 + "assertion this replaced went stale without failing");
 
         // Byte for byte, and in upstream's order. Renaming is settled as
-        // forbidden, so this asserts identity rather than exercising a map; the
+        // forbidden, so this asserts identity instead of exercising a map; the
         // day a rename map appears, this is what says so. The expected list is
         // computed from the committed snapshot, which the build regenerates from
         // the resolved payload, so an upstream change is a snapshot diff first
         // and this test second.
         //
-        // Compared as one joined string rather than as a set, because order is
+        // Compared as one joined string and not as a set, because order is
         // part of the contract: the spec asks for deterministic ordering for
         // prompt-cache hit rates, and a set comparison would pass a proxy that
         // shuffled the list.
         //
         // The seven authored tools come first; upstream's follow, and it is the
-        // WHOLE exposable surface -- 69 rather than the default 24 -- because the
+        // WHOLE exposable surface -- 69 and not the default 24 -- because the
         // run's own child is started with every capability upstream declares.
         // The spec forbids the tool set varying per connection, so one static
         // list is the only shape available and it has to be everything.
@@ -125,7 +125,7 @@ internal sealed class VerticalSliceTests
         // SessionToolPolicy.IsWithheldFromTheSurface"): the withholding is a
         // `deny` row in tool-verdicts.json now, and the predicate reads the
         // shipped file. The expected list is still computed from the committed
-        // snapshot rather than typed, and the filter is still applied through the
+        // snapshot and not typed, and the filter is still applied through the
         // product's own predicate over the product's own file -- so the day the
         // decision is reversed, in the file, this test follows it.
         var expectedUpstream = UpstreamSurface.For(BrowserConfiguration.GrantedCapabilities)
@@ -184,7 +184,7 @@ internal sealed class VerticalSliceTests
         }
 
         // Not vacuous -- the child really does have each of them, so the absence
-        // above is BrowserAI's filter rather than an upstream that never shipped
+        // above is BrowserAI's filter and not an upstream that never shipped
         // the tool.
         foreach (var denial in RepositoryVerdicts.TheDenials)
         {
@@ -193,7 +193,7 @@ internal sealed class VerticalSliceTests
         }
 
         // And every one of them gains BrowserAI's `session` parameter, asserted
-        // against the REAL child's list rather than against the snapshot the
+        // against the REAL child's list and not against the snapshot the
         // build regenerates from it: routing is the one thing this proxy cannot
         // get wrong, and a tool upstream added that slipped through the rewrite
         // would be answerable by the run's own child.
@@ -221,7 +221,7 @@ internal sealed class VerticalSliceTests
     /// <remarks>
     /// ⚠️ <b>Two since 2026-08-20 (previously <c>session</c> alone, and the test
     /// was named <c>EveryUpstreamToolGainsTheSessionParameterAndNoneLosesItsOwn</c>).</b>
-    /// <c>why</c> rides the same path, and the ORDER is asserted rather than
+    /// <c>why</c> rides the same path, and the ORDER is asserted and not
     /// mere presence: both are appended, upstream's own properties keep their
     /// positions, and <c>session</c> comes before <c>why</c> -- a rewrite that
     /// reordered would cost a prompt-cache miss per call with nothing failing.
@@ -293,7 +293,7 @@ internal sealed class VerticalSliceTests
         // a tool failure travels as a perfectly valid result.
         await Assert.That((bool?)run.NavigateEnvelope["result"]!["isError"] is true).IsFalse();
 
-        // The proof that a page was really loaded rather than that a result
+        // The proof that a page was really loaded and not that a result
         // shaped like one came back.
         await Assert.That(run.NavigateText).Contains("Page URL: data:text/html");
     }
@@ -305,7 +305,7 @@ internal sealed class VerticalSliceTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The defect this closed was ours, and 2026-08-26 removed its cause
-    /// rather than its symptom.</b> Upstream's handler ends
+    /// and not its symptom.</b> Upstream's handler ends
     /// <c>await response.addFileResult(resolvedFile, data); if (!params.filename)
     /// await response.registerImageResult(data, fileType);</c> -- the only
     /// <c>registerImageResult</c> call site in the resolved bundle. BrowserAI
@@ -350,9 +350,9 @@ internal sealed class VerticalSliceTests
             .IsEqualTo(Path.Combine(run.SessionDirectory, SessionLayout.OutputFolderName));
         await Assert.That(run.ScreenshotBytes.Length).IsGreaterThan(0);
 
-        // ⚠️ It is a PNG, checked at the file's own magic number rather than at
+        // ⚠️ It is a PNG, checked at the file's own magic number and not at
         // its extension: the whole point is that these bytes are an image a
-        // client can render, and an extension is a claim about that rather than
+        // client can render, and an extension is a claim about that and not
         // evidence of it.
         await Assert.That(run.ScreenshotBytes.Take(8))
             .IsEquivalentTo(new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A });
@@ -377,7 +377,7 @@ internal sealed class VerticalSliceTests
         // no scaler left anywhere in the path and the block is the capture at
         // its own size.
         //
-        // **Measured here rather than assumed, because the sameness is now the
+        // **Measured here, not assumed, because the sameness is now the
         // finding.** The bound below WAS 1,568 and was watched red at exactly
         // this line, receiving 1920 -- which is the viewport, which is the point.
         // What is asserted now is the viewport on both sides: the file is the
@@ -403,7 +403,7 @@ internal sealed class VerticalSliceTests
         await Assert.That(fileHeight).IsEqualTo(BrowserConfiguration.DefaultViewport.Height);
 
         // ⚠️ THE BLOCK IS THE VIEWPORT, and the dimensions are read from the
-        // PNG rather than taken from the argument that asked for them. The
+        // PNG and not taken from the argument that asked for them. The
         // product constant is the bound -- never a number written here -- so a
         // viewport default that moved would move this assertion with it, which
         // is the property the old literal 1,568 could not have.
@@ -447,7 +447,7 @@ internal sealed class VerticalSliceTests
             .IsEqualTo(1)
             .Because($"upstream names the file once, absolutely; a second mention would be a note of ours. The answer was: {answerText}");
 
-        // The cost, reported rather than asserted. An inline image is the one
+        // The cost, reported and not asserted. An inline image is the one
         // thing in an answer that costs the caller tokens and appears in no
         // file, so the number belongs somewhere a reader can find it; a
         // threshold on it would be a policy upstream does not have.
@@ -483,9 +483,9 @@ internal sealed class VerticalSliceTests
 
     /// <summary>Width × height, out of a PNG's <c>IHDR</c>.</summary>
     /// <remarks>
-    /// Thirteen bytes of header rather than an image library: the suite has no
-    /// decoder and does not need one, and the dimensions are reported rather
-    /// than asserted.
+    /// Thirteen bytes of header and not an image library: the suite has no
+    /// decoder and does not need one, and the dimensions are reported and
+    /// not asserted.
     /// </remarks>
     private static string PngDimensions(byte[] png) =>
         png.Length < 24

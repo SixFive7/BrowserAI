@@ -18,7 +18,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>These run against a loose <c>e_sqlite3.dll</c> and not against the
-/// artifact, and the difference is stated rather than glossed.</b> The test
+/// artifact, and the difference is stated, not glossed.</b> The test
 /// host is CoreCLR, so <c>DirectPInvoke</c> and <c>NativeLibrary</c> are inert
 /// and the module name resolves to the DLL <c>SourceGear.sqlite3</c> puts
 /// beside the host. That library is the same SQLite <i>version</i> as the
@@ -32,15 +32,15 @@ namespace BrowserAI.Tests;
 /// <b>No duration is asserted anywhere in this file.</b> Every property below
 /// is an event -- a row that is there, an exception that was thrown, a value
 /// that came back -- and the one number that looks like a duration is a
-/// configured budget read back from the connection, which is a setting rather
-/// than a measurement.
+/// configured budget read back from the connection, which is a setting and
+/// not a measurement.
 /// </para>
 /// </remarks>
 internal sealed class SqliteStorageTests
 {
     /// <summary>
     /// A timestamp in the shape the record uses, so that a stored value is a
-    /// realistic one rather than a placeholder.
+    /// realistic one and not a placeholder.
     /// </summary>
     /// <returns>The text.</returns>
     private static string Now() => DateTimeOffset.Now.ToString("O", CultureInfo.InvariantCulture);
@@ -142,7 +142,7 @@ internal sealed class SqliteStorageTests
     /// <b>The timeout is compared against the product constant it derives
     /// from</b>, never against a number written here -- which is also what keeps
     /// it out of the class of assertion this repository forbids, since it is a
-    /// setting read back rather than a duration measured.
+    /// setting read back and not a duration measured.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -209,7 +209,7 @@ internal sealed class SqliteStorageTests
     /// are a single fact; a reader that caught half of it would see a directory
     /// held for no reason, or a reason with no holder. The failure is provoked
     /// by a statement whose value is not a value, so the rollback runs on a real
-    /// SQLite refusal rather than on a thrown test double.
+    /// SQLite refusal and not on a thrown test double.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -232,7 +232,7 @@ internal sealed class SqliteStorageTests
         await Assert.That(store.Statements()[2].Value).IsEqualTo("read the two properties this test is about");
 
         // A second acquisition in which one statement cannot be written. The
-        // refusal has to come from SQLite rather than from a guard in this
+        // refusal has to come from SQLite and not from a guard in this
         // layer, or the rollback path is never reached at all -- so the store
         // is given a trigger that aborts on one value, which is a real
         // constraint failure arriving in the middle of a real transaction.
@@ -342,7 +342,7 @@ internal sealed class SqliteStorageTests
     /// <para>
     /// <b>It is not hypothetical for this product.</b> A <c>why</c> is the
     /// caller's own text, uncapped by decision, and the sanitiser that will
-    /// neutralise control characters runs above this layer rather than inside
+    /// neutralise control characters runs above this layer and not inside
     /// it -- so the storage layer has to be the thing that stores what it was
     /// handed.
     /// </para>
@@ -377,7 +377,7 @@ internal sealed class SqliteStorageTests
     /// rows.
     /// </summary>
     /// <remarks>
-    /// <b>The maintainer's explicit decision, asserted rather than assumed.</b>
+    /// <b>The maintainer's explicit decision, asserted, not assumed.</b>
     /// The record this replaces capped a <c>why</c> at 400 characters, a purpose
     /// at 2,000 and the log at 250 entries, and every one of those caps existed
     /// because an append rewrote the whole file durably. An append is now an
@@ -393,7 +393,7 @@ internal sealed class SqliteStorageTests
 
         // Comfortably past every cap the old record carried, and past the
         // 2,048-character client truncation budget as well, so the number is
-        // chosen against the constraints it is about rather than at random.
+        // chosen against the constraints it is about and not at random.
         var essay = new string('w', 100_000);
 
         _ = store.AppendLog(Now(), "browser_navigate", essay, SessionStore.InFlight);
@@ -427,7 +427,7 @@ internal sealed class SqliteStorageTests
     /// driving is the case a reader exists for, so a reader that opened
     /// successfully and then showed the session as of its start would satisfy
     /// the letter of *readers proceed* and none of its purpose -- a confident
-    /// wrong answer rather than a refusal.
+    /// wrong answer and not a refusal.
     /// </para>
     /// <para>
     /// <b>The lock file is held for the whole of it</b>, because *while the
@@ -482,7 +482,7 @@ internal sealed class SqliteStorageTests
     /// <remarks>
     /// <para>
     /// <b>This is a characterisation test, not a regression test.</b> It pins
-    /// behaviour that is accepted rather than fixed: when a holder dies without
+    /// behaviour that is accepted and not fixed: when a holder dies without
     /// closing, its <c>-wal</c> carries committed transactions the store file
     /// does not, and recovering them means <i>writing</i> the wal-index, which a
     /// read-only connection cannot do. So a crashed session reads as unreadable
@@ -498,12 +498,12 @@ internal sealed class SqliteStorageTests
     /// is quietly old.
     /// </para>
     /// <para>
-    /// <b>The crash is constructed rather than staged.</b> The state that
+    /// <b>The crash is constructed and not staged.</b> The state that
     /// matters is *a valid store file plus a hot <c>-wal</c> and no
     /// <c>-shm</c>*, and copying both out from under a live writer produces it
     /// exactly, deterministically, without killing a process -- the <c>-shm</c>
     /// is explicitly not persistent state, so leaving it behind is faithful
-    /// rather than convenient.
+    /// and not convenient.
     /// </para>
     /// <para>
     /// <b>Its own positive control is the third step</b>: the same read-only
@@ -568,7 +568,7 @@ internal sealed class SqliteStorageTests
 
         // The positive control: the same read-only open, on the same file, now
         // works -- so the refusal above was about the wal-index it could not
-        // build rather than about opening read-only at all.
+        // build and not about opening read-only at all.
         using var reader = SessionStore.OpenForReading(deadPath);
 
         await Assert.That(reader.LogLength()).IsEqualTo(1);
@@ -589,8 +589,8 @@ internal sealed class SqliteStorageTests
     /// recovers the log, and answers with the crashed session's newest rows.
     /// </para>
     /// <para>
-    /// <b>Which is the better outcome, and it still has a consequence worth
-    /// pinning.</b> A read-only caller gets the truth rather than a refusal,
+    /// <b>Which is the better outcome, and it still has a consequence.</b>
+    /// A read-only caller gets the truth and not a refusal,
     /// so the accepted-failure paragraph applies only to the read-only-directory
     /// case that
     /// <see cref="AReadOnlyOpenAgainstAnUncheckpointedWalIsRefusedUntilSomebodyWritesToIt"/>
@@ -630,7 +630,7 @@ internal sealed class SqliteStorageTests
         using (var reader = SessionStore.OpenForReading(deadPath))
         {
             // The rows are there, so the read-only connection recovered the log
-            // rather than answering from the store file alone -- which is the
+            // instead of answering from the store file alone -- which is the
             // reading that would have been a confident wrong answer.
             await Assert.That(reader.LogLength()).IsEqualTo(1);
             await Assert.That(reader.Log()[0].Why).IsEqualTo("committed by a holder that never closed");
@@ -645,8 +645,8 @@ internal sealed class SqliteStorageTests
     /// </summary>
     /// <remarks>
     /// <b>The one compile-time property that holds under every host</b>, and
-    /// therefore the only one the product asserts at run time rather than
-    /// reports. sqlite.org's recommended option set includes
+    /// therefore the only one the product asserts at run time and does not
+    /// report. sqlite.org's recommended option set includes
     /// <c>SQLITE_THREADSAFE=0</c>; this tree deliberately does not take it,
     /// because BrowserAI reaches storage from an async message loop, a
     /// background sweep, a background update check and an idle timer -- and a
@@ -678,7 +678,7 @@ internal sealed class SqliteStorageTests
     /// arithmetic.</b> It opens the source asking to share reads only, and
     /// SQLite's own open has been <i>granted</i> read and write -- so the copy is
     /// refused. Sharing write and delete on the way in is what makes the read a
-    /// bystander rather than a second opinion about who owns the file.
+    /// bystander and not a second opinion about who owns the file.
     /// </remarks>
     /// <param name="from">The file to copy.</param>
     /// <param name="to">Where to put it.</param>

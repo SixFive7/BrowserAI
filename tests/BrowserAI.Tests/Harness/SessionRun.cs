@@ -14,10 +14,10 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>One capture rather than one process per assertion.</b> Every fact below
+/// <b>One capture and not one process per assertion.</b> Every fact below
 /// then comes from the same run, which is both cheaper and stronger: the tool
 /// list, the refusals, the config round trip and the profile on disk are known to
-/// be true <i>of the same session</i> rather than of a dozen sessions that might
+/// be true <i>of the same session</i> and not of a dozen sessions that might
 /// have differed. It is the shape <see cref="SliceRun"/> already uses.
 /// </para>
 /// <para>
@@ -167,7 +167,7 @@ internal sealed record SessionRun
             // do exactly what it says -- delete 430 MiB and download it again --
             // in the middle of a suite whose other tests are driving browsers out
             // of that directory. Checked with the product's own image-path
-            // enumeration rather than assumed, so a capture that somehow lost its
+            // enumeration and not assumed, so a capture that somehow lost its
             // browser records the fact instead of destroying the machine's
             // install.
             var browsersLive = BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory).Count;
@@ -325,7 +325,7 @@ internal sealed record SessionRun
             bool heldSurvived;
 
             // FileShare.None, so the destroy below meets a file it cannot remove
-            // and has to report it rather than fail.
+            // and has to report it, not fail.
             using (var _ = new FileStream(held, FileMode.Create, FileAccess.Write, FileShare.None))
             {
                 answers["destroyBeta"] = await CallAsync(client, SessionToolSurface.Destroy, new JsonObject
@@ -338,7 +338,7 @@ internal sealed record SessionRun
                 heldSurvived = File.Exists(held);
             }
 
-            // Closed rather than killed: BrowserAI's own graceful path, and what
+            // Closed, not killed: BrowserAI's own graceful path, and what
             // releases the session directory so the move below can happen.
             _ = await client.CloseAndWaitForExitAsync(TestDefaults.ProcessHang).ConfigureAwait(false);
 
@@ -357,7 +357,7 @@ internal sealed record SessionRun
             // **The window the old comment defended is not lost.** Every assertion
             // over this text is a `Contains`, and end-of-file gives a SUPERSET of
             // any mid-run snapshot: what was true of the open window is still in
-            // it. What is gained is that the read is an event rather than a
+            // it. What is gained is that the read is an event and not a
             // duration -- everything holding the write end has exited by this
             // line, so there is nothing left to arrive.
             var sessionLog = await client.DrainedStandardErrorAsync().ConfigureAwait(false);
@@ -379,7 +379,7 @@ internal sealed record SessionRun
     /// </summary>
     /// <remarks>
     /// Bounded and loud: if the pin never clears, the failure names the cause
-    /// and how long it waited, rather than reporting a bare access-denied that
+    /// and how long it waited, instead of reporting a bare access-denied that
     /// reads like a permissions problem. It never retries anything but the pin --
     /// a genuinely wrong path throws <see cref="DirectoryNotFoundException"/>
     /// and is not caught here.
@@ -422,7 +422,7 @@ internal sealed record SessionRun
 
         // The ordinary case of somebody renaming a folder between sessions.
         //
-        // ⚠️ Retried, and the reason is a Windows fact rather than a defect in
+        // ⚠️ Retried, and the reason is a Windows fact and not a defect in
         // the product. BrowserAI has exited and its job object has therefore
         // terminated the node child -- but a terminated process is *signalled*
         // before the kernel has torn its handles down, and a directory that is
@@ -449,8 +449,8 @@ internal sealed record SessionRun
             ["purpose"] = "and resumed after the move",
         }).ConfigureAwait(false);
 
-        // ⚠️ Copied AFTER the resume above, and the order is the test rather
-        // than an accident. The recorded path discriminates a copy from a move
+        // ⚠️ Copied AFTER the resume above, and the order is the test and
+        // not an accident. The recorded path discriminates a copy from a move
         // only while it is ACCURATE: copying `gamma-moved` before its record was
         // repaired would produce a copy whose record names `gamma`, a path that
         // no longer exists -- which is the move signature exactly, and BrowserAI
@@ -463,7 +463,7 @@ internal sealed record SessionRun
         // list of timestamped statements, so resuming a copy does not overwrite
         // the evidence that it IS one, and the answer hands the model the
         // directory's whole history instead of demanding a confirmation for it.
-        // The step that used to be `resumeCopyAcknowledged` is gone rather than
+        // The step that used to be `resumeCopyAcknowledged` is gone and not
         // renamed, because there is no second call to make.
         answers["resumeCopy"] = await CallAsync(client, SessionToolSurface.Resume, new JsonObject
         {

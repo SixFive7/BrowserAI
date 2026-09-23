@@ -105,7 +105,7 @@ internal static class TestDefaults
     /// </para>
     /// <para>
     /// <b>Strictly larger than anything upstream imposes, and that is a
-    /// correctness property rather than slack.</b> Playwright's own
+    /// correctness property, not slack.</b> Playwright's own
     /// <c>DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT</c> is three minutes. A harness bound
     /// at or below that always wins the race and replaces upstream's diagnosis
     /// with <i>"the budget expired"</i> -- measured 2026-08-17, a Firefox launch
@@ -151,7 +151,7 @@ internal static class TestDefaults
     /// answer it. Here every peer is an in-process double that answers
     /// immediately, so a probe that ever runs to its timeout is a defect in a
     /// double -- and the cheapest way to find it is to make it cost 250 ms
-    /// rather than five seconds.
+    /// and not five seconds.
     /// </para>
     /// <para>
     /// The value only has an effect when the client prefers <c>2026-07-28</c>,
@@ -170,7 +170,7 @@ internal static class TestDefaults
     /// <remarks>
     /// Not <c>2026-07-28</c>: that revision removes <c>initialize</c>, and the
     /// caller-facing half of the protocol split exists to prove BrowserAI
-    /// answers whatever the caller offers rather than whatever the child
+    /// answers whatever the caller offers and not whatever the child
     /// negotiated.
     /// </remarks>
     public const string CallerProtocolVersion = "2025-11-25";
@@ -180,7 +180,7 @@ internal static class TestDefaults
     /// matching the ceiling measured on <c>@playwright/mcp</c> 0.0.79.
     /// </summary>
     /// <remarks>
-    /// A provenance stamp rather than a target. The double caps at the same
+    /// A provenance stamp and not a target. The double caps at the same
     /// place the real child does, and -- like the real child -- it never rejects
     /// a version, it caps or echoes.
     /// </remarks>

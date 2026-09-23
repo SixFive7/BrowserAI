@@ -63,11 +63,11 @@ internal sealed class ForegroundLockTests
         // pinned is a band that can be moved by a refactor and nothing says so.
         await Assert.That(ForegroundLock.Classify(budget + TimeSpan.FromTicks(1), budget)).IsEqualTo(ForegroundLockVerdict.Blind);
 
-        // And this machine's own value, as a constant rather than as a reading,
+        // And this machine's own value, as a constant and not as a reading,
         // so the band it lands in is asserted on every machine that runs this.
         await Assert.That(ForegroundLock.Classify(TimeSpan.FromMilliseconds(int.MaxValue), budget)).IsEqualTo(ForegroundLockVerdict.Blind);
 
-        // The budget derives rather than being written here: a number chosen at
+        // The budget derives instead of being written here: a number chosen at
         // this line is exactly what the house rule on durations forbids, and it
         // would put the band edge somewhere nobody could find it from the code.
         await Assert.That(ForegroundLock.Budget).IsEqualTo(TestDefaults.BrowserHang);
@@ -91,7 +91,7 @@ internal sealed class ForegroundLockTests
         var verdict = ForegroundLock.Classify(reading.Timeout, ForegroundLock.Budget);
         var summary = SuiteEnvironment.Summary();
 
-        // The live call is exercised rather than assumed: either Windows
+        // The live call is exercised, not assumed: either Windows
         // answered, or it did not and the error is carried instead of being
         // flattened into a zero that reads as "the lock is off".
         if (reading.Timeout is { } timeout)
@@ -115,7 +115,7 @@ internal sealed class ForegroundLockTests
     }
 
     /// <summary>
-    /// A run that could not have seen a steal says so, rather than printing a
+    /// A run that could not have seen a steal says so, instead of printing a
     /// number and leaving the reader to draw the wrong conclusion.
     /// </summary>
     /// <remarks>
@@ -141,7 +141,7 @@ internal sealed class ForegroundLockTests
         await Assert.That(blind).Contains(ForegroundLock.BlindState);
         await Assert.That(blind).Contains("2147483647 ms");
 
-        // ⚠️ 24.9 and not 24.8, and the difference is a rounding rather than a
+        // ⚠️ 24.9 and not 24.8, and the difference is a rounding, not a
         // disagreement: 2,147,483,647 ms is 24.855 days, which every record in
         // this repository truncates to "about 24.8 days" and this row rounds to
         // one decimal. Asserted so that whoever notices the two spellings finds

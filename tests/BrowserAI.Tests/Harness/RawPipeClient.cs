@@ -24,13 +24,13 @@ internal readonly record struct RawResponse(byte[] Frame, JsonObject Envelope)
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Why this exists beside <see cref="RawStdioClient"/> rather than instead
+/// <b>Why this exists beside <see cref="RawStdioClient"/> and not instead
 /// of it.</b> Both are hand-written and neither touches a product or SDK
 /// protocol type, which is the property that makes either an oracle at all --
 /// with both of BrowserAI's transports replaced, a test driven through an
 /// <c>McpClient</c> is testing the code under test using the code under test.
 /// They differ in the two things this layer needs and that one cannot give:
-/// this one speaks over a <b>stream pair</b> rather than starting a process, so
+/// this one speaks over a <b>stream pair</b> instead of starting a process, so
 /// no test here needs Node or a published binary; and it keeps every response's
 /// <b>raw bytes</b>, because <see cref="LosslessPassthroughTests"/> asserts
 /// byte-identity on the exact span of <c>result</c> -- found by
@@ -75,7 +75,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
     /// somewhere inside <c>System.IO.Pipelines</c> -- no method, no id, no
     /// elapsed time. Two real-browser tests hit it under full parallelism
     /// because most of their thirty seconds is spent legitimately waiting for a
-    /// browser rather than for this pipe.
+    /// browser and not for this pipe.
     /// <para>
     /// Per frame is also the stronger hang detector, not the weaker one: a peer
     /// that has genuinely stopped sends nothing at all, so the silence still
@@ -232,7 +232,7 @@ internal sealed class RawPipeClient : IAsyncDisposable
     /// list was written before the first answer was read, so all of them were
     /// outstanding at the server together. Whether the server then fans them out
     /// is the server's business, and the <b>arrival order</b> this returns is
-    /// what lets a caller say so rather than assume it.
+    /// what lets a caller say so and not assume it.
     /// </para>
     /// </remarks>
     /// <param name="requests">The requests, in the order they go out.</param>
@@ -268,8 +268,8 @@ internal sealed class RawPipeClient : IAsyncDisposable
                 || (int?)received is not { } id
                 || !outstanding.Remove(id))
             {
-                // A notification, or an answer to something else. Skipped rather
-                // than treated as a failure: the relay puts progress frames on
+                // A notification, or an answer to something else. Skipped and
+                // not treated as a failure: the relay puts progress frames on
                 // this pipe too.
                 continue;
             }

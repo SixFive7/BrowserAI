@@ -13,7 +13,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>It plants <c>cmd.exe</c>, and the choice is forced rather than
+/// <b>It plants <c>cmd.exe</c>, and the choice is forced, not
 /// arbitrary.</b> The obvious candidate was this suite's own
 /// <c>BrowserAI.TestProbe.exe</c>, and copying it does not work: it is a
 /// framework-dependent apphost, so a lone <c>.exe</c> in a strange directory
@@ -25,7 +25,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <c>cmd.exe</c> is self-contained in the sense that matters: it loads only
-/// System32 DLLs, which resolve by absolute path rather than beside the image.
+/// System32 DLLs, which resolve by absolute path and not beside the image.
 /// With <b>no arguments</b> it reads its stdin forever, and
 /// <see cref="JobObjectScope"/> holds the write end of that pipe for the scope's
 /// life -- so it stays alive without a busy loop, a timer or a script.

@@ -20,7 +20,7 @@ namespace BrowserAI.Tests;
 /// classified exhaustively, deny-by-default, and correct while sessions of
 /// different modes are being driven at once").</b> Seven of this file's eight
 /// tests asserted a permission matrix that no longer exists. <b>Six were deleted
-/// outright</b> and the seventh was inverted, rather than any of them being left
+/// outright</b> and the seventh was inverted, instead of any of them being left
 /// asserting a tautology -- a test that can no longer fail is worse than a gap,
 /// because it reads as covered. The eighth, the concurrency arm, was reframed and
 /// is the last test below. Across the suite that is <b>432 tests before and 428
@@ -45,7 +45,7 @@ namespace BrowserAI.Tests;
 /// <c>(tool, mode)</c> matrix is gone, so the second was inverted to assert that
 /// a tool this build had never heard of was <i>forwarded</i>. ⚠️ <b>That
 /// inversion was itself inverted on 2026-08-26</b>: deny-by-default came back as
-/// a VERDICT rather than as a permission, and
+/// a VERDICT and not as a permission, and
 /// <c>AToolThisBuildHasNeverJudgedIsRefusedRatherThanForwarded</c> below says why
 /// the 2026-08-18 reasoning does not reach it.</item>
 /// <item><c>AStorageToolOnAHeadlessSessionIsRefusedWithTextNamingPersistent</c> --
@@ -71,7 +71,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>Since 2026-08-26 the decision this class is about is a FILE.</b>
 /// <c>tool-verdicts.json</c> carries a row per tool -- <c>allow</c>, <c>deny</c>
 /// with the reason a caller reads, or <c>answer</c> -- and a name with no row is
-/// refused. Three arms below are about the mechanism rather than about any one
+/// refused. Three arms below are about the mechanism and not about any one
 /// tool, and they use rig copies of that file so the product's own deny set is
 /// left alone; <c>ToolVerdictTests</c> owns the file itself and its agreement
 /// with the golden snapshot. *(Was "stays at exactly one" until 2026-09-15, when
@@ -105,7 +105,7 @@ internal sealed class SessionPolicyTests
 {
     /// <summary>
     /// What one session permits of the surface BrowserAI advertises, written
-    /// down rather than computed.
+    /// down and not computed.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -113,10 +113,10 @@ internal sealed class SessionPolicyTests
     /// 2026-08-20 from three rows, 58 / 58 / 58 of 58, one per session mode;
     /// 58 / 59 / 59 of 59 before that, and 41 / 41 / 58 before that, measured
     /// 2026-08-16 against the five-class permission matrix).</b> Session modes
-    /// were deleted, so there is one row rather than three; and every capability
+    /// were deleted, so there is one row and not three; and every capability
     /// is now granted to every session, which put ten previously-unreachable
     /// tools into the surface -- <c>network</c>'s four, <c>pdf</c>'s one and
-    /// <c>testing</c>'s five. The 2026-09-15 move is upstream's rather than
+    /// <c>testing</c>'s five. The 2026-09-15 move is upstream's and not
     /// ours: <c>@playwright/mcp</c> 0.0.80 added
     /// <c>browser_start_recording</c> and <c>browser_stop_recording</c>, both
     /// judged <c>allow</c>.
@@ -131,7 +131,7 @@ internal sealed class SessionPolicyTests
     /// to <b>73</b>. The two were judged in opposite directions: the list
     /// <c>allow</c>, the call <c>deny</c> on liveness, because it runs a tool the
     /// page supplies and waits for it with no timeout. So the denominator moved
-    /// by two, the numerator by one, and <b>the withheld set is two rather than
+    /// by two, the numerator by one, and <b>the withheld set is two and not
     /// one for the first time</b> -- which is why the arithmetic below reads
     /// <c>Advertises + 2</c> and the named hole is a loop.
     /// </para>
@@ -145,7 +145,7 @@ internal sealed class SessionPolicyTests
     /// the paragraph above records the one time it was not.
     /// </para>
     /// <para>
-    /// <b>Written down rather than derived, for the reason the old table was:</b>
+    /// <b>Written down and not derived, for the reason the old table was:</b>
     /// derived from the product's own decision it would agree with it by
     /// construction and could never fail. This one still can -- a refusal
     /// reintroduced anywhere, or a surface that changed size.
@@ -166,8 +166,8 @@ internal sealed class SessionPolicyTests
     /// tool can come back. <see cref="Advertises"/> moved 72 → 71 with it, so
     /// the pair went 74 → 72 and both halves moved for the same cause -- which
     /// is exactly the shape the paragraph below says this pair exists to catch,
-    /// arriving from upstream rather than from a refusal being reintroduced.
-    /// <i>Previously <b>two since 2026-09-15</b>.</i> It is stated rather than read off
+    /// arriving from upstream and not from a refusal being reintroduced.
+    /// <i>Previously <b>two since 2026-09-15</b>.</i> It is stated and not read off
     /// <c>RepositoryVerdicts.Count</c> here: the pair
     /// <c>Advertises</c> + <c>Withholds</c> is the whole claim this class makes
     /// about the size of the surface, and reading either half out of the file
@@ -179,10 +179,10 @@ internal sealed class SessionPolicyTests
     /// The three sessions the concurrency arm drives at once.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Named rather than derived from anything, 2026-08-20 (previously one
+    /// ⚠️ <b>Named and not derived from anything, 2026-08-20 (previously one
     /// session per row of <c>SessionModes.All</c>).</b> Modes are gone. Three is
     /// what the arithmetic in that arm is written against -- 25 rounds × 3
-    /// sessions × 4 probes -- and naming them here rather than looping over a
+    /// sessions × 4 probes -- and naming them here instead of looping over a
     /// product list is what stops the denominator moving when something
     /// unrelated does.
     /// </remarks>
@@ -222,8 +222,8 @@ internal sealed class SessionPolicyTests
             await Assert.That(RepositoryVerdicts.Committed.Decide(denial.Name).IsAllowed).IsFalse();
         }
 
-        // The tools the old matrix turned on are permitted now. Asserted rather
-        // than left implied: these three are the whole of what that removal
+        // The tools the old matrix turned on are permitted now. Asserted, not
+        // left implied: these three are the whole of what that removal
         // changed, and a reader who learned the old behaviour needs to see it
         // stated.
         await Assert.That(Allows("browser_run_code_unsafe")).IsTrue();
@@ -241,7 +241,7 @@ internal sealed class SessionPolicyTests
     /// <c>AToolThisBuildHasNeverHeardOfIsForwardedRatherThanRefused</c>, whose
     /// own comment said it was "the test that proves the removal actually
     /// happened").</b> Deny-by-default is back, and the old claim is no longer
-    /// true of this product -- so the arm asserts the new policy rather than being
+    /// true of this product -- so the arm asserts the new policy instead of being
     /// deleted, because the case it covers did not go anywhere.
     /// </para>
     /// <para>
@@ -260,7 +260,7 @@ internal sealed class SessionPolicyTests
     /// <para>
     /// <b>The child double would answer, which is what makes the claim real.</b>
     /// A proxy that forwarded would visibly reach it, and the assertion below is
-    /// on the child's own call log rather than on the shape of the answer.
+    /// on the child's own call log and not on the shape of the answer.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -311,7 +311,7 @@ internal sealed class SessionPolicyTests
         // reaches the browser, and a name that is not in it never will". Read
         // against the list a caller can see, that is an instruction to send the
         // same name again, and a model that believes it retries until something
-        // else stops it. Asserted as LITERALS rather than against
+        // else stops it. Asserted as LITERALS and not against
         // SessionErrors.ToolHasNoVerdict(), because comparing a sentence to the
         // method that produces it cannot tell true from false; these two say the
         // caller is told not to retry, and that the disproved clause is gone.
@@ -336,16 +336,16 @@ internal sealed class SessionPolicyTests
     /// <para>
     /// <b>It is an exact match against <c>SessionToolSurface.Names</c> now</b>,
     /// which also makes the <c>answer</c> rows of <c>tool-verdicts.json</c>
-    /// load-bearing at run time rather than build-time only: a name in the
+    /// load-bearing at run time and not build-time only: a name in the
     /// authored namespace that nobody judged is deny-by-defaulted like anything
     /// else.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The residual is stated rather than closed.</b> A call naming
+    /// ⚠️ <b>The residual is stated and not closed.</b> A call naming
     /// <c>browserai_zzz</c> with <b>no</b> resolvable session still writes
     /// nothing, and cannot: there is no session directory to write it into.
     /// That half is asserted below too, so the boundary is a recorded property
-    /// rather than a gap somebody rediscovers.
+    /// and not a gap somebody rediscovers.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -390,19 +390,19 @@ internal sealed class SessionPolicyTests
         await Assert.That(recorded[0].Why).IsEqualTo("the suite exercising this call");
 
         // ⚠️ THE POSITIVE CONTROL. The seven real authored tools still
-        // short-circuit ahead of the door -- an exact match rather than no match
+        // short-circuit ahead of the door -- an exact match and not no match
         // at all -- so this is a narrowing and not a deletion.
         var listed = await CallAsync(rig, SessionToolSurface.List, new JsonObject { ["directory"] = sessions.Root });
 
         await Assert.That((bool?)listed["isError"]).IsNotEqualTo(true);
         await Assert.That(TextOf(listed)).Contains(directory);
 
-        // ⚠️ THE RESIDUAL, asserted rather than described: with no session there
+        // ⚠️ THE RESIDUAL, asserted, not described: with no session there
         // is nowhere to write a row and the verdict door cannot be reached, so
         // the answer is the one that names the seven tools that DO exist. It is
         // deliberately not "this needs a session" -- that would send a caller to
         // supply one for a tool that is not there, which is a second wasted turn
-        // rather than a recovery, and it is what this door answered for one run
+        // and not a recovery, and it is what this door answered for one run
         // while the exact-match change was being made.
         var noSession = await CallAsync(rig, NeverAuthored, new JsonObject { ["why"] = "the suite exercising this call" });
 
@@ -411,7 +411,7 @@ internal sealed class SessionPolicyTests
         await Assert.That(RecordedSession.LogOf(directory).Count(row => row.Tool == NeverAuthored)).IsEqualTo(1);
 
         // And an ordinary browser tool with no session still gets the
-        // session-missing sentence, so the branch above is narrow rather than a
+        // session-missing sentence, so the branch above is narrow and not a
         // replacement.
         var browserToolNoSession = await CallAsync(rig, "browser_navigate", new JsonObject { ["why"] = "the suite exercising this call" });
 
@@ -425,7 +425,7 @@ internal sealed class SessionPolicyTests
         // TheAnnotationToolIsRefusedWhereNoWindowWasPromisedAndForwardedWhereOneWas,
         // which asserted the headed arm FORWARDED the call and got the child's
         // answer back). It no longer does, and the child double below is what
-        // makes that a real claim rather than a missing case: it answers the
+        // makes that a real claim and not a missing case: it answers the
         // tool happily, so a proxy that forwarded would visibly succeed here.
         await using var sessions = RigSessionEnvironment.Create(child =>
             child.Tools[RepositoryVerdicts.ADenial.Name] = new FakeToolBehaviour
@@ -434,7 +434,7 @@ internal sealed class SessionPolicyTests
             });
 
         // The surface child answers with upstream's own committed list, so the
-        // absence asserted below is a filter rather than a double that never had
+        // absence asserted below is a filter and not a double that never had
         // the tool.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
@@ -496,14 +496,14 @@ internal sealed class SessionPolicyTests
         }
     }
 
-    // ⚠️ RETIRED 2026-09-21, and named here so the deletion is a record rather
-    // than an absence. `TheWebMcpCallIsWithheldOnLivenessAndTheWebMcpListIsNot`
+    // ⚠️ RETIRED 2026-09-21, and named here so the deletion is a record and
+    // not an absence. `TheWebMcpCallIsWithheldOnLivenessAndTheWebMcpListIsNot`
     // stood between these two comments from 2026-09-15. It asserted that the
     // pair @playwright/mcp 0.0.81 added was judged in two directions -- the list
     // advertised and forwarded, the call dropped from the surface and refused at
     // the door -- and it opened by requiring BOTH names to be in the surface a
     // fully-capable child exposes, because an absence has to be this build's
-    // decision rather than a bundle that never carried the tool.
+    // decision and not a bundle that never carried the tool.
     //
     // @playwright/mcp 0.0.82 marked both `skillOnly`, so neither is on the wire
     // in any configuration, both verdict rows were deleted, and every premise
@@ -512,7 +512,7 @@ internal sealed class SessionPolicyTests
     //
     // WHAT IT WAS FOR IS PRESERVED RATHER THAN LOST, because the tool can come
     // back and the judgement would then be owed again: the deny was LIVENESS
-    // rather than security -- upstream wraps the list path in a five-second
+    // and not security -- upstream wraps the list path in a five-second
     // timeout and the call path in nothing, and a page whose handler never
     // settles held one call for 45,002 ms where a well-behaved tool on the same
     // page answered in 521 ms. That reasoning is in tool-verdicts.json's
@@ -528,7 +528,7 @@ internal sealed class SessionPolicyTests
     // every snapshot-bearing call. That is measured, not inferred -- kb:
     // "A page can add tools to the child's tools/list, and its own text reaches
     // a caller", re-verification row 133 -- and what would switch it off is a
-    // `webmcp: false` this build does not write, which is a decision rather than
+    // `webmcp: false` this build does not write, which is a decision and not
     // a test.
 
     /// <summary>
@@ -539,7 +539,7 @@ internal sealed class SessionPolicyTests
     /// <remarks>
     /// <para>
     /// <b>The subject is the MECHANISM, and that is why it denies
-    /// <c>browser_navigate</c> rather than <c>browser_annotate</c>.</b> The arm
+    /// <c>browser_navigate</c> and not <c>browser_annotate</c>.</b> The arm
     /// above proves the shipped judgement; this one proves the judgement is
     /// <i>read from the file</i> -- which the shipped one cannot, because a
     /// hardcoded constant naming the same tool would satisfy every assertion
@@ -550,7 +550,7 @@ internal sealed class SessionPolicyTests
     /// </para>
     /// <para>
     /// <b>Three claims, and each is the half the others do not cover.</b> Absent
-    /// from the list, because a denied tool is dropped rather than disabled --
+    /// from the list, because a denied tool is dropped and not disabled --
     /// there is nothing for a model to read and weigh. Refused at the door,
     /// because a model that knows the name from upstream can still send it.
     /// Recorded, because <i>the agent reached for a tool this build will not
@@ -572,13 +572,13 @@ internal sealed class SessionPolicyTests
         const string Why = "A rig copy of the file denies this one, so the refusal below is the file talking rather than a constant.";
 
         // The session child would answer it happily, so a proxy that forwarded
-        // would visibly succeed here rather than failing for some other reason.
+        // would visibly succeed here instead of failing for some other reason.
         await using var sessions = RigSessionEnvironment.Create(
             child => child.Tools[Denied] = new FakeToolBehaviour(),
             verdicts: RepositoryVerdicts.Denying(Denied, Why));
 
         // The surface child answers with upstream's own committed list, so the
-        // absence asserted below is a filter rather than a double that never had
+        // absence asserted below is a filter and not a double that never had
         // the tool.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(
             child => child.ToolsListResult = UpstreamSurface.SnapshotToolsListResult(),
@@ -610,7 +610,7 @@ internal sealed class SessionPolicyTests
         await Assert.That((bool?)refused["isError"]).IsTrue();
 
         // The file's own `why` is the refusal, behind BrowserAI's own first
-        // sentence. Equality rather than Contains: a frame that swallowed the
+        // sentence. Equality and not Contains: a frame that swallowed the
         // reason would still contain the frame.
         await Assert.That(TextOf(refused)).IsEqualTo(SessionErrors.ToolIsDenied(Denied, Why));
 
@@ -619,7 +619,7 @@ internal sealed class SessionPolicyTests
             child.ToolCallsReceived.Count(tool => tool == Denied))).IsEqualTo(callsBefore);
 
         // And it is in the record, failed and settled, carrying what the caller
-        // was told rather than a summary of it.
+        // was told and not a summary of it.
         var log = RecordedSession.LogOf(rig.Session!);
         var row = log.Single(entry => entry.Tool == Denied);
 
@@ -636,7 +636,7 @@ internal sealed class SessionPolicyTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>DENY BY DEFAULT, and the asymmetry with a denial is deliberate
-    /// rather than an oversight.</b> A <c>deny</c> is a decision, so the tool is
+    /// and not an oversight.</b> A <c>deny</c> is a decision, so the tool is
     /// dropped from the list; a missing row is a <i>gap</i>, so the tool stays in
     /// the list and the call is refused. Two reasons. The gap is already loud --
     /// <c>ToolVerdictTests</c> is red on the same build -- so dropping it from the
@@ -678,7 +678,7 @@ internal sealed class SessionPolicyTests
             .ToList();
 
         // Still advertised. This is the half a reader will not expect, so it is
-        // asserted rather than left to the remark above.
+        // asserted and not left to the remark above.
         await Assert.That(names).Contains(Unjudged);
 
         foreach (var tool in new[] { Unjudged, Nowhere })
@@ -741,7 +741,7 @@ internal sealed class SessionPolicyTests
     /// <c>why</c> are read out of the arguments object.
     /// </para>
     /// <para>
-    /// <b>The refusal is asserted as a RESULT rather than as an error frame</b>,
+    /// <b>The refusal is asserted as a RESULT and not as an error frame</b>,
     /// because that is the distinction: a JSON-RPC error is a protocol failure
     /// and this is an answer that says no.
     /// </para>
@@ -826,7 +826,7 @@ internal sealed class SessionPolicyTests
         await Assert.That(rig.SurfaceChild.ToolCallsReceived).DoesNotContain("browser_navigate");
 
         // And it is required in the advertised schema too, so a model is told
-        // before it is refused rather than after.
+        // before it is refused and not after.
         var advertised = await rig.Client.RoundTripAsync("tools/list");
 
         var navigate = (advertised["tools"]?.AsArray() ?? [])
@@ -860,7 +860,7 @@ internal sealed class SessionPolicyTests
         // the handle that call named). With the permission matrix gone, a
         // verdict-based check would have been satisfied by "allowed" everywhere
         // and could no longer see a swapped lookup at all. What replaces it is
-        // stronger rather than weaker: the per-child call log says which session
+        // stronger, not weaker: the per-child call log says which session
         // actually received the work.
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
@@ -883,7 +883,7 @@ internal sealed class SessionPolicyTests
 
         // One probe per session per round, and the tool name carries which
         // session it was meant for -- so a call that landed in a neighbour's
-        // child is visible in that child's own log rather than inferred.
+        // child is visible in that child's own log and not inferred.
         const int Rounds = 25;
 
         var requests = new List<(string Method, JsonNode? Parameters)>();
@@ -896,8 +896,8 @@ internal sealed class SessionPolicyTests
                 foreach (var tool in Probes)
                 {
                     // The annotation probe is refused before it is routed, on
-                    // every mode, so it is counted out of the expectation rather
-                    // than out of the batch: the call still goes over the wire,
+                    // every mode, so it is counted out of the expectation and
+                    // not out of the batch: the call still goes over the wire,
                     // and a proxy that forwarded it anyway would show up as a
                     // surplus in that child's log.
                     if (RepositoryVerdicts.Committed.Decide(tool).IsAllowed)
@@ -918,7 +918,7 @@ internal sealed class SessionPolicyTests
                 }
             }
 
-            // Churn, interleaved into the same batch rather than run beside it:
+            // Churn, interleaved into the same batch and not run beside it:
             // the index the lookup reads is being written while the calls above
             // are being routed, which is the only state that could produce the
             // race.
@@ -946,7 +946,7 @@ internal sealed class SessionPolicyTests
         await Assert.That(answers.Count).IsEqualTo(requests.Count);
 
         // Each double is paired with the session directory the product built its
-        // launch options for, so the mapping is the product's rather than a
+        // launch options for, so the mapping is the product's and not a
         // guess about creation order.
         var children = sessions.SessionChildren;
         var launches = sessions.Launches;
@@ -986,9 +986,9 @@ internal sealed class SessionPolicyTests
 
         await Assert.That(refusedByLiveness).IsEqualTo(75);
 
-        // The batch really was concurrent rather than a queue the client drained
+        // The batch really was concurrent and not a queue the client drained
         // one at a time: answers came back in a different order from the
-        // requests. Asserted rather than noted, because a serialising server
+        // requests. Asserted, not noted, because a serialising server
         // would make every claim above evidence about one call at a time.
         var firstId = answers.Min(answer => answer.Id);
 

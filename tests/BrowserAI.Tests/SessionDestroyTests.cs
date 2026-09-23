@@ -30,7 +30,7 @@ namespace BrowserAI.Tests;
 /// contract for both tests, and <see cref="ADestroyThatCannotRemoveEverythingNamesWhatSurvivedAndSaysHowMany"/>
 /// provokes the survivor arm deterministically -- with a handle this test holds
 /// itself, needing no browser and no slow machine -- so the arm CI takes is
-/// exercised on every run rather than only on the runs that fail.
+/// exercised on every run and not only on the runs that fail.
 /// </para>
 /// <para>
 /// <b>Why this is not asserted on the outcome.</b> A destroy that released the
@@ -43,16 +43,16 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>The peer waits for the delete to begin, and that is what makes the test
-/// exact rather than lucky.</b> Before the destroy re-takes the directory there
+/// exact, not lucky.</b> Before the destroy re-takes the directory there
 /// is a legitimate unowned interval -- the live session is released first -- and a
-/// probe landing there would block the destroy's own acquisition rather than
-/// measure anything. So the peer probes nothing until the first planted file has
+/// probe landing there would block the destroy's own acquisition instead of
+/// measuring anything. So the peer probes nothing until the first planted file has
 /// gone, which is proof the delete pass is already running and therefore that
 /// ownership has already been proven. From that instant on, a directory that can
 /// be taken is the defect and nothing else.
 /// </para>
 /// <para>
-/// <b>The window is widened on purpose rather than waited for.</b> The defect
+/// <b>The window is widened on purpose and not waited for.</b> The defect
 /// this was written against
 /// ([the 2026-08-18 adversarial review](../../docs/reviews/2026-08-18-adversarial-locking.md))
 /// released ownership, then walked the whole tree for a size, then deleted -- so
@@ -77,7 +77,7 @@ internal sealed class SessionDestroyTests
     /// <c>browserai.lock</c>.
     /// </summary>
     /// <remarks>
-    /// Enough that removing them is measurable work rather than one syscall, and
+    /// Enough that removing them is measurable work and not one syscall, and
     /// small enough that planting them is not the cost of the test. The count
     /// sets how wide the broken code's window was; the fixed code has no window
     /// at any width.
@@ -89,7 +89,7 @@ internal sealed class SessionDestroyTests
 
     /// <summary>How long the peer waits between probes.</summary>
     /// <remarks>
-    /// <b>A sleep rather than a spin, and it is not a promptness bound.</b> The
+    /// <b>A sleep and not a spin, and it is not a promptness bound.</b> The
     /// suite runs every test at once on purpose; a thread spinning on a named
     /// mutex and a file open for the length of a directory delete is this test
     /// paying for its evidence with everybody else's timing, and it showed --
@@ -211,7 +211,7 @@ internal sealed class SessionDestroyTests
     /// </para>
     /// <para>
     /// ⚠️ <b><c>isError</c> is <see langword="true"/>, changed 2026-08-19, and
-    /// that is the decision being asserted rather than an accident of the
+    /// that is the decision being asserted and not an accident of the
     /// code.</b> <i>Previously it stayed <see langword="false"/>, defended as: a
     /// destroy that removed a nine-thousand-file profile and could not remove
     /// eleven locked files has done what it was asked, and failing the call
@@ -220,7 +220,7 @@ internal sealed class SessionDestroyTests
     /// side (<c>QUESTIONS.md</c> §11): a call that did not entirely do the thing
     /// it is named for must not be indistinguishable, to a model scanning result
     /// shapes, from one that did. <b>The retry the old defence predicted is
-    /// answered by the text rather than by the flag</b> -- the arm now says the
+    /// answered by the text and not by the flag</b> -- the arm now says the
     /// session is already destroyed, says not to call the tool again, and says
     /// what to do instead, which is what the assertions below hold it to. A
     /// naming nobody checks is still how either flag becomes a lie.
@@ -265,7 +265,7 @@ internal sealed class SessionDestroyTests
             await DestroyAnswer.AccountsForWhatItLeftAsync(answer, (bool?)destroyed["isError"], directory);
 
             // ⚠️ AND THE ERROR CARRIES THE THREE THINGS THAT MAKE IT ACTIONABLE,
-            // which is the refinement the decision rests on rather than a
+            // which is the refinement the decision rests on and not a
             // restatement of the prose. An error that only said "N items could
             // not be removed" would invite exactly the retry the objection
             // predicted -- and that retry finds no session and is refused, which
@@ -325,12 +325,12 @@ internal sealed class SessionDestroyTests
     /// handle than the cap allows, each held <c>FileShare.None</c> for the whole
     /// call, so the walk cannot unlink any of them. No browser and no slow
     /// machine. The session directory itself is a survivor too, which is why the
-    /// tally lands comfortably past the cap rather than exactly on it.
+    /// tally lands comfortably past the cap and not exactly on it.
     /// </para>
     /// <para>
     /// <b>The truncation note is read from the product</b>, through
     /// <see cref="SessionManager.TruncationNote"/> and
-    /// <see cref="DestroyAnswer"/>, rather than re-typed here -- a test holding
+    /// <see cref="DestroyAnswer"/>, and not re-typed here -- a test holding
     /// its own copy of a sentence stops recognising the arm the day somebody
     /// rewords it.
     /// </para>
@@ -382,7 +382,7 @@ internal sealed class SessionDestroyTests
 
             // ⚠️ THE PREDICATE BEFORE THE NUMBER: items the walk could not
             // remove, which is the held files plus the directory above them.
-            // Asserted as "more than the cap" rather than as an exact figure --
+            // Asserted as "more than the cap" and not as an exact figure --
             // a temp file or a log beside them would change the tally and change
             // nothing about the property under test.
             await Assert.That(survivors!.Value.Stated).IsGreaterThan(SessionManager.SurvivorsNamed).Because(answer);
@@ -443,7 +443,7 @@ internal sealed class SessionDestroyTests
         await Assert.That(cut).Contains("1 more are not named here");
         await Assert.That(cut).DoesNotContain($"item-{cap.ToString("D3", CultureInfo.InvariantCulture)}");
 
-        // And well past it, so the note does arithmetic rather than repeating a
+        // And well past it, so the note does arithmetic instead of repeating a
         // constant.
         await Assert.That(SessionManager.Listing(Items(cap + 5))).EndsWith(SessionManager.TruncationNote(cap + 5));
         await Assert.That(SessionManager.TruncationNote(cap + 5)).Contains("5 more are not named here");
@@ -466,7 +466,7 @@ internal sealed class SessionDestroyTests
     /// <b>The sentence is asserted verbatim because it is a promise about who
     /// does the work.</b> Every other refusal in this product names a recovery
     /// BrowserAI can perform; this one names one it cannot, and the honest form
-    /// of that is to say so in the first person rather than to offer a tool that
+    /// of that is to say so in the first person instead of offering a tool that
     /// will refuse in turn.
     /// </para>
     /// </remarks>
@@ -503,7 +503,7 @@ internal sealed class SessionDestroyTests
         // ⚠️ THE MAINTAINER'S WORDING, VERBATIM.
         await Assert.That(text).Contains("I cannot clean this up -- remove the entire directory yourself.");
 
-        // With the format as the reason rather than damage, and no converter
+        // With the format as the reason and not damage, and no converter
         // offered.
         await Assert.That(text).Contains(SessionLayout.LegacyRecordFileName);
         await Assert.That(text).Contains("There is no converter");

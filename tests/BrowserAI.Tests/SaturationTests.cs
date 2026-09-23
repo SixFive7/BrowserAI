@@ -32,8 +32,8 @@ namespace BrowserAI.Tests;
 /// identity, disjointness and completeness -- properties that are either true or
 /// false whatever the machine is doing, and every one of which is <i>false</i>
 /// if containment or session isolation breaks. The one place time appears is a
-/// bounded wait for a real process tree to die, which is a hang detector rather
-/// than a budget.
+/// bounded wait for a real process tree to die, which is a hang detector and
+/// not a budget.
 /// </para>
 /// <para>
 /// <b>The five claims, and what each would look like if it broke:</b>
@@ -92,7 +92,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// ⚠️ <b><c>[NotInParallel]</c> with no key, which in TUnit means it runs beside
 /// nothing at all -- and this is the one kind of exclusivity that is a
-/// requirement rather than an excuse.</b> The distinction is not "it is flaky
+/// requirement and not an excuse.</b> The distinction is not "it is flaky
 /// otherwise": <b>the assertions are meaningless without the resource</b>. This
 /// test's subject is what BrowserAI does when the machine is pinned, so the
 /// machine has to be pinned <i>by it</i>. Sharing 32 cores with 418 other tests
@@ -135,7 +135,7 @@ internal sealed partial class SaturationTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>A subset, and the number is a measured ceiling rather than a
+    /// <b>A subset, and the number is a measured ceiling and not a
     /// preference.</b> The hundred is a claim about BrowserAI processes; the
     /// browser subset is what makes the containment and disjointness claims mean
     /// anything, and each one is a tree of about eight processes and several
@@ -172,7 +172,7 @@ internal sealed partial class SaturationTests
     /// <b>So the ceiling is on what the machine can carry while 418 other tests
     /// run, not on anything BrowserAI does.</b> Raise this to 24 to reproduce the
     /// standalone measurement; the suite will go red, and it will go red for the
-    /// reason above rather than for a defect.
+    /// reason above and not for a defect.
     /// </para>
     /// </remarks>
     private const int WithBrowsers = 8;
@@ -216,7 +216,7 @@ internal sealed partial class SaturationTests
 
         try
         {
-            // Everything at once. Task.WhenAll rather than a throttle, because a
+            // Everything at once. Task.WhenAll and not a throttle, because a
             // throttle would be this test deciding the machine cannot take what
             // it is named for.
             var reports = await Task.WhenAll(peers.Select(peer => peer.RunAsync()));
@@ -233,8 +233,8 @@ internal sealed partial class SaturationTests
             // ---- 2. Every session belongs to exactly one process ------------
 
             // The answer a peer got names its own directory. Asserted as a set
-            // rather than per peer, so a cross-wiring shows up as a duplicate
-            // rather than as one confusing message.
+            // and not per peer, so a cross-wiring shows up as a duplicate
+            // and not as one confusing message.
             var claimed = reports.GroupBy(report => report.Session, StringComparer.OrdinalIgnoreCase)
                 .Where(group => group.Count() is not 1)
                 .Select(group => $"{group.Key} was claimed by peers {string.Join(", ", group.Select(report => report.Index))}")
@@ -251,7 +251,7 @@ internal sealed partial class SaturationTests
             await Assert.That(string.Join(Environment.NewLine, mixedUp)).IsEmpty();
 
             // And on disk: the lock in each session directory names the process
-            // that opened it, which is the product's own record rather than the
+            // that opened it, which is the product's own record and not the
             // harness's bookkeeping.
             var misheld = reports
                 .Where(report => report.LockHolder != report.ProcessId)
@@ -263,7 +263,7 @@ internal sealed partial class SaturationTests
             // ---- 3. The jobs are pairwise disjoint --------------------------
 
             // ⚠️ Keyed on (pid, creation time) and never on the pid alone, and
-            // this test is where that rule earns its keep rather than where it is
+            // this test is where that rule earns its keep and not where it is
             // recited. The first version compared pids: it reported TWELVE
             // processes shared between jobs on its very first run, every one of
             // them a pid Windows had recycled between two peers reading their
@@ -302,7 +302,7 @@ internal sealed partial class SaturationTests
             await Assert.That(string.Join(Environment.NewLine, thin)).IsEmpty();
 
             // The browser half, which is what makes disjointness a containment
-            // claim rather than an arithmetic one: a real browser tree really was
+            // claim and not an arithmetic one: a real browser tree really was
             // up inside each of the peers that launched one.
             var withoutABrowser = reports.Where(report => report.LaunchesABrowser && report.BrowsersInJob is 0)
                 .Select(report => $"peer {report.Index.ToString(CultureInfo.InvariantCulture)} navigated and had no process running out of the browsers root in its job")
@@ -340,7 +340,7 @@ internal sealed partial class SaturationTests
             // "what this run wrote" must not be answerable by what a previous one
             // wrote, however many files that takes.
             //
-            // Read before the torn check rather than after it because both are
+            // Read before the torn check and not after it because both are
             // now scoped by it, which is the same rule applied to the same file
             // twice.
             var ours = new HashSet<int>(reports.Select(report => report.ProcessId));
@@ -412,7 +412,7 @@ internal sealed partial class SaturationTests
     /// expression the live arm uses.</b> That is what stops this becoming a
     /// second copy of the record format: if <c>FileLoggerProvider</c> moves the
     /// header and the expression follows it, the catch arm below stops matching
-    /// and this test goes red rather than quietly asserting about a shape
+    /// and this test goes red instead of quietly asserting about a shape
     /// nothing writes any more.
     /// </para>
     /// </remarks>
@@ -422,7 +422,7 @@ internal sealed partial class SaturationTests
     {
         // Odd, so neither could ever be a real Windows pid -- those are
         // multiples of four -- which is what makes a planted line provably a
-        // stranger's rather than a peer's on an unlucky day.
+        // stranger's and not a peer's on an unlucky day.
         const int Ours = 4242;
         const int Stranger = 9191;
         const int AnotherStranger = 9193;
@@ -431,7 +431,7 @@ internal sealed partial class SaturationTests
 
         // The control on the control: the expression really does find a header
         // at a non-zero offset in a line built this way, so an empty result
-        // below means "ignored" rather than "never matched anything".
+        // below means "ignored" and not "never matched anything".
         await Assert.That(RecordHeader().Count(Torn(Stranger, AnotherStranger))).IsEqualTo(2);
 
         // A sibling checkout's tear, hours old, still in the machine-wide log.
@@ -700,8 +700,8 @@ internal sealed partial class SaturationTests
     /// <c>...T\d{2}:\d{2}:\d{2}[^\s]*\s\s\S+\s+pid=\d+</c>).</b> A record now carries
     /// <b>two</b> times -- the leading column is when it was <i>written</i>, taken
     /// inside the file's write gate, and <c>made=</c> is when it was created --
-    /// and the writer is <c>pid=&lt;n&gt;@&lt;createdFileTime&gt;</c> rather than
-    /// a bare pid. Both halves are matched here rather than skipped over with
+    /// and the writer is <c>pid=&lt;n&gt;@&lt;createdFileTime&gt;</c> and not
+    /// a bare pid. Both halves are matched here and not skipped over with
     /// <c>.*</c>: this expression is what says <i>a header may only appear at the
     /// start of a line</i>, and one that matched a prefix of the header would
     /// find the header inside itself.
@@ -889,7 +889,7 @@ internal sealed partial class SaturationTests
         /// This peer's BrowserAI pid, or zero if it never started.
         /// </summary>
         /// <remarks>
-        /// Kept on the peer rather than only on its report, because the report
+        /// Kept on the peer and not only on its report, because the report
         /// is not available when a run throws -- and the bookkeeping this test
         /// has to reclaim is keyed on exactly this number.
         /// </remarks>
@@ -898,7 +898,7 @@ internal sealed partial class SaturationTests
         /// <summary>Whether this peer drives a real browser.</summary>
         /// <remarks>
         /// The first <see cref="WithBrowsers"/> of them, so the set is fixed
-        /// rather than sampled: a test whose coverage varies run to run is one
+        /// and not sampled: a test whose coverage varies run to run is one
         /// whose green means something different every time.
         /// </remarks>
         public bool LaunchesABrowser => index < WithBrowsers;
@@ -966,7 +966,7 @@ internal sealed partial class SaturationTests
 
                     // Close, then launch again. The relaunch is upstream's own
                     // lazy creation and it is the half that says the close was a
-                    // close rather than a teardown: a session whose browser
+                    // close and not a teardown: a session whose browser
                     // cannot come back has been broken by the close.
                     _ = await client.RoundTripAsync("tools/call", new JsonObject
                     {
@@ -999,7 +999,7 @@ internal sealed partial class SaturationTests
                 };
 
                 // The session goes before the process does, so the index entry
-                // is removed by the product rather than by the scratch sweep.
+                // is removed by the product and not by the scratch sweep.
                 _ = await client.RoundTripAsync("tools/call", new JsonObject
                 {
                     ["name"] = SessionToolSurface.Destroy,

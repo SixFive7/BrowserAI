@@ -13,8 +13,8 @@
     <IsPackable>false</IsPackable>
     <!--
       Required by [LibraryImport] in Harness\ParentProcess.cs, which reads a
-      child's real parent pid so that an interposed cmd.exe fails a test rather
-      than being invisible. Same reason the product project sets it, and the
+      child's real parent pid so that an interposed cmd.exe fails a test
+      instead of being invisible. Same reason the product project sets it, and the
       same limit: every use is a P/Invoke declaration, never hand-written
       unsafe code.
     -->
@@ -42,7 +42,7 @@
 
   <!-- The upstream-review gate: four snapshots regenerated from the resolved
        payload and diffed on every build, with the diff in the failure message.
-       Imported here rather than in Directory.Build.props because the gate is
+       Imported here and not in Directory.Build.props because the gate is
        the suite, and because a shared import would run it once per project for
        one answer. -->
   <Import Project="..\..\build\UpstreamSnapshots.targets" />

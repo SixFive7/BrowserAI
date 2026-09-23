@@ -24,7 +24,7 @@ namespace BrowserAI.Tests.Harness;
 /// which is why the defect was reported twice from a machine and never once from
 /// a build. A test parameterised over both values below is red on the wrong
 /// comparison <i>whatever</i> started it. That property is now load-bearing
-/// rather than a bonus: with CI removed, the release gate is the suite run on the
+/// and not a bonus: with CI removed, the release gate is the suite run on the
 /// maintainer's machine, and <b>the standing instruction is to run it from
 /// PowerShell and from Git Bash</b> -- see
 /// [the release gate](../../../RELEASING.md#the-release-gate). This type is what
@@ -50,7 +50,7 @@ internal enum DriveLetterCase
     /// <c>c:\...</c> -- the spelling Git Bash hands the test host, and the one no
     /// Windows API ever returns. A composed path spelled this way <b>never</b>
     /// matches an OS-read one ordinally, which is what makes the wrong
-    /// comparison fail on every machine rather than on some of them.
+    /// comparison fail on every machine and not on some of them.
     /// </summary>
     Lower,
 }

@@ -79,7 +79,7 @@ internal static partial class JobProbe
     /// a decoration, and the failure it produces is reported by the host two
     /// minutes later, wearing the host's number. Measured 2026-08-17: a Firefox
     /// launch that failed at t=60 s was reported as a 3-minute timeout, which
-    /// reads as a budget being too tight rather than as a launch that never
+    /// reads as a budget being too tight instead of a launch that never
     /// happened. One budget, named by the caller.
     /// </remarks>
     /// <param name="outputDirectory">Where the report and the done marker are written.</param>
@@ -98,7 +98,7 @@ internal static partial class JobProbe
         _ = Directory.CreateDirectory(outputDirectory);
 
         // Product code, not a copy of it. If this line stops producing a
-        // correctly configured job, this test fails rather than a comment
+        // correctly configured job, this test fails instead of a comment
         // becoming untrue.
         using var job = JobObject.CreateKillOnClose();
 
@@ -112,7 +112,7 @@ internal static partial class JobProbe
 
         using var process = JobLauncher.Start(job, command, arguments, outputDirectory, ChildEnvironment.Build());
 
-        // ⚠️ Recorded rather than discarded, and that is the whole difference
+        // ⚠️ Recorded, not discarded, and that is the whole difference
         // between a diagnosable failure and a three-minute mystery. This used to
         // read the two pipes and throw the bytes away -- which kept a chatty
         // child off a full buffer and left the host, when the child never came
@@ -194,7 +194,7 @@ internal static partial class JobProbe
                 // containment failure on 2026-09-16. The tree here is live:
                 // helpers retire while the walk is still running, so by the time
                 // the row is built a descendant may simply be gone -- which is
-                // containment holding rather than failing, since an exited
+                // containment holding and not failing, since an exited
                 // process is neither a survivor nor an escapee.
                 //
                 // ProcessQueryVerdict decides which it was, from what Windows
@@ -372,7 +372,7 @@ internal static partial class JobProbe
 
     /// <summary>
     /// Tries to start a process that asks to leave the job, and reports the
-    /// Win32 error and the pid rather than a verdict.
+    /// Win32 error and the pid, not a verdict.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -421,7 +421,7 @@ internal static partial class JobProbe
         }
 
         // Left running on purpose: the walk has to reach it, so that where it
-        // ended up is measured rather than assumed.
+        // ended up is measured, not assumed.
         _ = CloseHandle(information.Thread);
         _ = CloseHandle(information.Process);
         return (0, (int)information.ProcessId);
@@ -473,8 +473,8 @@ internal static partial class JobProbe
         });
 
     /// <summary>
-    /// Waits until the job's membership has stopped changing, rather than for a
-    /// fixed number of milliseconds.
+    /// Waits until the job's membership has stopped changing, not for a fixed
+    /// number of milliseconds.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -505,11 +505,11 @@ internal static partial class JobProbe
     /// </para>
     /// </remarks>
     /// <param name="job">The job whose membership is being watched.</param>
-    /// <param name="patience">The host's budget, shared rather than re-invented.</param>
+    /// <param name="patience">The host's budget, shared and not re-invented.</param>
     private static void WaitUntilTheTreeStopsGrowing(JobObject job, TimeSpan patience)
     {
         // Ten readings 100 ms apart: one second of stillness, which is the
-        // criterion rather than a duration to spend.
+        // criterion, not a duration to spend.
         const int StillReadings = 10;
 
         var deadline = Stopwatch.StartNew();
@@ -608,7 +608,7 @@ internal static partial class JobProbe
     /// pid the job ever reported.
     /// </summary>
     /// <remarks>
-    /// The seeding is what makes this a cross-check rather than a second
+    /// The seeding is what makes this a cross-check instead of a second
     /// opinion from the same source: a process whose parent has already exited
     /// is re-parented and would be invisible to a pure parent-child walk, so it
     /// is reached from the completion port instead. A child that predates its
@@ -714,7 +714,7 @@ internal static partial class JobProbe
     /// projected into a string cannot be compared to one.
     /// </summary>
     /// <remarks>
-    /// The element type is <see cref="ushort"/> rather than <see cref="char"/>
+    /// The element type is <see cref="ushort"/> and not <see cref="char"/>
     /// because <c>char</c> is not blittable under runtime marshalling -- the
     /// generator refuses it with SYSLIB1051 -- and because UTF-16 code units
     /// nobody decodes is exactly what this field is.

@@ -20,7 +20,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>The preflight prevents a hang rather than a wrong answer, so the test
+/// <b>The preflight prevents a hang and not a wrong answer, so the test
 /// asserts on the clock.</b> Playwright's <c>isProfileLocked</c> checks only
 /// Chromium's <c>lockfile</c> and never Firefox's <c>parent.lock</c>
 /// ([kb](../../kb/chromium/profiles.md#the-dialog-hazard----worse-than-a-dialog-appears)),
@@ -50,7 +50,7 @@ namespace BrowserAI.Tests;
 /// 2026-08-17.
 /// The <c>stray-sweep</c> group serialises the tests that start a <i>Firefox</i>
 /// and deliberately does not constrain the ones that start a Chromium; the
-/// scoping is what makes that division correct rather than lucky. The full
+/// scoping is what makes that division correct, not lucky. The full
 /// account, with the measurements, is on the assertion itself.
 /// </para>
 /// </remarks>
@@ -69,7 +69,7 @@ internal sealed class FirefoxTests
     /// <remarks>
     /// <para>
     /// ⚠️ <b>Strictly larger than <see cref="ModalTimeout"/>, and that is a
-    /// correctness property rather than slack.</b> A harness bound at or below
+    /// correctness property, not slack.</b> A harness bound at or below
     /// Playwright's own launch timeout always wins the race, so the test reports
     /// <i>"the budget expired"</i> in place of the diagnosis the product and
     /// upstream were about to give.
@@ -88,10 +88,10 @@ internal sealed class FirefoxTests
     /// ⚠️ <b>Corrected 2026-08-18 (previously <c>ModalTimeout + 2 minutes</c>,
     /// a whole-conversation budget).</b> Two things changed and both matter.
     /// <see cref="RawStdioClient"/> now applies its bound <b>per exchange</b>
-    /// rather than from <c>Start()</c>, so this no longer has to be padded to
+    /// and not from <c>Start()</c>, so this no longer has to be padded to
     /// cover however many calls a test happens to make; and the value is now the
     /// suite's shared <see cref="TestDefaults.BrowserHang"/>, so a Firefox launch
-    /// and a Chromium one are watched by the same number rather than by two that
+    /// and a Chromium one are watched by the same number and not by two that
     /// can drift apart.
     /// </para>
     /// </remarks>
@@ -117,7 +117,7 @@ internal sealed class FirefoxTests
         // it -- read and write, no sharing at all. In another process because
         // that is the whole condition: a handle held on another thread of this
         // one would not be refused to this one, and the Restart Manager would
-        // name the test host rather than the holder.
+        // name the test host and not the holder.
         var ready = Path.Combine(scratch.Path, "holder.json");
         var holder = scope.Launch(
             PlantedProbe.ExecutablePath,
@@ -131,7 +131,7 @@ internal sealed class FirefoxTests
 
         // What the desktop and the Firefox process table looked like before
         // anything was asked. Both are re-read afterwards, so what is asserted is
-        // the difference rather than an absolute.
+        // the difference and not an absolute.
         var firefoxBefore = OurFirefoxProcessIds();
         var windowsBefore = TopLevelWindows.All().ToHashSet();
 
@@ -175,10 +175,10 @@ internal sealed class FirefoxTests
         // immune to whatever else on the machine starts while this runs, which is
         // the property the machine-wide reading below cannot have.
         //
-        // The membership is intersected with the image-path scan rather than
+        // The membership is intersected with the image-path scan and not
         // compared against the holder's pid alone: a console process started
         // through CreateProcessW brings a `conhost.exe` into the job with it,
-        // which is Windows rather than a launch.
+        // which is Windows and not a launch.
         var inScope = scope.ProcessIds().ToHashSet();
         var browsersInScope = BrowserProcesses.RunningFrom(BrowserAiPaths.BrowsersDirectory)
             .Where(process => inScope.Contains(process.ProcessId))
@@ -187,8 +187,8 @@ internal sealed class FirefoxTests
         await Assert.That(string.Join(", ", browsersInScope)).IsEmpty();
 
         // ⚠️ The machine-wide reading, and it is scoped to the FIREFOX EXECUTABLE
-        // rather than to the browsers root. That distinction is the whole of a
-        // 2-in-5 flake, so it is stated rather than left to look like a
+        // and not to the browsers root. That distinction is the whole of a
+        // 2-in-5 flake, so it is stated and not left to look like a
         // narrowing.
         //
         // The reading exists to catch a Firefox that escaped the job above. Asked
@@ -198,7 +198,7 @@ internal sealed class FirefoxTests
         // utility helpers as they appeared.
         //
         // Seven places in this suite launch a real Chromium out of that root, and
-        // they are counted rather than estimated because the first version of
+        // they are counted, not estimated, because the first version of
         // this note guessed: `SliceRun`'s shared capture (serving eight tests),
         // `SessionRun`'s shared capture (twelve), the three `BrowserIdleTimerTests`
         // arms that drive a live browser, `FirstRunProvisioningTests`, and
@@ -248,7 +248,7 @@ internal sealed class FirefoxTests
         //
         // Matched by full image path against the binary BrowserAI provisioned --
         // never by image name, which on this machine would name dozens of the
-        // developer's own browser. Reported with that path rather than as a bare
+        // developer's own browser. Reported with that path and not as a bare
         // pid, because by the time anyone reads the failure the process is gone
         // and a number names nothing.
         var appeared = OurFirefoxProcesses()
@@ -263,7 +263,7 @@ internal sealed class FirefoxTests
         // snapshot is resolved to its owner, and none of them may be one of our
         // Firefox processes -- which is what a profile dialog would be. A bare
         // window count would be flaky on a live desktop and would prove less;
-        // scoping the owners to the browsers root rather than to Firefox would
+        // scoping the owners to the browsers root instead of to Firefox would
         // reintroduce the same Chromium race the reading above just lost, and
         // leaving them unscoped by parent would reintroduce the Firefox half.
         var ours = OurFirefoxProcesses()
@@ -284,13 +284,13 @@ internal sealed class FirefoxTests
         var configFile = Path.Combine(scratch.Path, "playwright-mcp.json");
         await Assert.That(File.Exists(configFile)).IsFalse();
 
-        // Recorded rather than skipped: the half above needs no payload and is
+        // Recorded, not skipped: the half above needs no payload and is
         // worth running without one, but a run that took the shorter path must
         // still say so in the coverage block -- and must fail a release run.
         if (SuiteEnvironment.HasRepositoryPayload())
         {
             // The same refusal through the function every child launch actually
-            // passes through, so the guard is proven where it lives rather than
+            // passes through, so the guard is proven where it lives and not
             // only where it is convenient to call.
             var thrown = Assert.Throws<FirefoxProfileLockedException>(() => ChildLaunch.Create(
                 RepositoryPayload.Layout,
@@ -344,16 +344,16 @@ internal sealed class FirefoxTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The negative subject is real rather than synthesised.</b> This machine
+    /// <b>The negative subject is real, not synthesised.</b> This machine
     /// runs the maintainer's own Firefox out of <c>C:\Program Files</c> -- dozens
     /// of processes, real profiles, real windows, a live <c>parent.lock</c>.
     /// That is a far stronger foreign browser than anything a test could plant:
     /// it exercises the Restart Manager path for real and then has to be
-    /// rejected by the image-path guard, rather than failing the first filter
+    /// rejected by the image-path guard, instead of failing the first filter
     /// and never reaching the second.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The cost of the conditional arm, stated rather than hidden.</b> On
+    /// ⚠️ <b>The cost of the conditional arm, stated and not hidden.</b> On
     /// a machine with no other Firefox running, the foreign half proves nothing
     /// and says so through the recorded census. The unconditional half -- a
     /// session's own unheld lock file attributing nobody -- runs everywhere.
@@ -372,7 +372,7 @@ internal sealed class FirefoxTests
         // A profile that has been used and closed. Firefox NEVER deletes
         // parent.lock -- it reads the mtime to detect a startup crash -- so this
         // is the ordinary state of every session between runs, and a check on
-        // existence rather than on the live handle would refuse all of them.
+        // existence and not on the live handle would refuse all of them.
         await File.WriteAllTextAsync(FirefoxProfile.LockFileIn(profile), string.Empty);
 
         await Assert.That(File.Exists(FirefoxProfile.LockFileIn(profile))).IsTrue();
@@ -403,7 +403,7 @@ internal sealed class FirefoxTests
         // ⚠️ What the Restart Manager costs, recorded because the sweep pays it
         // per session directory and this is a machine with dozens of live
         // Firefox processes for it to walk. A query that costs seconds is a
-        // design constraint rather than a detail: the sweep runs at every
+        // design constraint and not a detail: the sweep runs at every
         // BrowserAI startup, and ~100 of those are a normal working day.
         var perQuery = foreignProfiles.Count is 0
             ? 0
@@ -421,7 +421,7 @@ internal sealed class FirefoxTests
         }
 
         // Guard two: no session of ours claims any of them. Asked the way the
-        // sweep asks it -- of our own session's lock -- rather than by comparing
+        // sweep asks it -- of our own session's lock -- and not by comparing
         // paths.
         var claimed = FirefoxProfile.HoldersOf(profile).Select(holder => holder.ProcessId).ToHashSet();
 
@@ -455,11 +455,11 @@ internal sealed class FirefoxTests
     [NotInParallel("stray-sweep")]
     public async Task AFirefoxWeLaunchedIsAttributedToItsSessionAndIsNotRegisteredForRestart()
     {
-        // ⚠️ The cost of the alternative, stated rather than hidden: with no
+        // ⚠️ The cost of the alternative, stated and not hidden: with no
         // payload or no provisioned Firefox this arm proves nothing, and the
         // guarantee would rest on the recorded measurement in
-        // kb/chromium/resurrection.md alone. So it reports as SKIPPED rather
-        // than as a pass, and a release run refuses outright.
+        // kb/chromium/resurrection.md alone. So it reports as SKIPPED and
+        // not as a pass, and a release run refuses outright.
         SuiteEnvironment.RequireProvisionedFirefox();
 
         using var scratch = ScratchDirectory.Create("firefox-attribution");
@@ -535,7 +535,7 @@ internal sealed class FirefoxTests
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
         // ⚠️ The preference reached the CHILD, asked of the child's own resolved
-        // configuration rather than of the profile on disk. Measured 2026-08-16
+        // configuration and not of the profile on disk. Measured 2026-08-16
         // and it is not where this test first looked: upstream writes
         // firefoxUserPrefs into `user.js` only on the **BiDi** Firefox path, and
         // the classic one -- which is what `@playwright/mcp` takes -- delivers
@@ -581,7 +581,7 @@ internal sealed class FirefoxTests
 
         // 1. An index that does not know this session. The browser is foreign to
         //    every session there is, so it is attributed to none of them and
-        //    reported rather than touched.
+        //    reported, not touched.
         index.Record(bystander);
 
         var unknown = await SweepAsync(index);
@@ -624,7 +624,7 @@ internal sealed class FirefoxTests
         await Assert.That(swept.Terminated.Select(entry => entry.ProcessId)).Contains(attributedPid);
 
         // ⚠️ What the lock file does when its holder dies, re-measured here
-        // rather than carried over, because the whole preflight rests on it.
+        // and not carried over, because the whole preflight rests on it.
         // [kb](../../kb/windows/detection.md) records that Firefox never deletes
         // parent.lock -- unlike Chromium's lockfile, which the kernel removes on
         // FILE_FLAG_DELETE_ON_CLOSE -- so its existence proves nothing and only a
@@ -648,7 +648,7 @@ internal sealed class FirefoxTests
         await Assert.That(lockSurvived).IsTrue();
 
         // And the file that outlived its holder does not lock anything: the
-        // preflight reads the handle rather than the name, so the very next
+        // preflight reads the handle and not the name, so the very next
         // launch on this profile is allowed. Without this the assertion above
         // would be indistinguishable from a design that refuses forever after
         // one crash.
@@ -694,7 +694,7 @@ internal sealed class FirefoxTests
     /// The tool's body is <c>JSON.stringify(context.config, null, 2)</c>, and
     /// upstream's response builder wraps every text section in a
     /// <c>### &lt;title&gt;</c> heading before it reaches the wire -- so the JSON
-    /// is cut out of the answer rather than parsed from it whole.
+    /// is cut out of the answer and not parsed from it whole.
     /// </remarks>
     private static async Task<JsonObject> ResolvedConfigAsync(RawStdioClient child)
     {
@@ -718,7 +718,7 @@ internal sealed class FirefoxTests
 
     /// <summary>
     /// Runs one pass over the Firefox image only, <b>waiting</b> for the
-    /// machine-wide gate rather than asking again while somebody else holds it.
+    /// machine-wide gate instead of asking again while somebody else holds it.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -742,7 +742,7 @@ internal sealed class FirefoxTests
             [BrowserAiPaths.FirefoxExecutable]).Run(TestDefaults.ProcessHang));
 
     /// <summary>
-    /// Runs blocking work on a dedicated thread rather than on the pool.
+    /// Runs blocking work on a dedicated thread and not on the pool.
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>A sweep is several hundred blocking syscalls and one Restart
@@ -751,7 +751,7 @@ internal sealed class FirefoxTests
     /// as it takes and the suite's in-process rigs -- which answer in
     /// milliseconds and assert budgets in tens of seconds -- start failing
     /// somewhere else entirely. That is a measured failure in this repository
-    /// rather than a precaution: <c>StraySweepTests</c> records a file-I/O loop
+    /// and not a precaution: <c>StraySweepTests</c> records a file-I/O loop
     /// on a pool thread taking <c>FakeChildHarnessTests</c> from 8 ms to 2.9 s.
     /// </remarks>
     /// <typeparam name="T">What the work produces.</typeparam>

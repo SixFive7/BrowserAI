@@ -31,7 +31,7 @@ namespace BrowserAI.Tests;
 /// forbids matching, counting and terminating by name, not observing one --
 /// <c>SdkStdioClientTransportTests</c> reads a parent's image name to prove
 /// that the SDK's own transport interposes a shell, which is a defect being
-/// exposed rather than a process being chosen.
+/// exposed and not a process being chosen.
 /// </para>
 /// </remarks>
 internal sealed class NeverByImageNameTests
@@ -41,13 +41,13 @@ internal sealed class NeverByImageNameTests
     /// anything: the five substrings the scan matched until 2026-09-17.
     /// </summary>
     /// <remarks>
-    /// <b>Deleted rather than retired</b> -- the shapes moved into
-    /// <see cref="ProcessSelection"/>, which reads them as filters rather than as
+    /// <b>Deleted, not retired</b> -- the shapes moved into
+    /// <see cref="ProcessSelection"/>, which reads them as filters and not as
     /// APIs, and each carries its own reason there. The one that needed carrying
     /// over in full is <c>szExeFile</c>: it was <i>claimed</i> by
     /// <c>build/BannedSymbols.txt</c> and absent for a day in 2026-08, and a
     /// false claim of coverage is worse than none because it stops anyone
-    /// looking. The needle is the FIELD rather than the walk, because
+    /// looking. The needle is the FIELD and not the walk, because
     /// <c>CreateToolhelp32Snapshot</c> is how a pid and a parent are read without
     /// touching a name at all -- <c>JobProbe</c> declares that member as
     /// <c>ImageNameWeDoNotRead</c> for exactly that reason -- so banning the walk
@@ -88,13 +88,13 @@ internal sealed class NeverByImageNameTests
     /// ⚠️ <b>The fifteenth is real and still keeps that directory out of
     /// <c>build/</c>:</b> <c>2026-09-14-firstrun/observe.ps1</c> calls
     /// <c>GetProcessesByName</c> over a literal watch list, which is matching and
-    /// counting by name rather than the observing this rule permits.
+    /// counting by name, not the observing this rule permits.
     /// </para>
     /// <para>
     /// ⚠️ <b>A narrowing needs both directions or it is a hole with a test in
     /// front of it.</b> Every violation shape below must be caught <i>and</i> the
     /// pid-keyed spelling of the same call must pass, so an over-eager rewrite of
-    /// the predicate reddens here rather than quietly permitting a kill by name.
+    /// the predicate reddens here instead of quietly permitting a kill by name.
     /// The third block is the mixed case -- a pid filter on a line that also names
     /// an image -- which must be a violation, because the name is what decides and
     /// the pid is decoration.
@@ -212,7 +212,7 @@ internal sealed class NeverByImageNameTests
         await Assert.That(ProcessSelection.OffencesIn(listing).Count).IsEqualTo(0);
 
         // The same two lines in a file that DOES enumerate processes is caught,
-        // which is the whole reason the gate is on the file rather than the line:
+        // which is the whole reason the gate is on the file and not the line:
         // a query built on one line and filtered on the next.
         var hunting = $"$all = Get-CimInstance {wmi}\n$match = $all | Where-Object {{ $_.{nm} -eq 'chrome.exe' }}";
 
@@ -240,7 +240,7 @@ internal sealed class NeverByImageNameTests
     public async Task EveryProjectIsCoveredByTheBannedApiAnalyzer()
     {
         // The analyzer and the shared list are declared in Directory.Build.props
-        // rather than per project, which is what makes a project added later
+        // and not per project, which is what makes a project added later
         // covered by construction. This asserts that arrangement, because
         // moving either line back into one .csproj would leave the suite green
         // and the other projects unguarded.

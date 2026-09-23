@@ -36,7 +36,7 @@ namespace BrowserAI.Tests;
 /// <b>What this does NOT catch, and nothing here should be read as claiming it
 /// does: access masks and share modes.</b> Whether the process log grants delete
 /// sharing, and whether its handle carries enough access for <c>LockFileEx</c> to
-/// accept it, are semantic choices rather than layout facts and no size or offset
+/// accept it, are semantic choices, not layout facts, and no size or offset
 /// assertion can see either. <c>ProcessLogTests</c> covers them, by failing the
 /// way each defect presented:
 /// <c>ConcurrentProcessesDoNotLoseEachOthersRecords</c> for the
@@ -46,14 +46,14 @@ namespace BrowserAI.Tests;
 /// <i>Corrected 2026-08-24 (previously this named <c>FILE_APPEND_DATA</c> without
 /// <c>FILE_WRITE_DATA</c> as the uncheckable choice): that mask is gone. The
 /// atomicity it bought was per <c>WriteFile</c> call and the completion loop
-/// above it voided the guarantee, so the machinery was deleted rather than
+/// above it voided the guarantee, so the machinery was deleted, not
 /// repaired.</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>One of the eight structs has a different oracle, and it is named here so
 /// that the difference is not mistaken for an oversight.</b>
 /// <c>NativeFile.Overlapped</c> is compared against
-/// <see cref="System.Threading.NativeOverlapped"/> rather than against
+/// <see cref="System.Threading.NativeOverlapped"/> and not against
 /// [`NativeMethods.txt`](NativeMethods.txt), because CsWin32 refuses to generate
 /// <c>OVERLAPPED</c> at all -- <c>error PInvoke003: This API will not be
 /// generated. Use System.Threading.NativeOverlapped instead</c>, measured
@@ -64,7 +64,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>The structs are reached by reflection because they are <c>private</c>
-/// nested types</b>, and that is deliberate rather than a workaround. An oracle
+/// nested types</b>, and that is deliberate, not a workaround. An oracle
 /// that compared a <i>copy</i> of each struct would assert that the copy matches
 /// Windows and say nothing at all about the declarations the product actually
 /// marshals through -- the two would be free to drift, which is precisely the
@@ -101,7 +101,7 @@ internal sealed class InteropLayoutTests
         // library split put NativeFile in BrowserAI.Core and left JobObject and
         // JobLauncher in the server, so a resolve rooted in one assembly threw
         // TypeLoadException for the other. The failure below names the member
-        // rather than the assembly on purpose: which binary a struct is compiled
+        // and not the assembly on purpose: which binary a struct is compiled
         // into is not a property this oracle is about, and pinning it here would
         // turn the next move into a red for a reason that has nothing to do
         // with Windows' layout.
@@ -311,7 +311,7 @@ internal sealed class InteropLayoutTests
         "JobObjectBasicLimitInformation" => sizeof(W.System.JobObjects.JOBOBJECT_BASIC_LIMIT_INFORMATION),
         "JobObjectExtendedLimitInformation" => sizeof(W.System.JobObjects.JOBOBJECT_EXTENDED_LIMIT_INFORMATION),
 
-        // The one row whose oracle is the framework rather than the metadata --
+        // The one row whose oracle is the framework and not the metadata --
         // see the type's remarks, and NativeMethods.txt, which says the same
         // thing at the place somebody would otherwise add the name.
         "Overlapped" => sizeof(System.Threading.NativeOverlapped),

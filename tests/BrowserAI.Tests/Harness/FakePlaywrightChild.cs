@@ -19,9 +19,9 @@ internal sealed record FakeToolBehaviour
     /// byte.
     /// </summary>
     /// <remarks>
-    /// A string rather than a typed object, and that is the point: the double
+    /// A string and not a typed object, and that is the point: the double
     /// never serialises through a contract, so anything that arrives at the
-    /// caller differently is attributable to the proxy rather than to the
+    /// caller differently is attributable to the proxy and not to the
     /// double's writer.
     /// </remarks>
     public string? RawResult { get; init; }
@@ -52,7 +52,7 @@ internal sealed record FakeToolBehaviour
     /// <b>Without this a cancellation test cannot exist.</b> A child parked
     /// inside its own dispatch cannot read the
     /// <c>notifications/cancelled</c> that the test is trying to prove reaches
-    /// it, so the assertion would be about the double rather than about the
+    /// it, so the assertion would be about the double and not about the
     /// proxy.
     /// </remarks>
     public Task? HoldUntil { get; init; }
@@ -89,7 +89,7 @@ internal sealed record FakeToolBehaviour
     /// <see cref="WritesArtifactBytes"/> writes zeros, which is enough for "the
     /// file is there and is this big" and not enough for "the image block is the
     /// file". A run of zeros base64-encodes to a run of <c>A</c>s, so a proxy
-    /// that inlined a buffer it had allocated itself rather than one it read off
+    /// that inlined a buffer it had allocated itself and not one it read off
     /// disk would pass.
     /// </remarks>
     public byte[]? WritesArtifactContent { get; init; }
@@ -191,8 +191,8 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// real child's own working directory.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Added 2026-08-26 with the passthrough, and it is fidelity rather
-    /// than convenience.</b> Until then BrowserAI rewrote every <c>filename</c>
+    /// ⚠️ <b>Added 2026-08-26 with the passthrough, and it is fidelity and
+    /// not convenience.</b> Until then BrowserAI rewrote every <c>filename</c>
     /// to an absolute path before the child saw it, so this double could write
     /// straight to the argument it was handed. Nothing rewrites one now: the
     /// caller's own string reaches the child, and upstream resolves it with
@@ -208,7 +208,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
 
     /// <summary>
     /// Whether <c>server/discover</c> is answered at all. Setting it false is
-    /// how a test reproduces the probe stall rather than merely describing it.
+    /// how a test reproduces the probe stall instead of merely describing it.
     /// </summary>
     public bool AnswersDiscover { get; set; } = true;
 
@@ -335,7 +335,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     {
         // A raw interpolated literal allows one fewer consecutive literal
         // closing brace than it has leading '$' characters, and these frames end
-        // in two. Hence three rather than two, and {{{ }}} for every hole.
+        // in two. Hence three and not two, and {{{ }}} for every hole.
         var data = rawData is null ? "" : $$$""","data":{{{rawData}}}""";
 
         return $$$"""{"jsonrpc":"2.0","id":{{{id}}},"error":{"code":{{{code.ToString(CultureInfo.InvariantCulture)}}},"message":{{{JsonSerializer.Serialize(message)}}}{{{data}}}}}""";
@@ -504,7 +504,7 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
             return false;
         }
 
-        // Echoing the caller's own token rather than inventing one: a relay that
+        // Echoing the caller's own token instead of inventing one: a relay that
         // rewrote it would still look right in a test that only counted
         // notifications.
         if (behaviour.ProgressUpdates > 0 && ProgressTokenOf(request) is { } token)
@@ -563,13 +563,13 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// <c>{"tools":{"listChanged":true}}</c>, because its tool list genuinely
     /// changes now: the child appends the current page's own WebMCP tools to
     /// <c>tools/list</c> and notifies when that set moves. This is the double
-    /// tracking the thing it doubles, which is the rule below applied rather
-    /// than relaxed -- the snapshot is the source and
+    /// tracking the thing it doubles, which is the rule below applied and
+    /// not relaxed -- the snapshot is the source and
     /// <c>UpstreamSnapshotTests.TheDoubleAdvertisesWhatTheRealChildDoes</c> is
     /// what moved first.
     /// </para>
     /// <para>
-    /// ⚠️ <b>BrowserAI does NOT forward it, and that is correct rather than an
+    /// ⚠️ <b>BrowserAI does NOT forward it, and that is correct and not an
     /// omission.</b> BrowserAI answers <c>tools/list</c> from the run's own
     /// child, which never navigates and so has no page to collect from, so
     /// BrowserAI's own list does not change and it advertises

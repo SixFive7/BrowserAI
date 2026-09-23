@@ -98,7 +98,7 @@ internal sealed class UpstreamSnapshotTests
         // filteredTools() ors `capability.startsWith("core")` with the
         // configured capabilities, so the core family is on whatever the
         // caller asks for. That is why setting `capabilities: ["config"]`
-        // yields 25 tools rather than 1, and it is the mechanism a session
+        // yields 25 tools and not 1, and it is the mechanism a session
         // type cannot opt out of.
         using var snapshot = ReadToolsList();
         var root = snapshot.RootElement;
@@ -183,10 +183,10 @@ internal sealed class UpstreamSnapshotTests
     /// nothing will take, which reads as coverage and is not.
     /// </para>
     /// <para>
-    /// <b>Asserted against the snapshot rather than against a literal</b>, so the
+    /// <b>Asserted against the snapshot and not against a literal</b>, so the
     /// day upstream starts advertising something the diff moves both the record
     /// and the double's obligation at once, and a hand-edit of the double is a
-    /// red build rather than a fidelity gap nobody measures.
+    /// red build and not a fidelity gap nobody measures.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -226,7 +226,7 @@ internal sealed class UpstreamSnapshotTests
     /// <remarks>
     /// Without the first half, <c>UpstreamSurface</c> is a second implementation
     /// of upstream's filter that nothing checks, and every surface assertion
-    /// built on it would be measuring the helper rather than the product. The
+    /// built on it would be measuring the helper and not the product. The
     /// second half is what turns two numbers in a design document into something
     /// a build can be wrong about.
     /// </remarks>
@@ -261,11 +261,11 @@ internal sealed class UpstreamSnapshotTests
         // from last time's reasoning: `core` went 21 -> 23 when upstream added
         // `browser_webmcp_list` and `browser_webmcp_call`, `devtools` did NOT
         // move and is still 13, and every other capability is unchanged to the
-        // tool. Because the two arrivals are `core` rather than `devtools`, they
+        // tool. Because the two arrivals are `core` and not `devtools`, they
         // land in the DEFAULT surface as well (24 -> 26), which the `devtools`
         // pair did not -- so the first number here moves for a reason the
         // previous correction would not have predicted. Both remain properties
-        // of the SNAPSHOT rather than of `tool-verdicts.json`.
+        // of the SNAPSHOT and not of `tool-verdicts.json`.
         //
         // ⚠️ Corrected 2026-09-17 @ playwright-core 1.64.0-alpha-2026-09-17
         // (previously 46 and 73). RE-COUNTED OFF THE ACCEPTED SNAPSHOT a third

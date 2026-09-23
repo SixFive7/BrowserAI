@@ -23,7 +23,7 @@ namespace BrowserAI.Tests.Harness;
 /// </para>
 /// <para>
 /// <b>The teardown order is load-bearing, and what each step actually buys was
-/// measured rather than assumed.</b> Cancel the token, complete <i>both</i>
+/// measured, not assumed.</b> Cancel the token, complete <i>both</i>
 /// writers on the caller hop, await the server task, then dispose downwards.
 /// Removing one step at a time on ModelContextProtocol 2.2.0, 2026-08-16, over
 /// the whole suite:
@@ -56,7 +56,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Disposal asserts, and can therefore mask.</b> A teardown defect throws
 /// from <see cref="DisposeAsync"/>, which is what makes "no test leaves a live
-/// pipe behind" a mechanism rather than a habit. The cost is the ordinary one:
+/// pipe behind" a mechanism and not a habit. The cost is the ordinary one:
 /// if a test body has already failed and teardown then fails too, the teardown
 /// exception is the one that propagates. Its message names the pipe, which is
 /// usually the more interesting half anyway.
@@ -136,7 +136,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
 
     /// <summary>
     /// The product object under test, for the assertions that are about the
-    /// options it hands the server rather than about a round trip.
+    /// options it hands the server and not about a round trip.
     /// </summary>
     /// <exception cref="InvalidOperationException">This rig has no proxy in it.</exception>
     public BrowserProxy Proxy =>
@@ -322,7 +322,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
 
         // 3. Await the server task. With neither of the two steps above it is
         //    still running when this returns, which is why the wait is bounded
-        //    rather than open-ended.
+        //    and not open-ended.
         try
         {
             await _serverTask.WaitAsync(TestDefaults.InProcessHang);
@@ -404,7 +404,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
         }
 
         // ⚠️ BOTH conditions, and the second one is what makes this a leak check
-        // rather than a stopwatch.
+        // and not a stopwatch.
         //
         // Corrected 2026-08-17 (previously: `_serverTaskDoneBeforeDispose`
         // alone). That flag is `IsCompleted` read after a bounded 30 s wait, so
@@ -484,7 +484,7 @@ internal sealed class McpTestHarness : IAsyncDisposable
             {
                 ["directory"] = directory,
 
-                // ⚠️ Read off the rig rather than written here. A headed
+                // ⚠️ Read off the rig and not written here. A headed
                 // session behind a real node child is a Chromium window on the
                 // developer's screen which takes their foreground -- measured
                 // 2026-08-17 as the ONLY thing in the whole suite that did.

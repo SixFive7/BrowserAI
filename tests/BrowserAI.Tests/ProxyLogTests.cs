@@ -18,12 +18,12 @@ namespace BrowserAI.Tests;
 /// reused; <c>ChildHasGone</c> was nevertheless given 16 on 2026-09-17, and
 /// <c>PageToolAbandoned</c> then took 17 -- the id 16 would have been had anybody
 /// read the comment. It was found by reading, on 2026-09-22, and the comment was
-/// corrected rather than the event renumbered (Q224 b): 16 is what the shipped
+/// corrected instead of the event being renumbered (Q224 b): 16 is what the shipped
 /// <c>v1.0.0</c> binaries emit for <c>ChildHasGone</c>, so renumbering would
 /// trade one stale meaning for a second one in the same key.
 /// </para>
 /// <para>
-/// <b>The retired set is read out of the comment rather than typed here</b>,
+/// <b>The retired set is read out of the comment and not typed here</b>,
 /// through the <c>RETIRED-EVENT-IDS:</c> marker line that comment carries. A
 /// second copy of the list in this file would be a second thing to keep in step,
 /// and the comment is the record a reader of an old log actually meets. The
@@ -38,7 +38,7 @@ namespace BrowserAI.Tests;
 /// SHIPPED under an older meaning -- that is what the retired list is for, and
 /// keeping the list honest is still a person's job. Nor does it stop a
 /// deliberate renumbering: moving an event to a free id passes, because that is
-/// a decision rather than a defect, and the retired list is where the decision
+/// a decision and not a defect, and the retired list is where the decision
 /// has to be recorded.
 /// </para>
 /// </remarks>
@@ -112,7 +112,7 @@ internal sealed class ProxyLogTests
             }
         }
 
-        // Not vacuous, and it names the two that exist rather than asserting a
+        // Not vacuous, and it names the two that exist instead of asserting a
         // count: a marker that stopped parsing would leave this empty and every
         // reuse below would pass.
         await Assert.That(retired.ContainsKey("ProxyLog"))
@@ -232,7 +232,7 @@ internal sealed class ProxyLogTests
 
             // The member the attribute decorates is the next partial void below
             // it; the attribute may span several lines, so this looks forward
-            // rather than at i + 1.
+            // and not at i + 1.
             var member = "(unnamed)";
 
             for (var j = i + 1; j < Math.Min(i + 12, lines.Length); j++)

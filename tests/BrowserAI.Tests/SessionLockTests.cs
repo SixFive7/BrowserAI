@@ -78,7 +78,7 @@ internal sealed class SessionLockTests
     /// take, and must be unreachable by a slow machine. This bounds how long a
     /// call is <i>observed failing to return</i>, so a slow, starved or paging
     /// machine can only make it pass. The number therefore has to be sized
-    /// against the <b>defect</b> rather than against the product: a free
+    /// against the <b>defect</b> and not against the product: a free
     /// directory acquired without the gate costs tens of milliseconds, so three
     /// seconds is roughly two orders of magnitude of headroom on the behaviour
     /// being excluded, and it is three seconds of a suite that is otherwise
@@ -132,7 +132,7 @@ internal sealed class SessionLockTests
             await WaitForAllAsync(reports.Select(report => $"{report}.ready"));
 
             // Everybody is parked on the event. This is the instant the race
-            // starts, rather than "whenever each process happened to get here".
+            // starts, and not "whenever each process happened to get here".
             _ = start.Set();
 
             var outcomes = await ProbeReport.ReadAllAsync(reports, Patience);
@@ -141,7 +141,7 @@ internal sealed class SessionLockTests
             var refused = outcomes.Where(report => !(bool)report["taken"]!).ToList();
 
             // ⚠️ EVERY ASSERTION BELOW CARRIES THE WHOLE DOSSIER, and that is the
-            // 2026-08-18 correction rather than decoration. This test failed once
+            // 2026-08-18 correction and not decoration. This test failed once
             // in eighteen full-suite runs with a loser reporting an outcome other
             // than `Held`, and the run that caught it recorded only that much: not
             // which outcome, not the holder it named, not what was on disk. The
@@ -199,7 +199,7 @@ internal sealed class SessionLockTests
 
         // The guard says the same thing the record's newest holder statement
         // does, which is what makes a probe and a history two views of one
-        // acquisition rather than two answers.
+        // acquisition and not two answers.
         await Assert.That(LockFile.Read(path.LockFile)!.ProcessId).IsEqualTo(winner);
     }
 
@@ -211,7 +211,7 @@ internal sealed class SessionLockTests
     /// <remarks>
     /// <para>
     /// <b>The gate is held by a third process for the whole call, and that is the
-    /// assertion rather than the setup.</b> A <c>TryAcquire</c> that still went
+    /// assertion and not the setup.</b> A <c>TryAcquire</c> that still went
     /// through the gate could only come back <c>Busy</c>, at
     /// <see cref="LockScopes.PerDirectoryGate"/>; one that comes back
     /// <c>Held</c> naming the holder's pid provably never entered it. No clock is
@@ -220,7 +220,7 @@ internal sealed class SessionLockTests
     /// <para>
     /// <b>Why this exists.</b> Every process that wanted to know who held a
     /// session took the gate, losers included -- so a refusal waited behind the
-    /// whole queue rather than behind one critical section, and the cost was
+    /// whole queue and not behind one critical section, and the cost was
     /// super-linear: 367 ms at 16 contenders, 3,349 ms at the charter's design
     /// point of 100, and at 200 the then-five-second gate was reached by queueing
     /// alone. The sharing violation on <c>browserai.lock</c> already proves ownership,
@@ -315,8 +315,8 @@ internal sealed class SessionLockTests
         using var scratch = ScratchDirectory.Create("session-probe-free");
         var (directory, path) = NewSession(scratch, "probe-free");
 
-        // No browserai.lock at all, so the probe's open fails with "not found" rather
-        // than with a sharing violation -- the "looks free" answer, which is the
+        // No browserai.lock at all, so the probe's open fails with "not found" and
+        // not with a sharing violation -- the "looks free" answer, which is the
         // one it is not allowed to act on.
         await Assert.That(File.Exists(path.LockFile)).IsFalse();
 
@@ -419,7 +419,7 @@ internal sealed class SessionLockTests
             await Assert.That(reclaimed.Message).Contains("Reclaiming it.");
 
             // Row 9 is not an error: the purpose the dead session recorded is
-            // handed on rather than lost, which is what a resume is for.
+            // handed on and not lost, which is what a resume is for.
             await Assert.That(reclaimed.Message).Contains("reading the customer portal");
             await Assert.That(reclaimed.Acquired!.Record.PurposeHistory.Count).IsEqualTo(2);
             await Assert.That(reclaimed.Acquired.Record.PurposeHistory[0].Value).IsEqualTo("reading the customer portal");
@@ -470,7 +470,7 @@ internal sealed class SessionLockTests
         // this thread does not own throws.
         mutex.Release();
 
-        // And the abandonment is consumed rather than sticky, so the next
+        // And the abandonment is consumed and not sticky, so the next
         // acquire is ordinary.
         var second = mutex.Acquire(LockScopes.PerDirectoryGate);
         await Assert.That(second).IsEqualTo(MutexAcquisition.Acquired);
@@ -555,13 +555,13 @@ internal sealed class SessionLockTests
             // earlier with five times MORE headroom -- and this one measured
             // across a process boundary, in each of eight processes launched
             // together, where process creation is the most contended thing on a
-            // loaded box. It also invented its own 1000 rather than deriving
+            // loaded box. It also invented its own 1000 instead of deriving
             // anything. What the record proves and what it does not is stated on
             // MachineMutex.LastAcquireTimeout;
             // AGateRecordsTheWaitItWasHandedRatherThanAConstant is the control
-            // that it follows the argument rather than sitting on a constant.
+            // that it follows the argument instead of sitting on a constant.
             //
-            // Asserted over EVERY outcome rather than only the skippers: the
+            // Asserted over EVERY outcome and not only the skippers: the
             // winner asked for zero too, and a version that only checked the
             // losers would pass a sweep whose first contender blocked.
             await Assert.That((long?)report["acquireTimeoutTicks"]).IsEqualTo(LockScopes.NeverWaits.Ticks);
@@ -599,7 +599,7 @@ internal sealed class SessionLockTests
     /// is wrong"</i>, about a machine where nothing was.
     /// </para>
     /// <para>
-    /// <b>Asserted rather than commented, because the two values are three
+    /// <b>Asserted, not commented, because the two values are three
     /// directories apart and each has its own long justification.</b> Either can
     /// be re-tuned on its own evidence; what may not happen is the two crossing,
     /// and the only thing that can notice that is a build.
@@ -641,7 +641,7 @@ internal sealed class SessionLockTests
 
     /// <summary>
     /// The gate records the wait it was <b>handed</b>, and the record follows the
-    /// argument rather than sitting on a constant.
+    /// argument instead of sitting on a constant.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -735,7 +735,7 @@ internal sealed class SessionLockTests
     /// </para>
     /// <para>
     /// <b>This is weaker than a red test and could not have been planted as one
-    /// -- say so rather than implying otherwise.</b> What it holds is the one
+    /// -- say so instead of implying otherwise.</b> What it holds is the one
     /// property the behavioural tests beside it cannot: those would all still
     /// pass with a gate, or with a database open, in the answer.
     /// </para>
@@ -867,7 +867,7 @@ internal sealed class SessionLockTests
     }
 
     /// <summary>
-    /// A process re-taking a directory it itself last held says so, rather than
+    /// A process re-taking a directory it itself last held says so, instead of
     /// reporting a reclaim from a live stranger.
     /// </summary>
     /// <remarks>
@@ -984,7 +984,7 @@ internal sealed class SessionLockTests
 
         // The naive combination of the two requirements -- hold the handle AND
         // rename the record into place -- does not work under ANY share mode,
-        // and this is the measurement that says so rather than an inference.
+        // and this is the measurement that says so and not an inference.
         // MoveFileEx with MOVEFILE_REPLACE_EXISTING wants DELETE on the
         // destination and is refused ERROR_ACCESS_DENIED, not the sharing
         // violation one would expect -- so a rename retry that caught only
@@ -1011,13 +1011,13 @@ internal sealed class SessionLockTests
         // gap real and the per-directory mutex the thing that covers it.
         //
         // ⚠️ The rename below is retried, and the reason is a live-system
-        // condition rather than a defect in either side of it. A file this
+        // condition and not a defect in either side of it. A file this
         // process has just closed is briefly held by something OUTSIDE this
         // repository -- the same scanner's handle that
         // `SessionLock`'s two-second move budget, `InstallationMarker` and the
         // first-run cache's commit all exist for -- and `MOVEFILE_REPLACE_EXISTING`
-        // wants DELETE on the destination, so it is refused ACCESS_DENIED rather
-        // than as a sharing violation. Measured 2026-08-18: one run in twenty of
+        // wants DELETE on the destination, so it is refused ACCESS_DENIED and
+        // not as a sharing violation. Measured 2026-08-18: one run in twenty of
         // the full suite at `SuiteParallelism.Unbounded`, 47 ms into this test,
         // as a bare `UnauthorizedAccessException` naming neither the holder nor
         // the fact that a retry would have worked.
@@ -1091,7 +1091,7 @@ internal sealed class SessionLockTests
     /// <para>
     /// <b>The reader has to have been looking WHILE the writer wrote</b>, or
     /// "never torn" is a claim about an empty observation -- so the assertion is
-    /// on <i>distinct records observed</i> rather than on a read count. Two
+    /// on <i>distinct records observed</i> and not on a read count. Two
     /// different purposes cannot both be seen unless the record changed under
     /// the reader.
     /// </para>
@@ -1277,15 +1277,15 @@ internal sealed class SessionLockTests
     /// </para>
     /// <para>
     /// ⚠️ <b>This test costs <see cref="RenameWindow.Budget"/> -- thirty seconds --
-    /// and that is coverage rather than waste.</b> The denied open runs through
+    /// and that is coverage and not waste.</b> The denied open runs through
     /// <c>RenameWindow.WaitOut</c>, which exists to wait out a rename in flight;
     /// a permanent denial is a different fault and must still be <i>reported</i>
-    /// rather than waited on forever. <i>Corrected 2026-08-19 (previously "This
+    /// and not waited on forever. <i>Corrected 2026-08-19 (previously "This
     /// is the only test in the suite that reaches the end of that budget, so it
     /// is also the only one that proves the wait is bounded at all")</i> -- there
     /// are two now. <c>ErrorCatalogueTests.TheLockRowsAreEmittedByRealLockConditions</c>
     /// denies the same right over a <c>browserai.lock</c> that already exists, which
-    /// reaches the <b>first</b> open in <c>TakeOrReport</c> rather than the
+    /// reaches the <b>first</b> open in <c>TakeOrReport</c> and not the
     /// re-open this test reaches, and that open had no arm for it at all until
     /// the same day.
     /// </para>
@@ -1369,7 +1369,7 @@ internal sealed class SessionLockTests
     /// and after a write that <b>threw</b>.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Coverage bounded, and named rather than implied.</b> The old test's
+    /// ⚠️ <b>Coverage bounded, and named, not implied.</b> The old test's
     /// second arm -- a replacement that failed <i>and</i> a name that could not be
     /// taken back -- has no counterpart, because there is no window in which the
     /// name is not held. The failing write here is provoked by disposing the
@@ -1436,7 +1436,7 @@ internal sealed class SessionLockTests
 
     /// <summary>
     /// A second disposal arriving while <c>ReleaseAndDelete</c> is mid-delete
-    /// waits for it, rather than disposing the gate out from under it and
+    /// waits for it, instead of disposing the gate out from under it and
     /// leaving <c>browserai.lock</c> held by a <c>FileStream</c> nothing will
     /// ever close.
     /// </summary>
@@ -1467,7 +1467,7 @@ internal sealed class SessionLockTests
     /// its sibling below forces a mutation against the same delete.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Coverage bounded, and stated rather than implied.</b> The third
+    /// ⚠️ <b>Coverage bounded, and stated, not implied.</b> The third
     /// pairing -- a <i>disposal</i> arriving during a <i>mutation</i> -- has no
     /// deterministic seam left, because the mutation no longer runs any caller's
     /// code. What holds it is the same private <c>Lock</c> these two prove is
@@ -1543,7 +1543,7 @@ internal sealed class SessionLockTests
 
     /// <summary>
     /// A mutation arriving while <c>ReleaseAndDelete</c> is mid-delete waits for
-    /// it, rather than racing the disposal it is being torn down by.
+    /// it, instead of racing the disposal it is being torn down by.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1646,7 +1646,7 @@ internal sealed class SessionLockTests
     /// <c>FileStream</c> construction, once per session on the machine.
     /// </para>
     /// <para>
-    /// <b>Observed rather than predicted: CI run 32203064556 attempt 1.</b> A
+    /// <b>Observed, not predicted: CI run 32203064556 attempt 1.</b> A
     /// contender wrote its record, was refused on the re-open by a peer's
     /// pre-gate probe, and answered that it had not taken the directory; a second
     /// contender reclaimed the same directory 61 ms later, and the record carried
@@ -1716,7 +1716,7 @@ internal sealed class SessionLockTests
                 + "and answering it hands the directory to whichever contender arrives next");
 
             // Released, and the wait clears -- which is the whole property. It is
-            // released here rather than on a timer so that nothing in this test
+            // released here and not on a timer so that nothing in this test
             // depends on how long a machine takes.
             await transient.DisposeAsync();
 
@@ -1764,7 +1764,7 @@ internal sealed class SessionLockTests
     /// <para>
     /// <b>And the record is read back.</b> "Nothing was taken" is the cheap half;
     /// the half that matters is that nothing was <i>written</i>, because the
-    /// defect this closes is a rebinding rather than a bad acquisition.
+    /// defect this closes is a rebinding and not a bad acquisition.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1901,7 +1901,7 @@ internal sealed class SessionLockTests
         await Assert.That(tolerant.Count).IsEqualTo(2).Because(string.Join(" | ", tolerant));
 
         // And the ownership tests are bare. TryHoldUnowned's is the one that may
-        // meet a real owner and must answer rather than wait.
+        // meet a real owner and must answer, not wait.
         await Assert.That(bare.Count).IsGreaterThanOrEqualTo(1).Because(string.Join(" | ", bare));
     }
 
@@ -1927,7 +1927,7 @@ internal sealed class SessionLockTests
             {
                 await Assert.That(watched.Taken).IsTrue();
 
-                // ILogger.Log directly rather than LogInformation: the
+                // ILogger.Log directly and not LogInformation: the
                 // extension method is what CA1848 objects to, and a
                 // [LoggerMessage] here would need the generator in a project
                 // that only references the abstractions transitively. What is
@@ -2055,12 +2055,12 @@ internal sealed class SessionLockTests
     /// competing BrowserAI asks it.
     /// </summary>
     /// <remarks>
-    /// <b>An exclusive open rather than a question put to the object under
+    /// <b>An exclusive open and not a question put to the object under
     /// test.</b> Asking the lock whether it still holds the directory would be
     /// asking the thing under test; the kernel refuses this open while -- and only
     /// while -- a handle is really there. A file that is not there at all counts
     /// as unheld: a destroy that unlinked it took the handle with it, which is
-    /// the outcome rather than the defect.
+    /// the outcome and not the defect.
     /// </remarks>
     /// <param name="lockFile">The session's <c>browserai.lock</c>.</param>
     /// <returns>Whether it could be opened with no sharing at all.</returns>
@@ -2160,11 +2160,11 @@ internal sealed class SessionLockTests
     /// A name that does not resolve is a reader seeing an owned session as
     /// unowned; a zero-length file is an atomic rename that was not atomic; a
     /// file that reads perfectly well a microsecond later is the rename window,
-    /// which is the only one of the three that is Windows rather than a defect.
+    /// which is the only one of the three that is Windows and not a defect.
     /// The temp count is the decisive half: the writer creates
     /// <c>browserai.lock.new-&lt;guid&gt;</c> in this directory and it exists for
     /// exactly the length of one acquisition, so its presence is direct evidence
-    /// that a rename was in flight at this instant rather than an inference
+    /// that a rename was in flight at this instant and not an inference
     /// about how wide a window is. <i>(Corrected 2026-08-26, previously
     /// "<c>browserai.json.new-&lt;guid&gt;</c> ... the length of one rewrite" --
     /// there are no rewrites left, so the one rename is acquisition's.)</i>
@@ -2217,7 +2217,7 @@ internal sealed class SessionLockTests
     /// <param name="RewriteInFlight">
     /// The writer's own <c>browserai.lock.new-&lt;guid&gt;</c> is on disk, so an
     /// acquisition was demonstrably in progress at that instant. Direct evidence
-    /// rather than an inference about how wide a window is.
+    /// and not an inference about how wide a window is.
     /// </param>
     /// <param name="RereadFoundARecord">The record was there on the next read.</param>
     /// <param name="Description">All of it, for the failure message.</param>

@@ -18,7 +18,7 @@ namespace BrowserAI.Tests;
 /// [Item 13](../../RELEASING.md) names the obligations that attach at
 /// first installer handoff, independently of BrowserAI's own licence, and the
 /// first run of that checklist -- 2026-08-16, reading the packed
-/// <c>.nupkg</c> rather than the source tree -- found <b>two of the four it then
+/// <c>.nupkg</c> and not the source tree -- found <b>two of the four it then
 /// listed absent from an otherwise releasable package</b>: Velopack's MIT
 /// notice, because a NuGet dependency's licence stays in the package cache and
 /// is never copied to a publish output, and the trademark disclaimer, because no
@@ -29,10 +29,10 @@ namespace BrowserAI.Tests;
 /// sentence must not fix a count that is allowed to grow.
 /// </para>
 /// <para>
-/// <b>The set is data, so a fifth obligation is a red build rather than a
+/// <b>The set is data, so a fifth obligation is a red build and not a
 /// discovery at the next release.</b> Add a row to <see cref="Obligations"/> and
 /// the suite fails until the file ships; that is the whole point of writing it
-/// this way rather than as five assertions.
+/// this way instead of as five assertions.
 /// </para>
 /// <para>
 /// <b>Corrected 2026-08-16 at the plan's final audit: the list is six, not four
@@ -98,7 +98,7 @@ internal sealed class ThirdPartyNoticeTests
     /// <b>A licence text is a measurement, and everything here floats.</b> Any
     /// of these can be bumped by a restore; a bump can change the licence, the
     /// copyright years or the holder, and text copied against an older version
-    /// would then be a confident wrong answer rather than a gap. Stamping the
+    /// would then be a confident wrong answer and not a gap. Stamping the
     /// resolved version inside the notices and asserting it against
     /// <c>packages.lock.json</c> makes the bump red until the text has been
     /// re-fetched from the new package's own commit.
@@ -126,7 +126,7 @@ internal sealed class ThirdPartyNoticeTests
     /// upstream file of their own.
     /// </summary>
     /// <remarks>
-    /// Asserted on content rather than on the file existing: an empty file at
+    /// Asserted on content and not on the file existing: an empty file at
     /// the right path satisfies a presence check and discharges nothing.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -147,7 +147,7 @@ internal sealed class ThirdPartyNoticeTests
         // browser_* names put upstream branding in BrowserAI's own API.
         // Fragments that cannot straddle the file's own line wrapping: the
         // disclaimer is prose in a fixed-width file, so a longer needle would
-        // fail on a rewrap rather than on the claim going missing.
+        // fail on a rewrap and not on the claim going missing.
         await Assert.That(notices).Contains("Playwright is a trademark of Microsoft Corporation");
         await Assert.That(notices).Contains("Chrome and Chromium are");
         await Assert.That(notices).Contains("trademarks of Google LLC");
@@ -233,13 +233,13 @@ internal sealed class ThirdPartyNoticeTests
     /// named in the notices, and both MIT copyright lines are reproduced.
     /// </summary>
     /// <remarks>
-    /// <b>Read from the lock file rather than maintained by hand.</b> These
+    /// <b>Read from the lock file and not maintained by hand.</b> These
     /// arrive almost entirely transitively -- two are referenced directly and the
     /// rest come through those and through the MCP SDK -- so the set changes
     /// whenever anything above them is bumped, silently and without anyone
     /// choosing it. Deriving the list from
     /// <c>src/BrowserAI/packages.lock.json</c> makes a new arrival a red build
-    /// here rather than a licence nobody noticed had appeared, which is the same
+    /// here and not a licence nobody noticed had appeared, which is the same
     /// property <see cref="Obligations"/> has and the reason both are data.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -292,13 +292,13 @@ internal sealed class ThirdPartyNoticeTests
     /// <b>Enumerated from two sources that move on their own, which is the point
     /// of writing it this way.</b> The payload half reads the committed lock, so
     /// it runs on a clean clone and a package arriving on a later roll is a red
-    /// build here rather than a name nobody noticed was missing. The browser
+    /// build here and not a name nobody noticed was missing. The browser
     /// half reads <c>ProvisionedBrowsers.Families</c>, which is the product's own
     /// list and the thing a third family would be added to.
     /// </para>
     /// <para>
     /// <b>The path half needs an assembled payload and the naming half does
-    /// not</b>, so the payload's absence is recorded rather than skipped: an arm
+    /// not</b>, so the payload's absence is recorded and not skipped: an arm
     /// that threw away the half not needing a payload would cover less on a
     /// clean clone than a hand-written list did.
     /// </para>
@@ -315,7 +315,7 @@ internal sealed class ThirdPartyNoticeTests
         // words, because this file is hard-wrapped prose: `playwright-core
         // 1.64.0-alpha-2026-09-17` is one string to a reader and two lines to a
         // text editor, and a needle that a rewrap can break fails on the layout
-        // rather than on the claim. Found the same afternoon it was written.
+        // and not on the claim. Found the same afternoon it was written.
         var flattened = Regex.Replace(notices, @"\s+", " ");
 
         // Not vacuous: a lock that parsed to nothing would make every loop below
@@ -344,7 +344,7 @@ internal sealed class ThirdPartyNoticeTests
         // so a reader who sees two Playwright versions in one payload would
         // otherwise have no way to tell a pin from a mistake"). THEY AGREE AGAIN
         // since the override was retired, and the pair stays stamped anyway --
-        // which is the point rather than an oversight. What this arm holds is
+        // which is the point and not an oversight. What this arm holds is
         // that the notices state the versions the payload RESOLVED, and a
         // reader meeting two equal numbers learns something a reader meeting
         // one number cannot: that nothing is pulling either of them anywhere.
@@ -418,7 +418,7 @@ internal sealed class ThirdPartyNoticeTests
     /// <see cref="TheNoticesNameEveryPackageThatShipsAndEveryFamilyThatIsProvisioned"/>
     /// closed them in <c>THIRD-PARTY-NOTICES.txt</c> on 2026-09-18 and nothing
     /// looked at the table in <c>README.md</c> that answers the same question for
-    /// a reader rather than for a recipient. That table still read <i>full
+    /// a reader and not for a recipient. That table still read <i>full
     /// <c>chromium</c> 1237</i> against a payload that resolves 1245, still
     /// carried a <c>chromium-headless-shell</c> row for a tree nothing has
     /// provisioned since <c>--no-shell</c> on 2026-08-16, and still had no
@@ -441,10 +441,10 @@ internal sealed class ThirdPartyNoticeTests
     /// </para>
     /// <para>
     /// ⚠️ <b>A <c>previously "..."</c> span is cut out before the revisions are
-    /// read, and that exemption is the point rather than a concession.</b> A
+    /// read, and that exemption is the point and not a concession.</b> A
     /// correction stamp records what a cell used to say, and that clause is the
     /// load-bearing half: it is what tells a reader who learned 1237 that the
-    /// number was reviewed and replaced rather than lost. Holding it to today's
+    /// number was reviewed and replaced, not lost. Holding it to today's
     /// manifest would demand the record be rewritten at every roll, which is the
     /// opposite of what a stamp is for.
     /// </para>
@@ -455,7 +455,7 @@ internal sealed class ThirdPartyNoticeTests
     /// table, which goes red if the pattern stops matching or if the
     /// <c>previously</c> cut swallows a live cell. The shared components are held
     /// to today's revision only if they state one, because what those rows are
-    /// about is where a licence file sits rather than which revision is current.
+    /// about is where a licence file sits and not which revision is current.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -529,7 +529,7 @@ internal sealed class ThirdPartyNoticeTests
 
     /// <summary><c>README.md</c>'s third-party components section, as text.</summary>
     /// <remarks>
-    /// <b>Anchored on the heading and refused when it is gone</b>, rather than
+    /// <b>Anchored on the heading and refused when it is gone</b>, and not
     /// scanning the whole file: every number outside this section is either a
     /// measurement of something else or a <c>previously</c> clause recording an
     /// old one, and a scan that read those would demand the history be rewritten.
@@ -628,7 +628,7 @@ internal sealed class ThirdPartyNoticeTests
     private static readonly string[] StampedPayloadPackages = ["playwright", "playwright-core"];
 
     /// <summary>
-    /// Whether the notices name a package as itself rather than as part of a
+    /// Whether the notices name a package as itself and not as part of a
     /// longer id.
     /// </summary>
     /// <param name="notices">The notices text.</param>
@@ -643,7 +643,7 @@ internal sealed class ThirdPartyNoticeTests
     /// Whether the provisioned-browsers block carries an entry for a family.
     /// </summary>
     /// <remarks>
-    /// <b>Scoped to the block rather than to the file</b>, because every family
+    /// <b>Scoped to the block and not to the file</b>, because every family
     /// is already named elsewhere -- in the trademark disclaimer, and in the
     /// sentence saying no copy of any browser ships. What has to exist is the
     /// entry that says where that family's terms are, and only the block can
@@ -673,7 +673,7 @@ internal sealed class ThirdPartyNoticeTests
     /// Every npm package the payload ships, read from the committed lock.
     /// </summary>
     /// <remarks>
-    /// <b>The lock rather than the assembled tree</b>, for the reason
+    /// <b>The lock and not the assembled tree</b>, for the reason
     /// <see cref="ResolvedVersions"/> gives: the lock is committed, so this list
     /// is the same on a clean clone as on a machine that has built a payload,
     /// and a test that read the tree would go quiet exactly when nobody had
@@ -760,7 +760,7 @@ internal sealed class ThirdPartyNoticeTests
     /// absence.</b> Everything upstream of this was green: the source tree had
     /// the payload, the publish had the payload, and the package was still
     /// missing two of four. <c>vpk</c> lays the publish directory down under
-    /// <c>lib/app/</c>, so that prefix is asserted rather than assumed.
+    /// <c>lib/app/</c>, so that prefix is asserted, not assumed.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -776,7 +776,7 @@ internal sealed class ThirdPartyNoticeTests
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         // The prefix itself, so that a vpk layout change is a named failure
-        // rather than six mysterious ones.
+        // and not six mysterious ones.
         await Assert.That(entries).Contains("lib/app/BrowserAI.exe");
 
         var missing = Obligations
@@ -787,7 +787,7 @@ internal sealed class ThirdPartyNoticeTests
         await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
 
         // And the notices file inside the package says what the repository's
-        // says, read out of the package rather than off disk.
+        // says, read out of the package and not off disk.
         var notices = archive.GetEntry("lib/app/THIRD-PARTY-NOTICES.txt");
         await Assert.That(notices).IsNotNull();
 

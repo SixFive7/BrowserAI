@@ -16,13 +16,13 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Build-order step 18's done-tests, as tests rather than as a checklist. Each
+/// Build-order step 18's done-tests, as tests and not as a checklist. Each
 /// one guards a failure that reports healthy: a version nobody chose, a version
 /// decorated after publication, a version collapsed to its major, or a build
 /// that does not know what it is at all.
 /// </para>
 /// <para>
-/// <b>What is measured rather than asserted here is in
+/// <b>What is measured and not asserted here is in
 /// [kb](../../kb/packaging/velopack.md#deriving-the-version-from-git-tags-with-minver).</b>
 /// The suite cannot run a build of itself, so the shape of an untagged version
 /// and the refusal of a tagless one are recorded there with the commands that
@@ -54,7 +54,7 @@ internal sealed partial class BuildVersionTests
     {
         // MinVer sets AssemblyVersion to {Major}.0.0.0 BY DESIGN, so every
         // build of the 0.x line reports 0.0.0.0 and every build of the 1.x line
-        // reports 1.0.0.0. Measured on this artifact rather than read from
+        // reports 1.0.0.0. Measured on this artifact and not read from
         // MinVer's documentation, because the whole point is that the number a
         // caller would naturally reach for is not the version.
         //
@@ -73,7 +73,7 @@ internal sealed partial class BuildVersionTests
     [Test]
     public async Task NothingInTheProductReadsTheAssemblyVersion()
     {
-        // The mechanism behind the test above. A source scan rather than an
+        // The mechanism behind the test above. A source scan and not an
         // analyzer rule because the shape is an ordinary property read on an
         // ordinary type, and because the file that explains why it is forbidden
         // must be able to say so: whole-line comments are stripped first.
@@ -173,7 +173,7 @@ internal sealed partial class BuildVersionTests
     [Test]
     public async Task TheSdkIsForbiddenFromDecoratingTheVersion()
     {
-        // Repository-wide rather than on the product project: a global property
+        // Repository-wide, not on the product project: a global property
         // passed with -p: reaches every referenced project, and a project still
         // carrying a decorated string gets linked into the same AOT binary.
         //
@@ -220,7 +220,7 @@ internal sealed partial class BuildVersionTests
         // caller ever sees its version. TWO PROJECTS DERIVING A VERSION IS TWO
         // THINGS THAT CAN DISAGREE", asserted as `src/BrowserAI` alone).
         //
-        // Three projects derive one now, and that is stronger rather than
+        // Three projects derive one now, and that is stronger, not
         // weaker: all three read the SAME git tag through the SAME prefix, so
         // they cannot disagree unless somebody changes a prefix -- which is
         // exactly what the last assertion in this method refuses. What the old
@@ -248,7 +248,7 @@ internal sealed partial class BuildVersionTests
         }
 
         // The house prefix, unanimous across every tagged repository in this
-        // estate. It is a tag prefix rather than a version, which is why it can
+        // estate. It is a tag prefix, not a version, which is why it can
         // live in a project file at all -- and with more than one project
         // deriving a number, it is also the thing that makes them agree.
         await Assert.That(prefixes.Keys.Order(StringComparer.Ordinal)).IsEquivalentTo(shipped);
@@ -265,13 +265,13 @@ internal sealed partial class BuildVersionTests
 
         // This is the arm that says the attribute survives ILC. Under NativeAOT
         // the version is read reflectively off an assembly attribute, and a
-        // trimmed-away attribute would surface as the fallback rather than as a
+        // trimmed-away attribute would surface as the fallback and not as a
         // failure -- a caller would see a plausible version and never know.
         await Assert.That(reported).IsNotNull();
         await Assert.That(reported!).Matches(DerivedVersion());
         await Assert.That(reported).IsNotEqualTo(BuildVersion.Unknown);
 
-        // Deliberately a shape rather than equality with this assembly's own
+        // Deliberately a shape, not equality with this assembly's own
         // version. The published binary is a separate artifact with its own
         // build timestamp, and PublishedSlice.EnsureFresh compares it against
         // SOURCE files -- so a commit that changes no source leaves a publish

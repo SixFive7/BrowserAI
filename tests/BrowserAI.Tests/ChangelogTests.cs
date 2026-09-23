@@ -19,9 +19,9 @@ namespace BrowserAI.Tests;
 /// [Release checklist item 10](../../RELEASING.md) refuses a release whose
 /// unreleased section is empty, and until build-order step 18 there was no file
 /// for it to be empty <i>of</i>. The refusal lives in
-/// <c>build/Get-ReleaseNotes.ps1</c> rather than in the product, because it is
+/// <c>build/Get-ReleaseNotes.ps1</c> and not in the product, because it is
 /// release machinery and BrowserAI is a proxy -- but it is driven from here, so
-/// it is exercised on every run rather than on the day someone cuts a release.
+/// it is exercised on every run and not on the day someone cuts a release.
 /// </para>
 /// <para>
 /// <b>Empty means no list items, not no characters.</b> A section holding
@@ -80,7 +80,7 @@ internal sealed partial class ChangelogTests
     /// </para>
     /// <para>
     /// <b>Planted red in both directions, 2026-09-15</b>, against synthetic
-    /// changelogs rather than against the tree -- tagged-and-empty passes,
+    /// changelogs and not against the tree -- tagged-and-empty passes,
     /// untagged-and-empty fails, and tagged-at-the-wrong-version fails -- because
     /// the tree can only ever be in one of those states at a time and a control
     /// that can only be read one way is not one.
@@ -125,11 +125,11 @@ internal sealed partial class ChangelogTests
         await Assert.That(IsTheCommitThatEmptiedIt(Emptied, null, codeLandedSince: null)).IsFalse();
 
         // Tagged at a version that is not the newest section's. A disagreement
-        // rather than an exemption -- the release stamped one version and the
+        // and not an exemption -- the release stamped one version and the
         // tag names another.
         await Assert.That(IsTheCommitThatEmptiedIt(Emptied, "v0.9.0", codeLandedSince: true)).IsFalse();
 
-        // And the leading `v` is required rather than tolerated, because the
+        // And the leading `v` is required, not tolerated, because the
         // heading is bare by this file's own other rule.
         await Assert.That(IsTheCommitThatEmptiedIt(Emptied, "1.0.0", codeLandedSince: true)).IsFalse();
 
@@ -157,8 +157,8 @@ internal sealed partial class ChangelogTests
         }
 
         // ⚠️ THE ONE ACCEPTED REFUSAL. Everything else about it still has to
-        // hold: it has to be the empty-section refusal rather than some other
-        // failure of the script, and the entries have to have MOVED rather than
+        // hold: it has to be the empty-section refusal and not some other
+        // failure of the script, and the entries have to have MOVED, not
         // vanished -- so the section they went to is required to hold some.
         await Assert.That(IsTheCommitThatEmptiedIt(text, tag, landed))
             .IsTrue()
@@ -249,7 +249,7 @@ internal sealed partial class ChangelogTests
     /// <remarks>
     /// <b>This array is the DECISION and the legend in the file is the
     /// PUBLICATION</b>, which is why one arm holds them identical and the other
-    /// reads entries against the legend rather than against this. A palette that
+    /// reads entries against the legend and not against this. A palette that
     /// grew an icon nobody approved would otherwise pass by being written twice.
     /// </remarks>
     private static readonly (string Icon, string Means)[] Palette =
@@ -286,7 +286,7 @@ internal sealed partial class ChangelogTests
     /// line a reader scans on a release page, and it is short enough that a
     /// headline cannot become the entry. <b>Nothing here measured where GitHub
     /// wraps</b> -- that is a question about a browser's layout at a font size
-    /// and a column width, and the markdown API returns HTML rather than a line
+    /// and a column width, and the markdown API returns HTML and not a line
     /// box, so the honest statement is that the number is a budget and not a
     /// wrap point.
     /// </para>
@@ -308,7 +308,7 @@ internal sealed partial class ChangelogTests
     /// <para>
     /// <b>The shape is what the release-notes generator reads</b>, so a
     /// malformed entry is not an untidy line -- it is a release body that cannot
-    /// be produced, and `build/New-ReleaseNotes.ps1` refuses rather than
+    /// be produced, and `build/New-ReleaseNotes.ps1` refuses instead of
     /// guessing. Asserted here as well, because the changelog is edited every
     /// working day and a release is cut rarely.
     /// </para>
@@ -360,7 +360,7 @@ internal sealed partial class ChangelogTests
             .IsNotEmpty();
 
         // And the shape they are each one mutation away from, so the five above
-        // fail for their own reason rather than because nothing passes.
+        // fail for their own reason and not because nothing passes.
         await Assert.That(Malformed(
             $"# C\n\n{control}\n## [9.9.9] - 2026-01-01\n\n### Added\n\n- ✨ **A headline of exactly the right shape.** The detail.\n", icons))
             .IsEmpty();
@@ -376,14 +376,14 @@ internal sealed partial class ChangelogTests
     /// <i>"The legend at the bottom of the release notes that explains the icons
     /// is missing newlines. Give it a nice yet compact layout."</i> The release
     /// body's footer carries the changelog's own legend, read out of the file
-    /// rather than written twice, and a paragraph of twelve entries separated by
+    /// and not written twice, and a paragraph of twelve entries separated by
     /// an interpunct renders as one unbroken line in a browser column.
     /// <i>Previously the legend was that paragraph, and this arm split it on the
     /// interpunct.</i>
     /// </para>
     /// <para>
     /// <b>Two pairs per row, six rows, a one-word heading row.</b> The shape is
-    /// asserted rather than the rendering: twelve icons in palette order, read
+    /// asserted and not the rendering: twelve icons in palette order, read
     /// left to right and then down, so the reading order of the table is the
     /// order the palette declares. The rendering itself was checked once against
     /// GitHub's own renderer, which is
@@ -393,7 +393,7 @@ internal sealed partial class ChangelogTests
     /// <para>
     /// <b>The control is the shape this replaced</b>, which is the one mistake
     /// available here: a single-line legend must be refused, or the change would
-    /// be a preference rather than a rule.
+    /// be a preference, not a rule.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -422,7 +422,7 @@ internal sealed partial class ChangelogTests
         await Assert.That(LegendTableRows(oneLine)).IsEmpty();
 
         // And a table with the right cells is read, so the two controls above
-        // fail for their own reason rather than because nothing is read at all.
+        // fail for their own reason and not because nothing is read at all.
         var table = "# C\n\n| Icon | Meaning |\n|---|---|\n| ✨ | new capability |\n\n## [9.9.9] - 2026-01-01\n";
 
         await Assert.That(string.Join(" | ", LegendPairs(table))).IsEqualTo("✨ new capability");
@@ -442,7 +442,7 @@ internal sealed partial class ChangelogTests
         }
 
         // The last block before the first version heading every one of whose
-        // lines is a table row -- a block rather than a line scan, because the
+        // lines is a table row -- a block and not a line scan, because the
         // head also carries prose that mentions pipes.
         var block = head.Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
             .LastOrDefault(paragraph => paragraph
@@ -458,7 +458,7 @@ internal sealed partial class ChangelogTests
                     .Select(line => line.Trim())
                     .Where(line => line.Length > 0)
                     // The heading row and the delimiter row are the table's
-                    // frame rather than its content.
+                    // frame and not its content.
                     .Skip(2)
                     .Select(line => (List<string>)[.. line.Trim('|').Split('|').Select(cell => cell.Trim())]),
             ];
@@ -483,7 +483,7 @@ internal sealed partial class ChangelogTests
     /// <b>Repeats are the failure this actually caught.</b> Before 2026-09-15
     /// the 1.0.0 section carried <c>Changed</c> four times, <c>Added</c> three,
     /// <c>Fixed</c> three and <c>Removed</c> three -- one run per batch of work
-    /// that landed -- so the section read as a diary rather than as a release,
+    /// that landed -- so the section read as a diary and not as a release,
     /// and a reader looking for what was removed had to find three lists of it.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -538,11 +538,11 @@ internal sealed partial class ChangelogTests
     /// space are what a generator emits and a person typing into a text box does
     /// not, so they are mechanisable. Whether a sentence READS generated is a
     /// reading and stays one; [`RELEASING.md`](../../RELEASING.md) says so beside
-    /// this rule rather than implying the test closed it.
+    /// this rule instead of implying the test closed it.
     /// </para>
     /// <para>
     /// <b>The scope is exactly what a release body is made of, which is narrower
-    /// than this file and is said out loud rather than implied.</b> Since
+    /// than this file and is said out loud, not implied.</b> Since
     /// 2026-09-16 the body is one shape: each section's preamble, one line per
     /// entry carrying its icon and its bold headline, the legend, and the
     /// footer. An entry's DETAIL never reaches it -- a <c>read more</c> link
@@ -555,10 +555,10 @@ internal sealed partial class ChangelogTests
     /// output came from the script.
     /// </para>
     /// <para>
-    /// <b>A deny list of eight code points rather than an allowlist of
+    /// <b>A deny list of eight code points and not an allowlist of
     /// permitted ones</b>, because the palette is twelve emoji, each with an
     /// optional variation selector, and an allowlist would refuse the next
-    /// legitimate symbol rather than the next generated one. <b>What is
+    /// legitimate symbol and not the next generated one. <b>What is
     /// therefore allowed, enumerated so a reader can see it:</b> the twelve
     /// palette icons and <c>U+FE0F</c>; <c>U+2192</c>, the arrow one headline
     /// uses for <i>moved to</i>; and every other non-ASCII character this file
@@ -567,7 +567,7 @@ internal sealed partial class ChangelogTests
     /// </para>
     /// <para>
     /// <b>A backticked code span is exempt, in both directions.</b> A span
-    /// quotes something that exists rather than choosing a style, and the live
+    /// quotes something that exists instead of choosing a style, and the live
     /// case is this repository's own correction token, <c>previously "..."</c>,
     /// which is spelled with <c>U+2026</c> and would be a different token
     /// respelled. The same character outside a span is an offence, and both
@@ -591,7 +591,7 @@ internal sealed partial class ChangelogTests
             offences.AddRange(Generated(body).Select(offence => $"CHANGELOG.md {what}: {offence}"));
         }
 
-        // The generator's own fixed text, read by generating a body rather than
+        // The generator's own fixed text, read by generating a body and not
         // by scanning the script: what the script SAYS and what it EMITS are two
         // different sets of strings, and only one of them reaches a reader.
         using var scratch = ScratchDirectory.Create("release-notes-characters");
@@ -609,7 +609,7 @@ internal sealed partial class ChangelogTests
 
         // ---- The controls, over text this file will never contain -----------
         // One per banned code point, so a needle that stopped matching is a red
-        // build rather than a clean report.
+        // build and not a clean report.
         foreach (var (character, _) in NotTyped)
         {
             await Assert.That(Generated($"a headline{character}with one in it")).IsNotEmpty();
@@ -654,9 +654,9 @@ internal sealed partial class ChangelogTests
     /// <returns>One line per offence, naming the character and quoting around it.</returns>
     private static List<string> Generated(string text)
     {
-        // A code span quotes something that exists rather than choosing a style,
+        // A code span quotes something that exists instead of choosing a style,
         // so it is emptied before anything else looks at the text -- blanked
-        // rather than removed, so the excerpt below still points at the right
+        // and not removed, so the excerpt below still points at the right
         // part of the sentence.
         var scanned = CodeSpan().Replace(text, match => new string(' ', match.Length));
 
@@ -913,7 +913,7 @@ internal sealed partial class ChangelogTests
         await Assert.That(run.ExitCode).IsEqualTo(1);
 
         // Subheads and prose are not entries, and the message says what to do
-        // rather than merely reporting that it stopped.
+        // and does not merely report that it stopped.
         await Assert.That(run.StandardError).Contains("no entries under");
         await Assert.That(run.StandardError).Contains("reconstruction at release time");
         await Assert.That(run.StandardError).Contains(file);
@@ -1021,10 +1021,10 @@ internal sealed partial class ChangelogTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Asserted as the whole body rather than as things it contains</b>,
+    /// <b>Asserted as the whole body and not as things it contains</b>,
     /// because what this generator is for is the document a person meets on a
     /// release page -- and every failure it exists to prevent is a shape failure
-    /// rather than a missing word. The fixture is small enough to write out in
+    /// and not a missing word. The fixture is small enough to write out in
     /// full, which is the only way an exact assertion is readable.
     /// </para>
     /// <para>
@@ -1041,7 +1041,7 @@ internal sealed partial class ChangelogTests
     /// paragraph -- and its range is <c>L16-L19</c>, which is the half that
     /// proves the blank line inside an entry is kept and the blank line
     /// <i>after</i> it is not. The second entry is one line and reads
-    /// <c>L23-L23</c>. Both are line numbers in the FILE rather than in the
+    /// <c>L23-L23</c>. Both are line numbers in the FILE and not in the
     /// section, which is the only thing a reader's browser can resolve.
     /// </para>
     /// </remarks>
@@ -1105,11 +1105,11 @@ internal sealed partial class ChangelogTests
     /// anything this project has cut.
     /// </para>
     /// <para>
-    /// <b>The fallback is driven by a small limit rather than a huge fixture</b>,
+    /// <b>The fallback is driven by a small limit and not a huge fixture</b>,
     /// which is the same document through the same code and costs nothing to
     /// read. The control is the arm above, which produces the linked shape from
     /// the same fixture -- and what this one asserts is that the links are gone
-    /// entirely rather than truncated, leaving the footer's section link as the
+    /// entirely and not truncated, leaving the footer's section link as the
     /// only way in.
     /// </para>
     /// </remarks>
@@ -1151,7 +1151,7 @@ internal sealed partial class ChangelogTests
 
         // The detail is not in the body at all, and neither is a way to reach
         // one entry of it -- which is the whole cost of this shape and is why
-        // the script says so out loud rather than quietly producing a different
+        // the script says so out loud instead of quietly producing a different
         // document.
         await Assert.That(await File.ReadAllTextAsync(body)).DoesNotContain("second paragraph");
         await Assert.That(await File.ReadAllTextAsync(body)).DoesNotContain("read more");
@@ -1173,10 +1173,10 @@ internal sealed partial class ChangelogTests
     /// </para>
     /// <para>
     /// <b>Over a real repository built in scratch, because the property is about
-    /// git rather than about text.</b> Four states, and the first is the one the
+    /// git and not about text.</b> Four states, and the first is the one the
     /// release takes: committed, tagged at HEAD. Then the two refusals -- a
     /// changelog edited after the commit, and a tag left behind on an older
-    /// commit -- each asserted on the sentence rather than only on the exit code,
+    /// commit -- each asserted on the sentence and not only on the exit code,
     /// because a refusal that does not name both halves sends somebody looking
     /// in the wrong place. The fourth is the control that keeps the other three
     /// from being a script that refuses everything.
@@ -1256,7 +1256,7 @@ internal sealed partial class ChangelogTests
     /// Runs git in one directory and waits for it.
     /// </summary>
     /// <remarks>
-    /// <b>Its own runner rather than <see cref="GitOracle"/>'s</b>, which is
+    /// <b>Its own runner and not <see cref="GitOracle"/>'s</b>, which is
     /// pinned to this repository's root by construction -- the whole point here is
     /// a different repository. <c>CreateNoWindow</c> for the house rule: a
     /// windowless parent puts a terminal on the user's screen without it.
@@ -1339,7 +1339,7 @@ internal sealed partial class ChangelogTests
     }
 
     /// <summary>
-    /// An entry that is not in the shape is refused, by name, rather than
+    /// An entry that is not in the shape is refused, by name, and not
     /// silently left out of the body.
     /// </summary>
     /// <returns>The assertion task.</returns>
@@ -1382,8 +1382,8 @@ internal sealed partial class ChangelogTests
     /// <para>
     /// ⚠️ <b>A paragraph UNDER a group heading was dropped, silently.</b> It is
     /// not a preamble, it is not an entry, and there is nowhere in a folded body
-    /// for it -- so it simply did not appear in the release notes. <b>Refused
-    /// rather than carried, deliberately</b>: inventing a rendering for a shape
+    /// for it -- so it simply did not appear in the release notes. <b>Refused,
+    /// not carried, deliberately</b>: inventing a rendering for a shape
     /// nothing else reads would widen the changelog's format past what
     /// <see cref="EveryEntryOpensWithOnePaletteIconAndABoldOneSentenceHeadline"/>
     /// holds it to, and prose already has a place -- the section preamble, above
@@ -1441,7 +1441,7 @@ internal sealed partial class ChangelogTests
     }
 
     /// <summary>
-    /// A version with no section refuses rather than producing an empty body.
+    /// A version with no section refuses instead of producing an empty body.
     /// </summary>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -1468,8 +1468,8 @@ internal sealed partial class ChangelogTests
     /// nothing refuses is a preference.</b> <i>"The legend at the bottom of the
     /// release notes that explains the icons is missing newlines. Give it a nice
     /// yet compact layout."</i> The footer legend is read out of the changelog
-    /// rather than written twice, so the only place the shape can be held is at
-    /// the read: a one-paragraph legend now refuses the body rather than being
+    /// and not written twice, so the only place the shape can be held is at
+    /// the read: a one-paragraph legend now refuses the body instead of being
     /// flattened into one line.
     /// </para>
     /// <para>
@@ -1503,7 +1503,7 @@ internal sealed partial class ChangelogTests
         await Assert.That(File.Exists(body)).IsFalse();
 
         // The control: the same fixture with the table is accepted, so this
-        // refuses a legend rather than refusing everything.
+        // refuses a legend and not everything.
         var accepted = await WriteAsync(scratch, "ACCEPTED.md", Fixture);
         var second = Path.Combine(scratch.Path, "accepted.md");
 
@@ -1638,7 +1638,7 @@ internal sealed partial class ChangelogTests
     /// <remarks>
     /// The date is what tells a released section from <c>## [Unreleased]</c>,
     /// which carries none -- so the first match in the file is the newest release
-    /// rather than the section a stamp is about to fill. A version pattern alone
+    /// and not the section a stamp is about to fill. A version pattern alone
     /// would work today and would stop working the moment somebody wrote
     /// <c>## [Unreleased]</c> as a version.
     /// </remarks>
@@ -1651,7 +1651,7 @@ internal sealed partial class ChangelogTests
     /// </summary>
     /// <remarks>
     /// The icon is matched as *whatever is between the dash and the bold run*
-    /// rather than as an emoji class, so an entry that put a word there fails on
+    /// and not as an emoji class, so an entry that put a word there fails on
     /// the palette check with the word quoted, which is a better message than a
     /// pattern that simply did not match.
     /// </remarks>

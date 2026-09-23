@@ -70,7 +70,7 @@ internal enum SuiteFilterDecision
 /// <param name="Session">
 /// <see cref="TestSessionContext.TestFilter"/>, set from the same value by the
 /// same object, and carried separately so that a disagreement between them is a
-/// state rather than a coin toss.
+/// state and not a coin toss.
 /// </param>
 internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulated, string? Global, string? Session)
 {
@@ -91,7 +91,7 @@ internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulat
 /// [`CLAUDE.md`](../../../CLAUDE.md) says plainly that no test can read that
 /// sentence. What a test *can* do is make the run state the premise, so the
 /// sentence can be checked against something. That is this row, and it is why it
-/// is a row rather than a refusal: a mechanism that forbade filtered runs would
+/// is a row and not a refusal: a mechanism that forbade filtered runs would
 /// forbid the iteration loop the rule exists to permit.
 /// </para>
 /// <para>
@@ -112,7 +112,7 @@ internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulat
 /// </para>
 /// <para>
 /// <b><c>ICommandLineOptions</c> was the first choice and it is unreachable from
-/// a test -- established by reading the resolved packages rather than by
+/// a test -- established by reading the resolved packages and not by
 /// assuming.</b> Decompiled 2026-08-24 at TUnit <b>1.65.0</b> /
 /// <c>Microsoft.Testing.Platform</c> <b>2.3.3</b>: the platform's
 /// <c>ICommandLineOptions</c> is handed to <c>TUnitServiceProvider</c>, which is
@@ -124,11 +124,11 @@ internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulat
 /// takes an <c>IServiceProvider</c> in its constructor and exposes no property
 /// for it. <b>The filter below is a strictly stronger source than
 /// <c>ICommandLineOptions</c> would have been</b>, because it is what the
-/// framework applied rather than what was typed, and it is the reason this
+/// framework applied and not what was typed, and it is the reason this
 /// shipped instead of stopping.
 /// </para>
 /// <para>
-/// <b>A row in the coverage block rather than a <see cref="SuiteCapability"/>,
+/// <b>A row in the coverage block and not a <see cref="SuiteCapability"/>,
 /// for <see cref="ForegroundLock"/>'s reason.</b> Every capability names a
 /// command that produces it; being unfiltered is not something a run can go and
 /// acquire. And like that row it reports four states, one of which is <i>this
@@ -197,7 +197,7 @@ internal static class SuiteFilter
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Called from a <c>[Before(TestSession)]</c> hook rather than lazily on
+    /// <b>Called from a <c>[Before(TestSession)]</c> hook and not lazily on
     /// first use, and that is the honesty half of this type.</b>
     /// <c>TUnitTestFramework.ExecuteRequestAsync</c> assigns both contexts before
     /// it runs a single hook, so a reading taken there is taken after the only
@@ -271,7 +271,7 @@ internal static class SuiteFilter
     /// <b><see cref="SuiteFilterVerdict.Disagreed"/> refuses in both modes</b>,
     /// exactly as <see cref="CapabilityState.Partial"/> does: two seams filled
     /// from one value that carry different values is a broken instrument, and a
-    /// broken instrument is a failure in every run rather than an absence a
+    /// broken instrument is a failure in every run and not an absence a
     /// developer run may tolerate.
     /// </para>
     /// </remarks>
@@ -410,7 +410,7 @@ internal static class SuiteFilter
     /// The reading as lines a child run writes and a parent run reads back.
     /// </summary>
     /// <remarks>
-    /// <b>Written by the child rather than parsed out of its console output.</b>
+    /// <b>Written by the child and not parsed out of its console output.</b>
     /// A run summary's wording belongs to the platform and moves with it; a file
     /// this type writes and this type reads cannot drift apart.
     /// </remarks>

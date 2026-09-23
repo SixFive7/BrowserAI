@@ -30,7 +30,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>ProtocolSplitTests</c> went red on the runner for a record the product had
 /// written correctly. Measured twice, 2026-08-18, on two consecutive CI runs
 /// that lost different amounts of the tail -- which is the signature of a queue
-/// rather than of an absent call.
+/// and not of an absent call.
 /// </para>
 /// <para>
 /// <b>Scoped to one process's whole identity -- <c>(pid, creationFileTime)</c> --
@@ -40,7 +40,7 @@ namespace BrowserAI.Tests.Harness;
 /// <c>SaturationTests</c>' record count pass on a machine with history and fail
 /// on a fresh one. A <i>pid</i>-scoped read is the same vacuity wearing a scope:
 /// the log is retained for thirty days and Windows reuses pids inside that
-/// window, so a bare pid eventually selects a stranger's records rather than
+/// window, so a bare pid eventually selects a stranger's records and not
 /// none.
 /// </para>
 /// <para>
@@ -55,7 +55,7 @@ namespace BrowserAI.Tests.Harness;
 /// pair is this repository's standing identity for a process -- it is what
 /// <c>ProcessIdentity.IsAlive(int, long)</c> takes, what <c>browserai.lock</c>
 /// spells, and what <see cref="Logging.FileLoggerProvider"/> writes into every
-/// record -- and the pid-only entry point is gone rather than caveated, because a
+/// record -- and the pid-only entry point is gone and not caveated, because a
 /// reader that can be handed half an identity will be.
 /// </para>
 /// </remarks>

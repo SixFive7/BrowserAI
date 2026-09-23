@@ -35,7 +35,7 @@ internal sealed class UpdateTests
     // ---- The feed URL: the worst hazard in the section -----------------------
 
     /// <summary>
-    /// The shipped channel-in-the-URL bug, refused rather than reproduced.
+    /// The shipped channel-in-the-URL bug, refused and not reproduced.
     /// </summary>
     /// <remarks>
     /// A base URL ending in the channel makes Velopack fetch
@@ -43,7 +43,7 @@ internal sealed class UpdateTests
     /// as *"no update available"*. It bricked auto-update for three shipped
     /// versions of a sibling project and the only recovery was a manual
     /// reinstall of every client -- which is why this is a refusal at
-    /// construction rather than a comment.
+    /// construction and not a comment.
     /// </remarks>
     [Test]
     public async Task AFeedUrlCarryingTheChannelIsRefused()
@@ -142,7 +142,7 @@ internal sealed class UpdateTests
     /// the August manifest, pack id <c>BrowserAI</c> at version <c>1.0.0</c>,
     /// recovered verbatim from the archived release evidence
     /// (<c>Releases/archive/BrowserAI-1.0.0-manifest/release-evidence.md</c>,
-    /// where it was recorded when the id changed) rather than reconstructed -- and
+    /// where it was recorded when the id changed) and not reconstructed -- and
     /// it fails on the id while passing every other check, which is exactly the
     /// shape the stale response had.
     /// </para>
@@ -152,7 +152,7 @@ internal sealed class UpdateTests
     /// this assertion cannot be made hermetically: a directory source composes
     /// paths differently and will pass where production 404s, and a served
     /// stand-in composes them the same way as the real one *by construction*
-    /// rather than by evidence. What has to be checked is the URL somebody
+    /// and not by evidence. What has to be checked is the URL somebody
     /// actually typed, against the storage somebody actually configured -- the
     /// exact pair that bricked a production deployment's auto-update for three
     /// shipped versions.
@@ -214,7 +214,7 @@ internal sealed class UpdateTests
     /// </summary>
     /// <remarks>
     /// Recovered from <c>Releases/archive/BrowserAI-1.0.0-manifest/release-evidence.md</c>,
-    /// which is a sealed dated record, rather than reconstructed from its shape:
+    /// which is a sealed dated record, and not reconstructed from its shape:
     /// a control assembled by hand tests the assembler.
     /// </remarks>
     private const string StaleAugustManifest =
@@ -227,7 +227,7 @@ internal sealed class UpdateTests
     /// under, and the version it carried.
     /// </summary>
     /// <remarks>
-    /// <b>The floor is a published fact rather than a policy</b>: 1.0.0 is the
+    /// <b>The floor is a published fact and not a policy</b>: 1.0.0 is the
     /// first version ever published under <c>BrowserAI.app</c>, so a feed naming
     /// anything older is serving something from before the layout split.
     /// </remarks>
@@ -239,7 +239,7 @@ internal sealed class UpdateTests
     /// Everything wrong with a feed manifest body, as sentences.
     /// </summary>
     /// <remarks>
-    /// A list rather than a bool, so the live arm and the control can be the
+    /// A list and not a bool, so the live arm and the control can be the
     /// same reading: the control asserts <i>which</i> complaint the stale body
     /// produces, which a boolean could not distinguish from a body that was
     /// wrong in three ways at once.
@@ -314,7 +314,7 @@ internal sealed class UpdateTests
     /// </summary>
     /// <remarks>
     /// In-process, because what is being asserted is the file-handle mechanism
-    /// rather than process boundaries: the handle is
+    /// and not process boundaries: the handle is
     /// <c>FileAccess.ReadWrite, FileShare.Read</c>, so a second holder is
     /// refused by the kernel whether it is in this process or another one, and
     /// the OS releases it on death either way.
@@ -342,7 +342,7 @@ internal sealed class UpdateTests
     }
 
     /// <summary>
-    /// A marker left by a process that died is reclaimed rather than counted
+    /// A marker left by a process that died is reclaimed and not counted
     /// forever.
     /// </summary>
     /// <remarks>
@@ -399,7 +399,7 @@ internal sealed class UpdateTests
     /// <i>false</i> for both of the others.
     /// </para>
     /// <para>
-    /// <b>Every state is produced by a real mechanism rather than constructed.</b>
+    /// <b>Every state is produced by a real mechanism and not constructed.</b>
     /// One instance is alone; two are not; and an instance that has left the set
     /// cannot speak for it, which is the cheapest genuine <c>Undetermined</c>
     /// there is.
@@ -446,8 +446,8 @@ internal sealed class UpdateTests
     /// <para>
     /// ⚠️ <b>This is the arm that used to answer <i>not alone</i>, and both
     /// answers keep the updater on the same side.</b> What the old one could not
-    /// do is tell a maintainer that the problem is an ACL on a named path rather
-    /// than a peer that is genuinely running -- which is a refusal nothing can act
+    /// do is tell a maintainer that the problem is an ACL on a named path and
+    /// not a peer that is genuinely running -- which is a refusal nothing can act
     /// on. The assertion is therefore on the <i>reason</i> as much as on the
     /// state.
     /// </para>
@@ -482,7 +482,7 @@ internal sealed class UpdateTests
         // WriteData and not ReadData: the probe asks for ReadWrite, so denying
         // the write half refuses it while leaving the directory enumerable and
         // the file readable -- which is what makes this an unanswered question
-        // rather than a directory that vanished.
+        // and not a directory that vanished.
         using (DirectoryDenial.Apply(
             LiveInstances.DirectoryUnder(paths.RootAppDir),
             FileSystemRights.WriteData,
@@ -531,7 +531,7 @@ internal sealed class UpdateTests
     /// <b>The handle is the product's own</b> --
     /// <c>FileAccess.ReadWrite, FileShare.Read</c>, byte for byte what
     /// <see cref="LiveInstances.Join"/> takes -- so what is being asserted is the
-    /// kernel's sharing rule rather than a convention this test invented.
+    /// kernel's sharing rule and not a convention this test invented.
     /// </para>
     /// <para>
     /// <b>In-process, deliberately.</b> Sharing modes are enforced by the kernel
@@ -611,7 +611,7 @@ internal sealed class UpdateTests
     /// <b>The remedy is the one the review named and the one this product had
     /// already used once</b> -- <c>BrowserProvisioner.MutexPrefix</c> is
     /// <c>Global\BrowserAI-Provision-</c> for the same reason. Asserted as
-    /// <i>different from</i> the per-directory name rather than as a literal, so
+    /// <i>different from</i> the per-directory name and not as a literal, so
     /// it stays true if either construction is ever changed.
     /// </para>
     /// </remarks>
@@ -649,16 +649,16 @@ internal sealed class UpdateTests
     }
 
     /// <summary>
-    /// A peer holding the gate makes the reclaim <b>skip instantly</b> rather
-    /// than wait, and nothing is touched while it does.
+    /// A peer holding the gate makes the reclaim <b>skip instantly</b> and
+    /// not wait, and nothing is touched while it does.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <b>This is what stops a hundred starting processes becoming a thundering
     /// herd.</b> The gate is taken at <see cref="LockScopes.NeverWaits"/> -- one
     /// process reclaims and the rest pay an acquire and leave -- which is the
-    /// discipline the stray sweep already applies machine-wide, reused rather
-    /// than reinvented. The mutex is held on <i>another thread</i> because a
+    /// discipline the stray sweep already applies machine-wide, reused and
+    /// not reinvented. The mutex is held on <i>another thread</i> because a
     /// Windows mutex is owned by the thread that waited on it, so this thread
     /// would otherwise be granted it recursively and the test would prove
     /// nothing.
@@ -679,8 +679,8 @@ internal sealed class UpdateTests
     /// <b>What replaced it is the gate's own record of the wait it was asked
     /// for</b> -- <see cref="MachineMutex.LastAcquireTimeout"/>, surfaced on
     /// <see cref="LiveMarkerReclaim.GateWait"/> -- which a starved thread cannot
-    /// move. <b>It is a weaker claim and that is stated rather than glossed:</b>
-    /// the assertion is now <i>the pass asked not to wait</i> rather than <i>the
+    /// move. <b>It is a weaker claim and that is stated, not glossed:</b>
+    /// the assertion is now <i>the pass asked not to wait</i> and not <i>the
     /// pass did not wait</i>. An edit that passed a real timeout is still caught;
     /// an edit that slept beside the acquire is not, and no clock this suite can
     /// run on this machine would have caught it either. See
@@ -700,7 +700,7 @@ internal sealed class UpdateTests
         using var taken = new ManualResetEventSlim(false);
         using var release = new ManualResetEventSlim(false);
 
-        // Kept rather than discarded, for two reasons that are both about this
+        // Kept, not discarded, for two reasons that are both about this
         // test being able to fail honestly. It is the PRECONDITION -- a peer
         // that did not take the gate would leave the assertions below measuring
         // a skip that happened for some other reason -- and `Release` on a mutex
@@ -790,7 +790,7 @@ internal sealed class UpdateTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Asserted through <see cref="UpdateService"/> rather than through
+    /// ⚠️ <b>Asserted through <see cref="UpdateService"/> and not through
     /// <see cref="LiveInstances.AmIAlone"/>'s signature, because the signature is
     /// not what the maintainer's instruction was about.</b> The requirement was
     /// that the updater keep treating <c>Undetermined</c> exactly as it treats
@@ -844,7 +844,7 @@ internal sealed class UpdateTests
     /// two cases, so the line has to distinguish them.
     /// </para>
     /// <para>
-    /// <b>Both arms are here rather than one.</b> A version that hard-coded a
+    /// <b>Both arms are here and not one.</b> A version that hard-coded a
     /// count would satisfy the first and fail the second, and one that printed
     /// the census enum would satisfy neither.
     /// </para>
@@ -867,14 +867,14 @@ internal sealed class UpdateTests
             provider.CreateLogger("BrowserAI.Updates"),
             () => { }).RunOnceAsync(CancellationToken.None);
 
-        // One peer, counted rather than implied, and the package the apply is no
+        // One peer, counted and not implied, and the package the apply is no
         // longer waiting on.
         await Assert.That(provider.Logged("at least 1 other BrowserAI process(es) are running")).IsTrue();
         await Assert.That(provider.Logged("112.4 MB was fetched in")).IsTrue();
         await Assert.That(provider.Logged("Nothing more has to be downloaded")).IsTrue();
 
         // And the other arm: a census that could not be taken is a permanent
-        // block rather than a queue, and the line says so and says why.
+        // block and not a queue, and the line says so and says why.
         using var undetermined = new CapturingLoggerProvider();
         var lost = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
@@ -894,7 +894,7 @@ internal sealed class UpdateTests
 
     /// <summary>Alone, the same pass applies and asks the process to end.</summary>
     /// <remarks>
-    /// <b>It asks rather than exits.</b> <c>Update.exe</c> is waiting on this
+    /// <b>It asks and does not exit.</b> <c>Update.exe</c> is waiting on this
     /// pid and will not swap <c>current\</c> until it is gone, so the ordinary
     /// shutdown has to run first -- the session locks release, the job objects
     /// close, the log flushes. An <c>Environment.Exit</c> here would skip all
@@ -966,7 +966,7 @@ internal sealed class UpdateTests
     /// wearing a second name -- and against a large package on a slow link that
     /// is the difference between an update that lands and one that never can.
     /// The double's <c>FullPackageSize</c> is 112.4 MB, which is what the
-    /// 30-minute budget carries at ~500 kbit/s rather than a measured package
+    /// 30-minute budget carries at ~500 kbit/s and not a measured package
     /// size (the real one is <b>49,050,382 bytes</b>): the double is
     /// deliberately larger than life, because a stall timer has to hold for the
     /// worst package this design admits and not for today's.
@@ -994,7 +994,7 @@ internal sealed class UpdateTests
     /// combined.
     /// </summary>
     /// <remarks>
-    /// Asserted rather than commented, because the outer deadline stops being a
+    /// Asserted, not commented, because the outer deadline stops being a
     /// crash tripwire the moment it is small enough to fire on a slow link -- at
     /// which point it is a second absolute timeout and the design has silently
     /// become the one-timer version it was written against.
@@ -1066,7 +1066,7 @@ internal sealed class UpdateTests
         }
 
         // A null message must not be treated as the notice, and the matched
-        // clause is upstream's leading sentence rather than the whole record --
+        // clause is upstream's leading sentence and not the whole record --
         // so a reword of the second half changes nothing and a reword of the
         // first half sends it back to Warning, which is the safe direction.
         await Assert.That(VelopackStartup.IsRoutineNotInstalledNotice(VelopackLogLevel.Warning, null, installed: false)).IsFalse();
@@ -1140,7 +1140,7 @@ internal sealed class UpdateTests
     /// from <c>Program.cs</c> by position.
     /// </para>
     /// <para>
-    /// A source scan rather than a behavioural one, for the reason this whole
+    /// A source scan and not a behavioural one, for the reason this whole
     /// file states: under a test host this process is not an install, and
     /// <c>VelopackApp.Build().Run()</c> cannot be driven twice in one process.
     /// It is the same mechanism <c>MachineMutex</c> and the never-by-image-name
@@ -1160,7 +1160,7 @@ internal sealed class UpdateTests
         // call became two on the day the product became two binaries: the SERVER
         // registers no lifecycle callback at all, because Velopack invokes all
         // four hooks on the main exe and the main exe is the configuration app.
-        // Two methods rather than a flag, so what is asserted here is the one
+        // Two methods and not a flag, so what is asserted here is the one
         // the server is supposed to be calling -- naming the other would be an
         // arm that passed while the server was serving hooks it must not serve.
         var velopack = program.IndexOf("VelopackStartup.RunWithoutLifecycleHooks(", StringComparison.Ordinal);
@@ -1269,7 +1269,7 @@ internal sealed class UpdateTests
         // And assigned nowhere else in the product: a second assignment is a
         // second place the channel can be got wrong.
         //
-        // ⚠️ The needle is the ASSIGNMENT rather than the name, and the first
+        // ⚠️ The needle is the ASSIGNMENT and not the name, and the first
         // draft of this test proved why: `UpdateFeed`'s refusal messages name
         // `UpdateOptions.ExplicitChannel` in the sentence that tells a caller
         // where the channel belongs, so a scan for the bare name fails on the
@@ -1306,8 +1306,8 @@ internal sealed class UpdateTests
     /// retention policy that can therefore never once have applied.
     /// </para>
     /// <para>
-    /// <b><c>PayloadLayout</c> is the sanctioned exception and is named
-    /// rather than excluded silently.</b> The payload is the one thing that
+    /// <b><c>PayloadLayout</c> is the sanctioned exception and is named,
+    /// not excluded silently.</b> The payload is the one thing that
     /// <i>should</i> be replaced wholesale by an update: it is the vendored copy
     /// of upstream the running build was tested against, and a payload surviving
     /// an update would mean the new binary driving the old upstream.

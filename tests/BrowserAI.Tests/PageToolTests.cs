@@ -14,7 +14,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Real pages rather than a double, because the thing under test is a rule
+/// <b>Real pages and not a double, because the thing under test is a rule
 /// about somebody else's code.</b> The wire name is built by
 /// <c>@playwright/mcp</c> out of the page's own tool name, the tool list covers
 /// the current tab only, and a page's handler is what decides whether a call ever
@@ -26,7 +26,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>One conversation, not one per assertion.</b> Every answer comes from the
 /// same session and the same browser, so the navigated-away and late-binding arms
-/// are known to be true of one tab that really moved rather than of several that
+/// are known to be true of one tab that really moved and not of several that
 /// might have.
 /// </para>
 /// <para>
@@ -34,7 +34,7 @@ namespace BrowserAI.Tests;
 /// There is no seam that shortens it and there should not be: what is being
 /// asserted is that BrowserAI's own clock is what ends the call, and a clock the
 /// test moves is a clock the product does not have. The lower bound is what says
-/// the refusal came from that budget rather than from something else giving up
+/// the refusal came from that budget and not from something else giving up
 /// first.
 /// </para>
 /// </remarks>
@@ -54,12 +54,12 @@ internal sealed class PageToolTests
         // upstream hands a page tool the WHOLE argument object with nothing
         // filtered -- measured 2026-09-21, with both leaking straight through to
         // the page when the child is driven directly. So this is the assertion
-        // the strip exists for, and it is an equality rather than a
+        // the strip exists for, and it is an equality and not a
         // does-not-contain: a third argument arriving from anywhere fails it.
         // ⚠️ THE ESCAPED SPELLING, because upstream renders the page's own
         // result object as JSON INSIDE its text block -- so what a caller
         // reads is the page's answer quoted, not the page's answer. Measured
-        // rather than written from the shape: the unescaped form was planted
+        // and not written from the shape: the unescaped form was planted
         // first and the run printed this one back.
         await Assert.That(run.Text("happy")).Contains("""ALPHA-ANSWERED {\"who\":\"world\"}""");
 
@@ -144,7 +144,7 @@ internal sealed class PageToolTests
         await Assert.That(run.Text("pageMoved")).Contains(run.BetaUrl);
         await Assert.That(run.Text("pageMoved")).Contains("bind late");
 
-        // And it really was refused rather than merely reported: the second
+        // And it really was refused and not merely reported: the second
         // page's tool never ran.
         // ⚠️ A SENTINEL THE PAGE COMPOSES AT RUN TIME, never one written whole
         // into the page source. The refusal quotes both URLs, and these pages
@@ -190,7 +190,7 @@ internal sealed class PageToolTests
         await Assert.That(run.Text("byTitle")).Contains("webmcp_Human_Title");
 
         // And the same tool answers when it is named the way the snapshot printed
-        // it, which is what makes the refusal above a correction rather than a
+        // it, which is what makes the refusal above a correction and not a
         // wall.
         await Assert.That(run.IsError("byName")).IsFalse();
         await Assert.That(run.Text("byName")).Contains("TITLED-ANSWERED");
@@ -216,14 +216,14 @@ internal sealed class PageToolTests
         await Assert.That(run.Text("hang")).Contains("Navigating the tab elsewhere or closing it releases");
 
         // ⚠️ A LOWER BOUND, WHICH IS THE CLAIM. It says the refusal came from
-        // BrowserAI's own budget rather than from anything else giving up first;
+        // BrowserAI's own budget and not from anything else giving up first;
         // the upper bound is the exchange deadline the client already carries,
         // and a second one written here would be the promptness assertion the
         // house rules forbid.
         await Assert.That(run.HangElapsed).IsGreaterThanOrEqualTo(SessionToolSurface.PageToolBudget);
 
         // And the session is genuinely still there, asked AFTER the abandonment
-        // rather than before it.
+        // and not before it.
         await Assert.That(run.IsError("afterHang")).IsFalse();
         await Assert.That(run.Text("afterHang")).Contains("- Page URL:");
     }
@@ -389,7 +389,7 @@ internal sealed record PageToolRun
 
         answers["snapshotAlpha"] = await snapshotAsync().ConfigureAwait(false);
 
-        // Read out of the browser's own answer rather than composed from the
+        // Read out of the browser's own answer and not composed from the
         // string that was navigated to: what `page` is compared against is what
         // the tab reports, and a test that built both ends would be asserting its
         // own escaping.

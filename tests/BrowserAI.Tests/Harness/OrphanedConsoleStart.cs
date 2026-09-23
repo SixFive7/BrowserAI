@@ -27,14 +27,14 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Nothing appears on screen, and that is what makes it allowable.</b>
 /// <c>cmd.exe</c> is started with <c>CreateNoWindow</c>, so Windows allocates it
-/// a console <b>with no window</b>; <c>start /b</c> shares that console rather
-/// than opening another. The child's standard input is therefore a real console
+/// a console <b>with no window</b>; <c>start /b</c> shares that console
+/// instead of opening another. The child's standard input is therefore a real console
 /// handle -- <c>GetConsoleMode</c> succeeds on it, which is the predicate
 /// <see cref="Interop.StandardInput.IsAConsole"/> actually asks -- with no
 /// terminal anywhere.
 /// </para>
 /// <para>
-/// ⚠️ <b>Nothing is redirected, and that is load-bearing rather than lazy.</b>
+/// ⚠️ <b>Nothing is redirected, and that is load-bearing, not lazy.</b>
 /// .NET sets <c>STARTF_USESTDHANDLES</c> as soon as <i>any</i> stream is
 /// redirected, and fills the others from the <b>test host's own</b> standard
 /// handles -- which are a console under PowerShell and a pipe under Git Bash
@@ -71,10 +71,10 @@ namespace BrowserAI.Tests.Harness;
 /// meeting an openable corpse anyway and serving nobody for ten minutes on the
 /// strength of it. The product decides it now -- an opened parent that has
 /// already exited is nobody to serve -- and this rig produces the shape on
-/// purpose rather than avoiding it.
+/// purpose instead of avoiding it.
 /// </para>
 /// <para>
-/// <b>The environment is stated rather than inherited for one name.</b>
+/// <b>The environment is stated and not inherited for one name.</b>
 /// <c>VELOPACK_FIRSTRUN</c> is set or removed explicitly on every start, because
 /// another arm in this suite sets it process-wide and a child that inherited it
 /// would take the installer exit and pass for a reason the arm never asked
@@ -149,9 +149,9 @@ internal sealed class OrphanedConsoleStart : IDisposable
 
     /// <summary>Everything the product recorded, read from its own log file.</summary>
     /// <remarks>
-    /// Scoped to the <c>(pid, creation)</c> pair rather than to the file: the
+    /// Scoped to the <c>(pid, creation)</c> pair and not to the file: the
     /// scratch root is fresh, but the scope is what makes the read say something
-    /// about <i>this</i> process rather than about whatever the directory holds.
+    /// about <i>this</i> process and not about whatever the directory holds.
     /// </remarks>
     /// <returns>Its records, joined, or an empty string when it wrote none.</returns>
     public string Records() =>
@@ -167,7 +167,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// returns without draining the async readers and truncates stderr silently.
     /// A method of that name on another type reads identically to it, so the
     /// scan reported this one -- correctly, in the sense that it could not
-    /// know. Renaming keeps the scan sharp rather than teaching it an exception.
+    /// know. Renaming keeps the scan sharp instead of teaching it an exception.
     /// </remarks>
     /// <param name="patience">
     /// A hang detector, never a budget: the thing being caught is a process that
@@ -183,7 +183,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
 
     /// <summary>
     /// Waits until the product's own records say something, so an arm can assert
-    /// on a record rather than on a clock.
+    /// on a record and not on a clock.
     /// </summary>
     /// <param name="sentence">The text to wait for.</param>
     /// <param name="patience">A hang detector, never a budget.</param>
@@ -291,7 +291,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
         catch (Win32Exception failure)
         {
             // ⚠️ THE ONE RACE THIS TEARDOWN CANNOT AVOID, and what bounds the
-            // swallow is a re-read rather than an error code.
+            // swallow is a re-read and not an error code.
             //
             // The product this rig starts is a BrowserAI with nobody to serve,
             // and since 2026-09-15 that process EXITS ON ITS OWN in about half
@@ -306,7 +306,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
             // NOT enough -- the process was still in the table when the filter
             // ran, so the exception escaped and the arm was red again. The
             // question is not *is it gone now* but *does it go*, so this waits,
-            // bounded by the suite's own hang detector rather than by a number
+            // bounded by the suite's own hang detector and not by a number
             // invented here.
             //
             // What is NOT swallowed: a terminate that failed against a process
@@ -330,7 +330,7 @@ internal sealed class OrphanedConsoleStart : IDisposable
 
     /// <summary>How often the log is re-read while waiting for a record.</summary>
     /// <remarks>
-    /// A poll interval rather than a bound: it decides how often a question is
+    /// A poll interval and not a bound: it decides how often a question is
     /// asked, never how long the answer may take, so it is not a duration any
     /// assertion rests on.
     /// </remarks>
@@ -420,12 +420,12 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// Reads the product's identity out of its own first record.
     /// </summary>
     /// <remarks>
-    /// <b>Out of the log rather than off the process table</b>, because the pid
+    /// <b>Out of the log and not off the process table</b>, because the pid
     /// and its creation time have to come from the same instant. Every record
     /// carries <c>pid=&lt;n&gt;@&lt;creation&gt;</c> in its header -- the pair
     /// <see cref="ProcessLogRecords"/> selects on -- and the <c>Startup[1]</c>
     /// record names the image beside it, so the identity is established by the
-    /// product saying who it is rather than by this rig guessing.
+    /// product saying who it is and not by this rig guessing.
     /// </remarks>
     /// <returns>Whether the identity was read.</returns>
     private bool ReadIdentity()
@@ -537,7 +537,7 @@ internal enum LauncherCorpse
     /// <b>Here it is up to the rig, which is the point.</b> The test host starts
     /// the launcher itself and keeps the <c>Process</c> -- and its handle -- for
     /// the whole life of the rig, so the corpse is openable <i>by
-    /// construction</i> rather than by luck. That is what makes the arms over
+    /// construction</i> and not by luck. That is what makes the arms over
     /// this mode deterministic where the 2026-09-15 flake was a coin toss.
     /// </para>
     /// </remarks>

@@ -73,7 +73,7 @@ internal sealed class DirectStdioClientTransportTests
     /// a group of one is a no-op wearing the clothes of a guard, and it read as
     /// protection for four months.
     /// <para>
-    /// Removed rather than widened, because the mutation is provably harmless and
+    /// Removed, not widened, because the mutation is provably harmless and
     /// the reason is the thing under test. Every name planted below is in
     /// <see cref="ChildEnvironment.Refused"/> except one that nothing reads, and
     /// none is in <see cref="ChildEnvironment.InheritedWhenSet"/> -- so no child
@@ -272,14 +272,14 @@ internal sealed class DirectStdioClientTransportTests
 
         // Cached as an int the moment it existed. Read from the Process object
         // instead, this is the point at which the answer becomes an exception
-        // -- see the test below, which proves that rather than assuming it.
+        // -- see the test below, which proves that and does not assume it.
         await Assert.That(child.Session.ExitCode).IsNotNull();
     }
 
     [Test]
     public async Task ProcessExitCodeThrowsAfterDisposeWhichIsWhyTheSessionCachesIt()
     {
-        // The hazard, reproduced rather than quoted. If a future .NET made
+        // The hazard, reproduced, not quoted. If a future .NET made
         // Process.ExitCode survive disposal, this test says so and the caching
         // becomes belt and braces instead of load bearing.
         var process = Process.Start(new ProcessStartInfo(

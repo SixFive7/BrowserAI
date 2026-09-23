@@ -13,7 +13,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>Every test here runs in milliseconds and needs no browser</b>, which is
-/// deliberate: the property under test is a property of Windows rather than of
+/// deliberate: the property under test is a property of Windows and not of
 /// Chromium, and pinning it to a browser launch would make it something nobody
 /// runs. The window that stands in for a browser is published by a probe
 /// process, because window classes are per-process and any program may register
@@ -58,7 +58,7 @@ internal sealed class MessageWindowTests
 
         // The probe's own reads, from inside the owning process. Both go through
         // the WndProc, and the WndProc lies -- so both are empty. This is the
-        // half that makes the cross-process answer below evidence rather than a
+        // half that makes the cross-process answer below evidence and not a
         // tautology: without it, a window that simply answered normally would
         // pass this test.
         await Assert.That((string?)report["sameProcessGetWindowText"]).IsEmpty();
@@ -105,7 +105,7 @@ internal sealed class MessageWindowTests
     /// </para>
     /// <para>
     /// <b>The fix is a second probe in the reverse order, and it is a
-    /// discriminator rather than a retry.</b> The four reads are
+    /// discriminator and not a retry.</b> The four reads are
     /// <c>documented, fallback, fallback, documented</c>: a genuine API
     /// disagreement is <i>stable</i>, so both APIs answer the same thing twice
     /// and the pair still differs; a window moving under the read changes at
@@ -121,7 +121,7 @@ internal sealed class MessageWindowTests
     /// tearing down must read stably on all four calls; an implementation that
     /// classified every divergence as movement would still have to produce a
     /// stable named window here, and the count of moving windows is reported
-    /// beside any failure rather than hidden.
+    /// beside any failure and not hidden.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -233,7 +233,7 @@ internal sealed class MessageWindowTests
         await Assert.That(walk.Windows.Count).IsGreaterThan(0);
         await Assert.That(walk.Windows.Any(found => found.Handle == messageOnly)).IsTrue();
 
-        // ⚠️ THE POSITIVE CONTROL, and it is by HANDLE IDENTITY rather than by
+        // ⚠️ THE POSITIVE CONTROL, and it is by HANDLE IDENTITY and not by
         // population.
         //
         // Corrected 2026-08-18 (previously `Assert.That(topLevel.Count)
@@ -276,7 +276,7 @@ internal sealed class MessageWindowTests
         var report = await PlantedProbe.PublishWindowAsync(scope, ProbeExecutable, scratch.Path, SingletonClass, directory);
         var expected = (nint)(long)report["window"]!;
 
-        // Row 4's canonicalisation table, re-measured rather than carried over.
+        // Row 4's canonicalisation table, re-measured, not carried over.
         await Assert.That(MessageWindows.FindExactly(SingletonClass, directory)).IsEqualTo(expected);
         await Assert.That(MessageWindows.FindExactly(SingletonClass, directory.ToUpperInvariant())).IsEqualTo(expected);
         await Assert.That(MessageWindows.FindExactly(SingletonClass, char.ToLowerInvariant(directory[0]) + directory[1..])).IsEqualTo(expected);
@@ -310,7 +310,7 @@ internal sealed class MessageWindowTests
         // exactly what a machine full of exiting browsers looks like, and it is
         // the condition under which an unchecked walk under-reports.
         //
-        // ⚠️ A fixed, small number of rounds rather than a wall-clock window,
+        // ⚠️ A fixed, small number of rounds and not a wall-clock window,
         // and that is a cost decision made once: every round starts and kills a
         // process, this test is not serialised against the rest of the suite,
         // and the suite's in-process rigs assert a two-second budget. A longer
@@ -325,14 +325,14 @@ internal sealed class MessageWindowTests
             check("after churn", MessageWindows.Walk(SingletonClass));
         }
 
-        // Every failure is collected rather than thrown at, so the message names
+        // Every failure is collected and not thrown at, so the message names
         // which walk lost the window and what the walk reported about itself.
         // A bare "expected true" here would say nothing about whether the walk
         // truncated, restarted, or simply came back short.
         await Assert.That(string.Join(Environment.NewLine, lost)).IsEmpty();
         await Assert.That(walks).IsGreaterThan(2);
 
-        // `restarts` is recorded rather than asserted on: a restart needs a
+        // `restarts` is recorded, not asserted on: a restart needs a
         // window to die in the microseconds between two FindWindowExW calls, so
         // requiring one would be a flaky test. What is asserted is the invariant
         // a missing ERROR_INVALID_WINDOW_HANDLE check breaks -- a walk that

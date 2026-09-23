@@ -20,7 +20,7 @@ namespace BrowserAI.Tests.Harness;
 /// repository forbids.
 /// </para>
 /// <para>
-/// <b>Hand-written rather than taken from
+/// <b>Hand-written and not taken from
 /// <c>Microsoft.Extensions.TimeProvider.Testing</c>.</b> What is needed is
 /// forty lines of it -- advance, and fire whatever is due -- and the package
 /// would be a floating dependency, a licence entry and an upstream review
@@ -38,8 +38,8 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>What it deliberately does not model.</b> There is no automatic advance,
 /// no wall-clock component and no thread of its own -- a test that forgets to
-/// advance sees a timer that never fires, which is a visible failure rather
-/// than a flaky one.
+/// advance sees a timer that never fires, which is a visible failure and
+/// not a flaky one.
 /// </para>
 /// </remarks>
 internal sealed class ManualClock : TimeProvider
@@ -53,7 +53,7 @@ internal sealed class ManualClock : TimeProvider
     /// <remarks>
     /// The unit is deliberately the same as <see cref="TimestampFrequency"/>'s,
     /// so a test can say <i>one tick short of the period</i> and mean exactly
-    /// that rather than approximately that.
+    /// that, not approximately that.
     /// </remarks>
     public const long OneTick = 1;
 
@@ -75,8 +75,8 @@ internal sealed class ManualClock : TimeProvider
 
     /// <inheritdoc />
     /// <remarks>
-    /// A fixed instant. Nothing under test reads it; it is implemented rather
-    /// than thrown from so that a future reader of the clock gets a coherent
+    /// A fixed instant. Nothing under test reads it; it is implemented and
+    /// not thrown from so that a future reader of the clock gets a coherent
     /// answer instead of an exception.
     /// </remarks>
     public override DateTimeOffset GetUtcNow() => DateTimeOffset.UnixEpoch + TimeSpan.FromTicks(GetTimestamp());
@@ -196,7 +196,7 @@ internal sealed class ManualClock : TimeProvider
                 {
                     // The product catches ObjectDisposedException on this path
                     // and treats it as "teardown already stopped everything", so
-                    // answering false rather than throwing keeps the manual
+                    // answering false instead of throwing keeps the manual
                     // clock from exercising a path the real timer would not.
                     return false;
                 }

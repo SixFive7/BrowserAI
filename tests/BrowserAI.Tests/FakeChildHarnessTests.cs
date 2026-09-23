@@ -29,7 +29,7 @@ namespace BrowserAI.Tests;
 /// and an oversized payload.
 /// </para>
 /// <para>
-/// <b>What these tests do not cover, said here rather than implied.</b> This
+/// <b>What these tests do not cover, said here and not implied.</b> This
 /// layer proves the framing, the serialisation and the proxy's handlers. It
 /// proves nothing about process launch, job containment, stderr classification
 /// or exit codes -- those are steps 5, 6 and 7, against real processes, and
@@ -85,8 +85,8 @@ internal sealed class FakeChildHarnessTests
     /// descheduled continuation, and raising it a second time is the move this
     /// repository forbids. A rig that has genuinely stopped is still caught, by
     /// the per-exchange <see cref="TestDefaults.InProcessHang"/> deadline inside the
-    /// client -- which fails naming the method that did not answer, rather than
-    /// naming a number.
+    /// client -- which fails naming the method that did not answer, not a
+    /// number.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -100,7 +100,7 @@ internal sealed class FakeChildHarnessTests
         var call = await rig.Client.RoundTripAsync("tools/call", Call(rig, "browser_navigate"));
 
         // The child's two, behind BrowserAI's five authored ones. Written as
-        // a sum rather than as 7, so a sixth authored tool moves this number
+        // a sum and not as 7, so a sixth authored tool moves this number
         // by construction instead of by somebody remembering.
         await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(SessionToolSurface.Names.Count + 2);
         await Assert.That(TextOf(call)).IsEqualTo("Page URL: data:text/html,<h1>ok</h1>");
@@ -120,7 +120,7 @@ internal sealed class FakeChildHarnessTests
         var tools = await rig.Client.RoundTripAsync("tools/list");
 
         // Byte-for-byte upstream's name. Renaming is settled as forbidden, so
-        // this asserts identity rather than exercising a map. It sits after the
+        // this asserts identity instead of exercising a map. It sits after the
         // five authored tools, which is the only thing the rewrite moves.
         await Assert.That(tools["tools"]!.AsArray().Count).IsEqualTo(SessionToolSurface.Names.Count + 1);
         await Assert.That(tools["tools"]![SessionToolSurface.Names.Count]!["name"]!.GetValue<string>())
@@ -159,7 +159,7 @@ internal sealed class FakeChildHarnessTests
         var response = await rig.Client.SendAsync("tools/call", Call(rig, "browser_navigate"));
 
         // Measured 2026-08-16 against ModelContextProtocol 2.2.0, and recorded
-        // here as exact equality rather than a containment check because each
+        // here as exact equality and not a containment check because each
         // part is a separate claim about what survives a JSON-RPC error's trip
         // through the proxy.
         await Assert.That(response.Error).IsNotNull();
@@ -204,9 +204,9 @@ internal sealed class FakeChildHarnessTests
 
         var response = await rig.Client.SendAsync("tools/call", Call(rig, "browser_navigate"));
 
-        // A defined answer rather than a hang, which is the property a proxy
+        // A defined answer and not a hang, which is the property a proxy
         // loses by default. The double really does die: this is what says the
-        // capability is the double's rather than the rig's.
+        // capability is the double's and not the rig's.
         await Assert.That(rig.Child.HasStopped).IsTrue();
 
         // ⚠️ Updated at step 9, and the change is the whole point of that step.
@@ -242,7 +242,7 @@ internal sealed class FakeChildHarnessTests
 
         // Arm two: the same bytes through the proxy.
         //
-        // ⚠️ Updated at step 9, deliberately handed over rather than deleted.
+        // ⚠️ Updated at step 9, deliberately handed over, not deleted.
         // Until 2026-08-16 this arm asserted the *lossy* behaviour so that
         // fixing it would turn the test red: the SDK's typed ContentBlock
         // converter threw `Unknown content type: 'x-browserai-unknown'`, the
@@ -297,7 +297,7 @@ internal sealed class FakeChildHarnessTests
     [Test]
     public async Task TheClientPinIsWhatSkipsTheDiscoverProbe()
     {
-        // The SDK's default, read from the SDK rather than from a document.
+        // The SDK's default, read from the SDK and not from a document.
         await Assert.That(new McpClientOptions().DiscoverProbeTimeout).IsEqualTo(TimeSpan.FromSeconds(5));
 
         // Pinned, as the product pins it: no probe is issued at all.
@@ -307,7 +307,7 @@ internal sealed class FakeChildHarnessTests
         }
 
         // Unpinned, against a double that answers: the probe IS issued, which is
-        // what makes the line above evidence rather than a tautology.
+        // what makes the line above evidence and not a tautology.
         var (probedMethods, _) = await ConnectUnpinnedAsync(answersDiscover: true);
         await Assert.That(probedMethods).Contains("server/discover");
 
@@ -322,7 +322,7 @@ internal sealed class FakeChildHarnessTests
         // finishing at 249.57 ms. Measured on 2026-08-16: this assertion failed
         // by 0.43 ms, once, on a suite that had passed six times running, which
         // is a red build wearing a disguise. What is being asserted is that the
-        // connect paid the whole timeout rather than returning promptly, and a
+        // connect paid the whole timeout instead of returning promptly, and a
         // regression would come back in single-digit milliseconds.
         var (_, stalledFor) = await ConnectUnpinnedAsync(answersDiscover: false);
         await Assert.That(stalledFor).IsGreaterThanOrEqualTo(TestDefaults.DiscoverProbeTimeout - TimeSpan.FromMilliseconds(2));
@@ -371,11 +371,11 @@ internal sealed class FakeChildHarnessTests
     public async Task NothingInThisLayerCanStartAProcessOrCreateAJob()
     {
         // "No live job and no live process" holds here because there is no way
-        // to make one, and this is what makes that a mechanism rather than an
+        // to make one, and this is what makes that a mechanism and not an
         // observation about today's code. The rig asserts the pipes; this
         // asserts the layer cannot reach a launcher at all.
         //
-        // The files are named rather than globbed, so a rename fails this test
+        // The files are named and not globbed, so a rename fails this test
         // instead of silently dropping a file out of the scan.
         string[] layer =
         [
@@ -443,13 +443,13 @@ internal sealed class FakeChildHarnessTests
     /// session now gets every capability, so there is no permissive mode to
     /// stay on and no reason for any rig to open a window. <b>The half that
     /// survives is the half that was about the developer's screen</b>, and it is
-    /// asserted for both rigs rather than one.
+    /// asserted for both rigs and not one.
     /// </para>
     /// <para>
     /// <b>The claim the deleted half was really making is asserted below in the
     /// form that is now true:</b> a double-backed rig meets no refusal of ours
     /// on the tools it calls, which is a statement about
-    /// <see cref="ToolVerdicts"/> rather than about a mode.
+    /// <see cref="ToolVerdicts"/> and not about a mode.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -469,7 +469,7 @@ internal sealed class FakeChildHarnessTests
 
         // Not vacuous: the rig really does hand this value to `browserai_init`,
         // and a config generated from it really does turn it into upstream's
-        // `headless`. Asserted through the product's own generator rather than
+        // `headless`. Asserted through the product's own generator and not
         // by reading the flag back out of itself.
         var generated = BrowserConfiguration.ForSession(
             SessionPath.For(Path.Combine(ScratchRoot.Path, $"rig-headedness-{Guid.NewGuid():N}")),

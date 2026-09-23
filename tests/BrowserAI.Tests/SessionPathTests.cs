@@ -14,8 +14,8 @@ namespace BrowserAI.Tests;
 /// The mutex name, the lock file and the session index all key on the same
 /// directory. If any two of them normalise differently the same directory
 /// acquires two identities, and a lock keyed on one of them reports success
-/// while guarding nothing -- which is why this is a done-test of its own rather
-/// than a property of the lock.
+/// while guarding nothing -- which is why this is a done-test of its own and
+/// not a property of the lock.
 /// </remarks>
 internal sealed class SessionPathTests
 {
@@ -25,7 +25,7 @@ internal sealed class SessionPathTests
         using var scratch = ScratchDirectory.Create("session-identity");
 
         // Mixed case on purpose: the case-folding half of the chain is what
-        // makes `c:\a` and `C:\A` one session rather than two.
+        // makes `c:\a` and `C:\A` one session and not two.
         var directory = Path.Combine(scratch.Path, "Session One");
         _ = Directory.CreateDirectory(directory);
 
@@ -49,7 +49,7 @@ internal sealed class SessionPathTests
             await Assert.That(spelling.Key).IsEqualTo(plain.Key);
         }
 
-        // "One file path" is asserted as one file on disk rather than as one
+        // "One file path" is asserted as one file on disk and not as one
         // string, and that is the stronger claim of the two. FullPath keeps the
         // caller's casing deliberately -- Windows has supported per-directory
         // case sensitivity since 1803, so an upper-cased path used for real I/O
@@ -79,12 +79,12 @@ internal sealed class SessionPathTests
         // directory per process and never the one the caller meant, and the tools
         // have refused one for as long as they have existed. The chain underneath
         // them resolved it anyway, so the refusal was a property of the door
-        // rather than of the path.
+        // and not of the path.
         //
         // Asserted from a process whose current directory really is the one the
         // relative spelling would have resolved against, because that is the only
-        // arrangement in which "it was refused" is a claim about the rule rather
-        // than about the spelling failing to resolve at all. The test host's own
+        // arrangement in which "it was refused" is a claim about the rule and
+        // not about the spelling failing to resolve at all. The test host's own
         // current directory is fixed and shared by every test running in
         // parallel.
         using var scratch = ScratchDirectory.Create("session-identity-relative");
@@ -132,12 +132,12 @@ internal sealed class SessionPathTests
         await Assert.That(path.MutexName).StartsWith(@"Global\BrowserAI-");
 
         // A backslash after the Global\ prefix is illegal, which is the whole
-        // reason the path is hashed rather than used.
+        // reason the path is hashed and not used.
         await Assert.That(path.MutexName[@"Global\".Length..]).DoesNotContain(@"\");
         await Assert.That(path.MutexName.Length).IsEqualTo(@"Global\BrowserAI-".Length + 32);
 
         // The full digest for the index, half of it for the mutex, and the two
-        // derived from one hash rather than from two hashings.
+        // derived from one hash and not from two hashings.
         await Assert.That(path.IndexKey.Length).IsEqualTo(64);
         await Assert.That(path.IndexKey).StartsWith(path.MutexName[@"Global\BrowserAI-".Length..]);
     }
@@ -147,7 +147,7 @@ internal sealed class SessionPathTests
     {
         // `C:\` trims to `C:`, which is a drive-relative path meaning "the
         // current directory on C:" -- a different directory that changes under
-        // the caller's feet. Refused rather than silently accepted.
+        // the caller's feet. Refused, not silently accepted.
         //
         // ⚠️ It is refused HERE and not in the canonicaliser, and the split is
         // what makes `browserai_list` able to use one path chain: a volume root
@@ -192,7 +192,7 @@ internal sealed class SessionPathTests
     [Test]
     public async Task ADirectoryWithNoRoomLeftForItsOutputFolderIsNotASessionDirectory()
     {
-        // One character past the budget, composed from the budget rather than
+        // One character past the budget, composed from the budget and not
         // from a number written here.
         var overlong = @"C:\" + new string('d', SessionPath.LongestSessionDirectory - 2);
 
@@ -207,7 +207,7 @@ internal sealed class SessionPathTests
         await Assert.That(refused.Message).DoesNotContain("(Parameter '");
 
         // ⚠️ THE BOUNDARY, in the accepting direction, which is what makes this
-        // a budget rather than a ban on deep paths. One character shorter is a
+        // a budget and not a ban on deep paths. One character shorter is a
         // session directory, and every derived name comes off it.
         var deepest = SessionPath.For(overlong[..^1]);
 

@@ -19,7 +19,7 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>A string no code path emits is documentation rather than behaviour</b>, and
+/// <b>A string no code path emits is documentation and not behaviour</b>, and
 /// this file is the check that says which is which. Each arm below provokes a
 /// real condition -- a missing argument, a held lock, a copied directory, a volume
 /// with no room -- and compares what came back against
@@ -31,7 +31,7 @@ namespace BrowserAI.Tests;
 /// <see cref="EveryRowInTheCatalogueWasTriggeredBySomethingAbove"/> reflects over
 /// the catalogue's public methods and requires each to have been matched by one
 /// of the provocations. Adding a row and forgetting to emit it is therefore a red
-/// build rather than a sentence nobody ever sees.
+/// build and not a sentence nobody ever sees.
 /// </para>
 /// </remarks>
 internal sealed partial class ErrorCatalogueTests
@@ -100,7 +100,7 @@ internal sealed partial class ErrorCatalogueTests
             nameof(SessionErrors.SessionNotOpen),
             SessionErrors.SessionNotOpen("browser_navigate", stranded));
 
-        // Row 3, through the session argument rather than through `directory`.
+        // Row 3, through the session argument and not through `directory`.
         var relative = await CallAsync(rig, "browser_navigate", new JsonObject { ["session"] = "relative\\path", ["why"] = "the suite exercising this call" });
 
         Match(
@@ -111,7 +111,7 @@ internal sealed partial class ErrorCatalogueTests
         // Row 1's companion -- a real session, named correctly, with no `why`.
         //
         // ⚠️ THE SESSION HAS TO BE REAL AND OPEN, which is what makes this arm
-        // worth writing rather than obvious: the `why` refusal is deliberately
+        // necessary and not obvious: the `why` refusal is deliberately
         // BEHIND routing and provisioning, so a call that also names an unknown
         // session is answered by row 2 and never reaches it. Written against the
         // rig's own open session for that reason.
@@ -139,7 +139,7 @@ internal sealed partial class ErrorCatalogueTests
     /// full-volume half is gone with the free-space check itself, at the
     /// maintainer's decision -- <i>"Checking for free space is out of scope ... I do
     /// not want to check for that at all."</i> That half asserted a refusal this
-    /// build no longer makes, so it was <b>deleted rather than skipped</b>: a test
+    /// build no longer makes, so it was <b>deleted, not skipped</b>: a test
     /// for removed behaviour is not a gap in coverage, it is coverage of
     /// something that is not there. What replaces it is
     /// <c>HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas</c>, which holds the
@@ -244,7 +244,7 @@ internal sealed partial class ErrorCatalogueTests
         // ⚠️ AND THE INVERTED HALF. The extended-length prefix over the same
         // directory was a refusal until 2026-08-26 and is now taken as what it
         // names: the session is created, and it is created at the spelling the
-        // filesystem uses rather than at the one the caller typed.
+        // filesystem uses and not at the one the caller typed.
         var aliased = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
             ["directory"] = VolumeIdentity.ExtendedLengthPrefix + real,
@@ -255,7 +255,7 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That(TextOf(aliased)).DoesNotContain(VolumeIdentity.ExtendedLengthPrefix);
         await Assert.That(File.Exists(Path.Combine(real, SessionLayout.LockFileName))).IsTrue();
 
-        // And the caller is told, once, rather than left to notice at the next
+        // And the caller is told, once, and not left to notice at the next
         // listing that a path it never typed is what its session is called.
         await Assert.That(TextOf(aliased)).Contains("is what the filesystem calls it");
     }
@@ -308,10 +308,10 @@ internal sealed partial class ErrorCatalogueTests
         Record(nameof(SessionErrors.ArgumentNotAcceptedOnResume));
 
         // ⚠️ Row 15 -- DirectoryIsACopy -- was deleted on 2026-08-18 with
-        // `acknowledgeCopy`, so its provocation is deleted too rather than left
+        // `acknowledgeCopy`, so its provocation is deleted too, not left
         // to rot: this test's whole job is that every row in the catalogue is
         // reachable from a real path, and a provocation for a row that no longer
-        // exists would not compile. A resumed copy is now answered rather than
+        // exists would not compile. A resumed copy is now answered and not
         // refused, and SessionToolTests owns that assertion.
     }
 
@@ -325,7 +325,7 @@ internal sealed partial class ErrorCatalogueTests
         // which provoked `ConfigurationWouldDiscloseSecrets`). All three rows
         // are gone from the catalogue with the permission matrix that emitted
         // them, and a provocation for a row that no longer exists would not
-        // compile -- which is why they were deleted rather than left to rot.
+        // compile -- which is why they were deleted, not left to rot.
         //
         // What survives is one row, and it is a LIVENESS refusal:
         // `browser_annotate` blocks until a human draws, with no self-timeout,
@@ -358,7 +358,7 @@ internal sealed partial class ErrorCatalogueTests
         // ⚠️ Row 5's companion, and it was INVERTED on 2026-08-26 (previously
         // "a tool this build has never heard of is FORWARDED now rather than
         // refused, so nothing of ours is in that answer at all"). Deny-by-default
-        // came back as a verdict rather than as a permission -- see
+        // came back as a verdict and not as a permission -- see
         // ToolVerdicts -- so a name with no row is refused at the door, and this
         // is the provocation for the row that says so.
         var unknown = await CallAsync(rig, "browser_not_a_real_tool", new JsonObject
@@ -418,7 +418,7 @@ internal sealed partial class ErrorCatalogueTests
         // pair, moved to `DirectoryDenial` so there is one of it: deny `ReadData`
         // on the objects inside the directory, which refuses every open that
         // reads and leaves the directory itself listable. The record written by
-        // the reclaim above is what makes this reach the FIRST open rather than
+        // the reclaim above is what makes this reach the FIRST open and not
         // the re-open after a write.
         SessionLockResult denied;
 
@@ -508,7 +508,7 @@ internal sealed partial class ErrorCatalogueTests
     /// </summary>
     /// <remarks>
     /// <b>It needs a session that opened and then lost its child</b>, which is
-    /// why the rig refuses the <i>next</i> child rather than every one:
+    /// why the rig refuses the <i>next</i> child and not every one:
     /// <see cref="RigSessionEnvironment.Failing"/> cannot reach this path at
     /// all, because nothing it stands up ever becomes a live session.
     /// </remarks>
@@ -592,7 +592,7 @@ internal sealed partial class ErrorCatalogueTests
     /// Waits until the session child's transport has reported end-of-stream.
     /// </summary>
     /// <remarks>
-    /// The product's own record of the close rather than a duration: a child
+    /// The product's own record of the close, not a duration: a child
     /// counts as dead only once the transport says so.
     /// <see cref="TestDefaults.InProcessHang"/> bounds it as a hang detector,
     /// both ends being in this process.
@@ -633,12 +633,12 @@ internal sealed partial class ErrorCatalogueTests
 
         // Capped ONCE, and only here: the record has no cap at all any more,
         // so this 300-character bound is the last length limit in the product
-        // and it is a bound on an ANSWER rather than on a file.
+        // and it is a bound on an ANSWER and not on a file.
         await Assert.That(framed.Length).IsLessThan(SessionErrors.ReplayedPurposeLength + 120);
         Record(nameof(SessionErrors.Recorded));
 
         // And it round-trips through browserai.data capped and stripped, which is the
-        // half that has to be true of the FILE rather than of a formatter.
+        // half that has to be true of the FILE and not of a formatter.
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
@@ -678,7 +678,7 @@ internal sealed partial class ErrorCatalogueTests
         // slow enough to break it would see the install LAND and the row-6
         // refusal below become a success -- a red build caused by a busy machine
         // and reported as the product emitting the wrong error. Never released,
-        // so "still downloading" is a fact about state rather than about time.
+        // so "still downloading" is a fact about state and not about time.
         var stillDownloading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         await using var sessions = RigSessionEnvironment.Create(
@@ -697,7 +697,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // Row 6. The condition is real -- this rig's browsers root is empty and
         // its installer cannot finish until this test releases it, which it never
-        // does -- and the call is answered rather than held.
+        // does -- and the call is answered, not held.
         var refused = await CallAsync(rig, "browser_navigate", new JsonObject
         {
             ["url"] = "data:text/html,x",
@@ -728,7 +728,7 @@ internal sealed partial class ErrorCatalogueTests
 
         // The half a recomposition cannot cover: either a sample had been taken
         // by the time this call landed, or it had not, and both spellings are the
-        // row rather than an absence of one.
+        // row and not an absence of one.
         await Assert.That(text.Contains("Progress:", StringComparison.Ordinal) || text.Contains("Nothing has been sampled yet", StringComparison.Ordinal))
             .IsTrue()
             .Because(text);
@@ -770,7 +770,7 @@ internal sealed partial class ErrorCatalogueTests
         // figure advances between the call and this line, so a whole-string
         // comparison would be asserting that two clocks agree. The clause itself
         // is asserted in ReinstallBrowserTests, where the reinstall is the thing
-        // under test rather than the catalogue.
+        // under test and not the catalogue.
         var reference = SessionErrors.BrowsersAreBeingReinstalled(
             SessionToolSurface.Init,
             root,
@@ -857,7 +857,7 @@ internal sealed partial class ErrorCatalogueTests
             reference[..reference.IndexOf("Windows said:", StringComparison.Ordinal)]);
 
         // ⚠️ THE POSITIVE CONTROL. The ACL is off, so the same init must now
-        // succeed -- which is what proves the refusal was the denial rather than
+        // succeed -- which is what proves the refusal was the denial and not
         // the rig.
         var allowed = await CallAsync(rig, SessionToolSurface.Init, new JsonObject
         {
@@ -908,7 +908,7 @@ internal sealed partial class ErrorCatalogueTests
         // the drive letter upper-case. Compared ordinally the same file fails
         // to match itself whenever the suite is started from a shell that
         // spells the drive `c:` -- so the test was green from one shell and red
-        // from another, which makes it a property of the caller rather than of
+        // from another, which makes it a property of the caller and not of
         // the product. Fixed 2026-08-17, ahead of CI picking a shell.
         await Assert.That(text).Contains(planted, StringComparison.OrdinalIgnoreCase);
 
@@ -1056,7 +1056,7 @@ internal sealed partial class ErrorCatalogueTests
     {
         var completion = new TaskCompletionSource<StraySweepResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        // A dedicated thread rather than the pool: the wait is blocking, and a
+        // A dedicated thread and not the pool: the wait is blocking, and a
         // parked worker is how an unrelated in-process rig starts missing its
         // budget.
         var thread = new Thread(() =>
@@ -1193,7 +1193,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(ThePageToolAbandonmentRowIsEmittedByAPageToolThatNeverAnswers))]
     public async Task EveryRowInTheCatalogueWasTriggeredBySomethingAbove()
     {
-        // The census, and the reason the catalogue is a type rather than a set of
+        // The census, and the reason the catalogue is a type and not a set of
         // interpolated strings scattered through the product: a row that reads
         // perfectly and is reachable from nowhere is documentation, and
         // documentation in an error catalogue is worse than a gap because it
@@ -1212,7 +1212,7 @@ internal sealed partial class ErrorCatalogueTests
 
         await Assert.That(string.Join(Environment.NewLine, untriggered)).IsEmpty();
 
-        // And the count, so a row deleted rather than triggered does not make
+        // And the count, so a row deleted instead of triggered does not make
         // this pass by shrinking the question.
         //
         // ⚠️ **Corrected 2026-08-18 to 21 (previously 22, and "24 since
@@ -1237,11 +1237,11 @@ internal sealed partial class ErrorCatalogueTests
         //
         // ⚠️ **Corrected 2026-08-19 to 24 (previously 23).** `LockFileCannotBeOpened`
         // arrived, and it is the first row here written for a condition that was
-        // ALREADY REACHABLE and was answered by an exception rather than by a
+        // ALREADY REACHABLE and was answered by an exception and not by a
         // refusal: a permanently denied `browserai.json` propagated out of
         // `SessionLock.TryAcquire`. The census could never have found it -- a
         // missing row is invisible to a check that reads the rows that exist --
-        // which is the standing limit of this test and is worth saying beside its
+        // which is the standing limit of this test and is said beside its
         // own number.
         //
         // ⚠️ **Corrected 2026-08-19 to 25 (previously 24).**
@@ -1268,9 +1268,9 @@ internal sealed partial class ErrorCatalogueTests
         // BrowserAI could otherwise have made: the browser would have worked and
         // the record would have been one entry short, which nobody would ever
         // have seen. Written as a refusal for that reason, and the sentence
-        // justifies the choice rather than only reporting it.
+        // justifies the choice instead of only reporting it.
         //
-        // Every one of them was **deleted rather than orphaned**, and this census
+        // Every one of them was **deleted, not orphaned**, and this census
         // is why: it fails on a row nobody emits, so a refusal left in the
         // catalogue after the code that produced it went is a red build.
         //
@@ -1278,16 +1278,16 @@ internal sealed partial class ErrorCatalogueTests
         // with BrowserAI's own `filename` gate -- `FilenameNotWithinSession`,
         // `FilenameEscapesTheSession` and `FilenameNotUsable` -- and they are
         // the first rows deleted here because the product stopped LOOKING at
-        // the thing they refused rather than because it stopped refusing it.
+        // the thing they refused and not because it stopped refusing it.
         // Upstream's file-access roots refuse the escape in upstream's own
         // words, forwarded byte-identical; what nobody refuses any more is
         // `NUL.png` and a trailing space or dot, which Windows redirects or
-        // rewrites rather than rejecting. That loss is a hazard row rather than
+        // rewrites instead of rejecting. That loss is a hazard row and not
         // three catalogue entries kept alive by nothing.
         //
         // ⚠️ **Corrected 2026-08-24 to 28 (previously 27).**
-        // `TheBrowsersRootCouldNotBeClaimed` arrived as a row of its own rather
-        // than as a clause on `BrowsersAreBeingReinstalled`, and the test is the
+        // `TheBrowsersRootCouldNotBeClaimed` arrived as a row of its own and
+        // not as a clause on `BrowsersAreBeingReinstalled`, and the test is the
         // recovery: that row's three callers share one row because they share
         // one recovery -- wait, then call again -- and this condition's recovery
         // is the opposite one. Nothing about waiting will clear an ACL that
@@ -1298,7 +1298,7 @@ internal sealed partial class ErrorCatalogueTests
         // two: `AnnotationIsNotInTheSurface` became `ToolIsDenied(tool, why)`,
         // which composes BrowserAI's frame with the reason from that tool's row
         // in `tool-verdicts.json`, and `ToolHasNoVerdict()`, which is the gap
-        // rather than the decision. They are two rows because they have two
+        // and not the decision. They are two rows because they have two
         // fixes -- a denial has none and a gap is answered by `tools/list` --
         // and a single row that said both would be the sentence a model cannot
         // act on that the note above already names.
@@ -1308,7 +1308,7 @@ internal sealed partial class ErrorCatalogueTests
         // the free space check. Checking for free space is out of scope and makes
         // our project more complicated. I do not want to check for that at all."*
         // It is the first row deleted here because the QUESTION was withdrawn
-        // rather than because the answer moved -- there is no condition left for
+        // and not because the answer moved -- there is no condition left for
         // a provocation to arrange, since nothing asks the volume anything. The
         // absence is held by `HouseRuleTests.NothingAsksAVolumeHowMuchRoomItHas`,
         // which is where a reader looking for the check should be sent.
@@ -1318,24 +1318,24 @@ internal sealed partial class ErrorCatalogueTests
         // repair of a dead child: a resume that meets one starts a replacement,
         // and a replacement that will not start is a condition with its own
         // recovery -- the session is still open and still held, so the fix is to
-        // resume again rather than to open another session beside it. It is a
-        // row of its own rather than a clause on `BrowserRuntimeDidNotStart`,
+        // resume again and not to open another session beside it. It is a
+        // row of its own and not a clause on `BrowserRuntimeDidNotStart`,
         // whose sentence releases the lock and invites a re-init, because that
         // advice is wrong here.
         //
         // ⚠️ **Corrected 2026-09-17 to 27 (previously 26), later the same
         // change.** `BrowserServerHasGone` arrived with the door check that
-        // refuses a forward into a child that has gone. It is a third row rather
-        // than a clause on either of the two above because its recovery is the
+        // refuses a forward into a child that has gone. It is a third row and
+        // not a clause on either of the two above because its recovery is the
         // only one of the three a caller can take without having been told
         // anything else first -- call `browserai_resume` and try again -- and
         // because it is the only one of the three whose predecessor was
-        // silence rather than another sentence.
+        // silence and not another sentence.
         //
         // ⚠️ **Corrected 2026-09-21 to 33 (previously 27).** Six rows arrived
         // together with `browserai_page_tool`, and they are the first rows in
         // this catalogue about a tool NOBODY IN THIS PROJECT WROTE: the names,
-        // the schemas and the answers belong to the page. Six rather than fewer
+        // the schemas and the answers belong to the page. Six and not fewer
         // because each has a different recovery, and collapsing any two would
         // produce the sentence a model cannot act on that the notes above keep
         // naming -- `PageToolIsNotOnThePage` says read the list again,
@@ -1355,7 +1355,7 @@ internal sealed partial class ErrorCatalogueTests
     /// tools.
     /// </summary>
     /// <remarks>
-    /// <b>The double rather than a browser, and for once that is the stronger
+    /// <b>The double and not a browser, and for once that is the stronger
     /// rig.</b> What these five rows are about is a resolution -- a name a model
     /// read against a list a page supplied -- and the double is the only way to
     /// hold that list still while five different questions are asked of it. The
@@ -1463,7 +1463,7 @@ internal sealed partial class ErrorCatalogueTests
     /// <remarks>
     /// <b>Its own rig, because the condition is a tab listing that says nothing
     /// this build can read</b> -- and the point of the row is that a check which
-    /// did not happen is not a check, so the call is refused rather than made
+    /// did not happen is not a check, so the call is refused instead of made
     /// without it.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1504,8 +1504,8 @@ internal sealed partial class ErrorCatalogueTests
     /// ⚠️ <b>It really waits <see cref="SessionToolSurface.PageToolBudget"/>,
     /// and there is no seam that shortens it.</b> What produces this row is
     /// BrowserAI's own clock running out, so a rig that moved the clock would be
-    /// provoking something else. <see cref="FakeToolBehaviour.HoldUntil"/> rather
-    /// than <see cref="FakeToolBehaviour.Delay"/>: the child has to stay awake
+    /// provoking something else. <see cref="FakeToolBehaviour.HoldUntil"/> and
+    /// not <see cref="FakeToolBehaviour.Delay"/>: the child has to stay awake
     /// while it holds the call, because the cancellation BrowserAI sends when the
     /// budget fires is a frame it must be able to read.
     /// </remarks>
@@ -1619,7 +1619,7 @@ internal sealed partial class ErrorCatalogueTests
 
         await Assert.That(string.Join(Environment.NewLine, wrong)).IsEmpty();
 
-        // Row 3 names NO tool, and that is correct rather than a gap. §H.6's
+        // Row 3 names NO tool, and that is correct, not a gap. §H.6's
         // sentence says "rows 1-3", and row 3 is a malformed argument: there is
         // no tool a caller could call to make a relative path absolute. Its
         // recovery is the argument's own shape, so what is asserted is that it
@@ -1636,7 +1636,7 @@ internal sealed partial class ErrorCatalogueTests
 
     /// <summary>
     /// <c>browserai_destroy</c> refuses every record shape it is specified to
-    /// refuse, through the tool itself rather than at the parser.
+    /// refuse, through the tool itself and not at the parser.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1654,7 +1654,7 @@ internal sealed partial class ErrorCatalogueTests
     /// closed for the same reason the record's used to be. A <b>fourth</b> shape
     /// arrived with the cutover -- a directory holding the old
     /// <c>browserai.json</c> -- and it is asserted in
-    /// <c>SessionDestroyTests</c>, because its answer is a sentence rather than
+    /// <c>SessionDestroyTests</c>, because its answer is a sentence and not
     /// a catalogue row.
     /// </para>
     /// </remarks>
@@ -1803,7 +1803,7 @@ internal sealed partial class ErrorCatalogueTests
         }));
 
         // The code point is named in words -- that part was always right -- and
-        // the literal is shown rather than replayed.
+        // the literal is shown, not replayed.
         await Assert.That(refused).Contains("U+0007");
         await Assert.That(refused.Any(char.IsControl)).IsFalse();
         Record(nameof(SessionErrors.DirectoryUnusable));
@@ -1862,7 +1862,7 @@ internal sealed partial class ErrorCatalogueTests
         await using var sessions = RigSessionEnvironment.Create();
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
 
-        // Composed against the real budget rather than against a number written
+        // Composed against the real budget and not against a number written
         // here, so a rig root of any length reaches exactly one character past
         // what a session directory may be.
         var overlong = Path.Combine(sessions.Root, new string('d', 8));

@@ -28,7 +28,7 @@ namespace BrowserAI.Tests;
 /// <c>src\BrowserAI\Storage\Sqlite.cs</c>, binds the module <c>e_sqlite3</c> --
 /// which under the published binary is a symbol linked into the executable and
 /// under this test host, CoreCLR, is a DLL that does not exist. So the version
-/// is read off the <i>artifact's own record</i> rather than by calling the
+/// is read off the <i>artifact's own record</i> and not by calling the
 /// function here, which is also the stronger claim: what a test host could load
 /// says nothing about what ILC linked.
 /// </para>
@@ -57,7 +57,7 @@ internal sealed partial class SqliteTests
     /// answering a question about a file nobody is compiling.
     /// </para>
     /// <para>
-    /// <b>The hashes are the half that catches an edit rather than a swap.</b>
+    /// <b>The hashes are the half that catches an edit and not a swap.</b>
     /// Third-party source is exactly the kind of file a sweep walks through --
     /// this repository has already had one rewrite a sealed record -- and 9 MB of
     /// C is the last place anybody would look. The archive's own SHA3-256 is
@@ -108,7 +108,7 @@ internal sealed partial class SqliteTests
                 continue;
             }
 
-            // Lower-case at the source rather than through ToLowerInvariant,
+            // Lower-case at the source and not through ToLowerInvariant,
             // which CA1308 forbids: the recorded hashes are lower case because
             // every tool that prints one is.
             var actual = Convert.ToHexStringLower(SHA256.HashData(await File.ReadAllBytesAsync(file)));
@@ -150,7 +150,7 @@ internal sealed partial class SqliteTests
     /// red CI runs for a line the product had written correctly.
     /// </para>
     /// <para>
-    /// <b>Asserted against the vendored source rather than a literal.</b> A
+    /// <b>Asserted against the vendored source and not a literal.</b> A
     /// number typed here would have to be edited by whoever swaps the
     /// amalgamation, which is the one moment they are thinking about something
     /// else.
@@ -185,7 +185,7 @@ internal sealed partial class SqliteTests
     /// tree saying otherwise.
     /// </para>
     /// <para>
-    /// <b>Asserted over the corpus rather than over the check.</b> A staleness
+    /// <b>Asserted over the corpus and not over the check.</b> A staleness
     /// check says nothing about what it never looked at: it is silent by
     /// construction when it is passing, and passing is exactly what it does
     /// when a file is outside it.
@@ -271,7 +271,7 @@ internal sealed partial class SqliteTests
         // THREADSAFE is deliberately in neither: it is the one deviation from
         // sqlite.org's recommended set -- taking their SQLITE_THREADSAFE=0
         // would be the defect -- so it is asserted as a floor under every build
-        // rather than listed as an intended flag.
+        // and not listed as an intended flag.
         await Assert.That(passed).DoesNotContain("THREADSAFE");
         await Assert.That(targets).DoesNotContain("/DSQLITE_THREADSAFE");
     }
@@ -359,7 +359,7 @@ internal sealed partial class SqliteTests
     /// with the <c>SQLITE_</c> prefix and any value stripped off the capture.
     /// </summary>
     /// <remarks>
-    /// The prefix is required rather than optional: it is what separates a
+    /// The prefix is required and not optional: it is what separates a
     /// compile-time option from every other switch the command line carries,
     /// and <c>PRAGMA compile_options</c> reports the names without it.
     /// </remarks>

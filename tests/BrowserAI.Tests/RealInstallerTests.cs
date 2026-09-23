@@ -56,7 +56,7 @@ namespace BrowserAI.Tests;
 /// ⚠️ <b>And the TITLE, which is the same defect one file later -- 2026-09-16.</b>
 /// <i>Corrected 2026-09-16 (previously "with the id and the output directory as
 /// the only deltas")</i>: Velopack names the Start Menu shortcut
-/// <c>&lt;packTitle&gt;.lnk</c> rather than <c>&lt;packId&gt;.lnk</c>, does not
+/// <c>&lt;packTitle&gt;.lnk</c> and not <c>&lt;packId&gt;.lnk</c>, does not
 /// gate shortcut creation on <c>--silent</c>, and removes shortcuts by target at
 /// uninstall -- so the id split left the two packs still sharing one
 /// <c>BrowserAI.lnk</c>, which this arm repointed at its scratch root and its own
@@ -71,7 +71,7 @@ namespace BrowserAI.Tests;
 /// directory -- without it the install hook would rewrite the maintainer's own
 /// <c>~/.claude.json</c> and the uninstall hook would then remove the entry it
 /// found there. <c>BROWSERAI_ROOT</c> does the same for the data root, so the
-/// markers this plants are in a directory of its own rather than in the real
+/// markers this plants are in a directory of its own and not in the real
 /// one. It installs only under <c>--installto</c>, and it uninstalls what it
 /// installed.
 /// </para>
@@ -133,7 +133,7 @@ internal sealed partial class RealInstallerTests
         // ⚠️ THE REAL INSTALL'S OWN ADD/REMOVE ENTRY, READ BEFORE ANYTHING RUNS.
         // This is the entry the shipping pack id would have had rewritten and
         // then deleted, and the whole reason the installer this arm runs is
-        // packed under another id. Asserted rather than logged: a claim about a
+        // packed under another id. Asserted, not logged: a claim about a
         // key nobody compared is the shape of claim this repository exists to
         // eliminate. Absent is a perfectly good before-state and must still be
         // absent afterwards.
@@ -157,7 +157,7 @@ internal sealed partial class RealInstallerTests
         {
             // ⚠️ IN A FINALLY, so a red assertion above does not leave an
             // install, a scratch tree and an Add/Remove entry behind for the
-            // next run to trip over. Every step reports rather than throws: this
+            // next run to trip over. Every step reports and does not throw: this
             // runs on the failure path, and a cleanup that throws replaces the
             // reason the arm went red.
             await ReclaimAsync(installRoot.Path);
@@ -171,8 +171,8 @@ internal sealed partial class RealInstallerTests
         var startMenuAfter = ReadStartMenuShortcuts();
 
         // Nothing under the SHIPPING title may point into this arm's scratch
-        // root -- which is what a shared title produced, and what is asserted
-        // rather than reasoned about.
+        // root -- which is what a shared title produced, and what is asserted,
+        // not reasoned about.
         var repointed = startMenuAfter
             .Where(shortcut => Mentions(shortcut.Value, installRoot.Path))
             .Select(shortcut => shortcut.Key)
@@ -194,12 +194,12 @@ internal sealed partial class RealInstallerTests
     /// programs directory, with its bytes.
     /// </summary>
     /// <remarks>
-    /// <b>The bytes rather than a resolved target, deliberately.</b> Resolving a
+    /// <b>The bytes and not a resolved target, deliberately.</b> Resolving a
     /// shortcut means <c>IShellLink</c>, which means COM on the test host for a
     /// question a substring answers: a <c>.lnk</c> embeds its target path
     /// literally, so <see cref="Mentions"/> over the file finds a shortcut
     /// pointing into a scratch root without any of that. It is also what makes
-    /// the before/after comparison a byte comparison rather than a comparison of
+    /// the before/after comparison a byte comparison and not a comparison of
     /// two things COM was asked about.
     /// </remarks>
     /// <returns>The file name of each, and its content.</returns>
@@ -266,14 +266,14 @@ internal sealed partial class RealInstallerTests
     /// </para>
     /// <para>
     /// ⚠️ <b>The console check is BY PID, and that is weaker than it looks --
-    /// said here rather than left to be discovered.</b> With the default
+    /// said here and not left to be discovered.</b> With the default
     /// terminal set to Windows Terminal, a console allocated to a process shows
     /// up as a window owned by <b>Windows Terminal's</b> process, not by ours:
     /// scanning for <c>ConsoleWindowClass</c> is exactly what reported a clean
     /// screen while two windows were on it. So this arm does not claim to detect
     /// a console by looking for its window. What carries that guarantee is
     /// <c>TaskDialogLayoutTests.TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c>,
-    /// which reads the subsystem out of the binary -- the cause rather than the
+    /// which reads the subsystem out of the binary -- the cause and not the
     /// symptom. The by-pid check below is kept because it is free and because it
     /// would catch the one case the subsystem cannot: this process calling
     /// <c>AllocConsole</c> itself.
@@ -359,7 +359,7 @@ internal sealed partial class RealInstallerTests
                 //
                 // Asserted from OUTSIDE the process, on the marker file it holds
                 // -- the same file `LiveInstances.Census` counts -- because the
-                // census is a property of the directory rather than of any one
+                // census is a property of the directory and not of any one
                 // process's opinion of itself.
                 var live = LiveInstances.DirectoryUnder(installRoot.Path);
 
@@ -373,7 +373,7 @@ internal sealed partial class RealInstallerTests
 
                 // And it leaves the census on the way out. The marker is
                 // released by the handle closing, so this is a property of the
-                // process ending rather than of any cleanup it performs.
+                // process ending and not of any cleanup it performs.
                 await Assert.That(Directory.EnumerateFiles(live, "*.live").Any()).IsFalse();
             }
             finally
@@ -405,7 +405,7 @@ internal sealed partial class RealInstallerTests
     private const string TaskDialogWindowClass = "#32770";
 
     /// <summary>
-    /// Waits for the dialog to appear, polling rather than sleeping once.
+    /// Waits for the dialog to appear, polling instead of sleeping once.
     /// </summary>
     /// <remarks>
     /// <b>A single sleep is what made this flake by hand.</b> Two runs of the
@@ -611,9 +611,9 @@ internal sealed partial class RealInstallerTests
     /// content, in a fixed order.
     /// </summary>
     /// <remarks>
-    /// <b>A string rather than a snapshot object, so the assertion's failure
+    /// <b>A string and not a snapshot object, so the assertion's failure
     /// message shows what moved.</b> An absent key answers <c>&lt;absent&gt;</c>
-    /// rather than empty, because a key that exists carrying nothing and a key
+    /// and not empty, because a key that exists carrying nothing and a key
     /// that does not exist are different states and this arm has to be able to
     /// tell them apart.
     /// </remarks>
@@ -659,7 +659,7 @@ internal sealed partial class RealInstallerTests
     /// the bytes.
     /// </para>
     /// <para>
-    /// <b>What may differ is named by a rule rather than by a list.</b> An entry
+    /// <b>What may differ is named by a rule and not by a list.</b> An entry
     /// whose bytes differ has to <i>mention the id</i>, in UTF-8 or in UTF-16,
     /// in one of the two packages -- which is what a <c>.nuspec</c>, a Velopack
     /// manifest and a stub's embedded metadata all do. Anything else differing
@@ -798,7 +798,7 @@ internal sealed partial class RealInstallerTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Read out of the package rather than out of the script that wrote
+    /// ⚠️ <b>Read out of the package and not out of the script that wrote
     /// it.</b> <c>ReleaseScriptTests</c> holds what
     /// <c>build/New-Release.ps1</c> passes; this holds what came out the other
     /// end, and the two are different claims -- a `vpk` that silently ignored an
@@ -852,7 +852,7 @@ internal sealed partial class RealInstallerTests
         }
 
         // And the payload the server needs is in there with them, which is what
-        // makes the package an install rather than two executables.
+        // makes the package an install and not two executables.
         await Assert.That(app).Contains("lib/app/payload/payload.json");
     }
 
@@ -896,7 +896,7 @@ internal sealed partial class RealInstallerTests
     /// mechanism working.
     /// </para>
     /// <para>
-    /// <b>It rewrites the ONE entry rather than the title wherever it appears</b>,
+    /// <b>It rewrites the ONE entry and not the title wherever it appears</b>,
     /// for the same reason <see cref="Licensed"/> refuses the shipping title: that
     /// title is <c>BrowserAI</c>, and stripping it from names would turn
     /// <c>BrowserAI.exe</c> and <c>BrowserAI.Server.exe</c> into the same key in
@@ -1073,7 +1073,7 @@ internal sealed partial class RealInstallerTests
     /// root byte-identical. It passed, and nothing would have said so.
     /// </para>
     /// <para>
-    /// <b>Watched red against a live reproduction rather than only a plant.</b>
+    /// <b>Watched red against a live reproduction and not only a plant.</b>
     /// A full suite run on 2026-09-15 with the keyed attribute deliberately put
     /// back reproduced the race and this assertion named <b>sixteen</b> foreign
     /// files in the data root: <c>browsers\reinstall.lock</c>, three
@@ -1084,7 +1084,7 @@ internal sealed partial class RealInstallerTests
     /// hash loop alone had reported that same directory unchanged.
     /// </para>
     /// <para>
-    /// <b>What the install is entitled to leave, named rather than globbed
+    /// <b>What the install is entitled to leave, named and not globbed
     /// loosely:</b> <c>mcp-registration.json</c> at the root, which the hook
     /// writes and which the assertion above requires; and the hook's own rolled
     /// process log, <c>logs\browserai-{yyyyMMdd}-{nnn}.log</c>, matched on its
@@ -1210,7 +1210,7 @@ internal sealed partial class RealInstallerTests
 
     /// <summary>The hook's own rolled process log: <c>browserai-{yyyyMMdd}-{nnn}.log</c>.</summary>
     /// <remarks>
-    /// The shape <c>RollingFileWriter</c> composes, rather than
+    /// The shape <c>RollingFileWriter</c> composes, and not
     /// <c>browserai-*.log</c>. The looser glob would also match this arm's own
     /// planted <c>browserai-planted.log</c> -- which is checked by hash above and
     /// must not be exempted here -- and would let any foreign file called

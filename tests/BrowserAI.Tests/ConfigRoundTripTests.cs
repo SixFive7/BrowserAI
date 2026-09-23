@@ -18,8 +18,8 @@ namespace BrowserAI.Tests;
 /// failure is silent.</b> <c>loadConfig</c> is a bare <c>JSON.parse</c> with no
 /// schema validation, so a renamed or removed key is discarded without a word --
 /// <c>--output-mode</c> was a no-op for its entire life and nobody noticed. This
-/// is the test that makes a key we set and the child ignores a red build rather
-/// than a mystery in production.
+/// is the test that makes a key we set and the child ignores a red build and
+/// not a mystery in production.
 /// </para>
 /// <para>
 /// <b>Two halves, and both are needed.</b> The first walks every leaf of the
@@ -65,9 +65,9 @@ internal sealed class ConfigRoundTripTests
     /// </summary>
     /// <remarks>
     /// <b>Deliberately independent of the published binary and of any process.</b>
-    /// This is a statement about the generator rather than about a run, and
+    /// This is a statement about the generator and not about a run, and
     /// keeping it so is what makes "delete one key and watch it go red" a check
-    /// anyone can perform in one build rather than one build plus a minute of
+    /// anyone can perform in one build instead of one build plus a minute of
     /// ILC.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -93,7 +93,7 @@ internal sealed class ConfigRoundTripTests
                 .ToHashSet(StringComparer.Ordinal);
 
             // This is the half that turns "delete one key from the generator"
-            // red. The list is written down rather than derived, because a
+            // red. The list is written down, not derived, because a
             // derived list shrinks in step with the deletion.
             var dropped = BrowserConfiguration.RequiredSessionOpinions(browser)
                 .Where(path => !written.Contains(path))
@@ -119,7 +119,7 @@ internal sealed class ConfigRoundTripTests
         await Assert.That((string?)Follow(resolved, "browser.launchOptions.channel")).IsEqualTo(BrowserConfiguration.Channel);
         await Assert.That((string?)Follow(resolved, "browser.browserName")).IsEqualTo(BrowserConfiguration.BrowserName);
 
-        // The profile is inside the session directory rather than in
+        // The profile is inside the session directory and not in
         // %LOCALAPPDATA%\ms-playwright-mcp, which is what the key exists for.
         await Assert.That((string?)Follow(resolved, "browser.userDataDir"))
             .IsEqualTo(Path.Combine(session, SessionLayout.ProfileFolderName));
@@ -127,13 +127,13 @@ internal sealed class ConfigRoundTripTests
         await Assert.That((string?)Follow(resolved, "outputDir"))
             .IsEqualTo(Path.Combine(session, SessionLayout.OutputFolderName));
 
-        // `capabilities` replaces rather than merges, so it arriving intact is
+        // `capabilities` replaces and does not merge, so it arriving intact is
         // also the evidence that nothing on the way in wiped it.
         await Assert.That(Follow(resolved, "capabilities")?.ToJsonString())
             .IsEqualTo(new JsonArray([.. BrowserConfiguration.GrantedCapabilities.Select(capability => (JsonNode)capability)]).ToJsonString());
 
-        // And the browser really used the directory, rather than the key merely
-        // surviving the merge.
+        // And the browser really used the directory; the key did not merely
+        // survive the merge.
         await Assert.That(run.ProfileWasUsed).IsTrue();
     }
 
@@ -169,8 +169,8 @@ internal sealed class ConfigRoundTripTests
     /// </para>
     /// <para>
     /// <b>The value is <c>absolute</c> and upstream's default is
-    /// <c>relative</c>.</b> A caller reading a tool result is a model rather
-    /// than a process with a working directory, so a relative pointer names
+    /// <c>relative</c>.</b> A caller reading a tool result is a model, not
+    /// a process with a working directory, so a relative pointer names
     /// nothing it can resolve.
     /// </para>
     /// </remarks>
@@ -206,7 +206,7 @@ internal sealed class ConfigRoundTripTests
     /// filesystem, and a config that lifted them would leave nothing at all.
     /// </para>
     /// <para>
-    /// <b>Written rather than merely omitted, and that is the assertion.</b>
+    /// <b>Written, not merely omitted, and that is the assertion.</b>
     /// <see langword="false"/> is upstream's default, so leaving the key out
     /// produces the same behaviour and says nothing about whether anybody chose
     /// it -- and <see cref="EveryGeneratedOpinionComesBackFromTheChild"/> can
@@ -229,9 +229,9 @@ internal sealed class ConfigRoundTripTests
 
         foreach (var browser in ProvisionedBrowsers.Families)
         {
-            // ⚠️ Both headednesses rather than both modes, 2026-08-20. Session
+            // ⚠️ Both headednesses, not both modes, 2026-08-20. Session
             // modes are gone; what a session's config still varies on is the
-            // window, and it varies per RUN rather than per directory.
+            // window, and it varies per RUN, not per directory.
             foreach (var headed in new[] { false, true })
             {
                 var config = BrowserConfiguration.ForSession(
@@ -271,10 +271,10 @@ internal sealed class ConfigRoundTripTests
     public async Task NothingCanReplaceTheCapabilityListOnTheWayIn()
     {
         // `--caps` and PLAYWRIGHT_MCP_CAPS both REPLACE the config file's
-        // capability list rather than merging with it, so either one silently
+        // capability list instead of merging with it, so either one silently
         // shrinks the tool surface with no error anywhere. The flag is never
         // built and the variable is refused by name -- absent because it is
-        // refused, rather than absent because nobody added it.
+        // refused, not absent because nobody added it.
         await Assert.That(ChildEnvironment.Refused.Contains("PLAYWRIGHT_MCP_CAPS")).IsTrue();
         await Assert.That(ChildEnvironment.Build().ContainsKey("PLAYWRIGHT_MCP_CAPS")).IsFalse();
 
@@ -311,7 +311,7 @@ internal sealed class ConfigRoundTripTests
     /// upstream's response builder wraps every text section in a
     /// <c>### &lt;title&gt;</c> heading before it reaches the wire, so the answer
     /// is Markdown with JSON inside it. Sliced from the first brace to the last
-    /// rather than parsed as a whole -- a heading cannot contain one.
+    /// and not parsed as a whole -- a heading cannot contain one.
     /// </remarks>
     private static JsonObject ResolvedConfig(SessionRun run)
     {

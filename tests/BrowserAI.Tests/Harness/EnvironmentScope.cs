@@ -34,7 +34,7 @@ namespace BrowserAI.Tests.Harness;
 /// channel to have instead: the reader is another process.
 /// </para>
 /// <para>
-/// <b>The rule is a scan rather than a sentence now</b> --
+/// <b>The rule is a scan and not a sentence now</b> --
 /// <see cref="BrowserAI.Tests.HouseRuleTests.EveryArmInAFileThatOverridesTheEnvironmentRunsBesideNothing"/>
 /// reads the tree and refuses a keyed attribute or a missing one. This paragraph
 /// is what it enforces, not what has to be remembered.

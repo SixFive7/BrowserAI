@@ -14,7 +14,7 @@ namespace BrowserAI.Tests.Harness;
 /// Every directory the suite creates for test data lands under <c>.work\</c>,
 /// per this repository's own rules, and never in <c>%TEMP%</c>. Deletion is
 /// best-effort: a directory a previous run left behind is reclaimed by the sweep
-/// in <see cref="ScratchRoot"/> rather than failing the run that finds it.
+/// in <see cref="ScratchRoot"/> instead of failing the run that finds it.
 /// </para>
 /// <para>
 /// ⚠️ <b>Corrected 2026-08-29 (previously "Everything the suite writes lands
@@ -70,12 +70,12 @@ internal sealed class ScratchDirectory : IDisposable
     /// and never had one to lose: the only recorded violation of that rule in
     /// this repository was in test code -- <see cref="ScratchRoot"/>'s reclaim
     /// pass, which used the framework primitive until 2026-08-17 and was caught
-    /// by a manual audit rather than by anything mechanical.
+    /// by a manual audit and not by anything mechanical.
     /// </para>
     /// <para>
     /// It returns the survivors instead of throwing so that both callers are
     /// honest ones: a teardown discards them, because a leftover directory is
-    /// the next run's reclaim problem rather than this run's failure, and a test
+    /// the next run's reclaim problem and not this run's failure, and a test
     /// whose next assertion depends on the directory being gone asserts on the
     /// list.
     /// </para>
@@ -97,7 +97,7 @@ internal sealed class ScratchDirectory : IDisposable
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Bounded and retried on the <i>whole</i> tree rather than per file,
+    /// <b>Bounded and retried on the <i>whole</i> tree and not per file,
     /// because a terminated process is signalled before the kernel has torn its
     /// handles down:</b> <c>TerminateProcess</c> returning is not proof that a
     /// mapped file has been released, and neither is a browser vanishing from
@@ -111,7 +111,7 @@ internal sealed class ScratchDirectory : IDisposable
     /// third about to be typed into <c>FirefoxSessionTests</c> -- which is the
     /// shape <see cref="TreeDelete"/>'s own remarks name as how two callers end
     /// up with one behaviour and the third with another, with nothing reporting
-    /// the difference. <paramref name="patience"/> stays a parameter rather than
+    /// the difference. <paramref name="patience"/> stays a parameter instead of
     /// becoming a constant here: it is a hang detector belonging to the caller's
     /// scenario, and nothing may assert on it.
     /// </para>
@@ -140,8 +140,8 @@ internal sealed class ScratchDirectory : IDisposable
 
     /// <inheritdoc />
     public void Dispose() =>
-        // Best-effort by design: TreeDelete collects what would not go rather
-        // than throwing, so a browser or a log handle that has not let go yet
+        // Best-effort by design: TreeDelete collects what would not go instead
+        // of throwing, so a browser or a log handle that has not let go yet
         // becomes ScratchRoot's sweep problem instead of a failed test. That is
         // also why there is no try/catch left here -- there is nothing to catch.
         _ = RemoveTree(Path);

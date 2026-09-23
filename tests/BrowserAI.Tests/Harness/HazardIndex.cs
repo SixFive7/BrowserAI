@@ -25,7 +25,7 @@ internal sealed record HazardRow(int Line, string Area, string Hazard, string St
     /// the predicate the tally in <c>TODO.md</c> counts.
     /// </summary>
     /// <remarks>
-    /// <b>Named rather than inlined, because getting this predicate wrong is the
+    /// <b>Named and not inlined, because getting this predicate wrong is the
     /// specific accident this whole mechanism exists for.</b> A re-count once
     /// measured <i>rows that are <c>open</c> at all</i> -- a different question
     /// over the same table -- and "corrected" a figure that had been right. Both
@@ -50,7 +50,7 @@ internal sealed record HazardRow(int Line, string Area, string Hazard, string St
 /// satisfiable while they are.
 /// </para>
 /// <para>
-/// <b>The row shape is asserted rather than assumed</b>, by
+/// <b>The row shape is asserted, not assumed</b>, by
 /// <c>HazardIndexTests.TheTableIsStillTheShapeThisReads</c>: a renamed column or
 /// a row rewritten to seven cells makes every check here pass over nothing,
 /// silently, which is the failure mode of every test that reads a document.
@@ -69,7 +69,7 @@ internal static partial class HazardIndex
     /// field before the first pipe and another after the last.
     /// </summary>
     /// <remarks>
-    /// <b>Named rather than written at each reader, because a line that splits
+    /// <b>Named and not written at each reader, because a line that splits
     /// into any other number is dropped in silence.</b> That is the one failure
     /// this table's counting mechanism cannot describe: a skipped line is absent
     /// from the `open` tally and the `closed` tally at once, so
@@ -106,7 +106,7 @@ internal static partial class HazardIndex
             // table -- which includes the header, the separator, and the
             // three-column table above the index explaining what each column is
             // for. It ALSO includes a row somebody wrote a bare pipe into, and
-            // that one is a defect rather than a non-row; the guard named on
+            // that one is a defect and not a non-row; the guard named on
             // Fields is what tells the two apart out loud.
             var cells = SplitRow(line);
 
@@ -136,7 +136,7 @@ internal static partial class HazardIndex
     /// show up as the two counts disagreeing.
     /// </para>
     /// <para>
-    /// <b>It begins at the header rather than at the first pipe in the file</b>,
+    /// <b>It begins at the header and not at the first pipe in the file</b>,
     /// because <c>HAZARDS.md</c> opens with a three-column table describing the
     /// index's own columns. Those lines split into five fields perfectly
     /// legitimately, and a guard that read them would have to be taught an
@@ -181,7 +181,7 @@ internal static partial class HazardIndex
 
     /// <summary>
     /// Splits one Markdown table line into its fields, honouring <c>\|</c> as a
-    /// literal pipe rather than a separator.
+    /// literal pipe and not a separator.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -189,7 +189,7 @@ internal static partial class HazardIndex
     /// here</b>: inside a table row a backslash-escaped pipe is content and the
     /// renderer prints one pipe. Reading it the same way means the parser and
     /// the rendered file agree about where a cell ends, and it is what makes the
-    /// guard's advice -- <i>write it <c>\|</c></i> -- true rather than a
+    /// guard's advice -- <i>write it <c>\|</c></i> -- true and not a
     /// suggestion that moves the row from one silent skip to another.
     /// </para>
     /// <para>
@@ -269,7 +269,7 @@ internal static partial class HazardIndex
         }
 
         // Compared case-insensitively and then returned as the CANONICAL
-        // spelling rather than lower-cased and returned: callers switch on
+        // spelling instead of lower-cased and returned: callers switch on
         // HazardIndex.Open and HazardIndex.Closed, so the answer has to be one of
         // those two strings and not merely equal to one ignoring case.
         var word = plain.Split(' ', '\t')[0].Trim(',', '.', ':', ';');

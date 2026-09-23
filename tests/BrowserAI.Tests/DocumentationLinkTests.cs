@@ -51,8 +51,8 @@ namespace BrowserAI.Tests;
 /// hand, which is the mechanism this repository exists to replace.
 /// <see cref="EveryLinkFragmentResolvesToAHeadingThatExists"/> is that half, and
 /// <see cref="TheSlugRuleIsTheOneGitHubApplies"/> is what keeps the fear above
-/// from coming true -- the slug rule is asserted against worked examples rather
-/// than trusted.
+/// from coming true -- the slug rule is asserted against worked examples and
+/// not trusted.
 /// </para>
 /// </remarks>
 internal sealed partial class DocumentationLinkTests
@@ -74,7 +74,7 @@ internal sealed partial class DocumentationLinkTests
     /// from becoming a hiding place.</b> It asserts the repository still tracks
     /// no file of any of these kinds -- so the exclusion is vacuous, and the day
     /// somebody adds an image, that test goes red and this list must lose the
-    /// entry rather than quietly excusing a real broken link.
+    /// entry instead of quietly excusing a real broken link.
     /// </para>
     /// </remarks>
     private static readonly string[] NotThisRepositorysKind =
@@ -130,9 +130,9 @@ internal sealed partial class DocumentationLinkTests
             {
                 // A same-file fragment resolves against the document it is
                 // written in -- and a file with no headings has nothing for it to
-                // resolve to, so one in a .cs or a .ps1 is reported rather than
+                // resolve to, so one in a .cs or a .ps1 is reported and not
                 // waved through. There are none today; this is the rule with no
-                // hiding place in it rather than an exception waiting to be
+                // hiding place in it, not an exception waiting to be
                 // added.
                 if (!IsMarkdown(file))
                 {
@@ -210,7 +210,7 @@ internal sealed partial class DocumentationLinkTests
         // the number above is what the scan returned. The total is separately
         // asserted against the sentence in `CLAUDE.md` by
         // `RecordedCountTests.TheFragmentCountInClaudeMdIsWhatTheScanFinds`, so
-        // it is now a red build rather than a stamp somebody has to remember. The floors are a long way under
+        // it is now a red build and not a stamp somebody has to remember. The floors are a long way under
         // these numbers on purpose: they exist to catch a narrowing that empties
         // the scan, not to pin counts that move whenever a document is written.
         //
@@ -235,7 +235,7 @@ internal sealed partial class DocumentationLinkTests
     [Arguments("The scope boundary", "the-scope-boundary")]
     // ⚠️ THIS ONE KEEPS ITS EM DASH ON PURPOSE, and is the reason the
     // 2026-09-23 dash sweep has a named exception. What it pins is that GitHub
-    // DROPS the character rather than hyphenating it -- the branch of the rule
+    // DROPS the character instead of hyphenating it -- the branch of the rule
     // that made 105 anchors move when the prose was swept. Rewriting it to two
     // hyphens would leave that branch unexercised, which is the only thing this
     // worked example is for. *(It mirrored CLAUDE.md's own heading until that
@@ -253,7 +253,7 @@ internal sealed partial class DocumentationLinkTests
     public async Task TheSlugRuleIsTheOneGitHubApplies(string heading, string expected)
     {
         // The fear this file used to state -- "a wrong slug rule would report
-        // failures that are not real" -- is answered here rather than by
+        // failures that are not real" -- is answered here and not by
         // confidence. Every case is a heading this repository actually carries
         // or a shape one of them is made of, and the two-hyphen answers are the
         // ones a hand-written rule gets wrong: an em-dash and an arrow are
@@ -306,7 +306,7 @@ internal sealed partial class DocumentationLinkTests
         // Corrected 2026-08-17 (previously IsGreaterThan(1000)). The
         // documentation restructure deleted the whole implementation plan, and
         // the corpus went 1413 -> 725 in one commit -- so the floor was
-        // measuring the plan rather than the corpus this guards. The number is
+        // measuring the plan and not the corpus this guards. The number is
         // deliberately a long way under 725: it exists to catch a narrowing that
         // empties the scan, not to pin a count that legitimately moves whenever
         // a document is added or retired. The RATIO below is the real
@@ -378,7 +378,7 @@ internal sealed partial class DocumentationLinkTests
     public async Task TheAssetExclusionHidesNothing()
     {
         // NotThisRepositorysKind is justified by a fact about the tree, not by
-        // taste, so the fact is asserted rather than remembered.
+        // taste, so the fact is asserted, not remembered.
         //
         // ⚠️ THE FACT CHANGED ON 2026-09-16 AND THE OLD ONE HAD ALREADY GONE
         // QUIET. It read "the repository tracks no file of these kinds", and its
@@ -407,7 +407,7 @@ internal sealed partial class DocumentationLinkTests
         await Assert.That(string.Join(Environment.NewLine, stray)).IsEmpty();
 
         // And the place it excuses is a real one with things in it, so the
-        // exemption above is narrow rather than vacuous.
+        // exemption above is narrow, not vacuous.
         var kept = Walk()
             .Count(path => path.StartsWith(directory, StringComparison.OrdinalIgnoreCase)
                 && NotThisRepositorysKind.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase));
@@ -433,7 +433,7 @@ internal sealed partial class DocumentationLinkTests
     /// the front page of the repository and nothing would have said so.
     /// </para>
     /// <para>
-    /// <b>Markdown files only, and the line is principled rather than
+    /// <b>Markdown files only, and the line is principled, not
     /// convenient.</b> A <c>.md</c> file's link is a link. A <c>.cs</c> file's
     /// string literal is data -- <c>LosslessPassthroughTests</c> carries an
     /// upstream tool result naming a screenshot that this repository is forbidden
@@ -529,14 +529,14 @@ internal sealed partial class DocumentationLinkTests
         await Assert.That(string.Join(Environment.NewLine, Unresolved(found))).IsEmpty();
 
         // Not vacuous. The front page's own icon is one of these, so a scan that
-        // found nothing would be a scan that stopped reading rather than a tree
+        // found nothing would be a scan that stopped reading and not a tree
         // with nothing in it.
         await Assert.That(found.Count).IsGreaterThan(4);
     }
 
     /// <summary>
     /// Every reference in one Markdown file that names a file in this repository
-    /// rather than a document: an image, an HTML attribute, or a link whose
+    /// and not a document: an image, an HTML attribute, or a link whose
     /// target is one of <see cref="NotThisRepositorysKind"/>.
     /// </summary>
     /// <param name="file">The Markdown file to read.</param>
@@ -632,14 +632,14 @@ internal sealed partial class DocumentationLinkTests
     }
 
     /// <summary>
-    /// Whether a path names a record this repository quotes rather than a
+    /// Whether a path names a record this repository quotes and not a
     /// document it writes.
     /// </summary>
     /// <remarks>
-    /// <b>One directory, named rather than inferred.</b> Everything under
+    /// <b>One directory, named, not inferred.</b> Everything under
     /// <c>docs/ledger/</c> is a snapshot taken whole from somewhere else and
     /// never edited afterwards; nothing else in the tree has that property, and
-    /// the day something does it gets named here on purpose rather than
+    /// the day something does it gets named here on purpose instead of
     /// acquiring the exemption by where it happens to sit.
     /// </remarks>
     /// <param name="path">A full or relative path.</param>
@@ -660,7 +660,7 @@ internal sealed partial class DocumentationLinkTests
     /// An HTML <c>src</c> or <c>href</c> attribute's value.
     /// </summary>
     /// <remarks>
-    /// <b>The attribute rather than the tag</b>, because the tags that can carry
+    /// <b>The attribute and not the tag</b>, because the tags that can carry
     /// one are not a closed set -- <c>img</c>, <c>a</c>, <c>source</c>,
     /// <c>image</c> -- and a scan anchored on a tag name is one tag away from
     /// seeing nothing.
@@ -685,7 +685,7 @@ internal sealed partial class DocumentationLinkTests
     /// treats it as a link, and this scan reported it as a broken one.
     /// </para>
     /// <para>
-    /// <b>It loses no coverage, and that was measured rather than argued.</b>
+    /// <b>It loses no coverage, and that was measured, not argued.</b>
     /// Counted over the whole scanned corpus on 2026-08-26: <b>1,304</b> link
     /// targets raw, <b>1,300</b> after blanking, and all <b>four</b> of the
     /// difference are the same quoted example -- upstream's snapshot line, in
@@ -693,10 +693,10 @@ internal sealed partial class DocumentationLinkTests
     /// link in the tree is hidden. The pairing is what makes it safe: the pattern
     /// requires an opening and a closing backtick on the same line, so an
     /// unpaired one matches nothing and blanks nothing, and the pattern begins at
-    /// the closing bracket rather than the opening one -- so backticks around a
+    /// the closing bracket and not the opening one -- so backticks around a
     /// link's <i>text</i>, which is the commonest shape in this repository's
-    /// prose, sit entirely outside what it looks at. (Spelled in words rather
-    /// than shown, for the reason <see cref="MarkdownLink"/>'s own remark gives:
+    /// prose, sit entirely outside what it looks at. (Spelled in words and
+    /// not shown, for the reason <see cref="MarkdownLink"/>'s own remark gives:
     /// a paragraph here that writes the shape out becomes an occurrence of it,
     /// and this one did -- the scan named this very line.) Blanking is by equal-length
     /// spaces so that every match index still lands in the raw line the offender
@@ -709,12 +709,12 @@ internal sealed partial class DocumentationLinkTests
     /// two characters <c>\r</c> belonged, in the path
     /// <c>&lt;browsers root&gt;\reinstall.lock</c>. That split the line, left one
     /// half with unbalanced spans, and shifted every pairing on it, so a genuine
-    /// link went dark. It was a pre-existing defect rather than a limit of this
+    /// link went dark. It was a pre-existing defect, not a limit of this
     /// approach -- a CommonMark renderer pairs single backticks left to right
     /// exactly as this does, so GitHub had been rendering that line wrong all
-    /// along -- and it was repaired rather than accommodated. <b>Anything that
+    /// along -- and it was repaired, not accommodated. <b>Anything that
     /// hides a link is a defect somewhere</b>; the count above is what says which
-    /// one, and re-running it is a loop over the corpus rather than a judgement.
+    /// one, and re-running it is a loop over the corpus and not a judgement.
     /// </para>
     /// <para>
     /// <b>The alternative was to reword the quoted text</b>, and it was rejected:
@@ -890,8 +890,8 @@ internal sealed partial class DocumentationLinkTests
     /// <remarks>
     /// <para>
     /// Separated from the file read so that the collision and fencing rules can
-    /// be asserted against a literal rather than against a scratch file -- the
-    /// rules are what a mis-port would get wrong, and they are worth stating in
+    /// be asserted against a literal and not against a scratch file -- the
+    /// rules are what a mis-port would get wrong, and they are stated in
     /// a test that cannot fail for a reason to do with the disk.
     /// </para>
     /// <para>
@@ -987,8 +987,8 @@ internal sealed partial class DocumentationLinkTests
     /// itself, which made this file an offender in its own scan -- with the
     /// ellipsis inside it as the target that did not resolve. It is the same
     /// trap <c>NeverByImageNameTests</c> composes its needles at run time to
-    /// avoid, and the honest way out is to describe the syntax rather than to
-    /// exclude this file, because an exclusion here would be the one place in
+    /// avoid, and the honest way out is to describe the syntax instead of
+    /// excluding this file, because an exclusion here would be the one place in
     /// the repository where a broken link is allowed to live.
     /// </para>
     /// <para>

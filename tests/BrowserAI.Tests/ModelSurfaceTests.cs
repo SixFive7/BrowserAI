@@ -38,7 +38,7 @@ internal sealed class ModelSurfaceTests
 {
     /// <summary>
     /// Every authored tool's argument set and its required subset, written
-    /// here rather than read from the class under test.
+    /// here and not read from the class under test.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -48,8 +48,8 @@ internal sealed class ModelSurfaceTests
     /// itself become the most recent thing that happened, and writing an entry
     /// would mean taking the per-directory gate, which a session another live
     /// BrowserAI is driving would refuse -- which is the case it exists for. The
-    /// row is here so that a future <c>why</c> added to it is a red build rather
-    /// than a silent widening.
+    /// row is here so that a future <c>why</c> added to it is a red build and
+    /// not a silent widening.
     /// </para>
     /// <para>
     /// ⚠️ <b>Changed 2026-08-20: <c>mode</c> is gone from <c>init</c> and
@@ -60,7 +60,7 @@ internal sealed class ModelSurfaceTests
     /// </para>
     /// <para>
     /// <b>Three of these differ from §H.2's table, and the difference is
-    /// deliberate rather than drift.</b> <c>browserai_resume</c> ships
+    /// deliberate, not drift.</b> <c>browserai_resume</c> ships
     /// <c>tracing</c> and <c>consoleLevel</c>, which §H.2 gives only to
     /// <c>init</c>. The rule §H.2 states for refusing an argument on
     /// <c>resume</c> is that <i>"a profile is browser-specific"</i> -- it is
@@ -107,7 +107,7 @@ internal sealed class ModelSurfaceTests
     /// <b>Not a whole-string comparison</b> -- the whole point of the rewrite is
     /// that the string changes. This is the record of <i>why</i> a sentence is
     /// there: a phrase is added the moment anyone decides upstream's wording is
-    /// load-bearing, and a rewrite that drops it fails rather than quietly
+    /// load-bearing, and a rewrite that drops it fails instead of quietly
     /// removing the warning a model was acting on.
     /// </para>
     /// <para>
@@ -127,7 +127,7 @@ internal sealed class ModelSurfaceTests
         // annotations") -- "blocks on a human. A model that does not know this
         // schedules it and waits forever." The tool is withheld from the surface
         // now, so there is no description of it for a phrase to survive in, and
-        // the fact the phrase protected is answered by removal rather than by
+        // the fact the phrase protected is answered by removal and not by
         // warning. Keeping the row would have failed the test below on its
         // "not in the advertised surface at all" arm, which is the arm that
         // exists to stop exactly this becoming a silent skip.
@@ -137,10 +137,10 @@ internal sealed class ModelSurfaceTests
         ("browser_network_request", "Use the number from browser_network_requests"),
 
         // Says the config is the RESOLVED one, which is the whole reason to call
-        // it rather than to read the file.
+        // it and not to read the file.
         ("browser_get_config", "after merging CLI options, environment variables and config file"),
 
-        // Where the credentials go, said in the description rather than only in
+        // Where the credentials go, said in the description and not only in
         // the schema.
         ("browser_storage_state", "cookies, local storage"),
     ];
@@ -164,7 +164,7 @@ internal sealed class ModelSurfaceTests
     /// everywhere except where it was required.
     /// </para>
     /// <para>
-    /// <b>Phrases rather than a whole-string comparison</b>, for the same reason
+    /// <b>Phrases and not a whole-string comparison</b>, for the same reason
     /// <see cref="LoadBearingUpstreamPhrases"/> is: the text will be reworded,
     /// and what must survive a rewording is the fact, not the sentence.
     /// </para>
@@ -182,15 +182,15 @@ internal sealed class ModelSurfaceTests
         // nothing about what the directory CONTAINS is looked at, so pointing a
         // session at a real profile still works and still does what the rest of
         // this list warns about. This is the rewording the remark above
-        // anticipated, and the phrase moved WITH the fact rather than the fact
+        // anticipated, and the phrase moved WITH the fact instead of the fact
         // being trimmed to keep the phrase.
         "nothing else about it is validated",
         "live cookies and logins",
 
-        // The retention policy, stated where the session is created rather than
+        // The retention policy, stated where the session is created and not
         // only where one is resumed or listed. The tool name is part of the
         // requirement: a retention policy with no way to act on it is a fact
-        // rather than guidance.
+        // and not guidance.
         "nothing here expires",
         "never deletes a session directory",
         SessionToolSurface.Destroy,
@@ -202,13 +202,13 @@ internal sealed class ModelSurfaceTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Written down rather than read off
+    /// <b>Written down and not read off
     /// <see cref="SessionToolSurface.NewlyGrantedTools"/>.</b> Derived from the
     /// product's own list this would agree with it by construction and could
     /// never fail -- the same reason the mode table this replaced kept a
     /// hand-written expectation row. What it can catch: a capability quietly
     /// dropped from <see cref="BrowserConfiguration.GrantedCapabilities"/>, an
-    /// upstream rename, and a product list edited to match a surface rather than
+    /// upstream rename, and a product list edited to match a surface instead of
     /// the other way round.
     /// </para>
     /// <para>
@@ -245,7 +245,7 @@ internal sealed class ModelSurfaceTests
     /// description, <c>resume</c>'s result, the refusal a bad <c>mode</c>
     /// produced, the generated child config, and the suite's own expectation
     /// table. Five of the six no longer exist, and the sixth renders nothing
-    /// that varies. It was <b>replaced rather than deleted</b>: the failure it
+    /// that varies. It was <b>replaced, not deleted</b>: the failure it
     /// existed to catch -- a capability decided in one place and rendered in
     /// another, drifting silently -- is exactly the failure a grant of ten
     /// previously-unreachable tools can reintroduce.
@@ -368,7 +368,7 @@ internal sealed class ModelSurfaceTests
         // judgements about nothing. The pair that moved this base by ONE on the
         // way in moved it by ONE on the way out, for the mirror-image reason:
         // only the `allow` was ever counted here. Re-counted off the
-        // regenerated snapshot rather than decremented.
+        // regenerated snapshot, not decremented.
         //
         // ⚠️ The base was 62 from 2026-09-17 (previously 61): the dated
         // playwright-core override added browser_emulate_media, `core` and so
@@ -380,7 +380,7 @@ internal sealed class ModelSurfaceTests
         // 0.0.81 added browser_webmcp_list and browser_webmcp_call, and the two
         // were judged in OPPOSITE directions on the same day -- `allow` for the
         // list, `deny` for the call, on liveness -- so upstream's pair moved this
-        // base by one rather than by two. That asymmetry is the whole reason the
+        // base by one and not by two. That asymmetry is the whole reason the
         // number is stated: a base one higher than the surface warrants would
         // mean a denial had stopped withholding, and one lower would mean a
         // tool had never arrived.
@@ -418,7 +418,7 @@ internal sealed class ModelSurfaceTests
         await Assert.That(ServerInstructions.CharacterCount).IsGreaterThan(400);
 
         // The byte count is still computed, and is still the larger of the two.
-        // It is reported rather than gated, so that the figure a wire capture
+        // It is reported, not gated, so that the figure a wire capture
         // shows is not a figure nothing in this repository names.
         await Assert.That(ServerInstructions.ByteCount).IsGreaterThanOrEqualTo(ServerInstructions.CharacterCount);
 
@@ -475,14 +475,14 @@ internal sealed class ModelSurfaceTests
     /// answer-rewrite can reach because nothing in this server said it.
     /// </para>
     /// <para>
-    /// <b>Here rather than on a tool description, for this file's standing
+    /// <b>Here and not on a tool description, for this file's standing
     /// reason.</b> <c>instructions</c> is the one model-facing string BrowserAI
     /// writes; every upstream description passes through byte for byte, and
     /// there is no tool to hang it on anyway -- the mistake is made <i>instead
     /// of</i> calling a tool.
     /// </para>
     /// <para>
-    /// <b>The wording is asserted verbatim rather than by phrase, and that is
+    /// <b>The wording is asserted verbatim and not by phrase, and that is
     /// deliberate for this one sentence.</b> The maintainer wrote it; the two
     /// halves -- <i>never install any yourself</i> and <i>this is the repair</i> --
     /// are each useless without the other, and a re-draft that keeps one is the
@@ -499,18 +499,18 @@ internal sealed class ModelSurfaceTests
 
         await Assert.That(ServerInstructions.Text).Contains(Sentence);
 
-        // The sentence names the tool that actually exists, rather than a name
+        // The sentence names the tool that actually exists, and not a name
         // somebody typed: a repair a model cannot call is worse than none.
         await Assert.That(Sentence).Contains(SessionToolSurface.ReinstallBrowser);
 
-        // ⚠️ The budget, asserted again HERE rather than left to the test above,
+        // ⚠️ The budget, asserted again HERE and not left to the test above,
         // because this is the change that spends it. The client cuts at 2,048
         // UTF-16 characters with nothing reported, so a sentence added past the
         // cut is a sentence nobody has ever read -- which is the exact failure it
         // was added to prevent, wearing a green suite.
         await Assert.That(ServerInstructions.CharacterCount).IsLessThanOrEqualTo(ServerInstructions.MaximumCharacters);
 
-        // And it survives the wire, rather than only the constant.
+        // And it survives the wire, and not only the constant.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync();
 
         var initialize = await rig.Client.RoundTripAsync("initialize", new JsonObject
@@ -538,7 +538,7 @@ internal sealed class ModelSurfaceTests
     /// description passes through byte for byte. So this asserts the sentence is
     /// in the <c>instructions</c> <i>and</i> that the tool's own description is
     /// still upstream's bytes: a future edit that moves it onto the tool fails
-    /// here rather than passing on the half it satisfied.
+    /// here instead of passing on the half it satisfied.
     /// </para>
     /// <para>
     /// ⚠️ <b>Re-measured 2026-09-14 and the required phrases changed with it.</b>
@@ -557,7 +557,7 @@ internal sealed class ModelSurfaceTests
     /// direction that costs money.
     /// </para>
     /// <para>
-    /// <b>The phrases are asserted rather than the whole sentence.</b> Wording is
+    /// <b>The phrases are asserted and not the whole sentence.</b> Wording is
     /// the maintainer's to tune; what must survive a re-draft is that the model
     /// is told the parameter's name, that there is <b>no</b> ceiling, and that
     /// <c>filename</c> is the way to pay nothing -- which is the actionable half
@@ -640,11 +640,11 @@ internal sealed class ModelSurfaceTests
         //
         // ⚠️ Corrected again, later the same day: minus whatever this build
         // withholds, which is one tool. Through the product's own predicate
-        // rather than `- 1`, so the day the decision is reversed this follows it.
+        // and not `- 1`, so the day the decision is reversed this follows it.
         //
         // ⚠️ Corrected 2026-09-15 (previously `- 1`): it is two tools now --
         // `browser_annotate` and `browser_webmcp_call`, both on liveness -- and
-        // the subtrahend is read off the file rather than typed, so the arm
+        // the subtrahend is read off the file and not typed, so the arm
         // states a relationship and the file states the number.
         var advertisedUpstream = UpstreamSurface.SnapshotDescriptions()
             .Count(entry => !RepositoryVerdicts.Committed.IsWithheldFromTheSurface(entry.Name));
@@ -690,7 +690,7 @@ internal sealed class ModelSurfaceTests
         // below exists: both required sentences are at the END of the string, so
         // an overflow deletes exactly the two things the charter demanded be
         // present. Together with EveryToolDescriptionFitsTheSameBudget that is a
-        // red build rather than a warning nobody reads.
+        // red build and not a warning nobody reads.
         await Assert.That(description.Length).IsLessThanOrEqualTo(SessionToolSurface.DescriptionMaximumCharacters);
     }
 
@@ -749,7 +749,7 @@ internal sealed class ModelSurfaceTests
     /// two descriptions where there is room for it.
     /// </para>
     /// <para>
-    /// <b>Phrases rather than whole sentences.</b> The wording is not the
+    /// <b>Phrases and not whole sentences.</b> The wording is not the
     /// maintainer's the way the browser-installation sentence is, so a re-draft
     /// should be free; what must survive one is that something says nothing else
     /// deletes a session, that the caller is the one who does, and that a login
@@ -784,7 +784,7 @@ internal sealed class ModelSurfaceTests
         (SessionToolSurface.Init, "promptly when it held a login"),
 
         // And where it is discharged, with the reason a login is the urgent
-        // case: the cookies are in the profile rather than in anything a tool
+        // case: the cookies are in the profile and not in anything a tool
         // call put there.
         (SessionToolSurface.Destroy, "the agent that created a session destroys it"),
         (SessionToolSurface.Destroy, "cookies and logins live in the profile"),
@@ -814,11 +814,11 @@ internal sealed class ModelSurfaceTests
     /// <see cref="EveryUpstreamDescriptionArrivesUnchangedAndTheWithheldToolDoesNotArriveAtAll"/>
     /// holds it again. The second assertion here is that half: the sentence is
     /// on <c>browserai_init</c> <i>and</i> the upstream tool is still upstream's
-    /// own bytes, so the instinctive repair fails rather than passing on the
+    /// own bytes, so the instinctive repair fails instead of passing on the
     /// half it satisfied.
     /// </para>
     /// <para>
-    /// <b>On <c>browserai_init</c> rather than in the <c>instructions</c>, and
+    /// <b>On <c>browserai_init</c> and not in the <c>instructions</c>, and
     /// the budget decided that.</b> The instructions string had <b>26
     /// characters</b> of the client's 2,048 left when this went in; the sentence
     /// is beside <i>the directory IS the session</i>, which is the claim it
@@ -856,7 +856,7 @@ internal sealed class ModelSurfaceTests
 
     /// <summary>
     /// Destroying a session takes everything in the directory with it, said
-    /// before it runs rather than reported after.
+    /// before it runs and not reported after.
     /// </summary>
     /// <remarks>
     /// <b>The screenshots are the case worth naming.</b> A model that has spent
@@ -905,7 +905,7 @@ internal sealed class ModelSurfaceTests
     /// about it concludes the session is pinned where it was created.
     /// </para>
     /// <para>
-    /// <b>The copy half is a warning rather than a capability.</b> Resume
+    /// <b>The copy half is a warning and not a capability.</b> Resume
     /// already detects a copy and says so <i>afterwards</i>; this says what it
     /// costs <i>before</i>, which is a second directory holding the same live
     /// logins with nothing tracking it.
@@ -936,11 +936,11 @@ internal sealed class ModelSurfaceTests
     /// named one per line.
     /// </summary>
     /// <remarks>
-    /// <b>Off the wire rather than off the constants</b>, for this file's
+    /// <b>Off the wire and not off the constants</b>, for this file's
     /// standing reason: these strings are assembled from concatenated constants
     /// and interpolated tables, and a sentence that exists in source and never
     /// reaches <c>tools/list</c> is the failure the assertion is for. A surface
-    /// name that is not on the wire at all is reported as a loss rather than
+    /// name that is not on the wire at all is reported as a loss instead of
     /// throwing, so one renamed tool does not hide the other rows.
     /// </remarks>
     /// <param name="run">The published slice's own <c>initialize</c> and <c>tools/list</c>.</param>
@@ -1030,9 +1030,9 @@ internal sealed class ModelSurfaceTests
     /// <b>Hard failure at 100%, and no warning tier -- deliberately.</b> The
     /// recorded argument against a headroom gate stands and is not contradicted
     /// here: that argument was against failing <i>below</i> 100%, because a
-    /// fourth session mode should fail on the six-consumer line rather than on a
+    /// fourth session mode should fail on the six-consumer line and not on a
     /// budget line. This fails only at the point where the client starts
-    /// discarding text, which is a broken state rather than a tight one.
+    /// discarding text, which is a broken state, not a tight one.
     /// </para>
     /// <para>
     /// <b>The per-string reading is MEASURED -- see
@@ -1042,7 +1042,7 @@ internal sealed class ModelSurfaceTests
     /// have settled it").</i> The experiment ran on 2026-08-18 against Claude
     /// Code 2.1.234, reading the <c>tools</c> array the client sends to the
     /// Messages API: the cap is per string, it is <b>2,048 UTF-16 characters</b>
-    /// rather than bytes, and there is no per-tool and no whole-surface total.
+    /// and not bytes, and there is no per-tool and no whole-surface total.
     /// <c>browserai_init</c>'s whole entry -- 3,360 bytes as the client sends it --
     /// arrives intact, so it was never the casualty the old note feared.
     /// </para>
@@ -1085,7 +1085,7 @@ internal sealed class ModelSurfaceTests
 
             // Reported, never asserted. See the ⚠️ paragraph in the remarks.
             //
-            // ⚠️ Serialised through Unminified rather than ToJsonString(), and it
+            // ⚠️ Serialised through Unminified and not ToJsonString(), and it
             // is not a nicety: the default encoder is JavaScriptEncoder.Default,
             // which escapes every non-ASCII character to \uXXXX and would report
             // `browserai_init` at 3,614 bytes for a 3,428-byte entry. That is a
@@ -1121,12 +1121,12 @@ internal sealed class ModelSurfaceTests
         // Not vacuous, in each surface separately. A rewrite that stopped
         // injecting `session`, or a capture that returned an empty tool array,
         // would leave every assertion above green over nothing -- which is the
-        // standing failure mode of a test that enumerates rather than names.
+        // standing failure mode of a test that enumerates and does not name.
         await Assert.That(measured.Count(entry => entry.Surface is "instructions")).IsEqualTo(1);
         await Assert.That(measured.Count(entry => entry.Surface is "tool")).IsEqualTo(run.ToolNames.Count);
         await Assert.That(measured.Count(entry => entry.Surface is "parameter")).IsGreaterThan(100);
 
-        // And every one of them is a real string rather than an absent member
+        // And every one of them is a real string and not an absent member
         // counted as zero: an empty description would satisfy the budget for
         // ever.
         await Assert.That(measured.Count(entry => entry.Gated is 0)).IsEqualTo(0);
@@ -1179,7 +1179,7 @@ internal sealed class ModelSurfaceTests
     /// Two of the three are the client's measured cap; the parameter surface is a
     /// <b>house limit</b> the client does not impose (20,000 characters measured
     /// through intact @ 2.1.234), and it stays a separate constant so that the
-    /// difference is visible where it is applied rather than only in prose.
+    /// difference is visible where it is applied and not only in prose.
     /// </remarks>
     private static int BudgetFor(string surface) => surface switch
     {
@@ -1289,7 +1289,7 @@ internal sealed class ModelSurfaceTests
 
             var rewritten = (string?)advertised[name]?["description"] ?? string.Empty;
 
-            // Unchanged, asserted as equality rather than as a prefix. The
+            // Unchanged, asserted as equality and not as a prefix. The
             // append hook was the only thing that ever made these differ and it
             // is gone (`SessionToolSurface.AppendModeNote`, deleted the same
             // day), so equality is now true and is the stronger claim: a prefix
@@ -1337,7 +1337,7 @@ internal sealed class ModelSurfaceTests
     [Test]
     public async Task NoConditionalCompilationReachesTheEnforcementPath()
     {
-        // A property of the artifact rather than of the source: the decision a
+        // A property of the artifact and not of the source: the decision a
         // released binary takes must be the decision the suite took. A `#if
         // DEBUG` here would make every test above evidence about a build nobody
         // ships.
@@ -1347,7 +1347,7 @@ internal sealed class ModelSurfaceTests
         // and this list is not allowed to shrink by accident -- the loop below
         // fails on a named file that is missing, which is exactly what it did
         // when the deletion landed. `Runtime/BrowserConfiguration.cs` takes its
-        // place rather than the list simply getting shorter: it is where a
+        // place instead of the list simply getting shorter: it is where a
         // session's capability set is now decided, so it is on the enforcement
         // path by the same argument SessionMode.cs was.
         //
@@ -1402,7 +1402,7 @@ internal sealed class ModelSurfaceTests
         // decisions, and nothing about the second reads differently from the
         // first.
         //
-        // It matters more rather than less now that only the liveness refusal is
+        // It matters more, not less, now that only the liveness refusal is
         // left: an environment variable that turned `browser_annotate` back on
         // would hang an overnight run, and the hang is the thing this product
         // exists not to do. And since 2026-08-20 the capability GRANT is on this
@@ -1458,7 +1458,7 @@ internal sealed class ModelSurfaceTests
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // BrowserProxy is deliberately outside the list above rather than
+        // BrowserProxy is deliberately outside the list above and not
         // silently omitted from it. It is the enforcement *call site* and also
         // the process's own composition root, so it legitimately reads the
         // environment for things that are not the decision -- and a scan that
@@ -1473,7 +1473,7 @@ internal sealed class ModelSurfaceTests
         // ToolVerdicts is the type that reads it. The lists are not allowed to
         // shrink by accident -- the loop fails on a named file that is missing,
         // which is exactly what it did when this landed -- so the replacement is
-        // named rather than the entry being dropped.
+        // named instead of the entry being dropped.
         var callSite = await RepositoryLayout.ReadCodeAsync(
             new FileInfo(Path.Combine(RepositoryLayout.Root.FullName, "src/BrowserAI/Proxy/BrowserProxy.cs")));
 
@@ -1499,7 +1499,7 @@ internal sealed class ModelSurfaceTests
         // happened to declare. An argument silently dropped from `init` would
         // show as a call the model stopped making, not as a red build.
         //
-        // Read out of the advertised surface rather than off the class, for the
+        // Read out of the advertised surface and not off the class, for the
         // same reason the description assertions are: the rewrite is what a
         // model receives, and it is the rewrite that could lose a property.
         await using var rig = await McpTestHarness.ThroughTheProxyAsync(

@@ -25,7 +25,7 @@ namespace BrowserAI.Tests;
 /// bounded by a five-second <c>DiscoverProbeTimeout</c>. Against a child that
 /// drops the unknown method that is a flat five seconds per spawn, against a
 /// ~300 ms baseline, presenting as "browser automation got slow" with no error
-/// anywhere. The child here answers <c>-32601</c> rather than dropping it, so
+/// anywhere. The child here answers <c>-32601</c> instead of dropping it, so
 /// the cost would be small today and is one upstream refactor away from being
 /// large.
 /// </para>
@@ -57,7 +57,7 @@ internal sealed class ProtocolSplitTests
         // written.
         //
         // ⚠️ ASSERTED ON THE PROCESS LOG, NOT ON STDERR, and the difference is a
-        // durability guarantee rather than a preference. Corrected 2026-08-18
+        // durability guarantee and not a preference. Corrected 2026-08-18
         // (previously `run.StandardError`), which was red on CI twice for a
         // record the product had written correctly both times. stderr goes
         // through `AddConsole`, which hands records to a background processor
@@ -72,7 +72,7 @@ internal sealed class ProtocolSplitTests
             .Contains($"requested={BrowserProxy.ChildProtocolVersion} negotiated={BrowserProxy.ChildProtocolVersion}")
             .Because($"BrowserAI ran as pid {run.BrowserAiProcessId} and wrote {run.ProcessLog.Split('\n').Length} record(s) to the shared process log");
 
-        // And the pin itself is the child's measured ceiling rather than a
+        // And the pin itself is the child's measured ceiling and not a
         // number somebody liked: the same value the snapshot generator recorded
         // by probing the child from both directions on every build.
         await Assert.That(BrowserProxy.ChildProtocolVersion).IsEqualTo(SnapshotCeiling());
@@ -135,7 +135,7 @@ internal sealed class ProtocolSplitTests
         // BrowserAI does. It refuses this particular call for a different reason
         // -- the request carries no per-request metadata naming a protocol
         // version -- and the assertion is deliberately "not method-not-found"
-        // rather than the exact code, because the code is the SDK's to change
+        // and not the exact code, because the code is the SDK's to change
         // and the routing is the fact under test.
         await Assert.That(ErrorCode(fromServer)).IsNotEqualTo(MethodNotFound);
     }

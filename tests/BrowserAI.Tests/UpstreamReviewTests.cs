@@ -33,7 +33,7 @@ internal sealed class UpstreamReviewTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Named rather than skipped. A missing comparison that reports nothing is
+    /// Named, not skipped. A missing comparison that reports nothing is
     /// the failure this project exists to eliminate, so the day an upstream
     /// enters the build this list stops matching and the suite says so.
     /// </para>
@@ -55,7 +55,7 @@ internal sealed class UpstreamReviewTests
     /// which is what <c>upstream-review.json</c> records as reviewed, so no
     /// review was owed. <b>The list is now empty, and an empty list is the
     /// state this test is most useful in</b> -- every reviewed upstream is in
-    /// the build, so any unresolved one is a defect rather than a plan.
+    /// the build, so any unresolved one is a defect and not a plan.
     /// </para>
     /// </remarks>
     private static readonly string[] NotReferencedByAnyProjectYet = [];

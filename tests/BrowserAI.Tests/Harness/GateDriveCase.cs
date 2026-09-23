@@ -42,7 +42,7 @@ namespace BrowserAI.Tests.Harness;
 /// the other's spelling. <b>A forcing that silently fails to take is the same
 /// trap in a new coat</b>, so each half also declares what it forced in
 /// <see cref="Variable"/>, and a run that did not get what it declared is a
-/// failing test rather than a line nobody reads.
+/// failing test and not a line nobody reads.
 /// </para>
 /// <para>
 /// <b>Unset declares nothing, which is what an ordinary developer run does.</b>
@@ -75,7 +75,7 @@ internal static class GateDriveCase
     /// when its base directory is not on a drive letter at all.
     /// </summary>
     /// <remarks>
-    /// <b>Read off <see cref="AppContext.BaseDirectory"/> rather than off the
+    /// <b>Read off <see cref="AppContext.BaseDirectory"/> and not off the
     /// working directory</b>, because that is the path every composed assertion
     /// in this suite is anchored on -- <c>RepositoryLayout</c> walks up from it.
     /// The working directory is reported beside it in <see cref="CoverageRow"/>
@@ -153,7 +153,7 @@ internal static class GateDriveCase
     /// <b>Printed on every run, declared or not.</b> The whole defect this closes
     /// is a gate that exercised one instrument twice and reported what two
     /// instruments report, so the number the run publishes about itself has to be
-    /// the spelling it actually got rather than the one it was configured to
+    /// the spelling it actually got and not the one it was configured to
     /// want.
     /// </remarks>
     public static string CoverageRow =>

@@ -14,7 +14,7 @@ namespace BrowserAI.Tests.Harness;
 /// <para>
 /// <b>Git is the oracle here, never the source of truth.</b> The suite has to
 /// run on an export with no git in it, which is why
-/// <see cref="RepositoryLayout"/> walks the disk rather than shelling out -- and
+/// <see cref="RepositoryLayout"/> walks the disk instead of shelling out -- and
 /// that objection does not reach this type, because nothing here is asked unless
 /// git answers. Absent, <see cref="SuiteCapability.Git"/> reads ABSENT in the
 /// coverage block and <see cref="RepositoryFilesAsync"/>'s one reader skips
@@ -40,10 +40,10 @@ namespace BrowserAI.Tests.Harness;
 /// tree during any piece of work; <c>--others</c> alone would miss everything
 /// committed. <c>--exclude-standard</c> is what applies <c>.gitignore</c>, and
 /// it is the half that makes a stray ignored directory -- a worktree, a cache,
-/// anything -- a divergence rather than agreement.
+/// anything -- a divergence and not agreement.
 /// </para>
 /// <para>
-/// <b><c>-z</c> rather than one path per line.</b> Git quotes and escapes a path
+/// <b><c>-z</c> and not one path per line.</b> Git quotes and escapes a path
 /// holding a space, a quote or a non-ASCII byte when it writes one per line, so
 /// a line reader would compare an escaped spelling against a real one and report
 /// a file present in both as missing from each. The NUL-separated form is never
@@ -64,12 +64,12 @@ internal static class GitOracle
 
     private static readonly Lazy<bool> Available = new(
         // ⚠️ Blocking on the async probe, deliberately, and it is safe for one
-        // reason worth writing down: SuiteEnvironment.StateOf is synchronous and
+        // reason: SuiteEnvironment.StateOf is synchronous and
         // is called from the coverage block as well as from a guard, so the
         // probe cannot be awaited by its caller. A test host is a console
         // application with no SynchronizationContext, so there is nothing for
         // the continuation to be posted back to and nothing to deadlock against;
-        // and the wait underneath is bounded by Patience rather than open-ended.
+        // and the wait underneath is bounded by Patience and not open-ended.
         () => ProbeAsync().GetAwaiter().GetResult(),
         LazyThreadSafetyMode.ExecutionAndPublication);
 
@@ -104,8 +104,8 @@ internal static class GitOracle
         return
         [
             .. output.Split('\0', StringSplitOptions.RemoveEmptyEntries)
-                // A nested repository is listed as the directory itself rather
-                // than as its contents. It is not a file, cannot be compared
+                // A nested repository is listed as the directory itself and
+                // not as its contents. It is not a file, cannot be compared
                 // against one, and the divergence it stands for is reported by
                 // the walk's side of the comparison anyway.
                 .Where(path => !path.EndsWith('/')),
@@ -117,7 +117,7 @@ internal static class GitOracle
     /// <para>
     /// <b><c>git describe --tags --exact-match</c>, which is the whole of the
     /// question.</b> Distance zero or nothing: <c>--exact-match</c> makes a
-    /// commit one past the tag an <i>error</i> rather than a
+    /// commit one past the tag an <i>error</i> and not a
     /// <c>v1.0.0-1-g&lt;sha&gt;</c> string somebody then has to parse the
     /// distance out of. Today's tree is the case that matters -- <c>v1.0.0</c>
     /// sits on <c>0455ca7</c> and HEAD is 215 commits past it, and this answers

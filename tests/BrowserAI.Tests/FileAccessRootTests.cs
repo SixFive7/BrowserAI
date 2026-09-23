@@ -27,7 +27,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>So the containment is now entirely upstream's, and a claim about somebody
-/// else's code is exactly the kind that has to be measured rather than
+/// else's code is exactly the kind that has to be measured, not
 /// read.</b> <c>checkFile</c> refuses a resolved name that is inside neither
 /// <c>outputDir</c> nor the child's working directory; BrowserAI writes both as
 /// <c>&lt;session&gt;\output</c>. That is four sentences of somebody else's
@@ -136,13 +136,13 @@ internal sealed partial class FileAccessRootTests
             // ⚠️ HALT-B's SUBJECT. If this is not an error, upstream's roots do
             // not contain a write to the session and the whole containment
             // decision is void -- the failure message carries the answer so a
-            // reader is looking at what actually happened rather than at
+            // reader is looking at what actually happened and not at
             // `Expected to be true but found False`.
             await Assert.That((bool?)refused["isError"])
                 .IsTrue()
                 .Because($"'{filename}' was NOT refused. Upstream's file-access roots do not contain a write, and BrowserAI has no gate of its own any more. The answer was: {text}");
 
-            // The refusal has to be the ROOTS refusing, rather than the
+            // The refusal has to be the ROOTS refusing, and not the
             // screenshot failing for some unrelated reason that happens to
             // produce an error.
             await Assert.That(text)
@@ -219,8 +219,8 @@ internal sealed partial class FileAccessRootTests
 
         await Assert.That((bool?)created["isError"]).IsNotEqualTo(true);
 
-        // Twenty-four entries in one go, so the first pointer is a range rather
-        // than a single line.
+        // Twenty-four entries in one go, so the first pointer is a range and
+        // not a single line.
         var navigated = TextOf(await CallAsync(client, "browser_navigate", new JsonObject
         {
             ["url"] = "data:text/html,<h1>one</h1><script>for (let i = 0; i < 24; i++) console.log('line ' + i);</script>",
@@ -229,7 +229,7 @@ internal sealed partial class FileAccessRootTests
         }));
 
         // ⚠️ TWO MORE BATCHES WITHOUT A NAVIGATION, which is what makes the
-        // child APPEND to the log it already made rather than start a new one.
+        // child APPEND to the log it already made instead of starting a new one.
         // A second navigation would produce a second file and never reach the
         // collision this exists for.
         var appended = new List<string>();
@@ -266,7 +266,7 @@ internal sealed partial class FileAccessRootTests
             {
                 checked_++;
 
-                // ⚠️ ABSOLUTE SINCE 2026-09-17, and asserted rather than merely
+                // ⚠️ ABSOLUTE SINCE 2026-09-17, and asserted, not merely
                 // tolerated. `Path.Combine` returns its second argument
                 // unchanged when that argument is rooted, so a pointer that
                 // silently went back to being relative would still resolve here
@@ -331,7 +331,7 @@ internal sealed partial class FileAccessRootTests
         // `LosslessPassthroughTests`' byte-identity claim.
         //
         // ⚠️ The session path is REMOVED BEFORE THE SCAN since 2026-09-17, and
-        // that is a repair rather than a loosening. `filePaths: "absolute"` puts
+        // that is a repair, not a loosening. `filePaths: "absolute"` puts
         // the full path in every pointer, and on this machine that path runs
         // through a directory called `BrowserAI` -- so the bare scan started
         // matching upstream's own bytes and said *something of ours is in the

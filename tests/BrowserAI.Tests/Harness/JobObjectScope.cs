@@ -19,14 +19,14 @@ namespace BrowserAI.Tests.Harness;
 /// disposed -- including by an exception unwinding past it -- the handle closes
 /// and <c>KILL_ON_JOB_CLOSE</c> takes the whole tree with it. <b>A leaked
 /// process is a defect in the test, not an acceptable cost</b>, and the
-/// mechanism that guarantees it is the same one the product relies on rather
-/// than a second, weaker one written for tests.
+/// mechanism that guarantees it is the same one the product relies on and
+/// not a second, weaker one written for tests.
 /// </para>
 /// <para>
 /// <b>It also puts the code under test inside somebody else's job</b>, which is
 /// the realistic production shape: any MCP client that spawns BrowserAI through
 /// Node's <c>child_process</c> puts it inside libuv's. Containment has to hold
-/// through nesting, and here it is nested on every run rather than in one test
+/// through nesting, and here it is nested on every run and not in one test
 /// that remembers to check.
 /// </para>
 /// </remarks>
@@ -41,7 +41,7 @@ internal sealed class JobObjectScope : IDisposable
     /// reached only when a test is already failing, and what it protects against
     /// is a child whose grandchildren inherited the write end of the pipe -- a
     /// real Chromium does exactly that -- so EOF may legitimately never arrive.
-    /// Whether it was reached is reported rather than swallowed, because "the
+    /// Whether it was reached is reported and not swallowed, because "the
     /// drain never finished" and "the process really said nothing" are different
     /// findings and the old message could not tell them apart.
     /// </remarks>
@@ -68,7 +68,7 @@ internal sealed class JobObjectScope : IDisposable
         SpawnRecord.Add(process.Id);
 
         // ⚠️ Drained because an undrained pipe stops the child once its buffer
-        // fills -- which presents as "the launcher never finished" rather than
+        // fills -- which presents as "the launcher never finished" and not
         // as a full pipe -- and KEPT because a discarded one is worse.
         //
         // Corrected 2026-08-17 (previously "nothing in the suite reads these",
@@ -140,7 +140,7 @@ internal sealed class JobObjectScope : IDisposable
     /// Every process the kernel currently reports in this scope's job.
     /// </summary>
     /// <remarks>
-    /// The kernel's own membership list rather than a tally the harness keeps,
+    /// The kernel's own membership list and not a tally the harness keeps,
     /// which is what makes "nothing was started" an assertion about the machine
     /// instead of about the test's bookkeeping -- and it is unaffected by
     /// whatever else on the machine is starting at the same moment.

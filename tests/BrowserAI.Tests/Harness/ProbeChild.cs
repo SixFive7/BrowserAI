@@ -140,7 +140,7 @@ internal sealed class ProbeChild : IAsyncDisposable
     private static async Task<JsonObject> WaitForReportAsync(string reportPath)
     {
         // The child writes this once, early, and the test cannot proceed until
-        // it exists. Polled rather than signalled: a named event would be a
+        // it exists. Polled, not signalled: a named event would be a
         // second mechanism to get wrong, and the whole wait is milliseconds.
         var deadline = Stopwatch.StartNew();
 
@@ -159,7 +159,7 @@ internal sealed class ProbeChild : IAsyncDisposable
                 }
                 catch (JsonException)
                 {
-                    // Caught mid-write. Retried rather than failed, because a
+                    // Caught mid-write. Retried, not failed, because a
                     // torn read here would report as "the child never started".
                 }
                 catch (IOException)

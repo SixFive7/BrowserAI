@@ -12,7 +12,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Asked of the running process rather than inferred from its command
+/// <b>Asked of the running process and not inferred from its command
 /// line.</b> The charter's resurrection article rests on Playwright's browser
 /// command line overshooting <c>RegisterApplicationRestart</c>'s 1023-character
 /// limit by 531 or more, which means the registration <i>fails</i> and Windows

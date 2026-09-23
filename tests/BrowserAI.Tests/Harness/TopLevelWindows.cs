@@ -21,7 +21,7 @@ namespace BrowserAI.Tests.Harness;
 /// forever.
 /// </para>
 /// <para>
-/// This lives in the harness rather than in the product because the product has
+/// This lives in the harness and not in the product because the product has
 /// no reason to enumerate top-level windows at all, and an API kept only to be
 /// asserted against belongs beside the assertion.
 /// </para>
@@ -55,7 +55,7 @@ internal static partial class TopLevelWindows
     /// <summary>Which process owns a window.</summary>
     /// <remarks>
     /// Here so that "no dialog appeared" can be asserted about <b>a browser's</b>
-    /// windows rather than about the desktop's. A live machine opens and closes
+    /// windows and not about the desktop's. A live machine opens and closes
     /// top-level windows constantly, so a bare before-and-after count is a flaky
     /// assertion dressed as a strict one; the owning process is what makes it
     /// specific.
@@ -95,7 +95,7 @@ internal static partial class TopLevelWindows
     /// <param name="window">The window.</param>
     /// <returns>Whether the message was posted.</returns>
     /// <remarks>
-    /// <b>Posted rather than sent.</b> A send would run the dialog's own message
+    /// <b>Posted and not sent.</b> A send would run the dialog's own message
     /// handling on the calling thread's behalf and block until it finished,
     /// which from a test host is a deadlock waiting to happen; a post returns
     /// immediately and the process exits on its own.

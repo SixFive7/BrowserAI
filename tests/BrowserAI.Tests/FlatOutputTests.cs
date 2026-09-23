@@ -27,7 +27,7 @@ namespace BrowserAI.Tests;
 /// </para>
 /// <para>
 /// <b>What is asserted instead is the absence, and the absence has to be
-/// asserted rather than assumed</b> -- a routing layer that came back would
+/// asserted, not assumed</b> -- a routing layer that came back would
 /// otherwise be caught by nothing here, only by the byte-identity arm in
 /// <c>LosslessPassthroughTests</c>, which says the answer is unchanged and not
 /// that the tree is.
@@ -36,7 +36,7 @@ namespace BrowserAI.Tests;
 /// <b>Three things in this file are not about the absence and survive
 /// unchanged:</b> the child's working directory, upstream's output-budget
 /// eviction staying off, and the sibling-sessions line an <c>init</c> answer
-/// carries. Each is a session-system fact rather than a traffic one, which is
+/// carries. Each is a session-system fact and not a traffic one, which is
 /// why each outlived the deletion. ⚠️ *Corrected 2026-08-29 (previously the
 /// third was "the per-root roll-up")* -- <c>browserai-sessions.json</c> is
 /// deleted, and what survives of that pair is the answer line, which is where
@@ -89,8 +89,8 @@ internal sealed class FlatOutputTests
         await Assert.That(File.Exists(Path.Combine(rig.Session!, "session.json"))).IsFalse();
 
         // The guard, the store, and the store's two WAL companions, which exist
-        // for as long as a connection is open and are SQLite's rather than
-        // BrowserAI's. Named individually rather than filtered out, so a third
+        // for as long as a connection is open and are SQLite's and not
+        // BrowserAI's. Named individually, not filtered out, so a third
         // file arriving at the root is a red build.
         await Assert.That(FilesAtTheRootOf(rig.Session!))
             .IsEqualTo(string.Join(
@@ -158,7 +158,7 @@ internal sealed class FlatOutputTests
         // reservation set produced.
         await Assert.That(File.Exists(Path.Combine(output, "login-2.png"))).IsFalse();
 
-        // And the caller was told at `init` rather than at the moment it lost
+        // And the caller was told at `init` and not at the moment it lost
         // the first file, which is the only warning a passthrough can give.
         var opened = TextOf(await InitAsync(rig, Path.Combine(sessions.Root, "told-about-overwriting")));
 
@@ -168,15 +168,15 @@ internal sealed class FlatOutputTests
     [Test]
     public async Task NothingBrowserAiGeneratesCanTurnEvictionOn()
     {
-        // "Nothing is ever auto-deleted" is a promise about a runtime rather
-        // than about us: `_enforceOutputBudget()` runs on every tool response
+        // "Nothing is ever auto-deleted" is a promise about a runtime and
+        // not about us: `_enforceOutputBudget()` runs on every tool response
         // and unlinks oldest-first across the whole output tree, sparing only
         // the current response's writes. It has no default at any merge stage,
         // so the promise holds exactly as long as neither door is opened. The
         // environment door is `ChildEnvironmentTests`; this is the config one.
         //
         // ⚠️ It matters MORE since the routing went, not less: a download now
-        // lives in the output tree permanently rather than being sorted out of
+        // lives in the output tree permanently instead of being sorted out of
         // it, and it is the first thing an evictor would unlink.
         var config = BrowserConfiguration.ForSession(
             SessionPath.For(Path.Combine(ScratchRoot.Path, "eviction-check")),

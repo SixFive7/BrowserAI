@@ -26,11 +26,11 @@ namespace BrowserAI.Tests.Harness;
 /// on a slow browser; it was nothing of the kind, and observing the machine
 /// during the remaining two minutes showed no browser, no <c>node</c> and no
 /// launcher alive at all. Both halves of the fix are here: the wait ends when
-/// the launcher does, and the message carries what the launcher left rather
-/// than a path to it.
+/// the launcher does, and the message carries what the launcher left and
+/// not a path to it.
 /// </para>
 /// <para>
-/// <b>The evidence is inlined rather than pointed at.</b> Scratch trees are
+/// <b>The evidence is inlined and not pointed at.</b> Scratch trees are
 /// deleted when a test unwinds, so a failure naming a directory names something
 /// the reader cannot open. Every small file in it is read into the message
 /// instead -- which is also why no file name is spelled here: whatever the
@@ -195,7 +195,7 @@ internal static class LauncherWait
                     FileAccess.Read,
                     FileShare.ReadWrite | FileShare.Delete);
 
-                // Off the handle rather than out of the directory entry the
+                // Off the handle and not out of the directory entry the
                 // enumeration cached, so the number beside the name was measured
                 // by the thing that read the bytes.
                 length = stream.Length;

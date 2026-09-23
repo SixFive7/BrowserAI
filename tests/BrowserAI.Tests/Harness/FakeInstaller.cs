@@ -89,8 +89,8 @@ internal sealed class FakeInstaller : IInstallerRun
     /// <c>install-browser ffmpeg</c> into an empty root produced
     /// <c>ffmpeg-1011</c> and <c>winldd-1007</c>, each with its own
     /// <c>INSTALLATION_COMPLETE</c>. A double that wrote one marker would make
-    /// the product's per-component completeness check fail against a fake rather
-    /// than against a fault.
+    /// the product's per-component completeness check fail against a fake and
+    /// not against a fault.
     /// </remarks>
     /// <param name="directories">Every directory it creates and marks.</param>
     /// <param name="after">How long the whole thing takes.</param>
@@ -106,7 +106,7 @@ internal sealed class FakeInstaller : IInstallerRun
     /// in-session recovery test asserted that a call is refused <i>while</i> the
     /// download runs and succeeds after; with a 400 ms double it passed until a
     /// fast machine finished the install before the first call arrived, and then
-    /// failed on the refusal rather than on the recovery. A completion source
+    /// failed on the refusal and not on the recovery. A completion source
     /// makes both halves deterministic: nothing lands until the test releases it.
     /// </remarks>
     /// <param name="directory">The browser directory it creates.</param>
@@ -162,7 +162,7 @@ internal sealed class FakeInstaller : IInstallerRun
     /// root.
     /// </para>
     /// <para>
-    /// <b>Each step is a NEW file rather than an append.</b> The product sums file
+    /// <b>Each step is a NEW file and not an append.</b> The product sums file
     /// lengths, and a growing file and a new file are the same to it -- but a new
     /// file cannot be mistaken for a buffered write that has not reached the
     /// filesystem yet, which is the one way this double could report progress the
@@ -179,12 +179,12 @@ internal sealed class FakeInstaller : IInstallerRun
 
         _ = Interlocked.Increment(ref _starts);
 
-        // ⚠️ A THREAD OF ITS OWN, and it is a correctness requirement rather than
+        // ⚠️ A THREAD OF ITS OWN, and it is a correctness requirement and not
         // a preference. The product's watcher polls from a `LongRunning` thread
         // and never starves; a double that ticked from the thread pool would
         // starve at unbounded suite parallelism, so its gaps would stretch while
         // the watcher's did not -- and the stall cap would then fire on the
-        // scheduler rather than on the behaviour under test. Observed exactly
+        // scheduler and not on the behaviour under test. Observed exactly
         // that way on 2026-08-19: green alone, red in a full run. The real
         // installer is a separate OS process and is never pool-bound either, so
         // this is the double being as schedulable as the thing it replaces.
@@ -282,7 +282,7 @@ internal sealed class FakeInstaller : IInstallerRun
 
     /// <summary>
     /// Creates a half-finished browser tree, with a file in it so that a test
-    /// asserting a partial tree was removed is asserting about files rather than
+    /// asserting a partial tree was removed is asserting about files and not
     /// about an empty folder.
     /// </summary>
     /// <remarks>
@@ -293,7 +293,7 @@ internal sealed class FakeInstaller : IInstallerRun
     /// congested thread pool the extraction cap then fires, deletes the tree,
     /// and the continuation <b>re-creates</b> it, so the test fails against a
     /// product that did remove it. Observed once in ten full-suite runs on
-    /// 2026-08-16. It lives here rather than inline because the blocking-call
+    /// 2026-08-16. It lives here and not inline because the blocking-call
     /// analyzer is right about async methods in general and wrong about this
     /// one; a suppression would have turned that off for the whole body.
     /// </remarks>
@@ -363,7 +363,7 @@ internal sealed class FakeInstaller : IInstallerRun
                 {
                     // The test decides when this install lands, so "refused
                     // while downloading" and "succeeds afterwards" are both
-                    // ordered facts rather than races against a duration.
+                    // ordered facts and not races against a duration.
                     await release.WaitAsync(installer._stopped.Token).ConfigureAwait(false);
                 }
 
@@ -403,7 +403,7 @@ internal sealed class FakeInstaller : IInstallerRun
             catch (OperationCanceledException)
             {
                 // Stopped by a cap or by disposal, which is the case under test
-                // rather than a fault.
+                // and not a fault.
             }
         });
 

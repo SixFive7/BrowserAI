@@ -37,11 +37,11 @@ namespace BrowserAI.Tests.Harness;
 /// consecutive CI runs on a four-core runner while passing nine local ones.</b>
 /// A survivor is the ordinary case against Firefox on a slow machine and the
 /// unlucky one on a fast machine, which is exactly the shape that gets a retry
-/// rather than a reader.
+/// instead of a reader.
 /// </para>
 /// <para>
 /// <b>The heading, the cap and the truncation note are read from
-/// <see cref="SessionManager"/> rather than re-typed.</b> A test carrying its own
+/// <see cref="SessionManager"/> and not re-typed.</b> A test carrying its own
 /// copy of the product's prose stops recognising the arm the day somebody rewords
 /// it -- and then passes, by never reaching the assertions underneath, which is
 /// the green-when-broken failure this suite exists to eliminate.
@@ -74,7 +74,7 @@ internal static class DestroyAnswer
     /// </para>
     /// <para>
     /// <b>What it deliberately does not assert is that the tree becomes
-    /// deletable.</b> That is a property of the browser's teardown rather than of
+    /// deletable.</b> That is a property of the browser's teardown and not of
     /// this tool, it needs a bounded wait, and a caller that wants it has
     /// <see cref="ScratchDirectory.RemoveTreeWhenReleasedAsync"/>.
     /// </para>
@@ -150,8 +150,8 @@ internal static class DestroyAnswer
     /// made no such claim.
     /// </summary>
     /// <remarks>
-    /// The tally is read out of the sentence rather than assumed, so a count and
-    /// a listing that disagree is a failure rather than a detail.
+    /// The tally is read out of the sentence, not assumed, so a count and
+    /// a listing that disagree is a failure and not a detail.
     /// </remarks>
     /// <param name="answer">The whole text of the answer.</param>
     /// <returns>The tally it stated and the nodes it named, unindented.</returns>
@@ -178,7 +178,7 @@ internal static class DestroyAnswer
             .ToList();
 
         // A heading with no number in it is a survivor arm that never says how
-        // many, which the caller must fail on rather than skip.
+        // many, which the caller must fail on and not skip.
         return (stated ?? 0, listed);
     }
 }

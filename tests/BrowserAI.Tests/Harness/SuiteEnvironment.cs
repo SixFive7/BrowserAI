@@ -39,7 +39,7 @@ internal enum SuiteCapability
     /// that can answer whether BrowserAI's registration works.
     /// </summary>
     /// <remarks>
-    /// <b>It is a capability rather than an assumption because the product's
+    /// <b>It is a capability and not an assumption because the product's
     /// registration reads upstream's English.</b> Every failure the client has
     /// exits 1, benign or not, so <i>"already exists"</i> and <i>"No MCP server
     /// named"</i> are the only discriminators there are -- and a run that cannot
@@ -55,7 +55,7 @@ internal enum SuiteCapability
     /// only thing that can install anything.
     /// </summary>
     /// <remarks>
-    /// <b>A capability rather than an assumption because the suite may not run
+    /// <b>A capability and not an assumption because the suite may not run
     /// the release script.</b> Packing takes a NativeAOT publish and <c>vpk</c>,
     /// and the one arm that needs an installer needs it for a question nothing
     /// else can answer: whether <c>Setup.exe</c>'s rename-and-delete of a
@@ -70,7 +70,7 @@ internal enum SuiteCapability
     /// A git that can answer questions about the tree this run is reading.
     /// </summary>
     /// <remarks>
-    /// <b>A capability rather than an assumption because the suite must run on
+    /// <b>A capability and not an assumption because the suite must run on
     /// an export that has none.</b> Every tree-as-text rule in this repository --
     /// the SPDX header, the link scan, the fragment count, never-by-image-name --
     /// reads the corpus <see cref="RepositoryLayout"/>'s walk produces, and the
@@ -114,7 +114,7 @@ internal enum SuiteCapability
 /// <item>
 /// <description>
 /// <b>An ordinary run skips, loudly.</b> <see cref="Skip.Test(string)"/> makes
-/// the test report as <i>skipped</i> rather than as <i>passed</i>, so the run's
+/// the test report as <i>skipped</i> and not as <i>passed</i>, so the run's
 /// own summary carries a skipped count that a healthy run does not -- and
 /// [release checklist item 8](../../../RELEASING.md) already requires that count
 /// to be zero. A clean clone can still run the suite, which is the property the
@@ -133,7 +133,7 @@ internal enum SuiteCapability
 /// <description>
 /// <b>A partial installation always fails, in either mode.</b> A publish
 /// directory that exists without a binary in it, or a <c>payload/</c> holding no
-/// <c>payload.json</c>, is a defect rather than a clean clone. This is the
+/// <c>payload.json</c>, is a defect and not a clean clone. This is the
 /// distinction the old per-site <c>IsAbsentAsAWhole</c> assertion drew, kept
 /// exactly.
 /// </description>
@@ -177,22 +177,22 @@ internal static class SuiteEnvironment
     /// environment knows, because it builds the machine it runs on.
     /// </para>
     /// <para>
-    /// ⚠️ <b>Nothing sets it as of 2026-08-20, and that is a removal rather than
+    /// ⚠️ <b>Nothing sets it as of 2026-08-20, and that is a removal and not
     /// a defect.</b> Hosted CI was this variable's only consumer -- it named
     /// <c>PackagedRelease,ClientCommandLine</c> on the step that ran the suite --
     /// and CI was removed that day at the maintainer's decision. Unset means
     /// <i>declares nothing</i>, which is already the developer-machine
     /// behaviour, so the mechanism below is correct, inert, and ready for
-    /// whatever environment runs the suite next. It is deliberately kept rather
-    /// than deleted; re-declaring is one environment variable.
+    /// whatever environment runs the suite next. It is deliberately kept and
+    /// not deleted; re-declaring is one environment variable.
     /// </para>
     /// <para>
-    /// <b><c>none</c> is a value rather than an omission, and that is
+    /// <b><c>none</c> is a value and not an omission, and that is
     /// load-bearing twice.</b> Windows cannot carry an empty environment variable
     /// -- <c>$env:X = ''</c> removes it -- so <i>"declared, and nothing is expected
     /// absent"</i> is inexpressible as an empty string and would collapse into
     /// <i>"not declared"</i>, which is the one value that switches the pin off.
-    /// It is also what let the fault be planted end to end rather than only in
+    /// It is also what let the fault be planted end to end and not only in
     /// the pure function: with everything present locally, <c>none</c> is the
     /// declaration a real run can be made red against by making one capability
     /// absent.
@@ -210,7 +210,7 @@ internal static class SuiteEnvironment
 
     /// <summary>
     /// Whether this run is a release run, in which a missing capability is a
-    /// failure rather than a skip.
+    /// failure and not a skip.
     /// </summary>
     public static bool IsReleaseRun { get; } =
         Environment.GetEnvironmentVariable(ReleaseRunVariable) is { } value
@@ -282,7 +282,7 @@ internal static class SuiteEnvironment
     /// </summary>
     /// <remarks>
     /// <b>Through the product's own <see cref="ClientCommandLine.Locate"/>
-    /// rather than a second search.</b> A harness that looked somewhere else
+    /// and not a second search.</b> A harness that looked somewhere else
     /// could report the capability present on a machine where the product would
     /// not find it, which is a false green about the one thing these tests
     /// exist to establish.
@@ -380,7 +380,7 @@ internal static class SuiteEnvironment
             if (tests.Count is not 0)
             {
                 // Named for what actually happened to them, which differs by
-                // mode: a release run fails these rather than skipping them, and
+                // mode: a release run fails these instead of skipping them, and
                 // a block that said "skipped" either way would be asserting
                 // something the run's own counts contradict.
                 _ = report.Append("      ")
@@ -401,7 +401,7 @@ internal static class SuiteEnvironment
         // reached for the nearest thing to hand, a COMMIT DATE, and reported
         // four gate sets as having driven a stale binary. Every reading was
         // right and the conclusion was false, and dissolving it took an
-        // investigation. It sits here rather than at the end of the block
+        // investigation. It sits here and not at the end of the block
         // because the reader who needs it is the one looking at the row above.
         _ = report.Append(PublishedSlice.CoverageRow).Append('\n');
 
@@ -431,7 +431,7 @@ internal static class SuiteEnvironment
             .Append('\n');
 
         // ⚠️ Where the first-run test's download came from, and it is a row here
-        // rather than a capability because it is not one: Chromium is provisioned
+        // and not a capability because it is not one: Chromium is provisioned
         // either way and every capability above reads PRESENT either way. What
         // this line says is who PAID for it -- Playwright's CDN, or a tree the
         // last cold run left in .work\. Without it, a suite that had quietly
@@ -441,7 +441,7 @@ internal static class SuiteEnvironment
         _ = report.Append(FirstRunCache.CoverageRow).Append('\n');
 
         // ⚠️ WHICH DRIVE-LETTER SPELLING THIS RUN ACTUALLY RECEIVED, which is the
-        // release gate's claim about itself rather than a capability. The gate
+        // release gate's claim about itself and not a capability. The gate
         // runs two shells because they hand the test host two different
         // spellings; on 2026-08-24 all six runs received `C:` and the gate
         // reported exactly what a genuine two-instrument gate reports. Both
@@ -463,7 +463,7 @@ internal static class SuiteEnvironment
         // ⚠️ WHAT THIS RUN COULD NOT HAVE SEEN, which is a different statement
         // from every row above it. Those say whether an artefact was there; this
         // one says whether Windows would have let a defect show itself at all.
-        // A row rather than a capability, for the reason ForegroundLock states:
+        // A row and not a capability, for the reason ForegroundLock states:
         // every capability above names a command that produces it, and the only
         // thing that would turn this one green is changing a machine-wide user
         // preference, which is out of bounds. Without it a run on a machine whose
@@ -476,9 +476,9 @@ internal static class SuiteEnvironment
         // reading a closed hazard row names as the thing that separates its own
         // cause from a live one -- and which no run had ever recorded, so the
         // question could not be asked of any gate this project has taken. A row
-        // rather than a capability for ForegroundLock's reason: nothing anybody
-        // types makes a machine's commit charge healthy. Two readings rather
-        // than one, because the difference between them is what separates "the
+        // and not a capability for ForegroundLock's reason: nothing anybody
+        // types makes a machine's commit charge healthy. Two readings and
+        // not one, because the difference between them is what separates "the
         // machine was already loaded" from "this suite loaded it". See
         // CommitCharge, and HAZARDS.md for what asked for it.
         _ = report.Append(CommitCharge.CoverageRow).Append('\n');
@@ -518,7 +518,7 @@ internal static class SuiteEnvironment
 
     /// <summary>
     /// The decision, as a pure function of the two inputs, so that the release
-    /// branch is exercised rather than only written.
+    /// branch is exercised and not only written.
     /// </summary>
     /// <remarks>
     /// Without this the <c>BROWSERAI_RELEASE_RUN</c> arm would be code no run of
@@ -541,7 +541,7 @@ internal static class SuiteEnvironment
     /// </summary>
     /// <remarks>
     /// Read once, like <see cref="IsReleaseRun"/>, so that the whole run
-    /// reconciles against one declaration rather than against whatever the
+    /// reconciles against one declaration and not against whatever the
     /// environment block said at the moment each test asked.
     /// </remarks>
     public static string? ExpectedAbsentDeclaration { get; } =
@@ -574,12 +574,12 @@ internal static class SuiteEnvironment
     /// intended cost.
     /// </para>
     /// <para>
-    /// <b>A name that is not a capability is a failure rather than an ignored
+    /// <b>A name that is not a capability is a failure and not an ignored
     /// token.</b> A typo would otherwise silently shrink the declared set, which
     /// fails in the safe direction today and in the unsafe direction the moment
     /// somebody widens it -- and a check that quietly discards its own input is
     /// how a positive control gets lost. Matched against
-    /// <see cref="Enum.GetNames{TEnum}()"/> rather than through
+    /// <see cref="Enum.GetNames{TEnum}()"/> and not through
     /// <see cref="Enum.TryParse{TEnum}(string, bool, out TEnum)"/>, because that
     /// parses <c>"1"</c> into a capability and a declaration of <c>1</c> means
     /// nothing to anybody.
@@ -593,7 +593,7 @@ internal static class SuiteEnvironment
         ArgumentNullException.ThrowIfNull(absent);
 
         // Nothing declared: a developer machine, whose provisioned set is a fact
-        // about somebody's disk rather than about this repository. Exactly the
+        // about somebody's disk and not about this repository. Exactly the
         // behaviour that existed before this function did.
         if (declaration is null)
         {
@@ -667,7 +667,7 @@ internal static class SuiteEnvironment
 
         foreach (var token in tokens)
         {
-            // Against the NAMES rather than through Enum.TryParse, which parses
+            // Against the NAMES and not through Enum.TryParse, which parses
             // "1" into a capability -- and a declaration of `1` means nothing to
             // anybody reading the pipeline definition it would be written in.
             var match = Array.Find(names, name => name.Equals(token, StringComparison.OrdinalIgnoreCase));
@@ -750,7 +750,7 @@ internal static class SuiteEnvironment
     /// as the degraded run.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The name is composed from the pack id rather than typed --
+    /// ⚠️ <b>The name is composed from the pack id and not typed --
     /// 2026-09-15, and the literal it replaced had just gone stale.</b> The id
     /// became <c>BrowserAI.app</c> that day (it is what Velopack derives the
     /// install directory from), so <c>vpk</c> now writes

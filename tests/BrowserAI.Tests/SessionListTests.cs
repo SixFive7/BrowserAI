@@ -37,9 +37,9 @@ namespace BrowserAI.Tests;
 /// it would pass the first.
 /// </para>
 /// <para>
-/// <b>In-process against the rig rather than the published binary.</b> The
+/// <b>In-process against the rig and not the published binary.</b> The
 /// mechanism under test is the kernel's file-sharing rule, which is enforced
-/// against handles rather than against processes -- the same argument
+/// against handles and not against processes -- the same argument
 /// <c>UpdateTests</c> makes about the live-marker set -- and the rig is what
 /// allows a peer's handle and an ACL to be planted around a single call.
 /// </para>
@@ -88,7 +88,7 @@ internal sealed class SessionListTests
         // WriteData and not ReadData: the probe asks for ReadWrite, so denying
         // the write half refuses it while leaving the record readable -- which
         // is what keeps this entry IN the listing with an unanswered liveness
-        // question rather than dropping it for want of a record.
+        // question instead of dropping it for want of a record.
         var denied = DirectoryDenial.Apply(
             unreadable,
             FileSystemRights.WriteData,
@@ -115,7 +115,7 @@ internal sealed class SessionListTests
         // ⚠️ Q100e, on the tool a caller reads before deciding what to keep.
         // Nothing here is ever deleted on a schedule or at a size, so the number
         // and the sentence beside it are the whole of what retention is: a
-        // decision somebody takes rather than one the server takes quietly.
+        // decision somebody takes and not one the server takes quietly.
         await Assert.That(BlockFor(text, driven)).Contains("output:");
         await Assert.That(BlockFor(text, driven)).Contains("BrowserAI never deletes any of it");
         await Assert.That(BlockFor(text, driven)).Contains(SessionToolSurface.Destroy);
@@ -176,8 +176,8 @@ internal sealed class SessionListTests
     /// forwarded call, so its name was unbound for milliseconds at a time and an
     /// absence could not be told from a rewrite. <c>browserai.lock</c> is
     /// written once at acquisition and never again, so an absence is an absence
-    /// -- and reading it as <i>undetermined</i> would now be the hedge rather
-    /// than the honest answer.
+    /// -- and reading it as <i>undetermined</i> would now be the hedge and
+    /// not the honest answer.
     /// </para>
     /// <para>
     /// <b>What is still never read as free is a denial</b>, which the tool-level
@@ -233,7 +233,7 @@ internal sealed class SessionListTests
 
     /// <summary>
     /// A peer inside create-or-take is the one window the listing can still
-    /// misreport, and what it reports there is a momentary truth rather than a
+    /// misreport, and what it reports there is a momentary truth and not a
     /// stale one.
     /// </summary>
     /// <remarks>
@@ -251,7 +251,7 @@ internal sealed class SessionListTests
     /// <para>
     /// <b>Nothing rewrites the guard, so the window is gone and the gate with
     /// it.</b> What is left is narrower by orders of magnitude and is asserted
-    /// here rather than left to be discovered: between a peer taking the gate
+    /// here, not left to be discovered: between a peer taking the gate
     /// and that peer's own <c>browserai.lock</c> landing, a listing sees the
     /// directory as free. That is a <b>momentary</b> truth -- it was free, and it
     /// is about to stop being -- and the answer's own text already says a
@@ -312,7 +312,7 @@ internal sealed class SessionListTests
         // holder; the kernel releasing the mutex is a step after that, so this is
         // the deterministic proof that the peer's hold is gone -- an abandoned
         // mutex IS acquired, which is exactly the state a killed holder leaves --
-        // and the bound is the product's own constant rather than a number
+        // and the bound is the product's own constant and not a number
         // written here.
         using (var gate = MachineMutex.Create(SessionPath.For(midTake).MutexName))
         {
@@ -321,7 +321,7 @@ internal sealed class SessionListTests
         }
 
         // ⚠️ THE POSITIVE CONTROL, and it is what makes the assertion above
-        // about the gate rather than about this listing always saying `no`: the
+        // about the gate and not about this listing always saying `no`: the
         // same session, held for real this time, reads YES.
         var location = SessionPath.For(midTake);
 
@@ -368,7 +368,7 @@ internal sealed class SessionListTests
         }));
 
         // The session is found, and it is named by the spelling the filesystem
-        // uses rather than by the one the listing was pointed at -- which is the
+        // uses and not by the one the listing was pointed at -- which is the
         // same canonical form `init` answered with, so the two tools agree about
         // what this session is called.
         await Assert.That(text).Contains(session, StringComparison.OrdinalIgnoreCase);
@@ -388,13 +388,13 @@ internal sealed class SessionListTests
     }
 
     /// <summary>
-    /// A listing pointed at a directory that is not there says so, rather than
+    /// A listing pointed at a directory that is not there says so, instead of
     /// answering confidently that there are no sessions under it.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ⚠️ <b>The answer was TRUE and useless, which is why this is a clause
-    /// rather than a refusal.</b> Measured 2026-08-26 through the published
+    /// and not a refusal.</b> Measured 2026-08-26 through the published
     /// binary: <c>browserai_list</c> on <c>Q:\</c> came back <c>isError=false</c>
     /// in 1 ms with <i>"No BrowserAI sessions under 'Q:\'. That is an answer
     /// rather than an error"</i>. There genuinely are none. A caller that typed
@@ -481,7 +481,7 @@ internal sealed class SessionListTests
     /// The one entry's worth of the listing that begins with a directory.
     /// </summary>
     /// <remarks>
-    /// <b><c>Single</c> rather than a substring search</b>, so an assertion can
+    /// <b><c>Single</c> and not a substring search</b>, so an assertion can
     /// never accidentally be satisfied by a neighbouring session's line -- which
     /// is exactly the failure a test with four almost-identical entries invites.
     /// </remarks>

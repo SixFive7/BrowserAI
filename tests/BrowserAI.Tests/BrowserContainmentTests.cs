@@ -27,13 +27,13 @@ namespace BrowserAI.Tests;
 /// the guarantee is actually about.
 /// </para>
 /// <para>
-/// <b>The intuition runs backwards, which is why this is measured rather than
+/// <b>The intuition runs backwards, which is why this is measured, not
 /// argued.</b> On Windows, job membership is inherited automatically by every
 /// descendant created with <c>CreateProcess</c>, so a component that spawns
 /// children "the normal way" is precisely the case that works; escaping requires
 /// an explicit opt-in <b>that our job must grant</b>, and a process requesting
 /// <c>CREATE_BREAKAWAY_FROM_JOB</c> from a job that does not permit it fails with
-/// <c>ERROR_ACCESS_DENIED</c> rather than escaping. That is the inverse of Linux
+/// <c>ERROR_ACCESS_DENIED</c> instead of escaping. That is the inverse of Linux
 /// process-group semantics. It matters here because the production chain already
 /// contains a permissive job: libuv creates a global one with
 /// <c>JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK</c> and Playwright spawns the browser
@@ -78,7 +78,7 @@ internal sealed class BrowserContainmentTests
 
     /// <summary>
     /// How long every member of the tree gets to be gone. <c>KILL_ON_JOB_CLOSE</c>
-    /// is a kernel operation, so this is scheduling latency rather than a
+    /// is a kernel operation, so this is scheduling latency, not a
     /// shutdown sequence.
     /// </summary>
     private static readonly TimeSpan TeardownPatience = TestDefaults.ProcessHang;
@@ -95,13 +95,13 @@ internal sealed class BrowserContainmentTests
     /// it does, but because <see cref="FirefoxTests"/>' preflight test asked the
     /// <i>machine</i> whether a Firefox had appeared, and this arm starts one.
     /// Two rounds of narrowing that reading fixed it: first to the Firefox
-    /// executable rather than the browsers root, which stopped every Chromium in
+    /// executable instead of the browsers root, which stopped every Chromium in
     /// the suite falsifying it, and then to a <b>direct child of the test
     /// host</b>, which is what this arm's Firefox -- a grandchild of a probe, by
     /// way of <c>node.exe</c> -- can never be.
     /// </para>
     /// <para>
-    /// <b>It is worth stating what that cost while it stood.</b> This test is
+    /// <b>What that cost while it stood.</b> This test is
     /// <b>13.05 s</b>, and the chain it was pinned into spanned <b>20.4 s of a
     /// 20.6 s run</b> -- so one test's machine-wide question was the suite's
     /// entire critical path. Serialising to protect an over-wide observation is
@@ -123,7 +123,7 @@ internal sealed class BrowserContainmentTests
     /// it is the only test here that starts no browser: the child is a dozen
     /// lines of JavaScript that answers two frames and leaves. What it drives is
     /// the driver, in the tree shape the arms above use, with the browser taken
-    /// out -- so a change to the tee is caught in seconds rather than by a
+    /// out -- so a change to the tee is caught in seconds instead of by a
     /// containment run.
     /// </para>
     /// <para>
@@ -139,7 +139,7 @@ internal sealed class BrowserContainmentTests
     /// <para>
     /// ⚠️ <b>The liveness assertion is not decoration.</b> A driver that died
     /// would release the handle too, and then a green here would be saying
-    /// nothing at all. It is read after the wait rather than before it, so the
+    /// nothing at all. It is read after the wait and not before it, so the
     /// case it exists for -- the driver dying <i>during</i> the wait -- is the case
     /// it catches.
     /// </para>
@@ -196,8 +196,8 @@ internal sealed class BrowserContainmentTests
         var created = ProcessIdentity.CreationTimeOf(launched.Id);
 
         // The driver writes this once it has an answer, which is also when the
-        // child leaves -- so reaching it means the round trip happened rather
-        // than the child having failed to start.
+        // child leaves -- so reaching it means the round trip happened instead
+        // of the child having failed to start.
         await LauncherWait.ForDoneAsync(readyFile, TeardownPatience, scratch.Path, launched.Id, created);
 
         var waited = Stopwatch.StartNew();
@@ -233,10 +233,10 @@ internal sealed class BrowserContainmentTests
 
     private static async Task RunAsync(string browser, string expectedExecutable)
     {
-        // ⚠️ The cost of the alternative, stated rather than hidden: on a machine
+        // ⚠️ The cost of the alternative, stated and not hidden: on a machine
         // where this family has never been provisioned, the arm proves nothing
         // and the guarantee for it would rest on the recorded measurement in
-        // kb/windows/processes.md alone. So it reports as SKIPPED rather than as
+        // kb/windows/processes.md alone. So it reports as SKIPPED and not as
         // a pass, and a release run refuses -- an unprovisioned family is the
         // batteries-included premise being dead code with the suite green.
         if (browser is "firefox")
@@ -277,7 +277,7 @@ internal sealed class BrowserContainmentTests
                 scratch.Path,
                 readyFile,
                 // The launcher's ready-wait is this test's patience and nothing
-                // else, so there is one budget rather than a hidden tighter one.
+                // else, so there is one budget and not a hidden tighter one.
                 ReportPatience.TotalSeconds.ToString(CultureInfo.InvariantCulture),
                 RepositoryPayload.Layout.NodeExecutable,
                 driver,
@@ -319,8 +319,8 @@ internal sealed class BrowserContainmentTests
         // reached would mean the seeding failed.
         await Assert.That(report["jobMembersTheWalkMissed"]!.AsArray().Count).IsEqualTo(0);
 
-        // And the tree really is a browser out of BrowserAI's own root, rather
-        // than four processes that happened to start. Two independent facts:
+        // And the tree really is a browser out of BrowserAI's own root, not
+        // four processes that happened to start. Two independent facts:
         // the driver navigated a real page, and at least one member of THIS
         // job's walk is running an image under the browsers root -- intersected
         // with the walk, so a browser another test has open cannot satisfy it.
@@ -353,7 +353,7 @@ internal sealed class BrowserContainmentTests
         await Assert.That(fromOurRoot.Count).IsGreaterThan(0);
         await Assert.That(fromOurRoot.All(process => process.ImagePath.StartsWith(BrowserAiPaths.BrowsersDirectory, StringComparison.OrdinalIgnoreCase))).IsTrue();
 
-        // ⚠️ Restart registration, asked of the live process rather than argued
+        // ⚠️ Restart registration, asked of the live process and not argued
         // from a length -- and the two browsers do NOT answer the same way.
         // Windows resurrects a registered process after a reboot or an update,
         // and [the maintainer's own browsers came back that
@@ -392,7 +392,7 @@ internal sealed class BrowserContainmentTests
             // `FirefoxProfile` writes and `FirefoxTests` asserts; this arm
             // launches Firefox WITHOUT it, which is why it still answers S_OK.
             //
-            // Asserted rather than merely noted, so the day Mozilla changes it
+            // Asserted, not merely noted, so the day Mozilla changes it
             // this test says so instead of going quietly green.
             await Assert.That(registered.Count).IsEqualTo(1);
         }
@@ -416,7 +416,7 @@ internal sealed class BrowserContainmentTests
         // Windows will not remove, so a profile that deletes cleanly is the
         // observable difference between "reported dead" and "nothing is left".
         // §E's own routine does the deleting, so this also exercises the
-        // per-node try/catch rather than a second implementation.
+        // per-node try/catch and not a second implementation.
         var failures = await ScratchDirectory.RemoveTreeWhenReleasedAsync(profile, TeardownPatience);
 
         await Assert.That(string.Join(Environment.NewLine, failures)).IsEmpty();
@@ -482,7 +482,7 @@ internal sealed class BrowserContainmentTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It speaks MCP by hand over a pipe rather than importing anything.</b>
+    /// <b>It speaks MCP by hand over a pipe and imports nothing.</b>
     /// What is under test is containment, so the fewer layers between the job and
     /// the browser the better -- and this way the tree is exactly the production
     /// shape with one extra node in front: launcher → driver → <c>cli.js</c> →
@@ -491,7 +491,7 @@ internal sealed class BrowserContainmentTests
     /// <para>
     /// It reports what it navigated and how many processes came out of the
     /// browsers root, so the assertion that a real browser was up is made from
-    /// evidence rather than from a process count that a failed launch could also
+    /// evidence and not from a process count that a failed launch could also
     /// produce.
     /// </para>
     /// <para>
@@ -511,7 +511,7 @@ internal sealed class BrowserContainmentTests
     /// that pipe.
     /// </para>
     /// <para>
-    /// <b>The file goes in the scratch directory rather than through the host</b>,
+    /// <b>The file goes in the scratch directory and not through the host</b>,
     /// because <see cref="LauncherWait.Evidence"/> already inlines every file it
     /// finds there, truncated, into the failure message -- so a tee is the whole
     /// change and nothing on the C# side needs to know this file exists.
@@ -519,10 +519,10 @@ internal sealed class BrowserContainmentTests
     /// <para>
     /// <b>An unread pipe is a second failure mode and this closes that too.</b>
     /// A pipe whose reader never reads it fills, and a child writing into a full
-    /// pipe blocks in its write rather than reporting anything -- so a
-    /// sufficiently chatty <c>cli.js</c> would have hung here in a way
+    /// pipe blocks in its write and reports nothing -- so a sufficiently
+    /// chatty <c>cli.js</c> would have hung here in a way
     /// indistinguishable from the browser stall this arm exists to catch.
-    /// Unobserved rather than hypothetical: nothing in this tree has ever
+    /// Unobserved, not hypothetical: nothing in this tree has ever
     /// measured how much upstream writes before it comes up.
     /// </para>
     /// <para>
@@ -679,7 +679,7 @@ internal sealed class BrowserContainmentTests
     /// one, and <see cref="FakePlaywrightChild"/> is where a real double lives.
     /// </para>
     /// <para>
-    /// <b><c>fs.writeSync(2, ...)</c> rather than <c>process.stderr.write</c>:</b>
+    /// <b><c>fs.writeSync(2, ...)</c> instead of <c>process.stderr.write</c>:</b>
     /// stderr on a pipe is asynchronous in node and <c>process.exit</c> does not
     /// wait for it, so the sentinel would be racing the exit below. That is the
     /// driver's own reasoning about its tee, one level further down.
@@ -688,8 +688,8 @@ internal sealed class BrowserContainmentTests
     /// <b>The exit rides the write callback</b>, which fires once the reply is in
     /// the OS, so leaving cannot truncate the answer the driver is waiting on.
     /// That is a completion signal and not a delay -- there is no duration
-    /// anywhere in this script, which is what keeps the arm above a hang detector
-    /// rather than a race.
+    /// anywhere in this script, which is what keeps the arm above a hang
+    /// detector and not a race.
     /// </para>
     /// </remarks>
     private const string ChildThatAnswersAndLeaves = $$"""

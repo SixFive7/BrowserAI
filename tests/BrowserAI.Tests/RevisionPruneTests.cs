@@ -16,7 +16,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>Every test here runs against a scratch browsers root, and that is a safety
-/// requirement rather than hygiene.</b> The subject is code that deletes browser
+/// requirement and not hygiene.</b> The subject is code that deletes browser
 /// trees; pointed at the developer's own <c>%LocalAppData%\BrowserAI\browsers</c>
 /// a defect costs a 430 MiB re-download, and pointed at it by a test that ran
 /// unattended it costs one nobody sees happen.
@@ -25,7 +25,7 @@ namespace BrowserAI.Tests;
 /// <b>The manifest is the real one.</b> What counts as <i>current</i> comes from
 /// the resolved payload's <c>browsers.json</c>, so these tests move with a
 /// revision bump instead of asserting a literal that stops being true -- the same
-/// reason <see cref="ProvisionedBrowsers"/> computes its paths rather than
+/// reason <see cref="ProvisionedBrowsers"/> computes its paths instead of
 /// spelling them.
 /// </para>
 /// </remarks>
@@ -61,7 +61,7 @@ internal sealed class RevisionPruneTests
         await Assert.That(Directory.Exists(oldFirefox)).IsFalse();
         await Assert.That(report.Removed.Count).IsEqualTo(2);
 
-        // Reclaimed is measured rather than counted: the whole reason this exists
+        // Reclaimed is measured, not counted: the whole reason this exists
         // is the disk, and "two directories" is not an amount of disk.
         await Assert.That(report.ReclaimedBytes).IsGreaterThanOrEqualTo(8192 + 2048);
         await Assert.That(report.Retained).IsEmpty();
@@ -131,7 +131,7 @@ internal sealed class RevisionPruneTests
         await Assert.That(File.Exists(imagePath)).IsTrue();
         await Assert.That(report.Removed).IsEmpty();
 
-        // And it says so rather than being silently skipped, with the pid somebody
+        // And it says so instead of being silently skipped, with the pid somebody
         // can act on.
         await Assert.That(string.Join(Environment.NewLine, report.Retained)).Contains(planted.Id.ToString(System.Globalization.CultureInfo.InvariantCulture));
         await Assert.That(string.Join(Environment.NewLine, report.Retained)).Contains(SupersededChromium);
@@ -175,7 +175,7 @@ internal sealed class RevisionPruneTests
             var report = RevisionPrune.Run(root, manifest, log.CreateLogger<RevisionPruneTests>());
 
             // An install in flight means a directory may be being written into
-            // right now, so the pass declines as a whole rather than reasoning
+            // right now, so the pass declines as a whole instead of reasoning
             // about which directory is safe.
             await Assert.That(Directory.Exists(superseded)).IsTrue();
             await Assert.That(report.Removed).IsEmpty();
@@ -348,8 +348,8 @@ internal sealed class RevisionPruneTests
         await Assert.That(retained).Contains("4242");
 
         // And the census was asked about each candidate by name, not once about
-        // the root -- which is the shape that makes the freshness real rather
-        // than an accident of when the one question was asked.
+        // the root -- which is the shape that makes the freshness real and
+        // not an accident of when the one question was asked.
         await Assert.That(asked.Count).IsEqualTo(2);
         await Assert.That(asked).Contains(first);
         await Assert.That(asked).Contains(second);
@@ -415,7 +415,7 @@ internal sealed class RevisionPruneTests
     /// answers with what the object manager resolved. One junction above the root
     /// and the two never match -- so <c>RevisionPrune</c> stops being a race and
     /// becomes deterministic: <b>every superseded tree looks idle while browsers
-    /// run out of it</b>, which is the direction that loses data rather than the
+    /// run out of it</b>, which is the direction that loses data and not the
     /// one that keeps disk.
     /// </para>
     /// <para>

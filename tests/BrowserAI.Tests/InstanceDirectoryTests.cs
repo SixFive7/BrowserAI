@@ -51,7 +51,7 @@ internal sealed class InstanceDirectoryTests
         // InstanceDirectory.Claim's rename was refused and the sweep concluded --
         // correctly, by its own contract -- that something still held the
         // directory. Establishing the precondition is what makes the assertion
-        // below a statement about the sweep rather than about Defender.
+        // below a statement about the sweep and not about Defender.
         //
         // The product deliberately does NOT retry there, and that is the right
         // call: a live instance directory always refuses the rename, so a retry
@@ -87,7 +87,7 @@ internal sealed class InstanceDirectoryTests
     /// this: a scanner's handle is not visible through any file API, and the
     /// operation the sweep performs is the only test of the condition the sweep
     /// depends on. A directory that never becomes renameable fails here, naming
-    /// the precondition, rather than failing an assertion about the sweep.
+    /// the precondition, and not failing an assertion about the sweep.
     /// </remarks>
     /// <param name="directory">The planted directory.</param>
     /// <returns>A task that completes once nothing holds it.</returns>
@@ -126,7 +126,7 @@ internal sealed class InstanceDirectoryTests
 
         // The one gap the working-directory lock does not cover: the instants
         // between a run creating its directory and its child adopting it as a
-        // cwd. Anything touched recently is skipped rather than raced.
+        // cwd. Anything touched recently is skipped, not raced.
         var young = Path.Combine(paths.InstanceRoot, "5678-just-started");
         _ = Directory.CreateDirectory(young);
 
@@ -158,7 +158,7 @@ internal sealed class InstanceDirectoryTests
     /// </para>
     /// <para>
     /// <b>Nothing in this test is ever anybody's current directory</b>, which is
-    /// the whole point -- the old holder is absent by construction rather than by
+    /// the whole point -- the old holder is absent by construction and not by
     /// timing. The sibling test above keeps the working-directory lock honest;
     /// this one proves the run no longer depends on it.
     /// </para>
@@ -206,7 +206,7 @@ internal sealed class InstanceDirectoryTests
             .Any(name => name!.StartsWith("sweeping-", StringComparison.Ordinal)))
             .IsFalse();
 
-        // And the pass NAMED it as a live instance rather than merely failing to
+        // And the pass NAMED it as a live instance and not merely failing to
         // rename it, which is the difference between the two log lines.
         await Assert.That(provider.Logged("belongs to a BrowserAI that is still running")).IsTrue();
         await Assert.That(provider.Logged("could not be renamed aside")).IsFalse();
@@ -231,7 +231,7 @@ internal sealed class InstanceDirectoryTests
     /// <b><see cref="Runtime.TreeDelete"/> exists for exactly this caller.</b> An
     /// instance directory has just held a
     /// running browser, and Chromium leaves mapped files behind for a moment
-    /// after exit -- the race is the normal case rather than the unlucky one.
+    /// after exit -- the race is the normal case, not the unlucky one.
     /// </para>
     /// <para>
     /// <b>The assertion that matters is the log line, not the survivor.</b>
@@ -275,7 +275,7 @@ internal sealed class InstanceDirectoryTests
         await Assert.That(File.Exists(Path.Combine(profile, "sibling.bin"))).IsFalse();
         await Assert.That(File.Exists(held)).IsTrue();
 
-        // And the run said so, naming the file rather than the operation. This
+        // And the run said so, naming the file and not the operation. This
         // is the half a swallow-all catch cannot have.
         var reported = provider.Records
             .Where(record => record.Level >= LogLevel.Warning)

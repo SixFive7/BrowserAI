@@ -8,8 +8,8 @@ namespace BrowserAI.Tests;
 /// that assert things about the build configuration itself.
 /// </summary>
 /// <remarks>
-/// Anchored on <c>Directory.Packages.props</c> rather than on <c>.git</c>: a
-/// worktree carries a <c>.git</c> file rather than a directory, and the tests
+/// Anchored on <c>Directory.Packages.props</c> and not on <c>.git</c>: a
+/// worktree carries a <c>.git</c> file and not a directory, and the tests
 /// that use this are about the build configuration, so the file that declares
 /// it is the honest anchor.
 /// </remarks>
@@ -23,21 +23,21 @@ internal static class RepositoryLayout
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Pruned during the walk rather than filtered after it: <c>payload\</c>
+    /// Pruned during the walk and not filtered after it: <c>payload\</c>
     /// carries an unpacked <c>node_modules</c>, so enumerating first and
     /// discarding second means reading tens of thousands of paths to keep none
-    /// of them. <c>payload\</c> earns its place in this list rather than in
+    /// of them. <c>payload\</c> earns its place in this list and not in
     /// <see cref="NotOursAtTheRoot"/> because there are two of them -- the
     /// unpacked one at the root and the vendored npm tree under <c>build\</c>.
     /// </para>
     /// <para>
-    /// <b>Declared above every member that reads it, and that is load-bearing
-    /// rather than tidy.</b> Static field initializers run in textual order, so
+    /// <b>Declared above every member that reads it, and that is load-bearing,
+    /// not tidy.</b> Static field initializers run in textual order, so
     /// this list sitting below <see cref="LinkBearingFiles"/> made it empty at
     /// the moment that walk ran -- the prune silently did nothing and the scan
     /// swept in the whole gitignored <c>.work\</c> tree. Observed 2026-08-17
     /// while this was being written; it fails open, which is why it is written
-    /// down here rather than left to whoever moves it next.
+    /// down here and not left to whoever moves it next.
     /// </para>
     /// </remarks>
     private static readonly string[] NotOursAnywhere =
@@ -57,7 +57,7 @@ internal static class RepositoryLayout
     /// the SPDX house rule alike. Five files, silently outside three tests.
     /// </para>
     /// <para>
-    /// <b>It was found by a new check rather than by review</b> -- the fragment
+    /// <b>It was found by a new check and not by review</b> -- the fragment
     /// scan counted 552 where a script counting the same corpus outside the
     /// suite counted 554, and the two missing entries were both in
     /// <c>Artifacts\</c>. A prune that removes files reports nothing when it
@@ -147,7 +147,7 @@ internal static class RepositoryLayout
     /// asserting about SQLite nobody had compiled.
     /// </para>
     /// <para>
-    /// <b>Enumerated rather than named.</b> A list of two paths would go stale
+    /// <b>Enumerated, not named.</b> A list of two paths would go stale
     /// the day a third file is vendored, and the failure would be the same
     /// silent one: something compiled into the binary that nothing watches.
     /// </para>
@@ -173,7 +173,7 @@ internal static class RepositoryLayout
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Enumerated over the whole tree rather than over a list of directory
+    /// <b>Enumerated over the whole tree and not over a list of directory
     /// names, and that is the point.</b> A documentation restructure moves files
     /// between directories; a scan anchored on <c>src</c>, <c>tests</c> and
     /// <c>build</c> would stop seeing a file the day it moved -- silently, and in
@@ -195,7 +195,7 @@ internal static class RepositoryLayout
     /// reason no message named.
     /// </para>
     /// <para>
-    /// <b>It is a mechanism now rather than a remark:</b>
+    /// <b>It is a mechanism now and not a remark:</b>
     /// <see cref="HouseRuleTests.TheScannedCorpusIsExactlyWhatGitSaysTheRepositoryHolds"/>
     /// compares this list against <c>git ls-files</c> on every run, in both
     /// directions, and skips loudly when git is absent. No count is quoted here
@@ -221,7 +221,7 @@ internal static class RepositoryLayout
     /// <remarks>
     /// <para>
     /// <b>The same walk <see cref="LinkBearingFiles"/> is made of, before the
-    /// extension filter.</b> A rule about <i>bytes</i> rather than about prose
+    /// extension filter.</b> A rule about <i>bytes</i> and not about prose
     /// has no business asking what the extension is first: the defect
     /// <see cref="HouseRuleTests.NoTextFileInTheTreeCarriesAControlByte"/> exists
     /// for arrived in a <c>.cs</c> file and in a <c>.md</c> file on the same day,
@@ -263,7 +263,7 @@ internal static class RepositoryLayout
 
     /// <summary>
     /// A file's text with whole-line comments removed, so that a scan for a
-    /// forbidden construct reads code rather than prose about it.
+    /// forbidden construct reads code and not prose about it.
     /// </summary>
     /// <remarks>
     /// <b>Writing down why a rule exists must not violate the rule.</b> Without
@@ -285,8 +285,8 @@ internal static class RepositoryLayout
     /// and the library split turned five of them into
     /// <c>FileNotFoundException</c> -- which is the good half of that failure:
     /// the bad half is the arm that would have gone on reading a file that had
-    /// been superseded rather than moved. One resolver means the next move is a
-    /// named refusal here rather than fifteen edits, and a file that is in no
+    /// been superseded and not moved. One resolver means the next move is a
+    /// named refusal here and not fifteen edits, and a file that is in no
     /// project at all is a failure that says so.
     /// </para>
     /// <para>

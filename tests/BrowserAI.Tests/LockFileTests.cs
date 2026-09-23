@@ -14,8 +14,8 @@ namespace BrowserAI.Tests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Six properties, and every one of them is a property of the kernel rather
-/// than of this code.</b> One writer per directory comes from the share mode;
+/// <b>Six properties, and every one of them is a property of the kernel and
+/// not of this code.</b> One writer per directory comes from the share mode;
 /// readers proceed because the same share mode admits them; the hold lasts the
 /// session because nothing closes it; the OS releases it on death; the probe is
 /// one <c>CreateFile</c>; and the holder is named because it is written inside.
@@ -24,13 +24,13 @@ namespace BrowserAI.Tests;
 /// claims.
 /// </para>
 /// <para>
-/// <b>Within one process, and that is a real limit stated rather than
-/// glossed.</b> Windows applies its sharing rules per handle rather than per
+/// <b>Within one process, and that is a real limit stated, not
+/// glossed.</b> Windows applies its sharing rules per handle and not per
 /// process, so a second <c>FileStream</c> here is refused by exactly the same
 /// arithmetic a second BrowserAI would be -- which is why the probe arms are
 /// meaningful. What a single process cannot show is the fourth property,
 /// release-on-death; <c>SessionLockTests</c> owns that across real processes
-/// for the record this replaces, and it moves with the cutover rather than
+/// for the record this replaces, and it moves with the cutover instead of
 /// being duplicated here.
 /// </para>
 /// </remarks>
@@ -108,7 +108,7 @@ internal sealed class LockFileTests
         using var scratch = ScratchDirectory.Create("lockfile-undetermined");
 
         // A directory sitting where the lock file should be: the open fails
-        // with an access denial rather than with a sharing violation or an
+        // with an access denial and not with a sharing violation or an
         // absence, which is the shape every "something else is wrong here"
         // failure has.
         var path = Path.Combine(scratch.Path, LockFile.FileName);
@@ -129,7 +129,7 @@ internal sealed class LockFileTests
     /// <remarks>
     /// <para>
     /// <b>The two load-bearing literals, asserted through their consequences
-    /// rather than by reading the source.</b> <c>FileShare.Read</c> on the hold
+    /// and not by reading the source.</b> <c>FileShare.Read</c> on the hold
     /// is what refuses a peer; <c>FileAccess.ReadWrite</c> on the probe is what
     /// that refusal is triggered by. Neither can be weakened without one of the
     /// two assertions below going red.
@@ -152,7 +152,7 @@ internal sealed class LockFileTests
         using var hold = LockFile.TakeAndWrite(path, LockFileHolder.ForThisProcess());
 
         // A second holder is refused, and refused with a sharing violation
-        // rather than with anything else.
+        // and not with anything else.
         var refused = Assert.Throws<IOException>(() => LockFile.Hold(path).Dispose());
 
         await Assert.That(refused).IsNotNull();
@@ -180,7 +180,7 @@ internal sealed class LockFileTests
     /// within seconds, so a guard that recorded only the number would let a
     /// reclaim take a live stranger's directory -- which is why the creation
     /// FILETIME is written beside it and why a file missing one is refused
-    /// rather than read.
+    /// and not read.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -285,7 +285,7 @@ internal sealed class LockFileTests
     }
 
     /// <summary>
-    /// A lock file that is not one of ours is refused rather than guessed at.
+    /// A lock file that is not one of ours is refused and not guessed at.
     /// </summary>
     /// <remarks>
     /// <b>The set of things a lock file may say is closed.</b> A file carrying
@@ -331,8 +331,8 @@ internal sealed class LockFileTests
             .Contains("a pid on its own is not an identity");
 
         // The positive control: a file this build did write reads back fine
-        // through the same path, so the arms above are refusing content rather
-        // than refusing everything.
+        // through the same path, so the arms above are refusing content and
+        // not everything.
         var ours = Path.Combine(scratch.Path, "ours.lock");
 
         using (LockFile.TakeAndWrite(ours, LockFileHolder.ForThisProcess()))

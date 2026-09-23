@@ -219,13 +219,13 @@ internal sealed partial class ProcessLivenessTests
         // `record.EventId.Id is 76`)*: `ClientHasAlreadyExited` moved off 76
         // when that id was retired, because two events held it at once and both
         // of them shipped in v1.0.0. **This arm is the reason the renumber is a
-        // behaviour change rather than a comment edit** -- an id is what a reader
+        // behaviour change and not a comment edit** -- an id is what a reader
         // of the log keys on, and this is the one place in the suite that reads
         // one back off a real record.
         await Assert.That(logs.Records.Any(record => record.EventId.Id is 78)).IsTrue();
         await Assert.That(logs.Records.Any(record => record.EventId.Id is 72)).IsFalse();
 
-        // And 76 is gone rather than merely unused here: nothing this product
+        // And 76 is gone and not merely unused here: nothing this product
         // emits carries it any more, which is what "retired" has to mean.
         await Assert.That(logs.Records.Any(record => record.EventId.Id is 76)).IsFalse();
 

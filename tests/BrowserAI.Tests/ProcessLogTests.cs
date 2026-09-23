@@ -147,7 +147,7 @@ internal sealed partial class ProcessLogTests
     /// creationFileTime)</c> from its own spawn record</i>; nothing wrote a
     /// record until 2026-08-19, so a run killed mid-test left a process the next
     /// run could not identify -- only a directory it could not delete, reported
-    /// as a locked file rather than as a live process.
+    /// as a locked file and not as a live process.
     /// </para>
     /// <para>
     /// ⚠️ <b>The second line of the record is this test host's own pid with a
@@ -155,7 +155,7 @@ internal sealed partial class ProcessLogTests
     /// whole mechanism turns on.</b> A pid Windows has recycled belongs to
     /// something else -- plausibly the developer's editor -- so a reclaim that
     /// acted on the number alone would end it. If this code ever regressed to
-    /// matching on pid, the run would die here rather than fail here, which is
+    /// matching on pid, the run would die here instead of failing here, which is
     /// the loudest possible form of red.
     /// </para>
     /// <para>
@@ -185,7 +185,7 @@ internal sealed partial class ProcessLogTests
         var ready = Path.Combine(scratch.Path, "gate.json");
 
         // Contained as well as recorded: if an assertion below throws, the job
-        // takes the probe with it rather than leaving the thing this test is
+        // takes the probe with it instead of leaving the thing this test is
         // about to prove can be cleaned up.
         using (var scope = new JobObjectScope())
         {
@@ -227,8 +227,8 @@ internal sealed partial class ProcessLogTests
             await Assert.That(ProcessIdentity.IsAlive(started.Id, created)).IsFalse();
             await Assert.That(ProcessIdentity.IsAlive(Environment.ProcessId, mine)).IsTrue();
 
-            // Emptied, so a second reclaim of the same file is a no-op rather
-            // than a second pass over pids that now belong to somebody else.
+            // Emptied, so a second reclaim of the same file is a no-op and
+            // not a second pass over pids that now belong to somebody else.
             await Assert.That(await File.ReadAllTextAsync(record)).IsEmpty();
             await Assert.That(SpawnRecord.Reclaim(record).Count).IsEqualTo(0);
         }
@@ -256,7 +256,7 @@ internal sealed partial class ProcessLogTests
     /// two rigs and eighty launches to not explain.
     /// </para>
     /// <para>
-    /// <b>The victim is a probe rather than a browser, and that is not a
+    /// <b>The victim is a probe and not a browser, and that is not a
     /// weakening.</b> What the old pass did to a browser it did through
     /// <c>TerminateProcess</c> on a pid it read out of a file, which is the same
     /// call against the same kind of handle whatever the image is. A browser here
@@ -293,7 +293,7 @@ internal sealed partial class ProcessLogTests
 
         var report = SpawnRecord.Reclaim(record);
 
-        // THE ASSERTION, and it is a process rather than a message: with the
+        // THE ASSERTION, and it is a process and not a message: with the
         // owner column absent this process is dead here, exit code 1, 18 times
         // out of 18.
         await Assert.That(ProcessIdentity.IsAlive(victimId, victimCreated)).IsTrue()
@@ -316,7 +316,7 @@ internal sealed partial class ProcessLogTests
     /// exists for, and the thing the owner column must not cost it.
     /// </summary>
     /// <remarks>
-    /// <b>The owner here was alive and was killed</b>, rather than being a number
+    /// <b>The owner here was alive and was killed</b>, and not a number
     /// that never named anything, because that is the case the recovery is
     /// <i>for</i>: a run cut short by a failed assertion taking its host with it,
     /// a debugger detached, a session limit. Its job object closed when it died,
@@ -335,7 +335,7 @@ internal sealed partial class ProcessLogTests
         var (ownerId, ownerCreated) = await HeldProbeAsync(scope, scratch.Path, "owner");
         var (orphanId, orphanCreated) = await HeldProbeAsync(scope, scratch.Path, "orphan");
 
-        // The run dies. Waited out rather than assumed, because TerminateProcess
+        // The run dies. Waited out, not assumed, because TerminateProcess
         // only asks and a pass that read the owner a millisecond early would be
         // asserting the opposite of what this test is about.
         ProcessIdentity.Terminate(ownerId, ownerCreated);
@@ -502,7 +502,7 @@ internal sealed partial class ProcessLogTests
         var prefix = Record(Pid, StrangerSharingOurPrefix, "a stranger sharing our prefix");
 
         // The control on the control: these are the shape FileLoggerProvider
-        // actually writes, at the start of the line, rather than three strings
+        // actually writes, at the start of the line, and not three strings
         // that merely look like records.
         foreach (var planted in new[] { ours, stranger, prefix })
         {
@@ -536,7 +536,7 @@ internal sealed partial class ProcessLogTests
     /// identity a spawn-record row would name it by.
     /// </summary>
     /// <remarks>
-    /// <b>Waited for its own report rather than for a duration</b>, so the
+    /// <b>Waited for its own report and not for a duration</b>, so the
     /// identity below is read from a process that has finished starting. The
     /// scope's job takes it down if an assertion throws before the test does.
     /// </remarks>
@@ -593,7 +593,7 @@ internal sealed partial class ProcessLogTests
         await Assert.That(writer.CurrentFile).IsNull();
 
         // And a local directory is still written, so the guard refuses shares
-        // rather than refusing everything.
+        // and not everything.
         using var scratch = ScratchDirectory.Create("rollingwriter-local");
         using var local = new RollingFileWriter(scratch.Path);
 
@@ -622,7 +622,7 @@ internal sealed partial class ProcessLogTests
         // factory that adds the console provider also adds a FileLoggerProvider
         // over RollingFileWriter, which is one unbuffered WriteFile per record.
         // So no record exists ONLY in a queue whose drain nobody measured, and
-        // the unverified behaviour is not relied on rather than being assumed
+        // the unverified behaviour is not relied on instead of being assumed
         // benign. What makes that true is a pairing, and a pairing is exactly
         // what a later edit breaks.
         var source = await RepositoryLayout.ReadCodeAsync(
@@ -715,7 +715,7 @@ internal sealed partial class ProcessLogTests
             // in a comment that names the banned call, and a scan that could not
             // tell a rule from its statement would fail on the sentence
             // describing it. No line number is reported for the same reason:
-            // ReadCodeAsync removes those lines rather than emptying them, so
+            // ReadCodeAsync removes those lines instead of emptying them, so
             // what survives no longer agrees with the file about numbering.
             offenders.AddRange(UnpairedWaits(await RepositoryLayout.ReadCodeAsync(file))
                 .Select(call => $"{Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName)}: '{call}' is not followed by a bare WaitForExit()"));
@@ -723,7 +723,7 @@ internal sealed partial class ProcessLogTests
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
-        // ⚠️ Composed rather than spelled, so that this file does not match its
+        // ⚠️ Composed, not spelled, so that this file does not match its
         // own scan. It is the trap NeverByImageNameTests assembles its needles
         // to avoid, and this test fell straight into it on the first run: the
         // samples below were offenders in the very list they exist to verify.
@@ -752,7 +752,7 @@ internal sealed partial class ProcessLogTests
 
         for (var at = 0; at < timed.Count; at++)
         {
-            // The window ends at the NEXT timed call rather than at the end of
+            // The window ends at the NEXT timed call and not at the end of
             // the file: one bare call flushes one wait, so two timed calls
             // sharing a single flush is the same defect wearing a disguise.
             var from = timed[at].Index + timed[at].Length;
@@ -815,8 +815,8 @@ internal sealed partial class ProcessLogTests
 
         // The design says ~100 concurrent BrowserAI processes share one process
         // log. That only works if a concurrent append cannot overwrite another
-        // process's bytes, and that is a property of the platform rather than
-        // of our code -- so it is measured here rather than assumed.
+        // process's bytes, and that is a property of the platform and not
+        // of our code -- so it is measured here, not assumed.
         var log = ProbeProcess.ReadProcessLog(scratch.Path);
 
         var missing = (from writer in Enumerable.Range(0, Processes)
@@ -888,7 +888,7 @@ internal sealed partial class ProcessLogTests
         await Assert.That(shared).DoesNotContain(marker, StringComparison.Ordinal);
 
         // And the session directory gained no file for it, which is what makes
-        // the deletion real rather than a rename.
+        // the deletion real and not a rename.
         await Assert.That(Directory.EnumerateFiles(session).Select(Path.GetFileName).ToArray()).IsEmpty();
     }
 
@@ -937,7 +937,7 @@ internal sealed partial class ProcessLogTests
         var stamps = WriteStampsIn(ProbeProcess.ReadProcessLog(scratch.Path));
 
         // Not vacuous: eight processes wrote sixty records each, so anything
-        // near zero means the file was not read rather than that it was sorted.
+        // near zero means the file was not read, not that it was sorted.
         await Assert.That(stamps.Count).IsGreaterThanOrEqualTo(Processes * LinesEach);
 
         var backwards = new List<string>();
@@ -1011,7 +1011,7 @@ internal sealed partial class ProcessLogTests
     /// the size was a per-process counter seeded once at open, which drifts as
     /// soon as a second process appends. Under the gate the length is the file's
     /// own, read through the open handle inside the claim, and the decision is
-    /// made <i>before</i> the write rather than after it. <b>Planted red</b> by
+    /// made <i>before</i> the write and not after it. <b>Planted red</b> by
     /// restoring the old shape - a counter, incremented after each write, rolling
     /// once it has already passed the cap - which leaves every full file over the
     /// line by one record.
@@ -1025,7 +1025,7 @@ internal sealed partial class ProcessLogTests
         var directory = new LocalAppDataPaths(scratch.Path).LogDirectory;
 
         // 64 KiB a record: enough that filling two 8 MiB files is a couple of
-        // hundred writes rather than tens of thousands, and far enough below the
+        // hundred writes and not tens of thousands, and far enough below the
         // cap that this is the ordinary arm and not the oversized-record one.
         var padding = new string('x', 64 * 1024);
 
@@ -1066,8 +1066,8 @@ internal sealed partial class ProcessLogTests
     /// failed.
     /// </para>
     /// <para>
-    /// <b>The cost is stated where it is paid, and it is the machine's log rather
-    /// than one process's own</b>: while any BrowserAI runs, nobody can remove
+    /// <b>The cost is stated where it is paid, and it is the machine's log and
+    /// not one process's own</b>: while any BrowserAI runs, nobody can remove
     /// today's file. That was accepted knowingly. <b>Planted red</b> by putting
     /// the share flag back, which makes the delete succeed.
     /// </para>
@@ -1092,7 +1092,7 @@ internal sealed partial class ProcessLogTests
         // because a share mode narrow enough to lock out the reader would have
         // traded one silent failure for a louder one.
         //
-        // IOException rather than UnauthorizedAccessException, and the pair is
+        // IOException and not UnauthorizedAccessException, and the pair is
         // worth keeping straight because this repository already records the
         // other half: a RENAME over an open file is refused ERROR_ACCESS_DENIED
         // and surfaces as UnauthorizedAccessException (kb/re-verification.md row
@@ -1137,7 +1137,7 @@ internal sealed partial class ProcessLogTests
 
 /// <summary>
 /// One source-generated record, so the handle test writes through the real
-/// logging path rather than a stub.
+/// logging path and not a stub.
 /// </summary>
 /// <remarks>
 /// Source-generated because <c>CA1848</c> is an error here and a

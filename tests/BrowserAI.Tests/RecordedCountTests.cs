@@ -47,7 +47,7 @@ namespace BrowserAI.Tests;
 /// <b>The sentence is the anchor, and rewording it fails the build.</b> That is
 /// deliberate and it is the same trade the re-verification index takes: a check
 /// keyed on prose can be unhooked by editing the prose, so the unhooking is made
-/// loud rather than silent. Every regex below is asserted to have matched before
+/// loud, not silent. Every regex below is asserted to have matched before
 /// its numbers are read.
 /// </para>
 /// <para>
@@ -98,7 +98,7 @@ internal sealed partial class RecordedCountTests
     /// </para>
     /// <para>
     /// <b>At zero it is a stronger mechanism than it was as a backlog</b>, which
-    /// is why it moved rather than being deleted. Counting down, it said
+    /// is why it moved instead of being deleted. Counting down, it said
     /// <i>somebody should decide these</i>. At zero it says <b>a row that
     /// arrives <c>open</c> with <c>--</c> fails the build</b>, so a hazard has to
     /// be adjudicated when it is written down instead of accumulating for a
@@ -143,7 +143,7 @@ internal sealed partial class RecordedCountTests
         // categories still summed to something plausible while the total had
         // drifted. Read from the index's OWN `Area` cells, so the sentence must
         // spell them the way the table does and a renamed area is a red build
-        // rather than a category that silently stops being counted.
+        // and not a category that silently stops being counted.
         var byArea = unadjudicated
             .GroupBy(row => row.Area, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
@@ -215,7 +215,7 @@ internal sealed partial class RecordedCountTests
 
         await Assert.That(recorded.Success).IsTrue();
 
-        // The same scan that produces the number, called rather than copied. The
+        // The same scan that produces the number, called, not copied. The
         // figure in CLAUDE.md is a stamp on THIS count and on nothing else.
         var live = await DocumentationLinkTests.FragmentCountAsync();
         var stated = int.Parse(recorded.Groups["fragments"].Value, CultureInfo.InvariantCulture);
@@ -321,10 +321,10 @@ internal sealed partial class RecordedCountTests
     /// that has to discuss this marker is a real article carrying real
     /// measurements, and excluding it would exclude the facts too. So the
     /// narrowing is by <i>shape</i>: the corpus is unchanged and the match is the
-    /// stamp rather than the token.
+    /// stamp and not the token.
     /// </para>
     /// <para>
-    /// <b>The stamp is the marker in backticks, and that is measured rather than
+    /// <b>The stamp is the marker in backticks, and that is measured, not
     /// asserted.</b> It is how <c>kb/README.md</c>'s conventions table spells
     /// every one of the five markers, and on 2026-08-27 all 487 marker
     /// occurrences under <c>kb/</c> -- 240 <c>[FLOATS]</c>, 106 <c>[STABLE]</c>,
@@ -340,7 +340,7 @@ internal sealed partial class RecordedCountTests
     /// article carries fails too.
     /// </para>
     /// <para>
-    /// <b>What this still cannot see</b>, said here rather than implied: a stamp
+    /// <b>What this still cannot see</b>, said here and not implied: a stamp
     /// and a quotation of one are the same characters, so an article that wants to
     /// quote the <i>backticked</i> form in prose is still red and still has to say
     /// it in words. That is the older workaround, narrowed to one shape instead of
@@ -353,7 +353,7 @@ internal sealed partial class RecordedCountTests
     {
         // kb/README.md's own claim, in the conventions table: "That no article
         // carries one today is the healthy state, not evidence the marker is
-        // dead." Read as the anchor rather than assumed, so the number it
+        // dead." Read as the anchor, not assumed, so the number it
         // publishes is what the articles are held against -- and so a stamp is
         // resolvable by moving it.
         var definition = Path.Combine(RepositoryLayout.Root.FullName, "kb", "README.md");
@@ -382,11 +382,11 @@ internal sealed partial class RecordedCountTests
                 + "sentence to the number, and the pair passes. Neither half passes alone: a stamp with the "
                 + "sentence unmoved fails here, and so does a sentence claiming a stamp no article carries.");
 
-        // ⚠️ BOTH DIRECTIONS over the shape, off synthetic articles rather than by
+        // ⚠️ BOTH DIRECTIONS over the shape, off synthetic articles and not by
         // doctoring the tree -- which is what the corpus check below could not
         // tell apart, and what the whole correction is about. Driven through the
         // same predicate the live count above is, so a narrowing that went too far
-        // or not far enough is red here rather than silently true of the tree.
+        // or not far enough is red here and not silently true of the tree.
         await Assert.That(StampedArticles([("stamped.md", "Not re-run. `[STALE]` -- owed since 2026-08-27.")]).Count).IsEqualTo(1);
         await Assert.That(StampedArticles([("prose.md", "The guard used to match [STALE] anywhere, so discussing it turned the suite red.")]).Count).IsEqualTo(0);
 
@@ -492,7 +492,7 @@ internal sealed partial class RecordedCountTests
 
         // The corpus, against the map. Reading the article set off the same
         // helper the counts come from, so an article added under kb/ is a red
-        // build rather than a row nobody wrote.
+        // build and not a row nobody wrote.
         var corpus = ReVerificationIndexTests.ArticleFiles()
             .Select(file => Path.GetRelativePath(articles, file).Replace(Path.DirectorySeparatorChar, '/'))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -554,21 +554,21 @@ internal sealed partial class RecordedCountTests
         // child launched without the storage capability). There is no such
         // child: session modes are gone and every session is granted every
         // capability, so that difference is structurally zero and the assertion
-        // would have been vacuous rather than wrong. What replaced it is the
+        // would have been vacuous, not wrong. What replaced it is the
         // figure the same paragraph now publishes and the one a caller acts on:
         // how many tools BrowserAI's own tools/list carries.
         await Assert.That(int.Parse(advertised.Groups["tools"].Value, CultureInfo.InvariantCulture))
             .IsEqualTo(granted.Count - withheld)
             .Because("DECISIONS.md states how many tools BrowserAI advertises, which is what a fully-capable child exposes minus what BrowserAI withholds.");
 
-        // Not vacuous, and the relationship is asserted rather than the numbers:
+        // Not vacuous, and the relationship is asserted and not the numbers:
         // a snapshot that had lost its capability map would make the granted
         // surface the default 26, and a policy that stopped withholding anything
         // would make the two counts equal.
         //
         // ⚠️ `withheld` is 1 again since 2026-09-21 (previously 2, and 1 before
         // 2026-09-15 when browser_webmcp_call joined browser_annotate). NOBODY
-        // DECIDED THAT, which is why it is stamped rather than just changed:
+        // DECIDED THAT, which is why it is stamped and not just changed:
         // @playwright/mcp 0.0.82 marked browser_webmcp_call `skillOnly`, so it
         // left the exposed surface and its row was deleted as a judgement about
         // nothing. The reasoning behind the deny is preserved in
@@ -587,7 +587,7 @@ internal sealed partial class RecordedCountTests
     /// <remarks>
     /// The links are relative to <c>kb/</c>, so the article's own relative path
     /// is what appears inside the brackets, optionally followed by a
-    /// <c>#anchor</c>. Matched as <c>(path)</c> or <c>(path#...)</c> rather than by
+    /// <c>#anchor</c>. Matched as <c>(path)</c> or <c>(path#...)</c> and not by
     /// containment, because <c>mcp/sdk.md</c> is a substring of nothing here
     /// today and would be the day somebody adds <c>mcp/sdk.md.old</c>.
     /// </remarks>
@@ -647,10 +647,10 @@ internal sealed partial class RecordedCountTests
     /// counted reached zero, so that link became a self-link and the wording
     /// went with it. Nothing else about the shape changed: four named totals and
     /// a category clause with no full stop in it. The superseded text is
-    /// paraphrased rather than quoted here for one reason --
+    /// paraphrased and not quoted here for one reason --
     /// <c>DocumentationLinkTests</c> reads every relative link in every
-    /// <c>.cs</c> file, and a quoted one resolves against this directory rather
-    /// than against the repository root, so quoting it verbatim fails that gate.
+    /// <c>.cs</c> file, and a quoted one resolves against this directory and
+    /// not against the repository root, so quoting it verbatim fails that gate.
     /// </remarks>
     [GeneratedRegex(
         @"\*\*(?<unadjudicated>\d+) rows of this index are `open` and carry `-` for evidence\.\*\*" +
@@ -674,7 +674,7 @@ internal sealed partial class RecordedCountTests
     /// What <c>ChildEnvironment</c>'s opening paragraph says upstream reads.
     /// </summary>
     /// <remarks>
-    /// Read off the sentence rather than off a constant, because there is no
+    /// Read off the sentence and not off a constant, because there is no
     /// constant: the figure is prose, which is exactly why it went stale.
     /// </remarks>
     /// <returns>The reader.</returns>
@@ -741,7 +741,7 @@ internal sealed partial class RecordedCountTests
     /// articles carry the marker, which is the anchor a real stamp moves.
     /// </summary>
     /// <remarks>
-    /// The clause is matched rather than the whole sentence, because the rest of
+    /// The clause is matched and not the whole sentence, because the rest of
     /// it -- <i>"is the healthy state, not evidence the marker is dead"</i> -- is
     /// true of zero and false of anything else, and a writer stamping an entry has
     /// to be free to finish the sentence honestly. <c>no</c> is spelled out

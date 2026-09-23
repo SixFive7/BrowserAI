@@ -36,7 +36,7 @@ internal static class ScratchRoot
     /// Everything the reclaim pass could not remove, in the order it met them.
     /// </summary>
     /// <remarks>
-    /// <b>Exposed so the pass can be a test rather than only a side effect.</b>
+    /// <b>Exposed so the pass can be a test and not only a side effect.</b>
     /// The suite's own specification says <i>"the pass is itself a test -- it
     /// runs the same reclaim the product performs, so a defect in reclaim shows
     /// up as a suite that cannot start clean, which is a louder signal than a
@@ -54,7 +54,7 @@ internal static class ScratchRoot
     /// <b>Separate from <see cref="LastPassSurvivors"/> because most of it is
     /// the healthy state.</b> A machine that has never crashed a run produces a
     /// file of pids that all read <i>not that process any more</i>, and that is
-    /// the pass confirming there is nothing to do rather than a finding. Only a
+    /// the pass confirming there is nothing to do and not a finding. Only a
     /// process it could not end is a survivor.
     /// </remarks>
     public static List<string> LastPassReport { get; } = [];
@@ -99,7 +99,7 @@ internal static class ScratchRoot
     /// exits 1 before it serves anything.
     /// </para>
     /// <para>
-    /// <b>A sibling of the product's own root rather than a child of it</b>, so
+    /// <b>A sibling of the product's own root and not a child of it</b>, so
     /// the reclaim below can delete the whole thing without ever being one
     /// mistake away from a developer's real browsers, sessions and log. The
     /// repository's own rule -- everything the suite writes goes in
@@ -112,10 +112,10 @@ internal static class ScratchRoot
     /// nowhere else").</b> There is a second place since the reclaim began
     /// announcing what it terminated: <see cref="SpawnRecord"/> writes that to
     /// the machine's process log under <c>%LocalAppData%\BrowserAI\logs</c>. Two
-    /// rather than one, and the count is the whole of the change -- the reason
-    /// stands, and so does the rule that a third needs the same argument. Worth
-    /// saying plainly: the suite's own published slices have always written
-    /// there, which is why <see cref="ProcessLogRecords"/> exists to read them
+    /// and not one, and the count is the whole of the change -- the reason
+    /// stands, and so does the rule that a third needs the same argument. The
+    /// suite's own published slices have always written there, which is why
+    /// <see cref="ProcessLogRecords"/> exists to read them
     /// back, so what moved is that the <i>harness</i> writes there too.
     /// </para>
     /// </remarks>
@@ -194,7 +194,7 @@ internal static class ScratchRoot
             // Only what it COULD NOT terminate joins the survivors. A
             // leftover this pass ended is the pass working, and putting
             // it in a list something asserts is empty would fail the run
-            // that cleaned up rather than the run that leaked.
+            // that cleaned up and not the run that leaked.
             LastPassReport.AddRange(SpawnRecord.Reclaim(SpawnRecord.Path));
             LastPassSurvivors.AddRange(LastPassReport
                 .Where(line => line.StartsWith("could not terminate ", StringComparison.Ordinal)));
@@ -224,14 +224,14 @@ internal static class ScratchRoot
     /// suite creates that a directory sweep cannot reach: an entry lives under
     /// <c>%LocalAppData%\BrowserAI\index\</c> and names a directory somewhere
     /// else. A test that pointed the index at the real root -- by taking
-    /// <see cref="LocalAppDataPaths"/>'s default rather than a scratch root --
+    /// <see cref="LocalAppDataPaths"/>'s default and not a scratch root --
     /// would put this run's throwaway directories into a developer's own
     /// <c>browserai_list</c>, and they would stay there.
     /// </para>
     /// <para>
     /// <b>Only entries pointing inside the scratch root are removed.</b> A
     /// developer's real sessions are never touched, and the reclaim cleans a
-    /// leak from any earlier run rather than only from this one.
+    /// leak from any earlier run and not only from this one.
     /// </para>
     /// </remarks>
     private static void ReclaimStrayIndexEntries(string scratchRoot)
@@ -309,7 +309,7 @@ internal static class ScratchRoot
         {
             try
             {
-                // TreeDelete rather than Directory.Delete(recursive: true),
+                // TreeDelete and not Directory.Delete(recursive: true),
                 // which is what this did until 2026-08-17 and is the one
                 // primitive §E says never to use. The suite's own reclaim spec
                 // names it: "the scratch root is deleted with the routine that

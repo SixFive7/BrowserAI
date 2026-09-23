@@ -19,8 +19,8 @@ namespace BrowserAI.Tests.Harness;
 /// composed path that nothing checks is a guess.
 /// </para>
 /// <para>
-/// <b>The files are real PE headers rather than real executables</b>, and that is
-/// the point rather than a shortcut: what
+/// <b>The files are real PE headers and not real executables</b>, and that is
+/// the point, not a shortcut: what
 /// <see cref="PeSubsystem"/> reads is eight bytes at three documented offsets, so
 /// a test can construct the exact input it wants to assert about -- a console
 /// binary, a Windows one, a file that is not a PE at all -- without publishing

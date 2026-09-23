@@ -52,7 +52,7 @@ internal static partial class ProcessIdentity
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>One rather than zero, so a survivor check cannot mistake a terminated
+    /// <b>One and not zero, so a survivor check cannot mistake a terminated
     /// process for one that shut down cleanly.</b> That is the reason it was
     /// chosen and it is still the reason it stands.
     /// </para>
@@ -64,7 +64,7 @@ internal static partial class ProcessIdentity
     /// which died wearing this exit code was indistinguishable from a browser
     /// that crashed -- for two rigs and eighty launches. The reclaim pass now
     /// announces what it did, and an announcement that spelled <c>1</c> at the
-    /// message rather than reading it from the call would be a second copy of a
+    /// message and not reading it from the call would be a second copy of a
     /// number that must never disagree with the first.
     /// </para>
     /// </remarks>
@@ -116,7 +116,7 @@ internal static partial class ProcessIdentity
     /// the handle opened.
     /// </summary>
     /// <remarks>
-    /// <b>For measuring the error rather than for deciding anything.</b>
+    /// <b>For measuring the error and not for deciding anything.</b>
     /// <see cref="IsAlive"/> is the question every caller in this suite actually
     /// has, and it deliberately refuses to answer it from an open alone -- a
     /// handle outlives the process it names. This exists so that a test which
@@ -161,8 +161,8 @@ internal static partial class ProcessIdentity
                 $"Process {processId} was created at {creation} rather than the recorded {createdFileTime}: the pid has been reused and this is not our process.");
         }
 
-        // Exit code 1 rather than 0, so a survivor check cannot mistake a
-        // terminated process for one that shut down cleanly. Named rather than
+        // Exit code 1 and not 0, so a survivor check cannot mistake a
+        // terminated process for one that shut down cleanly. Named and not
         // written here, because the reclaim's announcement quotes the same
         // constant: see TerminationExitCode.
         if (!TerminateProcess(handle, TerminationExitCode))
@@ -172,8 +172,8 @@ internal static partial class ProcessIdentity
     }
 
     /// <summary>
-    /// Waits for a terminated process to actually be gone, on its handle rather
-    /// than on a poll.
+    /// Waits for a terminated process to actually be gone, on its handle and
+    /// not on a poll.
     /// </summary>
     /// <remarks>
     /// <b><c>TerminateProcess</c> only asks.</b> It returns as soon as the

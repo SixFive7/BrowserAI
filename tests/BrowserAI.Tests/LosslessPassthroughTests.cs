@@ -50,11 +50,11 @@ namespace BrowserAI.Tests;
 /// </item>
 /// </list>
 /// <para>
-/// ⚠️ <b>One payload is still rewritten and it is named rather than hidden:</b>
+/// ⚠️ <b>One payload is still rewritten and it is named, not hidden:</b>
 /// upstream's <c>install-browser</c> advice, gated on <c>isError</c>, which
 /// <c>ProvisioningRemediationTests</c> owns end to end -- including a real-child
-/// canary over upstream's own wording, so a reword there is a red build rather
-/// than a rewrite that silently stops firing.
+/// canary over upstream's own wording, so a reword there is a red build and
+/// not a rewrite that silently stops firing.
 /// </para>
 /// </remarks>
 internal sealed class LosslessPassthroughTests
@@ -109,12 +109,12 @@ internal sealed class LosslessPassthroughTests
     [Test]
     public async Task AnEscapeTheChildChoseStaysAnEscape()
     {
-        // A verbatim string, so the backslash reaches the JSON rather than the
+        // A verbatim string, so the backslash reaches the JSON and not the
         // C# compiler: the child really writes the six bytes é.
         //
         // This is the case that separates byte-identical from
-        // semantically-lossless, and the reason the payload is spliced rather
-        // than round-tripped through a JsonNode. A node decodes this to 'é' and
+        // semantically-lossless, and the reason the payload is spliced and
+        // not round-tripped through a JsonNode. A node decodes this to 'é' and
         // writes it back out raw: same value, two fewer bytes, and a claim of
         // byte-identity that was only ever true of unescaped input.
         const string Escaped = @"{""content"":[{""type"":""text"",""text"":""caf\u00e9 \u2014 \/""}]}";
@@ -165,13 +165,13 @@ internal sealed class LosslessPassthroughTests
     {
         var image = Convert.ToBase64String(Enumerable.Range(0, 4096).Select(value => (byte)value).ToArray());
 
-        // Embedded raw rather than through JsonSerializer.Serialize, and the
+        // Embedded raw and not through JsonSerializer.Serialize, and the
         // difference is the test: base64's alphabet includes '+' and '/', which
         // JavaScriptEncoder.Default escapes and this path must not. Serialising
         // it here would have put the escapes in on the double's side and hidden
         // exactly what is being measured.
         //
-        // Three '$' rather than two: the literal ends in two consecutive closing
+        // Three '$' and not two: the literal ends in two consecutive closing
         // braces of its own, and an interpolated raw string allows one fewer
         // than it has leading '$' characters.
         var result =
@@ -211,7 +211,7 @@ internal sealed class LosslessPassthroughTests
 
         await Assert.That(caller.Length).IsGreaterThanOrEqualTo(Size);
 
-        // Compared as spans rather than with IsEquivalentTo, which walks a
+        // Compared as spans and not with IsEquivalentTo, which walks a
         // collection element by element: at 2 MiB that assertion alone took
         // 139 s and dominated the whole suite (measured 2026-08-16). The
         // offset is the assertion's subject so a mismatch still names where,
@@ -240,7 +240,7 @@ internal sealed class LosslessPassthroughTests
     /// <b>The witness is deliberately a call that WOULD have been rewritten.</b>
     /// <c>browser_take_screenshot</c> with a <c>filename</c> is the exact shape
     /// the old splice fired on, so a proxy that still appended anything to it
-    /// fails here rather than somewhere subtler.
+    /// fails here and not somewhere subtler.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -362,7 +362,7 @@ internal sealed class LosslessPassthroughTests
     [Test]
     public async Task CancellingACallIsObservedAtTheFakeChild()
     {
-        // Held rather than delayed: a child parked inside its own dispatch
+        // Held, not delayed: a child parked inside its own dispatch
         // could not hear the notification this test exists to prove reaches it.
         using var release = new CancellationTokenSource();
 
@@ -462,7 +462,7 @@ internal sealed class LosslessPassthroughTests
         await Assert.That(response.Error).IsNotNull();
         await Assert.That(response.Error!["code"]!.GetValue<int>()).IsEqualTo((int)McpErrorCode.InternalError);
 
-        // And the cause is named, rather than living only in the log. The
+        // And the cause is named, instead of living only in the log. The
         // wording is transport-level on purpose: §H.4's model-facing catalogue
         // is step 13's, and inventing its text here would be writing a
         // catalogue entry nobody reviewed.
@@ -477,7 +477,7 @@ internal sealed class LosslessPassthroughTests
     /// </summary>
     /// <remarks>
     /// ⚠️ <b>This test asserted byte-identity until build-order step 12, and the
-    /// assertion had to go rather than be relaxed.</b> Rewriting <c>tools/list</c>
+    /// assertion had to go, not be relaxed.</b> Rewriting <c>tools/list</c>
     /// -- the authored tools in front, a required <c>session</c> injected into
     /// every upstream schema -- is in scope by the charter, so the old assertion
     /// was asserting the absence of a feature. What is kept is every property
@@ -488,7 +488,7 @@ internal sealed class LosslessPassthroughTests
     /// <remarks>
     /// ⚠️ <b>Two injected parameters since 2026-08-20 (previously one).</b>
     /// <c>why</c> rides the same path <c>session</c> does -- mutating the
-    /// <see cref="JsonNode"/> the child sent rather than rebuilding it -- so this
+    /// <see cref="JsonNode"/> the child sent instead of rebuilding it -- so this
     /// test is what says the second one did not disturb the first: <c>url</c>
     /// still holds position 0, both are appended in order, and upstream's own
     /// <c>required</c> entry is still ahead of both.
@@ -497,7 +497,7 @@ internal sealed class LosslessPassthroughTests
     [Test]
     public async Task ToolsListKeepsUpstreamsNamesOrderAndExtensionsThroughTheRewrite()
     {
-        // Order is a requirement rather than an accident: the spec SHOULDs
+        // Order is a requirement, not an accident: the spec SHOULDs
         // deterministic ordering because callers cache prompts on it, and a
         // rewrite that reordered would cost a cache miss per call with nothing
         // failing.
@@ -530,8 +530,8 @@ internal sealed class LosslessPassthroughTests
 
         await Assert.That(navigate["inputSchema"]!["required"]!.ToJsonString()).IsEqualTo("""["url","session","why"]""");
 
-        // A tool that declared no properties at all still gains both, rather
-        // than being skipped because there was nothing to append to.
+        // A tool that declared no properties at all still gains both, and is
+        // not skipped because there was nothing to append to.
         var click = response.Result["tools"]![SessionToolSurface.Names.Count + 1]!;
         await Assert.That(click["inputSchema"]!["properties"]!["session"]).IsNotNull();
         await Assert.That(click["inputSchema"]!["properties"]!["why"]).IsNotNull();
@@ -545,7 +545,7 @@ internal sealed class LosslessPassthroughTests
         var options = rig.Proxy.ServerOptions();
 
         // The lossy path is not merely unused, it is absent: if the filter ever
-        // stopped short-circuiting, the caller would get -32601 rather than a
+        // stopped short-circuiting, the caller would get -32601 and not a
         // quietly re-serialised answer. A loud wrong answer can be found.
         await Assert.That(options.Handlers.ListToolsHandler is null).IsTrue();
         await Assert.That(options.Handlers.CallToolHandler is null).IsTrue();
@@ -567,7 +567,7 @@ internal sealed class LosslessPassthroughTests
         // convenience one drops tools whose x-mcp-header annotations fail
         // SEP-2243 validation, with no error anywhere. Step 9 goes further and
         // calls neither: tools/list is forwarded as a raw JsonRpcRequest, so the
-        // trap is unreachable rather than avoided. This is what keeps that true.
+        // trap is unreachable, not avoided. This is what keeps that true.
         var offenders = new List<string>();
 
         foreach (var file in RepositoryLayout.ProductSourceFiles)
@@ -655,7 +655,7 @@ internal sealed class LosslessPassthroughTests
     /// on.
     /// </para>
     /// <para>
-    /// <b>Asserted over the frame the double actually received</b>, rather than
+    /// <b>Asserted over the frame the double actually received</b>, and not
     /// over the arguments object the test built: the strip happens on a clone
     /// inside the proxy, so a version that stripped the caller's own node
     /// instead would pass an in-process check and corrupt a request the SDK may
@@ -803,7 +803,7 @@ internal sealed class SdkErrorShapeTests
             await Assert.That((int)failure.ErrorCode).IsEqualTo(-32000);
 
             // And the half of deviation 8 that turned out not to need doing:
-            // `data` is destructured into Exception.Data rather than lost.
+            // `data` is destructured into Exception.Data and not lost.
             await Assert.That(failure.Data.Count).IsGreaterThan(0);
         }
         finally

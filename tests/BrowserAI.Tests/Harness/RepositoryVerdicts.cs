@@ -20,7 +20,7 @@ namespace BrowserAI.Tests.Harness;
 /// needs to know what this build judges runs without the capability gate.
 /// </para>
 /// <para>
-/// <b>Read through <see cref="ToolVerdicts.Read"/> rather than parsed here.</b> A
+/// <b>Read through <see cref="ToolVerdicts.Read"/> and not parsed here.</b> A
 /// second reader in the suite would eventually disagree with the product's, and
 /// the disagreement would be reported as a product defect.
 /// </para>
@@ -35,7 +35,7 @@ internal static class RepositoryVerdicts
     public static ToolVerdicts Committed { get; } = ToolVerdicts.Read(Path);
 
     /// <summary>
-    /// Every tool this build ships a <c>deny</c> for, found rather than named,
+    /// Every tool this build ships a <c>deny</c> for, found and not named,
     /// in the file's own order.
     /// </summary>
     /// <remarks>
@@ -56,12 +56,12 @@ internal static class RepositoryVerdicts
     /// shape that scales with the file. <b>The protection is not dropped, it
     /// moves</b>: the arms that assert the <i>mechanism</i> -- refused at the
     /// door, absent from <c>tools/list</c>, absent from the real binary's real
-    /// answer -- now run over <i>every</i> row rather than over one, so a third
-    /// denial arriving is covered rather than ignored, and the counts those
-    /// arms state are <see cref="Count"/> rather than <c>1</c>.
+    /// answer -- now run over <i>every</i> row and not over one, so a third
+    /// denial arriving is covered and not ignored, and the counts those
+    /// arms state are <see cref="Count"/> and not <c>1</c>.
     /// </para>
     /// <para>
-    /// <b>Empty is refused here rather than at the call site.</b> A build that
+    /// <b>Empty is refused here and not at the call site.</b> A build that
     /// withheld nothing would make every "the withheld tool is absent" arm
     /// below vacuously true, and a vacuous pass is the failure this whole file
     /// exists to prevent.
@@ -84,11 +84,11 @@ internal static class RepositoryVerdicts
     public static int Count => TheDenials.Count;
 
     /// <summary>
-    /// One denial, for the arms that have to drive a rig at a single tool rather
-    /// than assert over the set.
+    /// One denial, for the arms that have to drive a rig at a single tool
+    /// instead of asserting over the set.
     /// </summary>
     /// <remarks>
-    /// <b>The oldest judgement, tie-broken by name, rather than the first row in
+    /// <b>The oldest judgement, tie-broken by name, and not the first row in
     /// the file.</b> Row order follows upstream's <c>tools/list</c> order, so
     /// "the first one" moves the day upstream reorders its own array -- which is
     /// exactly the silent re-point the <c>Single</c> this replaced was guarding

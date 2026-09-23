@@ -95,7 +95,7 @@ internal sealed class FrameChannel(Stream input, Stream output) : IDisposable
                 var length = newline - _start;
 
                 // Tolerant on the way in, like the product's own read loop: a
-                // peer that frames with CRLF is answerable rather than
+                // peer that frames with CRLF is answerable, not
                 // mysterious.
                 if (length > 0 && _buffer[_start + length - 1] is (byte)'\r')
                 {
