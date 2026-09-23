@@ -162,6 +162,28 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 📝 **The `webp` zero-byte watch is re-stamped, and it gains the instrument it was missing.**
+  The ask that a `webp` screenshot past 16,383 px should error instead of returning an empty
+  image has been open since 2026-09-14, and a watch whose last reading is nine days old reads
+  the same as one nobody has looked at. Read 2026-09-23 and written down with their date:
+  [#42717](https://github.com/microsoft/playwright/issues/42717) is open, labelled `v1.64` and
+  assigned to `dcrousso`; [PR #42721](https://github.com/microsoft/playwright/pull/42721) is
+  still closed and unmerged with nothing replacing it; **Chromium CL 8416650** is status **NEW**
+  with **Code-Owners unsatisfied** as of 2026-09-21; no `playwright`-side change has appeared;
+  and `@playwright/mcp` 0.0.82 is what the payload runs, with today's `playwright-core` next
+  alpha carrying the same **chromium 1246**. Nothing has moved on either side, and that is the
+  finding.
+
+  **The trigger moved and the instrument now follows it.** Because the fix is expected in
+  Chromium, what settles this arrives on a browser revision and not on a wrapper bump --
+  re-verification row 122 was keyed on the wrapper. **Row 138 is the browser-revision half**,
+  and its re-check is row 122's measurement re-run at the new revision, with the 16,383 px arm
+  as the positive control that is not optional. Both rows stay: either route would settle the
+  fact, and deleting the one that now looks unlikely is how a route nobody is watching gets
+  taken. The daily drift check reads the resolved revision, so a revision move is now the prompt
+  to re-take the measurement -- which is the one thing this item did not have, having been a
+  watch on a tracker nobody here controls with nothing scheduled to make anybody look.
+
 - 📝 **The network-service sandbox watch moves out of the backlog and into the re-check table.**
   [`TODO.md`](TODO.md) carried an item watching two upstream moves that would make the browser's
   network service ask for a sandbox the provisioned tree cannot give it. Its whole content was a

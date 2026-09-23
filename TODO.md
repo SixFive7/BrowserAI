@@ -625,6 +625,41 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       an ordinary full-page screenshot of a long document, which is what the ask
       says.
 
+      ⚠️ **RE-STAMPED 2026-09-23. NOTHING HAS MOVED ON EITHER SIDE, AND THAT
+      IS THE FINDING.** A watch whose last reading is nine days old reads the same
+      as one nobody has looked at, so the readings are written down with their
+      date:
+
+      - [**#42717**](https://github.com/microsoft/playwright/issues/42717) is
+        still **open**, labelled **`v1.64`** and assigned to **`dcrousso`** --
+        so it is triaged and owned, not ignored.
+      - [**PR #42721**](https://github.com/microsoft/playwright/pull/42721) is
+        still **closed and unmerged**. Nothing has replaced it.
+      - **Chromium CL 8416650** -- *DevTools: report screenshot encoding
+        failures* -- is still status **NEW**, with **Code-Owners unsatisfied** as
+        of **2026-09-21**. An unsatisfied owner review is what stands between it
+        and landing; it is not waiting on anything this side does.
+      - **No `playwright`-side change of any kind** has appeared for this.
+      - **`@playwright/mcp` 0.0.82 is what the payload runs**, and today's
+        `playwright-core` next alpha carries **the same chromium 1246** -- so the
+        revision that would carry a fix has not moved either.
+
+      ⚠️ **THE TRIGGER MOVED AND THE INSTRUMENT FOLLOWED IT.** Because the fix
+      is expected in Chromium, what settles this arrives on a **browser
+      revision** and not on a wrapper bump, which
+      [re-verification row 122](kb/re-verification.md) was keyed on.
+      **Row 138 is the browser-revision half**, added 2026-09-23, and its
+      re-check is exactly row 122's measurement re-run at the new revision.
+      Both rows stay: either route would settle the fact, and deleting the one
+      that now looks unlikely is how a route nobody is watching gets taken. So
+      the drift check surfaces this item the moment a revision moves, which is
+      the one thing that was missing -- this item was watching a tracker nobody
+      on this side controls, with nothing scheduled to make anybody look.
+
+      **The settlement condition is unchanged:** a released build in which a
+      16,384 px `webp` screenshot errors instead of returning empty. **This item
+      stays open as a watch**, not as work.
+
 - [x] **WATCH for the `@playwright/mcp` release that carries #42497, and delete
       the override when it lands.** ✅ **CLOSED 2026-09-21. Condition met
       2026-09-18, acted on 2026-09-21, override removed at commit `37abb9a`.**
