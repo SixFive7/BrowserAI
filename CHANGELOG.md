@@ -40,6 +40,23 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **The prose scan reads what the product says, and no longer only what its maintainer wrote.**
+  `HouseRuleTests.NoMaintainedProseCarriesATell` gained a second corpus.
+  `Harness.Commentary.LiteralsOf` is the comment lexer walked the other way, and
+  `IsProductVoice` is the file list it reads: every `.cs` and every project file under `src/`,
+  then `build/` and `.claude/hooks/` by extension, plus both `BannedSymbols.txt`. **Planted red
+  once per shape it reads**, by doctoring a real sentence in each -- a refusal in
+  `SessionErrors`, a `Write-Error` in `New-Release.ps1`, a banner in `invoke-release-gate.sh`,
+  an `<Error Text>` in `Sqlite.targets`, a thrown message in `upstream-snapshots.mjs` and the
+  review hook's here-string. **An eighth plant proved the two corpora do not overlap**: a
+  doctored line in `build/BannedSymbols.txt` was caught by the comment pass instead, because a
+  file with no code in it is all prose to one reader and one whole literal to the other.
+
+  **The `.mjs` shape was the one that stayed green**, until the lexer learned that a script's
+  single quotes and backticks are strings. That is the silent half of a reader like this: one
+  that returns too little stays synchronised, reports a clean tree, and looks exactly like one
+  that found nothing to report.
+
 - 📦 **The resolved set a release was cut from is committed to the repository, one per release.**
   `build/New-Release.ps1` has emitted a resolved-set manifest beside every archived package
   since 2026-08-16 -- the three `packages.lock.json` files, the payload's lock and its
@@ -117,6 +134,31 @@ release body; nothing else depends on it.
   funding it.
 
 ### Changed
+
+- 🔧 **Every sentence BrowserAI says to a person is written the way a person writes.**
+  The maintainer's directive of 2026-09-23 covers wording and character use, and until now the
+  wording half reached commentary only: `Harness.Commentary` lexes the comments out of code, so
+  a string literal was invisible to it. The `X rather than Y` frame therefore survived in
+  precisely the text a user, a model and a compiler read. **84 lines across 30 files** are
+  rewritten, 74 of them carrying that frame, with no change to any meaning, fact, number, name
+  or log event id: the server `instructions`, the `browserai_*` tool and parameter descriptions,
+  the `SessionErrors` and `SessionManager` refusals, the proxy and liveness log lines, both
+  `BannedSymbols.txt` reasons, the `<Error Text>` in all three project files, the release
+  scripts' `Write-Error` text, `Sqlite.targets`, `upstream-snapshots.mjs` and the review hook's
+  here-string. The maintainer's decision, verbatim: *"Q253 b"*.
+
+  **Three assertions were the planted red** and are updated in the same commit --
+  `ErrorCatalogueTests`, `SessionListTests` and `SessionToolTests` each pinned a sentence that
+  moved, and each went red before it was touched. The error catalogue's census counts rows by
+  method name, so it did not move; no golden text records any of these sentences.
+
+  **Three records quote the old wording and are left as they stand**: a released `CHANGELOG`
+  section, a ledger snapshot and a review's evidence block, each a dated capture of what the
+  product said on the day it was run. **Three files were refused and are named here** --
+  `upstream-review.json`, `drift-check.json` and `tool-verdicts.json` carry a reviewer's
+  reasoning and a dated check's own notes, so rewriting one would edit the account and not the
+  product. The suite's own harness messages are outside it for the same reason: a test
+  explaining a missing capability to whoever is running it is not the product speaking.
 
 - 📦 **A release publishes three assets, and the release script declares which three.**
   `build/New-Release.ps1` does not upload and never has: the publish is a hand-run
