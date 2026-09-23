@@ -134,7 +134,7 @@ internal sealed class TreeDeleteTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>Added 2026-09-17, planted red, off a real failure rather than off an
+    /// ⚠️ <b>Added 2026-09-17, planted red, off a real failure and not off an
     /// idea.</b> The 2026-09-17 release gate went red at the head of its own
     /// first run, in a test nothing had changed: the suite's reclaim pass could
     /// not take a <c>release-notes-tag-*</c> rig that
@@ -150,7 +150,7 @@ internal sealed class TreeDeleteTests
     /// <c>Remove-Item -Force</c> and therefore clears the attribute.
     /// </para>
     /// <para>
-    /// <b>The fix went into the product rather than into the rig</b>, because a
+    /// <b>The fix went into the product and not into the rig</b>, because a
     /// read-only file is ordinary content: anything a session downloaded, or a
     /// user dropped into a directory <c>browserai_destroy</c> is handed, would
     /// have been reported as a node the product could not remove when it could.
@@ -160,7 +160,7 @@ internal sealed class TreeDeleteTests
     /// behaviours.
     /// </para>
     /// <para>
-    /// <b>The held file is the control and it is in this arm rather than beside
+    /// <b>The held file is the control and it is in this arm and not beside
     /// it</b>: clearing an attribute must not turn into swallowing a sharing
     /// violation, so one tree carries both and the assertions say which node was
     /// removed and which was reported. The read-only <b>directory</b> is here

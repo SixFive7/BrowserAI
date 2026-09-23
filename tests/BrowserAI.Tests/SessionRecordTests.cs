@@ -17,7 +17,7 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// ⚠️ <b>This file replaces <c>LockRecordTests</c> (2026-08-26), and most of
-/// what that file held is gone rather than migrated.</b> Its subject was a JSON
+/// what that file held is gone and not migrated.</b> Its subject was a JSON
 /// document's strict parse -- an unknown key, a missing key, a statement with no
 /// timestamp, a superseded schema -- and those refusals now belong to two other
 /// mechanisms that already assert them: <c>LockFileTests</c> for
@@ -114,7 +114,7 @@ internal sealed class SessionRecordTests
     /// ⚠️ <b>The holder field is the one dedup does not bound, and that is
     /// deliberate.</b> <c>(pid, creationFileTime)</c> is never the same twice, so
     /// a session opened <i>n</i> times has <i>n</i> holder rows -- which is what
-    /// makes it a history of acquisitions rather than a note about the current
+    /// makes it a history of acquisitions and not a note about the current
     /// one.
     /// </para>
     /// </remarks>
@@ -168,7 +168,7 @@ internal sealed class SessionRecordTests
     }
 
     /// <summary>
-    /// <c>created</c> and <c>lastUsed</c> are derived from the record rather than
+    /// <c>created</c> and <c>lastUsed</c> are derived from the record and not
     /// stored, and the log moves the second one.
     /// </summary>
     /// <remarks>
@@ -191,7 +191,7 @@ internal sealed class SessionRecordTests
         await Assert.That(atOpen.Created).IsLessThanOrEqualTo(atOpen.LastUsed);
 
         // The store keeps `at` as text, so a stamp written one way and parsed
-        // another would sort wrongly rather than fail.
+        // another would sort wrongly and not fail.
         await Assert.That(atOpen.Created.Year).IsEqualTo(DateTimeOffset.Now.Year);
 
         try
@@ -222,7 +222,7 @@ internal sealed class SessionRecordTests
     /// </summary>
     /// <remarks>
     /// <b>The asymmetry is the decision, and it is what keeps the record the
-    /// reasons rather than the traffic.</b> A call that worked already returned
+    /// reasons and not the traffic.</b> A call that worked already returned
     /// the child's own answer to the caller byte-identical; a copy of it here
     /// would make <c>browserai.data</c> a transcript of every page the session
     /// ever loaded. A call that failed stores what failed, because that is the
@@ -274,7 +274,7 @@ internal sealed class SessionRecordTests
     /// </summary>
     /// <remarks>
     /// <b>This is the ordering the old write-before-forward existed for, and it
-    /// is the property rather than an implementation detail.</b> A navigation
+    /// is the property and not an implementation detail.</b> A navigation
     /// that hangs, a child that dies, a process that is killed -- the calls
     /// anybody investigates -- leave exactly this row and nothing else. A row
     /// written on the way back would be missing from all three.
@@ -347,7 +347,7 @@ internal sealed class SessionRecordTests
         // paragraph.
         await Assert.That(RecordText.Sanitise("first\nsecond")).IsEqualTo("first\nsecond");
 
-        // The carriage return is dropped rather than turned into a space, so a
+        // The carriage return is dropped and not turned into a space, so a
         // record written on Windows does not carry a stray one into a renderer.
         await Assert.That(RecordText.Sanitise("first\r\nsecond")).IsEqualTo("first\nsecond");
 
@@ -360,7 +360,7 @@ internal sealed class SessionRecordTests
         await Assert.That(RecordText.Sanitise("first\u2028second\u2029third")).IsEqualTo("first second third");
 
         // And the three that are invisible by construction, which are dropped
-        // outright rather than turned into a space nobody typed.
+        // outright and not turned into a space nobody typed.
         await Assert.That(RecordText.Sanitise("pay\u200bload\u202eand\ufeffmore")).IsEqualTo("payloadandmore");
 
         // ⚠️ NO CAP. The old record cut a purpose at 2,000 characters and a
@@ -372,7 +372,7 @@ internal sealed class SessionRecordTests
 
     /// <summary>
     /// A <c>Cf</c> outside the basic plane is dropped like every other one, and
-    /// an unpaired surrogate is dropped rather than replayed.
+    /// an unpaired surrogate is dropped and not replayed.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -386,13 +386,13 @@ internal sealed class SessionRecordTests
     /// another's context by <c>browserai_catch_up</c>.
     /// </para>
     /// <para>
-    /// <b>U+E0048 U+E0049 is the invisible text "HI"</b>, and it is here rather
-    /// than a tidier pair because it is the shape the class is actually used in.
+    /// <b>U+E0048 U+E0049 is the invisible text "HI"</b>, and it is here instead
+    /// of a tidier pair because it is the shape the class is actually used in.
     /// </para>
     /// <para>
     /// <b>The lone surrogate needs its own decision and this is it: dropped.</b>
     /// Half a character is not text, and turning it into a space would leave a
-    /// space nobody typed -- the same argument that drops a <c>Cf</c> rather than
+    /// space nobody typed -- the same argument that drops a <c>Cf</c> instead of
     /// neutralising it.
     /// </para>
     /// </remarks>
@@ -460,8 +460,8 @@ internal sealed class SessionRecordTests
     }
 
     /// <summary>
-    /// A client process name that could not be read is recorded as absent rather
-    /// than guessed, in the record's own holder history as well as in the guard.
+    /// A client process name that could not be read is recorded as absent and
+    /// not guessed, in the record's own holder history as well as in the guard.
     /// </summary>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -499,7 +499,7 @@ internal sealed class SessionRecordTests
 
         // ar-SA carries the Umm al-Qura calendar, so a date formatted or parsed
         // against the current culture comes out with a different year entirely --
-        // the failure this rule exists to close, rather than a cosmetic one.
+        // the failure this rule exists to close, and not a cosmetic one.
         var thread = new Thread(() =>
         {
             stamp = SessionRecordReader.Stamp(moment);
@@ -515,7 +515,7 @@ internal sealed class SessionRecordTests
 
         await Assert.That(thread.Join(TestDefaults.InProcessHang)).IsTrue();
 
-        // 2026 rather than 2569, and the offset spelled out rather than escaped.
+        // 2026 and not 2569, and the offset spelled out and not escaped.
         await Assert.That(stamp).StartsWith("2026-08-26T11:45:30");
         await Assert.That(stamp).EndsWith("+02:00");
         await Assert.That(parsed).IsEqualTo(moment);
@@ -570,7 +570,7 @@ internal sealed class SessionRecordTests
         await Assert.That(File.Exists(path.LockFile)).IsFalse();
         await Assert.That(File.Exists(path.DataFile)).IsFalse();
 
-        // And a read is refused the same way rather than answering "no session".
+        // And a read is refused the same way instead of answering "no session".
         var thrown = Assert.Throws<SessionRecordException>(() => SessionLock.ReadRecord(path));
 
         await Assert.That(thrown!.Message).Contains(SessionLayout.LegacyRecordFileName);

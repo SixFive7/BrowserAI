@@ -26,7 +26,7 @@ namespace BrowserAI.Tests;
 /// editor windows with a dozen agent sessions each -- so a sweep that is merely
 /// <i>correct</i> for one process is wrong: 96 processes sweeping at startup is a
 /// thundering herd, and 96 racing to kill the same stray is a correctness problem
-/// rather than a performance one. The first three rows are the ones that lose data
+/// and not a performance one. The first three rows are the ones that lose data
 /// or kill the wrong process.
 /// </para>
 /// <list type="table">
@@ -84,11 +84,11 @@ namespace BrowserAI.Tests;
 /// <i>logon sessions</i> -- is the one property that cannot be produced from a
 /// single logon; what is asserted there is the mechanism that makes it correct
 /// (a <c>Global\</c> name, and two processes serialising on it), with the
-/// untested half named rather than implied.
+/// untested half named and not implied.
 /// </para>
 /// <para>
 /// <b>The candidate is a planted copy of the probe, not a browser, and that is a
-/// stronger test rather than a weaker one.</b> Detection matches on <i>full
+/// stronger test and not a weaker one.</b> Detection matches on <i>full
 /// image path</i>, so a test that declares the planted copy as "a browser
 /// BrowserAI provisioned" exercises the identical code path a real Chromium
 /// takes -- while making it impossible for a run of this suite to terminate
@@ -105,7 +105,7 @@ namespace BrowserAI.Tests;
 /// <para>
 /// ⚠️ <b>Re-justified 2026-08-17, when the suite went to unbounded parallelism
 /// and every <c>[NotInParallel]</c> in it had to state a mechanism.</b> This one
-/// is genuine exclusivity rather than flakiness avoidance, and it is the
+/// is genuine exclusivity and not flakiness avoidance, and it is the
 /// product's own design that makes it so: <c>Global\BrowserAI-Sweep</c> is a
 /// machine-wide mutex, R4 and R9 in the table above are <i>about</i> it, and a
 /// second sweeper is by construction either serialised behind the first or
@@ -116,7 +116,7 @@ namespace BrowserAI.Tests;
 /// <c>FirefoxTests</c>' attribution arm, which sweeps at both ends.
 /// </para>
 /// <para>
-/// <b>What left the key on the same day, and why it is worth writing down.</b>
+/// <b>What left the key on the same day, and why.</b>
 /// Two Firefox tests were in it -- one that only <i>observed</i> the machine and
 /// one that merely started a browser -- and neither swept anything. They were
 /// there because the observation was machine-wide; scoping it to a direct child
@@ -224,7 +224,7 @@ internal sealed class StraySweepTests
         // holding a handle to it, so the pid cannot have become a stranger
         // between detection and the decision. That is the whole of R2's first
         // half, and it is why the scan opens the handle at the moment it
-        // matches rather than when it comes to act.
+        // matches and not when it comes to act.
         await Assert.That(candidate.IsStillTheProcessThatWasFound()).IsTrue();
     }
 
@@ -253,7 +253,7 @@ internal sealed class StraySweepTests
         await Assert.That(ProcessIdentity.IsAlive(pid, created)).IsTrue();
     }
 
-    /// <summary>R3, on the sweep mutex rather than on the per-directory gate.</summary>
+    /// <summary>R3, on the sweep mutex and not on the per-directory gate.</summary>
     /// <remarks>
     /// ⚠️ <b>The order is the test.</b> An abandoned mutex is only observable by
     /// a process that already held a handle when the holder died: open the name
@@ -343,14 +343,14 @@ internal sealed class StraySweepTests
     /// this product is developed on: 755 unheld markers in two days. It rides
     /// this pass because this pass already has the three properties a reclaim
     /// needs -- machine-wide, mutex-serialised, and instantly skipped when a peer
-    /// holds the gate -- rather than getting a second discipline of its own.
+    /// holds the gate -- instead of getting a second discipline of its own.
     /// </para>
     /// <para>
     /// <b>The held marker is the control</b>, and it is what separates <i>the
     /// sweep reclaimed the right file</i> from <i>the sweep deleted whatever it
     /// found</i>. Reclaiming a live instance's marker would make that instance
     /// invisible to every later census and therefore killable by an apply, so
-    /// the negative is proved rather than argued.
+    /// the negative is proved, not argued.
     /// </para>
     /// </remarks>
     [Test]
@@ -405,7 +405,7 @@ internal sealed class StraySweepTests
 
     /// <summary>
     /// A sweep built without an <see cref="IAppPaths"/> reclaims nothing and says
-    /// so, rather than reporting a pass that did not happen.
+    /// so, instead of reporting a pass that did not happen.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -452,7 +452,7 @@ internal sealed class StraySweepTests
 
         // Neither entry point carries a name of its own: the background thread
         // and the --sweep pass both build the same StraySweep, which takes the
-        // one name above. Asserted on the source rather than by running two
+        // one name above. Asserted on the source and not by running two
         // processes, because what could drift is a second spelling and that is
         // what the check above already forbids -- this half only proves the two
         // entry points are the same code.
@@ -480,7 +480,7 @@ internal sealed class StraySweepTests
     /// prevent.</b> This design's working day is ~100 concurrent BrowserAIs;
     /// each one sweeps at startup, and each one waiting for the gate would
     /// queue ninety-nine passes to do work the first one already did. So the
-    /// seam is scanned rather than trusted: in <c>src\</c>, a pass may be handed
+    /// seam is scanned, not trusted: in <c>src\</c>, a pass may be handed
     /// <c>LockScopes.NeverWaits</c> and nothing else.
     /// </para>
     /// <para>
@@ -522,7 +522,7 @@ internal sealed class StraySweepTests
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
 
         // Both directions, off lines shaped like the two real ones. Joined with
-        // a marker so an empty argument list reads as one entry rather than as
+        // a marker so an empty argument list reads as one entry and not as
         // no entries at all -- which is the whole distinction being asserted.
         static string arguments(string line, string file) =>
             string.Join(" · ", SweepPassArguments(line, file).Select(argument => $"[{argument}]"));
@@ -616,11 +616,11 @@ internal sealed class StraySweepTests
     /// wild browser death for nineteen days</b>; the attribution is in
     /// <see href="../../HAZARDS.md">the hazard index</see> and the run is in
     /// <see href="../../docs/evidence/2026-09-17-reverify/README.md">the
-    /// evidence</see>. It is deterministic rather than rare: <i>any</i> product
+    /// evidence</see>. It is deterministic and not rare: <i>any</i> product
     /// server starting while this browser is alive kills it.
     /// </para>
     /// <para>
-    /// <b>What it costs, measured rather than estimated.</b> The arm now runs
+    /// <b>What it costs, measured, not estimated.</b> The arm now runs
     /// beside nothing, so its duration is on the suite's critical path. Measured
     /// 2026-09-17 on the reference machine, three runs each: this arm alone is
     /// <b>1.528 s / 1.513 s / 1.476 s</b> of total run time against a
@@ -666,7 +666,7 @@ internal sealed class StraySweepTests
         var session = NewSessionDirectory(scratch, "real");
         var profile = Path.Combine(session, SessionLayout.ProfileFolderName);
 
-        // ⚠️ `about:blank` rather than `--no-startup-window`, and that is not
+        // ⚠️ `about:blank` and not `--no-startup-window`, and that is not
         // cosmetic: with no window and nothing to do, a headless Chromium exits
         // on its own within a second or so, and the attribution loop below then
         // waits out its whole deadline against a browser that has already gone.
@@ -674,7 +674,7 @@ internal sealed class StraySweepTests
         // parallel suite, which is the shape of every timing bug this project
         // has met.
         // ⚠️ `--enable-logging --log-file --v=1`, added 2026-08-18, and it is a
-        // diagnostic rather than a change to what is under test. This arm has
+        // diagnostic and not a change to what is under test. This arm has
         // failed at least three times in two days with *"exited before it
         // published a message window ... it wrote nothing to either stream"*, and
         // the reason it stayed open that long is that Chromium's account of a
@@ -702,7 +702,7 @@ internal sealed class StraySweepTests
         var attributed = await WaitForAttributionAsync(chromium, profile, browser, browserCreated, scope, chromiumLog);
 
         // The browser is still running, so what was attributed is a live process
-        // rather than the last echo of one that was leaving.
+        // and not the last echo of one that was leaving.
         await Assert.That(ProcessIdentity.IsAlive(browser.Id, browserCreated)).IsTrue();
 
         // Detection found it -- by full image path, which is our own binary.
@@ -743,16 +743,16 @@ internal sealed class StraySweepTests
     /// desktop that verdict is
     /// <see cref="DesktopHeapProbe.NotDesktopHeapVerdict"/>, and a run that
     /// produced <see cref="DesktopHeapProbe.ExhaustedVerdict"/> instead would be
-    /// a true reading of a machine in trouble rather than a red test.
+    /// a true reading of a machine in trouble and not a red test.
     /// </para>
     /// <para>
-    /// <b>The death is provoked rather than waited for, and it needs no browser.</b>
+    /// <b>The death is provoked and not waited for, and it needs no browser.</b>
     /// The probe executable with no arguments at all falls through its own
     /// dispatch to <c>Usage()</c>, writes nothing anywhere and is gone --
     /// so the branch under test is reached deterministically, on the first pass
     /// of the loop, without a provisioned Chromium and without the desktop this
     /// arm is about being touched. It is the probe's <b>own</b> build output
-    /// rather than <see cref="PlantedProbe.ExecutablePath"/>, so no sweep
+    /// and not <see cref="PlantedProbe.ExecutablePath"/>, so no sweep
     /// anywhere can see it as a candidate and this arm needs no place in the
     /// serialised key.
     /// </para>
@@ -797,7 +797,7 @@ internal sealed class StraySweepTests
         await Assert.That(DesktopHeapProbe.Verdicts.Count(failure.Message.Contains)).IsEqualTo(1);
 
         // And the rest of the account is still there: this is an addition to the
-        // message rather than a replacement for it.
+        // message and not a replacement for it.
         await Assert.That(failure.Message).Contains("exited before it published a message window");
         await Assert.That(failure.Message).Contains("--- the machine at that instant ---");
     }
@@ -818,7 +818,7 @@ internal sealed class StraySweepTests
         // The baseline, written before anything sweeps. Without it a writer task
         // that the scheduler had not got round to starting would leave this test
         // asserting against an empty index and failing for the harness's timing
-        // rather than for the product's behaviour -- observed on 2026-08-16
+        // and not for the product's behaviour -- observed on 2026-08-16
         // under a fully parallel suite.
         foreach (var session in live)
         {
@@ -831,7 +831,7 @@ internal sealed class StraySweepTests
         // One side writes, exactly as `init` and `resume` do -- idempotently and
         // without any lock. The other side sweeps, over and over.
         //
-        // ⚠️ A dedicated thread rather than Task.Run, and a Yield in the loop.
+        // ⚠️ A dedicated thread and not Task.Run, and a Yield in the loop.
         // A tight file-I/O loop on a POOL thread starves the pool for as long as
         // it runs, and the suite's in-process rigs -- which answer in single
         // milliseconds and assert a two-second budget -- then fail somewhere
@@ -893,7 +893,7 @@ internal sealed class StraySweepTests
     /// <summary>R7: a pointer whose directory came back before the delete is kept.</summary>
     /// <remarks>
     /// The race itself -- an <c>init</c> landing between the enumeration and the
-    /// delete microseconds later -- is <b>absorbed rather than prevented</b>, and
+    /// delete microseconds later -- is <b>absorbed, not prevented</b>, and
     /// both halves are asserted: the re-check that catches the case it can, and
     /// the idempotent re-assert that makes losing one cost a single cycle of
     /// invisibility.
@@ -945,12 +945,12 @@ internal sealed class StraySweepTests
     /// R8: two sweeps that can see each other, serialised by a machine-wide name.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>The half this cannot produce, named rather than implied.</b> R8 is
+    /// ⚠️ <b>The half this cannot produce, named and not implied.</b> R8 is
     /// about two sweeps in two different <i>terminal-server logon sessions</i>,
     /// and a suite running in one logon cannot create a second. What is asserted
     /// is the mechanism that makes that case correct: the name is
     /// <c>Global\</c>-prefixed -- so it is one kernel object across every logon
-    /// session rather than one per session -- and two processes contending for it
+    /// session and not one per session -- and two processes contending for it
     /// really do serialise, with one acquiring and the other refused
     /// immediately. A <c>Local\</c> prefix would pass neither.
     /// </remarks>
@@ -1154,7 +1154,7 @@ internal sealed class StraySweepTests
     /// colon, a separator -- and <c>File.Exists</c> on it was measured at
     /// <b>22,210 ms</b>
     /// ([kb](../../kb/windows/detection.md#a-mapped-drive-letter-is-a-network-path-and-costs-the-same-22-seconds)).
-    /// The loop evaluates <b>every</b> title on the machine rather than only a
+    /// The loop evaluates <b>every</b> title on the machine and not only a
     /// candidate's, and the class it walks is forgeable, so one process
     /// registering <c>Chrome_MessageWindow</c> with a <c>Z:\...</c> title stalls
     /// the whole pass -- while holding the machine-wide sweep mutex.
@@ -1194,7 +1194,7 @@ internal sealed class StraySweepTests
         await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(title)).IsFalse();
 
         // The control, on the same predicate: a real local letter still passes,
-        // so this is a rule about the volume rather than a refusal of everything.
+        // so this is a rule about the volume and not a refusal of everything.
         await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(
             Path.Combine(Path.GetTempPath(), "profile"))).IsTrue();
     }
@@ -1229,7 +1229,7 @@ internal sealed class StraySweepTests
         // ⚠️ THE CLAIM.
         await Assert.That(StraySweep.IsRootedLocalDriveLetterPath(title)).IsFalse();
 
-        // And the control that keeps this a rule about the network rather than
+        // And the control that keeps this a rule about the network and not
         // about substitution: a letter standing in for a real local directory is
         // still admitted, because refusing it would narrow what the sweep can
         // see and cost a stray browser left running.
@@ -1269,7 +1269,7 @@ internal sealed class StraySweepTests
         // is composed here from a root carrying whatever drive-letter case the
         // test host was launched with, and the logged one was read back from
         // the OS, which always reports it upper-case. An ordinal compare makes
-        // this assertion a property of the invoking shell rather than of the
+        // this assertion a property of the invoking shell and not of the
         // sweep. Fixed 2026-08-17, ahead of CI picking a shell.
         await Assert.That(reported.Message).Contains(PlantedProbe.ExecutablePath, StringComparison.OrdinalIgnoreCase);
     }
@@ -1280,7 +1280,7 @@ internal sealed class StraySweepTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Asserted against the whole machine rather than against a fixture.</b>
+    /// <b>Asserted against the whole machine and not against a fixture.</b>
     /// The legacy <c>%LOCALAPPDATA%\ms-playwright</c> tree that the
     /// <c>npx</c>-based setup this project replaces leaves behind is the exact
     /// shape of the mistake -- same Chromium revision, same vendor, a browser
@@ -1337,7 +1337,7 @@ internal sealed class StraySweepTests
 
         // And the real thing, if this machine still has one: every live process
         // out of the retired %LOCALAPPDATA%\ms-playwright tree, matched by
-        // DIRECTORY PREFIX rather than by name, is absent from the candidates.
+        // DIRECTORY PREFIX and not by name, is absent from the candidates.
         var legacyRoot = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "ms-playwright");
@@ -1425,7 +1425,7 @@ internal sealed class StraySweepTests
 
         // ⚠️ THE MEASUREMENT. Launched by the junctioned spelling, reported by
         // the target one. That is the whole mechanism of the finding, and it is
-        // asserted here rather than reasoned about.
+        // asserted here, not reasoned about.
         var reported = BrowserProcesses.RunningFrom(real).Single(entry => entry.ProcessId == ours.Process.Id);
 
         // ⚠️ CASE-INSENSITIVE ON BOTH SIDES, and this arm was watched failing for
@@ -1497,12 +1497,12 @@ internal sealed class StraySweepTests
 
         // Nothing opened it, which is what the ordering inside VolumeIdentity is
         // for: a share is refused on its characters. Bounded by the suite's own
-        // hang budget rather than by a number invented at the assertion -- what
+        // hang budget and not by a number invented at the assertion -- what
         // this excludes is a twenty-two-second stall, not a slow answer.
         await Assert.That(elapsed).IsLessThan(TestDefaults.InProcessHang);
 
         // And it is still a scan: the machine really was enumerated, so the empty
-        // candidate set is a fact about the images rather than about a pass that
+        // candidate set is a fact about the images and not about a pass that
         // never happened.
         await Assert.That(scan.Enumerated).IsGreaterThan(100);
         await Assert.That(scan.Candidates).IsEmpty();
@@ -1595,7 +1595,7 @@ internal sealed class StraySweepTests
 
     /// <summary>
     /// Runs one pass over the planted image, <b>waiting</b> for the machine-wide
-    /// gate rather than asking again while somebody else holds it.
+    /// gate instead of asking again while somebody else holds it.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -1608,14 +1608,14 @@ internal sealed class StraySweepTests
     /// <c>ASweepWithNoAppPathsReportsNoMarkerPassAtAll</c> failing once in five
     /// full runs with <c>Skipped</c> where it required <c>Ran</c> -- and that arm
     /// had no loop to lose in, which is what made the loop look like a solution
-    /// rather than a workaround.
+    /// and not a workaround.
     /// </para>
     /// <para>
     /// <b>A wait is the serialisation; a loop is a poll.</b> The kernel hands
     /// the mutex over in the order it was asked for, so a pass that waits gets
     /// its turn, and <see cref="TestDefaults.ProcessHang"/> bounds it as a hang
     /// detector -- a gate still held after that is a real BrowserAI stuck, which
-    /// is a finding rather than a flake.
+    /// is a finding and not a flake.
     /// </para>
     /// <para>
     /// <b>On a thread of its own, never the pool.</b> The wait is a blocking
@@ -1636,7 +1636,7 @@ internal sealed class StraySweepTests
     /// The arms that assert <see cref="StraySweepOutcome.Skipped"/> are about
     /// this exact acquisition, so they must not be handed the waiting one: a
     /// pass that queued would eventually acquire, and the property under test
-    /// would be gone rather than red.
+    /// would be gone and not red.
     /// </remarks>
     private static Task<StraySweepResult> Sweep(ILogger? logger = null) =>
         Task.Run(() => new StraySweep([PlantedProbe.ExecutablePath], index: null, logger ?? NullLogger.Instance).Run());
@@ -1651,7 +1651,7 @@ internal sealed class StraySweepTests
     /// </remarks>
     private static TimeSpan GatePatience => TestDefaults.ProcessHang;
 
-    /// <summary>Runs blocking work on a dedicated thread rather than on the pool.</summary>
+    /// <summary>Runs blocking work on a dedicated thread and not on the pool.</summary>
     /// <param name="work">The work.</param>
     /// <returns>Its result.</returns>
     private static Task<StraySweepResult> OnItsOwnThreadAsync(Func<StraySweepResult> work)
@@ -1708,7 +1708,7 @@ internal sealed class StraySweepTests
                 // uninformative, and left the actual question open: on Windows a
                 // Chromium that will not start writes to a log file and not to
                 // stderr, and the failure is suspected to be a resource ceiling
-                // rather than anything about this test, so what the machine was
+                // and not anything about this test, so what the machine was
                 // carrying at that instant is the measurement.
                 //
                 // ⚠️ Extended again 2026-08-29 with `DesktopHeapProbe`, which is

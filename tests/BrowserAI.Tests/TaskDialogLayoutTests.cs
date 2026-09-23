@@ -25,7 +25,7 @@ namespace BrowserAI.Tests;
 /// something else, and the failure is not a diagnostic -- the call returns
 /// <c>E_INVALIDARG</c>, or renders a dialog whose title is its content. That is
 /// the classic way to get the raw task dialog wrong, and it is checked against
-/// the vendor rather than against the last person who read the header.
+/// the vendor and not against the last person who read the header.
 /// </para>
 /// <para>
 /// <b>The literal is written out as well as compared</b>, for the same reason
@@ -200,7 +200,7 @@ internal sealed class TaskDialogLayoutTests
     /// resources would report every property absent, which is indistinguishable
     /// from a binary that declares none -- so the arm also reads a binary that is
     /// <i>known</i> to declare no common controls, and requires the reader to
-    /// come back with a manifest that says so rather than with nothing.
+    /// come back with a manifest that says so and not with nothing.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -349,7 +349,7 @@ internal sealed class TaskDialogLayoutTests
     /// <remarks>
     /// Deliberately <b>not</b> the real declaration with the attribute removed:
     /// a copy cannot be used by mistake, and a reader meeting it here is meeting
-    /// a fixture rather than a second definition of a shipped type.
+    /// a fixture and not a second definition of a shipped type.
     /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
     private struct NaturallyPacked

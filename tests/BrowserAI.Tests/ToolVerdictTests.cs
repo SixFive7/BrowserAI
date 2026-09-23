@@ -21,7 +21,7 @@ namespace BrowserAI.Tests;
 /// appeared</i>. What it cannot say is <i>and nobody has decided whether we
 /// forward it</i> -- a snapshot is a record of upstream and a verdict is a
 /// statement about this product. The comparison below is what makes the second
-/// question a red build rather than a thing somebody remembers to ask.
+/// question a red build and not a thing somebody remembers to ask.
 /// </para>
 /// <para>
 /// <b>The comparison runs on every build; the ADJUDICATION is release-gated.</b>
@@ -44,7 +44,7 @@ internal sealed class ToolVerdictTests
     /// </summary>
     /// <remarks>
     /// Spelled to be obviously synthetic in a failure message: an arm that
-    /// accidentally asserted against it would read as a defect rather than as a
+    /// accidentally asserted against it would read as a defect and not as a
     /// plausible upstream name.
     /// </remarks>
     private const string NeverATool = "browser_a_tool_no_payload_carries";
@@ -64,7 +64,7 @@ internal sealed class ToolVerdictTests
 
         // Not vacuous. A snapshot read that came back empty would agree with
         // everything, and a verdicts file that failed to parse would never have
-        // reached this line -- so the denominator is stated rather than trusted.
+        // reached this line -- so the denominator is stated, not trusted.
         await Assert.That(Snapshot().Count).IsEqualTo(RepositoryVerdicts.Committed.Upstream.Count);
         await Assert.That(Snapshot().Count).IsGreaterThan(40);
     }
@@ -122,11 +122,11 @@ internal sealed class ToolVerdictTests
     /// reached and <c>browserai_page_tool</c> is let past it explicitly, because
     /// it takes the forwarding path --
     /// and <c>SessionToolSurface.Rewrite</c> advertises the authored tools from
-    /// <c>SessionToolSurface.Names</c> rather than from the file -- so deleting an
+    /// <c>SessionToolSurface.Names</c> and not from the file -- so deleting an
     /// <c>answer</c> row changes nothing a caller can observe, and only this arm
     /// would notice. That makes the rows <b>build-and-test-time data</b>, and it
     /// is stated in <c>tool-verdicts.json</c> itself, in <c>ToolVerdicts</c>'
-    /// remarks and in <c>Sessions/CLAUDE.md</c> rather than left for a reader to
+    /// remarks and in <c>Sessions/CLAUDE.md</c> and not left for a reader to
     /// infer from a file whose other half is load-bearing at the door.
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -135,7 +135,7 @@ internal sealed class ToolVerdictTests
     {
         var authored = RepositoryVerdicts.Committed.Authored.Select(row => row.Name).ToList();
 
-        // Both directions rather than a count: a file that named seven of the
+        // Both directions and not a count: a file that named seven of the
         // wrong seven would satisfy any arithmetic.
         await Assert.That(string.Join(", ", authored.Except(SessionToolSurface.Names, StringComparer.Ordinal))).IsEmpty();
         await Assert.That(string.Join(", ", SessionToolSurface.Names.Except(authored, StringComparer.Ordinal))).IsEmpty();
@@ -227,7 +227,7 @@ internal sealed class ToolVerdictTests
         await Assert.That(authored.Message).Contains("authored");
 
         // ⚠️ THE POSITIVE CONTROL, and it is what makes the two refusals about
-        // the DUPLICATE rather than about anything else in these fixtures: the
+        // the DUPLICATE and not about anything else in these fixtures: the
         // same shape with one of each pair removed loads, both halves.
         const string OnceEach = """
             {"schemaVersion":1,
@@ -268,7 +268,7 @@ internal sealed class ToolVerdictTests
 
         // Not vacuous, and this is also the count DECISIONS.md publishes about
         // the surface: exactly two tools are withheld, and that is asserted here
-        // against the FILE rather than against a C# constant, because the file
+        // against the FILE and not against a C# constant, because the file
         // is now what decides.
         //
         // ⚠️ ONE AGAIN since 2026-09-21 (previously two since 2026-09-15,
@@ -281,8 +281,8 @@ internal sealed class ToolVerdictTests
         // upstream-review.json, because the tool can come back and the judgement
         // would then be owed again; re-read in the 0.0.82 bundle, the call path
         // is still unbounded and the new 5 s frame timeout covers only the
-        // listing. The number is written here rather than derived so that a
-        // denial withdrawn in the file is a red build rather than a quiet
+        // listing. The number is written here and not derived so that a
+        // denial withdrawn in the file is a red build and not a quiet
         // reversal -- and this move went through a snapshot diff and a review
         // first, which is what separates the two.
         await Assert.That(denied.Count).IsEqualTo(1);
@@ -366,7 +366,7 @@ internal sealed class ToolVerdictTests
         }
 
         // Not JSON at all, which is its own path: the parser's own message is
-        // carried rather than replaced, because "unexpected token at line 4" is
+        // carried and not replaced, because "unexpected token at line 4" is
         // the thing a person fixes.
         var broken = Assert.Throws<InvalidOperationException>(
             () => ToolVerdicts.Parse("{ this is not json"u8, "the-broken-file.json"));
@@ -375,7 +375,7 @@ internal sealed class ToolVerdictTests
         await Assert.That(broken.InnerException).IsNotNull();
 
         // A file that is not there at all, which is what a half-copied payload
-        // looks like. FileNotFoundException rather than the above, so an
+        // looks like. FileNotFoundException and not the above, so an
         // incomplete install and a corrupt one read differently.
         var absent = Path.Combine(ScratchRoot.Path, $"absent-{Guid.NewGuid():N}", ToolVerdicts.FileName);
         var missing = Assert.Throws<FileNotFoundException>(() => ToolVerdicts.Read(absent));
@@ -395,7 +395,7 @@ internal sealed class ToolVerdictTests
     {
         // The copy step is a build target, and a build target that silently
         // stopped running would leave the product reading a file the suite never
-        // tests -- so what ships and what is judged are compared rather than
+        // tests -- so what ships and what is judged are compared, not
         // assumed. Gated, because a clean clone has no payload and a scan of a
         // tree that is not there passes trivially.
         SuiteEnvironment.RequireRepositoryPayload();

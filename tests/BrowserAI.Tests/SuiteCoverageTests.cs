@@ -55,7 +55,7 @@ internal static class SuiteCoverage
     /// Takes the filter reading before anything else runs.
     /// </summary>
     /// <remarks>
-    /// <b>Here rather than lazily on first use, and the timing is the honesty.</b>
+    /// <b>Here and not lazily on first use, and the timing is the honesty.</b>
     /// <c>TUnitTestFramework.ExecuteRequestAsync</c> assigns
     /// <c>GlobalContext.Current</c> and <c>TestSessionContext.Current</c> before
     /// it runs a single hook, so a reading taken here is taken after the only
@@ -70,7 +70,7 @@ internal static class SuiteCoverage
     /// Takes the machine's commit charge before the first test runs.
     /// </summary>
     /// <remarks>
-    /// <b>Its own hook rather than a second statement in the one above</b>, so
+    /// <b>Its own hook and not a second statement in the one above</b>, so
     /// that each says what it does: the filter reading has a timing argument
     /// behind its placement and this one has only <i>before anything has
     /// allocated</i>. A reading taken lazily on first use would be a reading of
@@ -99,7 +99,7 @@ internal static class SuiteCoverage
         // `dotnet test` ONE, measured 2026-08-24 on this tree: neither the real
         // stdout handle nor the real stderr handle appears in a fully redirected
         // `dotnet test` log, because the MTP integration talks to the test app
-        // over its own channel rather than forwarding its console. The gate runs
+        // over its own channel instead of forwarding its console. The gate runs
         // `dotnet test`, so ReportPath below is the copy a gate run actually
         // has, and TESTING.md's two invocations append that file to each run's
         // own log for exactly this reason.
@@ -127,7 +127,7 @@ internal static class SuiteCoverage
 
         // The child writes what it read BEFORE the refusal below throws, because
         // a process that failed the way it was meant to still has to be
-        // readable. It lives here rather than in a test for the reason the
+        // readable. It lives here and not in a test for the reason the
         // refusal does: a filter that did not select that test took the report
         // with it.
         if (ProbeReportFile is { Length: > 0 } probe)
@@ -157,7 +157,7 @@ internal static class SuiteCoverage
     /// </para>
     /// <para>
     /// <b>What TUnit actually guarantees, measured 2026-08-24 at TUnit 1.65.0 /
-    /// Microsoft.Testing.Platform 2.3.3 on this tree rather than assumed.</b> A
+    /// Microsoft.Testing.Platform 2.3.3 on this tree and not assumed.</b> A
     /// <c>[Before(TestSession)]</c>/<c>[After(TestSession)]</c> hook is
     /// registered against the session and not against a test node, so no
     /// <c>--treenode-filter</c> and no uid-list selection can deselect it; an
@@ -177,7 +177,7 @@ internal static class SuiteCoverage
     /// before the framework's hooks are registered. That run reports nothing and
     /// is not a release either, but nothing here fails it, and
     /// [`TESTING.md`](../../TESTING.md) states the guarantee with that limit
-    /// rather than unqualified.
+    /// and not unqualified.
     /// </para>
     /// </remarks>
     /// <exception cref="InvalidOperationException">
@@ -240,7 +240,7 @@ internal sealed partial class SuiteCoverageTests
     /// <remarks>
     /// The block is the only thing in a run's output that distinguishes a
     /// degraded run from a real one before the skipped count moves, so its
-    /// contents are asserted rather than trusted.
+    /// contents are asserted, not trusted.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -275,7 +275,7 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(summary).Contains(PublishedSlice.StateWord(PublishedSlice.Verdict).Trim());
 
         // Not a capability either, and the only row here that reports what the
-        // SHELL handed this run rather than what the machine holds.
+        // SHELL handed this run and not what the machine holds.
         await Assert.That(summary).Contains("drive letter");
         await Assert.That(summary).Contains(GateDriveCase.Variable);
 
@@ -303,7 +303,7 @@ internal sealed partial class SuiteCoverageTests
             .Because("the row states the band this machine is actually in, and a block that printed a number without classifying it would be an assurance the run has not earned");
 
         // The start reading has to have been TAKEN, which is a statement about
-        // the session hook rather than about the machine: a run whose hook never
+        // the session hook and not about the machine: a run whose hook never
         // fired would print "<not read>" for it and still look like a row.
         await Assert.That(CommitCharge.AtStart.Answered)
             .IsTrue()
@@ -376,7 +376,7 @@ internal sealed partial class SuiteCoverageTests
 
     /// <summary>
     /// This run says which drive-letter spelling it actually received, and a
-    /// forcing that did not take fails here rather than passing quietly.
+    /// forcing that did not take fails here instead of passing quietly.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -432,7 +432,7 @@ internal sealed partial class SuiteCoverageTests
     /// own question could not be asked.
     /// </para>
     /// <para>
-    /// <b>The pure arm is mandatory rather than thorough</b>, for
+    /// <b>The pure arm is mandatory and not thorough</b>, for
     /// <see cref="AFilteredRunIsToldFromAFullOneFromOneThatCouldNotTellAndFromABrokenInstrument"/>'s
     /// reason exactly: a healthy machine sits in <c>HEALTHY</c> for ever, so the
     /// two bands that matter would otherwise be code nobody has ever run --
@@ -444,7 +444,7 @@ internal sealed partial class SuiteCoverageTests
     /// <see cref="MachineLoad"/>'s standing rule: an assertion on a live commit
     /// figure would pass or fail depending on the developer's other windows.
     /// What is asserted is that the row is produced, that the classification is
-    /// right, and that an unreadable reading says so rather than reading as
+    /// right, and that an unreadable reading says so instead of reading as
     /// zero bytes committed.
     /// </para>
     /// </remarks>
@@ -484,7 +484,7 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(unreadable).Contains("DID NOT ANSWER");
         await Assert.That(CommitChargeReading.NotTaken.Answered).IsFalse();
 
-        // A limit of zero is unreadable rather than infinitely full: the
+        // A limit of zero is unreadable and not infinitely full: the
         // division that would produce the percentage is the one thing here that
         // could throw or produce an infinity, and it is the shape a partially
         // populated struct takes.
@@ -504,7 +504,7 @@ internal sealed partial class SuiteCoverageTests
 
     /// <summary>
     /// The run states the freshness its own publish check established, and a
-    /// stale reading renders as staleness rather than as a pass.
+    /// stale reading renders as staleness and not as a pass.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -519,12 +519,12 @@ internal sealed partial class SuiteCoverageTests
     /// gate sets -- twelve full runs -- as having driven a stale binary. Every
     /// reading in that account was true and the conclusion was false: the file the
     /// commit touched was stamped 01:12:22.665, before the publish, and
-    /// <c>git commit</c> records when it ran rather than touching a working-tree
+    /// <c>git commit</c> records when it ran instead of touching a working-tree
     /// file. Dissolving it took an investigation that one printed line would have
     /// ended.
     /// </para>
     /// <para>
-    /// <b>The synthetic arm is mandatory rather than thorough</b>, for
+    /// <b>The synthetic arm is mandatory and not thorough</b>, for
     /// <see cref="TheRunReportsTheMachinesCommitChargeAndEveryBandIsExercised"/>'s
     /// reason exactly: a healthy tree publishes and then runs, so <c>STALE</c> is
     /// a state this machine reaches perhaps once a fortnight and the rendering
@@ -533,7 +533,7 @@ internal sealed partial class SuiteCoverageTests
     /// word, the sign and the warning, and a fresh one must carry none of them.
     /// </para>
     /// <para>
-    /// <b>And the live arm ties the row to the guard rather than to a second
+    /// <b>And the live arm ties the row to the guard and not to a second
     /// enumeration.</b> The row and the refusal are two renderings of one
     /// <see cref="PublishedSlice.Measure"/>, so a run whose block says
     /// <c>FRESH</c> while its slice arms refuse is impossible by construction --
@@ -576,7 +576,7 @@ internal sealed partial class SuiteCoverageTests
         // ⚠️ THE BOUNDARY THE GUARD ACTUALLY USES. EnsureFresh refuses on `>`
         // and never on `>=`, so an input stamped to the millisecond OF the
         // publish is not newer than it. The verdict is taken on the same list
-        // the guard refuses on rather than on the sign of the row's own margin,
+        // the guard refuses on and not on the sign of the row's own margin,
         // which is what keeps the two from parting company at exactly this tick.
         var tie = fresh with { Newest = published };
 
@@ -624,7 +624,7 @@ internal sealed partial class SuiteCoverageTests
             .DoesNotContain(PublishedSlice.FreshState)
             .Because("the two states are told apart by a reader scanning one log for a word, so a stale row carrying the passing word would be worse than no row at all");
 
-        // A run with no binary says so rather than reporting a comparison it
+        // A run with no binary says so instead of reporting a comparison it
         // never made -- the shape of honesty every other row in this block owes
         // its existence to.
         var absentRow = PublishedSlice.RowFor(nothing);
@@ -634,7 +634,7 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(absentRow).Contains("nothing was compared");
         await Assert.That(absentRow).DoesNotContain(PublishedSlice.FreshState);
 
-        // And the refusals, driven from readings rather than by arranging a
+        // And the refusals, driven from readings and not by arranging a
         // stale publish -- which would leave this tree needing a re-publish to
         // go green again, on the one message a developer reads at the worst
         // possible moment.
@@ -653,8 +653,8 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(summary).Contains(PublishedSlice.StateWord(PublishedSlice.Verdict).Trim());
 
         // ⚠️ AND THE ROW IS THE GUARD'S OWN COMPARISON. EnsureFresh refuses
-        // exactly the readings this row declines to spell FRESH; asserted rather
-        // than left to the construction, because the construction is the entire
+        // exactly the readings this row declines to spell FRESH; asserted and
+        // not left to the construction, because the construction is the entire
         // guarantee and nothing else would notice it being replaced.
         var refused = false;
 
@@ -679,7 +679,7 @@ internal sealed partial class SuiteCoverageTests
     /// <remarks>
     /// <para>
     /// <b>The positive control under the live arms below</b>, and it is mandatory
-    /// rather than thorough. A gate run is never filtered, so
+    /// and not thorough. A gate run is never filtered, so
     /// <see cref="SuiteFilter.Verdict"/> reads <c>FULL RUN</c> on every run this
     /// repository takes -- and a reading that can only ever come back empty is
     /// indistinguishable from one that cannot read. This drives all four states
@@ -767,7 +767,7 @@ internal sealed partial class SuiteCoverageTests
 
     /// <summary>
     /// This run says whether it was filtered, and it reads that from the
-    /// platform rather than from its own command line.
+    /// platform and not from its own command line.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -780,9 +780,9 @@ internal sealed partial class SuiteCoverageTests
     /// <para>
     /// <b>What is asserted is that the latched reading is the seam it claims to
     /// be.</b> <see cref="SuiteFilter.Observe"/> re-reads both contexts here,
-    /// inside a test rather than inside the session hook, so a latch that had
+    /// inside a test and not inside the session hook, so a latch that had
     /// gone stale or had been taken from somewhere else shows up as a
-    /// disagreement rather than as a row nobody checked.
+    /// disagreement and not as a row nobody checked.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -825,7 +825,7 @@ internal sealed partial class SuiteCoverageTests
     /// refuses now, from a place no filter reaches.
     /// </para>
     /// <para>
-    /// <b>What it still buys, kept deliberately rather than deleted.</b> The
+    /// <b>What it still buys, kept deliberately and not deleted.</b> The
     /// session hook fails a run <i>after</i> everything has run; this fails it in
     /// the list of tests, with the refusal quoted, which is where a human looks
     /// first. It also asserts the negative direction live -- an unfiltered
@@ -899,7 +899,7 @@ internal sealed partial class SuiteCoverageTests
         var host = Path.Combine(AppContext.BaseDirectory, "BrowserAI.Tests.exe");
 
         // The instrument has something to run. A missing host would make every
-        // assertion below unreachable rather than false.
+        // assertion below unreachable and not false.
         await Assert.That(File.Exists(host)).IsTrue().Because(host);
 
         using var scratch = ScratchDirectory.Create("filter-probe");
@@ -953,7 +953,7 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(described).Contains($"session={Filter}");
         await Assert.That(described).Contains($"decision={SuiteFilterDecision.Refuse}");
 
-        // The diagnostic beside the verdict, asserted to be present rather than
+        // The diagnostic beside the verdict, asserted to be present and not
         // to have a value: it records whether the child's OWN command line
         // carried the filter, which is the question the verdict deliberately
         // does not answer from. A field nobody reads is a field that can rot.
@@ -1034,7 +1034,7 @@ internal sealed partial class SuiteCoverageTests
     {
         // Nothing declared: a developer machine, and no opinion about anything.
         // This is the arm that keeps a clean clone runnable, so it is asserted
-        // against a run that lacks half of everything rather than against none.
+        // against a run that lacks half of everything and not against none.
         await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(null, [])).IsEmpty();
         await Assert.That(SuiteEnvironment.ReconcileDeclaredAbsence(
             null,
@@ -1095,7 +1095,7 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(typo[0]).Contains("PackedRelease");
         await Assert.That(typo[0]).Contains(nameof(SuiteCapability.PackagedRelease));
 
-        // Set to something that names nothing. Loud rather than silently
+        // Set to something that names nothing. Loud and not silently
         // equivalent to `none`: a variable that evaluated to empty is an
         // accident, and an accident that lands on the strictest reading would
         // read as a real failure of something else.
@@ -1108,7 +1108,7 @@ internal sealed partial class SuiteCoverageTests
     // ⚠️ THE THIRD ARM WAS DELETED ON 2026-08-20 AND WAS NOT RE-POINTED. It was
     // `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent`, and it read
     // `.github/workflows/build.yml` -- scoped to the step that ran the suite --
-    // so that deleting the declaration was a red build rather than a silent
+    // so that deleting the declaration was a red build and not a silent
     // switch-off. CI was removed at the maintainer's decision that day and the
     // file it read no longer exists.
     //
@@ -1125,7 +1125,7 @@ internal sealed partial class SuiteCoverageTests
     // green-when-blind test, which is the exact failure class the mechanism below
     // exists to remove.
     //
-    // WHAT IS THEREFORE UNGUARDED, said plainly rather than left to be
+    // WHAT IS THEREFORE UNGUARDED, said plainly and not left to be
     // discovered: nothing sets BROWSERAI_EXPECTED_ABSENT anywhere in this
     // repository, so `EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared`
     // below asserts nothing on every run of the suite. The mechanism is intact,
@@ -1141,7 +1141,7 @@ internal sealed partial class SuiteCoverageTests
     /// <remarks>
     /// <para>
     /// <b>This is the live arm, and on a developer machine it asserts
-    /// nothing</b> -- which is correct rather than a gap. What is provisioned on
+    /// nothing</b> -- which is correct and not a gap. What is provisioned on
     /// somebody's laptop is a fact about their disk; a suite that pinned it would
     /// be red on every clean clone. <c>BROWSERAI_EXPECTED_ABSENT</c> is set by
     /// the environment that knows.
@@ -1150,7 +1150,7 @@ internal sealed partial class SuiteCoverageTests
     /// ⚠️ <b>Since 2026-08-20 no environment sets it, so this arm asserts nothing
     /// on every run.</b> CI was removed that day at the maintainer's decision and
     /// it was the only thing that ever declared. The code is deliberately kept
-    /// rather than deleted: unset means <i>declares nothing</i>, which is already
+    /// and not deleted: unset means <i>declares nothing</i>, which is already
     /// what a developer machine does, so it is correct and inert and ready for
     /// whatever runs the suite next. Its behaviour is held by
     /// <see cref="TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent"/>,
@@ -1243,7 +1243,7 @@ internal sealed partial class SuiteCoverageTests
     /// </para>
     /// <para>
     /// <b>And the release halves are told from the ordinary ones by the variable
-    /// rather than by the file name</b>, because the difference that matters is
+    /// and not by the file name</b>, because the difference that matters is
     /// what the run claims about itself: an ordinary run that set
     /// <c>BROWSERAI_RELEASE_RUN</c> would print <c>release run YES</c> in its own
     /// coverage block and be a release nobody cut.
@@ -1332,7 +1332,7 @@ internal sealed partial class SuiteCoverageTests
         }
 
         // The clearance snapshot is the fifth file and is shared by all four, so
-        // it carries no spelling of its own and is asserted present rather than
+        // it carries no spelling of its own and is asserted present and not
         // read for one.
         await Assert.That(File.Exists(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"))).IsTrue();
     }
@@ -1364,7 +1364,7 @@ internal sealed partial class SuiteCoverageTests
     /// <b>Two spellings because two languages, and neither is a guess.</b> A
     /// PowerShell half re-cases the first character with
     /// <c>ToUpperInvariant</c>; a Git Bash half pipes it through <c>tr</c>. The
-    /// direction is read off the expression rather than off the file name, so a
+    /// direction is read off the expression and not off the file name, so a
     /// driver that was copied from the other shell and half-edited is caught.
     /// </remarks>
     /// <param name="text">The driver's text.</param>
@@ -1383,7 +1383,7 @@ internal sealed partial class SuiteCoverageTests
 
         var powershell = PowerShellCaseForcing().Match(text);
 
-        // Mapped rather than lower-cased: CA1308 bans ToLowerInvariant, and a
+        // Mapped and not lower-cased: CA1308 bans ToLowerInvariant, and a
         // two-value map is clearer than a normalisation anyway.
         return powershell.Success
             ? powershell.Groups["case"].Value is "Upper" ? "upper" : "lower"

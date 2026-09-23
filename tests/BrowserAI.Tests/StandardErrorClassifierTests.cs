@@ -38,7 +38,7 @@ internal sealed class StandardErrorClassifierTests
 {
     /// <summary>
     /// The event ids of the two halves of the verdict, so the assertions read the
-    /// level rather than the text.
+    /// level and not the text.
     /// </summary>
     private const int BenignEventId = 11;
 
@@ -52,14 +52,14 @@ internal sealed class StandardErrorClassifierTests
     /// <b>The most faithful possible error arm.</b> This is the exact failure that
     /// killed all four servers for five days, and the exact line the reference
     /// implementation's first regex was written against -- so the test is a
-    /// reproduction rather than an invention.
+    /// reproduction and not an invention.
     /// </remarks>
     private static readonly string[] DeadFlag = ["--output-mode", "tokens"];
 
     [Test]
     public async Task TheTwoRegexesAreByteIdenticalToTheReferenceImplementations()
     {
-        // Read and re-parsed here rather than shared with the product, so this
+        // Read and re-parsed here and not shared with the product, so this
         // compares two independently obtained strings. The extraction is
         // deliberately dumb -- every line of the excerpt carrying `-match`, the
         // text between its first and last quote -- because a clever parser could
@@ -120,7 +120,7 @@ internal sealed class StandardErrorClassifierTests
         // The reference matches against the WHOLE captured stderr file; this
         // product classifies each line as the pump delivers it. That is a port of
         // the regexes into a different call shape, so the equivalence is asserted
-        // rather than argued: the first pattern is multiline-anchored and the
+        // not argued: the first pattern is multiline-anchored and the
         // second is unanchored, which is why it holds.
         string[] buffers =
         [
@@ -180,8 +180,8 @@ internal sealed class StandardErrorClassifierTests
         await Assert.That(Records(capture, BenignEventId)
             .Any(record => record.Message.Contains("unknown option", StringComparison.Ordinal))).IsFalse();
 
-        // The child died of it, which is what makes this a startup failure rather
-        // than chatter -- and the exit code is readable after disposal, which is
+        // The child died of it, which is what makes this a startup failure and
+        // not chatter -- and the exit code is readable after disposal, which is
         // row 2 of the same table still holding.
         await Assert.That(session.ExitCode).IsEqualTo(1);
     }
@@ -196,7 +196,7 @@ internal sealed class StandardErrorClassifierTests
         using var factory = Factory(capture);
 
         // saveSession is what makes upstream write the line at all, and it is the
-        // product's own `tracing` modifier rather than a test-only key. A real
+        // product's own `tracing` modifier and not a test-only key. A real
         // browser is launched, because the line is written when the backend
         // initialises a context and not before.
         var options = LaunchOptions(scratch.Path, saveSession: true);
@@ -229,13 +229,13 @@ internal sealed class StandardErrorClassifierTests
         var session = Records(capture, BenignEventId)
             .FirstOrDefault(record => record.Message.Contains("Session: ", StringComparison.Ordinal));
 
-        // Row 33: upstream still prints it, and this is the observation rather
-        // than a memory of one.
+        // Row 33: upstream still prints it, and this is the observation and
+        // not a memory of one.
         await Assert.That(session).IsNotNull();
         await Assert.That(session!.Level).IsEqualTo(LogLevel.Debug);
 
         // The line as the child wrote it, classified directly. Taken off the
-        // captured record rather than retyped, so this cannot pass against a
+        // captured record and not retyped, so this cannot pass against a
         // string that no child ever produced.
         var line = session.Message[session.Message.IndexOf("Session: ", StringComparison.Ordinal)..];
 
@@ -302,7 +302,7 @@ internal sealed class StandardErrorClassifierTests
         int eventId,
         Func<LogRecord, bool>? predicate = null)
     {
-        // Polled rather than signalled: stderr arrives on its own reader thread,
+        // Polled, not signalled: stderr arrives on its own reader thread,
         // so the frame that proves the work happened can land before the line
         // that describes it. Bounded, and its expiry is not itself a failure --
         // the assertions that follow report what was and was not seen.

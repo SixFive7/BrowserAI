@@ -61,8 +61,8 @@ namespace BrowserAI.Tests;
 /// <para>
 /// <b>Unbounded was tried and measured before that work, and it was not quiet.</b>
 /// Twenty runs with the limiter above the test count went red eleven times, and
-/// every single failure was a defect four-way parallelism had been hiding rather
-/// than a limit being exceeded. All four are fixed:
+/// every single failure was a defect four-way parallelism had been hiding and
+/// not a limit being exceeded. All four are fixed:
 /// </para>
 /// <list type="number">
 /// <item><description>
@@ -89,7 +89,7 @@ namespace BrowserAI.Tests;
 /// </list>
 /// <para>
 /// <b>WHAT THE BLOCKER WAS, and what closed it on 2026-08-18.</b> With those
-/// four fixed, what remained was a class rather than a bug: <b>fixed patience
+/// four fixed, what remained was a class and not a bug: <b>fixed patience
 /// bounds that were promptness assertions in disguise</b>. They did not fail
 /// because anything was wrong; they failed because the machine was busy, and
 /// every one of them reported something other than "this machine is busy". The
@@ -115,7 +115,7 @@ namespace BrowserAI.Tests;
 /// <see cref="Demonstrated"/> is not needed today and is not the default; it is
 /// the number to reach for if this suite ever has to go green on a machine
 /// smaller than the one these runs were made on, and it exists so that choice is
-/// a one-line informed change rather than a rediscovery:
+/// a one-line informed change and not a rediscovery:
 /// </para>
 /// <list type="bullet">
 /// <item><description>
@@ -132,7 +132,7 @@ namespace BrowserAI.Tests;
 /// Flipping <c>Limit</c> to <see cref="Demonstrated"/> is a one-line, informed
 /// choice. Flipping it because a run went red is the mistake this whole comment
 /// exists to prevent -- and it is now also the wrong diagnosis, because the class
-/// of failure that made unbounded red has been removed rather than accommodated.
+/// of failure that made unbounded red has been removed and not accommodated.
 /// </para>
 /// <para>
 /// <b>Wall clock, and what is actually in it.</b> Before this work:
@@ -150,9 +150,9 @@ internal sealed class SuiteParallelism : IParallelLimit
     /// every test at once, which is what makes this a race detector.
     /// </summary>
     /// <remarks>
-    /// A number rather than <see cref="int.MaxValue"/> because the limit becomes
+    /// A number and not <see cref="int.MaxValue"/> because the limit becomes
     /// a <see cref="SemaphoreSlim"/>'s initial count, and a suite that grows past
-    /// this should meet a number somebody chose rather than an overflow.
+    /// this should meet a number somebody chose and not an overflow.
     /// </remarks>
     public const int Unbounded = 1024;
 
@@ -163,7 +163,7 @@ internal sealed class SuiteParallelism : IParallelLimit
     /// <para>
     /// Thirteen consecutive green runs, against eleven-red-in-twenty at
     /// <see cref="Unbounded"/> on the same tree. Kept as a named constant so that
-    /// <see cref="Limit"/> below is visibly a <i>choice</i> rather than the only
+    /// <see cref="Limit"/> below is visibly a <i>choice</i> and not the only
     /// value anyone measured.
     /// </para>
     /// <para>
