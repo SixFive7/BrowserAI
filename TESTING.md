@@ -6,8 +6,8 @@
 > **Salvaged 2026-08-17 from `TESTING.md`, which is consumed and deleted
 > like every other section of the plan.** What moved here is the part that does
 > not stop being true once the code exists: the argument for the suite, what the
-> build itself must fail on, why the upstream-review gate is the suite rather
-> than a hook, and why the test harness is ours rather than upstream's. What
+> build itself must fail on, why the upstream-review gate is the suite,
+> not a hook, and why the test harness is ours, not upstream's. What
 > stayed behind was the plan's own checklist of tests to write, because the
 > suite is now the record of which tests exist. Nothing was reworded in the
 > move except links that pointed at files being deleted.
@@ -116,7 +116,7 @@ into a red build", following the charter's
 [Known trade-offs](DECISIONS.md#known-trade-offs)).* The classification and the
 `(tool, mode)` permission matrix behind it were removed on 2026-08-18: they were
 never a boundary against the caller, who owns the session directory and therefore
-the profile inside it. The sentence is kept in corrected form rather than deleted
+the profile inside it. The sentence is kept in corrected form and not deleted
 because "the most important test in the suite" moved, and a reader who learned the
 old one needs to be told where.
 
@@ -135,7 +135,7 @@ what it cost to remove.
 Two things close it, and neither is a scheduled job:
 
 - **[The daily drift check](CLAUDE.md#the-daily-drift-check)** -- a directive that
-  fires at the start of a working session rather than on a clock.
+  fires at the start of a working session, not on a clock.
   ***Corrected 2026-08-18 (previously "It runs by construction, because the check
   happens when the work happens").*** **That is reasoned, not measured, and the
   reasoning does not hold in the case this bullet is answering.** The gap
@@ -153,8 +153,8 @@ Two things close it, and neither is a scheduled job:
   a user unexamined.
 
 What is genuinely lost is *predictability*: the first build after a quiet period
-discovers the divergence rather than being told about it in advance. That cost is
-accepted, recorded here rather than softened, and **is part of what the post-v1
+discovers the divergence instead of being told about it in advance. That cost is
+accepted, recorded here, not softened, and **is part of what the post-v1
 review of the no-automated-checks decision has to weigh**.
 
 Lifecycle tests must wrap themselves in their own job object (`KILL_ON_CLOSE`,
@@ -174,7 +174,7 @@ The reclaim pass runs before anything else and is idempotent:
 
 - **The machine-wide mutexes are acquired with `AbandonedMutexException` caught
   and treated as acquired**, which is race R3 (`StraySweepTests`) met in the test
-  host rather than in production. Unhandled, one crashed run disables the suite
+  host, not in production. Unhandled, one crashed run disables the suite
   the same way it would disable sweeping.
 - **Anything the previous run recorded is terminated by `(pid,
   creationFileTime)`** from its own spawn record -- never by image name, which is
@@ -186,20 +186,20 @@ The reclaim pass runs before anything else and is idempotent:
   delete cannot take, so the other order reports a locked file and names the wrong
   cause. ⚠️ *Written 2026-08-19; before that **nothing wrote a record**, so this
   bullet had no input and the pass quietly did nothing while reading as though it
-  did.* It terminates the process it named rather than a tree, because
+  did.* It terminates the process it named, not a tree, because
   `Process.Kill(entireProcessTree: true)` is banned repository-wide; a grandchild
   is the job object's business.
   `ProcessLogTests.TheSpawnRecordEndsAPreviousRunsProcessAndSkipsARecycledPid`
   drives all three cases, and the middle one is **this test host's own pid with a
   deliberately wrong creation time** -- a reclaim that regressed to matching on the
-  number alone would end the run rather than fail it.
+  number alone would end the run, not fail it.
 
   ⚠️ **Corrected 2026-08-29 (previously "one line per process the harness starts ...
   read and *emptied* by the pass").** A row also names its **owner** -- the identity
   of the process that started the recorded process and holds the job object
   containing it -- and the pass terminates a subject only when that owner is
   neither this process nor any process still running. Rows it declines are written
-  back verbatim, so the file is rewritten rather than emptied. **The previous
+  back verbatim, so the file is rewritten, not emptied. **The previous
   behaviour was a machine-wide kill with no interlock**: the pass runs on first use
   of a scratch root *in each process*, so a second harness process reading a live
   run's record ended that run's browsers, probes and slices with exit code 1 and
@@ -247,8 +247,8 @@ only** from 1.1.0, at the maintainer's decision
 `Delta` row. **What this layer proves is unchanged and still worth proving** --
 that `vpk` produces a delta when asked, and that an N→N+1 apply moves the
 installed version -- because the second half is the update lane itself and the
-first is what makes the decision a choice rather than a limitation. **The
-choosing is now asserted rather than assumed**, by
+first is what makes the decision a choice, not a limitation. **The
+choosing is now asserted, not assumed**, by
 `ReleaseScriptTests.EveryReleasePacksFullPackagesOnlyAndTheFeedCarriesNoDeltaRow`,
 whose positive control is exactly the delta this paragraph describes.
 
@@ -295,8 +295,8 @@ nohup bash -c "BROWSERAI_DRIVE_CASE=lower dotnet test '$root/BrowserAI.slnx' 2>&
                cat .work/suite-coverage.txt >> $log" >/dev/null 2>&1 </dev/null &
 ```
 
-⚠️ **AND SINCE 2026-09-23 THOSE TWO INVOCATIONS ARE FILES IN THE TREE
-RATHER THAN SOMETHING RETYPED FROM THIS SECTION -- Q239 b, *added by addition*.**
+⚠️ **AND SINCE 2026-09-23 THOSE TWO INVOCATIONS ARE FILES IN THE TREE,
+NOT SOMETHING RETYPED FROM THIS SECTION -- Q239 b, *added by addition*.**
 Four drivers, two per shell, plus the clearance snapshot they share:
 
 | File | What it is |
@@ -316,7 +316,7 @@ reads all four as text and fails if a driver forces one case and declares the
 other, if a shell's half forces the case the other shell's must, or if an
 ordinary half sets the release variable.
 
-**Why they were moved at all, and it is a measured cost rather than a
+**Why they were moved at all, and it is a measured cost, not a
 preference.** They were recreated from this section every session and lived in
 the ephemeral scratch folder, so the closing wipe took them every time. On
 **2026-09-22 at 19:26** one was launched after a wipe that had removed it: it
@@ -325,7 +325,7 @@ was working** -- fourteen minutes were lost waiting on it. That is also why each
 driver prints a `starting` line, and why the caller must read the driver's own
 log for it before waiting.
 
-⚠️ **Between two runs, wait for `.work\test-scratch` to be released rather than
+⚠️ **Between two runs, wait for `.work\test-scratch` to be released, not
 for the first run to report.** *Added 2026-09-15.* A test host that has printed
 its summary has not necessarily let go: on the 2026-09-15 release gate, **137
 rig directories were still handle-held after run 1 reported**, and the second
@@ -341,7 +341,7 @@ while ((Get-ChildItem .work\test-scratch -Force -ErrorAction SilentlyContinue).C
 ```
 
 ⚠️ **That block does not run under every agent harness, and the failure is a
-refusal rather than a no-op -- *added 2026-09-21 by addition, because the block
+refusal, not a no-op -- *added 2026-09-21 by addition, because the block
 above is what a human types and is correct at a PowerShell prompt*.** Claude
 Code's PowerShell tool refuses the **wildcard** form outright, with
 *`Remove-Item on system path '.work\test-scratch\*' is blocked. This path is
@@ -364,7 +364,7 @@ gives.
 
 A directory that will not clear is the signal, not the inconvenience: something
 from the last run is still alive. **Nothing enforces this** -- it is a property of
-two runs rather than of one, and no test inside either can see the other.
+two runs, not of one, and no test inside either can see the other.
 
 ⚠️ **This step was also hiding a product defect, and that is worth knowing about
 a step whose job is hygiene -- *2026-09-17*.** Until that day the reclaim pass
@@ -404,7 +404,7 @@ until grep -q "Test run summary" "$log"; do sleep 5; done; tail -12 "$log"
   drive letter still arrives `C:\...` from one and `c:\...` from the other --
   verified 2026-08-23, on the six-run gate that shipped this section, by reading
   the spelling back out of each log").*** The verification was real and the
-  property was not: it holds run to run rather than by construction. **On the
+  property was not: it holds run to run and not by construction. **On the
   2026-08-24 gate all six runs received `C:`** -- three of them silently
   duplicating the other three -- and the gate reported exactly what a genuine
   two-instrument gate reports; on the very next gate the two shells did differ.
@@ -417,7 +417,7 @@ until grep -q "Test run summary" "$log"; do sleep 5; done; tail -12 "$log"
   while the run is still going and survives the run being killed. Observed
   directly: the log carried the test host's first line 90 seconds before the
   summary arrived.
-- **The window is hidden rather than absent**, because a detached run still
+- **The window is hidden, not absent**, because a detached run still
   starts a process and [every launch in this tree suppresses its
   console](CLAUDE.md). A run started this way puts nothing on the screen.
 
@@ -427,7 +427,7 @@ the test host will read it. [Release checklist item 8](RELEASING.md#8-run-everyt
 is where that matters and what it changes.
 
 **Nothing enforces this.** A test could read this file and check the code fence
-still says `nohup`, and that would assert the documentation rather than the
+still says `nohup`, and that would assert the documentation, not the
 practice; the practice is a habit of whoever types the command, and this section
 is the reader it needs.
 
@@ -504,8 +504,8 @@ assertion.
 ran; the false thing is the sentence a human writes underneath it, and no test
 can read that sentence. What a test can do is make the run **state the premise**,
 so `SuiteEnvironment.Summary()` carries a **`filter`** row on every run, beside
-`drive letter` and for the same reason: it is the run's claim about itself rather
-than a fact about the machine.
+`drive letter` and for the same reason: it is the run's claim about itself,
+not a fact about the machine.
 
 | State | What it means |
 |---|---|
@@ -539,11 +539,11 @@ that one method was a filtered run, a claimed release, and **green** -- the guar
 failing in exactly the class of run it exists to guard. **A refusal a filter can
 remove is not a refusal.** It is now raised from
 `SuiteCoverage.ReportWhatThisRunExercised`, the `[After(TestSession)]` hook that
-writes the coverage block, and the `[Test]` is kept as the in-run echo rather than
+writes the coverage block, and the `[Test]` is kept as the in-run echo, not
 as the mechanism.
 
 **What TUnit guarantees about that, measured 2026-08-24 at TUnit `1.65.0` /
-`Microsoft.Testing.Platform` `2.3.3` rather than assumed:** a
+`Microsoft.Testing.Platform` `2.3.3`, not assumed:** a
 `[Before(TestSession)]`/`[After(TestSession)]` hook is registered against the
 session and not against a test node, so no `--treenode-filter` and no IDE
 uid-list selection can deselect it; an exception thrown out of one is reported as
@@ -552,7 +552,7 @@ host **exits 10**. Re-establish it by running the test executable directly with
 `BROWSERAI_RELEASE_RUN=1` and a filter naming any single method, and reading the
 exit code -- which is exactly what the child control below does.
 
-⚠️ **The guarantee has one limit and it is stated rather than implied.** The
+⚠️ **The guarantee has one limit and it is stated and not implied.** The
 refusal needs a test session to exist. A run that never starts one -- a filter
 naming no assembly at all, a host that fails before the framework registers its
 hooks -- reports nothing and is refused by nothing. That run is not a release
@@ -594,32 +594,32 @@ during that window got the child's.
 ## Two executables, and what each half of the suite can see
 
 *Added 2026-09-15.* BrowserAI ships two binaries and a library, and the suite
-reaches them three different ways -- worth stating once, because "the product" is
+reaches them three different ways -- stated once, because "the product" is
 no longer one thing.
 
 | What | How the suite reaches it | What it cannot see |
 |---|---|---|
 | `BrowserAI.Server.exe` | The **published slice**: a real NativeAOT publish driven over stdio. `PublishedSlice.Executable` moved to this name on 2026-09-15 | Nothing new. This is the half that was always covered |
-| `BrowserAI.exe`, the configuration app | Three ways, and none of them is "open the window and look". `ConfigurationAppTests` asserts every sentence, link and button as a pure function of an `AppState`; `TaskDialogLayoutTests` holds the interop structures against Microsoft's metadata and reads the PE subsystem out of both binaries; `RealInstallerTests` installs a real pack and asserts the window's **shape** -- one visible top-level window, class `#32770`, no console window, exit 0 on `WM_CLOSE` | **That Windows draws it correctly.** Nothing here can see a layout, a truncation or an icon. The maintainer looking at it once is the only thing that can, and that is stated rather than implied |
+| `BrowserAI.exe`, the configuration app | Three ways, and none of them is "open the window and look". `ConfigurationAppTests` asserts every sentence, link and button as a pure function of an `AppState`; `TaskDialogLayoutTests` holds the interop structures against Microsoft's metadata and reads the PE subsystem out of both binaries; `RealInstallerTests` installs a real pack and asserts the window's **shape** -- one visible top-level window, class `#32770`, no console window, exit 0 on `WM_CLOSE` | **That Windows draws it correctly.** Nothing here can see a layout, a truncation or an icon. The maintainer looking at it once is the only thing that can, and that is stated and not implied |
 | `BrowserAI.Core` | Directly, through `InternalsVisibleTo`. Its types are `internal` and the suite asserts on them exactly as it did when they were in the server | Nothing new |
 
 ⚠️ **The `--report` path exists because of the second row.** A window application
 whose only entry point opens a window is one nothing can assert anything about,
 so the app has a headless mode that writes the same state the dialog renders. A
-report that disagreed with the screen is a red rather than a support artifact
+report that disagreed with the screen is a red, not a support artifact
 nobody can trust -- which is what makes it worth having two consumers of one type
-rather than two renderings of one idea.
+and not two renderings of one idea.
 
 ⚠️ **The console check in the installer arm is BY PID and is weaker than it
 looks.** With the default terminal set to Windows Terminal, a console allocated
 to a process shows up as a window owned by *Windows Terminal's* process -- which
 is exactly what reported a clean screen while two windows were on it. What
-carries that guarantee is the subsystem read out of the binary, the cause rather
-than the symptom.
+carries that guarantee is the subsystem read out of the binary, the cause,
+not the symptom.
 
 ⚠️ **A test host stopped mid-installer-arm leaves
 `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\BrowserAI.app.test`
-behind, and the next run then SKIPS all three installer arms rather than failing.**
+behind, and the next run then SKIPS all three installer arms instead of failing.**
 *Observed 2026-09-17.* The arm installs under the suite's own pack id and removes
 the key on the way out; stop the host between those two and the key outlives the
 run, pointing at a scratch root the same teardown has already deleted. The
@@ -630,7 +630,7 @@ come back **green with three arms unrun**: read the `skipped` count, never the
 names (`ReleaseLayout.ClearTheLeftoverKey`), and **two things are checked before
 running it** -- that `InstallLocation` is under `%LocalAppData%\BrowserAI-test-scratch`
 **and** that the directory is gone. A key pointing at a directory that still
-exists is a live install rather than residue, and deleting it would strand one.
+exists is a live install, not residue, and deleting it would strand one.
 The values one held are in
 [`docs/evidence/2026-09-17-reverify/`](docs/evidence/2026-09-17-reverify/README.md).
 
@@ -642,7 +642,7 @@ which is the shape in which a client may run its first-run onboarding and open a
 browser window. This suite runs on the maintainer's own desktop.
 `Harness/OnboardedClientConfig.Seed` writes `hasCompletedOnboarding: true` into
 `$CLAUDE_CONFIG_DIR\.claude.json` -- the client's own `plugin eval` sandbox
-recipe, quoted from the bundle rather than invented here -- and all three sites go
+recipe, quoted from the bundle, not invented here -- and all three sites go
 through it: the registration arms' `PointTheClientAt` and the two installer arms,
 whose real `Setup.exe` runs a hook that registers with the client.
 `HouseRuleTests.EveryScratchClientConfigurationIsSeededAsOnboardedBeforeTheClientRuns`
@@ -651,7 +651,7 @@ refuses a site that skips the seam and
 holds that the file carries the marker.
 
 ⚠️ **The guard is ASSERTED and has never been measured against the flow, and that
-is why its [hazard row](HAZARDS.md#hazard-index) is `open` rather than `closed`.**
+is why its [hazard row](HAZARDS.md#hazard-index) is `open`, not `closed`.**
 Measuring it means running the sign-in flow to watch it suppressed, which is the
 event being guarded against, so nothing here shows that an unseeded directory
 would have opened a window -- only that the marker is there. It is the same weaker
@@ -665,11 +665,11 @@ published documentation does not document the marker at all -- so the key is
 ## Provisioning caps: what a duration test may assert here
 
 **Two of the suite's arms drive a cap that is measured in wall-clock time, and
-both are written as a RATIO rather than as a duration** --
+both are written as a RATIO, not as a duration** --
 [the house rule](#every-duration-is-a-hang-detector-or-it-is-a-defect) is why.
 
 - `ProvisioningTests.TheStallCapStopsADownloadThatNeverProgresses` drives a
-  double that writes **nothing at all**, so the cap fires on a state rather than
+  double that writes **nothing at all**, so the cap fires on a state, not
   on a race: no amount of scheduling delay can make an installer that never
   touches the disk look like one that is working.
 - `.ASlowInstallThatKeepsWritingIsNotStoppedHoweverLongItTakes` is the other half,
@@ -699,14 +699,14 @@ there is no load under which they behave differently -- which is what closed
 [the hazard row](HAZARDS.md#hazard-index) that this flake opened on the same day.
 
 ⚠️ **What that replaced, kept because the reasoning still applies to every other
-double in this suite.** The old arm's installer ran on a `LongRunning` thread
-rather than on the pool, and that was a correctness requirement: the product's
+double in this suite.** The old arm's installer ran on a `LongRunning` thread,
+not on the pool, and that was a correctness requirement: the product's
 watcher polls from a thread of its own and never starves, so a double that ticked
 from the pool would starve at unbounded parallelism while the watcher did not, and
-the cap would fire on the scheduler rather than on the behaviour under test.
+the cap would fire on the scheduler, not on the behaviour under test.
 **Observed exactly that way on 2026-08-19: green alone, red in a full run.** The
 real installer is a separate OS process and is never pool-bound either, so a
-double must be as schedulable as the thing it replaces rather than be given an
+double must be as schedulable as the thing it replaces and not be given an
 advantage.
 
 ## The first-run download runs at most once an hour
@@ -726,7 +726,7 @@ produced, and a stamp naming when the bytes were fetched, which revision they
 are, and how many files and bytes the tree holds. Inside the hour the test seeds
 from it; outside it, the test downloads for real and replaces the entry. **A
 cached run never touches the stamp**, so the ceiling is also a floor: the
-genuinely cold path runs at least once per hour of runs, rather than being
+genuinely cold path runs at least once per hour of runs, and is not
 deferred forever by use.
 
 **A cached run is not a different test wearing the same name -- it is the same
@@ -747,7 +747,7 @@ exercising its subject is the failure class this repository exists to eliminate:
 that Playwright's CDN is up, that `cftUrl` still resolves, that the revision the
 payload pins is still served, and that `install-browser --no-shell` still does
 what its name says. The layout assertions still run, against bytes a real
-download produced **within the hour** rather than within the second.
+download produced **within the hour**, not within the second.
 
 **Four mechanisms stop that becoming silent, and the first is the one that
 matters:**
@@ -757,11 +757,11 @@ matters:**
 - **Every run says which path it took**, in the same coverage block that makes a
   degraded run distinguishable from a real one -- a `first-run bytes` row reading
   `CDN`, `CACHED` or `NOT RUN`, with the age of the tree it used.
-- **The ceiling is a ceiling**, and a stamp dated in the future is refused rather
-  than trusted forever.
+- **The ceiling is a ceiling**, and a stamp dated in the future is refused,
+  not trusted forever.
 - **`BROWSERAI_FIRST_RUN_CACHE=off`** forces a cold run without editing anything.
 
-**A partial cache is refused rather than used**, and the completeness signal is
+**A partial cache is refused, not used**, and the completeness signal is
 the same one BrowserAI itself trusts plus a census the marker cannot give:
 `chromium-<rev>/INSTALLATION_COMPLETE`, an `ffmpeg-*` marker, `chrome.exe` where
 the payload says, **no** `chromium_headless_shell-*` -- a cache carrying one would
@@ -774,8 +774,8 @@ cache.
 into `.staging-<guid>\`, which readers do not enumerate, and then moved to
 `entry-<stamp>-<guid>\` in one `MoveFileEx`. The destination name carries a GUID,
 so two publishers cannot collide and neither needs a lock -- the same answer, for
-the same reason, that the session index gives to eight concurrent writers rather
-than reaching for `FileMode.Append`.
+the same reason, that the session index gives to eight concurrent writers instead
+of reaching for `FileMode.Append`.
 
 **The cost, measured 2026-08-17 over eight full-suite runs on the reference
 machine** ([kb](kb/playwright/provisioning-and-timings.md#what-the-first-run-download-costs-the-suite)):
@@ -796,7 +796,7 @@ for **133,761 B** where a cold one moves **425 MB** across the adapter counters.
 `SW_SHOWNOACTIVATE` so that a headed browser's first window appears without
 taking the foreground, and that is measured
 ([kb](kb/windows/processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it----measured-2026-08-24)).
-**No test in this suite can check it, and the reason is the machine rather than
+**No test in this suite can check it, and the reason is the machine, not
 the code.** `SPI_GETFOREGROUNDLOCKTIMEOUT` reads `2147483647` ms here, so Windows
 refuses a foreground change in the general case: a focus experiment answers *no
 steal* on both arms, and a change that reintroduced stealing would pass here and
@@ -813,7 +813,7 @@ carries one of four states with the number it read:
 | `BLIND` | The timeout outlasts that budget. **This machine.** Three further lines say the run *did not answer* the question and name the exception -- a foreground window owned by an ancestor of the launching process -- that makes a null trial read as a pass |
 | `UNREAD` | Windows refused the call, which is neither of the above and is not reported as either |
 
-**The band edge derives from `TestDefaults.BrowserHang`** rather than being
+**The band edge derives from `TestDefaults.BrowserHang`** instead of being
 written at the comparison, for [the same reason every other bound
 does](#every-duration-is-a-hang-detector-or-it-is-a-defect): *can this machine
 discriminate?* is exactly *can the lock expire inside the time an experiment here
@@ -861,7 +861,7 @@ with one of four states:
 | `CRITICAL` | Nine tenths or more. Allocations fail outright in this band; *"The paging file is too small"* is what the suite reported the last time it happened, and three further lines name the hazard row |
 | `UNREADABLE` | Windows would not answer. Reported as its own state and never as a zero, because a zero would read as an idle machine |
 
-**Two readings rather than one, and the verdict is taken on the worse of them.**
+**Two readings, not one, and the verdict is taken on the worse of them.**
 The difference between the ends is what separates *the machine was already
 loaded* from *this suite loaded it*, which are different findings with different
 owners; and a run that started `CRITICAL` and ended `HEALTHY` because whatever
@@ -870,8 +870,8 @@ an end-only verdict would call it healthy and lose exactly the finding the row
 exists for.
 
 ⚠️ **No assertion reads the numbers, and that is
-[`MachineLoad`](tests/BrowserAI.Tests/Harness/MachineLoad.cs)'s standing rule
-rather than caution.** Every figure here is a property of whatever else the
+[`MachineLoad`](tests/BrowserAI.Tests/Harness/MachineLoad.cs)'s standing rule,
+not caution.** Every figure here is a property of whatever else the
 machine is running, so a bound on one would be a test that passes or fails
 depending on the developer's other windows. What
 `SuiteCoverageTests.TheRunReportsTheMachinesCommitChargeAndEveryBandIsExercised`
@@ -883,7 +883,7 @@ on the day something is already wrong -- and that an unreadable reading says so.
 **It is a row and not a `SuiteCapability`**, for `foreground lock`'s reason
 exactly: nothing anybody types makes a machine's commit charge healthy, so a
 capability would make a release from a loaded machine unreachable with no
-permitted remedy rather than telling the reader what to distrust.
+permitted remedy instead of telling the reader what to distrust.
 
 ### The run states the publish freshness it established
 
@@ -915,8 +915,8 @@ three states:
 | State | What it means |
 |---|---|
 | `FRESH` | The binary is at least as new as every input. The row states its modification time, the newest input's time and name, how many inputs were compared, and the margin between them |
-| `STALE` | At least one input is newer. The row states the margin the other way round, how many inputs are newer, and three further lines saying that every slice arm in the run refused rather than ran, with the publish command |
-| `NOT ESTABLISHED` | There was no binary to compare anything against. Nothing was measured and the row says so, rather than printing a margin against a timestamp Windows returns for a file that does not exist |
+| `STALE` | At least one input is newer. The row states the margin the other way round, how many inputs are newer, and three further lines saying that every slice arm in the run refused and did not run, with the publish command |
+| `NOT ESTABLISHED` | There was no binary to compare anything against. Nothing was measured and the row says so, instead of printing a margin against a timestamp Windows returns for a file that does not exist |
 
 ⚠️ **The row and the guard are one comparison, not two.**
 `PublishedSlice.Measure` walks the inputs once; `RefusalFor` renders that reading
@@ -930,7 +930,7 @@ to spell `FRESH`.
 
 **Timestamps are UTC to the millisecond, and both halves are deliberate.** The
 whole of the misreading turned on a gap of one minute 53.8 seconds, so a row
-printed to the minute would have made it worse rather than better; and the two
+printed to the minute would have made it worse, not better; and the two
 figures put side by side that day were a local-time file stamp and a commit date,
 with nothing in either sentence naming a zone.
 
@@ -945,7 +945,7 @@ leave the tree needing a re-publish to go green again.
 publish whose payload is missing still has an answerable freshness question and
 gets a real answer; that its tier is broken is a different sentence, and
 `published slice PARTIAL` plus `NothingThisRunLacksIsHalfInstalled` already carry
-it. Each row answers its own question rather than borrowing another's verdict.
+it. Each row answers its own question instead of borrowing another's verdict.
 
 **It is a row and not a `SuiteCapability`, and the reason is the opposite of
 `commit charge`'s.** That one is not a capability because nothing anybody types
@@ -992,11 +992,11 @@ section `BrowserAI` and `BrowserAI.App` already carry, written by the same
 restore, over a library they both publish RID-specific. And **the revert habit had
 already failed once**: the paragraph above records the section reaching `HEAD` in
 a `git add -A` and being reverted in `ac244ff`, which is a rule kept by
-remembering, and this repository writes that shape down as a defect rather than
+remembering, and this repository writes that shape down as a defect, not
 as care.
 
 ⚠️ **THE FILE HAS TWO STATES AND THE LAST RESTORE WINS -- measured 2026-09-16
-*after* the decision, and it changes what the decision buys rather than the
+*after* the decision, and it changes what the decision buys, not the
 decision itself.** A RID restore writes one state and a **non-RID** restore
 writes the other, and `dotnet test` performs a non-RID one, so a suite run
 removes the section as reliably as a publish adds it. Measured on this tree, in
@@ -1008,14 +1008,14 @@ one pass, each state byte-stable under repetition of its own kind:
 | `dotnet restore BrowserAI.slnx` -- what `dotnet test` runs | section **absent** | `7f30ec57...` |
 
 **So committing it does not end the oscillation; it moves which end of it is the
-dirty one** -- and that is still the right way round, which is the argument rather
-than a restatement of the decision. The diff that matters is the one a **commit**
+dirty one** -- and that is still the right way round, which is the argument,
+not a restatement of the decision. The diff that matters is the one a **commit**
 follows: in this repository a publish is followed by a release commit, and a
 suite run is followed by reading a log. The one time this file reached `HEAD`
 unreviewed, it was a `git add -A` after a publish. The state a publish leaves
 behind is therefore the state that must be committed, and it now is.
 
-⚠️ **THE OSCILLATION IS OVER, BY CONSTRUCTION RATHER THAN BY HABIT -- *corrected
+⚠️ **THE OSCILLATION IS OVER, BY CONSTRUCTION, NOT BY HABIT -- *corrected
 2026-09-17 (previously "**The cost is stated rather than hidden.** `git status`
 shows this one file modified after every suite run, including all six of a release
 gate, and the repair is `dotnet restore <project> -r win-x64` -- or nothing at all,
@@ -1030,8 +1030,8 @@ outputs, and it belongs to whoever owns the build rather than to a release
 batch")*.** The way that was written down so that it could be taken **was taken**:
 [`src/BrowserAI.Core/BrowserAI.Core.csproj`](src/BrowserAI.Core/BrowserAI.Core.csproj)
 declares `<RuntimeIdentifier>win-x64</RuntimeIdentifier>` from 2026-09-17. That
-is **Q201**, decided the same day, and the decision it replaces is Q199 rather
-than contradicting it: Q199 chose *which* of two states to commit, which was the
+is **Q201**, decided the same day, and the decision it replaces is Q199 instead
+of contradicting it: Q199 chose *which* of two states to commit, which was the
 only move available while there were two.
 
 **Measured the day it went in, five reads, every one `fab160c4...`** -- the state
@@ -1057,9 +1057,9 @@ this tree reads by path.
 **`git add -A` after a suite run is still wrong** -- that was never about this file
 in particular, and it is no more right now that this file has stopped moving.
 
-**The other way out, `--locked-mode` restores that fail rather than rewrite, was
+**The other way out, `--locked-mode` restores that fail and do not rewrite, was
 not taken and is still the wrong shape here**: it would have **refused** this
-section rather than recording it, and the section is a resolution rather than a
+section instead of recording it, and the section is a resolution, not a
 corruption.
 
 ## We write our own harness
@@ -1072,7 +1072,7 @@ against an upstream that edits `tests/` weekly
 Writing ~100-200 lines ourselves buys a harness shaped for *this* product and
 frees the framework choice.
 
-Two lessons are inherited deliberately rather than by copying, because they cost
+Two lessons are inherited deliberately, not by copying, because they cost
 upstream real time to find:
 
 - **Pin `DiscoverProbeTimeout` in test clients.** The SDK's own base class sets it
@@ -1090,7 +1090,7 @@ upstream real time to find:
   > their own -- the suite is green with the cancellation removed entirely -- and
   > **only** completing both writers closes the hop. They are two independent ways
   > to end the server task, not a sequence in which the first enables the second.
-  > Both are kept, for reasons that are now stated rather than inherited.
+  > Both are kept, for reasons that are now stated and not inherited.
   > [The four-way table is in kb](kb/mcp/sdk.md#error-shape-and-teardown-seen-from-an-in-process-harness).
 
 What we build, and what each replaces:
@@ -1124,7 +1124,7 @@ client that:
 
 - speaks **newline-delimited JSON-RPC** directly onto the child's stdin and reads
   its stdout, with no SDK type between the assertion and the bytes;
-- **correlates by `id`** and **skips notifications** rather than assuming the next
+- **correlates by `id`** and **skips notifications** instead of assuming the next
   line is the answer -- the reason the naive version works locally and hangs under
   load;
 - **drains stderr and attaches it to every failure message**, because
@@ -1140,11 +1140,11 @@ client that:
   [an unset one passes `null` to `CreateProcess`](DECISIONS.md#windows-process-spawning)
   and the child silently inherits the test host's cwd.
 
-**Prior art to copy rather than reinvent:** an in-house `McpStdioClient` in a
+**Prior art to copy and not reinvent:** an in-house `McpStdioClient` in a
 sibling project's test tree, unpublished and not reachable from this repository
 -- 261 lines, verified 2026-08-16, carrying all five properties above. (An earlier
 note in this project put it at 233 lines; it has grown since.) It exists there for
-the same reason it is needed here: to prove the wire protocol rather than the
+the same reason it is needed here: to prove the wire protocol, not the
 SDK's model of it.
 
 ## Every duration is a hang detector, or it is a defect
@@ -1193,7 +1193,7 @@ interesting one.** *Added 2026-08-23, after the sweep this rule authorised was
 found to have left two of these standing.*
 `HouseRuleTests.NoAssertionBoundsAMeasuredDurationWithANumberItInvented` reads
 the tree for an assertion that bounds a **measured** duration from above, and
-fails if the bound is a number rather than the name of one -- `1000`, or a
+fails if the bound is a number, not the name of one -- `1000`, or a
 `TimeSpan.From...` around a literal. It carries a synthetic positive control
 rebuilt from the exact assertion deleted that day, because the tree is clean and
 a clean tree is indistinguishable from a scan whose needles stopped matching.
@@ -1201,14 +1201,14 @@ a clean tree is indistinguishable from a scan whose needles stopped matching.
 **What it cannot see is a promptness claim wearing a named constant**, which by
 text alone is the same thing as a hang detector -- so the two rows of the table
 above are still adjudicated by a reader, and the mechanism only closes the
-*"invented its own number"* half. That is worth stating plainly rather than
+*"invented its own number"* half. That should be said plainly, instead of
 letting a green build imply the rule is now automatic. What made the survivors
 findable at all was that the 2026-08-18 sweep **left its comments behind** where
 it deleted each one; the second survivor was found on 2026-08-23 only because the
 first had just been fixed and somebody went looking for siblings. Lower bounds
 are not examined -- load can only make one pass -- and neither is the inverse shape
 that watches a call *fail* to return (`SessionLockTests.StillBlocked`), which is
-sized against the defect rather than against the product and is the one duration
+sized against the defect, not against the product and is the one duration
 here a starved machine makes safer.
 
 ⚠️ **And a third case the two rows above do not cover: a property whose only
@@ -1217,8 +1217,8 @@ this a network path* before the one call in it that opens a directory, and an
 **ordering** cannot be observed any other way -- the answer is identical either
 way, twenty-two seconds apart. There is no bound that satisfies both halves of
 the rule: one with headroom a 419-test run cannot reach is far above a single
-22-second stall. **So it is not asserted, and the test says so in place** rather
-than carrying a number that would eventually go red on a busy machine and be
+22-second stall. **So it is not asserted, and the test says so in place** instead
+of carrying a number that would eventually go red on a busy machine and be
 "fixed" by raising it. What is asserted instead is *which branch produced the
 answer*, which is decisive about the branch and silent about the order;
 `CanonicalPathTests.TheNetworkRefusalDoesNotComeFromTheCallThatOpensThings`
@@ -1238,7 +1238,7 @@ sense as everything above -- the build configuration that enforces them is in
 [STACK.md](STACK.md#the-build-configuration), and what each one catches is here,
 because each exists to close a specific silent failure.
 
-**Warnings are errors, and `CS0162` -- unreachable code -- is promoted rather than
+**Warnings are errors, and `CS0162` -- unreachable code -- is promoted, not
 left as a warning.** Unreachable code is not a tidiness complaint; it means the
 compiler proved a branch cannot execute, and in this codebase the branch that
 cannot execute is usually a guard, a `catch`, or a cleanup path. A warning in a
@@ -1247,7 +1247,7 @@ it predicts is one this project has already named repeatedly: the recovery path
 that was never going to run.
 
 **Non-empty ILC output fails the publish, and this is the one the analyzers cannot
-catch.** Observed and recorded rather than re-run in this repository: **a
+catch.** Observed and recorded, not re-run in this repository: **a
 NativeAOT publish exited 0 while ILC emitted `Method '...' will always throw
 because: Failed to load assembly '...'`.** Exit code zero, an artifact on disk, and
 a binary that throws the moment that code path is reached. Analyzers at error
@@ -1257,7 +1257,7 @@ decided by the AOT compiler afterwards --
 arriving from the toolchain instead of from upstream. The gate is mechanical:
 capture ILC's output and fail the publish if it is non-empty. Publishing AOT and
 running the suite against it is required before committing to it, and this is the
-check that makes that publish meaningful rather than merely completed.
+check that makes that publish meaningful, not merely completed.
 
 **AOT and trim warning suppression is scoped per-assembly, never repo-wide.** A
 repo-wide suppression is permanent and invisible: it silences the warning for
@@ -1324,8 +1324,8 @@ the gate, and five things about it are deliberate:
   characters and never bytes. The byte figure is printed and not gated.
 - **Hard at 100%, with no warning tier.** This does not contradict the recorded
   argument against a headroom gate -- that argument was against failing *below*
-  100%, so that a surface that grew failed on the line about the surface rather
-  than on a budget line. Over 100% is a broken state rather than a tight one.
+  100%, so that a surface that grew failed on the line about the surface,
+  not on a budget line. Over 100% is a broken state, not a tight one.
   *(Reworded 2026-08-20, previously "so that a fourth session mode fails on the
   six-consumer line"; session modes and the six-consumer test are gone, and the
   argument was never about modes.)*
@@ -1362,7 +1362,7 @@ generalises it, on two rules:
   exactly how the earlier error survived.
 
 The sentence in the document is the anchor, so **rewording it fails the build**
-rather than silently unhooking the check. Four counts it cannot mechanise are
+instead of silently unhooking the check. Four counts it cannot mechanise are
 named in the class, each with the reason -- the executed-test count in `README.md`
 is a different predicate from any reflection over `[Test]` methods, and the
 installer size needs an artifact that `Releases/` gitignores.
@@ -1398,7 +1398,7 @@ likely to be run beside -- cannot be the one thing nobody registered.
 
 **Why not `git log --numstat`**, which would say for free whether a file has ever
 had a line deleted: it fails on both halves. A legitimate typo fix deletes a
-line, and the changelog's protection is per-*section* rather than per-file, which
+line, and the changelog's protection is per-*section*, not per-file, which
 no whole-file history check can express.
 
 ## The upstream-review gate
@@ -1441,8 +1441,8 @@ whether we forward it*** -- a snapshot is a record of upstream and a verdict is 
 statement about this product, so the two cannot live in one file.
 [`tool-verdicts.json`](tool-verdicts.json) is the second half, added 2026-08-26:
 one row per tool, `allow` / `deny` / `answer`, tracked at the repository root and
-copied into the payload it describes. `ToolVerdictTests` is what makes it a gate
-rather than a note.
+copied into the payload it describes. `ToolVerdictTests` is what makes it a gate,
+not a note.
 
 | Arm | Catches |
 |---|---|
@@ -1536,7 +1536,7 @@ nothing, blocks nothing, and prompts nobody.
 > **The general lesson, recorded because it outlives this file.** A hook returning
 > `ask` is **not** an enforcement mechanism: it is inert against sub-agents under
 > bypass, and against a human it only proves a click. Enforcement belongs in the
-> suite, where it is evidence rather than assent. If a rule can be a failing test,
+> suite, where it is evidence, not assent. If a rule can be a failing test,
 > it must be one -- and this is the case that proves the rule applies to our own
 > tooling too.
 
@@ -1545,7 +1545,7 @@ nothing, blocks nothing, and prompts nobody.
 **There is none, as of 2026-08-20.** `.github/workflows/build.yml` existed from
 2026-08-18 and was deleted that day at the maintainer's decision, verbatim:
 *"Remove CI completely. Let all the tests run on my machine only. I want no CI and
-no github runner."* `.github/` is gone entirely rather than left as an empty husk.
+no github runner."* `.github/` is gone entirely and not left as an empty husk.
 Bringing it back needs self-hosted runner infrastructure that does not exist yet,
 and the maintainer is considering leaving GitHub before that happens -- so
 [the TODO item](TODO.md#continuous-integration) deliberately does not assume
@@ -1564,9 +1564,9 @@ consequences a reader has to carry:
   ([kb](kb/windows/detection.md#windows-re-spells-a-paths-drive-letter-a-process-never-re-spells-its-own)).
   `DriveLetterCase` is the mechanism that catches it from either shell; running
   both is the belt beside it. ⚠️ **Since 2026-08-24 the difference is *forced*
-  rather than inherited, and each half declares what it forced** -- *previously
+  and not inherited, and each half declares what it forced** -- *previously
   this bullet's "differs between them" was the whole of it, and it was true run
-  to run rather than by construction*. See
+  to run and not by construction*. See
   [the two spellings are forced](#the-two-spellings-are-forced-and-the-run-says-which-one-it-got).
 
   ⚠️ **Once from each shell is the gate for ordinary work; three from each is the
@@ -1583,7 +1583,7 @@ consequences a reader has to carry:
   the refusal it produces: a gate attempt on 2026-09-17 cost **34 reds** reading
   *the published binary ... is older than 7 source file(s), so this test would
   prove nothing about the code in the tree*. Around thirty arms drive the
-  published NativeAOT binary rather than the tree, and `PublishedSlice.EnsureFresh`
+  published NativeAOT binary, not the tree, and `PublishedSlice.EnsureFresh`
   refuses all of them together. The commands are the two that refusal names:
   `dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
   --self-contained`, and the same shape over
@@ -1619,12 +1619,12 @@ consequences a reader has to carry:
 PackagedRelease,ClientCommandLine`", added 2026-08-19).* The workflow was the
 variable's only consumer anywhere in the repository, so with CI gone the live arm
 `SuiteCoverageTests.EveryAbsentCapabilityIsOneThisRunsEnvironmentDeclared` asserts
-nothing on every run -- which is *correct rather than broken*: an unset variable
+nothing on every run -- which is *correct, not broken*: an unset variable
 declares nothing, which is what a developer machine has always done. The
 reconciliation itself is still held by
 `SuiteCoverageTests.TheExpectedAbsentDeclarationIsReconciledAgainstWhatIsAbsent`,
-which is pure and in-process and unaffected. **The third arm was deleted rather
-than re-pointed.** `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` read
+which is pure and in-process and unaffected. **The third arm was deleted,
+not re-pointed.** `TheWorkflowStillDeclaresWhatItExpectsToBeAbsent` read
 `build.yml`, scoped to the step that ran the suite, and its positive control --
 *this really is the step that runs the suite* -- is the thing a re-pointed version
 could not have: a scan for "any pipeline definition that runs the suite without
@@ -1640,7 +1640,7 @@ conditionally-ignored test in the tree* -- is about the **tree**, and
 `HouseRuleTests.NoTestInTheTreeIsSkipped` enforces exactly that: no `[Skip]`
 attribute anywhere. A capability skip is a different thing. It is decided at run
 time, it names the capability, the path to restore it and the switch that makes it
-fatal, and it is reported as **skipped rather than passed** so the run's summary
+fatal, and it is reported as **skipped, not passed** so the run's summary
 cannot be mistaken for a healthy one. That is the gate working. **Zero skipped is
 a release requirement**: [release checklist item 8](RELEASING.md#the-release-gate)
 demands it, and it is met by cutting from a machine that has every capability
@@ -1648,7 +1648,7 @@ present. ⚠️ **Two of those capabilities are produced by the release
 script and by nothing else** -- the packed `.nupkg`, and, since 2026-09-15, the
 real `Setup.exe` the installer arm runs twice over one install root -- so *every
 capability present* means **pack first, then run the gate**. The installer
-capability has one more way of being absent, and it is a refusal rather than a
+capability has one more way of being absent, and it is a refusal, not a
 gap: it reads ABSENT when this machine already has an Add/Remove entry for the
 pack id, because installing under `--installto` would repoint that entry at a
 scratch directory and the uninstall that follows would delete it. *Previously this paragraph also recorded that a GitHub runner skipped
