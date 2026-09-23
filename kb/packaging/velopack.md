@@ -517,6 +517,98 @@ is and document it: *"Q225 b"*. The alternative offered and declined was a
 machine-wide check stamp in the shared data root, skipping the feed when any
 instance of this install had checked within the hour.
 
+### Nothing anywhere reads `RELEASES` or `assets.{channel}.json` from a release — measured 2026-09-23
+
+**Measured 2026-09-23 @ `vpk` 1.2.158, Velopack 1.2.158, against the files the
+published `v1.1.0` release carries.** `[FLOATS]` — it is a property of Velopack's
+sources and moves when they do.
+
+**The question.** `vpk pack` writes three feed files beside the packages and a
+release had been uploading all three. `releases.{channel}.json` is the one
+[`UpdateFeed`](../../src/BrowserAI.Core/Updates/UpdateFeed.cs) composes and the
+one this product asks for; what nobody had established is whether the **Velopack
+library inside the product, or any other part of the release chain**, reads the
+other two from a release.
+
+**It does not, and the control is the strong one.** Four `vpk download local`
+runs, which drive `SimpleFileSource` — the same `IUpdateSource` an
+`UpdateManager` uses, reached through the CLI so that no new binary has to exist:
+
+| Feed held | Result |
+|---|---|
+| all four files | `Found 1 release(s)`, downloaded **55,022,716** b, checksum verified |
+| **`RELEASES` and `assets.win.json` deleted** | identical — `Found 1 release(s)`, same bytes, **not one message about either file** |
+| `releases.win.json` deleted, package present | ⚠️ **a WARNING naming `releases.win.json` by path**, then a fallback scan of `*.nupkg` that succeeds |
+| ⭐ **`RELEASES` and `assets.win.json` present, `releases.win.json` and every `.nupkg` absent** | `Found 0 release(s)` · *"No full / applicable release was found to download. Aborting."* |
+
+**The fourth row is the measurement.** `RELEASES` in that feed reads
+`23FB729B035F39D30FD6E045965593E61DCE0ACC BrowserAI.app-1.1.0-full.nupkg 55022716`
+— the package, its SHA-1 and its exact size — and `assets.win.json` lists all
+three artifacts by name and type. Velopack found **nothing**. Neither file is a
+feed to it.
+
+⚠️ **The third row is why the obvious control does not work on a LOCAL feed.**
+`SimpleFileSource` falls back to scanning the directory for `*.nupkg` when the
+JSON is missing, so deleting `releases.win.json` alone is not a refusal — the
+packages have to go with it. `SimpleWebSource` has no such fallback, which is
+the difference [row 217 of the hazard index](../../HAZARDS.md#hazard-index)
+records for a different reason.
+
+**The suite half, against a scratch feed.** `Releases/` copied to
+`.work/feed-measure/suite-feed` with `BROWSERAI_RELEASE_FEED` pointed at it,
+`RELEASES` and `assets.win.json` deleted from the root **and** from
+`test-pack/`: `RealInstallerTests`, `UpdateTests` and `ReleaseScriptTests` ran
+**57 of 57 green, 0 skipped**, with the coverage block reading
+`release installer PRESENT` at the doctored feed — so the three arms that install
+a real pack twice over one root, launch the installed binary and uninstall it all
+ran, and none of them missed either file.
+
+**The positive control names the file that IS read.** Same feed with both legacy
+files RESTORED and `test-pack/releases.win.json` deleted, under
+`BROWSERAI_RELEASE_RUN=1`: all three `ReleaseInstaller`-gated arms **failed**,
+each saying *"`BrowserAI.test-installer.exe` exists but `releases.win.json` names
+no package with the id `BrowserAI.app.test`"*. So the arms are the ones that
+would have failed, and what they fail on is the JSON.
+
+**What the source says, read at tag `1.2.158` (sha `3c7f52c1`).** Every client
+source reads `releases.{channel}.json` and only that — `SimpleWebSource.cs:43`,
+`SimpleFileSource.cs:37`, `GitBase.cs:82`, Rust `sources/http.rs:39` — and
+`UpdateManager`'s check, download, delta and rollback paths
+(`UpdateManager.cs:240-315`) touch nothing else. **Nothing in `lib-csharp`
+outside the definition of `GetReleasesFileName` ever composes the name
+`RELEASES`**, so the client library cannot read it. `Update.exe` and `Setup.exe`
+never fetch a feed at all. `RELEASES` is a Squirrel-migration shim —
+`ReleaseEntryHelper.cs:115`, *"We write a legacy RELEASES file to allow older
+applications to update to velopack"* — and this product has no Squirrel
+predecessor: `git grep -ni squirrel` over `src/`, `build/` and `tests/` is empty.
+
+⚠️ **`assets.{channel}.json` MUST STAY ON DISK and is inert once published.** It
+is the pack-to-upload hand-off: `vpk upload github` reads it with
+`BuildAssets.Read` from the **local** `Releases/` directory (`_GitRelease.cs:154`)
+to learn what to upload, and a future `vpk upload` fails without it. What it is
+not is something anybody fetches from a release page. `vpk pack`'s own
+existing-release detection does not read it either — it enumerates `*.nupkg` on
+disk (`ReleaseEntryHelper.cs:30-42`).
+
+⚠️ **One upstream comment says the opposite and is stale in both languages.**
+`SimpleWebSource.cs:12` and `lib-rust/src/sources/http.rs:11` say the source
+requests `{baseUri}/RELEASES`; the code three lines below reads the JSON. Nothing
+in this repository repeats that sentence — checked, 2026-09-23 — and it is
+recorded here so that a reader who meets the comment upstream does not believe
+it.
+
+**How to re-establish it.** Copy `Releases/`'s four feed files into four scratch
+directories, delete a different combination from each, and run
+`vpk download local --path <dir> -o <out> -c win` against each; the fourth
+combination — both legacy files present, the JSON and every `.nupkg` absent — is
+the one that has to come back empty. For the suite half, copy `Releases/` without
+`archive/`, delete the two files at both levels, point `BROWSERAI_RELEASE_FEED`
+at the copy and run `RealInstallerTests`; then restore them, delete
+`test-pack/releases.win.json` and run it again under `BROWSERAI_RELEASE_RUN=1`
+for the control. **The clearance conditions apply around every run that installs**
+— `RealInstallerTests` runs a real `Setup.exe` — and they were byte-identical
+either side of both runs here.
+
 ### Sizes
 
 **Re-measured 2026-09-22** by running `build/New-Release.ps1` twice, at
