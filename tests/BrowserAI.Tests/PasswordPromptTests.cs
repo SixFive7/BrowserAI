@@ -157,6 +157,15 @@ internal sealed class PasswordPromptTests
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
+
+    // ⚠️ THE SAME KEY EVERY REAL-FIREFOX ARM CARRIES, and it is a correctness
+    // requirement and not a load one: `FirefoxTests`' preflight arm asserts that
+    // NO Firefox appeared while it ran, so a Firefox this arm launches would make
+    // that one fail for a reason belonging to this file. Leaving the key off cost
+    // a three-minute navigate timeout in the attribution arm on the first full
+    // pass after this file was added, which is the same contention wearing a
+    // different failure.
+    [NotInParallel("stray-sweep")]
     public async Task TheFirefoxRememberSignonsPreferenceReachesTheChild()
     {
         SuiteEnvironment.RequireProvisionedFirefox();
