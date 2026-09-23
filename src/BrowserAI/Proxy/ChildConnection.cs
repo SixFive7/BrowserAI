@@ -65,7 +65,17 @@ internal sealed class ChildConnection : IAsyncDisposable
         // notification needs no decorator either way --
         // RegisterNotificationHandler is public on McpSession, which McpClient
         // inherits.
-        _progressRelay = client.RegisterNotificationHandler(NotificationMethods.ProgressNotification, relay);
+        //
+        // ⚠️ IT GOES THROUGH THE TRANSPORT, AND THAT IS WHAT KEEPS THE ORDER.
+        // The SDK starts each inbound message's handling without awaiting it, so
+        // this handler is entered in an order that is already a race; the
+        // transport read the frames in one sequential loop and is the last place
+        // the child's own order still exists. link.Session is what ChildLink is
+        // for -- see deviation 7 -- and RelayInArrivalOrderAsync is where the
+        // wait happens.
+        _progressRelay = client.RegisterNotificationHandler(
+            NotificationMethods.ProgressNotification,
+            (notification, token) => link.Session.RelayInArrivalOrderAsync(notification, relay, token));
     }
 
     /// <summary>

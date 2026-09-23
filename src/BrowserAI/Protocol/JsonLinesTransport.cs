@@ -4,6 +4,7 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.IO.Pipelines;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -60,9 +61,14 @@ internal abstract class JsonLinesTransport : TransportBase
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly CancellationTokenSource _shutdown = new();
     private readonly ConcurrentDictionary<RequestId, VerbatimPayload?> _watched = new();
+    private readonly ConditionalWeakTable<JsonRpcNotification, Arrival> _arrival = [];
+    private readonly Dictionary<long, TaskCompletionSource> _waitingForTurn = [];
+    private readonly Lock _relayGate = new();
     private readonly JsonLinesRole _role;
 
     private Task _readLoop = Task.CompletedTask;
+    private long _arrivals;
+    private long _relayed;
     private int _disposed;
 
     /// <summary>Initialises the shared half of a transport.</summary>
@@ -156,6 +162,10 @@ internal abstract class JsonLinesTransport : TransportBase
 
         try
         {
+            // Before anything blocks: a relay parked waiting for its turn is
+            // waiting for a message that is no longer coming.
+            AbandonEveryTurn();
+
             await _shutdown.CancelAsync().ConfigureAwait(false);
 
             // Closing the peer's end is what actually wakes a read blocked in a
@@ -226,6 +236,127 @@ internal abstract class JsonLinesTransport : TransportBase
     }
 
     /// <summary>
+    /// Relays one notification to the caller in the order the child wrote it,
+    /// whatever order the SDK dispatched it in.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The defect is upstream's and it cannot be fixed where it shows.</b>
+    /// The SDK's <c>ProcessMessagesCoreAsync</c> starts each inbound message's
+    /// handling without awaiting it -- its own comment says <i>"Fire and forget
+    /// the message handling to avoid blocking the transport"</i> -- so by the time
+    /// a notification handler runs, two notifications written by the child in
+    /// order can already be racing. Two <c>notifications/progress</c> written in
+    /// order were observed reaching the caller as <b>2 then 1</b>
+    /// (<see href="../../../kb/mcp/sdk.md">kb</see>). The <c>progressToken</c> and
+    /// the params survive; only the order does not.
+    /// </para>
+    /// <para>
+    /// <b>So the order is taken where it still exists: here.</b>
+    /// <see cref="DispatchAsync"/> is one sequential loop over framed bytes, so a
+    /// ticket handed out there IS wire order, by construction and not by timing.
+    /// This is the seam
+    /// <see href="../../../STACK.md#nine-places-where-the-sdk-must-be-deviated-from">deviation
+    /// 7</see> predicted an <c>ITransport</c> decorator would be needed for, and
+    /// it is reached the way that deviation's correction describes: <c>ChildLink</c>
+    /// keeps the live transport, and <c>ChildConnection</c> wraps the caller's
+    /// relay in this call.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>A ticket is issued only to a notification that WILL be relayed</b>,
+    /// which is <c>notifications/progress</c> on the child's leg and nothing else.
+    /// A ticket nobody returns would park every later one behind it forever, so
+    /// the set that takes a number and the set that gives it back are the same
+    /// set by construction. An unstamped message is sent straight through, which
+    /// is exactly today's behaviour for everything this does not govern.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It waits, and it does not time out.</b> A bound here would be a
+    /// promptness assertion on a relay, and the two things that can really end
+    /// the wait both do: the caller's token, and disposal, which releases every
+    /// waiter. A notification whose relay is abandoned mid-flight therefore costs
+    /// the ones behind it nothing beyond the teardown that abandoned it.
+    /// </para>
+    /// </remarks>
+    /// <param name="notification">What the child sent.</param>
+    /// <param name="relay">What to do with it, once it is this one's turn.</param>
+    /// <param name="cancellationToken">Gives up waiting for a turn.</param>
+    /// <returns>A task that completes when the relay has run.</returns>
+    public async ValueTask RelayInArrivalOrderAsync(
+        JsonRpcNotification notification,
+        Func<JsonRpcNotification, CancellationToken, ValueTask> relay,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(notification);
+        ArgumentNullException.ThrowIfNull(relay);
+
+        if (!_arrival.TryGetValue(notification, out var arrival))
+        {
+            await relay(notification, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        Task? turn = null;
+
+        lock (_relayGate)
+        {
+            if (_relayed != arrival.Number - 1)
+            {
+                var waiting = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                _waitingForTurn[arrival.Number] = waiting;
+                turn = waiting.Task;
+            }
+        }
+
+        if (turn is not null)
+        {
+            await turn.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            await relay(notification, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            ReleaseTurn(arrival.Number);
+        }
+    }
+
+    /// <summary>Hands the turn to the next arrival, whether this one sent or threw.</summary>
+    /// <param name="number">The arrival that is finished with its turn.</param>
+    private void ReleaseTurn(long number)
+    {
+        lock (_relayGate)
+        {
+            _relayed = number;
+
+            if (_waitingForTurn.Remove(number + 1, out var next))
+            {
+                _ = next.TrySetResult();
+            }
+        }
+    }
+
+    /// <summary>Releases every waiter, because nothing is coming after a teardown.</summary>
+    private void AbandonEveryTurn()
+    {
+        lock (_relayGate)
+        {
+            foreach (var waiting in _waitingForTurn.Values)
+            {
+                _ = waiting.TrySetResult();
+            }
+
+            _waitingForTurn.Clear();
+        }
+    }
+
+    /// <summary>One inbound notification's place in the order the child wrote it.</summary>
+    /// <param name="Number">Its one-based arrival number on this transport.</param>
+    private sealed record Arrival(long Number);
+
+    /// <summary>
     /// Asks this transport to keep the raw bytes of the response to one
     /// request.
     /// </summary>
@@ -237,6 +368,7 @@ internal abstract class JsonLinesTransport : TransportBase
     /// one. A transport that kept every response would hold the last screenshot
     /// alive for the life of the session.
     /// </remarks>
+
     public void Watch(RequestId id) => _watched[id] = null;
 
     /// <summary>Takes back what <see cref="Watch"/> asked for, and stops watching.</summary>
@@ -438,6 +570,17 @@ internal abstract class JsonLinesTransport : TransportBase
         // and a payload captured afterwards would arrive too late for the very
         // request that asked for it.
         Capture(message, frame);
+
+        // The same reason, for the other property. This loop IS wire order, so a
+        // number taken here is the order the child wrote in; taken anywhere
+        // downstream it would already be a guess, because the SDK dispatches
+        // inbound messages fire-and-forget. Only the notifications that will be
+        // relayed take a number -- see RelayInArrivalOrderAsync.
+        if (_role is JsonLinesRole.ChildFacing
+            && message is JsonRpcNotification { Method: NotificationMethods.ProgressNotification } relayed)
+        {
+            _arrival.Add(relayed, new Arrival(Interlocked.Increment(ref _arrivals)));
+        }
 
         await WriteMessageAsync(message, _shutdown.Token).ConfigureAwait(false);
     }

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -441,6 +442,88 @@ internal sealed class LosslessPassthroughTests
         {
             await Assert.That(frame!["params"]!["progressToken"]!.GetValue<string>()).IsEqualTo(Token);
         }
+    }
+
+    /// <summary>
+    /// A burst of notifications reaches the caller in the order the child wrote
+    /// it, not in the order the SDK happened to dispatch it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The defect this pins is upstream's, and it is a race, so one round
+    /// proves nothing.</b> The SDK's <c>ProcessMessagesCoreAsync</c> starts each
+    /// inbound message's handling without awaiting it, so a burst written in order
+    /// can be relayed in any order at all. A single burst comes out right most of
+    /// the time on a quiet machine, which is why this drives <b>12 rounds of 16</b>
+    /// and reports EVERY round that came out wrong instead of failing on the first.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-23, before the fix, and it is the reason the numbers
+    /// are what they are.</b> With the relay unsequenced, 12 rounds of 16 reported
+    /// out-of-order rounds; with the transport handing out arrival numbers, all 12
+    /// come back 1..16. The bound is not a timing assertion of any kind: nothing
+    /// here measures duration, and a slow machine makes this MORE likely to catch
+    /// the defect, not less.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The child that ships emits no progress notifications at all</b>
+    /// (<see href="../../kb/mcp/sdk.md">kb</see>, re-verification row 104), so
+    /// this asserts a property nothing in production can currently exercise. That
+    /// is the point of building it: the day an upstream tool starts reporting
+    /// progress, it arrives in one bump, with no schema change and nothing the
+    /// golden snapshot can see.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABurstOfChildNotificationsReachesTheCallerInTheOrderTheChildWroteIt()
+    {
+        const int Burst = 16;
+        const int Rounds = 12;
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour
+            {
+                RawResult = """{"content":[{"type":"text","text":"done"}]}""",
+                ProgressUpdates = Burst,
+            });
+
+        var expected = Enumerable.Range(1, Burst).ToList();
+        var outOfOrder = new List<string>();
+
+        for (var round = 1; round <= Rounds; round++)
+        {
+            var before = ProgressFrames(rig).Count;
+
+            var parameters = Call(rig, "browser_navigate");
+            parameters["_meta"] = new JsonObject { ["progressToken"] = $"round-{round.ToString(CultureInfo.InvariantCulture)}" };
+
+            _ = await rig.Client.RoundTripAsync("tools/call", parameters);
+
+            // A client only sees what it reads, and the relay is asynchronous:
+            // without this the assertion is about whatever the round trip
+            // happened to consume.
+            await rig.Client.ReadUntilAsync(() => ProgressFrames(rig).Count >= before + Burst);
+
+            var arrived = ProgressFrames(rig)
+                .Skip(before)
+                .Take(Burst)
+                .Select(frame => frame!["params"]!["progress"]!.GetValue<int>())
+                .ToList();
+
+            if (!arrived.SequenceEqual(expected))
+            {
+                outOfOrder.Add($"round {round.ToString(CultureInfo.InvariantCulture)}: {string.Join(",", arrived)}");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, outOfOrder))
+            .IsEmpty()
+            .Because("the child wrote 1..16 and the caller must read 1..16, however the SDK dispatched them");
+
+        // ⚠️ THE CONTROL. A rig that stopped relaying at all would report no
+        // out-of-order rounds and pass, which is what a clean run looks like.
+        await Assert.That(ProgressFrames(rig).Count).IsEqualTo(Burst * Rounds);
     }
 
     [Test]

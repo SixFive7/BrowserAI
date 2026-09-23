@@ -291,32 +291,6 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       both-directions shape as the snapshots arm, over
       [the manual rows](kb/re-verification.md) instead of over four files.
 
-- [ ] **Decide whether relayed notifications need their order preserved.** The
-      child→caller progress relay preserves the `progressToken` and the params byte
-      for byte, and **does not preserve order**: the SDK dispatches inbound
-      notifications fire-and-forget, and two `notifications/progress` written in
-      order were observed arriving as 2 then 1
-      ([kb](kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames)).
-      It cannot be fixed from a notification handler -- the reordering has already
-      happened by the time one runs -- so a fix means the `IClientTransport`
-      decorator [deviation 7](STACK.md#nine-places-where-the-sdk-must-be-deviated-from)
-      describes, which sees messages in wire order.
-
-      ✅ **The first of the two things is settled, 2026-08-19: it emits none.**
-      All four occurrences of `notifications/progress` in the shipped payload are
-      the MCP SDK's own schema and capability arms; `sendNotification` appears
-      once, as the capability handed *to* a tool handler, and nothing in
-      `@playwright/mcp` or `playwright-core`'s MCP layer calls it
-      ([kb](kb/mcp/sdk.md#lossless-passthrough-cancellation-notifications-and-error-frames),
-      re-verification row 104, with a positive control). **So the defect is real
-      and unreachable through this product's child**, and the decorator would be
-      a component built for a notification nobody sends.
-
-      ⚠️ **What is left is a decision and only a decision**, and it is now a
-      cheaper one: whether to build ahead of the bump that makes this reachable,
-      or to let row 104 be the thing that re-opens it. Nothing further to
-      measure.
-
 ## Residue outside the app root
 
 - [ ] **Find out whether BrowserAI can reap the browser descriptors Playwright

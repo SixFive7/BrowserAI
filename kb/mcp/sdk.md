@@ -608,6 +608,21 @@ Re-establish by running
 with logging at `Trace` and reading the order of the two `sending message` lines.
 `[FLOATS]`
 
+⚠️ **The defect is upstream's and it is still there; what changed on 2026-09-23
+is that this product no longer passes it on.** The measurement above stands
+exactly as taken -- it is a fact about the SDK, not about BrowserAI, and nothing
+here re-states it. What is new is where the order is taken from:
+`JsonLinesTransport.DispatchAsync` is one sequential loop over framed bytes, so an
+arrival number handed out there is wire order **by construction and not by
+timing**, and `RelayInArrivalOrderAsync` makes each relay wait for its turn. Only
+a notification that will be relayed takes a number, because a ticket nobody
+returns would park every later one behind it forever. **Re-establish the
+DEFECT** the way the paragraph above says. **Re-establish the FIX** by running
+`LosslessPassthroughTests.ABurstOfChildNotificationsReachesTheCallerInTheOrderTheChildWroteIt`:
+12 rounds of 16, which reported **11 rounds out of order** with the relay
+unsequenced -- `1,8,4,14,3,16,6,5,10,11,9,12,7,2,13,15` was the first of them --
+and 12 clean rounds with it. One round proves nothing either way; it is a race.
+
 **And the child this proxy actually carries emits no progress notifications at
 all, so nothing today can observe that reordering.** Measured 2026-08-19 by
 reading the shipped bundle, not by inference: across the whole payload

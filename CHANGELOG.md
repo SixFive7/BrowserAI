@@ -351,6 +351,33 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **Notifications relayed from the child leave in the order the child wrote them.**
+  The SDK's message loop starts each inbound message's handling without awaiting it -- its own
+  comment says *"Fire and forget the message handling to avoid blocking the transport"* -- so a
+  burst of `notifications/progress` written in order could reach the caller in any order at
+  all. The `progressToken` and the params always survived; only the sequence did not. It cannot
+  be fixed from a notification handler, because by the time one runs the race has happened.
+
+  **It is fixed at the transport, which is the one place the child's own order still exists.**
+  `JsonLinesTransport.DispatchAsync` is a single sequential loop over framed bytes, so an
+  arrival number taken there is wire order **by construction and not by timing**;
+  `RelayInArrivalOrderAsync` makes each relay wait for its turn, and `ChildLink.Session` is the
+  route to it -- the `IClientTransport` seam [deviation 7](STACK.md) always described.
+  ⚠️ **Only a notification that WILL be relayed takes a number**, or a ticket nobody returns
+  would park every later one behind it forever. There is no timeout: a bound would be a
+  promptness assertion on a relay, and the two things that really end a wait both do -- the
+  caller's token, and disposal, which releases every waiter.
+
+  **Planted red at 12 rounds of 16**, because one burst comes out right most of the time on a
+  quiet machine and this is a race. Unsequenced, **11 of 12 rounds came out wrong** -- the
+  first read `1,8,4,14,3,16,6,5,10,11,9,12,7,2,13,15`. Sequenced, all 12 read 1 to 16.
+
+  ⚠️ **The child that ships emits no progress notifications at all**, so nothing in
+  production exercises this today. That is why it was a decision and not a defect: build ahead
+  of the bump that makes it reachable, or let re-verification row 104 re-open it. The
+  maintainer chose to build. The row's trigger now means something narrower and better -- the
+  day an upstream tool reports progress, the ORDER is already handled.
+
 - 🐛 **The packer's own asset list no longer disagrees with what a release publishes.**
   `vpk pack` writes `assets.<channel>.json` naming everything it produced, and `vpk upload github`
   uploads **every file listed in it**. So the portable archive would have been published by the

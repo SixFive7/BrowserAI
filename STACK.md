@@ -131,12 +131,23 @@ handler)`, which `McpClient` inherits, and which is what relays
 `IClientTransport.ConnectAsync` itself and keeps the `ITransport` private, so the
 proxy has no route to the one object that can see the child's raw bytes.
 `ChildLink` is therefore an **`IClientTransport`** decorator, ~30 lines as
-predicted but at the other end of the interface. **One thing the relay does not
-preserve, stated here and not left to be discovered: order.** The SDK's message loop
-dispatches inbound notifications fire-and-forget, so two progress notifications
-written by the child in order were observed reaching the caller as 2 then 1. The
-token and the params survive intact; this cannot be fixed from a notification
-handler, and it is carried in [`TODO.md`](TODO.md).
+predicted but at the other end of the interface. **The relay preserves order, and the seam
+above is what makes that possible.** The SDK's message loop dispatches inbound
+notifications fire-and-forget, so two progress notifications written by the child
+in order were observed reaching the caller as 2 then 1, and it cannot be fixed
+from a notification handler -- by the time one runs, the race has already
+happened. *Corrected 2026-09-23 (previously "**One thing the relay does not
+preserve, stated here and not left to be discovered: order.** ... this cannot be
+fixed from a notification handler, and it is carried in `TODO.md`").* **It is
+fixed at the transport, which is the one place the child's own order still
+exists.** `JsonLinesTransport.DispatchAsync` is a single sequential loop over
+framed bytes, so a number taken there IS wire order by construction and not by
+timing; `RelayInArrivalOrderAsync` makes each relay wait for its turn, and
+`ChildLink.Session` is the route to it. **Only a notification that WILL be
+relayed takes a number**, or a ticket nobody returns would park every later one
+behind it. Held by
+`LosslessPassthroughTests.ABurstOfChildNotificationsReachesTheCallerInTheOrderTheChildWroteIt`,
+planted red at 12 rounds of 16 and reporting 11 rounds out of order.
 
 **8. JSON-RPC errors are lossy above the transport.** `code` and `data` survive,
 but the message is prefixed -- `"upstream exploded"` arrives as `"Request failed
