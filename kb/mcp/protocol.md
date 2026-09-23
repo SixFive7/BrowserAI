@@ -360,6 +360,96 @@ that reason and says in place that it cannot currently fire.
 echo as the control. The rig is `.work/assumed-2026-09-23/src/probes/`; the output
 is `probe-C-negotiation.txt`.
 
+## Registering with Codex, and what its startup timeout costs -- measured 2026-09-24
+
+`[FLOATS]` codex-cli **0.155.0-alpha.9.2**, Windows 10.0.26200, BrowserAI's published
+NativeAOT server. Every reading below was taken with `CODEX_HOME` forced at a
+scratch directory; the real `~/.codex` was never written.
+
+**The CLI is not on PATH for a desktop-app install, and that is the finding the
+discovery order exists for.** On this machine `codex` resolves through
+`%LOCALAPPDATA%\OpenAI\Codex\chrome-native-hosts-v2.json`, whose
+`entries[].paths.codexCliPath` names
+`~\.codex\plugins\.plugin-appserver\codex.exe`. `command -v codex` finds
+nothing. A product that looked only at PATH would report no client on a machine
+with Codex installed, which reads as *BrowserAI does not support Codex*.
+
+**What `mcp add` writes**, read straight back off disk:
+
+```
+[mcp_servers.browserai]
+command = 'C:\x\BrowserAI.Server.exe'
+```
+
+A TOML **literal** string, so a Windows path needs no escaping and BrowserAI never
+has to produce one.
+
+**What `mcp list --json` answers** is a bare array, and it carries more than the
+command:
+
+```
+[{"name":"browserai","enabled":true,"disabled_reason":null,
+  "transport":{"type":"stdio","command":"C:\\x\\BrowserAI.Server.exe","args":[],
+               "env":null,"env_vars":[],"cwd":null},
+  "startup_timeout_sec":null,"tool_timeout_sec":null,"auth_status":"unsupported"}]
+```
+
+That is why BrowserAI asks the client instead of reading the TOML: the JSON answers
+the ownership question directly, and a client that changed its own file format costs
+this product nothing.
+
+**Idempotent in both directions, confirmed first-hand.** Three consecutive
+`mcp add browserai -- <cmd>` calls each exit **0**; `mcp remove browserai` exits
+**0**; and a second `mcp remove` of a server that is no longer there also exits
+**0**. So there is no already-exists and no nothing-to-remove failure to recognise,
+which is the opposite of Claude Code on both counts.
+
+**Project scope is the same command with `CODEX_HOME` moved.**
+`CODEX_HOME=<repo>\.codex codex mcp add ...` exits 0 and writes
+`<repo>\.codex\config.toml`. The directory must exist first.
+⚠️ *The `tmp\arg0` residue an earlier run of this rig recorded did NOT appear
+here*: the only file under `<repo>\.codex` afterwards was `config.toml`. So the
+residue is not reliably produced, and anything that cleans it up has to tolerate its
+absence.
+
+⚠️ **`codex mcp add` ACCEPTS NOTHING THAT PERSISTS A STARTUP TIMEOUT.** Its whole
+option set is `-c key=value`, `--env KEY=VALUE`, `--enable FEATURE`, `--url` and
+`--bearer-token-env-var`. `startup_timeout_sec` is a `config.toml` key
+(`mcp_servers.<id>.startup_timeout_sec`, default **10** seconds) and there is no flag
+for it. And `-c` is not a way in: `codex mcp add browserai -c
+mcp_servers.browserai.startup_timeout_sec=30 -- <cmd>` **fails** with *"failed to
+load configuration ... invalid transport in `mcp_servers.browserai`"* and writes
+nothing, because the override creates a partial server table the loader then rejects.
+So a product that does not write the TOML cannot set this key, and BrowserAI does not
+write the TOML.
+
+**Which is fine, because nothing needs it.** Measured over three rounds against the
+published `BrowserAI.Server.exe`, driving `initialize` and then `tools/list` over
+stdio and timing from `spawn`:
+
+| | round 1 | round 2 | round 3 |
+|---|---|---|---|
+| `initialize` answered | **342.4 ms** | **340.1 ms** | **332.0 ms** |
+| `tools/list` answered, 79 tools | 350.4 ms | 347.7 ms | 339.3 ms |
+
+The handshake is **three hundred and forty milliseconds against a ten-second
+budget**, and the surface child's own `tools/list` is inside it -- the 79 tools come
+from a node child that was spawned, handshaken and answered within that figure.
+
+⚠️ **WHAT WAS NOT MEASURED, and it is the only path that could approach the
+budget.** These rounds are warm: the binary had just been published and the payload
+was in the file cache. A genuinely cold first start reads a 19 MB server, a 93 MB
+`node.exe` and a ~117 MB payload from disk for the first time, and nothing here
+establishes what that costs on a slow or contended disk. **The first-run browser
+download is NOT this path**: provisioning is 207.3 MB and ~10.8 s, and it happens on
+the first browser call and not during startup, so it cannot reach a startup timeout
+-- it reaches a TOOL timeout instead, which Codex defaults to 60 s.
+
+**Re-establish** by pointing a stdio driver at the published server, writing
+`initialize` and timing the first framed answer, then `tools/list`; and by reading
+`codex mcp add --help` for the option set. The probe is
+`.work/startup-probe.mjs` in the batch that produced this entry.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --
