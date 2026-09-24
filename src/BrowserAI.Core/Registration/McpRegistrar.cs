@@ -588,14 +588,21 @@ internal static partial class RegistrationLog
     public static partial void PassFailed(ILogger logger, Exception failure);
 
     /// <summary>Where the registration record went, and what it says.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Once per client since 2026-09-24, and the client is named.</b> One
+    /// record now carries one outcome per client, so a single line could only
+    /// have named one of them -- which is the same reduction the record itself
+    /// refuses to make. The path repeats because there is still one file.
+    /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="path">The record file.</param>
-    /// <param name="status">The outcome it records.</param>
+    /// <param name="client">Which client this outcome is about.</param>
+    /// <param name="status">The outcome it records for that client.</param>
     [LoggerMessage(
         EventId = 9,
         Level = LogLevel.Information,
-        Message = "MCP registration state is at {Path}: {Status}")]
-    public static partial void RecordWritten(ILogger logger, string path, RegistrationStatus status);
+        Message = "MCP registration state is at {Path}: {Client}={Status}")]
+    public static partial void RecordWritten(ILogger logger, string path, string client, RegistrationStatus status);
 
     /// <summary>The record could not be written, which is a second silence.</summary>
     /// <param name="logger">Where to write.</param>

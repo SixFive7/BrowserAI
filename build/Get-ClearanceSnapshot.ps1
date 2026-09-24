@@ -6,7 +6,7 @@
     Writes the clearance snapshot the gate compares either side of every run.
 
 .DESCRIPTION
-    The suite installs a real pack under a test id, and the five things below are
+    The suite installs a real pack under a test id, and the six things below are
     the ones a run must not disturb. They are read before and after each run and
     compared; a difference stops the gate instead of being reported at the end.
 
@@ -21,6 +21,13 @@
       4. %TEMP%\velopack_BrowserAI.app -- present means an apply was interrupted.
       5. The Start Menu shortcut, by length and SHA-256, because Velopack names
          it after the pack TITLE and removes shortcuts by target.
+      6. ~\.codex\config.toml, by length and SHA-256 -- ADDED 2026-09-24 with the
+         Codex half of registration. The hooks register with Codex now, and
+         `codex mcp add` has no scope flag: it writes whichever configuration
+         CODEX_HOME names, so a suite arm that forgot to move it writes the
+         maintainer's own. Read as a FILE and not through `codex mcp get`,
+         because the thing that must not change is the file, and the reading has
+         to work on a machine with no CLI on it.
 
     ⚠️ IT READS AND NEVER REPAIRS. A snapshot that fixed what it found would
     destroy the evidence of the run that broke it. On a difference the gate
@@ -71,6 +78,14 @@ if (Test-Path $shortcut) {
 }
 else {
     $out += 'StartMenu BrowserAI.lnk ABSENT'
+}
+
+$codex = Join-Path $env:USERPROFILE '.codex\config.toml'
+if (Test-Path $codex) {
+    $out += ('Codex config.toml PRESENT len={0} sha256={1}' -f (Get-Item $codex).Length, (Get-FileHash $codex -Algorithm SHA256).Hash)
+}
+else {
+    $out += 'Codex config.toml ABSENT'
 }
 
 $directory = Join-Path $root '.work' 'clearance'

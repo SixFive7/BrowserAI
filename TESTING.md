@@ -305,7 +305,7 @@ Four drivers, two per shell, plus the clearance snapshot they share:
 | [`build/invoke-ordinary-gate.sh`](build/invoke-ordinary-gate.sh) | one run, forces `c:/`, declares `lower` |
 | [`build/Invoke-ReleaseGate.ps1`](build/Invoke-ReleaseGate.ps1) | three runs under `BROWSERAI_RELEASE_RUN`, forces `C:\`, declares `upper` |
 | [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) | three runs under `BROWSERAI_RELEASE_RUN`, forces `c:/`, declares `lower` |
-| [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1) | the five readings compared either side of every run, and it never repairs what it finds |
+| [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1) | the six readings compared either side of every run, and it never repairs what it finds -- *six since 2026-09-24 (previously five), when the hooks began registering with Codex and `~\.codex\config.toml` became a file a run must not change* |
 
 ⚠️ **THIS IS NOT THE SHARED WRAPPER SCRIPT `CLAUDE.md` FORBIDS, and the
 difference is the whole reason there are four files.** That rule is about one

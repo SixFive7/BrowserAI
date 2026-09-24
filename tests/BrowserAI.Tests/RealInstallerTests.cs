@@ -124,10 +124,19 @@ internal sealed partial class RealInstallerTests
         var paths = new LocalAppDataPaths(dataRoot.Path);
         var planted = Plant(paths);
 
+        // ⚠️ CODEX_HOME IS THE THIRD VARIABLE SINCE 2026-09-24, AND IT IS THE ONE
+        // THAT STOPS A WRITE. The install and uninstall hooks register with Codex
+        // now, and Codex has no scope flag: `codex mcp add` writes whichever
+        // configuration CODEX_HOME names. Left alone, this arm's real installer
+        // would run the maintainer's own codex.exe against his own ~\.codex and,
+        // finding no entry there, write one -- which is not something a test may
+        // do to somebody's machine, and is not something the clearance snapshot
+        // would have caught before this line existed.
         using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
         {
             [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
+            [CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
         });
 
         // ⚠️ THE REAL INSTALL'S OWN ADD/REMOVE ENTRY, READ BEFORE ANYTHING RUNS.
@@ -290,10 +299,19 @@ internal sealed partial class RealInstallerTests
         using var clientConfig = ScratchDirectory.Create("real-install-window-client");
         using var logs = ScratchDirectory.Create("real-install-window-logs");
 
+        // ⚠️ CODEX_HOME IS THE THIRD VARIABLE SINCE 2026-09-24, AND IT IS THE ONE
+        // THAT STOPS A WRITE. The install and uninstall hooks register with Codex
+        // now, and Codex has no scope flag: `codex mcp add` writes whichever
+        // configuration CODEX_HOME names. Left alone, this arm's real installer
+        // would run the maintainer's own codex.exe against his own ~\.codex and,
+        // finding no entry there, write one -- which is not something a test may
+        // do to somebody's machine, and is not something the clearance snapshot
+        // would have caught before this line existed.
         using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
         {
             [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
+            [CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
         });
 
         try
@@ -501,6 +519,20 @@ internal sealed partial class RealInstallerTests
         var written = await File.ReadAllTextAsync(RegistrationRecord.PathFor(dataRoot.Path));
 
         await Assert.That(written).Contains(RegistrationTarget.ServerFileName);
+
+        // ⚠️ AND NOT WHAT SHAPE THE RECORD IS IN, WHICH IS A LIMIT OF THIS ARM
+        // AND IS WRITTEN DOWN HERE BECAUSE IT WAS ASSUMED OTHERWISE -- 2026-09-24.
+        // The hooks that just ran are the ones compiled into the PACKED test
+        // installer, which `build/New-Release.ps1` produces as a by-product of a
+        // release cut and which nothing in an ordinary build refreshes: on the day
+        // the per-client record landed, this arm was still driving a 1.1.0 pack
+        // writing `schemaVersion: 1`. So an assertion about a hook behaviour
+        // added today would be red here until the next release, for a reason that
+        // has nothing to do with the tree. What this arm establishes is what only
+        // a real Setup.exe can -- that a hook ran, wrote its record into the data
+        // root, and left the install root alone -- and the SHAPE of that record is
+        // held by `RegistrationTests`, which runs the hook body in this build.
+        await Assert.That(written).Contains("\"intent\": \"Install\"");
 
         await Unchanged(dataRoot.Path, planted);
 

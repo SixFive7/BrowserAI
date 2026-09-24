@@ -951,7 +951,7 @@ internal sealed class RegistrationTests
             "9.9.9",
             command,
             client,
-            new LocalAppDataPaths(data.Path)).Registration;
+            new LocalAppDataPaths(data.Path)).For(RegistrationClient.ClaudeCode.Key);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Registered);
 
@@ -1028,7 +1028,7 @@ internal sealed class RegistrationTests
             "9.9.9",
             command,
             client,
-            new LocalAppDataPaths(data.Path)).Registration;
+            new LocalAppDataPaths(data.Path)).For(RegistrationClient.ClaudeCode.Key);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
 
@@ -1036,6 +1036,136 @@ internal sealed class RegistrationTests
 
         await Assert.That(written).Contains("\"outcome\": \"ClientNotFound\"");
         await Assert.That(written).Contains("claude mcp add browserai --scope user");
+    }
+
+    // ---- Both clients, one pass each -----------------------------------------
+
+    /// <summary>
+    /// One hook registers <b>every</b> client, and the record carries an entry
+    /// for each of them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q258 step 2, and the maintainer's ask is the reason it is two and not
+    /// one:</b> <i>"I want the system level and repo level registration to also
+    /// work for codex and not only for claude code."</i> A hook that registered
+    /// one client and left the other to a person is the state this closes.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The record's shape is the assertion, not the hook's return value.</b>
+    /// <c>mcp-registration.json</c> is what a person opens when a client cannot
+    /// see BrowserAI, and a file carrying one outcome for two clients cannot say
+    /// <i>which</i> one did not happen -- which is the whole reason the entries
+    /// are keyed. Both keys are read off <see cref="RegistrationClient.All"/>, so
+    /// a third client added later fails this arm until the record carries it.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b>: against the one-client hook this replaced,
+    /// the record carried no <c>clients</c> array at all and the double was asked
+    /// to add once.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task OneHookRegistersEveryClientAndTheRecordCarriesAnEntryForEach()
+    {
+        using var install = ScratchDirectory.Create("registration-both");
+        using var data = ScratchDirectory.Create("registration-both-data");
+        using var clientConfig = ScratchDirectory.Create("registration-both-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
+
+        var command = InstalledLayout.Create(install.Path);
+        var client = new FakeClientCommandLine();
+
+        var outcome = HookRegistration.Run(
+            RegistrationIntent.Install,
+            "9.9.9",
+            command,
+            client,
+            new LocalAppDataPaths(data.Path));
+
+        var written = await File.ReadAllTextAsync(Path.Combine(data.Path, RegistrationRecord.FileName));
+
+        // One entry per client, keyed by the product's own keys.
+        foreach (var who in RegistrationClient.All)
+        {
+            await Assert.That(written).Contains($"\"key\": \"{who.Key}\"");
+            await Assert.That(written).Contains($"\"displayName\": \"{who.DisplayName}\"");
+            await Assert.That(outcome.For(who.Key).Status).IsEqualTo(RegistrationStatus.Registered);
+        }
+
+        // And the client was asked once per client, not once in total.
+        await Assert.That(client.Verbs.Count(verb => verb is "add")).IsEqualTo(RegistrationClient.All.Count);
+
+        // The whole pass is what was asked for, which is the one aggregate the
+        // file still carries: two outcomes cannot be summarised by one word, and
+        // a boolean is the only honest reduction of them.
+        await Assert.That(written).Contains("\"isWhatWasAskedFor\": true");
+        await Assert.That(written).Contains("\"schemaVersion\": 2");
+    }
+
+    /// <summary>
+    /// A client this machine does not have is named in the record with its own
+    /// refusal, and the hook still succeeds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The failure this closes is a silent one, and it is the reason the
+    /// entries are per client.</b> With one outcome for two clients, a machine
+    /// with no Codex would either read as a failed registration -- which it is
+    /// not, because Claude Code was registered -- or read as a clean pass, with
+    /// nothing anywhere to say that the second client was never reached.
+    /// </para>
+    /// <para>
+    /// <b>The client set is supplied, for the same reason
+    /// <see cref="IRegistrationCommand"/> is.</b> Codex's discovery looks in
+    /// three places below the seam -- the desktop manifest and the npm layout
+    /// among them -- so on a machine that HAS Codex there is no way to ask the
+    /// double for its absence: the product would correctly find the real one and
+    /// this arm would drive somebody's installed CLI.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by giving the absent client the found one's
+    /// report, which is what a hook that stopped at the first client produces.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AClientThisMachineDoesNotHaveIsNamedInTheRecordAndNeverFailsTheHook()
+    {
+        using var install = ScratchDirectory.Create("registration-absent");
+        using var data = ScratchDirectory.Create("registration-absent-data");
+        using var clientConfig = ScratchDirectory.Create("registration-absent-config");
+        using var pointed = PointTheClientAt(clientConfig.Path);
+
+        var command = InstalledLayout.Create(install.Path);
+        var client = new FakeClientCommandLine();
+
+        var outcome = HookRegistration.Run(
+            RegistrationIntent.Install,
+            "9.9.9",
+            command,
+            client,
+            new LocalAppDataPaths(data.Path),
+            clients: [RegistrationClient.ClaudeCode, RegistrationClient.Codex with { Locate = _ => null }]);
+
+        await Assert.That(outcome.For(RegistrationClient.ClaudeCode.Key).Status).IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(outcome.For(RegistrationClient.Codex.Key).Status).IsEqualTo(RegistrationStatus.ClientNotFound);
+
+        // Never a failed hook: an absent client is a machine that has none, not
+        // an install that went wrong.
+        await Assert.That(outcome.IsWhatWasAskedFor).IsTrue();
+
+        var written = await File.ReadAllTextAsync(Path.Combine(data.Path, RegistrationRecord.FileName));
+
+        // The named refusal, in the record, naming every place that was looked
+        // and the command a person can run instead.
+        await Assert.That(written).Contains("\"outcome\": \"ClientNotFound\"");
+        await Assert.That(written).Contains("has not registered itself with Codex");
+        await Assert.That(written).Contains("codex mcp add browserai --");
+
+        // And the other client's entry is untouched beside it.
+        await Assert.That(written).Contains("\"outcome\": \"Registered\"");
     }
 
     // ---- The data root at uninstall -----------------------------------------
@@ -1088,7 +1218,7 @@ internal sealed class RegistrationTests
         // Nothing was registered with the double first, so the registration half
         // reports that there was nothing to remove -- which is still what was
         // asked for, and is the half this arm does not judge.
-        await Assert.That(outcome.Registration.IsWhatWasAskedFor).IsTrue();
+        await Assert.That(outcome.IsWhatWasAskedFor).IsTrue();
         await Assert.That(asked).IsEqualTo(0);
 
         await Assert.That(outcome.Disposal).IsNotNull();
@@ -1196,7 +1326,7 @@ internal sealed class RegistrationTests
             silent: false,
             ask: _ => true);
 
-        await Assert.That(outcome.Registration.IsWhatWasAskedFor).IsTrue();
+        await Assert.That(outcome.IsWhatWasAskedFor).IsTrue();
         await Assert.That(outcome.Disposal!.Choice).IsEqualTo(DataRootChoice.Remove);
 
         await Assert.That(string.Join(Environment.NewLine, outcome.Disposal.Failures)).IsEmpty();
@@ -1682,7 +1812,26 @@ internal sealed class RegistrationTests
     /// <see cref="HouseRuleTests.EveryScratchClientConfigurationIsSeededAsOnboardedBeforeTheClientRuns"/>
     /// for the scan that refuses a site which skips it.
     /// </remarks>
+    /// <remarks>
+    /// ⚠️ <b>BOTH CLIENTS SINCE 2026-09-24, AND THE SECOND ONE IS THE DANGEROUS
+    /// HALF.</b> The hooks register Codex as well now, and Codex's scope IS
+    /// <c>CODEX_HOME</c>: a hook arm that left it alone would run the real
+    /// <c>codex.exe</c> against the maintainer's own <c>~\.codex</c> and, finding
+    /// no entry there, WRITE one. Claude Code's override only has to stop a
+    /// foreign-entry refusal; this one stops a write into somebody's
+    /// configuration. The directory is created because
+    /// <c>codex mcp add</c> refuses a home that is not there.
+    /// </remarks>
     /// <param name="directory">The scratch configuration directory.</param>
     /// <returns>The scope that restores whatever was there before.</returns>
-    private static EnvironmentScope PointTheClientAt(string directory) => new(ConfigDirectoryVariable, OnboardedClientConfig.Seed(directory));
+    private static EnvironmentScope PointTheClientAt(string directory)
+    {
+        var codexHome = Directory.CreateDirectory(Path.Combine(directory, "codex")).FullName;
+
+        return new EnvironmentScope(new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            [ConfigDirectoryVariable] = OnboardedClientConfig.Seed(directory),
+            [CodexRegistration.HomeVariable] = codexHome,
+        });
+    }
 }

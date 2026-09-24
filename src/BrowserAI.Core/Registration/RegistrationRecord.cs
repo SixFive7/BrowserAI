@@ -44,7 +44,17 @@ namespace BrowserAI.Registration;
 internal static class RegistrationRecord
 {
     /// <summary>The schema this build writes.</summary>
-    public const int CurrentSchemaVersion = 1;
+    /// <remarks>
+    /// ⚠️ <b>2 since 2026-09-24 (previously <c>1</c>), when a hook stopped being
+    /// about one client.</b> Schema 1 carried one <c>outcome</c>, one
+    /// <c>client</c> and one <c>detail</c> at the top level, which was the whole
+    /// finding while there was one client to find it about. With two, a single
+    /// word cannot say which of them did not happen -- so the per-client fields
+    /// moved into <c>clients</c>, keyed by
+    /// <see cref="RegistrationClient.Key"/>, and what stayed at the top is only
+    /// what is true of the pass as a whole.
+    /// </remarks>
+    public const int CurrentSchemaVersion = 2;
 
     /// <summary>The record's file name, directly under the data root.</summary>
     public const string FileName = "mcp-registration.json";
@@ -59,12 +69,13 @@ internal static class RegistrationRecord
     }
 
     /// <summary>Serialises a pass exactly as it is written to disk.</summary>
-    /// <param name="report">What the pass concluded.</param>
+    /// <param name="passes">What the pass concluded, one entry per client.</param>
     /// <param name="intent">Which lifecycle event ran it.</param>
     /// <param name="version">The BrowserAI version the hook was given.</param>
     /// <param name="when">When it ran.</param>
     /// <returns>UTF-8 bytes, LF-separated, no BOM.</returns>
     /// <remarks>
+    /// <para>
     /// <b>The relaxed encoder, and the reason is the reader:</b> the default
     /// escapes <c>+</c>, so every ISO 8601 timestamp east of UTC would round-trip
     /// perfectly and be unreadable by the person this file exists for.
@@ -72,10 +83,25 @@ internal static class RegistrationRecord
     /// <c>browserai.json</c> uses one" -- that file is gone, and the timestamps it
     /// carried are columns in <c>browserai.data</c> now, where no encoder sees
     /// them.)*
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>ONE ENTRY PER CLIENT, AND ONE AGGREGATE -- 2026-09-24.</b> The only
+    /// thing reduced across clients is <c>isWhatWasAskedFor</c>, because it is
+    /// the one question with an answer for the pass as a whole: <i>did
+    /// everything that was asked for happen?</i> There is deliberately no
+    /// top-level <c>outcome</c> any more. Two clients produce two outcomes, and
+    /// a single word for both would have to invent an order of badness -- at
+    /// which point the file answers a question nobody asked and hides the one
+    /// they did.
+    /// </para>
     /// </remarks>
-    public static byte[] ToUtf8(RegistrationReport report, RegistrationIntent intent, string version, DateTimeOffset when)
+    public static byte[] ToUtf8(
+        IReadOnlyList<ClientRegistration> passes,
+        RegistrationIntent intent,
+        string version,
+        DateTimeOffset when)
     {
-        ArgumentNullException.ThrowIfNull(report);
+        ArgumentNullException.ThrowIfNull(passes);
 
         using var buffer = new MemoryStream();
 
@@ -89,16 +115,30 @@ internal static class RegistrationRecord
             writer.WriteNumber("schemaVersion", CurrentSchemaVersion);
             writer.WriteString("when", when.ToString("O", CultureInfo.InvariantCulture));
             writer.WriteString("intent", intent.ToString());
-            writer.WriteString("outcome", report.Status.ToString());
-            writer.WriteBoolean("isWhatWasAskedFor", report.IsWhatWasAskedFor);
+            writer.WriteBoolean("isWhatWasAskedFor", passes.All(pass => pass.Report.IsWhatWasAskedFor));
             writer.WriteString("server", McpClientRegistration.ServerName);
-            writer.WriteString("scope", McpClientRegistration.UserScope);
             writer.WriteString("browserAiVersion", version);
 
-            WriteNullable(writer, "client", report.ClientPath);
-            WriteNullable(writer, "command", report.Command);
+            writer.WritePropertyName("clients");
+            writer.WriteStartArray();
 
-            writer.WriteString("detail", report.Detail);
+            foreach (var pass in passes)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("key", pass.Key);
+                writer.WriteString("displayName", pass.DisplayName);
+                writer.WriteString("scope", McpClientRegistration.UserScope);
+                writer.WriteString("outcome", pass.Report.Status.ToString());
+                writer.WriteBoolean("isWhatWasAskedFor", pass.Report.IsWhatWasAskedFor);
+
+                WriteNullable(writer, "client", pass.Report.ClientPath);
+                WriteNullable(writer, "command", pass.Report.Command);
+
+                writer.WriteString("detail", pass.Report.Detail);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
             writer.WriteEndObject();
         }
 
@@ -107,17 +147,22 @@ internal static class RegistrationRecord
 
     /// <summary>Writes the record, replacing whatever was there.</summary>
     /// <param name="dataRoot">The data root, <see cref="Hosting.IAppPaths.RootAppDir"/>.</param>
-    /// <param name="report">What the pass concluded.</param>
+    /// <param name="passes">What the pass concluded, one entry per client.</param>
     /// <param name="intent">Which lifecycle event ran it.</param>
     /// <param name="version">The BrowserAI version the hook was given.</param>
     /// <param name="when">When it ran.</param>
     /// <returns>The path written.</returns>
-    public static string Write(string dataRoot, RegistrationReport report, RegistrationIntent intent, string version, DateTimeOffset when)
+    public static string Write(
+        string dataRoot,
+        IReadOnlyList<ClientRegistration> passes,
+        RegistrationIntent intent,
+        string version,
+        DateTimeOffset when)
     {
         var path = PathFor(dataRoot);
 
         _ = Directory.CreateDirectory(dataRoot);
-        File.WriteAllBytes(path, ToUtf8(report, intent, version, when));
+        File.WriteAllBytes(path, ToUtf8(passes, intent, version, when));
 
         return path;
     }

@@ -303,12 +303,18 @@ internal static class VelopackStartup
     public static void Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
     {
         var outcome = HookRegistration.Run(intent, version);
-        var report = outcome.Registration;
 
-        log(
-            report.IsWhatWasAskedFor ? VelopackLogLevel.Information : VelopackLogLevel.Warning,
-            $"BrowserAI {version} -- MCP registration ({intent}): {report.Status}. {report.Detail}",
-            null);
+        // ⚠️ ONE LINE PER CLIENT SINCE 2026-09-24, and the client is NAMED in
+        // each. A hook registers with every client now, and a single line
+        // summarising two of them would put somebody debugging an install in the
+        // position of guessing which one the sentence was about.
+        foreach (var pass in outcome.Registrations)
+        {
+            log(
+                pass.Report.IsWhatWasAskedFor ? VelopackLogLevel.Information : VelopackLogLevel.Warning,
+                $"BrowserAI {version} -- MCP registration with {pass.DisplayName} ({intent}): {pass.Report.Status}. {pass.Report.Detail}",
+                null);
+        }
 
         // ⚠️ THE ONE PLACE THE DATA ROOT'S FATE IS RECORDED IN A FILE THAT
         // SURVIVES IT. BrowserAI's own log is inside the directory being decided

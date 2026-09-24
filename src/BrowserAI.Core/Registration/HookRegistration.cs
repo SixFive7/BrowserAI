@@ -8,8 +8,21 @@ using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Registration;
 
+/// <summary>One client's pass, carrying enough to name it without it.</summary>
+/// <remarks>
+/// <b>The key and the display name are copied and not a reference to the
+/// <see cref="RegistrationClient"/>.</b> This travels into the record on disk,
+/// where a reader has neither the type nor the process that produced it, and a
+/// record that named a client only by object identity would name it nowhere.
+/// </remarks>
+/// <param name="Key">The client's stable key, as the record on disk spells it.</param>
+/// <param name="DisplayName">What to call it in a sentence a person reads.</param>
+/// <param name="Report">What that client's pass concluded.</param>
+internal sealed record ClientRegistration(string Key, string DisplayName, RegistrationReport Report);
+
 /// <summary>Everything one Velopack lifecycle hook did.</summary>
 /// <remarks>
+/// <para>
 /// <b>Two answers instead of one, since 2026-09-15.</b> A hook used to do
 /// exactly one thing -- point a client at this build, or unpoint it -- and the
 /// uninstall hook now also decides what becomes of the data root. The second
@@ -17,13 +30,44 @@ namespace BrowserAI.Registration;
 /// written into is inside the directory it is about: on a removal that file is
 /// gone, so the outcome goes to <c>VelopackStartup</c>, which mirrors it into
 /// the installer's own log.
+/// </para>
+/// <para>
+/// ⚠️ <b>A LIST SINCE 2026-09-24, AND THE PLURAL IS THE POINT (Q258 step 2).</b>
+/// One hook registers every client in
+/// <see cref="RegistrationClient.All"/> -- each with its own ownership check and
+/// its own entry -- so a failure against one is legible without guessing which.
+/// There is deliberately no single <c>Registration</c> property any more: a
+/// caller that wants one client must name it, because the one that read
+/// <i>the</i> registration silently meant Claude Code's and would have gone on
+/// meaning it after a second client existed.
+/// </para>
 /// </remarks>
-/// <param name="Registration">What the registration pass concluded.</param>
+/// <param name="Registrations">What each client's pass concluded, in <see cref="RegistrationClient.All"/> order.</param>
 /// <param name="Disposal">
 /// What was decided about the data root, or <see langword="null"/> when the hook
 /// was not an uninstall or could not get far enough to ask.
 /// </param>
-internal sealed record HookOutcome(RegistrationReport Registration, DataRootDisposalReport? Disposal);
+internal sealed record HookOutcome(IReadOnlyList<ClientRegistration> Registrations, DataRootDisposalReport? Disposal)
+{
+    /// <summary>
+    /// Whether every client's pass did what was asked of it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The one reduction across clients, and it is a boolean for a reason.</b>
+    /// An absent client is <see cref="RegistrationStatus.ClientNotFound"/> and
+    /// therefore still <i>what was asked for</i> -- a machine with no Codex on it
+    /// is a machine BrowserAI installs correctly on. What makes this false is a
+    /// refusal or a failure, which are the two outcomes a person has to act on.
+    /// </remarks>
+    public bool IsWhatWasAskedFor => Registrations.All(pass => pass.Report.IsWhatWasAskedFor);
+
+    /// <summary>One client's pass, by key.</summary>
+    /// <param name="key">The client's <see cref="RegistrationClient.Key"/>.</param>
+    /// <returns>What that client's pass concluded.</returns>
+    /// <exception cref="InvalidOperationException">No client with that key ran.</exception>
+    public RegistrationReport For(string key) =>
+        Registrations.Single(pass => string.Equals(pass.Key, key, StringComparison.Ordinal)).Report;
+}
 
 /// <summary>
 /// The whole body of a Velopack lifecycle hook: open a log, register or
@@ -102,11 +146,26 @@ internal static class HookRegistration
     /// every other intent.
     /// </param>
     /// <param name="ask">The question seam. See <see cref="DataRootDisposal.Choose"/>.</param>
+    /// <param name="clients">
+    /// Which clients to register with, or <see langword="null"/> for
+    /// <see cref="RegistrationClient.All"/>.
+    /// </param>
     /// <returns>What happened.</returns>
     /// <remarks>
+    /// <para>
     /// The overload the suite drives. It is the same body: the only things a
     /// test replaces are the ones that need an installed Velopack layout,
     /// somebody else's executable, and a human at the screen.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The client set is one of those things, added 2026-09-24.</b> Codex's
+    /// discovery looks in three places <i>below</i>
+    /// <see cref="IRegistrationCommand"/> -- the desktop manifest and the npm
+    /// layout among them -- so on a machine that has Codex installed there is no
+    /// way to ask a double for its absence, and an arm about a missing client
+    /// would drive somebody's real CLI instead. It defaults to every client, and
+    /// the hook itself never passes one.
+    /// </para>
     /// </remarks>
     public static HookOutcome Run(
         RegistrationIntent intent,
@@ -115,14 +174,17 @@ internal static class HookRegistration
         IRegistrationCommand commands,
         IAppPaths paths,
         bool silent = true,
-        Func<string, bool>? ask = null)
+        Func<string, bool>? ask = null,
+        IReadOnlyList<RegistrationClient>? clients = null)
     {
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(paths);
 
+        var who = clients ?? RegistrationClient.All;
+
         try
         {
-            RegistrationReport report;
+            var passes = new List<ClientRegistration>(who.Count);
             DataRootDisposalReport? disposal = null;
 
             // The log's own scope, closed before anything is deleted: the file is
@@ -134,9 +196,20 @@ internal static class HookRegistration
 
                 RegistrationHookLog.HookRunning(logger, intent, version, imagePath ?? "<unknown>");
 
-                report = McpRegistrar.Apply(intent, imagePath, commands, logger);
+                // ⚠️ EVERY CLIENT, AND ONE PASS EACH -- 2026-09-24, Q258 step 2.
+                // Each carries its own ownership read, so a foreign entry in one
+                // client's configuration refuses that client and says nothing
+                // about the other. McpRegistrar.Apply never throws, so no client
+                // can stop the next one from being reached.
+                foreach (var client in who)
+                {
+                    passes.Add(new ClientRegistration(
+                        client.Key,
+                        client.DisplayName,
+                        McpRegistrar.Apply(client, intent, imagePath, commands, logger)));
+                }
 
-                WriteRecord(paths.RootAppDir, report, intent, version, logger);
+                WriteRecord(paths.RootAppDir, passes, intent, version, logger);
 
                 // ⚠️ LAST, AND ONLY ON AN UNINSTALL. It is the only part of a
                 // hook that may wait for a human, so everything an uninstall must
@@ -150,7 +223,7 @@ internal static class HookRegistration
                 }
             }
 
-            return new HookOutcome(report, disposal is null ? null : DataRootDisposal.Remove(disposal));
+            return new HookOutcome(passes, disposal is null ? null : DataRootDisposal.Remove(disposal));
         }
 #pragma warning disable CA1031 // The outermost boundary of a fast-exit callback. Nothing may escape into the installer, including a failure to open a log.
         catch (Exception failure)
@@ -160,30 +233,43 @@ internal static class HookRegistration
             // this. The record is the only remaining channel and it is tried
             // anyway -- a silent install is the one outcome this whole mechanism
             // exists to prevent.
-            var report = new RegistrationReport(
-                RegistrationStatus.Failed,
-                $"The registration hook could not even open its log: {failure.Message}. BrowserAI may be installed and unregistered.",
-                null,
-                imagePath);
+            //
+            // ⚠️ THE SAME SENTENCE FOR EVERY CLIENT, and that is honest rather
+            // than lazy: this path is reached before any client was asked, so
+            // nothing is known about any of them individually.
+            var failed = who
+                .Select(client => new ClientRegistration(
+                    client.Key,
+                    client.DisplayName,
+                    new RegistrationReport(
+                        RegistrationStatus.Failed,
+                        $"The registration hook could not even open its log: {failure.Message}. BrowserAI may be installed and unregistered with {client.DisplayName}.",
+                        null,
+                        imagePath)))
+                .ToList();
 
-            TryWriteWithoutALogger(paths.RootAppDir, report, intent, version);
+            TryWriteWithoutALogger(paths.RootAppDir, failed, intent, version);
 
             // The data root is KEPT on this path and nothing is asked. A hook
             // that could not open a log is a hook that cannot report what it
             // deleted, and an unreportable deletion of somebody's browsers is the
             // one outcome that must not be reachable.
-            return new HookOutcome(report, null);
+            return new HookOutcome(failed, null);
         }
     }
 
-    private static void WriteRecord(string root, RegistrationReport report, RegistrationIntent intent, string version, ILogger logger)
+    private static void WriteRecord(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version, ILogger logger)
     {
         var path = RegistrationRecord.PathFor(root);
 
         try
         {
-            _ = RegistrationRecord.Write(root, report, intent, version, DateTimeOffset.Now);
-            RegistrationLog.RecordWritten(logger, path, report.Status);
+            _ = RegistrationRecord.Write(root, passes, intent, version, DateTimeOffset.Now);
+
+            foreach (var pass in passes)
+            {
+                RegistrationLog.RecordWritten(logger, path, pass.Key, pass.Report.Status);
+            }
         }
 #pragma warning disable CA1031 // A record that cannot be written must not turn an otherwise successful registration into a failed install.
         catch (Exception failure)
@@ -193,11 +279,11 @@ internal static class HookRegistration
         }
     }
 
-    private static void TryWriteWithoutALogger(string root, RegistrationReport report, RegistrationIntent intent, string version)
+    private static void TryWriteWithoutALogger(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version)
     {
         try
         {
-            _ = RegistrationRecord.Write(root, report, intent, version, DateTimeOffset.Now);
+            _ = RegistrationRecord.Write(root, passes, intent, version, DateTimeOffset.Now);
         }
 #pragma warning disable CA1031 // Last resort. If this fails too there is nothing left that could report it, and an installer must still succeed.
         catch (Exception)

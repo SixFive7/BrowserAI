@@ -56,8 +56,18 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     /// </summary>
     public List<string?> Directories { get; } = [];
 
-    /// <summary>What is registered, by server name, valued by the command.</summary>
+    /// <summary>What is registered with the SCOPED client, by server name, valued by the command.</summary>
     public Dictionary<string, string> Registered { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>What is registered with the SCOPELESS client, by server name.</summary>
+    /// <remarks>
+    /// ⚠️ <b>A second registry, because the two clients are two configurations
+    /// and sharing one here would hide the failure that matters most</b> -- a hook
+    /// that registered with one client and reported success for both. See
+    /// <see cref="IsScopeless"/> for how a call is attributed, and why the
+    /// attribution is a real property of the call rather than a flag a test sets.
+    /// </remarks>
+    public Dictionary<string, string> CodexRegistered { get; } = new(StringComparer.Ordinal);
 
     /// <summary>The verbs this double was asked for, in order -- <c>add</c> or <c>remove</c>.</summary>
     public IReadOnlyList<string> Verbs => [.. Invocations.Select(arguments => arguments.Count > 1 ? arguments[1] : "<none>")];
@@ -118,6 +128,9 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
 
         // ["mcp", "add", <name>, "--scope", <scope>, "--", <command>]
         // ["mcp", "remove", <name>, "--scope", <scope>]
+        // ["mcp", "add", <name>, "--", <command>]      the scopeless client
+        // ["mcp", "remove", <name>]                    the scopeless client
+        // ["mcp", "list", "--json"]                    the scopeless client
         if (arguments.Count < 3)
         {
             return new CommandOutcome(1, "unrecognised arguments", TimedOut: false, null);
@@ -126,6 +139,18 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
         var verb = arguments[1];
         var name = arguments[2];
 
+        if (IsScopeless(arguments))
+        {
+            return verb switch
+            {
+                "add" => CodexAdd(name, arguments[^1]),
+                "remove" => CodexRemove(name),
+                "list" => new CommandOutcome(0, CodexList(), TimedOut: false, null),
+                "get" => new CommandOutcome(0, CodexList(), TimedOut: false, null),
+                _ => new CommandOutcome(1, $"unknown command {verb}", TimedOut: false, null),
+            };
+        }
+
         return verb switch
         {
             "add" => Add(name, arguments[^1]),
@@ -133,6 +158,24 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
             _ => new CommandOutcome(1, $"unknown command {verb}", TimedOut: false, null),
         };
     }
+
+    /// <summary>
+    /// Whether this call belongs to the client that has no <c>--scope</c> flag.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Attributed by what the product actually hands the client, and not by
+    /// a flag an arm sets.</b> The absence of <c>--scope</c> is the structural
+    /// difference between the two clients
+    /// (<see cref="BrowserAI.Registration.CodexRegistration"/>): one takes the
+    /// scope as an argument, the other takes it as <c>CODEX_HOME</c>. So a double
+    /// that told them apart any other way would be able to stay right while the
+    /// product stopped being -- and a registration that lost its <c>--scope</c>
+    /// would quietly be modelled as the other client's instead of failing.
+    /// </remarks>
+    /// <param name="arguments">The argument vector.</param>
+    /// <returns>Whether it is the scopeless client's shape.</returns>
+    private static bool IsScopeless(IReadOnlyList<string> arguments) =>
+        !arguments.Contains("--scope", StringComparer.Ordinal);
 
     private CommandOutcome Add(string name, string command)
     {
@@ -158,4 +201,64 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
         Registered.Remove(name)
             ? new CommandOutcome(0, string.Create(CultureInfo.InvariantCulture, $"Removed MCP server {name} from user config"), TimedOut: false, null)
             : new CommandOutcome(1, string.Create(CultureInfo.InvariantCulture, $"No MCP server named \"{name}\" in user scope"), TimedOut: false, null);
+
+    /// <summary>
+    /// The scopeless client's add, which is idempotent and exits zero.
+    /// </summary>
+    /// <remarks>
+    /// <b>Measured 2026-09-24 @ codex-cli 0.155.0-alpha.9.2</b>, which is the
+    /// whole reason this is a second method and not a shared one: three
+    /// consecutive adds exit <b>0</b>, where the scoped client exits 1 on the
+    /// second. A double that gave both clients one dialect would let the
+    /// product's discrimination between them rot unnoticed.
+    /// </remarks>
+    /// <param name="name">The server name.</param>
+    /// <param name="command">What it is registered as.</param>
+    /// <returns>Exit zero, always.</returns>
+    private CommandOutcome CodexAdd(string name, string command)
+    {
+        CodexRegistered[name] = command;
+
+        return new CommandOutcome(
+            0,
+            string.Create(CultureInfo.InvariantCulture, $"Added MCP server {name}"),
+            TimedOut: false,
+            null);
+    }
+
+    /// <summary>The scopeless client's remove, which exits zero even when there was nothing.</summary>
+    /// <param name="name">The server name.</param>
+    /// <returns>Exit zero, always.</returns>
+    private CommandOutcome CodexRemove(string name)
+    {
+        _ = CodexRegistered.Remove(name);
+
+        return new CommandOutcome(
+            0,
+            string.Create(CultureInfo.InvariantCulture, $"Removed MCP server {name}"),
+            TimedOut: false,
+            null);
+    }
+
+    /// <summary>
+    /// The scopeless client's <c>mcp list --json</c>, in the shape the real one
+    /// prints.
+    /// </summary>
+    /// <remarks>
+    /// <b>A bare array whose entries carry <c>transport.command</c></b>, measured
+    /// first-hand on the same day. Serialised through
+    /// <see cref="System.Text.Json"/> because a Windows path inside a JSON string
+    /// needs its backslashes doubled, and a hand-built literal that lost the
+    /// doubling reads through the product's own view as UNREADABLE -- which is a
+    /// different state from the one an arm meant to arrange.
+    /// </remarks>
+    /// <returns>The JSON.</returns>
+    private string CodexList() =>
+        "[" + string.Join(
+            ",",
+            CodexRegistered.Select(entry =>
+                "{\"name\":" + System.Text.Json.JsonSerializer.Serialize(entry.Key)
+                + ",\"enabled\":true,\"transport\":{\"command\":"
+                + System.Text.Json.JsonSerializer.Serialize(entry.Value)
+                + ",\"args\":[]}}")) + "]";
 }
