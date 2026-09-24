@@ -239,6 +239,91 @@ internal static partial class BrowserProcesses
         return null;
     }
 
+    /// <summary>
+    /// Every live process whose image lies under a root, except one, each held open
+    /// to be waited on: the set an apply's kill pass would end.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The coordinator's apply gate -- Q285 a, decided 2026-09-24 by the
+    /// maintainer, in his words: <i>"Q285 a"</i>.</b> Velopack's
+    /// <c>force_stop_package</c> ends every process whose image path is under the
+    /// install root except its own, matching case-insensitively against the root
+    /// with a separator appended, read at 1.2.158
+    /// ([kb](../../../kb/packaging/velopack.md#what-an-apply-does-to-every-process-under-the-root----read-and-measured-at-12158-2026-09-24)).
+    /// This is the same set, found the way <see cref="RunningFrom"/> finds a
+    /// browser: full image path, every spelling of the root, never a name. The pid
+    /// left out is the caller's own, which is the one Velopack leaves out too.
+    /// </para>
+    /// <para>
+    /// <b>Held with <c>SYNCHRONIZE</c> and the query right and nothing else</b>, as
+    /// <see cref="HeldProcess"/> objects the caller can wait on; the handle is what
+    /// stops a pid being reused while it is held. <b>A process that has exited is not
+    /// found, even while another process still holds its handle</b>: measured
+    /// 2026-09-25, such a process is not in <c>EnumProcesses</c>' list, and although
+    /// its pid still opens, <c>QueryFullProcessImageNameW</c> refuses it, so a pass
+    /// that raced its exit drops it too. A wait on a handle already signalled would
+    /// wake for nothing, again and again, and that is what this rules out.
+    /// </para>
+    /// </remarks>
+    /// <param name="root">The install root, absolute.</param>
+    /// <param name="exceptProcessId">The pid to leave out: the caller's own.</param>
+    /// <returns>The scan. <b>The caller owns it and must dispose it.</b></returns>
+    /// <exception cref="Win32Exception">The process list could not be read at all.</exception>
+    public static RootScan HeldUnder(string root, int exceptProcessId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(root);
+
+        var spellings = ImageSpellings.OfDirectory(root);
+        var prefixes = spellings.Matched
+            .Select(spelling => spelling.EndsWith(Path.DirectorySeparatorChar) ? spelling : spelling + Path.DirectorySeparatorChar)
+            .ToArray();
+
+        var held = new List<HeldProcess>();
+
+        try
+        {
+            foreach (var processId in ProcessIds())
+            {
+                if (processId == exceptProcessId)
+                {
+                    continue;
+                }
+
+                var handle = OpenProcessToWaitOn(ProcessQueryLimitedInformation | Synchronize, bInheritHandle: false, (uint)processId);
+
+                if (handle.IsInvalid)
+                {
+                    handle.Dispose();
+                    continue;
+                }
+
+                var path = ImagePathOf(handle);
+
+                if (path is null
+                    || !Array.Exists(prefixes, prefix => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    || !GetProcessTimes(handle, out var created, out _, out _, out _))
+                {
+                    handle.Dispose();
+                    continue;
+                }
+
+                held.Add(new HeldProcess(processId, created, path, handle));
+            }
+        }
+        catch
+        {
+            foreach (var process in held)
+            {
+                process.Dispose();
+            }
+
+            throw;
+        }
+
+        return new RootScan(held, spellings.Unresolved);
+    }
+
     /// <summary>Every pid on the machine, from <c>EnumProcesses</c>.</summary>
     /// <remarks>
     /// <b><c>K32EnumProcesses</c> is <c>EnumProcesses</c>.</b> The name in
@@ -295,6 +380,53 @@ internal static partial class BrowserProcesses
                 : null;
         }
     }
+
+    /// <summary>The same read, over a handle opened to be waited on.</summary>
+    /// <param name="handle">The process.</param>
+    /// <returns>Its full image path, or <see langword="null"/>.</returns>
+    private static unsafe string? ImagePathOf(SafeWaitHandle handle)
+    {
+        var buffer = new char[32768];
+        var length = (uint)buffer.Length;
+
+        fixed (char* start = buffer)
+        {
+            return QueryFullProcessImageNameW(handle, 0, start, ref length)
+                ? new string(buffer, 0, (int)length)
+                : null;
+        }
+    }
+
+    /// <summary>
+    /// <c>OpenProcess</c>, answering a handle a <see cref="WaitHandle"/> can own, so
+    /// that the process can be waited on beside other handles without its raw value
+    /// ever leaving a <c>SafeHandle</c>.
+    /// </summary>
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "OpenProcess", SetLastError = true)]
+    private static partial SafeWaitHandle OpenProcessToWaitOn(
+        uint dwDesiredAccess,
+        [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
+        uint dwProcessId);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static unsafe partial bool QueryFullProcessImageNameW(
+        SafeWaitHandle hProcess,
+        uint dwFlags,
+        char* lpExeName,
+        ref uint lpdwSize);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "GetProcessTimes", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetProcessTimes(
+        SafeWaitHandle hProcess,
+        out long lpCreationTime,
+        out long lpExitTime,
+        out long lpKernelTime,
+        out long lpUserTime);
 
     // System32 only, on every P/Invoke in this repository (CA5392).
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
@@ -759,4 +891,60 @@ internal sealed partial class WatchedProcess : IDisposable
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]
     private static partial uint WaitForSingleObject(SafeProcessHandle hHandle, uint dwMilliseconds);
+}
+
+/// <summary>
+/// One process running out of a root, held open to be waited on and never to be
+/// ended.
+/// </summary>
+/// <remarks>
+/// <b>It is a <see cref="WaitHandle"/></b>, owning the process handle through its
+/// <see cref="WaitHandle.SafeWaitHandle"/>, so a caller can wait on it beside other
+/// handles with <see cref="WaitHandle.WaitAny(WaitHandle[])"/> and no raw value is
+/// ever read out of it. The pid and the creation time are its identity; the handle
+/// is what keeps the pid from being reused while it is held.
+/// </remarks>
+internal sealed class HeldProcess : WaitHandle
+{
+    internal HeldProcess(int processId, long createdFileTime, string imagePath, SafeWaitHandle handle)
+    {
+        ProcessId = processId;
+        CreatedFileTime = createdFileTime;
+        ImagePath = imagePath;
+        SafeWaitHandle = handle;
+    }
+
+    /// <summary>Its pid, pinned by the open handle for as long as this object lives.</summary>
+    public int ProcessId { get; }
+
+    /// <summary>Its creation time, read off the handle that is kept. With the pid, this is its identity.</summary>
+    public long CreatedFileTime { get; }
+
+    /// <summary>The full path of the executable it is running.</summary>
+    public string ImagePath { get; }
+}
+
+/// <summary>One pass over the processes running out of a root, each held open.</summary>
+/// <param name="held">Every process found, each held.</param>
+/// <param name="unresolved">
+/// A sentence for each spelling of the root that could not be established, from
+/// <see cref="ImageSpellings.Unresolved"/>: a scan that could not tell what the
+/// root is called finds nothing and must not read as an empty root.
+/// </param>
+internal sealed class RootScan(IReadOnlyList<HeldProcess> held, IReadOnlyList<string> unresolved) : IDisposable
+{
+    /// <summary>Every process found.</summary>
+    public IReadOnlyList<HeldProcess> Held { get; } = held;
+
+    /// <summary>Why a spelling of the root could not be established, one sentence each.</summary>
+    public IReadOnlyList<string> Unresolved { get; } = unresolved;
+
+    /// <summary>Lets go of every handle.</summary>
+    public void Dispose()
+    {
+        foreach (var process in Held)
+        {
+            process.Dispose();
+        }
+    }
 }

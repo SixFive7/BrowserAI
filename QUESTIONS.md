@@ -763,7 +763,7 @@ the crash, and the code was `0x80000003` anyway.
 ⚠️ **So the wild browser was ended from outside, and this tree has exactly two
 places that end anything with a 1** -- `git grep` over `src/` and `tests/`,
 2026-08-29: `StrayCandidate.TryTerminate` in
-[`BrowserProcesses.cs`](src/BrowserAI/Interop/BrowserProcesses.cs) and
+[`BrowserProcesses.cs`](src/BrowserAI.Core/Interop/BrowserProcesses.cs) and
 `ProcessIdentity.Terminate` in
 [`ProcessIdentity.cs`](tests/BrowserAI.Tests/Harness/ProcessIdentity.cs). **The
 product's sweep is ruled out by its own design**, read from

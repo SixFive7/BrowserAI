@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Coordination;
+using BrowserAI.Interop;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 
@@ -122,6 +123,114 @@ internal sealed class CoordinatorLoop(
 
             _ = inbox.Arrived.WaitOne();
         }
+    }
+}
+
+/// <summary>How the sign-in step ended.</summary>
+internal enum SignInOutcome
+{
+    /// <summary>No newer package is staged. Nothing to do.</summary>
+    NothingStaged,
+
+    /// <summary>A newer package was staged and nothing else ran from the install, so it was handed to Velopack.</summary>
+    Applied,
+
+    /// <summary>A newer package is staged and something runs from the install, so nothing was applied.</summary>
+    NotAlone,
+}
+
+/// <summary>What the sign-in step found, and the sentence it logged.</summary>
+/// <param name="Outcome">How it ended.</param>
+/// <param name="Why">The sentence.</param>
+internal sealed record SignInReport(SignInOutcome Outcome, string Why);
+
+/// <summary>
+/// The sign-in step: apply a staged update when nothing else runs from the
+/// install, and otherwise leave it for later.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Q282 a and Q285 a, decided 2026-09-24 by the maintainer, in his words:
+/// <i>"Q282 a"</i> and <i>"Q285 a"</i>.</b> The per-user logon task starts the app
+/// with <c>--sign-in</c> at sign-in, which on the morning measured was 1.3 to 2.3 s
+/// after it and minutes before the editor started its servers
+/// ([kb](../../kb/windows/processes.md#what-starts-first-after-sign-in-and-what-a-task-started-process-may-do----measured-2026-09-24)).
+/// </para>
+/// <para>
+/// <b>The staged package is Velopack's <c>UpdatePendingRestart</c></b>: the newest
+/// full package on disk whose version is above the installed one, read with no
+/// request. <b>The gate is a path scan</b>, every process whose image lies under the
+/// install root except this one, which is exactly the set Velopack's kill pass would
+/// end. An empty scan hands the package to <c>Update.exe</c>, silent and without a
+/// restart, and the caller exits; anything else leaves it staged, and the log says
+/// what was running. A scan that could not establish how the root is spelled is not
+/// an empty one: it applies nothing.
+/// </para>
+/// <para>
+/// <b>Automatic apply on startup stays off</b> (landmine 2 in the Velopack kb): this
+/// step decides, and <c>VelopackApp.Run()</c> never does.
+/// </para>
+/// </remarks>
+internal static class SignInStep
+{
+    /// <summary>How many running images the log names before it counts the rest.</summary>
+    public const int NamedInTheLog = 5;
+
+    /// <summary>Runs the step once.</summary>
+    /// <param name="staged">Whether a newer package is on disk, and the apply.</param>
+    /// <param name="scan">The path scan under the install root, this process left out.</param>
+    /// <param name="logger">Where the outcome is recorded.</param>
+    /// <returns>What happened.</returns>
+    public static SignInReport Run(IStagedUpdates staged, Func<RootScan> scan, ILogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(staged);
+        ArgumentNullException.ThrowIfNull(scan);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        SignInReport report;
+
+        if (staged.Pending() is not { } pending)
+        {
+            report = new SignInReport(SignInOutcome.NothingStaged, "no newer package is staged, so there is nothing to apply.");
+        }
+        else
+        {
+            using var found = scan();
+
+            if (found.Held.Count is 0 && found.Unresolved.Count is 0)
+            {
+                staged.ApplyAfterThisProcessExits(pending);
+                report = new SignInReport(SignInOutcome.Applied, $"{pending.Version} is staged and nothing else runs from this install, so it was handed to Update.exe, silent and with no restart, to apply once this process exits.");
+            }
+            else
+            {
+                report = new SignInReport(SignInOutcome.NotAlone, $"{pending.Version} is staged and was not applied: {Running(found)}");
+            }
+        }
+
+        var outcome = report.Outcome.ToString();
+
+        CoordinatorLog.SignedIn(logger, outcome, report.Why);
+
+        return report;
+    }
+
+    /// <summary>What a scan found, as a clause for the log.</summary>
+    /// <param name="found">The scan.</param>
+    /// <returns>The clause.</returns>
+    public static string Running(RootScan found)
+    {
+        ArgumentNullException.ThrowIfNull(found);
+
+        if (found.Held.Count is 0)
+        {
+            return $"the install root's spelling could not be established, so the scan cannot say nothing runs from it ({string.Join(" ", found.Unresolved)})";
+        }
+
+        var named = string.Join(", ", found.Held.Take(NamedInTheLog).Select(process => $"pid {process.ProcessId} {process.ImagePath}"));
+        var more = found.Held.Count > NamedInTheLog ? $" and {found.Held.Count - NamedInTheLog} more" : string.Empty;
+
+        return $"{found.Held.Count} process(es) run from this install and an apply would end them: {named}{more}.";
     }
 }
 

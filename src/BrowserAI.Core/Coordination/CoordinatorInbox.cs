@@ -35,6 +35,18 @@ internal sealed class CoordinatorInbox : IDisposable
     /// <summary>Set each time a verb arrives; reset by the wait that sees it.</summary>
     public WaitHandle Arrived => _arrived;
 
+    /// <summary>Whether no verb is waiting.</summary>
+    public bool IsEmpty
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _pending.Count is 0;
+            }
+        }
+    }
+
     /// <summary>Posts a verb and wakes whoever waits.</summary>
     /// <param name="verb">What was asked.</param>
     /// <param name="from">Who asked, when known.</param>

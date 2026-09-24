@@ -5,6 +5,7 @@ using BrowserAI.App.Interop;
 using BrowserAI.App.Ui;
 using BrowserAI.Coordination;
 using BrowserAI.Hosting;
+using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Registration;
 using BrowserAI.Updates;
@@ -223,6 +224,23 @@ internal static class Program
         IStagedUpdates staged = UpdateConfiguration.Resolve(logger) is { } feed
             ? new VelopackUpdateClient(feed)
             : NothingStaged.Instance;
+
+        // ⚠️ THE SIGN-IN STEP -- Q282 a and Q285 a, 2026-09-25. One pass: a staged
+        // package and nothing else running from the install is handed to Update.exe
+        // and this process exits so it can apply; anything else is logged and this
+        // process exits too. The one exception is a verb that reached the pipe during
+        // the pass -- a person's start asking for the window, or a blocked server's
+        // start handing over its recheck -- which the loop below then answers, since
+        // the start that sent it has already exited.
+        if (mode is StartMode.SignIn)
+        {
+            var signIn = SignInStep.Run(staged, () => BrowserProcesses.HeldUnder(root, Environment.ProcessId), logger);
+
+            if (signIn.Outcome is SignInOutcome.Applied || inbox.IsEmpty)
+            {
+                return 0;
+            }
+        }
 
         _ = new CoordinatorLoop(inbox, staged, window, logger).Run();
 

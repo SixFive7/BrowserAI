@@ -13,7 +13,7 @@ namespace BrowserAI.Interop;
 /// <remarks>
 /// <para>
 /// <b>This is attribution, and attribution is allowed to fail.</b>
-/// [Detection](BrowserProcesses.cs) is the fully documented half and it is what
+/// [Detection](../../BrowserAI.Core/Interop/BrowserProcesses.cs) is the fully documented half and it is what
 /// decides: a process is a candidate because its <i>full image path</i> is a
 /// binary BrowserAI provisioned. Everything here only answers <i>which
 /// directory</i>, so that the ownership test can run and a report can name the

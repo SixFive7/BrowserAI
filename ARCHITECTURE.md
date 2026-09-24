@@ -58,7 +58,7 @@ assumed and nothing on `PATH` is used.
 | Building the payload: Node, the vendored `node_modules`, the provenance stamp | `build/Build-Payload.ps1`, `build/payload/{package.json, package-lock.json}`, the publish-only payload copy in `src/BrowserAI/BrowserAI.csproj` |
 | Finding the payload at run time | `src/BrowserAI/Runtime/PayloadLayout.cs` |
 | Composing the child's configuration and command line | `src/BrowserAI/Runtime/{BrowserConfiguration, ChildLaunch}.cs` |
-| First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, MaintenanceLock, ProvisioningRemediation, RevisionPrune}.cs`, `src/BrowserAI.Core/Runtime/TreeDelete.cs`, `src/BrowserAI/Interop/BrowserProcesses.cs` |
+| First-run browser provisioning, and the tool that repairs it | `src/BrowserAI/Runtime/{BrowserProvisioner, BrowsersManifest, MaintenanceLock, ProvisioningRemediation, RevisionPrune}.cs`, `src/BrowserAI.Core/Runtime/TreeDelete.cs`, `src/BrowserAI.Core/Interop/BrowserProcesses.cs` |
 
 **The configuration is generated, never hand-held.** `BrowserConfiguration` writes
 `browserName`, an explicit `chrome-for-testing` channel, `headless` from the

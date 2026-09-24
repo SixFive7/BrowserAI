@@ -120,6 +120,16 @@ internal static partial class CoordinatorLog
         Message = "This BrowserAI could not become the coordinator and could not hand over to one: {Why}")]
     public static partial void Neither(ILogger logger, string why);
 
+    /// <summary>What the sign-in step found and did.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="outcome">How it ended.</param>
+    /// <param name="why">The sentence.</param>
+    [LoggerMessage(
+        EventId = 6,
+        Level = LogLevel.Information,
+        Message = "Sign-in step: {Outcome}. {Why}")]
+    public static partial void SignedIn(ILogger logger, string outcome, string why);
+
     /// <summary>The coordinator is done and lets its pipe go.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="why">Why it stops.</param>
