@@ -19,6 +19,165 @@ about an external source needs the date and version it was true at.
 
 ---
 
+## The next version
+
+The work the 2026-09-23 session settled in intent and deliberately did not build.
+Every item here has a decision behind it in
+[`DECISIONS.md`](DECISIONS.md#open-design-decisions); the one group that does not
+is named as candidates and says so.
+
+- [ ] **Codex registration, steps 2 to 6.** Step 1 landed on 2026-09-24 --
+      `CodexRegistration`, `CodexRegistryView`, the `RegistrationClient` record and
+      the binary discovery with its named refusal -- and step 5 measured the
+      startup timeout. **Nothing else is built: no hook, no GUI and no installer
+      path registers with Codex today**, and the decision is
+      [Q258](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client).
+
+      **Step 2, the hooks.** The Velopack install, update and uninstall hooks
+      register and unregister **both** clients, each with its own entry in
+      `mcp-registration.json`, so a failure against one is legible without
+      guessing which. The four properties the Claude Code path is held to carry
+      over unchanged: it registers the server and never the execution stub, it is
+      idempotent across install, update, repair and reinstall, it can neither fail
+      an install nor fail silently, and **it never adopts, overwrites or removes an
+      entry whose command is not under this install root**.
+
+      **Step 3, the GUI.** Per-client rows in the configuration window, with the
+      user-scope register and unregister buttons the maintainer asked for -- _"I
+      want the system level registration and unregistration to be an option in the
+      gui"_ -- plus **project-scope unregister, which does not exist for either
+      client today**, and a re-register affordance. ⚠️ **Separate control per
+      client is a requirement and not an implementation detail**, in his words:
+      _"I easy I want separate control over system level registration between codex
+      and claude."_ One row per client, one state per client, one action per client.
+
+      **Step 4, the arms and the row.** Real-client arms under a scratch
+      `CODEX_HOME` -- never the maintainer's `~/.codex` -- a `SuiteCapability` row
+      so a machine without Codex skips loudly instead of silently, and the
+      update-effect arm he asked for: _"I want the same update effects to be tested
+      on coded."_ ⚠️ **And the hazard row this batch deliberately did not write**:
+      Codex never re-launches a dead stdio server on the failure path, so closing a
+      Codex-hosted session's server ends MCP for that thread until a host asks for a
+      reload. It is named in [the frozen-tool-list row](HAZARDS.md#hazard-index) as
+      owed, so that its absence is deliberate and not an omission.
+
+      **Step 6, the documents.** `DECISIONS.md` by addition where the implementation
+      settles anything the decision left open, a Codex section in
+      [`README.md`](README.md), and the `CHANGELOG` entries.
+
+- [ ] **The update toast, and the sessions page it opens.** The decision is
+      [Q254](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)
+      and the alternatives are at
+      [`docs/design/toast-2026-09-24`](docs/design/toast-2026-09-24/README.md).
+      **A staged update that the census says is blocked raises a toast** naming how
+      many sessions hold it and how many of those are Codex-hosted, with two buttons
+      and a selection input whose default the X takes. ⚠️ **Six hours is the
+      default, and the three renderings say ten minutes** -- they are demos and the
+      decision is the specification.
+
+      **The page it opens lists every live session** with its client, its purpose,
+      when it was last used and whether a browser is open on it, closes the ones the
+      person selects and nothing else, and **warns for two kinds**: Codex-hosted,
+      which does not get its server back, and recently active, which may be mid-task
+      and takes its browser with it.
+
+      **What is already there to build on**: `LiveInstances` is the census,
+      `UpdateService` already distinguishes *Alone* from *StagedButNotAlone*, and
+      the configuration window is a `TaskDialog` today -- a page of sessions is a
+      new surface in it, not a new application. The Windows toast properties that
+      decide the layout are measured in
+      [kb](kb/windows/notifications.md).
+
+- [ ] **Q261: one informed refusal, and the version stamp.** The decision is
+      [the row in `DECISIONS.md`](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client),
+      taken 2026-09-24 in the maintainer's words: _"Q261 b"_.
+
+      **What to build.** A per-connection flag holding whether a `tools/list` has
+      arrived since this connection's handshake. The first `tools/call` that
+      precedes one is **refused once**, with a message naming the running BrowserAI
+      version and the remedy for the client at the other end -- Claude Code, that the
+      list-changed notification has been sent and the call can be retried; Codex,
+      that a new thread lists fresh -- and `notifications/tools/list_changed` goes out
+      with that refusal. A first connect lists before it calls, so a new session
+      pays nothing. **And the serving version is stamped into the session record on
+      every call**, with `browserai_resume` and `browserai_catch_up` carrying a
+      courtesy line when it differs from the server answering now. ⚠️ **The stamp is
+      never a refusal.**
+
+      **The acceptance, and the second half of it is the maintainer's, verbatim:**
+      _"MAke sure to test Q261 from a subagent once implemented and make sure to
+      have test coverage."_
+
+      1. **Suite coverage, four arms.** A stub client that calls before listing is
+         refused once with the informed message and receives the notification, and a
+         stub that lists first is never refused -- **planted red**. A real Claude
+         Code headless arm under a scratch configuration directory: the server exits
+         mid-session, the client re-dials, the first call is refused, the list is
+         refreshed on the notification, the second call succeeds. A Codex arm under
+         a scratch `CODEX_HOME`: a new thread lists fresh and is never refused. And
+         the resume and catch-up courtesy line when the stamped version differs.
+      2. **A sub-agent drives the real clients before the item is called done**, at
+         implementation time, against the **published slice** and through the same
+         rigs the 2026-09-23 research used --
+         [`docs/evidence/2026-09-23-client-reconnect`](docs/evidence/2026-09-23-client-reconnect/README.md)
+         -- **never the real install and never the maintainer's own client state**,
+         reporting byte-exact results.
+
+- [ ] **T7: start Playwright's own `list` at session close, detached.** The
+      decision is
+      [T7](DECISIONS.md#processes-browsers-and-session-modes), taken 2026-09-24.
+      **One call, from the payload, never awaited, no throttle and no concurrency
+      arm.** It is the only code upstream has that unlinks a dead descriptor, and
+      nothing calls it today.
+
+      **What the item owes beyond the call itself**: the kb entry keeps the
+      measurements it already carries and gains what the implementation establishes
+      -- what the first call costs on a real backlog, which was measured at
+      **141,616 ms over 3,762 entries** and is milliseconds afterwards -- and
+      [the descriptor hazard row](HAZARDS.md#hazard-index) closes when the call
+      exists, not when the decision was taken. ⚠️ **The re-verification row is keyed
+      on the `playwright-core` version** and the fragile half is
+      `PWTEST_SERVER_REGISTRY`: a renamed or dropped variable sends any future probe
+      at the maintainer's real directory.
+
+- [ ] **Candidates from the feature catalogue, and none of them is a commitment.**
+      The catalogue is [kb](kb/playwright/tools-and-artifacts.md#the-surface-browserai-does-not-use----read-2026-09-24)
+      and the dumps are
+      [here](docs/evidence/2026-09-24-playwright-surface/README.md). These five are
+      the ones a reader stopped on; they are listed so they can be picked, and this
+      item is **done when the maintainer has picked or declined each one**, not when
+      they are built.
+
+      | Candidate | What it would give, and what it would cost |
+      |---|---|
+      | **`--secrets`** | A file of values the child substitutes without the model seeing them. It is the one option here that changes what a caller can do and not merely how a browser behaves, and [`DECISIONS.md`](DECISIONS.md#browser_get_config-redacts-and-that-is-not-a-reason-to-set-secrets) already has a row saying redaction is not a reason to set it |
+      | **The `cli-client` command surface** | 102 commands that map onto the same tools, shipped in the package and not run by this product. A trace or replay lane would be built out of it |
+      | **`--allowed-origins` and `--blocked-origins`** | A per-session boundary on where a browser may go. Today there is none, and a session's reach is whatever the caller navigates to |
+      | **`--device`** | 207 device descriptors, of which this product uses none; a session is 1920x1080 desktop Chromium or Firefox and nothing else |
+      | **`--timeout-settle`** | 500 ms by default, and it is the knob behind *the snapshot came back before the page finished*. The cheapest of the five to try and the hardest to judge without a case |
+
+- [ ] **Four re-verification rows are owed a re-measurement at the Velopack that
+      ships.** Rows **123**, **124**, **126** and **130** were all measured at
+      **Velopack 1.2.0**, and the build has resolved **1.2.158** since 2026-09-22.
+      They stay owed by the maintainer's decision, Q242 = a, taken 2026-09-23.
+
+      **What each one is**: one Add/Remove Programs key per app id per user, so a
+      second install at another root rewrites it (123); a non-silent `Setup.exe`
+      starting a console-subsystem binary with a real console window and a stdin
+      that never reports EOF (124); `VELOPACK_FIRSTRUN` not being a reliable signal
+      that the installer started this process (126); and `Setup.exe` stopping to ask
+      before installing over a non-empty directory, with the button labelled from
+      the version comparison (130).
+
+      ⚠️ **All four need a real install and a real uninstall on a real machine**,
+      which is why none of them is automated and why the work is a measurement
+      session and not a code change. The rigs exist:
+      [`docs/probes/2026-09-14-firstrun`](docs/probes/2026-09-14-firstrun/README.md),
+      [`docs/probes/2026-09-15-install`](docs/probes/2026-09-15-install/README.md)
+      and [`docs/probes/2026-09-16-release`](docs/probes/2026-09-16-release/README.md).
+
+---
+
 ## Fingerprinting
 
 - [ ] **Measure fingerprint parity against a normal user browser.** The
