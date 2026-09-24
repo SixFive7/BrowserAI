@@ -65,26 +65,6 @@ is named as candidates and says so.
       | **`--device`** | 207 device descriptors, of which this product uses none; a session is 1920x1080 desktop Chromium or Firefox and nothing else |
       | **`--timeout-settle`** | 500 ms by default, and it is the knob behind *the snapshot came back before the page finished*. The cheapest of the five to try and the hardest to judge without a case |
 
-- [ ] **Four re-verification rows are owed a re-measurement at the Velopack that
-      ships.** Rows **123**, **124**, **126** and **130** were all measured at
-      **Velopack 1.2.0**, and the build has resolved **1.2.158** since 2026-09-22.
-      They stay owed by the maintainer's decision, Q242 = a, taken 2026-09-23.
-
-      **What each one is**: one Add/Remove Programs key per app id per user, so a
-      second install at another root rewrites it (123); a non-silent `Setup.exe`
-      starting a console-subsystem binary with a real console window and a stdin
-      that never reports EOF (124); `VELOPACK_FIRSTRUN` not being a reliable signal
-      that the installer started this process (126); and `Setup.exe` stopping to ask
-      before installing over a non-empty directory, with the button labelled from
-      the version comparison (130).
-
-      ⚠️ **All four need a real install and a real uninstall on a real machine**,
-      which is why none of them is automated and why the work is a measurement
-      session and not a code change. The rigs exist:
-      [`docs/probes/2026-09-14-firstrun`](docs/probes/2026-09-14-firstrun/README.md),
-      [`docs/probes/2026-09-15-install`](docs/probes/2026-09-15-install/README.md)
-      and [`docs/probes/2026-09-16-release`](docs/probes/2026-09-16-release/README.md).
-
 ---
 
 ## Fingerprinting

@@ -3,8 +3,9 @@
 
 # Velopack and the update path
 
-**Versions in force** unless an entry says otherwise: Velopack and `vpk` **1.2.0** (0.0.1298 where an entry says so) · MinVer **7.0.0** · .NET SDK 10.0.400, runtime and ILC 10.0.11 · Windows 11 Pro 26200.
+**Versions in force** unless an entry says otherwise: Velopack and `vpk` **1.2.158** since 2026-09-22 and **1.2.0** before it (0.0.1298 where an entry says so) · MinVer **8.0.0** since 2026-09-15 and **7.0.0** before it · .NET SDK 10.0.401, runtime and ILC 10.0.12 since 2026-09-14, and 10.0.400 and 10.0.11 before it · Windows 11 Pro 26200.
 Measured on [the reference machine](../README.md#the-reference-machine).
+*Corrected 2026-09-24 (previously "Velopack and `vpk` **1.2.0** (0.0.1298 where an entry says so) · MinVer **7.0.0** · .NET SDK 10.0.400, runtime and ILC 10.0.11")*: each was what the build resolved when the line was written, and each had moved since without the line moving with it. Read 2026-09-24 from the committed lock files, `dotnet tool list -g` and `dotnet --version`, and dated from the commits that moved the locks and from `global.json`'s own provenance note. An entry that names no version was taken under whatever this line said on the day it was written, so the older values stay beside the new ones. The four entries re-established on 2026-09-24 name 1.2.158 in place ([re-verification rows](../re-verification.md) 123, 124, 126 and 130).
 
 Read from Velopack **1.2.0** and its Rust binaries unless noted. `[FLOATS]` --
 this is a floating dependency like any other.
@@ -272,6 +273,24 @@ root -- and then uninstall the second copy and ask for the key again: it is gone
 Restore from the export. **Take the export first and verify the restore by
 hashing both**: without it this measurement removes a real install's uninstall
 entry, and the measurement is the damage. `[FLOATS]`
+
+**Re-established 2026-09-24 @ Velopack 1.2.158, and UNCHANGED, in both orders,
+under the suite's test id `BrowserAI.app.test`.** A second silent install into
+another scratch root rewrote `InstallLocation`, `DisplayIcon`, `UninstallString`
+and `QuietUninstallString` to name it; uninstalling either root deleted the key
+while the other root still held a complete install, including the root the key
+did not name; and the uninstall that then found no key logged
+`Unable to remove uninstall registry entry (The system cannot find the file
+specified. (os error 2)).` and exited **0**. Read at the 1.2.158 tag:
+`registry.rs:40` creates the subkey from `get_manifest_id()` alone, and
+`registry.rs:65` is an unconditional `delete_subkey_all(&app_id)`, reached from
+`uninstall.rs:38`. The real `BrowserAI.app` key hashed the same before and after
+every step. **The method above is superseded, and kept because it is what the
+2026-09-14 reading was taken with**: the fact is about ids, so the test id
+measures it without writing the real key at all, and nothing needs exporting or
+restoring. Point
+`CLAUDE_CONFIG_DIR`, `CODEX_HOME` and `BROWSERAI_ROOT` at scratch first, because
+the install hooks run ([re-verification row 123](../re-verification.md)).
 
 ## The restart handover race, and why `Update.exe` is the answer
 
@@ -1228,6 +1247,29 @@ scratch directory first, because the install hook registers with the real client
 by name, and export the Add/Remove key for the pack id, because the uninstall
 deletes it.
 
+**Re-established 2026-09-24 @ Velopack 1.2.158, and UNCHANGED on Velopack's
+side**, installing the suite's test pack without `--silent` from a
+`DETACHED_PROCESS` parent into a scratch `--installto`. Setup's own verbose log
+printed `PROCESS_CREATION_FLAGS(134218752)` for the `--veloapp-install` hook and
+`PROCESS_CREATION_FLAGS(1024)` for the app start, with
+`Setting environment variable: VELOPACK_FIRSTRUN=true` logged just before that
+start, and `Setup.exe` exited **26.9 ms** after the started app's own creation
+time, both read as kernel process times. Read at the 1.2.158 tag, with
+`process_win.rs` byte-identical to 1.2.0: `util_windows.rs:117` passes `true` for
+`show_window`, `process_win.rs:388-392` turns it into `CREATE_UNICODE_ENVIRONMENT`
+alone, `install.rs:252-255` starts the app on every non-silent install, and
+`setup.rs:97-104` has no option that skips the start.
+[velopack/velopack#1056](https://github.com/velopack/velopack/issues/1056) was
+still open with no comments on 2026-09-24. ⚠️ **The console-window half was not
+re-observed, and no pack this repository builds can show it**: `--mainExe` has
+been the Windows-subsystem configuration app since 2026-09-15, so what the start
+produced was that app's `#32770` dialog, whose log line reads `(FirstRun)`, and
+the 254 s above belongs to the published v1.0.0. *The sandbox is narrower now*:
+under the test pack's id no key but `BrowserAI.app.test` is written, so nothing
+needs exporting, and `CODEX_HOME` and `BROWSERAI_ROOT` go to scratch beside
+`CLAUDE_CONFIG_DIR` because the hooks register with both clients
+([re-verification row 124](../re-verification.md)).
+
 ### Re-measured 2026-09-15 against the published v1.0.0, and the paragraph above was half wrong
 
 **Everything above about the window and the launcher held; the paragraph headed
@@ -1249,17 +1291,40 @@ own log at
 | The app's own verdict | *no client-liveness watch* | `Startup[72]` then `Startup[9]`, **1.89 s** after start |
 | What happened next | served nobody until reboot | **did not exit either**: alive **213.6 s** past its own *is exiting* line, 10 threads, 224 handles, holding `node.exe` and `conhost.exe` |
 
-⚠️ **`VELOPACK_FIRSTRUN` did not reach the branch that reads it, and why is
-unresolved.** The product logged `Startup[72]`/`Startup[9]` -- the *general*
+⚠️ **`VELOPACK_FIRSTRUN` did not reach the branch that reads it, because
+`VelopackApp.Run()` clears it on an installed process before that branch runs.**
+*Corrected 2026-09-24 @ Velopack 1.2.158 (previously "and why is unresolved")*.
+The product logged `Startup[72]`/`Startup[9]` -- the *general*
 no-client decision -- and not `Startup[8]`, the installer exit, which sits
 thirty lines earlier in `Main`. The same binary **does** take `Startup[8]`, in
 0.313 s, when the variable is set on a start it is not installed for (measured
 the same day through the orphan rig,
 [`docs/evidence/2026-09-15-fix/repro-firstrun.txt`](../../docs/evidence/2026-09-15-fix/README.md)),
-so the read is not broken. What runs in between is `VelopackApp.Run()`, which is
-the only code with the opportunity; **that it clears the variable is INFERRED and
-has not been measured**, and it is recorded here as an open question and not
-as a fact. Nothing depends on the answer: see the next paragraph.
+so the read is not broken. What runs in between is `VelopackApp.Run()`, which
+reads the variable at `VelopackApp.cs:232` and clears it at `VelopackApp.cs:237`,
+and does both only on an installed process: `VelopackApp.cs:227-230` returns
+first when `CurrentlyInstalledVersion` is null. The file is byte-identical at
+1.2.0 and 1.2.158, so the published v1.0.0 cleared it the same way.
+*Corrected 2026-09-24 (previously "which is the only code with the opportunity;
+**that it clears the variable is INFERRED and has not been measured**, and it is
+recorded here as an open question and not as a fact")*: read at both tags, and
+measured @ Velopack 1.2.158 through the orphan-console rig with
+`VELOPACK_FIRSTRUN=true` on two byte-identical copies of the suite's test pack's
+`BrowserAI.Server.exe`. The copy inside an installed scratch root logged
+`Updates[17]`, `Startup[72]` and `Startup[9]`; the copy outside any install
+logged `Startup[8]`, 47 ms after its own creation
+([re-verification row 126](../re-verification.md)). Nothing depends on the
+answer: see the next paragraph.
+
+⚠️ **So this product's own installer branch cannot fire on an installed
+process** -- *added 2026-09-24*. `src/BrowserAI/Program.cs:228-232` asks
+`VelopackStartup.StartedByTheInstaller()` after
+`VelopackStartup.RunWithoutLifecycleHooks` at `:131` has already called
+`VelopackApp.Run()`, so on an installed start the variable is gone before the
+branch reads it, and only an uninstalled start with the variable set takes
+`Startup[8]`. The exit still happens, through the general branch the next
+paragraph describes. Whether the branch stays is a question put to the
+maintainer on 2026-09-24 (Q276) and not decided here.
 
 **So the exit may never key on the variable alone, and this is a second reason
 and not a restatement of the first.** The stub `BrowserAI.exe` that Velopack
@@ -1722,13 +1787,32 @@ unexplored.
 ## Setup will not install over an existing install without being told to, and on a same-version re-ship the button says "Repair" -- measured 2026-09-16
 
 ⚠️ **A non-silent `Setup.exe` whose target directory is not empty STOPS and asks,
-at any version, and waits indefinitely.** It is not a same-version behaviour and
+at any version, and after 300 s with no answer it cancels itself, exits 0 and
+installs nothing.** *Corrected 2026-09-24 @ Velopack 1.2.158 (previously "and
+waits indefinitely")*. It is not a same-version behaviour and
 it is not a BrowserAI one. Measured 2026-09-16 @ Velopack 1.2.0 on the published
 `v1.0.0` installer, launched through `CreateProcessW` with `DETACHED_PROCESS`
 from a parent that had freed its own console: Setup read the bundle, resolved
 `Installation Directory: C:\Users\jori\AppData\Local\BrowserAI.app`, and then
 put up a `#32770` titled **`BrowserAI Setup`**, 572x201, and sat there. The log
-stops at `Using root packages directory:` until somebody answers.
+stops at `Using root packages directory:` until somebody answers, or until the
+timeout.
+
+**The timeout, measured 2026-09-24 @ Velopack 1.2.158** against the suite's test
+pack over a scratch root that already held an install of it: the same dialog,
+titled `BrowserAI (suite) Setup`, 572x201, was left alone. It closed **299.9 s**
+after it was first seen, `Setup.exe` exited **0** 300.0 s after it was created,
+nothing was installed, and the log's last lines read
+`Overwrite/repair dialog timed out, treating as cancel.` The source says why:
+`setup.rs:118-120` arms a 300 s dialog timeout on every run without `--silent`,
+`dialogs.rs:250-253` turns the timeout into a cancel, and xdialog 3.1.9's
+`message.rs:99-105` closes the window. `update.rs:170` arms the same 300 s for
+`Update.exe`, so every dialog either binary shows on a non-silent run is bounded
+the same way; that half is read from source and was not measured. **1.2.0 armed
+it too**, at `setup.rs:110-112` over xdialog 2.1.1, so *indefinitely* was wrong
+at the version it was written for. It is one more thing
+[re-verification row 130](../re-verification.md) watches, beside the trigger,
+the wording and the labels.
 
 The dialog, read through UI Automation:
 
@@ -1756,10 +1840,25 @@ if !shared::is_dir_empty(&root_path) {
 }
 ```
 
-**Only the affirmative button's LABEL depends on the version** --
-`l18n/src/dialogs.rs`: `Update` when what is installed is older, `Downgrade` when
-it is newer, and **`Repair` when the two are equal**, which is what a re-ship of
-the same number produces. Whichever label it wears, taking it runs the **full
+**The affirmative button's LABEL and the dialog's BODY both depend on the
+version** -- `l18n/src/dialogs.rs`: `Update` when what is installed is older,
+`Downgrade` when it is newer, and **`Repair` when the two are equal**, which is
+what a re-ship of the same number produces. *Corrected 2026-09-24 @ Velopack
+1.2.158 (previously "**Only the affirmative button's LABEL depends on the
+version**")*: measured against the suite's test pack at 1.1.0, with the scratch
+install's `current\sq.version` set below and above the installer's version, and
+read through UI Automation:
+
+| Installed | Heading | Body | Button | Size |
+|---|---|---|---|---|
+| 1.1.0, the same | *BrowserAI (suite) is already installed* | *This application is already installed on your computer. If it is not working correctly, you can try repairing it by reinstalling.* | `Repair` | 572x201 |
+| 1.0.0, older | *BrowserAI (suite) is already installed* | *Version 1.0.0 is currently installed. Would you like to update to version 1.1.0?* | `Update` | 487x186 |
+| 9.9.9, newer | *A newer version of BrowserAI (suite) is already installed* | *Version 9.9.9 is currently installed, which is newer than this installer. Downgrading is not recommended and may cause problems. Continue anyway?* | `Downgrade` | 572x201 |
+
+Each body ends with the same `Installed at:` line, and a scratch directory holding
+one text file and no install got the same-version dialog, `Repair` included.
+The English strings are `locales/en-US.ftl:35-41`, byte-identical to 1.2.0, as is
+`dialogs.rs`. Whichever label it wears, taking it runs the **full
 `install_impl`**: the same code path as a first install, over an emptied
 directory, with the old root renamed aside and deleted on success.
 
@@ -1771,6 +1870,8 @@ directory, with the old root renamed aside and deleted on success.
 - **Cancel exits 0.** A caller that only reads the exit code cannot tell a
   cancelled install from a completed one; the log's
   `Installation completed successfully!` is the line that separates them.
+  *Added 2026-09-24*: **so does a prompt nobody answers**, after 300 s, which
+  makes an unattended non-silent run over an existing install an exit-0 no-op.
 - ⚠️ **On a same-version re-ship the button a user is asked to press says
   `Repair`.** The version number on the release page has not moved, and the
   installer says the application is *already installed* -- so the correct action
@@ -1785,6 +1886,13 @@ already holds an install and reading the top-level windows of its pid --
 enumerates the children and
 `Add-Type -AssemblyName UIAutomationClient` reads the task dialog's text, which
 `GetWindowTextW` cannot because the body is a `DirectUIHWND`.
+*Added 2026-09-24*: the suite's test pack over a scratch root reproduces all of
+it without touching the developer's own install, and that is how the 2026-09-24
+readings were taken. The buttons expose no UIA `InvokePattern`, and `WM_CLOSE`
+dismisses the dialog down the same arm a Cancel takes (`dialogs.rs:244-255` maps
+every result but buttons 0 and 1 to cancel). ⚠️ **The dialog is still a modal
+window on the developer's screen for as long as it is up**, up to 300 s, which is
+why this stays manual.
 
 ## Not verified
 
