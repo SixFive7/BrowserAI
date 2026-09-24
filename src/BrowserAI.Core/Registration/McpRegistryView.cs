@@ -281,14 +281,37 @@ internal static class McpRegistryView
             return RegistrationOwnership.Foreign;
         }
 
-        var expanded = Expand(command);
+        return ClassifyPath(Expand(command), installRoot);
+    }
+
+    /// <summary>
+    /// Whose a path is, once a client's own rules have turned its command into
+    /// one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The shared half of the ownership rule, split out 2026-09-24.</b> How a
+    /// command becomes a path is the CLIENT's: Claude Code expands <c>${VAR}</c>
+    /// (<see cref="Classify"/>) and Codex expands nothing
+    /// (<c>CodexRegistryView.Classify</c>, measured 0 of 48). Whether that path is
+    /// ours is one decision for both clients and lives here, so there is still
+    /// one answer to <i>may I delete this</i>.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The path the client would start.</param>
+    /// <param name="installRoot">The install root ownership is judged against.</param>
+    /// <returns>The classification.</returns>
+    public static RegistrationOwnership ClassifyPath(string path, string installRoot)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(installRoot);
 
         string full;
         string root;
 
         try
         {
-            full = Path.GetFullPath(expanded);
+            full = Path.GetFullPath(path);
             root = Path.GetFullPath(installRoot);
         }
         catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)

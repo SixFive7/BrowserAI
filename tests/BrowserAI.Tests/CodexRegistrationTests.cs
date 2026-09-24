@@ -197,6 +197,70 @@ internal sealed class CodexRegistrationTests
     }
 
     /// <summary>
+    /// A Codex entry spelled the way Claude Code expands is never ours, because
+    /// Codex expands nothing in a server command.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Measured 2026-09-24 @ codex-cli 0.155.0-alpha.9.2: 0 starts in 48
+    /// attempts</b> for <c>${LOCALAPPDATA}</c>, <c>$LOCALAPPDATA</c>,
+    /// <c>%LOCALAPPDATA%</c> and <c>~</c> in <c>command</c>, at user and project
+    /// scope, with either separator (<c>docs/evidence/2026-09-24-codex-expansion</c>).
+    /// Each failed with <i>os error 3</i>.
+    /// </para>
+    /// <para>
+    /// <b>The defect this holds closed:</b> the view used to call
+    /// <see cref="McpRegistryView.Classify"/>, which expands <c>${VAR}</c> the way
+    /// Claude Code does, so this spelling read as <c>OursAndPresent</c> in Codex --
+    /// a registration the window reports as working and Codex cannot start. BrowserAI
+    /// never writes a variable into a Codex entry, so an entry carrying one was
+    /// written by somebody else and is <c>Foreign</c>: reported, never touched.
+    /// <b>Planted red 2026-09-24</b> against the view as it stood.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACodexEntrySpelledWithAVariableIsNeverOursBecauseCodexExpandsNothing()
+    {
+        using var install = ScratchDirectory.CreateUnderProfile("codex-no-expansion");
+        _ = InstalledLayout.Create(install.Path);
+
+        var server = InstalledLayout.ServerIn(install.Path);
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+        // The profile scratch root is under %LOCALAPPDATA%, so the server can be
+        // spelled the way a portable Claude Code project entry spells it.
+        await Assert.That(server.StartsWith(localAppData + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)).IsTrue();
+
+        var spelled = "${LOCALAPPDATA}/" + Path.GetRelativePath(localAppData, server).Replace('\\', '/');
+
+        // ⚠️ THE CONTROL: Claude Code expands the braced form, so the very same
+        // text is ours and present there. Without this the arm could pass because
+        // the spelling was simply wrong.
+        await Assert.That(McpRegistryView.Classify(spelled, install.Path)).IsEqualTo(RegistrationOwnership.OursAndPresent);
+
+        // Codex: the same entry is somebody else's.
+        var codex = CodexRegistryView.Parse(OneServer(spelled), "where", install.Path, RegistrationScope.Project);
+
+        await Assert.That(codex.Ownership).IsEqualTo(RegistrationOwnership.Foreign);
+        await Assert.That(codex.Command).IsEqualTo(spelled);
+
+        // And the absolute spelling of the same file is ours and present in Codex,
+        // so the difference is the expansion and nothing else.
+        var absolute = CodexRegistryView.Parse(OneServer(server), "where", install.Path, RegistrationScope.User);
+
+        await Assert.That(absolute.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
+
+        // Every other spelling the measurement tried reads the same way.
+        foreach (var other in new[] { "$LOCALAPPDATA/", "%LOCALAPPDATA%/", "~/AppData/Local/" })
+        {
+            var text = other + Path.GetRelativePath(localAppData, server).Replace('\\', '/');
+
+            await Assert.That(CodexRegistryView.Classify(text, install.Path)).IsEqualTo(RegistrationOwnership.Foreign);
+        }
+    }
+
+    /// <summary>
     /// A client that cannot be asked is unreadable, and the registrar refuses
     /// instead of writing.
     /// </summary>

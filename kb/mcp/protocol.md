@@ -574,7 +574,11 @@ with `env.PATH` spelled `~\AppData\Local\...` started 3 of 3.
 **What BrowserAI does with it is Q294, decided 2026-09-24 by the maintainer, verbatim:
 *"Q294 b"*: a Codex project entry names the server by its bare file name, and the
 install puts its own `current\` folder on the user's PATH.** Claude Code's project entry
-keeps its `${LOCALAPPDATA}` spelling, which that client expands.
+keeps its `${LOCALAPPDATA}` spelling, which that client expands. **And the ownership
+check expands nothing for Codex** (`CodexRegistryView.Classify`): an entry spelled with a
+variable is not one BrowserAI writes, so it reads as another install's and is never
+touched. Until this measurement the check borrowed Claude Code's expansion, and such an
+entry read as ours and present while Codex could not start it.
 
 **Re-establish** with the rig in the evidence batch: `rig/matrix.sh` runs every case three
 times under scratch homes, and `rig/summarize.js` prints the table above from the

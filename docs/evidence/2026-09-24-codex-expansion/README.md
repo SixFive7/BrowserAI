@@ -10,7 +10,9 @@ Measured 2026-09-24 between 13:41Z and 13:57Z on this machine, against codex-cli
 the session dispatched; cut into this directory by the phase 1b writer the same day.
 
 Cited by [kb](../../../kb/mcp/protocol.md#codex-expands-nothing-in-a-servers-command-and-finds-a-bare-name-on-the-servers-path----measured-2026-09-24)
-and [re-verification row 161](../../../kb/re-verification.md).
+and [re-verification row 161](../../../kb/re-verification.md), and by
+`CodexRegistryView.Classify`, `McpRegistryView.ClassifyPath` and
+`CodexRegistrationTests.ACodexEntrySpelledWithAVariableIsNeverOursBecauseCodexExpandsNothing`.
 The maintainer's decision it led to is Q294 b: a Codex project entry names
 `BrowserAI.Server.exe` and the install puts its `current\` folder on the user's PATH.
 

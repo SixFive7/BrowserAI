@@ -230,7 +230,11 @@ release body; nothing else depends on it.
   says so, for both clients. And the first project registration asked Codex about a repository
   before creating its `.codex`: with `CODEX_HOME` at a missing directory every `codex mcp` verb
   exits 1 and creates nothing, so the reading came back unreadable and the registration was
-  refused. A repository with no `.codex` now reads as having nothing registered.
+  refused. A repository with no `.codex` now reads as having nothing registered. **A third was
+  found by reading the code once Q288 had measured that Codex expands nothing in a server's
+  command (0 of 48)**: the Codex ownership check borrowed Claude Code's `${VAR}` expansion, so
+  an entry spelled the Claude Code way read as ours and working while Codex could not start it.
+  The check expands nothing now, and such an entry reads as another install's.
 
   **Measured first-hand at codex-cli 0.155.0-alpha.9.2**, every call with `CODEX_HOME` forced
   at a scratch directory: the handshake against the published server is **332-342 ms** and

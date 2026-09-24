@@ -26,6 +26,10 @@ namespace BrowserAI.Registration;
 /// install root, and it is called and not copied: two implementations of <i>is
 /// this ours</i> are two answers waiting to disagree, and the consequence of
 /// disagreeing is deleting somebody else's registration.
+/// <i>Corrected 2026-09-24 by addition: the shared half is
+/// <see cref="McpRegistryView.ClassifyPath"/>, the judgement of a path. How a
+/// command becomes a path is each client's own, and Codex expands nothing; see
+/// <see cref="Classify"/>.</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>A CLIENT THAT COULD NOT BE ASKED IS UNREADABLE AND NOT ABSENT.</b> A
@@ -199,7 +203,7 @@ internal static class CodexRegistryView
 
                 var command = CommandOf(server);
 
-                return new RegistrationView(scope, where, command, McpRegistryView.Classify(command, installRoot), null);
+                return new RegistrationView(scope, where, command, Classify(command, installRoot), null);
             }
 
             return new RegistrationView(scope, where, null, RegistrationOwnership.Absent, null);
@@ -213,6 +217,45 @@ internal static class CodexRegistryView
                 RegistrationOwnership.Absent,
                 $"'codex mcp list --json' did not print readable JSON ({failure.Message}), so what is registered in Codex is unknown. BrowserAI will not act on a reading it does not have.");
         }
+    }
+
+    /// <summary>Whose a command in a Codex entry is.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>CODEX EXPANDS NOTHING, SO NEITHER DOES THIS -- 2026-09-24.</b>
+    /// <i>Previously this view called <see cref="McpRegistryView.Classify"/>, which
+    /// expands <c>${VAR}</c> the way Claude Code does.</i> Measured the same day at
+    /// codex-cli 0.155.0-alpha.9.2: <c>${LOCALAPPDATA}</c>, <c>$LOCALAPPDATA</c>,
+    /// <c>%LOCALAPPDATA%</c> and <c>~</c> in <c>command</c> started nothing in 48
+    /// attempts, each failing with <i>os error 3</i>
+    /// (<c>docs/evidence/2026-09-24-codex-expansion</c>). So an entry spelled the
+    /// Claude way read here as ours and present while Codex could not start it, and
+    /// the window would have reported a working registration that was not one.
+    /// </para>
+    /// <para>
+    /// <b>A command that is not a fully qualified path is not ours.</b> BrowserAI
+    /// never writes a variable, a tilde or a relative path into a Codex entry, so an
+    /// entry carrying one was written by somebody else: reported, never touched.
+    /// A fully qualified path goes to <see cref="McpRegistryView.ClassifyPath"/>,
+    /// the half of the ownership rule both clients share.
+    /// </para>
+    /// </remarks>
+    /// <param name="command">What the entry names, or <see langword="null"/>.</param>
+    /// <param name="installRoot">The install root ownership is judged against.</param>
+    /// <returns>The classification.</returns>
+    public static RegistrationOwnership Classify(string? command, string? installRoot)
+    {
+        if (command is not { Length: > 0 })
+        {
+            return RegistrationOwnership.Absent;
+        }
+
+        if (installRoot is not { Length: > 0 } || !Path.IsPathFullyQualified(command))
+        {
+            return RegistrationOwnership.Foreign;
+        }
+
+        return McpRegistryView.ClassifyPath(command, installRoot);
     }
 
     /// <summary>The array of servers, whichever wrapper the client put it in.</summary>
