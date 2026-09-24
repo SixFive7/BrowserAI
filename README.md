@@ -18,15 +18,18 @@ Why it exists, and every settled decision with the argument that settled it, is 
 ## Install
 
 1. Download **`BrowserAI.exe`** from [the latest release](https://github.com/SixFive7/BrowserAI/releases/latest) and run it -- it is the installer. *(Named `BrowserAI-win-Setup.exe` until 2026-09-15.)* It installs **per user** into `%LocalAppData%\BrowserAI.app` and needs no elevation. Your data -- the browsers it downloads, the index of your session directories and its log -- goes in `%LocalAppData%\BrowserAI` **beside** it, and stays there across an update, a reinstall and an uninstall. Uninstalling asks before deleting it; a silent uninstall keeps it.
-2. That is the whole installation. The installer's own hook registers BrowserAI with Claude Code by running the client's supported command, `claude mcp add --scope user`, so it is available in every repository on the machine. The uninstaller removes the registration again.
-3. **A small BrowserAI window opens when the install finishes**, and there is a **BrowserAI** entry in your Start Menu that opens it again whenever you want it. It shows the installed version, where BrowserAI is installed and where its data lives, and whether it is registered with Claude Code -- and it is the only place you need for the four things you might want to do: check for updates, register or unregister *for all your Claude Code projects*, register *in a specific project*, and open the logs. **It changes nothing unless you click something**; opening it is safe.
-4. Restart the client so it picks up the new server. **Claude Code reads its MCP configuration when a session starts, so sessions you already have open will not see BrowserAI until they are restarted.**
+2. That is the whole installation. The installer's own hook registers BrowserAI with **Claude Code and with Codex**, each through the client's own supported command -- `claude mcp add --scope user` and `codex mcp add` -- so it is available in every repository on the machine. A client that is not installed is skipped and named in the registration record below, and the install still succeeds. The uninstaller removes both registrations again. *(Codex registration arrives in the first release after 1.1.0; 1.1.0 registers Claude Code only.)*
+3. **A small BrowserAI window opens when the install finishes**, and there is a **BrowserAI** entry in your Start Menu that opens it again whenever you want it. It shows the installed version, where BrowserAI is installed and where its data lives, and whether it is registered with each client -- and it is the only place you need for what you might want to do: check for updates, and **for each client separately** register or unregister *for all your projects*, register *in a specific project*, or remove it from the project the window was opened in; and open the logs. When a registration is already correct the register link reads *Register again*, which writes it back the way BrowserAI would, and that is the way back after editing your own copy. **It changes nothing unless you click something**; opening it is safe.
+4. Restart the client so it picks up the new server. **Claude Code reads its MCP configuration when a session starts, so sessions you already have open will not see BrowserAI until they are restarted.** **Codex does not pick the change up in a thread that is already open; start a new thread.**
 
-**If registration did not happen** -- the client was not on `PATH`, or it is not Claude Code -- BrowserAI writes `mcp-registration.json` into `%LocalAppData%\BrowserAI` carrying the exact command to run by hand. It is this:
+**If registration did not happen** -- a client was not found, or it is neither Claude Code nor Codex -- BrowserAI writes `mcp-registration.json` into `%LocalAppData%\BrowserAI`, with one entry per client carrying the exact command to run by hand. They are these:
 
 ```
 claude mcp add browserai --scope user -- "<install root>\current\BrowserAI.Server.exe"
+codex mcp add browserai -- "<install root>\current\BrowserAI.Server.exe"
 ```
+
+Codex is looked for in four places, because its desktop app puts the command line on no search path at all: `PATH`, `~\.local\bin`, the desktop app's own manifest under `%LocalAppData%\OpenAI\Codex`, and `%AppData%\npm`.
 
 ⚠️ ***The file name changed on 2026-09-15 (previously `current\BrowserAI.exe`).***
 BrowserAI ships as two programs now, in one installer: **`BrowserAI.Server.exe`**
@@ -50,6 +53,20 @@ expands on each machine -- so it is right on every teammate's machine and not
 just on the one that wrote it. *(If you installed BrowserAI somewhere other than
 the default location, the entry gets that absolute path instead and the window
 tells you why.)*
+
+**For Codex, the same link writes `.codex\config.toml` in the folder you choose**, by
+running `codex mcp add` with `CODEX_HOME` pointed at that `.codex` folder, so the
+file is Codex's own. ⚠️ **Codex reads a project's own configuration only in a
+project you have trusted**, so the entry does nothing in a folder Codex has not been
+told to trust. It carries this machine's absolute path: Claude Code expands the
+portable spelling above, and Codex documents no such expansion, so a committed Codex
+entry is right on the machine that wrote it.
+
+**Removing a project registration is in the window too**: start `BrowserAI.exe` from a
+terminal inside the repository, and each client with a registration of ours at or
+above that folder offers *Remove BrowserAI from this project*. Opened from the Start
+Menu the window starts in its own install folder and finds none, so no such link
+appears there. It never removes another install's entry.
 
 This is an addition, not a replacement: registering for **all** your
 projects is still one entry in your own configuration with no file in any

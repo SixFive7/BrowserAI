@@ -26,45 +26,6 @@ Every item here has a decision behind it in
 [`DECISIONS.md`](DECISIONS.md#open-design-decisions); the one group that does not
 is named as candidates and says so.
 
-- [ ] **Codex registration, steps 2 to 6.** Step 1 landed on 2026-09-24 --
-      `CodexRegistration`, `CodexRegistryView`, the `RegistrationClient` record and
-      the binary discovery with its named refusal -- and step 5 measured the
-      startup timeout. **Nothing else is built: no hook, no GUI and no installer
-      path registers with Codex today**, and the decision is
-      [Q258](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client).
-
-      **Step 2, the hooks.** The Velopack install, update and uninstall hooks
-      register and unregister **both** clients, each with its own entry in
-      `mcp-registration.json`, so a failure against one is legible without
-      guessing which. The four properties the Claude Code path is held to carry
-      over unchanged: it registers the server and never the execution stub, it is
-      idempotent across install, update, repair and reinstall, it can neither fail
-      an install nor fail silently, and **it never adopts, overwrites or removes an
-      entry whose command is not under this install root**.
-
-      **Step 3, the GUI.** Per-client rows in the configuration window, with the
-      user-scope register and unregister buttons the maintainer asked for -- _"I
-      want the system level registration and unregistration to be an option in the
-      gui"_ -- plus **project-scope unregister, which does not exist for either
-      client today**, and a re-register affordance. ⚠️ **Separate control per
-      client is a requirement and not an implementation detail**, in his words:
-      _"I easy I want separate control over system level registration between codex
-      and claude."_ One row per client, one state per client, one action per client.
-
-      **Step 4, the arms and the row.** Real-client arms under a scratch
-      `CODEX_HOME` -- never the maintainer's `~/.codex` -- a `SuiteCapability` row
-      so a machine without Codex skips loudly instead of silently, and the
-      update-effect arm he asked for: _"I want the same update effects to be tested
-      on coded."_ ⚠️ **And the hazard row this batch deliberately did not write**:
-      Codex never re-launches a dead stdio server on the failure path, so closing a
-      Codex-hosted session's server ends MCP for that thread until a host asks for a
-      reload. It is named in [the frozen-tool-list row](HAZARDS.md#hazard-index) as
-      owed, so that its absence is deliberate and not an omission.
-
-      **Step 6, the documents.** `DECISIONS.md` by addition where the implementation
-      settles anything the decision left open, a Codex section in
-      [`README.md`](README.md), and the `CHANGELOG` entries.
-
 - [ ] **The update toast, and the sessions page it opens.** The decision is
       [Q254](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)
       and the alternatives are at

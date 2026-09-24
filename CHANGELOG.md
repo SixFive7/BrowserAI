@@ -90,7 +90,19 @@ release body; nothing else depends on it.
   only and **writes nothing**, which is what keeps that tool read-only against a session
   somebody else is driving.
 
-- ✨ **BrowserAI knows how to register itself with Codex, and nothing yet asks it to.**
+- ✨ **BrowserAI registers itself with Codex as well as Claude Code, from the installer and the window.**
+  The install, update and uninstall hooks now run one pass per client, each with its own
+  ownership check -- an entry is ours by its command path, and another install's is refused and
+  left alone -- and each with its own entry in `mcp-registration.json`. A machine with no Codex
+  gets Codex's own refusal in that entry, naming every place that was looked and the command to
+  run by hand, and an install that still succeeds. **User scope is `codex mcp add`, and project
+  scope is the same command with `CODEX_HOME` pointed at `<repo>\.codex`**, which makes Codex
+  write the project's own `config.toml` itself; Codex reads that file only in a project it has
+  been told to trust. A Codex project entry carries this machine's absolute path, because the
+  portable `${LOCALAPPDATA}` spelling works through Claude Code's expansion and Codex documents
+  none.
+
+  The library landed first, the same morning, when nothing yet asked it to register anything.
   A second client sits beside Claude Code in the registration library: `CodexRegistration`
   builds the `codex mcp add` and `codex mcp remove` command lines, `CodexRegistryView` reads
   `codex mcp list --json` -- a bare array whose entries carry `transport.command` and
@@ -103,9 +115,14 @@ release body; nothing else depends on it.
   would report no client on a machine that has one. When all four miss, the refusal names all
   four and the command to run by hand.
 
-  ⚠️ **What this is not: no hook, no GUI and no installer path registers with Codex.** Steps 2
-  to 6 of that work are in [`TODO.md`](TODO.md) with the decision behind them, and this entry
-  is deliberate about the gap so that two landed commits are not read as a working feature.
+  ⚠️ **Two defects the real client found before this shipped, each planted red before its
+  fix.** An uninstall ran the client's remove whatever the ownership read had said, and Codex
+  exits 0 on removing a server that is not there -- so every machine with no Codex entry would
+  have been told *Removed 'browserai' from Codex*; an uninstall over nothing now runs nothing and
+  says so, for both clients. And the first project registration asked Codex about a repository
+  before creating its `.codex`: with `CODEX_HOME` at a missing directory every `codex mcp` verb
+  exits 1 and creates nothing, so the reading came back unreadable and the registration was
+  refused. A repository with no `.codex` now reads as having nothing registered.
 
   **Measured first-hand at codex-cli 0.155.0-alpha.9.2**, every call with `CODEX_HOME` forced
   at a scratch directory: the handshake against the published server is **332-342 ms** and
@@ -116,6 +133,18 @@ release body; nothing else depends on it.
   *invalid transport* and writes nothing, because the override creates a partial server table
   the loader rejects. A product that does not write the TOML cannot set that key, and this one
   does not. Re-verification row 148 carries all of it, keyed on the codex-cli version.
+
+- ✨ **The configuration window gives each client its own state line and its own controls.**
+  In the maintainer's words, *"I easy I want separate control over system level registration
+  between codex and claude."* The heading carries both clients in a few words each --
+  `Claude Code: registered   Codex: not registered` -- the body gives each its full sentence,
+  and every link names the client it acts on and no other. **Three affordances are new.** The
+  one register link changes its label with the state -- register, repair, or *register again*,
+  which rewrites an entry that is already correct, the way back after editing your own copy of
+  it. **Remove BrowserAI from this project** appears for a client when a registration of ours is
+  found at or above the folder the window was started in, with no folder picker, because the
+  folder is the one it found. And **Register in a project** exists for Codex as well.
+  `BrowserAI.exe --report` writes one entry per client, schema 3.
 
 - ✨ **A session close now prunes Playwright's own browser registry, and never waits for it.**
   T7, and the reaper it starts is Playwright's own. `playwright-core` writes one JSON descriptor per browser bind
@@ -399,6 +428,42 @@ release body; nothing else depends on it.
   funding it.
 
 ### Changed
+
+- 🔧 **`mcp-registration.json` records one entry per client, and no single outcome for both.**
+  Schema 2. The per-client fields -- `outcome`, `isWhatWasAskedFor`, `client`, `command` and
+  `detail` -- moved into a `clients` array keyed `claude-code` and `codex`, and the top level
+  keeps only what is true of the pass as a whole: when it ran, which intent, which version, and
+  whether everything asked for happened. **There is no top-level `outcome` any more**, because
+  one word for two clients would have to decide which of two different results counts more.
+  Nothing in the product reads the file back; a script that did reads a schema number that says
+  it moved.
+
+- ✅ **The Codex half is held against the real Codex, including what an update needs from it.**
+  Four arms mirror the Claude Code ones under a scratch `CODEX_HOME`: its dialect (a duplicate
+  add and a remove of nothing both exit 0), the whole user-scope round trip through the product's
+  own registrar, a project registration written into the repository and nowhere else, and how the
+  CLI is found. **One arm is the update effect the maintainer asked for** -- *"I want the same
+  update effects to be tested on coded"* -- a BrowserAI registered in Codex the product's way,
+  started by a real `codex app-server`, serving one call, and then gone when the app-server goes,
+  leaving a live marker that is not held, so it does not hold an update. ⚠️ **It was briefed as
+  "exits on stdin EOF" and measurement said otherwise**, 3/3: Codex TERMINATES the server about
+  100 ms after its own stdin EOF, with no end-of-stream line in the server's log. And Codex hands a
+  stdio server an allowlist of exactly 20 environment variables and never `BROWSERAI_ROOT`, which
+  is why that arm passes the variable through Codex's own `--env`
+  ([kb](kb/mcp/protocol.md#what-codex-hands-a-stdio-server-and-how-it-ends-one----measured-2026-09-24),
+  re-verification row 155). The clearance snapshot gained a sixth reading,
+  `~\.codex\config.toml` by length and SHA-256, and HAZARDS gained the row the frozen-tool-list
+  row had named as owed: a Codex thread whose server has gone loses MCP for the rest of that
+  thread.
+
+- ✅ **A published binary built at another commit is refused by name.** The version is derived
+  from the git height, so a commit that touches no input moves it and leaves every file time
+  where it was -- which is how a gate once drove a server one version behind the tree and went
+  red over a refusal sentence that was right. The freshness reading now carries the version
+  baked into the binary and the one the tree derives, a disagreement is `STALE` with both named,
+  and the reconnect arm composes the refusal it expects from the version the server itself
+  announced. It fired on its first live run: *built as 1.1.1-alpha.0.77 and this tree derives
+  1.1.1-alpha.0.78*.
 
 - ✅ **The suite starts both real clients against the published binary, and the rig lists
   first.** Two arms in `ClientReconnectTests` drive the real Claude Code and
@@ -752,6 +817,14 @@ release body; nothing else depends on it.
   copy, not its second.
 
 ### Fixed
+
+- 🐛 **Registering in a project checks whose entry is already there, and rewrites a stale one of ours.**
+  The window's **Register in a project** had no ownership check at all, so it would write over
+  another BrowserAI's entry in somebody's `.mcp.json`; and over an entry of our own it ran
+  `claude mcp add --scope project`, which exits 1 with *already exists*, and reported the file as
+  written while the stale path stayed where it was. Both project verbs now go through the same
+  registrar the installer uses: another install's entry is refused and left alone, and an entry of
+  ours is removed before it is written again.
 
 - 🐛 **The update check has its own timer, so the crash tripwire means what it says again.**
   The maintainer's decision, 2026-09-24, verbatim: *"Wrap the check in its own timer. So all

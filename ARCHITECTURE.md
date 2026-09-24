@@ -175,11 +175,12 @@ costs.
 |---|---|
 | The proxy itself: filters, forwarding, the two methods it serves | `src/BrowserAI/Proxy/{BrowserProxy, ChildConnection, ServerInstructions}.cs` |
 | Entry point, wiring, `--sweep` | `src/BrowserAI/Program.cs` |
-| The configuration app: modes, dialog content, status report | `src/BrowserAI.App/{Program, AppState, ConfigurationDialog, StatusReport}.cs` |
+| The configuration app: modes, dialog content, status report | `src/BrowserAI.App/{Program, AppState, ClientState, ConfigurationDialog, StatusReport}.cs` -- *`ClientState` added 2026-09-24: one client's state and every predicate the window asks of it, one per client, so no link acts on both* |
 | The task dialog, the folder picker and Explorer | `src/BrowserAI.App/Interop/{TaskDialogInterop, ShellInterop}.cs`, `src/BrowserAI.App/Ui/TaskDialogPage.cs` |
 | Reading what a client has been told, and whose it is | `src/BrowserAI.Core/Registration/McpRegistryView.cs` |
 | Telling a console binary from a window one | `src/BrowserAI.Core/Runtime/PeSubsystem.cs` |
 | Registering BrowserAI with the client | `src/BrowserAI.Core/Registration/{McpClientRegistration, RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar, RegistrationRecord, HookRegistration}.cs` |
+| Registering with Codex, and everything that differs between the two clients | `src/BrowserAI.Core/Registration/{RegistrationClient, CodexRegistration, CodexRegistryView}.cs` -- *added 2026-09-24 (Q258). Every per-client difference is a member of `RegistrationClient`; the ownership rule stays in `McpRegistrar`, once, and `McpRegistrar.ApplyToProject` is the one project-scope path for both clients* |
 
 **The protocol version is split deliberately.** `McpServerOptions.ProtocolVersion`
 is `null` upward -- whatever the caller asks for -- while `McpClientOptions.
@@ -273,6 +274,15 @@ properties hold it together: it never registers the execution stub (only
 (*corrected 2026-09-15, previously "beside the install root"* -- that directory is
 emptied by the repair install and the uninstall somebody reads the record after)
 and can never throw into the installer, and it survives an update and a rollback.
+
+**Since 2026-09-24 it is one decision per client, and the ownership rule is still
+one.** Codex is registered through its own `codex mcp add`, which has no scope flag:
+user scope is the default home and project scope is the same command with
+`CODEX_HOME` moved. `RegistrationClient` carries every difference between the two
+clients, `HookRegistration` runs one pass per client with one record entry each, and
+the window's per-client links go through the same `McpRegistrar` the installer uses
+-- including the project verbs, which until that day were a sequence of their own in
+the window with no ownership check at all.
 
 ## Sessions
 
