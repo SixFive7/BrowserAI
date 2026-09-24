@@ -837,6 +837,16 @@ before this and nobody had re-read the number:*
   tree, and different bytes, because ILC does not produce the same binary twice.
   Item 7 is unchanged and still packs the release from its own publish.
 
+  ⚠️ *Corrected 2026-09-25 by addition, Q305 -- the maintainer's words: "Q305 a"
+  (previously, and still above, "the arms install the publish the suite tested, not
+  the release publish").* **The release gate drivers pack the suite's installer from
+  the release publish now**, `build/New-Release.ps1 -TestPackOnly -FromReleasePublish`,
+  out of `artifacts\publish-release`, so the arms install the bytes the release ships.
+  So item 7 comes before item 8 for a second reason: the release gate refuses to pack
+  when that directory is missing or holds another version. The slice arms still drive
+  the publishes under `src\<project>\bin\`, so publish both slices as well. An
+  ordinary gate is unchanged and packs from the dev publishes.
+
 - **The smoke layer ran against a real browser**, not against an empty browsers
   directory that would let the batteries-included premise be silently dead code.
   **Run the suite with `BROWSERAI_RELEASE_RUN=1` set**, which is what makes this

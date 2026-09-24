@@ -132,7 +132,10 @@ release body; nothing else depends on it.
   asserts the per-client registration record a real install writes, and the copy of an installed
   server outside any install is expected to take the general exit, typed and no longer read out
   of the binary. Each change was watched red against a 1.1.0 test pack packed for the purpose, and
-  the mode against the script without it. A pack takes about forty seconds.
+  the mode against the script without it. A pack takes about forty seconds. A release gate packs it
+  from the release publish instead, with `-FromReleasePublish`, so at a cut the arms install the
+  bytes the release ships (Q305, the maintainer's words: *"Q305 a"*); an ordinary gate still packs
+  from the dev publishes, and the driver scan holds both.
 - ✅ **The suite takes `.work\installer.lock` itself, and a gate driver says it already holds it.**
   Q291, the maintainer's words verbatim: *"Q291 a"*. The lock was a convention nothing in the
   tree read, and a run with the installer arms in it was safe only if somebody had taken the

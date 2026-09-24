@@ -145,11 +145,24 @@
     the twin's installer and archive are deleted and only its package and feed
     manifest stay. Never published, never tagged.
 
+.PARAMETER FromReleasePublish
+    With -TestPackOnly only: pack the suite's installer from the release publish,
+    `artifacts\publish-release`, and not from the two dev publishes. Q305, decided
+    2026-09-25 by the maintainer, in his words: "Q305 a". The release gate
+    drivers pass it, so at a cut the real-installer arms install the bytes the
+    release ships; an ordinary gate does not, because it made no release publish.
+    `SuiteCoverageTests.EveryGateDriverPacksTheSuitesInstallerFromTheTreeBeforeItsRun`
+    holds both halves. The version refusal is the same: a release publish whose
+    baked version is not the tree's is refused.
+
 .EXAMPLE
     pwsh -File build/New-Release.ps1
 
 .EXAMPLE
     pwsh -File build/New-Release.ps1 -TestPackOnly
+
+.EXAMPLE
+    pwsh -File build/New-Release.ps1 -TestPackOnly -FromReleasePublish
 #>
 [CmdletBinding()]
 param(
@@ -161,7 +174,8 @@ param(
     [switch] $AllowPreRelease,
     [switch] $SkipPublish,
     [string] $PackVersion,
-    [switch] $TestPackOnly
+    [switch] $TestPackOnly,
+    [switch] $FromReleasePublish
 )
 
 Set-StrictMode -Version Latest
@@ -381,6 +395,11 @@ else {
     }
 }
 
+if ($FromReleasePublish -and -not $TestPackOnly) {
+    Write-Error "-FromReleasePublish chooses where a TEST pack is packed from, and means nothing without -TestPackOnly. A release packs from its own publish already."
+    exit 1
+}
+
 # --- 4/5. Publish, read ILC's raw output, and scan the linked binary -----------
 if (-not $PackDir) {
     $PackDir = Join-Path $root 'artifacts' $(if ($TestPackOnly) { 'publish-test-pack' } else { 'publish-release' })
@@ -396,16 +415,34 @@ if ($TestPackOnly) {
     if (Test-Path -LiteralPath $PackDir) { Remove-Item -LiteralPath $PackDir -Recurse -Force }
     $null = New-Item -ItemType Directory -Force -Path $PackDir
 
-    foreach ($publish in $publishes) {
-        $bin = Join-Path (Split-Path -Parent $publish.Project) 'bin' 'Release'
-        $found = Get-ChildItem -Path $bin -Filter $publish.Exe -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.Directory.Name -eq 'publish' -and $_.Directory.Parent.Name -eq 'win-x64' } |
-            Sort-Object LastWriteTimeUtc -Descending |
-            Select-Object -First 1
+    # ⚠️ A RELEASE GATE PACKS FROM THE RELEASE PUBLISH -- Q305, 2026-09-25, the
+    # maintainer's words: "Q305 a". Item 7 of the release checklist publishes
+    # both projects into artifacts\publish-release, and those are the bytes the
+    # release ships; ILC makes different bytes of one tree on every publish, so a
+    # test pack of the dev publishes would have the real-installer arms install a
+    # build nobody downloads. The same version refusal applies to it below.
+    $releasePublish = Join-Path $root 'artifacts' 'publish-release'
 
-        if (-not $found) {
-            Write-Error "There is no published $($publish.Exe) under $bin. Publish it first: dotnet publish $($publish.Project) -c Release -r win-x64 --self-contained"
-            exit 1
+    foreach ($publish in $publishes) {
+        if ($FromReleasePublish) {
+            $found = Get-Item -LiteralPath (Join-Path $releasePublish $publish.Exe) -ErrorAction SilentlyContinue
+
+            if (-not $found) {
+                Write-Error "There is no $($publish.Exe) in $releasePublish, which a release gate packs the suite's installer from. Publish the release first: pwsh -File build/New-Release.ps1 (release checklist item 7)."
+                exit 1
+            }
+        }
+        else {
+            $bin = Join-Path (Split-Path -Parent $publish.Project) 'bin' 'Release'
+            $found = Get-ChildItem -Path $bin -Filter $publish.Exe -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Directory.Name -eq 'publish' -and $_.Directory.Parent.Name -eq 'win-x64' } |
+                Sort-Object LastWriteTimeUtc -Descending |
+                Select-Object -First 1
+
+            if (-not $found) {
+                Write-Error "There is no published $($publish.Exe) under $bin. Publish it first: dotnet publish $($publish.Project) -c Release -r win-x64 --self-contained"
+                exit 1
+            }
         }
 
         # ⚠️ THE BAKED VERSION MUST BE THE TREE'S, which is the N16 lesson: a

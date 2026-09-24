@@ -62,8 +62,11 @@ echo "installer lock held: $token"
 # Invoke-OrdinaryGate.ps1: New-Release.ps1 -TestPackOnly packs Releases/test-pack
 # from the two publishes this run tests and touches nothing a release is made of.
 # Publish both slices before starting a gate: this reads them and does not make them.
+# FROM THE RELEASE PUBLISH, -FromReleasePublish -- Q305, 2026-09-25, the maintainer's
+# words: "Q305 a". See Invoke-ReleaseGate.ps1: a release gate packs the suite's
+# installer from artifacts/publish-release, the bytes the release ships.
 pack_log=".work/suite/$prefix-testpack.log"
-if ! pwsh -NoProfile -File "$windows\\build\\New-Release.ps1" -TestPackOnly > "$pack_log" 2>&1; then
+if ! pwsh -NoProfile -File "$windows\\build\\New-Release.ps1" -TestPackOnly -FromReleasePublish > "$pack_log" 2>&1; then
   tail -20 "$pack_log"
   echo 'RELEASE-BASH-ABORTED-ON-TEST-PACK'
   exit 1

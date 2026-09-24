@@ -463,6 +463,19 @@ requires every byte of it unchanged; and
 reads all four drivers. A pack takes about forty seconds
 ([kb](kb/packaging/velopack.md#how-long-a-test-pack-takes----measured-2026-09-24)).
 
+⚠️ **A release gate packs it from the release publish -- Q305, decided 2026-09-25 by the
+maintainer, in his words: *"Q305 a"*.** *Added by addition; until that day every driver
+packed from the two dev publishes, so at a cut the real-installer arms installed bytes the
+release does not ship (ILC makes different bytes of one tree on every publish).* The two
+release drivers pass `-FromReleasePublish`, which packs from `artifacts\publish-release`,
+the directory [release checklist item 7](RELEASING.md#7-build-clean) publishes both
+projects into, and refuses one whose baked version is not the tree's. **The two ordinary
+drivers still pack from the dev publishes** and must not pass it: an ordinary gate made no
+release publish. In a release run the `release installer` capability compares the pack
+with the release publish (`ReleaseLayout.PackedBinaries`), and the slice arms still drive
+the dev publishes, so a release gate needs both publishes. The driver scan above holds
+both halves, and was watched red against the two release drivers as they stood.
+
 ### The installer lock is the suite's own
 
 **Q291, decided 2026-09-24 by the maintainer, verbatim: *"Q291 a"*.** *Previously a

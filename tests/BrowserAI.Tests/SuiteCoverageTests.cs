@@ -1568,7 +1568,7 @@ internal sealed partial class SuiteCoverageTests
             var path = Path.Combine(RepositoryLayout.Root.FullName, "build", driver.File);
             var code = CodeOf(await File.ReadAllTextAsync(path), Path.GetExtension(driver.File));
 
-            offences.AddRange(PackOffences(code).Select(offence => $"{driver.File}: {offence}"));
+            offences.AddRange(PackOffences(code, driver.Release).Select(offence => $"{driver.File}: {offence}"));
         }
 
         await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
@@ -1576,17 +1576,37 @@ internal sealed partial class SuiteCoverageTests
         // ⚠️ THE CONTROLS, both directions, through the same reader.
         const string Packed =
             "$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& New-Release.ps1 -TestPackOnly\n& dotnet test x.slnx\n";
+        const string PackedFromTheRelease =
+            "$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& New-Release.ps1 -TestPackOnly -" + FromReleasePublish + "\n& dotnet test x.slnx\n";
 
-        await Assert.That(PackOffences(Packed)).IsEmpty();
-        await Assert.That(PackOffences("& dotnet test x.slnx\n").Count).IsEqualTo(1);
-        await Assert.That(PackOffences("$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& dotnet test x.slnx\n& New-Release.ps1 -TestPackOnly\n").Count).IsEqualTo(1);
-        await Assert.That(PackOffences("& New-Release.ps1 -TestPackOnly\n$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& dotnet test x.slnx\n").Count).IsEqualTo(1);
+        await Assert.That(PackOffences(Packed, release: false)).IsEmpty();
+        await Assert.That(PackOffences("& dotnet test x.slnx\n", release: false).Count).IsEqualTo(1);
+        await Assert.That(PackOffences("$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& dotnet test x.slnx\n& New-Release.ps1 -TestPackOnly\n", release: false).Count).IsEqualTo(1);
+        await Assert.That(PackOffences("& New-Release.ps1 -TestPackOnly\n$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& dotnet test x.slnx\n", release: false).Count).IsEqualTo(1);
+
+        // ⚠️ Q305, both directions: a release half packs from the release
+        // publish and an ordinary half does not.
+        await Assert.That(PackOffences(PackedFromTheRelease, release: true)).IsEmpty();
+        await Assert.That(PackOffences(Packed, release: true).Count).IsEqualTo(1);
+        await Assert.That(PackOffences(PackedFromTheRelease, release: false).Count).IsEqualTo(1);
     }
+
+    /// <summary>The switch that makes a test pack out of the release publish.</summary>
+    private const string FromReleasePublish = "FromReleasePublish";
 
     /// <summary>What is wrong with one driver's test pack.</summary>
     /// <param name="code">The driver, comments blanked.</param>
+    /// <param name="release">Whether the driver is a release half.</param>
     /// <returns>One complaint per fault.</returns>
-    private static List<string> PackOffences(string code)
+    /// <remarks>
+    /// ⚠️ <b>Where a half packs from, since 2026-09-25 -- Q305, decided by the
+    /// maintainer, in his words: <i>"Q305 a"</i>.</b> A release half packs the
+    /// suite's installer from the release publish, <c>artifacts\publish-release</c>,
+    /// with <c>-FromReleasePublish</c>, so the arms install the bytes the release
+    /// ships; an ordinary half packs from the two dev publishes the slice arms
+    /// drive, and must not name the release publish, which it did not make.
+    /// </remarks>
+    private static List<string> PackOffences(string code, bool release)
     {
         var lines = code.Split('\n');
 
@@ -1604,9 +1624,19 @@ internal sealed partial class SuiteCoverageTests
             return ["packs the suite's installer after its first run, which then installed the pack before it"];
         }
 
-        return take < 0 || take > pack
-            ? ["packs the suite's installer before it holds the installer lock, beside whatever else is installing it"]
-            : [];
+        if (take < 0 || take > pack)
+        {
+            return ["packs the suite's installer before it holds the installer lock, beside whatever else is installing it"];
+        }
+
+        var fromRelease = lines[pack].Contains("-" + FromReleasePublish, StringComparison.Ordinal);
+
+        return (release, fromRelease) switch
+        {
+            (true, false) => [$"is a release half and packs the suite's installer from the dev publishes, so the arms install bytes the release does not ship: pass -{FromReleasePublish} (Q305 a)"],
+            (false, true) => [$"is an ordinary half and packs the suite's installer from the release publish, which an ordinary gate did not make: drop -{FromReleasePublish} (Q305 a)"],
+            _ => [],
+        };
     }
 
     /// <summary>What is wrong with one driver's hold on the installer lock.</summary>

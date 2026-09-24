@@ -1159,7 +1159,7 @@ internal sealed class ReleaseScriptTests
 
         await Assert.That(File.Exists(Path.Combine(testPack, $"{ReleaseLayout.TestDownloadId}-installer.exe"))).IsTrue();
         await Assert.That(File.Exists(package)).IsTrue();
-        await Assert.That(ReleaseLayout.MismatchBetween(package, ReleaseLayout.PackedBinaries)).IsNull();
+        await Assert.That(ReleaseLayout.MismatchBetween(package, ReleaseLayout.PackedBinariesFor(fromReleasePublish: false))).IsNull();
 
         // And its twin, under the shipping id, with nothing an installer could run.
         var twin = Path.Combine(testPack, "twin");

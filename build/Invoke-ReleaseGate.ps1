@@ -73,8 +73,15 @@ Write-Host "installer lock held: $token"
 # refuses a pack that is not those bytes. Publish both slices before starting a
 # gate: this reads the publishes and does not make them. Once and not three
 # times, because the three runs test one publish.
+#
+# ⚠️ FROM THE RELEASE PUBLISH, `-FromReleasePublish` -- Q305, 2026-09-25, the
+# maintainer's words: "Q305 a". A release gate follows release checklist item 7,
+# which publishes both projects into artifacts\publish-release; the test pack is
+# packed from those bytes, so the real-installer arms install what the release
+# ships. The slice arms still drive the dev publishes. An ordinary gate packs from
+# the dev publishes and must not pass this.
 $packLog = Join-Path $root '.work' 'suite' "$Prefix-testpack.log"
-& (Join-Path $PSScriptRoot 'New-Release.ps1') -TestPackOnly *> $packLog
+& (Join-Path $PSScriptRoot 'New-Release.ps1') -TestPackOnly -FromReleasePublish *> $packLog
 if ($LASTEXITCODE -ne 0) {
     Get-Content -LiteralPath $packLog -Tail 20 | Write-Host
     & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Release -HolderPid $PID | Out-Null
