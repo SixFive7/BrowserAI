@@ -49,19 +49,21 @@ internal sealed class ServerRegistryReapTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>It is a backlog and not a duration, and it is what makes the
-    /// "the close did not wait" assertion an event read and not a
-    /// stopwatch.</b> Reading this registry is quadratic -- 1,000 entries measured
-    /// at 9,911 ms for <c>list()</c> plus about 6 s of watcher-ready, against a
-    /// close that tears down a Chromium and deletes its profile in a few
-    /// ([kb](../../kb/playwright/tools-and-artifacts.md#every-launched-browser-leaves-a-descriptor-in-localappdatams-playwrightb-and-nothing-reaps-it----measured-2026-09-16))
-    /// -- so the reaper is provably still working when the caller has its answer,
-    /// and no assertion here compares any elapsed time to any number.
+    /// <b>A thousand and not one, because one dead descriptor is collected too
+    /// quickly to tell a working reap from a file that never existed</b> -- and
+    /// because the reap this arm watches has to be recognisably the real one: it
+    /// unlinks a thousand files and spares the one it can connect to, which is
+    /// upstream's predicate and not a coincidence.
     /// </para>
     /// <para>
-    /// <b>It is also what makes the reap worth asserting at all:</b> one dead
-    /// descriptor would be collected too quickly to tell a working reap from a
-    /// file that never existed.
+    /// ⚠️ <b>It is NOT a window for a liveness assertion, and it was that for one
+    /// run.</b> Reading this registry is quadratic -- 1,000 entries measured at
+    /// 10.19 s on this machine
+    /// ([kb](../../kb/playwright/tools-and-artifacts.md#a-session-close-now-starts-upstreams-own-reaper----measured-2026-09-24))
+    /// -- so a reaper over a thousand plants really is still working when the close
+    /// answers, and asserting that from here still failed: at full parallelism the
+    /// test host is starved for seconds and observes the answer after the reaper
+    /// has gone. The ordering that survives is read out of the log.
     /// </para>
     /// </remarks>
     private const int StaleDescriptorsPlanted = 1_000;
@@ -156,13 +158,18 @@ internal sealed class ServerRegistryReapTests
             .IsLessThan(RecordIndex(records, "Session destroyed at"))
             .Because($"the reap should be started during the close and not after it, and the records are:{Environment.NewLine}{records}");
 
-        // ⚠️ AND THE HALF THE LOG CANNOT SHOW: the caller has its answer while
-        // the reaper is still working. This is an event read and not a timing
-        // assertion -- see StaleDescriptorsPlanted for why the window is wide by
-        // construction.
-        await Assert.That(ProcessIdentity.IsAlive(reaperPid, reaperCreated))
-            .IsTrue()
-            .Because("the destroy answered its caller, so it cannot have waited for a reap over a thousand descriptors");
+        // ⚠️ AND WHAT IS DELIBERATELY NOT ASSERTED HERE, because it cannot be
+        // asserted without a clock. *That the reaper was still running when the
+        // destroy answered* was asserted for one run and removed: it holds only
+        // while the test host observes the answer inside the reap's own window,
+        // and at full parallelism this host is starved for seconds -- so the
+        // assertion failed in a full-suite run with the product behaving exactly
+        // as it does here, which is the promptness-assertion-in-disguise the house
+        // rule forbids. What is left is the ordering above, which says the reap is
+        // started INSIDE the close, and the fact that nothing in the product can
+        // wait for it: `ServerRegistryReap.Start` returns void and hands back no
+        // handle, and `JobLauncher.StartDetached` closes the process handle before
+        // it returns.
 
         await Assert.That(ProcessIdentity.WaitUntilGone(reaperPid, reaperCreated, TestDefaults.ProcessHang))
             .IsTrue()

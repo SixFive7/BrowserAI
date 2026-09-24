@@ -85,8 +85,13 @@ internal sealed class PasswordPromptTests
         using var scratch = ScratchDirectory.Create("password-prompt");
         using var site = LoginSite.Start();
 
-        await using var product = await StartAsync(scratch, "product", withArguments: true);
-        await using var control = await StartAsync(scratch, "control", withArguments: false);
+        // ⚠️ DECLARED BEFORE THE CHILDREN, so it is released after them: a
+        // browser whose session guard is unheld is a stray to every sweeper on
+        // this machine. See SessionGuards.
+        using var guards = new SessionGuards();
+
+        await using var product = await StartAsync(scratch, "product", withArguments: true, guards);
+        await using var control = await StartAsync(scratch, "control", withArguments: false, guards);
 
         // ⚠️ THE CONTROL'S CONFIGURATION IS ASSERTED, not assumed. A control
         // that quietly kept the switches would show no window either, and the
@@ -172,7 +177,10 @@ internal sealed class PasswordPromptTests
 
         using var scratch = ScratchDirectory.Create("password-prompt-firefox");
 
-        await using var child = await StartAsync(scratch, "firefox", withArguments: true, ProvisionedBrowsers.Firefox);
+        // Held for the child's life, for the reason SessionGuards gives.
+        using var guards = new SessionGuards();
+
+        await using var child = await StartAsync(scratch, "firefox", withArguments: true, guards, ProvisionedBrowsers.Firefox);
 
         var resolved = await ResolvedConfigAsync(child);
         var prefs = resolved["browser"]?["launchOptions"]?["firefoxUserPrefs"];
@@ -190,14 +198,19 @@ internal sealed class PasswordPromptTests
     /// <param name="label">The session's directory name.</param>
     /// <param name="withArguments">Whether the generated config keeps its Chromium switches.</param>
     /// <param name="browser">The family.</param>
+    /// <param name="guards">
+    /// Where this session's guard is held for the life of the child. It is not
+    /// optional and it is not tidiness: see <see cref="SessionGuards"/>.
+    /// </param>
     /// <returns>A started raw client.</returns>
     private static async Task<RawStdioClient> StartAsync(
         ScratchDirectory scratch,
         string label,
         bool withArguments,
+        SessionGuards guards,
         string browser = ProvisionedBrowsers.Chromium)
     {
-        var session = NewSession(scratch, label, browser);
+        var session = NewSession(scratch, label, browser, guards);
         var config = BrowserConfiguration.ForSession(session, headed: false, browser, tracing: false, RunOptions.Default);
         var configFile = Path.Combine(scratch.Path, $"playwright-mcp-{label}.json");
 
@@ -345,24 +358,86 @@ internal sealed class PasswordPromptTests
         return [];
     }
 
-    /// <summary>A session directory with its lock taken and released.</summary>
+    /// <summary>A session directory whose guard is taken and HELD.</summary>
+    /// <remarks>
+    /// ⚠️ <b>Previously "with its lock taken and released"</b>, and released was
+    /// the defect: see <see cref="SessionGuards"/> for the sweep that then ended
+    /// the browser launched into it, twice in one gate, by pid.
+    /// </remarks>
     /// <param name="scratch">Where it lives.</param>
     /// <param name="label">Its directory name.</param>
     /// <param name="browser">The family the lock records.</param>
+    /// <param name="guards">Where the guard is held until the arm ends.</param>
     /// <returns>The session path.</returns>
-    private static SessionPath NewSession(ScratchDirectory scratch, string label, string browser)
+    private static SessionPath NewSession(ScratchDirectory scratch, string label, string browser, SessionGuards guards)
     {
         var path = SessionPath.For(Path.Combine(scratch.Path, label));
         SessionLayout.Create(path);
 
-        var result = SessionLock.TryAcquire(
-            path,
-            new SessionLockRequest { Browser = browser, Purpose = $"password prompt {label}" },
-            NullLogger.Instance);
+        return guards.Take(path, browser, $"password prompt {label}");
+    }
 
-        result.Acquired?.Dispose();
+    /// <summary>
+    /// The session guards the children of one arm hold, released when the arm
+    /// ends.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THEY HAVE TO BE HELD, and until 2026-09-24 they were taken and
+    /// dropped on the spot -- which made every browser this file launches a STRAY
+    /// by the product's own definition.</b> The stray sweep is machine-wide, and a
+    /// browser under our browsers root becomes a stray exactly when its attributed
+    /// session directory holds a <c>browserai.lock</c> the sweeper can take
+    /// itself. A directory whose guard nobody holds is that.
+    /// </para>
+    /// <para>
+    /// <b>Measured twice in one gate, from the sweep's own record</b>:
+    /// <i>"Terminated a stray browser: pid=119332 image=...chrome.exe
+    /// session=...password-prompt..."</i> -- the same pid the failing arm's own
+    /// Playwright log carried, which then reported <i>"Target page, context or
+    /// browser has been closed"</i>. The product did what it promises; this file
+    /// was handing it a stray.
+    /// </para>
+    /// <para>
+    /// <b>Holding the guard makes the sweep's second condition refuse by
+    /// construction, which no <c>[NotInParallel]</c> key can do</b>: the sweeps
+    /// come from every BrowserAI this suite starts, which is roughly a hundred
+    /// processes, and not from a sibling arm sharing a key.
+    /// </para>
+    /// </remarks>
+    private sealed class SessionGuards : IDisposable
+    {
+        private readonly List<SessionLock> _held = [];
 
-        return path;
+        /// <summary>Takes one session's guard and holds it.</summary>
+        /// <param name="path">The session directory.</param>
+        /// <param name="browser">The family the record names.</param>
+        /// <param name="purpose">What the record says it is for.</param>
+        /// <returns><paramref name="path"/>, so a caller reads as one expression.</returns>
+        public SessionPath Take(SessionPath path, string browser, string purpose)
+        {
+            var taken = SessionLock.TryAcquire(
+                path,
+                new SessionLockRequest { Browser = browser, Purpose = purpose },
+                NullLogger.Instance);
+
+            _held.Add(taken.Acquired
+                ?? throw new InvalidOperationException(
+                    $"the suite could not take the guard on '{path.FullPath}', so a browser launched into it would be a stray: {taken.Message}"));
+
+            return path;
+        }
+
+        /// <summary>Releases every guard, after the children are gone.</summary>
+        public void Dispose()
+        {
+            foreach (var held in _held)
+            {
+                held.Dispose();
+            }
+
+            _held.Clear();
+        }
     }
 
     /// <summary>
