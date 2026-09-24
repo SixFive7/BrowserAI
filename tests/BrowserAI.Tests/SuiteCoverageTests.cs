@@ -1465,6 +1465,192 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(ClearanceOffences(CodeOf("# never claude mcp get\n$f = '.claude.json'; $j = $t | ConvertFrom-Json -AsHashtable", ".ps1"))).IsEmpty();
     }
 
+    /// <summary>
+    /// The clearance compares each client's BrowserAI entry and nothing else in
+    /// that client's file.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q292, decided 2026-09-24 by the maintainer, verbatim: <i>"Q292 a - Same
+    /// for claude code"</i>.</b> The Codex reading hashed the whole of
+    /// <c>~\.codex\config.toml</c>, and the Codex desktop app rewrites that file when
+    /// it starts: a gate spanning a Codex start stopped on a difference that had
+    /// nothing to do with BrowserAI. The rule for both clients is now the entry:
+    /// <c>mcpServers.browserai</c> in <c>~/.claude.json</c>, and the
+    /// <c>[mcp_servers.browserai]</c> table in <c>config.toml</c>.
+    /// </para>
+    /// <para>
+    /// <b>Driven, not read.</b> The script runs for real under a scratch profile --
+    /// <c>USERPROFILE</c> and <c>APPDATA</c> moved for that child alone -- whose two
+    /// files are rewritten around the entry between two snapshots, and then in the
+    /// entry itself. Only the two registration readings are compared, so a real
+    /// Add/Remove key changing under the run cannot redden it. <b>Planted red
+    /// 2026-09-24</b> against the script as it stood, which reported the rewritten
+    /// <c>config.toml</c> as a difference.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheClearanceComparesOnlyEachClientsBrowserAiEntry()
+    {
+        using var profile = ScratchDirectory.Create("clearance-q292");
+
+        var claude = Path.Combine(profile.Path, ".claude.json");
+        var codex = Path.Combine(Directory.CreateDirectory(Path.Combine(profile.Path, ".codex")).FullName, "config.toml");
+
+        // Forward slashes, so the reading can be searched for the text as written:
+        // ConvertTo-Json would double a backslash in the Claude Code half.
+        const string Ours = "C:/x/current/BrowserAI.Server.exe";
+        const string Moved = "C:/y/current/BrowserAI.Server.exe";
+
+        await File.WriteAllTextAsync(claude, ClaudeConfiguration(Ours, other: "one", startups: 1));
+        await File.WriteAllTextAsync(codex, CodexConfiguration(Ours, other: "one", model: "a", appended: false));
+
+        var before = await RegistrationReadingsAsync(profile.Path);
+
+        // The entry is what is read, verbatim, from each file.
+        await Assert.That(before.Count(line => line.Contains(Ours, StringComparison.Ordinal))).IsEqualTo(2);
+
+        // ---- Everything AROUND the entry moves, in both files.
+        await File.WriteAllTextAsync(claude, ClaudeConfiguration(Ours, other: "two", startups: 2));
+        await File.WriteAllTextAsync(codex, CodexConfiguration(Ours, other: "two", model: "b", appended: true));
+
+        var around = await RegistrationReadingsAsync(profile.Path);
+
+        await Assert.That(string.Join("\n", around))
+            .IsEqualTo(string.Join("\n", before))
+            .Because("a client rewriting its own file around the BrowserAI entry is not a change a run made -- Q292 a");
+
+        // ---- THE CONTROL, both clients: the entry itself moving IS a difference.
+        await File.WriteAllTextAsync(codex, CodexConfiguration(Moved, other: "two", model: "b", appended: true));
+
+        var codexMoved = await RegistrationReadingsAsync(profile.Path);
+
+        await Assert.That(string.Join("\n", codexMoved)).IsNotEqualTo(string.Join("\n", around));
+        await Assert.That(codexMoved.Any(line => line.Contains(Moved, StringComparison.Ordinal))).IsTrue();
+
+        await File.WriteAllTextAsync(claude, ClaudeConfiguration(Moved, other: "two", startups: 2));
+
+        var claudeMoved = await RegistrationReadingsAsync(profile.Path);
+
+        await Assert.That(string.Join("\n", claudeMoved)).IsNotEqualTo(string.Join("\n", codexMoved));
+        await Assert.That(claudeMoved.Count(line => line.Contains(Moved, StringComparison.Ordinal))).IsEqualTo(2);
+
+        // ---- And an entry that is not there says so, in each client.
+        await File.WriteAllTextAsync(claude, """{ "mcpServers": { "other": { "command": "c:/other.exe" } } }""");
+        await File.WriteAllTextAsync(codex, "[mcp_servers.other]\ncommand = 'c:/other.exe'\n");
+
+        var absent = await RegistrationReadingsAsync(profile.Path);
+
+        await Assert.That(absent.Count(line => line.Contains("ABSENT", StringComparison.Ordinal))).IsEqualTo(2);
+    }
+
+    /// <summary>A <c>.claude.json</c> carrying a BrowserAI entry among other things.</summary>
+    private static string ClaudeConfiguration(string command, string other, int startups) =>
+        $$"""
+        {
+          "numStartups": {{startups}},
+          "mcpServers": {
+            "other": { "command": "c:/{{other}}.exe", "args": [] },
+            "browserai": { "type": "stdio", "command": {{System.Text.Json.JsonSerializer.Serialize(command)}}, "args": [], "env": {} }
+          },
+          "projects": { "c:/somewhere": { "allowedTools": [ "{{other}}" ] } }
+        }
+        """;
+
+    /// <summary>A <c>config.toml</c> carrying a BrowserAI table among other tables.</summary>
+    private static string CodexConfiguration(string command, string other, string model, bool appended) =>
+        $"model = \"{model}\"\n\n"
+        + $"[mcp_servers.other]\ncommand = 'c:/{other}.exe'\n\n"
+        + $"[mcp_servers.browserai]\ncommand = '{command}'\nargs = []\n\n"
+        + "[mcp_servers.browserai.env]\nK = 'V'\n\n"
+        + "[projects.'c:/somewhere']\ntrust_level = \"trusted\"\n"
+        + (appended ? $"\n[notice]\nhide_{other} = true\n" : string.Empty);
+
+    /// <summary>
+    /// Runs the clearance script against a scratch profile and returns its two
+    /// registration readings and nothing else.
+    /// </summary>
+    /// <param name="profile">The directory the child sees as its profile.</param>
+    /// <returns>The lines of the two readings, in order.</returns>
+    private static async Task<List<string>> RegistrationReadingsAsync(string profile)
+    {
+        var tag = $"suite-q292-{Guid.NewGuid():N}";
+        var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
+
+        var start = new ProcessStartInfo("pwsh")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+
+            // The house rule for every launch in this tree: redirecting the
+            // streams does not suppress the console.
+            CreateNoWindow = true,
+        };
+
+        start.ArgumentList.Add("-NoProfile");
+        start.ArgumentList.Add("-NonInteractive");
+        start.ArgumentList.Add("-File");
+        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"));
+        start.ArgumentList.Add("-Tag");
+        start.ArgumentList.Add(tag);
+
+        // The child's own block, so this process's environment is untouched.
+        start.Environment["USERPROFILE"] = profile;
+        start.Environment["APPDATA"] = Path.Combine(profile, "AppData", "Roaming");
+
+        using (var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the clearance script."))
+        {
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
+            _ = await output;
+            _ = await error;
+        }
+
+        try
+        {
+            return RegistrationReadingsIn(await File.ReadAllLinesAsync(snapshot));
+        }
+        finally
+        {
+            File.Delete(snapshot);
+        }
+    }
+
+    /// <summary>The two registration readings out of a whole snapshot.</summary>
+    /// <remarks>
+    /// <b>Each starts at a line that is not indented and names the client's file,
+    /// and runs through the indented lines under it.</b> The shape the script had
+    /// before Q292 -- one unindented line for Codex carrying the whole file's hash --
+    /// is read by the same rule, which is what let this arm be planted red against it.
+    /// </remarks>
+    /// <param name="lines">The snapshot.</param>
+    /// <returns>The readings' lines.</returns>
+    private static List<string> RegistrationReadingsIn(IEnumerable<string> lines)
+    {
+        var kept = new List<string>();
+        var inside = false;
+
+        foreach (var line in lines)
+        {
+            if (!line.StartsWith(' '))
+            {
+                inside = line.Contains(".claude.json", StringComparison.Ordinal)
+                    || line.Contains("config.toml", StringComparison.Ordinal);
+            }
+
+            if (inside)
+            {
+                kept.Add(line);
+            }
+        }
+
+        return kept;
+    }
+
     /// <summary>What is wrong with a clearance script's registration reading.</summary>
     /// <param name="code">The script, comments blanked.</param>
     /// <returns>One complaint per fault.</returns>

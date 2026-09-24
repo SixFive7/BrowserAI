@@ -106,6 +106,12 @@ release body; nothing else depends on it.
   prove untouched. It parses that file's `browserai` entry read-only now, key by key, and
   `SuiteCoverageTests.TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient` refuses a
   call to the client's MCP verbs in the script; planted red against the script as it stood.
+  **Each client's reading is its BrowserAI entry and nothing else of its file**: Q292, the
+  maintainer's words verbatim, *"Q292 a - Same for claude code"*. The Codex reading hashed the
+  whole `config.toml`, which the Codex desktop app rewrites when it starts; it is the
+  `[mcp_servers.browserai]` entry now, and
+  `SuiteCoverageTests.TheClearanceComparesOnlyEachClientsBrowserAiEntry` drives the script against
+  a scratch profile to hold it, planted red against the whole-file hash.
 - ✅ **The installed app's dialog arm runs on a desktop of its own, so a full run leaves the screen alone.**
   Q279. `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow` creates
   a desktop nobody is looking at, starts the installed app there through `JobLauncher` with

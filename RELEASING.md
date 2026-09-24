@@ -703,7 +703,10 @@ it**. ⚠️ *Added 2026-09-24 by addition, Q281: the snapshot reads the client
 registration by parsing `~/.claude.json` read-only and never starts the client
 to ask -- the maintainer's words verbatim: "Q281 a". Before that day every
 gate ran `claude mcp get`, which can write the file the gate exists to prove
-untouched.* They are two files and not one for the reason
+untouched.* ⚠️ *Added 2026-09-24 by addition, Q292: each client's reading is
+its `browserai` entry and nothing else of its file -- the maintainer's words
+verbatim: "Q292 a - Same for claude code". The Codex reading hashed the whole
+`config.toml`, which the Codex desktop app rewrites when it starts.* They are two files and not one for the reason
 [Testing](TESTING.md#how-the-suite-is-run-detached-teed-and-the-log-polled)
 gives: a shared wrapper would run one instrument twice. Ordinary work uses the
 ordinary pair beside them, which is one run per shell and does **not** set the

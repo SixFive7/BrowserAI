@@ -28,13 +28,22 @@
       4. %TEMP%\velopack_BrowserAI.app -- present means an apply was interrupted.
       5. The Start Menu shortcut, by length and SHA-256, because Velopack names
          it after the pack TITLE and removes shortcuts by target.
-      6. ~\.codex\config.toml, by length and SHA-256 -- ADDED 2026-09-24 with the
-         Codex half of registration. The hooks register with Codex now, and
-         `codex mcp add` has no scope flag: it writes whichever configuration
-         CODEX_HOME names, so a suite arm that forgot to move it writes the
-         maintainer's own. Read as a FILE and not through `codex mcp get`,
-         because the thing that must not change is the file, and the reading has
-         to work on a machine with no CLI on it.
+      6. ~\.codex\config.toml -- ADDED 2026-09-24 with the Codex half of
+         registration. The hooks register with Codex now, and `codex mcp add`
+         has no scope flag: it writes whichever configuration CODEX_HOME names,
+         so a suite arm that forgot to move it writes the maintainer's own. Read
+         as a FILE and not through `codex mcp get`, so the reading works on a
+         machine with no CLI on it.
+         ⚠️ THE ENTRY AND NOT THE FILE since 2026-09-24 -- Q292, the
+         maintainer's words verbatim: "Q292 a - Same for claude code".
+         (Previously "by length and SHA-256".) The Codex desktop app rewrites
+         this file when it starts, so a whole-file hash stopped a gate on a
+         change that was not BrowserAI's. What is compared now is the
+         `[mcp_servers.browserai]` entry, line for line, and reading 3 is the
+         same rule for Claude Code: the `browserai` entry and no other part of
+         ~/.claude.json. `SuiteCoverageTests.
+         TheClearanceComparesOnlyEachClientsBrowserAiEntry` runs this script
+         against a scratch profile and holds both halves.
 
     ⚠️ IT READS AND NEVER REPAIRS. A snapshot that fixed what it found would
     destroy the evidence of the run that broke it. On a difference the gate
@@ -121,12 +130,82 @@ else {
     $out += 'StartMenu BrowserAI.lnk ABSENT'
 }
 
+# 6. The Codex registration: the browserai entry of ~/.codex/config.toml and
+# nothing else in that file (Q292 a). The whole file was hashed until
+# 2026-09-24, and the Codex desktop app rewrites it when it starts, so a gate
+# that spanned a Codex start stopped on a change that was not BrowserAI's.
+# Read as text, every line of the entry verbatim, with the file opened under
+# every sharing mode so a client writing it is neither blocked nor raced:
+#   - a `[mcp_servers.browserai]` table and any `[mcp_servers.browserai.*]` sub-table,
+#     which is the shape `codex mcp add` writes;
+#   - a `browserai` key inside a `[mcp_servers]` table, and a top-level
+#     `mcp_servers.browserai` key, which a person may write by hand.
+# A value that runs over several lines is followed until its brackets close.
 $codex = Join-Path $env:USERPROFILE '.codex\config.toml'
-if (Test-Path $codex) {
-    $out += ('Codex config.toml PRESENT len={0} sha256={1}' -f (Get-Item $codex).Length, (Get-FileHash $codex -Algorithm SHA256).Hash)
+$out += '--- ~/.codex/config.toml [mcp_servers.browserai], read as text ---'
+if (Test-Path -LiteralPath $codex) {
+    try {
+        $stream = [System.IO.File]::Open($codex, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+        try {
+            $reader = New-Object System.IO.StreamReader($stream)
+            $toml = $reader.ReadToEnd()
+        }
+        finally {
+            $stream.Dispose()
+        }
+
+        $name = '(?:browserai|"browserai"|''browserai'')'
+        $entryTable = "^\s*\[\s*mcp_servers\s*\.\s*$name\s*(?:\.[^\]]*)?\]\s*(?:#.*)?$"
+        $serversTable = '^\s*\[\s*mcp_servers\s*\]\s*(?:#.*)?$'
+        $anyTable = '^\s*\['
+        $keyInServers = "^\s*$name\s*[.=]"
+        $keyAtTop = "^\s*mcp_servers\s*\.\s*$name\s*[.=]"
+
+        $table = ''
+        $open = 0
+        $entry = @()
+
+        foreach ($line in ($toml -split "`r?`n")) {
+            if ($open -gt 0) {
+                # Inside a value that began on an earlier line of the entry.
+                $entry += '  ' + $line.Trim()
+                $open += ([regex]::Matches($line, '[\[{]').Count - [regex]::Matches($line, '[\]}]').Count)
+                continue
+            }
+
+            if ($line -match $anyTable) {
+                $table = if ($line -match $entryTable) { 'entry' } elseif ($line -match $serversTable) { 'servers' } else { 'other' }
+                if ($table -eq 'entry') { $entry += '  ' + $line.Trim() }
+                continue
+            }
+
+            $trimmed = $line.Trim()
+            if ($trimmed.Length -eq 0 -or $trimmed.StartsWith('#')) { continue }
+
+            $belongs = ($table -eq 'entry') -or
+                ($table -eq 'servers' -and $line -match $keyInServers) -or
+                ($table -eq '' -and $line -match $keyAtTop)
+
+            if ($belongs) {
+                $entry += '  ' + $trimmed
+                $open = [regex]::Matches($line, '[\[{]').Count - [regex]::Matches($line, '[\]}]').Count
+                if ($open -lt 0) { $open = 0 }
+            }
+        }
+
+        if ($entry.Count -gt 0) {
+            $out += $entry
+        }
+        else {
+            $out += '  browserai ABSENT from config.toml'
+        }
+    }
+    catch {
+        $out += "  UNREADABLE: $($_.Exception.Message)"
+    }
 }
 else {
-    $out += 'Codex config.toml ABSENT'
+    $out += '  ~/.codex/config.toml ABSENT'
 }
 
 $directory = Join-Path $root '.work' 'clearance'
