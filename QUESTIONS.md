@@ -1236,6 +1236,25 @@ which reads the contract, not a literal.
 
 ### 12. The CsWin32 metadata licence -- **MOOT 2026-08-20, and the entry stays**
 
+⚠️ **THE RULE BELOW WAS WITHDRAWN ON 2026-09-24, AND THE QUESTION IS SETTLED THE
+OTHER WAY: GENERATED CODE MAY SHIP.** *Added by addition; nothing below is
+deleted.* The maintainer took Q274 = c, in his words verbatim: *"q274 c be liberal
+with the license interpretation. I really believe it is ok."* So generated code may
+ship, including CsWin32 output generated from Microsoft's Windows metadata and
+C#/WinRT projections, and **the contradiction this entry documents -- the package
+declaring the Windows SDK terms over a file the metadata repository's README calls
+MIT -- is resolved by his liberal reading of it.** That is the maintainer's
+decision; it is not a legal opinion, and this entry still carries none. What stays
+is one obligation: **the first commit that ships generated output from third-party
+metadata adds that metadata's notice to
+[`THIRD-PARTY-NOTICES.txt`](THIRD-PARTY-NOTICES.txt) under the repository's notice
+rules**, and `ForbiddenDependencyTests.AProjectUnderSrcThatReferencesTheCodeGeneratorShipsTheMetadatasNotice`
+holds the CsWin32 half of that by reference. The same day he took **Q273 = b**: the
+toast interop will use .NET's `[GeneratedComInterface]` and `[GeneratedComClass]`.
+The decision of record is the `Generated code` row of [`DECISIONS.md`](DECISIONS.md),
+and everything below this paragraph is the brief as it stood, kept because it is
+what a future reader of the terms still needs.
+
 ⚠️ **SETTLED PERMANENTLY, 2026-08-20, at the maintainer's decision: no generated
 code will ever ship.** That is direction **(a)** below, taken not as a *for now*
 but as a standing rule -- CsWin32 is a test-only tool and nothing it emits enters

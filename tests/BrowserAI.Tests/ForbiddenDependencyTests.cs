@@ -129,61 +129,135 @@ internal sealed class ForbiddenDependencyTests
 
 
     /// <summary>
-    /// The code generator is referenced by no project under <c>src/</c>, which is
-    /// the mechanism behind a standing decision that no generated code ever ships.
+    /// A project under <c>src/</c> that references the code generator ships with
+    /// the notice of every metadata package the generator reads.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>The decision, 2026-08-20.</b> The maintainer ruled that no generated
-    /// code will ever ship -- not as a <i>for now</i> but as a standing rule -- and
-    /// that is what makes the CsWin32 metadata licence question unreachable rather
-    /// than open. The terms are quoted in full in <c>QUESTIONS.md</c> section 12
-    /// and the contradiction they carry is real and unresolved; the only act that
-    /// would engage it has been ruled out. The decision of record is in
-    /// <c>DECISIONS.md</c>.
+    /// ⚠️ <b>Inverted 2026-09-24, when the maintainer withdrew the rule it
+    /// enforced.</b> <i>Previously
+    /// <c>NoProjectUnderSrcReferencesTheCodeGenerator</c>, which refused any
+    /// <c>Include="Microsoft.Windows.CsWin32"</c> under <c>src/</c> because "no
+    /// generated code ships: DECISIONS.md, decided 2026-08-20, and a reference
+    /// under src/ is what reverses it".</i> Q274, his words verbatim: <i>"q274 c be
+    /// liberal with the license interpretation. I really believe it is ok."</i>
+    /// Generated code may ship now, CsWin32 output from Microsoft's Windows
+    /// metadata and C#/WinRT projections included, and the licence contradiction
+    /// <c>QUESTIONS.md</c> section 12 documents is resolved by his reading. The
+    /// decision of record is the <c>Generated code</c> row of <c>DECISIONS.md</c>.
     /// </para>
     /// <para>
-    /// <b>Why the reference is the assertion and not the output.</b> Generated code
-    /// has no distinguishing mark in a compiled binary and no file in the tree, so
-    /// there is nothing downstream to scan. What can be asserted is the one thing
-    /// that has to happen first: the generator has to be referenced by a project
-    /// that ships. <c>PrivateAssets="all"</c> keeps it out of the product's
-    /// closure today, and that attribute is load-bearing, not tidy -- but it is
-    /// only load-bearing where the reference is, so the rule is about WHERE.
+    /// <b>What the decision kept is what this asserts: the first commit that
+    /// ships generated output from third-party metadata carries that metadata's
+    /// notice.</b> <c>THIRD-PARTY-NOTICES.txt</c> ships beside the binary, and
+    /// generated declarations compile into whatever references the generator, so
+    /// a shipping reference with no notice is a redistribution with nothing
+    /// travelling with it. The packages named are the generator's own
+    /// dependencies as the test project's lock file resolves them, read and not
+    /// typed, so a fourth metadata package arriving with a CsWin32 bump joins the
+    /// list by itself.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-09-23</b> by adding the reference to
-    /// <c>src/BrowserAI/BrowserAI.csproj</c> and watching the arm name the file
-    /// and the line; the doctored project was then reverted. The two references
-    /// that must stay are asserted by count, so deleting the layout oracle is a
-    /// red build as well -- it is the only independent check that the seven
-    /// hand-written interop structs match what Windows expects, and the absence of
-    /// a shipped generator is not a reason to lose it.
+    /// <b>Why the reference is still the signal.</b> Generated code has no mark in
+    /// a compiled binary and no file in the tree, so the reference by a shipping
+    /// project remains the one earlier signal there is. <b>C#/WinRT projections
+    /// are not covered here</b>: they arrive through a target framework carrying a
+    /// Windows SDK version or a <c>Microsoft.Windows.CsWinRT</c> reference, and the
+    /// notice that goes with them is a reader's job, which the decision row says.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by adding the generator's reference to
+    /// <c>src/BrowserAI/BrowserAI.csproj</c> as text, with no notice beside it,
+    /// and watching this arm name the project line and each of the three metadata
+    /// packages; the doctored project was reverted before anything built it. The
+    /// layout oracle's two references are still required, so losing the only
+    /// independent check of the seven hand-written interop structs is a red build
+    /// as it was before.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task NoProjectUnderSrcReferencesTheCodeGenerator()
+    public async Task AProjectUnderSrcThatReferencesTheCodeGeneratorShipsTheMetadatasNotice()
     {
-        var references = Mentioning("Microsoft.Windows.CsWin32").ToList();
+        var references = Mentioning(CodeGenerator).ToList();
+        var metadata = MetadataTheGeneratorReads();
+        var notices = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, NoticesFile));
 
-        // THE RULE, and it is stated before its control so that a violation
-        // fails on the sentence that names the offending file instead of on a
-        // count that names a number.
-        await Assert.That(string.Join(
-            Environment.NewLine,
-            references.Where(line => line.StartsWith($"src{Path.DirectorySeparatorChar}", StringComparison.Ordinal))))
+        // THE RULE, stated before its controls so that a violation fails on the
+        // sentence naming the project and the package.
+        await Assert.That(string.Join(Environment.NewLine, MissingNotices(references, metadata, notices)))
             .IsEmpty()
-            .Because("no generated code ships: DECISIONS.md, decided 2026-08-20, and a reference under src/ is what reverses it");
+            .Because("generated output from third-party metadata ships with that metadata's notice: DECISIONS.md, Generated code, decided 2026-09-24");
 
-        // ⚠️ THE CONTROL, because the assertion above is an absence and a scan
-        // that stopped matching would report the tree clean. The generator IS
-        // referenced, in the two places it belongs: the central version, and the
-        // test project that uses it as a layout oracle.
-        await Assert.That(references.Count).IsEqualTo(2);
+        // ⚠️ THE LIST IS READ, SO IT HAS TO BE THERE. An empty read would make
+        // every shipping reference pass, which is the vacuity this arm exists to
+        // refuse.
+        await Assert.That(metadata).Contains("Microsoft.Windows.SDK.Win32Metadata");
+
+        // The oracle stays, and the scan still sees it: the central version and
+        // the test project's layout-oracle reference.
         await Assert.That(references.Any(line => line.StartsWith("Directory.Packages.props", StringComparison.Ordinal))).IsTrue();
         await Assert.That(references.Any(line => line.Contains("BrowserAI.Tests.csproj", StringComparison.Ordinal))).IsTrue();
+
+        // ⚠️ THE CONTROL, in both directions over lines this arm composes: a
+        // shipping reference with no notice is named once per package, the same
+        // reference beside every notice is not, and a test project's reference
+        // is never a shipping one.
+        string[] shipping = [$"src{Path.DirectorySeparatorChar}BrowserAI{Path.DirectorySeparatorChar}BrowserAI.csproj:9: <PackageReference Include=\"{CodeGenerator}\" />"];
+        string[] oracle = [$"tests{Path.DirectorySeparatorChar}BrowserAI.Tests{Path.DirectorySeparatorChar}BrowserAI.Tests.csproj:9: <PackageReference Include=\"{CodeGenerator}\" />"];
+
+        await Assert.That(MissingNotices(shipping, metadata, "no notice here").Count).IsEqualTo(metadata.Count);
+        await Assert.That(MissingNotices(shipping, metadata, string.Join(Environment.NewLine, metadata))).IsEmpty();
+        await Assert.That(MissingNotices(oracle, metadata, "no notice here")).IsEmpty();
     }
+
+    /// <summary>The generator whose output the rule above is about.</summary>
+    private const string CodeGenerator = "Microsoft.Windows.CsWin32";
+
+    /// <summary>The file that travels beside the binary with every notice in it.</summary>
+    private const string NoticesFile = "THIRD-PARTY-NOTICES.txt";
+
+    /// <summary>
+    /// The packages the generator depends on, as the test project's lock file
+    /// resolves them.
+    /// </summary>
+    /// <returns>Their ids, in order.</returns>
+    private static List<string> MetadataTheGeneratorReads()
+    {
+        var lockFile = Path.Combine(RepositoryLayout.Root.FullName, "tests", "BrowserAI.Tests", "packages.lock.json");
+
+        using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(lockFile));
+
+        var found = new SortedSet<string>(StringComparer.Ordinal);
+
+        foreach (var framework in document.RootElement.GetProperty("dependencies").EnumerateObject())
+        {
+            if (framework.Value.TryGetProperty(CodeGenerator, out var generator)
+                && generator.TryGetProperty("dependencies", out var dependencies))
+            {
+                foreach (var dependency in dependencies.EnumerateObject())
+                {
+                    _ = found.Add(dependency.Name);
+                }
+            }
+        }
+
+        return [.. found];
+    }
+
+    /// <summary>One complaint per shipping reference per metadata notice it lacks.</summary>
+    /// <param name="references">What <see cref="Mentioning"/> found for the generator.</param>
+    /// <param name="metadata">The packages the generator reads.</param>
+    /// <param name="notices">The notices file's text.</param>
+    /// <returns>The complaints.</returns>
+    private static List<string> MissingNotices(IEnumerable<string> references, IReadOnlyList<string> metadata, string notices) =>
+    [
+        .. from reference in references
+           where reference.StartsWith($"src{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+           from package in metadata
+           where !notices.Contains(package, StringComparison.Ordinal)
+           select $"{reference} ships generated output and {NoticesFile} does not name {package}, whose metadata that output is generated from",
+    ];
 
     /// <summary>Every build file that declares a package, and where it declares it.</summary>
     /// <remarks>

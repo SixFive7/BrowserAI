@@ -158,6 +158,16 @@
       NOT answered anywhere in this repository"). THE LEGAL QUESTION IS STILL NOT
       ANSWERED AND MUST NOT BE ASSERTED EITHER WAY. What changed is that it is
       now a question for a lawyer and not a research task.
+
+      SETTLED 2026-09-24 BY THE MAINTAINER, ADDED BY ADDITION: generated code
+      may ship, CsWin32 output and C#/WinRT projections included, and the
+      contradiction above is resolved by his liberal reading of the terms (Q274,
+      verbatim: "q274 c be liberal with the license interpretation. I really
+      believe it is ok."). That is his decision, not a legal opinion. The first
+      commit that moves this generator into a project under src/ adds the notice
+      of every metadata package it reads to THIRD-PARTY-NOTICES.txt, and
+      ForbiddenDependencyTests refuses a src/ reference without them. This
+      reference stays test only until somebody needs it in the product.
     -->
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="*" />
 
