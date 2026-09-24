@@ -1828,6 +1828,104 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(lines[header + 1]).IsEqualTo(expected);
     }
 
+    /// <summary>
+    /// The clearance snapshot names a task left behind under the test pack's id, and
+    /// says none once it has gone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q282 a, the maintainer's words verbatim: <i>"Q282 a"</i>.</b> The test
+    /// pack's install hook registers <c>BrowserAI.app.test sign-in &lt;root key&gt;</c>
+    /// in the person's own task scheduler, from a scratch root, in every gate, and the
+    /// uninstall hook removes it; a run that leaves one is a run that did not clean up,
+    /// which is what the clearance's eighth reading exists to say.
+    /// </para>
+    /// <para>
+    /// <b>Driven against the real scheduler with a task this arm registers itself</b>,
+    /// under the test pack's id and a scratch root's key, and removed in a
+    /// <c>finally</c>. The second snapshot, after the removal, is the positive control
+    /// for the first: a reading that could only ever print a name would pass that half.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheClearanceNamesATestPackTaskLeftBehind()
+    {
+        using var root = ScratchDirectory.Create("clearance-task");
+
+        var name = BrowserAI.Registration.SignInTask.NameFor(ReleaseLayout.TestPackId, root.Path);
+        var definition = BrowserAI.Registration.SignInTask.DefinitionFor(
+            Path.Combine(root.Path, "current", "BrowserAI.exe"),
+            BrowserAI.Interop.NamedPipes.CurrentUserSid(),
+            root.Path);
+
+        string left;
+
+        try
+        {
+            var registered = BrowserAI.Registration.ScheduledTasks.Instance.Register(name, definition);
+
+            await Assert.That(registered.Change).IsEqualTo(BrowserAI.Registration.TaskChange.Registered).Because(registered.Detail);
+
+            left = await TaskReadingAsync();
+        }
+        finally
+        {
+            _ = BrowserAI.Registration.ScheduledTasks.Instance.Remove(name);
+        }
+
+        await Assert.That(left).Contains(name);
+        await Assert.That(left).Contains("MUST BE ABSENT");
+
+        var gone = await TaskReadingAsync();
+
+        await Assert.That(gone).DoesNotContain(name);
+    }
+
+    /// <summary>Runs the clearance script and returns its test-pack task line.</summary>
+    /// <returns>The line.</returns>
+    private static async Task<string> TaskReadingAsync()
+    {
+        var tag = $"suite-task-{Guid.NewGuid():N}";
+        var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
+
+        var start = new ProcessStartInfo("pwsh")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+
+        start.ArgumentList.Add("-NoProfile");
+        start.ArgumentList.Add("-NonInteractive");
+        start.ArgumentList.Add("-File");
+        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"));
+        start.ArgumentList.Add("-Tag");
+        start.ArgumentList.Add(tag);
+
+        using (var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the clearance script."))
+        {
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
+            _ = await output;
+            _ = await error;
+        }
+
+        try
+        {
+            var lines = await File.ReadAllLinesAsync(snapshot);
+
+            return lines.Single(line => line.StartsWith($"  {ReleaseLayout.TestPackId} tasks: ", StringComparison.Ordinal));
+        }
+        finally
+        {
+            File.Delete(snapshot);
+        }
+    }
+
     /// <summary>A <c>.claude.json</c> carrying a BrowserAI entry among other things.</summary>
     private static string ClaudeConfiguration(string command, string other, int startups) =>
         $$"""

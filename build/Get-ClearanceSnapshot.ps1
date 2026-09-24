@@ -6,7 +6,7 @@
     Writes the clearance snapshot the gate compares either side of every run.
 
 .DESCRIPTION
-    The suite installs a real pack under a test id, and the seven things below are
+    The suite installs a real pack under a test id, and the eight things below are
     the ones a run must not disturb. They are read before and after each run and
     compared; a difference stops the gate instead of being reported at the end.
 
@@ -53,6 +53,15 @@
          entries that name BrowserAI; `SuiteCoverageTests.
          TheClearanceReadsTheUserPathByteForByte` holds the line against the test
          host's own read.
+
+      8. The Task Scheduler's root folder -- ADDED 2026-09-25 with Q282 a, the
+         maintainer's words verbatim: "Q282 a". The install and update hooks
+         register a per-user logon task named `<pack id> sign-in <root key>` and
+         the uninstall hook removes it, and the test pack runs those hooks from
+         scratch roots in every gate: each `BrowserAI.app sign-in` task by name
+         and the SHA-256 of its stored definition, which must not move, and every
+         `BrowserAI.app.test` task, of which there must be none.
+         `SuiteCoverageTests.TheClearanceNamesATestPackTaskLeftBehind` holds it.
 
     ⚠️ IT READS AND NEVER REPAIRS. A snapshot that fixed what it found would
     destroy the evidence of the run that broke it. On a difference the gate
@@ -236,6 +245,33 @@ if ($environment -and ($environment.GetValueNames() -contains 'Path')) {
 }
 else {
     $out += '  Path ABSENT'
+}
+
+# 8. The per-user logon task (Q282 a). The install and update hooks register one
+# task per install root in the scheduler's root folder, named for the pack id and
+# the root's key, and the uninstall hook removes it; the suite's test pack runs
+# those hooks from scratch roots in every gate. So the real install's task, if
+# there is one, must come out of a run byte-identical, and no task under the test
+# pack's id may be left. Read through the scheduler's own COM object, which only
+# reads here; each task by name and the SHA-256 of the definition it stores.
+$out += '--- Task Scheduler root folder, the sign-in tasks ---'
+try {
+    $scheduler = New-Object -ComObject Schedule.Service
+    $scheduler.Connect()
+    $all = @($scheduler.GetFolder('\').GetTasks(1))
+    $realTasks = @($all | Where-Object { $_.Name -like 'BrowserAI.app sign-in *' } | Sort-Object Name)
+    if ($realTasks.Count -eq 0) {
+        $out += '  BrowserAI.app sign-in: none'
+    }
+    foreach ($task in $realTasks) {
+        $digest = [System.Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::Unicode.GetBytes([string] $task.Xml)))
+        $out += ('  {0} sha256={1}' -f $task.Name, $digest)
+    }
+    $testTasks = @($all | Where-Object { $_.Name -like 'BrowserAI.app.test *' } | Sort-Object Name)
+    $out += '  BrowserAI.app.test tasks: ' + $(if ($testTasks.Count -gt 0) { ($testTasks.Name -join ' | ') + ' <<< MUST BE ABSENT' } else { 'none' })
+}
+catch {
+    $out += "  UNREADABLE: $($_.Exception.Message)"
 }
 
 $directory = Join-Path $root '.work' 'clearance'

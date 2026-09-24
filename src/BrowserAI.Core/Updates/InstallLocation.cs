@@ -111,6 +111,19 @@ internal static class InstallLocation
     /// </remarks>
     public static string? InstalledVersion => Resolved.Value.Version;
 
+    /// <summary>
+    /// The Velopack pack id this install came from, or <see langword="null"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read for one name since 2026-09-25: the per-user logon task's</b>
+    /// (<c>Registration.SignInTask.NameFor</c>), which is named for the pack so that
+    /// the suite's test pack, <c>BrowserAI.app.test</c>, registers a task of its own
+    /// and never the shipping pack's. Inside an installer hook the locator already
+    /// exists, because <c>VelopackApp.Run()</c> creates it before it invokes the
+    /// callback, read at Velopack 1.2.158 (<c>VelopackApp.cs</c>).
+    /// </remarks>
+    public static string? AppId => Resolved.Value.AppId;
+
     private static Located Locate()
     {
         // ⚠️ THE ONE EXCEPTION THAT IS CAUGHT HERE, AND IT IS NOT
@@ -130,14 +143,14 @@ internal static class InstallLocation
             var version = locator.CurrentlyInstalledVersion;
 
             return version is null
-                ? new Located(false, null, null, null)
-                : new Located(true, locator.RootAppDir, locator.Channel, version.ToFullString());
+                ? new Located(false, null, null, null, null)
+                : new Located(true, locator.RootAppDir, locator.Channel, version.ToFullString(), locator.AppId);
         }
         catch (InvalidOperationException)
         {
-            return new Located(false, null, null, null);
+            return new Located(false, null, null, null, null);
         }
     }
 
-    private readonly record struct Located(bool IsInstalled, string? RootAppDir, string? Channel, string? Version);
+    private readonly record struct Located(bool IsInstalled, string? RootAppDir, string? Channel, string? Version, string? AppId);
 }

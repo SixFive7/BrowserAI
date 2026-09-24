@@ -248,9 +248,13 @@ internal static partial class NamedPipes
     }
 
     /// <summary>The current process token's user SID, in its string form.</summary>
+    /// <remarks>
+    /// <b>Two readers since 2026-09-25</b>: every pipe's DACL, and the per-user logon
+    /// task, whose trigger and principal name the installing user by it.
+    /// </remarks>
     /// <returns>A SID such as <c>S-1-5-21-...-1001</c>.</returns>
     /// <exception cref="Win32Exception">The token could not be read.</exception>
-    private static string CurrentUserSid()
+    internal static string CurrentUserSid()
     {
         if (!OpenProcessToken(GetCurrentProcess(), TokenQuery, out var token))
         {

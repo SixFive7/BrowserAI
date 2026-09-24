@@ -26,6 +26,18 @@
 //
 // Adding a name here is cheap; adding one and not asserting on it is how this
 // file becomes a dependency nobody can justify. Every name below is asserted.
+//
+// AND FOUR COM INTERFACES SINCE 2026-09-25, added by addition: the Task
+// Scheduler's ITaskService, ITaskFolder, IRegisteredTask and IRunningTask, which
+// the product declares by hand through [GeneratedComInterface] for the per-user
+// logon task (Q282 a). They are types and not functions, so the rule above holds:
+// nothing here calls them, and InteropLayoutTests reads each one's GUID, its
+// methods' order and their arity by reflection and compares the product's slots
+// with them. VARIANT is NOT here: CsWin32 refuses it in COM interface mode --
+// `error PInvoke003: This API will not be generated. Use object instead of VARIANT
+// when in COM interface mode`, measured 2026-09-25 -- so the hand-written VARIANT's
+// oracle is the framework's own ComVariant, the way OVERLAPPED's is
+// NativeOverlapped.
 
 STARTUPINFOW
 STARTUPINFOEXW
@@ -37,3 +49,7 @@ JOBOBJECT_EXTENDED_LIMIT_INFORMATION
 TASKDIALOGCONFIG
 TASKDIALOG_BUTTON
 TOKEN_USER
+ITaskService
+ITaskFolder
+IRegisteredTask
+IRunningTask

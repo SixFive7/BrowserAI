@@ -283,6 +283,8 @@ internal sealed class UserPathTests
             new FakeClientCommandLine(),
             new LocalAppDataPaths(data),
             store,
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId,
             silent: true,
             ask: _ => false,
             clients: [RegistrationClient.ClaudeCode]).PathEntry;

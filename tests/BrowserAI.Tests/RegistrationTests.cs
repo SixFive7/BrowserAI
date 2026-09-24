@@ -952,7 +952,9 @@ internal sealed class RegistrationTests
             command,
             client,
             new LocalAppDataPaths(data.Path),
-            new ScratchUserPath()).For(RegistrationClient.ClaudeCode.Key);
+            new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId).For(RegistrationClient.ClaudeCode.Key);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Registered);
 
@@ -1030,7 +1032,9 @@ internal sealed class RegistrationTests
             command,
             client,
             new LocalAppDataPaths(data.Path),
-            new ScratchUserPath()).For(RegistrationClient.ClaudeCode.Key);
+            new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId).For(RegistrationClient.ClaudeCode.Key);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
 
@@ -1085,7 +1089,9 @@ internal sealed class RegistrationTests
             command,
             client,
             new LocalAppDataPaths(data.Path),
-            new ScratchUserPath());
+            new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId);
 
         var written = await File.ReadAllTextAsync(Path.Combine(data.Path, RegistrationRecord.FileName));
 
@@ -1151,6 +1157,8 @@ internal sealed class RegistrationTests
             client,
             new LocalAppDataPaths(data.Path),
             new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId,
             clients: [RegistrationClient.ClaudeCode, RegistrationClient.Codex with { Locate = _ => null }]);
 
         await Assert.That(outcome.For(RegistrationClient.ClaudeCode.Key).Status).IsEqualTo(RegistrationStatus.Registered);
@@ -1213,6 +1221,8 @@ internal sealed class RegistrationTests
             new FakeClientCommandLine(),
             paths,
             new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId,
             silent: true,
             ask: _ =>
             {
@@ -1272,6 +1282,8 @@ internal sealed class RegistrationTests
             new FakeClientCommandLine(),
             paths,
             new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId,
             silent: false,
             ask: message =>
             {
@@ -1330,6 +1342,8 @@ internal sealed class RegistrationTests
             new FakeClientCommandLine(),
             paths,
             new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId,
             silent: false,
             ask: _ => true);
 
@@ -1384,6 +1398,8 @@ internal sealed class RegistrationTests
             new FakeClientCommandLine(),
             paths,
             new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId,
             silent: false,
             ask: _ =>
             {
@@ -1435,6 +1451,8 @@ internal sealed class RegistrationTests
             new FakeClientCommandLine(),
             paths,
             new ScratchUserPath(),
+            new ScratchLogonTasks(),
+            ScratchLogonTasks.AppId,
             silent: false,
             ask: _ =>
             {

@@ -96,6 +96,10 @@ internal sealed class InteropLayoutTests
         // out of the second.
         (nameof(NamedPipes), "SecurityAttributes", 24),
         (nameof(NamedPipes), "TokenUser", 16),
+
+        // Added 2026-09-25 with the per-user logon task (Q282 a): the VARIANT the
+        // Task Scheduler's interfaces take by value.
+        (nameof(TaskSchedulerInterop), "Variant", 24),
     ];
 
     /// <summary>
@@ -141,7 +145,8 @@ internal sealed class InteropLayoutTests
     {
         // ⚠️ Corrected 2026-09-24 to 10 (previously 8): NamedPipes brought a
         // second SECURITY_ATTRIBUTES and a TOKEN_USER with the server pipe.
-        await Assert.That(Structs.Length).IsEqualTo(10);
+        // Corrected 2026-09-25 to 11 (previously 10): the Task Scheduler's VARIANT.
+        await Assert.That(Structs.Length).IsEqualTo(11);
 
         foreach (var (owner, nested, _) in Structs)
         {
@@ -247,7 +252,85 @@ internal sealed class InteropLayoutTests
         await Assert.That(SizeOfMetadata("JobObjectExtendedLimitInformation")).IsEqualTo(144);
         await Assert.That(SizeOfMetadata("Overlapped")).IsEqualTo(32);
         await Assert.That(SizeOfMetadata("TokenUser")).IsEqualTo(16);
+        await Assert.That(SizeOfMetadata("Variant")).IsEqualTo(24);
+
+        // VARIANT's value begins after the type and three reserved words.
+        await Assert.That((int)Marshal.OffsetOf(Nested(nameof(TaskSchedulerInterop), "Variant"), "Value")).IsEqualTo(8);
     }
+
+    /// <summary>
+    /// Every hand-written Task Scheduler interface has Microsoft's GUID, begins
+    /// after <c>IDispatch</c>'s four slots, and declares its methods in Microsoft's
+    /// order with Microsoft's arity, as far as it declares them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A vtable slot is a position, and a wrong one runs the wrong function with
+    /// no diagnostic</b>, which is the reason the shell's folder picker was kept off
+    /// COM in 2026-09 (<c>ShellInterop</c>'s remarks). The Task Scheduler's four
+    /// interfaces are declared through <c>[GeneratedComInterface]</c> since
+    /// 2026-09-25 (Q282 a), and this is what stands between a slot and its function:
+    /// CsWin32 generates the same four from Microsoft's metadata into this assembly,
+    /// and their methods are read here in declaration order.
+    /// </para>
+    /// <para>
+    /// <b>Names are compared through the COM convention</b>: a property read is
+    /// <c>get_X</c> in the metadata and <c>GetX</c> in the product, a property write
+    /// <c>set_X</c> and <c>PutX</c>. <b>Arity is the native one</b>: the parameters,
+    /// plus the return value where a method or a property read returns one.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryHandWrittenComInterfaceDeclaresWindowsSlotsInWindowsOrder()
+    {
+        (Type Hand, Type Metadata)[] interfaces =
+        [
+            (typeof(ITaskService), typeof(W.System.TaskScheduler.ITaskService)),
+            (typeof(ITaskFolder), typeof(W.System.TaskScheduler.ITaskFolder)),
+            (typeof(IRegisteredTask), typeof(W.System.TaskScheduler.IRegisteredTask)),
+            (typeof(IRunningTask), typeof(W.System.TaskScheduler.IRunningTask)),
+        ];
+
+        foreach (var (hand, metadata) in interfaces)
+        {
+            await Assert.That(hand.GUID).IsEqualTo(metadata.GUID);
+
+            // After IDispatch: the product derives from the four-slot base, and the
+            // metadata's interface is dual or dispatch.
+            await Assert.That(hand.GetInterfaces()).Contains(typeof(IDispatchSlots));
+            await Assert.That(metadata.GetCustomAttribute<InterfaceTypeAttribute>()!.Value)
+                .IsNotEqualTo(ComInterfaceType.InterfaceIsIUnknown);
+
+            // The generator re-declares the base's four in each derived interface,
+            // after the interface's own; they are the base's slots and not these.
+            var handSlots = Declared(hand)
+                .Where(method => typeof(IDispatchSlots).GetMethod(method.Name) is null)
+                .Select(method => (Slot(method.Name), Arity(method)))
+                .ToList();
+            var metadataSlots = Declared(metadata).Select(method => (Slot(method.Name), Arity(method))).ToList();
+
+            await Assert.That(handSlots.Count).IsGreaterThan(0);
+            await Assert.That(handSlots.Count).IsLessThanOrEqualTo(metadataSlots.Count);
+            await Assert.That(string.Join(", ", handSlots)).IsEqualTo(string.Join(", ", metadataSlots.Take(handSlots.Count)));
+        }
+
+        await Assert.That(typeof(IDispatchSlots).GetMethods().Length).IsEqualTo(4);
+    }
+
+    /// <summary>An interface's own methods, in the order its metadata lists them.</summary>
+    private static IEnumerable<MethodInfo> Declared(Type type) =>
+        type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).OrderBy(method => method.MetadataToken);
+
+    /// <summary>A method's name in the COM convention both sides are compared in.</summary>
+    private static string Slot(string name) =>
+        name.StartsWith("get_", StringComparison.Ordinal) ? "Get" + name[4..]
+        : name.StartsWith("set_", StringComparison.Ordinal) ? "Put" + name[4..]
+        : name;
+
+    /// <summary>How many parameters the native slot takes, return value included.</summary>
+    private static int Arity(MethodInfo method) =>
+        method.GetParameters().Length + (method.ReturnType == typeof(void) ? 0 : 1);
 
     /// <summary>
     /// <c>Affinity</c> sits at the same offset in both definitions.
@@ -325,6 +408,10 @@ internal sealed class InteropLayoutTests
         // thing at the place somebody would otherwise add the name.
         "Overlapped" => sizeof(System.Threading.NativeOverlapped),
         "TokenUser" => sizeof(W.Security.TOKEN_USER),
-        _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the nine."),
+
+        // The second row whose oracle is the framework: CsWin32 will not emit
+        // VARIANT in COM interface mode, and ComVariant is Microsoft's own.
+        "Variant" => sizeof(System.Runtime.InteropServices.Marshalling.ComVariant),
+        _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the ten."),
     };
 }

@@ -4,6 +4,7 @@
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Logging;
+using BrowserAI.Updates;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Registration;
@@ -52,10 +53,15 @@ internal sealed record ClientRegistration(string Key, string DisplayName, Regist
 /// <see langword="null"/> when the hook could not get far enough to know which
 /// folder that is.
 /// </param>
+/// <param name="SignInTask">
+/// What became of the per-user logon task (Q282 a), or <see langword="null"/> when
+/// the hook could not get far enough to know which install it runs in.
+/// </param>
 internal sealed record HookOutcome(
     IReadOnlyList<ClientRegistration> Registrations,
     DataRootDisposalReport? Disposal,
-    UserPathReport? PathEntry = null)
+    UserPathReport? PathEntry = null,
+    SignInTaskReport? SignInTask = null)
 {
     /// <summary>
     /// Whether every client's pass did what was asked of it.
@@ -135,6 +141,8 @@ internal static class HookRegistration
             new ClientCommandLine(),
             new LocalAppDataPaths(LocalAppDataPaths.Overridden()),
             RegistryUserPathStore.User,
+            ScheduledTasks.Instance,
+            InstallLocation.AppId,
             DataRootDisposal.IsSilent(ProcessLiveness.ParentCommandLine()),
             message => UserPrompt.AskYesNo(DataRootDisposal.PromptTitle, message));
 
@@ -155,6 +163,16 @@ internal static class HookRegistration
     /// install's folder on and the uninstall hook takes it off (Q294 b).
     /// <b>Required, not defaulted</b>, for the reason <paramref name="paths"/> is:
     /// a test that forgot it would write the developer's own PATH.
+    /// </param>
+    /// <param name="tasks">
+    /// The task scheduler, where the install and update hooks register the per-user
+    /// logon task and the uninstall hook removes it (Q282 a). <b>Required, not
+    /// defaulted</b>, for the same reason: a test that forgot it would register a
+    /// task in the developer's own scheduler.
+    /// </param>
+    /// <param name="appId">
+    /// The pack id the task is named for; the hook passes the locator's, and the
+    /// suite the test pack's.
     /// </param>
     /// <param name="silent">
     /// Whether the uninstall that started this hook was unattended. Ignored by
@@ -189,6 +207,8 @@ internal static class HookRegistration
         IRegistrationCommand commands,
         IAppPaths paths,
         IUserPathStore userPath,
+        ILogonTasks tasks,
+        string? appId,
         bool silent = true,
         Func<string, bool>? ask = null,
         IReadOnlyList<RegistrationClient>? clients = null)
@@ -196,6 +216,7 @@ internal static class HookRegistration
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(paths);
         ArgumentNullException.ThrowIfNull(userPath);
+        ArgumentNullException.ThrowIfNull(tasks);
 
         var who = clients ?? RegistrationClient.All;
 
@@ -204,6 +225,7 @@ internal static class HookRegistration
             var passes = new List<ClientRegistration>(who.Count);
             DataRootDisposalReport? disposal = null;
             UserPathReport? pathEntry = null;
+            SignInTaskReport? signIn = null;
 
             // The log's own scope, closed before anything is deleted: the file is
             // inside the data root, and a handle this process still holds would
@@ -240,6 +262,16 @@ internal static class HookRegistration
                 // may wait for a human.
                 pathEntry = ChangeThePath(intent, imagePath, userPath, logger);
 
+                // ⚠️ THE PER-USER LOGON TASK -- Q282 a, 2026-09-25. The install and
+                // update hooks register one task per install root, named for the
+                // pack id and the root, and the uninstall hook removes it. After the
+                // PATH for the same reason the PATH is after the record: a failure
+                // here costs this step its own sentence and nothing before it, and
+                // SignInTask.Apply never throws.
+                signIn = RegistrationTarget.TryResolve(imagePath, out var target, out _)
+                    ? SignInTask.Apply(intent, target!, appId, tasks, logger)
+                    : null;
+
                 // ⚠️ LAST, AND ONLY ON AN UNINSTALL. It is the only part of a
                 // hook that may wait for a human, so everything an uninstall must
                 // not skip is already on disk above it: a hook killed at its
@@ -252,7 +284,7 @@ internal static class HookRegistration
                 }
             }
 
-            return new HookOutcome(passes, disposal is null ? null : DataRootDisposal.Remove(disposal), pathEntry);
+            return new HookOutcome(passes, disposal is null ? null : DataRootDisposal.Remove(disposal), pathEntry, signIn);
         }
 #pragma warning disable CA1031 // The outermost boundary of a fast-exit callback. Nothing may escape into the installer, including a failure to open a log.
         catch (Exception failure)

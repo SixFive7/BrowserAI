@@ -308,9 +308,27 @@ internal static class VelopackStartup
     /// installer's own log, which is the file somebody debugging a failed install
     /// opens first and the only one that exists before BrowserAI has ever run.
     /// </remarks>
-    public static void Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
+    public static void Register(RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log) =>
+        Mirror(HookRegistration.Run(intent, version), intent, version, log);
+
+    /// <summary>
+    /// Writes what one hook did into the installer's own log, one line per thing it
+    /// changed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Split out of <see cref="Register"/> on 2026-09-25</b>, so the suite can hand
+    /// it an outcome the real hook produced nowhere near a test: a sign-in task that
+    /// could not be registered, which must reach this log as a warning and must not
+    /// fail the hook.
+    /// </remarks>
+    /// <param name="outcome">What the hook did.</param>
+    /// <param name="intent">Which hook it was.</param>
+    /// <param name="version">The version Velopack passed the callback.</param>
+    /// <param name="log">Velopack's logger, which reaches the installer's log file.</param>
+    internal static void Mirror(HookOutcome outcome, RegistrationIntent intent, string version, Action<VelopackLogLevel, string, Exception?> log)
     {
-        var outcome = HookRegistration.Run(intent, version);
+        ArgumentNullException.ThrowIfNull(outcome);
+        ArgumentNullException.ThrowIfNull(log);
 
         // ⚠️ ONE LINE PER CLIENT SINCE 2026-09-24, and the client is NAMED in
         // each. A hook registers with every client now, and a single line
@@ -332,6 +350,17 @@ internal static class VelopackStartup
             log(
                 pathEntry.Change is UserPathChange.Failed ? VelopackLogLevel.Warning : VelopackLogLevel.Information,
                 $"BrowserAI {version} -- user PATH ({intent}): {pathEntry.Change}. {pathEntry.Detail}",
+                null);
+        }
+
+        // The per-user logon task (Q282 a), in the installer's own log as well:
+        // a registration that failed never fails the hook, so this line is where
+        // somebody finds out that the sign-in step will not run.
+        if (outcome.SignInTask is { } task)
+        {
+            log(
+                task.Change is Registration.TaskChange.Failed ? VelopackLogLevel.Warning : VelopackLogLevel.Information,
+                $"BrowserAI {version} -- sign-in task ({intent}): {task.Change}. {task.Detail}",
                 null);
         }
 

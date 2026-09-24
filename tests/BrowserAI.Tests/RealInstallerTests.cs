@@ -557,6 +557,7 @@ internal sealed partial class RealInstallerTests
         var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
         var startMenuBefore = ReadStartMenuShortcuts();
         var pathBefore = RegistryUserPathStore.User.Read();
+        var realTaskBefore = ScheduledTasks.DefinitionOf(RealSignInTask);
 
         try
         {
@@ -579,7 +580,18 @@ internal sealed partial class RealInstallerTests
 
         // And so is the user's PATH, after four installs and four uninstalls.
         await Assert.That(RegistryUserPathStore.User.Read()).IsEqualTo(pathBefore);
+
+        // And the real install's sign-in task, whether or not there is one.
+        await Assert.That(ScheduledTasks.DefinitionOf(RealSignInTask)).IsEqualTo(realTaskBefore);
     }
+
+    /// <summary>
+    /// The real install's sign-in task: the shipping pack id and the default install
+    /// root, which is where a person's BrowserAI is.
+    /// </summary>
+    private static string RealSignInTask { get; } = SignInTask.NameFor(
+        ReleaseLayout.PackId,
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ReleaseLayout.PackId));
 
     /// <summary>One order of the two-roots measurement.</summary>
     /// <param name="setup">The test-id installer.</param>
@@ -615,6 +627,12 @@ internal sealed partial class RealInstallerTests
         await Assert.That(PathEntriesNaming(firstEntry)).IsEqualTo(1);
         await Assert.That(PathEntriesNaming(secondEntry)).IsEqualTo(1);
 
+        // ⚠️ AND EACH ROOT REGISTERED ITS OWN SIGN-IN TASK -- Q282 a -- named for the
+        // test pack's id and that root's key, starting that root's app with the
+        // sign-in argument. The uninstalls below take each off with its root.
+        await Assert.That(SignInCommandOf(first)).IsEqualTo(Path.Combine(first, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
+        await Assert.That(SignInCommandOf(second)).IsEqualTo(Path.Combine(second, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName));
+
         var (goesFirst, staysBehind) = uninstallTheNamedRootFirst ? (second, first) : (first, second);
 
         await Assert.That(await RunAsync(Path.Combine(goesFirst, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
@@ -629,11 +647,44 @@ internal sealed partial class RealInstallerTests
         await Assert.That(PathEntriesNaming(Path.Combine(goesFirst, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(0);
         await Assert.That(PathEntriesNaming(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(1);
 
+        // So did the scheduler: the uninstalled root's task is gone, the other's stays.
+        await Assert.That(SignInCommandOf(goesFirst)).IsNull();
+        await Assert.That(SignInCommandOf(staysBehind)).IsNotNull();
+
         // And the root left behind still uninstalls cleanly, finding no key.
         await Assert.That(await RunAsync(Path.Combine(staysBehind, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
         await WaitOutTheDeferredRemoval(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName));
         await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
         await Assert.That(PathEntriesNaming(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(0);
+        await Assert.That(SignInCommandOf(staysBehind)).IsNull();
+    }
+
+    /// <summary>
+    /// The command the test pack's sign-in task for one root starts, read back from
+    /// the scheduler, or <see langword="null"/> when there is no such task.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read from what the scheduler stored</b>, so it is the installed hook's
+    /// registration that is asserted and not the product's composition of it. The
+    /// arguments are held to <c>--sign-in $(Arg0)</c> here too, since a command
+    /// alone would pass a task that starts the window.
+    /// </remarks>
+    /// <param name="installRoot">The scratch root the test pack was installed into.</param>
+    /// <returns>The command, or <see langword="null"/>.</returns>
+    private static string? SignInCommandOf(string installRoot)
+    {
+        if (ScheduledTasks.DefinitionOf(SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot)) is not { } xml)
+        {
+            return null;
+        }
+
+        var task = System.Xml.Linq.XDocument.Parse(xml);
+        var exec = task.Descendants().Single(element => element.Name.LocalName == "Exec");
+        var arguments = exec.Elements().Single(element => element.Name.LocalName == "Arguments").Value;
+
+        return arguments == SignInTask.Arguments
+            ? exec.Elements().Single(element => element.Name.LocalName == "Command").Value
+            : $"<a task whose arguments are '{arguments}'>";
     }
 
     /// <summary>
@@ -976,6 +1027,13 @@ internal sealed partial class RealInstallerTests
         // nobody else's; the product's own remover is the one used, so a real
         // install's entry is out of its reach for the reason it is out of the hooks'.
         _ = UserPath.Remove(RegistryUserPathStore.User, Path.Combine(installRoot, RegistrationTarget.CurrentDirectoryName));
+
+        // ⚠️ THE SCRATCH ROOT'S OWN SIGN-IN TASK, BY ITS NAME -- Q282 a. The test
+        // pack's install hook registers `BrowserAI.app.test sign-in <this root's
+        // key>`, and an arm that died before its uninstall would leave it in the
+        // person's scheduler. The name is this root's under the test id and can be
+        // nobody else's.
+        _ = ScheduledTasks.Instance.Remove(SignInTask.NameFor(ReleaseLayout.TestPackId, installRoot));
 
         try
         {
