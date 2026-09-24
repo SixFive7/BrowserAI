@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Logging;
 using BrowserAI.Proxy;
@@ -200,6 +201,44 @@ internal sealed class SessionManager : IAsyncDisposable
         + "to flush, and measurement says recent cookie and localStorage writes may be gone, while IndexedDB and CacheStorage survive. "
         + "Read any stored value back before you rely on it. Nothing that lived in the old process survived it either: no page is open, "
         + "there are no tabs, and anything a previous call left on a page is gone. Navigate again before you act on what you see.";
+
+    /// <summary>
+    /// The courtesy line a session gets when the BrowserAI serving it now is not
+    /// the one that last wrote its record.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q261 (b), settled 2026-09-24, and it is a NOTE and never a
+    /// refusal.</b> Nothing about a session written by an older build is wrong:
+    /// the directory, the profile and the log are the same files, every one of
+    /// them is forward-compatible by construction, and the session resumes and
+    /// answers exactly as it would have. What has changed is the thing a model
+    /// cannot see -- the tool surface it is calling from may have been read from
+    /// the older build -- so this says which two versions are in play and leaves
+    /// the decision where it belongs.
+    /// </para>
+    /// <para>
+    /// <b>Spelled once and used twice</b>, by <c>browserai_resume</c> and by
+    /// <c>browserai_catch_up</c>, which are the two tools an agent arriving at a
+    /// session it did not open calls. It is deliberately NOT on a forwarded
+    /// browser call: a note on every call is a note nobody reads, and by then the
+    /// session is this process's and the record carries this build.
+    /// </para>
+    /// <para>
+    /// <b>The stamp it compares against is the record's own</b>
+    /// <c>browserAiVersion</c> statement, which <c>SessionLock.Compose</c> writes
+    /// at every acquisition and dedups, so a directory carries one row per build
+    /// that has ever held it and <see cref="HowItGotHere"/> prints the whole chain
+    /// beneath this line once there is more than one.
+    /// </para>
+    /// </remarks>
+    /// <param name="recorded">The version the record's newest statement names.</param>
+    /// <returns>The note, without its <c>NOTE: </c> prefix.</returns>
+    public static string ServedByADifferentVersion(string recorded) =>
+        $"this session's record was last written by BrowserAI {recorded} and the BrowserAI serving you now is {BuildVersion.Current}. "
+        + "Nothing is wrong and nothing needs repairing -- the directory, the profile and the log are unchanged and this session works normally. "
+        + "What may be stale is the TOOL LIST you are calling from: if you have not asked this server for its tools since it started, ask now, "
+        + "because a tool name can have been added, removed or renamed between those two versions and a call to a name that has gone reads as your mistake rather than as a moved surface.";
 
     /// <summary>
     /// One line per item up to <see cref="SurvivorsNamed"/>, and a sentence
@@ -833,6 +872,23 @@ internal sealed class SessionManager : IAsyncDisposable
                 notes.Add(spelling);
             }
 
+            // ⚠️ READ FROM THE RECORD ON DISK AND NOT FROM THE OPENED SESSION,
+            // WHICH IS THE WHOLE ORDERING. `OpenAsync` below re-acquires the
+            // directory, and acquisition stamps this build's version -- so by the
+            // time `Describe` reads `session.Lock.Record` the two agree and there
+            // is nothing left to notice. The comparison has to happen here, and
+            // the note travels down as a note.
+            //
+            // A record carrying NO version statement is not this note: the field
+            // has been written at every acquisition since it existed, so an empty
+            // one means a build that predates the field, and "was last written by
+            // BrowserAI " is not a sentence.
+            if (record.BrowserAiVersion is { Length: > 0 } stamped
+                && !string.Equals(stamped, BuildVersion.Current, StringComparison.Ordinal))
+            {
+                notes.Add(ServedByADifferentVersion(stamped));
+            }
+
             // The directory is the identity; the path in browserai.data is provenance. A
             // move leaves nothing behind and a copy leaves the original standing, so
             // the recorded path already discriminates and no fingerprint field is
@@ -1029,6 +1085,17 @@ internal sealed class SessionManager : IAsyncDisposable
                 .Append("  last touched: ").Append(Stamp(record.LastUsed)).Append("   (").Append(Age(now - record.LastUsed)).Append(" ago)\n")
                 .Append("  ").Append(InUse(location)).Append('\n')
                 .Append("  ").Append(SessionErrors.Recorded(record.Purpose)).Append('\n');
+
+            // Q261 (b). On page 1 only, with the rest of the header: it is a fact
+            // about the SERVER and not about the page being fetched, and repeating
+            // it on every page of a long log would be a line nobody reads. This
+            // tool writes nothing, so nothing here stamps the record -- the note
+            // is the whole of what a read can do.
+            if (record.BrowserAiVersion is { Length: > 0 } stamped
+                && !string.Equals(stamped, BuildVersion.Current, StringComparison.Ordinal))
+            {
+                _ = text.Append("  NOTE: ").Append(ServedByADifferentVersion(stamped)).Append('\n');
+            }
         }
 
         _ = text.Append('\n')

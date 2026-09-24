@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
+using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 
 namespace BrowserAI.Sessions;
@@ -65,6 +66,78 @@ internal static class SessionErrors
     /// from the record did not touch it.
     /// </remarks>
     public const int ReplayedPurposeLength = 300;
+
+    /// <summary>
+    /// Row 0 -- the first <c>tools/call</c> of a connection that never asked for
+    /// a tool list, refused once so the list can be refreshed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is the only row here about the CONNECTION and not about a session</b>,
+    /// and the condition is one a client produces and a model cannot see: the
+    /// tool list the model is calling from was read from a <i>different</i>
+    /// BrowserAI. Measured 2026-09-24 @ Claude Code 2.1.281, 3/3: a client whose
+    /// stdio server has exited re-launches it transparently on the next tool call
+    /// and sends <c>initialize</c> and <c>tools/call</c> and <b>no</b>
+    /// <c>tools/list</c>, so a surface that moved across the restart is invisible
+    /// and a tool that has gone answers the model with an error it reads as its
+    /// own mistake.
+    /// </para>
+    /// <para>
+    /// <b>The remedy is per client because the recovery genuinely differs</b>, and
+    /// each half is measured rather than assumed. Claude Code honours
+    /// <c>notifications/tools/list_changed</c> -- 3/3, with the client's own debug
+    /// line <i>"Received tools/list_changed notification, refreshing tools"</i> --
+    /// so its remedy is <i>retry</i>, and the notification has already gone out
+    /// with this refusal. Codex ignores that notification -- 3/3, one line in its
+    /// own tracing log and nothing else -- and takes its list at first connect, so
+    /// its remedy is <i>a new thread</i>, which lists fresh. A client this build
+    /// has never met is told to ask for the list, which is the only advice that is
+    /// true of every client.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>It fires ONCE per connection and is never a wall.</b> A second call
+    /// with no list behind it is forwarded normally. That is deliberate: refusing
+    /// until a list arrives turns a working session into a failing one for as long
+    /// as the model does not happen to list, which is the direction this decision
+    /// explicitly did not take -- and a first connect lists before it calls, so an
+    /// ordinary session never meets this at all.
+    /// </para>
+    /// <para>
+    /// <b>It says nothing was forwarded, because nothing was.</b> The refusal is
+    /// made before the session is resolved, so there is no browser state to
+    /// reason about and the retry the sentence recommends is safe.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool the call named, whatever the caller said.</param>
+    /// <param name="version">The version of the BrowserAI that is actually serving the connection.</param>
+    /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
+    /// <returns>The refusal.</returns>
+    public static string ToolListPredatesThisServer(string tool, string version, string? clientName) =>
+        $"'{tool}' was NOT forwarded, once, because this connection has never asked BrowserAI for its tool list. "
+        + $"The BrowserAI serving you is version {version}, and it started after the tool list you are calling from was read -- so that list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. "
+        + $"{Remedy(clientName)} "
+        + "Nothing reached a browser, no session was opened or changed, and this is said once per connection: if you call again without a list, the call is forwarded normally.";
+
+    /// <summary>
+    /// What to do about a tool list that predates the running server, spelled for
+    /// the client at the other end.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not a public row, deliberately.</b> There is one condition and one
+    /// refusal; this is the recovery clause inside it, and three rows would be
+    /// three sentences to keep in step about one state -- the shape
+    /// <see cref="BrowsersAreBeingReinstalled"/>'s own note argues against. The
+    /// names are <see cref="KnownClients"/>' and were read off the wire.
+    /// </remarks>
+    /// <param name="clientName">What the client called itself.</param>
+    /// <returns>One sentence naming the fix.</returns>
+    private static string Remedy(string? clientName) =>
+        KnownClients.Matches(clientName, KnownClients.ClaudeCode)
+            ? "BrowserAI has just sent your client a tools/list_changed notification and your client refreshes its tool list on that notification, so RETRY this call: the names you have will be the names this server has."
+            : KnownClients.Matches(clientName, KnownClients.Codex)
+                ? "Your client takes its tool list once per thread and does not act on the tools/list_changed notification BrowserAI has just sent, so START A NEW THREAD: a new one lists fresh and every name in it is this server's. Until then, treat any missing tool as gone rather than as a mistake of yours."
+                : "Ask BrowserAI for its tool list before calling again -- BrowserAI has also sent a tools/list_changed notification, in case your client acts on one -- and call from the list that comes back rather than from the one you are holding.";
 
     /// <summary>Row 1 -- the call named no session.</summary>
     /// <param name="tool">The tool that was called.</param>

@@ -139,14 +139,19 @@ internal sealed class RawPipeClient : IAsyncDisposable
 
     /// <summary>Performs the <c>initialize</c> handshake.</summary>
     /// <param name="protocolVersion">The revision to offer.</param>
+    /// <param name="clientName">
+    /// What to call itself in <c>clientInfo.name</c>, for the arms that are about
+    /// what the server says to a particular client. Defaults to this client's own
+    /// name, which is deliberately not any real client's.
+    /// </param>
     /// <returns>The <c>initialize</c> result.</returns>
-    public async Task<JsonObject> InitializeAsync(string protocolVersion)
+    public async Task<JsonObject> InitializeAsync(string protocolVersion, string? clientName = null)
     {
         var result = await RoundTripAsync("initialize", new JsonObject
         {
             ["protocolVersion"] = protocolVersion,
             ["capabilities"] = new JsonObject(),
-            ["clientInfo"] = new JsonObject { ["name"] = "BrowserAI.RawPipeClient", ["version"] = "1" },
+            ["clientInfo"] = new JsonObject { ["name"] = clientName ?? "BrowserAI.RawPipeClient", ["version"] = "1" },
         });
 
         await NotifyAsync("notifications/initialized");

@@ -82,6 +82,36 @@ internal sealed class BrowserProxy : IAsyncDisposable
     private McpServer? _caller;
     private int _disposed;
 
+    /// <summary>
+    /// Whether this connection has asked for a tool list since its handshake.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A field and not a dictionary, because a stdio server has exactly one
+    /// connection.</b> One process, one pipe pair, one client -- which is the same
+    /// premise <see cref="_caller"/> already rests on. It is reset on
+    /// <c>initialize</c> rather than only at construction, so *since the
+    /// handshake* is literally what it means and a second handshake on the same
+    /// transport starts the question again.
+    /// </para>
+    /// <para>
+    /// <b>Set on ARRIVAL and not on a successful answer.</b> The question is
+    /// whether the client asked, not whether the child managed to reply: a
+    /// <c>tools/list</c> the run's own child failed to answer still tells us the
+    /// client is not working from a list it inherited from a dead server.
+    /// </para>
+    /// </remarks>
+    private int _toolsListed;
+
+    /// <summary>Whether the one stale-list refusal has already been made.</summary>
+    /// <remarks>
+    /// <b>Once per connection, and the second call is forwarded.</b> Refusing
+    /// every call until a list arrives is the direction Q261 explicitly did not
+    /// take -- it turns a working session into a failing one for as long as the
+    /// model does not happen to list.
+    /// </remarks>
+    private int _staleListRefused;
+
     private BrowserProxy(ChildConnection surface, SessionManager sessions, ToolVerdicts verdicts, ILogger logger)
     {
         _surface = surface;
@@ -354,11 +384,25 @@ internal sealed class BrowserProxy : IAsyncDisposable
         {
             switch (request.Method)
             {
+                case RequestMethods.Initialize:
+                    // ⚠️ NOT a `return`: the SDK owns the handshake and this only
+                    // resets what "since the handshake" is counted from, so the
+                    // frame has to go on to `next`.
+                    Volatile.Write(ref _toolsListed, 0);
+                    Volatile.Write(ref _staleListRefused, 0);
+                    break;
+
                 case RequestMethods.ToolsList:
+                    Volatile.Write(ref _toolsListed, 1);
                     await AnswerToolsListAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
                     return;
 
                 case RequestMethods.ToolsCall:
+                    if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
+                    {
+                        return;
+                    }
+
                     await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
                     return;
 
@@ -368,6 +412,86 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
 
         await next(context, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Refuses the first <c>tools/call</c> of a connection that has never asked
+    /// for a tool list, and sends the list-changed notification with it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q261, settled 2026-09-24 in the maintainer's words: <i>"Q261 b"</i>.</b>
+    /// The condition this answers is one nothing on the wire otherwise reports.
+    /// Measured 2026-09-24 @ Claude Code 2.1.281, 3/3: a client whose stdio server
+    /// has exited re-launches it transparently on the next tool call and sends
+    /// <c>initialize</c> and <c>tools/call</c> and <b>no</b> <c>tools/list</c> --
+    /// so after an update the model goes on calling the surface of a server that
+    /// no longer exists, and a tool that was renamed or removed answers it with an
+    /// error it reads as its own mistake.
+    /// </para>
+    /// <para>
+    /// <b>The notification goes out BEFORE the refusal, and the ordering is the
+    /// useful half.</b> Both are frames on one pipe, so the client sees the
+    /// notification first and can already be refreshing while the model reads the
+    /// sentence telling it to retry. Sent the other way round, a model that acts
+    /// immediately retries against the list it still has.
+    /// </para>
+    /// <para>
+    /// <b>Three directions were dropped and the reasons are in
+    /// <see cref="SessionErrors.ToolListPredatesThisServer"/>.</b> The
+    /// notification alone moves Claude Code and is ignored by Codex; refusing
+    /// every call until a list arrives is a wall; accepting the mismatch rests on
+    /// a model re-tooling after an error, which it does in practice and which is
+    /// not a mechanism.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The tool name is read leniently here and kind-checked later.</b> This
+    /// runs in front of <see cref="AnswerToolsCallAsync"/>'s
+    /// <see cref="Text(JsonObject?, string)"/>, so a <c>name</c> that arrived as a
+    /// number must not throw out of this method -- it has its own named refusal
+    /// one step further on, and pre-empting it with an exception would replace a
+    /// sentence the caller can act on with a bare <c>-32603</c>.
+    /// </para>
+    /// </remarks>
+    /// <param name="caller">The connection to answer.</param>
+    /// <param name="request">The <c>tools/call</c> that arrived.</param>
+    /// <param name="cancellationToken">The caller's token.</param>
+    /// <returns><see langword="true"/> when the call was refused and must not be forwarded.</returns>
+    private async Task<bool> RefuseAToolListThatPredatesThisServerAsync(
+        McpServer caller,
+        JsonRpcRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (Volatile.Read(ref _toolsListed) is not 0)
+        {
+            return false;
+        }
+
+        if (Interlocked.Exchange(ref _staleListRefused, 1) is not 0)
+        {
+            return false;
+        }
+
+        var name = (request.Params as JsonObject)?["name"] is JsonValue value
+            && value.GetValueKind() is JsonValueKind.String
+                ? value.GetValue<string>()
+                : "<none>";
+
+        var client = caller.ClientInfo?.Name;
+
+        ProxyLog.ToolListPredatesThisServer(_logger, name, client ?? "<unnamed>", BuildVersion.Current);
+
+        await caller.SendMessageAsync(
+            new JsonRpcNotification { Method = NotificationMethods.ToolListChangedNotification },
+            cancellationToken).ConfigureAwait(false);
+
+        await RefuseAsync(
+            caller,
+            request.Id,
+            SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client),
+            cancellationToken).ConfigureAwait(false);
+
+        return true;
     }
 
     /// <summary>
@@ -1420,6 +1544,28 @@ internal static partial class ProxyLog
         Level = LogLevel.Warning,
         Message = "'{Tool}' on the session at {Session} abandoned a page tool that had not answered. The browser server bounds nothing here, so the page's own code may still be running; navigating the tab or closing it releases it.")]
     public static partial void PageToolAbandoned(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// A connection called a tool before it ever asked for a tool list, so the
+    /// list it is calling from came from a different BrowserAI.
+    /// </summary>
+    /// <remarks>
+    /// <b>Machine-wide, like the other two records about a client getting the
+    /// surface wrong</b> -- no session has been resolved at this point, so there
+    /// is nowhere else for it to go, and it is a fact about the client and not
+    /// about any one session. <b>Information and not a warning:</b> it is the
+    /// mechanism working, and on a machine that updates BrowserAI it is expected
+    /// to appear once per relaunched session.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool the call named.</param>
+    /// <param name="client">What the client called itself in its handshake.</param>
+    /// <param name="version">The version actually serving the connection.</param>
+    [LoggerMessage(
+        EventId = 18,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' arrived from client '{Client}' before any tools/list on this connection, so its tool list predates BrowserAI {Version}. Refused once, and notifications/tools/list_changed was sent with the refusal.")]
+    public static partial void ToolListPredatesThisServer(ILogger logger, string tool, string client, string version);
 
     // ⚠️ EVENT IDS 10, 11 AND 12 ARE RETIRED AND ARE NOT TO BE REUSED,
     // 2026-08-26. They were `InlineImageRestored`, `FilenameRefused` and

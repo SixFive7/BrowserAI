@@ -152,10 +152,24 @@ internal sealed class McpTestHarness : IAsyncDisposable
     /// open one; the default can open none, which keeps every other test in this
     /// layer touching nothing on disk.
     /// </param>
+    /// <param name="listsBeforeCalling">
+    /// Whether the client asks for the tool list before its first
+    /// <c>tools/call</c>, which is what a real client does and what every arm but
+    /// the Q261 ones wants. <see langword="false"/> reproduces the one shape the
+    /// refusal is about -- a connection whose tool list came from a server that
+    /// has gone -- and it implies no default session, because opening one IS a
+    /// <c>tools/call</c> and would spend the one refusal on the rig's own setup.
+    /// </param>
+    /// <param name="clientName">
+    /// What the client calls itself in <c>clientInfo.name</c>, for the arms about
+    /// what BrowserAI says to a particular client. Defaults to the rig's own name.
+    /// </param>
     /// <returns>The rig, ready for a request.</returns>
     public static async Task<McpTestHarness> ThroughTheProxyAsync(
         Action<FakePlaywrightChild>? configure = null,
-        RigSessionEnvironment? sessions = null)
+        RigSessionEnvironment? sessions = null,
+        bool listsBeforeCalling = true,
+        string? clientName = null)
     {
         var logs = new CapturingLoggerProvider();
         var loggerFactory = NewLoggerFactory(logs);
@@ -195,14 +209,29 @@ internal sealed class McpTestHarness : IAsyncDisposable
             var serverTask = server.RunAsync(stopping.Token);
             var client = new RawPipeClient(callerHop);
 
-            _ = await client.InitializeAsync(TestDefaults.CallerProtocolVersion);
+            _ = await client.InitializeAsync(TestDefaults.CallerProtocolVersion, clientName);
+
+            // ⚠️ THE RIG LISTS BEFORE IT CALLS, BECAUSE A REAL CLIENT DOES, and
+            // since Q261 that is the difference between an ordinary connection and
+            // one whose tool list came from a server that has gone. A `tools/call`
+            // arriving before any `tools/list` is refused once, with the
+            // list-changed notification -- so a rig that never listed would meet
+            // that refusal on its own `browserai_init` and every arm below it would
+            // be testing the refusal instead of the thing it was written for.
+            //
+            // The arms that assert the refusal pass `listsBeforeCalling: false`,
+            // which is the whole condition. See `StaleToolListTests`.
+            if (listsBeforeCalling)
+            {
+                _ = await client.RoundTripAsync("tools/list", new System.Text.Json.Nodes.JsonObject());
+            }
 
             // One session, opened up front, because `session` is mandatory and a
             // layer that could not open one could no longer exercise a single
             // tools/call. It costs a directory, a lock and a log under the
             // suite's scratch root -- so this layer is no longer "nothing on
             // disk", and saying so is cheaper than a reader discovering it.
-            var session = sessionEnvironment.CanOpenSessions && sessionEnvironment.OpensDefaultSession
+            var session = listsBeforeCalling && sessionEnvironment.CanOpenSessions && sessionEnvironment.OpensDefaultSession
                 ? await OpenDefaultSessionAsync(client, sessionEnvironment)
                 : null;
 

@@ -6,7 +6,9 @@ using System.Reflection;
 using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Text.Json.Nodes;
+using BrowserAI.Hosting;
 using BrowserAI.Interop;
+using BrowserAI.Proxy;
 using BrowserAI.Runtime;
 using BrowserAI.Sessions;
 using BrowserAI.Storage;
@@ -39,6 +41,61 @@ internal sealed partial class ErrorCatalogueTests
     /// <summary>Which catalogue methods a trigger matched, accumulated across the arms.</summary>
     private static readonly HashSet<string> Triggered = new(StringComparer.Ordinal);
     private static readonly Lock Gate = new();
+
+    /// <summary>
+    /// The stale-tool-list row, provoked by a connection that calls before it
+    /// lists, in all three of the remedies it can carry.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Three clients and one row, which is the shape the row argues for.</b>
+    /// The condition is identical and the recovery is not: Claude Code honours
+    /// the list-changed notification and is told to retry, Codex does not and is
+    /// told to start a thread, and a client this build has never met is told to
+    /// ask for the list. Three rows would be three sentences to keep in step
+    /// about one state.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Each arm needs its own connection.</b> The refusal is once per
+    /// connection by construction, so a single rig can only ever produce one of
+    /// these -- and a version of this test that reused one would assert the first
+    /// remedy three times and pass.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStaleToolListRowIsEmittedByAConnectionThatCallsBeforeItLists()
+    {
+        foreach (var client in new[] { KnownClients.ClaudeCode, KnownClients.Codex, "some-client-nobody-has-met" })
+        {
+            await refusedOnceAsync(client);
+        }
+
+        // A local function and not a `using` declaration in the loop body, because
+        // CA2000's dataflow does not follow an `await using` declaration inside a
+        // loop and reports the environment as undisposed. One scope per client is
+        // the property; where the scope is written is not.
+        static async Task refusedOnceAsync(string client)
+        {
+            await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+            await using var rig = await McpTestHarness.ThroughTheProxyAsync(
+                sessions: sessions,
+                listsBeforeCalling: false,
+                clientName: client);
+
+            var refused = await CallAsync(rig, "browser_navigate", new JsonObject
+            {
+                ["url"] = "data:text/html,x",
+            });
+
+            await Assert.That((bool?)refused["isError"]).IsTrue();
+
+            Match(
+                TextOf(refused),
+                nameof(SessionErrors.ToolListPredatesThisServer),
+                SessionErrors.ToolListPredatesThisServer("browser_navigate", BuildVersion.Current, client));
+        }
+    }
 
     [Test]
     public async Task TheProxyRefusesACallWithNoSessionAndOneNamingNothing()
@@ -1179,6 +1236,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheProvisioningRowIsEmittedByACallMadeWhileTheBrowserIsStillDownloading))]
     [DependsOn(nameof(TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot))]
     [DependsOn(nameof(TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims))]
+    [DependsOn(nameof(TheStaleToolListRowIsEmittedByAConnectionThatCallsBeforeItLists))]
     [DependsOn(nameof(TheProxyRefusesACallWithNoSessionAndOneNamingNothing))]
     [DependsOn(nameof(InitRefusesAnUnusablePath))]
     [DependsOn(nameof(ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept))]
@@ -1346,7 +1404,18 @@ internal sealed partial class ErrorCatalogueTests
         // different things has gone wrong and names both, and
         // `PageToolDidNotAnswer` says what is still running and what releases
         // it.
-        await Assert.That(rows.Count).IsEqualTo(33);
+        //
+        // ⚠️ **Corrected 2026-09-24 to 34 (previously 33).**
+        // `ToolListPredatesThisServer` arrived with Q261, and it is the first row
+        // in this catalogue that is about the CONNECTION and not about a session:
+        // every other row here can name a directory, and this one is refused
+        // before any session is resolved, so it is also the fourth record that
+        // has nowhere but the machine-wide log to go. It is one row and not three
+        // although it carries three different remedies, for the reason
+        // `BrowsersAreBeingReinstalled` is one row for three tools -- three
+        // sentences about one state is three things to keep in step, and the
+        // census would then demand three provocations of the same condition.
+        await Assert.That(rows.Count).IsEqualTo(34);
     }
 
     /// <summary>
