@@ -80,6 +80,13 @@ internal static class Program
     /// fix. The value is read first, so the dialog still knows it was a first
     /// run.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The server no longer exits on the variable, since 2026-09-24 --
+    /// Q276 a</b>, so the first paragraph's consequence no longer follows from
+    /// it. The clearing stays: a child should not inherit an installer's marker
+    /// it has no use for, and the Velopack callbacks still decide from it before
+    /// this runs.
+    /// </para>
     /// </remarks>
     public static void ClearTheInstallersOwnVariables()
     {

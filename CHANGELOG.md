@@ -749,7 +749,7 @@ release body; nothing else depends on it.
   **`VELOPACK_FIRSTRUN` is cleared by `VelopackApp.Run()` on an installed process**, which
   answers a question the kb had held open since 2026-09-15, and it has a consequence here: the
   server's own installer exit reads the variable after that call, so it cannot fire on an
-  installed start. Whether it stays is a question put to the maintainer (Q276). And the live
+  installed start. The maintainer took Q276 a the same day and the exit is deleted; see its own entry under Removed. And the live
   install's Add/Remove entry now carries its size as a `REG_DWORD`, which 1.2.158's registry code
   writes and 1.2.0's could not: the 1.1.0 update rewrote it on 2026-09-24. The runs, the dialog
   reads and the readings are `docs/evidence/2026-09-24-velopack-rows/`.
@@ -907,6 +907,20 @@ release body; nothing else depends on it.
 
 ### Removed
 
+- 🗑️ **The server's own installer exit is deleted, because it could never fire on a real install.**
+  Q276, the maintainer's words verbatim: *"Q276 a"*. `Main` exited 0 as `Startup[8]` when
+  `VELOPACK_FIRSTRUN=true`, but `VelopackApp.Run()` clears that variable in an installed process
+  before the server read it, and `Setup.exe` has started the configuration app and not the server
+  since 2026-09-15, so the branch answered nothing on any real install. The general exit -- a
+  launcher that is gone and a console on standard input, `Startup[9]` -- was already what ended
+  the installer's shape, and it now does so alone. `Startup[8]` is retired and may not be reused,
+  which `ProxyLogTests` holds.
+
+  **The variable is no longer a reason to stop serving**: a client that hands it on is served,
+  and a server whose launcher is gone takes `Startup[9]` with the variable set or not. Both
+  `InstallerHandoffTests` arms were watched red against a published build that still carried the
+  branch, and the arm that required the old exit is inverted to require serving. The
+  configuration app still reads the variable, before `Run()` clears it, to know a first run.
 - 🗑️ **The portable `BrowserAI.zip` is no longer published beside the installer.**
   The maintainer's decision, verbatim: *"2 drop and update the readme to not mention it."* So
   `README.md` does not mention it, with no *previously* clause in its place -- a correction

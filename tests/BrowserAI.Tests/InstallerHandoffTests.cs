@@ -34,6 +34,14 @@ namespace BrowserAI.Tests;
 /// exits while leaving a console attached.
 /// </para>
 /// <para>
+/// ⚠️ <b>One half since 2026-09-24 -- Q276 a.</b> The first was deleted with its
+/// event: <c>VelopackApp.Run()</c> clears the variable in an installed process
+/// before the server could read it, and <c>Setup.exe</c> starts the configuration
+/// app and not the server, so the specific answer never answered anything. The
+/// general one covers the installer's shape by itself, and the arms below hold
+/// that it does, with the variable set and without it.
+/// </para>
+/// <para>
 /// ⚠️ <b>Corrected 2026-09-15 (previously "no test in this suite starts
 /// BrowserAI with a real console. It cannot -- every launch site in the tree is
 /// required to set <c>CreateNoWindow</c> ... and a test that allocated a console
@@ -140,77 +148,95 @@ internal sealed class InstallerHandoffTests
     }
 
     /// <summary>
-    /// The published binary really exits when the installer started it, and it
-    /// exits <b>before</b> creating anything.
+    /// The published binary serves the client that started it, whatever the
+    /// installer's variable says: the variable is no longer a reason to exit.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Through the front door, because the ordering is half the property.</b>
-    /// The measured cost of the old behaviour was not only that the process
-    /// stayed: it swept the machine, took a machine-wide mutex, created an
-    /// instance directory and started a node child that would have provisioned
-    /// 768 MB on a first run. So the assertion is not <i>it exited</i> -- it is
-    /// that <c>logs\</c> is the <b>only</b> thing under the root afterwards,
-    /// which is the same shape
-    /// <c>InstallRootScopeTests.ThePublishedBinaryRefusesToServeOutOfASharedRootAndSaysWhyInTheLog</c>
-    /// uses for the refusal that has to happen before any state exists.
+    /// ⚠️ <b>Inverted 2026-09-24 -- Q276 a, the maintainer's words verbatim:
+    /// "Q276 a".</b> <i>Previously
+    /// <c>ThePublishedBinaryStartedByTheInstallerExitsBeforeItCreatesAnything</c>,
+    /// which set <c>VELOPACK_FIRSTRUN=true</c> and required the server to exit 0
+    /// logging <c>Startup[8]</c>, with nothing but <c>logs\</c> under its root.</i>
+    /// That exit could never fire where it was meant to: <c>VelopackApp.Run()</c>
+    /// clears the variable in an installed process before the server read it
+    /// (<c>VelopackApp.cs:227-238</c> at 1.2.158), and <c>Setup.exe</c> has started
+    /// the configuration app and not the server since 2026-09-15. So the branch and
+    /// its event were deleted, the id retired, and what ends the installer's shape
+    /// is the general exit alone -- launcher gone and a console on standard input --
+    /// which the two arms below drive.
     /// </para>
     /// <para>
-    /// <b>The exit code is 0, and that matters to the installer.</b> Velopack
-    /// starts the app and does not wait for it, but a non-zero exit from a
-    /// freshly installed binary is what a person would find in the install log
-    /// if they ever went looking; <i>nothing to serve</i> is not a failure.
+    /// <b>What is left to hold is the other direction</b>: a client that happens to
+    /// hand the variable on is still served. Started from this host, which stays
+    /// alive, over pipes, the server reaches its serving line and logs no installer
+    /// exit, and it ends on end-of-file with exit 0. <b>Planted red 2026-09-24</b>
+    /// against a published build that still carried the branch: it exited 0
+    /// logging <c>Startup[8]</c> instead of serving.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task ThePublishedBinaryStartedByTheInstallerExitsBeforeItCreatesAnything()
+    public async Task ThePublishedBinaryServesTheClientThatStartedItWithTheInstallersVariableSet()
     {
         SuiteEnvironment.RequirePublishedSlice();
 
-        using var root = ScratchDirectory.CreateUnderProfile("installer-firstrun");
+        using var root = ScratchDirectory.CreateUnderProfile("installer-variable-serves");
 
         var environment = PublishedSlice.InheritedEnvironment();
         environment[BrowserAiPaths.AppRootOverride] = root.Path;
         environment[VelopackStartup.FirstRunVariable] = "true";
 
-        // ⚠️ Inside a kill-on-close job, which is the suite's standing rule for
-        // starting a real BrowserAI -- and here it is also the hang detector: a
-        // build in which this exit was deleted starts serving and waits on its
-        // stdin for ever, and what fails then must be this assertion and not
-        // the whole run.
+        // Inside a kill-on-close job, the suite's standing rule for a real
+        // BrowserAI, so an assertion that fails below leaves nothing running.
         using var job = JobObject.CreateKillOnClose();
 
         using var process = JobLauncher.Start(job, PublishedSlice.Executable, [], root.Path, environment);
 
-        var exited = await process.WaitForExitAsync(TestDefaults.ProcessHang);
-
-        await Assert.That(exited).IsTrue();
-        await Assert.That(process.TryReadExitCode()).IsEqualTo(0);
-
         var logs = Path.Combine(root.Path, "logs");
-        var said = Directory.Exists(logs)
+
+        // Until it says it is serving, or goes: a hang detector, not a budget.
+        var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
+        var said = string.Empty;
+
+        while (DateTime.UtcNow < deadline && !process.HasExited)
+        {
+            said = Directory.Exists(logs)
+                ? string.Join(Environment.NewLine, Directory.EnumerateFiles(logs).Select(ReadShared))
+                : string.Empty;
+
+            if (said.Contains(ServingSentence, StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            await Task.Delay(50);
+        }
+
+        // Read once more, so that a server that went says what it said.
+        said = Directory.Exists(logs)
             ? string.Join(Environment.NewLine, Directory.EnumerateFiles(logs).Select(ReadShared))
             : string.Empty;
 
-        await Assert.That(said).Contains("started by the installer");
-        await Assert.That(said).Contains(VelopackStartup.FirstRunVariable);
+        await Assert.That(process.HasExited).IsFalse().Because(said);
+        await Assert.That(said).Contains(ServingSentence);
+        await Assert.That(said).DoesNotContain(RetiredInstallerExitSentence);
 
-        // ⚠️ AND NOTHING ELSE WAS CREATED. `live\`, `instances\`, `index\` and
-        // `browsers\` are each a step the old behaviour took before it settled
-        // down to serve nobody; `instances\` is the one that proves no child was
-        // started, because a child's working directory is inside it.
-        var created = Directory.EnumerateFileSystemEntries(root.Path)
-            .Select(Path.GetFileName)
-            .Where(name => !string.Equals(name, "logs", StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        // And it ends the way a served conversation ends: on end-of-file.
+        await process.StandardInput.DisposeAsync();
 
-        await Assert.That(string.Join(", ", created)).IsEmpty();
-
-        // The serving line is what the old build wrote next, and it is the one
-        // sentence that must not be in this log.
-        await Assert.That(said).DoesNotContain("BrowserAI is serving stdio");
+        await Assert.That(await process.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+        await Assert.That(process.TryReadExitCode()).IsEqualTo(0);
     }
+
+    /// <summary>The line the server writes once it is serving.</summary>
+    private const string ServingSentence = "BrowserAI is serving stdio";
+
+    /// <summary>
+    /// What the retired installer exit, <c>Startup[8]</c>, said, which no build
+    /// after Q276 writes.
+    /// </summary>
+    private const string RetiredInstallerExitSentence = "started by the installer";
 
     /// <summary>
     /// A launcher that is gone <b>and</b> a console stdin means nobody is there;
@@ -338,6 +364,16 @@ internal sealed class InstallerHandoffTests
     /// watchable would exit for the ordinary reason and pass while testing
     /// nothing.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Both arms take the general exit since 2026-09-24 -- Q276 a.</b>
+    /// <i>Previously the arm with the variable set required the installer exit,
+    /// <c>Startup[8]</c>, "started by the installer".</i> That branch was deleted
+    /// with its event, because it could not fire on an installed process, so the
+    /// variable changes nothing about the decision and both arms require
+    /// <c>Startup[9]</c> and the absence of the retired sentence. <b>Planted red
+    /// 2026-09-24</b>: against a published build that still carried the branch,
+    /// the variable arm named the installer exit and failed.
+    /// </para>
     /// </remarks>
     /// <param name="startedByTheInstaller">Whether Velopack's variable is set.</param>
     /// <returns>The assertion task.</returns>
@@ -354,15 +390,15 @@ internal sealed class InstallerHandoffTests
         await Assert.That(run.Started).IsTrue();
 
         // The decision first, so that a failure names which one was taken --
-        // and waiting for the OTHER outcome as well, so that a lost race is a
+        // and waiting for the OTHER outcomes as well, so that a lost race is a
         // named failure in a second and not a ten-minute one that says only
-        // that a sentence never arrived.
-        var decision = startedByTheInstaller
-            ? "started by the installer"
-            : "no client to serve and is exiting";
+        // that a sentence never arrived. The retired installer exit is one of
+        // them, so a build that still carried it is named and not waited out.
+        const string Decision = "no client to serve and is exiting";
 
-        await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, decision, "Watching the MCP client"))
-            .IsEqualTo(decision);
+        await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, Decision, RetiredInstallerExitSentence, "Watching the MCP client"))
+            .IsEqualTo(Decision)
+            .Because(run.Records());
 
         // And then the exit, which is the thing v1.0.0 did not do.
         await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
@@ -445,9 +481,8 @@ internal sealed class InstallerHandoffTests
     /// </para>
     /// <para>
     /// <b>Asserted on the records the product already writes</b>, which is the
-    /// same shape
-    /// <see cref="ThePublishedBinaryStartedByTheInstallerExitsBeforeItCreatesAnything"/>
-    /// uses: each of the three sentences is one step the old order took, and
+    /// same shape the installer-exit arm used until Q276 deleted it with its
+    /// branch on 2026-09-24: each of the three sentences is one step the old order took, and
     /// <c>instances\</c> is what proves no child was started, because a child's
     /// working directory is inside it.
     /// </para>

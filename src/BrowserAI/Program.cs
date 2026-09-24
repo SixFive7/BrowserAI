@@ -210,28 +210,19 @@ internal static class Program
             StartupLog.AppRootOverridden(logger, AppRootVariable, overridden);
         }
 
-        // ⚠️ THE INSTALLER STARTED THIS PROCESS, AND THERE IS NOBODY ON THE
-        // OTHER END OF IT. Velopack sets VELOPACK_FIRSTRUN=true on the one start
-        // it performs itself, after an install -- and it starts the app with
-        // show_window=true, so a console-subsystem binary gets a REAL CONSOLE
-        // WINDOW on the user's screen, holding a stdin that never EOFs. Measured
-        // 2026-09-14: the server and its node child then ran until the machine
-        // was rebooted, serving nobody, while a terminal window titled with the
-        // full exe path sat on the desktop
-        // (evidence: docs/evidence/2026-09-14-firstrun/).
-        //
-        // It is here and not three lines lower because everything below
-        // costs something a blink must not: the sweep enumerates the machine,
-        // the live marker takes a machine-wide mutex, and the child spawn
-        // provisions 768 MB on a first run. An install that produced one log
-        // line and a window that flickers is the whole of what this is for.
-        if (VelopackStartup.StartedByTheInstaller())
-        {
-            StartupLog.StartedByTheInstaller(logger, VelopackStartup.FirstRunVariable);
-            return 0;
-        }
+        // ⚠️ THERE IS NO INSTALLER EXIT HERE ANY MORE -- Q276 a, 2026-09-24, the
+        // maintainer's words verbatim: "Q276 a". A branch stood here that exited
+        // 0 when VELOPACK_FIRSTRUN=true, logging Startup[8], for the start
+        // Velopack performs itself after an install (evidence:
+        // docs/evidence/2026-09-14-firstrun/). It could never fire where it was
+        // meant to: VelopackApp.Run() at the top of Main clears that variable in
+        // an installed process before this line (VelopackApp.cs:227-238 at
+        // 1.2.158), and Setup.exe has started the configuration app and not this
+        // binary since 2026-09-15. So it is deleted, its event id is retired in
+        // StartupLog, and the general exit below is the whole of the answer to
+        // the installer's shape -- as it already was on every real install.
 
-        // ⚠️ AND THE GENERAL CASE IMMEDIATELY AFTER IT, BEFORE ANYTHING COSTS
+        // ⚠️ THE GENERAL CASE, BEFORE ANYTHING COSTS
         // ANYTHING -- moved here 2026-09-15. Everything below this line spends
         // something: the root judgement walks the filesystem, the sweep
         // enumerates every process on the machine, the live marker takes a
@@ -245,7 +236,8 @@ internal static class Program
         // anything cost the most, and left a second orphan behind when it did
         // not exit. The installer exit above had been placed here for exactly
         // this reason and this one had not, which is how the general case went
-        // on paying for a conversation nobody was having.
+        // on paying for a conversation nobody was having. (That installer exit
+        // is gone since 2026-09-24; this one is what it never managed to be.)
         //
         // ⚠️ THE WATCH IS ATTACHED HERE, NOT MERELY ASKED ABOUT. Whether
         // a handle can be held on the launcher is half the decision, and a
@@ -742,24 +734,6 @@ internal static partial class StartupLog
     public static partial void ChannelNotClosed(ILogger logger, Exception exception);
 
     /// <summary>
-    /// The installer started this process itself, so there is nothing to serve.
-    /// </summary>
-    /// <remarks>
-    /// <b>Information, not Warning: it is the ordinary end of an
-    /// install</b>, and the line exists because the alternative is an install
-    /// whose only trace of having started BrowserAI at all is a window that
-    /// flickered. It is also the evidence that the exit happened <i>before</i>
-    /// the sweep, the marker and the child -- nothing else is recorded after it.
-    /// </remarks>
-    /// <param name="logger">Where to write.</param>
-    /// <param name="variable">The variable Velopack set to say so.</param>
-    [LoggerMessage(
-        EventId = 8,
-        Level = LogLevel.Information,
-        Message = "BrowserAI was started by the installer ({Variable}=true) and there is nothing to serve: no MCP client is on the other end of this process. Exiting without starting a browser server. This is how an install ends; a client starts BrowserAI itself when it needs one.")]
-    public static partial void StartedByTheInstaller(ILogger logger, string variable);
-
-    /// <summary>
     /// Neither teardown signal can ever arrive, so this process would serve
     /// nobody for ever.
     /// </summary>
@@ -778,4 +752,18 @@ internal static partial class StartupLog
         Level = LogLevel.Warning,
         Message = "BrowserAI has no client to serve and is exiting: the process that started it (pid={Launcher}) could not be opened or is gone, and standard input is a console, not a pipe, so neither of the two teardown signals can ever arrive. A client that starts BrowserAI gives it a pipe and stays alive on the other end of it.")]
     public static partial void NoClientToServe(ILogger logger, int launcher);
+
+    // ⚠️ EVENT ID 8 IS RETIRED -- Q276 a, 2026-09-24. It was
+    // `StartedByTheInstaller`, "BrowserAI was started by the installer
+    // (VELOPACK_FIRSTRUN=true) and there is nothing to serve", written by the
+    // installer exit `Main` carried until that day. Every shipped build up to
+    // 1.1.0 carries it, so a saved query for Startup[8] may still meet it in an
+    // old log, and a new event under the same id would answer that query about
+    // something else. Nothing may take it.
+    //
+    // ⚠️ THE LINE BELOW IS READ BY `ProxyLogTests`, per class: the
+    // machine-readable half of the paragraph above, beside it and not in place of
+    // it.
+    //
+    // RETIRED-EVENT-IDS: 8
 }

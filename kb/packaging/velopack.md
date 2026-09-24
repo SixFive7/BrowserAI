@@ -1342,6 +1342,21 @@ branch reads it, and only an uninstalled start with the variable set takes
 paragraph describes. Whether the branch stays is a question put to the
 maintainer on 2026-09-24 (Q276) and not decided here.
 
+⚠️ **Decided the same day: the branch is deleted -- Q276 a, the maintainer's words
+verbatim, "Q276 a".** *Added by addition; the paragraph above stands as the
+account of why.* `Main` no longer reads `VELOPACK_FIRSTRUN`, `Startup[8]` is
+retired in `StartupLog` and may not be reused, and the general exit is the whole
+of the answer to the installer's shape. The suite holds both directions:
+`InstallerHandoffTests.ThePublishedBinaryExitsWhenItsLauncherIsGoneAndStdinIsAConsole`
+requires `Startup[9]` with the variable set and without it, and
+`InstallerHandoffTests.ThePublishedBinaryServesTheClientThatStartedItWithTheInstallersVariableSet`
+requires a live client to be served whatever the variable says -- both watched red
+against a published build that still carried the branch. **The configuration
+app's own read is unchanged**: it takes the value before `Run()` clears it, which
+is what lets its dialog say it is a first run. The last packed test pack is a
+1.1.0 build and still carries `Startup[8]`, so the measurement above keeps
+reproducing on it until the next release is cut.
+
 **So the exit may never key on the variable alone, and this is a second reason
 and not a restatement of the first.** The stub `BrowserAI.exe` that Velopack
 leaves in the install root reaches the app through `Update.exe start`

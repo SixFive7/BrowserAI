@@ -204,6 +204,14 @@ internal static class VelopackStartup
     /// is a BrowserAI, so that costs nothing today, and a future path that
     /// re-launched this binary from inside itself would have to clear it.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>One caller since 2026-09-24, the configuration app -- Q276 a.</b>
+    /// <i>Previously the server read it too, to exit 0 as <c>Startup[8]</c>.</i>
+    /// That branch was deleted: <c>VelopackApp.Run()</c> clears the variable in an
+    /// installed process before the server's read, so it never fired on a real
+    /// install. The app reads it BEFORE <c>Run()</c>, which is why its read still
+    /// answers.
+    /// </para>
     /// </remarks>
     /// <returns>Whether the installer started this process.</returns>
     public static bool StartedByTheInstaller() =>

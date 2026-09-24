@@ -123,6 +123,10 @@ internal sealed class ProxyLogTests
             .IsTrue()
             .Because("ClientLivenessLog retired id 76 on 2026-09-22 under Q226 c and must carry the marker line this test reads it from");
 
+        await Assert.That(retired.TryGetValue("StartupLog", out var startup) && startup.Contains(8))
+            .IsTrue()
+            .Because("StartupLog retired id 8, the installer exit, on 2026-09-24 under Q276 a and must carry the marker line this test reads it from");
+
         var reused = events
             .Where(e => retired.TryGetValue(e.Class, out var ids) && ids.Contains(e.Id))
             .Select(e => $"{e.File}({e.Line}): {e.Class}.{e.Member} uses {EventIdSpelling} {e.Id}, which that class's own"
