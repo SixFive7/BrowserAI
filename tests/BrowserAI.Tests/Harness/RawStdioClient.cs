@@ -129,9 +129,35 @@ internal sealed class RawStdioClient : IAsyncDisposable
     }
 
     /// <summary>Performs the <c>initialize</c> handshake and returns its result.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>IT ASKS FOR THE TOOL LIST, BECAUSE EVERY REAL CLIENT DOES, and since
+    /// Q261 that is the difference between an ordinary connection and one whose
+    /// list came from a server that has gone.</b> BrowserAI refuses the first
+    /// <c>tools/call</c> that precedes any <c>tools/list</c>, once -- so without
+    /// this every arm that drives a published server would meet that refusal on
+    /// its own first call and be testing Q261 instead of itself. Measured:
+    /// <b>22</b> arms went red on the first gate run after the refusal landed, all
+    /// of them here and none of them in the in-process layer, which had already
+    /// been given the same line.
+    /// </para>
+    /// <para>
+    /// <b>The answer is deliberately not required to succeed.</b> The question the
+    /// flag asks is whether the client ASKED, and some arms here point a client at
+    /// a peer that is about to die or that answers nothing useful -- so the list
+    /// goes out through <see cref="EnvelopeAsync"/> and whatever comes back is
+    /// discarded. A handshake that failed because a peer would not list would be a
+    /// rig defect wearing a product's name.
+    /// </para>
+    /// </remarks>
     /// <param name="protocolVersion">The revision to offer.</param>
+    /// <param name="listsTools">
+    /// Whether to ask for the tool list, which is what a real client does.
+    /// <see langword="false"/> reproduces a connection whose list predates the
+    /// server, for the arms that are about exactly that.
+    /// </param>
     /// <returns>The <c>result</c> object of the <c>initialize</c> response.</returns>
-    public async Task<JsonObject> InitializeAsync(string protocolVersion)
+    public async Task<JsonObject> InitializeAsync(string protocolVersion, bool listsTools = true)
     {
         var response = await RoundTripAsync("initialize", new JsonObject
         {
@@ -141,6 +167,12 @@ internal sealed class RawStdioClient : IAsyncDisposable
         }).ConfigureAwait(false);
 
         await NotifyAsync("notifications/initialized").ConfigureAwait(false);
+
+        if (listsTools)
+        {
+            _ = await EnvelopeAsync("tools/list", new JsonObject()).ConfigureAwait(false);
+        }
+
         return response;
     }
 

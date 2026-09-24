@@ -100,7 +100,16 @@ internal static partial class ClientProbe
 
         writer.WriteLine(new JsonObject { ["jsonrpc"] = "2.0", ["method"] = "notifications/initialized" }.ToJsonString());
 
-        _ = Exchange(writer, reader, 2, "tools/call", new JsonObject
+        // ⚠️ IT ASKS FOR THE TOOL LIST, BECAUSE EVERY REAL CLIENT DOES. Since
+        // Q261, BrowserAI refuses the first `tools/call` that arrives on a
+        // connection which has never listed -- once, so the model is told its list
+        // came from a server that is gone. Without this line that refusal lands on
+        // this probe's own `browserai_init`, the session is never opened, and the
+        // navigate below reports `navigated: false` about a defect that is the
+        // probe's. Measured: exactly this, on the gate run of 2026-09-24.
+        _ = Exchange(writer, reader, 2, "tools/list", new JsonObject());
+
+        _ = Exchange(writer, reader, 3, "tools/call", new JsonObject
         {
             ["name"] = "browserai_init",
             ["arguments"] = new JsonObject
@@ -110,7 +119,7 @@ internal static partial class ClientProbe
             },
         });
 
-        var navigate = Exchange(writer, reader, 3, "tools/call", new JsonObject
+        var navigate = Exchange(writer, reader, 4, "tools/call", new JsonObject
         {
             ["name"] = "browser_navigate",
             ["arguments"] = new JsonObject

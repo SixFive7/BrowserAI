@@ -308,6 +308,50 @@ internal sealed class ClientReconnectTests
         await Assert.That(driverLog).DoesNotContain("has never asked BrowserAI for its tool list");
     }
 
+    /// <summary>
+    /// A process this file started, ended on dispose.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Because <c>Process.Dispose</c> releases a handle and does not end a
+    /// process, and an API stub never exits on its own.</b> Measured: four leaked
+    /// <c>node.exe</c> stubs from four runs of these arms held four scratch
+    /// directories open, which the next run's reclaim pass could not delete -- so
+    /// the defect surfaced as <c>TheReclaimPassIsItselfATestAndReportsWhatItCouldNotTake</c>
+    /// naming somebody else's directory, which is the hardest shape of this to
+    /// read. The client and the app-server driver do exit on their own; this ends
+    /// them anyway, because "it usually exits" is not a teardown.
+    /// </remarks>
+    /// <param name="Process">The process.</param>
+    private readonly record struct Started(Process Process) : IDisposable
+    {
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            try
+            {
+                if (!Process.HasExited)
+                {
+                    // ⚠️ THIS ONE AND NOT THE TREE. `Process.Kill(entireProcessTree:
+                    // true)` is banned repository-wide -- it walks re-parentable,
+                    // pid-reusable links and loses the race against anything that
+                    // respawns while it walks -- and nothing here needs it: what
+                    // leaks is the API stub, which has no children at all. The
+                    // client and the app-server driver exit on their own; what they
+                    // started is ended by its own stdin reaching EOF when their
+                    // pipes close, and every BrowserAI server behind them is held by
+                    // BrowserAI's own job object.
+                    Process.Kill();
+                }
+            }
+            catch (Exception failure) when (failure is InvalidOperationException or System.ComponentModel.Win32Exception or AggregateException)
+            {
+                // It has already gone, which is the ordinary case.
+            }
+
+            Process.Dispose();
+        }
+    }
+
     /// <summary>One frame the shim saw, reduced to what these arms read.</summary>
     /// <param name="Shim">Which shim process it passed through, which is which server.</param>
     /// <param name="Method">The JSON-RPC method, or null for a response.</param>
@@ -424,7 +468,7 @@ internal sealed class ClientReconnectTests
     /// <param name="environment">What to add to the inherited environment.</param>
     /// <param name="argument">One argument, for the driver that takes its steps that way.</param>
     /// <returns>The process.</returns>
-    private static Process StartNode(string script, DirectoryInfo work, Dictionary<string, string> environment, string? argument = null) =>
+    private static Started StartNode(string script, DirectoryInfo work, Dictionary<string, string> environment, string? argument = null) =>
         StartProcess(
             RepositoryPayload.Layout.NodeExecutable,
             work.FullName,
@@ -442,7 +486,7 @@ internal sealed class ClientReconnectTests
     /// <param name="environment">What to add to the inherited environment.</param>
     /// <param name="arguments">Its arguments.</param>
     /// <returns>The process.</returns>
-    private static Process StartProcess(
+    private static Started StartProcess(
         string executable,
         string workingDirectory,
         Dictionary<string, string> environment,
@@ -495,7 +539,7 @@ internal sealed class ClientReconnectTests
         _ = Drain(process.StandardError, $"{stem}.stderr.txt");
         process.StandardInput.Close();
 
-        return process;
+        return new Started(process);
     }
 
     /// <summary>
@@ -553,11 +597,12 @@ internal sealed class ClientReconnectTests
     /// <see cref="TestDefaults.RealClientHang"/>, which is derived and not written
     /// here; what these runs actually take is seconds.
     /// </remarks>
-    /// <param name="process">The process.</param>
+    /// <param name="started">The process.</param>
     /// <param name="what">What it was, for the failure.</param>
     /// <returns>The wait.</returns>
-    private static async Task WaitFor(Process process, string what)
+    private static async Task WaitFor(Started started, string what)
     {
+        var process = started.Process;
         using var deadline = new CancellationTokenSource(TestDefaults.RealClientHang);
 
         try
