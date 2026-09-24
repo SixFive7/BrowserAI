@@ -31,6 +31,21 @@ departure is called out in the batch's own README —
 [`2026-08-26-post-course-correction`](2026-08-26-post-course-correction/README.md)
 is the only one, and it is one byte, twice.
 
+⚠️ *Corrected 2026-09-24 by addition (previously the sentence above, which named
+one batch as "the only one").* **Five more batches depart from the bytes as
+taken, and each one's own README says how:**
+[`2026-09-23-feed-hosting-research`](2026-09-23-feed-hosting-research/README.md),
+[`2026-09-24-coordinator-lifecycle`](2026-09-24-coordinator-lifecycle/README.md),
+[`2026-09-24-ipc-review`](2026-09-24-ipc-review/README.md),
+[`2026-09-24-toast-design`](2026-09-24-toast-design/README.md) and
+[`2026-09-24-velopack-rows`](2026-09-24-velopack-rows/README.md) prepended the
+repository's two-line SPDX header to the files it requires one on, when each batch
+was cut. `coordinator-lifecycle` also stores three rig scripts as `.ps1.txt` and
+renamed one log, and it and `velopack-rows` use the `.trimmed.` name for lines cut
+for privacy, not for size, with the original's SHA-256 beside each. Found by
+reading every batch README for the header on 2026-09-24; a README that says
+nothing about its headers was not compared against originals, which are gone.
+
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
 reasons that have nothing to do with a record. Adding a pattern below that
