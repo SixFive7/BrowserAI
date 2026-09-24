@@ -97,6 +97,112 @@ internal sealed partial class ErrorCatalogueTests
         }
     }
 
+    /// <summary>
+    /// The update row, provoked both ways it happens: a call cut off in flight
+    /// by a stop, and a call made once the stop has begun -- and the cut-off call
+    /// gets that one answer and no other.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q286 b, the maintainer's words verbatim: <i>"Q286 b"</i>.</b> The
+    /// published binary's own arm is <c>UpdateInProgressTests</c>; this one is
+    /// the census's, and it can hold the call open for as long as it likes,
+    /// because the double answers only when the arm releases it.
+    /// </para>
+    /// <para>
+    /// <b>The late answer is the part a stop could get wrong without anybody
+    /// seeing it.</b> Released after its refusal, the double answers the held
+    /// call; the proxy tries to pass that answer on, and the door out must drop
+    /// it. The arm waits for the call to finish inside the proxy and then makes
+    /// one more round trip, which reads every frame written before its own
+    /// answer -- so a second answer, had one been written, is among them.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheUpdateRowIsEmittedByACallCutOffByAStopAndByACallMadeAfterIt()
+    {
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_navigate"] = new FakeToolBehaviour
+            {
+                HoldUntil = release.Task,
+                RawResult = """{"content":[{"type":"text","text":"navigated, too late"}]}""",
+            });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        var held = await rig.Client.BeginAsync("tools/call", new JsonObject
+        {
+            ["name"] = "browser_navigate",
+            ["arguments"] = new JsonObject
+            {
+                ["url"] = "data:text/html,x",
+                ["session"] = rig.Session!,
+                ["why"] = "the suite holding a call open across a stop",
+            },
+        });
+
+        await waitForAsync(() => rig.Proxy.Activity.Read().CallsInFlight is 1);
+
+        using (var bound = new CancellationTokenSource(TestDefaults.InProcessHang))
+        {
+            await rig.Proxy.RefuseCallsInFlightForAnUpdateAsync(bound.Token);
+        }
+
+        // ---- The call cut off in flight.
+        var cutOff = (await rig.Client.AwaitAsync(held, "tools/call")).Result!;
+
+        await Assert.That((bool?)cutOff["isError"]).IsTrue();
+
+        Match(
+            TextOf(cutOff),
+            nameof(SessionErrors.UpdateIsBeingInstalled),
+            SessionErrors.UpdateIsBeingInstalled("browser_navigate", wasRunning: true, "BrowserAI.RawPipeClient"));
+
+        // ---- A call made once the stop has begun: refused at the door.
+        var afterwards = await CallAsync(rig, "browser_snapshot", new JsonObject
+        {
+            ["session"] = rig.Session!,
+            ["why"] = "the suite calling after the stop began",
+        });
+
+        Match(
+            TextOf(afterwards),
+            nameof(SessionErrors.UpdateIsBeingInstalled),
+            SessionErrors.UpdateIsBeingInstalled("browser_snapshot", wasRunning: false, "BrowserAI.RawPipeClient"));
+
+        // ---- The late answer. Released, answered by the double, finished inside
+        // the proxy -- and then one more round trip reads everything before it.
+        release.SetResult();
+
+        await waitForAsync(() => rig.Proxy.Activity.Read().CallsInFlight is 0);
+
+        _ = await rig.Client.RoundTripAsync("tools/list", new JsonObject());
+
+        var answersToTheHeldCall = rig.Client.FramesReceived
+            .Select(frame => System.Text.Json.Nodes.JsonNode.Parse(FrameChannel.TextOf(frame))?["id"])
+            .Count(id => id is not null && (int?)id == held);
+
+        await Assert.That(answersToTheHeldCall).IsEqualTo(1);
+
+        static async Task waitForAsync(Func<bool> condition)
+        {
+            var waited = System.Diagnostics.Stopwatch.StartNew();
+
+            while (!condition())
+            {
+                if (waited.Elapsed > TestDefaults.InProcessHang)
+                {
+                    throw new TimeoutException("The proxy's own count of calls in flight never reached what the arm waited for. That is a hang detector.");
+                }
+
+                await Task.Delay(10);
+            }
+        }
+    }
+
     [Test]
     public async Task TheProxyRefusesACallWithNoSessionAndOneNamingNothing()
     {
@@ -1237,6 +1343,7 @@ internal sealed partial class ErrorCatalogueTests
     [DependsOn(nameof(TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot))]
     [DependsOn(nameof(TheUnattributableStrayRowIsEmittedByASweepThatFindsAProcessNoWindowClaims))]
     [DependsOn(nameof(TheStaleToolListRowIsEmittedByAConnectionThatCallsBeforeItLists))]
+    [DependsOn(nameof(TheUpdateRowIsEmittedByACallCutOffByAStopAndByACallMadeAfterIt))]
     [DependsOn(nameof(TheProxyRefusesACallWithNoSessionAndOneNamingNothing))]
     [DependsOn(nameof(InitRefusesAnUnusablePath))]
     [DependsOn(nameof(ResumeReportsACopyAndRefusesAnArgumentItDoesNotAccept))]
@@ -1415,7 +1522,16 @@ internal sealed partial class ErrorCatalogueTests
         // `BrowsersAreBeingReinstalled` is one row for three tools -- three
         // sentences about one state is three things to keep in step, and the
         // census would then demand three provocations of the same condition.
-        await Assert.That(rows.Count).IsEqualTo(34);
+        //
+        // ⚠️ **Corrected 2026-09-24 to 35 (previously 34), later the same day.**
+        // `UpdateIsBeingInstalled` arrived with Q286 b, and it is the second row
+        // about the CONNECTION and not a session: a server stopped for an update
+        // refuses its calls in flight with it, and a server that started during
+        // one refuses every call with it. One row and not two, although it says
+        // two different things about what may have happened, for the reason the
+        // stale-list row gives -- one condition, one recovery, and a census that
+        // would otherwise demand two provocations of it.
+        await Assert.That(rows.Count).IsEqualTo(35);
     }
 
     /// <summary>

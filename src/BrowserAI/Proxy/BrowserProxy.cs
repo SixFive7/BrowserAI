@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -112,6 +113,22 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// model does not happen to list.
     /// </remarks>
     private int _staleListRefused;
+
+    /// <summary>
+    /// Every tool call this server is answering right now, by the caller's own
+    /// request id, for the refusal a stop sends to each of them.
+    /// </summary>
+    /// <remarks>
+    /// <b>An entry is kept once a stop has begun</b>, so that an answer arriving
+    /// after that call's refusal -- the child finishing a moment too late, or the
+    /// SDK answering a handler the stop cancelled -- still meets it at the door
+    /// out and is dropped. The process is ending, so nothing is lost by keeping
+    /// them.
+    /// </remarks>
+    private readonly ConcurrentDictionary<RequestId, CallInFlight> _calls = new();
+
+    /// <summary>Whether a stop for an update has begun: every call from here on is refused.</summary>
+    private int _stoppingForAnUpdate;
 
     private BrowserProxy(ChildConnection surface, SessionManager sessions, ToolVerdicts verdicts, ServerActivity activity, ILogger logger)
     {
@@ -253,6 +270,43 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <returns>Server options whose tool methods are short-circuited by a message filter.</returns>
     public McpServerOptions ServerOptions()
     {
+        var options = CallerFacingOptions();
+
+        // Not WithMessageFilters: that is a DI extension in the hosting package,
+        // and this is a Core/AOT server. An incoming message filter sees
+        // JsonRpcRequest.Params as a raw JsonNode and never constructs a
+        // ContentBlock, which is what makes it the only hook a lossless proxy
+        // can use.
+        options.Filters.Message.IncomingFilters.Add(next => (context, cancellationToken) =>
+            OnIncomingAsync(next, context, cancellationToken));
+
+        // ⚠️ ONE ANSWER PER CALL, and this is where it is held -- Q286 b. A stop
+        // refuses every call still in flight, and the call's own answer can still
+        // arrive afterwards: the child finishing a moment too late, or the SDK
+        // answering a handler the stop cancelled. Every message this server sends
+        // passes through here (the SDK routes SendMessageAsync through the
+        // outgoing filters, read out of McpSessionHandler at v2.2.0), so the first
+        // answer for an id claims it and a second is dropped.
+        options.Filters.Message.OutgoingFilters.Add(next => (context, cancellationToken) =>
+            IsASecondAnswer(context) ? Task.CompletedTask : next(context, cancellationToken));
+
+        return options;
+    }
+
+    /// <summary>
+    /// What every caller-facing server this product runs says at
+    /// <c>initialize</c>: its name and version, its instructions, the revisions
+    /// it speaks and the one capability it declares.
+    /// </summary>
+    /// <remarks>
+    /// <b>Shared with <see cref="UpdateInProgressServer"/></b>, which answers a
+    /// client while its install's updater runs and has to introduce itself exactly
+    /// as the full server would -- a second copy of these lines would be a second
+    /// place for the instructions to drift.
+    /// </remarks>
+    /// <returns>Options with no incoming filter yet.</returns>
+    internal static McpServerOptions CallerFacingOptions()
+    {
         var options = new McpServerOptions
         {
             ServerInfo = new Implementation { Name = "BrowserAI", Version = BuildVersion.Current },
@@ -281,14 +335,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 Tools = new ToolsCapability(),
             },
         };
-
-        // Not WithMessageFilters: that is a DI extension in the hosting package,
-        // and this is a Core/AOT server. An incoming message filter sees
-        // JsonRpcRequest.Params as a raw JsonNode and never constructs a
-        // ContentBlock, which is what makes it the only hook a lossless proxy
-        // can use.
-        options.Filters.Message.IncomingFilters.Add(next => (context, cancellationToken) =>
-            OnIncomingAsync(next, context, cancellationToken));
 
         // ⚠️ The one thing this outgoing filter does, and it exists because the
         // SDK advertises a capability we never asked for. See UnadvertiseLogging.
@@ -394,7 +440,11 @@ internal sealed class BrowserProxy : IAsyncDisposable
         };
     }
 
-    private static JsonObject TextResult(string text, bool isError) =>
+    /// <summary>A tool result carrying one text block.</summary>
+    /// <param name="text">The text.</param>
+    /// <param name="isError">Whether the result is an error.</param>
+    /// <returns>The result object.</returns>
+    internal static JsonObject TextResult(string text, bool isError) =>
         new()
         {
             ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = text }),
@@ -431,12 +481,35 @@ internal sealed class BrowserProxy : IAsyncDisposable
                     // refused call is as much a model at work as a forwarded one.
                     using (Activity.ToolCall())
                     {
-                        if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
+                        // ⚠️ A STOP FOR AN UPDATE HAS BEGUN, so this call is
+                        // refused at the door and nothing is forwarded -- Q286 b.
+                        // The conversation ends a moment later; a client that
+                        // calls in that moment is told why and what to do.
+                        if (Volatile.Read(ref _stoppingForAnUpdate) is not 0)
                         {
+                            await RefuseForAnUpdateAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
                             return;
                         }
 
-                        await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
+                        var call = new CallInFlight(context.Server, ToolNameOf(request));
+                        _calls[request.Id] = call;
+
+                        try
+                        {
+                            if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
+                            {
+                                return;
+                            }
+
+                            await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
+                        }
+                        finally
+                        {
+                            if (Volatile.Read(ref _stoppingForAnUpdate) is 0)
+                            {
+                                _ = _calls.TryRemove(new KeyValuePair<RequestId, CallInFlight>(request.Id, call));
+                            }
+                        }
                     }
 
                     return;
@@ -527,10 +600,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return false;
         }
 
-        var name = (request.Params as JsonObject)?["name"] is JsonValue value
-            && value.GetValueKind() is JsonValueKind.String
-                ? value.GetValue<string>()
-                : "<none>";
+        var name = ToolNameOf(request);
 
         var client = caller.ClientInfo?.Name;
 
@@ -547,6 +617,115 @@ internal sealed class BrowserProxy : IAsyncDisposable
             cancellationToken).ConfigureAwait(false);
 
         return true;
+    }
+
+    /// <summary>
+    /// Refuses every tool call still being answered, because this server is
+    /// about to stop so that an update can be installed -- and refuses every call
+    /// that arrives from here on.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q286 b, the maintainer's words verbatim: <i>"Q286 b"</i>.</b> A call in
+    /// flight when a server is stopped through its pipe is answered with
+    /// <see cref="SessionErrors.UpdateIsBeingInstalled"/> before the conversation
+    /// ends, and not with a connection that simply closed under it. A dropped
+    /// connection tells a model nothing; a refusal tells it to wait and call
+    /// again, and to check what the cut-off call had done first.
+    /// </para>
+    /// <para>
+    /// <b>Each call is claimed before its refusal is sent</b>, so a call whose own
+    /// answer went out first is left alone, and an answer arriving after its
+    /// refusal is dropped by <see cref="IsASecondAnswer"/>. A write that cannot
+    /// finish inside the caller's bound is abandoned: the stop goes ahead either
+    /// way, and the caller's token says how long it may take.
+    /// </para>
+    /// </remarks>
+    /// <param name="cancellationToken">Bounds the refusals.</param>
+    /// <returns>A task that completes once every refusal has been sent or abandoned.</returns>
+    public async Task RefuseCallsInFlightForAnUpdateAsync(CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Exchange(ref _stoppingForAnUpdate, 1);
+
+        foreach (var (id, call) in _calls)
+        {
+            if (Interlocked.CompareExchange(ref call.Answered, 1, 0) is not 0)
+            {
+                continue;
+            }
+
+            var refusal = new JsonRpcResponse
+            {
+                Id = id,
+                Result = TextResult(SessionErrors.UpdateIsBeingInstalled(call.Tool, wasRunning: true, call.Caller.ClientInfo?.Name), isError: true),
+            };
+
+            // Published before the send, so the door out knows it for this
+            // call's one answer.
+            Volatile.Write(ref call.Refusal, refusal);
+            ProxyLog.CutOffForAnUpdate(_logger, call.Tool);
+
+            try
+            {
+                await call.Caller.SendMessageAsync(refusal, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception failure) when (failure is IOException or ObjectDisposedException or OperationCanceledException or InvalidOperationException)
+            {
+                ProxyLog.RefusalNotSent(_logger, call.Tool, failure);
+            }
+        }
+    }
+
+    /// <summary>The tool a <c>tools/call</c> names, read leniently: a name that is not a string is <c>&lt;none&gt;</c>.</summary>
+    /// <param name="request">The call.</param>
+    /// <returns>The name, or <c>&lt;none&gt;</c>.</returns>
+    internal static string ToolNameOf(JsonRpcRequest request) =>
+        (request.Params as JsonObject)?["name"] is JsonValue value
+            && value.GetValueKind() is JsonValueKind.String
+                ? value.GetValue<string>()
+                : "<none>";
+
+    /// <summary>Refuses one call at the door, because a stop for an update has begun.</summary>
+    /// <param name="caller">The connection to answer.</param>
+    /// <param name="request">The call.</param>
+    /// <param name="cancellationToken">The caller's token.</param>
+    /// <returns>The send.</returns>
+    private async Task RefuseForAnUpdateAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
+    {
+        var tool = ToolNameOf(request);
+
+        ProxyLog.RefusedForAnUpdate(_logger, tool);
+
+        await RefuseAsync(
+            caller,
+            request.Id,
+            SessionErrors.UpdateIsBeingInstalled(tool, wasRunning: false, caller.ClientInfo?.Name),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Whether an outgoing message is a second answer to a call that already
+    /// has one, which must not reach the client.
+    /// </summary>
+    /// <param name="context">The outgoing message.</param>
+    /// <returns><see langword="true"/> when the message must be dropped.</returns>
+    private bool IsASecondAnswer(MessageContext context)
+    {
+        if (context.JsonRpcMessage is not (JsonRpcResponse or JsonRpcError)
+            || context.JsonRpcMessage is not JsonRpcMessageWithId { Id: var id }
+            || !_calls.TryGetValue(id, out var call))
+        {
+            return false;
+        }
+
+        // The stop's own refusal for this call is the one answer it gets.
+        if (ReferenceEquals(Volatile.Read(ref call.Refusal), context.JsonRpcMessage))
+        {
+            return false;
+        }
+
+        // Otherwise the first answer claims the call, and any later one is a second.
+        return Interlocked.Exchange(ref call.Answered, 1) is not 0;
     }
 
     /// <summary>
@@ -1378,6 +1557,24 @@ internal sealed class BrowserProxy : IAsyncDisposable
         await caller.SendMessageAsync(answer, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>One tool call this server is answering, and whether it has been answered.</summary>
+    /// <param name="caller">The connection it arrived on.</param>
+    /// <param name="tool">The tool it named.</param>
+    private sealed class CallInFlight(McpServer caller, string tool)
+    {
+        /// <summary>Set to 1 by whichever answer claims the call first.</summary>
+        public int Answered;
+
+        /// <summary>The stop's refusal for this call, once it has claimed it.</summary>
+        public JsonRpcMessage? Refusal;
+
+        /// <summary>The connection it arrived on.</summary>
+        public McpServer Caller { get; } = caller;
+
+        /// <summary>The tool it named.</summary>
+        public string Tool { get; } = tool;
+    }
+
     private async ValueTask RelayToCallerAsync(JsonRpcNotification notification, CancellationToken cancellationToken)
     {
         if (Volatile.Read(ref _caller) is not { } caller)
@@ -1621,6 +1818,37 @@ internal static partial class ProxyLog
         Level = LogLevel.Information,
         Message = "'{Tool}' arrived from client '{Client}' before any tools/list on this connection, so its tool list predates BrowserAI {Version}. Refused once, and notifications/tools/list_changed was sent with the refusal.")]
     public static partial void ToolListPredatesThisServer(ILogger logger, string tool, string client, string version);
+
+    /// <summary>
+    /// A call still in flight when a stop for an update began was answered with
+    /// the update refusal.
+    /// </summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool the call named.</param>
+    [LoggerMessage(
+        EventId = 19,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' was still running when this server was stopped for an update; it was answered with the update refusal before the conversation ended.")]
+    public static partial void CutOffForAnUpdate(ILogger logger, string tool);
+
+    /// <summary>A call arrived after a stop for an update had begun, or while an update is being installed, and was refused.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool the call named.</param>
+    [LoggerMessage(
+        EventId = 20,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' arrived while an update is being installed and was refused; nothing was forwarded.")]
+    public static partial void RefusedForAnUpdate(ILogger logger, string tool);
+
+    /// <summary>A refusal for a call cut off by a stop could not be written.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool the call named.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 21,
+        Level = LogLevel.Warning,
+        Message = "The update refusal for '{Tool}' could not be sent; the stop goes ahead and the client sees its connection close instead.")]
+    public static partial void RefusalNotSent(ILogger logger, string tool, Exception failure);
 
     // ⚠️ EVENT IDS 10, 11 AND 12 ARE RETIRED AND ARE NOT TO BE REUSED,
     // 2026-08-26. They were `InlineImageRestored`, `FilenameRefused` and

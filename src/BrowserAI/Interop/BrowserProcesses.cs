@@ -53,6 +53,12 @@ internal static partial class BrowserProcesses
     private const uint ProcessQueryLimitedInformation = 0x00001000;
     private const uint ProcessTerminate = 0x00000001;
 
+    /// <summary>
+    /// Required to wait on a process handle, and not implied by
+    /// <see cref="ProcessQueryLimitedInformation"/>.
+    /// </summary>
+    private const uint Synchronize = 0x00100000;
+
     /// <summary>Every live process whose executable sits under <paramref name="root"/>.</summary>
     /// <param name="root">
     /// An absolute directory. Matching is a case-insensitive prefix match on the
@@ -180,6 +186,57 @@ internal static partial class BrowserProcesses
         }
 
         return new StrayScan(candidates, enumerated, opened, spellings);
+    }
+
+    /// <summary>
+    /// The first live process running <b>exactly</b> one executable, held open
+    /// for waiting on and for nothing else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Detection only, and the access asked for says so.</b> The handle carries
+    /// <c>PROCESS_QUERY_LIMITED_INFORMATION</c> and <c>SYNCHRONIZE</c> and never
+    /// <c>PROCESS_TERMINATE</c>: what this finds is watched until it goes, and a
+    /// handle that could end it would be a capability nobody asked for.
+    /// </para>
+    /// <para>
+    /// <b>The same full-path match as <see cref="ScanFor"/></b>, against every
+    /// spelling the filesystem gives the path, with the creation time read off the
+    /// handle that is kept -- so the identity is the pair, and the handle is what
+    /// stops the pid being reused while it is held.
+    /// </para>
+    /// </remarks>
+    /// <param name="image">The absolute executable path to look for.</param>
+    /// <returns>The process, or <see langword="null"/> when none is running it. The caller owns it.</returns>
+    /// <exception cref="Win32Exception">The process list could not be read at all.</exception>
+    public static WatchedProcess? FirstRunning(string image)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(image);
+
+        var wanted = ImageSpellings.Of([image]).Matched;
+
+        foreach (var processId in ProcessIds())
+        {
+            var handle = OpenProcess(ProcessQueryLimitedInformation | Synchronize, bInheritHandle: false, (uint)processId);
+
+            if (handle.IsInvalid)
+            {
+                handle.Dispose();
+                continue;
+            }
+
+            var path = ImagePathOf(handle);
+
+            if (path is null || !wanted.Contains(path) || !GetProcessTimes(handle, out var created, out _, out _, out _))
+            {
+                handle.Dispose();
+                continue;
+            }
+
+            return new WatchedProcess(processId, created, path, handle);
+        }
+
+        return null;
     }
 
     /// <summary>Every pid on the machine, from <c>EnumProcesses</c>.</summary>
@@ -612,4 +669,94 @@ internal sealed partial class StrayCandidate : IDisposable
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool TerminateProcess(SafeProcessHandle hProcess, uint uExitCode);
+}
+
+/// <summary>
+/// One live process found by its full image path and held open to be waited on:
+/// never to be ended.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>It exists for Q286 b</b>, the maintainer's words verbatim: <i>"Q286 b"</i>.
+/// A server that starts while its own install's <c>Update.exe</c> is running
+/// finds that updater here, and waits on it here, because the updater leaving is
+/// the moment the refusals have to stop.
+/// </para>
+/// <para>
+/// <b>The wait is a thread blocked on the handle, not a thread-pool
+/// registration.</b> The handle stays a <see cref="SafeProcessHandle"/> the whole
+/// time and is passed to <c>WaitForSingleObject</c> by the marshaller, which holds
+/// a reference across the call, so no raw value is stored anywhere and a
+/// <see cref="Dispose"/> during the wait cannot close it underneath the waiter.
+/// One thread for the seconds an update takes is the whole cost.
+/// </para>
+/// </remarks>
+internal sealed partial class WatchedProcess : IDisposable
+{
+    private const uint Infinite = 0xFFFFFFFF;
+
+    private readonly SafeProcessHandle _handle;
+    private int _watching;
+
+    internal WatchedProcess(int processId, long createdFileTime, string imagePath, SafeProcessHandle handle)
+    {
+        ProcessId = processId;
+        CreatedFileTime = createdFileTime;
+        ImagePath = imagePath;
+        _handle = handle;
+    }
+
+    /// <summary>Its pid, pinned by the open handle for as long as this object lives.</summary>
+    public int ProcessId { get; }
+
+    /// <summary>Its creation time, read off the handle that is kept. With the pid, this is its identity.</summary>
+    public long CreatedFileTime { get; }
+
+    /// <summary>The full path of the executable it is running.</summary>
+    public string ImagePath { get; }
+
+    /// <summary>Runs <paramref name="onExit"/> once, on a thread of its own, when the process has gone.</summary>
+    /// <param name="onExit">What to do. It must not throw; a failure is swallowed there, since nothing waits for it.</param>
+    public void WhenExited(Action onExit)
+    {
+        ArgumentNullException.ThrowIfNull(onExit);
+
+        if (Interlocked.Exchange(ref _watching, 1) is not 0)
+        {
+            return;
+        }
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                // An answer other than signalled means the wait itself failed;
+                // the process may still be there, and a stop built on that would
+                // end a conversation for nothing. Only a signalled handle is a
+                // departure.
+                if (WaitForSingleObject(_handle, Infinite) is 0)
+                {
+                    onExit();
+                }
+            }
+#pragma warning disable CA1031 // A background watch must not take the process down; the conversation it ends has its own paths.
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "BrowserAI updater watch",
+        };
+
+        thread.Start();
+    }
+
+    /// <inheritdoc />
+    public void Dispose() => _handle.Dispose();
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint WaitForSingleObject(SafeProcessHandle hHandle, uint dwMilliseconds);
 }

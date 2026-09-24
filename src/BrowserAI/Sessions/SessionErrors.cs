@@ -157,6 +157,60 @@ internal static class SessionErrors
                 ? "START A NEW THREAD: your client takes its tool list once per thread, it does not act on the tools/list_changed notification BrowserAI has just sent, and it does not re-launch a server that has gone -- so a retry has nothing to reach. A new thread lists fresh and every name in it is this server's. Until then, treat any missing tool as gone and not as a mistake of yours."
                 : "Ask BrowserAI for its tool list before calling again -- BrowserAI has also sent a tools/list_changed notification, in case your client acts on one -- and call from the list that comes back and not from the one you are holding.";
 
+    /// <summary>
+    /// Row 0's companion -- BrowserAI is installing an update, so this call was
+    /// refused or cut off, and the model is told to wait and call again.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q286 b, the maintainer's words verbatim: <i>"Q286 b"</i>.</b> A tool
+    /// result is the only channel that reaches a model: MCP has no shutdown
+    /// message a client passes on, Claude Code drops log notifications and Codex
+    /// only logs them. So the two moments an update meets a model are both
+    /// answered with this sentence: a call still in flight when a server is
+    /// stopped through its pipe, and every call made to a server that started
+    /// while its own install's <c>Update.exe</c> was running.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The two moments differ in what may have happened, and the sentence
+    /// says which.</b> A call refused at the door reached nothing. A call cut off
+    /// in flight had already been forwarded to a browser server, which may have
+    /// clicked, typed or navigated before it was stopped -- so that sentence says
+    /// to check before repeating, and does not claim that nothing ran.
+    /// </para>
+    /// <para>
+    /// <b>The recovery is per client, for the reason the stale-list row gives.</b>
+    /// Claude Code starts a stdio server again on the next call by itself, and
+    /// after the update that server is the new one; Codex never does, so its
+    /// remedy is a new thread or a reconnect; a client this build has never met
+    /// is told both halves.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool the call named, whatever the caller said.</param>
+    /// <param name="wasRunning">Whether the call was already being carried out when the server stopped.</param>
+    /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
+    /// <returns>The refusal.</returns>
+    public static string UpdateIsBeingInstalled(string tool, bool wasRunning, string? clientName) =>
+        (wasRunning
+            ? $"BrowserAI stopped to install an update while '{tool}' was running. The call was already being carried out, so part of it may have happened: check what it was doing before you repeat it. "
+            : $"BrowserAI is installing an update, so '{tool}' was NOT run: nothing reached a browser and nothing changed. ")
+        + UpdateRemedy(clientName)
+        + $" A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call {SessionToolSurface.Resume} on its directory before you use it again.";
+
+    /// <summary>What to do while an update installs, spelled for the client at the other end.</summary>
+    /// <remarks>
+    /// <b>Not a public row, for <see cref="Remedy"/>'s reason</b>: one condition,
+    /// one refusal, and this is the recovery clause inside it.
+    /// </remarks>
+    /// <param name="clientName">What the client called itself.</param>
+    /// <returns>One or two sentences naming the fix.</returns>
+    private static string UpdateRemedy(string? clientName) =>
+        KnownClients.Matches(clientName, KnownClients.ClaudeCode)
+            ? "Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call."
+            : KnownClients.Matches(clientName, KnownClients.Codex)
+                ? "Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer."
+                : "Wait about a minute, then call again. If your client then reports that the server has gone, reconnect the BrowserAI server.";
+
     /// <summary>Row 1 -- the call named no session.</summary>
     /// <param name="tool">The tool that was called.</param>
     /// <returns>The refusal.</returns>

@@ -319,11 +319,26 @@ internal static class Program
             return SweepOnce(paths, installRoot, log.Factory, logger);
         }
 
+        // ⚠️ IS THIS INSTALL'S UPDATER RUNNING -- Q286 b, 2026-09-24, the
+        // maintainer's words verbatim: "Q286 b". Asked BEFORE the sweep, because a
+        // server that starts during an apply must start nothing of its own: the
+        // updater's kill pass ends every process under the install root, and
+        // anything this server started there would hold files the swap needs.
+        // The match is the full image path <install root>\Update.exe, read with
+        // QueryFullProcessImageNameW, and the handle it holds can wait and cannot
+        // terminate: this is detection and nothing else.
+        using var updater = FindTheUpdater(installRoot, logger);
+
         // Fire-and-forget, on its own background thread, before anything that
         // can be slow. Nothing on the request path waits for it or observes it,
         // and it is deliberately never a startup gate: a BrowserAI that cannot
-        // sweep is degraded, one that will not start is broken.
-        StraySweep.StartInBackground(() => CreateSweep(paths, installRoot, log.Factory), logger);
+        // sweep is degraded, one that will not start is broken. Not during an
+        // update: a sweep that ends a stray browser starts a registry reap, and
+        // that is a node process from the payload under the install root.
+        if (updater is null)
+        {
+            StraySweep.StartInBackground(() => CreateSweep(paths, installRoot, log.Factory), logger);
+        }
 
         // ⚠️ TAKEN BY EVERY RUN, NOT ONLY BY ONE THAT CHECKS FOR UPDATES, and
         // held for the whole process life. It is what another instance's census
@@ -357,9 +372,25 @@ internal static class Program
         // BEFORE everything slow, so a coordinator can see a server that is still
         // starting -- it says so -- and stop one that has not begun serving.
         var activity = new ServerActivity(TimeProvider.System, Environment.CurrentDirectory);
-        var responder = new ServerPipeResponder(activity, () => RequestStop(stopping));
+
+        // Set once the proxy exists; until then a stop has no calls to refuse.
+        BrowserProxy? serving = null;
+
+        var responder = new ServerPipeResponder(
+            activity,
+            () => _ = StopThroughThePipeAsync(() => Volatile.Read(ref serving), () => RequestStop(stopping), logger));
 
         using var pipe = OpenPipe(live, responder, log.Factory.CreateLogger("BrowserAI.Pipe"));
+
+        // ⚠️ A SERVER THAT STARTED DURING AN UPDATE -- Q286 b. It answers the
+        // handshake, refuses every tool call with the update refusal, starts no
+        // browser server and never checks the feed; its pipe describes it as
+        // "updating". The updater's kill pass ends it, and the client starts one
+        // again on its next call.
+        if (updater is not null)
+        {
+            return await ServeWhileUpdatingAsync(updater, activity, stopping, log.Factory, logger).ConfigureAwait(false);
+        }
 
         // One run, one directory. It holds this run's own child -- the one that
         // answers `tools/list` before any session exists -- together with its
@@ -421,8 +452,10 @@ internal static class Program
             var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment, activity).ConfigureAwait(false);
 
             // The pipe describes the sessions from here on; until this line it
-            // said "starting" and listed none, which was the truth.
+            // said "starting" and listed none, which was the truth. And a stop
+            // from here on refuses this proxy's calls in flight before it acts.
             responder.AttachSessions(proxy.HeldSessions);
+            Volatile.Write(ref serving, proxy);
 
             // `await using var x = ...` awaits its DisposeAsync on the captured
             // context, which CA2007 refuses. Holding the ConfiguredAsyncDisposable
@@ -556,6 +589,134 @@ internal static class Program
             ServerPipeLog.NotCreated(logger, ServerPipeProtocol.NameFor(live.OwnFile), failure);
             return null;
         }
+    }
+
+    /// <summary>The updater of this install, when it is running, found by its full image path.</summary>
+    /// <param name="installRoot">The install root; the updater is <c>Update.exe</c> directly beneath it.</param>
+    /// <param name="logger">Where a process list that could not be read is reported.</param>
+    /// <returns>The running updater, held open to be waited on, or <see langword="null"/>.</returns>
+    private static WatchedProcess? FindTheUpdater(string installRoot, ILogger logger)
+    {
+        try
+        {
+            return BrowserProcesses.FirstRunning(Path.Combine(installRoot, UpdaterFileName));
+        }
+        catch (Win32Exception failure)
+        {
+            // A process list that cannot be read cannot say an update is running,
+            // and refusing every call on a guess would break a server that is not
+            // in the way of anything. Served normally, and said.
+            StartupLog.UpdaterNotChecked(logger, failure);
+            return null;
+        }
+    }
+
+    /// <summary>The file name Velopack gives its updater, directly under the install root.</summary>
+    public const string UpdaterFileName = "Update.exe";
+
+    /// <summary>
+    /// Serves a client while this install's updater runs: the handshake, and a
+    /// refusal for every tool call, until the updater or the client goes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>It ends its own conversation when the updater has gone, and that is
+    /// an addition to Q286 b's text, measured and not reasoned.</b> Velopack's
+    /// kill pass ends every server that started before it, but a server can also
+    /// start AFTER it: on 2026-09-24 at 1.2.158, four servers started between the
+    /// swap and the updater's own exit -- 2.9 to 4.2 s into a 4.25 s apply -- were
+    /// running the new version with <c>Update.exe</c> still alive, and nothing
+    /// would ever have killed them. Left alone, each would refuse every call for
+    /// the rest of its session. So the watch on the updater stops this
+    /// conversation the moment it goes, and the client's next call starts a
+    /// server from whatever the update left in place.
+    /// </para>
+    /// <para>
+    /// <b>A stop through the pipe works here too</b>, and it has no calls to
+    /// refuse: every call this server receives is answered as it arrives.
+    /// </para>
+    /// </remarks>
+    /// <param name="updater">The updater found at startup.</param>
+    /// <param name="activity">What this server has been doing, for its pipe.</param>
+    /// <param name="stopping">The process's own stop signal.</param>
+    /// <param name="factory">Where the transport and the server log.</param>
+    /// <param name="logger">Where this startup reports.</param>
+    /// <returns>Zero, once the conversation has ended.</returns>
+    private static async Task<int> ServeWhileUpdatingAsync(
+        WatchedProcess updater,
+        ServerActivity activity,
+        CancellationTokenSource stopping,
+        ILoggerFactory factory,
+        ILogger logger)
+    {
+        StartupLog.UpdateInProgress(logger, updater.ProcessId, updater.ImagePath);
+
+        using var channel = StdioChannel.OpenStandardStreams();
+
+        var transport = new DirectStdioServerTransport(channel, factory);
+        await using var transportScope = transport.ConfigureAwait(false);
+
+        var surface = new UpdateInProgressServer(activity, factory.CreateLogger<UpdateInProgressServer>());
+        var server = McpServer.Create(transport, surface.ServerOptions(), factory);
+        await using var serverScope = server.ConfigureAwait(false);
+
+        using var closeOnDeparture = stopping.Token.Register(
+            () => _ = EndTheConversationAsync(transport, logger));
+
+        updater.WhenExited(() =>
+        {
+            StartupLog.UpdaterExited(logger, updater.ProcessId);
+            RequestStop(stopping);
+        });
+
+        activity.Updating();
+
+        try
+        {
+            await server.RunAsync(stopping.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // The updater went, the client went, or a stop arrived. Each has
+            // already said so.
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// What an acknowledged stop does: refuse the calls still in flight, then
+    /// take the one graceful path there is.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q286 b.</b> The refusals go out first and inside
+    /// <see cref="ServerPipeProtocol.CallBound"/>, the same bound a caller gives
+    /// the stop itself; a write that cannot finish in that is abandoned, because
+    /// a stop that waited on a client which is not reading would be a stop that
+    /// never came.
+    /// </remarks>
+    /// <param name="serving">The proxy, once there is one.</param>
+    /// <param name="stop">The graceful path, <see cref="RequestStop"/> over the process's own stop signal.</param>
+    /// <param name="logger">Where a failure to refuse is reported.</param>
+    /// <returns>The stop.</returns>
+    private static async Task StopThroughThePipeAsync(Func<BrowserProxy?> serving, Action stop, ILogger logger)
+    {
+        try
+        {
+            if (serving() is { } proxy)
+            {
+                using var bound = new CancellationTokenSource(ServerPipeProtocol.CallBound);
+                await proxy.RefuseCallsInFlightForAnUpdateAsync(bound.Token).ConfigureAwait(false);
+            }
+        }
+#pragma warning disable CA1031 // The refusals are a courtesy to the client; nothing about them may stand between a stop and the stop.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            StartupLog.StopRefusalsFailed(logger, failure);
+        }
+
+        stop();
     }
 
     /// <summary>What an acknowledged stop does: the one graceful path there is.</summary>
@@ -829,6 +990,51 @@ internal static partial class StartupLog
         Level = LogLevel.Warning,
         Message = "BrowserAI has no client to serve and is exiting: the process that started it (pid={Launcher}) could not be opened or is gone, and standard input is a console, not a pipe, so neither of the two teardown signals can ever arrive. A client that starts BrowserAI gives it a pipe and stays alive on the other end of it.")]
     public static partial void NoClientToServe(ILogger logger, int launcher);
+
+    /// <summary>
+    /// This install's updater is running, so this server refuses every tool call
+    /// and starts nothing until it has gone.
+    /// </summary>
+    /// <remarks>
+    /// Warning: the client this server answers cannot use it for the length of
+    /// the update, which is the state an investigator of a failed call wants to
+    /// find first.
+    /// </remarks>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="updater">The updater's pid.</param>
+    /// <param name="image">The updater's full image path.</param>
+    [LoggerMessage(
+        EventId = 10,
+        Level = LogLevel.Warning,
+        Message = "This install's updater is running (pid={Updater}, {Image}), so this server answers its client's handshake, refuses every tool call and starts no browser server until the updater has gone.")]
+    public static partial void UpdateInProgress(ILogger logger, int updater, string image);
+
+    /// <summary>The updater this server found at startup has gone, so the conversation ends.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="updater">The updater's pid.</param>
+    [LoggerMessage(
+        EventId = 11,
+        Level = LogLevel.Information,
+        Message = "The updater (pid={Updater}) has gone, so this server ends its conversation; the client's next call starts a server from whatever the update left in place.")]
+    public static partial void UpdaterExited(ILogger logger, int updater);
+
+    /// <summary>The refusals a stop sends to the calls in flight failed; the stop went ahead.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 12,
+        Level = LogLevel.Warning,
+        Message = "The refusals for the calls in flight could not all be sent; the stop goes ahead.")]
+    public static partial void StopRefusalsFailed(ILogger logger, Exception failure);
+
+    /// <summary>The process list could not be read, so whether an update is running is not known.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 13,
+        Level = LogLevel.Warning,
+        Message = "Whether this install's updater is running could not be checked, so this server serves normally.")]
+    public static partial void UpdaterNotChecked(ILogger logger, Exception failure);
 
     // ⚠️ EVENT ID 8 IS RETIRED -- Q276 a, 2026-09-24. It was
     // `StartedByTheInstaller`, "BrowserAI was started by the installer
