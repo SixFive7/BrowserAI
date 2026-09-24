@@ -1425,6 +1425,91 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(File.Exists(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"))).IsTrue();
     }
 
+    /// <summary>
+    /// The clearance snapshot reads the client's registration out of the client's
+    /// own file, and never starts the client to ask.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q281, decided 2026-09-24 by the maintainer, verbatim: "Q281 a".</b> The
+    /// question put to him: the snapshot's third reading ran
+    /// <c>claude mcp get browserai</c>, which starts the client -- and the client
+    /// health-checks the server it names -- and may write <c>~/.claude.json</c>,
+    /// the file the gate exists to prove untouched; every gate had run it. Direction
+    /// (a) was a read-only parse of the <c>browserai</c> entry, which answers the
+    /// same question without starting anything, and it is the reading
+    /// permanently.
+    /// </para>
+    /// <para>
+    /// <b>Read as code, comments blanked</b>, so the script may say why it no longer
+    /// asks the client. <b>Planted red 2026-09-24</b> against the script as it
+    /// stood, which this arm named for starting the client and for reading no
+    /// file.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient()
+    {
+        var script = Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1");
+        var code = CodeOf(await File.ReadAllTextAsync(script), ".ps1");
+
+        await Assert.That(string.Join(Environment.NewLine, ClearanceOffences(code))).IsEmpty();
+
+        // ⚠️ THE POSITIVE CONTROL, both directions, through the same reader: the
+        // old reading is caught twice, the new one not at all, and a comment
+        // about the client is not a call to it.
+        await Assert.That(ClearanceOffences(CodeOf("$out += ((claude mcp get browserai 2>&1 | Out-String))", ".ps1")).Count).IsEqualTo(2);
+        await Assert.That(ClearanceOffences(CodeOf("$j = $text | ConvertFrom-Json -AsHashtable # the entry in ~/.claude.json\n$f = '.claude.json'", ".ps1"))).IsEmpty();
+        await Assert.That(ClearanceOffences(CodeOf("# never claude mcp get\n$f = '.claude.json'; $j = $t | ConvertFrom-Json -AsHashtable", ".ps1"))).IsEmpty();
+    }
+
+    /// <summary>What is wrong with a clearance script's registration reading.</summary>
+    /// <param name="code">The script, comments blanked.</param>
+    /// <returns>One complaint per fault.</returns>
+    private static List<string> ClearanceOffences(string code)
+    {
+        var offences = new List<string>();
+
+        if (ClientInvocation().IsMatch(code))
+        {
+            offences.Add("it starts the client to read the registration, and the client can write ~/.claude.json while it answers -- Q281 a");
+        }
+
+        if (!code.Contains(".claude.json", StringComparison.Ordinal) || !code.Contains("ConvertFrom-Json", StringComparison.OrdinalIgnoreCase))
+        {
+            offences.Add("it does not read the browserai entry out of ~/.claude.json with a parse, which is the reading Q281 a made permanent");
+        }
+
+        return offences;
+    }
+
+    /// <summary>A script's text with its comments blanked, line structure kept.</summary>
+    /// <param name="text">The script.</param>
+    /// <param name="suffix">Its extension, with the dot.</param>
+    /// <returns>The code.</returns>
+    private static string CodeOf(string text, string suffix)
+    {
+        var characters = text.ToCharArray();
+
+        foreach (var (start, end) in Commentary.SpansOf(text, suffix))
+        {
+            for (var at = start; at < end; at++)
+            {
+                if (characters[at] is not '\n')
+                {
+                    characters[at] = ' ';
+                }
+            }
+        }
+
+        return new string(characters);
+    }
+
+    /// <summary>A call to the Claude Code client's MCP verbs.</summary>
+    [GeneratedRegex(@"\bclaude(?:\.exe)?\s+mcp\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ClientInvocation();
+
     /// <summary>The four gate drivers, what each must force, and whether it is a release half.</summary>
     private static (string File, string Expected, bool Release)[] GateDrivers { get; } =
     [

@@ -40,6 +40,13 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **The gate's clearance reads the client registration out of its file and never starts the client.**
+  Q281, the maintainer's words verbatim: *"Q281 a"*. The snapshot compared either side of every
+  gate run read the real `browserai` registration with `claude mcp get`, which starts the client,
+  health-checks the server and can write `~/.claude.json` -- the file the comparison is there to
+  prove untouched. It parses that file's `browserai` entry read-only now, key by key, and
+  `SuiteCoverageTests.TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient` refuses a
+  call to the client's MCP verbs in the script; planted red against the script as it stood.
 - ✅ **The installed app's dialog arm runs on a desktop of its own, so a full run leaves the screen alone.**
   Q279. `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow` creates
   a desktop nobody is looking at, starts the installed app there through `JobLauncher` with

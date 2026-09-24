@@ -16,8 +16,15 @@
       2. HKCU Uninstall\BrowserAI.app.test -- the suite's own, which must be
          ABSENT: every key under the test id is one the suite wrote, so one that
          outlives a run is a run that did not clean up.
-      3. `claude mcp get browserai` -- the real registration, which the install
-         and uninstall hooks rewrite.
+      3. The real registration, which the install and uninstall hooks rewrite:
+         the `browserai` entry of `mcpServers` in ~/.claude.json, READ AS A FILE
+         AND PARSED, never asked of the client. Q281, decided 2026-09-24 by the
+         maintainer, verbatim: "Q281 a". Until then this reading ran the client's
+         own `mcp get` verb, which starts the client, health-checks the server it
+         names, and may write ~/.claude.json, the one file every run has to be
+         shown not to change. `SuiteCoverageTests.
+         TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient` holds
+         it that way.
       4. %TEMP%\velopack_BrowserAI.app -- present means an apply was interrupted.
       5. The Start Menu shortcut, by length and SHA-256, because Velopack names
          it after the pack TITLE and removes shortcuts by target.
@@ -66,8 +73,42 @@ else {
 $test = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("$uninstall\BrowserAI.app.test")
 $out += ('ARP BrowserAI.app.test: ' + $(if ($test) { 'PRESENT <<< MUST BE ABSENT' } else { 'ABSENT' }))
 
-$out += '--- claude mcp get browserai ---'
-$out += ((claude mcp get browserai 2>&1 | Out-String) -split "`r?`n" | Where-Object { $_ -notmatch '^\s*$' })
+# 3. The registration, out of the client's own file and never by starting the
+# client (Q281 a). Opened for reading with every sharing mode, so a client
+# writing the file at the same moment is neither blocked nor raced by a lock.
+# -AsHashtable because the file can carry keys that differ only by case, and it
+# returns an ordered table, so two snapshots print the keys in the same order.
+$claudeJson = Join-Path $env:USERPROFILE '.claude.json'
+$out += '--- ~/.claude.json mcpServers.browserai, parsed read-only ---'
+if (Test-Path -LiteralPath $claudeJson) {
+    try {
+        $stream = [System.IO.File]::Open($claudeJson, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete)
+        try {
+            $reader = New-Object System.IO.StreamReader($stream)
+            $parsed = $reader.ReadToEnd() | ConvertFrom-Json -AsHashtable
+        }
+        finally {
+            $stream.Dispose()
+        }
+
+        $servers = $parsed['mcpServers']
+        if ($servers -and $servers.Contains('browserai')) {
+            $entry = $servers['browserai']
+            foreach ($key in ($entry.Keys | Sort-Object)) {
+                $out += ('  {0} = {1}' -f $key, (ConvertTo-Json -InputObject $entry[$key] -Compress -Depth 10))
+            }
+        }
+        else {
+            $out += '  browserai ABSENT at user scope'
+        }
+    }
+    catch {
+        $out += "  UNREADABLE: $($_.Exception.Message)"
+    }
+}
+else {
+    $out += '  ~/.claude.json ABSENT'
+}
 
 $staging = Join-Path $env:TEMP 'velopack_BrowserAI.app'
 $out += ('TEMP velopack_BrowserAI.app: ' + $(if (Test-Path $staging) { 'PRESENT <<< MUST BE ABSENT' } else { 'ABSENT' }))

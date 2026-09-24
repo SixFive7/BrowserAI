@@ -699,7 +699,11 @@ AND [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) -- *added
 each forcing and declaring its own drive-letter spelling, each comparing
 [the clearance snapshot](build/Get-ClearanceSnapshot.ps1) either side of every
 run and **stopping on the first difference instead of finishing and reporting
-it**. They are two files and not one for the reason
+it**. ⚠️ *Added 2026-09-24 by addition, Q281: the snapshot reads the client
+registration by parsing `~/.claude.json` read-only and never starts the client
+to ask -- the maintainer's words verbatim: "Q281 a". Before that day every
+gate ran `claude mcp get`, which can write the file the gate exists to prove
+untouched.* They are two files and not one for the reason
 [Testing](TESTING.md#how-the-suite-is-run-detached-teed-and-the-log-polled)
 gives: a shared wrapper would run one instrument twice. Ordinary work uses the
 ordinary pair beside them, which is one run per shell and does **not** set the
