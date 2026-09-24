@@ -306,6 +306,10 @@ internal sealed partial class SuiteCoverageTests
     {
         var summary = SuiteEnvironment.Summary();
 
+        // ⚠️ THE READING THE BLOCK PRINTED, taken off this thread before anything
+        // is awaited -- see CommitCharge.CoverageRow for the gate half this cost.
+        var printed = CommitCharge.PrintedOnThisThread;
+
         await Assert.That(summary).Contains("published slice");
         await Assert.That(summary).Contains("repository payload");
         await Assert.That(summary).Contains("Chromium");
@@ -356,8 +360,9 @@ internal sealed partial class SuiteCoverageTests
         // from a live one. Until 2026-08-30 no run took it at all, so that row's
         // question could not be asked of any gate this project has ever run.
         await Assert.That(summary).Contains(CommitCharge.Title);
+        await Assert.That(printed).IsNotNull();
         await Assert.That(summary)
-            .Contains(CommitCharge.StateWord(CommitCharge.Classify(CommitCharge.AtStart, CommitChargeReading.Take())).Trim())
+            .Contains(CommitCharge.StateWord(CommitCharge.Classify(CommitCharge.AtStart, printed!.Value)).Trim())
             .Because("the row states the band this machine is actually in, and a block that printed a number without classifying it would be an assurance the run has not earned");
 
         // Not a capability either, and the only row that fails the run by itself:

@@ -115,7 +115,34 @@ internal static class CommitCharge
     public static void TakeTheStartReading() => AtStart = CommitChargeReading.Take();
 
     /// <summary>The row the coverage block prints, with the end reading taken now.</summary>
-    public static string CoverageRow => RowFor(AtStart, CommitChargeReading.Take());
+    /// <remarks>
+    /// ⚠️ <b>The reading it printed is kept for the thread that asked -- 2026-09-24.</b>
+    /// <c>SuiteCoverageTests.TheCoverageBlockStatesWhatWasExercised</c> used to
+    /// classify a reading of its own and look for that word in the block. With the
+    /// machine at 75.0% of its limit the two readings, milliseconds apart, fell
+    /// either side of <see cref="TightFraction"/>: the block said TIGHT, the arm
+    /// expected HEALTHY, and a gate half went red on the machine and not on the
+    /// code, which this type's remarks forbid. The arm now classifies the reading
+    /// the block printed.
+    /// </remarks>
+    public static string CoverageRow
+    {
+        get
+        {
+            var end = CommitChargeReading.Take();
+
+            PrintedOnThisThread = end;
+
+            return RowFor(AtStart, end);
+        }
+    }
+
+    /// <summary>
+    /// The end reading the last <see cref="CoverageRow"/> on this thread printed,
+    /// or <see langword="null"/> when this thread has printed none.
+    /// </summary>
+    [field: ThreadStatic]
+    public static CommitChargeReading? PrintedOnThisThread { get; private set; }
 
     /// <summary>
     /// What a pair of readings amounts to, as a pure function of them.
