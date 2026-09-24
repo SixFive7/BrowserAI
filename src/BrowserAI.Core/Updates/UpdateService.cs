@@ -127,7 +127,7 @@ internal sealed class UpdateService
     /// in its own timer. So all three timers sit in the tripwire's time."</i>
     /// </para>
     /// <para>
-    /// """ + W + """ <b>WITHOUT IT THE CHECK WAS BOUNDED BY NOTHING THIS PRODUCT
+    /// ⚠️ <b>WITHOUT IT THE CHECK WAS BOUNDED BY NOTHING THIS PRODUCT
     /// CONTROLS.</b> Velopack 1.2.158's <c>UpdateManager.CheckForUpdatesAsync()</c>
     /// takes no <see cref="CancellationToken"/> at all, so the token handed to
     /// <c>IUpdateClient.CheckAsync</c> was read once on entry and never again: a
@@ -154,7 +154,7 @@ internal sealed class UpdateService
     /// <see cref="AbsoluteBudget"/>.
     /// </para>
     /// <para>
-    /// """ + W + """ <b>IT IS APPLIED BY WAITING, NOT BY PASSING A TOKEN, because passing
+    /// ⚠️ <b>IT IS APPLIED BY WAITING, NOT BY PASSING A TOKEN, because passing
     /// one does not work.</b> <c>CheckAsync</c> honours cancellation only up to
     /// the point where it calls Velopack; past that the token is inert. So the
     /// call is awaited through <c>WaitAsync</c> with this budget's token, which
@@ -591,7 +591,7 @@ internal static partial class UpdateLog
 
     /// <summary>The manifest check outran its own budget.</summary>
     /// <remarks>
-    /// """ + W + """ <b>ITS OWN EVENT ID, AND THAT IS THE POINT OF THE CHANGE.</b> Before
+    /// ⚠️ <b>ITS OWN EVENT ID, AND THAT IS THE POINT OF THE CHANGE.</b> Before
     /// 2026-09-24 a stalled or timed-out check reported as <c>TripwireFired</c>,
     /// event 11, which says the inner timers failed -- so the one line that was
     /// supposed to mean "this is a defect" was also the line an ordinary network

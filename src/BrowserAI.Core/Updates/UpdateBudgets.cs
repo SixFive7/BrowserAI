@@ -20,7 +20,7 @@ namespace BrowserAI.Updates;
 /// a behaviour that is asserted and one that is commented.
 /// </para>
 /// <para>
-/// """ + W + """ <b>SCALING PRESERVES THE RELATIONSHIPS AND THAT IS THE WHOLE POINT.</b>
+/// ⚠️ <b>SCALING PRESERVES THE RELATIONSHIPS AND THAT IS THE WHOLE POINT.</b>
 /// <see cref="Scaled"/> divides all four by the same factor, so a test runs
 /// against the product's own arithmetic -- check plus absolute inside the
 /// tripwire -- and not against four numbers somebody typed. A test that wrote

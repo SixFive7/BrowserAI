@@ -88,7 +88,7 @@ internal static class StatusReport
             writer.WriteString("version", state.Version);
             writer.WriteString("writtenAt", DateTimeOffset.Now.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
 
-            // %s THE APARTMENT OF THE THREAD THAT RAN Main, AND IT IS NOT
+            // ⚠️ THE APARTMENT OF THE THREAD THAT RAN Main, AND IT IS NOT
             // COSMETIC -- 2026-09-16. [STAThread] is an attribute the CLR reads;
             // whether NativeAOT honours it was ASSUMED and never measured, and
             // two things depend on it with no diagnostic if it is wrong. The

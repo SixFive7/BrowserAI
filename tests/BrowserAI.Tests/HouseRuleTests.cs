@@ -3436,4 +3436,178 @@ internal sealed partial class HouseRuleTests
     /// <summary>A row of the evidence index: a table line whose first cell is a linked batch name.</summary>
     [GeneratedRegex(@"(?m)^\|\s*\[`(?<batch>[^`]+)`\]\(")]
     private static partial Regex EvidenceIndexRow();
+
+    /// <summary>
+    /// No comment carries what the script that wrote it left behind: a string
+    /// concatenation, or a printf placeholder, standing where a character was
+    /// meant to be.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-09-24, after eight of them were found by a reader and none by
+    /// a run.</b> Five XML doc paragraphs opened with a triple quote, a plus, the
+    /// one-letter name of a patch script's variable, a plus and another triple
+    /// quote; three more comments opened with a bare printf placeholder. Each sat
+    /// where its siblings in the same commit open with the warning sign, and one
+    /// of the five replaced a paragraph that had opened with it, so the script
+    /// meant to write that sign and wrote its own source text. The compiler takes
+    /// a doc comment as text, and every other scan here passed all eight, because
+    /// none of them is a phrase or a character this tree refuses.
+    /// </para>
+    /// <para>
+    /// <b>It reads commentary in code files, and never code.</b>
+    /// <see cref="Harness.Commentary"/>, the lexer the prose scan reads with,
+    /// tells a comment from a literal, so a test composing a needle from halves, a
+    /// shell script calling printf and a format string in the product are all
+    /// outside it. Inside a comment, a <c>c</c> or <c>code</c> element and a
+    /// backtick span are code quoted in prose and are blanked first, so a comment
+    /// may still show the concatenation it is explaining.
+    /// </para>
+    /// <para>
+    /// <b>Two shapes.</b> A quote, a plus, a name, a plus and a quote: a string
+    /// closed, something appended and a string reopened, which no sentence does.
+    /// And a percent sign followed by one of the printf conversions a script
+    /// reaches for, bare or with a parenthesised name, and then by neither a
+    /// letter, a digit nor another percent sign -- which is what keeps an
+    /// environment variable such as <c>%LocalAppData%</c>, written in comments
+    /// across this tree, out of it.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24 against the tree as it stood</b>, before the
+    /// eight were restored: it named all eight, both shapes, at their lines, and
+    /// one of them was a comment the reader had not listed.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoCommentCarriesTheResidueOfTheScriptThatWroteIt()
+    {
+        var offences = new List<string>();
+        var scanned = 0;
+
+        foreach (var file in RepositoryLayout.AllFiles)
+        {
+            var name = Relative(file).Replace('\\', '/');
+
+            if (!IsSwept(name) || !IsCode(Path.GetExtension(name)) || IsBinary(file))
+            {
+                continue;
+            }
+
+            scanned++;
+            offences.AddRange(ResidueIn(name, await File.ReadAllTextAsync(file.FullName)));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // ⚠️ EACH SHAPE, PLANTED, in each comment syntax the tree writes. A
+        // pattern that stopped matching would report the tree clean, which is
+        // what a clean tree looks like.
+        string[] planted =
+        [
+            "/// \"\"\" + W + \"\"\" <b>A PARAGRAPH'S LEAD.</b>",
+            "// \" + marker + \" a lead",
+            "/// ' + Lead.Sign + ' a lead",
+            "/// %s <b>A PARAGRAPH'S LEAD.</b>",
+            "// %(sign)s a lead",
+            "/// the %d files it named",
+        ];
+
+        foreach (var line in planted)
+        {
+            await Assert.That(ResidueIn("tests/X.cs", line))
+                .IsNotEmpty()
+                .Because($"'{line}' is script residue and must be found");
+        }
+
+        await Assert.That(ResidueIn("build/X.ps1", "# %s a lead")).IsNotEmpty();
+        await Assert.That(ResidueIn("build/X.sh", "# \" + W + \" a lead")).IsNotEmpty();
+        await Assert.That(ResidueIn("docs/probes/a/rig.js", "// %r a lead")).IsNotEmpty();
+        await Assert.That(ResidueIn("src/X/X.csproj", "<!-- %s a lead -->")).IsNotEmpty();
+
+        // ⚠️ AND THE LEGITIMATE USES THE TREE CARRIES, verbatim, each from the
+        // file named beside it. Every one of them sits next to one of the two
+        // shapes, and none of them may be read as residue.
+        string[] legitimate =
+        [
+            // BrowsersManifest.cs: code quoted in a doc element.
+            "/// <c>browserDirectoryPrefix.replace(/-/g, \"_\") + \"-\" + revision</c>, read",
+            // RevisionPruneTests.cs: the same code, quoted in a backtick span.
+            "// as `name.replace(/-/g, \"_\") + \"-\" + revision`, so that a browser whose",
+            // LosslessPassthroughTests.cs: a plus that is a character being named.
+            "// difference is the test: base64's alphabet includes '+' and '/', which",
+            // IAppPaths.cs and a dozen more: an environment variable.
+            "/// <c>%LocalAppData%\\BrowserAI.app</c> for the install and",
+        ];
+
+        foreach (var line in legitimate)
+        {
+            await Assert.That(ResidueIn("tests/X.cs", line))
+                .IsEmpty()
+                .Because($"'{line}' is a legitimate comment the tree carries");
+        }
+
+        // docs/probes: an environment variable in bare prose, with no doc element round it.
+        await Assert.That(ResidueIn("docs/probes/a/rig.js", "// Nothing here touches %LocalAppData%\\BrowserAI.app.")).IsEmpty();
+
+        // New-Release.ps1: a plus between two placeholders, not between two quotes.
+        await Assert.That(ResidueIn("build/X.ps1", "# `<version core>+<sha>` is the shape the SDK produces, in both the `+` and")).IsEmpty();
+
+        // ⚠️ CODE IS NOT COMMENTARY. The gate drivers call printf in code, and a
+        // test composes its needles from halves in code; neither is read.
+        await Assert.That(ResidueIn("build/X.sh", "forced=\"$(printf %s \"${forced:0:1}\" | tr 'A-Z' 'a-z')${forced:1}\"")).IsEmpty();
+        await Assert.That(ResidueIn("tests/X.cs", "var needle = \"\"\" + W + \"\"\";")).IsEmpty();
+
+        // Not vacuous over the tree.
+        await Assert.That(scanned).IsGreaterThan(250);
+    }
+
+    /// <summary>Whether a file's comments are this rule's to read.</summary>
+    /// <param name="suffix">Its extension, with the dot.</param>
+    /// <returns>Whether the lexer separates comments from code in it.</returns>
+    private static bool IsCode(string suffix) =>
+        suffix is ".cs" or ".js" or ".mjs" or ".ps1" or ".psm1" or ".sh"
+            or ".csproj" or ".props" or ".targets" or ".slnx" or ".xml" or ".manifest";
+
+    /// <summary>Every piece of script residue in one file's comments, with its line.</summary>
+    /// <param name="name">The repository-relative path, with forward slashes.</param>
+    /// <param name="text">Its text.</param>
+    /// <returns>One line per offence.</returns>
+    private static List<string> ResidueIn(string name, string text)
+    {
+        var offences = new List<string>();
+
+        foreach (var (start, end) in Harness.Commentary.SpansOf(text, Path.GetExtension(name)))
+        {
+            // Quoted code is blanked to spaces of the same length, so an offset
+            // into what is left is still an offset into the file.
+            var comment = QuotedCode().Replace(text[start..end], quoted => new string(' ', quoted.Length));
+
+            foreach (Match residue in Residue().Matches(comment))
+            {
+                var at = start + residue.Index;
+                var line = 1 + text.AsSpan(0, at).Count('\n');
+                var what = residue.Groups["joined"].Success
+                    ? "a string concatenation, which is the source of the script that wrote this comment"
+                    : "a printf placeholder the script that wrote this comment never filled";
+
+                offences.Add($"{name}:{line.ToString(CultureInfo.InvariantCulture)}: {what} -- '{residue.Value}'");
+            }
+        }
+
+        return offences;
+    }
+
+    /// <summary>Code quoted inside a comment: a doc element or a backtick span.</summary>
+    [GeneratedRegex(@"(?s)<c>.*?</c>|<code>.*?</code>|`[^`\n]*`")]
+    private static partial Regex QuotedCode();
+
+    /// <summary>The two shapes a script leaves in a comment it wrote.</summary>
+    /// <remarks>
+    /// The conversion is wrapped in a group of its own so that no closing
+    /// bracket in this pattern is followed by an opening parenthesis, which
+    /// <see cref="DocumentationLinkTests"/> reads as a Markdown link.
+    /// </remarks>
+    [GeneratedRegex(@"(?<joined>[""']\s*\+\s*[A-Za-z_][A-Za-z0-9_.]*(?:\([^()\n]*\))?\s*\+\s*[""'])|(?<placeholder>(?<![%\w])%(?:\([A-Za-z_]\w*\))?(?:[sdrif])(?![A-Za-z0-9%]))")]
+    private static partial Regex Residue();
 }

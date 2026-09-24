@@ -284,7 +284,7 @@ internal sealed class ConfigurationSession(
     /// What a click did that it was not supposed to be able to do.
     /// </summary>
     /// <remarks>
-    /// %s <b>This is the reporting half of the dialog's exception boundary.</b>
+    /// ⚠️ <b>This is the reporting half of the dialog's exception boundary.</b>
     /// Everything this app does runs inside a reverse P/Invoke, where an escaped
     /// exception is a <c>FailFast</c> -- no window, no record, nothing. The host
     /// catches, hands it here, and then re-renders, so the note this sets is

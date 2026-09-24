@@ -90,7 +90,7 @@ internal static class FirefoxProfile
     /// so it is in force on the first navigation and not one page late.
     /// </para>
     /// <para>
-    /// """ + W + """ <b>THE BEHAVIOURAL EVIDENCE HERE IS WEAKER THAN CHROMIUM'S, AND IT IS
+    /// ⚠️ <b>THE BEHAVIOURAL EVIDENCE HERE IS WEAKER THAN CHROMIUM'S, AND IT IS
     /// WRITTEN DOWN AS WEAKER.</b> Measured 2026-09-23 @ firefox 1549 (156.0):
     /// the preference reaches the running child and the prompt does not appear
     /// -- but it did not appear in the CONTROL either, on a fresh profile with

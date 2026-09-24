@@ -111,7 +111,7 @@ internal sealed partial class AppendOnlyRecordTests
     /// The digest of the same characters <b>without their first line</b>.
     /// </param>
     /// <remarks>
-    /// %s <b>The second digest exists to tell one failure apart from every
+    /// ⚠️ <b>The second digest exists to tell one failure apart from every
     /// other, and that failure is a DATE -- 2026-09-16.</b> A sealed record
     /// starts at its heading, so <c>## [1.0.0] - 2026-09-15</c> is inside the
     /// prefix: changing the release date at the cut breaks the seal, and the
