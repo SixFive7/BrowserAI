@@ -1,0 +1,10 @@
+TORN variant=none handle=persistent writeRate=10 reads=8958000 in 60.0s ok=8958000 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.3 p99=12.8 max=6184.0
+  HOLDER pid=66328 variant=none writes=600 rate=10.0/s writeMeanUs=23.01 duty=0.023 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=11840
+TORN variant=none handle=persistent writeRate=10 reads=8166501 in 60.0s ok=8166501 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.4 p99=14.7 max=54079.4
+  HOLDER pid=84184 variant=none writes=600 rate=10.0/s writeMeanUs=27.48 duty=0.027 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=11828
+TORN variant=none handle=persistent writeRate=10 reads=8256917 in 60.0s ok=8256916 detected=0 WRONG_ACCEPTED=1 caughtByParser=0 empty=0 readUs p50=6.4 p99=14.4 max=53187.5
+  HOLDER pid=52188 variant=none writes=600 rate=10.0/s writeMeanUs=26.36 duty=0.026 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=11828
+TORN variant=crc handle=persistent writeRate=10 reads=8606625 in 60.0s ok=8606623 detected=2 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.4 p99=11.4 max=65377.7
+  HOLDER pid=82928 variant=crc writes=600 rate=10.0/s writeMeanUs=26.94 duty=0.027 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=12596
+TORN variant=none handle=persistent writeRate=100 reads=9330354 in 60.0s ok=9330354 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.1 p99=11.7 max=24905.3
+  HOLDER pid=58372 variant=none writes=6001 rate=100.0/s writeMeanUs=19.12 duty=0.191 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=21764

@@ -90,6 +90,12 @@ internal sealed class InteropLayoutTests
         (nameof(JobObject), "JobObjectBasicLimitInformation", 64),
         (nameof(JobObject), "JobObjectExtendedLimitInformation", 144),
         (nameof(NativeFile), "Overlapped", 32),
+
+        // Added 2026-09-24 with the server pipe: the descriptor the pipe is
+        // created with rides in the first, and the current user's SID is read
+        // out of the second.
+        (nameof(NamedPipes), "SecurityAttributes", 24),
+        (nameof(NamedPipes), "TokenUser", 16),
     ];
 
     /// <summary>
@@ -133,7 +139,9 @@ internal sealed class InteropLayoutTests
     [Test]
     public async Task TheOracleReachesEveryStruct()
     {
-        await Assert.That(Structs.Length).IsEqualTo(8);
+        // ⚠️ Corrected 2026-09-24 to 10 (previously 8): NamedPipes brought a
+        // second SECURITY_ATTRIBUTES and a TOKEN_USER with the server pipe.
+        await Assert.That(Structs.Length).IsEqualTo(10);
 
         foreach (var (owner, nested, _) in Structs)
         {
@@ -238,6 +246,7 @@ internal sealed class InteropLayoutTests
         await Assert.That(SizeOfMetadata("JobObjectBasicLimitInformation")).IsEqualTo(64);
         await Assert.That(SizeOfMetadata("JobObjectExtendedLimitInformation")).IsEqualTo(144);
         await Assert.That(SizeOfMetadata("Overlapped")).IsEqualTo(32);
+        await Assert.That(SizeOfMetadata("TokenUser")).IsEqualTo(16);
     }
 
     /// <summary>
@@ -315,6 +324,7 @@ internal sealed class InteropLayoutTests
         // see the type's remarks, and NativeMethods.txt, which says the same
         // thing at the place somebody would otherwise add the name.
         "Overlapped" => sizeof(System.Threading.NativeOverlapped),
-        _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the seven."),
+        "TokenUser" => sizeof(W.Security.TOKEN_USER),
+        _ => throw new ArgumentOutOfRangeException(nameof(nested), nested, "Not one of the nine."),
     };
 }

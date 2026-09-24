@@ -1,0 +1,7 @@
+SDDL NamedPipeServerStream default       : O:S-1-5-21-1861559866-3226897200-1792437171-1001D:(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;S-1-5-21-1861559866-3226897200-1792437171-1001)(A;;FR;;;WD)(A;;FR;;;AN)
+SDDL NamedPipeServerStream CurrentUserOnly: O:S-1-5-21-1861559866-3226897200-1792437171-1001D:(A;;0x1f019f;;;S-1-5-21-1861559866-3226897200-1792437171-1001)
+SDDL CreateNamedPipeW NULL attributes    : O:S-1-5-21-1861559866-3226897200-1792437171-1001D:(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;S-1-5-21-1861559866-3226897200-1792437171-1001)(A;;FR;;;WD)(A;;FR;;;AN)
+GetNamedPipeInfo created without PIPE_REJECT_REMOTE_CLIENTS: server flags=0x1 client flags=0x0 maxInstances=1
+GetNamedPipeInfo created WITH PIPE_REJECT_REMOTE_CLIENTS: server flags=0x9 client flags=0x8 maxInstances=1
+SDDL named event Global\ default         : O:S-1-5-21-1861559866-3226897200-1792437171-1001D:(A;;0x1f0003;;;S-1-5-21-1861559866-3226897200-1792437171-1001)(A;;0x1f0003;;;BA)(A;;0x1f0003;;;SY)
+FIRST_PIPE_INSTANCE: second server refused: IOException hr=0x800700E7 All pipe instances are busy.

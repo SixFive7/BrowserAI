@@ -242,6 +242,39 @@ internal sealed class LiveSession : IAsyncDisposable
     public BrowserIdleTimer Idle { get; }
 
     /// <summary>
+    /// Whether this session's browser server has a browser up: anything in the
+    /// child's job besides the node child itself.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The predicate the teardown below reads, and the count the idle
+    /// timer's own evidence is</b> -- <c>11 → 1</c> processes after a close -- so
+    /// a description and a teardown agree on what <i>a browser is open</i> means.
+    /// </para>
+    /// <para>
+    /// <b>A job that cannot be read answers <see langword="false"/></b>, because
+    /// the one reader that asks from outside the session's own lifetime -- a
+    /// description on the server's pipe -- must never fail over it: a child torn
+    /// down between the question and the answer has no browser, which is the
+    /// truth by the time anybody reads it.
+    /// </para>
+    /// </remarks>
+    public bool BrowserIsOpen
+    {
+        get
+        {
+            try
+            {
+                return Child.JobProcessIds().Count > 1;
+            }
+            catch (Exception failure) when (failure is System.ComponentModel.Win32Exception or ObjectDisposedException)
+            {
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
     /// Swaps in a child started to replace one that died, and tears the dead one
     /// down.
     /// </summary>

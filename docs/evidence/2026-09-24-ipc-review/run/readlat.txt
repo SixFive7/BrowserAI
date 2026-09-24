@@ -1,0 +1,7 @@
+READLAT variant=crc writeRate=0/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=210/390/7506 open=5824/8339/11423 read=31/52/375 close=31/53/294
+READLAT variant=crc writeRate=1/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=183/473/2495 open=51/5596/6770 read=27/42/278 close=18/29/76
+READLAT variant=crc writeRate=10/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=187/441/664 open=54/6890/9863 read=28/41/234 close=19/33/42
+READLAT variant=idle writeRate=0/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=184/327/524 open=44/91/208 read=11/19/25 close=17/29/39
+READLAT variant=crc probe=False writeRate=0/s reads=500 intervalMs=10 us p50/p99/max: censusProbe=0/0/0 open=6264/8302/9116 read=31/191/390 close=31/53/258
+READLAT variant=crc probe=True writeRate=0/s reads=500 intervalMs=10 us p50/p99/max: censusProbe=199/670/1650 open=6110/8704/14642 read=29/50/435 close=30/50/104
+READLAT variant=none probe=False writeRate=0/s reads=500 intervalMs=10 us p50/p99/max: censusProbe=0/0/1 open=6274/8196/10063 read=30/52/361 close=31/55/504

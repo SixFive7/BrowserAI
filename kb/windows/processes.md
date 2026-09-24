@@ -1353,6 +1353,202 @@ pids. ⚠️ **A deliberate reproduction needs a pid to come round**, which noth
 schedule, so this is a kb entry and not a suite arm; what the suite does hold is
 that the pair is what liveness takes.
 
+## A per-server named pipe answers from memory and cannot tear -- measured 2026-09-24
+
+`[MACHINE]` for every number, `[STABLE]` for the Windows behaviour. Windows 11 Pro
+**10.0.26200**, AMD Ryzen 9 5950X (32 logical), 128 GB, .NET SDK **10.0.401**,
+NativeAOT win-x64, Defender real-time protection on. Measured by the IPC review
+with a prototype published NativeAOT, whose stand-in servers held their live
+marker exactly as `LiveInstances.Join` does (`CreateNew`, `ReadWrite`,
+`FileShare.Read`, buffer size 1); sizes were measured on copies of the real
+server at `40df5db`. Everything it was read from:
+[`docs/evidence/2026-09-24-ipc-review`](../../docs/evidence/2026-09-24-ipc-review/README.md).
+It settled Q268 and, with the lifecycle research, Q284 -- the maintainer's words
+verbatim, *"Q284 a"*: one raw named pipe per server, answering `describe` from
+memory and `stop` by acknowledging and then stopping. The product's half is
+[`Coordination/ServerPipe.cs`](../../src/BrowserAI.Core/Coordination/ServerPipe.cs)
+and [`Coordination/ServerPipeClient.cs`](../../src/BrowserAI.Core/Coordination/ServerPipeClient.cs).
+
+### A record rewritten in place is read torn, and the torn read parses
+
+⭐ **The failure a file-based record has, and the reason the pipe was chosen.** A
+holder rewrote a JSON record in place in its own marker file, and 3,000,000 reads
+were taken against it at the fastest rate the holder could write:
+
+| Framing | Reads | Detected | **Accepted with wrong values** |
+|---|---:|---:|---:|
+| none, the JSON alone | 3,000,000 | 0 | **22** |
+| a CRC-32 in a header | 3,000,000 | 374 | 0 |
+| a sequence counter either side | 3,000,000 | 1,708,003 | 0 |
+| a byte-range lock | 3,000,000 | 1,663,733 | 0 |
+
+**Every one of the 22 parsed as valid JSON**, so no parser would have caught
+them: they are values from two different writes stitched into one well-formed
+document. At the realistic rate, ten writes a second, the unframed record was
+read wrong **twice in 1,976 writes** over four runs (once in each of two runs,
+60 s and 17.6 s long, and never in the other two), and the CRC framing accepted
+none. Writing a temporary file and renaming it over the record accepted none
+either, and cost two other things: a read went from about 6 µs to about 60 µs at
+p50, and the rename itself failed with `ERROR_ACCESS_DENIED` **88 times in
+17,812** at full rate while readers held the file. The first such run's holder
+died of the unhandled failure, which is why the prototype's retry exists.
+
+**Re-establish it** with `torn` in the batch's prototype (`proto/Bench.cs`,
+`proto/Holder.cs`): a holder process rewriting its own marker, and a reader
+counting parses that succeed with values no single write produced.
+
+### The pipe has nothing to tear, and a page of 100 servers costs 22 ms
+
+A pipe carries the bytes the writer wrote, in order, from a snapshot the writer
+built in its own memory, so there is no in-place rewrite for a reader to catch
+half done. What asking costs, over stand-in servers each asked once per round:
+
+| Asking 100 servers | Round, one after another (p50) | Round, eight at once (p50) | One server, one after another, p50 / p99 |
+|---|---:|---:|---:|
+| the census alone: is the marker held | 5.67 ms | 2.15 ms | 48.2 / 137.4 µs |
+| **the raw pipe, `describe`** | **21.94 ms** | **4.95 ms** | **208.7 / 387.2 µs** |
+| the framework's pipe, synchronous | 23.86 ms | 4.55 ms | 224.3 / 412.9 µs |
+| the framework's pipe, asynchronous | 22.86 ms | 5.20 ms | 223.8 / 383.4 µs |
+| reading the working directory and parent from outside the process | 27.04 ms | 13.07 ms | 255.4 / 510.0 µs |
+| a CRC-framed record file | 180.16 ms | 18.37 ms | 196.7 / 7,962.2 µs |
+
+With eight in flight the raw pipe's per-server p99 was **1,989.9 µs**, the
+slowest pipe percentile measured in the batch, and it is what
+`ServerPipeProtocol.CallBound`, 500 ms, is derived from: more than 250 times it.
+A description is small: **419 bytes** of JSON with no sessions, 1,082 with three,
+4,858 with twenty, built in 1.51, 2.60 and 10.23 µs.
+
+### What the raw call costs the binary, and what only it can set
+
+| One probe each, NativeAOT, on the real server at `40df5db` | `BrowserAI.Server.exe` | Over the baseline |
+|---|---:|---:|
+| baseline, the same hook with nothing behind it | 19,318,784 B | -- |
+| `NamedPipeServerStream`, synchronous | 19,440,640 B | **+121,856 B** |
+| `NamedPipeServerStream`, asynchronous | 19,447,808 B | +129,024 B |
+| **raw `CreateNamedPipeW`** | **19,322,368 B** | **+3,584 B** |
+| a CRC-framed record | 19,319,808 B | +1,024 B |
+| a named stop event | 19,320,320 B | +1,536 B |
+
+**The product as built is larger than the probe**, because it carries the
+description, the dispatch and the logging as well as the call: the published
+server went from **19,317,760 to 19,361,280 bytes (+43,520)** between `0386365`
+and the first build of the pipe on 2026-09-24, measured by this writer.
+
+**What Windows gives a pipe by default, read off the handle with
+`GetSecurityInfo`.** A pipe created with no security attributes, and the
+framework's server stream by default, byte for byte the same, has **five**
+allow entries: `SYSTEM`, the administrators and the owner with full access, and
+**`Everyone` and `ANONYMOUS LOGON` with read**. The framework's `CurrentUserOnly`
+option writes one entry for the user, `0x1F019F`. The product writes its own:
+`D:P(A;;GA;;;<the user's SID>)`, one entry.
+
+**`PIPE_REJECT_REMOTE_CLIENTS` is visible from both ends**: `GetNamedPipeInfo`
+answers flags `0x9` on the server end and **`0x8` on the client end** of a pipe
+created with it, `0x1` and `0x0` without. The framework's server stream has no way
+to set it.
+
+**`FILE_FLAG_FIRST_PIPE_INSTANCE` is the defence against a name somebody else
+created first**, measured by this writer the same day. Against a name another
+creator had opened with unlimited instances and its default DACL, a creation
+carrying the flag was refused with **`ERROR_ACCESS_DENIED` (5)**, and the same
+creation without it **succeeded**: it joined the other creator's pipe as a second
+instance, and a client could then have reached either. Against a name this
+process already served with one instance, a second creation was refused with
+**`ERROR_PIPE_BUSY` (231, `0x800700E7`)** with or without the flag, and with a
+maximum of two instances as well; the review's two framework servers measured the
+same `0x800700E7`.
+
+### What a client sees when the server fails
+
+| The server | What the client saw |
+|---|---|
+| dies after writing half its answer | **no answer, through the length prefix**, in 32.1 to 36.4 ms: 3 of 3 on the raw pipe and 3 of 3 on the framework's |
+| accepts and never answers | its own read timeout and no more: 256.0 ms against 250, 1,012.7 ms against 1,000 |
+| answers once and never listens again | the second client's 500 ms connect ran out at 508.9 to 515.3 ms |
+| was killed | **the framework's client waited out its whole 500 ms connect**, 493.7 to 510.5 ms, because it retries a name nobody serves until its timeout |
+| eight clients at once, one instance | all eight served, one after another, the last in 1.08 ms |
+
+**So the census stays the liveness signal.** Against a listener that had
+stopped answering, asking whether its marker was held said *held* in **240 µs**
+while a `describe` with 500 ms timeouts gave up at 504 ms; against a killed
+holder the census said *free* in **85 µs**. The pipe tells a server that answers
+from one that is alive and does not; only the census tells a server that has
+gone from one that has not. BrowserAI's own client asks the census first and
+does not wait on a name nobody serves.
+
+### A second start finds the first through a pipe, and learns its pid
+
+Twenty processes started at once, three rounds for each shape, and every round
+produced **exactly one winner**:
+
+| Single-instance shape | Winner decided | A second start handed over | It learned the winner's pid |
+|---|---:|---:|---|
+| a named mutex and a named event | 0.09 to 0.15 ms | 0.12 to 15.64 ms | **no**: an event carries none |
+| a pipe created with `FILE_FLAG_FIRST_PIPE_INSTANCE` | 0.51 to 0.86 ms | 2.76 to 31.18 ms, p50 13.79 to 16.20 | **yes**, in every reply |
+
+After the winner was killed, the next start won in 0.06 to 0.07 ms through the
+mutex and in 0.17 to 0.19 ms through the pipe. The pid is what the Q284 design
+needs, because a second start has to grant the first the right to take the
+foreground before it asks it to show its window.
+
+### Inside a client's job
+
+`JOBREPORT` in the batch: a prototype started from the review's own shell was in a
+job whose limit flags were `0x3C00`, which is `JOB_OBJECT_LIMIT_BREAKAWAY_OK`,
+`JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK` and `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`,
+and a child it started with `Process.Start` was **in no job**. Whose job that was
+is not in the file, so this establishes the shape and not the owner.
+
+### What crosses a process boundary in BrowserAI -- read 2026-09-24
+
+The review counted **17** inter-process mechanisms and found **no named pipe, no
+named event and no shared memory** among them before this change; its list is not
+in the batch. This writer's own reading of the tree at `0386365`, taken to put a
+list beside the count, finds these, and the absence holds for every row:
+
+| Between | Mechanism | What it carries | How liveness is read |
+|---|---|---|---|
+| BrowserAI processes | a live marker, `<install root>\live\<pid>-<guid>.live` | membership of the census | a held handle, `FileShare.Read` |
+| BrowserAI processes | `Global\BrowserAI-Live-<hash>` | one join, census or reclaim at a time | the mutex |
+| BrowserAI processes | `instance.live` in each run's directory | that a run directory is in use | a held handle |
+| BrowserAI processes | `browserai.lock` in a session directory | who owns the session, as `(pid, creation time)` | a held handle |
+| BrowserAI processes | `browserai.data` | the session's statements and its call log, in SQLite | none: a record |
+| BrowserAI processes | the session index, one file per session under the data root | which sessions exist | none: a record |
+| BrowserAI processes | `Global\BrowserAI-<hash>` | one create-or-take of one directory at a time | the mutex |
+| BrowserAI processes | `Global\BrowserAI-Sweep` | one stray sweep at a time | the mutex |
+| BrowserAI processes | `Global\BrowserAI-Provision-<hash>` | one browser download at a time | the mutex |
+| BrowserAI processes | `reinstall.lock` in the browsers root | shared by every session, exclusive to a reinstall | a held handle |
+| BrowserAI processes | the process log, `browserai-*.log` | every process's records | an append under a byte-range lock |
+| BrowserAI processes | `mcp-registration.json` | the last registration outcome | none: a record |
+| the server and its children | stdio, JSON Lines | the MCP conversation with each `@playwright/mcp` child | end of stream |
+| the server and its children | a job object per child | that nothing outlives the server | the kernel |
+| the server and its children | the environment block and a generated config file | how each child is started | none |
+| the server and its client | stdio, JSON Lines | the MCP conversation | end of stream, and a handle on the launcher |
+| BrowserAI and browsers | profile locks, and window titles read across processes | whose browser a stray is | a held file, a readable title |
+| BrowserAI and the updater | `Update.exe`'s command line and `--waitPid` | an apply | the asking pid's exit |
+| BrowserAI and its clients | the clients' own configuration files | where the server is registered | none |
+
+**Re-establish it** by reading the tree for every named object, every file
+another process opens and every process started. The number of rows is a count
+under this table's own predicate, and the review's 17 was taken under its own.
+
+### In 332 of 365 starts, an installed server's working directory was a repository
+
+The review read **143 of 162** starts of the installed server with a working
+directory that is a repository. Re-read by this writer the same day, read-only,
+over the process log's `Startup[1]` records for images under
+`BrowserAI.app\current\`, from 2026-09-16T04:00Z to 2026-09-24T13:29Z: **365
+distinct starts** by pid and creation time, **332** whose working directory holds a
+`.git`, **334** inside one, **6** in `C:\Windows\System32`, and 2 whose directory
+no longer exists. `[MACHINE]`, and deliberately counted and not listed: the
+directories are the maintainer's projects. It is what makes the working directory
+worth describing, because the sessions page can name the project a server was
+started for before that server has made a single call.
+
+**Re-establish it** with the batch's `cwdcount.py`: every `Startup[1]` record,
+deduplicated by pid and creation time, each working directory tested for `.git`
+on the day of reading.
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

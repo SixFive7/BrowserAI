@@ -1,0 +1,8 @@
+TORN variant=none handle=persistent writeRate=max reads=3000000 in 19.8s ok=2999978 detected=0 WRONG_ACCEPTED=22 caughtByParser=0 empty=0 readUs p50=5.8 p99=11.5 max=6693.0
+  HOLDER pid=94492 variant=none writes=3138341 rate=158421.6/s writeMeanUs=2.98 duty=47.163 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=25580
+TORN variant=crc handle=persistent writeRate=max reads=3000000 in 22.1s ok=2999626 detected=374 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.6 p99=11.2 max=2280.5
+  HOLDER pid=70408 variant=crc writes=2517272 rate=113743.5/s writeMeanUs=2.99 duty=34.012 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=21816
+TORN variant=seq handle=persistent writeRate=max reads=3000000 in 20.6s ok=1291997 detected=1708003 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=3.2 p99=16.4 max=6250.1
+  HOLDER pid=94120 variant=seq writes=1512015 rate=73355.8/s writeMeanUs=8.00 duty=58.687 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=21820
+TORN variant=lock handle=persistent writeRate=max reads=3000000 in 15.2s ok=1336267 detected=1663733 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=1.6 p99=13.8 max=948.8
+  HOLDER pid=56468 variant=lock writes=1242935 rate=81957.8/s writeMeanUs=6.22 duty=51.016 % lockContention=286915 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=25576

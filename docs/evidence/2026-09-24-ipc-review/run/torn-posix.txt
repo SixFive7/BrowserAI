@@ -1,0 +1,4 @@
+TORN variant=posix handle=reopen writeRate=max reads=35041 in 30.0s ok=33909 detected=1132 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=59.8 p99=7842.9 max=420067.4
+  HOLDER pid=88044 variant=posix writes=17812 rate=558.5/s writeMeanUs=1769.06 duty=98.797 % lockContention=0 renameFailures=88 renameGaveUp=0 lastRenameError=5 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=21868
+TORN variant=posix handle=reopen writeRate=10 reads=200000 in 14.0s ok=200000 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=60.6 p99=118.1 max=176073.4
+  HOLDER pid=71976 variant=posix writes=141 rate=10.0/s writeMeanUs=2940.37 duty=2.940 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=6680

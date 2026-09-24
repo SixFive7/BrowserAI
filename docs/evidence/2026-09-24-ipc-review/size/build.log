@@ -1,0 +1,48 @@
+=== V0-baseline 12:21:40Z
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V0-baseline\src\BrowserAI\BrowserAI.csproj (in 311 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V0-baseline\src\BrowserAI.Core\BrowserAI.Core.csproj (in 311 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V0-baseline\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V0-baseline\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.Server.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V0-baseline\out\
+=== V1-netpipe-sync 12:22:26Z
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V1-netpipe-sync\src\BrowserAI\BrowserAI.csproj (in 298 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V1-netpipe-sync\src\BrowserAI.Core\BrowserAI.Core.csproj (in 298 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V1-netpipe-sync\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V1-netpipe-sync\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.Server.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V1-netpipe-sync\out\
+=== V2-netpipe-async 12:23:06Z
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V2-netpipe-async\src\BrowserAI\BrowserAI.csproj (in 307 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V2-netpipe-async\src\BrowserAI.Core\BrowserAI.Core.csproj (in 307 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V2-netpipe-async\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V2-netpipe-async\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.Server.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V2-netpipe-async\out\
+=== V3-rawpipe 12:23:51Z
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V3-rawpipe\src\BrowserAI.Core\BrowserAI.Core.csproj (in 278 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V3-rawpipe\src\BrowserAI\BrowserAI.csproj (in 278 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V3-rawpipe\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V3-rawpipe\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.Server.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V3-rawpipe\out\
+=== V4-record-crc 12:24:34Z
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V4-record-crc\src\BrowserAI.Core\BrowserAI.Core.csproj (in 305 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V4-record-crc\src\BrowserAI\BrowserAI.csproj (in 305 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V4-record-crc\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V4-record-crc\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.Server.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V4-record-crc\out\
+=== V5-stop-event 12:25:21Z
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V5-stop-event\src\BrowserAI\BrowserAI.csproj (in 279 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V5-stop-event\src\BrowserAI.Core\BrowserAI.Core.csproj (in 279 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V5-stop-event\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V5-stop-event\src\BrowserAI\bin\Release\net10.0-windows\win-x64\BrowserAI.Server.dll
+  Generating native code
+  BrowserAI -> C:\Source\SixFive7\BrowserAI\.work\ipc-review\size\tree-V5-stop-event\out\

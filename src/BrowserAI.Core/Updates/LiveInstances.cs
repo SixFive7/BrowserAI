@@ -737,6 +737,41 @@ internal sealed class LiveInstances : IDisposable
     public const string DirectoryName = "live";
 
     /// <summary>
+    /// Whether one marker is held right now: the census of a single entry.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The same probe <see cref="Census"/> and <see cref="ReclaimStaleMarkers"/>
+    /// act on, and nothing else</b>, so a caller asking about one marker cannot
+    /// reach a different verdict from a pass over all of them. It touches
+    /// nothing: a marker proven free is left where it is, because removing
+    /// markers is the gated passes' job and this runs outside the gate.
+    /// </para>
+    /// <para>
+    /// <b>It is what a caller reads before it connects to a server's pipe.</b>
+    /// Measured 2026-09-24: 85 µs to say a marker's holder had gone, and 240 µs
+    /// to say a hung one was still there.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">The marker file.</param>
+    /// <returns>
+    /// <see langword="true"/> when a live process holds it,
+    /// <see langword="false"/> when nothing does, and <see langword="null"/>
+    /// when neither could be established.
+    /// </returns>
+    public static bool? IsMarkerHeld(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        return Probe(path).State switch
+        {
+            MarkerState.Held => true,
+            MarkerState.Free => false,
+            _ => null,
+        };
+    }
+
+    /// <summary>
     /// Where the markers for one install root are, and the one place that folder
     /// name is spelled.
     /// </summary>

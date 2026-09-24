@@ -1,0 +1,1 @@
+LOSER impl=mutex decidedAndSignalledMs=0.15 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)

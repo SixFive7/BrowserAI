@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.ComponentModel;
+using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Logging;
@@ -342,6 +344,23 @@ internal static class Program
         // process just created is safe by construction because it is HELD.
         LiveInstances.StartReclaimInBackground(installRoot, updateLogger);
 
+        // ⚠️ THE PIPE, NAMED AFTER THE MARKER JUST TAKEN -- Q284 a, 2026-09-24, the
+        // maintainer's words verbatim: "Q284 a". One raw named pipe per server,
+        // answering `describe` from this process's memory and `stop` by
+        // acknowledging and then ending the conversation the way a client leaving
+        // ends it. Named after the marker so that the census entry IS the address:
+        // whoever can list the markers can reach every server, and a marker nobody
+        // holds names a pipe nobody serves.
+        //
+        // AFTER the join, because the name is the join's; a process that could not
+        // join is invisible to the census and so has nothing to be addressed by.
+        // BEFORE everything slow, so a coordinator can see a server that is still
+        // starting -- it says so -- and stop one that has not begun serving.
+        var activity = new ServerActivity(TimeProvider.System, Environment.CurrentDirectory);
+        var responder = new ServerPipeResponder(activity, () => RequestStop(stopping));
+
+        using var pipe = OpenPipe(live, responder, log.Factory.CreateLogger("BrowserAI.Pipe"));
+
         // One run, one directory. It holds this run's own child -- the one that
         // answers `tools/list` before any session exists -- together with its
         // profile and the config generated for every session this run opens.
@@ -399,7 +418,11 @@ internal static class Program
                 OpenSessionLog = ProcessLog.OpenSessionLog,
             };
 
-            var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment).ConfigureAwait(false);
+            var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment, activity).ConfigureAwait(false);
+
+            // The pipe describes the sessions from here on; until this line it
+            // said "starting" and listed none, which was the truth.
+            responder.AttachSessions(proxy.HeldSessions);
 
             // `await using var x = ...` awaits its DisposeAsync on the captured
             // context, which CA2007 refuses. Holding the ConfiguredAsyncDisposable
@@ -447,6 +470,7 @@ internal static class Program
                 () => _ = EndTheConversationAsync(transport, logger));
 
             StartupLog.Serving(logger, proxy.NegotiatedChildProtocolVersion ?? "<none>");
+            activity.Serving();
 
             // Off the message loop and after the server is up, because a
             // `tools/call` has to stay answerable while a package is in flight.
@@ -498,6 +522,59 @@ internal static class Program
             // The clean path. The killed path is the next run's sweep, because
             // nothing here runs when the process is terminated from outside.
             InstanceDirectory.Delete(instance, logger);
+        }
+    }
+
+    /// <summary>Opens this server's pipe, or says why there is none and serves without it.</summary>
+    /// <remarks>
+    /// <b>A pipe that cannot be created is not a server that cannot start</b>, the
+    /// posture the live join takes for the same kind of claim. A name somebody
+    /// else created first is refused by <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> and
+    /// lands here: this server then serves its client and no coordinator can
+    /// describe or stop it, which the log says.
+    /// </remarks>
+    /// <param name="live">This process's membership of the census, or <see langword="null"/> when it could not join.</param>
+    /// <param name="responder">What the pipe answers with.</param>
+    /// <param name="logger">Where the pipe reports.</param>
+    /// <returns>The serving pipe, or <see langword="null"/>.</returns>
+    private static ServerPipe? OpenPipe(LiveInstances? live, IServerPipeResponder responder, ILogger logger)
+    {
+        if (live is null)
+        {
+            // Not in the census, so there is no marker to be named after and
+            // nothing a coordinator could have found this server by. The join
+            // has already logged why.
+            return null;
+        }
+
+        try
+        {
+            return ServerPipe.Open(live.OwnFile, responder, logger);
+        }
+        catch (Exception failure) when (failure is IOException or Win32Exception)
+        {
+            ServerPipeLog.NotCreated(logger, ServerPipeProtocol.NameFor(live.OwnFile), failure);
+            return null;
+        }
+    }
+
+    /// <summary>What an acknowledged stop does: the one graceful path there is.</summary>
+    /// <remarks>
+    /// <b>The same cancellation the client watcher fires when a client leaves</b>,
+    /// so a stop tears down exactly what a departure tears down -- every session,
+    /// its child and browser, the locks and the instance directory -- and there is
+    /// one shutdown path and not two.
+    /// </remarks>
+    /// <param name="stopping">The process's own stop signal.</param>
+    private static void RequestStop(CancellationTokenSource stopping)
+    {
+        try
+        {
+            stopping.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Main is already on its way out; the stop has nothing left to do.
         }
     }
 

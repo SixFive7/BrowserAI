@@ -1202,6 +1202,21 @@ door and `ChildEnvironmentTests` holds the environment one.
 |---|---|
 | The update lane | `src/BrowserAI.Core/Updates/{InstallLocation, UpdateFeed, UpdateConfiguration, IUpdateClient, VelopackUpdateClient, UpdateService, LiveInstances, VelopackStartup}.cs` |
 | Packing, versioning and the resolved-set manifest | `build/{New-Release.ps1, Test-ReleaseVersion.ps1, Write-ReleaseManifest.ps1, Get-ReleaseNotes.ps1}` |
+| Each server's pipe: `describe` answered from memory, `stop` acknowledged and then acted on -- **added 2026-09-24, Q284 a** | `src/BrowserAI.Core/Coordination/{ServerPipe, ServerPipeProtocol, ServerDescription}.cs` and `src/BrowserAI.Core/Interop/NamedPipes.cs`; the server's half is `src/BrowserAI/Proxy/{ServerActivity, ServerPipeResponder}.cs`, `BrowserProxy.HeldSessions` and `SessionManager.Held`, opened by `Program.Main` straight after the live join |
+| Asking a server: the census first, the pipe's owner checked, the whole call bounded | `src/BrowserAI.Core/Coordination/ServerPipeClient.cs` and `LiveInstances.IsMarkerHeld`, which the configuration app links as well |
+
+**The pipe is named after the live marker, so the census entry is the address --
+2026-09-24.** `\\.\pipe\BrowserAI-<pid>-<guid>` for the marker
+`<pid>-<guid>.live`: whoever can list the markers can reach every server, and a
+marker nobody holds names a pipe nobody serves. One instance, one thread, one
+request per connection, a length-prefixed answer, no checksum -- a pipe carries a
+snapshot the server built in its own memory, and there is no in-place rewrite
+for a reader to catch half done. The DACL admits the current user and nobody
+else, `PIPE_REJECT_REMOTE_CLIENTS` refuses other machines, and
+`FILE_FLAG_FIRST_PIPE_INSTANCE` refuses a name somebody else created first.
+`stop` is `Program.RequestStop`, the same cancellation a client leaving fires, so
+there is one graceful path and not two. What each number rests on:
+[kb](kb/windows/processes.md#a-per-server-named-pipe-answers-from-memory-and-cannot-tear----measured-2026-09-24).
 
 Per-user to `%LocalAppData%`, never `--msi`. ⚠️ **`--shortcuts StartMenuRoot`
 since 2026-09-15** *(previously `None`, "this is a background stdio server that a

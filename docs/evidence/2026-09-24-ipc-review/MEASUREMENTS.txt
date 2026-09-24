@@ -1,0 +1,211 @@
+IPC review measurements, 2026-09-24 (UTC 12:36Z). Windows 11 Pro 10.0.26200, AMD Ryzen 9 5950X (32 logical), 128 GB, .NET SDK 10.0.401, NativeAOT win-x64.
+Defender real-time protection ON (Get-MpComputerStatus). Repository HEAD at size build: HEAD=40df5db3d5e139c61f51d63afd4bfa7ee8ab0e84.
+Prototype: proto/*.cs published NativeAOT to bin/proto/IpcProto.exe. Stand-in servers hold their marker EXACTLY as LiveInstances.Join (CreateNew, ReadWrite, FileShare.Read, bufferSize 1).
+Every child process was started with CreateNoWindow=true; no window was created by any run.
+
+===== run/sddl.txt
+SDDL NamedPipeServerStream default       : O:S-1-5-21-1861559866-3226897200-1792437171-1001D:(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;S-1-5-21-1861559866-3226897200-1792437171-1001)(A;;FR;;;WD)(A;;FR;;;AN)
+SDDL NamedPipeServerStream CurrentUserOnly: O:S-1-5-21-1861559866-3226897200-1792437171-1001D:(A;;0x1f019f;;;S-1-5-21-1861559866-3226897200-1792437171-1001)
+SDDL CreateNamedPipeW NULL attributes    : O:S-1-5-21-1861559866-3226897200-1792437171-1001D:(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;S-1-5-21-1861559866-3226897200-1792437171-1001)(A;;FR;;;WD)(A;;FR;;;AN)
+GetNamedPipeInfo created without PIPE_REJECT_REMOTE_CLIENTS: server flags=0x1 client flags=0x0 maxInstances=1
+GetNamedPipeInfo created WITH PIPE_REJECT_REMOTE_CLIENTS: server flags=0x9 client flags=0x8 maxInstances=1
+SDDL named event Global\ default         : O:S-1-5-21-1861559866-3226897200-1792437171-1001D:(A;;0x1f0003;;;S-1-5-21-1861559866-3226897200-1792437171-1001)(A;;0x1f0003;;;BA)(A;;0x1f0003;;;SY)
+FIRST_PIPE_INSTANCE: second server refused: IOException hr=0x800700E7 All pipe instances are busy.
+
+===== run/torn-max-persistent.txt
+TORN variant=none handle=persistent writeRate=max reads=3000000 in 19.8s ok=2999978 detected=0 WRONG_ACCEPTED=22 caughtByParser=0 empty=0 readUs p50=5.8 p99=11.5 max=6693.0
+  HOLDER pid=94492 variant=none writes=3138341 rate=158421.6/s writeMeanUs=2.98 duty=47.163 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=25580
+TORN variant=crc handle=persistent writeRate=max reads=3000000 in 22.1s ok=2999626 detected=374 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.6 p99=11.2 max=2280.5
+  HOLDER pid=70408 variant=crc writes=2517272 rate=113743.5/s writeMeanUs=2.99 duty=34.012 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=21816
+TORN variant=seq handle=persistent writeRate=max reads=3000000 in 20.6s ok=1291997 detected=1708003 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=3.2 p99=16.4 max=6250.1
+  HOLDER pid=94120 variant=seq writes=1512015 rate=73355.8/s writeMeanUs=8.00 duty=58.687 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=21820
+TORN variant=lock handle=persistent writeRate=max reads=3000000 in 15.2s ok=1336267 detected=1663733 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=1.6 p99=13.8 max=948.8
+  HOLDER pid=56468 variant=lock writes=1242935 rate=81957.8/s writeMeanUs=6.22 duty=51.016 % lockContention=286915 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=25576
+
+===== run/torn-realistic.txt
+TORN variant=none handle=persistent writeRate=10 reads=8958000 in 60.0s ok=8958000 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.3 p99=12.8 max=6184.0
+  HOLDER pid=66328 variant=none writes=600 rate=10.0/s writeMeanUs=23.01 duty=0.023 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=11840
+TORN variant=none handle=persistent writeRate=10 reads=8166501 in 60.0s ok=8166501 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.4 p99=14.7 max=54079.4
+  HOLDER pid=84184 variant=none writes=600 rate=10.0/s writeMeanUs=27.48 duty=0.027 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=11828
+TORN variant=none handle=persistent writeRate=10 reads=8256917 in 60.0s ok=8256916 detected=0 WRONG_ACCEPTED=1 caughtByParser=0 empty=0 readUs p50=6.4 p99=14.4 max=53187.5
+  HOLDER pid=52188 variant=none writes=600 rate=10.0/s writeMeanUs=26.36 duty=0.026 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=11828
+TORN variant=crc handle=persistent writeRate=10 reads=8606625 in 60.0s ok=8606623 detected=2 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.4 p99=11.4 max=65377.7
+  HOLDER pid=82928 variant=crc writes=600 rate=10.0/s writeMeanUs=26.94 duty=0.027 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=12596
+TORN variant=none handle=persistent writeRate=100 reads=9330354 in 60.0s ok=9330354 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.1 p99=11.7 max=24905.3
+  HOLDER pid=58372 variant=none writes=6001 rate=100.0/s writeMeanUs=19.12 duty=0.191 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=21764
+
+===== run/torn-posix-and-realistic.txt
+NOTE: the first posix run below is the one whose holder died with an unhandled ERROR_ACCESS_DENIED (5) from SetFileInformationByHandle(FileRenameInfoEx); its 200,000 reads are of the last sidecar it managed to write. That failure is why the holder now retries; run/torn-posix.txt is the rerun.
+Unhandled exception. System.ComponentModel.Win32Exception (5): SetFileInformationByHandle(FileRenameInfoEx)
+   at Holder.Rename(SafeFileHandle, String) + 0x134
+   at Holder.WriteOut(String, SafeFileHandle, String, String, Byte[], Int64) + 0x3ab
+   at Holder.Run(String[]) + 0xdb0
+   at Program.Main(String[] args) + 0x145
+TORN variant=posix handle=reopen writeRate=max reads=200000 in 27.4s ok=200000 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=60.2 p99=4423.8 max=1020405.8
+  
+TORN variant=none handle=persistent writeRate=10 reads=3000000 in 17.6s ok=2999999 detected=0 WRONG_ACCEPTED=1 caughtByParser=0 empty=0 readUs p50=5.5 p99=10.6 max=789.0
+  HOLDER pid=93376 variant=none writes=176 rate=10.0/s writeMeanUs=21.91 duty=0.022 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=6960
+TORN variant=crc handle=persistent writeRate=10 reads=3000000 in 19.9s ok=3000000 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.3 p99=10.2 max=5605.3
+  HOLDER pid=90516 variant=crc writes=199 rate=10.0/s writeMeanUs=22.35 duty=0.022 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=7468
+
+===== run/torn-posix.txt
+TORN variant=posix handle=reopen writeRate=max reads=35041 in 30.0s ok=33909 detected=1132 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=59.8 p99=7842.9 max=420067.4
+  HOLDER pid=88044 variant=posix writes=17812 rate=558.5/s writeMeanUs=1769.06 duty=98.797 % lockContention=0 renameFailures=88 renameGaveUp=0 lastRenameError=5 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=3 privateKB=21868
+TORN variant=posix handle=reopen writeRate=10 reads=200000 in 14.0s ok=200000 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=60.6 p99=118.1 max=176073.4
+  HOLDER pid=71976 variant=posix writes=141 rate=10.0/s writeMeanUs=2940.37 duty=2.940 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=6680
+
+===== run/readlat.txt
+READLAT variant=crc writeRate=0/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=210/390/7506 open=5824/8339/11423 read=31/52/375 close=31/53/294
+READLAT variant=crc writeRate=1/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=183/473/2495 open=51/5596/6770 read=27/42/278 close=18/29/76
+READLAT variant=crc writeRate=10/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=187/441/664 open=54/6890/9863 read=28/41/234 close=19/33/42
+READLAT variant=idle writeRate=0/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=184/327/524 open=44/91/208 read=11/19/25 close=17/29/39
+READLAT variant=crc probe=False writeRate=0/s reads=500 intervalMs=10 us p50/p99/max: censusProbe=0/0/0 open=6264/8302/9116 read=31/191/390 close=31/53/258
+READLAT variant=crc probe=True writeRate=0/s reads=500 intervalMs=10 us p50/p99/max: censusProbe=199/670/1650 open=6110/8704/14642 read=29/50/435 close=30/50/104
+READLAT variant=none probe=False writeRate=0/s reads=500 intervalMs=10 us p50/p99/max: censusProbe=0/0/1 open=6274/8196/10063 read=30/52/361 close=31/55/504
+
+===== run/walk-20.txt
+WALK what=census servers=20 writeRate=1/s rounds=20 sequential roundMs p50=1.43 p99=1.85 max=1.85 perServerUs p50=53.0 p99=165.2 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3259 startAllSeconds=0.5
+  sample holder: HOLDER pid=68396 variant=idle writes=0 rate=0.0/s writeMeanUs=0.00 duty=0.000 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5416
+WALK what=crc servers=20 writeRate=1/s rounds=20 sequential roundMs p50=27.12 p99=98.98 max=98.98 perServerUs p50=144.9 p99=6735.4 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3318 startAllSeconds=0.5
+  sample holder: HOLDER pid=83468 variant=crc writes=4 rate=1.0/s writeMeanUs=25.00 duty=0.002 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5476
+WALK what=seq servers=20 writeRate=1/s rounds=20 sequential roundMs p50=23.71 p99=118.23 max=118.23 perServerUs p50=144.9 p99=6472.9 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3321 startAllSeconds=0.6
+  sample holder: HOLDER pid=67188 variant=seq writes=5 rate=1.0/s writeMeanUs=28.94 duty=0.003 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5480
+WALK what=lock servers=20 writeRate=1/s rounds=20 sequential roundMs p50=21.21 p99=120.71 max=120.71 perServerUs p50=151.4 p99=6847.1 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3316 startAllSeconds=0.6
+  sample holder: HOLDER pid=66636 variant=lock writes=4 rate=1.0/s writeMeanUs=27.77 duty=0.003 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5476
+WALK what=posix servers=20 writeRate=1/s rounds=20 sequential roundMs p50=3.24 p99=10.42 max=10.42 perServerUs p50=135.6 p99=346.7 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3383 startAllSeconds=0.7
+  sample holder: HOLDER pid=90460 variant=posix writes=4 rate=1.0/s writeMeanUs=1677.92 duty=0.167 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5480
+WALK what=pipe:netsync servers=20 writeRate=1/s rounds=20 sequential roundMs p50=5.36 p99=6.75 max=6.75 perServerUs p50=243.4 p99=515.1 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=6.0 holderPrivateKBMean=3490 startAllSeconds=0.6
+  sample holder: HOLDER pid=13984 variant=crc writes=4 rate=1.0/s writeMeanUs=24.52 duty=0.002 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=20 pipeAllocPerReq=8392 pipeServeMeanUs=251.5 threads=7 privateKB=5728
+WALK what=pipe:netasync servers=20 writeRate=1/s rounds=20 sequential roundMs p50=5.17 p99=7.54 max=7.54 perServerUs p50=235.1 p99=598.2 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=7.4 holderPrivateKBMean=3632 startAllSeconds=0.6
+  sample holder: HOLDER pid=77784 variant=crc writes=4 rate=1.0/s writeMeanUs=17.60 duty=0.002 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=20 pipeAllocPerReq=8804 pipeServeMeanUs=115.3 threads=8 privateKB=5760
+WALK what=pipe:raw servers=20 writeRate=1/s rounds=20 sequential roundMs p50=5.20 p99=6.69 max=6.69 perServerUs p50=227.0 p99=506.1 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=6.0 holderPrivateKBMean=3514 startAllSeconds=0.6
+  sample holder: HOLDER pid=44544 variant=crc writes=4 rate=1.0/s writeMeanUs=28.25 duty=0.003 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=20 pipeAllocPerReq=8272 pipeServeMeanUs=113.6 threads=7 privateKB=5732
+WALK what=derive servers=20 writeRate=1/s rounds=20 sequential roundMs p50=6.13 p99=7.82 max=7.82 perServerUs p50=275.9 p99=537.4 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3258 startAllSeconds=0.6
+  sample holder: HOLDER pid=90228 variant=idle writes=0 rate=0.0/s writeMeanUs=0.00 duty=0.000 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5432
+
+===== run/walk-100.txt
+WALK what=census servers=100 writeRate=1/s rounds=10 sequential roundMs p50=5.67 p99=7.42 max=7.42 perServerUs p50=48.2 p99=137.4 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3256 startAllSeconds=2.9
+WALK what=census servers=100 writeRate=1/s rounds=10 parallel8 roundMs p50=2.15 p99=4.17 max=4.17 perServerUs p50=88.4 p99=1336.6 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3261 startAllSeconds=2.9
+WALK what=crc servers=100 writeRate=1/s rounds=10 sequential roundMs p50=180.16 p99=623.49 max=623.49 perServerUs p50=196.7 p99=7962.2 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3320 startAllSeconds=2.8
+WALK what=crc servers=100 writeRate=1/s rounds=10 parallel8 roundMs p50=18.37 p99=102.56 max=102.56 perServerUs p50=217.8 p99=7495.7 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3320 startAllSeconds=2.9
+WALK what=pipe:netsync servers=100 writeRate=1/s rounds=10 sequential roundMs p50=23.86 p99=25.24 max=25.24 perServerUs p50=224.3 p99=412.9 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=6.0 holderPrivateKBMean=3424 startAllSeconds=2.8
+WALK what=pipe:netsync servers=100 writeRate=1/s rounds=10 parallel8 roundMs p50=4.55 p99=34.28 max=34.28 perServerUs p50=266.9 p99=3329.7 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=6.0 holderPrivateKBMean=3427 startAllSeconds=2.8
+WALK what=pipe:netasync servers=100 writeRate=1/s rounds=10 sequential roundMs p50=22.86 p99=28.89 max=28.89 perServerUs p50=223.8 p99=383.4 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=7.2 holderPrivateKBMean=3547 startAllSeconds=3.0
+WALK what=pipe:netasync servers=100 writeRate=1/s rounds=10 parallel8 roundMs p50=5.20 p99=7.73 max=7.73 perServerUs p50=293.0 p99=2151.9 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=7.1 holderPrivateKBMean=3527 startAllSeconds=2.8
+WALK what=pipe:raw servers=100 writeRate=1/s rounds=10 sequential roundMs p50=21.94 p99=24.92 max=24.92 perServerUs p50=208.7 p99=387.2 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=6.0 holderPrivateKBMean=3450 startAllSeconds=2.9
+WALK what=pipe:raw servers=100 writeRate=1/s rounds=10 parallel8 roundMs p50=4.95 p99=7.62 max=7.62 perServerUs p50=258.8 p99=1989.9 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=6.0 holderPrivateKBMean=3449 startAllSeconds=2.9
+WALK what=derive servers=100 writeRate=1/s rounds=10 sequential roundMs p50=27.04 p99=29.83 max=29.83 perServerUs p50=255.4 p99=510.0 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3256 startAllSeconds=2.7
+WALK what=derive servers=100 writeRate=1/s rounds=10 parallel8 roundMs p50=13.07 p99=14.55 max=14.55 perServerUs p50=916.8 p99=1930.4 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3255 startAllSeconds=2.9
+
+===== run/walk-touch.txt
+WALK what=touch servers=100 writeRate=1/s rounds=10 sequential roundMs p50=8.80 p99=10.93 max=10.93 perServerUs p50=80.4 p99=169.8 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3332 startAllSeconds=2.5
+  sample holder: HOLDER pid=103396 variant=touch writes=6 rate=1.0/s writeMeanUs=122.42 duty=0.012 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5188
+WALK what=touch servers=100 writeRate=1/s rounds=10 parallel8 roundMs p50=3.16 p99=39.26 max=39.26 perServerUs p50=163.3 p99=4242.3 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3356 startAllSeconds=3.0
+  sample holder: HOLDER pid=95948 variant=touch writes=7 rate=1.0/s writeMeanUs=137.76 duty=0.014 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5204
+WALK what=touch servers=20 writeRate=10/s rounds=10 sequential roundMs p50=2.42 p99=4.68 max=4.68 perServerUs p50=93.0 p99=302.9 failures=0 retries=0 wrongAccepted=0 holderThreadsMean=5.0 holderPrivateKBMean=3453 startAllSeconds=0.6
+  sample holder: HOLDER pid=11736 variant=touch writes=24 rate=10.0/s writeMeanUs=120.21 duty=0.120 % lockContention=0 renameFailures=0 renameGaveUp=0 lastRenameError=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=5188
+
+===== run/pipefail.txt
+NOTE: the two "hang-listener" lines in this file came from a first implementation that hung AFTER accepting the second request (i.e. a second hang-after-accept). The corrected scenario, a listener that never calls ConnectNamedPipe again, is run/pipefail-listener.txt.
+PIPEFAIL impl=netsync die-mid-answer run=0 client saw: null (truncation detected by the length prefix) after 33.6 ms; server exit=99
+PIPEFAIL impl=netsync die-mid-answer run=1 client saw: null (truncation detected by the length prefix) after 32.1 ms; server exit=99
+PIPEFAIL impl=netsync die-mid-answer run=2 client saw: null (truncation detected by the length prefix) after 35.2 ms; server exit=99
+PIPEFAIL impl=netsync hang-after-accept readTimeout=250 client saw: OperationCanceledException after 255.6 ms
+PIPEFAIL impl=netsync hang-after-accept readTimeout=1000 client saw: OperationCanceledException after 1014.7 ms
+PIPEFAIL impl=netsync hang-listener first=True second client (connect timeout 500) saw: OperationCanceledException: The operation was canceled. after 501.9 ms
+PIPEFAIL impl=netsync 8 simultaneous clients, maxInstances=1: ok:0.18ms ok:0.31ms ok:0.48ms ok:0.64ms ok:0.77ms ok:0.91ms ok:1.01ms ok:1.18ms
+PIPEFAIL impl=netsync server killed, connect(500 ms) saw: TimeoutException: The operation has timed out. after 496.6 ms
+PIPEFAIL impl=raw die-mid-answer run=0 client saw: null (truncation detected by the length prefix) after 36.1 ms; server exit=99
+PIPEFAIL impl=raw die-mid-answer run=1 client saw: null (truncation detected by the length prefix) after 36.4 ms; server exit=99
+PIPEFAIL impl=raw die-mid-answer run=2 client saw: null (truncation detected by the length prefix) after 35.6 ms; server exit=99
+PIPEFAIL impl=raw hang-after-accept readTimeout=250 client saw: OperationCanceledException after 256.0 ms
+PIPEFAIL impl=raw hang-after-accept readTimeout=1000 client saw: OperationCanceledException after 1012.7 ms
+PIPEFAIL impl=raw hang-listener first=True second client (connect timeout 500) saw: OperationCanceledException: The operation was canceled. after 502.0 ms
+PIPEFAIL impl=raw 8 simultaneous clients, maxInstances=1: ok:0.18ms ok:0.31ms ok:0.45ms ok:0.57ms ok:0.69ms ok:0.81ms ok:0.95ms ok:1.08ms
+PIPEFAIL impl=raw server killed, connect(500 ms) saw: TimeoutException: The operation has timed out. after 496.2 ms
+
+===== run/pipefail-listener.txt
+PIPEFAIL impl=netsync hang-listener first=True second client (connect timeout 500) saw: TimeoutException: The operation has timed out. after 515.3 ms
+PIPEFAIL impl=netsync server killed, connect(500 ms) saw: TimeoutException: The operation has timed out. after 510.5 ms
+PIPEFAIL impl=raw hang-listener first=True second client (connect timeout 500) saw: TimeoutException: The operation has timed out. after 508.9 ms
+PIPEFAIL impl=raw server killed, connect(500 ms) saw: TimeoutException: The operation has timed out. after 493.7 ms
+
+===== run/micro-census-touch.txt
+MICRO sessions=0 jsonBytes=419 buildUs=1.51 buildAllocBytes=4903 crc32Us=0.76 (550 bytes/us) parseUs=1.34 unframe+crc+parseUs=2.08 sink=0
+MICRO sessions=3 jsonBytes=1082 buildUs=2.60 buildAllocBytes=6764 crc32Us=1.87 (579 bytes/us) parseUs=1.93 unframe+crc+parseUs=3.84 sink=0
+MICRO sessions=20 jsonBytes=4858 buildUs=10.23 buildAllocBytes=25636 crc32Us=8.47 (573 bytes/us) parseUs=5.57 unframe+crc+parseUs=13.83 sink=0
+CENSUSHUNG hung-listener: census probe says HELD (holder alive) in 240 us
+CENSUSHUNG hung-listener: pipe describe (500 ms timeouts) says TimeoutException in 504 ms
+CENSUSHUNG killed: census probe says FREE (holder gone) in 85 us (the pipe connect would have waited its whole timeout)
+READLAT touch: GetFileAttributesEx (File.GetLastWriteTimeUtc) us p50/p99/max=110/342/6680; reads that saw a published call time: 1000/1000
+READLAT variant=touch probe=False writeRate=10/s reads=1000 intervalMs=10 us p50/p99/max: censusProbe=0/0/1 open=49/175/3022 read=10/61/183 close=14/86/107
+READLAT touch: GetFileAttributesEx (File.GetLastWriteTimeUtc) us p50/p99/max=193/654/9349; reads that saw a published call time: 500/500
+READLAT variant=touch probe=False writeRate=0/s reads=500 intervalMs=10 us p50/p99/max: censusProbe=0/0/0 open=74/186/399 read=30/114/185 close=62/174/236
+
+===== run/derive.txt
+DERIVE servers=20 correctCwdAndParent=20/20 perServerUs p50=182.1 p99=431.6
+  sample: image=C:\Source\SixFive7\BrowserAI\.work\ipc-review\bin\proto\IpcProto.exe parentImage=C:\Source\SixFive7\BrowserAI\.work\ipc-review\bin\proto\IpcProto.exe parentVersion=IpcProto 1.0.0+40df5db3d5e139c61f51d63afd4bfa7ee8ab0e84 cwd=C:\Source\SixFive7\BrowserAI\.work\ipc-review\run\derive-397e6784\project-000\
+  sample commandLine="C:\Source\SixFive7\BrowserAI\.work\ipc-review\bin\proto\IpcProto.exe" holder C:\Source\SixFive7\BrowserAI\.work\ipc-review\run\derive-397e6784 idle 0 3 none normal Local\IpcReview-ready-9d63690b335941e48a4ba97dbeb41ac3 Local\IpcReview-stop-9d63690b335941e48a4ba97dbeb41ac3
+
+===== run/single.txt
+SINGLE impl=mutex contenders=20 results=20 winners=1
+  WINNER impl=mutex decidedMs=0.09 abandoned=False showWakes=11
+  losers=19 failed=0
+  LOSER impl=mutex decidedAndSignalledMs=0.18 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.18 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.19 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  loser handover ms: min=0.12 p50=0.19 max=15.64
+  after the winner was killed, the next start said: WINNER impl=mutex decidedMs=0.07 abandoned=False showWakes=0
+SINGLE impl=pipe contenders=20 results=20 winners=1
+  WINNER impl=pipe decidedMs=0.86 served=19
+  losers=19 failed=0
+  LOSER impl=pipe handedOverMs=24.67 coordinatorPid=84904 reply=ok 84904
+  LOSER impl=pipe handedOverMs=12.38 coordinatorPid=84904 reply=ok 84904
+  LOSER impl=pipe handedOverMs=8.13 coordinatorPid=84904 reply=ok 84904
+  loser handover ms: min=2.84 p50=16.20 max=31.18
+  after the winner was killed, the next start said: WINNER impl=pipe decidedMs=0.17 served=0
+SINGLE impl=mutex contenders=20 results=20 winners=1
+  WINNER impl=mutex decidedMs=0.15 abandoned=False showWakes=8
+  losers=19 failed=0
+  LOSER impl=mutex decidedAndSignalledMs=0.28 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.26 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.35 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  loser handover ms: min=0.22 p50=0.31 max=0.36
+  after the winner was killed, the next start said: WINNER impl=mutex decidedMs=0.06 abandoned=False showWakes=0
+SINGLE impl=pipe contenders=20 results=20 winners=1
+  WINNER impl=pipe decidedMs=0.51 served=19
+  losers=19 failed=0
+  LOSER impl=pipe handedOverMs=15.23 coordinatorPid=90336 reply=ok 90336
+  LOSER impl=pipe handedOverMs=21.43 coordinatorPid=90336 reply=ok 90336
+  LOSER impl=pipe handedOverMs=13.79 coordinatorPid=90336 reply=ok 90336
+  loser handover ms: min=2.76 p50=13.79 max=27.62
+  after the winner was killed, the next start said: WINNER impl=pipe decidedMs=0.19 served=0
+SINGLE impl=mutex contenders=20 results=20 winners=1
+  WINNER impl=mutex decidedMs=0.11 abandoned=False showWakes=10
+  losers=19 failed=0
+  LOSER impl=mutex decidedAndSignalledMs=0.27 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.30 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.22 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  loser handover ms: min=0.20 p50=0.27 max=0.34
+  after the winner was killed, the next start said: WINNER impl=mutex decidedMs=0.06 abandoned=False showWakes=0
+SINGLE impl=pipe contenders=20 results=20 winners=1
+  WINNER impl=pipe decidedMs=0.53 served=19
+  losers=19 failed=0
+  LOSER impl=pipe handedOverMs=11.44 coordinatorPid=26440 reply=ok 26440
+  LOSER impl=pipe handedOverMs=13.09 coordinatorPid=26440 reply=ok 26440
+  LOSER impl=pipe handedOverMs=17.48 coordinatorPid=26440 reply=ok 26440
+  loser handover ms: min=2.78 p50=14.56 max=27.94
+  after the winner was killed, the next start said: WINNER impl=pipe decidedMs=0.17 served=0
+
+===== run/jobreport.txt
+JOBREPORT self inJob=True immediateJobQueried=True limitFlags=0x3C00 (BREAKAWAY_OK=True SILENT_BREAKAWAY_OK=True KILL_ON_JOB_CLOSE=True) ; a child started with Process.Start inJob=False
+
+===== size/sizes.txt (NativeAOT BrowserAI.Server.exe, copy of the real server via git archive, one probe each, see size/probes/)
+HEAD=40df5db3d5e139c61f51d63afd4bfa7ee8ab0e84
+V0-baseline exit=0 BrowserAI.Server.exe=19318784
+V1-netpipe-sync exit=0 BrowserAI.Server.exe=19440640
+V2-netpipe-async exit=0 BrowserAI.Server.exe=19447808
+V3-rawpipe exit=0 BrowserAI.Server.exe=19322368
+V4-record-crc exit=0 BrowserAI.Server.exe=19319808
+V5-stop-event exit=0 BrowserAI.Server.exe=19320320
+DONE

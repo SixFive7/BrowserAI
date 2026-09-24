@@ -86,6 +86,20 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <summary>The pid of the process this client started.</summary>
     public int ProcessId => _process.Id;
 
+    /// <summary>What this client calls itself in its handshake unless told otherwise.</summary>
+    public const string DefaultClientName = "BrowserAI.RawStdioClient";
+
+    /// <summary>The peer's exit code once it has exited, or <see langword="null"/>.</summary>
+    public int? ExitCode => _process.HasExited ? _process.TryReadExitCode() : null;
+
+    /// <summary>
+    /// Waits for the peer to exit on its own, with its stdin left open -- for the
+    /// arms where something other than end-of-file ends it.
+    /// </summary>
+    /// <param name="timeout">A hang detector, never a budget.</param>
+    /// <returns><see langword="true"/> if it exited within the timeout.</returns>
+    public Task<bool> WaitForExitAsync(TimeSpan timeout) => _process.WaitForExitAsync(timeout);
+
     /// <summary>
     /// Every process the kernel currently reports in this client's job: the
     /// child, and everything it started, however deep.
@@ -156,14 +170,19 @@ internal sealed class RawStdioClient : IAsyncDisposable
     /// <see langword="false"/> reproduces a connection whose list predates the
     /// server, for the arms that are about exactly that.
     /// </param>
+    /// <param name="clientInfo">
+    /// What to call itself, for the arms about what a server records of its
+    /// client. Defaults to this client's own name and version, which are
+    /// deliberately not any real client's, and no title.
+    /// </param>
     /// <returns>The <c>result</c> object of the <c>initialize</c> response.</returns>
-    public async Task<JsonObject> InitializeAsync(string protocolVersion, bool listsTools = true)
+    public async Task<JsonObject> InitializeAsync(string protocolVersion, bool listsTools = true, JsonObject? clientInfo = null)
     {
         var response = await RoundTripAsync("initialize", new JsonObject
         {
             ["protocolVersion"] = protocolVersion,
             ["capabilities"] = new JsonObject(),
-            ["clientInfo"] = new JsonObject { ["name"] = "BrowserAI.RawStdioClient", ["version"] = "1" },
+            ["clientInfo"] = clientInfo ?? new JsonObject { ["name"] = DefaultClientName, ["version"] = "1" },
         }).ConfigureAwait(false);
 
         await NotifyAsync("notifications/initialized").ConfigureAwait(false);

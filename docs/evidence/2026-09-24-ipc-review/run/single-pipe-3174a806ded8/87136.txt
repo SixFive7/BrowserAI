@@ -1,0 +1,1 @@
+LOSER impl=pipe handedOverMs=18.05 coordinatorPid=84904 reply=ok 84904

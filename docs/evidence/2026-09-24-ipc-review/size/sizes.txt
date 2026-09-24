@@ -1,0 +1,8 @@
+HEAD=40df5db3d5e139c61f51d63afd4bfa7ee8ab0e84
+V0-baseline exit=0 BrowserAI.Server.exe=19318784
+V1-netpipe-sync exit=0 BrowserAI.Server.exe=19440640
+V2-netpipe-async exit=0 BrowserAI.Server.exe=19447808
+V3-rawpipe exit=0 BrowserAI.Server.exe=19322368
+V4-record-crc exit=0 BrowserAI.Server.exe=19319808
+V5-stop-event exit=0 BrowserAI.Server.exe=19320320
+DONE

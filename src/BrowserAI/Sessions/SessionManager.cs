@@ -366,6 +366,24 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     /// <summary>
+    /// Every session this process holds right now: its directory, what its
+    /// record says it is for, and whether its browser is open.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read from memory for the server's pipe, and it takes no lock.</b> The
+    /// dictionary's enumeration is a moment-in-time walk that a concurrent open or
+    /// close cannot break, and the purpose is the record the session's lock
+    /// already holds -- so a description never waits on a session and never
+    /// opens its store.
+    /// </remarks>
+    /// <returns>One entry per held session, in no particular order.</returns>
+    public IReadOnlyList<Coordination.HeldSession> Held() =>
+        [.. _live.Values.Select(live => new Coordination.HeldSession(
+            live.Location.FullPath,
+            live.Lock.Record.Purpose,
+            live.BrowserIsOpen))];
+
+    /// <summary>
     /// Why a <c>session</c> argument resolved to nothing, in terms the caller can
     /// act on in one turn.
     /// </summary>

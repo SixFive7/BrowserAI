@@ -1,0 +1,11 @@
+Unhandled exception. System.ComponentModel.Win32Exception (5): SetFileInformationByHandle(FileRenameInfoEx)
+   at Holder.Rename(SafeFileHandle, String) + 0x134
+   at Holder.WriteOut(String, SafeFileHandle, String, String, Byte[], Int64) + 0x3ab
+   at Holder.Run(String[]) + 0xdb0
+   at Program.Main(String[] args) + 0x145
+TORN variant=posix handle=reopen writeRate=max reads=200000 in 27.4s ok=200000 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=60.2 p99=4423.8 max=1020405.8
+  
+TORN variant=none handle=persistent writeRate=10 reads=3000000 in 17.6s ok=2999999 detected=0 WRONG_ACCEPTED=1 caughtByParser=0 empty=0 readUs p50=5.5 p99=10.6 max=789.0
+  HOLDER pid=93376 variant=none writes=176 rate=10.0/s writeMeanUs=21.91 duty=0.022 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=6960
+TORN variant=crc handle=persistent writeRate=10 reads=3000000 in 19.9s ok=3000000 detected=0 WRONG_ACCEPTED=0 caughtByParser=0 empty=0 readUs p50=6.3 p99=10.2 max=5605.3
+  HOLDER pid=90516 variant=crc writes=199 rate=10.0/s writeMeanUs=22.35 duty=0.022 % lockContention=0 pipeServed=0 pipeAllocPerReq=0 pipeServeMeanUs=0.0 threads=6 privateKB=7468

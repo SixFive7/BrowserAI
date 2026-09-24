@@ -1,0 +1,4 @@
+PIPEFAIL impl=netsync hang-listener first=True second client (connect timeout 500) saw: TimeoutException: The operation has timed out. after 515.3 ms
+PIPEFAIL impl=netsync server killed, connect(500 ms) saw: TimeoutException: The operation has timed out. after 510.5 ms
+PIPEFAIL impl=raw hang-listener first=True second client (connect timeout 500) saw: TimeoutException: The operation has timed out. after 508.9 ms
+PIPEFAIL impl=raw server killed, connect(500 ms) saw: TimeoutException: The operation has timed out. after 493.7 ms

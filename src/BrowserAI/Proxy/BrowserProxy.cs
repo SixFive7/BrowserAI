@@ -4,6 +4,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Protocol;
 using BrowserAI.Runtime;
@@ -112,27 +113,43 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     private int _staleListRefused;
 
-    private BrowserProxy(ChildConnection surface, SessionManager sessions, ToolVerdicts verdicts, ILogger logger)
+    private BrowserProxy(ChildConnection surface, SessionManager sessions, ToolVerdicts verdicts, ServerActivity activity, ILogger logger)
     {
         _surface = surface;
         _sessions = sessions;
         _verdicts = verdicts;
+        Activity = activity;
         _logger = logger;
     }
 
     /// <summary>The revision negotiated with the run's own child.</summary>
     public string? NegotiatedChildProtocolVersion => _surface.NegotiatedProtocolVersion;
 
+    /// <summary>
+    /// What this proxy has been doing, for the server's pipe to describe: its
+    /// client, and when its tool calls arrive and finish.
+    /// </summary>
+    public ServerActivity Activity { get; }
+
+    /// <summary>Every session this process holds right now, for the server's pipe.</summary>
+    /// <returns>One entry per held session.</returns>
+    public IReadOnlyList<HeldSession> HeldSessions() => _sessions.Held();
+
     /// <summary>Starts the run's own child and completes the handshake with it.</summary>
     /// <param name="options">What to start, from <see cref="Runtime.ChildLaunch"/>.</param>
     /// <param name="loggerFactory">Where the proxy, the transport and the session log.</param>
     /// <param name="environment">Where sessions keep their index, payload and configs.</param>
+    /// <param name="activity">
+    /// Where this proxy records what it does for the server's pipe, or
+    /// <see langword="null"/> for a record nobody reads.
+    /// </param>
     /// <param name="cancellationToken">Cancels the connect.</param>
     /// <returns>The connected proxy.</returns>
     public static async Task<BrowserProxy> ConnectAsync(
         ChildProcessOptions options,
         ILoggerFactory loggerFactory,
         SessionEnvironment environment,
+        ServerActivity? activity = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -142,6 +159,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             new DirectStdioClientTransport(options, loggerFactory),
             loggerFactory,
             environment,
+            activity,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -160,12 +178,17 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <param name="transport">The client transport to connect over. The SDK client owns it.</param>
     /// <param name="loggerFactory">Where the proxy and the session log.</param>
     /// <param name="environment">Where sessions keep their index, payload and configs.</param>
+    /// <param name="activity">
+    /// Where this proxy records what it does for the server's pipe, or
+    /// <see langword="null"/> for a record nobody reads.
+    /// </param>
     /// <param name="cancellationToken">Cancels the connect.</param>
     /// <returns>The connected proxy.</returns>
     public static async Task<BrowserProxy> ConnectAsync(
         IClientTransport transport,
         ILoggerFactory loggerFactory,
         SessionEnvironment environment,
+        ServerActivity? activity = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(transport);
@@ -198,7 +221,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
             surface = await ChildConnection.ConnectAsync(transport, loggerFactory, "browserai-", relay, cancellationToken).ConfigureAwait(false);
 #pragma warning restore CA2000
 
-            proxy = new BrowserProxy(surface, sessions, environment.Verdicts, logger);
+            proxy = new BrowserProxy(
+                surface,
+                sessions,
+                environment.Verdicts,
+                activity ?? new ServerActivity(TimeProvider.System, Environment.CurrentDirectory),
+                logger);
 
             // Ownership of both has moved into the proxy, which the caller now
             // owns and disposes.
@@ -398,12 +426,19 @@ internal sealed class BrowserProxy : IAsyncDisposable
                     return;
 
                 case RequestMethods.ToolsCall:
-                    if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
+                    // ⚠️ EVERY CALL IS ACTIVITY, the refused ones included -- the
+                    // pipe's description reports when calls arrive and finish, and a
+                    // refused call is as much a model at work as a forwarded one.
+                    using (Activity.ToolCall())
                     {
-                        return;
+                        if (await RefuseAToolListThatPredatesThisServerAsync(context.Server, request, cancellationToken).ConfigureAwait(false))
+                        {
+                            return;
+                        }
+
+                        await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
                     }
 
-                    await AnswerToolsCallAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
                     return;
 
                 default:
@@ -412,6 +447,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
         }
 
         await next(context, cancellationToken).ConfigureAwait(false);
+
+        // After the SDK has handled the handshake, so what is recorded is what it
+        // accepted: the client's own name, title and version, for the pipe.
+        if (context.JsonRpcMessage is JsonRpcRequest { Method: RequestMethods.Initialize }
+            && context.Server.ClientInfo is { } introduced)
+        {
+            Activity.Introduced(new ClientIdentity(introduced.Name, introduced.Title, introduced.Version));
+        }
     }
 
     /// <summary>

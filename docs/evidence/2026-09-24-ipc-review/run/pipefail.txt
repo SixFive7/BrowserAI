@@ -1,0 +1,16 @@
+PIPEFAIL impl=netsync die-mid-answer run=0 client saw: null (truncation detected by the length prefix) after 33.6 ms; server exit=99
+PIPEFAIL impl=netsync die-mid-answer run=1 client saw: null (truncation detected by the length prefix) after 32.1 ms; server exit=99
+PIPEFAIL impl=netsync die-mid-answer run=2 client saw: null (truncation detected by the length prefix) after 35.2 ms; server exit=99
+PIPEFAIL impl=netsync hang-after-accept readTimeout=250 client saw: OperationCanceledException after 255.6 ms
+PIPEFAIL impl=netsync hang-after-accept readTimeout=1000 client saw: OperationCanceledException after 1014.7 ms
+PIPEFAIL impl=netsync hang-listener first=True second client (connect timeout 500) saw: OperationCanceledException: The operation was canceled. after 501.9 ms
+PIPEFAIL impl=netsync 8 simultaneous clients, maxInstances=1: ok:0.18ms ok:0.31ms ok:0.48ms ok:0.64ms ok:0.77ms ok:0.91ms ok:1.01ms ok:1.18ms
+PIPEFAIL impl=netsync server killed, connect(500 ms) saw: TimeoutException: The operation has timed out. after 496.6 ms
+PIPEFAIL impl=raw die-mid-answer run=0 client saw: null (truncation detected by the length prefix) after 36.1 ms; server exit=99
+PIPEFAIL impl=raw die-mid-answer run=1 client saw: null (truncation detected by the length prefix) after 36.4 ms; server exit=99
+PIPEFAIL impl=raw die-mid-answer run=2 client saw: null (truncation detected by the length prefix) after 35.6 ms; server exit=99
+PIPEFAIL impl=raw hang-after-accept readTimeout=250 client saw: OperationCanceledException after 256.0 ms
+PIPEFAIL impl=raw hang-after-accept readTimeout=1000 client saw: OperationCanceledException after 1012.7 ms
+PIPEFAIL impl=raw hang-listener first=True second client (connect timeout 500) saw: OperationCanceledException: The operation was canceled. after 502.0 ms
+PIPEFAIL impl=raw 8 simultaneous clients, maxInstances=1: ok:0.18ms ok:0.31ms ok:0.45ms ok:0.57ms ok:0.69ms ok:0.81ms ok:0.95ms ok:1.08ms
+PIPEFAIL impl=raw server killed, connect(500 ms) saw: TimeoutException: The operation has timed out. after 496.2 ms

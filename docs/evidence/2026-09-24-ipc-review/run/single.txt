@@ -1,0 +1,48 @@
+SINGLE impl=mutex contenders=20 results=20 winners=1
+  WINNER impl=mutex decidedMs=0.09 abandoned=False showWakes=11
+  losers=19 failed=0
+  LOSER impl=mutex decidedAndSignalledMs=0.18 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.18 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.19 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  loser handover ms: min=0.12 p50=0.19 max=15.64
+  after the winner was killed, the next start said: WINNER impl=mutex decidedMs=0.07 abandoned=False showWakes=0
+SINGLE impl=pipe contenders=20 results=20 winners=1
+  WINNER impl=pipe decidedMs=0.86 served=19
+  losers=19 failed=0
+  LOSER impl=pipe handedOverMs=24.67 coordinatorPid=84904 reply=ok 84904
+  LOSER impl=pipe handedOverMs=12.38 coordinatorPid=84904 reply=ok 84904
+  LOSER impl=pipe handedOverMs=8.13 coordinatorPid=84904 reply=ok 84904
+  loser handover ms: min=2.84 p50=16.20 max=31.18
+  after the winner was killed, the next start said: WINNER impl=pipe decidedMs=0.17 served=0
+SINGLE impl=mutex contenders=20 results=20 winners=1
+  WINNER impl=mutex decidedMs=0.15 abandoned=False showWakes=8
+  losers=19 failed=0
+  LOSER impl=mutex decidedAndSignalledMs=0.28 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.26 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.35 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  loser handover ms: min=0.22 p50=0.31 max=0.36
+  after the winner was killed, the next start said: WINNER impl=mutex decidedMs=0.06 abandoned=False showWakes=0
+SINGLE impl=pipe contenders=20 results=20 winners=1
+  WINNER impl=pipe decidedMs=0.51 served=19
+  losers=19 failed=0
+  LOSER impl=pipe handedOverMs=15.23 coordinatorPid=90336 reply=ok 90336
+  LOSER impl=pipe handedOverMs=21.43 coordinatorPid=90336 reply=ok 90336
+  LOSER impl=pipe handedOverMs=13.79 coordinatorPid=90336 reply=ok 90336
+  loser handover ms: min=2.76 p50=13.79 max=27.62
+  after the winner was killed, the next start said: WINNER impl=pipe decidedMs=0.19 served=0
+SINGLE impl=mutex contenders=20 results=20 winners=1
+  WINNER impl=mutex decidedMs=0.11 abandoned=False showWakes=10
+  losers=19 failed=0
+  LOSER impl=mutex decidedAndSignalledMs=0.27 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.30 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  LOSER impl=mutex decidedAndSignalledMs=0.22 openRetries=0 coordinatorPid=UNKNOWN (an event carries no pid)
+  loser handover ms: min=0.20 p50=0.27 max=0.34
+  after the winner was killed, the next start said: WINNER impl=mutex decidedMs=0.06 abandoned=False showWakes=0
+SINGLE impl=pipe contenders=20 results=20 winners=1
+  WINNER impl=pipe decidedMs=0.53 served=19
+  losers=19 failed=0
+  LOSER impl=pipe handedOverMs=11.44 coordinatorPid=26440 reply=ok 26440
+  LOSER impl=pipe handedOverMs=13.09 coordinatorPid=26440 reply=ok 26440
+  LOSER impl=pipe handedOverMs=17.48 coordinatorPid=26440 reply=ok 26440
+  loser handover ms: min=2.78 p50=14.56 max=27.94
+  after the winner was killed, the next start said: WINNER impl=pipe decidedMs=0.17 served=0

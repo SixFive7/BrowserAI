@@ -1,0 +1,1 @@
+JOBREPORT self inJob=True immediateJobQueried=True limitFlags=0x3C00 (BREAKAWAY_OK=True SILENT_BREAKAWAY_OK=True KILL_ON_JOB_CLOSE=True) ; a child started with Process.Start inJob=False
