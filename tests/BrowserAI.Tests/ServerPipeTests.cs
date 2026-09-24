@@ -111,7 +111,13 @@ internal sealed class ServerPipeTests
             ["arguments"] = new JsonObject { ["url"] = SliceRun.TargetUrl, ["session"] = session, ["why"] = "the suite exercising this call" },
         });
 
-        var second = await ServerPipeClient.DescribeAsync(marker, TestDefaults.ProcessHang);
+        // ⚠️ WAITED FOR, NOT READ ONCE -- 2026-09-24. The navigate's answer is
+        // written before its call stops counting, so a describe sent the instant
+        // the answer arrives can read one call in flight; this went red once in a
+        // gate on exactly that. Watched red first with the single read against a
+        // server planted to hold the count for two seconds after answering, and
+        // green there with this.
+        var second = await ServerPipeRig.DescribeWhenSettledAsync(marker, TestDefaults.ProcessHang);
 
         await Assert.That(second.Outcome).IsEqualTo(ServerPipeOutcome.Answered).Because(second.Why);
 

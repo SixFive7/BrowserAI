@@ -87,6 +87,38 @@ internal static partial class ServerPipeRig
         }
     }
 
+    /// <summary>
+    /// Describes a server until it counts no call in flight, or until the
+    /// patience is spent; the last answer either way.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A call's count ends after its answer is written, not before -- found
+    /// 2026-09-24.</b> The proxy closes a call's activity scope when the handler
+    /// that wrote the answer returns, so a client that asks the pipe the instant
+    /// its answer arrives can be told the call is still in flight. That went red
+    /// once in a gate. The claim an arm makes is that an answered call stops
+    /// counting, never how fast, so it waits, bounded by the suite's hang detector.
+    /// </remarks>
+    /// <param name="marker">The server's live marker.</param>
+    /// <param name="patience">The hang detector.</param>
+    /// <returns>The last answer.</returns>
+    public static async Task<ServerPipeAnswer> DescribeWhenSettledAsync(string marker, TimeSpan patience)
+    {
+        var waited = Stopwatch.StartNew();
+
+        while (true)
+        {
+            var answer = await ServerPipeClient.DescribeAsync(marker, patience);
+
+            if (answer.Description is not { CallsInFlight: > 0 } || waited.Elapsed > patience)
+            {
+                return answer;
+            }
+
+            await Task.Delay(20);
+        }
+    }
+
     /// <summary>The DACL Windows reports for a pipe, read off an open handle to it.</summary>
     /// <param name="handle">Any handle to the pipe that carries <c>READ_CONTROL</c>.</param>
     /// <returns>The DACL.</returns>
