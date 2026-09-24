@@ -680,6 +680,11 @@ release body; nothing else depends on it.
   follows the version as well as its button**: an older install is asked *Version 1.0.0 is
   currently installed. Would you like to update to version 1.1.0?* over **Update**, and a newer
   one is told *A newer version of BrowserAI (suite) is already installed* over **Downgrade**.
+  A real mouse click on that prompt's **Cancel** exits 0 and leaves the install as it was, which
+  is what closing it does. **The console window a non-silent install gives a console main
+  executable is still there too**: through a probe pack whose main executable is the server, the
+  start put a Windows Terminal window on the screen titled with the server's path. The shipping
+  pack's main executable is the configuration app, so no release shows it.
 
   **`VELOPACK_FIRSTRUN` is cleared by `VelopackApp.Run()` on an installed process**, which
   answers a question the kb had held open since 2026-09-15, and it has a consequence here: the

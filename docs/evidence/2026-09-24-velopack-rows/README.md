@@ -11,7 +11,7 @@ suite's test pack** -- id `BrowserAI.app.test`, title `BrowserAI (suite)`, versi
 1.1.0, installer `Releases\test-pack\BrowserAI.test-installer.exe`, 62,585,518
 bytes, SHA-256 `8f18747305ef7b1973819f36439f0a6ea0ce47cf652d2d254ed5335ddecc85a0` --
 installed into scratch roots under `.work\velopack-rows\` and never into the
-maintainer's own install. **73 files with this README, 1.3 MB.**
+maintainer's own install. **88 files with this README, 1.7 MB** -- *corrected 2026-09-24, later the same day (previously "73 files with this README, 1.3 MB"), when the second screen window's runs `I1` to `I3b` were added, taken between 11:34Z and 11:41Z with the maintainer's consent to UI.*
 
 ⚠️ **Nothing here touched the maintainer's own state, and the readings say so.**
 Every install and uninstall ran with `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and
@@ -34,7 +34,8 @@ records which run fell where.
 
 | Record | What it takes from here |
 |---|---|
-| [kb: re-verification](../../../kb/re-verification.md) | Rows 123, 124, 126 and 130, replaced by the re-run's text |
+| [kb: re-verification](../../../kb/re-verification.md) | Rows 123, 124, 126 and 130, replaced by the re-run's text; rows 124 and 130 again the same day, from `I3`/`I3b` and `I2` |
+| `HouseRuleTests.EveryProcessLaunchInTheTreeSuppressesTheConsoleWindow` | `logs/I1-hidden-pwsh.txt`: the gate drivers' `Start-Process pwsh -WindowStyle Hidden` shape leaves no visible window and hands nothing to Windows Terminal, which is why that scan accepts it |
 | [kb: two installs of one app id](../../../kb/packaging/velopack.md#two-installs-of-one-app-id-share-one-uninstall-key----measured-2026-09-14) | The re-established paragraph: both uninstall orders under the test id |
 | [kb: the non-silent install](../../../kb/packaging/velopack.md#a-non-silent-install-starts-the-app-in-a-console-window-and-nobody-is-on-the-other-end-of-it----measured-2026-09-14) | The creation flags, the variable line and the 26.9 ms |
 | [kb: the v1.0.0 re-measurement](../../../kb/packaging/velopack.md#re-measured-2026-09-15-against-the-published-v100-and-the-paragraph-above-was-half-wrong) | `Startup[9]` against `Startup[8]`, and the consequence for the server's installer branch |
@@ -58,6 +59,9 @@ Times are the machine's local time, UTC+2, as the captures print them.
 | `B1`, `U1`, `U2` | 123 | Silent install into `root-b` over a live `root-a`; uninstall `root-b` (the key's root); uninstall `root-a` (no key left) | `logs/B1-silent-*`, `clearance/C-*-B1-*`, `clearance/C-after-U1-*`, `clearance/C-after-U2-*` |
 | `A2`, `B2`, `U3`, `U4` | 123 | The other order: install `root-a`, then `root-b`; uninstall `root-a` (the root the key did NOT name); uninstall `root-b` (no key left) | `logs/A2-silent-*`, `logs/B2-silent-*`, `clearance/C-*-A2-*`, `clearance/C-after-B2-*`, `clearance/C-after-U3-*` |
 | suite | 124, 126 | `InstallerHandoffTests`, filtered, once from each shell, against a fresh published slice: 9 of 9 each | `logs/suite-InstallerHandoffTests-*.log` |
+| `I1` | the scan | The gate drivers' own launch shape, `Start-Process pwsh -WindowStyle Hidden ... -RedirectStandardOutput`, a 20 s sleep, watched for 23 s: its console window stayed invisible, no Windows Terminal or OpenConsole process started for it, 0 visible windows. Every other `conhost` the file lists is some other process's, started in those seconds | `logs/I1-hidden-pwsh.txt`, `rig/item1-hidden-pwsh.ps1` |
+| `I2` | 130 | A silent install into `root-d` (211 files), then the same installer non-silently over it and a real mouse click on the dialog's `Cancel`: exit 0, `user cancelled overwrite`, 211 files as before | `logs/I2-*`, `rig/item2-cancel-click.ps1` |
+| `I3`, `I3b` | 124 | A probe pack with `--mainExe BrowserAI.Server.exe` under a third id, `BrowserAI.app.r124`, installed without `--silent`: a visible `CASCADIA_HOSTING_WINDOW_CLASS` window of the running Windows Terminal, titled with the server's path; the server logged `Startup[78]` and `Startup[9]` and exited 0 | `logs/I3-*`, `logs/I3b-*`, `logs/velopack_BrowserAI.app.r124.log`, `rig/item3-pack.cmd`, `rig/install-observe-r124*.ps1` |
 
 The four uninstalls are in `logs/velopack-test-id-log-excerpt.txt`: `update:71988`
 at 11:50:56, `update:72012` at 11:51:11 with the `os error 2` line, `update:85312`
@@ -118,18 +122,21 @@ update to 1.1.0 between the two, and a `REG_DWORD` is what 1.2.158's
 - **The scratch client configuration** the hooks registered into: a
   `.claude.json` the client wrote on its first start, carrying a machine id and a
   user id it generated, and nothing that was measured.
+- **Three screenshots and one empty file from the second window.** `I1-screenshot.png` was deleted by the root session before this cut, because it showed the maintainer's private windows, and was never hashed here. `I3b-r124-nonsilent-console-1.png`, 3,054,421 bytes, SHA-256 `3EC29A328971645228680EEE63E61B89498CE94064DBB9827782124262AD90F5`, is left out for the same reason: the Terminal window it was taken for is framed by the maintainer's own windows and taskbar. `I3b-r124-nonsilent-console-3.png`, 120 bytes, SHA-256 `E1FB82735B66A2D44E94F53290ED2325A3308F262B2B131458A6105FB821AE03`, is an empty crop. `I1-hidden-pwsh-stdout.log` is 0 bytes, SHA-256 `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`, the sleep writing nothing.
 - **The researcher's working files**: the four original rows and the replacement
   text, which are in git history and in `kb/re-verification.md` verbatim, and the
   script that assembled the replacement.
 
-## Two departures from the bytes as taken
+## Three departures from the bytes as taken
 
+- **`logs/I3b-r124-nonsilent-observe.trimmed.jsonl` is the observation with one line cut**: its line 15, a second `CASCADIA_HOSTING_WINDOW_CLASS` window of the same Terminal process, which is one of the maintainer's own terminals and whose title is his work. 62 of 63 lines are kept; the original is SHA-256 `651B54D0DF3FFE153C24BAD39421637CE4F8B032631FCABC99269EB6963E7462`.
 - **Every `.ps1` and `Rig.cs` under `rig/` gained the repository's two-line SPDX
-  header**, because this tree requires one on every script it holds. Nothing else
-  in them moved.
+  header**, because this tree requires one on every script it holds, and
+  `item3-pack.cmd` gained the same two lines as `@rem`. Nothing else in them moved.
 - **Line endings are this repository's**, per
   [the directory's own note](../README.md): captures written with CRLF are stored
-  with LF.
+  with LF, and `rig/item3-pack.cmd` keeps CRLF because `.gitattributes` gives
+  every `.cmd` that.
 
 ## A note on method the probes carry
 

@@ -1270,6 +1270,22 @@ needs exporting, and `CODEX_HOME` and `BROWSERAI_ROOT` go to scratch beside
 `CLAUDE_CONFIG_DIR` because the hooks register with both clients
 ([re-verification row 124](../re-verification.md), [evidence](../../docs/evidence/2026-09-24-velopack-rows/README.md)).
 
+**The console-window half was re-measured later the same day, and it is
+UNCHANGED too.** *Corrected 2026-09-24, by addition (previously the paragraph
+above ended its Velopack half with "⚠️ **The console-window half was not
+re-observed, and no pack this repository builds can show it**").* A probe pack,
+`vpk` 1.2.158 over the test pack's own publish with `--mainExe
+BrowserAI.Server.exe` under a third id `BrowserAI.app.r124`, installed without
+`--silent`: the start put up a visible `CASCADIA_HOSTING_WINDOW_CLASS` window,
+3049x1745, titled with the server's full path and owned by the already-running
+Windows Terminal, which then read *"[process exited with code 0 (0x00000000)]"*;
+the server logged `Startup[78]` and `Startup[9]` and exited **0** after 343 ms,
+`Startup[78]` because the observing rig held a handle to `Setup.exe`. **The
+shipping pack still cannot show it**, for the reason above: its main executable is
+the configuration app. Runs `I3` and `I3b` of the evidence batch; the screenshot
+of that window is not kept, because it showed the maintainer's own windows around
+it.
+
 ### Re-measured 2026-09-15 against the published v1.0.0, and the paragraph above was half wrong
 
 **Everything above about the window and the launcher held; the paragraph headed
@@ -1895,6 +1911,14 @@ dismisses the dialog down the same arm a Cancel takes (`dialogs.rs:244-255` maps
 every result but buttons 0 and 1 to cancel). ⚠️ **The dialog is still a modal
 window on the developer's screen for as long as it is up**, up to 300 s, which is
 why this stays manual.
+
+*Added 2026-09-24, later the same day*: **a real mouse click on `Cancel` does
+what `WM_CLOSE` does.** Measured over a silent install of the test pack into a
+scratch root of 211 files: the click landed on the dialog's own `Cancel` at the
+point its rectangle gave, `Setup.exe` exited **0** logging
+`Directory already exists, and user cancelled overwrite.`, and the root still held
+211 files of the same total size, with no `Renaming` line in the log. Run `I2` of
+the [evidence](../../docs/evidence/2026-09-24-velopack-rows/README.md).
 
 ## Not verified
 

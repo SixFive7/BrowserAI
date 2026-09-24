@@ -1,0 +1,9 @@
+    3478ms 11:35:40.288 silent install exit=0; sq.version mtime=2026-09-24T11:35:37.1024699Z sha=6EE42EAAC5682BA6
+    3523ms 11:35:40.333 root-d before: files=211 bytes=203218586
+    4244ms 11:35:41.053 dialog hwnd=0x3B163C Cancel rect=1874,1085 72x23 -> click point 1910,1096
+    4387ms 11:35:41.196 CLICKED Cancel with the mouse at 1910,1096 (window under point belonged to Setup pid 86712); cursor restored to 1922,2006
+    4473ms 11:35:41.282 ui.lock released
+    4475ms 11:35:41.284 Setup exited=13:35:41.2612242 code=0
+    4489ms 11:35:41.299 log tail: [setup:86712] [13:35:41] [ERROR] Directory already exists, and user cancelled overwrite.
+    4530ms 11:35:41.340 root-d after: files=211 bytes=203218586; sq.version mtime=2026-09-24T11:35:37.1024699Z sha=6EE42EAAC5682BA6; renamed-aside dirs: 1; 'Renaming' in log: False
+    4531ms 11:35:41.340 DONE
