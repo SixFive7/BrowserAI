@@ -40,6 +40,53 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **Every server answers on a named pipe of its own: who it is, what it holds, and a stop.**
+  Q284 a, the maintainer's words verbatim: *"Q284 a"*. A server opens
+  `\\.\pipe\BrowserAI-<its live marker's name>` right after it joins the census, through raw
+  `CreateNamedPipeW`: a first-instance flag, so a name somebody else created first is refused and
+  never joined; a flag that turns remote clients away; and a DACL whose one entry is the current
+  user, where the default would also let `Everyone` and anonymous logons read. One request per
+  connection, answered with a length-prefixed reply. `describe` comes from the server's own
+  memory: its pid, creation time, version and image, the client's name, title and version, the
+  working directory, when it began serving, its last tool call and the calls in flight, and each
+  session it holds with its directory, its purpose and whether its browser is open. `stop`
+  acknowledges, then takes the path a client leaving takes.
+
+  **Nothing in the product asks a server anything yet**: the coordinator that will is the next
+  phase, and the only caller today is the suite. `ServerPipeClient` reads the census first, so a
+  server that has gone costs microseconds and never a timeout, checks that the pipe is served by
+  the marker's own pid, and bounds every call at 500 ms, derived from the slowest pipe percentile
+  the review measured. **Why a pipe and not a file**: a record rewritten in place was read torn 22
+  times in 3,000,000 reads, and every torn read parsed as valid JSON; a pipe answering from memory
+  has nothing to tear. It costs the server 43,520 bytes. `ServerPipeTests`, eight tests, each
+  watched red against a planted defect, and two open hazard rows name what it does not handle yet:
+  a caller that connects and never closes holds the one thread that serves the pipe, and a server
+  from 1.1.0 or earlier has no pipe to be stopped through.
+  [kb](kb/windows/processes.md#a-per-server-named-pipe-answers-from-memory-and-cannot-tear----measured-2026-09-24), [evidence](docs/evidence/2026-09-24-ipc-review/README.md).
+
+- ✨ **A tool call that meets an update is refused with a sentence that says whether it ran.**
+  Q286 b, the maintainer's words verbatim: *"Q286 b"*. No MCP message reaches a model when a
+  server shuts down, measured on both clients, so a tool result is the only channel there is.
+  **A server that starts while its own install's `Update.exe` is running**, found by the full
+  image path under its install root and never by a name, answers `initialize`, refuses every tool
+  call with that sentence, answers `tools/list` with an error that carries it, starts no browser
+  server, skips its feed check and its stray sweep, and ends its conversation when the updater
+  exits, so Claude Code starts the new version on its next call. **A server stopped through its
+  pipe** answers every call still in flight before it exits, and refuses at the door any call
+  that arrives after the stop began: no call goes unanswered, and none is answered twice. The
+  first of the two is live in this release; the second waits for the coordinator, the only thing
+  that will ask a server to stop.
+
+  The sentence differs because a call cut off in flight had already been forwarded: *"The call was
+  already being carried out, so part of it may have happened: check what it was doing before you
+  repeat it."* against *"was NOT run: nothing reached a browser and nothing changed."* Both go on
+  to the remedy for the client at the other end, and to `browserai_resume` for a session the update
+  closed, whose files stay on disk. **The gap accepted with it**: a server the updater ends before
+  its handshake finishes is lost to that session, and an installed server takes 0.39 s at the median
+  to finish it. `UpdateInProgressTests`, three tests against the published binary, one of them with
+  a stand-in `Update.exe` that is a copy of `cmd.exe` in a scratch install root, ended through its
+  own job; and the error catalogue's census, now 35. Each was watched red against a planted defect.
+
 - ✅ **Two installer facts that were manual rows are suite arms under the test pack's id.**
   Q275. `RealInstallerTests.TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt`
   installs the test pack silently into two scratch roots and shows the second install rewriting
@@ -780,6 +827,38 @@ release body; nothing else depends on it.
   shortcut's; and a click on the body through a protocol launch drops the dropdown, as a
   button's does. Whether a suppressed toast lights the taskbar's badge stays open, because no
   toast shows one on this machine, and another display scale was not tried.
+
+- 📝 **What a Velopack apply ends is measured, and three claims it contradicts are corrected.**
+  The maintainer asked it in as many words: *"I have a hard time believing it only monitors the
+  process calling update. That would mean it kills all instances of a multi instance app!?"* It
+  does. Read at Velopack's tag `1.2.158` and measured the same day against servers from the suite's
+  test pack: `Update.exe` waits up to 60 s for the one process that asked, then ends every process
+  whose image is under the install root with `TerminateProcess`, exit code 1, after each hook and
+  once more before the swap. Of twenty-one servers, every one still running before the swap was
+  ended, and the eleven started after it ran the new version. Of two applies started together, the
+  kill pass decided which one won, not Velopack's lock. And its log reads the wait backwards: a wait
+  that worked logs *Access is denied*, and one that ran out logs nothing.
+
+  **Corrected by addition, each where it was written.** Velopack's `start` kills only on its legacy
+  `app-` branch, where the kb and `LiveInstances` said every start does. The 2026-08-16 finding
+  that a non-elevated token may not register a scheduled task holds only for a trigger that fires
+  for any user; a trigger scoped to the user registers, re-measured, and the kb and DECISIONS say
+  so. And the 2026-08-20 reading of the DACL on a `Global\` mutex is stamped for re-measurement,
+  because a `Global\` event read on 2026-09-24 disagrees with it in two entries. Beside them, this
+  machine's order of starts after sign-in, where a logon task's process came at +1.249 s, before
+  Explorer, and the editor at +274.5 s, and the fact that a process a task starts holds no right to
+  the foreground. [kb](kb/packaging/velopack.md#what-an-apply-does-to-every-process-under-the-root----read-and-measured-at-12158-2026-09-24), [kb](kb/windows/processes.md#what-starts-first-after-sign-in-and-what-a-task-started-process-may-do----measured-2026-09-24),
+  re-verification rows 159 and 160, `docs/evidence/2026-09-24-coordinator-lifecycle/`.
+
+- 📝 **The coordinator's design is a decision of record, with the four answers that settled it.**
+  Q280 b and Q282 a to Q285 a, each in the maintainer's own words, as five rows of DECISIONS'
+  update lane: a hidden coordinator, one per user and single instance through its own pipe,
+  started by a per-user logon task at sign-in or by a blocked server through that task, applying
+  only when a path scan under the install root finds nothing else, and talking to servers over
+  raw named pipes with nothing written to disk for another process to read. The rows name the four
+  directions set aside and where each was measured, and say what exists: the servers' pipe and the
+  refusal above are this batch, and the coordinator, its toast and its sessions page are the next
+  phases.
 
 - 📝 **The `webp` zero-byte watch is re-stamped, and it gains the instrument it was missing.**
   The ask that a `webp` screenshot past 16,383 px should error instead of returning an empty
