@@ -10,19 +10,21 @@ namespace BrowserAI.Interop;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>What Explorer listens for.</b> <c>WM_SETTINGCHANGE</c> with the string
-/// <c>Environment</c> is the message on which Explorer reads the environment out of
-/// the registry again, so a program started from Explorer afterwards is given the
-/// new PATH; a program already running keeps the one it started with. Added
-/// 2026-09-24 with Q294 b, whose install hook puts BrowserAI's folder on the user's
-/// PATH.
+/// <b>What the shell listens for.</b> Writing an environment value to the registry
+/// changes no running program. The documented way to publish it is
+/// <c>WM_SETTINGCHANGE</c> with the string <c>Environment</c>, which lets the shell
+/// pick the change up; a program that does not act on it keeps the environment it
+/// started with, and so does everything it starts. Cited and measured in
+/// kb/windows/processes.md. Added 2026-09-24 with Q294 b, whose install hook puts
+/// BrowserAI's folder on the user's PATH.
 /// </para>
 /// <para>
 /// ⚠️ <b>Bounded, and a hung window is skipped.</b> A broadcast is delivered to each
 /// top-level window in turn, and every hook that sends it runs under Velopack's own
 /// timeout -- fifteen seconds for the update hook. <c>SMTO_ABORTIFHUNG</c> skips a
 /// window the system already knows is hung, and one second is the most any other
-/// window may take. Nothing waits for an answer, because there is none to read.
+/// window may take. Measured at 261 to 436 ms with 669 top-level windows. Nothing
+/// waits for an answer, because there is none to read.
 /// </para>
 /// </remarks>
 internal static partial class EnvironmentBroadcast

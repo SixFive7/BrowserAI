@@ -1686,10 +1686,22 @@ already running does not act on it is read from its launcher and not measured**,
 why [the hazard index](../../HAZARDS.md#hazard-index) carries it open and README tells a
 person to restart Codex after installing.
 
+**What the broadcast costs** `[MACHINE]`: `SendMessageTimeoutW` to `HWND_BROADCAST` with
+`WM_SETTINGCHANGE`, `"Environment"`, `SMTO_ABORTIFHUNG` and a 1,000 ms timeout -- the call
+`EnvironmentBroadcast` makes -- returned nonzero 5 of 5 and took **261 to 436 ms**, with
+669 top-level windows on the machine by `EnumWindows`. The documented ceiling is the
+timeout once per window that is slow to answer, *"up to the value of uTimeout multiplied
+by the number of top-level windows"*
+([SendMessageTimeoutW](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-sendmessagetimeoutw)),
+and the hooks that send it run under Velopack's own timeouts, 15 s for the update hook
+([velopack](../packaging/velopack.md#nativeaot-hooks-and-vpk-output)).
+
 **How to re-establish it:** open the session's own token with `TOKEN_QUERY`, call
 `CreateEnvironmentBlock` with `bInherit` false, walk the block to `Path=`, and compare it with
 both registry values read with `DoNotExpandEnvironmentNames` and expanded. Take it while
 nothing is installing: every real-installer arm writes the user value and takes it back.
+For the cost, time the same `SendMessageTimeoutW` call; it changes no value, and every
+install and uninstall of the suite's test pack sends it anyway.
 
 ## The Win32 interop surface
 
