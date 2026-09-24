@@ -30,8 +30,8 @@ permission to skip the fact.
 > **155** numbered rows below (164 lines")` -- **three new markers and three new rows**, from
 > the toast research: the app id Velopack already sets (row 156), the NativeAOT raw-call path
 > (row 157), and what .NET 11 does to `Environment.TickCount64` (row 158). **They are the first
-> markers in [`windows/notifications.md`](windows/notifications.md)**, which the note below
-> recorded as floating on nothing; the Windows facts the same research added there are stamped
+> markers in [`windows/notifications.md`](windows/notifications.md)**, which an earlier note
+> below recorded as floating on nothing; the Windows facts the same research added there are stamped
 > `[STABLE]` and `[MACHINE]` and move no count. Re-counted through the scan, never adjusted.
 >
 > `Corrected 2026-09-24, a fourth time that day (previously "**268** ... against the
