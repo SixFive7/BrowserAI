@@ -418,6 +418,16 @@ scratch project home left `tmp\` and `tmp\arg0\`, both empty, beside a
 there *PATH aliases*. Both readings are true of their moment. The registrar removes
 the two innermost first and only while they are empty, and never the `config.toml`
 -- see [what Codex hands a stdio server](#what-codex-hands-a-stdio-server-and-how-it-ends-one----measured-2026-09-24).
+⚠️ *Corrected 2026-09-24 @ codex-cli 0.155.0-alpha.9.2, by addition (previously "So
+the residue is not reliably produced").* **The Q288 rig produced it every time: 18 of 18
+project setups**, each an `mcp add` and an `mcp get --json` with `CODEX_HOME` at a
+scratch project's `.codex`, listed `config.toml`, `tmp` and `tmp\arg0` there afterwards
+([evidence](../../docs/evidence/2026-09-24-codex-expansion/README.md),
+`files.projectDotCodexListing` in each run's `setup.json`). The same runs show what it
+is for: every server an app-server started carried `<CODEX_HOME>\tmp\arg0\codex-arg0`
+and a random suffix as the FIRST entry of its PATH, unless its own entry set a PATH. The
+one earlier run that left nothing is unexplained and stays recorded above; the cleanup
+still tolerates an absent residue, which costs nothing.
 
 ⚠️ **`codex mcp add` ACCEPTS NOTHING THAT PERSISTS A STARTUP TIMEOUT.** Its whole
 option set is `-c key=value`, `--env KEY=VALUE`, `--enable FEATURE`, `--url` and
