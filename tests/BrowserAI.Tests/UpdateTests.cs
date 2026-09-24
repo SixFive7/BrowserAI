@@ -774,7 +774,7 @@ internal sealed class UpdateTests
 
         var client = new ScriptedUpdateClient();
         var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++);
+        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
 
         var outcome = await service.RunOnceAsync(CancellationToken.None);
 
@@ -820,7 +820,7 @@ internal sealed class UpdateTests
 
         var client = new ScriptedUpdateClient();
         var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++);
+        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
 
         var outcome = await service.RunOnceAsync(CancellationToken.None);
 
@@ -865,7 +865,8 @@ internal sealed class UpdateTests
             new ScriptedUpdateClient(),
             mine,
             provider.CreateLogger("BrowserAI.Updates"),
-            () => { }).RunOnceAsync(CancellationToken.None);
+            () => { },
+            new RecordedWake()).RunOnceAsync(CancellationToken.None);
 
         // One peer, counted and not implied, and the package the apply is no
         // longer waiting on.
@@ -886,7 +887,8 @@ internal sealed class UpdateTests
             new ScriptedUpdateClient(),
             lost,
             undetermined.CreateLogger("BrowserAI.Updates"),
-            () => { }).RunOnceAsync(CancellationToken.None);
+            () => { },
+            new RecordedWake()).RunOnceAsync(CancellationToken.None);
 
         await Assert.That(undetermined.Logged("the census could not be taken, so solitude cannot be proven")).IsTrue();
         await Assert.That(undetermined.Logged("at least")).IsFalse();
@@ -910,13 +912,67 @@ internal sealed class UpdateTests
 
         var client = new ScriptedUpdateClient();
         var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++);
+        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
 
         var outcome = await service.RunOnceAsync(CancellationToken.None);
 
         await Assert.That(outcome).IsEqualTo(UpdateOutcome.Applying);
         await Assert.That(client.Applies).IsEqualTo(1);
         await Assert.That(shutdowns).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// A package staged while another instance is live wakes the coordinator, once;
+    /// an undetermined census does the same; applying alone and finding nothing wake
+    /// nobody.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q283 a, the maintainer's words verbatim: <i>"Q283 a"</i>.</b> A server whose
+    /// update is staged and blocked starts the per-user logon task, or sends the
+    /// serving coordinator a recheck, so a coordinator outside the client's process
+    /// tree applies once the install is idle. The wake itself is
+    /// <see cref="CoordinatorWakeTests"/>'s; this is the lane asking for it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AStagedUpdateThatIsBlockedWakesTheCoordinatorAndNoOtherOutcomeDoes()
+    {
+        using var scratch = ScratchDirectory.Create("update-wake");
+        var paths = new LocalAppDataPaths(scratch.Path);
+
+        using (var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance))
+        using (LiveInstances.Join(paths.RootAppDir, NullLogger.Instance))
+        {
+            var wake = new RecordedWake();
+
+            await Assert.That(await new UpdateService(new ScriptedUpdateClient(), mine, NullLogger.Instance, () => { }, wake).RunOnceAsync(CancellationToken.None))
+                .IsEqualTo(UpdateOutcome.StagedButNotAlone);
+            await Assert.That(wake.Wakes).IsEqualTo(1);
+        }
+
+        var lost = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
+
+        lost!.Dispose();
+
+        var undetermined = new RecordedWake();
+
+        await Assert.That(await new UpdateService(new ScriptedUpdateClient(), lost, NullLogger.Instance, () => { }, undetermined).RunOnceAsync(CancellationToken.None))
+            .IsEqualTo(UpdateOutcome.StagedButNotAlone);
+        await Assert.That(undetermined.Wakes).IsEqualTo(1);
+
+        using var alone = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
+
+        var applying = new RecordedWake();
+
+        await Assert.That(await new UpdateService(new ScriptedUpdateClient(), alone, NullLogger.Instance, () => { }, applying).RunOnceAsync(CancellationToken.None))
+            .IsEqualTo(UpdateOutcome.Applying);
+        await Assert.That(applying.Wakes).IsEqualTo(0);
+
+        var nothing = new RecordedWake();
+
+        await Assert.That(await new UpdateService(new ScriptedUpdateClient { Candidate = null }, alone, NullLogger.Instance, () => { }, nothing).RunOnceAsync(CancellationToken.None))
+            .IsEqualTo(UpdateOutcome.NothingToDo);
+        await Assert.That(nothing.Wakes).IsEqualTo(0);
     }
 
     /// <summary>Nothing on offer is not a failure, and nothing is asked of the process.</summary>
@@ -929,7 +985,7 @@ internal sealed class UpdateTests
 
         var client = new ScriptedUpdateClient { Candidate = null };
         var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++);
+        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
 
         await Assert.That(await service.RunOnceAsync(CancellationToken.None)).IsEqualTo(UpdateOutcome.NothingToDo);
         await Assert.That(shutdowns).IsEqualTo(0);
@@ -950,7 +1006,7 @@ internal sealed class UpdateTests
 
         var client = new ScriptedUpdateClient { CheckFailure = new HttpRequestException("404") };
         var shutdowns = 0;
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++);
+        var service = new UpdateService(client, mine, NullLogger.Instance, () => shutdowns++, new RecordedWake());
 
         await Assert.That(await service.RunOnceAsync(CancellationToken.None)).IsEqualTo(UpdateOutcome.Failed);
         await Assert.That(shutdowns).IsEqualTo(0);
@@ -983,7 +1039,7 @@ internal sealed class UpdateTests
         using var mine = LiveInstances.Join(paths.RootAppDir, NullLogger.Instance);
 
         var client = new ScriptedUpdateClient { ProgressSteps = 40, DelayPerStep = TimeSpan.FromMilliseconds(25) };
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => { });
+        var service = new UpdateService(client, mine, NullLogger.Instance, () => { }, new RecordedWake());
 
         await Assert.That(await service.RunOnceAsync(CancellationToken.None)).IsEqualTo(UpdateOutcome.Applying);
         await Assert.That(client.ProgressReported).IsEqualTo(40);
@@ -1099,7 +1155,7 @@ internal sealed class UpdateTests
 
         using var stopping = new CancellationTokenSource();
         var client = new ScriptedUpdateClient { ProgressSteps = 200, DelayPerStep = TimeSpan.FromMilliseconds(20) };
-        var service = new UpdateService(client, mine, NullLogger.Instance, () => { });
+        var service = new UpdateService(client, mine, NullLogger.Instance, () => { }, new RecordedWake());
 
         var pass = service.RunOnceAsync(stopping.Token);
 
@@ -1571,7 +1627,7 @@ internal sealed class UpdateTests
         using var capture = new CapturingLoggerProvider();
 
         var client = new NeverAnsweringUpdateClient();
-        var service = new UpdateService(client, mine, capture.CreateLogger("BrowserAI.Update"), () => { }, budgets);
+        var service = new UpdateService(client, mine, capture.CreateLogger("BrowserAI.Update"), () => { }, new RecordedWake(), budgets);
 
         var clock = System.Diagnostics.Stopwatch.StartNew();
         var outcome = await service.RunOnceAsync(CancellationToken.None);

@@ -130,6 +130,16 @@ internal static partial class CoordinatorLog
         Message = "Sign-in step: {Outcome}. {Why}")]
     public static partial void SignedIn(ILogger logger, string outcome, string why);
 
+    /// <summary>A blocked server woke the coordinator, or could not.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="outcome">How it went.</param>
+    /// <param name="why">The sentence.</param>
+    [LoggerMessage(
+        EventId = 7,
+        Level = LogLevel.Information,
+        Message = "Coordinator wake: {Outcome}, {Why}")]
+    public static partial void Woke(ILogger logger, string outcome, string why);
+
     /// <summary>The coordinator is done and lets its pipe go.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="why">Why it stops.</param>

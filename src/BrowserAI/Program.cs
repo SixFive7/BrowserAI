@@ -517,7 +517,8 @@ internal static class Program
                     new VelopackUpdateClient(feed),
                     live,
                     updateLogger,
-                    stopping.Cancel)
+                    stopping.Cancel,
+                    new CoordinatorWake(installRoot, InstallLocation.AppId, Registration.ScheduledTasks.Instance, updateLogger))
                     .StartInBackground(BuildVersion.Current, InstallLocation.IsInstalled, stopping.Token);
             }
 

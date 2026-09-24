@@ -203,6 +203,7 @@ internal sealed class UpdateService
     private readonly LiveInstances? _live;
     private readonly ILogger _logger;
     private readonly Action _requestShutdown;
+    private readonly Coordination.ICoordinatorWake _wake;
 
     /// <summary>Builds a pass.</summary>
     /// <param name="client">The Velopack seam.</param>
@@ -220,6 +221,12 @@ internal sealed class UpdateService
     /// <c>Update.exe</c> is waiting on this pid and will not swap until it is
     /// gone.
     /// </param>
+    /// <param name="wake">
+    /// What a pass that staged a package it may not apply does next: make sure a
+    /// coordinator looks at the install (Q283 a). <b>Required, not defaulted</b>: the
+    /// product's starts the per-user logon task, and a test that forgot it would
+    /// start the developer's.
+    /// </param>
     /// <param name="budgets">
     /// The four timers, or <see langword="null"/> for the product's own. Nothing
     /// in the product passes anything else; the parameter exists so a test can
@@ -232,16 +239,19 @@ internal sealed class UpdateService
         LiveInstances? live,
         ILogger logger,
         Action requestShutdown,
+        Coordination.ICoordinatorWake wake,
         UpdateBudgets? budgets = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(requestShutdown);
+        ArgumentNullException.ThrowIfNull(wake);
 
         _client = client;
         _live = live;
         _logger = logger;
         _requestShutdown = requestShutdown;
+        _wake = wake;
         _budgets = budgets ?? UpdateBudgets.Default;
     }
 
@@ -357,6 +367,16 @@ internal sealed class UpdateService
 
                     UpdateLog.StagedButNotAlone(_logger, candidate.Version, waitingOn, size, clock.Elapsed.TotalSeconds);
                 }
+
+                // ⚠️ AND A COORDINATOR IS WOKEN -- Q283 a, 2026-09-25, the
+                // maintainer's words verbatim: "Q283 a". A recheck to the one that
+                // serves this install's pipe, or the per-user logon task started on
+                // demand with --coordinate, so the coordinator is the task
+                // scheduler's child and outlives this server's client, which kills
+                // its server's process tree when it exits. The coordinator applies
+                // once a path scan under the install root finds only itself. The
+                // wake never throws and says what it did in its own log line.
+                _ = _wake.Wake();
 
                 return UpdateOutcome.StagedButNotAlone;
             }
