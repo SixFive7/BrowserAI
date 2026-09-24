@@ -1,0 +1,19 @@
+<toast scenario="reminder" useButtonStyle="true" activationType="protocol" launch="browserai-q254test:review?from=body">
+  <visual>
+    <binding template="ToastGeneric">
+      <text>TEST (Q254 research) BrowserAI 9.9.9 is ready to install</text>
+      <text>TEST toast raised by a research prototype, not by BrowserAI. Protocol activation arm.</text>
+      <text placement="attribution">BrowserAI (test)</text>
+    </binding>
+  </visual>
+  <actions>
+    <input id="snooze" type="selection" defaultInput="6h" title="If not now, ask me again">
+      <selection id="10m" content="In 10 minutes"/>
+      <selection id="6h" content="In 6 hours"/>
+      <selection id="reboot" content="After the next reboot"/>
+      <selection id="never" content="Not for this version"/>
+    </input>
+    <action content="Review 27 sessions" arguments="browserai-q254test:review?from=button" activationType="protocol" hint-buttonStyle="Success"/>
+    <action content="Ask me later" arguments="browserai-q254test:snooze" activationType="protocol" hint-inputId="snooze"/>
+  </actions>
+</toast>

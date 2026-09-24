@@ -1,0 +1,8 @@
+2026-09-24T11:33:55.4327267+02:00 FILE C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\BrowserAI Q254 test.lnk (aumid=BrowserAI.Q254Test.Lnk activator=) setAumid=0x00000000 commit=0x00000000
+2026-09-24T11:38:37.6255442+02:00 KEY HKCU:\Software\Classes\CLSID\{6E64C7E9-5743-476D-A2EA-6502822581A4}
+2026-09-24T11:38:38.0788852+02:00 KEY HKCU:\Software\Classes\AppUserModelId\BrowserAI.Q254Test.Lnk
+2026-09-24T11:41:34.0701819+02:00 FILE C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\BrowserAI Q254 test.lnk (aumid=BrowserAI.Q254Test.Lnk activator=) setAumid=0x00000000 commit=0x00000000
+2026-09-24T11:42:56.5957116+02:00 KEY HKCU:\Software\Classes\browserai-q254test
+2026-09-24T11:43:17.7849227+02:00 KEY HKCU:\Software\Classes\CLSID\{6E64C7E9-5743-476D-A2EA-6502822581A4}
+2026-09-24T11:43:18.2447962+02:00 KEY HKCU:\Software\Classes\AppUserModelId\BrowserAI.Q254Test.Reg
+2026-09-24T11:57:40.5682283+02:00 FILE C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\BrowserAI Q254 test.lnk (aumid=BrowserAI.Q254Test.Lnk activator=) setAumid=0x00000000 commit=0x00000000

@@ -1,0 +1,6 @@
+TickCount64 route: 100000 reads in 2128,4 ms (21,284 us each, PowerShell overhead included); boot=2026-09-24T07:13:44.2221676Z; spread=18,0 ms
+WMI Win32_OperatingSystem.LastBootUpTime: 2026-09-24T09:13:44.5000000+02:00 (local) in 550,8 ms
+difference WMI - TickCount64 route: 278 ms
+Fast Startup (HiberbootEnabled): 0
+session logon time: 2026-09-24T07:38:52.2681164Z (read in 5,37 ms)
+kernel boot time via GetTickCount64 P/Invoke: 2026-09-24T07:13:44.2292626Z

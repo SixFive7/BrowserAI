@@ -1,0 +1,23 @@
+E1 File.ReadAllText (Read, share Read): IOException hr=0x80070020 (The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\q254-design\share\run\e1.live' because it is being used by another process.)
+E1 FileStream(Read, share ReadWrite): OK (4096)
+E1 FileStream(Read, share ReadWrite|Delete): OK (4096)
+E1 census probe (ReadWrite, share Read): IOException hr=0x80070020 (The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\q254-design\share\run\e1.live' because it is being used by another process.)
+E1 read-only held-ness probe (Read, share Read): IOException hr=0x80070020 (The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\q254-design\share\run\e1.live' because it is being used by another process.)
+E1 content parses, seq: OK (0)
+E2 census probe while a share-RW|Delete reader is open, holder alive: IOException hr=0x80070020 (The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\q254-design\share\run\e1.live' because it is being used by another process.)
+E3 [ReadWrite, Delete] census probe after holder exit, reader open: OK (0)
+E3 [ReadWrite, Delete] File.Delete after holder exit, reader open: OK (0)
+E3 [ReadWrite, Delete] name still listed after that delete: OK (0)
+E3 [ReadWrite] census probe after holder exit, reader open: OK (0)
+E3 [ReadWrite] File.Delete after holder exit, reader open: IOException hr=0x80070020 (The process cannot access the file 'C:\Source\SixFive7\BrowserAI\.work\q254-design\share\run\e3-nodel.live' because it is being used by another process.)
+E3 [ReadWrite] name still listed after that delete: OK (1)
+E4 rewrite-fixed: reads=20000 ok=19995 torn=5 empty=0 in 195014 ms (9750,7 us/read)
+E4 rewrite-fixed: the holder wrote 5090519 records during the reads
+E4 rewrite-var: reads=20000 ok=19081 torn=4 empty=915 in 7894 ms (394,7 us/read)
+E4 rewrite-var: the holder wrote 5742 records during the reads
+E5 after 1.5 s of rewrites every 200 ms:
+   FileInfo (GetFileAttributesEx)     moved 1447 ms, age 99 ms
+   directory enumeration (FindFirst)  moved 0 ms, age 1546 ms
+   by handle                          moved 1447 ms, age 99 ms
+E6 [ReadWrite, Delete] File.Move(temp, target, overwrite) while a reader holds target: UnauthorizedAccessException hr=0x80070005 (Access to the path is denied.)
+E6 [ReadWrite] File.Move(temp, target, overwrite) while a reader holds target: UnauthorizedAccessException hr=0x80070005 (Access to the path is denied.)

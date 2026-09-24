@@ -1,0 +1,91 @@
+Q254 design research, 2026-09-24, Windows 11 Pro 10.0.26200, 3840x2160, .NET SDK 10.0.401.
+Raw evidence lines copied from the runs (the prototype's events.log was truncated before each run,
+so this file is the only on-disk copy of the toast-activation lines).
+
+Prototype: proto/ToastProto.exe, NativeAOT, 1,288,192 bytes, publish log shows zero warnings
+(proto/publish.log .. publish4.log). Hand-written WinRT/COM vtables, blittable DllImports only.
+Scratch AUMIDs: BrowserAI.Q254Test.Lnk (Start Menu shortcut, no activator), BrowserAI.Q254Test.Reg
+(registry only). Scratch CLSID {6E64C7E9-5743-476D-A2EA-6502822581A4}. All removed; see reg/created.txt
+and the cleanup output in the report.
+
+REAL SHORTCUT (read-only, GPS_DEFAULT): lnk/real-shortcut.txt
+  System.AppUserModel.ID = 'velopack.BrowserAI.app'; ToastActivatorCLSID = VT_EMPTY
+  target C:\Users\jori\AppData\Local\BrowserAI.app\current\BrowserAI.exe, LastWriteTime 2026-09-24T09:40:44.1118316+02:00
+  (same LastWriteTime after all research)
+
+T0 first toast from the NativeAOT rig: shots/nativeaot-toast.png (identity 'BrowserAI Q254 test', default 'In 6 hours')
+  get_Setting before the AUMID's first toast: hr=0x80070490 (ERROR_NOT_FOUND); after it: hr=0, setting=0 (Enabled)
+
+T1 no activator, raiser ALIVE, activationType=background, dropdown set to 'After the next reboot', 'Ask me later'
+  UIA DONE 11:38:05.4987531+02:00
+  09:38:05.5187791Z EVENT Activated arguments='action=snooze' userInput(hr=0x00000000)={ snooze='reboot' }
+
+T2 no activator, raiser ALIVE, the X
+  UIA: X is named 'Move this notification to Notification Centre' (AutomationId DismissButton); DONE 11:38:21.7647402+02:00
+  09:38:21.7721911Z EVENT Dismissed reason=0 (UserCanceled)
+  09:38:25.9063965Z HISTORY count=1 tag=t3   <- the toast is still in the Notification Centre after the X
+
+T3 no activator, raiser EXITED, background button with 'After the next reboot', 'Ask me later'
+  UIA DONE 11:37:47.2539656+02:00; no process launched in the following 6 s; HISTORY count=0 (toast consumed, choice lost)
+
+t8 no activator, raiser EXITED, activationType=FOREGROUND, 'In 10 minutes', 'Ask me later'
+  UIA DONE 11:43:59.8254833+02:00; no process launched in 6 s; 09:44:06.0288669Z HISTORY count=0
+
+T4 shortcut AUMID + HKCU\Software\Classes\AppUserModelId\<aumid>\CustomActivator + CLSID LocalServer32, raiser EXITED
+  UIA 'In 10 minutes', 'Ask me later', DONE 11:38:44.6971084+02:00
+  09:38:44.7245337Z START args=[-ToastActivated | -Embedding]   (COM appended -Embedding to the LocalServer32 line)
+  09:38:44.7292933Z COM-FACTORY CreateInstance iid=IUnknown
+  09:38:44.7322866Z COM-ACTIVATE aumid='BrowserAI.Q254Test.Lnk' invokedArgs='action=snooze' count=1 [snooze='10m']
+
+T5+T7 REGISTRY-ONLY AUMID (DisplayName, IconUri, CustomActivator; no shortcut), body click, raiser EXITED
+  toast shown as 'New notification from BrowserAI Q254 test (registry id)' with the IconUri icon: shots/registry-only-aumid-toast.png
+  UIA INVOKE body DONE 11:43:26.2955020+02:00
+  09:43:26.3355433Z START args=[-ToastActivated | -Embedding]
+  09:43:26.3444786Z COM-ACTIVATE aumid='BrowserAI.Q254Test.Reg' invokedArgs='action=review' count=1 [snooze='6h']
+
+t9 COM activator registered AND raiser ALIVE with an in-proc Activated handler, 'In 10 minutes', 'Ask me later'
+  UIA DONE 11:44:19.3601215+02:00
+  09:44:19.3809666Z (new pid 95396) START args=[-ToastActivated | -Embedding]
+  09:44:19.3877620Z COM-ACTIVATE ... [snooze='10m']
+  09:44:19.3913914Z (raiser pid 77684) EVENT Activated arguments='action=snooze' userInput={ snooze='10m' }
+  -> BOTH handlers received the same click.
+
+T6 PROTOCOL activation (activationType=protocol, arguments='browserai-q254test:snooze'), 'Not for this version'
+  UIA DONE 11:43:03.3768779+02:00
+  09:43:03.4949508Z START args=[browserai-q254test:snooze]
+  09:43:03.4953263Z PROTOCOL-ACTIVATED uri=browserai-q254test:snooze   <- the dropdown value is NOT in the URI
+
+real1 one test toast under the REAL AUMID velopack.BrowserAI.app: identity line 'BrowserAI' with the product icon
+  shots/real-aumid-toast.png; removed by tag/group (hr=0, history 0 after)
+  platform created HKCU\...\Notifications\Settings\velopack.BrowserAI.app (LastNotificationAddedTime 134347166766708136,
+  PeriodicNotificationCount 1, IsOptOutCandidate 0); it was absent before and was removed after.
+
+SUPPRESSPOPUP (the suite instrument)
+  s1: BEFORE-SHOW foreground=0x1122C pid=2980 (Code); SHOWN suppressPopup=True, same foreground;
+      +32 ms EVENT Dismissed reason=2 (TimedOut); window under the toast area = VS Code (no 'New notification');
+      shots/suppress-s1.png taken 6 s later shows no toast.
+      AFTER +1.5 s the foreground was pid 9576, a short-lived process gone before it could be named, NOT
+      ShellExperienceHost (pid 36440). Re-measured with a 25 ms sampler:
+  s2, s3: foreground sampled every 25 ms for 3 s after Show: exactly one value in each run (0xC159E, pid 76976,
+      process BrowserAI.test-installer, not ours) -> no change; Dismissed reason=2 at +24 ms and +16 ms.
+  p1 (control, popup NOT suppressed): 'New notification' window of ShellExperienceHost present under the point;
+      foreground sampled 3 s: no change. History.Remove(tag, group) removed the popup from the screen too.
+  History read-back: HISTORY count=2, [0] tag=s3 group=q254 xml=<toast scenario="reminder" ...> (full XML returned
+      through IToastNotification.get_Content + IXmlNodeSerializer.GetXml); REMOVE hr=0 -> count 0.
+
+SCHEDULED toast (process-free re-ask)
+  09:57:40.8089947Z SCHEDULED tag=sch1 suppressPopup=True due=2026-09-24T09:58:00.7985602Z; process exited
+  09:57:40.8526669Z HISTORY count=0
+  0 scratch processes alive at delivery time
+  09:58:14.6393320Z HISTORY count=1 [0] tag=sch1 group=q254 (delivered by the platform)
+
+NOT MEASURED (UI would be needed; method recorded in the report):
+  - activation from the Notification Centre after the X (the UIA driver found the per-app 'Settings for ...' button
+    first and invoked THAT; the flyout was closed again through the clock button; t10 removed afterwards)
+  - whether the configuration window, when COM-activated by 'Review', may take the foreground
+  - which identity wins when a shortcut AND a registry DisplayName name the same AUMID
+  - whether a suppressed toast lights the taskbar's notification badge
+  - protocol body click, and anything at another scale factor
+
+HEADLESS MEASUREMENTS: share/results.txt (marker sharing, torn reads, timestamps, sidecar rename),
+stopevent/results.txt (named stop event, NativeAOT), boot/results.txt (boot time, logon time).

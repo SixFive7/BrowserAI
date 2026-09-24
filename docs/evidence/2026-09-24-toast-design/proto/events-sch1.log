@@ -1,0 +1,29 @@
+2026-09-24T09:57:40.7895458Z pid=85688 START args=[schedule | xml\background.xml | BrowserAI.Q254Test.Lnk | sch1 | q254 | 20 | suppress] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe schedule xml\background.xml BrowserAI.Q254Test.Lnk sch1 q254 20 suppress
+2026-09-24T09:57:40.8089947Z pid=85688 SCHEDULED aumid=BrowserAI.Q254Test.Lnk tag=sch1 group=q254 suppressPopup=True due=2026-09-24T09:58:00.7985602Z; this process now exits
+2026-09-24T09:57:40.8414746Z pid=93928 START args=[history | BrowserAI.Q254Test.Lnk] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe history BrowserAI.Q254Test.Lnk
+2026-09-24T09:57:40.8526669Z pid=93928 HISTORY aumid=BrowserAI.Q254Test.Lnk count=0
+2026-09-24T09:58:14.6263146Z pid=81076 START args=[history | BrowserAI.Q254Test.Lnk] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe history BrowserAI.Q254Test.Lnk
+2026-09-24T09:58:14.6393320Z pid=81076 HISTORY aumid=BrowserAI.Q254Test.Lnk count=1
+2026-09-24T09:58:14.6413262Z pid=81076 HISTORY   [0] tag=sch1 group=q254 xml=<toast scenario="reminder" useButtonStyle="true" launch="action=review">
+  <visual>
+    <binding template="ToastGeneric">
+      <text>TEST (Q254 research) BrowserAI 9.9.9 is ready to install</text>
+      <text>TEST toast raised by a research prototype, not by BrowserAI. 27 sessions are holding it, 1 of them from Codex. Nothing is closed until you choose.</text>
+      <text placement="attribution">BrowserAI (test)</text>
+    </binding>
+  </visual>
+  <actions>
+    <input id="snooze" type="selection" defaultInput="6h" title="If not now, ask me again">
+      <selection id="10m" content="In 10 minutes"/>
+      <selection id="6h" content="In 6 hours"/>
+      <selection id="reboot" content="After the next reboot"/>
+      <selection id="never" content="Not for this version"/>
+    </input>
+    <action content="Review 27 sessions" arguments="action=review" activationType="background" hint-buttonStyle="Success"/>
+    <action content="Ask me later" arguments="action=snooze" activationType="background" hint-inputId="snooze"/>
+  </actions>
+</toast>
+2026-09-24T09:58:27.9409450Z pid=80608 START args=[remove | BrowserAI.Q254Test.Lnk | sch1 | q254] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe remove BrowserAI.Q254Test.Lnk sch1 q254
+2026-09-24T09:58:27.9538137Z pid=80608 REMOVE aumid=BrowserAI.Q254Test.Lnk tag=sch1 group=q254 hr=0x00000000
+2026-09-24T09:58:28.0000701Z pid=62300 START args=[history | BrowserAI.Q254Test.Lnk] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe history BrowserAI.Q254Test.Lnk
+2026-09-24T09:58:28.0113522Z pid=62300 HISTORY aumid=BrowserAI.Q254Test.Lnk count=0

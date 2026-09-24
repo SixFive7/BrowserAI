@@ -1,0 +1,8 @@
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\q254-design\stopevent\StopEvent.csproj (in 248 ms).
+C:\Source\SixFive7\BrowserAI\.work\q254-design\stopevent\Program.cs(91,38): warning CA1416: This call site is reachable on all platforms. 'EventWaitHandle.OpenExisting(string)' is only supported on: 'windows'. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1416) [C:\Source\SixFive7\BrowserAI\.work\q254-design\stopevent\StopEvent.csproj]
+C:\Source\SixFive7\BrowserAI\.work\q254-design\stopevent\Program.cs(74,35): warning CA1416: This call site is reachable on all platforms. 'EventWaitHandle.OpenExisting(string)' is only supported on: 'windows'. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1416) [C:\Source\SixFive7\BrowserAI\.work\q254-design\stopevent\StopEvent.csproj]
+  StopEvent -> C:\Source\SixFive7\BrowserAI\.work\q254-design\stopevent\bin\Release\net10.0\win-x64\StopEvent.dll
+  Generating native code
+  StopEvent -> C:\Source\SixFive7\BrowserAI\.work\q254-design\stopevent\publish\
+EXIT 0

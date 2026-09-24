@@ -1,0 +1,19 @@
+<toast scenario="reminder" useButtonStyle="true" launch="action=review">
+  <visual>
+    <binding template="ToastGeneric">
+      <text>TEST (Q254 research) BrowserAI 9.9.9 is ready to install</text>
+      <text>TEST toast raised by a research prototype, not by BrowserAI. 27 sessions are holding it, 1 of them from Codex. Nothing is closed until you choose.</text>
+      <text placement="attribution">BrowserAI (test)</text>
+    </binding>
+  </visual>
+  <actions>
+    <input id="snooze" type="selection" defaultInput="6h" title="If not now, ask me again">
+      <selection id="10m" content="In 10 minutes"/>
+      <selection id="6h" content="In 6 hours"/>
+      <selection id="reboot" content="After the next reboot"/>
+      <selection id="never" content="Not for this version"/>
+    </input>
+    <action content="Review 27 sessions" arguments="action=review" activationType="background" hint-buttonStyle="Success"/>
+    <action content="Ask me later" arguments="action=snooze" activationType="background" hint-inputId="snooze"/>
+  </actions>
+</toast>

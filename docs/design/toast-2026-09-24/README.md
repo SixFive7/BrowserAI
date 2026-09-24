@@ -67,8 +67,16 @@ removed is background and no part of it was ever the subject.
 ## Re-rendering one
 
 ```
-pwsh -File show.ps1 -XmlPath v3.xml -Shot v3.png
+powershell -File show.ps1 -XmlPath v3.xml -Shot v3.png
 ```
+
+*Corrected 2026-09-24 (previously `pwsh -File show.ps1 -XmlPath v3.xml -Shot v3.png`)*:
+`pwsh`, PowerShell 7.6.6, cannot load the WinRT toast type at all and stops at
+the script's first line that names it, while Windows PowerShell 5.1,
+`powershell`, loads it -- measured 2026-09-24 by loading the type in each shell
+and raising nothing ([kb](../../../kb/windows/notifications.md)). `show.ps1`
+passes Windows PowerShell's own app id, which is the identity line the images
+show, so it only ever ran under that shell.
 
 It clears the shell's own toast history for that application id, shows the toast,
 waits 2.5 s and captures the bottom-right 900x700 of the primary screen -- which is

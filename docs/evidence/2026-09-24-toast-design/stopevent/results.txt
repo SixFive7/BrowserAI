@@ -1,0 +1,12 @@
+Local\ run 1: createdNew=True set->callback 0.23 ms, set->process exit 65.6 ms, exit code 0
+Local\ run 1: after exit, OpenExisting -> WaitHandleCannotBeOpenedException (the object died with its last handle)
+Local\ run 2: createdNew=True set->callback 0.21 ms, set->process exit 64.7 ms, exit code 0
+Local\ run 2: after exit, OpenExisting -> WaitHandleCannotBeOpenedException (the object died with its last handle)
+Local\ run 3: createdNew=True set->callback 0.21 ms, set->process exit 60.5 ms, exit code 0
+Local\ run 3: after exit, OpenExisting -> WaitHandleCannotBeOpenedException (the object died with its last handle)
+Global\ run 1: createdNew=True set->callback 0.22 ms, set->process exit 64.4 ms, exit code 0
+Global\ run 1: after exit, OpenExisting -> WaitHandleCannotBeOpenedException (the object died with its last handle)
+Global\ run 2: createdNew=True set->callback 0.20 ms, set->process exit 64.2 ms, exit code 0
+Global\ run 2: after exit, OpenExisting -> WaitHandleCannotBeOpenedException (the object died with its last handle)
+Global\ run 3: createdNew=True set->callback 0.17 ms, set->process exit 62.0 ms, exit code 0
+Global\ run 3: after exit, OpenExisting -> WaitHandleCannotBeOpenedException (the object died with its last handle)
