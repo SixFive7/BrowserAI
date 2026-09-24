@@ -1,0 +1,65 @@
+{
+ "runId": "B-user-tilde-r3",
+ "kind": "user",
+ "spelling": "tilde",
+ "round": 3,
+ "adds": [],
+ "gets": [],
+ "files": {
+  "userConfigText": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"read-only\"\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:9/v1\"\nwire_api = \"responses\"\nenv_key = \"Q288_STUB_KEY\"\n\n[mcp_servers.ctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['--tag', 'ctl']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r3\\stublogs', PROBE_TAG = 'ctl' }\n\n[mcp_servers.tilde_cmd]\ncommand = '~/AppData/Local/codex-expansion-probe/probe-stub.exe'\nargs = ['~/AppData/Local/codex-expansion-probe/arg-marker', '--tag', 'tilde_cmd']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r3\\stublogs', PROBE_TAG = 'tilde_cmd' }\n\n[mcp_servers.tilde_cmdb]\ncommand = '~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['~/AppData/Local/codex-expansion-probe/arg-marker', '--tag', 'tilde_cmdb']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r3\\stublogs', PROBE_TAG = 'tilde_cmdb' }\n\n[mcp_servers.tilde_arg]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['~/AppData/Local/codex-expansion-probe/arg-marker', '--tag', 'tilde_arg']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r3\\stublogs', PROBE_TAG = 'tilde_arg', PROBE_SPELLED = '~/AppData/Local/codex-expansion-probe/env-marker' }\n"
+ },
+ "entries": [
+  {
+   "name": "ctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "ctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r3\\stublogs",
+    "PROBE_TAG": "ctl"
+   }
+  },
+  {
+   "name": "tilde_cmd",
+   "command": "~/AppData/Local/codex-expansion-probe/probe-stub.exe",
+   "args": [
+    "~/AppData/Local/codex-expansion-probe/arg-marker",
+    "--tag",
+    "tilde_cmd"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r3\\stublogs",
+    "PROBE_TAG": "tilde_cmd"
+   }
+  },
+  {
+   "name": "tilde_cmdb",
+   "command": "~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "~/AppData/Local/codex-expansion-probe/arg-marker",
+    "--tag",
+    "tilde_cmdb"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r3\\stublogs",
+    "PROBE_TAG": "tilde_cmdb"
+   }
+  },
+  {
+   "name": "tilde_arg",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "~/AppData/Local/codex-expansion-probe/arg-marker",
+    "--tag",
+    "tilde_arg"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r3\\stublogs",
+    "PROBE_TAG": "tilde_arg",
+    "PROBE_SPELLED": "~/AppData/Local/codex-expansion-probe/env-marker"
+   }
+  }
+ ]
+}

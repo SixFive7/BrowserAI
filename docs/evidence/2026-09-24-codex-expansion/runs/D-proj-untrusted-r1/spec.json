@@ -1,0 +1,14 @@
+{
+ "runId": "D-proj-untrusted-r1",
+ "layer": "project-untrusted",
+ "spelling": "untrusted",
+ "round": 1,
+ "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\home",
+ "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\proj",
+ "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\proj",
+ "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\stublogs",
+ "expect": [
+  "uctl",
+  "ctl"
+ ]
+}

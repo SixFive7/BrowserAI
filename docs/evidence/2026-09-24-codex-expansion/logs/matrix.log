@@ -1,0 +1,62 @@
+MATRIX START 2026-09-24T13:46:00Z
+B-user-braced-r1: prepared
+B-user-braced-r1: status={"ctl":"ready","braced_cmd":"failed","braced_cmdb":"failed","braced_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:46:06.246Z"} leftover=0
+B-proj-braced-r1: prepared, 4 mcp add, failures=[]
+B-proj-braced-r1: status={"uctl":"ready","ctl":"ready","braced_cmd":"failed","braced_cmdb":"failed","braced_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:46:23.605Z"} leftover=0
+B-user-bare-r1: prepared
+B-user-bare-r1: status={"ctl":"ready","bare_cmd":"failed","bare_cmdb":"failed","bare_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:46:38.994Z"} leftover=0
+B-proj-bare-r1: prepared, 4 mcp add, failures=[]
+B-proj-bare-r1: status={"uctl":"ready","ctl":"ready","bare_cmd":"failed","bare_cmdb":"failed","bare_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:46:56.196Z"} leftover=0
+B-user-percent-r1: prepared
+B-user-percent-r1: status={"ctl":"ready","percent_cmd":"failed","percent_cmdb":"failed","percent_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:47:12.008Z"} leftover=0
+B-proj-percent-r1: prepared, 4 mcp add, failures=[]
+B-proj-percent-r1: status={"uctl":"ready","ctl":"ready","percent_cmd":"failed","percent_cmdb":"failed","percent_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:47:28.592Z"} leftover=0
+B-user-tilde-r1: prepared
+B-user-tilde-r1: status={"ctl":"ready","tilde_cmd":"failed","tilde_cmdb":"failed","tilde_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:47:43.729Z"} leftover=0
+B-proj-tilde-r1: prepared, 4 mcp add, failures=[]
+B-proj-tilde-r1: status={"uctl":"ready","ctl":"ready","tilde_cmd":"failed","tilde_cmdb":"failed","tilde_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:48:00.701Z"} leftover=0
+C-proj-alt-r1: prepared, 9 mcp add, failures=[]
+C-proj-alt-r1: status={"uctl":"ready","ctl":"ready","cmdwrap":"ready","cmdwrap_v":"ready","cmdwrap_space":"failed","cmdwrap_space_q":"failed","cmdwrap_space_qs":"failed","cmdwrap_space_v":"ready","barepath":"ready","tildepath":"ready"} alive=7 exit={"code":0,"signal":null,"at":"2026-09-24T13:48:23.700Z"} leftover=0
+D-proj-untrusted-r1: prepared, 1 mcp add, failures=[]
+D-proj-untrusted-r1: status={"uctl":"ready","ctl":null} alive=1 exit={"code":0,"signal":null,"at":"2026-09-24T13:49:09.271Z"} leftover=0
+B-user-braced-r2: prepared
+B-user-braced-r2: status={"ctl":"ready","braced_cmd":"failed","braced_cmdb":"failed","braced_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:49:25.000Z"} leftover=0
+B-proj-braced-r2: prepared, 4 mcp add, failures=[]
+B-proj-braced-r2: status={"uctl":"ready","ctl":"ready","braced_cmd":"failed","braced_cmdb":"failed","braced_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:49:41.841Z"} leftover=0
+B-user-bare-r2: prepared
+B-user-bare-r2: status={"ctl":"ready","bare_cmd":"failed","bare_cmdb":"failed","bare_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:49:57.127Z"} leftover=0
+B-proj-bare-r2: prepared, 4 mcp add, failures=[]
+B-proj-bare-r2: status={"uctl":"ready","ctl":"ready","bare_cmd":"failed","bare_cmdb":"failed","bare_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:50:15.063Z"} leftover=0
+B-user-percent-r2: prepared
+B-user-percent-r2: status={"ctl":"ready","percent_cmd":"failed","percent_cmdb":"failed","percent_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:50:31.737Z"} leftover=0
+B-proj-percent-r2: prepared, 4 mcp add, failures=[]
+B-proj-percent-r2: status={"uctl":"ready","ctl":"ready","percent_cmd":"failed","percent_cmdb":"failed","percent_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:50:50.861Z"} leftover=0
+B-user-tilde-r2: prepared
+B-user-tilde-r2: status={"ctl":"ready","tilde_cmd":"failed","tilde_cmdb":"failed","tilde_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:51:06.432Z"} leftover=0
+B-proj-tilde-r2: prepared, 4 mcp add, failures=[]
+B-proj-tilde-r2: status={"uctl":"ready","ctl":"ready","tilde_cmd":"failed","tilde_cmdb":"failed","tilde_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:51:23.798Z"} leftover=0
+C-proj-alt-r2: prepared, 9 mcp add, failures=[]
+C-proj-alt-r2: status={"uctl":"ready","ctl":"ready","cmdwrap":"ready","cmdwrap_v":"ready","cmdwrap_space":"failed","cmdwrap_space_q":"failed","cmdwrap_space_qs":"failed","cmdwrap_space_v":"ready","barepath":"ready","tildepath":"ready"} alive=7 exit={"code":0,"signal":null,"at":"2026-09-24T13:51:46.988Z"} leftover=0
+D-proj-untrusted-r2: prepared, 1 mcp add, failures=[]
+D-proj-untrusted-r2: status={"uctl":"ready","ctl":null} alive=1 exit={"code":0,"signal":null,"at":"2026-09-24T13:52:32.108Z"} leftover=0
+B-user-braced-r3: prepared
+B-user-braced-r3: status={"ctl":"ready","braced_cmd":"failed","braced_cmdb":"failed","braced_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:52:48.247Z"} leftover=0
+B-proj-braced-r3: prepared, 4 mcp add, failures=[]
+B-proj-braced-r3: status={"uctl":"ready","ctl":"ready","braced_cmd":"failed","braced_cmdb":"failed","braced_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:53:06.137Z"} leftover=0
+B-user-bare-r3: prepared
+B-user-bare-r3: status={"ctl":"ready","bare_cmd":"failed","bare_cmdb":"failed","bare_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:53:21.974Z"} leftover=0
+B-proj-bare-r3: prepared, 4 mcp add, failures=[]
+B-proj-bare-r3: status={"uctl":"ready","ctl":"ready","bare_cmd":"failed","bare_cmdb":"failed","bare_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:53:38.972Z"} leftover=0
+B-user-percent-r3: prepared
+B-user-percent-r3: status={"ctl":"ready","percent_cmd":"failed","percent_cmdb":"failed","percent_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:53:54.324Z"} leftover=0
+B-proj-percent-r3: prepared, 4 mcp add, failures=[]
+B-proj-percent-r3: status={"uctl":"ready","ctl":"ready","percent_cmd":"failed","percent_cmdb":"failed","percent_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:54:11.372Z"} leftover=0
+B-user-tilde-r3: prepared
+B-user-tilde-r3: status={"ctl":"ready","tilde_cmd":"failed","tilde_cmdb":"failed","tilde_arg":"ready"} alive=2 exit={"code":0,"signal":null,"at":"2026-09-24T13:54:26.969Z"} leftover=0
+B-proj-tilde-r3: prepared, 4 mcp add, failures=[]
+B-proj-tilde-r3: status={"uctl":"ready","ctl":"ready","tilde_cmd":"failed","tilde_cmdb":"failed","tilde_arg":"ready"} alive=3 exit={"code":0,"signal":null,"at":"2026-09-24T13:54:43.648Z"} leftover=0
+C-proj-alt-r3: prepared, 9 mcp add, failures=[]
+C-proj-alt-r3: status={"uctl":"ready","ctl":"ready","cmdwrap":"ready","cmdwrap_v":"ready","cmdwrap_space":"failed","cmdwrap_space_q":"failed","cmdwrap_space_qs":"failed","cmdwrap_space_v":"ready","barepath":"ready","tildepath":"ready"} alive=7 exit={"code":0,"signal":null,"at":"2026-09-24T13:55:06.578Z"} leftover=0
+D-proj-untrusted-r3: prepared, 1 mcp add, failures=[]
+D-proj-untrusted-r3: status={"uctl":"ready","ctl":null} alive=1 exit={"code":0,"signal":null,"at":"2026-09-24T13:55:51.289Z"} leftover=0
+MATRIX END 2026-09-24T13:56:01Z

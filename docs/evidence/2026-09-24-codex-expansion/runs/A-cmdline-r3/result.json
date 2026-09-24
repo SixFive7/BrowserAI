@@ -1,0 +1,9 @@
+{
+ "round": 3,
+ "cmdLine": "\"\"C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe\" mcp add viacmd -- %LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe %LOCALAPPDATA%\\codex-expansion-probe\\arg-marker\"",
+ "status": 0,
+ "stdout": "Added global MCP server 'viacmd'.",
+ "stderr": "",
+ "config": "[mcp_servers.viacmd]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\arg-marker']\n",
+ "get": "{\n  \"name\": \"viacmd\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\arg-marker\"\n    ],\n    \"env\": null,\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}"
+}

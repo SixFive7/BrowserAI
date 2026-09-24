@@ -1,0 +1,338 @@
+{
+ "runId": "B-proj-bare-r1",
+ "kind": "project",
+ "spelling": "bare",
+ "round": 1,
+ "adds": [
+  {
+   "name": "ctl",
+   "intended": {
+    "name": "ctl",
+    "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "--tag",
+     "ctl"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+     "PROBE_TAG": "ctl"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "ctl",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=ctl",
+     "--",
+     "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "ctl"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'ctl'.\n",
+    "stderr": "",
+    "ms": 54
+   }
+  },
+  {
+   "name": "bare_cmd",
+   "intended": {
+    "name": "bare_cmd",
+    "command": "$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe",
+    "args": [
+     "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+     "--tag",
+     "bare_cmd"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+     "PROBE_TAG": "bare_cmd"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "bare_cmd",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=bare_cmd",
+     "--",
+     "$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe",
+     "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+     "--tag",
+     "bare_cmd"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'bare_cmd'.\n",
+    "stderr": "",
+    "ms": 57
+   }
+  },
+  {
+   "name": "bare_cmdb",
+   "intended": {
+    "name": "bare_cmdb",
+    "command": "$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+     "--tag",
+     "bare_cmdb"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+     "PROBE_TAG": "bare_cmdb"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "bare_cmdb",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=bare_cmdb",
+     "--",
+     "$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe",
+     "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+     "--tag",
+     "bare_cmdb"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'bare_cmdb'.\n",
+    "stderr": "",
+    "ms": 59
+   }
+  },
+  {
+   "name": "bare_arg",
+   "intended": {
+    "name": "bare_arg",
+    "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+     "--tag",
+     "bare_arg"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+     "PROBE_TAG": "bare_arg",
+     "PROBE_SPELLED": "$LOCALAPPDATA/codex-expansion-probe/env-marker"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "bare_arg",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=bare_arg",
+     "--env",
+     "PROBE_SPELLED=$LOCALAPPDATA/codex-expansion-probe/env-marker",
+     "--",
+     "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+     "--tag",
+     "bare_arg"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'bare_arg'.\n",
+    "stderr": "",
+    "ms": 57
+   }
+  }
+ ],
+ "gets": [
+  {
+   "name": "ctl",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "ctl",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"ctl\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"--tag\",\n      \"ctl\"\n    ],\n    \"env\": {\n      \"PROBE_TAG\": \"ctl\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-bare-r1\\\\stublogs\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 57
+   }
+  },
+  {
+   "name": "bare_cmd",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "bare_cmd",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"bare_cmd\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe\",\n    \"args\": [\n      \"$LOCALAPPDATA/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"bare_cmd\"\n    ],\n    \"env\": {\n      \"PROBE_TAG\": \"bare_cmd\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-bare-r1\\\\stublogs\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 60
+   }
+  },
+  {
+   "name": "bare_cmdb",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "bare_cmdb",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"bare_cmdb\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"$LOCALAPPDATA\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"$LOCALAPPDATA/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"bare_cmdb\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-bare-r1\\\\stublogs\",\n      \"PROBE_TAG\": \"bare_cmdb\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 57
+   }
+  },
+  {
+   "name": "bare_arg",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "bare_arg",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"bare_arg\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"$LOCALAPPDATA/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"bare_arg\"\n    ],\n    \"env\": {\n      \"PROBE_SPELLED\": \"$LOCALAPPDATA/codex-expansion-probe/env-marker\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-bare-r1\\\\stublogs\",\n      \"PROBE_TAG\": \"bare_arg\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 57
+   }
+  }
+ ],
+ "files": {
+  "projectConfigBytesB64": "W21jcF9zZXJ2ZXJzLmN0bF0KY29tbWFuZCA9ICdDOlxVc2Vyc1xqb3JpXEFwcERhdGFcTG9jYWxcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJwphcmdzID0gWyItLXRhZyIsICJjdGwiXQoKW21jcF9zZXJ2ZXJzLmN0bC5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xCLXByb2otYmFyZS1yMVxzdHVibG9ncycKUFJPQkVfVEFHID0gImN0bCIKClttY3Bfc2VydmVycy5iYXJlX2NtZF0KY29tbWFuZCA9ICIkTE9DQUxBUFBEQVRBL2NvZGV4LWV4cGFuc2lvbi1wcm9iZS9wcm9iZS1zdHViLmV4ZSIKYXJncyA9IFsiJExPQ0FMQVBQREFUQS9jb2RleC1leHBhbnNpb24tcHJvYmUvYXJnLW1hcmtlciIsICItLXRhZyIsICJiYXJlX2NtZCJdCgpbbWNwX3NlcnZlcnMuYmFyZV9jbWQuZW52XQpQUk9CRV9MT0dfRElSID0gJ0M6XFNvdXJjZVxTaXhGaXZlN1xCcm93c2VyQUlcLndvcmtcY29kZXgtZXhwYW5zaW9uXHJ1bnNcQi1wcm9qLWJhcmUtcjFcc3R1YmxvZ3MnClBST0JFX1RBRyA9ICJiYXJlX2NtZCIKClttY3Bfc2VydmVycy5iYXJlX2NtZGJdCmNvbW1hbmQgPSAnJExPQ0FMQVBQREFUQVxjb2RleC1leHBhbnNpb24tcHJvYmVccHJvYmUtc3R1Yi5leGUnCmFyZ3MgPSBbIiRMT0NBTEFQUERBVEEvY29kZXgtZXhwYW5zaW9uLXByb2JlL2FyZy1tYXJrZXIiLCAiLS10YWciLCAiYmFyZV9jbWRiIl0KClttY3Bfc2VydmVycy5iYXJlX2NtZGIuZW52XQpQUk9CRV9MT0dfRElSID0gJ0M6XFNvdXJjZVxTaXhGaXZlN1xCcm93c2VyQUlcLndvcmtcY29kZXgtZXhwYW5zaW9uXHJ1bnNcQi1wcm9qLWJhcmUtcjFcc3R1YmxvZ3MnClBST0JFX1RBRyA9ICJiYXJlX2NtZGIiCgpbbWNwX3NlcnZlcnMuYmFyZV9hcmddCmNvbW1hbmQgPSAnQzpcVXNlcnNcam9yaVxBcHBEYXRhXExvY2FsXGNvZGV4LWV4cGFuc2lvbi1wcm9iZVxwcm9iZS1zdHViLmV4ZScKYXJncyA9IFsiJExPQ0FMQVBQREFUQS9jb2RleC1leHBhbnNpb24tcHJvYmUvYXJnLW1hcmtlciIsICItLXRhZyIsICJiYXJlX2FyZyJdCgpbbWNwX3NlcnZlcnMuYmFyZV9hcmcuZW52XQpQUk9CRV9MT0dfRElSID0gJ0M6XFNvdXJjZVxTaXhGaXZlN1xCcm93c2VyQUlcLndvcmtcY29kZXgtZXhwYW5zaW9uXHJ1bnNcQi1wcm9qLWJhcmUtcjFcc3R1YmxvZ3MnClBST0JFX1NQRUxMRUQgPSAiJExPQ0FMQVBQREFUQS9jb2RleC1leHBhbnNpb24tcHJvYmUvZW52LW1hcmtlciIKUFJPQkVfVEFHID0gImJhcmVfYXJnIgo=",
+  "projectConfigText": "[mcp_servers.ctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"--tag\", \"ctl\"]\n\n[mcp_servers.ctl.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs'\nPROBE_TAG = \"ctl\"\n\n[mcp_servers.bare_cmd]\ncommand = \"$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe\"\nargs = [\"$LOCALAPPDATA/codex-expansion-probe/arg-marker\", \"--tag\", \"bare_cmd\"]\n\n[mcp_servers.bare_cmd.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs'\nPROBE_TAG = \"bare_cmd\"\n\n[mcp_servers.bare_cmdb]\ncommand = '$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"$LOCALAPPDATA/codex-expansion-probe/arg-marker\", \"--tag\", \"bare_cmdb\"]\n\n[mcp_servers.bare_cmdb.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs'\nPROBE_TAG = \"bare_cmdb\"\n\n[mcp_servers.bare_arg]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"$LOCALAPPDATA/codex-expansion-probe/arg-marker\", \"--tag\", \"bare_arg\"]\n\n[mcp_servers.bare_arg.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs'\nPROBE_SPELLED = \"$LOCALAPPDATA/codex-expansion-probe/env-marker\"\nPROBE_TAG = \"bare_arg\"\n",
+  "projectDotCodexListing": [
+   "config.toml",
+   "tmp",
+   "tmp\\arg0"
+  ],
+  "userConfigText": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"read-only\"\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:9/v1\"\nwire_api = \"responses\"\nenv_key = \"Q288_STUB_KEY\"\n\n[mcp_servers.uctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['--tag', 'uctl']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs', PROBE_TAG = 'uctl' }\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj']\ntrust_level = \"trusted\"\n"
+ },
+ "gitInit": {
+  "file": "git",
+  "args": [
+   "init",
+   "-q",
+   "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\proj"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "",
+  "ms": 70
+ },
+ "entries": [
+  {
+   "name": "uctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "uctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+    "PROBE_TAG": "uctl"
+   }
+  },
+  {
+   "name": "ctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "ctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+    "PROBE_TAG": "ctl"
+   }
+  },
+  {
+   "name": "bare_cmd",
+   "command": "$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe",
+   "args": [
+    "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+    "--tag",
+    "bare_cmd"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+    "PROBE_TAG": "bare_cmd"
+   }
+  },
+  {
+   "name": "bare_cmdb",
+   "command": "$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+    "--tag",
+    "bare_cmdb"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+    "PROBE_TAG": "bare_cmdb"
+   }
+  },
+  {
+   "name": "bare_arg",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "$LOCALAPPDATA/codex-expansion-probe/arg-marker",
+    "--tag",
+    "bare_arg"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-bare-r1\\stublogs",
+    "PROBE_TAG": "bare_arg",
+    "PROBE_SPELLED": "$LOCALAPPDATA/codex-expansion-probe/env-marker"
+   }
+  }
+ ]
+}

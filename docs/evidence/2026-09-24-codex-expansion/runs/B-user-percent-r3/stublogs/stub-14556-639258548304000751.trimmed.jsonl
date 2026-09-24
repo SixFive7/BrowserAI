@@ -1,0 +1,8 @@
+{"event":"launch","at":"2026-09-24T13:53:50.4000751Z","pid":14556,"image":"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe","commandLine":"\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" %LOCALAPPDATA%/codex-expansion-probe/arg-marker --tag percent_arg","argv":["%LOCALAPPDATA%/codex-expansion-probe/arg-marker","--tag","percent_arg"],"cwd":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-percent-r3\\neutral","env":{"LOCALAPPDATA":"C:\\Users\\jori\\AppData\\Local","PATH":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-percent-r3\\home\\tmp\\arg0\\codex-arg0xypInK;[cut: 64 entries of this machine's PATH]","PROBE_LOG_DIR":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-percent-r3\\stublogs","PROBE_SPELLED":"%LOCALAPPDATA%/codex-expansion-probe/env-marker","PROBE_TAG":"percent_arg","USERPROFILE":"C:\\Users\\jori"}}
+{"event":"recv","at":"2026-09-24T13:53:50.4293087Z","method":"initialize","id":0}
+{"event":"sent","at":"2026-09-24T13:53:50.4293087Z","method":"initialize","id":0}
+{"event":"recv","at":"2026-09-24T13:53:50.4293087Z","method":"notifications/initialized","id":null}
+{"event":"recv","at":"2026-09-24T13:53:50.4303151Z","method":"tools/list","id":1}
+{"event":"sent","at":"2026-09-24T13:53:50.4303151Z","method":"tools/list","id":1}
+{"event":"recv","at":"2026-09-24T13:53:52.5181904Z","method":"tools/call","id":2}
+{"event":"sent","at":"2026-09-24T13:53:52.5191977Z","method":"tools/call","id":2}

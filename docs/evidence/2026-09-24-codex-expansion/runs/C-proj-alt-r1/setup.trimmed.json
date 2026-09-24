@@ -1,0 +1,751 @@
+{
+ "runId": "C-proj-alt-r1",
+ "kind": "alt",
+ "spelling": "-",
+ "round": 1,
+ "adds": [
+  {
+   "name": "ctl",
+   "intended": {
+    "name": "ctl",
+    "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "--tag",
+     "ctl"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "ctl"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "ctl",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=ctl",
+     "--",
+     "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "ctl"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'ctl'.\n",
+    "stderr": "",
+    "ms": 60
+   }
+  },
+  {
+   "name": "cmdwrap",
+   "intended": {
+    "name": "cmdwrap",
+    "command": "cmd.exe",
+    "args": [
+     "/d",
+     "/c",
+     "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "cmdwrap"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "cmdwrap"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "cmdwrap",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=cmdwrap",
+     "--",
+     "cmd.exe",
+     "/d",
+     "/c",
+     "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "cmdwrap"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'cmdwrap'.\n",
+    "stderr": "",
+    "ms": 70
+   }
+  },
+  {
+   "name": "cmdwrap_v",
+   "intended": {
+    "name": "cmdwrap_v",
+    "command": "cmd.exe",
+    "args": [
+     "/d",
+     "/v:on",
+     "/c",
+     "!LOCALAPPDATA!\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "cmdwrap_v"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "cmdwrap_v"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "cmdwrap_v",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=cmdwrap_v",
+     "--",
+     "cmd.exe",
+     "/d",
+     "/v:on",
+     "/c",
+     "!LOCALAPPDATA!\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "cmdwrap_v"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'cmdwrap_v'.\n",
+    "stderr": "",
+    "ms": 73
+   }
+  },
+  {
+   "name": "cmdwrap_space",
+   "intended": {
+    "name": "cmdwrap_space",
+    "command": "cmd.exe",
+    "args": [
+     "/d",
+     "/c",
+     "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "cmdwrap_space"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "cmdwrap_space",
+     "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "cmdwrap_space",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=cmdwrap_space",
+     "--env",
+     "LOCALAPPDATA=C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace",
+     "--",
+     "cmd.exe",
+     "/d",
+     "/c",
+     "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "cmdwrap_space"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'cmdwrap_space'.\n",
+    "stderr": "",
+    "ms": 69
+   }
+  },
+  {
+   "name": "cmdwrap_space_q",
+   "intended": {
+    "name": "cmdwrap_space_q",
+    "command": "cmd.exe",
+    "args": [
+     "/d",
+     "/c",
+     "\"%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe\"",
+     "--tag",
+     "cmdwrap_space_q"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "cmdwrap_space_q",
+     "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "cmdwrap_space_q",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=cmdwrap_space_q",
+     "--env",
+     "LOCALAPPDATA=C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace",
+     "--",
+     "cmd.exe",
+     "/d",
+     "/c",
+     "\"%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe\"",
+     "--tag",
+     "cmdwrap_space_q"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'cmdwrap_space_q'.\n",
+    "stderr": "",
+    "ms": 60
+   }
+  },
+  {
+   "name": "cmdwrap_space_qs",
+   "intended": {
+    "name": "cmdwrap_space_qs",
+    "command": "cmd.exe",
+    "args": [
+     "/d",
+     "/s",
+     "/c",
+     "\"%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe\" --tag cmdwrap_space_qs"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "cmdwrap_space_qs",
+     "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "cmdwrap_space_qs",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=cmdwrap_space_qs",
+     "--env",
+     "LOCALAPPDATA=C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace",
+     "--",
+     "cmd.exe",
+     "/d",
+     "/s",
+     "/c",
+     "\"%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe\" --tag cmdwrap_space_qs"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'cmdwrap_space_qs'.\n",
+    "stderr": "",
+    "ms": 57
+   }
+  },
+  {
+   "name": "cmdwrap_space_v",
+   "intended": {
+    "name": "cmdwrap_space_v",
+    "command": "cmd.exe",
+    "args": [
+     "/d",
+     "/v:on",
+     "/c",
+     "!LOCALAPPDATA!\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "cmdwrap_space_v"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "cmdwrap_space_v",
+     "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "cmdwrap_space_v",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=cmdwrap_space_v",
+     "--env",
+     "LOCALAPPDATA=C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace",
+     "--",
+     "cmd.exe",
+     "/d",
+     "/v:on",
+     "/c",
+     "!LOCALAPPDATA!\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "cmdwrap_space_v"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'cmdwrap_space_v'.\n",
+    "stderr": "",
+    "ms": 83
+   }
+  },
+  {
+   "name": "barepath",
+   "intended": {
+    "name": "barepath",
+    "command": "probe-stub.exe",
+    "args": [
+     "--tag",
+     "barepath"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "barepath",
+     "PATH": "[cut: 1 entries of this machine's PATH]"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "barepath",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=barepath",
+     "--env",
+     "PATH=C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe",
+     "--",
+     "probe-stub.exe",
+     "--tag",
+     "barepath"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'barepath'.\n",
+    "stderr": "",
+    "ms": 87
+   }
+  },
+  {
+   "name": "tildepath",
+   "intended": {
+    "name": "tildepath",
+    "command": "probe-stub.exe",
+    "args": [
+     "--tag",
+     "tildepath"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "PROBE_TAG": "tildepath",
+     "PATH": "[cut: 1 entries of this machine's PATH]"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "tildepath",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=tildepath",
+     "--env",
+     "PATH=~\\AppData\\Local\\codex-expansion-probe",
+     "--",
+     "probe-stub.exe",
+     "--tag",
+     "tildepath"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'tildepath'.\n",
+    "stderr": "",
+    "ms": 104
+   }
+  }
+ ],
+ "gets": [
+  {
+   "name": "ctl",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "ctl",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"ctl\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"--tag\",\n      \"ctl\"\n    ],\n    \"env\": {\n      \"PROBE_TAG\": \"ctl\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 67
+   }
+  },
+  {
+   "name": "cmdwrap",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "cmdwrap",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"cmdwrap\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"cmd.exe\",\n    \"args\": [\n      \"/d\",\n      \"/c\",\n      \"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"--tag\",\n      \"cmdwrap\"\n    ],\n    \"env\": {\n      \"PROBE_TAG\": \"cmdwrap\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 63
+   }
+  },
+  {
+   "name": "cmdwrap_v",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "cmdwrap_v",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"cmdwrap_v\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"cmd.exe\",\n    \"args\": [\n      \"/d\",\n      \"/v:on\",\n      \"/c\",\n      \"!LOCALAPPDATA!\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"--tag\",\n      \"cmdwrap_v\"\n    ],\n    \"env\": {\n      \"PROBE_TAG\": \"cmdwrap_v\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 76
+   }
+  },
+  {
+   "name": "cmdwrap_space",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "cmdwrap_space",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"cmdwrap_space\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"cmd.exe\",\n    \"args\": [\n      \"/d\",\n      \"/c\",\n      \"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"--tag\",\n      \"cmdwrap_space\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\",\n      \"LOCALAPPDATA\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\",\n      \"PROBE_TAG\": \"cmdwrap_space\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 91
+   }
+  },
+  {
+   "name": "cmdwrap_space_q",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "cmdwrap_space_q",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"cmdwrap_space_q\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"cmd.exe\",\n    \"args\": [\n      \"/d\",\n      \"/c\",\n      \"\\\"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\\\"\",\n      \"--tag\",\n      \"cmdwrap_space_q\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\",\n      \"LOCALAPPDATA\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\",\n      \"PROBE_TAG\": \"cmdwrap_space_q\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 76
+   }
+  },
+  {
+   "name": "cmdwrap_space_qs",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "cmdwrap_space_qs",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"cmdwrap_space_qs\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"cmd.exe\",\n    \"args\": [\n      \"/d\",\n      \"/s\",\n      \"/c\",\n      \"\\\"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag cmdwrap_space_qs\"\n    ],\n    \"env\": {\n      \"LOCALAPPDATA\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\",\n      \"PROBE_TAG\": \"cmdwrap_space_qs\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 96
+   }
+  },
+  {
+   "name": "cmdwrap_space_v",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "cmdwrap_space_v",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"cmdwrap_space_v\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"cmd.exe\",\n    \"args\": [\n      \"/d\",\n      \"/v:on\",\n      \"/c\",\n      \"!LOCALAPPDATA!\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"--tag\",\n      \"cmdwrap_space_v\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\",\n      \"LOCALAPPDATA\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\",\n      \"PROBE_TAG\": \"cmdwrap_space_v\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 99
+   }
+  },
+  {
+   "name": "barepath",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "barepath",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"barepath\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"probe-stub.exe\",\n    \"args\": [\n      \"--tag\",\n      \"barepath\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\",\n      \"PROBE_TAG\": \"barepath\",\n      \"PATH\": \"[cut: 1 entries of this machine's PATH]\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 94
+   }
+  },
+  {
+   "name": "tildepath",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "tildepath",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"tildepath\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"probe-stub.exe\",\n    \"args\": [\n      \"--tag\",\n      \"tildepath\"\n    ],\n    \"env\": {\n      \"PATH\": \"[cut: 1 entries of this machine's PATH]\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r1\\\\stublogs\",\n      \"PROBE_TAG\": \"tildepath\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 107
+   }
+  }
+ ],
+ "files": {
+  "projectConfigBytesB64": "W21jcF9zZXJ2ZXJzLmN0bF0KY29tbWFuZCA9ICdDOlxVc2Vyc1xqb3JpXEFwcERhdGFcTG9jYWxcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJwphcmdzID0gWyItLXRhZyIsICJjdGwiXQoKW21jcF9zZXJ2ZXJzLmN0bC5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xDLXByb2otYWx0LXIxXHN0dWJsb2dzJwpQUk9CRV9UQUcgPSAiY3RsIgoKW21jcF9zZXJ2ZXJzLmNtZHdyYXBdCmNvbW1hbmQgPSAiY21kLmV4ZSIKYXJncyA9IFsiL2QiLCAiL2MiLCAnJUxPQ0FMQVBQREFUQSVcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJywgIi0tdGFnIiwgImNtZHdyYXAiXQoKW21jcF9zZXJ2ZXJzLmNtZHdyYXAuZW52XQpQUk9CRV9MT0dfRElSID0gJ0M6XFNvdXJjZVxTaXhGaXZlN1xCcm93c2VyQUlcLndvcmtcY29kZXgtZXhwYW5zaW9uXHJ1bnNcQy1wcm9qLWFsdC1yMVxzdHVibG9ncycKUFJPQkVfVEFHID0gImNtZHdyYXAiCgpbbWNwX3NlcnZlcnMuY21kd3JhcF92XQpjb21tYW5kID0gImNtZC5leGUiCmFyZ3MgPSBbIi9kIiwgIi92Om9uIiwgIi9jIiwgJyFMT0NBTEFQUERBVEEhXGNvZGV4LWV4cGFuc2lvbi1wcm9iZVxwcm9iZS1zdHViLmV4ZScsICItLXRhZyIsICJjbWR3cmFwX3YiXQoKW21jcF9zZXJ2ZXJzLmNtZHdyYXBfdi5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xDLXByb2otYWx0LXIxXHN0dWJsb2dzJwpQUk9CRV9UQUcgPSAiY21kd3JhcF92IgoKW21jcF9zZXJ2ZXJzLmNtZHdyYXBfc3BhY2VdCmNvbW1hbmQgPSAiY21kLmV4ZSIKYXJncyA9IFsiL2QiLCAiL2MiLCAnJUxPQ0FMQVBQREFUQSVcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJywgIi0tdGFnIiwgImNtZHdyYXBfc3BhY2UiXQoKW21jcF9zZXJ2ZXJzLmNtZHdyYXBfc3BhY2UuZW52XQpMT0NBTEFQUERBVEEgPSAnQzpcVXNlcnNcam9yaVxBcHBEYXRhXExvY2FsXGNvZGV4LWV4cGFuc2lvbi1wcm9iZVxzcCBhY2UnClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xDLXByb2otYWx0LXIxXHN0dWJsb2dzJwpQUk9CRV9UQUcgPSAiY21kd3JhcF9zcGFjZSIKClttY3Bfc2VydmVycy5jbWR3cmFwX3NwYWNlX3FdCmNvbW1hbmQgPSAiY21kLmV4ZSIKYXJncyA9IFsiL2QiLCAiL2MiLCAnIiVMT0NBTEFQUERBVEElXGNvZGV4LWV4cGFuc2lvbi1wcm9iZVxwcm9iZS1zdHViLmV4ZSInLCAiLS10YWciLCAiY21kd3JhcF9zcGFjZV9xIl0KClttY3Bfc2VydmVycy5jbWR3cmFwX3NwYWNlX3EuZW52XQpMT0NBTEFQUERBVEEgPSAnQzpcVXNlcnNcam9yaVxBcHBEYXRhXExvY2FsXGNvZGV4LWV4cGFuc2lvbi1wcm9iZVxzcCBhY2UnClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xDLXByb2otYWx0LXIxXHN0dWJsb2dzJwpQUk9CRV9UQUcgPSAiY21kd3JhcF9zcGFjZV9xIgoKW21jcF9zZXJ2ZXJzLmNtZHdyYXBfc3BhY2VfcXNdCmNvbW1hbmQgPSAiY21kLmV4ZSIKYXJncyA9IFsiL2QiLCAiL3MiLCAiL2MiLCAnIiVMT0NBTEFQUERBVEElXGNvZGV4LWV4cGFuc2lvbi1wcm9iZVxwcm9iZS1zdHViLmV4ZSIgLS10YWcgY21kd3JhcF9zcGFjZV9xcyddCgpbbWNwX3NlcnZlcnMuY21kd3JhcF9zcGFjZV9xcy5lbnZdCkxPQ0FMQVBQREFUQSA9ICdDOlxVc2Vyc1xqb3JpXEFwcERhdGFcTG9jYWxcY29kZXgtZXhwYW5zaW9uLXByb2JlXHNwIGFjZScKUFJPQkVfTE9HX0RJUiA9ICdDOlxTb3VyY2VcU2l4Rml2ZTdcQnJvd3NlckFJXC53b3JrXGNvZGV4LWV4cGFuc2lvblxydW5zXEMtcHJvai1hbHQtcjFcc3R1YmxvZ3MnClBST0JFX1RBRyA9ICJjbWR3cmFwX3NwYWNlX3FzIgoKW21jcF9zZXJ2ZXJzLmNtZHdyYXBfc3BhY2Vfdl0KY29tbWFuZCA9ICJjbWQuZXhlIgphcmdzID0gWyIvZCIsICIvdjpvbiIsICIvYyIsICchTE9DQUxBUFBEQVRBIVxjb2RleC1leHBhbnNpb24tcHJvYmVccHJvYmUtc3R1Yi5leGUnLCAiLS10YWciLCAiY21kd3JhcF9zcGFjZV92Il0KClttY3Bfc2VydmVycy5jbWR3cmFwX3NwYWNlX3YuZW52XQpMT0NBTEFQUERBVEEgPSAnQzpcVXNlcnNcam9yaVxBcHBEYXRhXExvY2FsXGNvZGV4LWV4cGFuc2lvbi1wcm9iZVxzcCBhY2UnClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xDLXByb2otYWx0LXIxXHN0dWJsb2dzJwpQUk9CRV9UQUcgPSAiY21kd3JhcF9zcGFjZV92IgoKW21jcF9zZXJ2ZXJzLmJhcmVwYXRoXQpjb21tYW5kID0gInByb2JlLXN0dWIuZXhlIgphcmdzID0gWyItLXRhZyIsICJiYXJlcGF0aCJdCgpbbWNwX3NlcnZlcnMuYmFyZXBhdGguZW52XQpQQVRIID0gJ0M6XFVzZXJzXGpvcmlcQXBwRGF0YVxMb2NhbFxjb2RleC1leHBhbnNpb24tcHJvYmUnClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xDLXByb2otYWx0LXIxXHN0dWJsb2dzJwpQUk9CRV9UQUcgPSAiYmFyZXBhdGgiCgpbbWNwX3NlcnZlcnMudGlsZGVwYXRoXQpjb21tYW5kID0gInByb2JlLXN0dWIuZXhlIgphcmdzID0gWyItLXRhZyIsICJ0aWxkZXBhdGgiXQoKW21jcF9zZXJ2ZXJzLnRpbGRlcGF0aC5lbnZdClBBVEggPSAnflxBcHBEYXRhXExvY2FsXGNvZGV4LWV4cGFuc2lvbi1wcm9iZScKUFJPQkVfTE9HX0RJUiA9ICdDOlxTb3VyY2VcU2l4Rml2ZTdcQnJvd3NlckFJXC53b3JrXGNvZGV4LWV4cGFuc2lvblxydW5zXEMtcHJvai1hbHQtcjFcc3R1YmxvZ3MnClBST0JFX1RBRyA9ICJ0aWxkZXBhdGgiCg==",
+  "projectConfigText": "[mcp_servers.ctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"--tag\", \"ctl\"]\n\n[mcp_servers.ctl.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"ctl\"\n\n[mcp_servers.cmdwrap]\ncommand = \"cmd.exe\"\nargs = [\"/d\", \"/c\", '%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe', \"--tag\", \"cmdwrap\"]\n\n[mcp_servers.cmdwrap.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"cmdwrap\"\n\n[mcp_servers.cmdwrap_v]\ncommand = \"cmd.exe\"\nargs = [\"/d\", \"/v:on\", \"/c\", '!LOCALAPPDATA!\\codex-expansion-probe\\probe-stub.exe', \"--tag\", \"cmdwrap_v\"]\n\n[mcp_servers.cmdwrap_v.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"cmdwrap_v\"\n\n[mcp_servers.cmdwrap_space]\ncommand = \"cmd.exe\"\nargs = [\"/d\", \"/c\", '%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe', \"--tag\", \"cmdwrap_space\"]\n\n[mcp_servers.cmdwrap_space.env]\nLOCALAPPDATA = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace'\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"cmdwrap_space\"\n\n[mcp_servers.cmdwrap_space_q]\ncommand = \"cmd.exe\"\nargs = [\"/d\", \"/c\", '\"%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe\"', \"--tag\", \"cmdwrap_space_q\"]\n\n[mcp_servers.cmdwrap_space_q.env]\nLOCALAPPDATA = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace'\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"cmdwrap_space_q\"\n\n[mcp_servers.cmdwrap_space_qs]\ncommand = \"cmd.exe\"\nargs = [\"/d\", \"/s\", \"/c\", '\"%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe\" --tag cmdwrap_space_qs']\n\n[mcp_servers.cmdwrap_space_qs.env]\nLOCALAPPDATA = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace'\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"cmdwrap_space_qs\"\n\n[mcp_servers.cmdwrap_space_v]\ncommand = \"cmd.exe\"\nargs = [\"/d\", \"/v:on\", \"/c\", '!LOCALAPPDATA!\\codex-expansion-probe\\probe-stub.exe', \"--tag\", \"cmdwrap_space_v\"]\n\n[mcp_servers.cmdwrap_space_v.env]\nLOCALAPPDATA = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace'\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"cmdwrap_space_v\"\n\n[mcp_servers.barepath]\ncommand = \"probe-stub.exe\"\nargs = [\"--tag\", \"barepath\"]\n\n[mcp_servers.barepath.env]\nPATH = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe'\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"barepath\"\n\n[mcp_servers.tildepath]\ncommand = \"probe-stub.exe\"\nargs = [\"--tag\", \"tildepath\"]\n\n[mcp_servers.tildepath.env]\nPATH = '~\\AppData\\Local\\codex-expansion-probe'\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs'\nPROBE_TAG = \"tildepath\"\n",
+  "projectDotCodexListing": [
+   "config.toml",
+   "tmp",
+   "tmp\\arg0"
+  ],
+  "userConfigText": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"read-only\"\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:9/v1\"\nwire_api = \"responses\"\nenv_key = \"Q288_STUB_KEY\"\n\n[mcp_servers.uctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['--tag', 'uctl']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs', PROBE_TAG = 'uctl' }\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj']\ntrust_level = \"trusted\"\n"
+ },
+ "gitInit": {
+  "file": "git",
+  "args": [
+   "init",
+   "-q",
+   "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\proj"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "",
+  "ms": 85
+ },
+ "entries": [
+  {
+   "name": "uctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "uctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "uctl"
+   }
+  },
+  {
+   "name": "ctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "ctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "ctl"
+   }
+  },
+  {
+   "name": "cmdwrap",
+   "command": "cmd.exe",
+   "args": [
+    "/d",
+    "/c",
+    "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+    "--tag",
+    "cmdwrap"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "cmdwrap"
+   }
+  },
+  {
+   "name": "cmdwrap_v",
+   "command": "cmd.exe",
+   "args": [
+    "/d",
+    "/v:on",
+    "/c",
+    "!LOCALAPPDATA!\\codex-expansion-probe\\probe-stub.exe",
+    "--tag",
+    "cmdwrap_v"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "cmdwrap_v"
+   }
+  },
+  {
+   "name": "cmdwrap_space",
+   "command": "cmd.exe",
+   "args": [
+    "/d",
+    "/c",
+    "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+    "--tag",
+    "cmdwrap_space"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "cmdwrap_space",
+    "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace"
+   }
+  },
+  {
+   "name": "cmdwrap_space_q",
+   "command": "cmd.exe",
+   "args": [
+    "/d",
+    "/c",
+    "\"%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe\"",
+    "--tag",
+    "cmdwrap_space_q"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "cmdwrap_space_q",
+    "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace"
+   }
+  },
+  {
+   "name": "cmdwrap_space_qs",
+   "command": "cmd.exe",
+   "args": [
+    "/d",
+    "/s",
+    "/c",
+    "\"%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe\" --tag cmdwrap_space_qs"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "cmdwrap_space_qs",
+    "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace"
+   }
+  },
+  {
+   "name": "cmdwrap_space_v",
+   "command": "cmd.exe",
+   "args": [
+    "/d",
+    "/v:on",
+    "/c",
+    "!LOCALAPPDATA!\\codex-expansion-probe\\probe-stub.exe",
+    "--tag",
+    "cmdwrap_space_v"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "cmdwrap_space_v",
+    "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace"
+   }
+  },
+  {
+   "name": "barepath",
+   "command": "probe-stub.exe",
+   "args": [
+    "--tag",
+    "barepath"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "barepath",
+    "PATH": "[cut: 1 entries of this machine's PATH]"
+   }
+  },
+  {
+   "name": "tildepath",
+   "command": "probe-stub.exe",
+   "args": [
+    "--tag",
+    "tildepath"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r1\\stublogs",
+    "PROBE_TAG": "tildepath",
+    "PATH": "[cut: 1 entries of this machine's PATH]"
+   }
+  }
+ ]
+}

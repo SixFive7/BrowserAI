@@ -1,0 +1,17 @@
+{
+ "runId": "B-proj-percent-r3",
+ "layer": "project",
+ "spelling": "percent",
+ "round": 3,
+ "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r3\\home",
+ "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r3\\proj",
+ "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r3\\proj",
+ "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r3\\stublogs",
+ "expect": [
+  "uctl",
+  "ctl",
+  "percent_cmd",
+  "percent_cmdb",
+  "percent_arg"
+ ]
+}

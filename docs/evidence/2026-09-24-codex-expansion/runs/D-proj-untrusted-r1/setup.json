@@ -1,0 +1,118 @@
+{
+ "runId": "D-proj-untrusted-r1",
+ "kind": "untrusted",
+ "spelling": "-",
+ "round": 1,
+ "adds": [
+  {
+   "name": "ctl",
+   "intended": {
+    "name": "ctl",
+    "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "--tag",
+     "ctl"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\stublogs",
+     "PROBE_TAG": "ctl"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "ctl",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=ctl",
+     "--",
+     "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "ctl"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'ctl'.\n",
+    "stderr": "",
+    "ms": 61
+   }
+  }
+ ],
+ "gets": [
+  {
+   "name": "ctl",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "ctl",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"ctl\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"--tag\",\n      \"ctl\"\n    ],\n    \"env\": {\n      \"PROBE_TAG\": \"ctl\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\D-proj-untrusted-r1\\\\stublogs\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 61
+   }
+  }
+ ],
+ "files": {
+  "projectConfigBytesB64": "W21jcF9zZXJ2ZXJzLmN0bF0KY29tbWFuZCA9ICdDOlxVc2Vyc1xqb3JpXEFwcERhdGFcTG9jYWxcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJwphcmdzID0gWyItLXRhZyIsICJjdGwiXQoKW21jcF9zZXJ2ZXJzLmN0bC5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xELXByb2otdW50cnVzdGVkLXIxXHN0dWJsb2dzJwpQUk9CRV9UQUcgPSAiY3RsIgo=",
+  "projectConfigText": "[mcp_servers.ctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"--tag\", \"ctl\"]\n\n[mcp_servers.ctl.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\stublogs'\nPROBE_TAG = \"ctl\"\n",
+  "projectDotCodexListing": [
+   "config.toml",
+   "tmp",
+   "tmp\\arg0"
+  ],
+  "userConfigText": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"read-only\"\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:9/v1\"\nwire_api = \"responses\"\nenv_key = \"Q288_STUB_KEY\"\n\n[mcp_servers.uctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['--tag', 'uctl']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\stublogs', PROBE_TAG = 'uctl' }\n\n"
+ },
+ "gitInit": {
+  "file": "git",
+  "args": [
+   "init",
+   "-q",
+   "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\proj"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "",
+  "ms": 76
+ },
+ "entries": [
+  {
+   "name": "uctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "uctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\stublogs",
+    "PROBE_TAG": "uctl"
+   }
+  },
+  {
+   "name": "ctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "ctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\D-proj-untrusted-r1\\stublogs",
+    "PROBE_TAG": "ctl"
+   }
+  }
+ ]
+}

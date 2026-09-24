@@ -1,0 +1,338 @@
+{
+ "runId": "B-proj-tilde-r3",
+ "kind": "project",
+ "spelling": "tilde",
+ "round": 3,
+ "adds": [
+  {
+   "name": "ctl",
+   "intended": {
+    "name": "ctl",
+    "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "--tag",
+     "ctl"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+     "PROBE_TAG": "ctl"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "ctl",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+     "--env",
+     "PROBE_TAG=ctl",
+     "--",
+     "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "ctl"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'ctl'.\n",
+    "stderr": "",
+    "ms": 55
+   }
+  },
+  {
+   "name": "tilde_cmd",
+   "intended": {
+    "name": "tilde_cmd",
+    "command": "~/AppData/Local/codex-expansion-probe/probe-stub.exe",
+    "args": [
+     "~/AppData/Local/codex-expansion-probe/arg-marker",
+     "--tag",
+     "tilde_cmd"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+     "PROBE_TAG": "tilde_cmd"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "tilde_cmd",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+     "--env",
+     "PROBE_TAG=tilde_cmd",
+     "--",
+     "~/AppData/Local/codex-expansion-probe/probe-stub.exe",
+     "~/AppData/Local/codex-expansion-probe/arg-marker",
+     "--tag",
+     "tilde_cmd"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'tilde_cmd'.\n",
+    "stderr": "",
+    "ms": 54
+   }
+  },
+  {
+   "name": "tilde_cmdb",
+   "intended": {
+    "name": "tilde_cmdb",
+    "command": "~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "~/AppData/Local/codex-expansion-probe/arg-marker",
+     "--tag",
+     "tilde_cmdb"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+     "PROBE_TAG": "tilde_cmdb"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "tilde_cmdb",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+     "--env",
+     "PROBE_TAG=tilde_cmdb",
+     "--",
+     "~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "~/AppData/Local/codex-expansion-probe/arg-marker",
+     "--tag",
+     "tilde_cmdb"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'tilde_cmdb'.\n",
+    "stderr": "",
+    "ms": 55
+   }
+  },
+  {
+   "name": "tilde_arg",
+   "intended": {
+    "name": "tilde_arg",
+    "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "~/AppData/Local/codex-expansion-probe/arg-marker",
+     "--tag",
+     "tilde_arg"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+     "PROBE_TAG": "tilde_arg",
+     "PROBE_SPELLED": "~/AppData/Local/codex-expansion-probe/env-marker"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "tilde_arg",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+     "--env",
+     "PROBE_TAG=tilde_arg",
+     "--env",
+     "PROBE_SPELLED=~/AppData/Local/codex-expansion-probe/env-marker",
+     "--",
+     "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "~/AppData/Local/codex-expansion-probe/arg-marker",
+     "--tag",
+     "tilde_arg"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'tilde_arg'.\n",
+    "stderr": "",
+    "ms": 57
+   }
+  }
+ ],
+ "gets": [
+  {
+   "name": "ctl",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "ctl",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"ctl\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"--tag\",\n      \"ctl\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r3\\\\stublogs\",\n      \"PROBE_TAG\": \"ctl\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 61
+   }
+  },
+  {
+   "name": "tilde_cmd",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "tilde_cmd",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"tilde_cmd\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"~/AppData/Local/codex-expansion-probe/probe-stub.exe\",\n    \"args\": [\n      \"~/AppData/Local/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"tilde_cmd\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r3\\\\stublogs\",\n      \"PROBE_TAG\": \"tilde_cmd\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 56
+   }
+  },
+  {
+   "name": "tilde_cmdb",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "tilde_cmdb",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"tilde_cmdb\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"~\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"~/AppData/Local/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"tilde_cmdb\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r3\\\\stublogs\",\n      \"PROBE_TAG\": \"tilde_cmdb\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 51
+   }
+  },
+  {
+   "name": "tilde_arg",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "tilde_arg",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"tilde_arg\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"~/AppData/Local/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"tilde_arg\"\n    ],\n    \"env\": {\n      \"PROBE_TAG\": \"tilde_arg\",\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r3\\\\stublogs\",\n      \"PROBE_SPELLED\": \"~/AppData/Local/codex-expansion-probe/env-marker\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 57
+   }
+  }
+ ],
+ "files": {
+  "projectConfigBytesB64": "W21jcF9zZXJ2ZXJzLmN0bF0KY29tbWFuZCA9ICdDOlxVc2Vyc1xqb3JpXEFwcERhdGFcTG9jYWxcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJwphcmdzID0gWyItLXRhZyIsICJjdGwiXQoKW21jcF9zZXJ2ZXJzLmN0bC5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xCLXByb2otdGlsZGUtcjNcc3R1YmxvZ3MnClBST0JFX1RBRyA9ICJjdGwiCgpbbWNwX3NlcnZlcnMudGlsZGVfY21kXQpjb21tYW5kID0gIn4vQXBwRGF0YS9Mb2NhbC9jb2RleC1leHBhbnNpb24tcHJvYmUvcHJvYmUtc3R1Yi5leGUiCmFyZ3MgPSBbIn4vQXBwRGF0YS9Mb2NhbC9jb2RleC1leHBhbnNpb24tcHJvYmUvYXJnLW1hcmtlciIsICItLXRhZyIsICJ0aWxkZV9jbWQiXQoKW21jcF9zZXJ2ZXJzLnRpbGRlX2NtZC5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xCLXByb2otdGlsZGUtcjNcc3R1YmxvZ3MnClBST0JFX1RBRyA9ICJ0aWxkZV9jbWQiCgpbbWNwX3NlcnZlcnMudGlsZGVfY21kYl0KY29tbWFuZCA9ICd+XEFwcERhdGFcTG9jYWxcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJwphcmdzID0gWyJ+L0FwcERhdGEvTG9jYWwvY29kZXgtZXhwYW5zaW9uLXByb2JlL2FyZy1tYXJrZXIiLCAiLS10YWciLCAidGlsZGVfY21kYiJdCgpbbWNwX3NlcnZlcnMudGlsZGVfY21kYi5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xCLXByb2otdGlsZGUtcjNcc3R1YmxvZ3MnClBST0JFX1RBRyA9ICJ0aWxkZV9jbWRiIgoKW21jcF9zZXJ2ZXJzLnRpbGRlX2FyZ10KY29tbWFuZCA9ICdDOlxVc2Vyc1xqb3JpXEFwcERhdGFcTG9jYWxcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJwphcmdzID0gWyJ+L0FwcERhdGEvTG9jYWwvY29kZXgtZXhwYW5zaW9uLXByb2JlL2FyZy1tYXJrZXIiLCAiLS10YWciLCAidGlsZGVfYXJnIl0KClttY3Bfc2VydmVycy50aWxkZV9hcmcuZW52XQpQUk9CRV9MT0dfRElSID0gJ0M6XFNvdXJjZVxTaXhGaXZlN1xCcm93c2VyQUlcLndvcmtcY29kZXgtZXhwYW5zaW9uXHJ1bnNcQi1wcm9qLXRpbGRlLXIzXHN0dWJsb2dzJwpQUk9CRV9TUEVMTEVEID0gIn4vQXBwRGF0YS9Mb2NhbC9jb2RleC1leHBhbnNpb24tcHJvYmUvZW52LW1hcmtlciIKUFJPQkVfVEFHID0gInRpbGRlX2FyZyIK",
+  "projectConfigText": "[mcp_servers.ctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"--tag\", \"ctl\"]\n\n[mcp_servers.ctl.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs'\nPROBE_TAG = \"ctl\"\n\n[mcp_servers.tilde_cmd]\ncommand = \"~/AppData/Local/codex-expansion-probe/probe-stub.exe\"\nargs = [\"~/AppData/Local/codex-expansion-probe/arg-marker\", \"--tag\", \"tilde_cmd\"]\n\n[mcp_servers.tilde_cmd.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs'\nPROBE_TAG = \"tilde_cmd\"\n\n[mcp_servers.tilde_cmdb]\ncommand = '~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"~/AppData/Local/codex-expansion-probe/arg-marker\", \"--tag\", \"tilde_cmdb\"]\n\n[mcp_servers.tilde_cmdb.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs'\nPROBE_TAG = \"tilde_cmdb\"\n\n[mcp_servers.tilde_arg]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"~/AppData/Local/codex-expansion-probe/arg-marker\", \"--tag\", \"tilde_arg\"]\n\n[mcp_servers.tilde_arg.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs'\nPROBE_SPELLED = \"~/AppData/Local/codex-expansion-probe/env-marker\"\nPROBE_TAG = \"tilde_arg\"\n",
+  "projectDotCodexListing": [
+   "config.toml",
+   "tmp",
+   "tmp\\arg0"
+  ],
+  "userConfigText": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"read-only\"\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:9/v1\"\nwire_api = \"responses\"\nenv_key = \"Q288_STUB_KEY\"\n\n[mcp_servers.uctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['--tag', 'uctl']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs', PROBE_TAG = 'uctl' }\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj']\ntrust_level = \"trusted\"\n"
+ },
+ "gitInit": {
+  "file": "git",
+  "args": [
+   "init",
+   "-q",
+   "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "",
+  "ms": 65
+ },
+ "entries": [
+  {
+   "name": "uctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "uctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+    "PROBE_TAG": "uctl"
+   }
+  },
+  {
+   "name": "ctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "ctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+    "PROBE_TAG": "ctl"
+   }
+  },
+  {
+   "name": "tilde_cmd",
+   "command": "~/AppData/Local/codex-expansion-probe/probe-stub.exe",
+   "args": [
+    "~/AppData/Local/codex-expansion-probe/arg-marker",
+    "--tag",
+    "tilde_cmd"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+    "PROBE_TAG": "tilde_cmd"
+   }
+  },
+  {
+   "name": "tilde_cmdb",
+   "command": "~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "~/AppData/Local/codex-expansion-probe/arg-marker",
+    "--tag",
+    "tilde_cmdb"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+    "PROBE_TAG": "tilde_cmdb"
+   }
+  },
+  {
+   "name": "tilde_arg",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "~/AppData/Local/codex-expansion-probe/arg-marker",
+    "--tag",
+    "tilde_arg"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs",
+    "PROBE_TAG": "tilde_arg",
+    "PROBE_SPELLED": "~/AppData/Local/codex-expansion-probe/env-marker"
+   }
+  }
+ ]
+}

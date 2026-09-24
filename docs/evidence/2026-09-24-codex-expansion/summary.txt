@@ -1,0 +1,329 @@
+RUNS
+{"runId":"B-proj-bare-r1","layer":"project","spelling":"bare","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:46:56.196Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ab-40b7-7c60-bed1-001695a0bd95"}
+{"runId":"B-proj-bare-r2","layer":"project","spelling":"bare","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:50:15.063Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ae-46fb-7ae3-af1b-c6729c8aad1d"}
+{"runId":"B-proj-bare-r3","layer":"project","spelling":"bare","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:53:38.972Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b1-66c5-7031-9e0a-9bcf2cf4f45e"}
+{"runId":"B-proj-braced-r1","layer":"project","spelling":"braced","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:46:23.605Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3aa-c102-7c80-ab28-9ee19c185664"}
+{"runId":"B-proj-braced-r2","layer":"project","spelling":"braced","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:49:41.841Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ad-c8a1-7a73-be61-157c41a1a097"}
+{"runId":"B-proj-braced-r3","layer":"project","spelling":"braced","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:53:06.137Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b0-e3ca-7822-a887-84a56988e2aa"}
+{"runId":"B-proj-percent-r1","layer":"project","spelling":"percent","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:47:28.592Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ab-c103-79c0-ade9-439668beb53c"}
+{"runId":"B-proj-percent-r2","layer":"project","spelling":"percent","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:50:50.861Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ae-cea6-73a2-b439-459cb55c2746"}
+{"runId":"B-proj-percent-r3","layer":"project","spelling":"percent","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:54:11.372Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b1-e538-7480-9828-665e449800db"}
+{"runId":"B-proj-tilde-r1","layer":"project","spelling":"tilde","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:48:00.701Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ac-3dba-75a0-b3a9-95ce76dbbb8e"}
+{"runId":"B-proj-tilde-r2","layer":"project","spelling":"tilde","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:51:23.798Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3af-555b-7480-bc56-585137cc93dd"}
+{"runId":"B-proj-tilde-r3","layer":"project","spelling":"tilde","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:54:43.648Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b2-6440-7442-8c56-8a6b1c32cff0"}
+{"runId":"B-user-bare-r1","layer":"user","spelling":"bare","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:46:38.994Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ab-02a9-7ef3-97de-0efc8b8c2c4f"}
+{"runId":"B-user-bare-r2","layer":"user","spelling":"bare","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:49:57.127Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ae-0881-7160-8942-0113f27292b4"}
+{"runId":"B-user-bare-r3","layer":"user","spelling":"bare","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:53:21.974Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b1-267e-7631-b123-b00676be3db3"}
+{"runId":"B-user-braced-r1","layer":"user","spelling":"braced","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:46:06.246Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3aa-81d2-72c2-8200-0e3adf8bcd8d"}
+{"runId":"B-user-braced-r2","layer":"user","spelling":"braced","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:49:25.000Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ad-89e7-7032-8bce-3551c73b2835"}
+{"runId":"B-user-braced-r3","layer":"user","spelling":"braced","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:52:48.247Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b0-a239-7a73-9b72-951a81b43c80"}
+{"runId":"B-user-percent-r1","layer":"user","spelling":"percent","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:47:12.008Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ab-8205-78c0-ba94-5078c05ee455"}
+{"runId":"B-user-percent-r2","layer":"user","spelling":"percent","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:50:31.737Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ae-8a84-74f1-9725-fa9a2c2b0538"}
+{"runId":"B-user-percent-r3","layer":"user","spelling":"percent","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:53:54.324Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b1-a6af-7382-83d1-30220b83f398"}
+{"runId":"B-user-tilde-r1","layer":"user","spelling":"tilde","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:47:43.729Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ab-ffc4-7a61-9b86-7ccd2077920a"}
+{"runId":"B-user-tilde-r2","layer":"user","spelling":"tilde","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:51:06.432Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3af-1685-7071-a8ff-0c38d0aa9ec0"}
+{"runId":"B-user-tilde-r3","layer":"user","spelling":"tilde","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:54:26.969Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b2-24f1-7783-b560-10f93402795d"}
+{"runId":"C-proj-alt-r1","layer":"project","spelling":"alt","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:48:23.700Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ac-8502-7483-a5cc-b717142b6bc5"}
+{"runId":"C-proj-alt-r2","layer":"project","spelling":"alt","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:51:46.988Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3af-9c9c-7652-bffe-cc9d6aa1f378"}
+{"runId":"C-proj-alt-r3","layer":"project","spelling":"alt","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:55:06.578Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b2-a8c5-7531-96cd-63631478168f"}
+{"runId":"D-proj-untrusted-r1","layer":"project-untrusted","spelling":"untrusted","round":1,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:49:09.271Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3ac-d8dc-7701-aadb-4c2ed36f871c"}
+{"runId":"D-proj-untrusted-r2","layer":"project-untrusted","spelling":"untrusted","round":2,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:52:32.108Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3af-f2be-7021-b064-d97f6ff8ff43"}
+{"runId":"D-proj-untrusted-r3","layer":"project-untrusted","spelling":"untrusted","round":3,"appServerExit":{"code":0,"signal":null,"at":"2026-09-24T13:55:51.289Z"},"killed":[],"leftoverAfterExit":0,"before":0,"mcpListStatus":0,"mcpListStderr":"","threadId":"01a0d3b2-fde1-7a80-98aa-6d3a3fbd3628"}
+
+CASES
+project | bare_arg
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"$LOCALAPPDATA/codex-expansion-probe/arg-marker\",\"--tag\",\"bare_arg\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+project | bare_cmd
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `bare_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe"]
+project | bare_cmdb
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `bare_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe"]
+project | barepath
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"--tag\",\"barepath\"]"]
+  mcpList.command=["probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["probe-stub.exe"]
+project | braced_arg
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"${LOCALAPPDATA}/codex-expansion-probe/arg-marker\",\"--tag\",\"braced_arg\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+project | braced_cmd
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `braced_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["${LOCALAPPDATA}/codex-expansion-probe/probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["${LOCALAPPDATA}/codex-expansion-probe/probe-stub.exe"]
+project | braced_cmdb
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `braced_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["${LOCALAPPDATA}\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["${LOCALAPPDATA}\\codex-expansion-probe\\probe-stub.exe"]
+project | cmdwrap
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Windows\\system32\\cmd.exe"]
+  argvSeen=["[\"--tag\",\"cmdwrap\"]"]
+  mcpList.command=["cmd.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["cmd.exe"]
+project | cmdwrap_space
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `cmdwrap_space` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["cmd.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["cmd.exe"]
+project | cmdwrap_space_q
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `cmdwrap_space_q` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["cmd.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["cmd.exe"]
+project | cmdwrap_space_qs
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `cmdwrap_space_qs` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["cmd.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["cmd.exe"]
+project | cmdwrap_space_v
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Windows\\system32\\cmd.exe"]
+  argvSeen=["[\"ace\\\\codex-expansion-probe\\\\probe-stub.exe\",\"--tag\",\"cmdwrap_space_v\"]"]
+  mcpList.command=["cmd.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["cmd.exe"]
+project | cmdwrap_v
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Windows\\system32\\cmd.exe"]
+  argvSeen=["[\"--tag\",\"cmdwrap_v\"]"]
+  mcpList.command=["cmd.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["cmd.exe"]
+project | ctl
+  rounds=15 startup=[ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready] aliveByPath=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] answeredInitialize=[y,y,y,y,y,y,y,y,y,y,y,y,y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"--tag\",\"ctl\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+project | percent_arg
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"%LOCALAPPDATA%/codex-expansion-probe/arg-marker\",\"--tag\",\"percent_arg\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+project | percent_cmd
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `percent_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["%LOCALAPPDATA%/codex-expansion-probe/probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["%LOCALAPPDATA%/codex-expansion-probe/probe-stub.exe"]
+project | percent_cmdb
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `percent_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe"]
+project | tilde_arg
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"~/AppData/Local/codex-expansion-probe/arg-marker\",\"--tag\",\"tilde_arg\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+project | tilde_cmd
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `tilde_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["~/AppData/Local/codex-expansion-probe/probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["~/AppData/Local/codex-expansion-probe/probe-stub.exe"]
+project | tilde_cmdb
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `tilde_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+project | tildepath
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"--tag\",\"tildepath\"]"]
+  mcpList.command=["probe-stub.exe"]
+  mcpAdd=["exit 0"] mcpGet.command=["probe-stub.exe"]
+project | uctl
+  rounds=15 startup=[ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready] aliveByPath=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] answeredInitialize=[y,y,y,y,y,y,y,y,y,y,y,y,y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"--tag\",\"uctl\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+project-untrusted | ctl
+  rounds=3 startup=[,,] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=[]
+  statusList(thread)=["(absent)"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["(absent)"]
+  mcpAdd=["exit 0"] mcpGet.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+project-untrusted | uctl
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"--tag\",\"uctl\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | bare_arg
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"$LOCALAPPDATA/codex-expansion-probe/arg-marker\",\"--tag\",\"bare_arg\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | bare_cmd
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `bare_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | bare_cmdb
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `bare_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | braced_arg
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"${LOCALAPPDATA}/codex-expansion-probe/arg-marker\",\"--tag\",\"braced_arg\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | braced_cmd
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `braced_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["${LOCALAPPDATA}/codex-expansion-probe/probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | braced_cmdb
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `braced_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["${LOCALAPPDATA}\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | ctl
+  rounds=12 startup=[ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready,ready] aliveByPath=[1,1,1,1,1,1,1,1,1,1,1,1] answeredInitialize=[y,y,y,y,y,y,y,y,y,y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"--tag\",\"ctl\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | percent_arg
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"%LOCALAPPDATA%/codex-expansion-probe/arg-marker\",\"--tag\",\"percent_arg\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | percent_cmd
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `percent_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["%LOCALAPPDATA%/codex-expansion-probe/probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | percent_cmdb
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `percent_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | tilde_arg
+  rounds=3 startup=[ready,ready,ready] aliveByPath=[1,1,1] answeredInitialize=[y,y,y]
+  error=[]
+  statusList(thread)=["connected/serverInfo/tools:probe_whoami"]
+  image=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"] parent=["C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe"]
+  argvSeen=["[\"~/AppData/Local/codex-expansion-probe/arg-marker\",\"--tag\",\"tilde_arg\"]"]
+  mcpList.command=["C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | tilde_cmd
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `tilde_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["~/AppData/Local/codex-expansion-probe/probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]
+user | tilde_cmdb
+  rounds=3 startup=[failed,failed,failed] aliveByPath=[0,0,0] answeredInitialize=[n,n,n]
+  error=["MCP client for `tilde_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)"]
+  statusList(thread)=["failed/noInfo/toolsError"]
+  image=[] parent=[]
+  argvSeen=[]
+  mcpList.command=["~\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"]
+  mcpAdd=["-"] mcpGet.command=["-"]

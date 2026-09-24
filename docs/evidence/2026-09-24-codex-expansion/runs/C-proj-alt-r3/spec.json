@@ -1,0 +1,22 @@
+{
+ "runId": "C-proj-alt-r3",
+ "layer": "project",
+ "spelling": "alt",
+ "round": 3,
+ "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r3\\home",
+ "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r3\\proj",
+ "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r3\\proj",
+ "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r3\\stublogs",
+ "expect": [
+  "uctl",
+  "ctl",
+  "cmdwrap",
+  "cmdwrap_v",
+  "cmdwrap_space",
+  "cmdwrap_space_q",
+  "cmdwrap_space_qs",
+  "cmdwrap_space_v",
+  "barepath",
+  "tildepath"
+ ]
+}

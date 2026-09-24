@@ -1,0 +1,65 @@
+{
+ "runId": "B-user-braced-r0",
+ "kind": "user",
+ "spelling": "braced",
+ "round": 0,
+ "adds": [],
+ "gets": [],
+ "files": {
+  "userConfigText": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"read-only\"\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:9/v1\"\nwire_api = \"responses\"\nenv_key = \"Q288_STUB_KEY\"\n\n[mcp_servers.ctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['--tag', 'ctl']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r0\\stublogs', PROBE_TAG = 'ctl' }\n\n[mcp_servers.braced_cmd]\ncommand = '${LOCALAPPDATA}/codex-expansion-probe/probe-stub.exe'\nargs = ['${LOCALAPPDATA}/codex-expansion-probe/arg-marker', '--tag', 'braced_cmd']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r0\\stublogs', PROBE_TAG = 'braced_cmd' }\n\n[mcp_servers.braced_cmdb]\ncommand = '${LOCALAPPDATA}\\codex-expansion-probe\\probe-stub.exe'\nargs = ['${LOCALAPPDATA}/codex-expansion-probe/arg-marker', '--tag', 'braced_cmdb']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r0\\stublogs', PROBE_TAG = 'braced_cmdb' }\n\n[mcp_servers.braced_arg]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['${LOCALAPPDATA}/codex-expansion-probe/arg-marker', '--tag', 'braced_arg']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r0\\stublogs', PROBE_TAG = 'braced_arg', PROBE_SPELLED = '${LOCALAPPDATA}/codex-expansion-probe/env-marker' }\n"
+ },
+ "entries": [
+  {
+   "name": "ctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "ctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r0\\stublogs",
+    "PROBE_TAG": "ctl"
+   }
+  },
+  {
+   "name": "braced_cmd",
+   "command": "${LOCALAPPDATA}/codex-expansion-probe/probe-stub.exe",
+   "args": [
+    "${LOCALAPPDATA}/codex-expansion-probe/arg-marker",
+    "--tag",
+    "braced_cmd"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r0\\stublogs",
+    "PROBE_TAG": "braced_cmd"
+   }
+  },
+  {
+   "name": "braced_cmdb",
+   "command": "${LOCALAPPDATA}\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "${LOCALAPPDATA}/codex-expansion-probe/arg-marker",
+    "--tag",
+    "braced_cmdb"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r0\\stublogs",
+    "PROBE_TAG": "braced_cmdb"
+   }
+  },
+  {
+   "name": "braced_arg",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "${LOCALAPPDATA}/codex-expansion-probe/arg-marker",
+    "--tag",
+    "braced_arg"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r0\\stublogs",
+    "PROBE_TAG": "braced_arg",
+    "PROBE_SPELLED": "${LOCALAPPDATA}/codex-expansion-probe/env-marker"
+   }
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+{
+ "runId": "B-user-braced-r2",
+ "layer": "user",
+ "spelling": "braced",
+ "round": 2,
+ "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r2\\home",
+ "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r2\\neutral",
+ "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r2\\neutral",
+ "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-braced-r2\\stublogs",
+ "expect": [
+  "ctl",
+  "braced_cmd",
+  "braced_cmdb",
+  "braced_arg"
+ ]
+}

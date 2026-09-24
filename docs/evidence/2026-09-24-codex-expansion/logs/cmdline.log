@@ -1,0 +1,4 @@
+A-cmdline-r1: exit=0 config="[mcp_servers.viacmd]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\arg-marker']\n"
+A-cmdline-r2: exit=0 config="[mcp_servers.viacmd]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\arg-marker']\n"
+A-cmdline-r3: exit=0 config="[mcp_servers.viacmd]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\arg-marker']\n"
+rc=0

@@ -1,0 +1,27 @@
+START 2026-09-24T13:29:31Z
+Cloning into 'src-tag'...
+warning: refs/tags/rust-v0.155.0-alpha.9.2 f507a90df8684231353b1e6effe4dd894fc60415 is not a commit!
+Note: switching to '4607249e430dac1c961df4dc615beae88e33cec8'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+4607249e430dac1c961df4dc615beae88e33cec8
+4607249e430dac1c961df4dc615beae88e33cec8 2026-09-17T19:11:16-07:00 Release 0.155.0-alpha.9.2
+TAG DONE rc=0 2026-09-24T13:29:48Z
+Cloning into 'src-main'...
+282cd7b019378746cb87bd91a95d8b4bcae12aa3
+282cd7b019378746cb87bd91a95d8b4bcae12aa3 2026-09-24T13:09:49Z Stabilize Rosetta test timing and retry delay telemetry (#47832)
+MAIN DONE rc=0 2026-09-24T13:30:07Z

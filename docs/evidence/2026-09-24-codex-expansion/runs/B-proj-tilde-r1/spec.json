@@ -1,0 +1,17 @@
+{
+ "runId": "B-proj-tilde-r1",
+ "layer": "project",
+ "spelling": "tilde",
+ "round": 1,
+ "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r1\\home",
+ "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r1\\proj",
+ "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r1\\proj",
+ "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r1\\stublogs",
+ "expect": [
+  "uctl",
+  "ctl",
+  "tilde_cmd",
+  "tilde_cmdb",
+  "tilde_arg"
+ ]
+}

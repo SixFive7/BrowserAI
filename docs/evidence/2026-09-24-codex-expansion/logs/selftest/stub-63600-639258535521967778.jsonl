@@ -1,0 +1,7 @@
+{"event":"launch","at":"2026-09-24T13:32:32.1972955Z","pid":63600,"image":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\stub\\probe-stub.exe","commandLine":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\stub\\probe-stub.exe \"a b\" ${X} %LOCALAPPDATA% ~/x","argv":["a b","${X}","%LOCALAPPDATA%","~/x"],"cwd":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\stub","env":{"HOME":"C:\\Users\\jori","LOCALAPPDATA":"C:\\Users\\jori\\AppData\\Local","PROBE_LOG_DIR":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\logs\\selftest","PROBE_TAG":"self","USERPROFILE":"C:\\Users\\jori"}}
+{"event":"recv","at":"2026-09-24T13:32:32.2273912Z","method":"initialize","id":1}
+{"event":"sent","at":"2026-09-24T13:32:32.2284385Z","method":"initialize","id":1}
+{"event":"recv","at":"2026-09-24T13:32:32.2284385Z","method":"notifications/initialized","id":null}
+{"event":"recv","at":"2026-09-24T13:32:32.2289509Z","method":"tools/list","id":2}
+{"event":"sent","at":"2026-09-24T13:32:32.2289509Z","method":"tools/list","id":2}
+{"event":"stdin-eof","at":"2026-09-24T13:32:32.2296834Z"}

@@ -1,0 +1,16 @@
+{
+ "runId": "B-user-bare-r2",
+ "layer": "user",
+ "spelling": "bare",
+ "round": 2,
+ "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-bare-r2\\home",
+ "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-bare-r2\\neutral",
+ "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-bare-r2\\neutral",
+ "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-bare-r2\\stublogs",
+ "expect": [
+  "ctl",
+  "bare_cmd",
+  "bare_cmdb",
+  "bare_arg"
+ ]
+}

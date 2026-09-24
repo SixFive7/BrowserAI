@@ -1,0 +1,2698 @@
+{
+ "spec": {
+  "runId": "C-proj-alt-r2",
+  "layer": "project",
+  "spelling": "alt",
+  "round": 2,
+  "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home",
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+  "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+  "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+  "expect": [
+   "uctl",
+   "ctl",
+   "cmdwrap",
+   "cmdwrap_v",
+   "cmdwrap_space",
+   "cmdwrap_space_q",
+   "cmdwrap_space_qs",
+   "cmdwrap_space_v",
+   "barepath",
+   "tildepath"
+  ]
+ },
+ "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+ "startedAt": "2026-09-24T13:51:35.384Z",
+ "notes": [
+  {
+   "at": "2026-09-24T13:51:36.592Z",
+   "method": "remoteControl/status/changed",
+   "params": {
+    "status": "disabled",
+    "serverName": "pc657",
+    "installationId": "313653f2-66e6-4d9a-8ffc-00f495c3965f",
+    "environmentId": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.718Z",
+   "method": "thread/started",
+   "params": {
+    "thread": {
+     "id": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+     "environments": [
+      {
+       "environmentId": "local",
+       "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+       "runtimeWorkspaceRoots": [
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj"
+       ]
+      }
+     ],
+     "extra": null,
+     "sessionId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+     "forkedFromId": null,
+     "parentThreadId": null,
+     "preview": "",
+     "ephemeral": false,
+     "section": null,
+     "sectionEnteredAt": null,
+     "projectId": null,
+     "historyMode": "paginated",
+     "modelProvider": "stub",
+     "model": "stub-model",
+     "reasoningEffort": null,
+     "createdAt": 1790257896,
+     "updatedAt": 1790257896,
+     "recencyAt": 1790257896,
+     "status": {
+      "type": "idle"
+     },
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\sessions\\2026\\09\\24\\rollout-2026-09-24T15-51-36-01a0d3af-9c9c-7652-bffe-cc9d6aa1f378.jsonl",
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "cliVersion": "0.155.0-alpha.9.2",
+     "originator": "q288-probe",
+     "source": "vscode",
+     "canAcceptDirectInput": true,
+     "threadSource": null,
+     "agentNickname": null,
+     "agentRole": null,
+     "gitInfo": null,
+     "name": null,
+     "daybreakEnabled": null,
+     "turns": []
+    }
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.718Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_space_qs",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.719Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.719Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "ctl",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.719Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_space",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.720Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_space_q",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.721Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "barepath",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.721Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "uctl",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.721Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_v",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.722Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "tildepath",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.722Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_space_v",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.757Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_space_qs",
+    "status": "failed",
+    "error": "MCP client for `cmdwrap_space_qs` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.766Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_space_q",
+    "status": "failed",
+    "error": "MCP client for `cmdwrap_space_q` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.808Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "barepath",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.809Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_space",
+    "status": "failed",
+    "error": "MCP client for `cmdwrap_space` failed to start: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.810Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "ctl",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.819Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "uctl",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.820Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "tildepath",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.865Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_space_v",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.868Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap_v",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:36.880Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+    "name": "cmdwrap",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  }
+ ],
+ "responses": {
+  "initialize": {
+   "id": 1,
+   "result": {
+    "userAgent": "q288-probe/0.155.0-alpha.9.2 (Windows 10.0.26200; x86_64) xterm-256color (q288-probe; 1)",
+    "codexHome": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home",
+    "platformFamily": "windows",
+    "platformOs": "windows"
+   }
+  },
+  "threadStart": {
+   "id": 2,
+   "result": {
+    "thread": {
+     "id": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+     "environments": [
+      {
+       "environmentId": "local",
+       "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+       "runtimeWorkspaceRoots": [
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj"
+       ]
+      }
+     ],
+     "extra": null,
+     "sessionId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+     "forkedFromId": null,
+     "parentThreadId": null,
+     "preview": "",
+     "ephemeral": false,
+     "section": null,
+     "sectionEnteredAt": null,
+     "projectId": null,
+     "historyMode": "paginated",
+     "modelProvider": "stub",
+     "model": "stub-model",
+     "reasoningEffort": null,
+     "createdAt": 1790257896,
+     "updatedAt": 1790257896,
+     "recencyAt": 1790257896,
+     "status": {
+      "type": "idle"
+     },
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\sessions\\2026\\09\\24\\rollout-2026-09-24T15-51-36-01a0d3af-9c9c-7652-bffe-cc9d6aa1f378.jsonl",
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "cliVersion": "0.155.0-alpha.9.2",
+     "originator": "q288-probe",
+     "source": "vscode",
+     "canAcceptDirectInput": true,
+     "threadSource": null,
+     "agentNickname": null,
+     "agentRole": null,
+     "gitInfo": null,
+     "name": null,
+     "daybreakEnabled": null,
+     "turns": []
+    },
+    "model": "stub-model",
+    "modelProvider": "stub",
+    "serviceTier": null,
+    "disabledPluginIds": [],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+    "runtimeWorkspaceRoots": [
+     "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj"
+    ],
+    "instructionSources": [],
+    "approvalPolicy": "never",
+    "approvalsReviewer": "user",
+    "sandbox": {
+     "type": "readOnly",
+     "networkAccess": false
+    },
+    "activePermissionProfile": null,
+    "reasoningEffort": null,
+    "multiAgentMode": "explicitRequestOnly"
+   }
+  },
+  "statusListThread": {
+   "id": 3,
+   "result": {
+    "data": [
+     {
+      "name": "barepath",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-83488",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-64652",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_space",
+      "runtimeStatus": "failed",
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_space_q",
+      "runtimeStatus": "failed",
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_space_qs",
+      "runtimeStatus": "failed",
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_space_v",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-91948",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_v",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-58552",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "ctl",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-46316",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "tildepath",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-66444",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "uctl",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-38524",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  "statusListNoThread": {
+   "id": 4,
+   "result": {
+    "data": [
+     {
+      "name": "barepath",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-69348",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-96096",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_space",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_space_q",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_space_qs",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_space_v",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-83856",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "cmdwrap_v",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-105124",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "ctl",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-85364",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "tildepath",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-85580",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "uctl",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-91084",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     }
+    ],
+    "nextCursor": null
+   }
+  }
+ },
+ "procs": {
+  "before": {
+   "at": "2026-09-24T13:51:36.247Z",
+   "list": [],
+   "status": 0,
+   "stderr": ""
+  },
+  "whileAlive": {
+   "at": "2026-09-24T13:51:41.739Z",
+   "list": [
+    {
+     "pid": 58256,
+     "ppid": 81012,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag barepath",
+     "created": "2026-09-24T13:51:36.7137520Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 105192
+    },
+    {
+     "pid": 98248,
+     "ppid": 81012,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "created": "2026-09-24T13:51:36.7195830Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 105192
+    },
+    {
+     "pid": 72472,
+     "ppid": 81012,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "created": "2026-09-24T13:51:36.7257560Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 105192
+    },
+    {
+     "pid": 102636,
+     "ppid": 81012,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag tildepath",
+     "created": "2026-09-24T13:51:36.7307880Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 105192
+    },
+    {
+     "pid": 109460,
+     "ppid": 85968,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_space_v",
+     "created": "2026-09-24T13:51:36.7741570Z",
+     "parentPath": "C:\\Windows\\system32\\cmd.exe",
+     "parentPpid": 81012
+    },
+    {
+     "pid": 107468,
+     "ppid": 100444,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_v",
+     "created": "2026-09-24T13:51:36.7857980Z",
+     "parentPath": "C:\\Windows\\system32\\cmd.exe",
+     "parentPpid": 81012
+    },
+    {
+     "pid": 68740,
+     "ppid": 107692,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap",
+     "created": "2026-09-24T13:51:36.7956880Z",
+     "parentPath": "C:\\Windows\\system32\\cmd.exe",
+     "parentPpid": 81012
+    }
+   ],
+   "status": 0,
+   "stderr": ""
+  },
+  "afterCalls": {
+   "at": "2026-09-24T13:51:46.907Z",
+   "list": [
+    {
+     "pid": 58256,
+     "ppid": 81012,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag barepath",
+     "created": "2026-09-24T13:51:36.7137520Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 105192
+    },
+    {
+     "pid": 98248,
+     "ppid": 81012,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "created": "2026-09-24T13:51:36.7195830Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 105192
+    },
+    {
+     "pid": 72472,
+     "ppid": 81012,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "created": "2026-09-24T13:51:36.7257560Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 105192
+    },
+    {
+     "pid": 102636,
+     "ppid": 81012,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag tildepath",
+     "created": "2026-09-24T13:51:36.7307880Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 105192
+    },
+    {
+     "pid": 109460,
+     "ppid": 85968,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_space_v",
+     "created": "2026-09-24T13:51:36.7741570Z",
+     "parentPath": "C:\\Windows\\system32\\cmd.exe",
+     "parentPpid": 81012
+    },
+    {
+     "pid": 107468,
+     "ppid": 100444,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_v",
+     "created": "2026-09-24T13:51:36.7857980Z",
+     "parentPath": "C:\\Windows\\system32\\cmd.exe",
+     "parentPpid": 81012
+    },
+    {
+     "pid": 68740,
+     "ppid": 107692,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap",
+     "created": "2026-09-24T13:51:36.7956880Z",
+     "parentPath": "C:\\Windows\\system32\\cmd.exe",
+     "parentPpid": 81012
+    }
+   ],
+   "status": 0,
+   "stderr": ""
+  },
+  "afterExit": {
+   "at": "2026-09-24T13:51:48.457Z",
+   "list": [],
+   "status": 0,
+   "stderr": ""
+  }
+ },
+ "toolCalls": {
+  "barepath": {
+   "id": 5,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:36.7689129Z\",\"pid\":58256,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag barepath\",\"argv\":[\"--tag\",\"barepath\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"[cut: 1 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\"PROBE_TAG\":\"barepath\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "cmdwrap": {
+   "id": 6,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:36.8471611Z\",\"pid\":68740,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe  --tag cmdwrap\",\"argv\":[\"--tag\",\"cmdwrap\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\home\\\\tmp\\\\arg0\\\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\"PROBE_TAG\":\"cmdwrap\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "cmdwrap_space_v": {
+   "id": 7,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:36.8332034Z\",\"pid\":109460,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\\\\codex-expansion-probe\\\\probe-stub.exe  --tag cmdwrap_space_v\",\"argv\":[\"ace\\\\codex-expansion-probe\\\\probe-stub.exe\",\"--tag\",\"cmdwrap_space_v\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\home\\\\tmp\\\\arg0\\\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\"PROBE_TAG\":\"cmdwrap_space_v\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "cmdwrap_v": {
+   "id": 8,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:36.8382460Z\",\"pid\":107468,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe  --tag cmdwrap_v\",\"argv\":[\"--tag\",\"cmdwrap_v\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\home\\\\tmp\\\\arg0\\\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\"PROBE_TAG\":\"cmdwrap_v\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "ctl": {
+   "id": 9,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:36.7719568Z\",\"pid\":98248,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag ctl\",\"argv\":[\"--tag\",\"ctl\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\home\\\\tmp\\\\arg0\\\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\"PROBE_TAG\":\"ctl\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "tildepath": {
+   "id": 10,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:36.7823839Z\",\"pid\":102636,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag tildepath\",\"argv\":[\"--tag\",\"tildepath\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"[cut: 1 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\"PROBE_TAG\":\"tildepath\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "uctl": {
+   "id": 11,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:36.7808511Z\",\"pid\":72472,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag uctl\",\"argv\":[\"--tag\",\"uctl\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\home\\\\tmp\\\\arg0\\\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\"PROBE_TAG\":\"uctl\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  }
+ },
+ "killed": [],
+ "appServerPid": 81012,
+ "threadId": "01a0d3af-9c9c-7652-bffe-cc9d6aa1f378",
+ "startupStatus": {
+  "uctl": "ready",
+  "ctl": "ready",
+  "cmdwrap": "ready",
+  "cmdwrap_v": "ready",
+  "cmdwrap_space": "failed",
+  "cmdwrap_space_q": "failed",
+  "cmdwrap_space_qs": "failed",
+  "cmdwrap_space_v": "ready",
+  "barepath": "ready",
+  "tildepath": "ready"
+ },
+ "startupStatusAll": {
+  "cmdwrap_space_qs": "failed",
+  "cmdwrap": "ready",
+  "ctl": "ready",
+  "cmdwrap_space": "failed",
+  "cmdwrap_space_q": "failed",
+  "barepath": "ready",
+  "uctl": "ready",
+  "cmdwrap_v": "ready",
+  "tildepath": "ready",
+  "cmdwrap_space_v": "ready"
+ },
+ "appServerExit": {
+  "code": 0,
+  "signal": null,
+  "at": "2026-09-24T13:51:46.988Z"
+ },
+ "mcpListJson": {
+  "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+  "args": [
+   "mcp",
+   "list",
+   "--json"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "[\n  {\n    \"name\": \"barepath\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"probe-stub.exe\",\n      \"args\": [\n        \"--tag\",\n        \"barepath\"\n      ],\n      \"env\": {\n        \"PATH\": \"[cut: 1 entries of this machine's PATH]\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\n        \"PROBE_TAG\": \"barepath\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"cmdwrap\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"cmd.exe\",\n      \"args\": [\n        \"/d\",\n        \"/c\",\n        \"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\",\n        \"--tag\",\n        \"cmdwrap\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"cmdwrap\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"cmdwrap_space\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"cmd.exe\",\n      \"args\": [\n        \"/d\",\n        \"/c\",\n        \"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\",\n        \"--tag\",\n        \"cmdwrap_space\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"cmdwrap_space\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\n        \"LOCALAPPDATA\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"cmdwrap_space_q\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"cmd.exe\",\n      \"args\": [\n        \"/d\",\n        \"/c\",\n        \"\\\"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\\\"\",\n        \"--tag\",\n        \"cmdwrap_space_q\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"cmdwrap_space_q\",\n        \"LOCALAPPDATA\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"cmdwrap_space_qs\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"cmd.exe\",\n      \"args\": [\n        \"/d\",\n        \"/s\",\n        \"/c\",\n        \"\\\"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag cmdwrap_space_qs\"\n      ],\n      \"env\": {\n        \"LOCALAPPDATA\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\n        \"PROBE_TAG\": \"cmdwrap_space_qs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"cmdwrap_space_v\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"cmd.exe\",\n      \"args\": [\n        \"/d\",\n        \"/v:on\",\n        \"/c\",\n        \"!LOCALAPPDATA!\\\\codex-expansion-probe\\\\probe-stub.exe\",\n        \"--tag\",\n        \"cmdwrap_space_v\"\n      ],\n      \"env\": {\n        \"LOCALAPPDATA\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\sp ace\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\n        \"PROBE_TAG\": \"cmdwrap_space_v\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"cmdwrap_v\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"cmd.exe\",\n      \"args\": [\n        \"/d\",\n        \"/v:on\",\n        \"/c\",\n        \"!LOCALAPPDATA!\\\\codex-expansion-probe\\\\probe-stub.exe\",\n        \"--tag\",\n        \"cmdwrap_v\"\n      ],\n      \"env\": {\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\",\n        \"PROBE_TAG\": \"cmdwrap_v\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"ctl\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"--tag\",\n        \"ctl\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"ctl\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"tildepath\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"probe-stub.exe\",\n      \"args\": [\n        \"--tag\",\n        \"tildepath\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"tildepath\",\n        \"PATH\": \"[cut: 1 entries of this machine's PATH]\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"uctl\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"--tag\",\n        \"uctl\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"uctl\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\C-proj-alt-r2\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  }\n]\n",
+  "stderr": "",
+  "ms": 74
+ },
+ "stubLogs": [
+  {
+   "file": "stub-102636-639258546967808511.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:36.7823839Z",
+     "pid": 102636,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag tildepath",
+     "argv": [
+      "--tag",
+      "tildepath"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "[cut: 1 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "tildepath",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8187786Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8197868Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8202937Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8208123Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8208123Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1490594Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1497090Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-105124-639258547020643187.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:42.0658455Z",
+     "pid": 105124,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_v",
+     "argv": [
+      "--tag",
+      "cmdwrap_v"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap_v",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1072116Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1077477Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1082694Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1088066Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1093287Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1098713Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1114485Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1137509Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1148007Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-107468-639258546968377401.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:36.8382460Z",
+     "pid": 107468,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_v",
+     "argv": [
+      "--tag",
+      "cmdwrap_v"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap_v",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8667096Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8667096Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8682395Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8682395Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8682395Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1430915Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1441426Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-109460-639258546968326849.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:36.8332034Z",
+     "pid": 109460,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_space_v",
+     "argv": [
+      "ace\\codex-expansion-probe\\probe-stub.exe",
+      "--tag",
+      "cmdwrap_space_v"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap_space_v",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8636547Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8641603Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8641603Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8646683Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8651851Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1404475Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1409731Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-38524-639258547018429225.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:41.8434294Z",
+     "pid": 38524,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8893782Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8898850Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8909276Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8914703Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8914703Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9476733Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9491954Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9522502Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-46316-639258547018382714.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:41.8382714Z",
+     "pid": 46316,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8805872Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8812710Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8817882Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8817882Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8833079Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9476733Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9491954Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9522502Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-58256-639258546967689129.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:36.7689129Z",
+     "pid": 58256,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag barepath",
+     "argv": [
+      "--tag",
+      "barepath"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "[cut: 1 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "barepath",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8050390Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8065656Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8065656Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8065656Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8081010Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1351875Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1362368Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-58552-639258547019056560.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:41.9067092Z",
+     "pid": 58552,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_v",
+     "argv": [
+      "--tag",
+      "cmdwrap_v"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap_v",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9461531Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9461531Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9461531Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9476733Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9476733Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9476733Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9491954Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9507209Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-64652-639258547019056560.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:41.9061896Z",
+     "pid": 64652,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap",
+     "argv": [
+      "--tag",
+      "cmdwrap"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9440594Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9445887Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9451086Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9456287Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9461531Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9476733Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9491954Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9522502Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-66444-639258547018352208.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:41.8352208Z",
+     "pid": 66444,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag tildepath",
+     "argv": [
+      "--tag",
+      "tildepath"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "[cut: 1 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "tildepath",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8817882Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8817882Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8833079Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8833079Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8843171Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9476733Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9491954Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9522502Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-68740-639258546968466388.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:36.8471611Z",
+     "pid": 68740,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap",
+     "argv": [
+      "--tag",
+      "cmdwrap"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8780592Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8780592Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8795813Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8795813Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8805881Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1378219Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1388771Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-69348-639258547020349313.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:42.0349313Z",
+     "pid": 69348,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag barepath",
+     "argv": [
+      "--tag",
+      "barepath"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "[cut: 1 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "barepath",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0757913Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0757913Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0782536Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0795857Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0811572Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1093287Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1114485Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1137509Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1148007Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-72472-639258546967808511.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:36.7808511Z",
+     "pid": 72472,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8172650Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8182722Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8187786Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8187786Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8197868Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1518779Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1524068Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-83488-639258547018382714.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:41.8382714Z",
+     "pid": 83488,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag barepath",
+     "argv": [
+      "--tag",
+      "barepath"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "[cut: 1 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "barepath",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8893782Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8898850Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8909276Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8914703Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8914703Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8929935Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8929935Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.8940031Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.8945109Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-83856-639258547020871024.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:42.0876193Z",
+     "pid": 83856,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_space_v",
+     "argv": [
+      "ace\\codex-expansion-probe\\probe-stub.exe",
+      "--tag",
+      "cmdwrap_space_v"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap_space_v",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1286495Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1293541Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1298743Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1298743Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1303948Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1314477Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1319725Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1319725Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1325713Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-85364-639258547020344244.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:42.0349313Z",
+     "pid": 85364,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0747838Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0757913Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0782536Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0795857Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0811572Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1093287Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1109282Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1130264Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1137509Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-85580-639258547020303639.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:42.0303639Z",
+     "pid": 85580,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag tildepath",
+     "argv": [
+      "--tag",
+      "tildepath"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "[cut: 1 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "tildepath",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0736467Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0741672Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0741672Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0747838Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0757913Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0757913Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0782536Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0795857Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0811572Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-91084-639258547020318917.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:42.0318917Z",
+     "pid": 91084,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0747838Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0747838Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0757913Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.0782536Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.0795857Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1093287Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1114485Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1130264Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1142759Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-91948-639258547019056560.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:41.9061896Z",
+     "pid": 91948,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap_space_v",
+     "argv": [
+      "ace\\codex-expansion-probe\\probe-stub.exe",
+      "--tag",
+      "cmdwrap_space_v"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\sp ace",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap_space_v",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9435129Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9440594Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9445887Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9451086Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9456287Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9476733Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:41.9491954Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:41.9507209Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-96096-639258547020747838.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:42.0757913Z",
+     "pid": 96096,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe  --tag cmdwrap",
+     "argv": [
+      "--tag",
+      "cmdwrap"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "cmdwrap",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1164004Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1174453Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1179631Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1186393Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1191572Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1314477Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1319725Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1319725Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1325713Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-98248-639258546967719568.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:36.7719568Z",
+     "pid": 98248,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\home\\tmp\\arg0\\codex-arg0LTMncg;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\C-proj-alt-r2\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8081010Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8081010Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8096309Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:36.8096309Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:36.8106415Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:42.1464401Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:42.1469552Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  }
+ ],
+ "finishedAt": "2026-09-24T13:51:48.539Z"
+}

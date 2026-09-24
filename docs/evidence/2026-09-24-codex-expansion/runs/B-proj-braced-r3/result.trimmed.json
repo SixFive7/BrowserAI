@@ -1,0 +1,1344 @@
+{
+ "spec": {
+  "runId": "B-proj-braced-r3",
+  "layer": "project",
+  "spelling": "braced",
+  "round": 3,
+  "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home",
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+  "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+  "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+  "expect": [
+   "uctl",
+   "ctl",
+   "braced_cmd",
+   "braced_cmdb",
+   "braced_arg"
+  ]
+ },
+ "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+ "startedAt": "2026-09-24T13:52:59.077Z",
+ "notes": [
+  {
+   "at": "2026-09-24T13:53:00.352Z",
+   "method": "remoteControl/status/changed",
+   "params": {
+    "status": "disabled",
+    "serverName": "pc657",
+    "installationId": "3566ec5a-2a95-478c-b8ee-e18c550581c8",
+    "environmentId": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.471Z",
+   "method": "thread/started",
+   "params": {
+    "thread": {
+     "id": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+     "environments": [
+      {
+       "environmentId": "local",
+       "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+       "runtimeWorkspaceRoots": [
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj"
+       ]
+      }
+     ],
+     "extra": null,
+     "sessionId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+     "forkedFromId": null,
+     "parentThreadId": null,
+     "preview": "",
+     "ephemeral": false,
+     "section": null,
+     "sectionEnteredAt": null,
+     "projectId": null,
+     "historyMode": "paginated",
+     "modelProvider": "stub",
+     "model": "stub-model",
+     "reasoningEffort": null,
+     "createdAt": 1790257980,
+     "updatedAt": 1790257980,
+     "recencyAt": 1790257980,
+     "status": {
+      "type": "idle"
+     },
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\sessions\\2026\\09\\24\\rollout-2026-09-24T15-53-00-01a0d3b0-e3ca-7822-a887-84a56988e2aa.jsonl",
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "cliVersion": "0.155.0-alpha.9.2",
+     "originator": "q288-probe",
+     "source": "vscode",
+     "canAcceptDirectInput": true,
+     "threadSource": null,
+     "agentNickname": null,
+     "agentRole": null,
+     "gitInfo": null,
+     "name": null,
+     "daybreakEnabled": null,
+     "turns": []
+    }
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.471Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "braced_cmd",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.472Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "ctl",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.472Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "braced_cmdb",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.472Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "braced_arg",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.472Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "uctl",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.473Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "braced_cmdb",
+    "status": "failed",
+    "error": "MCP client for `braced_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.473Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "braced_cmd",
+    "status": "failed",
+    "error": "MCP client for `braced_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.549Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "uctl",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.554Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "braced_arg",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:53:00.556Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+    "name": "ctl",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  }
+ ],
+ "responses": {
+  "initialize": {
+   "id": 1,
+   "result": {
+    "userAgent": "q288-probe/0.155.0-alpha.9.2 (Windows 10.0.26200; x86_64) xterm-256color (q288-probe; 1)",
+    "codexHome": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home",
+    "platformFamily": "windows",
+    "platformOs": "windows"
+   }
+  },
+  "threadStart": {
+   "id": 2,
+   "result": {
+    "thread": {
+     "id": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+     "environments": [
+      {
+       "environmentId": "local",
+       "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+       "runtimeWorkspaceRoots": [
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj"
+       ]
+      }
+     ],
+     "extra": null,
+     "sessionId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+     "forkedFromId": null,
+     "parentThreadId": null,
+     "preview": "",
+     "ephemeral": false,
+     "section": null,
+     "sectionEnteredAt": null,
+     "projectId": null,
+     "historyMode": "paginated",
+     "modelProvider": "stub",
+     "model": "stub-model",
+     "reasoningEffort": null,
+     "createdAt": 1790257980,
+     "updatedAt": 1790257980,
+     "recencyAt": 1790257980,
+     "status": {
+      "type": "idle"
+     },
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\sessions\\2026\\09\\24\\rollout-2026-09-24T15-53-00-01a0d3b0-e3ca-7822-a887-84a56988e2aa.jsonl",
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "cliVersion": "0.155.0-alpha.9.2",
+     "originator": "q288-probe",
+     "source": "vscode",
+     "canAcceptDirectInput": true,
+     "threadSource": null,
+     "agentNickname": null,
+     "agentRole": null,
+     "gitInfo": null,
+     "name": null,
+     "daybreakEnabled": null,
+     "turns": []
+    },
+    "model": "stub-model",
+    "modelProvider": "stub",
+    "serviceTier": null,
+    "disabledPluginIds": [],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+    "runtimeWorkspaceRoots": [
+     "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj"
+    ],
+    "instructionSources": [],
+    "approvalPolicy": "never",
+    "approvalsReviewer": "user",
+    "sandbox": {
+     "type": "readOnly",
+     "networkAccess": false
+    },
+    "activePermissionProfile": null,
+    "reasoningEffort": null,
+    "multiAgentMode": "explicitRequestOnly"
+   }
+  },
+  "statusListThread": {
+   "id": 3,
+   "result": {
+    "data": [
+     {
+      "name": "braced_arg",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-91988",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "braced_cmd",
+      "runtimeStatus": "failed",
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: The system cannot find the path specified. (os error 3)",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "braced_cmdb",
+      "runtimeStatus": "failed",
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: The system cannot find the path specified. (os error 3)",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "ctl",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-65088",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "uctl",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-107684",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  "statusListNoThread": {
+   "id": 4,
+   "result": {
+    "data": [
+     {
+      "name": "braced_arg",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-64440",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "braced_cmd",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: The system cannot find the path specified. (os error 3)",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "braced_cmdb",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: The system cannot find the path specified. (os error 3)",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "ctl",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-101544",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "uctl",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-89600",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     }
+    ],
+    "nextCursor": null
+   }
+  }
+ },
+ "procs": {
+  "before": {
+   "at": "2026-09-24T13:52:59.998Z",
+   "list": [],
+   "status": 0,
+   "stderr": ""
+  },
+  "whileAlive": {
+   "at": "2026-09-24T13:53:03.293Z",
+   "list": [
+    {
+     "pid": 39876,
+     "ppid": 7660,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "created": "2026-09-24T13:53:00.4689010Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 93800
+    },
+    {
+     "pid": 97632,
+     "ppid": 7660,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ${LOCALAPPDATA}/codex-expansion-probe/arg-marker --tag braced_arg",
+     "created": "2026-09-24T13:53:00.4748020Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 93800
+    },
+    {
+     "pid": 99892,
+     "ppid": 7660,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "created": "2026-09-24T13:53:00.4797950Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 93800
+    }
+   ],
+   "status": 0,
+   "stderr": ""
+  },
+  "afterCalls": {
+   "at": "2026-09-24T13:53:06.074Z",
+   "list": [
+    {
+     "pid": 39876,
+     "ppid": 7660,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "created": "2026-09-24T13:53:00.4689010Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 93800
+    },
+    {
+     "pid": 97632,
+     "ppid": 7660,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ${LOCALAPPDATA}/codex-expansion-probe/arg-marker --tag braced_arg",
+     "created": "2026-09-24T13:53:00.4748020Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 93800
+    },
+    {
+     "pid": 99892,
+     "ppid": 7660,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "created": "2026-09-24T13:53:00.4797950Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 93800
+    }
+   ],
+   "status": 0,
+   "stderr": ""
+  },
+  "afterExit": {
+   "at": "2026-09-24T13:53:07.522Z",
+   "list": [],
+   "status": 0,
+   "stderr": ""
+  }
+ },
+ "toolCalls": {
+  "braced_arg": {
+   "id": 5,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:53:00.5234033Z\",\"pid\":97632,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" ${LOCALAPPDATA}/codex-expansion-probe/arg-marker --tag braced_arg\",\"argv\":[\"${LOCALAPPDATA}/codex-expansion-probe/arg-marker\",\"--tag\",\"braced_arg\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\home\\\\tmp\\\\arg0\\\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\stublogs\",\"PROBE_SPELLED\":\"${LOCALAPPDATA}/codex-expansion-probe/env-marker\",\"PROBE_TAG\":\"braced_arg\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "ctl": {
+   "id": 6,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:53:00.5270008Z\",\"pid\":99892,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag ctl\",\"argv\":[\"--tag\",\"ctl\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\home\\\\tmp\\\\arg0\\\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\stublogs\",\"PROBE_TAG\":\"ctl\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "uctl": {
+   "id": 7,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:53:00.5188376Z\",\"pid\":39876,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag uctl\",\"argv\":[\"--tag\",\"uctl\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\home\\\\tmp\\\\arg0\\\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\stublogs\",\"PROBE_TAG\":\"uctl\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  }
+ },
+ "killed": [],
+ "appServerPid": 7660,
+ "threadId": "01a0d3b0-e3ca-7822-a887-84a56988e2aa",
+ "startupStatus": {
+  "uctl": "ready",
+  "ctl": "ready",
+  "braced_cmd": "failed",
+  "braced_cmdb": "failed",
+  "braced_arg": "ready"
+ },
+ "startupStatusAll": {
+  "braced_cmd": "failed",
+  "ctl": "ready",
+  "braced_cmdb": "failed",
+  "braced_arg": "ready",
+  "uctl": "ready"
+ },
+ "appServerExit": {
+  "code": 0,
+  "signal": null,
+  "at": "2026-09-24T13:53:06.137Z"
+ },
+ "mcpListJson": {
+  "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+  "args": [
+   "mcp",
+   "list",
+   "--json"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "[\n  {\n    \"name\": \"braced_arg\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"${LOCALAPPDATA}/codex-expansion-probe/arg-marker\",\n        \"--tag\",\n        \"braced_arg\"\n      ],\n      \"env\": {\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\stublogs\",\n        \"PROBE_TAG\": \"braced_arg\",\n        \"PROBE_SPELLED\": \"${LOCALAPPDATA}/codex-expansion-probe/env-marker\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"braced_cmd\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"${LOCALAPPDATA}/codex-expansion-probe/probe-stub.exe\",\n      \"args\": [\n        \"${LOCALAPPDATA}/codex-expansion-probe/arg-marker\",\n        \"--tag\",\n        \"braced_cmd\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"braced_cmd\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"braced_cmdb\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"${LOCALAPPDATA}\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"${LOCALAPPDATA}/codex-expansion-probe/arg-marker\",\n        \"--tag\",\n        \"braced_cmdb\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"braced_cmdb\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"ctl\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"--tag\",\n        \"ctl\"\n      ],\n      \"env\": {\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\stublogs\",\n        \"PROBE_TAG\": \"ctl\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"uctl\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"--tag\",\n        \"uctl\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"uctl\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-braced-r3\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  }\n]\n",
+  "stderr": "",
+  "ms": 72
+ },
+ "stubLogs": [
+  {
+   "file": "stub-101544-639258547834859295.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:03.4874503Z",
+     "pid": 101544,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5210809Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5210809Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5220902Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5225963Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5225963Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5256817Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5271979Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5282027Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5287267Z",
+     "method": "resources/list",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-107684-639258547833590127.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:03.3605339Z",
+     "pid": 107684,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3946285Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.3951648Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3962459Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3967638Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.3967638Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3967638Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.3982830Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3988027Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.3993211Z",
+     "method": "resources/list",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-39876-639258547805183103.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:00.5188376Z",
+     "pid": 39876,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5479878Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:00.5485069Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5485069Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5490260Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:00.5490260Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5365458Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5365458Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-64440-639258547834854231.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:03.4859295Z",
+     "pid": 64440,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ${LOCALAPPDATA}/codex-expansion-probe/arg-marker --tag braced_arg",
+     "argv": [
+      "${LOCALAPPDATA}/codex-expansion-probe/arg-marker",
+      "--tag",
+      "braced_arg"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_SPELLED": "${LOCALAPPDATA}/codex-expansion-probe/env-marker",
+      "PROBE_TAG": "braced_arg",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5165355Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5175424Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5175424Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5175424Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5185497Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5190567Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5190567Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5195625Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5195625Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-65088-639258547833615420.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:03.3620496Z",
+     "pid": 65088,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3946285Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.3951648Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3962459Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3967638Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.3967638Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3967638Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.3982830Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.3988027Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.3988027Z",
+     "method": "resources/templates/list",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-89600-639258547834828981.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:03.4828981Z",
+     "pid": 89600,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5241095Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5246273Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5251512Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5256817Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5256817Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5256817Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5266900Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5271979Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5282027Z",
+     "method": "resources/templates/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-91988-639258547833801243.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:03.3811329Z",
+     "pid": 91988,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ${LOCALAPPDATA}/codex-expansion-probe/arg-marker --tag braced_arg",
+     "argv": [
+      "${LOCALAPPDATA}/codex-expansion-probe/arg-marker",
+      "--tag",
+      "braced_arg"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_SPELLED": "${LOCALAPPDATA}/codex-expansion-probe/env-marker",
+      "PROBE_TAG": "braced_arg",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.4131982Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.4137036Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.4142210Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.4147618Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.4147618Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.4152811Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.4158083Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.4163264Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.4168442Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-97632-639258547805223953.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:00.5234033Z",
+     "pid": 97632,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ${LOCALAPPDATA}/codex-expansion-probe/arg-marker --tag braced_arg",
+     "argv": [
+      "${LOCALAPPDATA}/codex-expansion-probe/arg-marker",
+      "--tag",
+      "braced_arg"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_SPELLED": "${LOCALAPPDATA}/codex-expansion-probe/env-marker",
+      "PROBE_TAG": "braced_arg",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5526444Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:00.5526444Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5526444Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5526444Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:00.5526444Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5307715Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5307715Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-99892-639258547805270008.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:53:00.5270008Z",
+     "pid": 99892,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\home\\tmp\\arg0\\codex-arg03ymIzl;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-braced-r3\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5541665Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:00.5556988Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5556988Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:00.5556988Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:00.5556988Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:53:03.5339703Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:53:03.5345007Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  }
+ ],
+ "finishedAt": "2026-09-24T13:53:07.598Z"
+}

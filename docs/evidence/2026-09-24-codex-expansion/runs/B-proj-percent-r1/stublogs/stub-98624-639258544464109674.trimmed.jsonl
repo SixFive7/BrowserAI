@@ -1,0 +1,9 @@
+{"event":"launch","at":"2026-09-24T13:47:26.4109674Z","pid":98624,"image":"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe","commandLine":"\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl","argv":["--tag","ctl"],"cwd":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj","env":{"LOCALAPPDATA":"C:\\Users\\jori\\AppData\\Local","PATH":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\home\\tmp\\arg0\\codex-arg0Nfp40A;[cut: 64 entries of this machine's PATH]","PROBE_LOG_DIR":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs","PROBE_TAG":"ctl","USERPROFILE":"C:\\Users\\jori"}}
+{"event":"recv","at":"2026-09-24T13:47:26.4404001Z","method":"initialize","id":0}
+{"event":"sent","at":"2026-09-24T13:47:26.4414480Z","method":"initialize","id":0}
+{"event":"recv","at":"2026-09-24T13:47:26.4424854Z","method":"notifications/initialized","id":null}
+{"event":"recv","at":"2026-09-24T13:47:26.4430142Z","method":"tools/list","id":1}
+{"event":"sent","at":"2026-09-24T13:47:26.4435268Z","method":"tools/list","id":1}
+{"event":"recv","at":"2026-09-24T13:47:26.4440461Z","method":"resources/templates/list","id":3}
+{"event":"sent","at":"2026-09-24T13:47:26.4445670Z","method":"resources/templates/list","id":3}
+{"event":"recv","at":"2026-09-24T13:47:26.4445670Z","method":"resources/list","id":2}

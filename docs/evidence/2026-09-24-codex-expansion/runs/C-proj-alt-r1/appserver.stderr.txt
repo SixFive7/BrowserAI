@@ -1,0 +1,97 @@
+2026-09-24T13:48:13.954308Z  WARN codex_models_manager::model_info: Unknown model stub-model is used. This will use fallback model metadata.
+2026-09-24T13:48:14.059060Z  WARN codex_core_plugins::manager: failed to warm featured plugin ids cache error=remote featured plugin request to https://chatgpt.com/backend-api/plugins/featured?platform=codex failed with status 401 Unauthorized: {"detail":"Unauthorized"}
+2026-09-24T13:48:14.107927Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell
+2026-09-24T13:48:14.129647Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: new
+2026-09-24T13:48:14.129688Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: enter
+2026-09-24T13:48:14.129699Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: exit
+2026-09-24T13:48:14.129705Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: enter
+2026-09-24T13:48:14.129712Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: exit
+2026-09-24T13:48:14.129724Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: close time.busy=18.2µs time.idle=60.7µs
+2026-09-24T13:48:14.130647Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:14.130673Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:14.130695Z DEBUG codex_rmcp_client::program_resolver: Resolved "probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:14.130704Z DEBUG codex_rmcp_client::program_resolver: Resolved "probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:14.134049Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:14.134076Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:14.134120Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:14.134207Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:14.134217Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:14.134335Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:14.213751Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): 'C:\Users\jori\AppData\Local\codex-expansion-probe\sp' is not recognized as an internal or external command,
+2026-09-24T13:48:14.213816Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:14.217081Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:14.237792Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): '\"C:\Users\jori\AppData\Local\codex-expansion-probe\sp ace\codex-expansion-probe\probe-stub.exe\"' is not recognized as an internal or external command,
+2026-09-24T13:48:14.237853Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:14.241751Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space_qs" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:14.248657Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): '\"C:\Users\jori\AppData\Local\codex-expansion-probe\sp ace\codex-expansion-probe\probe-stub.exe\"' is not recognized as an internal or external command,
+2026-09-24T13:48:14.248689Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:14.252740Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space_q" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:19.103638Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:19.103879Z DEBUG codex_rmcp_client::program_resolver: Resolved "probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:19.103946Z DEBUG codex_rmcp_client::program_resolver: Resolved "probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:19.103984Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:19.105912Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.106404Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.106435Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.106578Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.106581Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.106624Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.142759Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): '\"C:\Users\jori\AppData\Local\codex-expansion-probe\sp ace\codex-expansion-probe\probe-stub.exe\"' is not recognized as an internal or external command,
+2026-09-24T13:48:19.142812Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:19.146390Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space_q" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:19.148330Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): '\"C:\Users\jori\AppData\Local\codex-expansion-probe\sp ace\codex-expansion-probe\probe-stub.exe\"' is not recognized as an internal or external command,
+2026-09-24T13:48:19.148376Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:19.151370Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): 'C:\Users\jori\AppData\Local\codex-expansion-probe\sp' is not recognized as an internal or external command,
+2026-09-24T13:48:19.151430Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:19.151691Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space_qs" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:19.155359Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:19.259516Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'barepath': Unexpected response type
+2026-09-24T13:48:19.259584Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'tildepath': Unexpected response type
+2026-09-24T13:48:19.259599Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'cmdwrap': Unexpected response type
+2026-09-24T13:48:19.259642Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'barepath': Unexpected response type
+2026-09-24T13:48:19.259659Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'tildepath': Unexpected response type
+2026-09-24T13:48:19.259676Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'cmdwrap': Unexpected response type
+2026-09-24T13:48:19.260855Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'cmdwrap_space_v': Unexpected response type
+2026-09-24T13:48:19.260976Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'cmdwrap_v': Unexpected response type
+2026-09-24T13:48:19.261005Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'ctl': Unexpected response type
+2026-09-24T13:48:19.261045Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'uctl': Unexpected response type
+2026-09-24T13:48:19.263761Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'cmdwrap_v': Unexpected response type
+2026-09-24T13:48:19.263802Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'cmdwrap_space_v': Unexpected response type
+2026-09-24T13:48:19.263817Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'uctl': Unexpected response type
+2026-09-24T13:48:19.264002Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'ctl': Unexpected response type
+2026-09-24T13:48:19.275831Z DEBUG codex_rmcp_client::program_resolver: Resolved "probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:19.275845Z DEBUG codex_rmcp_client::program_resolver: Resolved "probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:19.276013Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:19.276106Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:48:19.280355Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.280792Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.280836Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.280920Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.281014Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.281073Z DEBUG codex_rmcp_client::program_resolver: Resolved "cmd.exe" to "C:\\Windows\\system32\\cmd.exe"
+2026-09-24T13:48:19.308595Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): '\"C:\Users\jori\AppData\Local\codex-expansion-probe\sp ace\codex-expansion-probe\probe-stub.exe\"' is not recognized as an internal or external command,
+2026-09-24T13:48:19.308664Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:19.312727Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space_q" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:19.321523Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): 'C:\Users\jori\AppData\Local\codex-expansion-probe\sp' is not recognized as an internal or external command,
+2026-09-24T13:48:19.321577Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:19.323454Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): '\"C:\Users\jori\AppData\Local\codex-expansion-probe\sp ace\codex-expansion-probe\probe-stub.exe\"' is not recognized as an internal or external command,
+2026-09-24T13:48:19.323495Z  INFO codex_rmcp_client::stdio_server_launcher: MCP server stderr (cmd.exe): operable program or batch file.
+2026-09-24T13:48:19.325702Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:19.327006Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="cmdwrap_space_qs" error=handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:19.440802Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'tildepath': Unexpected response type
+2026-09-24T13:48:19.440845Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'ctl': Unexpected response type
+2026-09-24T13:48:19.440859Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'cmdwrap': Unexpected response type
+2026-09-24T13:48:19.440896Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'cmdwrap': Unexpected response type
+2026-09-24T13:48:19.440912Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'tildepath': Unexpected response type
+2026-09-24T13:48:19.440924Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'ctl': Unexpected response type
+2026-09-24T13:48:19.442154Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'cmdwrap_v': Unexpected response type
+2026-09-24T13:48:19.442358Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'barepath': Unexpected response type
+2026-09-24T13:48:19.442484Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'cmdwrap_space_v': Unexpected response type
+2026-09-24T13:48:19.442529Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'uctl': Unexpected response type
+2026-09-24T13:48:19.444984Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'cmdwrap_v': Unexpected response type
+2026-09-24T13:48:19.445071Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'barepath': Unexpected response type
+2026-09-24T13:48:19.445144Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'cmdwrap_space_v': Unexpected response type
+2026-09-24T13:48:19.445216Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'uctl': Unexpected response type
+2026-09-24T13:48:23.636677Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:23.636714Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response
+2026-09-24T13:48:23.637060Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: handshaking with MCP server failed: connection closed: initialize response: connection closed: initialize response

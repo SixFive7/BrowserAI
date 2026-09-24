@@ -526,6 +526,61 @@ start line under the scratch app root. The millisecond row above came from a cop
 the driver that polled that pid every 100 ms after the EOF, which is one
 `setInterval` around `process.kill(pid, 0)`.
 
+## Codex expands nothing in a server's command, and finds a bare name on the server's PATH -- measured 2026-09-24
+
+`[FLOATS]` codex-cli **0.155.0-alpha.9.2**, Windows 10.0.26200, measured 2026-09-24
+between 13:41Z and 13:57Z for Q288 under a scratch `CODEX_HOME` per run
+([evidence](../../docs/evidence/2026-09-24-codex-expansion/README.md)). **The question
+was whether a Codex project entry can be committed in a form that resolves on every
+machine**, the way `${LOCALAPPDATA}/...` does for Claude Code
+([the registration section](#registering-browserai-with-the-client)). **It cannot.**
+
+| Spelled in `command` | Started |
+|---|---|
+| `${LOCALAPPDATA}`, `$LOCALAPPDATA`, `%LOCALAPPDATA%` and `~`, each with `/` and with `\`, at user and at project scope, three rounds | **0 of 48**, every one *"MCP startup failed: The system cannot find the path specified. (os error 3)"* |
+| An absolute path, the controls | 45 of the 45 Codex loaded |
+| A bare name, `probe-stub.exe`, with the entry's own `env.PATH` naming its directory | 3 of 3 |
+
+The same four spellings in `args` reached the server as written, 24 of 24, and
+`codex mcp add` stores whatever it is handed: 78 of 78 adds read back byte for byte
+through `codex mcp get --json`. **So a variable in a Codex entry is text**, and an
+entry written the Claude Code way is a registration Codex cannot start.
+
+**The source agrees, at the tag the CLI was built from**, `rust-v0.155.0-alpha.9.2`,
+commit `4607249e430dac1c961df4dc615beae88e33cec8`:
+`codex-rs/rmcp-client/src/stdio_server_launcher.rs:263-285` builds the server's
+environment, resolves the configured program with
+`program_resolver::resolve(program, &envs, &cwd)` and starts what that returns;
+`program_resolver.rs:41-65` is `which::which_in` over the `PATH` in that environment,
+falling back to the text as given; and `utils.rs:16-57`,
+`create_env_for_mcp_server`, reads each allowlisted variable, `PATH` among them, from
+Codex's own environment and lays the entry's `env` table over it. Nothing on that
+path expands anything. On `main` at `282cd7b0` (2026-09-24T13:09:49Z) the resolver
+and the environment builder are byte-identical once line endings are set aside, and
+`launch_server` still resolves and starts the program the same way. Expansion is
+[openai/codex#2680](https://github.com/openai/codex/issues/2680), *"Support environment
+variable expansion"*, **open since 2025-08-25** (read 2026-09-24).
+
+⚠️ **What the bare-name row does and does not show.** It was measured with the PATH in
+the entry's own `env`. The route BrowserAI takes -- no `env` in the entry, the install's
+`current\` folder on the user's PATH, and Codex's own inherited `PATH` carrying it to the
+resolver -- is the same resolver reading a different `PATH`, and is **read from the
+source above, not measured**. It also means **a Codex process started before the install
+has no such entry in its PATH**, so it cannot find the server until it is started again;
+that is inferred from the same source and is not measured either. `which` resolves a
+leading `~` in a PATH entry as well (`finder.rs:242` in `which` 8.0.0): the same case
+with `env.PATH` spelled `~\AppData\Local\...` started 3 of 3.
+
+**What BrowserAI does with it is Q294, decided 2026-09-24 by the maintainer, verbatim:
+*"Q294 b"*: a Codex project entry names the server by its bare file name, and the
+install puts its own `current\` folder on the user's PATH.** Claude Code's project entry
+keeps its `${LOCALAPPDATA}` spelling, which that client expands.
+
+**Re-establish** with the rig in the evidence batch: `rig/matrix.sh` runs every case three
+times under scratch homes, and `rig/summarize.js` prints the table above from the
+result files. Against a newer CLI the first thing to look at is the `_cmd` rows: one
+that starts means Codex has begun expanding.
+
 ## What a client does when the server exits, and what the pipe decides -- measured 2026-09-24
 
 `[FLOATS]` **Claude Code 2.1.281** and **codex-cli 0.155.0-alpha.9.2**, Windows

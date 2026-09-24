@@ -1,0 +1,16 @@
+{
+ "runId": "B-user-tilde-r2",
+ "layer": "user",
+ "spelling": "tilde",
+ "round": 2,
+ "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r2\\home",
+ "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r2\\neutral",
+ "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r2\\neutral",
+ "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-user-tilde-r2\\stublogs",
+ "expect": [
+  "ctl",
+  "tilde_cmd",
+  "tilde_cmdb",
+  "tilde_arg"
+ ]
+}

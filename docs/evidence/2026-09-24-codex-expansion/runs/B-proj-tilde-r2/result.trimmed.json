@@ -1,0 +1,1344 @@
+{
+ "spec": {
+  "runId": "B-proj-tilde-r2",
+  "layer": "project",
+  "spelling": "tilde",
+  "round": 2,
+  "home": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home",
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+  "threadCwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+  "logDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+  "expect": [
+   "uctl",
+   "ctl",
+   "tilde_cmd",
+   "tilde_cmdb",
+   "tilde_arg"
+  ]
+ },
+ "codex": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+ "startedAt": "2026-09-24T13:51:17.224Z",
+ "notes": [
+  {
+   "at": "2026-09-24T13:51:18.353Z",
+   "method": "remoteControl/status/changed",
+   "params": {
+    "status": "disabled",
+    "serverName": "pc657",
+    "installationId": "81157a73-a762-41df-988e-5c7116d5d7b6",
+    "environmentId": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.494Z",
+   "method": "thread/started",
+   "params": {
+    "thread": {
+     "id": "01a0d3af-555b-7480-bc56-585137cc93dd",
+     "environments": [
+      {
+       "environmentId": "local",
+       "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+       "runtimeWorkspaceRoots": [
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj"
+       ]
+      }
+     ],
+     "extra": null,
+     "sessionId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+     "forkedFromId": null,
+     "parentThreadId": null,
+     "preview": "",
+     "ephemeral": false,
+     "section": null,
+     "sectionEnteredAt": null,
+     "projectId": null,
+     "historyMode": "paginated",
+     "modelProvider": "stub",
+     "model": "stub-model",
+     "reasoningEffort": null,
+     "createdAt": 1790257878,
+     "updatedAt": 1790257878,
+     "recencyAt": 1790257878,
+     "status": {
+      "type": "idle"
+     },
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\sessions\\2026\\09\\24\\rollout-2026-09-24T15-51-18-01a0d3af-555b-7480-bc56-585137cc93dd.jsonl",
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "cliVersion": "0.155.0-alpha.9.2",
+     "originator": "q288-probe",
+     "source": "vscode",
+     "canAcceptDirectInput": true,
+     "threadSource": null,
+     "agentNickname": null,
+     "agentRole": null,
+     "gitInfo": null,
+     "name": null,
+     "daybreakEnabled": null,
+     "turns": []
+    }
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.494Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "tilde_cmdb",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.494Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "tilde_arg",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.495Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "tilde_cmd",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.495Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "uctl",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.495Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "ctl",
+    "status": "starting",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.496Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "tilde_cmdb",
+    "status": "failed",
+    "error": "MCP client for `tilde_cmdb` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.496Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "tilde_cmd",
+    "status": "failed",
+    "error": "MCP client for `tilde_cmd` failed to start: MCP startup failed: The system cannot find the path specified. (os error 3)",
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.570Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "ctl",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.572Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "tilde_arg",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  },
+  {
+   "at": "2026-09-24T13:51:18.581Z",
+   "method": "mcpServer/startupStatus/updated",
+   "params": {
+    "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+    "name": "uctl",
+    "status": "ready",
+    "error": null,
+    "failureReason": null
+   }
+  }
+ ],
+ "responses": {
+  "initialize": {
+   "id": 1,
+   "result": {
+    "userAgent": "q288-probe/0.155.0-alpha.9.2 (Windows 10.0.26200; x86_64) xterm-256color (q288-probe; 1)",
+    "codexHome": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home",
+    "platformFamily": "windows",
+    "platformOs": "windows"
+   }
+  },
+  "threadStart": {
+   "id": 2,
+   "result": {
+    "thread": {
+     "id": "01a0d3af-555b-7480-bc56-585137cc93dd",
+     "environments": [
+      {
+       "environmentId": "local",
+       "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+       "runtimeWorkspaceRoots": [
+        "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj"
+       ]
+      }
+     ],
+     "extra": null,
+     "sessionId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+     "forkedFromId": null,
+     "parentThreadId": null,
+     "preview": "",
+     "ephemeral": false,
+     "section": null,
+     "sectionEnteredAt": null,
+     "projectId": null,
+     "historyMode": "paginated",
+     "modelProvider": "stub",
+     "model": "stub-model",
+     "reasoningEffort": null,
+     "createdAt": 1790257878,
+     "updatedAt": 1790257878,
+     "recencyAt": 1790257878,
+     "status": {
+      "type": "idle"
+     },
+     "path": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\sessions\\2026\\09\\24\\rollout-2026-09-24T15-51-18-01a0d3af-555b-7480-bc56-585137cc93dd.jsonl",
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "cliVersion": "0.155.0-alpha.9.2",
+     "originator": "q288-probe",
+     "source": "vscode",
+     "canAcceptDirectInput": true,
+     "threadSource": null,
+     "agentNickname": null,
+     "agentRole": null,
+     "gitInfo": null,
+     "name": null,
+     "daybreakEnabled": null,
+     "turns": []
+    },
+    "model": "stub-model",
+    "modelProvider": "stub",
+    "serviceTier": null,
+    "disabledPluginIds": [],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+    "runtimeWorkspaceRoots": [
+     "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj"
+    ],
+    "instructionSources": [],
+    "approvalPolicy": "never",
+    "approvalsReviewer": "user",
+    "sandbox": {
+     "type": "readOnly",
+     "networkAccess": false
+    },
+    "activePermissionProfile": null,
+    "reasoningEffort": null,
+    "multiAgentMode": "explicitRequestOnly"
+   }
+  },
+  "statusListThread": {
+   "id": 3,
+   "result": {
+    "data": [
+     {
+      "name": "ctl",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-24468",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "tilde_arg",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-106884",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "tilde_cmd",
+      "runtimeStatus": "failed",
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: The system cannot find the path specified. (os error 3)",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "tilde_cmdb",
+      "runtimeStatus": "failed",
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: The system cannot find the path specified. (os error 3)",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "uctl",
+      "runtimeStatus": "connected",
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-77612",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     }
+    ],
+    "nextCursor": null
+   }
+  },
+  "statusListNoThread": {
+   "id": 4,
+   "result": {
+    "data": [
+     {
+      "name": "ctl",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-96428",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "tilde_arg",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-92368",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "tilde_cmd",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: The system cannot find the path specified. (os error 3)",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "tilde_cmdb",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": null,
+      "serverCapabilities": null,
+      "tools": {},
+      "toolsError": "MCP startup failed: The system cannot find the path specified. (os error 3)",
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     },
+     {
+      "name": "uctl",
+      "runtimeStatus": null,
+      "pluginId": null,
+      "serverInfo": {
+       "name": "q288-probe-stub",
+       "title": null,
+       "version": "pid-98796",
+       "description": null,
+       "icons": null,
+       "websiteUrl": null
+      },
+      "serverCapabilities": {
+       "tools": {}
+      },
+      "tools": {
+       "probe_whoami": {
+        "name": "probe_whoami",
+        "description": "Returns how this probe process was started.",
+        "inputSchema": {
+         "type": "object",
+         "properties": {}
+        }
+       }
+      },
+      "toolsError": null,
+      "resources": [],
+      "resourceTemplates": [],
+      "authStatus": "unsupported"
+     }
+    ],
+    "nextCursor": null
+   }
+  }
+ },
+ "procs": {
+  "before": {
+   "at": "2026-09-24T13:51:18.038Z",
+   "list": [],
+   "status": 0,
+   "stderr": ""
+  },
+  "whileAlive": {
+   "at": "2026-09-24T13:51:21.086Z",
+   "list": [
+    {
+     "pid": 94580,
+     "ppid": 83976,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "created": "2026-09-24T13:51:18.4921160Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 69404
+    },
+    {
+     "pid": 92240,
+     "ppid": 83976,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ~/AppData/Local/codex-expansion-probe/arg-marker --tag tilde_arg",
+     "created": "2026-09-24T13:51:18.4973810Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 69404
+    },
+    {
+     "pid": 96220,
+     "ppid": 83976,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "created": "2026-09-24T13:51:18.5025230Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 69404
+    }
+   ],
+   "status": 0,
+   "stderr": ""
+  },
+  "afterCalls": {
+   "at": "2026-09-24T13:51:23.740Z",
+   "list": [
+    {
+     "pid": 94580,
+     "ppid": 83976,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "created": "2026-09-24T13:51:18.4921160Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 69404
+    },
+    {
+     "pid": 92240,
+     "ppid": 83976,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ~/AppData/Local/codex-expansion-probe/arg-marker --tag tilde_arg",
+     "created": "2026-09-24T13:51:18.4973810Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 69404
+    },
+    {
+     "pid": 96220,
+     "ppid": 83976,
+     "path": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "created": "2026-09-24T13:51:18.5025230Z",
+     "parentPath": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+     "parentPpid": 69404
+    }
+   ],
+   "status": 0,
+   "stderr": ""
+  },
+  "afterExit": {
+   "at": "2026-09-24T13:51:25.174Z",
+   "list": [],
+   "status": 0,
+   "stderr": ""
+  }
+ },
+ "toolCalls": {
+  "ctl": {
+   "id": 5,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:18.5402071Z\",\"pid\":94580,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag ctl\",\"argv\":[\"--tag\",\"ctl\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\home\\\\tmp\\\\arg0\\\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\stublogs\",\"PROBE_TAG\":\"ctl\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "tilde_arg": {
+   "id": 6,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:18.5417185Z\",\"pid\":92240,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" ~/AppData/Local/codex-expansion-probe/arg-marker --tag tilde_arg\",\"argv\":[\"~/AppData/Local/codex-expansion-probe/arg-marker\",\"--tag\",\"tilde_arg\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\home\\\\tmp\\\\arg0\\\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\stublogs\",\"PROBE_SPELLED\":\"~/AppData/Local/codex-expansion-probe/env-marker\",\"PROBE_TAG\":\"tilde_arg\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  },
+  "uctl": {
+   "id": 7,
+   "result": {
+    "content": [
+     {
+      "type": "text",
+      "text": "{\"event\":\"launch\",\"at\":\"2026-09-24T13:51:18.5498680Z\",\"pid\":96220,\"image\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\"commandLine\":\"\\\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\\\" --tag uctl\",\"argv\":[\"--tag\",\"uctl\"],\"cwd\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\proj\",\"env\":{\"LOCALAPPDATA\":\"C:\\\\Users\\\\jori\\\\AppData\\\\Local\",\"PATH\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\home\\\\tmp\\\\arg0\\\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]\",\"PROBE_LOG_DIR\":\"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\stublogs\",\"PROBE_TAG\":\"uctl\",\"USERPROFILE\":\"C:\\\\Users\\\\jori\"}}"
+     }
+    ]
+   }
+  }
+ },
+ "killed": [],
+ "appServerPid": 83976,
+ "threadId": "01a0d3af-555b-7480-bc56-585137cc93dd",
+ "startupStatus": {
+  "uctl": "ready",
+  "ctl": "ready",
+  "tilde_cmd": "failed",
+  "tilde_cmdb": "failed",
+  "tilde_arg": "ready"
+ },
+ "startupStatusAll": {
+  "tilde_cmdb": "failed",
+  "tilde_arg": "ready",
+  "tilde_cmd": "failed",
+  "uctl": "ready",
+  "ctl": "ready"
+ },
+ "appServerExit": {
+  "code": 0,
+  "signal": null,
+  "at": "2026-09-24T13:51:23.798Z"
+ },
+ "mcpListJson": {
+  "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+  "args": [
+   "mcp",
+   "list",
+   "--json"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "[\n  {\n    \"name\": \"ctl\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"--tag\",\n        \"ctl\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"ctl\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"tilde_arg\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"~/AppData/Local/codex-expansion-probe/arg-marker\",\n        \"--tag\",\n        \"tilde_arg\"\n      ],\n      \"env\": {\n        \"PROBE_SPELLED\": \"~/AppData/Local/codex-expansion-probe/env-marker\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\stublogs\",\n        \"PROBE_TAG\": \"tilde_arg\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"tilde_cmd\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"~/AppData/Local/codex-expansion-probe/probe-stub.exe\",\n      \"args\": [\n        \"~/AppData/Local/codex-expansion-probe/arg-marker\",\n        \"--tag\",\n        \"tilde_cmd\"\n      ],\n      \"env\": {\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\stublogs\",\n        \"PROBE_TAG\": \"tilde_cmd\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"tilde_cmdb\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"~\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"~/AppData/Local/codex-expansion-probe/arg-marker\",\n        \"--tag\",\n        \"tilde_cmdb\"\n      ],\n      \"env\": {\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\stublogs\",\n        \"PROBE_TAG\": \"tilde_cmdb\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  },\n  {\n    \"name\": \"uctl\",\n    \"enabled\": true,\n    \"disabled_reason\": null,\n    \"transport\": {\n      \"type\": \"stdio\",\n      \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n      \"args\": [\n        \"--tag\",\n        \"uctl\"\n      ],\n      \"env\": {\n        \"PROBE_TAG\": \"uctl\",\n        \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-tilde-r2\\\\stublogs\"\n      },\n      \"env_vars\": [],\n      \"cwd\": null\n    },\n    \"startup_timeout_sec\": null,\n    \"tool_timeout_sec\": null,\n    \"auth_status\": \"unsupported\"\n  }\n]\n",
+  "stderr": "",
+  "ms": 63
+ },
+ "stubLogs": [
+  {
+   "file": "stub-106884-639258546811516240.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:21.1516240Z",
+     "pid": 106884,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ~/AppData/Local/codex-expansion-probe/arg-marker --tag tilde_arg",
+     "argv": [
+      "~/AppData/Local/codex-expansion-probe/arg-marker",
+      "--tag",
+      "tilde_arg"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_SPELLED": "~/AppData/Local/codex-expansion-probe/env-marker",
+      "PROBE_TAG": "tilde_arg",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.1813801Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.1818980Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.1824230Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.1829454Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.1829454Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.2094839Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.2094839Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.2094839Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.2113151Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-24468-639258546811516240.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:21.1516240Z",
+     "pid": 24468,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.1829454Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.1844731Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.1844731Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.1844731Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.1844731Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.1860015Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.1860015Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.1860015Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.1860015Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-77612-639258546811743497.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:21.1748862Z",
+     "pid": 77612,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.2069539Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.2069539Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.2084771Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.2084771Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.2084771Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.2094839Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.2094839Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.2094839Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.2094839Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-92240-639258546785417185.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:18.5417185Z",
+     "pid": 92240,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ~/AppData/Local/codex-expansion-probe/arg-marker --tag tilde_arg",
+     "argv": [
+      "~/AppData/Local/codex-expansion-probe/arg-marker",
+      "--tag",
+      "tilde_arg"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_SPELLED": "~/AppData/Local/codex-expansion-probe/env-marker",
+      "PROBE_TAG": "tilde_arg",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5704096Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:18.5704096Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5709306Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5709306Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:18.5709306Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3245531Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3245531Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-92368-639258546812823840.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:21.2833913Z",
+     "pid": 92368,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" ~/AppData/Local/codex-expansion-probe/arg-marker --tag tilde_arg",
+     "argv": [
+      "~/AppData/Local/codex-expansion-probe/arg-marker",
+      "--tag",
+      "tilde_arg"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_SPELLED": "~/AppData/Local/codex-expansion-probe/env-marker",
+      "PROBE_TAG": "tilde_arg",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3126006Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3131317Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3131317Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3136516Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3136516Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3188965Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3194130Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3199481Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3204677Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  },
+  {
+   "file": "stub-94580-639258546785386868.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:18.5402071Z",
+     "pid": 94580,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5668411Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:18.5683631Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5683631Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5683631Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:18.5698841Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3230326Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3230326Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-96220-639258546785483446.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:18.5498680Z",
+     "pid": 96220,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5795771Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:18.5795771Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5795771Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:18.5811092Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:18.5811092Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3276150Z",
+     "method": "tools/call",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3276150Z",
+     "method": "tools/call",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-96428-639258546812772730.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:21.2772730Z",
+     "pid": 96428,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag ctl",
+     "argv": [
+      "--tag",
+      "ctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_TAG": "ctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3094741Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3099925Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3105103Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3105103Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3110348Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3115519Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3120780Z",
+     "method": "resources/templates/list",
+     "id": 3
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3120780Z",
+     "method": "resources/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3126006Z",
+     "method": "resources/list",
+     "id": 2
+    }
+   ]
+  },
+  {
+   "file": "stub-98796-639258546812818670.jsonl",
+   "events": [
+    {
+     "event": "launch",
+     "at": "2026-09-24T13:51:21.2823840Z",
+     "pid": 98796,
+     "image": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl",
+     "argv": [
+      "--tag",
+      "uctl"
+     ],
+     "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\proj",
+     "env": {
+      "LOCALAPPDATA": "C:\\Users\\jori\\AppData\\Local",
+      "PATH": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\home\\tmp\\arg0\\codex-arg0L0o41I;[cut: 64 entries of this machine's PATH]",
+      "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r2\\stublogs",
+      "PROBE_TAG": "uctl",
+      "USERPROFILE": "C:\\Users\\jori"
+     }
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3168095Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3168095Z",
+     "method": "initialize",
+     "id": 0
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3173265Z",
+     "method": "notifications/initialized",
+     "id": null
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3178484Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3183707Z",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3188965Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3199481Z",
+     "method": "resources/templates/list",
+     "id": 2
+    },
+    {
+     "event": "recv",
+     "at": "2026-09-24T13:51:21.3204677Z",
+     "method": "resources/list",
+     "id": 3
+    },
+    {
+     "event": "sent",
+     "at": "2026-09-24T13:51:21.3209905Z",
+     "method": "resources/list",
+     "id": 3
+    }
+   ]
+  }
+ ],
+ "finishedAt": "2026-09-24T13:51:25.241Z"
+}

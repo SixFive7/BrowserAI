@@ -1,0 +1,338 @@
+{
+ "runId": "B-proj-percent-r1",
+ "kind": "project",
+ "spelling": "percent",
+ "round": 1,
+ "adds": [
+  {
+   "name": "ctl",
+   "intended": {
+    "name": "ctl",
+    "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "--tag",
+     "ctl"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+     "PROBE_TAG": "ctl"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "ctl",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=ctl",
+     "--",
+     "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "--tag",
+     "ctl"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'ctl'.\n",
+    "stderr": "",
+    "ms": 53
+   }
+  },
+  {
+   "name": "percent_cmd",
+   "intended": {
+    "name": "percent_cmd",
+    "command": "%LOCALAPPDATA%/codex-expansion-probe/probe-stub.exe",
+    "args": [
+     "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+     "--tag",
+     "percent_cmd"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+     "PROBE_TAG": "percent_cmd"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "percent_cmd",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=percent_cmd",
+     "--",
+     "%LOCALAPPDATA%/codex-expansion-probe/probe-stub.exe",
+     "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+     "--tag",
+     "percent_cmd"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'percent_cmd'.\n",
+    "stderr": "",
+    "ms": 53
+   }
+  },
+  {
+   "name": "percent_cmdb",
+   "intended": {
+    "name": "percent_cmdb",
+    "command": "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+     "--tag",
+     "percent_cmdb"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+     "PROBE_TAG": "percent_cmdb"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "percent_cmdb",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=percent_cmdb",
+     "--",
+     "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+     "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+     "--tag",
+     "percent_cmdb"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'percent_cmdb'.\n",
+    "stderr": "",
+    "ms": 51
+   }
+  },
+  {
+   "name": "percent_arg",
+   "intended": {
+    "name": "percent_arg",
+    "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+    "args": [
+     "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+     "--tag",
+     "percent_arg"
+    ],
+    "env": {
+     "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+     "PROBE_TAG": "percent_arg",
+     "PROBE_SPELLED": "%LOCALAPPDATA%/codex-expansion-probe/env-marker"
+    }
+   },
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "add",
+     "percent_arg",
+     "--env",
+     "PROBE_LOG_DIR=C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+     "--env",
+     "PROBE_TAG=percent_arg",
+     "--env",
+     "PROBE_SPELLED=%LOCALAPPDATA%/codex-expansion-probe/env-marker",
+     "--",
+     "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+     "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+     "--tag",
+     "percent_arg"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "Added global MCP server 'percent_arg'.\n",
+    "stderr": "",
+    "ms": 55
+   }
+  }
+ ],
+ "gets": [
+  {
+   "name": "ctl",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "ctl",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"ctl\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"--tag\",\n      \"ctl\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-percent-r1\\\\stublogs\",\n      \"PROBE_TAG\": \"ctl\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 55
+   }
+  },
+  {
+   "name": "percent_cmd",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "percent_cmd",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"percent_cmd\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"%LOCALAPPDATA%/codex-expansion-probe/probe-stub.exe\",\n    \"args\": [\n      \"%LOCALAPPDATA%/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"percent_cmd\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-percent-r1\\\\stublogs\",\n      \"PROBE_TAG\": \"percent_cmd\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 51
+   }
+  },
+  {
+   "name": "percent_cmdb",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "percent_cmdb",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"percent_cmdb\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"%LOCALAPPDATA%\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"%LOCALAPPDATA%/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"percent_cmdb\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-percent-r1\\\\stublogs\",\n      \"PROBE_TAG\": \"percent_cmdb\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 54
+   }
+  },
+  {
+   "name": "percent_arg",
+   "result": {
+    "file": "C:\\Users\\jori\\.codex\\plugins\\.plugin-appserver\\codex.exe",
+    "args": [
+     "mcp",
+     "get",
+     "percent_arg",
+     "--json"
+    ],
+    "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"name\": \"percent_arg\",\n  \"enabled\": true,\n  \"disabled_reason\": null,\n  \"transport\": {\n    \"type\": \"stdio\",\n    \"command\": \"C:\\\\Users\\\\jori\\\\AppData\\\\Local\\\\codex-expansion-probe\\\\probe-stub.exe\",\n    \"args\": [\n      \"%LOCALAPPDATA%/codex-expansion-probe/arg-marker\",\n      \"--tag\",\n      \"percent_arg\"\n    ],\n    \"env\": {\n      \"PROBE_LOG_DIR\": \"C:\\\\Source\\\\SixFive7\\\\BrowserAI\\\\.work\\\\codex-expansion\\\\runs\\\\B-proj-percent-r1\\\\stublogs\",\n      \"PROBE_TAG\": \"percent_arg\",\n      \"PROBE_SPELLED\": \"%LOCALAPPDATA%/codex-expansion-probe/env-marker\"\n    },\n    \"env_vars\": [],\n    \"cwd\": null\n  },\n  \"enabled_tools\": null,\n  \"disabled_tools\": null,\n  \"startup_timeout_sec\": null,\n  \"tool_timeout_sec\": null\n}\n",
+    "stderr": "",
+    "ms": 53
+   }
+  }
+ ],
+ "files": {
+  "projectConfigBytesB64": "W21jcF9zZXJ2ZXJzLmN0bF0KY29tbWFuZCA9ICdDOlxVc2Vyc1xqb3JpXEFwcERhdGFcTG9jYWxcY29kZXgtZXhwYW5zaW9uLXByb2JlXHByb2JlLXN0dWIuZXhlJwphcmdzID0gWyItLXRhZyIsICJjdGwiXQoKW21jcF9zZXJ2ZXJzLmN0bC5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xCLXByb2otcGVyY2VudC1yMVxzdHVibG9ncycKUFJPQkVfVEFHID0gImN0bCIKClttY3Bfc2VydmVycy5wZXJjZW50X2NtZF0KY29tbWFuZCA9ICIlTE9DQUxBUFBEQVRBJS9jb2RleC1leHBhbnNpb24tcHJvYmUvcHJvYmUtc3R1Yi5leGUiCmFyZ3MgPSBbIiVMT0NBTEFQUERBVEElL2NvZGV4LWV4cGFuc2lvbi1wcm9iZS9hcmctbWFya2VyIiwgIi0tdGFnIiwgInBlcmNlbnRfY21kIl0KClttY3Bfc2VydmVycy5wZXJjZW50X2NtZC5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xCLXByb2otcGVyY2VudC1yMVxzdHVibG9ncycKUFJPQkVfVEFHID0gInBlcmNlbnRfY21kIgoKW21jcF9zZXJ2ZXJzLnBlcmNlbnRfY21kYl0KY29tbWFuZCA9ICclTE9DQUxBUFBEQVRBJVxjb2RleC1leHBhbnNpb24tcHJvYmVccHJvYmUtc3R1Yi5leGUnCmFyZ3MgPSBbIiVMT0NBTEFQUERBVEElL2NvZGV4LWV4cGFuc2lvbi1wcm9iZS9hcmctbWFya2VyIiwgIi0tdGFnIiwgInBlcmNlbnRfY21kYiJdCgpbbWNwX3NlcnZlcnMucGVyY2VudF9jbWRiLmVudl0KUFJPQkVfTE9HX0RJUiA9ICdDOlxTb3VyY2VcU2l4Rml2ZTdcQnJvd3NlckFJXC53b3JrXGNvZGV4LWV4cGFuc2lvblxydW5zXEItcHJvai1wZXJjZW50LXIxXHN0dWJsb2dzJwpQUk9CRV9UQUcgPSAicGVyY2VudF9jbWRiIgoKW21jcF9zZXJ2ZXJzLnBlcmNlbnRfYXJnXQpjb21tYW5kID0gJ0M6XFVzZXJzXGpvcmlcQXBwRGF0YVxMb2NhbFxjb2RleC1leHBhbnNpb24tcHJvYmVccHJvYmUtc3R1Yi5leGUnCmFyZ3MgPSBbIiVMT0NBTEFQUERBVEElL2NvZGV4LWV4cGFuc2lvbi1wcm9iZS9hcmctbWFya2VyIiwgIi0tdGFnIiwgInBlcmNlbnRfYXJnIl0KClttY3Bfc2VydmVycy5wZXJjZW50X2FyZy5lbnZdClBST0JFX0xPR19ESVIgPSAnQzpcU291cmNlXFNpeEZpdmU3XEJyb3dzZXJBSVwud29ya1xjb2RleC1leHBhbnNpb25ccnVuc1xCLXByb2otcGVyY2VudC1yMVxzdHVibG9ncycKUFJPQkVfU1BFTExFRCA9ICIlTE9DQUxBUFBEQVRBJS9jb2RleC1leHBhbnNpb24tcHJvYmUvZW52LW1hcmtlciIKUFJPQkVfVEFHID0gInBlcmNlbnRfYXJnIgo=",
+  "projectConfigText": "[mcp_servers.ctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"--tag\", \"ctl\"]\n\n[mcp_servers.ctl.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs'\nPROBE_TAG = \"ctl\"\n\n[mcp_servers.percent_cmd]\ncommand = \"%LOCALAPPDATA%/codex-expansion-probe/probe-stub.exe\"\nargs = [\"%LOCALAPPDATA%/codex-expansion-probe/arg-marker\", \"--tag\", \"percent_cmd\"]\n\n[mcp_servers.percent_cmd.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs'\nPROBE_TAG = \"percent_cmd\"\n\n[mcp_servers.percent_cmdb]\ncommand = '%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"%LOCALAPPDATA%/codex-expansion-probe/arg-marker\", \"--tag\", \"percent_cmdb\"]\n\n[mcp_servers.percent_cmdb.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs'\nPROBE_TAG = \"percent_cmdb\"\n\n[mcp_servers.percent_arg]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = [\"%LOCALAPPDATA%/codex-expansion-probe/arg-marker\", \"--tag\", \"percent_arg\"]\n\n[mcp_servers.percent_arg.env]\nPROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs'\nPROBE_SPELLED = \"%LOCALAPPDATA%/codex-expansion-probe/env-marker\"\nPROBE_TAG = \"percent_arg\"\n",
+  "projectDotCodexListing": [
+   "config.toml",
+   "tmp",
+   "tmp\\arg0"
+  ],
+  "userConfigText": "model = \"stub-model\"\nmodel_provider = \"stub\"\napproval_policy = \"never\"\nsandbox_mode = \"read-only\"\n\n[model_providers.stub]\nname = \"stub\"\nbase_url = \"http://127.0.0.1:9/v1\"\nwire_api = \"responses\"\nenv_key = \"Q288_STUB_KEY\"\n\n[mcp_servers.uctl]\ncommand = 'C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe'\nargs = ['--tag', 'uctl']\nenv = { PROBE_LOG_DIR = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs', PROBE_TAG = 'uctl' }\n\n[projects.'C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj']\ntrust_level = \"trusted\"\n"
+ },
+ "gitInit": {
+  "file": "git",
+  "args": [
+   "init",
+   "-q",
+   "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\proj"
+  ],
+  "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1",
+  "status": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "",
+  "ms": 73
+ },
+ "entries": [
+  {
+   "name": "uctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "uctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+    "PROBE_TAG": "uctl"
+   }
+  },
+  {
+   "name": "ctl",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "--tag",
+    "ctl"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+    "PROBE_TAG": "ctl"
+   }
+  },
+  {
+   "name": "percent_cmd",
+   "command": "%LOCALAPPDATA%/codex-expansion-probe/probe-stub.exe",
+   "args": [
+    "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+    "--tag",
+    "percent_cmd"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+    "PROBE_TAG": "percent_cmd"
+   }
+  },
+  {
+   "name": "percent_cmdb",
+   "command": "%LOCALAPPDATA%\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+    "--tag",
+    "percent_cmdb"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+    "PROBE_TAG": "percent_cmdb"
+   }
+  },
+  {
+   "name": "percent_arg",
+   "command": "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe",
+   "args": [
+    "%LOCALAPPDATA%/codex-expansion-probe/arg-marker",
+    "--tag",
+    "percent_arg"
+   ],
+   "env": {
+    "PROBE_LOG_DIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-percent-r1\\stublogs",
+    "PROBE_TAG": "percent_arg",
+    "PROBE_SPELLED": "%LOCALAPPDATA%/codex-expansion-probe/env-marker"
+   }
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+{"event":"launch","at":"2026-09-24T13:54:41.2145011Z","pid":103344,"image":"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe","commandLine":"\"C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe\" --tag uctl","argv":["--tag","uctl"],"cwd":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\proj","env":{"LOCALAPPDATA":"C:\\Users\\jori\\AppData\\Local","PATH":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\home\\tmp\\arg0\\codex-arg0jmUQze;[cut: 64 entries of this machine's PATH]","PROBE_LOG_DIR":"C:\\Source\\SixFive7\\BrowserAI\\.work\\codex-expansion\\runs\\B-proj-tilde-r3\\stublogs","PROBE_TAG":"uctl","USERPROFILE":"C:\\Users\\jori"}}
+{"event":"recv","at":"2026-09-24T13:54:41.2447216Z","method":"initialize","id":0}
+{"event":"sent","at":"2026-09-24T13:54:41.2462384Z","method":"initialize","id":0}
+{"event":"recv","at":"2026-09-24T13:54:41.2462384Z","method":"notifications/initialized","id":null}
+{"event":"recv","at":"2026-09-24T13:54:41.2462384Z","method":"tools/list","id":1}
+{"event":"sent","at":"2026-09-24T13:54:41.2462384Z","method":"tools/list","id":1}
+{"event":"recv","at":"2026-09-24T13:54:41.2477761Z","method":"resources/list","id":2}
+{"event":"sent","at":"2026-09-24T13:54:41.2477761Z","method":"resources/list","id":2}
+{"event":"recv","at":"2026-09-24T13:54:41.2477761Z","method":"resources/templates/list","id":3}

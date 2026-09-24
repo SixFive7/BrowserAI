@@ -1,0 +1,77 @@
+CLEANUP START 2026-09-24T13:57:18Z
+removed runs/A-cmdline-r1/home
+removed runs/A-cmdline-r2/home
+removed runs/A-cmdline-r3/home
+removed runs/B-proj-bare-r1/home
+removed runs/B-proj-bare-r1/proj
+removed runs/B-proj-bare-r2/home
+removed runs/B-proj-bare-r2/proj
+removed runs/B-proj-bare-r3/home
+removed runs/B-proj-bare-r3/proj
+removed runs/B-proj-braced-r1/home
+removed runs/B-proj-braced-r1/proj
+removed runs/B-proj-braced-r2/home
+removed runs/B-proj-braced-r2/proj
+removed runs/B-proj-braced-r3/home
+removed runs/B-proj-braced-r3/proj
+removed runs/B-proj-percent-r1/home
+removed runs/B-proj-percent-r1/proj
+removed runs/B-proj-percent-r2/home
+removed runs/B-proj-percent-r2/proj
+removed runs/B-proj-percent-r3/home
+removed runs/B-proj-percent-r3/proj
+removed runs/B-proj-tilde-r1/home
+removed runs/B-proj-tilde-r1/proj
+removed runs/B-proj-tilde-r2/home
+removed runs/B-proj-tilde-r2/proj
+removed runs/B-proj-tilde-r3/home
+removed runs/B-proj-tilde-r3/proj
+removed runs/B-user-bare-r1/home
+removed runs/B-user-bare-r1/neutral
+removed runs/B-user-bare-r2/home
+removed runs/B-user-bare-r2/neutral
+removed runs/B-user-bare-r3/home
+removed runs/B-user-bare-r3/neutral
+removed runs/B-user-braced-r0/home
+removed runs/B-user-braced-r0/neutral
+removed runs/B-user-braced-r1/home
+removed runs/B-user-braced-r1/neutral
+removed runs/B-user-braced-r2/home
+removed runs/B-user-braced-r2/neutral
+removed runs/B-user-braced-r3/home
+removed runs/B-user-braced-r3/neutral
+removed runs/B-user-percent-r1/home
+removed runs/B-user-percent-r1/neutral
+removed runs/B-user-percent-r2/home
+removed runs/B-user-percent-r2/neutral
+removed runs/B-user-percent-r3/home
+removed runs/B-user-percent-r3/neutral
+removed runs/B-user-tilde-r1/home
+removed runs/B-user-tilde-r1/neutral
+removed runs/B-user-tilde-r2/home
+removed runs/B-user-tilde-r2/neutral
+removed runs/B-user-tilde-r3/home
+removed runs/B-user-tilde-r3/neutral
+removed runs/C-proj-alt-r1/home
+removed runs/C-proj-alt-r1/proj
+removed runs/C-proj-alt-r2/home
+removed runs/C-proj-alt-r2/proj
+removed runs/C-proj-alt-r3/home
+removed runs/C-proj-alt-r3/proj
+removed runs/D-proj-untrusted-r1/home
+removed runs/D-proj-untrusted-r1/proj
+removed runs/D-proj-untrusted-r2/home
+removed runs/D-proj-untrusted-r2/proj
+removed runs/D-proj-untrusted-r3/home
+removed runs/D-proj-untrusted-r3/proj
+removed 65 scratch home/project directories
+removed empty-home
+stub folder file: /c/Users/jori/AppData/Local/codex-expansion-probe/probe-stub.exe
+stub folder file: /c/Users/jori/AppData/Local/codex-expansion-probe/sp ace/codex-expansion-probe/probe-stub.exe
+removed /c/Users/jori/AppData/Local/codex-expansion-probe
+removed src-tag clone
+removed src-main clone
+left: 34 run records
+ls: cannot access '/c/Users/jori/AppData/Local/codex-expansion-probe': No such file or directory
+CLEANUP END 2026-09-24T13:58:40Z
+rc=0

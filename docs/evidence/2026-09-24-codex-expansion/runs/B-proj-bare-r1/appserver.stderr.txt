@@ -1,0 +1,44 @@
+2026-09-24T13:46:50.935512Z  WARN codex_models_manager::model_info: Unknown model stub-model is used. This will use fallback model metadata.
+2026-09-24T13:46:51.013034Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell
+2026-09-24T13:46:51.031550Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: new
+2026-09-24T13:46:51.031575Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: enter
+2026-09-24T13:46:51.031582Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: exit
+2026-09-24T13:46:51.031585Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: enter
+2026-09-24T13:46:51.031590Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: exit
+2026-09-24T13:46:51.031596Z  INFO session_init.required_mcp_wait{otel.name="session_init.required_mcp_wait" session_init.required_mcp_server_count=0}: codex_mcp::connection_manager::required: close time.busy=11.8µs time.idle=36.2µs
+2026-09-24T13:46:51.031938Z DEBUG codex_rmcp_client::program_resolver: Failed to resolve "$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe": cannot find binary path. Using original path
+2026-09-24T13:46:51.031938Z DEBUG codex_rmcp_client::program_resolver: Failed to resolve "$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe": cannot find binary path. Using original path
+2026-09-24T13:46:51.032144Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:51.032160Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:51.032199Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:51.033539Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="bare_cmdb" error=The system cannot find the path specified. (os error 3)
+2026-09-24T13:46:51.033969Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="bare_cmd" error=The system cannot find the path specified. (os error 3)
+2026-09-24T13:46:51.046754Z  WARN codex_core_plugins::manager: failed to warm featured plugin ids cache error=remote featured plugin request to https://chatgpt.com/backend-api/plugins/featured?platform=codex failed with status 401 Unauthorized: {"detail":"Unauthorized"}
+2026-09-24T13:46:53.485953Z DEBUG codex_rmcp_client::program_resolver: Failed to resolve "$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe": cannot find binary path. Using original path
+2026-09-24T13:46:53.485968Z DEBUG codex_rmcp_client::program_resolver: Failed to resolve "$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe": cannot find binary path. Using original path
+2026-09-24T13:46:53.486147Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:53.486155Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:53.486191Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:53.486862Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="bare_cmd" error=The system cannot find the path specified. (os error 3)
+2026-09-24T13:46:53.487546Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="bare_cmdb" error=The system cannot find the path specified. (os error 3)
+2026-09-24T13:46:53.589494Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'bare_arg': Unexpected response type
+2026-09-24T13:46:53.589560Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'bare_arg': Unexpected response type
+2026-09-24T13:46:53.590529Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'ctl': Unexpected response type
+2026-09-24T13:46:53.590644Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'uctl': Unexpected response type
+2026-09-24T13:46:53.591742Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'ctl': Unexpected response type
+2026-09-24T13:46:53.591784Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'uctl': Unexpected response type
+2026-09-24T13:46:53.600480Z DEBUG codex_rmcp_client::program_resolver: Failed to resolve "$LOCALAPPDATA\\codex-expansion-probe\\probe-stub.exe": cannot find binary path. Using original path
+2026-09-24T13:46:53.600507Z DEBUG codex_rmcp_client::program_resolver: Failed to resolve "$LOCALAPPDATA/codex-expansion-probe/probe-stub.exe": cannot find binary path. Using original path
+2026-09-24T13:46:53.600742Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:53.600742Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:53.600784Z DEBUG codex_rmcp_client::program_resolver: Resolved "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe" to "C:\\Users\\jori\\AppData\\Local\\codex-expansion-probe\\probe-stub.exe"
+2026-09-24T13:46:53.601649Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="bare_cmd" error=The system cannot find the path specified. (os error 3)
+2026-09-24T13:46:53.602320Z  WARN codex_mcp::rmcp_client: MCP server startup failed server_name="bare_cmdb" error=The system cannot find the path specified. (os error 3)
+2026-09-24T13:46:53.699995Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'uctl': Unexpected response type
+2026-09-24T13:46:53.700241Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'ctl': Unexpected response type
+2026-09-24T13:46:53.700538Z  WARN codex_mcp::connection_manager::resources: Failed to list resource templates for MCP server 'bare_arg': Unexpected response type
+2026-09-24T13:46:53.701648Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'uctl': Unexpected response type
+2026-09-24T13:46:53.702582Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'bare_arg': Unexpected response type
+2026-09-24T13:46:53.702653Z  WARN codex_mcp::connection_manager::resources: Failed to list resources for MCP server 'ctl': Unexpected response type
+2026-09-24T13:46:56.138470Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: The system cannot find the path specified. (os error 3)
+2026-09-24T13:46:56.138757Z  WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: The system cannot find the path specified. (os error 3)
