@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using BrowserAI.Protocol;
+using BrowserAI.Runtime;
 
 namespace BrowserAI.Tests;
 
@@ -164,6 +165,45 @@ internal sealed class ChildEnvironmentTests
         foreach (var name in TheEgressNames)
         {
             await Assert.That(built[name]).IsEqualTo($"value-of-{name}");
+        }
+    }
+
+    /// <summary>
+    /// The one test hook on the allowlist is there, is inherited only when this
+    /// process has it, and is refused to nobody.
+    /// </summary>
+    /// <remarks>
+    /// <b>T7, 2026-09-24.</b> <c>PWTEST_SERVER_REGISTRY</c> moves the directory
+    /// <c>playwright-core</c> writes a descriptor into at every browser bind, and
+    /// the product never sets it -- forwarding is the whole hook. Without it the
+    /// child that writes the descriptors and the reap
+    /// <c>ServerRegistryReap</c> starts would read <b>two different
+    /// directories</b>, and the only arm that could exist would be one that pruned
+    /// the developer's own registry.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePlaywrightRegistryPathIsForwardedWhenTheHostHasItAndIsAbsentWhenItDoesNot()
+    {
+        await Assert.That(ChildEnvironment.InheritedWhenSet.Contains(ServerRegistryReap.RegistryDirectoryVariable)).IsTrue();
+        await Assert.That(ChildEnvironment.Refused.Contains(ServerRegistryReap.RegistryDirectoryVariable)).IsFalse();
+
+        // Inherited-WHEN-SET, asserted both ways through Build() and never by
+        // setting it on this process: an arm that planted a process-wide variable
+        // would reach every child every other arm starts.
+        var host = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            [ServerRegistryReap.RegistryDirectoryVariable] = @"C:\scratchegistry",
+        };
+
+        await Assert.That(ChildEnvironment.Build(host)[ServerRegistryReap.RegistryDirectoryVariable])
+            .IsEqualTo(@"C:\scratchegistry");
+
+        // And absent by default, whatever this machine happens to carry: nothing
+        // in the product writes this name.
+        if (Environment.GetEnvironmentVariable(ServerRegistryReap.RegistryDirectoryVariable) is null)
+        {
+            await Assert.That(ChildEnvironment.Build().ContainsKey(ServerRegistryReap.RegistryDirectoryVariable)).IsFalse();
         }
     }
 
