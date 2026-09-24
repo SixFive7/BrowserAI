@@ -1534,15 +1534,35 @@ internal sealed class UpdateTests
     /// that the check is bounded by something smaller than the outer deadline.
     /// Nothing here asserts promptness.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>THE FACTOR WAS 4,500 AND IT MADE THIS A PROMPTNESS TEST BY
+    /// ACCIDENT -- corrected 2026-09-24 (previously "4,500 takes the product's
+    /// 15 / 30 / 1 / 45 minutes to 200 ms / 400 ms / 13 ms / 600 ms").</b> At
+    /// that factor the tripwire is 600 ms, which is smaller than the scheduling
+    /// noise of a machine running the whole suite: the arm passed every filtered
+    /// run and went <b>red in the first full two-shell gate it met</b>, at
+    /// <b>1,054 ms against 600 ms</b>, with every other assertion in it green --
+    /// the budget fired, event 21 was logged and event 11 was not. <b>The claim
+    /// was never wrong and the instrument could not make it.</b> At 450 the same
+    /// four numbers are 2 s / 4 s / 133 ms / 6 s, the orderings are still the
+    /// product's own because one factor divides all four, and an 850 ms overshoot
+    /// is a seventh of the bound instead of double it. <b>Watched red at the new
+    /// factor</b> with the check budget parked above the tripwire: the pass ran
+    /// <b>7.4 s</b>, to the tripwire and past it, and the arm went red on the
+    /// attribution assertion -- event 21 absent -- with the elapsed bound behind
+    /// it. That is the ordering this arm wants, because <i>the check budget did
+    /// not fire</i> is the finding and <i>it took too long</i> is the symptom.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task ACheckThatNeverAnswersEndsOnItsOwnBudgetAndSaysSo()
     {
-        // 4,500 takes the product's 15 / 30 / 1 / 45 minutes to 200 ms / 400 ms /
-        // 13 ms / 600 ms. One factor, so the orderings the service depends on are
-        // the product's own.
-        var budgets = UpdateBudgets.Default.Scaled(4_500);
+        // 450 takes the product's 15 / 30 / 1 / 45 minutes to 2 s / 4 s / 133 ms /
+        // 6 s. One factor, so the orderings the service depends on are the
+        // product's own -- and the smallest of the four has to stay above this
+        // machine's scheduling noise under a full run, which 4,500 did not.
+        var budgets = UpdateBudgets.Default.Scaled(450);
 
         using var scratch = ScratchDirectory.Create("check-budget");
         var paths = new LocalAppDataPaths(scratch.Path);
