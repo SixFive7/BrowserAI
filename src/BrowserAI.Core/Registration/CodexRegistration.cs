@@ -207,6 +207,52 @@ internal static class CodexRegistration
     public static string ManualCommandFor(string command) =>
         $"codex mcp add {ServerName} -- \"{command}\"";
 
+    /// <summary>
+    /// What a Codex project file is given: the server's bare name, and which file
+    /// that name finds on the PATH today.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q294, decided 2026-09-24 by the maintainer, verbatim: <i>"Q294 b"</i>. A
+    /// Codex project entry names <c>BrowserAI.Server.exe</c> alone, never an absolute
+    /// path.</b> Codex expands no variable in a command (0 of 48, measured), so no
+    /// spelling of this install's path resolves on a teammate's machine, and a bare
+    /// name does: Codex resolves it with <c>which</c> over the PATH it hands the
+    /// server, and every BrowserAI install puts its own folder on the user's PATH
+    /// (<see cref="UserPath"/>).
+    /// </para>
+    /// <para>
+    /// <b>The sentence names what the name finds, and that it may take a restart</b>:
+    /// a Codex process started before the install carries a PATH without the folder,
+    /// which follows from how the launcher builds the server's environment and was
+    /// not measured.
+    /// </para>
+    /// </remarks>
+    /// <param name="server">This install's server, absolute.</param>
+    /// <param name="installRoot">This install's root, or <see langword="null"/>.</param>
+    /// <returns>The command and the sentence.</returns>
+    public static ProjectCommand ProjectCommandFor(string server, string? installRoot) =>
+        ProjectCommandGiven(server, UserPath.Resolve(RegistrationTarget.ServerFileName, UserPath.SearchDirectories()));
+
+    /// <summary>The same, given what the name finds on the PATH today.</summary>
+    /// <param name="server">This install's server, absolute.</param>
+    /// <param name="found">The file the bare name resolves to, or <see langword="null"/>.</param>
+    /// <returns>The command and the sentence.</returns>
+    public static ProjectCommand ProjectCommandGiven(string server, string? found)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(server);
+
+        const string How = "The entry names BrowserAI.Server.exe and no folder, because Codex expands no variable in a command; Codex finds it on the PATH it gives the server.";
+
+        var note = found is null
+            ? $"{How} No folder on your PATH holds one yet. BrowserAI's installer puts its own there, so install BrowserAI on this machine, or put the folder that holds it on your PATH."
+            : string.Equals(Path.GetFullPath(found), Path.GetFullPath(server), StringComparison.OrdinalIgnoreCase)
+                ? $"{How} It finds this install. A Codex that was already running before BrowserAI was installed may need to be restarted to see it."
+                : $"{How} The first one on your PATH is '{found}', which is not this install.";
+
+        return new ProjectCommand(RegistrationTarget.ServerFileName, note);
+    }
+
     /// <summary>The home directory a repository-scoped registration is written into.</summary>
     /// <param name="projectDirectory">The repository root.</param>
     /// <returns>The directory, which the caller must create before running the client.</returns>

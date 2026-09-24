@@ -240,6 +240,33 @@ internal static class McpClientRegistration
         $"${{LOCALAPPDATA}}/{packId}/{RegistrationTarget.CurrentDirectoryName}/{RegistrationTarget.ServerFileName}";
 
     /// <summary>
+    /// What a Claude Code project file is given: the portable spelling when it
+    /// expands to this install, and the absolute path with the reason otherwise.
+    /// </summary>
+    /// <param name="server">This install's server, absolute.</param>
+    /// <param name="installRoot">This install's root, or <see langword="null"/>.</param>
+    /// <returns>The command and the sentence.</returns>
+    public static ProjectCommand ProjectCommandFor(string server, string? installRoot)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(server);
+
+        var folder = installRoot is { Length: > 0 } root
+            ? Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+            : "BrowserAI.app";
+
+        var candidate = PortableCommandFor(folder);
+
+        return string.Equals(
+                Path.GetFullPath(McpRegistryView.Expand(candidate)),
+                Path.GetFullPath(server),
+                StringComparison.OrdinalIgnoreCase)
+            ? new ProjectCommand(candidate, null)
+            : new ProjectCommand(
+                server,
+                "This install is not at its default location, so the entry carries its absolute path and will not resolve on another machine.");
+    }
+
+    /// <summary>
     /// Whether a failed <c>add</c> failed only because the entry was already
     /// there.
     /// </summary>

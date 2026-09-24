@@ -3,6 +3,14 @@
 
 namespace BrowserAI.Registration;
 
+/// <summary>What a project file is given, and what a person is told about it.</summary>
+/// <param name="Command">The command the entry names.</param>
+/// <param name="Note">
+/// The sentence that follows a registration, or <see langword="null"/> when there is
+/// nothing to say beyond the client's own hints.
+/// </param>
+internal sealed record ProjectCommand(string Command, string? Note);
+
 /// <summary>
 /// One MCP client, as everything that registers with it needs to see it.
 /// </summary>
@@ -101,21 +109,32 @@ internal sealed record RegistrationClient
     public required string ProjectFileName { get; init; }
 
     /// <summary>
-    /// The spelling of this install's server path that resolves on every
-    /// machine, for a project file meant to be committed, or
-    /// <see langword="null"/> when this client offers no such spelling.
+    /// What a project file for this install says, and the sentence a person is
+    /// told about it: from the server's absolute path and the install root.
     /// </summary>
     /// <remarks>
-    /// ⚠️ <b>Per client because only one of them is known to expand a variable
-    /// in a server command -- 2026-09-24.</b> Claude Code expands <c>${VAR}</c>
-    /// inside <c>.mcp.json</c>, which is the only reason
-    /// <see cref="McpClientRegistration.PortableCommandFor"/> is usable. Codex's
-    /// own documentation of <c>mcp_servers.&lt;id&gt;.command</c> says nothing of
-    /// expansion, and a committed command that expands on one client and not the
-    /// other is a path that resolves to nothing on the second. So a Codex project
-    /// entry carries this machine's absolute path, and the window says so.
+    /// <para>
+    /// ⚠️ <b>Per client because only one of them expands a variable in a server
+    /// command.</b> Claude Code expands <c>${VAR}</c> inside <c>.mcp.json</c>, which
+    /// is the only reason <see cref="McpClientRegistration.PortableCommandFor"/> is
+    /// usable, and it is written when it expands to this install. <b>Codex expands
+    /// nothing</b>: <c>${LOCALAPPDATA}</c>, <c>$LOCALAPPDATA</c>,
+    /// <c>%LOCALAPPDATA%</c> and <c>~</c> started nothing in 48 attempts, and its
+    /// launcher resolves the configured text with <c>which</c> and starts it as it
+    /// is (measured and read 2026-09-24,
+    /// <c>docs/evidence/2026-09-24-codex-expansion</c>).
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>So a Codex project entry names <c>BrowserAI.Server.exe</c> alone and
+    /// never an absolute path -- Q294, the maintainer's words verbatim:
+    /// <i>"Q294 b"</i>.</b> <i>Corrected 2026-09-24 (previously "So a Codex project
+    /// entry carries this machine's absolute path, and the window says so").</i>
+    /// Codex finds the name on the PATH it hands the server, and the install puts its
+    /// own folder there (<see cref="UserPath"/>); the sentence says which file the
+    /// name finds today.
+    /// </para>
     /// </remarks>
-    public required Func<string, string?> PortableCommandFor { get; init; }
+    public required Func<string, string?, ProjectCommand> ProjectCommandFor { get; init; }
 
     /// <summary>The project registration's file, under a named repository.</summary>
     /// <param name="projectDirectory">The repository root.</param>
@@ -193,7 +212,7 @@ internal sealed record RegistrationClient
         ProjectHint =
             "Claude Code will ask you to approve this server the first time you open a session in that folder.",
         ProjectFileName = McpRegistryView.ProjectConfigFileName,
-        PortableCommandFor = McpClientRegistration.PortableCommandFor,
+        ProjectCommandFor = McpClientRegistration.ProjectCommandFor,
         MeansAlreadyRegistered = McpClientRegistration.MeansAlreadyRegistered,
         MeansNothingToRemove = McpClientRegistration.MeansNothingToRemove,
         ManualCommandFor = McpClientRegistration.ManualCommandFor,
@@ -226,7 +245,7 @@ internal sealed record RegistrationClient
         ProjectHint =
             "Codex reads a project's own configuration only in a project you have trusted, so this entry does nothing in a folder Codex has not been trusted in.",
         ProjectFileName = Path.Combine(CodexRegistration.ProjectDirectoryName, CodexRegistration.ConfigFileName),
-        PortableCommandFor = _ => null,
+        ProjectCommandFor = CodexRegistration.ProjectCommandFor,
         MeansAlreadyRegistered = CodexRegistration.MeansAlreadyRegistered,
         MeansNothingToRemove = CodexRegistration.MeansNothingToRemove,
         ManualCommandFor = CodexRegistration.ManualCommandFor,

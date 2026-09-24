@@ -951,7 +951,8 @@ internal sealed class RegistrationTests
             "9.9.9",
             command,
             client,
-            new LocalAppDataPaths(data.Path)).For(RegistrationClient.ClaudeCode.Key);
+            new LocalAppDataPaths(data.Path),
+            new ScratchUserPath()).For(RegistrationClient.ClaudeCode.Key);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Registered);
 
@@ -1028,7 +1029,8 @@ internal sealed class RegistrationTests
             "9.9.9",
             command,
             client,
-            new LocalAppDataPaths(data.Path)).For(RegistrationClient.ClaudeCode.Key);
+            new LocalAppDataPaths(data.Path),
+            new ScratchUserPath()).For(RegistrationClient.ClaudeCode.Key);
 
         await Assert.That(report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
 
@@ -1082,7 +1084,8 @@ internal sealed class RegistrationTests
             "9.9.9",
             command,
             client,
-            new LocalAppDataPaths(data.Path));
+            new LocalAppDataPaths(data.Path),
+            new ScratchUserPath());
 
         var written = await File.ReadAllTextAsync(Path.Combine(data.Path, RegistrationRecord.FileName));
 
@@ -1147,6 +1150,7 @@ internal sealed class RegistrationTests
             command,
             client,
             new LocalAppDataPaths(data.Path),
+            new ScratchUserPath(),
             clients: [RegistrationClient.ClaudeCode, RegistrationClient.Codex with { Locate = _ => null }]);
 
         await Assert.That(outcome.For(RegistrationClient.ClaudeCode.Key).Status).IsEqualTo(RegistrationStatus.Registered);
@@ -1208,6 +1212,7 @@ internal sealed class RegistrationTests
             InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
+            new ScratchUserPath(),
             silent: true,
             ask: _ =>
             {
@@ -1266,6 +1271,7 @@ internal sealed class RegistrationTests
             InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
+            new ScratchUserPath(),
             silent: false,
             ask: message =>
             {
@@ -1323,6 +1329,7 @@ internal sealed class RegistrationTests
             InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
+            new ScratchUserPath(),
             silent: false,
             ask: _ => true);
 
@@ -1376,6 +1383,7 @@ internal sealed class RegistrationTests
             InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
+            new ScratchUserPath(),
             silent: false,
             ask: _ =>
             {
@@ -1426,6 +1434,7 @@ internal sealed class RegistrationTests
             InstalledLayout.Create(install.Path),
             new FakeClientCommandLine(),
             paths,
+            new ScratchUserPath(),
             silent: false,
             ask: _ =>
             {

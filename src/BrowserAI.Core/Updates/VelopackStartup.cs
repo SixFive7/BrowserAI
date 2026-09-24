@@ -324,6 +324,17 @@ internal static class VelopackStartup
                 null);
         }
 
+        // The install's folder on the user's PATH (Q294 b), in the installer's own
+        // log as well, because a Codex project entry that cannot be started is
+        // debugged from there first.
+        if (outcome.PathEntry is { } pathEntry)
+        {
+            log(
+                pathEntry.Change is UserPathChange.Failed ? VelopackLogLevel.Warning : VelopackLogLevel.Information,
+                $"BrowserAI {version} -- user PATH ({intent}): {pathEntry.Change}. {pathEntry.Detail}",
+                null);
+        }
+
         // ⚠️ THE ONE PLACE THE DATA ROOT'S FATE IS RECORDED IN A FILE THAT
         // SURVIVES IT. BrowserAI's own log is inside the directory being decided
         // about, so on a removal it goes with it; the installer's log is outside

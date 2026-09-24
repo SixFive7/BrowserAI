@@ -402,13 +402,15 @@ internal static class ConfigurationDialog
     /// </summary>
     /// <param name="report">The pass.</param>
     /// <param name="who">The client it was against.</param>
-    /// <param name="absoluteBecause">
-    /// Why the command written is this machine's absolute path, or
-    /// <see langword="null"/> when it is the portable spelling -- the only form
-    /// that resolves on somebody else's machine.
+    /// <param name="note">
+    /// The client's own sentence about what the entry names
+    /// (<see cref="ProjectCommand.Note"/>): why Claude Code's is this machine's
+    /// absolute path when it is not the portable spelling, and which file Codex's bare
+    /// name finds on the PATH. <see langword="null"/> when there is nothing to add.
+    /// <i>Previously <c>absoluteBecause</c>, when only the first of the two existed.</i>
     /// </param>
     /// <returns>The note.</returns>
-    public static string ProjectNoteFor(RegistrationReport report, RegistrationClient who, string? absoluteBecause)
+    public static string ProjectNoteFor(RegistrationReport report, RegistrationClient who, string? note)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentNullException.ThrowIfNull(who);
@@ -419,7 +421,7 @@ internal static class ConfigurationDialog
         }
 
         return report.Detail
-            + (absoluteBecause is { Length: > 0 } because ? " " + because : string.Empty)
+            + (note is { Length: > 0 } said ? " " + said : string.Empty)
             + " " + who.ProjectHint
             + " " + RestartHintFor(who);
     }

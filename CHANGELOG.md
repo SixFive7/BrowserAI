@@ -99,6 +99,20 @@ release body; nothing else depends on it.
   out of the binary, so the arm stays true across the release that drops the installer exit. That
   is the installed half of row 126. Both hold the real key and the Start Menu byte-identical, and
   each was watched red against a planted wrong expectation.
+- ✨ **A Codex project entry names `BrowserAI.Server.exe`, and the installer puts its folder on your PATH.**
+  Q294, the maintainer's words verbatim: *"Q294 b"*. Codex expands no variable in a server's command,
+  measured in 48 attempts across four spellings of `LOCALAPPDATA` and read in its launcher, so the
+  portable spelling Claude Code's `.mcp.json` uses cannot work in `.codex\config.toml`, and the
+  entry used to carry one machine's absolute path. It names the server alone now, and Codex resolves
+  the name on the PATH it hands the server, as its launcher reads: the install and update hooks put
+  this install's own `current` folder on the user's PATH, keeping the value's kind and announcing the
+  change, and the uninstall hook takes exactly that entry off, never another install's. The window's
+  sentence after a Codex project registration says which file the name finds today, and the Codex
+  ownership check judges the file it finds first. ⚠️ A Codex that was running before BrowserAI was
+  installed needs restarting to see the PATH, which follows from how it builds a server's environment
+  and was not measured. Claude Code's project entry and every user-scope entry are unchanged. The
+  gate's clearance reads the real user PATH before and after every run. Each change was watched red
+  first.
 - ✅ **The real-installer arms install this tree's build, packed before every gate run.**
   Q287, the maintainer's words verbatim: *"Q287 a"*. They installed whatever test pack the last
   release cut had left, so no real `Setup.exe` had run a hook the tree changed since 1.1.0.

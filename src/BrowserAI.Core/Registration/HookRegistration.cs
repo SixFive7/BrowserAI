@@ -47,7 +47,15 @@ internal sealed record ClientRegistration(string Key, string DisplayName, Regist
 /// What was decided about the data root, or <see langword="null"/> when the hook
 /// was not an uninstall or could not get far enough to ask.
 /// </param>
-internal sealed record HookOutcome(IReadOnlyList<ClientRegistration> Registrations, DataRootDisposalReport? Disposal)
+/// <param name="PathEntry">
+/// What became of the install's folder on the user's PATH (Q294 b), or
+/// <see langword="null"/> when the hook could not get far enough to know which
+/// folder that is.
+/// </param>
+internal sealed record HookOutcome(
+    IReadOnlyList<ClientRegistration> Registrations,
+    DataRootDisposalReport? Disposal,
+    UserPathReport? PathEntry = null)
 {
     /// <summary>
     /// Whether every client's pass did what was asked of it.
@@ -126,6 +134,7 @@ internal static class HookRegistration
             Environment.ProcessPath,
             new ClientCommandLine(),
             new LocalAppDataPaths(LocalAppDataPaths.Overridden()),
+            RegistryUserPathStore.User,
             DataRootDisposal.IsSilent(ProcessLiveness.ParentCommandLine()),
             message => UserPrompt.AskYesNo(DataRootDisposal.PromptTitle, message));
 
@@ -140,6 +149,12 @@ internal static class HookRegistration
     /// Where the log and the record go, and -- on an uninstall -- what is offered
     /// for deletion. <b>Required, not defaulted</b>: a test that forgot
     /// it would write into the developer's own data root and offer to delete it.
+    /// </param>
+    /// <param name="userPath">
+    /// Where the user's PATH is, which the install and update hooks put this
+    /// install's folder on and the uninstall hook takes it off (Q294 b).
+    /// <b>Required, not defaulted</b>, for the reason <paramref name="paths"/> is:
+    /// a test that forgot it would write the developer's own PATH.
     /// </param>
     /// <param name="silent">
     /// Whether the uninstall that started this hook was unattended. Ignored by
@@ -173,12 +188,14 @@ internal static class HookRegistration
         string? imagePath,
         IRegistrationCommand commands,
         IAppPaths paths,
+        IUserPathStore userPath,
         bool silent = true,
         Func<string, bool>? ask = null,
         IReadOnlyList<RegistrationClient>? clients = null)
     {
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(paths);
+        ArgumentNullException.ThrowIfNull(userPath);
 
         var who = clients ?? RegistrationClient.All;
 
@@ -186,6 +203,7 @@ internal static class HookRegistration
         {
             var passes = new List<ClientRegistration>(who.Count);
             DataRootDisposalReport? disposal = null;
+            UserPathReport? pathEntry = null;
 
             // The log's own scope, closed before anything is deleted: the file is
             // inside the data root, and a handle this process still holds would
@@ -211,6 +229,17 @@ internal static class HookRegistration
 
                 WriteRecord(paths.RootAppDir, passes, intent, version, logger);
 
+                // ⚠️ THE INSTALL'S FOLDER ON THE USER'S PATH -- Q294 b, 2026-09-24. A
+                // Codex project entry names `BrowserAI.Server.exe` alone, because
+                // Codex expands no variable in a command, and Codex finds it through
+                // the PATH it hands the server. The install and update hooks put this
+                // install's own `current\` there and the uninstall hook takes exactly
+                // that entry off; another install root's entry is never touched. After
+                // the record, so a failure here cannot cost the registration its
+                // account; before the data root's question, which is the one step that
+                // may wait for a human.
+                pathEntry = ChangeThePath(intent, imagePath, userPath, logger);
+
                 // ⚠️ LAST, AND ONLY ON AN UNINSTALL. It is the only part of a
                 // hook that may wait for a human, so everything an uninstall must
                 // not skip is already on disk above it: a hook killed at its
@@ -223,7 +252,7 @@ internal static class HookRegistration
                 }
             }
 
-            return new HookOutcome(passes, disposal is null ? null : DataRootDisposal.Remove(disposal));
+            return new HookOutcome(passes, disposal is null ? null : DataRootDisposal.Remove(disposal), pathEntry);
         }
 #pragma warning disable CA1031 // The outermost boundary of a fast-exit callback. Nothing may escape into the installer, including a failure to open a log.
         catch (Exception failure)
@@ -256,6 +285,31 @@ internal static class HookRegistration
             // one outcome that must not be reachable.
             return new HookOutcome(failed, null);
         }
+    }
+
+    /// <summary>Puts this install's folder on the user's PATH, or takes it off.</summary>
+    /// <param name="intent">Which hook is asking.</param>
+    /// <param name="imagePath">The running image, which decides the folder.</param>
+    /// <param name="userPath">Where the PATH is.</param>
+    /// <param name="logger">Where the change is reported.</param>
+    /// <returns>What happened, or <see langword="null"/> when the image is not an install.</returns>
+    private static UserPathReport? ChangeThePath(RegistrationIntent intent, string? imagePath, IUserPathStore userPath, ILogger logger)
+    {
+        // The same refusal the registration took: an image that is not an install
+        // has no folder of its own to put anywhere, and it said why already.
+        if (!RegistrationTarget.TryResolve(imagePath, out var target, out _))
+        {
+            return null;
+        }
+
+        var entry = UserPath.EntryFor(target!);
+        var report = intent is RegistrationIntent.Uninstall
+            ? UserPath.Remove(userPath, entry)
+            : UserPath.Add(userPath, entry);
+
+        RegistrationHookLog.PathChanged(logger, report.Change, report.Detail);
+
+        return report;
     }
 
     private static void WriteRecord(string root, IReadOnlyList<ClientRegistration> passes, RegistrationIntent intent, string version, ILogger logger)
@@ -309,4 +363,14 @@ internal static partial class RegistrationHookLog
         Level = LogLevel.Information,
         Message = "Velopack {Intent} hook running for BrowserAI {Version}. image={ImagePath}")]
     public static partial void HookRunning(ILogger logger, RegistrationIntent intent, string version, string imagePath);
+
+    /// <summary>What became of the install's folder on the user's PATH.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="change">The change.</param>
+    /// <param name="detail">The sentence.</param>
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Information,
+        Message = "User PATH: {Change}. {Detail}")]
+    public static partial void PathChanged(ILogger logger, UserPathChange change, string detail);
 }

@@ -6,7 +6,7 @@
     Writes the clearance snapshot the gate compares either side of every run.
 
 .DESCRIPTION
-    The suite installs a real pack under a test id, and the six things below are
+    The suite installs a real pack under a test id, and the seven things below are
     the ones a run must not disturb. They are read before and after each run and
     compared; a difference stops the gate instead of being reported at the end.
 
@@ -44,6 +44,15 @@
          ~/.claude.json. `SuiteCoverageTests.
          TheClearanceComparesOnlyEachClientsBrowserAiEntry` runs this script
          against a scratch profile and holds both halves.
+
+      7. HKCU\Environment\Path, read raw -- ADDED 2026-09-24 with Q294 b, the
+         maintainer's words verbatim: "Q294 b". The hooks put the install's
+         `current\` folder on the user's PATH and take it off again, and the test
+         pack runs them in every gate, so the value must come out of every run
+         byte-identical. Kind, length and SHA-256 of the unexpanded text, and the
+         entries that name BrowserAI; `SuiteCoverageTests.
+         TheClearanceReadsTheUserPathByteForByte` holds the line against the test
+         host's own read.
 
     ⚠️ IT READS AND NEVER REPAIRS. A snapshot that fixed what it found would
     destroy the evidence of the run that broke it. On a difference the gate
@@ -206,6 +215,27 @@ if (Test-Path -LiteralPath $codex) {
 }
 else {
     $out += '  ~/.codex/config.toml ABSENT'
+}
+
+# 7. The user's own PATH, read raw (Q294 b). The install and update hooks put
+# the install's `current\` folder on HKCU\Environment\Path and the uninstall hook
+# takes exactly that entry off, and the suite's test pack runs both hooks from
+# scratch roots in every gate: the value has to come out of every run exactly as
+# it went in. Its kind, its length and the SHA-256 of its unexpanded UTF-16 text,
+# and every entry naming BrowserAI -- not the whole value, which lists the
+# software installed on this machine.
+$out += '--- HKCU\Environment Path, read raw ---'
+$environment = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment')
+if ($environment -and ($environment.GetValueNames() -contains 'Path')) {
+    $kind = $environment.GetValueKind('Path')
+    $text = [string] $environment.GetValue('Path', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+    $hash = [System.Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::Unicode.GetBytes($text)))
+    $out += ('  kind={0} chars={1} sha256={2}' -f $kind, $text.Length, $hash)
+    $ours = @($text.Split(';') | Where-Object { $_ -match 'BrowserAI' })
+    $out += '  entries naming BrowserAI: ' + $(if ($ours.Count -gt 0) { $ours -join ' | ' } else { 'none' })
+}
+else {
+    $out += '  Path ABSENT'
 }
 
 $directory = Join-Path $root '.work' 'clearance'

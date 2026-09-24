@@ -58,9 +58,18 @@ tells you why.)*
 running `codex mcp add` with `CODEX_HOME` pointed at that `.codex` folder, so the
 file is Codex's own. ⚠️ **Codex reads a project's own configuration only in a
 project you have trusted**, so the entry does nothing in a folder Codex has not been
-told to trust. It carries this machine's absolute path: Claude Code expands the
-portable spelling above, and Codex documents no such expansion, so a committed Codex
-entry is right on the machine that wrote it.
+told to trust. **The entry names `BrowserAI.Server.exe` and no folder**, because
+Codex expands no variable in a server's command -- measured: none of four spellings of
+`LOCALAPPDATA` started anything in 48 attempts -- so the portable spelling above does
+not work there. Codex finds the name on your PATH instead, and **the installer puts
+BrowserAI's own `current` folder on your user PATH** and the uninstaller takes it off
+again, so the same committed file serves every machine with BrowserAI installed.
+⚠️ **Restart Codex after installing BrowserAI**: a Codex that was already running
+keeps the PATH it started with and will not find the server until it is started again.
+Both follow from how Codex builds a server's environment, read in its source, and
+neither has been measured end to end.
+*(Until 2026-09-24 the entry carried this machine's absolute path, which was right on
+the machine that wrote it and on no other.)*
 
 **Removing a project registration is in the window too**: start `BrowserAI.exe` from a
 terminal inside the repository, and each client with a registration of ours at or

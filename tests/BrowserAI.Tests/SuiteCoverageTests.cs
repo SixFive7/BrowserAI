@@ -1717,6 +1717,82 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(absent.Count(line => line.Contains("ABSENT", StringComparison.Ordinal))).IsEqualTo(2);
     }
 
+    /// <summary>
+    /// The clearance reads the user's own PATH, kind and text, byte for byte.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q294, decided 2026-09-24 by the maintainer, verbatim: <i>"Q294 b"</i>.</b>
+    /// The install and uninstall hooks write the real <c>HKCU\Environment\Path</c> now,
+    /// and the suite's test pack runs them from scratch roots in every gate: the value
+    /// must come out of every gate exactly as it went in, so the snapshot compared
+    /// either side of each run reads it -- its kind, its length and the SHA-256 of its
+    /// text as stored, unexpanded -- and names any entry that mentions BrowserAI.
+    /// </para>
+    /// <para>
+    /// <b>Driven, and compared with this process's own read of the same value.</b>
+    /// <b>Planted red 2026-09-24</b> against the script without the reading.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheClearanceReadsTheUserPathByteForByte()
+    {
+        using var profile = ScratchDirectory.Create("clearance-path");
+
+        var tag = $"suite-path-{Guid.NewGuid():N}";
+        var snapshot = Path.Combine(RepositoryLayout.Root.FullName, ".work", "clearance", $"{tag}.txt");
+
+        var start = new ProcessStartInfo("pwsh")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+
+        start.ArgumentList.Add("-NoProfile");
+        start.ArgumentList.Add("-NonInteractive");
+        start.ArgumentList.Add("-File");
+        start.ArgumentList.Add(Path.Combine(RepositoryLayout.Root.FullName, "build", "Get-ClearanceSnapshot.ps1"));
+        start.ArgumentList.Add("-Tag");
+        start.ArgumentList.Add(tag);
+        start.Environment["USERPROFILE"] = profile.Path;
+        start.Environment["APPDATA"] = Path.Combine(profile.Path, "AppData", "Roaming");
+
+        using (var process = Process.Start(start) ?? throw new InvalidOperationException("'pwsh' did not start for the clearance script."))
+        {
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
+            _ = await output;
+            _ = await error;
+        }
+
+        string[] lines;
+
+        try
+        {
+            lines = await File.ReadAllLinesAsync(snapshot);
+        }
+        finally
+        {
+            File.Delete(snapshot);
+        }
+
+        var header = Array.FindIndex(lines, line => line.Contains(@"HKCU\Environment Path", StringComparison.Ordinal));
+
+        await Assert.That(header).IsGreaterThan(-1).Because(string.Join("\n", lines));
+
+        var value = BrowserAI.Registration.RegistryUserPathStore.User.Read();
+        var expected = value is null
+            ? "  Path ABSENT"
+            : $"  kind={value.Kind} chars={value.Text.Length} sha256={Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.Unicode.GetBytes(value.Text)))}";
+
+        await Assert.That(lines[header + 1]).IsEqualTo(expected);
+    }
+
     /// <summary>A <c>.claude.json</c> carrying a BrowserAI entry among other things.</summary>
     private static string ClaudeConfiguration(string command, string other, int startups) =>
         $$"""

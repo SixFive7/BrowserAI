@@ -1658,6 +1658,39 @@ morning of a sign-in, and `proto/measure.ps1.txt` over a publish of `proto/`; a
 task-started reading needs a task registered with the probe's `fg-info` mode as its
 action, removed afterwards.
 
+## A new environment's Path is the machine's entries, then the user's, and a running program keeps its own -- measured 2026-09-24
+
+`[MACHINE]` for the counts; `[STABLE]` for what a running program keeps, which is
+documented. Windows 11 Pro **10.0.26200**, three reads with nothing writing either value.
+**`CreateEnvironmentBlock` for this session's own token, with `bInherit` false, returned a
+`Path` that is exactly the machine's entries and then the user's**: the 31 non-empty entries
+of `HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment\Path`, expanded, in order,
+then the 20 of the 22 non-empty entries of `HKCU\Environment\Path` that the machine value
+does not already hold -- 51 entries, compared case-insensitively as one string, 3 of 3.
+The user value ends in `;`, and the block holds no empty entry for it. A first read, taken
+while a real-installer arm had its own entry on the user value, agreed on the order and is
+not counted. **`UserPath.SearchDirectories` reads the two values in that order**, so the
+first folder it finds holding a name is the first a new program would find: dropping a user
+entry the machine value already holds never changes which folder comes first.
+
+**What a running program keeps** `[STABLE]`: *"By default, each process receives a copy of
+the environment block for its parent process"*
+([User Environment Variables](https://learn.microsoft.com/windows/win32/shell/user-environment-variables)),
+and the documented way to publish a change to the registry values is a `WM_SETTINGCHANGE`
+broadcast with `lParam` set to `"Environment"`, which *"allows applications, such as the
+shell, to pick up your updates"*
+([Environment Variables](https://learn.microsoft.com/windows/win32/procthread/environment-variables)).
+So a program started before the install hook wrote BrowserAI's entry holds a Path without
+it, and so does everything it starts, unless it acts on the broadcast. **That a Codex
+already running does not act on it is read from its launcher and not measured**, which is
+why [the hazard index](../../HAZARDS.md#hazard-index) carries it open and README tells a
+person to restart Codex after installing.
+
+**How to re-establish it:** open the session's own token with `TOKEN_QUERY`, call
+`CreateEnvironmentBlock` with `bInherit` false, walk the block to `Path=`, and compare it with
+both registry values read with `DoNotExpandEnvironmentNames` and expanded. Take it while
+nothing is installing: every real-installer arm writes the user value and takes it back.
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

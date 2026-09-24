@@ -29,7 +29,7 @@ namespace BrowserAI.Registration;
 /// <i>Corrected 2026-09-24 by addition: the shared half is
 /// <see cref="McpRegistryView.ClassifyPath"/>, the judgement of a path. How a
 /// command becomes a path is each client's own, and Codex expands nothing; see
-/// <see cref="Classify"/>.</i>
+/// <see cref="Classify(string?, string?)"/>.</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>A CLIENT THAT COULD NOT BE ASKED IS UNREADABLE AND NOT ABSENT.</b> A
@@ -239,23 +239,59 @@ internal static class CodexRegistryView
     /// A fully qualified path goes to <see cref="McpRegistryView.ClassifyPath"/>,
     /// the half of the ownership rule both clients share.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>Except a bare name, which is what a Codex PROJECT entry is since
+    /// 2026-09-24 -- Q294, the maintainer's words verbatim: <i>"Q294 b"</i>.</b> A
+    /// bare name is resolved the way Codex resolves it, through a PATH -- here the
+    /// one a program started now would get (<see cref="UserPath.SearchDirectories"/>)
+    /// -- and the file it finds first is what is judged: under this install root it
+    /// is ours, anywhere else it is another install's. A bare
+    /// <c>BrowserAI.Server.exe</c> that nothing on the PATH answers is the product's
+    /// own spelling pointing at nothing, which is ours and stale, and a register
+    /// over it writes the same name again; any other bare name that resolves to
+    /// nothing is somebody else's.
+    /// </para>
     /// </remarks>
     /// <param name="command">What the entry names, or <see langword="null"/>.</param>
     /// <param name="installRoot">The install root ownership is judged against.</param>
     /// <returns>The classification.</returns>
-    public static RegistrationOwnership Classify(string? command, string? installRoot)
+    public static RegistrationOwnership Classify(string? command, string? installRoot) =>
+        Classify(command, installRoot, UserPath.SearchDirectories);
+
+    /// <summary>Whose a command in a Codex entry is, given where a bare name is looked for.</summary>
+    /// <param name="command">What the entry names, or <see langword="null"/>.</param>
+    /// <param name="installRoot">The install root ownership is judged against.</param>
+    /// <param name="folders">The PATH a bare name is resolved against, read only when there is one.</param>
+    /// <returns>The classification.</returns>
+    public static RegistrationOwnership Classify(string? command, string? installRoot, Func<IEnumerable<string>> folders)
     {
+        ArgumentNullException.ThrowIfNull(folders);
+
         if (command is not { Length: > 0 })
         {
             return RegistrationOwnership.Absent;
         }
 
-        if (installRoot is not { Length: > 0 } || !Path.IsPathFullyQualified(command))
+        if (installRoot is not { Length: > 0 })
         {
             return RegistrationOwnership.Foreign;
         }
 
-        return McpRegistryView.ClassifyPath(command, installRoot);
+        if (UserPath.IsBareName(command))
+        {
+            if (UserPath.Resolve(command, folders()) is { } found)
+            {
+                return McpRegistryView.ClassifyPath(found, installRoot);
+            }
+
+            return string.Equals(command, RegistrationTarget.ServerFileName, StringComparison.OrdinalIgnoreCase)
+                ? RegistrationOwnership.OursAndStale
+                : RegistrationOwnership.Foreign;
+        }
+
+        return Path.IsPathFullyQualified(command)
+            ? McpRegistryView.ClassifyPath(command, installRoot)
+            : RegistrationOwnership.Foreign;
     }
 
     /// <summary>The array of servers, whichever wrapper the client put it in.</summary>

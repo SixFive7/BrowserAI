@@ -159,6 +159,13 @@ internal sealed partial class RealInstallerTests
         // not a claim.
         var startMenuBefore = ReadStartMenuShortcuts();
 
+        // ⚠️ AND THE USER'S OWN PATH, since Q294 b -- 2026-09-24. The install hook
+        // puts the install's `current\` folder on the real HKCU\Environment Path and
+        // the uninstall hook takes exactly that entry off; a hook cannot be handed a
+        // scratch PATH from here, so this arm writes the real one and holds it
+        // byte-identical, and the gate's clearance reading holds it again.
+        var pathBefore = RegistryUserPathStore.User.Read();
+
         try
         {
             await InstallTwiceAndUninstall(setup, installRoot, dataRoot, logs, planted);
@@ -197,6 +204,9 @@ internal sealed partial class RealInstallerTests
         // "the real install's Start Menu entry was not touched", and the one
         // that keeps meaning something on a machine that acquires one.
         await Assert.That(Describe(startMenuAfter)).IsEqualTo(Describe(startMenuBefore));
+
+        // And the user's PATH: text and kind, exactly as before the first install.
+        await Assert.That(RegistryUserPathStore.User.Read()).IsEqualTo(pathBefore);
     }
 
     /// <summary>
@@ -546,6 +556,7 @@ internal sealed partial class RealInstallerTests
 
         var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
         var startMenuBefore = ReadStartMenuShortcuts();
+        var pathBefore = RegistryUserPathStore.User.Read();
 
         try
         {
@@ -565,6 +576,9 @@ internal sealed partial class RealInstallerTests
         await Assert.That(ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}")).IsEqualTo(realKeyBefore);
         await Assert.That(Describe(ReadStartMenuShortcuts())).IsEqualTo(Describe(startMenuBefore));
         await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
+
+        // And so is the user's PATH, after four installs and four uninstalls.
+        await Assert.That(RegistryUserPathStore.User.Read()).IsEqualTo(pathBefore);
     }
 
     /// <summary>One order of the two-roots measurement.</summary>
@@ -592,6 +606,15 @@ internal sealed partial class RealInstallerTests
         await Assert.That(InstallLocationOfTheTestKey()).IsEqualTo(Normalised(second));
         await Assert.That(IsACompleteInstall(first)).IsTrue();
 
+        // ⚠️ EACH ROOT PUT ITS OWN FOLDER ON THE PATH -- Q294 b -- and the uninstall
+        // below takes off its own and never the other's, which is the property that
+        // keeps the test pack away from a real install's entry.
+        var firstEntry = Path.Combine(first, RegistrationTarget.CurrentDirectoryName);
+        var secondEntry = Path.Combine(second, RegistrationTarget.CurrentDirectoryName);
+
+        await Assert.That(PathEntriesNaming(firstEntry)).IsEqualTo(1);
+        await Assert.That(PathEntriesNaming(secondEntry)).IsEqualTo(1);
+
         var (goesFirst, staysBehind) = uninstallTheNamedRootFirst ? (second, first) : (first, second);
 
         await Assert.That(await RunAsync(Path.Combine(goesFirst, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
@@ -602,10 +625,15 @@ internal sealed partial class RealInstallerTests
         await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
         await Assert.That(IsACompleteInstall(staysBehind)).IsTrue();
 
+        // The PATH lost the uninstalled root's entry and kept the other's.
+        await Assert.That(PathEntriesNaming(Path.Combine(goesFirst, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(0);
+        await Assert.That(PathEntriesNaming(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(1);
+
         // And the root left behind still uninstalls cleanly, finding no key.
         await Assert.That(await RunAsync(Path.Combine(staysBehind, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
         await WaitOutTheDeferredRemoval(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName));
         await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
+        await Assert.That(PathEntriesNaming(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName))).IsEqualTo(0);
     }
 
     /// <summary>
@@ -839,6 +867,12 @@ internal sealed partial class RealInstallerTests
         // the install root twice over.
         await Assert.That(File.Exists(RegistrationRecord.PathFor(dataRoot.Path))).IsTrue();
 
+        // ⚠️ THIS INSTALL'S FOLDER IS ON THE USER'S PATH, ONCE -- Q294 b. Two installs
+        // over one root put it there once: the second found it already there.
+        var entry = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName);
+
+        await Assert.That(PathEntriesNaming(entry)).IsEqualTo(1);
+
         // ---- And uninstall, in the same sandbox --------------------------------
         var update = Path.Combine(installRoot.Path, "Update.exe");
 
@@ -855,7 +889,18 @@ internal sealed partial class RealInstallerTests
         // ⚠️ THE CLAIM. A silent uninstall keeps the data root, and every byte of
         // it is the byte that was planted.
         await Unchanged(dataRoot.Path, planted);
+
+        // And the uninstall hook took this install's folder off the PATH.
+        await Assert.That(PathEntriesNaming(entry)).IsEqualTo(0);
     }
+
+    /// <summary>How many entries of the real user PATH name a folder.</summary>
+    /// <param name="folder">The folder.</param>
+    /// <returns>The count.</returns>
+    private static int PathEntriesNaming(string folder) =>
+        RegistryUserPathStore.User.Read() is { } value
+            ? UserPath.Segments(value.Text).Count(segment => UserPath.Names(segment, folder))
+            : 0;
 
     /// <summary>
     /// Takes back whatever the arm left: the install, the scratch root, and the
@@ -924,6 +969,13 @@ internal sealed partial class RealInstallerTests
         }
 
         _ = ScratchDirectory.RemoveTree(installRoot);
+
+        // ⚠️ THE SCRATCH ROOT'S OWN PATH ENTRY, EXACTLY, AND NO OTHER -- Q294 b. An arm
+        // that died between its install and its uninstall would otherwise leave a
+        // folder that is gone on the person's PATH. The entry is this root's and can be
+        // nobody else's; the product's own remover is the one used, so a real
+        // install's entry is out of its reach for the reason it is out of the hooks'.
+        _ = UserPath.Remove(RegistryUserPathStore.User, Path.Combine(installRoot, RegistrationTarget.CurrentDirectoryName));
 
         try
         {

@@ -391,10 +391,20 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Stay;
         }
 
-        var command = ProjectCommand(who, out var absoluteBecause);
-        var report = McpRegistrar.ApplyToProject(who, register: true, folder, Environment.ProcessPath, commands, logger, command);
+        // ⚠️ THE CLIENT DECIDES WHAT A PROJECT FILE SAYS, and the two answer
+        // differently. Claude Code expands `${LOCALAPPDATA}`, so its entry is the
+        // portable spelling when that expands to this install. Codex expands NO
+        // variable in a command -- measured 2026-09-24, 0 of 48 across four spellings,
+        // and read in its launcher -- so no spelling of this install's path resolves
+        // on another machine, and Q294 b, the maintainer's answer verbatim "Q294 b",
+        // is the bare name `BrowserAI.Server.exe`, found on the PATH the install puts
+        // this install's folder on. *Previously this method composed the command
+        // itself and wrote Codex's as the absolute path, "because BrowserAI does not
+        // rely on Codex expanding a variable in a server command".*
+        var project = who.ProjectCommandFor(_state.ServerCommand ?? string.Empty, _state.InstallRoot);
+        var report = McpRegistrar.ApplyToProject(who, register: true, folder, Environment.ProcessPath, commands, logger, project.Command);
 
-        _note = ConfigurationDialog.ProjectNoteFor(report, who, absoluteBecause);
+        _note = ConfigurationDialog.ProjectNoteFor(report, who, project.Note);
 
         return Reread();
     }
@@ -438,46 +448,6 @@ internal sealed class ConfigurationSession(
 
         return ClickOutcome.Rerender;
     }
-
-    /// <summary>
-    /// The command a project file gets: portable when the client expands the
-    /// portable spelling and it expands to this install, absolute otherwise.
-    /// </summary>
-    /// <param name="who">The client the project file is for.</param>
-    /// <param name="absoluteBecause">
-    /// Why the absolute path was written, for the note, or <see langword="null"/>
-    /// when the portable spelling was.
-    /// </param>
-    /// <returns>The command to write.</returns>
-    private string ProjectCommand(RegistrationClient who, out string? absoluteBecause)
-    {
-        var absolute = _state.ServerCommand ?? string.Empty;
-
-        if (who.PortableCommandFor(InstallRootFolderName()) is not { Length: > 0 } candidate)
-        {
-            absoluteBecause =
-                $"The entry carries this machine's absolute path, because BrowserAI does not rely on {who.DisplayName} expanding a variable in a server command, so it will not resolve on another machine.";
-
-            return absolute;
-        }
-
-        var portable = absolute.Length > 0
-            && string.Equals(
-                Path.GetFullPath(McpRegistryView.Expand(candidate)),
-                Path.GetFullPath(absolute),
-                StringComparison.OrdinalIgnoreCase);
-
-        absoluteBecause = portable
-            ? null
-            : "This install is not at its default location, so the entry carries its absolute path and will not resolve on another machine.";
-
-        return portable ? candidate : absolute;
-    }
-
-    private string InstallRootFolderName() =>
-        _state.InstallRoot is { Length: > 0 } root
-            ? Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
-            : "BrowserAI.app";
 
     private ClickOutcome CheckForUpdates()
     {
