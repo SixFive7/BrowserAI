@@ -294,6 +294,44 @@ internal static class PublishedSlice
         }
     }
 
+    /// <summary>
+    /// Refuses an arm that drives the published CONFIGURATION APP when a source
+    /// file is newer than that binary.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-09-25 with the coordinator</b>, the first time an arm drives
+    /// the app over a protocol: <see cref="EnsureFresh"/> reads the server's
+    /// binary only, and the two are published by two commands. The inputs are the
+    /// same list, because the app links the same library.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">The app's publish is missing or older than the tree.</exception>
+    public static void EnsureAppFresh()
+    {
+        if (!File.Exists(AppExecutable))
+        {
+            throw new InvalidOperationException(
+                $"'{AppExecutable}' is not there. Publish the configuration app: {AppPublishCommand}");
+        }
+
+        var published = File.GetLastWriteTimeUtc(AppExecutable);
+        var newer = FreshnessInputs
+            .Where(file => file.LastWriteTimeUtc > published)
+            .Select(file => Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        if (newer.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"The published configuration app at '{AppExecutable}' is older than {newer.Count} source file(s), so this test would prove "
+                + $"nothing about the code in the tree, among them {newer[0]}. Publish it again: {AppPublishCommand}");
+        }
+    }
+
+    /// <summary>The command that publishes the configuration app.</summary>
+    public const string AppPublishCommand =
+        "dotnet publish src/BrowserAI.App/BrowserAI.App.csproj -c Release -r win-x64 --self-contained";
+
     /// <summary>The label the <c>publish freshness</c> row carries in the coverage block.</summary>
     public const string FreshnessTitle = "publish freshness";
 

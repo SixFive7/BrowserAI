@@ -3,6 +3,7 @@
 
 using BrowserAI.App.Interop;
 using BrowserAI.App.Ui;
+using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Logging;
 using BrowserAI.Registration;
@@ -22,6 +23,17 @@ namespace BrowserAI.App;
 /// them has a window.</b> A hook runs headless and exits; <c>--report</c> writes
 /// a file and exits; anything else opens the dialog. Nothing else is a mode, and
 /// nothing about the dialog runs on any other path.
+/// </para>
+/// <para>
+/// ⚠️ <b>And every start that is neither a hook nor a report settles who the
+/// coordinator is first, since 2026-09-25</b> -- Q280 b and Q284 a, the
+/// maintainer's words verbatim: <i>"Q284 a"</i>. The app is the coordinator when
+/// it holds its pipe, <c>\\.\pipe\BrowserAI-Coordinator-</c> and the install
+/// root's key. A start that finds the pipe held hands over instead: a person's
+/// start grants the coordinator the foreground and asks it to <c>show</c> its
+/// window, a hidden start (<c>--coordinate</c>, <c>--sign-in</c>) asks it to
+/// <c>recheck</c>, and either way this process exits. The dialog is still the
+/// only window, and only a person's start or a <c>show</c> opens it.
 /// </para>
 /// <para>
 /// ⚠️ <b>The hooks are dispatched by Velopack itself and not by reading
@@ -151,31 +163,70 @@ internal static class Program
         }
 
         var commands = new ClientCommandLine();
-        var state = AppState.Read(commands, Environment.CurrentDirectory);
 
+        // ⚠️ THE STATE IS READ ONLY WHERE IT IS SHOWN -- 2026-09-25. Reading it asks
+        // every client for its registration, which starts each client's CLI; a
+        // start that hands over to the coordinator, or a hidden one, shows nothing
+        // and must not pay for that or start anybody's CLI. The report reads it
+        // here, and the window reads it each time it opens.
         if (ReportPathFrom(args) is { Length: > 0 } report)
         {
-            var written = StatusReport.Write(state, report);
+            var written = StatusReport.Write(AppState.Read(commands, Environment.CurrentDirectory), report);
             AppLog.ReportWritten(logger, written);
             return 0;
         }
 
         var occasion = restarted ? Occasion.AfterUpdate : firstRun ? Occasion.FirstRun : Occasion.Ordinary;
-        var status = state.StatusSentence();
 
-        AppLog.Opening(logger, state.Version, occasion, status);
+        // ⚠️ WHO THE COORDINATOR IS, SETTLED BEFORE ANY WINDOW -- Q280 b, Q284 a,
+        // 2026-09-25. Holding the pipe is being the coordinator. A start that finds
+        // it held hands its verb over and exits here, so a second Start Menu click
+        // brings the running window forward instead of opening another one, and a
+        // hidden start that is not needed costs a few milliseconds. The root is the
+        // census's own: the install root, or the data root of a build that is not
+        // installed, which is what keeps a scratch BROWSERAI_ROOT one coordinator.
+        var mode = StartModes.Of(args);
+        var root = InstallLocation.RootAppDir ?? paths.RootAppDir;
 
-        using var session = new ConfigurationSession(
-            state,
-            commands,
-            paths,
-            logger,
-            occasion,
-            Environment.ProcessPath,
-            ShellInterop.PickFolder,
-            () => AppState.Read(commands, Environment.CurrentDirectory));
+        using var inbox = new CoordinatorInbox();
 
-        return session.Show();
+        var start = CoordinatorStart.Settle(
+            root,
+            inbox,
+            StartModes.VerbOf(mode),
+            mode is StartMode.User ? Foreground.Grant : null,
+            logger);
+
+        if (start.Outcome is CoordinatorStartOutcome.HandedOver)
+        {
+            return 0;
+        }
+
+        using var pipe = start.Pipe;
+
+        var window = new ConfigurationWindow(commands, paths, logger, occasion, inbox);
+
+        if (pipe is null)
+        {
+            // Neither the coordinator nor handed over, and the log says why. A
+            // person still gets the window they asked for; a hidden start has
+            // nothing to do without the pipe.
+            return mode is StartMode.User ? window.Show() : 1;
+        }
+
+        var started = mode.ToString();
+
+        CoordinatorLog.Became(logger, pipe.Name, started);
+
+        var shown = mode is StartMode.User ? window.Show() : 0;
+
+        IStagedUpdates staged = UpdateConfiguration.Resolve(logger) is { } feed
+            ? new VelopackUpdateClient(feed)
+            : NothingStaged.Instance;
+
+        _ = new CoordinatorLoop(inbox, staged, window, logger).Run();
+
+        return shown;
     }
 
     /// <summary>
@@ -232,6 +283,11 @@ internal static class Program
 /// <param name="imagePath">This process's own image, which every registration is judged from.</param>
 /// <param name="pickFolder">Asks for a folder, modal to the window it is given.</param>
 /// <param name="read">Reads the state again after a change.</param>
+/// <param name="inbox">
+/// The coordinator's verbs, whose <c>show</c> brings this window forward while it
+/// is open, or <see langword="null"/> when this process is not the coordinator.
+/// </param>
+/// <param name="raise">Brings a window of this process to the foreground; <see cref="Foreground.Raise"/> in the product.</param>
 internal sealed class ConfigurationSession(
     AppState state,
     IRegistrationCommand commands,
@@ -240,7 +296,9 @@ internal sealed class ConfigurationSession(
     Occasion occasion,
     string? imagePath,
     Func<nint, string, FolderPick> pickFolder,
-    Func<AppState> read) : IDisposable
+    Func<AppState> read,
+    CoordinatorInbox? inbox,
+    Func<nint, bool> raise) : IDisposable
 {
     private readonly BackgroundWork<UpdateAnswer> _work = new();
 
@@ -378,6 +436,17 @@ internal sealed class ConfigurationSession(
     /// <returns>Whether the page has to be redrawn.</returns>
     private ClickOutcome OnTick()
     {
+        // ⚠️ A SECOND START ASKED FOR THIS WINDOW -- Q284 a, 2026-09-25. The
+        // coordinator's thread is inside this dialog while it is open, so the
+        // pipe's `show` is answered here, on the dialog's own thread, from the
+        // timer that already runs every 200 ms or so. The second start granted
+        // this process the foreground before it asked, which is what lets the
+        // raise take effect.
+        if (inbox?.TakeShow() is true)
+        {
+            _ = raise(_host?.Window ?? 0);
+        }
+
         var poll = _work.Poll();
 
         if (!poll.Finished)
@@ -723,4 +792,55 @@ internal static partial class AppLog
         Level = LogLevel.Error,
         Message = "A click in the configuration window threw. Nothing was changed and the window is still open.")]
     public static partial void ClickFailed(ILogger logger, Exception failure);
+}
+
+/// <summary>
+/// The configuration window as the coordinator opens it: read the state, show
+/// the dialog, return when it closes.
+/// </summary>
+/// <remarks>
+/// <b>The first window carries the occasion the process was started for</b> --
+/// the installer's first run, or the restart after an update -- and every later
+/// one, opened by a second start's <c>show</c>, is an ordinary one.
+/// </remarks>
+/// <param name="commands">The seam over starting a client.</param>
+/// <param name="paths">Where the logs are.</param>
+/// <param name="logger">Where the records go.</param>
+/// <param name="first">Why the first window opens.</param>
+/// <param name="inbox">The coordinator's verbs, whose <c>show</c> brings an open window forward.</param>
+internal sealed class ConfigurationWindow(
+    IRegistrationCommand commands,
+    IAppPaths paths,
+    ILogger logger,
+    Occasion first,
+    CoordinatorInbox inbox) : ICoordinatorWindow
+{
+    private Occasion _next = first;
+
+    /// <inheritdoc />
+    public int Show()
+    {
+        var state = AppState.Read(commands, Environment.CurrentDirectory);
+        var occasion = _next;
+
+        _next = Occasion.Ordinary;
+
+        var status = state.StatusSentence();
+
+        AppLog.Opening(logger, state.Version, occasion, status);
+
+        using var session = new ConfigurationSession(
+            state,
+            commands,
+            paths,
+            logger,
+            occasion,
+            Environment.ProcessPath,
+            ShellInterop.PickFolder,
+            () => AppState.Read(commands, Environment.CurrentDirectory),
+            inbox,
+            Foreground.Raise);
+
+        return session.Show();
+    }
 }

@@ -39,7 +39,7 @@ namespace BrowserAI.Updates;
 /// that owns the locator.
 /// </para>
 /// </remarks>
-internal sealed class VelopackUpdateClient : IUpdateClient
+internal sealed class VelopackUpdateClient : IUpdateClient, IStagedUpdates
 {
     private readonly UpdateManager _manager;
     private readonly UpdateFeed _feed;
@@ -97,21 +97,46 @@ internal sealed class VelopackUpdateClient : IUpdateClient
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <b>No request is made.</b> <c>UpdatePendingRestart</c> reads the packages
+    /// directory through the locator and compares versions, read at Velopack
+    /// 1.2.158 (<c>UpdateManager.cs</c>); in a process that is not installed the
+    /// installed version is unknown and the answer is always none.
+    /// </remarks>
+    public UpdateCandidate? Pending() =>
+        _manager.UpdatePendingRestart is { } asset
+            ? new UpdateCandidate
+            {
+                Version = asset.Version.ToFullString(),
+                IsDowngrade = false,
+                DeltaCount = 0,
+                FullPackageSize = asset.Size,
+                Native = asset,
+            }
+            : null;
+
+    /// <inheritdoc cref="IUpdateClient.ApplyAfterThisProcessExits" />
     public void ApplyAfterThisProcessExits(UpdateCandidate candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);
 
-        if (candidate.Native is not UpdateInfo info)
+        // ⚠️ TWO KINDS OF CANDIDATE SINCE 2026-09-25: the server's, which came
+        // from a feed check and carries Velopack's UpdateInfo, and the
+        // coordinator's, which came from the packages directory and carries the
+        // asset itself. Both reach Update.exe the same way.
+        var asset = candidate.Native switch
         {
-            throw new InvalidOperationException("This candidate did not come from the Velopack client and cannot be applied by it.");
-        }
+            UpdateInfo info => info.TargetFullRelease,
+            VelopackAsset staged => staged,
+            _ => throw new InvalidOperationException("This candidate did not come from the Velopack client and cannot be applied by it."),
+        };
 
         // silent: no dialogs -- there is no user at a background MCP server to
         // answer one. restart: false -- a relaunched process does not inherit
         // the caller's stdio, so restarting would produce a server with no
         // client. waitPid is this process, supplied by Velopack itself, which is
         // what guarantees the session locks are released before the swap.
-        _manager.WaitExitThenApplyUpdates(info.TargetFullRelease, silent: true, restart: false);
+        _manager.WaitExitThenApplyUpdates(asset, silent: true, restart: false);
     }
 
     /// <summary>

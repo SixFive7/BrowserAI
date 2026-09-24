@@ -204,6 +204,17 @@ internal static partial class NamedPipes
     public static int? ServerProcessIdOf(SafeFileHandle client) =>
         GetNamedPipeServerProcessId(client, out var processId) ? (int)processId : null;
 
+    /// <summary>The pid of the process on the client end of a connected server handle.</summary>
+    /// <remarks>
+    /// <b>Read for the record, never for a decision.</b> The coordinator logs who
+    /// asked it to show its window or to look again; what it does is the same
+    /// whoever asked, because the pipe's DACL already decided who may ask.
+    /// </remarks>
+    /// <param name="server">The server end, connected.</param>
+    /// <returns>The pid, or <see langword="null"/> when Windows would not say.</returns>
+    public static int? ClientProcessIdOf(SafeFileHandle server) =>
+        GetNamedPipeClientProcessId(server, out var processId) ? (int)processId : null;
+
     /// <summary>The HRESULT a Win32 error code is reported as.</summary>
     /// <param name="error">The Win32 error.</param>
     /// <returns><c>HRESULT_FROM_WIN32(error)</c>.</returns>
@@ -366,6 +377,11 @@ internal static partial class NamedPipes
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool GetNamedPipeServerProcessId(SafeFileHandle pipe, out uint serverProcessId);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetNamedPipeClientProcessId(SafeFileHandle pipe, out uint clientProcessId);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll")]

@@ -59,6 +59,38 @@ internal interface IUpdateClient
     void ApplyAfterThisProcessExits(UpdateCandidate candidate);
 }
 
+/// <summary>
+/// What the coordinator asks of Velopack: whether a newer package is already on
+/// disk, and to apply it once this process has gone.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>A second seam and not a fifth member of <see cref="IUpdateClient"/></b>, and
+/// the difference is who asks. The server's update lane checks a feed and
+/// downloads; the coordinator never touches the network, and asks only what
+/// <c>UpdateManager.UpdatePendingRestart</c> answers from the packages directory
+/// (the newest full package whose version is above the installed one, read at
+/// Velopack 1.2.158) and then hands the same apply to <c>Update.exe</c>. Added
+/// 2026-09-25 with the coordinator, Q280 b and Q285 a.
+/// </para>
+/// <para>
+/// <b>The apply is the one <see cref="IUpdateClient.ApplyAfterThisProcessExits"/>
+/// already is</b>: silent, no restart, waiting on this pid. The coordinator has no
+/// client and no window it must bring back, so a restart would only start a
+/// configuration window nobody asked for.
+/// </para>
+/// </remarks>
+internal interface IStagedUpdates
+{
+    /// <summary>The package already on disk that is newer than what is installed, or <see langword="null"/>.</summary>
+    /// <returns>The candidate. Its <see cref="UpdateCandidate.Native"/> is Velopack's own asset.</returns>
+    UpdateCandidate? Pending();
+
+    /// <summary>Hands the package to <c>Update.exe</c>, which applies it once this process has exited.</summary>
+    /// <param name="candidate">What <see cref="Pending"/> returned.</param>
+    void ApplyAfterThisProcessExits(UpdateCandidate candidate);
+}
+
 /// <summary>What the feed is offering, in terms this side of the seam can read.</summary>
 /// <remarks>
 /// <see cref="Native"/> is Velopack's own <c>UpdateInfo</c> and is opaque

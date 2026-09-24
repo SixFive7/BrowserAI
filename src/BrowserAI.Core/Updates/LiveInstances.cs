@@ -738,7 +738,24 @@ internal sealed class LiveInstances : IDisposable
     /// check's name.
     /// </remarks>
     public static string MutexNameFor(string installRoot) =>
-        MutexPrefix + SessionPath.For(installRoot).MutexName[LockScopes.PerDirectoryPrefix.Length..];
+        MutexPrefix + RootKeyFor(installRoot);
+
+    /// <summary>
+    /// The install root's key: the 32 hex characters every name keyed to one
+    /// install root ends in.
+    /// </summary>
+    /// <remarks>
+    /// <b>One derivation, three names since 2026-09-25</b>: the census gate above,
+    /// the coordinator's pipe (<c>Coordination.CoordinatorProtocol.NameFor</c>) and
+    /// the per-user logon task (<c>Registration.SignInTask.NameFor</c>). A second
+    /// spelling of the key is how two of them would come to name different roots
+    /// while each reported success, which is the defect
+    /// <see cref="MutexNameFor"/>'s own remarks record for the gate.
+    /// </remarks>
+    /// <param name="installRoot">The install root, never the data root.</param>
+    /// <returns>The upper-case hex key.</returns>
+    public static string RootKeyFor(string installRoot) =>
+        SessionPath.For(installRoot).MutexName[LockScopes.PerDirectoryPrefix.Length..];
 
     /// <summary>The folder the markers live in, directly under an install root.</summary>
     public const string DirectoryName = "live";

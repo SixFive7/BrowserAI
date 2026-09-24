@@ -53,6 +53,17 @@ internal sealed record ServerPipeAnswer(
     ServerDescription? Description,
     TimeSpan Elapsed);
 
+/// <summary>One request's exchange over a pipe found by name.</summary>
+/// <param name="Failure">How it failed, or <see langword="null"/> when <paramref name="Body"/> is the answer.</param>
+/// <param name="Why">One sentence saying why it failed, when it did.</param>
+/// <param name="Body">The whole answer's JSON, when there is one.</param>
+/// <param name="ServerProcessId">The pid Windows reported for the pipe's server, when the connect got that far.</param>
+internal sealed record PipeExchange(
+    ServerPipeOutcome? Failure,
+    string? Why,
+    byte[]? Body,
+    int? ServerProcessId);
+
 /// <summary>
 /// Asks one server, through its pipe, to describe itself or to stop -- after the
 /// census has said it is there, and never for longer than the bound.
@@ -130,11 +141,72 @@ internal static class ServerPipeClient
 
         var name = ServerPipeProtocol.NameFor(markerPath);
 
+        var exchange = await ExchangeAsync(
+            name,
+            ServerPipeProtocol.Request(request),
+            request.ToString(),
+            clock,
+            bound,
+            serving => serving == expected
+                ? null
+                : (ServerPipeOutcome.NotItsServer, string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"'{name}' is served by pid {serving?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}, not by pid {expected} whose marker names it, so nothing was asked.")),
+            cancellationToken).ConfigureAwait(false);
+
+        return exchange.Body is { } body
+            ? Read(name, request, body, answer)
+            : answer(exchange.Failure!.Value, exchange.Why!);
+    }
+
+    /// <summary>
+    /// Connects to a pipe by its full name, asks one request, and reads one framed
+    /// answer: the part every caller of a BrowserAI pipe shares.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Shared since 2026-09-25 with the coordinator's own pipe</b>
+    /// (<see cref="CoordinatorClient"/>), which is found by an install root and not
+    /// by a marker, so the census step above is this method's caller's and not
+    /// this method's.
+    /// </para>
+    /// <para>
+    /// <b>The vet runs after the connect and before a byte is sent</b>, with the pid
+    /// Windows reports for the pipe's server: a server pipe's caller refuses a pid
+    /// its marker does not name there, and the coordinator's caller grants that pid
+    /// the right to take the foreground there, before it asks for the window.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The full pipe name.</param>
+    /// <param name="request">The request's bytes, newline included.</param>
+    /// <param name="requestName">The request, as a sentence names it.</param>
+    /// <param name="clock">The call's clock, started by the caller.</param>
+    /// <param name="bound">The whole call's bound, connect included.</param>
+    /// <param name="vet">
+    /// Given the server's pid, returns <see langword="null"/> to go on, or the
+    /// outcome and sentence that end the call without sending anything.
+    /// </param>
+    /// <param name="cancellationToken">Ends the call early.</param>
+    /// <returns>The answer's body, or why there is none, and the server's pid when it was read.</returns>
+    internal static async Task<PipeExchange> ExchangeAsync(
+        string name,
+        byte[] request,
+        string requestName,
+        Stopwatch clock,
+        TimeSpan bound,
+        Func<int?, (ServerPipeOutcome Outcome, string Why)?> vet,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(clock);
+        ArgumentNullException.ThrowIfNull(vet);
+
         var (pipe, refusal) = Connect(name, clock, bound);
 
         if (pipe is null)
         {
-            return answer(refusal!.Value.Outcome, refusal.Value.Why);
+            return new PipeExchange(refusal!.Value.Outcome, refusal.Value.Why, null, null);
         }
 
         // The stream owns the handle from here, on every path out.
@@ -143,15 +215,9 @@ internal static class ServerPipeClient
 
         var serving = NamedPipes.ServerProcessIdOf(pipe);
 
-        if (serving != expected)
+        if (vet(serving) is { } stop)
         {
-            var actual = serving?.ToString(CultureInfo.InvariantCulture) ?? "unknown";
-
-            return answer(
-                ServerPipeOutcome.NotItsServer,
-                string.Create(
-                    CultureInfo.InvariantCulture,
-                    $"'{name}' is served by pid {actual}, not by pid {expected} whose marker names it, so nothing was asked."));
+            return new PipeExchange(stop.Outcome, stop.Why, null, serving);
         }
 
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -162,7 +228,7 @@ internal static class ServerPipeClient
 
         try
         {
-            await stream.WriteAsync(ServerPipeProtocol.Request(request), deadline.Token).ConfigureAwait(false);
+            await stream.WriteAsync(request, deadline.Token).ConfigureAwait(false);
 
             var prefix = new byte[ServerPipeProtocol.LengthPrefixBytes];
 
@@ -170,18 +236,22 @@ internal static class ServerPipeClient
 
             if (headerRead < prefix.Length)
             {
-                return answer(
+                return new PipeExchange(
                     ServerPipeOutcome.NoAnswer,
-                    string.Create(CultureInfo.InvariantCulture, $"'{name}' closed after {headerRead} of the {prefix.Length} bytes of its length prefix."));
+                    string.Create(CultureInfo.InvariantCulture, $"'{name}' closed after {headerRead} of the {prefix.Length} bytes of its length prefix."),
+                    null,
+                    serving);
             }
 
             var length = BinaryPrimitives.ReadInt32LittleEndian(prefix);
 
             if (length is < 0 or > ServerPipeProtocol.MaximumReplyBytes)
             {
-                return answer(
+                return new PipeExchange(
                     ServerPipeOutcome.NoAnswer,
-                    string.Create(CultureInfo.InvariantCulture, $"'{name}' announced an answer of {length} bytes, which is no answer this protocol produces."));
+                    string.Create(CultureInfo.InvariantCulture, $"'{name}' announced an answer of {length} bytes, which is no answer this protocol produces."),
+                    null,
+                    serving);
             }
 
             body = new byte[length];
@@ -190,9 +260,11 @@ internal static class ServerPipeClient
 
             if (bodyRead < length)
             {
-                return answer(
+                return new PipeExchange(
                     ServerPipeOutcome.NoAnswer,
-                    string.Create(CultureInfo.InvariantCulture, $"'{name}' closed after {bodyRead} of the {length} bytes its length prefix announced, so the answer is not whole and none of it was read as one."));
+                    string.Create(CultureInfo.InvariantCulture, $"'{name}' closed after {bodyRead} of the {length} bytes its length prefix announced, so the answer is not whole and none of it was read as one."),
+                    null,
+                    serving);
             }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -202,16 +274,18 @@ internal static class ServerPipeClient
             // hung server is the bound and not a little less.
             await WaitOutAsync(clock, bound, cancellationToken).ConfigureAwait(false);
 
-            return answer(
+            return new PipeExchange(
                 ServerPipeOutcome.NoAnswer,
-                string.Create(CultureInfo.InvariantCulture, $"'{name}' did not answer '{request}' inside {bound.TotalMilliseconds:F0} ms."));
+                string.Create(CultureInfo.InvariantCulture, $"'{name}' did not answer '{requestName}' inside {bound.TotalMilliseconds:F0} ms."),
+                null,
+                serving);
         }
         catch (IOException failure)
         {
-            return answer(ServerPipeOutcome.NoAnswer, $"'{name}' failed part-way through the call: {failure.Message}");
+            return new PipeExchange(ServerPipeOutcome.NoAnswer, $"'{name}' failed part-way through the call: {failure.Message}", null, serving);
         }
 
-        return Read(name, request, body, answer);
+        return new PipeExchange(null, null, body, serving);
     }
 
     /// <summary>Opens the pipe, waiting for a busy instance inside the bound.</summary>
@@ -238,10 +312,11 @@ internal static class ServerPipeClient
             if (error is NamedPipes.ErrorFileNotFound)
             {
                 // No instance of the name exists at all. Waiting would not make
-                // one: the marker is held, so this is a server with no pipe --
-                // one from before the pipe, the configuration app, or one whose
-                // pipe could not be created -- and it costs nothing to say so.
-                return (null, (ServerPipeOutcome.NoPipe, $"The marker is held and no pipe named '{name}' exists."));
+                // one: for a server's pipe the marker is held, so this is a server
+                // with no pipe -- one from before the pipe, the configuration app,
+                // or one whose pipe could not be created -- and for the
+                // coordinator's it is no coordinator. It costs nothing to say so.
+                return (null, (ServerPipeOutcome.NoPipe, $"No pipe named '{name}' exists."));
             }
 
             if (error is not NamedPipes.ErrorPipeBusy)

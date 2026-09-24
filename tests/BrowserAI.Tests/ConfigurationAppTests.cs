@@ -346,7 +346,9 @@ internal sealed class ConfigurationAppTests
                 asked.Add((owner, prompt));
                 return answer;
             },
-            () => state);
+            () => state,
+            inbox: null,
+            raise: _ => false);
 
         using var host = session.Attach();
 
@@ -463,7 +465,9 @@ internal sealed class ConfigurationAppTests
             Occasion.Ordinary,
             image,
             (_, _) => FolderPick.Of(project.Path),
-            () => state);
+            () => state,
+            inbox: null,
+            raise: _ => false);
 
         using var host = session.Attach();
 

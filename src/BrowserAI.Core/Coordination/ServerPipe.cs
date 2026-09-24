@@ -26,6 +26,29 @@ internal interface IServerPipeResponder
     ServerPipeReply Stop();
 }
 
+/// <summary>What one pipe answers, verb by verb.</summary>
+/// <remarks>
+/// <b>Two pipes share one serving loop since 2026-09-25</b>: each server's, which
+/// answers <c>describe</c> and <c>stop</c>, and the coordinator's, which answers
+/// <c>show</c> and <c>recheck</c> (Q284 a). The loop, the framing, the
+/// security descriptor and the one-instance rule are the same for both, so the
+/// only thing a pipe supplies is this table.
+/// </remarks>
+internal interface IPipeAnswers
+{
+    /// <summary>The verbs this pipe answers, in the order a refusal names them.</summary>
+    IReadOnlyList<string> Verbs { get; }
+
+    /// <summary>The answer to one request.</summary>
+    /// <param name="verb">The request line, without its newline.</param>
+    /// <param name="clientProcessId">
+    /// The pid of the process on the other end, as <c>GetNamedPipeClientProcessId</c>
+    /// reports it, or <see langword="null"/> when Windows would not say.
+    /// </param>
+    /// <returns>The reply, or <see langword="null"/> for a verb this pipe does not know.</returns>
+    ServerPipeReply? Answer(string verb, int? clientProcessId);
+}
+
 /// <summary>
 /// One server's named pipe: one instance, one thread, one request per
 /// connection, and a length-prefixed answer.
@@ -54,18 +77,18 @@ internal interface IServerPipeResponder
 /// </remarks>
 internal sealed class ServerPipe : IDisposable
 {
-    private readonly IServerPipeResponder _responder;
+    private readonly IPipeAnswers _answers;
     private readonly ILogger _logger;
     private readonly Thread _thread;
 
     private SafeFileHandle? _pipe;
     private int _stopping;
 
-    private ServerPipe(string name, SafeFileHandle pipe, IServerPipeResponder responder, ILogger logger)
+    private ServerPipe(string name, SafeFileHandle pipe, IPipeAnswers answers, ILogger logger)
     {
         Name = name;
         _pipe = pipe;
-        _responder = responder;
+        _answers = answers;
         _logger = logger;
 
         _thread = new Thread(Serve)
@@ -113,14 +136,42 @@ internal sealed class ServerPipe : IDisposable
         ArgumentNullException.ThrowIfNull(responder);
         ArgumentNullException.ThrowIfNull(logger);
 
+        return OpenNamed(name, new ServerAnswers(responder, name, logger), logger);
+    }
+
+    /// <summary>Creates a pipe under an exact name and serves it with a table of answers.</summary>
+    /// <remarks>
+    /// <b>What the coordinator's pipe opens through</b>, and what the overload
+    /// taking a server's responder is one case of. The creation is
+    /// <c>NamedPipes.CreateServer</c> for every pipe, so the coordinator's gets the
+    /// first-instance flag, the refusal of remote clients and the current user's
+    /// DACL with nothing to remember.
+    /// </remarks>
+    /// <param name="name">The full pipe name.</param>
+    /// <param name="answers">What each request is answered with.</param>
+    /// <param name="logger">Where the pipe reports.</param>
+    /// <returns>The serving pipe.</returns>
+    /// <exception cref="IOException">
+    /// The pipe was not created. <see cref="Exception.HResult"/> is Windows' own
+    /// answer: <c>0x800700E7</c> when an instance of the name already exists, and
+    /// <c>0x80070005</c> when somebody else created the name first.
+    /// </exception>
+    public static ServerPipe OpenNamed(string name, IPipeAnswers answers, ILogger logger)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(answers);
+        ArgumentNullException.ThrowIfNull(logger);
+
         var handle = NamedPipes.CreateServer(name);
 
         try
         {
-            var pipe = new ServerPipe(name, handle, responder, logger);
+            var pipe = new ServerPipe(name, handle, answers, logger);
+
+            var verbs = string.Join(" and ", answers.Verbs);
 
             pipe._thread.Start();
-            ServerPipeLog.Listening(logger, name);
+            ServerPipeLog.Listening(logger, name, verbs);
 
             return pipe;
         }
@@ -177,7 +228,7 @@ internal sealed class ServerPipe : IDisposable
                     break;
                 }
 
-                var after = AnswerOne(stream);
+                var after = AnswerOne(stream, NamedPipes.ClientProcessIdOf(pipe));
 
                 NamedPipes.Disconnect(pipe);
 
@@ -209,8 +260,9 @@ internal sealed class ServerPipe : IDisposable
 
     /// <summary>Reads one request, writes its answer and waits for the client to finish reading it.</summary>
     /// <param name="stream">The connected pipe.</param>
+    /// <param name="clientProcessId">The pid on the other end, when Windows says.</param>
     /// <returns>What to do once the connection has been dropped, if anything.</returns>
-    private Action? AnswerOne(FileStream stream)
+    private Action? AnswerOne(FileStream stream, int? clientProcessId)
     {
         try
         {
@@ -223,14 +275,7 @@ internal sealed class ServerPipe : IDisposable
                 return null;
             }
 
-            var request = ServerPipeProtocol.Parse(line);
-
-            if (request is ServerPipeRequest.Stop)
-            {
-                ServerPipeLog.StopRequested(_logger, Name);
-            }
-
-            var reply = Dispatch(request, line);
+            var reply = Dispatch(line, clientProcessId);
 
             stream.Write(ServerPipeProtocol.Frame(reply.Body));
 
@@ -257,21 +302,17 @@ internal sealed class ServerPipe : IDisposable
     /// The one place a request becomes an answer, and the one place a server
     /// failing to answer becomes a refusal a client can read.
     /// </summary>
-    /// <param name="request">The request, or <see langword="null"/> for a verb this build does not know.</param>
     /// <param name="line">The verb as it arrived.</param>
+    /// <param name="clientProcessId">The pid on the other end, when Windows says.</param>
     /// <returns>The reply.</returns>
-    private ServerPipeReply Dispatch(ServerPipeRequest? request, string line)
+    private ServerPipeReply Dispatch(string line, int? clientProcessId)
     {
         try
         {
-            return request switch
-            {
-                ServerPipeRequest.Describe => _responder.Describe(),
-                ServerPipeRequest.Stop => _responder.Stop(),
-                _ => new ServerPipeReply(ServerPipeProtocol.Refused(
+            return _answers.Answer(line, clientProcessId)
+                ?? new ServerPipeReply(ServerPipeProtocol.Refused(
                     line,
-                    $"This BrowserAI does not know the request '{line}'. It answers '{ServerPipeProtocol.DescribeVerb}' and '{ServerPipeProtocol.StopVerb}'.")),
-            };
+                    $"This BrowserAI does not know the request '{line}'. It answers {string.Join(" and ", _answers.Verbs.Select(verb => $"'{verb}'"))}."));
         }
 #pragma warning disable CA1031 // A responder that throws must cost one answer and not the pipe: the client is told why, and the next request is served.
         catch (Exception failure)
@@ -317,6 +358,31 @@ internal sealed class ServerPipe : IDisposable
 
         return (end >= 0 ? text[..end] : text).TrimEnd('\r');
     }
+
+    /// <summary>A server's two verbs, answered by its responder.</summary>
+    /// <param name="responder">What answers them.</param>
+    /// <param name="name">The pipe's full name, for the stop's record.</param>
+    /// <param name="logger">Where the stop is recorded.</param>
+    private sealed class ServerAnswers(IServerPipeResponder responder, string name, ILogger logger) : IPipeAnswers
+    {
+        public IReadOnlyList<string> Verbs { get; } = [ServerPipeProtocol.DescribeVerb, ServerPipeProtocol.StopVerb];
+
+        public ServerPipeReply? Answer(string verb, int? clientProcessId)
+        {
+            switch (ServerPipeProtocol.Parse(verb))
+            {
+                case ServerPipeRequest.Describe:
+                    return responder.Describe();
+
+                case ServerPipeRequest.Stop:
+                    ServerPipeLog.StopRequested(logger, name);
+                    return responder.Stop();
+
+                default:
+                    return null;
+            }
+        }
+    }
 }
 
 /// <summary>Source-generated log messages for a server's pipe.</summary>
@@ -325,11 +391,12 @@ internal static partial class ServerPipeLog
     /// <summary>The pipe exists and its thread is waiting for a client.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="name">The pipe's full name.</param>
+    /// <param name="verbs">What it answers.</param>
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
-        Message = "Listening on {Name} for describe and stop.")]
-    public static partial void Listening(ILogger logger, string name);
+        Message = "Listening on {Name} for {Verbs}.")]
+    public static partial void Listening(ILogger logger, string name, string verbs);
 
     /// <summary>The pipe could not be created, and the server serves stdio without it.</summary>
     /// <param name="logger">Where to write.</param>
