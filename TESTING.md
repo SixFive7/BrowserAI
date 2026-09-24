@@ -305,6 +305,7 @@ Four drivers, two per shell, plus the clearance snapshot they share:
 | [`build/invoke-ordinary-gate.sh`](build/invoke-ordinary-gate.sh) | one run, forces `c:/`, declares `lower` |
 | [`build/Invoke-ReleaseGate.ps1`](build/Invoke-ReleaseGate.ps1) | three runs under `BROWSERAI_RELEASE_RUN`, forces `C:\`, declares `upper` |
 | [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) | three runs under `BROWSERAI_RELEASE_RUN`, forces `c:/`, declares `lower` |
+| [`build/InstallerLock.ps1`](build/InstallerLock.ps1) | the drivers' half of `.work\installer.lock`: each driver takes it for its own pid before its first clearance snapshot, declares the token in `BROWSERAI_INSTALLER_LOCK_HELD` for the run it starts, and lets it go at the end -- *added 2026-09-24, Q291 a; see [the installer lock](#the-installer-lock-is-the-suites-own)* |
 | [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1) | the six readings compared either side of every run, and it never repairs what it finds -- *six since 2026-09-24 (previously five), when the hooks began registering with Codex and `~\.codex\config.toml` became a file a run must not change*. ⚠️ *The registration reading is a read-only parse of the `browserai` entry in `~/.claude.json` since 2026-09-24 (previously `claude mcp get browserai`), Q281, the maintainer's words verbatim: "Q281 a". The client's own verb starts the client, which health-checks the server and can write that very file; `SuiteCoverageTests.TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient` holds the parse*. ⚠️ *The Codex reading is the `[mcp_servers.browserai]` entry of `~\.codex\config.toml`, line for line, since 2026-09-24 (previously the whole file by length and SHA-256), Q292, the maintainer's words verbatim: "Q292 a - Same for claude code". The Codex desktop app rewrites that file when it starts, and a whole-file hash stopped a gate on it; the Claude Code reading was already the entry alone. `SuiteCoverageTests.TheClearanceComparesOnlyEachClientsBrowserAiEntry` runs the script against a scratch profile, rewrites both files around the entry and then the entry itself, and holds both halves* |
 
 ⚠️ **THIS IS NOT THE SHARED WRAPPER SCRIPT `CLAUDE.md` FORBIDS, and the
@@ -430,6 +431,36 @@ is where that matters and what it changes.
 still says `nohup`, and that would assert the documentation, not the
 practice; the practice is a habit of whoever types the command, and this section
 is the reader it needs.
+
+### The installer lock is the suite's own
+
+**Q291, decided 2026-09-24 by the maintainer, verbatim: *"Q291 a"*.** *Previously a
+convention nothing in the tree read*: every run that included `RealInstallerTests`
+was to be started by somebody holding `.work\installer.lock` by hand. Those arms
+install the test pack under one Add/Remove key and one Start Menu title, and since
+Q294 b they put its folder on the user's PATH, so two at once is the collision the
+test id exists to prevent.
+
+**The suite takes it from a session hook**, which no filter can deselect, and lets it
+go when the session ends: `InstallerLock.Take` creates the file naming the test host's
+pid and creation time, waits for a live holder up to `TestDefaults.InstallerLockWait`,
+and takes over from a holder that is gone. **A gate driver takes it first**, through
+[`build/InstallerLock.ps1`](build/InstallerLock.ps1), and declares the token in
+`BROWSERAI_INSTALLER_LOCK_HELD`, so the test host finds the holder it was told about
+and neither waits for it nor lets it go; a host that took the lock itself declares it
+the same way for the child test hosts some arms start. A run that could not take it
+runs no installer arm: the `release installer` capability reads absent and names the
+holder, which is a skip in an ordinary run and a failure in a release run. The
+coverage block's **`installer lock`** row says which of the three it was -- `TAKEN`,
+`HELD` or `WAITED`.
+
+**Held by:** `InstallerLockTests` (the decision over constructed readings, this run's
+own hold, and the drivers' script driven against a scratch lock for a live, a foreign
+and a dead holder) and
+`SuiteCoverageTests.EveryGateDriverHoldsTheInstallerLockForItsWholeRun`, which reads
+all four drivers. **One file for every checkout**: a linked worktree resolves the main
+checkout's `.work` through its `.git` file, because the state the lock guards is the
+machine's.
 
 ### The two spellings are forced, and the run says which one it got
 

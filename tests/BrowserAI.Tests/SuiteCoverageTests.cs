@@ -93,6 +93,19 @@ internal static class SuiteCoverage
     [Before(TestSession)]
     public static void WatchForWindows() => WindowWatch.Start();
 
+    /// <summary>
+    /// Takes <c>.work\installer.lock</c> for the whole session, or finds the live holder
+    /// that started this run holding it.
+    /// </summary>
+    /// <remarks>
+    /// <b>A session hook, so no filter can deselect it</b>, and it is Q291 a in the
+    /// maintainer's words: <i>"Q291 a"</i>. It waits for a live holder up to
+    /// <see cref="TestDefaults.InstallerLockWait"/> and takes over from a dead one; a
+    /// run that could not take it runs no installer arm. See <see cref="InstallerLock"/>.
+    /// </remarks>
+    [Before(TestSession)]
+    public static void TakeTheInstallerLock() => InstallerLock.Take();
+
     /// <summary>Writes the coverage block at the end of the session.</summary>
     [After(TestSession)]
     public static void ReportWhatThisRunExercised()
@@ -153,6 +166,11 @@ internal static class SuiteCoverage
             _ = Directory.CreateDirectory(Path.GetDirectoryName(probe)!);
             File.WriteAllText(probe, SuiteFilter.Describe(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
         }
+
+        // The lock goes before the refusal below throws, so a refused run still
+        // lets the next one in, and after the block is written, so the block says
+        // what this run held.
+        InstallerLock.Release();
 
         RefuseWhatThisRunsOwnReadingsForbid();
     }
@@ -1463,6 +1481,90 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(ClearanceOffences(CodeOf("$out += ((claude mcp get browserai 2>&1 | Out-String))", ".ps1")).Count).IsEqualTo(2);
         await Assert.That(ClearanceOffences(CodeOf("$j = $text | ConvertFrom-Json -AsHashtable # the entry in ~/.claude.json\n$f = '.claude.json'", ".ps1"))).IsEmpty();
         await Assert.That(ClearanceOffences(CodeOf("# never claude mcp get\n$f = '.claude.json'; $j = $t | ConvertFrom-Json -AsHashtable", ".ps1"))).IsEmpty();
+    }
+
+    /// <summary>
+    /// Every gate driver takes the installer lock before its first clearance
+    /// snapshot, declares it to the run it starts, and lets it go.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q291, decided 2026-09-24 by the maintainer, verbatim: <i>"Q291 a"</i>.</b>
+    /// The suite takes <c>.work\installer.lock</c> itself when a session starts, and a
+    /// driver that did not take it first would have its own test host take it -- after
+    /// the driver's first clearance snapshot, which then read a machine nothing held. So
+    /// a driver takes it through <c>build/InstallerLock.ps1</c> before that snapshot,
+    /// declares the token in <see cref="InstallerLock.DeclarationVariable"/> for the run
+    /// it starts, and lets it go at the end.
+    /// </para>
+    /// <para>
+    /// <b>Read as code, comments blanked</b>, like the drive-letter arm beside it.
+    /// <b>Planted red 2026-09-24</b> against the four drivers as they stood, none of
+    /// which named the lock.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryGateDriverHoldsTheInstallerLockForItsWholeRun()
+    {
+        var offences = new List<string>();
+
+        foreach (var driver in GateDrivers)
+        {
+            var path = Path.Combine(RepositoryLayout.Root.FullName, "build", driver.File);
+            var code = CodeOf(await File.ReadAllTextAsync(path), Path.GetExtension(driver.File));
+
+            offences.AddRange(LockOffences(code).Select(offence => $"{driver.File}: {offence}"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // ⚠️ THE CONTROLS, both directions, through the same reader.
+        const string Held =
+            "$t = & InstallerLock.ps1 -Take -HolderPid $PID\n$env:BROWSERAI_INSTALLER_LOCK_HELD = $t\n"
+            + "& Get-ClearanceSnapshot.ps1 -Tag a\n& InstallerLock.ps1 -Release -HolderPid $PID\n";
+
+        await Assert.That(LockOffences(Held)).IsEmpty();
+        await Assert.That(LockOffences("& Get-ClearanceSnapshot.ps1 -Tag a\n").Count).IsEqualTo(3);
+
+        const string Late =
+            "& Get-ClearanceSnapshot.ps1 -Tag a\n$t = & InstallerLock.ps1 -Take -HolderPid $PID\n"
+            + "$env:BROWSERAI_INSTALLER_LOCK_HELD = $t\n& InstallerLock.ps1 -Release -HolderPid $PID\n";
+
+        await Assert.That(LockOffences(Late).Count).IsEqualTo(1);
+    }
+
+    /// <summary>What is wrong with one driver's hold on the installer lock.</summary>
+    /// <param name="code">The driver, comments blanked.</param>
+    /// <returns>One complaint per fault.</returns>
+    private static List<string> LockOffences(string code)
+    {
+        var offences = new List<string>();
+        var lines = code.Split('\n');
+
+        var take = Array.FindIndex(lines, line => line.Contains("InstallerLock.ps1", StringComparison.Ordinal) && line.Contains("-Take", StringComparison.Ordinal));
+        var clearance = Array.FindIndex(lines, line => line.Contains("Get-ClearanceSnapshot.ps1", StringComparison.Ordinal));
+
+        if (take < 0)
+        {
+            offences.Add("never takes the installer lock through build/InstallerLock.ps1 -Take");
+        }
+        else if (clearance >= 0 && clearance < take)
+        {
+            offences.Add("takes the installer lock after its first clearance snapshot, which then reads a machine nothing held");
+        }
+
+        if (!Array.Exists(lines, line => line.Contains(InstallerLock.DeclarationVariable, StringComparison.Ordinal) && line.Contains('=', StringComparison.Ordinal)))
+        {
+            offences.Add($"never declares the lock in {InstallerLock.DeclarationVariable}, so the test host it starts would wait for its own driver");
+        }
+
+        if (!Array.Exists(lines, line => line.Contains("InstallerLock.ps1", StringComparison.Ordinal) && line.Contains("-Release", StringComparison.Ordinal)))
+        {
+            offences.Add("never lets the installer lock go through build/InstallerLock.ps1 -Release");
+        }
+
+        return offences;
     }
 
     /// <summary>

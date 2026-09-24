@@ -163,6 +163,21 @@ internal static class TestDefaults
     public static TimeSpan RealClientHang { get; } = BrowserHang;
 
     /// <summary>
+    /// How long a session waits for <c>.work\installer.lock</c> while a live
+    /// holder has it, before it gives up on the installer arms. Thirty minutes.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A wait bound, not a budget, and nothing asserts on it -- added
+    /// 2026-09-24, Q291 a.</b> The holders it waits for are a gate half (about
+    /// four minutes per run, three runs in a release half) and a measurement that
+    /// installs the test pack by hand, for as long as it runs. A holder
+    /// still there after this is a holder that is not going to let go in time for
+    /// this run, and the run then skips the installer arms loudly, or fails them
+    /// as a release. <see cref="InstallerLock"/>.
+    /// </remarks>
+    public static TimeSpan InstallerLockWait { get; } = BrowserHang;
+
+    /// <summary>
     /// The <c>server/discover</c> probe timeout every test client pins.
     /// </summary>
     /// <remarks>

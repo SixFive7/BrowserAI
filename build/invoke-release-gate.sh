@@ -41,6 +41,22 @@ windows=$(cygpath -w "$root")
 
 mkdir -p .work/suite
 
+# THE INSTALLER LOCK, BEFORE THE FIRST CLEARANCE SNAPSHOT AND LET GO AFTER THE
+# LAST -- Q291, the maintainer's words verbatim: "Q291 a". The suite takes
+# .work/installer.lock itself when a session starts; this driver takes it first,
+# for the Windows pid of this bash process, which lives for the whole gate, and
+# declares the token so the test host it starts finds the holder it was told
+# about instead of waiting for it. A live holder is waited for, and a gate that
+# could not take it runs nothing. The trap lets it go on every way out.
+winpid=$(cat /proc/$$/winpid)
+token=$(pwsh -NoProfile -File "$windows\\build\\InstallerLock.ps1" -Take -HolderPid "$winpid") || {
+  echo 'RELEASE-BASH-ABORTED-ON-LOCK'
+  exit 1
+}
+export BROWSERAI_INSTALLER_LOCK_HELD="$token"
+trap 'pwsh -NoProfile -File "$windows\\build\\InstallerLock.ps1" -Release -HolderPid "$winpid" >/dev/null 2>&1' EXIT
+echo "installer lock held: $token"
+
 n=1
 while [ "$n" -le "$runs" ]; do
   tag="$prefix-$n"

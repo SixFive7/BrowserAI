@@ -99,6 +99,17 @@ release body; nothing else depends on it.
   out of the binary, so the arm stays true across the release that drops the installer exit. That
   is the installed half of row 126. Both hold the real key and the Start Menu byte-identical, and
   each was watched red against a planted wrong expectation.
+- ✅ **The suite takes `.work\installer.lock` itself, and a gate driver says it already holds it.**
+  Q291, the maintainer's words verbatim: *"Q291 a"*. The lock was a convention nothing in the
+  tree read, and a run with the installer arms in it was safe only if somebody had taken the
+  file by hand. A session hook now takes it for the test host, waits for a live holder up to
+  thirty minutes, takes over from one that is gone and lets it go at the end. The four gate
+  drivers take it first through `build/InstallerLock.ps1` and name themselves in
+  `BROWSERAI_INSTALLER_LOCK_HELD`, so the test host they start is covered and waits for no
+  one. A run that cannot take it skips the installer arms, or fails them as a release, and the
+  coverage block gains an `installer lock` row. `InstallerLockTests` and
+  `SuiteCoverageTests.EveryGateDriverHoldsTheInstallerLockForItsWholeRun`, each watched red
+  against the tree before the hook and the drivers changed.
 - ✅ **The gate's clearance reads the client registration out of its file and never starts the client.**
   Q281, the maintainer's words verbatim: *"Q281 a"*. The snapshot compared either side of every
   gate run read the real `browserai` registration with `claude mcp get`, which starts the client,

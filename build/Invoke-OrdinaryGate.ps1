@@ -62,43 +62,67 @@ $forced = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)
 $null = New-Item -ItemType Directory -Force -Path (Join-Path $root '.work' 'suite')
 
 Write-Host "=== ORDINARY RUN $Tag starting $(Get-Date -Format HH:mm:ss) ==="
-& (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$Tag-before" | Out-Null
 
-# ⚠️ WAIT FOR THE RIG TREE TO BE RELEASED, NOT FOR THE PREVIOUS RUN TO REPORT. A
-# test host that has printed its summary has not necessarily let go of its
-# handles: on the 2026-09-15 release gate 137 rig directories were still held
-# after run 1 reported. The piped form is used because the harness path guard
-# refuses a wildcard argument to Remove-Item.
-$scratch = Join-Path $root '.work' 'test-scratch'
-$waited = 0
-while ((Get-ChildItem $scratch -Force -ErrorAction SilentlyContinue).Count -gt 0 -and $waited -lt 120) {
-    Get-ChildItem $scratch -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 2
-    $waited += 2
-}
-Write-Host "scratch released after ${waited}s"
-
-$log = Join-Path $root '.work' 'suite' "$Tag.log"
-$env:BROWSERAI_DRIVE_CASE = 'upper'
-& dotnet test (Join-Path $forced 'BrowserAI.slnx') 2>&1 | Tee-Object -LiteralPath $log
-
-# The coverage block reaches `.work\suite-coverage.txt` and never a `dotnet
-# test` log: neither real stream survives the MTP integration. Appending it is
-# what gives a multi-run gate one block per run instead of one in total.
-Get-Content (Join-Path $root '.work' 'suite-coverage.txt') -ErrorAction SilentlyContinue | Add-Content -LiteralPath $log
-
-& (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$Tag-after" | Out-Null
-
-$difference = Compare-Object `
-    (Get-Content (Join-Path $root '.work' 'clearance' "$Tag-before.txt")) `
-    (Get-Content (Join-Path $root '.work' 'clearance' "$Tag-after.txt"))
-
-if ($difference) {
-    Write-Host "=== CLEARANCE DIFF ON $Tag - STOPPING ==="
-    $difference | ForEach-Object { '{0} {1}' -f $_.SideIndicator, $_.InputObject } | Write-Host
-    Write-Host 'ORDINARY-PS-ABORTED-ON-CLEARANCE'
+# ⚠️ THE INSTALLER LOCK, BEFORE THE FIRST CLEARANCE SNAPSHOT AND LET GO AFTER THE
+# LAST -- Q291, the maintainer's words verbatim: "Q291 a". The suite takes
+# .work\installer.lock itself when a session starts; this driver takes it first,
+# for its own pid, and declares the token so the test host it starts finds the
+# holder it was told about instead of waiting for it. A live holder is waited
+# for, and a gate that could not take it runs nothing.
+$token = & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Take -HolderPid $PID
+if ($LASTEXITCODE -ne 0) {
+    Write-Host 'ORDINARY-PS-ABORTED-ON-LOCK'
     exit 1
 }
+$env:BROWSERAI_INSTALLER_LOCK_HELD = $token
+Write-Host "installer lock held: $token"
 
-Write-Host "=== ORDINARY RUN $Tag done $(Get-Date -Format HH:mm:ss), clearance clean ==="
-Write-Host 'ORDINARY-PS-DONE'
+$outcome = 'ORDINARY-PS-DONE'
+
+try {
+    & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$Tag-before" | Out-Null
+
+    # ⚠️ WAIT FOR THE RIG TREE TO BE RELEASED, NOT FOR THE PREVIOUS RUN TO REPORT. A
+    # test host that has printed its summary has not necessarily let go of its
+    # handles: on the 2026-09-15 release gate 137 rig directories were still held
+    # after run 1 reported. The piped form is used because the harness path guard
+    # refuses a wildcard argument to Remove-Item.
+    $scratch = Join-Path $root '.work' 'test-scratch'
+    $waited = 0
+    while ((Get-ChildItem $scratch -Force -ErrorAction SilentlyContinue).Count -gt 0 -and $waited -lt 120) {
+        Get-ChildItem $scratch -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+        $waited += 2
+    }
+    Write-Host "scratch released after ${waited}s"
+
+    $log = Join-Path $root '.work' 'suite' "$Tag.log"
+    $env:BROWSERAI_DRIVE_CASE = 'upper'
+    & dotnet test (Join-Path $forced 'BrowserAI.slnx') 2>&1 | Tee-Object -LiteralPath $log
+
+    # The coverage block reaches `.work\suite-coverage.txt` and never a `dotnet
+    # test` log: neither real stream survives the MTP integration. Appending it is
+    # what gives a multi-run gate one block per run instead of one in total.
+    Get-Content (Join-Path $root '.work' 'suite-coverage.txt') -ErrorAction SilentlyContinue | Add-Content -LiteralPath $log
+
+    & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$Tag-after" | Out-Null
+
+    $difference = Compare-Object `
+        (Get-Content (Join-Path $root '.work' 'clearance' "$Tag-before.txt")) `
+        (Get-Content (Join-Path $root '.work' 'clearance' "$Tag-after.txt"))
+
+    if ($difference) {
+        Write-Host "=== CLEARANCE DIFF ON $Tag - STOPPING ==="
+        $difference | ForEach-Object { '{0} {1}' -f $_.SideIndicator, $_.InputObject } | Write-Host
+        $outcome = 'ORDINARY-PS-ABORTED-ON-CLEARANCE'
+    }
+    else {
+        Write-Host "=== ORDINARY RUN $Tag done $(Get-Date -Format HH:mm:ss), clearance clean ==="
+    }
+}
+finally {
+    & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Release -HolderPid $PID | Out-Null
+}
+
+Write-Host $outcome
+if ($outcome -ne 'ORDINARY-PS-DONE') { exit 1 }

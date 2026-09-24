@@ -535,6 +535,12 @@ internal static class SuiteEnvironment
         // see WindowWatch, and SuiteCoverage for where the refusal is raised.
         _ = report.Append(WindowWatch.CoverageRow).Append('\n');
 
+        // ⚠️ WHO HELD .work\installer.lock FOR THIS RUN, which is what lets the
+        // installer arms run at all since Q291 a: this run itself, a gate driver that
+        // declared it, or nobody in time -- and then those arms did not run. See
+        // InstallerLock.
+        _ = report.Append(InstallerLock.CoverageRow).Append('\n');
+
         _ = report.Append(rule).Append('\n');
 
         var absent = All.Count(capability => StateOf(capability) is not CapabilityState.Present);
@@ -780,7 +786,10 @@ internal static class SuiteEnvironment
         // another id is not a half-installed capability -- it is somebody else's
         // artefact wearing the same file name, and the answer to both is the
         // same command.
-        SuiteCapability.ReleaseInstaller => ReleaseLayout.HasCurrentInstaller()
+        // ⚠️ AND THE LOCK, since Q291 a: an installer the suite may run, in a run that
+        // does not hold .work\installer.lock, is an installer it may NOT run, because
+        // another holder may be installing the same test id this instant.
+        SuiteCapability.ReleaseInstaller => ReleaseLayout.HasCurrentInstaller() && InstallerLock.IsHeldForThisRun
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
@@ -914,7 +923,9 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedFirefox => BrowserAiPaths.FirefoxExecutable,
         SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{McpClientRegistration.ClientExecutable} (not on PATH, nor at {BrowserAI.Registration.ClientCommandLine.FallbackDirectory})",
         SuiteCapability.CodexCommandLine => CodexExecutable() ?? CodexRegistration.NotFoundDetail("mcp list"),
-        SuiteCapability.ReleaseInstaller => ReleaseLayout.Witness(),
+        SuiteCapability.ReleaseInstaller => InstallerLock.IsHeldForThisRun
+            ? ReleaseLayout.Witness()
+            : $"{ReleaseLayout.Witness()}; {InstallerLock.Detail}",
         SuiteCapability.Git => GitOracle.IsAvailable
             ? $"git -C {RepositoryLayout.Root.FullName} rev-parse --is-inside-work-tree said true"
             : $"git could not answer for {RepositoryLayout.Root.FullName} (not on PATH, or this is an export rather than a checkout)",

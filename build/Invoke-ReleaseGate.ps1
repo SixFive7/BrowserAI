@@ -52,40 +52,60 @@ $forced = $root.Substring(0, 1).ToUpperInvariant() + $root.Substring(1)
 $null = New-Item -ItemType Directory -Force -Path (Join-Path $root '.work' 'suite')
 $scratch = Join-Path $root '.work' 'test-scratch'
 
-foreach ($n in 1..$Runs) {
-    $tag = "$Prefix-$n"
-    Write-Host "=== RELEASE RUN $tag starting $(Get-Date -Format HH:mm:ss) ==="
+# ⚠️ THE INSTALLER LOCK, BEFORE THE FIRST RUN'S CLEARANCE SNAPSHOT AND LET GO AFTER
+# THE LAST -- Q291, the maintainer's words verbatim: "Q291 a". Held across all
+# three runs, so no other holder can slip in between two of them; see
+# Invoke-OrdinaryGate.ps1 for the rest.
+$token = & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Take -HolderPid $PID
+if ($LASTEXITCODE -ne 0) {
+    Write-Host 'RELEASE-PS-ABORTED-ON-LOCK'
+    exit 1
+}
+$env:BROWSERAI_INSTALLER_LOCK_HELD = $token
+Write-Host "installer lock held: $token"
 
-    & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$tag-before" | Out-Null
+$outcome = 'RELEASE-PS-DONE'
 
-    $waited = 0
-    while ((Get-ChildItem $scratch -Force -ErrorAction SilentlyContinue).Count -gt 0 -and $waited -lt 120) {
-        Get-ChildItem $scratch -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        Start-Sleep -Seconds 2
-        $waited += 2
+try {
+    foreach ($n in 1..$Runs) {
+        $tag = "$Prefix-$n"
+        Write-Host "=== RELEASE RUN $tag starting $(Get-Date -Format HH:mm:ss) ==="
+
+        & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$tag-before" | Out-Null
+
+        $waited = 0
+        while ((Get-ChildItem $scratch -Force -ErrorAction SilentlyContinue).Count -gt 0 -and $waited -lt 120) {
+            Get-ChildItem $scratch -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            $waited += 2
+        }
+        Write-Host "scratch released after ${waited}s"
+
+        $log = Join-Path $root '.work' 'suite' "$tag.log"
+        $env:BROWSERAI_RELEASE_RUN = '1'
+        $env:BROWSERAI_DRIVE_CASE = 'upper'
+        & dotnet test (Join-Path $forced 'BrowserAI.slnx') 2>&1 | Tee-Object -LiteralPath $log
+        Get-Content (Join-Path $root '.work' 'suite-coverage.txt') -ErrorAction SilentlyContinue | Add-Content -LiteralPath $log
+
+        & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$tag-after" | Out-Null
+
+        $difference = Compare-Object `
+            (Get-Content (Join-Path $root '.work' 'clearance' "$tag-before.txt")) `
+            (Get-Content (Join-Path $root '.work' 'clearance' "$tag-after.txt"))
+
+        if ($difference) {
+            Write-Host "=== CLEARANCE DIFF ON $tag - STOPPING ==="
+            $difference | ForEach-Object { '{0} {1}' -f $_.SideIndicator, $_.InputObject } | Write-Host
+            $outcome = 'RELEASE-PS-ABORTED-ON-CLEARANCE'
+            break
+        }
+
+        Write-Host "=== RELEASE RUN $tag done $(Get-Date -Format HH:mm:ss), clearance clean ==="
     }
-    Write-Host "scratch released after ${waited}s"
-
-    $log = Join-Path $root '.work' 'suite' "$tag.log"
-    $env:BROWSERAI_RELEASE_RUN = '1'
-    $env:BROWSERAI_DRIVE_CASE = 'upper'
-    & dotnet test (Join-Path $forced 'BrowserAI.slnx') 2>&1 | Tee-Object -LiteralPath $log
-    Get-Content (Join-Path $root '.work' 'suite-coverage.txt') -ErrorAction SilentlyContinue | Add-Content -LiteralPath $log
-
-    & (Join-Path $PSScriptRoot 'Get-ClearanceSnapshot.ps1') -Tag "$tag-after" | Out-Null
-
-    $difference = Compare-Object `
-        (Get-Content (Join-Path $root '.work' 'clearance' "$tag-before.txt")) `
-        (Get-Content (Join-Path $root '.work' 'clearance' "$tag-after.txt"))
-
-    if ($difference) {
-        Write-Host "=== CLEARANCE DIFF ON $tag - STOPPING ==="
-        $difference | ForEach-Object { '{0} {1}' -f $_.SideIndicator, $_.InputObject } | Write-Host
-        Write-Host 'RELEASE-PS-ABORTED-ON-CLEARANCE'
-        exit 1
-    }
-
-    Write-Host "=== RELEASE RUN $tag done $(Get-Date -Format HH:mm:ss), clearance clean ==="
+}
+finally {
+    & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Release -HolderPid $PID | Out-Null
 }
 
-Write-Host 'RELEASE-PS-DONE'
+Write-Host $outcome
+if ($outcome -ne 'RELEASE-PS-DONE') { exit 1 }
