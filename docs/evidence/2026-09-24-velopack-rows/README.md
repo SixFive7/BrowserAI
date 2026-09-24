@@ -11,7 +11,7 @@ suite's test pack** -- id `BrowserAI.app.test`, title `BrowserAI (suite)`, versi
 1.1.0, installer `Releases\test-pack\BrowserAI.test-installer.exe`, 62,585,518
 bytes, SHA-256 `8f18747305ef7b1973819f36439f0a6ea0ce47cf652d2d254ed5335ddecc85a0` --
 installed into scratch roots under `.work\velopack-rows\` and never into the
-maintainer's own install. **72 files, 1.3 MB.**
+maintainer's own install. **73 files with this README, 1.3 MB.**
 
 ⚠️ **Nothing here touched the maintainer's own state, and the readings say so.**
 Every install and uninstall ran with `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and

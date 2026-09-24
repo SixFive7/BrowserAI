@@ -10,7 +10,7 @@ headers and Velopack 1.2.158: three NativeAOT or console prototypes, the raw
 activation lines of every toast that was clicked, dismissed or scheduled, the
 real Start Menu shortcut's property store read without write access, the boot
 and logon time readings, the live-marker sharing matrix, the stop-event timings,
-and four screenshots. **62 files, 0.5 MB.**
+and four screenshots. **62 files with this README, 0.5 MB.**
 
 ⚠️ **The design these facts feed is not decided.** The questions it raises were
 put to the maintainer as Q262 to Q277 on 2026-09-24, and nothing here is product
