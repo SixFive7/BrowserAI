@@ -40,6 +40,60 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **BrowserAI knows how to register itself with Codex, and nothing yet asks it to.**
+  A second client sits beside Claude Code in the registration library: `CodexRegistration`
+  builds the `codex mcp add` and `codex mcp remove` command lines, `CodexRegistryView` reads
+  `codex mcp list --json` -- a bare array whose entries carry `transport.command` and
+  `startup_timeout_sec` -- and a `RegistrationClient` record carries which client a
+  registration is about. **Discovery is four places in order**: `PATH`, `~/.local/bin`, the
+  desktop manifest at `%LOCALAPPDATA%\OpenAI\Codex\chrome-native-hosts-v2.json`, and
+  `%APPDATA%\npm`. ⚠️ **The manifest is not a nicety**: on this machine `command -v codex`
+  finds nothing at all, because the desktop install puts the CLI at
+  `~\.codex\plugins\.plugin-appserver\codex.exe`, and a product that looked only at `PATH`
+  would report no client on a machine that has one. When all four miss, the refusal names all
+  four and the command to run by hand.
+
+  ⚠️ **What this is not: no hook, no GUI and no installer path registers with Codex.** Steps 2
+  to 6 of that work are in [`TODO.md`](TODO.md) with the decision behind them, and this entry
+  is deliberate about the gap so that two landed commits are not read as a working feature.
+
+  **Measured first-hand at codex-cli 0.155.0-alpha.9.2**, every call with `CODEX_HOME` forced
+  at a scratch directory: the handshake against the published server is **332-342 ms** and
+  `tools/list` lands 7-8 ms later with 79 tools, against a **10 s** default, so nothing about
+  BrowserAI's startup is near Codex's budget. **And `codex mcp add` accepts nothing that
+  persists a startup timeout** -- its whole option set is `-c`, `--env`, `--enable`, `--url`
+  and `--bearer-token-env-var`, and `-c mcp_servers.<id>.startup_timeout_sec=30` fails with
+  *invalid transport* and writes nothing, because the override creates a partial server table
+  the loader rejects. A product that does not write the TOML cannot set that key, and this one
+  does not. Re-verification row 148 carries all of it, keyed on the codex-cli version.
+
+- ✅ **The five gate drivers live in the repository, and a test holds what each one declares.**
+  [The two halves of the gate](TESTING.md#continuous-integration) force opposite drive-letter
+  spellings and each declares what it forced, which is what makes a six-run gate cover two
+  spellings instead of running one instrument twice. The scripts that do the forcing lived
+  outside the tree and were lost on 2026-09-23 at 19:26. They are
+  [`build/Invoke-OrdinaryGate.ps1`](build/Invoke-OrdinaryGate.ps1),
+  [`build/invoke-ordinary-gate.sh`](build/invoke-ordinary-gate.sh),
+  [`build/Invoke-ReleaseGate.ps1`](build/Invoke-ReleaseGate.ps1),
+  [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) and
+  [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1), which the four share
+  and which reads and never repairs. Each derives the repository root from its own location,
+  so none is machine-specific the way the wiped copies were.
+
+  ⚠️ **This is not the shared wrapper [`CLAUDE.md`](CLAUDE.md) forbids**, and
+  [`TESTING.md`](TESTING.md) and [`RELEASING.md`](RELEASING.md) say so in place: the
+  prohibition is against one script both shells call, which would erase the difference that
+  makes two shells worth running. These are five scripts, one per shell per level plus the
+  shared read-only snapshot, and the difference is the whole point of each.
+
+  **`SuiteCoverageTests.EveryGateDriverDeclaresTheDriveLetterSpellingItForces` found a defect
+  on its first run** -- the bash ordinary half declared `upper` while forcing lower -- and in
+  the same breath reported one of its own: every driver *explains* in prose whether it is a
+  release half, and a `Contains` read an explanation as a setting. It keys on an assignment
+  now. ⚠️ **`.sh` joined `RepositoryLayout`'s source list and link predicate** in the same
+  change; two new shell scripts would otherwise have been the first files in this tree outside
+  the SPDX rule, the link scan and the fragment count.
+
 - ✅ **All 27 assumed justifications are settled, and the arm that holds the number at zero is green.**
   Three readers measured or cited every one of them. **19 measured, 8 cited, 0 left
   unestablishable** -- and the striking part is the direction: **eleven came back against the
@@ -260,6 +314,129 @@ release body; nothing else depends on it.
   funding it.
 
 ### Changed
+
+- 📝 **No trace of AI is a repository directive, and two scans keep the half a machine can see.**
+  The maintainer's instruction, 2026-09-23, verbatim: *"Ensure there is no trace of AI both in
+  wording and character use. Both as a directive and as part of the sweep."* It is a rule in
+  [`CLAUDE.md`](CLAUDE.md) with both halves named and with the second one honest about needing
+  a reader.
+
+  **The character half: 12,518 characters in two passes.** Em dash to `--`, en dash to `-`,
+  ellipsis to three full stops, curly quotes to straight ones, and the single non-breaking
+  space in the tree left alone because it was a positive control. **398 heading anchors moved
+  and 223 links followed them**, computed by porting `MarkdownAnchor`'s own slug rule and not
+  by pattern, because that rule DROPS an em dash and KEEPS a hyphen. The scan that keeps it
+  reads five classes over every non-binary tracked file, excluding exactly the verbatim
+  captures.
+
+  **The wording half: 72 edits from four readers, then 4,880 more from five.** The comparison
+  frame, the stock lead-ins, the decorative stars in front of already-bold sentences, and 31
+  stock phrases. `HouseRuleTests.NoMaintainedProseCarriesATell` refuses them in commentary and
+  in the product's own strings, reading through a lexer and never a pattern -- ⚠️ **a URL in a
+  string literal starts with two slashes, and reading those as comments reported 114 offences
+  where the real number was 2.** `ChangelogTests.NoEntrysDetailOpensByRestatingItsHeadline`
+  refuses a detail that opens by repeating its own headline, on a budget of four shared words;
+  103 entries were rewritten to clear it. Both were planted red and watched.
+
+  ⚠️ **Sealed records were edited for this and nothing else, under a grant in the maintainer's
+  own words**: *"When it comes to no semantic differences and only removing traces of AI (both
+  in wording and character use) then I hereby grant and instruct you the right and instruction
+  to edit sealed documents."* Eleven seals were re-recorded in the commit that moved them, and
+  the grant is quoted where the seal rule lives. **No fact, number, date, name, claim or
+  maintainer-verbatim line moved.**
+
+  ⚠️ **Three things the sweep broke, all caught by mechanisms and all worth keeping.** An XML
+  comment may not contain `--`, so a `.csproj` stopped loading and MSBuild refused the project
+  -- a red no test reaches, because nothing compiles. Two `ChangelogTests` controls went quiet
+  when a literal ellipsis inside them became three full stops, so an `IsNotEmpty` half started
+  asserting nothing. And the scan went red on its own file twice, because **the write path
+  turns a `\uXXXX` escape into the real character**, so a test about a character cannot spell
+  it that way; it is built from code points now.
+
+- 📝 **The first documents a reader meets name the standing release, and the tagline names the features.**
+  [`README.md`](README.md) and [`CLAUDE.md`](CLAUDE.md) said *tagged `v1.0.0` and published* on
+  the day `1.1.0` was published, and `1.1.0` appeared nowhere in the README at all. Both say
+  `v1.1.0` now; the *no install is known* half is untouched, because nothing measured it.
+
+  **And the tagline is the maintainer's choice, approved verbatim** -- *"Look good use that."*
+  It names automatic updates and session management instead of the runtime pin, on his
+  reasoning: *"The pinning feature is a minor feature that can easily be misunderstood."* That
+  closed a two-sense use of one word across the three documents a reader meets first, where
+  the README called the runtime **pinned** while the charter heads a section *The pin is an
+  output, not an input*.
+
+  ⚠️ **One kb sentence was narrowed in the same pass, and the re-measurement is the useful
+  half.** *Every one of them is the SUITE's*, about the descriptor cache, is now **3,749 files
+  and 26 of them name the installed product**, re-measured on the day. The re-establishment
+  procedure names the shape that defeated the first attempt: the descriptors are JSON, so a
+  grep for the single-backslash Windows path returns zero on a directory holding 26.
+
+- 📝 **Six decisions leave a session ledger for the charter, in the maintainer's own words.**
+  A ledger is not a decision of record: if something is written only there, it has not been
+  written down. **Q254 is no relay** -- a staged update never ends a session's server to let
+  itself in, and a blocked one raises a toast that opens a page listing the live sessions,
+  warning for the Codex-hosted and the recently active, and closing only what a person
+  selects. **The relay is recorded as the direction not taken, with its measurements**,
+  because it works and what it costs is the reason it is not built. **Q261 is one informed
+  refusal** of the first tool call that precedes a `tools/list` on a connection, plus the
+  list-changed notification and a version stamp in the session record that is never a refusal.
+  **Q258 registers with Codex through Codex's own command** at user scope, reaches project
+  scope through the `CODEX_HOME` lever, names the app-server protocol as the migration target,
+  skips the plugin route and keeps TOML writing rejected -- recorded as a closer call for
+  Codex than it was for Claude Code. **T7 starts Playwright's own `list` at session close**,
+  detached and never awaited, with three accepted risks named. **And Q260 is the gate
+  arrangement itself**: a version's editing runs on a pushed branch, filtered runs are
+  iteration, the two-shell gate runs once at the end, and unfinished work becomes the next
+  version's instead of crossing the boundary half-built.
+
+  [`RELEASING.md`](RELEASING.md) gains the rule those measurements imply -- **a model-facing
+  tool name may not be renamed or removed in a release a live session can cross**, because a
+  re-launched server is never re-listed -- and [`HAZARDS.md`](HAZARDS.md) gains the row behind
+  it, open, with the tally corrected from 56 to 57 and the predicate quoted.
+
+- 📝 **A day of research leaves scratch for the repository: seven batches, a probe and a design.**
+  Everything measured on 2026-09-23 lived in a gitignored directory that is wiped at the close
+  of a session. What a record points at is under
+  [`docs/evidence/`](docs/evidence/README.md) now -- the client-reconnect rounds with every API
+  request body the model was sent, the six server-registry probes, the password-prompt
+  reproduction and the fingerprint diff, what each Codex registration path wrote, the
+  enumerated `@playwright/mcp` surface, the 22-server census, and the rigs that settled all 27
+  assumed justifications. The dashboard demo is a probe record and the three toast renderings
+  are a design, beside the decision they were chosen for.
+
+  **And six measurements are in the kb**, in the articles that own them: what each client does
+  when a stdio server exits and what the pipe decides; the descriptor registry's growth, reap
+  semantics and quadratic read cost; the catalogue of the child's surface this product does not
+  use; what `--enable-automation` changes that a page can see; reading the process log by pid
+  alone; and the session index healing itself on the read path. A new article,
+  [`kb/windows/notifications.md`](kb/windows/notifications.md), holds the Windows toast
+  properties the design turned on.
+
+  ⚠️ **Two earlier claims are corrected by addition, each quoting what it replaces.** A harness
+  **can** point the descriptor directory at scratch -- the lever is `PWTEST_SERVER_REGISTRY`,
+  and the sentence it replaces was true of the `PLAYWRIGHT_` prefix and false of the one that
+  matters. And `navigator.webdriver` is **false** at chromium 1246 through the product funnel:
+  re-verification row 109 was correct and the staleness mark it briefly carried came from a raw
+  `playwright-core` launch missing the blink switch.
+
+  **Five departures from the bytes as taken are named in the batches they belong to**: the
+  request captures are trimmed of a third-party client's own system prompt, this repository's
+  `CLAUDE.md` and the tool schemas, with the SHA-256 of all 69 originals kept; the full-desktop
+  screenshots and every browser profile tree are dropped; a cookie jar is deleted and one public
+  address is redacted; ANSI escapes are stripped from five terminal captures; and eighteen
+  fetched documents and rigs are renamed so a scan does not try to resolve somebody else's links
+  or a PowerShell cast. The re-verification index gains four rows and is re-stamped through its
+  own scan: 148 rows to 152, 259 markers to 265.
+
+- 📝 **The next version's work is a list, and every item on it names the decision it came from.**
+  [`TODO.md`](TODO.md) gains a section for the work this session settled in intent and did not
+  build: Codex registration steps 2 to 6, the update toast and its sessions page, Q261's
+  refusal and version stamp with the acceptance the maintainer asked for -- *"MAke sure to test
+  Q261 from a subagent once implemented and make sure to have test coverage."* -- and T7's
+  detached call. **Five candidates from the feature catalogue are listed as candidates**, and
+  the item is done when each has been picked or declined, not when any is built. **And four
+  re-verification rows are owed a re-measurement** at the Velopack that ships: 123, 124, 126 and
+  130 were all taken at 1.2.0 and the build has resolved 1.2.158 since 2026-09-22.
 
 - 🔧 **The browser no longer asks a caller to save a password, because a caller cannot answer.**
   A sign-in POST makes Chromium offer to remember the credential, and the offer is a top-level
