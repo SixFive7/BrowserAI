@@ -57,6 +57,19 @@ export BROWSERAI_INSTALLER_LOCK_HELD="$token"
 trap 'pwsh -NoProfile -File "$windows\\build\\InstallerLock.ps1" -Release -HolderPid "$winpid" >/dev/null 2>&1' EXIT
 echo "installer lock held: $token"
 
+# THE SUITE'S INSTALLER, PACKED FROM THIS TREE UNDER THE LOCK AND BEFORE THE FIRST
+# RUN -- Q287, the maintainer's words verbatim: "Q287 a". See
+# Invoke-OrdinaryGate.ps1: New-Release.ps1 -TestPackOnly packs Releases/test-pack
+# from the two publishes this run tests and touches nothing a release is made of.
+# Publish both slices before starting a gate: this reads them and does not make them.
+pack_log=".work/suite/$prefix-testpack.log"
+if ! pwsh -NoProfile -File "$windows\\build\\New-Release.ps1" -TestPackOnly > "$pack_log" 2>&1; then
+  tail -20 "$pack_log"
+  echo 'RELEASE-BASH-ABORTED-ON-TEST-PACK'
+  exit 1
+fi
+grep -E '^vpk pack of .* took' "$pack_log"
+
 n=1
 while [ "$n" -le "$runs" ]; do
   tag="$prefix-$n"

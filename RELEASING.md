@@ -826,6 +826,17 @@ before this and nobody had re-read the number:*
   -AllowPreRelease`, then the arm against that directory -- and it is the same two
   files the capability reads out of `Releases/`.
 
+  ⚠️ *Added 2026-09-24 by addition, Q287 -- the maintainer's words verbatim:
+  "Q287 a".* **The release gate drivers now pack the suite's installer
+  themselves**, with `build/New-Release.ps1 -TestPackOnly`, from the publishes
+  under `src\<project>\bin\` that the slice arms test -- once, before the first
+  run, under the installer lock -- and the `release installer` capability refuses
+  a test pack that is not those bytes. So at a cut the pack item 7 left in
+  `Releases/test-pack/` is replaced before the arms run, and **the arms install the
+  publish the suite tested, not the release publish** in `artifacts\`: the same
+  tree, and different bytes, because ILC does not produce the same binary twice.
+  Item 7 is unchanged and still packs the release from its own publish.
+
 - **The smoke layer ran against a real browser**, not against an empty browsers
   directory that would let the batteries-included premise be silently dead code.
   **Run the suite with `BROWSERAI_RELEASE_RUN=1` set**, which is what makes this

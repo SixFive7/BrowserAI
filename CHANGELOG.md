@@ -99,6 +99,18 @@ release body; nothing else depends on it.
   out of the binary, so the arm stays true across the release that drops the installer exit. That
   is the installed half of row 126. Both hold the real key and the Start Menu byte-identical, and
   each was watched red against a planted wrong expectation.
+- ✅ **The real-installer arms install this tree's build, packed before every gate run.**
+  Q287, the maintainer's words verbatim: *"Q287 a"*. They installed whatever test pack the last
+  release cut had left, so no real `Setup.exe` had run a hook the tree changed since 1.1.0.
+  `build/New-Release.ps1 -TestPackOnly` packs the suite's installer, `BrowserAI.app.test`, from the
+  two publishes the run tests, and a shipping-id twin beside it for the one arm that compares
+  two packs of one publish; it never reads or writes the shipping feed and archives nothing. The
+  four gate drivers run it under the installer lock before their first run, and the release
+  installer capability refuses a pack that is not the published bytes. So the installer arm now
+  asserts the per-client registration record a real install writes, and the copy of an installed
+  server outside any install is expected to take the general exit, typed and no longer read out
+  of the binary. Each change was watched red against a 1.1.0 test pack packed for the purpose, and
+  the mode against the script without it. A pack takes about forty seconds.
 - ✅ **The suite takes `.work\installer.lock` itself, and a gate driver says it already holds it.**
   Q291, the maintainer's words verbatim: *"Q291 a"*. The lock was a convention nothing in the
   tree read, and a run with the installer arms in it was safe only if somebody had taken the

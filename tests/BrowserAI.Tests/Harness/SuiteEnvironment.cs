@@ -279,9 +279,16 @@ internal static class SuiteEnvironment
     /// </summary>
     /// <param name="test">The calling test, filled in by the compiler.</param>
     /// <returns>The installer's path.</returns>
+    /// <remarks>
+    /// ⚠️ <b>And the publish it was packed from is this tree, since Q287 a.</b> The
+    /// capability holds that the pack is byte for byte the published slices; this
+    /// holds that the slices are this tree's, the same way every slice arm does, so
+    /// a real installer never runs hooks the tree no longer has.
+    /// </remarks>
     public static string RequireReleaseInstaller([CallerMemberName] string test = "")
     {
         Require(SuiteCapability.ReleaseInstaller, test);
+        PublishedSlice.EnsureFresh();
         return ReleaseLayout.TestSetupExecutable;
     }
 
@@ -789,7 +796,15 @@ internal static class SuiteEnvironment
         // ⚠️ AND THE LOCK, since Q291 a: an installer the suite may run, in a run that
         // does not hold .work\installer.lock, is an installer it may NOT run, because
         // another holder may be installing the same test id this instant.
-        SuiteCapability.ReleaseInstaller => ReleaseLayout.HasCurrentInstaller() && InstallerLock.IsHeldForThisRun
+        //
+        // ⚠️ AND THE PACK HAS TO BE THIS RUN'S BUILD, since Q287 a: an installer
+        // packed from last month's publish runs last month's hooks, which is what
+        // the real-installer arms did until the gate began packing one per run. A
+        // pack that is not byte for byte the published slices is the same absence
+        // as no pack, and is answered by the same command.
+        SuiteCapability.ReleaseInstaller => ReleaseLayout.HasCurrentInstaller()
+            && ReleaseLayout.TestPackMismatch is null
+            && InstallerLock.IsHeldForThisRun
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
@@ -923,9 +938,14 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedFirefox => BrowserAiPaths.FirefoxExecutable,
         SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{McpClientRegistration.ClientExecutable} (not on PATH, nor at {BrowserAI.Registration.ClientCommandLine.FallbackDirectory})",
         SuiteCapability.CodexCommandLine => CodexExecutable() ?? CodexRegistration.NotFoundDetail("mcp list"),
-        SuiteCapability.ReleaseInstaller => InstallerLock.IsHeldForThisRun
-            ? ReleaseLayout.Witness()
-            : $"{ReleaseLayout.Witness()}; {InstallerLock.Detail}",
+        SuiteCapability.ReleaseInstaller => string.Join(
+            "; ",
+            new[]
+            {
+                ReleaseLayout.Witness(),
+                ReleaseLayout.HasCurrentInstaller() ? ReleaseLayout.TestPackMismatch : null,
+                InstallerLock.IsHeldForThisRun ? null : InstallerLock.Detail,
+            }.Where(clause => clause is { Length: > 0 })),
         SuiteCapability.Git => GitOracle.IsAvailable
             ? $"git -C {RepositoryLayout.Root.FullName} rev-parse --is-inside-work-tree said true"
             : $"git could not answer for {RepositoryLayout.Root.FullName} (not on PATH, or this is an export rather than a checkout)",
@@ -940,7 +960,7 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedFirefox => "Provision it: BrowserAI downloads it on first use of a Firefox session.",
         SuiteCapability.ClientCommandLine => $"Install the MCP client, so that '{McpClientRegistration.ClientExecutable}' is on PATH. Nothing is written to it: the real-client arms point it at a scratch configuration directory.",
         SuiteCapability.CodexCommandLine => "Install the Codex CLI. Nothing is written to it: the real-client arms force CODEX_HOME at a scratch directory and never read the user's own.",
-        SuiteCapability.ReleaseInstaller => $"Run: pwsh -File build/New-Release.ps1, or set {ReleaseLayout.FeedVariable} to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed.",
+        SuiteCapability.ReleaseInstaller => $"Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set {ReleaseLayout.FeedVariable} to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed.",
         SuiteCapability.Git => "Install git and run the suite from a checkout rather than from an export. Nothing is written: the only command asked for is 'git ls-files'.",
         _ => $"Run: pwsh -File build/New-Release.ps1, or set {ReleasePackageVariable} to a packed .nupkg.",
     };

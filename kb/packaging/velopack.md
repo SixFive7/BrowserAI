@@ -1197,6 +1197,21 @@ default channel only · **`Setup.exe` never matches** -- vpk's own name is
 `/staging/`, `/.staging/` are not vpk output at all**; they are BrowserAI's own
 build conventions and must be justified on that basis or dropped.
 
+### How long a test pack takes -- measured 2026-09-24
+
+`[MACHINE]` vpk **1.2.158**, .NET SDK **10.0.401**, the reference machine, a pack of
+1.1.1-alpha.0.116. **`build/New-Release.ps1 -TestPackOnly` took 40.2 s end to end**:
+deriving the version through MinVer, copying the two published directories (the
+server's 275 MB and the app's 52 MB) into one pack directory, and two `vpk pack`
+runs of the same directory -- **15.8 s** for the suite's installer,
+`BrowserAI.app.test`, and **18.0 s** for its shipping-id twin, each a full package of
+about 55 MB with an installer and a portable archive. One run, timed by the script's
+own stopwatch around each `vpk pack`; every gate driver prints those two lines into
+its log, which is where later readings are.
+
+**Re-establish** with the command itself: it prints *"vpk pack of ... took N s"* for
+each pack, and the wall time is the caller's.
+
 ## Deriving the version from git tags, with MinVer
 
 Measured while building the git-tag versioning, on SDK **10.0.302**

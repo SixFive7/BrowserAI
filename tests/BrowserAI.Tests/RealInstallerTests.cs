@@ -623,15 +623,13 @@ internal sealed partial class RealInstallerTests
     /// which is <c>Startup[9]</c>. The copy outside any install still sees it.
     /// </para>
     /// <para>
-    /// ⚠️ <b>What the copy logs depends on the BUILD, and the arm reads which build
-    /// it has.</b> The binaries are the last PACKED test pack's, not this tree's, for
-    /// the reason the first arm's remarks give. Up to 1.1.0 the server carried an
-    /// installer exit keyed on the variable, <c>Startup[8]</c>; Q276 deleted it on
-    /// 2026-09-24, so from the first pack cut after that day the copy ends through
-    /// <c>Startup[9]</c> as well. The expectation is therefore read out of the
-    /// binary -- whether it carries that exit's sentence -- and not typed here, which
-    /// keeps the arm true across the release that changes it and still refuses a
-    /// copy that took the wrong exit for the build it is.
+    /// ⚠️ <b>The copy takes the general exit too, since the pack is this tree's
+    /// build -- Q287 a, 2026-09-24.</b> <i>Previously: "What the copy logs depends on
+    /// the BUILD, and the arm reads which build it has"</i> -- the binaries were the
+    /// last packed test pack's, a 1.1.0 build still carrying the installer exit
+    /// Q276 deleted, <c>Startup[8]</c>, so the expectation was read out of the
+    /// copy's bytes (N74). Every gate packs the test installer from its own publish
+    /// now, so the copy is this build, and <c>Startup[9]</c> is typed.
     /// </para>
     /// <para>
     /// <b>Through the orphan-console rig, silent install only</b>, so neither start
@@ -673,8 +671,6 @@ internal sealed partial class RealInstallerTests
 
             File.Copy(installed, copy);
 
-            var carriesTheInstallerExit = Mentions(await File.ReadAllBytesAsync(copy), InstallerExitSentence);
-
             // The installed server: Run() cleared the variable, so the general exit.
             using (var run = OrphanedConsoleStart.Begin(installed, installedData.Path, startedByTheInstaller: true, TestDefaults.ProcessHang))
             {
@@ -686,14 +682,17 @@ internal sealed partial class RealInstallerTests
             }
 
             // The copy outside any install: the variable is still set when the
-            // server reads it, so it takes whichever exit this build carries.
-            var expected = carriesTheInstallerExit ? InstallerExitSentence : GeneralExitSentence;
-
+            // server reads it, and since Q276 deleted the installer exit it takes the
+            // general exit too. ⚠️ *Previously the expectation was read out of the
+            // copy's own bytes -- whether it carried the installer exit's sentence --
+            // because the pack was a 1.1.0 build that still had it.* The pack is this
+            // tree's build since Q287 a, so the expectation is typed and the
+            // installer exit's sentence stays only as a sentence the run would stop on.
             using (var run = OrphanedConsoleStart.Begin(copy, outsideData.Path, startedByTheInstaller: true, TestDefaults.ProcessHang))
             {
                 await Assert.That(run.Started).IsTrue();
                 await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, GeneralExitSentence, InstallerExitSentence, "Watching the MCP client"))
-                    .IsEqualTo(expected)
+                    .IsEqualTo(GeneralExitSentence)
                     .Because(run.Records());
                 await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
             }
@@ -717,8 +716,10 @@ internal sealed partial class RealInstallerTests
     /// What the installer exit, <c>Startup[8]</c>, said while a build carried it.
     /// </summary>
     /// <remarks>
-    /// Kept after Q276 deleted that exit on 2026-09-24, because the last packed
-    /// test pack is a 1.1.0 build that still carries it.
+    /// Kept after Q276 deleted that exit on 2026-09-24 as a sentence the arm stops
+    /// on, so a build that grew it back fails naming it. <i>Previously kept because
+    /// "the last packed test pack is a 1.1.0 build that still carries it"</i>, which
+    /// stopped being true with Q287 a.
     /// </remarks>
     private const string InstallerExitSentence = "started by the installer";
 
@@ -798,19 +799,38 @@ internal sealed partial class RealInstallerTests
 
         await Assert.That(written).Contains(RegistrationTarget.ServerFileName);
 
-        // ⚠️ AND NOT WHAT SHAPE THE RECORD IS IN, WHICH IS A LIMIT OF THIS ARM
-        // AND IS WRITTEN DOWN HERE BECAUSE IT WAS ASSUMED OTHERWISE -- 2026-09-24.
-        // The hooks that just ran are the ones compiled into the PACKED test
-        // installer, which `build/New-Release.ps1` produces as a by-product of a
-        // release cut and which nothing in an ordinary build refreshes: on the day
-        // the per-client record landed, this arm was still driving a 1.1.0 pack
-        // writing `schemaVersion: 1`. So an assertion about a hook behaviour
-        // added today would be red here until the next release, for a reason that
-        // has nothing to do with the tree. What this arm establishes is what only
-        // a real Setup.exe can -- that a hook ran, wrote its record into the data
-        // root, and left the install root alone -- and the SHAPE of that record is
-        // held by `RegistrationTests`, which runs the hook body in this build.
-        await Assert.That(written).Contains("\"intent\": \"Install\"");
+        // ⚠️ AND THE SHAPE OF THE RECORD, SINCE Q287 a -- 2026-09-24. *Previously
+        // "AND NOT WHAT SHAPE THE RECORD IS IN, WHICH IS A LIMIT OF THIS ARM": the
+        // hooks that ran were the last PACKED test installer's, a 1.1.0 build
+        // writing `schemaVersion: 1` on the day the per-client record landed, and
+        // the shape was left to RegistrationTests.* Every gate packs the test
+        // installer from the publish it tests now, so the hooks that just ran are
+        // this tree's, and what they wrote is asserted here as a real Setup.exe
+        // ran it: the per-client record, one entry per client in the product's own
+        // order, each what was asked for, each naming this install's server.
+        using (var record = System.Text.Json.JsonDocument.Parse(written))
+        {
+            var root = record.RootElement;
+
+            await Assert.That(root.GetProperty("schemaVersion").GetInt32()).IsEqualTo(RegistrationRecord.CurrentSchemaVersion);
+            await Assert.That(root.GetProperty("intent").GetString()).IsEqualTo(nameof(RegistrationIntent.Install));
+            await Assert.That(root.GetProperty("browserAiVersion").GetString()).IsEqualTo(PublishedSlice.BakedVersion());
+
+            var clients = root.GetProperty("clients").EnumerateArray().ToList();
+
+            await Assert.That(string.Join(",", clients.Select(client => client.GetProperty("key").GetString())))
+                .IsEqualTo(string.Join(",", RegistrationClient.All.Select(client => client.Key)));
+
+            var server = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.ServerFileName);
+
+            foreach (var client in clients)
+            {
+                await Assert.That(client.GetProperty("isWhatWasAskedFor").GetBoolean())
+                    .IsTrue()
+                    .Because(client.GetProperty("detail").GetString() ?? "<no detail>");
+                await Assert.That(Normalised(client.GetProperty("command").GetString() ?? "<none>")).IsEqualTo(Normalised(server));
+            }
+        }
 
         await Unchanged(dataRoot.Path, planted);
 
@@ -999,14 +1019,23 @@ internal sealed partial class RealInstallerTests
     [Test]
     public async Task TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears()
     {
-        _ = SuiteEnvironment.RequirePackagedRelease();
         _ = SuiteEnvironment.RequireReleaseInstaller();
 
-        var shipping = ReleaseLayout.FullPackage(test: false);
+        // ⚠️ THE TWIN, SINCE Q287 a -- 2026-09-24. *Previously the shipping pack in
+        // Releases, which a release cut left beside the test pack of the same
+        // publish.* The gate packs the test installer from its own publish now, and
+        // the last release's shipping pack beside it would be two publishes; so
+        // `New-Release.ps1 -TestPackOnly` packs the same directory once more under
+        // the shipping id into test-pack's `twin` directory, and a release cut still
+        // leaves its own shipping pack of the same version in Releases.
         var mine = ReleaseLayout.FullPackage(test: true);
 
-        await Assert.That(shipping is null ? "no shipping .nupkg" : string.Empty).IsEmpty();
         await Assert.That(mine is null ? "no test .nupkg" : string.Empty).IsEmpty();
+
+        var shipping = ReleaseLayout.ShippingTwinOf(mine!);
+
+        await Assert.That(shipping is null ? $"no shipping-id package of {mine!.Name}'s version under {ReleaseLayout.TwinDirectory} or {ReleaseLayout.Directory}" : string.Empty)
+            .IsEmpty();
 
         using var a = await ZipFile.OpenReadAsync(shipping!.FullName);
         using var b = await ZipFile.OpenReadAsync(mine!.FullName);
@@ -1100,6 +1129,73 @@ internal sealed partial class RealInstallerTests
 
         var (_, notExempt) = Compare(elsewhere, elsewhereToo);
         await Assert.That(notExempt.Count).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// The suite's installer carries, byte for byte, the two binaries this run
+    /// tested.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q287, decided 2026-09-24 by the maintainer, verbatim: <i>"Q287 a"</i> --
+    /// the real-installer arms exercise THIS tree's hooks.</b> Until that day they
+    /// installed the last pack a release cut had left in <c>Releases\test-pack</c>, a
+    /// 1.1.0 build, so every hook behaviour added since was untested by a real
+    /// <c>Setup.exe</c>. Every gate driver now packs the test installer from the
+    /// publish it tests, and the <c>release installer</c> capability is absent when
+    /// the pack is not byte for byte the published slices -- which
+    /// <see cref="PublishedSlice.EnsureFresh"/> in turn holds to this tree.
+    /// </para>
+    /// <para>
+    /// <b>The comparison is watched in both directions over archives this arm
+    /// composes</b>, because a live pair that agrees is indistinguishable from a
+    /// comparison that stopped reading. <b>Planted red 2026-09-24</b>: the live half
+    /// against a 1.1.0 test pack, which named the server as not the published one.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheSuitesInstallerIsTheBuildThisRunTested()
+    {
+        using var scratch = ScratchDirectory.Create("test-pack-bytes");
+
+        var server = Path.Combine(scratch.Path, "server.bin");
+        var app = Path.Combine(scratch.Path, "app.bin");
+
+        await File.WriteAllTextAsync(server, "the server's bytes");
+        await File.WriteAllTextAsync(app, "the app's bytes");
+
+        (string Entry, string Published)[] binaries = [("lib/app/BrowserAI.Server.exe", server), ("lib/app/BrowserAI.exe", app)];
+
+        var same = Path.Combine(scratch.Path, "same.nupkg");
+        var other = Path.Combine(scratch.Path, "other.nupkg");
+        var missing = Path.Combine(scratch.Path, "missing.nupkg");
+
+        await PackageAsync(same, ("lib/app/BrowserAI.Server.exe", "the server's bytes"), ("lib/app/BrowserAI.exe", "the app's bytes"));
+        await PackageAsync(other, ("lib/app/BrowserAI.Server.exe", "the server's bytes, one release ago"), ("lib/app/BrowserAI.exe", "the app's bytes"));
+        await PackageAsync(missing, ("lib/app/BrowserAI.exe", "the app's bytes"));
+
+        await Assert.That(ReleaseLayout.MismatchBetween(same, binaries)).IsNull();
+        await Assert.That(ReleaseLayout.MismatchBetween(other, binaries)).Contains("BrowserAI.Server.exe");
+        await Assert.That(ReleaseLayout.MismatchBetween(missing, binaries)).Contains("carries no lib/app/BrowserAI.Server.exe");
+
+        // ---- The live half: this run's installer is this run's build.
+        _ = SuiteEnvironment.RequireReleaseInstaller();
+
+        await Assert.That(ReleaseLayout.TestPackMismatch).IsNull();
+    }
+
+    /// <summary>Writes a package holding the given entries.</summary>
+    private static async Task PackageAsync(string path, params (string Entry, string Text)[] entries)
+    {
+        await using var stream = File.Create(path);
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Create);
+
+        foreach (var (entry, text) in entries)
+        {
+            await using var writer = new StreamWriter(await archive.CreateEntry(entry).OpenAsync());
+            await writer.WriteAsync(text);
+        }
     }
 
     /// <summary>

@@ -182,6 +182,147 @@ internal static partial class ReleaseLayout
     /// <summary>The installer the suite is allowed to run.</summary>
     public static string TestSetupExecutable { get; } = Path.Combine(TestDirectory, $"{TestDownloadId}-installer.exe");
 
+    /// <summary>
+    /// Where <c>New-Release.ps1 -TestPackOnly</c> packs the same publish once more
+    /// under the SHIPPING id.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q287 a, 2026-09-24.</b> A test pack from the tree and the last release's
+    /// shipping pack are two publishes, so comparing them says nothing about whether
+    /// the suite's installer is the shipping one under another name. The twin is the
+    /// shipping id packed from the test pack's own directory, which is what a release
+    /// cut from this publish would pack; only its package and feed manifest are kept.
+    /// </remarks>
+    public static string TwinDirectory { get; } = Path.Combine(TestDirectory, "twin");
+
+    /// <summary>
+    /// The shipping-id package of the same version as a test pack: the twin, or at a
+    /// release cut the shipping pack itself.
+    /// </summary>
+    /// <param name="testPackage">The test pack's full package.</param>
+    /// <returns>The package, or <see langword="null"/> when neither place has one.</returns>
+    public static FileInfo? ShippingTwinOf(FileInfo testPackage)
+    {
+        ArgumentNullException.ThrowIfNull(testPackage);
+
+        var prefix = $"{TestPackId}-";
+        var suffix = "-full.nupkg";
+
+        if (!testPackage.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            || !testPackage.Name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var version = testPackage.Name[prefix.Length..^suffix.Length];
+        var name = $"{PackId}-{version}{suffix}";
+
+        foreach (var directory in new[] { TwinDirectory, Directory })
+        {
+            var candidate = new FileInfo(Path.Combine(directory, name));
+
+            if (candidate.Exists)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The two binaries a pack carries, as entry names inside its package.</summary>
+    public static IReadOnlyList<(string Entry, string Published)> PackedBinaries { get; } =
+    [
+        ("lib/app/BrowserAI.Server.exe", PublishedSlice.Executable),
+        ("lib/app/BrowserAI.exe", PublishedSlice.AppExecutable),
+    ];
+
+    /// <summary>
+    /// Why the test pack does not carry the binaries this run tested, or
+    /// <see langword="null"/> when it does.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q287 a, 2026-09-24: the real-installer arms exercise THIS tree's hooks,
+    /// and this is what says so.</b> Until that day they installed whatever pack a
+    /// release cut had left behind -- a 1.1.0 build writing a schema-1 record on the
+    /// day the per-client record landed. Every gate driver now packs the suite's
+    /// installer from the two publishes the run tests, and this compares each
+    /// binary inside the package with the published one, byte for byte.
+    /// </para>
+    /// <para>
+    /// <b>Bytes and not a version</b>, because two publishes of one tree differ in
+    /// bytes (<see cref="PublishedSlice.EnsureFresh"/>'s own measurement), so the
+    /// only way to say "this pack is this publish" is that it is these bytes -- and
+    /// <see cref="PublishedSlice.EnsureFresh"/> already says the publish is this
+    /// tree. Read once per run.
+    /// </para>
+    /// </remarks>
+    public static string? TestPackMismatch => LazyTestPackMismatch.Value;
+
+    private static readonly Lazy<string?> LazyTestPackMismatch = new(() =>
+        FullPackage(test: true) is { } package
+            ? MismatchBetween(package.FullName, PackedBinaries)
+            : $"there is no {TestPackId} package under {TestDirectory}");
+
+    /// <summary>
+    /// Why a package does not carry these published binaries byte for byte, or
+    /// <see langword="null"/> when it does.
+    /// </summary>
+    /// <remarks>
+    /// A pure function of two sets of files, so that
+    /// <c>RealInstallerTests.TheSuitesInstallerIsTheBuildThisRunTested</c> can drive it
+    /// in both directions over archives it composes.
+    /// </remarks>
+    /// <param name="package">The <c>.nupkg</c>.</param>
+    /// <param name="binaries">Each entry name inside it and the file it must equal.</param>
+    /// <returns>The first difference, or <see langword="null"/>.</returns>
+    public static string? MismatchBetween(string package, IReadOnlyList<(string Entry, string Published)> binaries)
+    {
+        ArgumentNullException.ThrowIfNull(binaries);
+
+        var name = Path.GetFileName(package);
+
+        try
+        {
+            using var archive = System.IO.Compression.ZipFile.OpenRead(package);
+
+            foreach (var (entry, published) in binaries)
+            {
+                if (archive.GetEntry(entry) is not { } packed)
+                {
+                    return $"{name} carries no {entry}";
+                }
+
+                if (!File.Exists(published))
+                {
+                    return $"{published} is not there to compare {name} against";
+                }
+
+                string inside;
+
+                using (var stream = packed.Open())
+                {
+                    inside = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream));
+                }
+
+                var outside = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(published)));
+
+                if (!string.Equals(inside, outside, StringComparison.Ordinal))
+                {
+                    return $"{name}'s {entry} is not {published}, so the pack is not the build this run tested. "
+                        + "Publish both slices and run: pwsh -File build/New-Release.ps1 -TestPackOnly (every gate driver does)";
+                }
+            }
+
+            return null;
+        }
+        catch (Exception failure) when (failure is IOException or InvalidDataException or UnauthorizedAccessException)
+        {
+            return $"{package} could not be read: {failure.Message}";
+        }
+    }
+
     /// <summary>The feed manifest packed beside it.</summary>
     public static string TestFeedManifest { get; } = Path.Combine(TestDirectory, $"releases.{Channel}.json");
 

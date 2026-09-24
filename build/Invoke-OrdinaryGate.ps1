@@ -77,6 +77,24 @@ if ($LASTEXITCODE -ne 0) {
 $env:BROWSERAI_INSTALLER_LOCK_HELD = $token
 Write-Host "installer lock held: $token"
 
+# ⚠️ THE SUITE'S INSTALLER, PACKED FROM THIS TREE UNDER THE LOCK AND BEFORE THE
+# FIRST RUN -- Q287, the maintainer's words verbatim: "Q287 a". The real-installer
+# arms install Releases\test-pack, which only a release cut used to write, so
+# they ran the last release's hooks. `-TestPackOnly` packs it from the two
+# publishes this run tests, refuses a publish that is not the tree's version,
+# and touches nothing a release is made of; the release installer capability
+# refuses a pack that is not those bytes. Publish both slices before starting a
+# gate: this reads the publishes and does not make them.
+$packLog = Join-Path $root '.work' 'suite' "$Tag-testpack.log"
+& (Join-Path $PSScriptRoot 'New-Release.ps1') -TestPackOnly *> $packLog
+if ($LASTEXITCODE -ne 0) {
+    Get-Content -LiteralPath $packLog -Tail 20 | Write-Host
+    & (Join-Path $PSScriptRoot 'InstallerLock.ps1') -Release -HolderPid $PID | Out-Null
+    Write-Host 'ORDINARY-PS-ABORTED-ON-TEST-PACK'
+    exit 1
+}
+Get-Content -LiteralPath $packLog | Where-Object { $_ -match '^vpk pack of .* took' } | Write-Host
+
 $outcome = 'ORDINARY-PS-DONE'
 
 try {

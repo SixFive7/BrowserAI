@@ -552,8 +552,10 @@ internal sealed class ReleaseScriptTests
         await Assert.That(guard).Contains("else");
 
         // Reported, so the shape the size guard chose is in the release record
-        // and not only on somebody's screen.
-        var report = script.IndexOf("[pscustomobject]@{", StringComparison.Ordinal);
+        // and not only on somebody's screen. The LAST report object and not the
+        // first, since 2026-09-24: `-TestPackOnly` returns its own, earlier, and
+        // exits before a release body could exist (Q287 a).
+        var report = script.LastIndexOf("[pscustomobject]@{", StringComparison.Ordinal);
         await Assert.That(report).IsGreaterThan(call);
         await Assert.That(script[report..]).Contains("ReleaseBody");
         await Assert.That(script[report..]).Contains("ReleaseBodyShape");
@@ -1079,6 +1081,95 @@ internal sealed class ReleaseScriptTests
             "-Channel", ReleaseLayout.Channel);
 
         await Assert.That(absentExit).IsEqualTo(0);
+    }
+
+    /// <summary>
+    /// A test-pack-only run packs the suite's installer and its shipping-id twin
+    /// from this tree's publish, and leaves everything a release is made of alone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q287, decided 2026-09-24 by the maintainer, verbatim: <i>"Q287 a"</i>.</b>
+    /// The gate rebuilds the suite's installer from the tree before each run, so the
+    /// real-installer arms run this tree's hooks and not the last release cut's:
+    /// pack id <c>BrowserAI.app.test</c>, never published, never tagged, never
+    /// touching the real release artifacts or feed. <c>-TestPackOnly</c> is that
+    /// build, and every gate driver calls it.
+    /// </para>
+    /// <para>
+    /// <b>Driven for real, into a scratch output directory</b> that already holds a
+    /// shipping feed, an installer, an archive and a manifest, every one of which must
+    /// come out byte-identical. The pack is the real one -- the two published slices,
+    /// <c>vpk</c> twice -- which is about forty seconds. <b>Planted red 2026-09-24</b>
+    /// against the script without the mode, which refused the parameter.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ATestPackOnlyRunPacksTheSuitesInstallerAndItsTwinAndNothingElse()
+    {
+        _ = SuiteEnvironment.RequirePackagedRelease();
+        SuiteEnvironment.RequirePublishedSlice();
+        PublishedSlice.EnsureFresh();
+
+        using var scratch = ScratchDirectory.Create("release-test-pack-only");
+
+        var releases = Path.Combine(scratch.Path, "Releases");
+        var archive = Directory.CreateDirectory(Path.Combine(releases, "archive")).FullName;
+
+        // What a release is made of, planted with bytes that name themselves.
+        string[] shipping =
+        [
+            Path.Combine(releases, $"{ReleaseLayout.PackId}-1.0.0-full.nupkg"),
+            Path.Combine(releases, $"releases.{ReleaseLayout.Channel}.json"),
+            Path.Combine(releases, "RELEASES"),
+            Path.Combine(releases, $"assets.{ReleaseLayout.Channel}.json"),
+            Path.Combine(releases, $"{ReleaseLayout.DownloadId}.exe"),
+            Path.Combine(releases, $"{ReleaseLayout.DownloadId}.zip"),
+            Path.Combine(archive, $"{ReleaseLayout.PackId}-1.0.0-full.nupkg"),
+        ];
+
+        foreach (var file in shipping)
+        {
+            await File.WriteAllTextAsync(file, $"keep {Path.GetFileName(file)}");
+        }
+
+        var (exit, _, output) = await RunAsync(
+            ReleaseScript,
+            "-TestPackOnly",
+            "-OutputDir", releases,
+            "-PackDir", Path.Combine(scratch.Path, "packdir"));
+
+        await Assert.That(exit).IsEqualTo(0).Because(output);
+
+        // Nothing a release is made of moved, and nothing was added beside it.
+        foreach (var file in shipping)
+        {
+            await Assert.That(await File.ReadAllTextAsync(file)).IsEqualTo($"keep {Path.GetFileName(file)}");
+        }
+
+        await Assert.That(string.Join(", ", Directory.EnumerateFileSystemEntries(releases).Select(Path.GetFileName).Order(StringComparer.Ordinal)))
+            .IsEqualTo(string.Join(", ", shipping.Where(file => Path.GetDirectoryName(file) == releases).Select(Path.GetFileName).Append("archive").Append("test-pack").Order(StringComparer.Ordinal)));
+        await Assert.That(Directory.EnumerateFileSystemEntries(archive).Count()).IsEqualTo(1);
+
+        // The suite's installer, at this tree's version, carrying this tree's binaries.
+        var version = PublishedSlice.BakedVersion();
+        var testPack = Path.Combine(releases, "test-pack");
+        var package = Path.Combine(testPack, $"{ReleaseLayout.TestPackId}-{version}-full.nupkg");
+
+        await Assert.That(File.Exists(Path.Combine(testPack, $"{ReleaseLayout.TestDownloadId}-installer.exe"))).IsTrue();
+        await Assert.That(File.Exists(package)).IsTrue();
+        await Assert.That(ReleaseLayout.MismatchBetween(package, ReleaseLayout.PackedBinaries)).IsNull();
+
+        // And its twin, under the shipping id, with nothing an installer could run.
+        var twin = Path.Combine(testPack, "twin");
+
+        await Assert.That(string.Join(", ", Directory.EnumerateFiles(twin).Select(Path.GetFileName).Order(StringComparer.Ordinal)))
+            .IsEqualTo(string.Join(", ", new[] { $"{ReleaseLayout.PackId}-{version}-full.nupkg", "RELEASES", $"assets.{ReleaseLayout.Channel}.json", $"releases.{ReleaseLayout.Channel}.json" }.Order(StringComparer.Ordinal)));
+
+        // It says how long each pack took, which is what the kb's figure is read from.
+        await Assert.That(output).Contains($"vpk pack of {ReleaseLayout.TestPackId} took");
+        await Assert.That(output).Contains("vpk pack of the twin took");
     }
 
     /// <summary>

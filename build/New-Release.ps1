@@ -126,8 +126,30 @@
     Use the existing -PackDir instead of publishing. The ILC and version-string
     checks are skipped with it, and say so.
 
+.PARAMETER TestPackOnly
+    Pack the suite's installer, and nothing that could be released, from the
+    two publishes a gate has just made and tested. Q287, decided 2026-09-24 by
+    the maintainer, verbatim: "Q287 a". Every gate driver runs this before its
+    first run, so the real-installer arms install THIS tree's binaries and run
+    this tree's hooks; until that day they ran the last pack a release cut had
+    left behind. It reads `src\BrowserAI\bin\Release\...\publish` and
+    `src\BrowserAI.App\bin\Release\...\publish` -- the directories every
+    published-slice arm drives -- refuses a binary whose baked version is not the
+    tree's, and writes `Releases\test-pack\` and nothing else: no shipping pack,
+    no rename of a download, no archive, no manifest, no release body, no upload
+    set, and the shipping feed is neither read nor written. Beside the test pack
+    it packs the same directory once more under the SHIPPING id into
+    `Releases\test-pack\twin\`, which is what
+    `RealInstallerTests.TheSuitesPackAndTheShippingPackDifferOnlyWhereTheIdAppears`
+    compares, so that arm keeps comparing two packs of one publish at every gate;
+    the twin's installer and archive are deleted and only its package and feed
+    manifest stay. Never published, never tagged.
+
 .EXAMPLE
     pwsh -File build/New-Release.ps1
+
+.EXAMPLE
+    pwsh -File build/New-Release.ps1 -TestPackOnly
 #>
 [CmdletBinding()]
 param(
@@ -138,7 +160,8 @@ param(
     [switch] $RollbackRepublish,
     [switch] $AllowPreRelease,
     [switch] $SkipPublish,
-    [string] $PackVersion
+    [string] $PackVersion,
+    [switch] $TestPackOnly
 )
 
 Set-StrictMode -Version Latest
@@ -322,7 +345,10 @@ if ($PackVersion -match '\+') {
     exit 1
 }
 
-if (($PackVersion -match '-') -and -not $AllowPreRelease) {
+# A test pack is never a release, so the one refusal that exists to stop a
+# release being cut off a tag does not apply to it: every gate packs a
+# pre-release, by construction.
+if (($PackVersion -match '-') -and -not $AllowPreRelease -and -not $TestPackOnly) {
     Write-Error "The derived version $PackVersion carries a pre-release suffix, which means HEAD is not on a tag. Never self-update from a build that is not a release. Tag it, or pass -AllowPreRelease to exercise the update lane."
     exit 1
 }
@@ -335,24 +361,70 @@ Write-Host "Packing version $PackVersion on channel $Channel."
 # matters, and this one has to agree with a setting on the other side of the
 # wire (AllowVersionDowngrade, in VelopackUpdateClient). One implementation, two
 # callers: here, and ReleaseScriptTests.
-$feedManifest = Join-Path $OutputDir "releases.$Channel.json"
-$decision = & (Join-Path $PSScriptRoot 'Test-ReleaseVersion.ps1') `
-    -Manifest $feedManifest -Version $PackVersion -RollbackRepublish:$RollbackRepublish
+#
+# ⚠️ NOT FOR A TEST PACK, which must not so much as read the shipping feed: Q287
+# says "never touching the real release artifacts or feed".
+if ($TestPackOnly) {
+    Write-Host "Test pack only: the shipping feed in $OutputDir is neither read nor written."
+}
+else {
+    $feedManifest = Join-Path $OutputDir "releases.$Channel.json"
+    $decision = & (Join-Path $PSScriptRoot 'Test-ReleaseVersion.ps1') `
+        -Manifest $feedManifest -Version $PackVersion -RollbackRepublish:$RollbackRepublish
 
-if ($LASTEXITCODE -ne 0) { exit 1 }
+    if ($LASTEXITCODE -ne 0) { exit 1 }
 
-if ($decision -eq 'rollback') {
-    Write-Warning "ROLLBACK REPUBLISH: $PackVersion is older than what is published on channel '$Channel', and -RollbackRepublish was given."
-} else {
-    Write-Host "Release validation: $decision."
+    if ($decision -eq 'rollback') {
+        Write-Warning "ROLLBACK REPUBLISH: $PackVersion is older than what is published on channel '$Channel', and -RollbackRepublish was given."
+    } else {
+        Write-Host "Release validation: $decision."
+    }
 }
 
 # --- 4/5. Publish, read ILC's raw output, and scan the linked binary -----------
 if (-not $PackDir) {
-    $PackDir = Join-Path $root 'artifacts' 'publish-release'
+    $PackDir = Join-Path $root 'artifacts' $(if ($TestPackOnly) { 'publish-test-pack' } else { 'publish-release' })
 }
 
-if (-not $SkipPublish) {
+if ($TestPackOnly) {
+    # ⚠️ THE GATE'S OWN PUBLISHES, AND NOT A THIRD ONE. The published-slice arms
+    # drive these two directories, so the test pack carries exactly the binaries
+    # the rest of the run tested -- and ILC is not deterministic here (two
+    # publishes of one input set differ in bytes, measured 2026-08-30), so a
+    # publish of its own would be a third, untested pair. The gate reads each
+    # publish's own log for ILC's complaints before it gets here.
+    if (Test-Path -LiteralPath $PackDir) { Remove-Item -LiteralPath $PackDir -Recurse -Force }
+    $null = New-Item -ItemType Directory -Force -Path $PackDir
+
+    foreach ($publish in $publishes) {
+        $bin = Join-Path (Split-Path -Parent $publish.Project) 'bin' 'Release'
+        $found = Get-ChildItem -Path $bin -Filter $publish.Exe -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Directory.Name -eq 'publish' -and $_.Directory.Parent.Name -eq 'win-x64' } |
+            Sort-Object LastWriteTimeUtc -Descending |
+            Select-Object -First 1
+
+        if (-not $found) {
+            Write-Error "There is no published $($publish.Exe) under $bin. Publish it first: dotnet publish $($publish.Project) -c Release -r win-x64 --self-contained"
+            exit 1
+        }
+
+        # ⚠️ THE BAKED VERSION MUST BE THE TREE'S, which is the N16 lesson: a
+        # commit between a publish and a gate moves the tree's version and leaves
+        # the binary behind, and a pack of that binary would install last
+        # commit's hooks while calling itself this one's.
+        $baked = $found.VersionInfo.ProductVersion
+        if ($baked -ne $PackVersion) {
+            Write-Error "$($found.FullName) was built as $baked and the tree is $PackVersion. Publish again before packing, or the test pack installs another build's hooks."
+            exit 1
+        }
+
+        Copy-Item -Path (Join-Path $found.Directory.FullName '*') -Destination $PackDir -Recurse -Force
+        Write-Host "Copied the $($publish.What), $baked, from $($found.Directory.FullName)."
+    }
+
+    Write-Warning "-TestPackOnly: the ILC output check and the decorated-version-string scan are the release's, and did NOT run here; the gate reads each publish's log."
+}
+elseif (-not $SkipPublish) {
     if (Test-Path -LiteralPath $PackDir) { Remove-Item -LiteralPath $PackDir -Recurse -Force }
 
     # ⚠️ THE INTERMEDIATES TOO, AND CLEARING THE OUTPUT DIRECTORY IS NOT ENOUGH
@@ -616,67 +688,74 @@ $packArgs = @(
     # a background MCP server. Per-user to %LocalAppData% is the whole design.
 )
 
-Write-Host "vpk $($packArgs -join ' ')"
-& vpk @packArgs
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "vpk pack failed with exit code $LASTEXITCODE."
-    exit 1
-}
+# ⚠️ NOT FOR A TEST PACK, which packs the suite's installer and the twin below
+# and nothing a release is made of.
+if (-not $TestPackOnly) {
+    Write-Host "vpk $($packArgs -join ' ')"
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    & vpk @packArgs
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "vpk pack failed with exit code $LASTEXITCODE."
+        exit 1
+    }
 
-# --- 6b. The downloads are called BrowserAI.exe and BrowserAI.zip --------------
-# ⚠️ ADDED 2026-09-15 WITH THE PACK-ID RENAME and WIDENED THE SAME DAY to the
-# two HUMAN-FACING artifacts *(previously the installer alone, renamed
-# `BrowserAI.app-win-Setup.exe` -> `BrowserAI-win-Setup.exe`)*. `vpk` names
-# everything after the pack id; the id is what chooses the install directory, so
-# it had to become `BrowserAI.app`, and the files a person downloads must not
-# inherit a suffix that exists to answer a question about directories -- nor
-# vpk's own `-Setup` and `-Portable` vocabulary, which says what the tool calls
-# them and not what they are.
-#
-# Exactly two artifacts are renamed and the feed-internal ones are the control:
-# the `.nupkg`s and `releases.<channel>.json` keep the id, because Velopack
-# resolves those by name and a rename there is a feed that 404s on the first
-# update.
-$downloads = @(
-    @{ Packed = "$packId-$Channel-Setup.exe";    Download = "$downloadId$downloadSuffix.exe"; What = 'installer'; Required = $true }
-    @{ Packed = "$packId-$Channel-Portable.zip"; Download = "$downloadId$downloadSuffix.zip"; What = 'portable archive'; Required = $true }
-)
+    Write-Host "vpk pack of $packId took $([math]::Round($clock.Elapsed.TotalSeconds, 1)) s."
 
-$assets = Join-Path $OutputDir "assets.$Channel.json"
-$assetText = if (Test-Path -LiteralPath $assets) { Get-Content -LiteralPath $assets -Raw } else { $null }
-$rewritten = $assetText
+    # --- 6b. The downloads are called BrowserAI.exe and BrowserAI.zip --------------
+    # ⚠️ ADDED 2026-09-15 WITH THE PACK-ID RENAME and WIDENED THE SAME DAY to the
+    # two HUMAN-FACING artifacts *(previously the installer alone, renamed
+    # `BrowserAI.app-win-Setup.exe` -> `BrowserAI-win-Setup.exe`)*. `vpk` names
+    # everything after the pack id; the id is what chooses the install directory, so
+    # it had to become `BrowserAI.app`, and the files a person downloads must not
+    # inherit a suffix that exists to answer a question about directories -- nor
+    # vpk's own `-Setup` and `-Portable` vocabulary, which says what the tool calls
+    # them and not what they are.
+    #
+    # Exactly two artifacts are renamed and the feed-internal ones are the control:
+    # the `.nupkg`s and `releases.<channel>.json` keep the id, because Velopack
+    # resolves those by name and a rename there is a feed that 404s on the first
+    # update.
+    $downloads = @(
+        @{ Packed = "$packId-$Channel-Setup.exe";    Download = "$downloadId$downloadSuffix.exe"; What = 'installer'; Required = $true }
+        @{ Packed = "$packId-$Channel-Portable.zip"; Download = "$downloadId$downloadSuffix.zip"; What = 'portable archive'; Required = $true }
+    )
 
-foreach ($download in $downloads) {
-    $packedPath = Join-Path $OutputDir $download.Packed
-    $downloadPath = Join-Path $OutputDir $download.Download
+    $assets = Join-Path $OutputDir "assets.$Channel.json"
+    $assetText = if (Test-Path -LiteralPath $assets) { Get-Content -LiteralPath $assets -Raw } else { $null }
+    $rewritten = $assetText
 
-    if (-not (Test-Path -LiteralPath $packedPath)) {
-        if ($download.Required) {
-            Write-Error "vpk did not produce $packedPath, so there is no $($download.What) to rename or to publish."
-            exit 1
+    foreach ($download in $downloads) {
+        $packedPath = Join-Path $OutputDir $download.Packed
+        $downloadPath = Join-Path $OutputDir $download.Download
+
+        if (-not (Test-Path -LiteralPath $packedPath)) {
+            if ($download.Required) {
+                Write-Error "vpk did not produce $packedPath, so there is no $($download.What) to rename or to publish."
+                exit 1
+            }
+
+            continue
         }
 
-        continue
+        Move-Item -LiteralPath $packedPath -Destination $downloadPath -Force
+        Write-Host "Renamed the $($download.What) to $(Split-Path -Leaf $downloadPath)."
+
+        # And the asset manifest goes with it, because it is read by machines: a file
+        # name in there that nothing on disk answers to is a lie in a machine-readable
+        # file, which is worse than an inconvenient name.
+        if ($null -ne $rewritten) {
+            $rewritten = $rewritten.Replace($download.Packed, $download.Download)
+        }
     }
 
-    Move-Item -LiteralPath $packedPath -Destination $downloadPath -Force
-    Write-Host "Renamed the $($download.What) to $(Split-Path -Leaf $downloadPath)."
+    $setup = Join-Path $OutputDir "$downloadId$downloadSuffix.exe"
+    $portable = Join-Path $OutputDir "$downloadId$downloadSuffix.zip"
 
-    # And the asset manifest goes with it, because it is read by machines: a file
-    # name in there that nothing on disk answers to is a lie in a machine-readable
-    # file, which is worse than an inconvenient name.
-    if ($null -ne $rewritten) {
-        $rewritten = $rewritten.Replace($download.Packed, $download.Download)
+    if (($null -ne $rewritten) -and ($rewritten -ne $assetText)) {
+        # LF and no BOM, like every other file this repository writes.
+        [System.IO.File]::WriteAllText($assets, ($rewritten -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding $false))
+        Write-Host "Rewrote the download names in $(Split-Path -Leaf $assets)."
     }
-}
-
-$setup = Join-Path $OutputDir "$downloadId$downloadSuffix.exe"
-$portable = Join-Path $OutputDir "$downloadId$downloadSuffix.zip"
-
-if (($null -ne $rewritten) -and ($rewritten -ne $assetText)) {
-    # LF and no BOM, like every other file this repository writes.
-    [System.IO.File]::WriteAllText($assets, ($rewritten -replace "`r`n", "`n"), (New-Object System.Text.UTF8Encoding $false))
-    Write-Host "Rewrote the download names in $(Split-Path -Leaf $assets)."
 }
 
 # --- 6c. The suite's installer, same publish, test id --------------------------
@@ -743,11 +822,15 @@ for ($i = 0; $i -lt $packArgs.Count; $i++) {
 }
 
 Write-Host "vpk $($testPackArgs -join ' ')"
+$testClock = [System.Diagnostics.Stopwatch]::StartNew()
 & vpk @testPackArgs
 if ($LASTEXITCODE -ne 0) {
     Write-Error "vpk pack failed for the test pack with exit code $LASTEXITCODE, so the suite has no installer it may run."
     exit 1
 }
+
+$testPackSeconds = [math]::Round($testClock.Elapsed.TotalSeconds, 1)
+Write-Host "vpk pack of $testPackId took $testPackSeconds s."
 
 $testDownloads = @(
     @{ Packed = "$testPackId-$Channel-Setup.exe";    Download = "$testDownloadId-installer.exe" }
@@ -767,6 +850,57 @@ foreach ($download in $testDownloads) {
 }
 
 Write-Host "Packed the suite's own installer as $testDownloadId-installer.exe under $testOutputDir (pack id $testPackId). It is NEVER published."
+
+# --- 6d. A test pack's twin, and the end of a test pack ------------------------
+# ⚠️ -TestPackOnly STOPS HERE, and packs one more thing first: the same directory
+# under the SHIPPING id, into `Releases\test-pack\twin\` -- Q287 a. The arm that
+# holds "the suite's installer and the shipping installer are one package under
+# two names" compares two packs of ONE publish, and a test pack from the tree
+# beside the last release's pack would be two publishes months apart. The twin is
+# `$packArgs` with the output directory alone replaced, so it is exactly what a
+# release cut from this publish would pack; its installer and archive are deleted
+# the moment it exists, because an installer under the shipping id has no business
+# sitting on disk after a gate. Its package and feed manifest stay for the arm.
+if ($TestPackOnly) {
+    $twinOutputDir = Join-Path $testOutputDir 'twin'
+    if (Test-Path -LiteralPath $twinOutputDir) { Remove-Item -LiteralPath $twinOutputDir -Recurse -Force }
+
+    $twinPackArgs = @()
+    for ($i = 0; $i -lt $packArgs.Count; $i++) {
+        switch ($packArgs[$i]) {
+            '--outputDir' { $twinPackArgs += $packArgs[$i]; $twinPackArgs += $twinOutputDir; $i++; continue }
+            default       { $twinPackArgs += $packArgs[$i] }
+        }
+    }
+
+    Write-Host "vpk $($twinPackArgs -join ' ')"
+    $twinClock = [System.Diagnostics.Stopwatch]::StartNew()
+    & vpk @twinPackArgs
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "vpk pack failed for the test pack's twin with exit code $LASTEXITCODE, so there is nothing to compare the suite's installer against."
+        exit 1
+    }
+
+    $twinPackSeconds = [math]::Round($twinClock.Elapsed.TotalSeconds, 1)
+    Write-Host "vpk pack of the twin took $twinPackSeconds s."
+
+    foreach ($name in @("$packId-$Channel-Setup.exe", "$packId-$Channel-Portable.zip")) {
+        $path = Join-Path $twinOutputDir $name
+        if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }
+    }
+
+    [pscustomobject]@{
+        Version         = $PackVersion
+        Channel         = $Channel
+        TestSetup       = Join-Path $testOutputDir "$testDownloadId-installer.exe"
+        TestPackage     = Join-Path $testOutputDir "$testPackId-$PackVersion-full.nupkg"
+        TwinPackage     = Join-Path $twinOutputDir "$packId-$PackVersion-full.nupkg"
+        TestPackSeconds = $testPackSeconds
+        TwinPackSeconds = $twinPackSeconds
+    }
+
+    exit 0
+}
 
 # --- 7. Archive the full package ----------------------------------------------
 $null = New-Item -ItemType Directory -Force -Path $ArchiveDir

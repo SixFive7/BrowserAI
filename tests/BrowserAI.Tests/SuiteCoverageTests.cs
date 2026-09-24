@@ -1534,6 +1534,76 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(LockOffences(Late).Count).IsEqualTo(1);
     }
 
+    /// <summary>
+    /// Every gate driver packs the suite's installer from the tree, under the lock
+    /// and before its first run.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q287, decided 2026-09-24 by the maintainer, verbatim: <i>"Q287 a"</i>.</b>
+    /// The real-installer arms install <c>Releases\test-pack</c>, and until that day
+    /// only a release cut wrote it, so they ran the last release's hooks. A driver
+    /// runs <c>build/New-Release.ps1 -TestPackOnly</c> after the lock is taken and
+    /// before the first <c>dotnet test</c>, from the two publishes the run then tests;
+    /// the <c>release installer</c> capability refuses a pack that is not those bytes.
+    /// </para>
+    /// <para>
+    /// <b>Read as code, comments blanked. Planted red 2026-09-24</b> against the four
+    /// drivers as they stood, none of which packed anything.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryGateDriverPacksTheSuitesInstallerFromTheTreeBeforeItsRun()
+    {
+        var offences = new List<string>();
+
+        foreach (var driver in GateDrivers)
+        {
+            var path = Path.Combine(RepositoryLayout.Root.FullName, "build", driver.File);
+            var code = CodeOf(await File.ReadAllTextAsync(path), Path.GetExtension(driver.File));
+
+            offences.AddRange(PackOffences(code).Select(offence => $"{driver.File}: {offence}"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offences)).IsEmpty();
+
+        // ⚠️ THE CONTROLS, both directions, through the same reader.
+        const string Packed =
+            "$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& New-Release.ps1 -TestPackOnly\n& dotnet test x.slnx\n";
+
+        await Assert.That(PackOffences(Packed)).IsEmpty();
+        await Assert.That(PackOffences("& dotnet test x.slnx\n").Count).IsEqualTo(1);
+        await Assert.That(PackOffences("$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& dotnet test x.slnx\n& New-Release.ps1 -TestPackOnly\n").Count).IsEqualTo(1);
+        await Assert.That(PackOffences("& New-Release.ps1 -TestPackOnly\n$t = & InstallerLock.ps1 -Take -HolderPid $PID\n& dotnet test x.slnx\n").Count).IsEqualTo(1);
+    }
+
+    /// <summary>What is wrong with one driver's test pack.</summary>
+    /// <param name="code">The driver, comments blanked.</param>
+    /// <returns>One complaint per fault.</returns>
+    private static List<string> PackOffences(string code)
+    {
+        var lines = code.Split('\n');
+
+        var pack = Array.FindIndex(lines, line => line.Contains("New-Release.ps1", StringComparison.Ordinal) && line.Contains("-TestPackOnly", StringComparison.Ordinal));
+        var take = Array.FindIndex(lines, line => line.Contains("InstallerLock.ps1", StringComparison.Ordinal) && line.Contains("-Take", StringComparison.Ordinal));
+        var run = Array.FindIndex(lines, line => line.Contains("dotnet test", StringComparison.Ordinal));
+
+        if (pack < 0)
+        {
+            return ["never packs the suite's installer from the tree with build/New-Release.ps1 -TestPackOnly, so the real-installer arms run whatever pack a release cut left behind"];
+        }
+
+        if (run >= 0 && run < pack)
+        {
+            return ["packs the suite's installer after its first run, which then installed the pack before it"];
+        }
+
+        return take < 0 || take > pack
+            ? ["packs the suite's installer before it holds the installer lock, beside whatever else is installing it"]
+            : [];
+    }
+
     /// <summary>What is wrong with one driver's hold on the installer lock.</summary>
     /// <param name="code">The driver, comments blanked.</param>
     /// <returns>One complaint per fault.</returns>

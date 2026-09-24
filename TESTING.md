@@ -305,6 +305,7 @@ Four drivers, two per shell, plus the clearance snapshot they share:
 | [`build/invoke-ordinary-gate.sh`](build/invoke-ordinary-gate.sh) | one run, forces `c:/`, declares `lower` |
 | [`build/Invoke-ReleaseGate.ps1`](build/Invoke-ReleaseGate.ps1) | three runs under `BROWSERAI_RELEASE_RUN`, forces `C:\`, declares `upper` |
 | [`build/invoke-release-gate.sh`](build/invoke-release-gate.sh) | three runs under `BROWSERAI_RELEASE_RUN`, forces `c:/`, declares `lower` |
+| [`build/New-Release.ps1 -TestPackOnly`](build/New-Release.ps1) | the suite's installer, packed from the two publishes the run tests, under the lock and before the first run -- *added 2026-09-24, Q287 a; see [the suite's installer](#the-suites-installer-is-packed-from-the-tree-before-each-run)* |
 | [`build/InstallerLock.ps1`](build/InstallerLock.ps1) | the drivers' half of `.work\installer.lock`: each driver takes it for its own pid before its first clearance snapshot, declares the token in `BROWSERAI_INSTALLER_LOCK_HELD` for the run it starts, and lets it go at the end -- *added 2026-09-24, Q291 a; see [the installer lock](#the-installer-lock-is-the-suites-own)* |
 | [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1) | the six readings compared either side of every run, and it never repairs what it finds -- *six since 2026-09-24 (previously five), when the hooks began registering with Codex and `~\.codex\config.toml` became a file a run must not change*. ⚠️ *The registration reading is a read-only parse of the `browserai` entry in `~/.claude.json` since 2026-09-24 (previously `claude mcp get browserai`), Q281, the maintainer's words verbatim: "Q281 a". The client's own verb starts the client, which health-checks the server and can write that very file; `SuiteCoverageTests.TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient` holds the parse*. ⚠️ *The Codex reading is the `[mcp_servers.browserai]` entry of `~\.codex\config.toml`, line for line, since 2026-09-24 (previously the whole file by length and SHA-256), Q292, the maintainer's words verbatim: "Q292 a - Same for claude code". The Codex desktop app rewrites that file when it starts, and a whole-file hash stopped a gate on it; the Claude Code reading was already the entry alone. `SuiteCoverageTests.TheClearanceComparesOnlyEachClientsBrowserAiEntry` runs the script against a scratch profile, rewrites both files around the entry and then the entry itself, and holds both halves* |
 
@@ -431,6 +432,36 @@ is where that matters and what it changes.
 still says `nohup`, and that would assert the documentation, not the
 practice; the practice is a habit of whoever types the command, and this section
 is the reader it needs.
+
+### The suite's installer is packed from the tree before each run
+
+**Q287, decided 2026-09-24 by the maintainer, verbatim: *"Q287 a"*.** *Previously
+the real-installer arms installed whatever pack a release cut had left in
+`Releases\test-pack`*, which on the day the per-client registration record landed
+was a 1.1.0 build writing the old record: no real `Setup.exe` had run a hook this
+tree wrote since the last release. **Every gate driver now runs
+`build/New-Release.ps1 -TestPackOnly` after taking the installer lock and before its
+first run.** It packs `BrowserAI.app.test` from the two publishes the run tests --
+`src\BrowserAI\bin\Release\...\publish` and the configuration app's -- refuses a publish whose
+baked version is not the tree's, and packs the same directory once more under the
+shipping id into `Releases\test-pack\twin`, so the arm that compares the two packs
+keeps comparing two packs of one publish. It never reads or writes the shipping feed,
+renames no download, archives nothing and writes no manifest, body or upload set;
+the twin's installer and archive are deleted as soon as they exist. **Publish both
+slices before starting a gate**: the step reads the publishes and does not make
+them, and the ILC check is the publish's own log.
+
+**What holds it.** The `release installer` capability is absent unless the test pack
+carries, byte for byte, the published server and app (`ReleaseLayout.TestPackMismatch`),
+and `SuiteEnvironment.RequireReleaseInstaller` then holds the publish to the tree
+through `PublishedSlice.EnsureFresh`. `RealInstallerTests.TheSuitesInstallerIsTheBuildThisRunTested`
+drives the byte comparison both ways over archives it composes;
+`ReleaseScriptTests.ATestPackOnlyRunPacksTheSuitesInstallerAndItsTwinAndNothingElse`
+runs the mode for real into a scratch output that already holds a shipping feed, and
+requires every byte of it unchanged; and
+`SuiteCoverageTests.EveryGateDriverPacksTheSuitesInstallerFromTheTreeBeforeItsRun`
+reads all four drivers. A pack takes about forty seconds
+([kb](kb/packaging/velopack.md#how-long-a-test-pack-takes----measured-2026-09-24)).
 
 ### The installer lock is the suite's own
 
