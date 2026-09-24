@@ -50,7 +50,7 @@ created with `CreateNoWindow`.
 | `procs/srvA.stderr.txt` to `procs/srvC.stderr.txt`, `procs/late01.stderr.txt` to `procs/late18.stderr.txt` | Each server's own log: the ones the kill ended stop mid-startup, and the ones started after the swap report `manifestVersion=1.1.1` |
 | `logs/before-arp-real.reg`, `logs/after-arp-real.reg` | The real uninstall key, exported before and after |
 | `linger-measure.ps1.txt`, `logs2/`, `procs2/` | Run 2: the asking server never exits and two applies wait on it at once. `logs2/update-apply-1.log` is the apply the other one killed, whole |
-| `sandbox/client/` | The client configuration the installer's hook wrote to, as it was after the uninstall |
+| `sandbox/client/` | The client configuration the installer's hook wrote to, as it was after the uninstall. `.claude.trimmed.json` is its `.claude.json` with two installation identifiers cut, Q298 b; see [What was cut](#what-was-cut) |
 | `vpk-pack.log`, `vp-files.txt` | How the 1.1.1 package was packed, and the list of Velopack source files the researcher read |
 | `proto/` | The single-instance prototype: `Program.cs`, its project and three build files, `measure.ps1.txt`, the primary's log and the harness's spawn times for twenty second starts, and the three task-started probes' one-line logs |
 | `writer/sign-in.ps1.txt`, `writer/sign-in.txt` | The writer's read-only re-reading of this morning's sign-in from the System and Shell-Core logs, the running processes, the task scheduler and BrowserAI's process log, with the maintainer's own programs counted and never named |
@@ -81,6 +81,25 @@ suite's own shortcut stay, and nothing else was removed.
 
 `logs2/update-apply-1.log` and `procs2/update-apply-1.stdout.txt` had no such line and
 are kept whole.
+
+⚠️ **The sandbox client's two installation identifiers are cut -- Q298, decided
+2026-09-25 by the maintainer, in his words: *"Q298 b"*.** *Added by addition; the phase 1
+writer had kept the file whole (N105) because it is the record that the installer hook's
+registration went to the sandbox and was gone after the uninstall.* That record is its
+`"mcpServers": {}`, which stays, as does every other member. The two values Claude Code
+wrote to identify the installation, `machineID` and `userID`, each 64 hexadecimal
+characters, are replaced by a sentence saying so, and the file is here as
+`sandbox/client/.claude.trimmed.json`. No account or organisation identifier was in it.
+
+| Cut | SHA-256 of the value, as UTF-8 |
+|---|---|
+| `machineID` | `237d176ca65b217d32d0ce237451cd0c5c3be0b00e9432f0c8d836e1b4fe08b8` |
+| `userID` | `73c16c4a7b4cb8b813a4ad354887d921f50b46209426fda7561890f78e8cf085` |
+
+The original `sandbox/client/.claude.json`, 519 bytes, had the SHA-256
+`de55cda8a5c55e2584636d1609ee4c692fb919382048fe249f106ad7bea1a844`. **The commits before this cut still carry both values**, since this
+directory was committed whole on 2026-09-24; cutting them from the tree does not remove
+them from its history.
 
 | Left out | Why | SHA-256 of what it was |
 |---|---|---|
