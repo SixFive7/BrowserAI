@@ -393,6 +393,21 @@ release body; nothing else depends on it.
   `DocumentationLinkTests` reported both -- which is that scan working, and is why this one now
   uses the arrangement that file already keeps for its own controls.
 
+- ✅ **A comment that carries the source of the script that wrote it is refused, and eight are fixed.**
+  Five XML doc paragraphs opened with `""" + W + """` -- a triple quote, a plus, a one-letter
+  variable, a plus and a triple quote -- and three comments with a bare `%s`, each where the
+  paragraphs the same commit wrote beside it open with the warning sign; one of the five had
+  replaced a paragraph that opened with it. The compiler takes a doc comment as text, and every
+  scan in the suite passed all eight, because none of them is a phrase or a character this tree
+  refuses. All eight open with the sign again.
+
+  `HouseRuleTests.NoCommentCarriesTheResidueOfTheScriptThatWroteIt` reads the comments of every
+  code file, through the lexer the prose scan uses and never the code, for two shapes: a quote, a
+  plus, a name, a plus and a quote, and a printf placeholder that no letter, digit or percent sign
+  follows, which keeps `%LocalAppData%` out of it. **Watched red against the tree as it stood**, it
+  named all eight at their lines, and one of them was a comment the reader who found the rest had
+  not listed.
+
 - 📝 **The feed and the package stay release assets, and the four alternatives are written down.**
   The asset trim raised the obvious next question -- if a release carries three files, does it
   need to carry them at all? -- and it was researched before it was answered and not after.
@@ -608,8 +623,9 @@ release body; nothing else depends on it.
   Q261 from a subagent once implemented and make sure to have test coverage."* -- and T7's
   detached call. **Five candidates from the feature catalogue are listed as candidates**, and
   the item is done when each has been picked or declined, not when any is built. **And four
-  re-verification rows are owed a re-measurement** at the Velopack that ships: 123, 124, 126 and
-  130 were all taken at 1.2.0 and the build has resolved 1.2.158 since 2026-09-22.
+  re-verification rows were owed a re-measurement** at the Velopack that ships -- 123, 124, 126
+  and 130, all taken at 1.2.0 while the build has resolved 1.2.158 since 2026-09-22 -- and were
+  re-run at 1.2.158 on 2026-09-24, which the entry on them records.
 
 - 🔧 **The browser no longer asks a caller to save a password, because a caller cannot answer.**
   A sign-in POST makes Chromium offer to remember the credential, and the offer is a top-level
@@ -655,6 +671,47 @@ release body; nothing else depends on it.
   bounds the wait with a number somebody invented. The Firefox arm asserts only that the
   preference reached the child, because the behaviour was NOT established -- no prompt appeared
   in the Firefox control either, and the kb entry says so.
+
+- 📝 **Four Velopack re-checks owed since 1.2.158 are run, and they correct what the kb said about Setup.**
+  Rows 123, 124, 126 and 130 of the re-verification index had been taken at Velopack 1.2.0, and
+  each is re-established at 1.2.158 against the suite's test pack in scratch roots, with the real
+  install's Add/Remove entry, its Start Menu shortcut and Velopack's temp directories read before
+  and after every step: 19 readings, all identical. All four behave as they did at 1.2.0, and
+  the re-run corrects what the record said about two of them.
+
+  **A non-silent `Setup.exe` over an existing install does not wait for an answer forever**: its
+  prompt cancels itself after 300 s, exits 0 and installs nothing, and 1.2.0 armed the same
+  timeout, so an unattended run of the installer over an install is an exit-0 no-op. **Its wording
+  follows the version as well as its button**: an older install is asked *Version 1.0.0 is
+  currently installed. Would you like to update to version 1.1.0?* over **Update**, and a newer
+  one is told *A newer version of BrowserAI (suite) is already installed* over **Downgrade**.
+
+  **`VELOPACK_FIRSTRUN` is cleared by `VelopackApp.Run()` on an installed process**, which
+  answers a question the kb had held open since 2026-09-15, and it has a consequence here: the
+  server's own installer exit reads the variable after that call, so it cannot fire on an
+  installed start. Whether it stays is a question put to the maintainer (Q276). And the live
+  install's Add/Remove entry now carries its size as a `REG_DWORD`, which 1.2.158's registry code
+  writes and 1.2.0's could not: the 1.1.0 update rewrote it on 2026-09-24. The runs, the dialog
+  reads and the readings are `docs/evidence/2026-09-24-velopack-rows/`.
+
+- 📝 **What an update toast from BrowserAI would take is measured, ahead of deciding how it looks.**
+  The design is not decided and none of this is product code. **The app id is already there**:
+  Velopack writes `velopack.BrowserAI.app` on the Start Menu shortcut and sets it on every
+  installed process, so a toast needs no id of its own and no edit to the shortcut. **A NativeAOT
+  binary can raise one through hand-written WinRT calls**, with no CsWinRT and no ILC warning.
+  **Only a COM activator hears which snooze a person picked**: a protocol launch drops the
+  dropdown's value, and with no activator a click on a toast whose raiser has exited starts
+  nothing and the choice is lost.
+
+  The X is heard only by a raiser that is still running, a scheduled toast is delivered with no
+  process alive, and a toast with its popup suppressed shows nothing and moves no foreground
+  window, which is what a test of a real toast would stand on. Beside them, what the sessions
+  page could read from a live marker -- 5 torn reads in 20,000, and 915 empty ones when the
+  holder truncates -- and a named stop event that ends a process about 60 ms after it is
+  signalled. All of it is in `kb/windows/notifications.md` with re-verification rows 156 to 158,
+  from `docs/evidence/2026-09-24-toast-design/`. **The toast renderings the design directory
+  holds were raised from Windows PowerShell 5.1**, not PowerShell 7, which cannot load the toast
+  type at all; two documents said otherwise and are corrected.
 
 - 📝 **The `webp` zero-byte watch is re-stamped, and it gains the instrument it was missing.**
   The ask that a `webp` screenshot past 16,383 px should error instead of returning an empty
