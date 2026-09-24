@@ -618,6 +618,24 @@ was offered **79** tool definitions on every turn of every run, unchanged --
 which is the control that says nothing about the surface actually moved between
 the two servers, so what the arms measure is the mechanism and not a real rename.
 
+⚠️ **Two corrections from the independent re-measurement of 2026-09-24, both by
+addition.** *(1)* **The 79 is BrowserAI's own list and not the turn's total, and
+the turn's total is configuration-specific** -- *previously "the model was offered
+**79** tool definitions on every turn", which reads as a property of the run.* A
+re-run from a working directory inside this repository was offered **121**,
+because the repository's committed `.mcp.json` servers connected as well;
+`browserai`'s own contribution was 79 on every connection in both. The control
+the sentence above rests on is unaffected -- what it needs is *unchanged across
+the two servers*, which held -- but a reader comparing a future run's total
+against 79 would be comparing two different configurations. *(2)* ⭐ **The premise
+these runs are built on is simulated by process identity and never by a real
+surface difference.** *"A tool the old server advertised has gone"* is what makes
+the refusal worth having, and no rig here ever removed a tool: what every run
+establishes is that a **second server process** answered the call, read off the
+shim's per-frame pid. A measurement of a real rename would need two BrowserAI
+builds with different surfaces, which nothing here has yet done -- so the
+mechanism is measured and its premise is assumed.
+
 ### The list-changed notification does NOTHING on a re-dialled connection, 3/3
 
 ⚠️ **This is the finding that corrected the product's own wording before it

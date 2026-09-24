@@ -70,6 +70,24 @@ throwaway-config recipe, and `CODEX_HOME` is a scratch directory with a
 `config.toml` the rig writes. The Codex CLI is taken from
 `AppData\Local\OpenAI\Codex\bin`, outside `~\.codex`.
 
+⚠️ **Two corrections from the independent re-measurement of 2026-09-24, by
+addition.** *(1)* **That last sentence is about THIS rig and not about the suite
+arm** -- *previously it stood alone, and it reads as a property of every Codex
+measurement this batch made.* `ClientReconnectTests` resolves the binary through
+the product's own `CodexRegistration.Locate`, which finds
+`~\.codex\plugins\.plugin-appserver\codex.exe` -- **inside** `~\.codex`, and
+byte-identical to the one above on this machine today. Nothing writes there and
+the guard on the real configuration is unchanged; what is corrected is the claim
+that no Codex binary under `~\.codex` is involved anywhere. *(2)* ⚠️ **A headless
+Claude Code started from a working directory inside this repository connects the
+repository's own project-scope `.mcp.json` servers**, even with an empty
+`.mcp.json` in that directory and `CLAUDE_CONFIG_DIR` pointed at scratch -- the
+scratch config isolates the *user* scope and not the project scope. It changes no
+finding here -- the refusal and the retry are about `browserai`'s own connection --
+and it does change the tool-count total a run reports, which is what the
+[kb entry](../../../kb/mcp/protocol.md#the-refusal-fires-on-exactly-the-connection-it-was-designed-for-33)
+now records.
+
 ## Running them
 
 Publish the server first -- these drive the published binary, not the tree:
