@@ -1212,6 +1212,14 @@ its log, which is where later readings are.
 **Re-establish** with the command itself: it prints *"vpk pack of ... took N s"* for
 each pack, and the wall time is the caller's.
 
+**Twelve more readings the same evening, from six gate halves, and the first reading
+above is the slow one.** `[MACHINE]` The gate drivers packed 1.1.1-alpha.0.120, .122
+and .124, and their logs read **9.7 to 10.4 s** for the suite's installer and **9.2 to
+9.7 s** for the twin every time (PowerShell 10.2 / 9.4, 10.0 / 9.5, 10.4 / 9.4 and
+9.9 / 9.3; Git Bash 9.7 / 9.2 and 10.4 / 9.7), against 15.8 s and 18.0 s in the one run
+above. Two packs run by hand at .117 read 9.4 / 9.3 and 10 / 9.2. Why the first run was
+slower is not established. The drivers do not print the pack step's end-to-end time.
+
 ## Deriving the version from git tags, with MinVer
 
 Measured while building the git-tag versioning, on SDK **10.0.302**
