@@ -909,6 +909,15 @@ machine -- the watcher is ready at once and there is nothing to connect to or
 unlink -- and it is why a call at every session close costs nothing once the
 backlog is gone. `[MACHINE]`
 
+⭐ **AND THE SUITE'S OWN RESIDUE IS NOW ZERO, which is what says the growth rate
+above is history and not a current reading.** Measured 2026-09-24 immediately
+after two full 817-test gate runs, both driving real browsers: **0 descriptors**
+at the real path, against the 499 a day this machine used to accumulate. The
+product's own records account for it -- **679 reap records** on this machine that
+day at event id 90, **0** at 91 and **0** at 92, so every reap that was asked for
+was started. Read the rate above as what an unreaped machine did, and this as
+what a reaped one does. `[MACHINE]`
+
 **What was accepted, in the maintainer's own words**
 ([T7](../../DECISIONS.md#processes-browsers-and-session-modes)): *"I want to
 avoid complexity. Does throtthling not mean we need to implement anything
