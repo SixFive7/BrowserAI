@@ -1,0 +1,20 @@
+2026-09-23T22:29:51.513Z 129612 LAUNCH role=A trigger=after-first-call
+2026-09-23T22:29:51.516Z 129612 IN {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"roots":{"listChanged":true}},"clientInfo":{"name":"smoke","version":"1"}}}
+2026-09-23T22:29:51.517Z 129612 OUT initialize result (protocolVersion=2025-06-18)
+2026-09-23T22:29:51.518Z 129612 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:29:51.518Z 129612 IN {"jsonrpc":"2.0","id":2,"method":"tools/list"}
+2026-09-23T22:29:51.519Z 129612 OUT tools/list
+2026-09-23T22:29:51.519Z 129612 IN {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"ping","arguments":{"note":"c1"}}}
+2026-09-23T22:29:51.519Z 129612 OUT tools/call #1 answered by A
+2026-09-23T22:29:51.520Z 129612 HANDOVER-STATE wrote C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/smoke2.state.json residual=""
+2026-09-23T22:29:51.528Z 129612 HANDOVER-SPAWNED helper pid=98836 with inherited stdio
+2026-09-23T22:29:51.562Z 98836 LAUNCH role=H holding the pipe; not reading stdin
+2026-09-23T22:29:51.663Z 129612 HANDOVER-EXIT A exiting 0; the pipe is now held by H
+2026-09-23T22:29:51.663Z 129612 EXIT role=A code=0
+2026-09-23T22:29:52.788Z 98836 APPLY-DONE after 1225ms
+2026-09-23T22:29:52.796Z 98836 B-SPAWNED pid=99432 from C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-install/b.js with inherited stdio
+2026-09-23T22:29:52.832Z 99432 LAUNCH role=B adopting state from pid=129612 initializeDone=true protocolVersion=2025-06-18 callCount=1
+2026-09-23T22:29:52.836Z 99432 STDIN-END 
+2026-09-23T22:29:52.836Z 99432 EXIT role=B code=0
+2026-09-23T22:29:52.957Z 98836 H-EXIT handing the pipe to B and exiting 0
+2026-09-23T22:29:52.958Z 98836 EXIT role=H code=0

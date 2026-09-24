@@ -1,0 +1,20 @@
+############ PROBE G
+############ PROBE G -- can a line a child writes to stderr be lost?
+rig mirrors ChildProcessSession: a pump Task, drained with WaitAsync(2 s), timeout swallowed
+.NET 10.0.401 | Windows 11 Pro 10.0.26200 | 2026-09-23
+
+--- POSITIVE CONTROL: child writes 5 lines and exits
+    child exited, then drained for 0.00 s; pump abandoned = False
+    LINES WRITTEN BY THE TREE: 5   LINES RECEIVED: 5   LOST: 0
+      got| child-line-1
+      got| child-line-2
+      got| child-line-3
+      got| child-line-4
+      got| child-line-5
+
+--- CLAIM: a grandchild inherits the stderr write end and outlives the child
+    child exited, then drained for 2.01 s; pump abandoned = True
+    LINES WRITTEN BY THE TREE: 6   LINES RECEIVED: 2   LOST: 4
+      got| child-line-1 (before the grandchild)
+      got| child-line-2 (grandchild started; child now exits)
+

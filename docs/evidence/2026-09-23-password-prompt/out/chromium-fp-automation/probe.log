@@ -1,0 +1,16 @@
+[probe] arm=chromium/fp-automation origin=http://127.0.0.1:53793 profile=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-fp-automation\profile
+[probe] prefs=false switch=false seedPreferences=false
+[probe] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\chromium-fp-automation\\downloads","viewport":{"width":1280,"height":800},"locale":"en-US","ignoreHTTPSErrors":true,"channel":"chrome-for-testing","permissions":["clipboard-read"],"args":["--enable-automation"]}
+[probe] context.browser() gave no pid; rooting the pid walk at node itself
+[probe] pid walk root = 156028 (node pid 156028)
+[probe] fingerprint {"webdriver":true,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"}
+[probe] before: 17 windows in pid tree 9496,24340,50728,61480,63664,100408,106048,115672,122968,155264,156028
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-fp-automation\screen-before.png
+[server] POST /login body=username=probe-user&password=Sup3rSecret%21probe
+[probe] navigation after submit completed (#ok present)
+[probe] new windows first seen after 2848 ms
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-fp-automation\screen-after.png
+[probe] after: 17 windows; 1 not present before
+[probe]   NEW top 0x6065E pid=122968 visible=true class='Chrome_WidgetWin_1' title='signed in - Google Chrome for Testing' rect=10,10,1306,944
+[probe]     PrintWindow(6065E) -> True, 1296x934, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-fp-automation\win-signed_in_-_Google_Chrome_for_Testing.png
+[probe] Preferences after launch: 7820 bytes; credentials_enable_service=undefined profile.password_manager_enabled=undefined

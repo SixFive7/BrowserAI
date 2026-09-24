@@ -1,0 +1,1 @@
+{"name":"local-repo","interface":{"displayName":"This repo"},"plugins":[{"name":"browserai","source":{"source":"local","path":"./plugins/browserai"},"policy":{"installation":"AVAILABLE"},"category":"Developer Tools"}]}

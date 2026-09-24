@@ -1,0 +1,27 @@
+PIDs returned       : 764
+Opened successfully : 598
+OpenProcess denied  : 166
+
+--- denied set by session id (session 0 = services/system, session 1 = this interactive logon) ---
+  session 0   : 157
+  session 1   : 9
+
+--- the denied processes that are NOT in session 0 ---
+
+   Pid Name                    Session
+   --- ----                    -------
+  2000 csrss.exe                     1
+  1420 winlogon.exe                  1
+  2240 fontdrvhost.exe               1
+  2496 dwm.exe                       1
+  2524 NVDisplay.Container.exe       1
+  3440 nvcontainer.exe               1
+117468 tv_w32.exe                    1
+ 49500 tv_x64.exe                    1
+105760 GameInputSvc.exe              1
+
+
+
+--- and for comparison, how many OPENED processes are in this interactive session ---
+  session 0   : 1
+  session 1   : 597

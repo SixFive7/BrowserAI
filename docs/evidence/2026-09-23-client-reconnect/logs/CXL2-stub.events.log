@@ -1,0 +1,11 @@
+2026-09-23T22:43:20.442Z LISTENING 8941 script=["tool:mcp__probe/ping:{\"note\":\"c1\"}","tool:mcp__probe/ping:{\"note\":\"c2\"}","text:done"]
+2026-09-23T22:43:21.908Z REQ POST /responses bytes=43672
+2026-09-23T22:43:21.926Z turn 0: function_call mcp__probe/ping {"note":"c1"}
+2026-09-23T22:43:21.972Z REQ POST /responses bytes=44068
+2026-09-23T22:43:21.973Z SWAP: requesting the swap before turn 1
+2026-09-23T22:43:23.175Z SWAP: running the apply (VERSION -> 2.0.0)
+2026-09-23T22:43:23.547Z SWAP: relay reported the swap complete after 370ms
+2026-09-23T22:43:23.548Z SWAP: serving turn 1
+2026-09-23T22:43:23.549Z turn 1: function_call mcp__probe/ping {"note":"c2"}
+2026-09-23T22:43:23.598Z REQ POST /responses bytes=44464
+2026-09-23T22:43:23.599Z turn 2: message

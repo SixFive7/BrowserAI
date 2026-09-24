@@ -1,0 +1,3 @@
+top 0x280316 pid=47076 vis=false class='Mozilla_firefox-default_C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-hl-baseline\profile_RemoteWindow' title='' rect=0,0,136,39
+top 0xB82960 pid=47076 vis=false class='MozillaHiddenWindowClass' title='WinEventWindow' rect=0,0,136,39
+top 0xFF2362 pid=47076 vis=false class='IME' title='Default IME' rect=0,0,0,0

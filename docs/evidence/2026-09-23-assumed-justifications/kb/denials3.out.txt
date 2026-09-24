@@ -1,0 +1,9 @@
+launching a browser as this user, non-elevated: C:\Users\jori\AppData\Local\ms-playwright\chromium_headless_shell-1246\chrome-headless-shell-win64\chrome-headless-shell.exe
+am I elevated? False
+browser processes launched (whole tree): 1
+  OPENED  pid=71708 path=C:\Users\jori\AppData\Local\ms-playwright\chromium_headless_shell-1246\chrome-headless-shell-win64\chrome-headless-shell.exe
+
+of the 1 processes of a browser this user launched: OPENED=1 DENIED=0
+the sweep as a whole this time      : opened=612 denied=166
+NEGATIVE CONTROL -- the sweep still denies somebody, so it is not opening everything: 166 denials
+cleaned up; remaining: 0

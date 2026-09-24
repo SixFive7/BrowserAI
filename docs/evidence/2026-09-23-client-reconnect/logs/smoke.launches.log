@@ -1,0 +1,12 @@
+2026-09-23T20:52:17.139Z smoke-pid10448-1790196737139 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T20:52:17.143Z smoke-pid10448-1790196737139 IN {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"smoke","version":"1"}}}
+2026-09-23T20:52:17.144Z smoke-pid10448-1790196737139 OUT {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance smoke-pid10448-1790196737139."}}
+2026-09-23T20:52:17.144Z smoke-pid10448-1790196737139 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T20:52:17.145Z smoke-pid10448-1790196737139 IN {"jsonrpc":"2.0","id":2,"method":"tools/list"}
+2026-09-23T20:52:17.145Z smoke-pid10448-1790196737139 OUT {"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T20:52:17.145Z smoke-pid10448-1790196737139 IN {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"ping","arguments":{"note":"first"}}}
+2026-09-23T20:52:17.146Z smoke-pid10448-1790196737139 OUT {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"pong #1 from smoke-pid10448-1790196737139. note=first. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T20:52:17.146Z smoke-pid10448-1790196737139 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-smoke-pid10448-1790196737139: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T20:52:17.147Z smoke-pid10448-1790196737139 PLANNED-EXIT after first tools/call
+2026-09-23T20:52:17.147Z smoke-pid10448-1790196737139 STDIN-END 
+2026-09-23T20:52:17.148Z smoke-pid10448-1790196737139 EXIT code=0

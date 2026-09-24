@@ -1,0 +1,39 @@
+ENTRY D -- "durable" in src/, classified by sense.  Counted 2026-09-23 over
+`git ls-files 'src/**/*.cs'`, case-insensitive on the stem "durabl".
+TOTAL OCCURRENCES: 23, in 15 files.
+
+PREDICATE 1 -- "a persistence CLAIM about a file write whose asserted guarantee
+is survival of THIS PROCESS rather than the kb's power-cut definition":  2
+  src/BrowserAI.Core/Logging/ProcessLog.cs:59        "durable the moment it is written"
+  src/BrowserAI.Core/Logging/RollingFileWriter.cs:131 "already durable"
+  (both about RollingFileWriter, which opens through NativeFile.OpenForLockedAppend
+   -> File.OpenHandle(OpenOrCreate, Write, share) with NO FileOptions.WriteThrough
+   and no Flush(flushToDisk: true) anywhere in the file.)
+
+PREDICATE 2 -- "every use that is NOT the kb's WriteThrough+flush+rename sense":  7
+  the 2 above, plus
+  src/BrowserAI.Core/Hosting/IAppPaths.cs:144         "a session's durable state"     (persists across runs)
+  src/BrowserAI/Sessions/SessionEnvironment.cs:70     "the session's durable state"   (persists across runs)
+  src/BrowserAI/Sessions/BrowserIdleTimer.cs:16       "the durable thing is the profile and not the process"
+  src/BrowserAI/Runtime/BrowserProvisioner.cs:826     "A durable confident wrong answer"  (colloquial: long-lived)
+  src/BrowserAI/Sessions/SessionManager.cs:2357       "the only durable evidence"     (persisted to the store)
+
+THE KB SENSE (correct, no change needed):  14
+  SessionIndex.cs:56,716 | SessionLock.cs:30,1050,1074 | LockFile.cs:92,136
+  LockScopes.cs:120,213,254 | SessionLayout.cs:56,99 | RenameWindow.cs:200
+  SessionStore.cs:76
+  (SessionIndex.cs:56 is the sharpest: "The write is *not* durable ... browserai.lock
+   is written WriteThrough plus Flush(flushToDisk: true) -- measured at ~17 ms".)
+
+NOT A USE AT ALL -- the word appears only inside a kb link fragment:  2
+  ProcessLog.cs:194 and TreeDelete.cs:39, both "#files-durable-writes-and-deletes".
+  POSITIVE CONTROL for the scan: these two prove the grep matches text a reader
+  would not count, so a raw count of 23 is not a count of claims.
+
+THE KB'S OWN DEFINITION, kb/windows/processes.md:514 --
+  "A plain file write is not durable when it returns ... Surviving a power cut needs
+   FileStream.Flush(flushToDisk: true) ... or FileOptions.WriteThrough".
+THE KB ALSO USES THE OTHER SENSE, kb/windows/processes.md:1131 --
+  "A record on stderr is not durable, and a record in the process log is", measured
+  2026-08-18 across two CI runs against TerminateProcess.  So the process-scope
+  reading is MEASURED, not invented; what is missing in src/ is the scope word.

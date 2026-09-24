@@ -1,0 +1,19 @@
+[probe] arm=chromium/cred-only origin=http://127.0.0.1:52089 profile=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-cred-only\profile
+[probe] prefs=false switch=false seedPreferences=true
+[probe] seeded C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-cred-only\profile\Default\Preferences = {"credentials_enable_service":false}
+[probe] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\chromium-cred-only\\downloads","viewport":{"width":1280,"height":800},"locale":"en-US","ignoreHTTPSErrors":true,"channel":"chrome-for-testing","permissions":["clipboard-read"]}
+[probe] context.browser() gave no pid; rooting the pid walk at node itself
+[probe] pid walk root = 20692 (node pid 20692)
+[probe] before: 15 windows in pid tree 20692,32916,43280,51612,86972,129764,129824,143376,158192,169968
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-cred-only\screen-before.png
+[server] POST /login body=username=probe-user&password=Sup3rSecret%21probe
+[probe] navigation after submit completed (#ok present)
+[probe] new windows first seen after 2229 ms
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-cred-only\screen-after.png
+[probe] after: 15 windows; 1 not present before
+[probe]   NEW top 0x250B80 pid=51612 visible=true class='Chrome_WidgetWin_1' title='signed in - Google Chrome for Testing' rect=10,10,1306,944
+[probe]     PrintWindow(250B80) -> True, 1296x934, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-cred-only\win-signed_in_-_Google_Chrome_for_Testing.png
+[probe] Preferences after launch: 7779 bytes; credentials_enable_service=false profile.password_manager_enabled=undefined
+
+[probe] VERDICT newWindows=1 firstSeenMs=2229 outDir=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-cred-only
+EXIT=0

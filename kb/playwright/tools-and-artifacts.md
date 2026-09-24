@@ -748,6 +748,88 @@ session-scoped one, so it would reap a peer's descriptors as readily as its own.
 Re-establish with a directory listing and a byte total over
 `%LOCALAPPDATA%\ms-playwright\b`, and read one file to see whose it is.
 
+⚠️ **THREE THINGS ABOVE WERE RE-MEASURED 2026-09-24 AND ONE OF THEM WAS WRONG.**
+*Corrected by addition; every sentence above stands except the one quoted here.*
+Measured at `playwright-core` **1.64.0-alpha-1789764292000**, node **v24.21.0**,
+Chromium **154.0.8037.0** (revision 1246), against copies of the real directory
+inside a scratch registry. Probes, logs and the real directory's count at the
+start and end of every one:
+[`docs/evidence/2026-09-23-server-registry`](../../docs/evidence/2026-09-23-server-registry/README.md).
+
+⭐ **A harness CAN point the directory at scratch, and the lever is
+`PWTEST_SERVER_REGISTRY`.** *Corrected 2026-09-24 (previously "There is no
+`PLAYWRIGHT_*` variable in that path at all, so a harness cannot point it at
+scratch -- the only lever is `LOCALAPPDATA` itself, which moves every other
+Windows path with it").* The first clause is still true and is what made the
+second one look safe: the variable is not spelled `PLAYWRIGHT_`, it is spelled
+`PWTEST_`, and `registryDirectory()` reads it first. Measured both ways in one
+run: the descriptor appeared under the scratch path, **no** file appeared at the
+real path, and the real directory's count did not move. `[FLOATS]`
+
+**The growth is real, it is unbounded, and here are the rates.** The only code
+that unlinks a descriptor is inside `ServerRegistry.list()`, whose own call site
+upstream carries the comment *List early to GC*; `browser.ts`'s `stop()` still
+skips the delete for a persistent profile, and `serverRegistry.ts` on `main`
+(read 2026-09-24) is functionally identical to the pinned alpha. Over the 7.73
+days between the two readings of this directory: **about 499 descriptors a day
+from the suite and about 3.5 a day from the installed product**, one per browser
+bind plus one more per idle-close-then-resume. A heavy real user is therefore
+around **1,280 a year** and reaches 10,000 in about **7.8 years**; this
+development machine reaches 10,000 in **20 days**. ⚠️ **`playwright uninstall
+--all` never touches this directory**, so the housekeeping command a user would
+reach for does not help. `[FLOATS]`
+
+⭐ **What makes the growth matter is that reading it is QUADRATIC.** `list()`
+timed at six sizes inside a scratch registry, entries copied from the real one:
+
+| Entries | `list()` | Per entry |
+|--:|--:|--:|
+| 125 | 261 ms | 2.1 ms |
+| 250 | 678 ms | 2.7 ms |
+| 500 | 2,101 ms | 4.2 ms |
+| 1,000 | 9,911 ms | 9.9 ms |
+| 2,000 | 36,310 ms | 18.2 ms |
+| **3,762** | **141,616 ms** | **37.6 ms** |
+
+That last one is **2.4 minutes for a single call** at the size this machine
+already stands at. Extrapolated on the same curve, about **16 minutes at 10,000**
+and about **26 hours at 100,000**. The watcher-ready half is linear at 5-7 ms an
+entry (19,088 ms over 3,762) and is not what dominates. **What degrades is
+Playwright's own dashboard, `list` and attach. Nothing in BrowserAI reads this
+directory, and disk is not the problem**: 3,815 descriptors are a few megabytes.
+`[FLOATS]` `[MACHINE]`
+
+**What `list()` reaps, and what it spares.** Seven descriptors planted in a
+scratch registry, six of them dead copies and one belonging to a browser the probe
+had just launched: **the six dead ones were unlinked and the live one survived**,
+the call took 19 ms, and the page still worked afterwards. So the unlink is keyed
+on *cannot connect* and it does what upstream's comment says.
+
+⭐ **And a concurrent caller does not reap a live descriptor.** Eight `list()`
+processes over a registry holding 40 dead descriptors and one live one, started
+together: **8 of 8 returned the live descriptor as connectable, it was still there
+afterwards, and the browser was still connected**, 738 ms wall. ⚠️ **Beyond eight
+this is not established**, and the failure mode to watch for is a caller that
+cannot open a live browser's pipe because another caller has it, which would
+unlink a descriptor for a browser that is alive. The cost of that is
+discoverability -- a browser missing from a list -- and never a browser.
+
+⚠️ **The dashboard cannot be reloaded, and that is upstream's defect and not the
+rig's.** One `SessionProvider` is shared per server, and a closing connection's
+`dispose()` removes **every** listener including the new connection's, so a
+reloaded tab never receives `SessionsChanged` and its session list never fills. A
+fresh connection against the same server lists normally. Open the bare URL in a
+new tab. The rig that shows this is a probe record:
+[`docs/probes/2026-09-24-playwright-dashboard`](../../docs/probes/2026-09-24-playwright-dashboard/README.md).
+
+**What this project decided to do about it** is
+[T7](../../DECISIONS.md#processes-browsers-and-session-modes): start Playwright's
+own `list` command from the payload at session close, detached and never awaited,
+with no throttle and no concurrency arm. The paragraph above about *whether
+BrowserAI could call it safely is not established* is what those two probes were
+run to answer, and the answer is *yes at the concurrency this product produces,
+and unmeasured past eight*.
+
 ## Every artifact pointer a tool result carries is absolute -- measured 2026-09-17
 
 **`filePaths: "absolute"` makes every one of them absolute, and two of the shapes
@@ -989,6 +1071,115 @@ on the way through.
 serve a page whose `invokeTool` is `() => new Promise(() => {})`, call it, and
 keep asking the same child for snapshots while it pends.
 
+
+## The surface BrowserAI does not use -- read 2026-09-24
+
+`[FLOATS]` Read out of the payload as assembled 2026-09-22: `@playwright/mcp`
+**0.0.82**, `playwright-core` **1.64.0-alpha-1789764292000**, node **v24.21.0**.
+Every enumeration below came **through the library** and not out of a pattern --
+the options through `commander`, the tools through the registry, the wire set
+through the golden `tools-list.json`. Dumps:
+[`docs/evidence/2026-09-24-playwright-surface`](../../docs/evidence/2026-09-24-playwright-surface/README.md).
+
+**Why this is written down.** Everything this product decides about the child is a
+decision *not* to use something, and until now those decisions were scattered
+across `BrowserConfiguration`, `ChildLaunch` and `ChildEnvironment` with no list
+anywhere of what was on offer. This is the list. It is a **catalogue and not a
+backlog**: nothing here is owed, and the five items the maintainer may pick from
+it are in [`TODO.md`](../../TODO.md) as candidates.
+
+### What BrowserAI passes, and what it writes
+
+**The command line is four arguments and nothing else.** `node.exe`, the child's
+`cli.js`, `--config <file>`, `--sandbox`. Everything else BrowserAI has an opinion
+about is written into the generated config file, and the merge order inside the
+child is **config file, then environment, then command line**.
+
+⚠️ **`--caps` is never passed, by rule**, and the reason is a property of
+upstream's own resolution: `--caps` **replaces** the capability list instead of
+merging into it, so passing it on the command line would silently drop whatever
+the config file said. The capabilities are written in the file.
+`PLAYWRIGHT_MCP_CAPS` is refused on the environment route for the same reason.
+
+**Of 53 declared options** -- one of which is `--version`, two hidden, and
+`--sandbox` and `--no-sandbox` sharing one attribute -- **49 are distinct
+settings**, and BrowserAI's position on them is: **10 SET** to a value the product
+chooses, **7 DIFF** (written deliberately to something other than upstream's
+default, or written to upstream's own default so that the choice is on the
+record), **1 PARTIAL**, **25 NOT SET**, and **7 of the NOT SET also REFUSED on the
+environment route** by `ChildEnvironment.Refused`, which is the list that stops a
+caller reaching around the config file.
+
+⭐ **The config schema and the `.ini` table are WIDER than the command line**, and
+this is the half a reader would miss. `browser.contextOptions` is passed verbatim
+to `launchPersistentContext`, so the whole of Playwright's `BrowserContextOptions`
+is reachable through the file with no option to name it: BrowserAI sets
+`viewport`, `locale`, `timezoneId`, `ignoreHTTPSErrors`, `permissions`,
+`serviceWorkers` and `recordHar`, and does not set `recordVideo`, `baseURL`,
+`bypassCSP`, `colorScheme`, `deviceScaleFactor`, `geolocation`,
+`httpCredentials`, `extraHTTPHeaders`, `clientCertificates` or a dozen more.
+`browser.launchOptions` likewise carries `slowMo`, `tracesDir`, `ignoreDefaultArgs`
+and the signal handlers. **And `saveVideo` exists in the `.ini` table only and is
+read by nothing** -- a dead key of the same shape as the `--output-mode` no-op
+already on record in this article.
+
+### The nine deliberate departures from upstream's defaults
+
+| Key | What upstream does | What BrowserAI writes, and why |
+|---|---|---|
+| `--console-level` | `info` | `debug`, because the default silently drops debug messages |
+| `--codegen` | `typescript` | `none` |
+| `--file-paths` | `relative` | `absolute`, so a pointer in a tool result means something to a caller |
+| `--snapshot-boxes` | off | on |
+| `--idle-timeout` | 3,600,000 ms | the same number, written so it is on the record, and unreachable behind BrowserAI's own 10-minute timer |
+| `--no-webmcp` | webmcp on | webmcp on, written as a stance |
+| `--allow-unrestricted-file-access` | off | `false`, written explicitly |
+| `--output-max-size` | unset | left unset **deliberately**, so upstream's recursive oldest-first deleter never runs |
+| `--isolated` | off | never set, ever: it puts the profile in a temp directory deleted on close |
+
+### The tool surface, counted three ways
+
+**83 tools in the internal registry**, **72 that can reach a wire at all**, **25
+in upstream's default surface**, and **11 marked `skillOnly`** which never appear
+in any `tools/list`. Twelve capabilities are declared; **four are unconditional**
+-- `core`, `core-input`, `core-navigation`, `core-tabs` -- and `core-install`
+carries no tool at all. BrowserAI grants seven of the optional ones: `config`,
+`vision`, `devtools`, `storage`, `network`, `pdf`, `testing`.
+
+**And there is a whole second product in the package.** `cli-client` declares
+**102 commands** with their own arguments and flags, mapping onto the same tool
+names. BrowserAI does not ship it, does not run it, and the map from command to
+tool is in the dump for the day somebody asks whether it could.
+
+### What is not reached, grouped by what it would take
+
+- **A configuration key and nothing else**: `--device` (207 descriptors live in
+  `playwright.devices`), `--mobile`, `--user-agent`, `--test-id-attribute`,
+  `--image-responses`, `--snapshot-mode`, and the three timeouts
+  `--timeout-action` (5,000 ms), `--timeout-navigation` (60,000 ms) and
+  `--timeout-settle` (500 ms).
+- **A key plus a product decision about what it means for a session**:
+  `--allowed-origins`, `--blocked-origins`, `--secrets`, `--storage-state`
+  (`browser_set_storage_state` is granted instead), `--proxy-server`,
+  `--block-service-workers` as an independent control and not only alongside a
+  HAR capture.
+- **Structurally out of reach here**: `--port`, `--host` and `--allowed-hosts`
+  (the HTTP transport, and this product takes stdio), `--shared-browser-context`
+  (HTTP clients only), `--endpoint` and `--cdp-endpoint` (attaching to a browser
+  somebody else published), `--extension` and `--profile-dir-name` (driving the
+  user's own Chrome), `--executable-path` (`PLAYWRIGHT_BROWSERS_PATH` and a channel
+  do this instead).
+- **Refused on the environment route as well as unset**: `PLAYWRIGHT_MCP_CAPS`,
+  `PLAYWRIGHT_MCP_OUTPUT_DIR`, `PLAYWRIGHT_MCP_FILE_PATHS`,
+  `PLAYWRIGHT_MCP_INIT_PAGE`, `PLAYWRIGHT_MCP_INIT_SCRIPT`,
+  `PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE` and the unrestricted-file-access variable.
+
+**Re-establish it** by re-running the three enumerations in the batch's own
+`README.txt` against a freshly assembled payload: the options through `commander`,
+the registry through the tool registry, and the wire set out of
+`upstream-snapshots/tools-list.json`. ⚠️ **The counts move with `@playwright/mcp`,
+which floats**, and the per-option verdicts move with this repository, so the
+column that ages first is the one naming files and line numbers in `src/`.
 
 ## Artifacts and output-directory behaviour
 

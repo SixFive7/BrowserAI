@@ -1,0 +1,160 @@
+{
+  "label": "after",
+  "rootPid": 98100,
+  "takenAt": "2026-09-23T23:20:43.0213394+02:00",
+  "pidsInTree": [
+    19796,
+    25480,
+    40852,
+    51108,
+    62576,
+    70212,
+    81900,
+    98100,
+    98268,
+    121836
+  ],
+  "commandLines": [
+    {
+      "pid": 98100,
+      "commandLine": "C:\\Source\\SixFive7\\BrowserAI\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-suppressed1\\config.json --sandbox"
+    },
+    {
+      "pid": 70212,
+      "commandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+    },
+    {
+      "pid": 121836,
+      "commandLine": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-suppressed1\\profile -juggler-pipe about:blank"
+    },
+    {
+      "pid": 40852,
+      "commandLine": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe -no-remote -foreground -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-suppressed1\\profile -juggler-pipe about:blank"
+    },
+    {
+      "pid": 51108,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260917210045 -prefsHandle 2448:27494 -prefMapHandle 2452:302982 -ipcHandle 2472 -initialChannelId {78aa6618-7413-4341-8ef6-9e372b42ffab} -parentPid 40852 -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 1 gpu"
+    },
+    {
+      "pid": 25480,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260917210045 -prefsHandle 2736:27494 -prefMapHandle 2740:302982 -ipcHandle 2748 -initialChannelId {a566f691-316c-4827-bf28-d45940c440dd} -parentPid 40852 -win32kLockedDown -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 2 socket"
+    },
+    {
+      "pid": 81900,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260917210045 -prefsHandle 3640:28451 -prefMapHandle 3644:302982 -ipcHandle 3652 -initialChannelId {7d9d73a0-499c-4599-9f13-acad5b83e45d} -parentPid 40852 -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 4 rdd"
+    },
+    {
+      "pid": 98268,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 4160:28648 -prefMapHandle 4164:302982 -jsInitHandle 4168:162620 -parentBuildID 20260917210045 -ipcHandle 4176 -initialChannelId {7e980054-7da8-4047-81d7-0e15aa12bd4b} -parentPid 40852 -win32kLockedDown -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 5 tab"
+    },
+    {
+      "pid": 62576,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 4740:27954 -prefMapHandle 4744:302982 -jsInitHandle 4748:162620 -parentBuildID 20260917210045 -ipcHandle 4756 -initialChannelId {a06661cd-00af-473f-8994-bd9e3d503f63} -parentPid 40852 -win32kLockedDown -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 6 tab"
+    },
+    {
+      "pid": 19796,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260917210045 -sandboxingKind 0 -prefsHandle 5844:49340 -prefMapHandle 5852:302982 -ipcHandle 5820 -initialChannelId {59aedd25-5050-41cc-91e5-f13e889ea040} -parentPid 40852 -win32kLockedDown -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 8 utility"
+    }
+  ],
+  "windows": [
+    {
+      "level": "top",
+      "hwnd": "0x2682B58",
+      "pid": 40852,
+      "class": "MozillaWindowClass",
+      "title": "signed in — Nightly",
+      "visible": true,
+      "rect": "4,4,1300,897"
+    },
+    {
+      "level": "child-of-0x2682B58",
+      "hwnd": "0xF07BA",
+      "pid": 40852,
+      "class": "InputNonClientPointerSource",
+      "title": "Non Client Input Sink Window",
+      "visible": true,
+      "rect": "12,4,1292,8"
+    },
+    {
+      "level": "child-of-0x2682B58",
+      "hwnd": "0x250316",
+      "pid": 40852,
+      "class": "ReunionWindowingCaptionControls",
+      "title": "ReunionCaptionControlsWindow",
+      "visible": true,
+      "rect": "1292,4,1292,4"
+    },
+    {
+      "level": "child-of-0x2682B58",
+      "hwnd": "0x1407CA",
+      "pid": 51108,
+      "class": "MozillaCompositorWindowClass",
+      "title": "",
+      "visible": true,
+      "rect": "12,4,1292,889"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1A22C86",
+      "pid": 51108,
+      "class": "MozillaCompositorInitialParentClass",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,1,1"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xD0704",
+      "pid": 40852,
+      "class": "MozillaBatteryClass",
+      "title": "Battery Watcher",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1772C7A",
+      "pid": 40852,
+      "class": "Mozilla_firefox-default_C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-suppressed1\\profile_RemoteWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xA0752",
+      "pid": 40852,
+      "class": "MozillaHiddenWindowClass",
+      "title": "WinEventWindow",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x2162904",
+      "pid": 40852,
+      "class": "MSCTFIME UI",
+      "title": "MSCTFIME UI",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x98052C",
+      "pid": 40852,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xF074A",
+      "pid": 51108,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    }
+  ]
+}

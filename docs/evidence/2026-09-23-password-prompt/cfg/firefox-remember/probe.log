@@ -1,0 +1,17 @@
+[cfg] C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-remember\config.json
+[cfg] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-remember\\downloads","firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false,"signon.rememberSignons":true}}
+[cfg] child node pid 89112
+[cfg] navigate -> ### Page | - Page URL: http://127.0.0.1:57128/ | - Page Title: BrowserAI password probe | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-remember\output\page-20
+[cfg] before: 11 windows, 10 pids
+[cfg] browser command line (pid 72428): C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-remember\profile -juggler-pipe about:blank
+[cfg] refs username=e5 password=e7 go=e8
+[server] POST /login username=probe-user&password=Sup3rSecret%21probe
+[cfg] click -> ### Page | - Page URL: http://127.0.0.1:57128/login | - Page Title: signed in
+[cfg] after: 14 windows; 3 new
+[cfg]   NEW top 0x23033C pid=153492 visible=true class='MozillaDropShadowWindowClass' title='' rect=261,78,643,299
+[cfg]     PrintWindow(23033C) -> True, 382x221, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-remember\win-MozillaDropShadowWindowClass.png
+[cfg]   NEW child-of-0x23033C 0x1807A2 pid=78296 visible=true class='MozillaCompositorWindowClass' title='' rect=261,78,643,299
+[cfg]     PrintWindow(1807A2) -> True, 382x221, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-remember\win-MozillaCompositorWindowClass.png
+[cfg]   NEW top 0x2AF2A76 pid=153492 visible=true class='MozillaWindowClass' title='signed in - Nightly' rect=4,4,1300,897
+[cfg]     PrintWindow(2AF2A76) -> True, 1296x893, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-remember\win-signed_in_-_Nightly.png
+[cfg] browser_get_config launchOptions = {"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-remember\\downloads","firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false,"signon.rememberSignons":true},"chromiumSandbox":true}

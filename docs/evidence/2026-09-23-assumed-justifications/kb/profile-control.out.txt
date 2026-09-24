@@ -1,0 +1,3 @@
+  POSITIVE CONTROL -- copy of Cookies
+    before doctoring                        : ok
+    after 1024 bytes of 0x5A written mid-file: ok

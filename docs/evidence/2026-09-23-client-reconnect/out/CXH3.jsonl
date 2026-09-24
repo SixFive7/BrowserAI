@@ -1,0 +1,9 @@
+{"type":"thread.started","thread_id":"01a0d06e-bf50-78e1-ae24-037275e54e03"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"c1"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"c1"},"result":{"content":[{"type":"text","text":"pong from ROLE=A pid=83672 call#1 note=c1"}],"structured_content":null},"error":null,"status":"completed"}}
+{"type":"item.started","item":{"id":"item_2","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"c2-after-handover"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_2","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"c2-after-handover"},"result":{"content":[{"type":"text","text":"pong from ROLE=B pid=164024 version=2.0.0 call#2 note=c2-after-handover (post-update, no re-initialize)"}],"structured_content":null},"error":null,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_3","type":"agent_message","text":"done"}}
+{"type":"turn.completed","usage":{"input_tokens":126,"cached_input_tokens":36,"cache_write_input_tokens":0,"output_tokens":15,"reasoning_output_tokens":0}}

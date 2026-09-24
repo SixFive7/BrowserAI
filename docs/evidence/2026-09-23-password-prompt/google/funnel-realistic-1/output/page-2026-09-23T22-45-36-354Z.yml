@@ -1,0 +1,101 @@
+- generic [ref=e1] [box=0,0,1280,800]:
+  - generic [aria-hidden] [ref=e2] [box=0,0,1280,800]:
+    - navigation [ref=e3] [box=0,0,1280,60]:
+      - generic [ref=e5] [box=6,5,1268,51]:
+        - generic [ref=e6] [box=1015,5,118,51]:
+          - link [ref=e8] [cursor=pointer] [box=1030,17,34,24]:
+            - /url: https://mail.google.com/mail/&ogbl
+            - text: Gmail
+          - link [ref=e10] [cursor=pointer] [box=1079,17,43,24]:
+            - /url: https://www.google.com/imghp?hl=en&ogbl
+            - text: Images
+        - button [ref=e13] [cursor=pointer] [box=1137,9,40,40]
+        - link [ref=e18] [cursor=pointer] [box=1185,9,85,40]:
+          - /url: https://accounts.google.com/ServiceLogin?hl=en&passive=true&continue=https://www.google.com/%3Fhl%3Den&ec=futura_exp_og_so_72776762_e
+          - generic [ref=e19] [box=1197,19,61,18]: Sign in
+    - search [ref=e25] [box=20,326,1240,140]:
+      - generic [ref=e27] [box=348,326,584,140]:
+        - generic [ref=e29] [box=349,327,582,50]:
+          - combobox [ref=e36] [box=396,327,447,50]
+          - generic [ref=e38] [box=843,340,80,24]:
+            - button [ref=e39] [cursor=pointer] [box=843,340,40,24]
+            - button [ref=e42] [cursor=pointer] [box=883,340,40,24]
+        - generic [ref=e46] [box=348,396,584,58]:
+          - button [ref=e47] [cursor=pointer] [box=497,407,130,36]: Google Search
+          - button [ref=e48] [cursor=pointer] [box=638,407,145,36]: I'm Feeling Lucky
+    - generic [ref=e51] [box=536,486,209,28]:
+      - text: "Google offered in:"
+      - link [ref=e52] [cursor=pointer] [box=642,492,67,15]:
+        - /url: https://www.google.com/setprefs?sig=0_caRGRupQm2QxAU1BXMnghfrF06Q%3D&hl=nl&source=homepage&sa=X&ved=0ahUKEwiLyaXv44WXAxUKwAIHHfqjIoUQ2ZgBCBQ
+        - text: Nederlands
+      - link [ref=e53] [cursor=pointer] [box=713,492,32,15]:
+        - /url: https://www.google.com/setprefs?sig=0_caRGRupQm2QxAU1BXMnghfrF06Q%3D&hl=fy&source=homepage&sa=X&ved=0ahUKEwiLyaXv44WXAxUKwAIHHfqjIoUQ2ZgBCBU
+        - text: Frysk
+    - contentinfo [ref=e55] [box=0,706,1280,94]:
+      - generic [ref=e56] [box=0,706,1280,48]: Netherlands
+      - generic [ref=e57] [box=0,754,1280,46]:
+        - generic [ref=e58] [box=20,754,399,46]:
+          - link [ref=e59] [cursor=pointer] [box=20,754,67,46]:
+            - /url: https://about.google/?utm_source=google-NL&utm_medium=referral&utm_campaign=hp-footer&fg=1
+            - text: About
+          - link [ref=e60] [cursor=pointer] [box=87,754,99,46]:
+            - /url: https://www.google.com/intl/en_nl/ads/?subid=ww-ww-et-g-awa-a-g_hpafoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpafooter&fg=1
+            - text: Advertising
+          - link [ref=e61] [cursor=pointer] [box=186,754,87,46]:
+            - /url: https://www.google.com/services/?subid=ww-ww-et-g-awa-a-g_hpbfoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpbfooter&fg=1
+            - text: Business
+          - link [ref=e62] [cursor=pointer] [box=273,754,147,46]:
+            - /url: https://google.com/search/howsearchworks/?fg=1
+            - text: How Search works
+        - generic [ref=e63] [box=1035,754,225,46]:
+          - link [ref=e64] [cursor=pointer] [box=1035,754,76,46]:
+            - /url: https://policies.google.com/privacy?hl=en-NL&fg=1
+            - text: Privacy
+          - link [ref=e65] [cursor=pointer] [box=1111,754,68,46]:
+            - /url: https://policies.google.com/terms?hl=en-NL&fg=1
+            - text: Terms
+          - button [ref=e69] [cursor=pointer] [box=1179,754,81,46]:
+            - generic [ref=e70] [box=1179,754,81,46]: Settings
+  - generic [box=0,800,1280,0]:
+    - dialog "Before you continue to Google Search" [box=0,800,1280,0]:
+      - generic [ref=e77] [box=233,0,800,830]:
+        - generic [ref=e79] [box=233,0,800,90]:
+          - img "Google" [ref=e80] [box=265,28,40,40]
+          - generic [ref=e81] [box=805,24,196,48]:
+            - 'button "Language: ‪English‬" [active] [ref=e83] [cursor=pointer] [box=805,24,100,48]':
+              - generic [ref=e84] [box=836,38,48,20]: en
+            - link "Sign in" [ref=e86] [cursor=pointer] [box=904,24,96,48]
+        - generic [ref=e87] [box=233,90,800,594]:
+          - heading "Before you continue to Google" [level=1] [ref=e88] [box=265,90,736,36]
+          - generic [ref=e89] [box=265,146,736,518]:
+            - generic [ref=e90] [box=265,146,736,136]:
+              - text: We use
+              - link "cookies" [ref=e91] [cursor=pointer] [box=316,147,50,18]:
+                - /url: https://policies.google.com/technologies/cookies?utm_source=ucbs&hl=en-NL
+              - text: and data, including IP addresses, to
+              - list [ref=e92] [box=265,178,736,104]:
+                - listitem [ref=e93] [box=265,178,736,20]: Deliver and maintain Google services
+                - listitem [ref=e94] [box=265,210,736,20]: Track outages and protect against spam, fraud and abuse
+                - listitem [ref=e95] [box=265,242,736,40]: Measure audience engagement and site statistics to understand how our services are used and enhance the quality of those services
+            - generic [ref=e96] [box=265,306,736,180]:
+              - text: If you choose to 'Accept all', we will also use cookies and data, including IP addresses, to
+              - list [ref=e97] [box=265,338,736,116]:
+                - listitem [ref=e98] [box=265,338,736,20]: Develop and improve new services
+                - listitem [ref=e99] [box=265,370,736,20]: Deliver and measure the effectiveness of ads
+                - listitem [ref=e100] [box=265,402,736,20]: Show personalised content, depending on your settings
+                - listitem [ref=e101] [box=265,434,736,20]: Show personalised ads, depending on your settings
+              - generic [ref=e102] [box=265,466,736,20]: If you choose to 'Reject all', we will not use cookies or IP addresses for these additional purposes.
+            - generic [ref=e103] [box=265,510,736,100]: Non-personalised content is influenced by things like the content that you’re currently viewing, activity in your active Search session, and your location. Non-personalised ads are influenced by the content that you’re currently viewing and your general location. Personalised content and ads can also include more relevant results, recommendations and tailored ads based on past activity from this browser, like previous Google searches. We also use cookies and data to tailor the experience to be age-appropriate, if relevant.
+            - generic [ref=e104] [box=265,624,736,40]: Select 'More options' to see additional information, including details about managing your privacy settings. You can also visit g.co/privacytools at any time.
+        - generic [ref=e105] [box=233,684,800,96]:
+          - generic [ref=e106] [box=233,684,800,48]:
+            - button "Reject all" [ref=e107] [cursor=pointer] [box=424,684,206,48]
+            - button "Accept all" [ref=e108] [cursor=pointer] [box=630,684,212,48]
+          - link "More options for personalisation settings and cookies" [ref=e110] [cursor=pointer] [box=581,732,102,48]:
+            - generic "More options for personalisation settings and cookies" [ref=e111] [box=581,732,102,48]: More options
+        - generic [ref=e112] [box=233,780,800,48]:
+          - link "Privacy" [ref=e113] [cursor=pointer] [box=576,780,55,48]:
+            - /url: https://policies.google.com/privacy?hl=en-NL&fg=1&utm_source=ucbs
+          - generic [aria-hidden] [ref=e114] [box=634,780,4,48]: ·
+          - link "Terms" [ref=e115] [cursor=pointer] [box=640,780,49,48]:
+            - /url: https://policies.google.com/terms?hl=en-NL&fg=1&utm_source=ucbs

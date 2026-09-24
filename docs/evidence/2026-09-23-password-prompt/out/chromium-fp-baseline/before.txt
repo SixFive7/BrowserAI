@@ -1,0 +1,15 @@
+top 0x3012FA pid=94868 vis=false class='Chrome_WidgetWin_0' title='' rect=0,0,0,0
+top 0x2950F2A pid=2196 vis=false class='Chrome_WidgetWin_0' title='' rect=0,0,0,0
+top 0x2817C4 pid=2196 vis=true class='Chrome_WidgetWin_1' title='BrowserAI password probe - Google Chrome for Testing' rect=10,10,1306,944
+child-of-0x2817C4 0x7E0F52 pid=2196 vis=true class='Chrome_RenderWidgetHostHWND' title='Chrome Legacy Window' rect=18,97,1298,897
+child-of-0x2817C4 0xB1934 pid=2196 vis=false class='Chrome_RenderWidgetHostHWND' title='Chrome Legacy Window' rect=133,51,1219,95
+child-of-0x2817C4 0x1B18DE pid=2196 vis=false class='Chrome_RenderWidgetHostHWND' title='Chrome Legacy Window' rect=980,95,981,96
+child-of-0x2817C4 0x250F04 pid=94868 vis=true class='Intermediate D3D Window' title='' rect=18,10,1298,936
+top 0x2E2046 pid=2196 vis=false class='Chrome_StatusTrayWindow' title='' rect=0,0,0,0
+top 0x1A0CDA pid=2196 vis=false class='Chrome_WidgetWin_0' title='' rect=520,520,3400,2083
+top 0x605C0 pid=2196 vis=false class='Base_PowerMessageWindow' title='' rect=0,0,0,0
+top 0x607B0 pid=169304 vis=false class='crashpad_SessionEndWatcher' title='' rect=0,0,136,39
+top 0x14A0F5C pid=94868 vis=false class='IME' title='Default IME' rect=0,0,0,0
+top 0x1271664 pid=2196 vis=false class='MSCTFIME UI' title='MSCTFIME UI' rect=0,0,0,0
+top 0x50666 pid=2196 vis=false class='IME' title='Default IME' rect=0,0,0,0
+top 0x5069A pid=169304 vis=false class='IME' title='Default IME' rect=0,0,0,0

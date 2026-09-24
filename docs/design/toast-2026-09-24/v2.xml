@@ -1,0 +1,19 @@
+<toast scenario="reminder" useButtonStyle="true" launch="action=review">
+  <visual>
+    <binding template="ToastGeneric">
+      <text>BrowserAI 1.1.0 is ready to install</text>
+      <text>It installs when the last open session closes. 27 sessions are holding it, 1 of them from Codex. Nothing is interrupted until you choose to.</text>
+      <text placement="attribution">BrowserAI</text>
+    </binding>
+  </visual>
+  <actions>
+    <input id="snooze" type="selection" defaultInput="10m" title="Remind me again">
+      <selection id="10m" content="In 10 minutes"/>
+      <selection id="6h" content="In 6 hours"/>
+      <selection id="reboot" content="After the next reboot"/>
+      <selection id="never" content="Never for this version"/>
+    </input>
+    <action content="Review sessions" arguments="action=review" activationType="background" hint-buttonStyle="Success"/>
+    <action content="Remind me" arguments="action=snooze" activationType="background" hint-inputId="snooze"/>
+  </actions>
+</toast>

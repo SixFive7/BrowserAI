@@ -1,0 +1,55 @@
+=== ARM KILL: full chrome, one profile, whole tree hard-killed (what force_stop_package does) ===
+  launched pid=62444 CDP=true
+  processes whose command line names this profile, before the kill: 12
+  killed
+  processes whose command line names this profile, after  the kill: 
+  [after hard kill] Preferences: unreadable (ENOENT)
+  [after hard kill] 19 SQLite files under the profile, PRAGMA integrity_check each:
+      Default\Account Web Data                      ok
+      Default\Affiliation Database                  ok
+      Default\declarative_performance_observer.db   ok
+      Default\Favicons                              ok
+      Default\History                               ok
+      Default\LocalStorage                          ok
+      Default\Login Data                            ok
+      Default\Login Data For Account                ok
+      Default\Network\Cookies                       ok
+      Default\Network\Device Bound Sessions         ok
+      Default\Network\Reporting and NEL             ok
+      Default\Network\Trust Tokens                  ok
+      Default\ServerCertificate                     ok
+      Default\SessionStorage                        ok
+      Default\Shared Dictionary\db                  ok
+      Default\Top Sites                             ok
+      Default\Web Data                              ok
+      Default\WebStorage\QuotaManager               ok
+      segmentation_platform\ukm_db                  ok
+  [after hard kill] not-ok: 0 of 19
+  [after hard kill] LevelDB stores present: Default\chrome_cart_db, Default\ClientCertificates, Default\commerce_subscription_db, Default\discounts_db, Default\discount_infos_db, Default\Extension Rules, Default\Extension Scripts, Default\Extension State, Default, Default\parcel_tracking_db, Default\PersistentOriginTrials, Default\Segmentation Platform\SegmentInfoDB, Default\Segmentation Platform\SignalDB, Default\Segmentation Platform\SignalStorageConfigDB, Default\Service Worker\Database, Default\shared_proto_db, Default\shared_proto_db\metadata, Default\Site Characteristics Database, Default\Sync Data\LevelDB
+  relaunching against the SAME profile directory...
+  relaunch pid=48772 CDP connected=true
+  state read back: {"lsKeys":0,"lsTags":[],"cookies":[]}
+  relaunch stderr: ["\r","DevTools listening on ws://127.0.0.1:9412/devtools/browser/1f35443b-444e-4607-a899-89831d3daecf\r"]
+  [after a clean close] Preferences: unreadable (ENOENT)
+  [after a clean close] 19 SQLite files under the profile, PRAGMA integrity_check each:
+      Default\Account Web Data                      ok
+      Default\Affiliation Database                  ok
+      Default\declarative_performance_observer.db   ok
+      Default\Favicons                              ok
+      Default\History                               ok
+      Default\LocalStorage                          ok
+      Default\Login Data                            ok
+      Default\Login Data For Account                ok
+      Default\Network\Cookies                       ok
+      Default\Network\Device Bound Sessions         ok
+      Default\Network\Reporting and NEL             ok
+      Default\Network\Trust Tokens                  ok
+      Default\ServerCertificate                     ok
+      Default\SessionStorage                        ok
+      Default\Shared Dictionary\db                  ok
+      Default\Top Sites                             ok
+      Default\Web Data                              ok
+      Default\WebStorage\QuotaManager               ok
+      segmentation_platform\ukm_db                  ok
+  [after a clean close] not-ok: 0 of 19
+  [after a clean close] LevelDB stores present: Default\chrome_cart_db, Default\ClientCertificates, Default\commerce_subscription_db, Default\discounts_db, Default\discount_infos_db, Default\Extension Rules, Default\Extension Scripts, Default\Extension State, Default, Default\parcel_tracking_db, Default\PersistentOriginTrials, Default\Segmentation Platform\SegmentInfoDB, Default\Segmentation Platform\SignalDB, Default\Segmentation Platform\SignalStorageConfigDB, Default\Service Worker\Database, Default\shared_proto_db, Default\shared_proto_db\metadata, Default\Site Characteristics Database, Default\Sync Data\LevelDB

@@ -1,0 +1,14 @@
+[cfg] C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed\config.json
+[cfg] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-suppressed\\downloads","firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false,"signon.rememberSignons":false}}
+[cfg] child node pid 163480
+[cfg] navigate -> ### Page | - Page URL: http://127.0.0.1:61995/ | - Page Title: BrowserAI password probe | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed\output\page-
+[cfg] before: 13 windows, 11 pids
+[cfg] browser command line (pid 10108): C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed\profile -juggler-pipe about:blank
+[cfg] refs username=e5 password=e7 go=e8
+[cfg] click -> ### Page | - Page URL: https://www.mozilla.org/en-US/contribute/ | - Page Title: Volunteer Opportunities at Mozilla — Mozilla
+[cfg] after: 13 windows; 1 new
+[cfg]   NEW top 0x1307A6 pid=76516 visible=true class='MozillaWindowClass' title='Volunteer Opportunities at Mozilla - Mozilla - Nightly' rect=4,4,1300,897
+[cfg]     PrintWindow(1307A6) -> True, 1296x893, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed\win-Volunteer_Opportunities_at_Mozilla_-_Mozilla_-_Nightly.png
+[cfg] browser_get_config launchOptions = {"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-suppressed\\downloads","firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false,"signon.rememberSignons":false},"chromiumSandbox":true}
+
+[cfg] VERDICT promptSeen=false newWindows=1 root=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed

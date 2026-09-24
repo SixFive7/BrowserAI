@@ -1,0 +1,5 @@
+{"seeded":125,"readyMs":678,"readyPerEntry":5.424,"listMs":261,"listPerEntry":2.088,"reaped":125,"realBefore":3815,"realAfter":3815}
+{"seeded":250,"readyMs":1252,"readyPerEntry":5.008,"listMs":678,"listPerEntry":2.712,"reaped":250,"realBefore":3815,"realAfter":3815}
+{"seeded":500,"readyMs":3256,"readyPerEntry":6.512,"listMs":2101,"listPerEntry":4.202,"reaped":499,"realBefore":3815,"realAfter":3815}
+{"seeded":1000,"readyMs":6919,"readyPerEntry":6.919,"listMs":9911,"listPerEntry":9.911,"reaped":999,"realBefore":3815,"realAfter":3815}
+{"seeded":2000,"readyMs":15067,"readyPerEntry":7.534,"listMs":36310,"listPerEntry":18.155,"reaped":1999,"realBefore":3815,"realAfter":3815}

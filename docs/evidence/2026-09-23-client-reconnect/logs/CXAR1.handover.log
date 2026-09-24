@@ -1,0 +1,25 @@
+2026-09-23T22:40:40.043Z 21084 R LAUNCH relay holding the client pipes; server dir=C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-install
+2026-09-23T22:40:40.053Z 21084 R CHILD-SPAWNED gen=1 pid=68684 from C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\ho-install\s.js
+2026-09-23T22:40:40.101Z 68684 S(v1.0.0) LAUNCH real server version=1.0.0
+2026-09-23T22:40:40.105Z 68684 S(v1.0.0) IN {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}},"clientInfo":{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}}}
+2026-09-23T22:40:40.107Z 68684 S(v1.0.0) IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:40:40.107Z 68684 S(v1.0.0) IN {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"progressToken":0}}}
+2026-09-23T22:40:40.108Z 68684 S(v1.0.0) OUT tools/list
+2026-09-23T22:40:40.239Z 68684 S(v1.0.0) IN {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"_meta":{"callId":"call_0","x-codex-turn-metadata":{"session_id":"01a0d06d-9dbe-72b0-923d-1b559126e883","thread_id":"01a0d06d-9dbe-72b0-923d-1b559126e883","model":"stub-model","turn_id":"01a0d06d-9e47-7892-befd-6b5b772dc307","turn_started_at_un
+2026-09-23T22:40:40.240Z 68684 S(v1.0.0) OUT tools/call #1 answered
+2026-09-23T22:40:44.310Z 21084 R SWAP-REQUESTED marker seen by poller
+2026-09-23T22:40:44.311Z 21084 R SWAP-BEGIN queueing client frames; in-flight=0
+2026-09-23T22:40:44.313Z 68684 S(v1.0.0) STDIN-END 
+2026-09-23T22:40:44.313Z 68684 S(v1.0.0) EXIT code=0
+2026-09-23T22:40:44.324Z 21084 R CHILD-EXIT gen=1 code=0 swapping=true
+2026-09-23T22:40:44.372Z 21084 R SWAP-OLD-GONE exitCode=0 after 60ms
+2026-09-23T22:40:45.362Z 21084 R SWAP-APPLY-DONE after 989ms
+2026-09-23T22:40:45.369Z 21084 R CHILD-SPAWNED gen=2 pid=120708 from C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\ho-install\s.js
+2026-09-23T22:40:45.369Z 21084 R SWAP-REPLAY initialize replayed to the new S
+2026-09-23T22:40:45.421Z 120708 S(v2.0.0) LAUNCH real server version=2.0.0
+2026-09-23T22:40:45.426Z 120708 S(v2.0.0) IN {"jsonrpc":"2.0","id":"__relay_init__","method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}},"clientInfo":{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}}}
+2026-09-23T22:40:45.426Z 120708 S(v2.0.0) IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:40:45.427Z 21084 R CHILD-REPLAY-INIT-OK gen=2
+2026-09-23T22:40:45.628Z 21084 R SWAP-END forwarding resumed; the client saw nothing; swaps=1
+2026-09-23T22:40:45.666Z 120708 S(v2.0.0) IN {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"_meta":{"callId":"call_2","x-codex-turn-metadata":{"session_id":"01a0d06d-9dbe-72b0-923d-1b559126e883","thread_id":"01a0d06d-9dbe-72b0-923d-1b559126e883","model":"stub-model","turn_id":"01a0d06d-ae0f-7541-a216-509051af9c51","turn_started_at_un
+2026-09-23T22:40:45.667Z 120708 S(v2.0.0) OUT tools/call #1 answered

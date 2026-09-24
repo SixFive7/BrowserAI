@@ -1,0 +1,144 @@
+browser_close  params=[]
+   Close the page
+browser_resize  params=['width', 'height']
+   Resize the browser window
+browser_get_config  params=[]
+   Get the final resolved config after merging CLI options, environment variables and config file.
+browser_console_messages  params=['level', 'all', 'filename']
+   Returns all console messages
+browser_cookie_list  params=['domain', 'path']
+   List all cookies (optionally filtered by domain/path)
+browser_cookie_get  params=['name']
+   Get a specific cookie by name
+browser_cookie_set  params=['name', 'value', 'domain', 'path', 'expires', 'httpOnly', 'secure', 'sameSite']
+   Set a cookie with optional flags (domain, path, expires, httpOnly, secure, sameSite)
+browser_cookie_delete  params=['name']
+   Delete a specific cookie
+browser_cookie_clear  params=[]
+   Clear all cookies
+browser_resume  params=['step', 'location']
+   Resume script execution after it was paused. When called with step set to true, execution will pause again before the next action.
+browser_highlight  params=['element', 'target', 'style']
+   Show a persistent highlight overlay around the element on the page.
+browser_hide_highlight  params=['element', 'target']
+   Remove a highlight overlay previously added for the element.
+browser_annotate  params=[]
+   Open the Playwright Dashboard in annotation mode for the current page and wait for the user to draw annotations. Returns the annotated screenshot, ARIA snapshot, and the list of annotations.
+browser_handle_dialog  params=['accept', 'promptText']
+   Handle a dialog
+browser_emulate_media  params=['colorScheme', 'reducedMotion', 'forcedColors', 'contrast', 'media']
+   Emulate CSS media features for the page, for example switch between the light and dark color scheme. Omitted parameters are left unchanged; null clears an override.
+browser_evaluate  params=['element', 'target', 'function', 'filename']
+   Evaluate JavaScript expression on page or element
+browser_file_upload  params=['paths']
+   Upload one or multiple files
+browser_drop  params=['element', 'target', 'paths', 'data']
+   Drop files or MIME-typed data onto an element, as if dragged from outside the page. At least one of "paths" or "data" must be provided.
+browser_find  params=['text', 'regex']
+   Search the accessibility snapshot of the current page for text or a regular expression. Returns matching snapshot nodes with a few lines of surrounding context (like search snippets), each shown under its path from the root of the tree, which is cheaper than capturing the whole snapshot when you only need to locate an element and its ref.
+browser_fill_form  params=['fields']
+   Fill multiple form fields
+browser_press_key  params=['key']
+   Press a key on the keyboard
+browser_type  params=['element', 'target', 'text', 'submit', 'slowly']
+   Type text into editable element
+browser_mouse_move_xy  params=['x', 'y']
+   Move mouse to a given position
+browser_mouse_click_xy  params=['x', 'y', 'button', 'clickCount', 'delay']
+   Click mouse button at a given position
+browser_mouse_drag_xy  params=['startX', 'startY', 'endX', 'endY']
+   Drag left mouse button to a given position
+browser_mouse_down  params=['button']
+   Press mouse down
+browser_mouse_up  params=['button']
+   Press mouse up
+browser_mouse_wheel  params=['deltaX', 'deltaY']
+   Scroll mouse wheel
+browser_navigate  params=['url']
+   Navigate to a URL
+browser_navigate_back  params=[]
+   Go back to the previous page in the history
+browser_network_requests  params=['static', 'filter', 'filename']
+   Returns a numbered list of network requests since loading the page. Use browser_network_request with the number to get full details.
+browser_network_request  params=['index', 'part', 'filename']
+   Returns full details (headers and body) of a single network request, or a single part if `part` is set. Use the number from browser_network_requests.
+browser_network_state_set  params=['state']
+   Sets the browser network state to online or offline. When offline, all network requests will fail.
+browser_pdf_save  params=['filename']
+   Save page as PDF
+browser_start_recording  params=[]
+   Start recording actions that the user performs in the browser as Playwright code. Use it when the user wants to demonstrate a flow manually. Call browser_stop_recording when the user says they are done to retrieve the recorded actions.
+browser_stop_recording  params=[]
+   Stop the recording started with browser_start_recording and return the recorded actions as Playwright code.
+browser_route  params=['pattern', 'status', 'body', 'contentType', 'headers', 'removeHeaders']
+   Set up a route to mock network requests matching a URL pattern
+browser_route_list  params=[]
+   List all active network routes
+browser_unroute  params=['pattern']
+   Remove network routes matching a pattern (or all routes if no pattern specified)
+browser_run_code_unsafe  params=['code', 'filename']
+   Run a Playwright code snippet. Unsafe: executes arbitrary JavaScript in the Playwright server process and is RCE-equivalent.
+browser_take_screenshot  params=['element', 'target', 'type', 'filename', 'fullPage', 'scale']
+   Take a screenshot of the current page. You can't perform actions based on the screenshot, use browser_snapshot for actions.
+browser_snapshot  params=['target', 'filename', 'depth', 'boxes']
+   Capture accessibility snapshot of the current page, this is better than screenshot
+browser_click  params=['element', 'target', 'doubleClick', 'button', 'modifiers']
+   Perform click on a web page
+browser_drag  params=['startElement', 'startTarget', 'endElement', 'endTarget']
+   Perform drag and drop between two elements
+browser_hover  params=['element', 'target']
+   Hover over element on page
+browser_select_option  params=['element', 'target', 'values']
+   Select an option in a dropdown
+browser_generate_locator  params=['element', 'target']
+   Generate locator for the given element to use in tests
+browser_storage_state  params=['filename']
+   Save storage state (cookies, local storage) to a file for later reuse
+browser_set_storage_state  params=['filename']
+   Restore storage state (cookies, local storage) from a file. This clears existing cookies and local storage before restoring.
+browser_tabs  params=['action', 'index', 'url']
+   List, create, close, or select a browser tab.
+browser_start_tracing  params=[]
+   Start trace recording
+browser_stop_tracing  params=[]
+   Stop trace recording
+browser_verify_element_visible  params=['role', 'accessibleName']
+   Verify element is visible on the page
+browser_verify_text_visible  params=['text']
+   Verify text is visible on the page. Prefer browser_verify_element_visible if possible.
+browser_verify_list_visible  params=['element', 'target', 'items']
+   Verify list is visible on the page
+browser_verify_value  params=['type', 'element', 'target', 'value']
+   Verify element value
+browser_start_video  params=['filename', 'size', 'fps', 'cursor']
+   Start video recording
+browser_stop_video  params=[]
+   Stop video recording
+browser_video_chapter  params=['title', 'description', 'duration']
+   Add a chapter marker to the video recording. Shows a full-screen chapter card with blurred backdrop.
+browser_video_show_actions  params=['duration', 'position', 'cursor', 'style']
+   Annotate subsequent actions performed on the page with a callout that names the action and, when styled, marks the action point and highlights the target element. Useful while video recording or screencasting.
+browser_video_hide_actions  params=[]
+   Stop annotating actions performed on the page.
+browser_wait_for  params=['time', 'text', 'textGone']
+   Wait for text to appear or disappear or a specified time to pass
+browser_localstorage_list  params=[]
+   List all localStorage key-value pairs
+browser_localstorage_get  params=['key']
+   Get a localStorage item by key
+browser_localstorage_set  params=['key', 'value']
+   Set a localStorage item
+browser_localstorage_delete  params=['key']
+   Delete a localStorage item
+browser_localstorage_clear  params=[]
+   Clear all localStorage
+browser_sessionstorage_list  params=[]
+   List all sessionStorage key-value pairs
+browser_sessionstorage_get  params=['key']
+   Get a sessionStorage item by key
+browser_sessionstorage_set  params=['key', 'value']
+   Set a sessionStorage item
+browser_sessionstorage_delete  params=['key']
+   Delete a sessionStorage item
+browser_sessionstorage_clear  params=[]
+   Clear all sessionStorage

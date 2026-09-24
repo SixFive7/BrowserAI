@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+# Probe v2: is anything BrowserAI must see inside the OpenProcess-denied set?
+$ErrorActionPreference = 'Stop'
+Add-Type -Namespace P2 -Name K -MemberDefinition @'
+[DllImport("psapi.dll", SetLastError=true)] public static extern bool EnumProcesses(uint[] p, uint cb, out uint needed);
+[DllImport("kernel32.dll", SetLastError=true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+[DllImport("kernel32.dll", SetLastError=true)] public static extern bool CloseHandle(IntPtr h);
+[DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)] public static extern bool QueryFullProcessImageNameW(IntPtr h, uint flags, System.Text.StringBuilder buf, ref uint size);
+'@
+function Sweep {
+  $buf = New-Object uint32[] 8192; $needed = 0
+  [void][P2.K]::EnumProcesses($buf, 8192*4, [ref]$needed)
+  $pids = $buf[0..([int]($needed/4)-1)] | Where-Object { $_ -ne 0 }
+  $o=@{}; $d=@()
+  foreach ($procId in $pids) {
+    $h = [P2.K]::OpenProcess(0x1000, $false, $procId)
+    if ($h -eq [IntPtr]::Zero) { $d += $procId }
+    else { $sb = New-Object Text.StringBuilder 1024; $sz=1024
+           if ([P2.K]::QueryFullProcessImageNameW($h,0,$sb,[ref]$sz)) { $o[$procId]=$sb.ToString() } else { $o[$procId]='<no-path>' }
+           [void][P2.K]::CloseHandle($h) }
+  }
+  @{ Pids=$pids; Opened=$o; Denied=$d }
+}
+$s = Sweep
+"PIDs returned       : $($s.Pids.Count)"
+"Opened successfully : $($s.Opened.Count)"
+"OpenProcess denied  : $($s.Denied.Count)"
+
+# Independent oracle that a NON-ELEVATED caller can actually read: the terminal-services session id.
+$wmi = @{}; Get-CimInstance Win32_Process | ForEach-Object { $wmi[[uint32]$_.ProcessId] = $_ }
+$rows = foreach ($procId in $s.Denied) { $p=$wmi[[uint32]$procId]
+  [pscustomobject]@{ Pid=$procId; Name=$(if($p){$p.Name}else{'<gone>'}); Session=$(if($p){$p.SessionId}else{'?'}) } }
+"`n--- denied set by session id (session 0 = services/system, session 1 = this interactive logon) ---"
+$rows | Group-Object Session | Sort-Object Name | ForEach-Object { "  session {0,-3} : {1}" -f $_.Name, $_.Count }
+"`n--- the denied processes that are NOT in session 0 ---"
+$rows | Where-Object { $_.Session -ne 0 } | Format-Table -AutoSize | Out-String -Width 120
+"`n--- and for comparison, how many OPENED processes are in this interactive session ---"
+$op = foreach ($k in $s.Opened.Keys) { $p=$wmi[[uint32]$k]; [pscustomobject]@{ Pid=$k; Session=$(if($p){$p.SessionId}else{'?'}) } }
+$op | Group-Object Session | Sort-Object Name | ForEach-Object { "  session {0,-3} : {1}" -f $_.Name, $_.Count }

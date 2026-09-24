@@ -1,0 +1,119 @@
+q254 / 2026-09-23 -- what each artifact under this directory is.
+
+RIGS
+  rig/server.js        tiny stdio MCP server, one tool `ping`.
+                       PROBE_MODE: stay | exit-after-first | exit-after-ms:<n> | die-on-launch:<n> (composable with +)
+                       On a planned exit it sends the friendly text three ways:
+                       in the tool result, as notifications/message (level info,
+                       logger browserai-update), and on stderr.
+  rig/apistub.js       Anthropic Messages API stub (SSE). Scripts the model's tool calls.
+  rig/openaistub.js    OpenAI Responses API stub (SSE), shaped after codex's own
+                       sdk/typescript/tests/responsesProxy.ts. function_call carries `namespace`.
+  rig/probe.sh         one claude -p run    rig/probe2.sh  two claude -p runs (--continue / fresh)
+  rig/cprobe.sh        one codex exec run   rig/cresume.sh codex exec resume --last
+  rig/grepbin.py       context dump around a needle in a binary
+  cfg/.claude.json     scratch CLAUDE_CONFIG_DIR, seeded {"hasCompletedOnboarding":true,...}
+                       per tests/BrowserAI.Tests/Harness/OnboardedClientConfig.cs
+  codexhome/config.toml scratch CODEX_HOME. Never the real ~/.codex.
+
+CLAUDE CODE 2.1.281  (logs/<run>.launches.log = one LAUNCH line per server process)
+  A1,A1b,A1c  exit after tool call #1, then call #2 in the same session -> relaunched 3/3
+  A1d         same, with --system-prompt-snapshot off -> instructions still not refreshed
+  A2a,A2b,A2c idle exit (1.5 s) before any tool call, then call #1 -> relaunched 3/3
+  A5a,A5b,A5c exit, then the relaunch refuses to start -> is_error, "is not connected" 3/3
+  A6a,A6b,A6c same plus a third call -> NO second dial attempt; failure is sticky 3/3
+  A3a,A3b,A3c exit, then `claude -p --continue` -> fresh server 3/3
+  A4a,A4b,A4c exit, then a fresh `claude -p` -> fresh server 3/3
+  out/<run>.debug.log     the client's own --debug-file
+  logs/<run>.requests.jsonl  every API request body = exactly what the model saw
+
+CODEX 0.155.0-alpha.9.2
+  C0  stay mode, smoke test: server launched, namespace tool surface captured
+  C1,C1b,C1c  exit after call #1, then call #2 -> NOT relaunched 3/3, "Transport closed"
+  C2a,C2b,C2c idle exit before any call -> NOT relaunched 3/3, "Transport closed"
+  C3          three calls -> never recovers
+  C4 + C4r    `codex exec resume --last` in a new process -> fresh server, call succeeds
+  out/C*.err.txt  codex tracing log (RUST_LOG=codex_core::mcp=trace,codex_rmcp_client=trace)
+
+READ, NOT MEASURED
+  out/mcp-module-slice.js  1 MB slice of claude.exe at offset 230,400,000: the MCP client module,
+                           including ensureConnectedClient (Jo), the stdio/sdk branch in onclose,
+                           and the export table that names every function.
+  out/docs-mcp.md          code.claude.com/docs/en/mcp raw markdown, fetched 2026-09-23
+  out/cc-changelog.md      anthropics/claude-code CHANGELOG.md
+  out/github-issues.txt    issue searches
+  out/codex-toolname.rs out/codex-models.rs out/responsesProxy.ts  openai/codex sources
+
+USER-SCOPE CONTROL (rig/probe-user.sh -- `claude mcp add probe --scope user` into a fresh
+scratch CLAUDE_CONFIG_DIR at cfg-user/, i.e. the shape the product actually writes,
+NOT --mcp-config)
+  U1,U1b,U1c  exit after call #1, then call #2 -> relaunched 3/3, clean result to the model
+  U6          exit, relaunch refused, then a third call -> no third dial; failure sticky
+  NOTE: these runs omit --strict-mcp-config, so the repository's own committed .mcp.json
+  was also read and its servers connected. Nothing was written outside cfg-user/.
+
+============================================================================
+ROUND 2 (2026-09-23, after the maintainer disputed the Codex half)
+
+SOURCE  src-codex/at-installed = openai/codex at tag rust-v0.155.0-alpha.9.2
+        (commit 4607249e430dac1c961df4dc615beae88e33cec8) -- the EXACT tag of the
+        installed 0.155.0-alpha.9.2.
+        src-codex/at-main = main @ 5f371ba30ae4a4bf4527eb0729ab6b36e3a0c123 2026-09-23T21:35Z
+        The reconnect surface is identical in both.
+
+RIG     rig/appserver.js  drives `codex app-server --listen stdio://` over JSON-RPC.
+                          Steps: {m:method,p:params} | {sleep:ms} | {marker:s} | {touch:path}.
+                          $THREAD is substituted with the started thread id.
+        rig/dprobe.sh     one app-server run, no model (uses mcpServer/tool/call)
+        rig/tprobe.sh     one app-server run WITH the responses stub (uses turn/start)
+        rig/steps-*.json  the step scripts
+
+MEASURED (logs/<run>.driver.log has every JSON-RPC line; logs/<run>.launches.log
+          has one LAUNCH line per spawned server process)
+  R1,R2,R3  dead server + `config/mcpServer/reload`      -> RECOVERED 3/3
+  G1,G2,G3  dead server + `thread/settings/update` (cwd)  -> RECOVERED 3/3
+  N1,N2,N3  dead server + a 2nd `thread/start`, same proc -> RECOVERED 3/3 (new thread)
+  X1,X2,X3  same as R but the server exits 3 (a crash)    -> RECOVERED 3/3, identical
+  T1,T2,T3  dead server + a new TURN, same thread         -> NOT recovered 3/3
+  S1,S2,S3  dead server + `mcpServerStatus/list`          -> NOT recovered 3/3;
+                                                             reports runtimeStatus "failed"
+                                                             and dials a throwaway probe
+  W1,W2,W3  dead server + an edit to config.toml on disk  -> NOT recovered 3/3
+  D0        the first reload observation (same as R)
+
+============================================================================
+ROUND 3 (2026-09-24): does option C work?
+
+RIGS
+  ho/a.js ho/h.js ho/b.js       the HANDOVER shape: A hands the client's pipes to
+                                helper H (outside the install folder), H waits for the
+                                apply, starts B from the replaced location, exits.
+                                B adopts the negotiated MCP state and never re-initializes.
+  ho/relay.js ho/s.js           the RELAY shape: R is spawned by the client, never exits,
+                                forwards stdio to child S and re-spawns S across the apply.
+  ho-install/                   stands in for the install folder (a.js, b.js, s.js, VERSION)
+  ho-helper/                    stands in for OUTSIDE the install folder (h.js, relay.js)
+  inherit-test/                 the minimal Windows stdio-inheritance experiments
+  rig/ho-smoke.js               handover mechanics, no MCP client
+  rig/relay-smoke.js            relay mechanics, no MCP client
+  rig/cc-ho.sh                  either shape through Claude Code
+  rig/cx-ho.sh                  either shape through Codex (exec | app-server)
+
+MEASURED  (logs/<run>.handover.log has one line per role with its pid)
+  inherit-test  node parent: stdio 'inherit' WITHOUT detached -> H killed with A's job
+                object. WITH detached -> stdout survives A's exit (parent 'exit' fires,
+                'close' does NOT), but H's inherited STDIN reports EOF at A's exit in all
+                three of destroy/pause/nothing, and the parent's later write is lost.
+  CCR1-3  Claude Code + relay          -> 3/3 call 2 answered by a NEW pid at version 2.0.0
+  CXR1-3  codex exec + relay           -> 3/3 same
+  CXAR1-3 codex app-server, 2 turns    -> 3/3 same, one thread, no reload, no user action
+  CCH1-3  Claude Code + handover       -> 3/3 B dies on stdin EOF; Claude Code silently
+                                          re-dials a FRESH A and serves the call
+  CXH1-3  codex exec + handover        -> 3/3 B survives and answers (Rust/tokio parent);
+                                          "call#2 ... (post-update, no re-initialize)"
+  CCL1-3  Claude Code + list_changed   -> 3/3 REFETCHES: debug log "Received
+                                          tools/list_changed notification, refreshing tools"
+  CXL1-3  Codex + list_changed         -> 3/3 does NOT refetch; logs "MCP server tool list
+                                          changed" and nothing else
+  CCF1-3 / CXF1-3  in-flight call interrupted by the swap -> 3/3 each, one clean result
+                                          from the new server (the relay RE-SENT the frame)

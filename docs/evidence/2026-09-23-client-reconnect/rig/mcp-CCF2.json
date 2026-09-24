@@ -1,0 +1,24 @@
+{
+ "mcpServers": {
+  "probe": {
+   "type": "stdio",
+   "command": "C:/Program Files/nodejs/node.exe",
+   "args": [
+    "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-helper/relay.js"
+   ],
+   "env": {
+    "HO_LOGDIR": "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs",
+    "HO_TAG": "CCF2",
+    "HO_INSTALL_DIR": "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-install",
+    "HO_HELPER_DIR": "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-helper",
+    "HO_STATE": "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CCF2.state.json",
+    "HO_APPLY_DONE": "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CCF2.apply.done",
+    "HO_SWAP_REQUEST": "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CCF2.swap.request",
+    "HO_SWAP_DONE": "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CCF2.swap.done",
+    "HO_TRIGGER": "after-first-call",
+    "HO_CALL_DELAY_MS": "4000",
+    "HO_SWAP_ON_CALL": "1"
+   }
+  }
+ }
+}

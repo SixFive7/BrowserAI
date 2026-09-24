@@ -1,0 +1,32 @@
+=== ARM CLEAN (control): full chrome, one profile, graceful Browser.close() ===
+  launched pid=47852 CDP=true
+  state written; closing gracefully with the CDP Browser.close command
+  child exitCode after graceful close: 0
+  profile root: component_crx_cache, Crashpad, Default, extensions_crx_cache, first_party_sets.db, first_party_sets.db-journal, GPUPersistentCache, Last Version, Local State, OptimizationGuideModelsManifest, Safe Browsing, segmentation_platform, Variations
+  Default/: LocalStorage, Preferences, Secure Preferences
+  [after graceful close] Preferences: exit_type=Normal exited_cleanly=undefined
+  [after graceful close] 20 SQLite files under the profile, PRAGMA integrity_check each:
+      Default\Account Web Data                      ok
+      Default\Affiliation Database                  ok
+      Default\declarative_performance_observer.db   ok
+      Default\Favicons                              ok
+      Default\History                               ok
+      Default\LocalStorage                          ok
+      Default\Login Data                            ok
+      Default\Login Data For Account                ok
+      Default\Network\Cookies                       ok
+      Default\Network\Device Bound Sessions         ok
+      Default\Network\Reporting and NEL             ok
+      Default\Network\Trust Tokens                  ok
+      Default\ServerCertificate                     ok
+      Default\SessionStorage                        ok
+      Default\Shared Dictionary\db                  ok
+      Default\Top Sites                             ok
+      Default\Web Data                              ok
+      Default\WebStorage\QuotaManager               ok
+      first_party_sets.db                           ok
+      segmentation_platform\ukm_db                  ok
+  [after graceful close] not-ok: 0 of 20
+  [after graceful close] LevelDB stores present: Default\chrome_cart_db, Default\ClientCertificates, Default\commerce_subscription_db, Default\discounts_db, Default\discount_infos_db, Default\Extension Rules, Default\Extension Scripts, Default\Extension State, Default, Default\parcel_tracking_db, Default\PersistentOriginTrials, Default\Segmentation Platform\SegmentInfoDB, Default\Segmentation Platform\SignalDB, Default\Segmentation Platform\SignalStorageConfigDB, Default\Service Worker\Database, Default\shared_proto_db, Default\shared_proto_db\metadata, Default\Site Characteristics Database, Default\Sync Data\LevelDB
+  relaunch pid=51332 CDP=true
+  state read back: {"lsKeys":40,"lsTags":["A"],"cookies":["c-A"]}

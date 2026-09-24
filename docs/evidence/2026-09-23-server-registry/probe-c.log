@@ -1,0 +1,21 @@
+scratch registry: C:/Source/SixFive7/BrowserAI/.work/t7-2026-09-23/reg-scratch-c
+planted 5 COPIES of real (dead) descriptors:
+   browser@0019411c419ac51a91628b143043adf7  title="BrowserAI"  endpoint="\\\\.\\pipe\\pw-e52b5188-browser-browser@001941"
+   browser@0042dbc832e61df6cf1419279cac541d  title="BrowserAI"  endpoint="\\\\.\\pipe\\pw-e52b5188-browser-browser@0042db"
+   browser@004dc330021fafd07b5e4e869834f0a0  title="BrowserAI"  endpoint="\\\\.\\pipe\\pw-e52b5188-browser-browser@004dc3"
+   browser@004f34376e46bff899c3c9506e018acb  title="BrowserAI"  endpoint="\\\\.\\pipe\\pw-e52b5188-browser-browser@004f34"
+   browser@00685c0a3cd5416b5070e73526311d34  title="BrowserAI (2)"  endpoint="\\\\.\\pipe\\pw-e52b5188-browser-browser@00685c"
+planted 1 synthetic PEER descriptor: browser@ffffffffffffffffffffffffffffffff
+LIVE descriptor guid: browser@d135ba3ed099a1498a82d0042e866fb8
+
+count BEFORE list(): 7 -> ["browser@0019411c419ac51a91628b143043adf7","browser@0042dbc832e61df6cf1419279cac541d","browser@004dc330021fafd07b5e4e869834f0a0","browser@004f34376e46bff899c3c9506e018acb","browser@00685c0a3cd5416b5070e73526311d34","browser@d135ba3ed099a1498a82d0042e866fb8","browser@ffffffffffffffffffffffffffffffff"]
+list() took 19ms and returned 1 connectable descriptor(s)
+   workspace="C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23" -> ["t7-live-descriptor"]
+count AFTER  list(): 1 -> ["browser@d135ba3ed099a1498a82d0042e866fb8"]
+REAPED  : ["browser@0019411c419ac51a91628b143043adf7","browser@0042dbc832e61df6cf1419279cac541d","browser@004dc330021fafd07b5e4e869834f0a0","browser@004f34376e46bff899c3c9506e018acb","browser@00685c0a3cd5416b5070e73526311d34","browser@ffffffffffffffffffffffffffffffff"]
+SURVIVED: ["browser@d135ba3ed099a1498a82d0042e866fb8"]
+live descriptor survived: true
+page after reap: "after-reap"
+count after close: 1 -> ["browser@d135ba3ed099a1498a82d0042e866fb8"]
+
+REAL directory at start: 3761   at end: 3761

@@ -1,0 +1,16 @@
+[probe] arm=chromium/headless origin=http://127.0.0.1:60082 profile=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-headless\profile
+[probe] prefs=false switch=false seedPreferences=false
+[probe] launchOptions={"headless":true,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\chromium-headless\\downloads","viewport":{"width":1280,"height":800},"locale":"en-US","ignoreHTTPSErrors":true,"channel":"chrome-for-testing","permissions":["clipboard-read"]}
+[probe] context.browser() gave no pid; rooting the pid walk at node itself
+[probe] pid walk root = 111380 (node pid 111380)
+[probe] fingerprint {"webdriver":true,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36"}
+[probe] before: 10 windows in pid tree 16244,27788,38348,50840,111380,121724,129928,134412,141920,160972
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-headless\screen-before.png
+[server] POST /login body=username=probe-user&password=Sup3rSecret%21probe
+[probe] navigation after submit completed (#ok present)
+[probe] new windows first seen after 2380 ms
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-headless\screen-after.png
+[probe] after: 12 windows; 2 not present before
+[probe]   NEW top 0x73254E pid=50840 visible=false class='Chrome_WidgetWin_1' title='Save password?' rect=0,0,0,0
+[probe]   NEW top 0x1AE2C86 pid=50840 visible=false class='Chrome_WidgetWin_1' title='signed in - Google Chrome for Testing' rect=10,10,790,590
+[probe] Preferences after launch: 7675 bytes; credentials_enable_service=undefined profile.password_manager_enabled=undefined

@@ -1,0 +1,173 @@
+{
+  "label": "after",
+  "rootPid": 113804,
+  "takenAt": "2026-09-23T23:10:43.6142894+02:00",
+  "pidsInTree": [
+    9164,
+    24800,
+    27924,
+    46844,
+    63100,
+    88520,
+    89176,
+    107668,
+    113804,
+    136012,
+    169112
+  ],
+  "windows": [
+    {
+      "level": "top",
+      "hwnd": "0x781494",
+      "pid": 89176,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x6074A",
+      "pid": 27924,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xDD2550",
+      "pid": 89176,
+      "class": "Chrome_WidgetWin_1",
+      "title": "signed in – Google Chrome for Testing",
+      "visible": true,
+      "rect": "10,10,1306,944"
+    },
+    {
+      "level": "child-of-0xDD2550",
+      "hwnd": "0x64254E",
+      "pid": 89176,
+      "class": "Chrome_RenderWidgetHostHWND",
+      "title": "Chrome Legacy Window",
+      "visible": true,
+      "rect": "18,97,1298,897"
+    },
+    {
+      "level": "child-of-0xDD2550",
+      "hwnd": "0x2A42A76",
+      "pid": 89176,
+      "class": "Chrome_RenderWidgetHostHWND",
+      "title": "Chrome Legacy Window",
+      "visible": false,
+      "rect": "133,51,1219,95"
+    },
+    {
+      "level": "child-of-0xDD2550",
+      "hwnd": "0x1210F3C",
+      "pid": 89176,
+      "class": "Chrome_RenderWidgetHostHWND",
+      "title": "Chrome Legacy Window",
+      "visible": false,
+      "rect": "980,95,981,96"
+    },
+    {
+      "level": "child-of-0xDD2550",
+      "hwnd": "0xC078E",
+      "pid": 27924,
+      "class": "Intermediate D3D Window",
+      "title": "",
+      "visible": true,
+      "rect": "18,10,1298,936"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1C036A",
+      "pid": 89176,
+      "class": "Chrome_StatusTrayWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x4482A5E",
+      "pid": 89176,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "338,338,3218,1901"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xBB1688",
+      "pid": 89176,
+      "class": "Base_PowerMessageWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x60762",
+      "pid": 107668,
+      "class": "crashpad_SessionEndWatcher",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xF0452",
+      "pid": 46844,
+      "class": "crashpad_SessionEndWatcher",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x5A2BF8",
+      "pid": 27924,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x240B80",
+      "pid": 89176,
+      "class": "MSCTFIME UI",
+      "title": "MSCTFIME UI",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xCE221E",
+      "pid": 89176,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x60786",
+      "pid": 107668,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x273094C",
+      "pid": 46844,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    }
+  ]
+}

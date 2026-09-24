@@ -1,0 +1,200 @@
+{
+  "label": "after",
+  "rootPid": 110940,
+  "takenAt": "2026-09-23T23:11:42.9581304+02:00",
+  "pidsInTree": [
+    20908,
+    31724,
+    50900,
+    57220,
+    61868,
+    76132,
+    82116,
+    89708,
+    93292,
+    110940,
+    171860
+  ],
+  "windows": [
+    {
+      "level": "top",
+      "hwnd": "0xD0684",
+      "pid": 50900,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x63043E",
+      "pid": 20908,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x260B80",
+      "pid": 50900,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x3B224AC",
+      "pid": 20908,
+      "class": "Chrome_WidgetWin_1",
+      "title": "Save password?",
+      "visible": true,
+      "rect": "757,86,1219,476"
+    },
+    {
+      "level": "child-of-0x3B224AC",
+      "hwnd": "0x23036A",
+      "pid": 50900,
+      "class": "Intermediate D3D Window",
+      "title": "",
+      "visible": true,
+      "rect": "757,86,1219,476"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x80762",
+      "pid": 20908,
+      "class": "Chrome_WidgetWin_1",
+      "title": "signed in – Google Chrome for Testing",
+      "visible": true,
+      "rect": "10,10,1306,944"
+    },
+    {
+      "level": "child-of-0x80762",
+      "hwnd": "0xB076E",
+      "pid": 20908,
+      "class": "Chrome_RenderWidgetHostHWND",
+      "title": "Chrome Legacy Window",
+      "visible": true,
+      "rect": "18,97,1298,897"
+    },
+    {
+      "level": "child-of-0x80762",
+      "hwnd": "0x80786",
+      "pid": 20908,
+      "class": "Chrome_RenderWidgetHostHWND",
+      "title": "Chrome Legacy Window",
+      "visible": false,
+      "rect": "133,51,1219,95"
+    },
+    {
+      "level": "child-of-0x80762",
+      "hwnd": "0xD0221E",
+      "pid": 20908,
+      "class": "Chrome_RenderWidgetHostHWND",
+      "title": "Chrome Legacy Window",
+      "visible": false,
+      "rect": "980,95,981,96"
+    },
+    {
+      "level": "child-of-0x80762",
+      "hwnd": "0x24F2C8C",
+      "pid": 50900,
+      "class": "Intermediate D3D Window",
+      "title": "",
+      "visible": true,
+      "rect": "18,10,1298,936"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x66254E",
+      "pid": 20908,
+      "class": "Chrome_StatusTrayWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1318B2",
+      "pid": 20908,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "390,390,3270,1953"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x892048",
+      "pid": 20908,
+      "class": "Base_PowerMessageWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x110452",
+      "pid": 61868,
+      "class": "crashpad_SessionEndWatcher",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x80192",
+      "pid": 31724,
+      "class": "crashpad_SessionEndWatcher",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x807C2",
+      "pid": 50900,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x8074A",
+      "pid": 20908,
+      "class": "MSCTFIME UI",
+      "title": "MSCTFIME UI",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x5C2BF8",
+      "pid": 20908,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xB072C",
+      "pid": 61868,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1A037A",
+      "pid": 31724,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    }
+  ]
+}

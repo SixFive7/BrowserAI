@@ -1,0 +1,34 @@
+{
+  "hasCompletedOnboarding": true,
+  "bypassPermissionsModeAccepted": false,
+  "firstStartTime": "2026-09-23T21:22:08.778Z",
+  "firstStartVersion": "2.1.281",
+  "machineID": "f417bd464434f7d78e4c7822cbf36255778ed3c3b25314d555cd37ed8e3cd11d",
+  "userID": "b513074c08643a5343ecce8a06346b5b4fd6e61460454be87daaff565b6b8fff",
+  "opusProMigrationComplete": true,
+  "sonnet1m45MigrationComplete": true,
+  "seenNotifications": {},
+  "hasResetAutoModeOptInForDefaultOffer": true,
+  "migrationVersion": 14,
+  "mcpServers": {
+    "probe": {
+      "type": "stdio",
+      "command": "C:/Program Files/nodejs/node.exe",
+      "args": [
+        "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/rig/server.js"
+      ],
+      "env": {
+        "PROBE_LOGDIR": "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs",
+        "PROBE_TAG": "U6",
+        "PROBE_MODE": "exit-after-first+die-on-launch:2"
+      }
+    }
+  },
+  "pluginUsage": {
+    "agents-md@builtin": {
+      "usageCount": 0,
+      "lastUsedAt": 1790198530752,
+      "lastUsedNumStartups": 0
+    }
+  }
+}

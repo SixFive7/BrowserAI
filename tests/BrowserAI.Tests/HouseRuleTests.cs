@@ -2217,10 +2217,21 @@ internal sealed partial class HouseRuleTests
     /// included in what is forbidden -- those are the kinds this repository writes
     /// its prose and its code in, and a NUL in one of them is the same defect
     /// wearing a different byte. Anything else is binary if it holds a NUL in its
-    /// first 8,000 bytes, which is git's own heuristic, and is skipped: today
-    /// that is exactly one file, <c>assets\BrowserAI.ico</c>, and both counts are
-    /// asserted so that a corpus quietly re-classifying itself as binary cannot
-    /// empty this scan.
+    /// first 8,000 bytes, which is git's own heuristic, and is skipped. Both
+    /// counts are asserted so that a corpus quietly re-classifying itself as
+    /// binary cannot empty this scan.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-09-24 (previously "and is skipped: today that is
+    /// exactly one file, <c>assets\BrowserAI.ico</c>", with the control written as
+    /// <c>skipped</c> under a flat 20).</b> The skipped set is every image record
+    /// under <c>docs/evidence/</c> and <c>docs/design/</c>, and it passed twenty
+    /// the day five research batches were persisted. <b>The control is a
+    /// PROPORTION now</b>, which is what it always meant: what it exists to catch
+    /// is a classifier that called everything binary, and that shows up as a
+    /// ratio and never as a count the corpus can outgrow. Watched red in that
+    /// exact shape, with <c>IsBinary</c> forced to <c>true</c>: <c>scanned</c>
+    /// goes to zero, and the count control above fires first and names it.
     /// </para>
     /// <para>
     /// <b>Planted red before it was trusted, twice:</b> against the three real
@@ -2278,7 +2289,11 @@ internal sealed partial class HouseRuleTests
         // classifier that called everything binary, would satisfy the emptiness
         // above perfectly.
         await Assert.That(scanned).IsGreaterThan(250);
-        await Assert.That(skipped).IsLessThan(20);
+        await Assert.That(skipped * 10).IsLessThan(scanned)
+            .Because($"{skipped.ToString(CultureInfo.InvariantCulture)} of "
+                + $"{(scanned + skipped).ToString(CultureInfo.InvariantCulture)} files read as binary. "
+                + "A tenth is the bound because the thing this catches is a classifier that called "
+                + "everything binary, not a repository that holds images");
     }
 
     /// <summary>

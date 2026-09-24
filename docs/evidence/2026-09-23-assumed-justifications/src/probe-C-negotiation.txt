@@ -1,0 +1,31 @@
+############ PROBE C -- what does the SDK do when a child echoes another protocol version?
+ModelContextProtocol 2.2.0 | .NET 10.0.401 | Windows 11 Pro 10.0.26200 | 2026-09-23
+client pins McpClientOptions.ProtocolVersion = "2025-11-25" (BrowserAI's ChildConnection.ChildProtocolVersion)
+
+--- server echoes protocolVersion="2025-11-25"  [EXACT (control)]
+    RESULT: CONNECTED. NegotiatedProtocolVersion="2025-11-25"
+
+--- server echoes protocolVersion="2025-06-18"  [BELOW]
+    RESULT: THREW ModelContextProtocol.McpException
+            Server protocol version mismatch. Expected 2025-11-25, got 2025-06-18
+
+--- server echoes protocolVersion="2024-11-05"  [BELOW]
+    RESULT: THREW ModelContextProtocol.McpException
+            Server protocol version mismatch. Expected 2025-11-25, got 2024-11-05
+
+--- server echoes protocolVersion="2026-07-28"  [ABOVE/UNSUPPORTED]
+    RESULT: THREW ModelContextProtocol.McpException
+            Server protocol version mismatch. Expected 2025-11-25, got 2026-07-28
+
+--- server echoes protocolVersion="1999-01-01"  [BELOW]
+    RESULT: THREW ModelContextProtocol.McpException
+            Server protocol version mismatch. Expected 2025-11-25, got 1999-01-01
+
+--- server echoes protocolVersion="<omit>"  [NO VERSION ON THE WIRE]
+    RESULT: THREW System.Text.Json.JsonException
+            JSON deserialization for type 'ModelContextProtocol.Protocol.InitializeResult' was missing required properties including: 'protocolVersion'.
+
+--- server echoes protocolVersion="<null>"  [NO VERSION ON THE WIRE]
+    RESULT: THREW ModelContextProtocol.McpException
+            Server protocol version mismatch. Expected 2025-11-25, got 
+

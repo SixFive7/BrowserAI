@@ -1,0 +1,169 @@
+{
+  "label": "after",
+  "rootPid": 157736,
+  "takenAt": "2026-09-23T23:25:32.9129398+02:00",
+  "pidsInTree": [
+    24280,
+    47088,
+    63228,
+    77496,
+    83784,
+    109036,
+    145092,
+    157736,
+    167000,
+    168592
+  ],
+  "commandLines": [
+    {
+      "pid": 157736,
+      "commandLine": "C:\\Source\\SixFive7\\BrowserAI\\payload\\node\\node.exe C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\@playwright\\mcp\\cli.js --config C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\config.json --sandbox"
+    },
+    {
+      "pid": 109036,
+      "commandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+    },
+    {
+      "pid": 167000,
+      "commandLine": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1246\\chrome-win64\\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --user-data-dir=C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile --remote-debugging-pipe about:blank"
+    },
+    {
+      "pid": 145092,
+      "commandLine": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1246\\chrome-win64\\chrome.exe --type=crashpad-handler --user-data-dir=C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile /prefetch:4 --monitor-self-annotation=ptype=crashpad-handler --database=C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile\\Crashpad --annotation=plat=Win64 \"--annotation=prod=Google Chrome for Testing\" --annotation=ver=154.0.8037.0 --initial-client-data=0x138,0x13c,0x140,0xa8,0x144,0x7ffe9d219ed0,0x7ffe9d219ee0,0x7ffe9d219ef0"
+    },
+    {
+      "pid": 63228,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1246\\chrome-win64\\chrome.exe\" --type=gpu-process --gpu-recent-crash-count=0 --disable-breakpad --headless --enable-unsafe-swiftshader --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile\" --no-pre-read-main-dll --start-stack-profiler --gpu-preferences=WAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAAEAAAAAIAAAABAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --field-trial-handle=1876,i,7763819392259587733,5331143955703725967,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1880,i,8819218204067998204,9210620373501616600,4 --trace-process-track-uuid=3190708988185955192 --mojo-platform-channel-handle=1864 /prefetch:2"
+    },
+    {
+      "pid": 83784,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1246\\chrome-win64\\chrome.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-GB --service-sandbox-type=none --mute-audio --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile\" --no-pre-read-main-dll --start-stack-profiler --field-trial-handle=1876,i,7763819392259587733,5331143955703725967,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1880,i,8819218204067998204,9210620373501616600,4 --trace-process-track-uuid=3190708989122997041 --mojo-platform-channel-handle=2100 /prefetch:11"
+    },
+    {
+      "pid": 47088,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1246\\chrome-win64\\chrome.exe\" --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-GB --service-sandbox-type=service --mute-audio --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile\" --no-pre-read-main-dll --field-trial-handle=1876,i,7763819392259587733,5331143955703725967,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1880,i,8819218204067998204,9210620373501616600,4 --trace-process-track-uuid=3190708990060038890 --mojo-platform-channel-handle=2568 /prefetch:13"
+    },
+    {
+      "pid": 24280,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1246\\chrome-win64\\chrome.exe\" --type=renderer --top-chrome-webui --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=5 --launch-time-ticks=661006423691 --field-trial-handle=1876,i,7763819392259587733,5331143955703725967,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1880,i,8819218204067998204,9210620373501616600,4 --trace-process-track-uuid=3190708990997080739 --mojo-platform-channel-handle=3576 /prefetch:1"
+    },
+    {
+      "pid": 168592,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1246\\chrome-win64\\chrome.exe\" --type=renderer --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=7 --launch-time-ticks=661006465980 --field-trial-handle=1876,i,7763819392259587733,5331143955703725967,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1880,i,8819218204067998204,9210620373501616600,4 --trace-process-track-uuid=3190708992871164437 --mojo-platform-channel-handle=3976 /prefetch:1"
+    },
+    {
+      "pid": 77496,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\chromium-1246\\chrome-win64\\chrome.exe\" --type=renderer --noerrdialogs --user-data-dir=\"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-control\\profile\" --no-pre-read-main-dll --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --disable-blink-features=AutomationControlled --video-capture-use-gpu-memory-buffer --lang=en-GB --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=6 --launch-time-ticks=661006466240 --field-trial-handle=1876,i,7763819392259587733,5331143955703725967,262144 --enable-features=CDPScreenshotNewSurface,SingleAxisScrollContainers --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BlockOriginHeaderModificationOnRedirect,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,ThirdPartyStoragePartitioning,Translate,msEdgeUpdateLaunchServicesPreferredVersion,msForceBrowserSignIn --variations-seed-version --pseudonymization-salt-handle=1880,i,8819218204067998204,9210620373501616600,4 --trace-process-track-uuid=3190708991934122588 --mojo-platform-channel-handle=4008 /prefetch:1"
+    }
+  ],
+  "windows": [
+    {
+      "level": "top",
+      "hwnd": "0x6C2074",
+      "pid": 167000,
+      "class": "Base_PowerMessageWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1A07A6",
+      "pid": 63228,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x8A2008",
+      "pid": 167000,
+      "class": "Chrome_WidgetWin_1",
+      "title": "Save password?",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x9D052C",
+      "pid": 63228,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xBA2960",
+      "pid": 167000,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x250684",
+      "pid": 167000,
+      "class": "Chrome_WidgetWin_1",
+      "title": "signed in – Google Chrome for Testing",
+      "visible": false,
+      "rect": "10,10,790,590"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x140752",
+      "pid": 167000,
+      "class": "Chrome_StatusTrayWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x3203C6",
+      "pid": 167000,
+      "class": "Chrome_WidgetWin_0",
+      "title": "",
+      "visible": false,
+      "rect": "338,338,3218,1901"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1905BA",
+      "pid": 145092,
+      "class": "crashpad_SessionEndWatcher",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x230366",
+      "pid": 167000,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1012362",
+      "pid": 63228,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x17F24A8",
+      "pid": 145092,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    }
+  ]
+}

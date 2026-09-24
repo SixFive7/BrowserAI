@@ -1,0 +1,286 @@
+function decorateMCPCommand(command) {
+  command.option("--allowed-hosts <hosts...>", "comma-separated list of hosts this server is allowed to serve from. Defaults to the host the server is bound to. Pass '*' to disable the host check.", commaSeparatedList).option("--allowed-origins <origins>", "semicolon-separated list of TRUSTED origins to allow the browser to request. Default is to allow all.\nImportant: *does not* serve as a security boundary and *does not* affect redirects. ", semicolonSeparatedList).option("--allow-unrestricted-file-access", "allow access to files outside of the workspace roots. Also allows unrestricted access to file:// URLs. By default access to file system is restricted to workspace root directories (or cwd if no roots are configured) only, and navigation to file:// URLs is blocked.").option("--blocked-origins <origins>", "semicolon-separated list of origins to block the browser from requesting. Blocklist is evaluated before allowlist. If used without the allowlist, requests not matching the blocklist are still allowed.\nImportant: *does not* serve as a security boundary and *does not* affect redirects.", semicolonSeparatedList).option("--block-service-workers", "block service workers").option("--browser <browser>", "browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.").option("--caps <caps>", "comma-separated list of additional capabilities to enable, possible values: vision, pdf, devtools.", commaSeparatedList).option("--cdp-endpoint <endpoint>", "CDP endpoint to connect to.").option("--cdp-header <headers...>", "CDP headers to send with the connect request, multiple can be specified.", headerParser).option("--cdp-timeout <timeout>", "timeout in milliseconds for connecting to CDP endpoint, defaults to 30000ms", numberParser).option("--codegen <lang>", `specify the language to use for code generation, possible values: "typescript", "python", "java", "csharp", "none". Default is "${defaultCodegenLanguage}".`, enumParser.bind(null, "--codegen", ["none", "typescript", "python", "java", "csharp"])).option("--config <path>", "path to the configuration file.").option("--console-level <level>", 'level of console messages to return: "error", "warning", "info", "debug". Each level includes the messages of more severe levels.', enumParser.bind(null, "--console-level", ["error", "warning", "info", "debug"])).option("--device <device>", 'device to emulate, for example: "iPhone 15"').option("--mobile", "emulate a generic mobile device (Pixel 10 for Chromium, iPhone 17 for WebKit). Mobile pages are usually lighter, which saves tokens. Cannot be combined with --device.").option("--executable-path <path>", "path to the browser executable.").option("--extension", 'Connect to a running browser instance (Edge/Chrome only). Requires the "Playwright Extension" to be installed.').option("--endpoint <endpoint>", "Bound browser endpoint to connect to.").option("--file-paths <mode>", 'how file paths are rendered in tool results, "relative" to the workspace root or "absolute". Default is "relative".', enumParser.bind(null, "--file-paths", ["relative", "absolute"])).option("--grant-permissions <permissions...>", 'List of permissions to grant to the browser context, for example "geolocation", "clipboard-read", "clipboard-write".', commaSeparatedList).option("--headless", "run browser in headless mode, headed by default").option("--host <host>", "host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.").option("--idle-timeout <timeout>", "close the browser after this many milliseconds without a completed tool call, the next tool call relaunches it. Defaults to one hour for headless browsers, never for headed ones, 0 disables.", numberParser).option("--ignore-https-errors", "ignore https errors").option("--init-page <path...>", "path to TypeScript file to evaluate on Playwright page object").option("--init-script <path...>", "path to JavaScript file to add as an initialization script. The script will be evaluated in every page before any of the page's scripts. Can be specified multiple times.").option("--isolated", "keep the browser profile in memory, do not save it to disk.").option("--image-responses <mode>", 'whether to send image responses to the client. Can be "allow", "omit" or "only". With "only", a response that carries an image consists of the image parts alone, without the text part. Defaults to "allow".', enumParser.bind(null, "--image-responses", ["allow", "omit", "only"])).option("--no-sandbox", "disable the sandbox for all process types that are normally sandboxed.").option("--no-webmcp", "do not collect or expose the tools that a page registers through the WebMCP API.").option("--output-dir <path>", "path to the directory for automatically named output files, for example a screenshot taken without an explicit file name. Files with an explicit name are resolved against the workspace root instead and are not affected by this option.").option("--output-max-size <bytes>", "Threshold for evicting old output files, in bytes.", numberParser).option("--port <port>", "port to listen on for SSE transport.").option("--profile-dir-name <name>", 'name of the profile directory in the user data dir to connect to with --extension, for example "Profile 1". Defaults to the last used profile that has the extension installed.').option("--proxy-bypass <bypass>", 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"').option("--proxy-server <proxy>", 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"').addOption(new ProgramOption("--remote-header <headers...>", "headers to send with the remote endpoint connect request, multiple can be specified.").argParser(headerParser).hideHelp()).option("--sandbox", "enable the sandbox for all process types that are normally not sandboxed.").option("--save-session", "Whether to save the Playwright MCP session into the output directory.").option("--secrets <path>", "path to a file containing secrets in the dotenv format", dotenvFileLoader).option("--shared-browser-context", "reuse the same browser context between all connected HTTP clients.").option("--snapshot-boxes", "include each element's bounding box as [box=x,y,width,height] in snapshots. Coordinates are viewport-relative, in CSS pixels.").option("--snapshot-mode <mode>", 'when taking snapshots for responses, specifies the mode to use. Can be "full" or "none". Default is "full".').option("--storage-state <path>", "path to the storage state file for isolated sessions.").option("--test-id-attribute <attribute>", 'specify the attribute to use for test ids, defaults to "data-testid"').option("--timeout-action <timeout>", "specify action timeout in milliseconds, defaults to 5000ms", numberParser).option("--timeout-navigation <timeout>", "specify navigation timeout in milliseconds, defaults to 60000ms", numberParser).option("--timeout-settle <timeout>", "how long to wait after each action for triggered work to settle, in milliseconds, defaults to 500ms", numberParser).option("--user-agent <ua string>", "specify user agent string").option("--user-data-dir <path>", "path to the user data directory. If not specified, a temporary directory will be created.").option("--viewport-size <size>", 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, "--viewport-size")).addOption(new ProgramOption("--vision", "Legacy option, use --caps=vision instead").hideHelp()).action(async (options) => {
+    setupExitWatchdog();
+    if (options.vision) {
+      console.error("The --vision option is deprecated, use --caps=vision instead");
+      options.caps ??= [];
+      options.caps.push("vision");
+    }
+    if (options.caps?.includes("tracing"))
+      options.caps.push("devtools");
+    const config = await resolveCLIConfigForMCP(options);
+    const tools = filteredTools(config);
+    const useSharedBrowser = config.sharedBrowserContext || config.browser.isolated;
+    let sharedBrowserPromise;
+    let clientCount = 0;
+    const clientNameCounters = /* @__PURE__ */ new Map();
+    const factory = {
+      name: "Playwright",
+      nameInConfig: "playwright",
+      version: version2,
+      toolSchemas: tools.map((tool) => tool.schema),
+      create: async (clientInfo) => {
+        if (useSharedBrowser && !sharedBrowserPromise) {
+          const promise2 = createBrowserWithInfo(config, clientInfo, options, { title: clientInfo.clientName, workspaceDir: clientInfo.cwd }).then((shared2) => {
+            shared2.browser.once("disconnected", () => {
+              if (sharedBrowserPromise === promise2)
+                sharedBrowserPromise = void 0;
+            });
+            return shared2;
+          }, (error) => {
+            if (sharedBrowserPromise === promise2)
+              sharedBrowserPromise = void 0;
+            throw error;
+          });
+          sharedBrowserPromise = promise2;
+        }
+        clientCount++;
+        const promise = sharedBrowserPromise;
+        let shared;
+        let info;
+        let browser;
+        try {
+          shared = await promise;
+          if (shared) {
+            testDebug3("connect to shared browser");
+            info = shared;
+            browser = await connectToBrowserEndpoint(config, shared.browser, shared.endpoint);
+          } else {
+            const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
+            clientNameCounters.set(clientInfo.clientName, count);
+            const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
+            info = await createBrowserWithInfo(config, clientInfo, options, { title: sessionName, workspaceDir: clientInfo.cwd });
+            browser = info.browser;
+          }
+        } catch (error) {
+          clientCount--;
+          throw error;
+        }
+        let browserContext;
+        try {
+          browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0] ?? await browser.newContext(config.browser.contextOptions);
+        } catch (error) {
+          clientCount--;
+          await browser.close().catch(() => {
+          });
+          throw error;
+        }
+        return new BrowserBackend(config, browserContext, tools, {
+          idleTimer: info.idleTimer,
+          dispose: async () => {
+            clientCount--;
+            const last = !shared || !clientCount;
+            if (last && sharedBrowserPromise === promise)
+              sharedBrowserPromise = void 0;
+            if (!last) {
+              if (config.browser.isolated) {
+                testDebug3("close context");
+                await browserContext.close().catch(() => {
+                });
+              } else {
+                testDebug3("disconnect from shared browser");
+              }
+              await browser.close().catch(() => {
+              });
+              return;
+            }
+            testDebug3("close browser");
+            await browserContext.close().catch(() => {
+            });
+            await browser.close().catch(() => {
+            });
+            await shared?.browser.close().catch(() => {
+            });
+          }
+        });
+      }
+    };
+    await start(factory, config.server);
+  });
+}
+var ProgramOption, version2;
+var init_program2 = __esm({
+  "packages/playwright-core/src/tools/mcp/program.ts"() {
+    "use strict";
+    init_server2();
+    init_config2();
+    init_watchdog();
+    init_browserFactory();
+    init_browserBackend();
+    init_tools();
+    init_log();
+    init_package();
+    ({ ProgramOption } = require("./utilsBundle"));
+    version2 = packageJSON.version;
+  }
+});
+
+// packages/playwright-core/src/cli/program.ts
+var program_exports = {};
+__export(program_exports, {
+  decorateProgram: () => decorateProgram
+});
+function decorateProgram(program4) {
+  program4.version("Version " + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version)).name(buildBasePlaywrightCLICommand(process.env.PW_LANG_NAME));
+  program4.command("mark-docker-image [dockerImageNameTemplate]", { hidden: true }).description("mark docker image").allowUnknownOption(true).action(async function(dockerImageNameTemplate) {
+    markDockerImage(dockerImageNameTemplate).catch(logErrorAndExit);
+  });
+  commandWithOpenOptions("open [url]", "open page in browser specified via -b, --browser", []).action(async function(url3, options) {
+    open4(options, url3).catch(logErrorAndExit);
+  }).addHelpText("afterAll", `
+  Examples:
+
+    $ open
+    $ open -b webkit https://example.com`);
+  commandWithOpenOptions(
+    "codegen [url]",
+    "open page and generate code for user actions",
+    [
+      ["-o, --output <file name>", "saves the generated script to a file"],
+      ["--target <language>", `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, csharp-xunit, java, java-junit`, codegenId()],
+      ["--test-id-attribute <attributeName>", "use the specified attribute to generate data test ID selectors"]
+    ]
+  ).action(async function(url3, options) {
+    await codegen(options, url3);
+  }).addHelpText("afterAll", `
+  Examples:
+
+    $ codegen
+    $ codegen --target=python
+    $ codegen -b webkit https://example.com`);
+  program4.command("install [browser...]").description("ensure browsers necessary for this version of Playwright are installed").option("--with-deps", "install system dependencies for browsers").option("--dry-run", "do not execute installation, only print information").option("--list", "prints list of browsers from all playwright installations").option("--force", "force reinstall of already installed browsers").option("--only-shell", "only install headless shell when installing chromium").option("--no-shell", "do not install chromium headless shell").option("--no-progress", "do not show download progress bars").option("--no-remove", "do not remove unused browsers").action(async function(args, options) {
+    try {
+      await installBrowsers(args, options);
+    } catch (e) {
+      console.log(`Failed to install browsers
+${e}`);
+      gracefullyProcessExitDoNotHang(1);
+    }
+  }).addHelpText("afterAll", `
+
+  Examples:
+    - $ install
+      Install default browsers.
+
+    - $ install chrome firefox
+      Install custom browsers, supports chromium, firefox, webkit, chromium-headless-shell.`);
+  program4.command("uninstall").description("Removes browsers used by this installation of Playwright from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.").option("--all", "Removes all browsers used by any Playwright installation from the system.").action(async (options) => {
+    uninstallBrowsers(options).catch(logErrorAndExit);
+  });
+  program4.command("install-deps [browser...]").description("install dependencies necessary to run browsers (will ask for sudo permissions)").option("--dry-run", "Do not modify the system. On Linux, simulate the install via apt-get and exit with a non-zero code if any required packages are missing; on Windows, print the install command.").action(async function(args, options) {
+    try {
+      await installDeps(args, options);
+    } catch (e) {
+      console.log(`Failed to install browser dependencies
+${e}`);
+      gracefullyProcessExitDoNotHang(1);
+    }
+  }).addHelpText("afterAll", `
+  Examples:
+    - $ install-deps
+      Install dependencies for default browsers.
+
+    - $ install-deps chrome firefox
+      Install dependencies for specific browsers, supports chromium, firefox, webkit, chromium-headless-shell.
+
+    - $ install-deps --dry-run
+      Report which required system dependencies are missing without modifying the system. Exits non-zero if any are missing. Useful for non-interactive verification scripts.`);
+  const browsers = [
+    { alias: "cr", name: "Chromium", type: "chromium" },
+    { alias: "ff", name: "Firefox", type: "firefox" },
+    { alias: "wk", name: "WebKit", type: "webkit" }
+  ];
+  for (const { alias, name, type: type3 } of browsers) {
+    commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, []).action(async function(url3, options) {
+      open4({ ...options, browser: type3 }, url3).catch(logErrorAndExit);
+    }).addHelpText("afterAll", `
+  Examples:
+
+    $ ${alias} https://example.com`);
+  }
+  commandWithOpenOptions(
+    "screenshot <url> <filename>",
+    "capture a page screenshot",
+    [
+      ["--wait-for-selector <selector>", "wait for selector before taking a screenshot"],
+      ["--wait-for-timeout <timeout>", "wait for timeout in milliseconds before taking a screenshot"],
+      ["--full-page", "whether to take a full page screenshot (entire scrollable area)"]
+    ]
+  ).action(async function(url3, filename, command) {
+    screenshot3(command, command, url3, filename).catch(logErrorAndExit);
+  }).addHelpText("afterAll", `
+  Examples:
+
+    $ screenshot -b webkit https://example.com example.png`);
+  commandWithOpenOptions(
+    "pdf <url> <filename>",
+    "save page as pdf",
+    [
+      ["--paper-format <format>", "paper format: Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5, A6"],
+      ["--wait-for-selector <selector>", "wait for given selector before saving as pdf"],
+      ["--wait-for-timeout <timeout>", "wait for given timeout in milliseconds before saving as pdf"]
+    ]
+  ).action(async function(url3, filename, options) {
+    pdf2(options, options, url3, filename).catch(logErrorAndExit);
+  }).addHelpText("afterAll", `
+  Examples:
+
+    $ pdf https://example.com example.pdf`);
+  program4.command("run-driver", { hidden: true }).action(async function(options) {
+    runDriver();
+  });
+  program4.command("run-server", { hidden: true }).option("--port <port>", "Server port").option("--host <host>", "Server host").option("--path <path>", "Endpoint Path", "/").option("--max-clients <maxClients>", "Maximum clients").option("--mode <mode>", 'Server mode, either "default" or "extension"').option("--artifacts-dir <artifactsDir>", "Artifacts directory").option("--unsafe", "Allow clients to set unsafe launch options (args, executablePath, ignoreAllDefaultArgs, etc)").action(async function(options) {
+    runServer({
+      port: options.port ? +options.port : void 0,
+      host: options.host,
+      path: options.path,
+      maxConnections: options.maxClients ? +options.maxClients : Infinity,
+      extension: options.mode === "extension" || !!process.env.PW_EXTENSION_MODE,
+      artifactsDir: options.artifactsDir,
+      unsafe: !!options.unsafe
+    }).catch(logErrorAndExit);
+  });
+  program4.command("launch-server", { hidden: true }).requiredOption("--browser <browserName>", 'Browser name, one of "chromium", "firefox" or "webkit"').option("--config <path-to-config-file>", "JSON file with launchServer options").action(async function(options) {
+    launchBrowserServer(options.browser, options.config);
+  });
+  program4.command("show-trace [trace]").option("-b, --browser <browserType>", "browser to use, one of cr, chromium, ff, firefox, wk, webkit", "chromium").option("-h, --host <host>", "Host to serve trace on; specifying this option opens trace in a browser tab").option("-p, --port <port>", "Port to serve trace on, 0 for any free port; specifying this option opens trace in a browser tab").option("--stdin", "Accept trace URLs over stdin to update the viewer").description("show trace viewer").action(async function(trace, options) {
+    if (options.browser === "cr")
+      options.browser = "chromium";
+    if (options.browser === "ff")
+      options.browser = "firefox";
+    if (options.browser === "wk")
+      options.browser = "webkit";
+    const openOptions = {
+      host: options.host,
+      port: +options.port,
+      isServer: !!options.stdin
+    };
+    if (options.port !== void 0 || options.host !== void 0)
+      runTraceInBrowser(trace, openOptions).catch(logErrorAndExit);
+    else
+      runTraceViewerApp(trace, options.browser, openOptions).catch(logErrorAndExit);
+  }).addHelpText("afterAll", `
+  Examples:
+
+    $ show-trace
+    $ show-trace https://example.com/trace.zip`);
+  addTraceCommands(program4, logErrorAndExit);
+  program4.command("cli").description("run playwright cli commands from terminal").allowExcessArguments(true).allowUnknownOption(true).helpOption(false).action(async (options) => {
+    process.argv.splice(process.argv.indexOf("cli"), 1);
+    program2().catch(logErrorAndExit);
+  });
+  decorateMCPCommand(program4.command("mcp").description("run the Playwright MCP server"));
+}
+function logErrorAndExit(e) {
+  if (process.env.PWDEBUGIMPL)
+    console.error(e);
+  else
+    console.error(e.name + ": " + e.message);
+  gracefullyProcessExitDoNotHang(1);
+}
+function codegenId() {
+  return process.env.PW_LANG_NAME || "playwright-test";
+}
+function commandWithOpenOptions(command, description, options) {
+  let result2 = program3.command(command).description(description);
+  for (const option of options)

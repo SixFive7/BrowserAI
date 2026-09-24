@@ -1,0 +1,13 @@
+[
+ {"m":"initialize","p":{"clientInfo":{"name":"probe-driver","title":"probe","version":"1.0.0"},"capabilities":{"experimentalApi":true}}},
+ {"m":"thread/start","p":{}},
+ {"m":"mcpServer/tool/call","p":{"threadId":"$THREAD","server":"probe","tool":"ping","arguments":{"note":"c1"}}},
+ {"sleep":2000},
+ {"marker":"BASELINE call2 (no trigger)"},
+ {"m":"mcpServer/tool/call","p":{"threadId":"$THREAD","server":"probe","tool":"ping","arguments":{"note":"c2"}}},
+ {"marker":"TRIGGER edit config.toml on disk"},
+ {"touch":"C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/codexhome/config.toml"},
+ {"sleep":5000},
+ {"marker":"call3 after a config.toml edit"},
+ {"m":"mcpServer/tool/call","p":{"threadId":"$THREAD","server":"probe","tool":"ping","arguments":{"note":"c3"}}}
+]

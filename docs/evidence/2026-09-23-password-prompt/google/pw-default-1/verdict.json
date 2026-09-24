@@ -1,0 +1,22 @@
+{
+  "mode": "pw",
+  "arm": "default-1",
+  "query": "solaris doors ipc",
+  "url": "https://www.google.com/search?q=solaris%20doors%20ipc&hl=en",
+  "rest": [],
+  "verdict": {
+    "url": "https://www.google.com/sorry/index?continue=https://www.google.com/search%3Fq%3Dsolaris%2520doors%2520ipc%26hl%3Den%26sei%3DW1e0arC8N76ki-gPz_bLgAw&hl=en&q=EgS8WrUoGNyu0dUGIjA8KJMY_0-qhFHX_rBTS3lRdAQbZ7Ko6hxwAkPyho0SsLIkymoTxS-4BHeVDIqG7IcyAVJaAUM",
+    "title": "https://www.google.com/search?q=solaris%20doors%20ipc&hl=en&sei=W1e0arC8N76ki-gPz_bLgAw",
+    "rso": false,
+    "search": false,
+    "resultLinks": 0,
+    "recaptchaIframe": 2,
+    "gRecaptchaDiv": 1,
+    "unusualTraffic": true,
+    "sorryPath": true,
+    "consentHost": false,
+    "consentText": false,
+    "notRobot": false,
+    "bodyHead": "\n\nAbout this page\n\nOur systems have detected unusual traffic from your computer network. This page checks to see if it's really you sending the requests, and not a robot. Why did this happen?\n\n\n\nIP address: <residential address, redacted>\nTime: 2026-09-23T22:49:00Z\nURL: https://www.google.com/search?q=solaris%20doors%20ipc&hl=en&sei=W1e0arC8N76ki-gPz_bLgAw\n"
+  }
+}

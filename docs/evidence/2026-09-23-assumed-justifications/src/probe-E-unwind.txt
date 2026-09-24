@@ -1,0 +1,45 @@
+############ PROBE E -- does an unhandled exception unwind the stack? ############
+host Windows 11 Pro 10.0.26200 | .NET SDK 10.0.401, runtime net10.0 CoreCLR | 2026-09-23
+project .work/assumed-2026-09-23/src/probes/unwind
+
+=========== mode=catchtest ===========
+MODE catchtest: POSITIVE CONTROL, same code, caught outside
+OBSERVED: inner finally ran
+OBSERVED: outer finally ran
+OBSERVED: Dispose ran (using/Dispose)
+OBSERVED: outer catch ran
+OBSERVED: reached the end of Main
+--- exit=0 ---
+
+=========== mode=main ===========
+MODE main: unhandled out of Main
+OBSERVED: AppDomain.UnhandledException handler ran. IsTerminating=True
+Unhandled exception. System.InvalidOperationException: boom
+OBSERVED: inner finally ran
+OBSERVED: outer finally ran
+OBSERVED: Dispose ran (using/Dispose)
+--- exit=127 ---
+
+=========== mode=thread ===========
+MODE thread: unhandled on a background thread
+OBSERVED: AppDomain.UnhandledException handler ran. IsTerminating=True
+Unhandled exception. System.InvalidOperationException: boom
+OBSERVED: inner finally ran
+OBSERVED: outer finally ran
+OBSERVED: Dispose ran (using/Dispose)
+--- exit=127 ---
+
+=========== mode=failfast ===========
+MODE failfast: Environment.FailFast under the same try/finally/using
+Process terminated.
+probe: fail fast
+--- exit=35 ---
+
+=========== mode=stackoverflow ===========
+MODE stackoverflow: StackOverflowException under the same try/finally/using
+Stack overflow.
+Repeated 24092 times:
+--------------------------------
+--------------------------------
+--- exit=127 ---
+

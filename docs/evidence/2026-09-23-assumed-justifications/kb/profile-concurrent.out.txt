@@ -1,0 +1,52 @@
+
+=== ARM CONCURRENT (chrome-headless-shell): two instances, one profile directory ===
+  first  pid=66248 CDP=true exitCode=null
+  second pid=144904 CDP=true exitCode=null
+  second stderr: ["\r","DevTools listening on ws://127.0.0.1:9422/devtools/browser/9d7275ad-f56f-4f08-b20f-46c6b8a3a39b\r","[0923/231723.812:ERROR:net\\disk_cache\\cache_util_win.cc:25] Unable to move the cache: Access is denied. (0x5)\r","[0923/231723.812:ERROR:net\\disk_cache\\cache_util_win.cc:25] Unable to move the cache: Access is denied. (0x5)\r"]
+  both instances wrote 6 interleaved rounds of cookies + localStorage
+  pid=66248 exitCode after graceful close: 0
+  pid=144904 exitCode after graceful close: 0
+  [chrome-headless-shell after both closed] Preferences: unreadable (ENOENT)
+  [chrome-headless-shell after both closed] 4 SQLite files under the profile, PRAGMA integrity_check each:
+      Default\declarative_performance_observer.db   ok
+      Default\DIPS                                  ok
+      Default\Network\Cookies                       ok
+      Default\Shared Dictionary\db                  ok
+  [chrome-headless-shell after both closed] not-ok: 0 of 4
+  [chrome-headless-shell after both closed] LevelDB stores present: Default\Local Storage\leveldb, Default\PersistentOriginTrials, Default\Session Storage, Default\shared_proto_db, Default\shared_proto_db\metadata
+  reopen pid=164600 CDP=true
+  state read back: {"lsKeys":240,"lsTags":["A0","A1","A2","A3","A4","A5"],"cookies":[]}
+
+=== ARM CONCURRENT (full-chrome): two instances, one profile directory ===
+  first  pid=91992 CDP=true exitCode=null
+  second pid=153084 CDP=false exitCode=21
+  second stderr: []
+  pid=91992 exitCode after graceful close: 0
+  Browser.close said: Cannot read properties of null (reading 'newBrowserCDPSession')
+  pid=153084 exitCode after graceful close: 21
+  [full-chrome after both closed] Preferences: exit_type=Normal exited_cleanly=undefined
+  [full-chrome after both closed] 20 SQLite files under the profile, PRAGMA integrity_check each:
+      Default\Account Web Data                      ok
+      Default\Affiliation Database                  ok
+      Default\declarative_performance_observer.db   ok
+      Default\Favicons                              ok
+      Default\History                               ok
+      Default\LocalStorage                          ok
+      Default\Login Data                            ok
+      Default\Login Data For Account                ok
+      Default\Network\Cookies                       ok
+      Default\Network\Device Bound Sessions         ok
+      Default\Network\Reporting and NEL             ok
+      Default\Network\Trust Tokens                  ok
+      Default\ServerCertificate                     ok
+      Default\SessionStorage                        ok
+      Default\Shared Dictionary\db                  ok
+      Default\Top Sites                             ok
+      Default\Web Data                              ok
+      Default\WebStorage\QuotaManager               ok
+      first_party_sets.db                           ok
+      segmentation_platform\ukm_db                  ok
+  [full-chrome after both closed] not-ok: 0 of 20
+  [full-chrome after both closed] LevelDB stores present: Default\chrome_cart_db, Default\ClientCertificates, Default\commerce_subscription_db, Default\discounts_db, Default\discount_infos_db, Default\Extension Rules, Default\Extension Scripts, Default\Extension State, Default, Default\parcel_tracking_db, Default\PersistentOriginTrials, Default\Segmentation Platform\SegmentInfoDB, Default\Segmentation Platform\SignalDB, Default\Segmentation Platform\SignalStorageConfigDB, Default\Service Worker\Database, Default\shared_proto_db, Default\shared_proto_db\metadata, Default\Site Characteristics Database, Default\Sync Data\LevelDB
+  reopen pid=164572 CDP=true
+  state read back: {"lsKeys":0,"lsTags":[],"cookies":[]}

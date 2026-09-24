@@ -119,3 +119,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-09-16-resume`](2026-09-16-resume/README.md) | What a resume costs and which stores survive it |  |
 | [`2026-09-17-cost-ratios`](2026-09-17-cost-ratios/README.md) | Firefox against Chromium on RAM, first paint, idle CPU and profile disk |  |
 | [`2026-09-17-file-paths`](2026-09-17-file-paths/README.md) | Which artifact pointers in a tool result `filePaths: "absolute"` reaches |  |
+| [`2026-09-24-playwright-dashboard`](2026-09-24-playwright-dashboard/README.md) | Playwright's own dashboard over a scratch registry, and the reload that hangs its session list | |

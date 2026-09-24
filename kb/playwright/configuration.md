@@ -857,6 +857,76 @@ is the suite's copy of it. **Planted red 2026-09-23** by removing
 `--enable-automation`: the arm named `Chrome_WidgetWin_1`, title *"Save
 password?"*, which it reports and does not assert.
 
+## What `--enable-automation` changes that a page or a server can see -- measured 2026-09-24
+
+`[FLOATS]` Chromium **154.0.8037.0** (revision **1246**), `@playwright/mcp`
+**0.0.82**, `playwright-core` **1.64.0-alpha-1789764292000**, node **v24.21.0**.
+Rigs, per-arm fingerprints and the Google arms:
+[`docs/evidence/2026-09-23-password-prompt`](../../docs/evidence/2026-09-23-password-prompt/README.md).
+
+**The question, in the maintainer's words, once the switch had been chosen to
+suppress the password prompt:** _"But we do have the outstanding issue of the
+browser identifying as automated. Testable by a google search askign for a
+captcha. Is option a something that triggers that?"_
+
+⭐ **No. Headed through the product's own funnel, the switch changes nothing a
+page or a server can see.** 43 of 43 JS-visible properties identical with and
+without it, and 13 of 14 request headers identical -- the fourteenth being the
+ephemeral port in a header that carries one. **`navigator.webdriver` is `false` in
+both arms.** The switch's observable effect is the one it was chosen for: the
+password-save prompt does not open.
+
+⚠️ **AND IT CORRECTS A CLAIM THIS PROJECT MADE THE DAY BEFORE, which is the more
+useful half.** *Corrected 2026-09-24 (previously recorded on 2026-09-23 as
+"`navigator.webdriver` is TRUE at chromium 1246", which was carried far enough to
+mark [re-verification row 109](../re-verification.md) stale).* **Row 109 is
+correct and was never stale.** The `true` reading came from the researcher's own
+raw `playwright-core` launch, which does not carry
+`--disable-blink-features=AutomationControlled`: Playwright's
+`--remote-debugging-pipe` turns the `EnableAutomationControlled` feature **on**,
+and `@playwright/mcp` appends the blink switch that turns it back off **after**
+that, so the wrapper's argument wins in the real funnel and never in a bare
+`playwright-core` script. The stale mark was reverted in the same change that
+recorded this.
+
+⚠️ **The trap underneath it is worth more than the reading.** Upstream appends
+`--disable-blink-features=AutomationControlled` to the configured arguments
+**unless the configured arguments already contain the string
+`--disable-blink-features`**. So any BrowserAI argument mentioning that switch for
+any reason silently drops upstream's `AutomationControlled` suppression and turns
+`navigator.webdriver` true. That is why this product writes **both** entries
+explicitly, and why the round-trip test asserts both.
+
+### The Google arms, and what they did not establish
+
+**Eight arms, interleaved, from one residential address**: the product funnel with
+the switch and without it, twice each; two *realistic* arms that accept the
+consent interstitial first; and a raw `playwright-core` arm at Playwright's own
+defaults as the outside control. **Every one of the eight met an unusual-traffic
+page or a reCAPTCHA on the search.** The Google home page loads normally in all
+eight.
+
+⚠️ **So the switch is not the cause, and the cause is NOT ESTABLISHED.** An
+outcome that is identical in the arm with the switch, the arm without it and the
+raw-defaults control cannot be attributed to the switch -- and it cannot be
+attributed to anything else here either. Three candidates were left standing and
+none was tested: the address's own reputation, the Chrome for Testing build's
+`sec-ch-ua` brand reading `Chromium` instead of `Google Chrome`, and Playwright's
+remote-debugging pipe. **This entry records a negative result about the switch and
+an open question about Google**, and the second is in
+[not-established](../not-established.md).
+
+**Option b would be identical on the wire by construction**, since seeding
+`credentials_enable_service: false` into the profile's `Preferences` changes no
+command line and no header at all.
+
+**Re-establish it** with `fp.mjs` from the batch, which runs the same fingerprint
+page through four launch paths and diffs the property sets, and with `google.mjs`,
+which is written to take **at most three searches per arm** from one address. ⚠️
+**Re-running the Google half is a live request to a third party from the
+maintainer's own address**, and it produced a captcha on every arm the first time;
+treat a repeat as an experiment on somebody else's service and keep it small.
+
 ## Shutdown
 
 **`setupExitWatchdog`** hooks `stdin` close, `SIGINT` and `SIGTERM`, calls

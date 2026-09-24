@@ -1,0 +1,24 @@
+=== E1: single process, registry seeded with 3762 copies (real dir: 3762) ===
+  watcher ready over 3762 files : 19088 ms
+  200 dead-endpoint connect probes   : 7 ms
+  list() over 3762 entries        : 141616 ms
+  connectable returned               : 2
+  reaped                             : 3760  (left: 2)
+
+=== E2: 8 concurrent list() over 40 dead + 1 live ===
+  LIVE guid: browser@02d56042063e293b7059d750a777d6d4
+  count BEFORE: 41
+  8 concurrent list() finished in 738 ms wall
+    child 0: {"ms":385,"connectable":["browser@02d56042063e293b7059d750a777d6d4"]}
+    child 1: {"ms":394,"connectable":["browser@02d56042063e293b7059d750a777d6d4"]}
+    child 2: {"ms":396,"connectable":["browser@02d56042063e293b7059d750a777d6d4"]}
+    child 3: {"ms":406,"connectable":["browser@02d56042063e293b7059d750a777d6d4"]}
+    child 4: {"ms":392,"connectable":["browser@02d56042063e293b7059d750a777d6d4"]}
+    child 5: {"ms":394,"connectable":["browser@02d56042063e293b7059d750a777d6d4"]}
+    child 6: {"ms":368,"connectable":["browser@02d56042063e293b7059d750a777d6d4"]}
+    child 7: {"ms":364,"connectable":["browser@02d56042063e293b7059d750a777d6d4"]}
+  count AFTER : 1 -> ["browser@02d56042063e293b7059d750a777d6d4"]
+  LIVE descriptor survived 8 concurrent reaps: true
+  live browser after 8 concurrent probes: "survived"  isConnected=true
+
+REAL directory at start: 3762   at end: 3762

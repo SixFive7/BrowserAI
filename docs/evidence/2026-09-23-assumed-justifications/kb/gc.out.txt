@@ -1,0 +1,68 @@
+=== ARM A: .links is EMPTY -- nothing references this tree ===
+--- before ---
+chromium-1244
+chromium-1246
+chromium_headless_shell-1246
+ffmpeg-1011
+firefox-1544
+firefox-1549
+not-a-browser
+reinstall.lock
+winldd-1007
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\a\chromium-1244
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\a\chromium-1246
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\a\chromium_headless_shell-1246
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\a\ffmpeg-1011
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\a\firefox-1544
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\a\firefox-1549
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\a\winldd-1007
+--- after ---
+not-a-browser
+reinstall.lock
+
+=== ARM B: POSITIVE CONTROL -- one .links entry pointing at this playwright-core package ===
+--- before ---
+chromium-1244
+chromium-1246
+chromium_headless_shell-1246
+ffmpeg-1011
+firefox-1544
+firefox-1549
+not-a-browser
+reinstall.lock
+winldd-1007
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\b\chromium-1244
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\b\firefox-1544
+Successfully uninstalled Playwright browsers for the current Playwright installation.
+There are still 5 browsers left, used by other Playwright installations.
+To uninstall Playwright browsers for all installations, re-run with --all flag.
+--- after ---
+chromium-1246
+chromium_headless_shell-1246
+ffmpeg-1011
+firefox-1549
+not-a-browser
+reinstall.lock
+winldd-1007
+
+=== ARM C: does PLAYWRIGHT_SKIP_BROWSER_GC protect the uninstall path? ===
+--- before ---
+chromium-1244
+chromium-1246
+chromium_headless_shell-1246
+ffmpeg-1011
+firefox-1544
+firefox-1549
+not-a-browser
+reinstall.lock
+winldd-1007
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\c\chromium-1244
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\c\chromium-1246
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\c\chromium_headless_shell-1246
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\c\ffmpeg-1011
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\c\firefox-1544
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\c\firefox-1549
+Removing unused browser at C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\gc\c\winldd-1007
+--- after ---
+not-a-browser
+reinstall.lock

@@ -1,0 +1,11 @@
+top 0x11E0F3C pid=145964 vis=false class='MozillaCompositorInitialParentClass' title='' rect=0,0,1,1
+top 0x1A0B7E pid=86028 vis=false class='MozillaBatteryClass' title='Battery Watcher' rect=0,0,136,39
+top 0x210B80 pid=86028 vis=false class='Mozilla_firefox-default_C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-baseline\profile_RemoteWindow' title='' rect=0,0,136,39
+top 0x1503C6 pid=86028 vis=true class='MozillaWindowClass' title='BrowserAI password probe - Nightly' rect=4,4,1300,897
+child-of-0x1503C6 0x4452A5E pid=86028 vis=true class='InputNonClientPointerSource' title='Non Client Input Sink Window' rect=12,4,1292,8
+child-of-0x1503C6 0x9E2960 pid=86028 vis=true class='ReunionWindowingCaptionControls' title='ReunionCaptionControlsWindow' rect=1292,4,1292,4
+child-of-0x1503C6 0x572BF8 pid=145964 vis=true class='MozillaCompositorWindowClass' title='' rect=12,4,1292,889
+top 0x502424 pid=86028 vis=false class='MozillaHiddenWindowClass' title='WinEventWindow' rect=0,0,136,39
+top 0x822048 pid=145964 vis=false class='IME' title='Default IME' rect=0,0,0,0
+top 0x1172B66 pid=86028 vis=false class='IME' title='Default IME' rect=0,0,0,0
+top 0x150B48 pid=86028 vis=false class='MSCTFIME UI' title='MSCTFIME UI' rect=0,0,0,0

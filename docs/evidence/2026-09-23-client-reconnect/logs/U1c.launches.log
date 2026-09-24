@@ -1,0 +1,22 @@
+2026-09-23T21:22:05.942Z U1c-pid133720-1790198525941 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T21:22:05.944Z U1c-pid133720-1790198525941 LAUNCHNO 1
+2026-09-23T21:22:05.948Z U1c-pid133720-1790198525941 IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},"jsonrpc":"2.0","id":0}
+2026-09-23T21:22:05.950Z U1c-pid133720-1790198525941 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-11-25","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance U1c-pid133720-1790198525941."}}
+2026-09-23T21:22:05.950Z U1c-pid133720-1790198525941 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:22:05.952Z U1c-pid133720-1790198525941 IN {"method":"tools/list","jsonrpc":"2.0","id":1}
+2026-09-23T21:22:05.952Z U1c-pid133720-1790198525941 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T21:22:07.141Z U1c-pid133720-1790198525941 IN {"method":"tools/call","params":{"name":"ping","arguments":{"note":"first"},"_meta":{"claudecode/toolUseId":"toolu_0","progressToken":2}},"jsonrpc":"2.0","id":2}
+2026-09-23T21:22:07.142Z U1c-pid133720-1790198525941 OUT {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"pong #1 from U1c-pid133720-1790198525941. note=first. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:22:07.142Z U1c-pid133720-1790198525941 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-U1c-pid133720-1790198525941: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:22:07.143Z U1c-pid133720-1790198525941 PLANNED-EXIT after first tools/call
+2026-09-23T21:22:07.396Z U1c-pid133720-1790198525941 EXIT code=0
+2026-09-23T21:22:07.544Z U1c-pid89772-1790198527544 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T21:22:07.546Z U1c-pid89772-1790198527544 LAUNCHNO 2
+2026-09-23T21:22:07.549Z U1c-pid89772-1790198527544 IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},"jsonrpc":"2.0","id":0}
+2026-09-23T21:22:07.550Z U1c-pid89772-1790198527544 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-11-25","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance U1c-pid89772-1790198527544."}}
+2026-09-23T21:22:07.551Z U1c-pid89772-1790198527544 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:22:07.552Z U1c-pid89772-1790198527544 IN {"method":"tools/call","params":{"name":"ping","arguments":{"note":"second"},"_meta":{"claudecode/toolUseId":"toolu_1","progressToken":1}},"jsonrpc":"2.0","id":1}
+2026-09-23T21:22:07.552Z U1c-pid89772-1790198527544 OUT {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"pong #1 from U1c-pid89772-1790198527544. note=second. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:22:07.552Z U1c-pid89772-1790198527544 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-U1c-pid89772-1790198527544: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:22:07.553Z U1c-pid89772-1790198527544 PLANNED-EXIT after first tools/call
+2026-09-23T21:22:07.814Z U1c-pid89772-1790198527544 EXIT code=0

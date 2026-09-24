@@ -1,0 +1,83 @@
+{
+  "label": "after",
+  "rootPid": 6428,
+  "takenAt": "2026-09-23T23:23:25.4627414+02:00",
+  "pidsInTree": [
+    6428,
+    9000,
+    39552,
+    47076,
+    52516,
+    66656,
+    67232,
+    133452,
+    152648
+  ],
+  "commandLines": [
+    {
+      "pid": 6428,
+      "commandLine": "C:\\Source\\SixFive7\\BrowserAI\\payload\\node\\node.exe probe.mjs --browser firefox --arm hl-baseline --headless"
+    },
+    {
+      "pid": 39552,
+      "commandLine": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-hl-baseline\\profile -juggler-pipe about:blank"
+    },
+    {
+      "pid": 47076,
+      "commandLine": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-hl-baseline\\profile -juggler-pipe about:blank"
+    },
+    {
+      "pid": 52516,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260917210045 -prefsHandle 2692:27337 -prefMapHandle 2696:302946 -ipcHandle 2656 -initialChannelId {b1adf643-16d2-4c48-838a-c37e4dd9f5ed} -parentPid 47076 -win32kLockedDown -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 1 socket"
+    },
+    {
+      "pid": 152648,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260917210045 -prefsHandle 3728:28294 -prefMapHandle 3732:302946 -ipcHandle 3524 -initialChannelId {1bd853fa-3515-4726-a0bc-dbffd5b3fa68} -parentPid 47076 -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 3 rdd"
+    },
+    {
+      "pid": 66656,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 4040:28491 -prefMapHandle 4088:302946 -jsInitHandle 3732:162620 -parentBuildID 20260917210045 -ipcHandle 3464 -initialChannelId {7b8ece89-216e-4d00-b46f-67b0b5bbb4da} -parentPid 47076 -win32kLockedDown -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 4 tab"
+    },
+    {
+      "pid": 9000,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -isForBrowser -prefsHandle 4332:27790 -prefMapHandle 4336:302946 -jsInitHandle 4340:162620 -parentBuildID 20260917210045 -ipcHandle 4348 -initialChannelId {2af64606-d944-4764-9d77-ecf4d092876c} -parentPid 47076 -win32kLockedDown -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 5 tab"
+    },
+    {
+      "pid": 133452,
+      "commandLine": "\"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\firefox.exe\" -contentproc -parentBuildID 20260917210045 -sandboxingKind 0 -prefsHandle 5564:49136 -prefMapHandle 5568:302946 -ipcHandle 5292 -initialChannelId {c7a17119-ee78-4518-b1c5-8b782d86b7cf} -parentPid 47076 -win32kLockedDown -appDir \"C:\\Users\\jori\\AppData\\Local\\BrowserAI\\browsers\\firefox-1549\\firefox\\browser\" - 7 utility"
+    },
+    {
+      "pid": 67232,
+      "commandLine": "pwsh -NoProfile -ExecutionPolicy Bypass -File C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\windows-of.ps1 -RootPid 6428 -Label after -OutFile C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-hl-baseline\\windows-after.json"
+    }
+  ],
+  "windows": [
+    {
+      "level": "top",
+      "hwnd": "0x280316",
+      "pid": 47076,
+      "class": "Mozilla_firefox-default_C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-hl-baseline\\profile_RemoteWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xB82960",
+      "pid": 47076,
+      "class": "MozillaHiddenWindowClass",
+      "title": "WinEventWindow",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0xFF2362",
+      "pid": 47076,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    }
+  ]
+}

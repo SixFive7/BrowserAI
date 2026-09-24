@@ -1,0 +1,53 @@
+ENTRY 10 -- "the single 2023 statement by an unnamed Google engineer that is the entire basis
+for Chrome for Testing may not be redistributed"
+Place: README.md:644 ("the only on-point public statement -- a Google engineer, 2023 -- reads
+those terms as forbidding redistribution"), and the same sentence at
+kb/packaging/dependencies.md:130-132 and kb/not-established.md:78.
+Settled by CITATION, 2026-09-23 -- and the citation narrows the claim.
+
+THE ENGINEER IS NAMEABLE AND THE STATEMENT IS EXACT.
+GoogleChromeLabs/chrome-for-testing issue #21, "License unclear", opened 2023-06-15T16:22:40Z
+by Tobias43, closed 2023-06-16. Read 2026-09-23 through the GitHub API.
+  Q (Tobias43, opening post): "This repository contains an Apache 2.0 LICENSE file. Does this
+     mean that only the code in this repository is under the Apache 2.0 license, or also the
+     whole Chrome for Testing? Or more concretely: Can Chrome for Testing be redistributed as
+     part of a commercial software that uses it for some automation."
+  A (mathiasbynens, author_association MEMBER, 2023-06-16T07:29:05Z):
+     "The license at https://github.com/GoogleChromeLabs/chrome-for-testing/blob/main/LICENSE
+      applies to the code in this repository."
+  Q (Tobias43, 2023-06-16T08:23:22Z): "So which license applies to the Chrome for Testing binary?"
+  A (mathiasbynens, MEMBER, 2023-06-16T08:33:45Z), comment id 1594319082:
+     "Chrome for Testing is a flavor of Google Chrome, so https://www.google.com/chrome/terms/
+      applies."
+     https://github.com/GoogleChromeLabs/chrome-for-testing/issues/21#issuecomment-1594319082
+  Q (Tobias43, 2023-06-16T08:35:41Z): "Ok, so unfortunately no redistribution is possible.
+     Thank you very much for the quick reply!"   <- NOT answered by Google.
+
+THE CORRECTION THIS FORCES. Google's representative said only which TERMS apply. The sentence
+"so no redistribution is possible" is the QUESTIONER's, posted two minutes later, and nobody
+from Google replied to it. So "a Google engineer ... reads those terms as forbidding
+redistribution" attributes to Google a reading Google did not state. What Google stated is the
+pointer; the forbidding is this repository's own reading of the document at the end of it.
+
+THE TRAP BESIDE IT, worth recording because a search falls into it. GoogleChromeLabs/
+chrome-for-testing carries an Apache-2.0 LICENSE file, and a web search for
+"Chrome for Testing redistribute license" surfaces it as though it licensed the browser.
+Bynens' first comment is the thing that rules that out in one sentence: it "applies to the
+code in this repository", which is a dashboard and a JSON API.
+
+WHERE THE POINTER LEADS, so the writer has the chain and not just its first link:
+  https://www.google.com/chrome/terms/ -- "Google Chrome and ChromeOS Additional Terms of
+  Service", Last modified 30 September 2025, fetched 2026-09-23. It states "Most source code
+  for Chrome is available free of charge under open source software license agreements at
+  chrome://credits" and refers the rest to the main Google Terms of Service.
+  https://policies.google.com/terms -- Google Terms of Service, Effective July 30, 2026,
+  fetched 2026-09-23, section "Software in Google services":
+     "You may not copy, modify, distribute, sell, or lease any part of our services or software."
+
+NOT ESTABLISHABLE HERE, and this is the honest verdict on the load-bearing half. Whether those
+two documents forbid redistributing the Chrome for Testing binaries this product provisions is
+a legal reading, and it is the same class of question this repository already refuses to answer
+for the CsWin32 metadata licence -- nobody here may supply one. What WOULD establish it: a
+written answer from Google to that question, or counsel's opinion. What has changed today is
+that the evidence is no longer a half-remembered remark by an unnamed person -- it is a dated,
+attributable, quotable comment, and it says less than the repository has been saying it says.

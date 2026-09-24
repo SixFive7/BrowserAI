@@ -1,0 +1,4 @@
+23:04:57.171 start pid=63800 IsInputRedirected=True
+23:04:57.175 calling Console.ReadKey(true)
+23:04:57.178 THREW System.InvalidOperationException: Cannot read keys when either application does not have a console or when console input has been redirected. Try Console.Read.
+23:04:57.179 end

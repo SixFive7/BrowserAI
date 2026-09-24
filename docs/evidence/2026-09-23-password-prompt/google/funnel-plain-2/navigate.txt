@@ -1,0 +1,9 @@
+### Page
+- Page URL: https://www.google.com/sorry/index?continue=https://www.google.com/search%3Fq%3Dntfs%2520reparse%2520point%2520junction%26hl%3Den%26sei%3DeFa0as-QEJrd7_UPhejW0Qg&hl=en&q=EgS8WrUoGPis0dUGIjAfTbP37KXCAmfaDi6U_gR8W816BwzPZgZ9Kl8mxxJCFxbBcUGXoYec9Q7BSC2wst0yAVJaAUM
+- Page Title: https://www.google.com/search?q=ntfs%20reparse%20point%20junction&hl=en&sei=eFa0as-QEJrd7_UPhejW0Qg
+- HTTP status: 429
+- Console: 3 errors, 1 warnings
+### Snapshot
+- [Snapshot](C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\google\funnel-plain-2\output\page-2026-09-23T22-45-11-822Z.yml)
+### Events
+- New console entries: C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\google\funnel-plain-2\output\console-2026-09-23T22-45-10-903Z.log#L1-L5

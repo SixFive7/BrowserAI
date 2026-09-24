@@ -1,0 +1,20 @@
+[g] mode=funnel arm=realistic-plain rest=["--realistic"]
+[g] https://www.google.com/?hl=en
+[g] funnel launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\google\\funnel-realistic-plain\\downloads","channel":"chrome-for-testing"}
+[g] realistic: consent reject ref=e126
+[g] realistic: search box ref=e141
+[g] VERDICT {
+ "url": "https://www.google.com/sorry/index?continue=https://www.google.com/search%3Fq%3Dwindows%2Bstructured%2Bexception%2Bhandling%26sca_esv%3Dd35e14188c1eb546%26hl%3Den%26source%3Dhp%26ei%3Dz1a0arCNIq6A9u8P4vKc2Aw%26iflsig%3DABILxe8AAAAAarRk3_7cPGnjN8t_0xGVcUeIICeGBa-f%26ved%3D0ahUKEwjwsIKN5IWXAxUugP0HHWI5B8sQ4dUDCBk%26uact%3D5%26oq%3Dwindows%2Bstructured%2Bexception%2Bhandling%26gs_lp%3DEgdnd3Mtd2l6IiV3aW5kb3dzIHN0cnVjdHVyZWQgZXhjZXB0aW9uIGhhbmRsaW5nSBJQAFgAcAB4AJABAJgBAKABAKoBALgBA8gBAPgBAZgCAKACAJgDAJIHAKAHALIHALgHAMIHAMgHAIAIAQ%26sclient%3Dgws-wiz%26sei%3D2Fa0aq7gFOqE9u8P2ualyQE&hl=en&q=EgS8WrUoGNit0dUGIjABppXHYSxX10JL97ejz12F9kcwfY9rlplLa2ZlLcBAT7lRhDZwATPYn9AUs_hlS8EyAVJaAUM",
+ "title": "https://www.google.com/search?q=windows+structured+exception+handling&sca_esv=d35e14188c1eb546&hl=en&source=hp&ei=z1a0arCNIq6A9u8P4vKc2Aw&iflsig=ABILxe8AAAAAarRk3_7cPGnjN8t_0xGVcUeIICeGBa-f&ved=0ahUKEwjwsIKN5IWXAxUugP0HHWI5B8sQ4dUDCBk&uact=5&oq=windows+structured+exception+handling&gs_lp=Egdnd3Mtd2l6IiV3aW5kb3dzIHN0cnVjdHVyZWQgZXhjZXB0aW9uIGhhbmRsaW5nSBJQAFgAcAB4AJABAJgBAKABAKoBALgBA8gBAPgBAZgCAKACAJgDAJIHAKAHALIHALgHAMIHAMgHAIAIAQ&sclient=gws-wiz&sei=2Fa0aq7gFOqE9u8P2ualyQE",
+ "rso": false,
+ "search": false,
+ "resultLinks": 0,
+ "recaptchaIframe": 2,
+ "gRecaptchaDiv": 1,
+ "unusualTraffic": true,
+ "sorryPath": true,
+ "consentHost": false,
+ "consentText": false,
+ "notRobot": false,
+ "bodyHead": "\\n\\nAbout this page\\n\\nOur systems have detected unusual traffic from your computer network. This page checks to see if it's really you sending the requests, and not a robot. Why did this happen?\\n\\n\\n\\nIP address: <residential address, redacted>\\nTime: 2026-09-23T22:46:48Z\\nURL: https://www.google.com/search?q=windows+structured+exception+handling&sca_esv=d35e14188c1eb546&hl=en&source=hp&ei=z1a0arCNIq6A9u8P4vKc2Aw&iflsig=ABILxe8AAAAAarRk3_7cPGnjN8t_0xGVcUeIICeGBa-f&ved=0ahUKEwjwsIKN5IWXAxUugP0HHWI5B8sQ4dUDCBk&uact=5&oq=wi"
+}

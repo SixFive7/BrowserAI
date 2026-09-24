@@ -1,0 +1,133 @@
+
+################ A1 ################
+[A1] registry dir          : C:\Users\jori\AppData\Local\ms-playwright\b
+[A1] count BEFORE launch   : 3761
+[A1] launched. browser guid: browser@8878d847f0992cde26bb129da77a46d2
+[A1] browser version       : 154.0.8037.0
+[A1] count after launch, BEFORE bind: 3761  (new: [])
+[A1] bind() endpoint       : \\.\pipe\pw-e52b5188-browser-browser@8878d8
+[A1] count AFTER bind      : 3762
+[A1] files ADDED by me     : ["browser@8878d847f0992cde26bb129da77a46d2"]
+[A1] --- content of browser@8878d847f0992cde26bb129da77a46d2 ---
+{
+  "playwrightVersion": "1.64.0-alpha-1789764292000",
+  "playwrightLib": "C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\playwright-core",
+  "title": "t7-descriptor-probe-A1",
+  "browser": {
+    "guid": "browser@8878d847f0992cde26bb129da77a46d2",
+    "browserName": "chromium",
+    "launchOptions": {
+      "ignoreAllDefaultArgs": false,
+      "handleSIGINT": false,
+      "handleSIGTERM": false,
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\downloads",
+      "tracesDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\traces",
+      "noDefaultViewport": false,
+      "selectorEngines": [],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\profile-a1"
+    },
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\profile-a1"
+  },
+  "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@8878d8",
+  "workspaceDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23"
+}
+[A1] confirmed MINE by content: ["browser@8878d847f0992cde26bb129da77a46d2"]
+[A1] page works before delete: innerText="alive-1"
+[A1] DELETED while running : browser@8878d847f0992cde26bb129da77a46d2  exists-now=false
+[A1] recreated after 1.5s? : [false]
+[A1] page AFTER delete     : OK  innerText="alive-2" evaluate=42
+[A1] newPage AFTER delete  : OK  title=""
+[A1] close()               : OK in 45ms
+[A1] browser.isConnected() : false
+[A1] count AFTER close     : 3761
+[A1] my descriptor present after close: [false]
+[A1] net new vs BEFORE     : []
+
+################ A2 ################
+[A2] registry dir          : C:\Users\jori\AppData\Local\ms-playwright\b
+[A2] count BEFORE launch   : 3761
+[A2] launched. browser guid: browser@55d034fabc61228817ad66927b9cc5a1
+[A2] browser version       : 154.0.8037.0
+[A2] count after launch, BEFORE bind: 3761  (new: [])
+[A2] bind() endpoint       : \\.\pipe\pw-e52b5188-browser-browser@55d034
+[A2] count AFTER bind      : 3762
+[A2] files ADDED by me     : ["browser@55d034fabc61228817ad66927b9cc5a1"]
+[A2] --- content of browser@55d034fabc61228817ad66927b9cc5a1 ---
+{
+  "playwrightVersion": "1.64.0-alpha-1789764292000",
+  "playwrightLib": "C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\playwright-core",
+  "title": "t7-descriptor-probe-A2",
+  "browser": {
+    "guid": "browser@55d034fabc61228817ad66927b9cc5a1",
+    "browserName": "chromium",
+    "launchOptions": {
+      "ignoreAllDefaultArgs": false,
+      "handleSIGINT": false,
+      "handleSIGTERM": false,
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\downloads",
+      "tracesDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\traces",
+      "noDefaultViewport": false,
+      "selectorEngines": [],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\profile-a2"
+    },
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\profile-a2"
+  },
+  "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@55d034",
+  "workspaceDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23"
+}
+[A2] confirmed MINE by content: ["browser@55d034fabc61228817ad66927b9cc5a1"]
+[A2] page works before delete: innerText="alive-1"
+[A2] close()               : OK in 40ms
+[A2] browser.isConnected() : false
+[A2] count AFTER close     : 3762
+[A2] my descriptor present after close: [true]
+[A2] net new vs BEFORE     : ["browser@55d034fabc61228817ad66927b9cc5a1"]
+
+################ A3: delete AFTER close ################
+[A3] deleted after close       : browser@55d034fabc61228817ad66927b9cc5a1 exists-now=false
+
+################ A4 ################
+[A4] registry dir          : C:\Users\jori\AppData\Local\ms-playwright\b
+[A4] count BEFORE launch   : 3761
+[A4] launched. browser guid: browser@8c7f1e854f9b35a0d6f9bf3c4efa32fe
+[A4] browser version       : 154.0.8037.0
+[A4] count after launch, BEFORE bind: 3761  (new: [])
+[A4] bind() endpoint       : \\.\pipe\pw-e52b5188-browser-browser@8c7f1e
+[A4] count AFTER bind      : 3762
+[A4] files ADDED by me     : ["browser@8c7f1e854f9b35a0d6f9bf3c4efa32fe"]
+[A4] --- content of browser@8c7f1e854f9b35a0d6f9bf3c4efa32fe ---
+{
+  "playwrightVersion": "1.64.0-alpha-1789764292000",
+  "playwrightLib": "C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\playwright-core",
+  "title": "t7-descriptor-probe-A4",
+  "browser": {
+    "guid": "browser@8c7f1e854f9b35a0d6f9bf3c4efa32fe",
+    "browserName": "chromium",
+    "launchOptions": {
+      "ignoreAllDefaultArgs": false,
+      "handleSIGINT": false,
+      "handleSIGTERM": false,
+      "headless": true,
+      "downloadsPath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\downloads",
+      "tracesDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\traces",
+      "noDefaultViewport": false,
+      "selectorEngines": [],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\profile-a4"
+    },
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23\\profile-a4"
+  },
+  "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@8c7f1e",
+  "workspaceDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\t7-2026-09-23"
+}
+[A4] confirmed MINE by content: ["browser@8c7f1e854f9b35a0d6f9bf3c4efa32fe"]
+[A4] page works before delete: innerText="alive-1"
+[A4] close()               : OK in 45ms
+[A4] browser.isConnected() : false
+[A4] count AFTER close     : 3762
+[A4] my descriptor present after close: [true]
+[A4] net new vs BEFORE     : ["browser@8c7f1e854f9b35a0d6f9bf3c4efa32fe"]
+[A4] cleaned up my descriptor  : browser@8c7f1e854f9b35a0d6f9bf3c4efa32fe exists-now=false
+
+FINAL registry count: 3761

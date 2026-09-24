@@ -1,0 +1,37 @@
+2026-09-23T22:42:52.956Z 163988 R LAUNCH relay holding the client pipes; server dir=C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-install
+2026-09-23T22:42:52.965Z 163988 R CHILD-SPAWNED gen=1 pid=42248 from C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\ho-install\s.js
+2026-09-23T22:42:53.008Z 42248 S(v1.0.0) LAUNCH real server version=1.0.0
+2026-09-23T22:42:53.012Z 42248 S(v1.0.0) IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},
+2026-09-23T22:42:53.014Z 42248 S(v1.0.0) IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:42:53.016Z 42248 S(v1.0.0) IN {"method":"tools/list","jsonrpc":"2.0","id":1}
+2026-09-23T22:42:53.016Z 42248 S(v1.0.0) OUT tools/list
+2026-09-23T22:42:53.098Z 42248 S(v1.0.0) IN {"method":"tools/call","params":{"name":"ping","arguments":{"note":"c1"},"_meta":{"claudecode/toolUseId":"toolu_0","progressToken":2}},"jsonrpc":"2.0","id":2}
+2026-09-23T22:42:53.098Z 42248 S(v1.0.0) OUT tools/call #1 answered
+2026-09-23T22:42:53.174Z 163988 R SWAP-REQUESTED marker seen by poller
+2026-09-23T22:42:53.175Z 163988 R SWAP-BEGIN queueing client frames; in-flight=0
+2026-09-23T22:42:53.176Z 42248 S(v1.0.0) STDIN-END 
+2026-09-23T22:42:53.176Z 42248 S(v1.0.0) EXIT code=0
+2026-09-23T22:42:53.184Z 163988 R CHILD-EXIT gen=1 code=0 swapping=true
+2026-09-23T22:42:53.236Z 163988 R SWAP-OLD-GONE exitCode=0 after 60ms
+2026-09-23T22:42:54.357Z 163988 R SWAP-APPLY-DONE after 1120ms
+2026-09-23T22:42:54.362Z 163988 R CHILD-SPAWNED gen=2 pid=127912 from C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\ho-install\s.js
+2026-09-23T22:42:54.363Z 163988 R SWAP-REPLAY initialize replayed to the new S
+2026-09-23T22:42:54.407Z 127912 S(v2.0.0) LAUNCH real server version=2.0.0
+2026-09-23T22:42:54.408Z 127912 S(v2.0.0) OUT tools/list_changed announced by the post-apply server
+2026-09-23T22:42:54.410Z 163988 R QUEUED tools/list id=3
+2026-09-23T22:42:54.413Z 127912 S(v2.0.0) IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},
+2026-09-23T22:42:54.413Z 127912 S(v2.0.0) IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:42:54.413Z 163988 R CHILD-REPLAY-INIT-OK gen=2
+2026-09-23T22:42:54.622Z 163988 R SWAP-RESEND in-flight id=3
+2026-09-23T22:42:54.623Z 127912 S(v2.0.0) IN {"method":"tools/list","jsonrpc":"2.0","id":3}
+2026-09-23T22:42:54.624Z 163988 R SWAP-END forwarding resumed; the client saw nothing; swaps=1
+2026-09-23T22:42:54.624Z 127912 S(v2.0.0) OUT tools/list
+2026-09-23T22:42:54.625Z 127912 S(v2.0.0) IN {"method":"tools/list","jsonrpc":"2.0","id":3}
+2026-09-23T22:42:54.625Z 127912 S(v2.0.0) OUT tools/list
+2026-09-23T22:42:54.648Z 127912 S(v2.0.0) IN {"method":"tools/call","params":{"name":"ping","arguments":{"note":"c2"},"_meta":{"claudecode/toolUseId":"toolu_1","progressToken":4}},"jsonrpc":"2.0","id":4}
+2026-09-23T22:42:54.649Z 127912 S(v2.0.0) OUT tools/call #1 answered
+2026-09-23T22:42:54.700Z 163988 R CLIENT-STDIN-END client closed; shutting the child down
+2026-09-23T22:42:54.701Z 127912 S(v2.0.0) STDIN-END 
+2026-09-23T22:42:54.701Z 127912 S(v2.0.0) EXIT code=0
+2026-09-23T22:42:54.711Z 163988 R CHILD-EXIT gen=2 code=0 swapping=false
+2026-09-23T22:42:55.213Z 163988 R EXIT code=0

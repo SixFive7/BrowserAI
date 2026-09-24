@@ -1,0 +1,7 @@
+{"type":"thread.started","thread_id":"01a0d071-74b2-72d3-96be-30b0b616a676"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"inflight"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"inflight"},"result":{"content":[{"type":"text","text":"pong from RELAY-CHILD pid=123936 version=2.0.0 call#1 note=inflight"}],"structured_content":null},"error":null,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"done"}}
+{"type":"turn.completed","usage":{"input_tokens":84,"cached_input_tokens":24,"cache_write_input_tokens":0,"output_tokens":10,"reasoning_output_tokens":0}}

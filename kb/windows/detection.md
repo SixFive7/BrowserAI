@@ -1605,3 +1605,40 @@ three of those four rows never reach a caller.
   installer running elevated can set a different DACL.
 - **Session 0 and services.** Every measurement here is from an interactive
   session-1 token.
+
+## The session index heals itself on the read path -- measured 2026-09-23
+
+`[MACHINE]` Windows **10.0.26200**, BrowserAI **1.0.0**, 22 live servers, 6 index
+entries. Taken read-only, at the maintainer's instruction, as the test of an index
+nobody had watched work under load:
+[`docs/evidence/2026-09-23-instances`](../../docs/evidence/2026-09-23-instances/README.md).
+
+**The index held six entries and three of them pointed at directories that no
+longer existed** -- scratch trees a suite run had created and removed.
+`browserai_list` reported **exactly the three live ones**, with their purposes and
+their in-use state, and **the read pruned the three stale entries as it went**.
+Nothing was asked to repair anything; the repair is what reading is.
+
+⭐ **The cross-checks agreed, which is the part that makes this a measurement and
+not an anecdote.** The lock files and the find path were read independently and
+named the same three sessions. An index that pruned too eagerly would have
+disagreed with them, and that is the failure this arrangement is exposed to: the
+predicate is *the directory is gone*, so a session on a disconnected drive or
+inside a container that is momentarily unavailable is indistinguishable from one
+that was deleted.
+
+⚠️ **Only 4 of the 22 live servers had ever opened a session at all**, and no
+browser was alive for any of them. A server is started by a client at session
+start and lives as long as that client; **most of them never do anything**. That
+is the population fact behind
+[the update lane](../../DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client):
+what holds a staged update is overwhelmingly processes with nothing to lose.
+
+⚠️ **The run also left 8 orphan instance directories** under
+`%LOCALAPPDATA%\BrowserAI\instances`, from a suite run earlier that day, each with
+an empty profile. They are not index entries and nothing prunes them.
+
+**Re-establish it** by calling `browserai_list` against a root whose index holds an
+entry for a directory that has been removed, and comparing the entry count before
+and after. ⚠️ **Do it on a scratch root**: reading the real index is what prunes
+it, so the measurement consumes its own precondition.

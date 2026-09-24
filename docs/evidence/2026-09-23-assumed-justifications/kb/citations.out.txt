@@ -1,0 +1,57 @@
+PROBE: citations read out of the resolved payload, 2026-09-23
+playwright-core 1.64.0-alpha-1789764292000 | @playwright/mcp 0.0.82 | node v24.21.0
+file: payload/mcp/node_modules/playwright-core/lib/coreBundle.js
+
+--- INSTALLATION_COMPLETE short-circuits the download (33099-33106) ---
+async function downloadBrowserWithProgressBar(title, browserDirectory, executablePath, downloadURLs, downloadFileName, downloadSocketTimeout, force) {
+  if (await existsAsync(browserDirectoryToMarkerFilePath(browserDirectory))) {
+    debugLogger.log("install", `${title} is already downloaded.`);
+    if (force)
+      debugLogger.log("install", `force-downloading ${title}.`);
+    else
+      return;
+  }
+
+--- the GC is gated on PLAYWRIGHT_SKIP_BROWSER_GC only on the INSTALL path (34280-34281) ---
+          if (options?.gc !== false && !getAsBooleanFromENV("PLAYWRIGHT_SKIP_BROWSER_GC"))
+            await this._validateInstallationCache(linksDir);
+
+--- and NOT on the uninstall path (34339-34341) ---
+          });
+        }
+        await this._validateInstallationCache(linksDir);
+
+--- what the GC deletes: every isBrowserDirectory not in usedBrowserPaths (34519-34537) ---
+      }
+      async _deleteStaleBrowsers(browserList) {
+        const usedBrowserPaths = /* @__PURE__ */ new Set();
+        for (const browser of browserList) {
+          const { browserName, browserVersion, browserPath } = browser;
+          const shouldHaveMarkerFile = browserName === "chromium" && (browserVersion >= 786218 || browserVersion < 3e5) || browserName === "firefox" && browserVersion >= 1128 || browserName === "webkit" && browserVersion >= 1307 || // All new applications have a marker file right away.
+          browserName !== "firefox" && browserName !== "chromium" && browserName !== "webkit";
+          if (!shouldHaveMarkerFile || await existsAsync(browserDirectoryToMarkerFilePath(browserPath)))
+            usedBrowserPaths.add(browserPath);
+        }
+        let downloadedBrowsers = (await import_fs19.default.promises.readdir(registryDirectory)).map((file) => import_path20.default.join(registryDirectory, file));
+        downloadedBrowsers = downloadedBrowsers.filter((file) => isBrowserDirectory(file));
+        const directories = new Set(downloadedBrowsers);
+        for (const browserDirectory of usedBrowserPaths)
+          directories.delete(browserDirectory);
+        for (const directory of directories)
+          logPolitely("Removing unused browser at " + directory);
+        await removeFolders([...directories]);
+      }
+
+--- isBrowserDirectory: basename prefix match only (33399-33406) ---
+function isBrowserDirectory(browserDirectory) {
+  const baseName = import_path20.default.basename(browserDirectory);
+  for (const browserName of allDownloadableDirectoriesThatEverExisted) {
+    if (baseName.startsWith(browserName.replace(/-/g, "_") + "-"))
+      return true;
+  }
+  return false;
+}
+
+--- winldd validation still passes chrome-win, a directory Chromium does not extract to (33917, 33935) ---
+          _validateHostRequirements: (sdkLanguage) => this._validateHostRequirements(sdkLanguage, chromium.dir, ["chrome-linux"], [], ["chrome-win"]),
+          _validateHostRequirements: (sdkLanguage) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShell.dir, ["chrome-linux"], [], ["chrome-win"]),

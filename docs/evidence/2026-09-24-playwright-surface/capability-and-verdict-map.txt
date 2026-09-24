@@ -1,0 +1,93 @@
+playwright-core 1.64.0-alpha-1789764292000 / @playwright/mcp 0.0.82
+counts: {'internalRegistry': 83, 'exposedMaximum': 72, 'defaultSurface': 25, 'skillOnly': 11}
+declaredCapabilities: ['config', 'core', 'core-navigation', 'core-tabs', 'core-input', 'core-install', 'network', 'pdf', 'storage', 'testing', 'vision', 'devtools']
+unconditional (always on): ['core', 'core-input', 'core-navigation', 'core-tabs']
+carrying no tool: ['core-install']
+BrowserAI grants: ["config","vision","devtools","storage","network","pdf","testing"] (BrowserConfiguration.cs:339)
+
+tool                               capability       onWire   BrowserAI verdict
+browser_get_config                 config           yes       allow
+browser_close                      core             yes       allow
+browser_resize                     core             yes       allow
+browser_console_messages           core             yes       allow
+browser_console_clear              core             no(skill) NO ROW
+browser_handle_dialog              core             yes       allow
+browser_emulate_media              core             yes       allow
+browser_evaluate                   core             yes       allow
+browser_file_upload                core             yes       allow
+browser_drop                       core             yes       allow
+browser_find                       core             yes       allow
+browser_fill_form                  core             yes       allow
+browser_network_requests           core             yes       allow
+browser_network_request            core             yes       allow
+browser_network_clear              core             no(skill) NO ROW
+browser_run_code_unsafe            core             yes       allow
+browser_take_screenshot            core             yes       allow
+browser_snapshot                   core             yes       allow
+browser_click                      core             yes       allow
+browser_drag                       core             yes       allow
+browser_hover                      core             yes       allow
+browser_select_option              core             yes       allow
+browser_wait_for                   core             yes       allow
+browser_webmcp_list                core             no(skill) NO ROW
+browser_webmcp_call                core             no(skill) NO ROW
+browser_navigate                   core-navigation  yes       allow
+browser_navigate_back              core-navigation  yes       allow
+browser_navigate_forward           core-navigation  no(skill) NO ROW
+browser_reload                     core-navigation  no(skill) NO ROW
+browser_tabs                       core-tabs        yes       allow
+browser_press_key                  core-input       yes       allow
+browser_type                       core-input       yes       allow
+browser_press_sequentially         core-input       no(skill) NO ROW
+browser_keydown                    core-input       no(skill) NO ROW
+browser_keyup                      core-input       no(skill) NO ROW
+browser_check                      core-input       no(skill) NO ROW
+browser_uncheck                    core-input       no(skill) NO ROW
+browser_network_state_set          network          yes       allow
+browser_route                      network          yes       allow
+browser_route_list                 network          yes       allow
+browser_unroute                    network          yes       allow
+browser_pdf_save                   pdf              yes       allow
+browser_cookie_list                storage          yes       allow
+browser_cookie_get                 storage          yes       allow
+browser_cookie_set                 storage          yes       allow
+browser_cookie_delete              storage          yes       allow
+browser_cookie_clear               storage          yes       allow
+browser_storage_state              storage          yes       allow
+browser_set_storage_state          storage          yes       allow
+browser_localstorage_list          storage          yes       allow
+browser_localstorage_get           storage          yes       allow
+browser_localstorage_set           storage          yes       allow
+browser_localstorage_delete        storage          yes       allow
+browser_localstorage_clear         storage          yes       allow
+browser_sessionstorage_list        storage          yes       allow
+browser_sessionstorage_get         storage          yes       allow
+browser_sessionstorage_set         storage          yes       allow
+browser_sessionstorage_delete      storage          yes       allow
+browser_sessionstorage_clear       storage          yes       allow
+browser_generate_locator           testing          yes       allow
+browser_verify_element_visible     testing          yes       allow
+browser_verify_text_visible        testing          yes       allow
+browser_verify_list_visible        testing          yes       allow
+browser_verify_value               testing          yes       allow
+browser_mouse_move_xy              vision           yes       allow
+browser_mouse_click_xy             vision           yes       allow
+browser_mouse_drag_xy              vision           yes       allow
+browser_mouse_down                 vision           yes       allow
+browser_mouse_up                   vision           yes       allow
+browser_mouse_wheel                vision           yes       allow
+browser_resume                     devtools         yes       allow
+browser_highlight                  devtools         yes       allow
+browser_hide_highlight             devtools         yes       allow
+browser_annotate                   devtools         yes       deny
+browser_start_recording            devtools         yes       allow
+browser_stop_recording             devtools         yes       allow
+browser_start_tracing              devtools         yes       allow
+browser_stop_tracing               devtools         yes       allow
+browser_start_video                devtools         yes       allow
+browser_stop_video                 devtools         yes       allow
+browser_video_chapter              devtools         yes       allow
+browser_video_show_actions         devtools         yes       allow
+browser_video_hide_actions         devtools         yes       allow
+
+authored by BrowserAI: ['browserai_init', 'browserai_resume', 'browserai_catch_up', 'browserai_list', 'browserai_destroy', 'browserai_set_purpose', 'browserai_reinstall_browser', 'browserai_page_tool']

@@ -1,0 +1,9 @@
+### Result
+"{\"url\":\"https://www.google.com/sorry/index?continue=https://www.google.com/search%3Fq%3Dntfs%2520reparse%2520point%2520junction%26hl%3Den%26sei%3DeFa0as-QEJrd7_UPhejW0Qg&hl=en&q=EgS8WrUoGPis0dUGIjAfTbP37KXCAmfaDi6U_gR8W816BwzPZgZ9Kl8mxxJCFxbBcUGXoYec9Q7BSC2wst0yAVJaAUM\",\"title\":\"https://www.google.com/search?q=ntfs%20reparse%20point%20junction&hl=en&sei=eFa0as-QEJrd7_UPhejW0Qg\",\"rso\":false,\"search\":false,\"resultLinks\":0,\"recaptchaIframe\":2,\"gRecaptchaDiv\":1,\"unusualTraffic\":true,\"sorryPath\":true,\"consentHost\":false,\"consentText\":false,\"notRobot\":false,\"bodyHead\":\"\\n\\nAbout this page\\n\\nOur systems have detected unusual traffic from your computer network. This page checks to see if it's really you sending the requests, and not a robot. Why did this happen?\\n\\n\\n\\nIP address: <residential address, redacted>\\nTime: 2026-09-23T22:45:12Z\\nURL: https://www.google.com/search?q=ntfs%20reparse%20point%20junction&hl=en&sei=eFa0as-QEJrd7_UPhejW0Qg\\n\"}"
+### Page
+- Page URL: https://www.google.com/sorry/index?continue=https://www.google.com/search%3Fq%3Dntfs%2520reparse%2520point%2520junction%26hl%3Den%26sei%3DeFa0as-QEJrd7_UPhejW0Qg&hl=en&q=EgS8WrUoGPis0dUGIjAfTbP37KXCAmfaDi6U_gR8W816BwzPZgZ9Kl8mxxJCFxbBcUGXoYec9Q7BSC2wst0yAVJaAUM
+- Page Title: https://www.google.com/search?q=ntfs%20reparse%20point%20junction&hl=en&sei=eFa0as-QEJrd7_UPhejW0Qg
+- HTTP status: 429
+- Console: 3 errors, 2 warnings
+### Events
+- New console entries: C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\google\funnel-plain-2\output\console-2026-09-23T22-45-10-903Z.log#L6

@@ -1,0 +1,11 @@
+[
+ {"m":"initialize","p":{"clientInfo":{"name":"probe-driver","title":"probe","version":"1.0.0"}}},
+ {"m":"thread/start","p":{}},
+ {"marker":"TURN 1 START"},
+ {"m":"turn/start","p":{"threadId":"$THREAD","input":[{"type":"text","text":"Call the ping tool."}]},"timeout":90000},
+ {"sleep":4000},
+ {"marker":"TURN 2 START (same process, same thread, server is dead)"},
+ {"m":"turn/start","p":{"threadId":"$THREAD","input":[{"type":"text","text":"Call the ping tool again."}]},"timeout":90000},
+ {"sleep":4000},
+ {"marker":"END"}
+]

@@ -1,0 +1,5 @@
+seeded scratch registry with 3762 copies (real dir has 3762)
+LIVE guid: browser@95ce413d4567a489d55fdf6c9848a5d2
+count BEFORE: 3763
+
+forking 8 concurrent list() processes...

@@ -1,0 +1,41 @@
+ENTRY 7 -- "two STACK.md rows justifying components nothing in the tree references"
+MEASURED 2026-09-23 against the tracked corpus (git grep = git's index, which is the oracle
+CLAUDE.md names for the tree-as-text scans).
+
+THE TWO ROWS:
+  STACK.md:30  | Snapshots      | `Verify.TUnit` (latest; 31.28.0 as of 2026-07-31) | ... |
+  STACK.md:32  | External smoke | `@modelcontextprotocol/inspector` 2.2.0           | ... |
+
+POSITIVE CONTROL first, because the finding is an absence. A package this tree really does
+reference:
+  $ git grep -l "TUnit" -- '*.csproj' 'Directory.Packages.props' 'tests/**/packages.lock.json'
+    Directory.Packages.props
+    tests/BrowserAI.Tests/BrowserAI.Tests.csproj
+    tests/BrowserAI.Tests/packages.lock.json
+  -> the search finds a referenced package in all three places a reference can live.
+
+THE MEASUREMENT:
+  $ git grep -il "verify\.tunit|verifytunit|verify\.xunit"
+    .gitignore            (a COMMENT: "*.received.* is already ignored above ... which is
+                           exactly what Verify.TUnit needs")
+    STACK.md              (the row itself)
+    kb/packaging/dependencies.md  (the provenance stamp for the row)
+
+  $ git grep -il "inspector"
+    HAZARDS.md            (a row citing the kb line)
+    STACK.md              (the row itself)
+    kb/mcp/protocol.md    (the kb line the row is drawn from)
+    kb/packaging/dependencies.md  (the provenance stamp)
+
+  $ grep -c "inspector" build/payload/package-lock.json
+    0
+
+  Directory.Packages.props declares 11 PackageVersion items and neither Verify nor any
+  Verify.* is among them; no .csproj names either; the npm payload manifest declares exactly
+  one dependency, "@playwright/mcp": "latest".
+
+CONCLUSION, stated as the predicate: of the files git says this repository holds, the ones
+mentioning Verify.TUnit are three and the ones mentioning inspector are four, and EVERY one
+of them is a document or a comment. Neither name appears in a project file, a lock file, a
+build script or a CI definition. So both rows justify a choice that was never taken up --
+they record a decision about what to use, and nothing uses it.

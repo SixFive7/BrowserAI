@@ -1,0 +1,1267 @@
+var init_commands = __esm({
+  "packages/playwright-core/src/tools/cli-daemon/commands.ts"() {
+    "use strict";
+    init_command();
+    z33 = require("./utilsBundle").z;
+    elementTargetDescription2 = "Exact target element reference from the page snapshot, or a unique element selector";
+    numberArg = z33.preprocess((val, ctx) => {
+      const number = Number(val);
+      if (Number.isNaN(number)) {
+        ctx.issues.push({
+          code: "custom",
+          message: `expected number, received '${val}'`,
+          input: val
+        });
+      }
+      return number;
+    }, z33.number());
+    stringArrayArg = z33.union([z33.string(), z33.array(z33.string())]).transform((v) => Array.isArray(v) ? v : [v]);
+    open3 = declareCommand({
+      name: "open",
+      description: "Open the browser",
+      category: "core",
+      args: z33.object({
+        url: z33.string().optional().describe("The URL to navigate to")
+      }),
+      options: z33.object({
+        browser: z33.string().optional().describe("Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge."),
+        config: z33.string().optional().describe("Path to the configuration file, defaults to .playwright/cli.config.json"),
+        device: z33.string().optional().describe('Emulate a specific device, for example "iPhone 15".'),
+        headed: z33.boolean().optional().describe("Run browser in headed mode"),
+        ["idle-timeout"]: numberArg.optional().describe("Shut the session down after this many milliseconds without a command. Defaults to one hour for headless browsers, never for headed ones. Pass 0 to disable."),
+        mobile: z33.boolean().optional().describe("Emulate a generic mobile device (Pixel 10 for Chromium, iPhone 17 for WebKit). Mobile pages are usually lighter, which saves tokens."),
+        persistent: z33.boolean().optional().describe("Use persistent browser profile"),
+        profile: z33.string().optional().describe("Path to a persistent user data directory.")
+      }),
+      toolName: "",
+      toolParams: () => ({})
+    });
+    attach = declareCommand({
+      name: "attach",
+      description: "Attach to a running Playwright browser",
+      category: "core",
+      args: z33.object({
+        name: z33.string().optional().describe("Bound browser name to attach to")
+      }),
+      options: z33.object({
+        cdp: z33.string().optional().describe("Connect to an existing browser via CDP endpoint URL."),
+        endpoint: z33.string().optional().describe("Playwright browser server endpoint to attach to."),
+        extension: z33.union([z33.boolean(), z33.string()]).optional().describe("Connect to browser extension, optionally specify browser name (e.g. --extension=chrome)"),
+        config: z33.string().optional().describe("Path to the configuration file, defaults to .playwright/cli.config.json"),
+        session: z33.string().optional().describe('Session name (defaults to bound browser name or "default")'),
+        ["idle-timeout"]: numberArg.optional().describe("Detach after this many milliseconds without a command. Attached browsers are never detached by default.")
+      }),
+      toolName: "browser_snapshot",
+      toolParams: () => ({ filename: "<auto>" })
+    });
+    close2 = declareCommand({
+      name: "close",
+      description: "Close the browser",
+      category: "core",
+      args: z33.object({}),
+      toolName: "",
+      toolParams: () => ({})
+    });
+    detach = declareCommand({
+      name: "detach",
+      description: "Detach from an attached browser",
+      category: "core",
+      args: z33.object({}),
+      toolName: "",
+      toolParams: () => ({})
+    });
+    goto = declareCommand({
+      name: "goto",
+      description: "Navigate to a URL",
+      category: "core",
+      args: z33.object({
+        url: z33.string().describe("The URL to navigate to")
+      }),
+      toolName: "browser_navigate",
+      toolParams: ({ url: url3 }) => ({ url: url3 })
+    });
+    goBack2 = declareCommand({
+      name: "go-back",
+      description: "Go back to the previous page",
+      category: "navigation",
+      args: z33.object({}),
+      toolName: "browser_navigate_back",
+      toolParams: () => ({})
+    });
+    goForward2 = declareCommand({
+      name: "go-forward",
+      description: "Go forward to the next page",
+      category: "navigation",
+      args: z33.object({}),
+      toolName: "browser_navigate_forward",
+      toolParams: () => ({})
+    });
+    reload2 = declareCommand({
+      name: "reload",
+      description: "Reload the current page",
+      category: "navigation",
+      args: z33.object({}),
+      toolName: "browser_reload",
+      toolParams: () => ({})
+    });
+    pressKey = declareCommand({
+      name: "press",
+      description: "Press a key on the keyboard, `a`, `ArrowLeft`",
+      category: "keyboard",
+      args: z33.object({
+        key: z33.string().describe("Name of the key to press or a character to generate, such as `ArrowLeft` or `a`")
+      }),
+      toolName: "browser_press_key",
+      toolParams: ({ key }) => ({ key })
+    });
+    type2 = declareCommand({
+      name: "type",
+      description: "Type text into editable element",
+      category: "core",
+      args: z33.object({
+        text: z33.string().describe("Text to type into the element")
+      }),
+      options: z33.object({
+        submit: z33.boolean().optional().describe("Whether to submit entered text (press Enter after)")
+      }),
+      toolName: "browser_press_sequentially",
+      toolParams: ({ text: text2, submit }) => ({ text: text2, submit })
+    });
+    keydown2 = declareCommand({
+      name: "keydown",
+      description: "Press a key down on the keyboard",
+      category: "keyboard",
+      args: z33.object({
+        key: z33.string().describe("Name of the key to press or a character to generate, such as `ArrowLeft` or `a`")
+      }),
+      toolName: "browser_keydown",
+      toolParams: ({ key }) => ({ key })
+    });
+    keyup2 = declareCommand({
+      name: "keyup",
+      description: "Press a key up on the keyboard",
+      category: "keyboard",
+      args: z33.object({
+        key: z33.string().describe("Name of the key to press or a character to generate, such as `ArrowLeft` or `a`")
+      }),
+      toolName: "browser_keyup",
+      toolParams: ({ key }) => ({ key })
+    });
+    mouseMove2 = declareCommand({
+      name: "mousemove",
+      description: "Move mouse to a given position",
+      category: "mouse",
+      args: z33.object({
+        x: numberArg.describe("X coordinate"),
+        y: numberArg.describe("Y coordinate")
+      }),
+      toolName: "browser_mouse_move_xy",
+      toolParams: ({ x, y }) => ({ x, y })
+    });
+    mouseDown2 = declareCommand({
+      name: "mousedown",
+      description: "Press mouse down",
+      category: "mouse",
+      args: z33.object({
+        button: z33.string().optional().describe("Button to press, defaults to left")
+      }),
+      toolName: "browser_mouse_down",
+      toolParams: ({ button }) => ({ button })
+    });
+    mouseUp2 = declareCommand({
+      name: "mouseup",
+      description: "Press mouse up",
+      category: "mouse",
+      args: z33.object({
+        button: z33.string().optional().describe("Button to press, defaults to left")
+      }),
+      toolName: "browser_mouse_up",
+      toolParams: ({ button }) => ({ button })
+    });
+    mouseWheel2 = declareCommand({
+      name: "mousewheel",
+      description: "Scroll mouse wheel",
+      category: "mouse",
+      args: z33.object({
+        dx: numberArg.describe("X delta"),
+        dy: numberArg.describe("Y delta")
+      }),
+      toolName: "browser_mouse_wheel",
+      toolParams: ({ dx: deltaX, dy: deltaY }) => ({ deltaX, deltaY })
+    });
+    click2 = declareCommand({
+      name: "click",
+      description: "Perform click on a web page",
+      category: "core",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2),
+        button: z33.string().optional().describe("Button to click, defaults to left")
+      }),
+      options: z33.object({
+        modifiers: stringArrayArg.optional().describe("Modifier key to press (repeatable)")
+      }),
+      toolName: "browser_click",
+      toolParams: ({ target, button, modifiers }) => ({ target, button, modifiers })
+    });
+    doubleClick = declareCommand({
+      name: "dblclick",
+      description: "Perform double click on a web page",
+      category: "core",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2),
+        button: z33.string().optional().describe("Button to click, defaults to left")
+      }),
+      options: z33.object({
+        modifiers: stringArrayArg.optional().describe("Modifier key to press (repeatable)")
+      }),
+      toolName: "browser_click",
+      toolParams: ({ target, button, modifiers }) => ({ target, button, modifiers, doubleClick: true })
+    });
+    drag2 = declareCommand({
+      name: "drag",
+      description: "Perform drag and drop between two elements",
+      category: "core",
+      args: z33.object({
+        startTarget: z33.string().describe("Exact source element reference from the page snapshot, or a unique element selector"),
+        endTarget: z33.string().describe(elementTargetDescription2)
+      }),
+      toolName: "browser_drag",
+      toolParams: ({ startTarget, endTarget }) => ({ startTarget, endTarget })
+    });
+    drop2 = declareCommand({
+      name: "drop",
+      description: "Drop files or data onto an element",
+      category: "core",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2)
+      }),
+      options: z33.object({
+        path: stringArrayArg.optional().describe("Absolute path to a file to drop onto the element (repeatable)"),
+        data: stringArrayArg.optional().describe('Data to drop in "mime/type=value" format, e.g. --data "text/plain=hello" (repeatable)')
+      }),
+      toolName: "browser_drop",
+      toolParams: ({ target, path: path67, data }) => {
+        let dataMap;
+        if (data) {
+          dataMap = {};
+          for (const entry of data) {
+            const idx = entry.indexOf("=");
+            if (idx === -1)
+              throw new Error(`--data must be in "mime/type=value" format, got: ${entry}`);
+            dataMap[entry.slice(0, idx)] = entry.slice(idx + 1);
+          }
+        }
+        return { target, paths: path67, data: dataMap };
+      }
+    });
+    fill = declareCommand({
+      name: "fill",
+      description: "Fill text into editable element",
+      category: "core",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2),
+        text: z33.string().describe("Text to fill into the element")
+      }),
+      options: z33.object({
+        submit: z33.boolean().optional().describe("Whether to submit entered text (press Enter after)")
+      }),
+      toolName: "browser_type",
+      toolParams: ({ target, text: text2, submit }) => ({ target, text: text2, submit })
+    });
+    hover2 = declareCommand({
+      name: "hover",
+      description: "Hover over element on page",
+      category: "core",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2)
+      }),
+      toolName: "browser_hover",
+      toolParams: ({ target }) => ({ target })
+    });
+    select = declareCommand({
+      name: "select",
+      description: "Select an option in a dropdown",
+      category: "core",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2),
+        val: z33.string().describe("Value to select in the dropdown")
+      }),
+      toolName: "browser_select_option",
+      toolParams: ({ target, val: value2 }) => ({ target, values: [value2] })
+    });
+    fileUpload = declareCommand({
+      name: "upload",
+      description: "Upload one or multiple files",
+      category: "core",
+      args: z33.object({
+        files: stringArrayArg.describe("The absolute paths to the files to upload")
+      }),
+      toolName: "browser_file_upload",
+      toolParams: ({ files }) => ({ paths: files })
+    });
+    check2 = declareCommand({
+      name: "check",
+      description: "Check a checkbox or radio button",
+      category: "core",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2)
+      }),
+      toolName: "browser_check",
+      toolParams: ({ target }) => ({ target })
+    });
+    uncheck2 = declareCommand({
+      name: "uncheck",
+      description: "Uncheck a checkbox or radio button",
+      category: "core",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2)
+      }),
+      toolName: "browser_uncheck",
+      toolParams: ({ target }) => ({ target })
+    });
+    snapshot2 = declareCommand({
+      name: "snapshot",
+      description: "Capture page snapshot to obtain element ref",
+      category: "core",
+      args: z33.object({
+        target: z33.string().optional().describe("Element reference from the previous page snapshot, or a unique element selector for the root element to capture a partial snapshot instead of the whole page")
+      }),
+      options: z33.object({
+        filename: z33.string().optional().describe("Save snapshot to markdown file instead of returning it in the response."),
+        depth: numberArg.optional().describe("Limit snapshot depth, unlimited by default."),
+        boxes: z33.boolean().optional().describe("Include each element's bounding box as [box=x,y,width,height] in the snapshot. Coordinates are viewport-relative, in CSS pixels (Element.getBoundingClientRect).")
+      }),
+      toolName: "browser_snapshot",
+      toolParams: ({ filename, target, depth, boxes }) => ({ filename, target, depth, boxes })
+    });
+    find2 = declareCommand({
+      name: "find",
+      description: "Search the page snapshot for text or a regexp, returning matching nodes with surrounding context (like search snippets)",
+      category: "core",
+      args: z33.object({
+        text: z33.string().optional().describe("Plain text to search for in the page snapshot (case-insensitive substring match)")
+      }),
+      options: z33.object({
+        regex: z33.string().optional().describe("Regular expression to search for in the page snapshot. Provide either a text argument or --regex, not both.")
+      }),
+      toolName: "browser_find",
+      toolParams: ({ text: text2, regex }) => ({ text: text2, regex })
+    });
+    generateLocator2 = declareCommand({
+      name: "generate-locator",
+      description: "Generate a Playwright locator for the given element",
+      category: "devtools",
+      args: z33.object({
+        target: z33.string().describe(elementTargetDescription2)
+      }),
+      toolName: "browser_generate_locator",
+      toolParams: ({ target }) => ({ target })
+    });
+    highlight2 = declareCommand({
+      name: "highlight",
+      description: "Show (or with --hide, remove) a highlight overlay for an element; `--hide` without a target hides all page highlights.",
+      category: "devtools",
+      args: z33.object({
+        target: z33.string().optional().describe(elementTargetDescription2)
+      }),
+      options: z33.object({
+        hide: z33.boolean().optional().describe("Hide a previously added highlight for this element, or all page highlights when no element is given"),
+        style: z33.string().optional().describe('Additional inline CSS applied to the highlight overlay, e.g. "outline: 2px dashed red"')
+      }),
+      toolName: ({ hide }) => hide ? "browser_hide_highlight" : "browser_highlight",
+      toolParams: ({ target, style }) => ({ target, style })
+    });
+    evaluate3 = declareCommand({
+      name: "eval",
+      description: "Evaluate JavaScript expression on page or element",
+      category: "core",
+      args: z33.object({
+        func: z33.string().describe("() => { /* code */ } or (element) => { /* code */ } when element is provided"),
+        target: z33.string().optional().describe(elementTargetDescription2)
+      }),
+      options: z33.object({
+        filename: z33.string().optional().describe("Save evaluation result to a file instead of returning it in the response.")
+      }),
+      toolName: "browser_evaluate",
+      toolParams: ({ func, target, filename }) => ({ function: func, filename, target })
+    });
+    dialogAccept = declareCommand({
+      name: "dialog-accept",
+      description: "Accept a dialog",
+      category: "core",
+      args: z33.object({
+        prompt: z33.string().optional().describe("The text of the prompt in case of a prompt dialog.")
+      }),
+      toolName: "browser_handle_dialog",
+      toolParams: ({ prompt: promptText }) => ({ accept: true, promptText })
+    });
+    dialogDismiss = declareCommand({
+      name: "dialog-dismiss",
+      description: "Dismiss a dialog",
+      category: "core",
+      args: z33.object({}),
+      toolName: "browser_handle_dialog",
+      toolParams: () => ({ accept: false })
+    });
+    resize2 = declareCommand({
+      name: "resize",
+      description: "Resize the browser window",
+      category: "core",
+      args: z33.object({
+        w: numberArg.describe("Width of the browser window"),
+        h: numberArg.describe("Height of the browser window")
+      }),
+      toolName: "browser_resize",
+      toolParams: ({ w: width, h: height }) => ({ width, height })
+    });
+    setColorScheme = declareCommand({
+      name: "set-color-scheme",
+      description: "Emulate the light or dark color scheme",
+      category: "emulation",
+      args: z33.object({
+        scheme: z33.enum(["light", "dark"]).describe("Color scheme to emulate")
+      }),
+      toolName: "browser_emulate_media",
+      toolParams: ({ scheme: colorScheme }) => ({ colorScheme })
+    });
+    setReducedMotion = declareCommand({
+      name: "set-reduced-motion",
+      description: "Emulate the reduced motion preference",
+      category: "emulation",
+      args: z33.object({
+        motion: z33.enum(["reduce", "no-preference"]).describe("Reduced motion preference to emulate")
+      }),
+      toolName: "browser_emulate_media",
+      toolParams: ({ motion: reducedMotion }) => ({ reducedMotion })
+    });
+    setForcedColors = declareCommand({
+      name: "set-forced-colors",
+      description: "Emulate forced colors mode",
+      category: "emulation",
+      args: z33.object({
+        colors: z33.enum(["active", "none"]).describe("Forced colors mode to emulate")
+      }),
+      toolName: "browser_emulate_media",
+      toolParams: ({ colors: forcedColors }) => ({ forcedColors })
+    });
+    setContrast = declareCommand({
+      name: "set-contrast",
+      description: "Emulate the preferred contrast",
+      category: "emulation",
+      args: z33.object({
+        contrast: z33.enum(["more", "no-preference"]).describe("Contrast preference to emulate")
+      }),
+      toolName: "browser_emulate_media",
+      toolParams: ({ contrast }) => ({ contrast })
+    });
+    setMedia = declareCommand({
+      name: "set-media",
+      description: "Emulate the CSS media type",
+      category: "emulation",
+      args: z33.object({
+        media: z33.enum(["screen", "print"]).describe("CSS media type to emulate")
+      }),
+      toolName: "browser_emulate_media",
+      toolParams: ({ media }) => ({ media })
+    });
+    clearColorScheme = declareCommand({
+      name: "clear-color-scheme",
+      description: "Clear color scheme emulation",
+      category: "emulation",
+      args: z33.object({}),
+      toolName: "browser_emulate_media",
+      toolParams: () => ({ colorScheme: null })
+    });
+    clearReducedMotion = declareCommand({
+      name: "clear-reduced-motion",
+      description: "Clear reduced motion emulation",
+      category: "emulation",
+      args: z33.object({}),
+      toolName: "browser_emulate_media",
+      toolParams: () => ({ reducedMotion: null })
+    });
+    clearForcedColors = declareCommand({
+      name: "clear-forced-colors",
+      description: "Clear forced colors emulation",
+      category: "emulation",
+      args: z33.object({}),
+      toolName: "browser_emulate_media",
+      toolParams: () => ({ forcedColors: null })
+    });
+    clearContrast = declareCommand({
+      name: "clear-contrast",
+      description: "Clear preferred contrast emulation",
+      category: "emulation",
+      args: z33.object({}),
+      toolName: "browser_emulate_media",
+      toolParams: () => ({ contrast: null })
+    });
+    clearMedia = declareCommand({
+      name: "clear-media",
+      description: "Clear CSS media type emulation",
+      category: "emulation",
+      args: z33.object({}),
+      toolName: "browser_emulate_media",
+      toolParams: () => ({ media: null })
+    });
+    runCode2 = declareCommand({
+      name: "run-code",
+      description: "Run Playwright code snippet",
+      category: "devtools",
+      args: z33.object({
+        code: z33.string().optional().describe("A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.")
+      }),
+      options: z33.object({
+        filename: z33.string().optional().describe("Load code from the specified file.")
+      }),
+      toolName: "browser_run_code_unsafe",
+      toolParams: ({ code, filename }) => ({ code, filename })
+    });
+    tabList = declareCommand({
+      name: "tab-list",
+      description: "List all tabs",
+      category: "tabs",
+      args: z33.object({}),
+      toolName: "browser_tabs",
+      toolParams: () => ({ action: "list" })
+    });
+    tabNew = declareCommand({
+      name: "tab-new",
+      description: "Create a new tab",
+      category: "tabs",
+      args: z33.object({
+        url: z33.string().optional().describe("The URL to navigate to in the new tab. If omitted, the new tab will be blank.")
+      }),
+      toolName: "browser_tabs",
+      toolParams: ({ url: url3 }) => ({ action: "new", url: url3 })
+    });
+    tabClose = declareCommand({
+      name: "tab-close",
+      description: "Close a browser tab",
+      category: "tabs",
+      args: z33.object({
+        index: numberArg.optional().describe("Tab index. If omitted, current tab is closed.")
+      }),
+      toolName: "browser_tabs",
+      toolParams: ({ index }) => ({ action: "close", index })
+    });
+    tabSelect = declareCommand({
+      name: "tab-select",
+      description: "Select a browser tab",
+      category: "tabs",
+      args: z33.object({
+        index: numberArg.describe("Tab index")
+      }),
+      toolName: "browser_tabs",
+      toolParams: ({ index }) => ({ action: "select", index })
+    });
+    stateLoad = declareCommand({
+      name: "state-load",
+      description: "Loads browser storage (authentication) state from a file",
+      category: "storage",
+      args: z33.object({
+        filename: z33.string().describe("File name to load the storage state from.")
+      }),
+      toolName: "browser_set_storage_state",
+      toolParams: ({ filename }) => ({ filename })
+    });
+    stateSave = declareCommand({
+      name: "state-save",
+      description: "Saves the current storage (authentication) state to a file",
+      category: "storage",
+      args: z33.object({
+        filename: z33.string().optional().describe("File name to save the storage state to.")
+      }),
+      toolName: "browser_storage_state",
+      toolParams: ({ filename }) => ({ filename })
+    });
+    cookieList2 = declareCommand({
+      name: "cookie-list",
+      description: "List all cookies (optionally filtered by domain/path)",
+      category: "storage",
+      raw: true,
+      args: z33.object({}),
+      options: z33.object({
+        domain: z33.string().optional().describe("Filter cookies by domain"),
+        path: z33.string().optional().describe("Filter cookies by path")
+      }),
+      toolName: "browser_cookie_list",
+      toolParams: ({ domain, path: path67 }) => ({ domain, path: path67 })
+    });
+    cookieGet2 = declareCommand({
+      name: "cookie-get",
+      description: "Get a specific cookie by name",
+      category: "storage",
+      raw: true,
+      args: z33.object({
+        name: z33.string().describe("Cookie name")
+      }),
+      toolName: "browser_cookie_get",
+      toolParams: ({ name }) => ({ name })
+    });
+    cookieSet2 = declareCommand({
+      name: "cookie-set",
+      description: "Set a cookie with optional flags",
+      category: "storage",
+      args: z33.object({
+        name: z33.string().describe("Cookie name"),
+        value: z33.string().describe("Cookie value")
+      }),
+      options: z33.object({
+        domain: z33.string().optional().describe("Cookie domain"),
+        path: z33.string().optional().describe("Cookie path"),
+        expires: numberArg.optional().describe("Cookie expiration as Unix timestamp"),
+        httpOnly: z33.boolean().optional().describe("Whether the cookie is HTTP only"),
+        secure: z33.boolean().optional().describe("Whether the cookie is secure"),
+        sameSite: z33.enum(["Strict", "Lax", "None"]).optional().describe("Cookie SameSite attribute")
+      }),
+      toolName: "browser_cookie_set",
+      toolParams: ({ name, value: value2, domain, path: path67, expires, httpOnly, secure, sameSite }) => ({ name, value: value2, domain, path: path67, expires, httpOnly, secure, sameSite })
+    });
+    cookieDelete2 = declareCommand({
+      name: "cookie-delete",
+      description: "Delete a specific cookie",
+      category: "storage",
+      args: z33.object({
+        name: z33.string().describe("Cookie name")
+      }),
+      toolName: "browser_cookie_delete",
+      toolParams: ({ name }) => ({ name })
+    });
+    cookieClear2 = declareCommand({
+      name: "cookie-clear",
+      description: "Clear all cookies",
+      category: "storage",
+      args: z33.object({}),
+      toolName: "browser_cookie_clear",
+      toolParams: () => ({})
+    });
+    localStorageList2 = declareCommand({
+      name: "localstorage-list",
+      description: "List all localStorage key-value pairs",
+      category: "storage",
+      raw: true,
+      args: z33.object({}),
+      toolName: "browser_localstorage_list",
+      toolParams: () => ({})
+    });
+    localStorageGet2 = declareCommand({
+      name: "localstorage-get",
+      description: "Get a localStorage item by key",
+      category: "storage",
+      raw: true,
+      args: z33.object({
+        key: z33.string().describe("Key to get")
+      }),
+      toolName: "browser_localstorage_get",
+      toolParams: ({ key }) => ({ key })
+    });
+    localStorageSet2 = declareCommand({
+      name: "localstorage-set",
+      description: "Set a localStorage item",
+      category: "storage",
+      args: z33.object({
+        key: z33.string().describe("Key to set"),
+        value: z33.string().describe("Value to set")
+      }),
+      toolName: "browser_localstorage_set",
+      toolParams: ({ key, value: value2 }) => ({ key, value: value2 })
+    });
+    localStorageDelete2 = declareCommand({
+      name: "localstorage-delete",
+      description: "Delete a localStorage item",
+      category: "storage",
+      args: z33.object({
+        key: z33.string().describe("Key to delete")
+      }),
+      toolName: "browser_localstorage_delete",
+      toolParams: ({ key }) => ({ key })
+    });
+    localStorageClear2 = declareCommand({
+      name: "localstorage-clear",
+      description: "Clear all localStorage",
+      category: "storage",
+      args: z33.object({}),
+      toolName: "browser_localstorage_clear",
+      toolParams: () => ({})
+    });
+    sessionStorageList2 = declareCommand({
+      name: "sessionstorage-list",
+      description: "List all sessionStorage key-value pairs",
+      category: "storage",
+      raw: true,
+      args: z33.object({}),
+      toolName: "browser_sessionstorage_list",
+      toolParams: () => ({})
+    });
+    sessionStorageGet2 = declareCommand({
+      name: "sessionstorage-get",
+      description: "Get a sessionStorage item by key",
+      category: "storage",
+      raw: true,
+      args: z33.object({
+        key: z33.string().describe("Key to get")
+      }),
+      toolName: "browser_sessionstorage_get",
+      toolParams: ({ key }) => ({ key })
+    });
+    sessionStorageSet2 = declareCommand({
+      name: "sessionstorage-set",
+      description: "Set a sessionStorage item",
+      category: "storage",
+      args: z33.object({
+        key: z33.string().describe("Key to set"),
+        value: z33.string().describe("Value to set")
+      }),
+      toolName: "browser_sessionstorage_set",
+      toolParams: ({ key, value: value2 }) => ({ key, value: value2 })
+    });
+    sessionStorageDelete2 = declareCommand({
+      name: "sessionstorage-delete",
+      description: "Delete a sessionStorage item",
+      category: "storage",
+      args: z33.object({
+        key: z33.string().describe("Key to delete")
+      }),
+      toolName: "browser_sessionstorage_delete",
+      toolParams: ({ key }) => ({ key })
+    });
+    sessionStorageClear2 = declareCommand({
+      name: "sessionstorage-clear",
+      description: "Clear all sessionStorage",
+      category: "storage",
+      args: z33.object({}),
+      toolName: "browser_sessionstorage_clear",
+      toolParams: () => ({})
+    });
+    routeMock = declareCommand({
+      name: "route",
+      description: "Mock network requests matching a URL pattern",
+      category: "network",
+      args: z33.object({
+        pattern: z33.string().describe('URL pattern to match (e.g., "**/api/users")')
+      }),
+      options: z33.object({
+        status: numberArg.optional().describe("HTTP status code (default: 200)"),
+        body: z33.string().optional().describe("Response body (text or JSON string)"),
+        ["content-type"]: z33.string().optional().describe("Content-Type header"),
+        header: stringArrayArg.optional().describe('Header to add in "Name: Value" format (repeatable)'),
+        ["remove-header"]: z33.string().optional().describe("Comma-separated header names to remove")
+      }),
+      toolName: "browser_route",
+      toolParams: ({ pattern, status, body, ["content-type"]: contentType, header: headers, ["remove-header"]: removeHeaders }) => ({
+        pattern,
+        status,
+        body,
+        contentType,
+        headers,
+        removeHeaders
+      })
+    });
+    routeList2 = declareCommand({
+      name: "route-list",
+      description: "List all active network routes",
+      category: "network",
+      raw: true,
+      args: z33.object({}),
+      toolName: "browser_route_list",
+      toolParams: () => ({})
+    });
+    unroute2 = declareCommand({
+      name: "unroute",
+      description: "Remove routes matching a pattern (or all routes)",
+      category: "network",
+      args: z33.object({
+        pattern: z33.string().optional().describe("URL pattern to unroute (omit to remove all)")
+      }),
+      toolName: "browser_unroute",
+      toolParams: ({ pattern }) => ({ pattern })
+    });
+    networkStateSet2 = declareCommand({
+      name: "network-state-set",
+      description: "Set the browser network state to online or offline",
+      category: "network",
+      args: z33.object({
+        state: z33.enum(["online", "offline"]).describe('Set to "offline" to simulate offline mode, "online" to restore network connectivity')
+      }),
+      toolName: "browser_network_state_set",
+      toolParams: ({ state }) => ({ state })
+    });
+    screenshot2 = declareCommand({
+      name: "screenshot",
+      description: "screenshot of the current page or element",
+      category: "export",
+      args: z33.object({
+        target: z33.string().optional().describe(elementTargetDescription2)
+      }),
+      options: z33.object({
+        filename: z33.string().optional().describe("File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg|webp}` if not specified."),
+        type: z33.enum(["png", "jpeg", "webp"]).optional().describe("Image format. If unset, inferred from the filename extension, otherwise png."),
+        ["full-page"]: z33.boolean().optional().describe("When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport."),
+        hires: z33.boolean().optional().describe("When true, captures a high-resolution screenshot using device pixels (accounts for the device pixel ratio), instead of CSS pixels.")
+      }),
+      toolName: "browser_take_screenshot",
+      toolParams: ({ target, filename, type: type3, ["full-page"]: fullPage, hires }) => ({ filename, target, type: type3, fullPage, scale: hires ? "device" : void 0 })
+    });
+    pdfSave = declareCommand({
+      name: "pdf",
+      description: "Save page as PDF",
+      category: "export",
+      args: z33.object({}),
+      options: z33.object({
+        filename: z33.string().optional().describe("File name to save the pdf to. Defaults to `page-{timestamp}.pdf` if not specified.")
+      }),
+      toolName: "browser_pdf_save",
+      toolParams: ({ filename }) => ({ filename })
+    });
+    consoleList = declareCommand({
+      name: "console",
+      description: "List console messages",
+      category: "devtools",
+      args: z33.object({
+        ["min-level"]: z33.string().optional().describe('Level of the console messages to return. Each level includes the messages of more severe levels. Defaults to "info".')
+      }),
+      options: z33.object({
+        clear: z33.boolean().optional().describe("Whether to clear the console list")
+      }),
+      toolName: ({ clear }) => clear ? "browser_console_clear" : "browser_console_messages",
+      toolParams: ({ ["min-level"]: level, clear }) => clear ? {} : { level }
+    });
+    networkRequests = declareCommand({
+      name: "requests",
+      description: "List all network requests since loading the page. Each request is numbered for use with the `request` command.",
+      category: "network",
+      args: z33.object({}),
+      options: z33.object({
+        static: z33.boolean().optional().describe("Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false."),
+        filter: z33.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
+        clear: z33.boolean().optional().describe("Whether to clear the network list")
+      }),
+      toolName: ({ clear }) => clear ? "browser_network_clear" : "browser_network_requests",
+      toolParams: ({ static: s, filter, clear }) => clear ? {} : { static: s, filter }
+    });
+    filenameOption = z33.string().optional().describe("Filename to save the result to. If not provided, output is returned as text.");
+    networkRequest = declareCommand({
+      name: "request",
+      description: "Show full details (headers, body, response) of a single network request by its number from the `requests` command.",
+      category: "network",
+      args: z33.object({
+        index: numberArg.describe("1-based number of the request as listed by `requests`")
+      }),
+      options: z33.object({
+        filename: filenameOption
+      }),
+      toolName: "browser_network_request",
+      toolParams: ({ index, filename }) => ({ index, filename })
+    });
+    networkRequestHeaders = declareCommand({
+      name: "request-headers",
+      description: "Print only the request headers for a single network request by its number from the `requests` command.",
+      category: "network",
+      raw: true,
+      args: z33.object({
+        index: numberArg.describe("1-based number of the request as listed by `requests`")
+      }),
+      options: z33.object({
+        filename: filenameOption
+      }),
+      toolName: "browser_network_request",
+      toolParams: ({ index, filename }) => ({ index, part: "request-headers", filename })
+    });
+    networkRequestBody = declareCommand({
+      name: "request-body",
+      description: "Print only the request body for a single network request by its number from the `requests` command.",
+      category: "network",
+      raw: true,
+      args: z33.object({
+        index: numberArg.describe("1-based number of the request as listed by `requests`")
+      }),
+      options: z33.object({
+        filename: filenameOption
+      }),
+      toolName: "browser_network_request",
+      toolParams: ({ index, filename }) => ({ index, part: "request-body", filename })
+    });
+    networkResponseHeaders = declareCommand({
+      name: "response-headers",
+      description: "Print only the response headers for a single network request by its number from the `requests` command.",
+      category: "network",
+      raw: true,
+      args: z33.object({
+        index: numberArg.describe("1-based number of the request as listed by `requests`")
+      }),
+      options: z33.object({
+        filename: filenameOption
+      }),
+      toolName: "browser_network_request",
+      toolParams: ({ index, filename }) => ({ index, part: "response-headers", filename })
+    });
+    networkResponseBody = declareCommand({
+      name: "response-body",
+      description: "Print the response body for a single network request by its number from the `requests` command. Textual bodies are inlined; binary bodies are saved to a file and the path is printed.",
+      category: "network",
+      raw: true,
+      args: z33.object({
+        index: numberArg.describe("1-based number of the request as listed by `requests`")
+      }),
+      options: z33.object({
+        filename: filenameOption
+      }),
+      toolName: "browser_network_request",
+      toolParams: ({ index, filename }) => ({ index, part: "response-body", filename })
+    });
+    recordingStart = declareCommand({
+      name: "recording-start",
+      description: "Start recording user actions",
+      category: "devtools",
+      toolName: "browser_start_recording",
+      toolParams: () => ({})
+    });
+    recordingStop = declareCommand({
+      name: "recording-stop",
+      description: "Stop recording user actions and print them as Playwright code",
+      category: "devtools",
+      toolName: "browser_stop_recording",
+      toolParams: () => ({})
+    });
+    tracingStart2 = declareCommand({
+      name: "tracing-start",
+      description: "Start trace recording",
+      category: "devtools",
+      args: z33.object({}),
+      toolName: "browser_start_tracing",
+      toolParams: () => ({})
+    });
+    tracingStop2 = declareCommand({
+      name: "tracing-stop",
+      description: "Stop trace recording",
+      category: "devtools",
+      args: z33.object({}),
+      toolName: "browser_stop_tracing",
+      toolParams: () => ({})
+    });
+    videoStart2 = declareCommand({
+      name: "video-start",
+      description: "Start video recording",
+      category: "devtools",
+      args: z33.object({
+        filename: z33.string().optional().describe("Filename to save the video.")
+      }),
+      options: z33.object({
+        size: z33.string().optional().describe('Video frame size, e.g. "800x600". If not specified, the size of the recorded video will fit 800x800.'),
+        fps: numberArg.optional().describe("Video frame rate in frames per second, defaults to 25."),
+        cursor: z33.boolean().optional().describe("Render an animated mouse cursor that travels to each action point. Paces actions by 800ms so that the cursor has time to travel.")
+      }),
+      toolName: "browser_start_video",
+      toolParams: ({ filename, size, fps, cursor }) => {
+        const parsedSize = size ? size.split("x").map(Number) : void 0;
+        return { filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : void 0, fps, cursor };
+      }
+    });
+    videoStop2 = declareCommand({
+      name: "video-stop",
+      description: "Stop video recording",
+      category: "devtools",
+      toolName: "browser_stop_video",
+      toolParams: () => ({})
+    });
+    videoChapter2 = declareCommand({
+      name: "video-chapter",
+      description: "Add a chapter marker to the video recording",
+      category: "devtools",
+      args: z33.object({
+        title: z33.string().describe("Chapter title.")
+      }),
+      options: z33.object({
+        description: z33.string().optional().describe("Chapter description."),
+        duration: numberArg.optional().describe("Duration in milliseconds to show the chapter card.")
+      }),
+      toolName: "browser_video_chapter",
+      toolParams: ({ title, description, duration }) => ({ title, description, duration })
+    });
+    actionPositionArg = z33.enum(["top-left", "top", "top-right", "bottom-left", "bottom", "bottom-right"]);
+    actionCursorArg = z33.enum(["none", "pointer"]);
+    videoShowActions2 = declareCommand({
+      name: "video-show-actions",
+      description: "Annotate subsequent CLI/MCP actions on the page with a callout that names the action and, when styled, marks the action point and highlights the target element",
+      category: "devtools",
+      args: z33.object({}),
+      options: z33.object({
+        duration: numberArg.optional().describe("How long each action annotation stays on screen, in milliseconds. Defaults to 500."),
+        position: actionPositionArg.optional().describe("Where to place the action title: top-left, top, top-right, bottom-left, bottom, bottom-right. Defaults to top-right."),
+        cursor: actionCursorArg.optional().describe('Cursor decoration: "pointer" (default) animates a mouse pointer between action points; "none" disables it.'),
+        ["point-style"]: z33.string().optional().describe('CSS declarations for the zero-sized marker centered on the action point, e.g. "width: 20px; height: 20px; border-radius: 50%; background: red". Not shown when omitted.'),
+        ["highlight-style"]: z33.string().optional().describe('CSS declarations for the box that covers the target element, e.g. "outline: 2px solid #333". Not shown when omitted.'),
+        ["title-style"]: z33.string().optional().describe('CSS declarations for the action title, e.g. "font-size: 16px".')
+      }),
+      toolName: "browser_video_show_actions",
+      toolParams: ({ duration, position, cursor, ["point-style"]: point, ["highlight-style"]: highlight3, ["title-style"]: title }) => ({ duration, position, cursor, style: point || highlight3 || title ? { point, highlight: highlight3, title } : void 0 })
+    });
+    videoHideActions2 = declareCommand({
+      name: "video-hide-actions",
+      description: "Stop annotating actions performed on the page",
+      category: "devtools",
+      toolName: "browser_video_hide_actions",
+      toolParams: () => ({})
+    });
+    dashboardShow = declareCommand({
+      name: "show",
+      description: "Show Playwright Dashboard",
+      category: "devtools",
+      raw: true,
+      args: z33.object({}),
+      options: z33.object({
+        port: numberArg.optional().describe("Start as a blocking HTTP server on this port (use 0 for a random port)"),
+        host: z33.string().optional().describe("Host to bind to when using --port (defaults to localhost)"),
+        annotate: z33.boolean().optional().describe("Switch the dashboard into annotation mode."),
+        kill: z33.boolean().optional().describe("Kill the dashboard daemon.")
+      }),
+      toolName: ({ annotate: annotate2 }) => annotate2 ? "browser_annotate" : "",
+      toolParams: () => ({})
+    });
+    resume2 = declareCommand({
+      name: "resume",
+      description: "Resume the test execution",
+      category: "devtools",
+      args: z33.object({}),
+      toolName: "browser_resume",
+      toolParams: ({ step }) => ({ step })
+    });
+    stepOver = declareCommand({
+      name: "step-over",
+      description: "Step over the next call in the test",
+      category: "devtools",
+      args: z33.object({}),
+      toolName: "browser_resume",
+      toolParams: ({}) => ({ step: true })
+    });
+    pauseAt = declareCommand({
+      name: "pause-at",
+      description: "Run the test up to a specific location and pause there",
+      category: "devtools",
+      args: z33.object({
+        location: z33.string().describe('Location to pause at. Format is <file>:<line>, e.g. "example.spec.ts:42".')
+      }),
+      toolName: "browser_resume",
+      toolParams: ({ location: location2 }) => ({ location: location2 })
+    });
+    sessionList = declareCommand({
+      name: "list",
+      description: "List browser sessions",
+      category: "browsers",
+      args: z33.object({}),
+      options: z33.object({
+        all: z33.boolean().optional().describe("List all browser sessions across all workspaces")
+      }),
+      toolName: "",
+      toolParams: () => ({})
+    });
+    sessionCloseAll = declareCommand({
+      name: "close-all",
+      description: "Close all browser sessions",
+      category: "browsers",
+      toolName: "",
+      toolParams: () => ({})
+    });
+    killAll = declareCommand({
+      name: "kill-all",
+      description: "Forcefully kill all browser sessions (for stale/zombie processes)",
+      category: "browsers",
+      toolName: "",
+      toolParams: () => ({})
+    });
+    deleteData = declareCommand({
+      name: "delete-data",
+      description: "Delete session data",
+      category: "core",
+      toolName: "",
+      toolParams: () => ({})
+    });
+    configPrint = declareCommand({
+      name: "config-print",
+      description: "Print the final resolved config after merging CLI options, environment variables and config file.",
+      category: "config",
+      hidden: true,
+      toolName: "browser_get_config",
+      toolParams: () => ({})
+    });
+    install = declareCommand({
+      name: "install",
+      description: "Initialize workspace",
+      category: "install",
+      args: z33.object({}),
+      options: z33.object({
+        skills: z33.string().optional().describe("Install skills, possible values: claude (default), agents."),
+        global: z33.boolean().optional().describe("Install skills into the home directory instead of the workspace (alias: -g). Requires --skills.")
+      }),
+      toolName: "",
+      toolParams: () => ({})
+    });
+    installBrowser = declareCommand({
+      name: "install-browser",
+      description: "Install browser",
+      category: "install",
+      args: z33.object({
+        browser: z33.string().optional().describe("Browser to install")
+      }),
+      options: z33.object({
+        ["with-deps"]: z33.boolean().optional().describe("Install system dependencies for browsers"),
+        ["dry-run"]: z33.boolean().optional().describe("Do not execute installation, only print information"),
+        list: z33.boolean().optional().describe("Prints list of browsers from all Playwright installations"),
+        force: z33.boolean().optional().describe("Force reinstall of already installed browsers"),
+        ["only-shell"]: z33.boolean().optional().describe("Only install headless shell when installing Chromium"),
+        ["no-shell"]: z33.boolean().optional().describe("Do not install Chromium headless shell")
+      }),
+      toolName: "",
+      toolParams: () => ({})
+    });
+    tray = declareCommand({
+      name: "tray",
+      description: "Run tray",
+      category: "config",
+      hidden: true,
+      toolName: "",
+      toolParams: () => ({})
+    });
+    webmcpList2 = declareCommand({
+      name: "webmcp-list",
+      description: "List the WebMCP tools registered by the page",
+      category: "webmcp",
+      args: z33.object({}),
+      toolName: "browser_webmcp_list",
+      toolParams: () => ({})
+    });
+    webmcpCall2 = declareCommand({
+      name: "webmcp-call",
+      description: "Call a WebMCP tool registered by the page",
+      category: "webmcp",
+      args: z33.object({
+        name: z33.string().describe("Name of the WebMCP tool to call")
+      }),
+      options: z33.object({
+        params: z33.string().optional().describe(`Tool input parameters as a JSON object, for example '{"query":"cats"}'`),
+        frame: z33.string().optional().describe("Frame that registered the tool, as reported by webmcp-list, when the tool name is ambiguous")
+      }),
+      toolName: "browser_webmcp_call",
+      toolParams: ({ name, params: params2, frame }) => ({ name, params: parseWebMCPParams(params2), frame })
+    });
+    commandsArray = [
+      // core category
+      open3,
+      attach,
+      close2,
+      detach,
+      goto,
+      type2,
+      click2,
+      doubleClick,
+      fill,
+      drag2,
+      drop2,
+      hover2,
+      select,
+      fileUpload,
+      check2,
+      uncheck2,
+      snapshot2,
+      find2,
+      evaluate3,
+      consoleList,
+      dialogAccept,
+      dialogDismiss,
+      resize2,
+      runCode2,
+      deleteData,
+      // navigation category
+      goBack2,
+      goForward2,
+      reload2,
+      // keyboard category
+      pressKey,
+      keydown2,
+      keyup2,
+      // mouse category
+      mouseMove2,
+      mouseDown2,
+      mouseUp2,
+      mouseWheel2,
+      // export category
+      screenshot2,
+      pdfSave,
+      // tabs category
+      tabList,
+      tabNew,
+      tabClose,
+      tabSelect,
+      // storage category
+      stateLoad,
+      stateSave,
+      cookieList2,
+      cookieGet2,
+      cookieSet2,
+      cookieDelete2,
+      cookieClear2,
+      localStorageList2,
+      localStorageGet2,
+      localStorageSet2,
+      localStorageDelete2,
+      localStorageClear2,
+      sessionStorageList2,
+      sessionStorageGet2,
+      sessionStorageSet2,
+      sessionStorageDelete2,
+      sessionStorageClear2,
+      // emulation category
+      setColorScheme,
+      setReducedMotion,
+      setForcedColors,
+      setContrast,
+      setMedia,
+      clearColorScheme,
+      clearReducedMotion,
+      clearForcedColors,
+      clearContrast,
+      clearMedia,
+      // network category
+      networkRequests,
+      networkRequest,
+      networkRequestHeaders,
+      networkRequestBody,
+      networkResponseHeaders,
+      networkResponseBody,
+      routeMock,
+      routeList2,
+      unroute2,
+      networkStateSet2,
+      // config category
+      configPrint,
+      // install category
+      install,
+      installBrowser,
+      // devtools category
+      recordingStart,
+      recordingStop,
+      tracingStart2,
+      tracingStop2,
+      videoStart2,
+      videoStop2,
+      videoChapter2,
+      videoShowActions2,
+      videoHideActions2,
+      dashboardShow,
+      pauseAt,
+      resume2,
+      stepOver,
+      generateLocator2,
+      highlight2,
+      // session category
+      sessionList,
+      sessionCloseAll,
+      killAll,
+      // webmcp category
+      webmcpList2,
+      webmcpCall2,
+      // Hidden commands
+      tray
+    ];
+    commands = Object.fromEntries(commandsArray.map((cmd) => [cmd.name, cmd]));

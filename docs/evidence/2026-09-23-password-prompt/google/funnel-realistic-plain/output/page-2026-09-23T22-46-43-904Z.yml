@@ -1,0 +1,50 @@
+- generic [ref=e2] [box=0,0,1280,800]:
+  - navigation [ref=e3] [box=0,0,1280,60]:
+    - generic [ref=e5] [box=6,5,1268,51]:
+      - generic [ref=e6] [box=1015,5,118,51]:
+        - link "Gmail" [ref=e135] [cursor=pointer] [box=1030,17,34,24]:
+          - /url: https://mail.google.com/mail/&ogbl
+        - link "Search for Images" [ref=e136] [cursor=pointer] [box=1079,17,43,24]:
+          - /url: https://www.google.com/imghp?hl=en&ogbl
+          - text: Images
+      - button "Google apps" [ref=e137] [cursor=pointer] [box=1137,9,40,40]
+      - link "Sign in" [ref=e138] [cursor=pointer] [box=1185,9,85,40]:
+        - /url: https://accounts.google.com/ServiceLogin?hl=en&passive=true&continue=https://www.google.com/%3Fhl%3Den&ec=futura_exp_og_so_72776762_e
+  - img "Google" [ref=e139] [box=504,208,272,92]
+  - search [ref=e25] [box=96,326,1088,140]:
+    - generic [ref=e27] [box=296,326,688,140]:
+      - generic [ref=e29] [box=297,327,686,50]:
+        - button "Upload files or images" [ref=e140] [cursor=pointer] [box=303,334,36,36]
+        - combobox "Search" [ref=e141] [box=345,327,445,50]
+        - generic [ref=e40] [box=790,327,185,50]:
+          - generic [ref=e41] [box=790,340,80,24]:
+            - button "Search by voice" [ref=e142] [cursor=pointer] [box=790,340,40,24]
+            - button "Search by image" [ref=e143] [cursor=pointer] [box=830,340,40,24]
+          - link "AI Mode" [ref=e144] [cursor=pointer] [box=878,334,97,36]
+      - generic [ref=e65] [box=296,396,688,58]:
+        - button "Google Search" [ref=e145] [cursor=pointer] [box=497,407,130,36]
+        - button "I'm Feeling Lucky" [ref=e146] [cursor=pointer] [box=638,407,145,36]
+  - generic [ref=e70] [box=536,486,209,28]:
+    - text: "Google offered in:"
+    - link "Nederlands" [ref=e147] [cursor=pointer] [box=642,492,67,15]:
+      - /url: https://www.google.com/setprefs?sig=0_Guy92Sa-hDySFe2mzgx1gfPbxy8%3D&hl=nl&source=homepage&sa=X&ved=0ahUKEwjwsIKN5IWXAxUugP0HHWI5B8sQ2ZgBCCQ
+    - link "Frysk" [ref=e148] [cursor=pointer] [box=713,492,32,15]:
+      - /url: https://www.google.com/setprefs?sig=0_Guy92Sa-hDySFe2mzgx1gfPbxy8%3D&hl=fy&source=homepage&sa=X&ved=0ahUKEwjwsIKN5IWXAxUugP0HHWI5B8sQ2ZgBCCU
+  - contentinfo [ref=e74] [box=0,706,1280,94]:
+    - generic [ref=e75] [box=0,706,1280,48]: Netherlands
+    - generic [ref=e76] [box=0,754,1280,46]:
+      - generic [ref=e77] [box=20,754,399,46]:
+        - link "About" [ref=e149] [cursor=pointer] [box=20,754,67,46]:
+          - /url: https://about.google/?utm_source=google-NL&utm_medium=referral&utm_campaign=hp-footer&fg=1
+        - link "Advertising" [ref=e150] [cursor=pointer] [box=87,754,99,46]:
+          - /url: https://www.google.com/intl/en_nl/ads/?subid=ww-ww-et-g-awa-a-g_hpafoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpafooter&fg=1
+        - link "Business" [ref=e151] [cursor=pointer] [box=186,754,87,46]:
+          - /url: https://www.google.com/services/?subid=ww-ww-et-g-awa-a-g_hpbfoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpbfooter&fg=1
+        - link "How Search works" [ref=e152] [cursor=pointer] [box=273,754,147,46]:
+          - /url: https://google.com/search/howsearchworks/?fg=1
+      - generic [ref=e82] [box=1035,754,225,46]:
+        - link "Privacy" [ref=e153] [cursor=pointer] [box=1035,754,76,46]:
+          - /url: https://policies.google.com/privacy?hl=en-NL&fg=1
+        - link "Terms" [ref=e154] [cursor=pointer] [box=1111,754,68,46]:
+          - /url: https://policies.google.com/terms?hl=en-NL&fg=1
+        - button "Settings" [ref=e155] [cursor=pointer] [box=1179,754,81,46]

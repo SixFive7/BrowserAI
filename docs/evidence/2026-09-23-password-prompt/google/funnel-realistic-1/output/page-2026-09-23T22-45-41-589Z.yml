@@ -1,0 +1,188 @@
+- generic [ref=e1] [box=0,0,1280,800]:
+  - generic [aria-hidden] [ref=e2] [box=0,0,1280,800]:
+    - navigation [ref=e3] [box=0,0,1280,60]:
+      - generic [ref=e5] [box=6,5,1268,51]:
+        - generic [ref=e6] [box=1015,5,118,51]:
+          - link [ref=e8] [cursor=pointer] [box=1030,17,34,24]:
+            - /url: https://mail.google.com/mail/&ogbl
+            - text: Gmail
+          - link [ref=e10] [cursor=pointer] [box=1079,17,43,24]:
+            - /url: https://www.google.com/imghp?hl=en&ogbl
+            - text: Images
+        - button [ref=e13] [cursor=pointer] [box=1137,9,40,40]
+        - link [ref=e18] [cursor=pointer] [box=1185,9,85,40]:
+          - /url: https://accounts.google.com/ServiceLogin?hl=en&passive=true&continue=https://www.google.com/%3Fhl%3Den&ec=futura_exp_og_so_72776762_e
+          - generic [ref=e19] [box=1197,19,61,18]: Sign in
+    - search [ref=e25] [box=20,326,1240,140]:
+      - generic [ref=e27] [box=348,326,584,140]:
+        - combobox [ref=e36] [box=396,327,527,50]: windows structured exception handling
+        - generic [ref=e46] [box=348,396,584,58]:
+          - button [ref=e47] [cursor=pointer] [box=497,407,130,36]: Google Search
+          - button [ref=e48] [cursor=pointer] [box=638,407,145,36]: I'm Feeling Lucky
+    - generic [ref=e51] [box=536,486,209,28]:
+      - text: "Google offered in:"
+      - link [ref=e52] [cursor=pointer] [box=642,492,67,15]:
+        - /url: https://www.google.com/setprefs?sig=0_caRGRupQm2QxAU1BXMnghfrF06Q%3D&hl=nl&source=homepage&sa=X&ved=0ahUKEwiLyaXv44WXAxUKwAIHHfqjIoUQ2ZgBCBQ
+        - text: Nederlands
+      - link [ref=e53] [cursor=pointer] [box=713,492,32,15]:
+        - /url: https://www.google.com/setprefs?sig=0_caRGRupQm2QxAU1BXMnghfrF06Q%3D&hl=fy&source=homepage&sa=X&ved=0ahUKEwiLyaXv44WXAxUKwAIHHfqjIoUQ2ZgBCBU
+        - text: Frysk
+    - contentinfo [ref=e55] [box=0,706,1280,94]:
+      - generic [ref=e56] [box=0,706,1280,48]: Netherlands
+      - generic [ref=e57] [box=0,754,1280,46]:
+        - generic [ref=e58] [box=20,754,399,46]:
+          - link [ref=e59] [cursor=pointer] [box=20,754,67,46]:
+            - /url: https://about.google/?utm_source=google-NL&utm_medium=referral&utm_campaign=hp-footer&fg=1
+            - text: About
+          - link [ref=e60] [cursor=pointer] [box=87,754,99,46]:
+            - /url: https://www.google.com/intl/en_nl/ads/?subid=ww-ww-et-g-awa-a-g_hpafoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpafooter&fg=1
+            - text: Advertising
+          - link [ref=e61] [cursor=pointer] [box=186,754,87,46]:
+            - /url: https://www.google.com/services/?subid=ww-ww-et-g-awa-a-g_hpbfoot1_1!o2&utm_source=google.com&utm_medium=referral&utm_campaign=google_hpbfooter&fg=1
+            - text: Business
+          - link [ref=e62] [cursor=pointer] [box=273,754,147,46]:
+            - /url: https://google.com/search/howsearchworks/?fg=1
+            - text: How Search works
+        - generic [ref=e63] [box=1035,754,225,46]:
+          - link [ref=e64] [cursor=pointer] [box=1035,754,76,46]:
+            - /url: https://policies.google.com/privacy?hl=en-NL&fg=1
+            - text: Privacy
+          - link [ref=e65] [cursor=pointer] [box=1111,754,68,46]:
+            - /url: https://policies.google.com/terms?hl=en-NL&fg=1
+            - text: Terms
+          - button [ref=e69] [cursor=pointer] [box=1179,754,81,46]:
+            - generic [ref=e70] [box=1179,754,81,46]: Settings
+  - generic [box=0,800,1280,0]:
+    - dialog "Before you continue to Google Search" [box=0,800,1280,0]:
+      - generic [ref=e77] [box=233,0,800,830]:
+        - generic [ref=e79] [box=233,0,800,90]:
+          - img "Google" [ref=e80] [box=265,28,40,40]
+          - generic [ref=e81] [box=805,24,196,48]:
+            - generic [ref=e82] [box=805,24,100,48]:
+              - 'button "Language: ‪English‬" [expanded] [ref=e83] [cursor=pointer] [box=805,24,100,48]':
+                - generic [ref=e84] [box=836,38,48,20]: en
+              - menu [ref=e116] [box=805,24,192,450]:
+                - menuitem "‪English‬" [disabled] [active] [ref=e117] [box=805,24,177,58]
+                - generic [ref=e121] [box=805,82,177,342]:
+                  - menuitem "‪Deutsch‬" [ref=e122] [cursor=pointer] [box=805,82,177,46]
+                  - menuitem "‪English (United Kingdom)‬" [ref=e123] [cursor=pointer] [box=805,128,177,78]
+                  - menuitem "‪Español (España)‬" [ref=e124] [cursor=pointer] [box=805,206,177,62]
+                  - menuitem "‪Français (France)‬" [ref=e125] [cursor=pointer] [box=805,268,177,62]
+                  - menuitem "‪Italiano‬" [ref=e126] [cursor=pointer] [box=805,330,177,46]
+                  - menuitem "All languages" [ref=e127] [box=805,376,177,48]
+                - menuitem "‪Afrikaans‬" [ref=e128] [cursor=pointer] [box=805,424,177,46]
+                - menuitem "‪azərbaycan‬" [ref=e129] [cursor=pointer] [box=805,470,177,46]
+                - menuitem "‪bosanski‬" [ref=e130] [cursor=pointer] [box=805,516,177,46]
+                - menuitem "‪català‬" [ref=e131] [cursor=pointer] [box=805,562,177,46]
+                - menuitem "‪Čeština‬" [ref=e132] [cursor=pointer] [box=805,608,177,46]
+                - menuitem "‪Cymraeg‬" [ref=e133] [cursor=pointer] [box=805,654,177,46]
+                - menuitem "‪Dansk‬" [ref=e134] [cursor=pointer] [box=805,700,177,46]
+                - menuitem "‪Deutsch‬" [ref=e135] [cursor=pointer] [box=805,746,177,46]
+                - menuitem "‪eesti‬" [ref=e136] [cursor=pointer] [box=805,792,177,46]
+                - menuitem "‪English (United Kingdom)‬" [ref=e137] [cursor=pointer] [box=805,838,177,78]
+                - menuitem "‪English (United States)‬" [ref=e138] [cursor=pointer] [box=805,916,177,78]
+                - menuitem "‪Español (España)‬" [ref=e139] [cursor=pointer] [box=805,994,177,62]
+                - menuitem "‪Español (Latinoamérica)‬" [ref=e140] [cursor=pointer] [box=805,1056,177,62]
+                - menuitem "‪euskara‬" [ref=e141] [cursor=pointer] [box=805,1118,177,46]
+                - menuitem "‪Filipino‬" [ref=e142] [cursor=pointer] [box=805,1164,177,46]
+                - menuitem "‪Français (Canada)‬" [ref=e143] [cursor=pointer] [box=805,1210,177,62]
+                - menuitem "‪Français (France)‬" [ref=e144] [cursor=pointer] [box=805,1272,177,62]
+                - menuitem "‪Gaeilge‬" [ref=e145] [cursor=pointer] [box=805,1334,177,46]
+                - menuitem "‪galego‬" [ref=e146] [cursor=pointer] [box=805,1380,177,46]
+                - menuitem "‪Hrvatski‬" [ref=e147] [cursor=pointer] [box=805,1426,177,46]
+                - menuitem "‪Indonesia‬" [ref=e148] [cursor=pointer] [box=805,1472,177,46]
+                - menuitem "‪isiZulu‬" [ref=e149] [cursor=pointer] [box=805,1518,177,46]
+                - menuitem "‪íslenska‬" [ref=e150] [cursor=pointer] [box=805,1564,177,46]
+                - menuitem "‪Italiano‬" [ref=e151] [cursor=pointer] [box=805,1610,177,46]
+                - menuitem "‪Kiswahili‬" [ref=e152] [cursor=pointer] [box=805,1656,177,46]
+                - menuitem "‪latviešu‬" [ref=e153] [cursor=pointer] [box=805,1702,177,46]
+                - menuitem "‪lietuvių‬" [ref=e154] [cursor=pointer] [box=805,1748,177,46]
+                - menuitem "‪magyar‬" [ref=e155] [cursor=pointer] [box=805,1794,177,46]
+                - menuitem "‪Melayu‬" [ref=e156] [cursor=pointer] [box=805,1840,177,46]
+                - menuitem "‪Nederlands‬" [ref=e157] [cursor=pointer] [box=805,1886,177,46]
+                - menuitem "‪norsk‬" [ref=e158] [cursor=pointer] [box=805,1932,177,46]
+                - menuitem "‪o‘zbek‬" [ref=e159] [cursor=pointer] [box=805,1978,177,46]
+                - menuitem "‪polski‬" [ref=e160] [cursor=pointer] [box=805,2024,177,46]
+                - menuitem "‪Português (Brasil)‬" [ref=e161] [cursor=pointer] [box=805,2070,177,62]
+                - menuitem "‪Português (Portugal)‬" [ref=e162] [cursor=pointer] [box=805,2132,177,62]
+                - menuitem "‪română‬" [ref=e163] [cursor=pointer] [box=805,2194,177,46]
+                - menuitem "‪shqip‬" [ref=e164] [cursor=pointer] [box=805,2240,177,46]
+                - menuitem "‪Slovenčina‬" [ref=e165] [cursor=pointer] [box=805,2286,177,46]
+                - menuitem "‪slovenščina‬" [ref=e166] [cursor=pointer] [box=805,2332,177,46]
+                - menuitem "‪srpski (latinica)‬" [ref=e167] [cursor=pointer] [box=805,2378,177,62]
+                - menuitem "‪Suomi‬" [ref=e168] [cursor=pointer] [box=805,2440,177,46]
+                - menuitem "‪Svenska‬" [ref=e169] [cursor=pointer] [box=805,2486,177,46]
+                - menuitem "‪Tiếng Việt‬" [ref=e170] [cursor=pointer] [box=805,2532,177,46]
+                - menuitem "‪Türkçe‬" [ref=e171] [cursor=pointer] [box=805,2578,177,46]
+                - menuitem "‪Ελληνικά‬" [ref=e172] [cursor=pointer] [box=805,2624,177,46]
+                - menuitem "‪беларуская‬" [ref=e173] [cursor=pointer] [box=805,2670,177,46]
+                - menuitem "‪български‬" [ref=e174] [cursor=pointer] [box=805,2716,177,46]
+                - menuitem "‪кыргызча‬" [ref=e175] [cursor=pointer] [box=805,2762,177,46]
+                - menuitem "‪македонски‬" [ref=e176] [cursor=pointer] [box=805,2808,177,46]
+                - menuitem "‪монгол‬" [ref=e177] [cursor=pointer] [box=805,2854,177,46]
+                - menuitem "‪Русский‬" [ref=e178] [cursor=pointer] [box=805,2900,177,46]
+                - menuitem "‪српски (ћирилица)‬" [ref=e179] [cursor=pointer] [box=805,2946,177,62]
+                - menuitem "‪Українська‬" [ref=e180] [cursor=pointer] [box=805,3008,177,46]
+                - menuitem "‪ქართული‬" [ref=e181] [cursor=pointer] [box=805,3054,177,48]
+                - menuitem "‪қазақ тілі‬" [ref=e182] [cursor=pointer] [box=805,3102,177,46]
+                - menuitem "‪հայերեն‬" [ref=e183] [cursor=pointer] [box=805,3148,177,46]
+                - menuitem "‫עברית‬" [ref=e184] [cursor=pointer] [box=805,3194,177,46]
+                - menuitem "‫اردو‬" [ref=e186] [cursor=pointer] [box=805,3240,177,46]
+                - menuitem "‫العربية‬" [ref=e188] [cursor=pointer] [box=805,3286,177,46]
+                - menuitem "‫فارسی‬" [ref=e190] [cursor=pointer] [box=805,3332,177,46]
+                - menuitem "‪አማርኛ‬" [ref=e192] [cursor=pointer] [box=805,3378,177,49]
+                - menuitem "‪नेपाली‬" [ref=e193] [cursor=pointer] [box=805,3427,177,49]
+                - menuitem "‪मराठी‬" [ref=e194] [cursor=pointer] [box=805,3476,177,49]
+                - menuitem "‪हिन्दी‬" [ref=e195] [cursor=pointer] [box=805,3525,177,49]
+                - menuitem "‪বাংলা‬" [ref=e196] [cursor=pointer] [box=805,3574,177,49]
+                - menuitem "‪ਪੰਜਾਬੀ‬" [ref=e197] [cursor=pointer] [box=805,3623,177,49]
+                - menuitem "‪ગુજરાતી‬" [ref=e198] [cursor=pointer] [box=805,3672,177,49]
+                - menuitem "‪தமிழ்‬" [ref=e199] [cursor=pointer] [box=805,3721,177,49]
+                - menuitem "‪తెలుగు‬" [ref=e200] [cursor=pointer] [box=805,3770,177,49]
+                - menuitem "‪ಕನ್ನಡ‬" [ref=e201] [cursor=pointer] [box=805,3819,177,49]
+                - menuitem "‪മലയാളം‬" [ref=e202] [cursor=pointer] [box=805,3868,177,49]
+                - menuitem "‪සිංහල‬" [ref=e203] [cursor=pointer] [box=805,3917,177,49]
+                - menuitem "‪ไทย‬" [ref=e204] [cursor=pointer] [box=805,3966,177,47]
+                - menuitem "‪ລາວ‬" [ref=e205] [cursor=pointer] [box=805,4013,177,49]
+                - menuitem "‪မြန်မာ‬" [ref=e206] [cursor=pointer] [box=805,4062,177,57]
+                - menuitem "‪ខ្មែរ‬" [ref=e207] [cursor=pointer] [box=805,4119,177,49]
+                - menuitem "‪한국어‬" [ref=e208] [cursor=pointer] [box=805,4168,177,48]
+                - menuitem "‪中文（香港）‬" [ref=e209] [cursor=pointer] [box=805,4216,177,68]
+                - menuitem "‪日本語‬" [ref=e210] [cursor=pointer] [box=805,4284,177,49]
+                - menuitem "‪简体中文‬" [ref=e211] [cursor=pointer] [box=805,4333,177,49]
+                - menuitem "‪繁體中文‬" [ref=e212] [cursor=pointer] [box=805,4382,177,49]
+            - link "Sign in" [ref=e86] [cursor=pointer] [box=904,24,96,48]
+        - generic [ref=e87] [box=233,90,800,594]:
+          - heading "Before you continue to Google" [level=1] [ref=e88] [box=265,90,736,36]
+          - generic [ref=e89] [box=265,146,736,518]:
+            - generic [ref=e90] [box=265,146,736,136]:
+              - text: We use
+              - link "cookies" [ref=e91] [cursor=pointer] [box=316,147,50,18]:
+                - /url: https://policies.google.com/technologies/cookies?utm_source=ucbs&hl=en-NL
+              - text: and data, including IP addresses, to
+              - list [ref=e92] [box=265,178,736,104]:
+                - listitem [ref=e93] [box=265,178,736,20]: Deliver and maintain Google services
+                - listitem [ref=e94] [box=265,210,736,20]: Track outages and protect against spam, fraud and abuse
+                - listitem [ref=e95] [box=265,242,736,40]: Measure audience engagement and site statistics to understand how our services are used and enhance the quality of those services
+            - generic [ref=e96] [box=265,306,736,180]:
+              - text: If you choose to 'Accept all', we will also use cookies and data, including IP addresses, to
+              - list [ref=e97] [box=265,338,736,116]:
+                - listitem [ref=e98] [box=265,338,736,20]: Develop and improve new services
+                - listitem [ref=e99] [box=265,370,736,20]: Deliver and measure the effectiveness of ads
+                - listitem [ref=e100] [box=265,402,736,20]: Show personalised content, depending on your settings
+                - listitem [ref=e101] [box=265,434,736,20]: Show personalised ads, depending on your settings
+              - generic [ref=e102] [box=265,466,736,20]: If you choose to 'Reject all', we will not use cookies or IP addresses for these additional purposes.
+            - generic [ref=e103] [box=265,510,736,100]: Non-personalised content is influenced by things like the content that you’re currently viewing, activity in your active Search session, and your location. Non-personalised ads are influenced by the content that you’re currently viewing and your general location. Personalised content and ads can also include more relevant results, recommendations and tailored ads based on past activity from this browser, like previous Google searches. We also use cookies and data to tailor the experience to be age-appropriate, if relevant.
+            - generic [ref=e104] [box=265,624,736,40]: Select 'More options' to see additional information, including details about managing your privacy settings. You can also visit g.co/privacytools at any time.
+        - generic [ref=e105] [box=233,684,800,96]:
+          - generic [ref=e106] [box=233,684,800,48]:
+            - button "Reject all" [ref=e107] [cursor=pointer] [box=424,684,206,48]
+            - button "Accept all" [ref=e108] [cursor=pointer] [box=630,684,212,48]
+          - link "More options for personalisation settings and cookies" [ref=e110] [cursor=pointer] [box=581,732,102,48]:
+            - generic "More options for personalisation settings and cookies" [ref=e111] [box=581,732,102,48]: More options
+        - generic [ref=e112] [box=233,780,800,48]:
+          - link "Privacy" [ref=e113] [cursor=pointer] [box=576,780,55,48]:
+            - /url: https://policies.google.com/privacy?hl=en-NL&fg=1&utm_source=ucbs
+          - generic [aria-hidden] [ref=e114] [box=634,780,4,48]: ·
+          - link "Terms" [ref=e115] [cursor=pointer] [box=640,780,49,48]:
+            - /url: https://policies.google.com/terms?hl=en-NL&fg=1&utm_source=ucbs

@@ -1,0 +1,1 @@
+{"name":"mpv-b","plugins":[{"name":"p-b","source":{"source":"local","path":"./plugins/p"},"policy":{"installation":"AVAILABLE"}}]}

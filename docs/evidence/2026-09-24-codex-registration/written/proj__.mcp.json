@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "proj_via_mcp_json": {
+      "command": "node",
+      "args": ["b.js"]
+    }
+  }
+}

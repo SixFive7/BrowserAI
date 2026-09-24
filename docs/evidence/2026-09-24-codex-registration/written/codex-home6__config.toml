@@ -1,0 +1,6 @@
+[marketplaces.browserai-test-mp]
+source_type = "local"
+source = '\\?\C:\Source\SixFive7\BrowserAI\.work\codex-registration-2026-09-24\mp'
+
+[plugins."browserai@browserai-test-mp"]
+enabled = true

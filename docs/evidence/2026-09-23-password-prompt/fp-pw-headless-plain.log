@@ -1,0 +1,47 @@
+[fp] mode=pw arm=headless-plain rest=["--headless"] origin=http://127.0.0.1:54468/
+[fp] playwright launchOptions={"headless":true,"channel":"chrome-for-testing","viewport":{"width":1280,"height":800},"locale":"en-US","args":[]}
+[fp] reported=true
+[fp] webdriver                  true
+[fp] webdriverOwnProperty       false
+[fp] webdriverDescriptorOnProto "function get webdriver() { [native code] }"
+[fp] documentWebdriverAttr      null
+[fp] userAgent                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36"
+[fp] appVersion                 "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36"
+[fp] languages                  "[\"en-US\"]"
+[fp] language                   "en-US"
+[fp] platform                   "Win32"
+[fp] hardwareConcurrency        32
+[fp] deviceMemory               32
+[fp] pdfViewerEnabled           true
+[fp] pluginsLength              5
+[fp] mimeTypesLength            2
+[fp] uaDataBrands               "[{\"brand\":\"Not A(Brand\",\"version\":\"99\"},{\"brand\":\"Chromium\",\"version\":\"154\"}]"
+[fp] uaDataMobile               false
+[fp] uaDataPlatform             "Windows"
+[fp] uaDataHighEntropy          "{\"architecture\":\"x86\",\"bitness\":\"64\",\"brands\":[{\"brand\":\"Not A(Brand\",\"version\":\"99\"},{\"brand\":\"Chromium\",\"version\":\"154\"}],\"fullVersionList\":[{\"brand\":\"Not A(Brand\",\"version\":\"99.0.0.0\"},{\"brand\":\"Chromium\",\"version\":\"154.0.8037.0\"}],\"mobile\":false,\"model\":\"\",\"platform\":\"Windows\",\"platformVersion\":\"19.0.0\",\"uaFullVersion\":\"154.0.8037.0\",\"wow64\":false}"
+[fp] windowChrome               "object"
+[fp] windowChromeKeys           "app,csi,loadTimes"
+[fp] chromeRuntime              "undefined"
+[fp] chromeRuntimeKeys          "none"
+[fp] chromeLoadTimes            "function"
+[fp] chromeCsi                  "function"
+[fp] chromeApp                  "InstallState,RunningState,getDetails,getIsInstalled,installState,isInstalled,runningState"
+[fp] cdcKeys                    "none"
+[fp] documentCdc                "none"
+[fp] externalToString           "[object External]"
+[fp] outerWidth                 1280
+[fp] outerHeight                800
+[fp] innerWidth                 1280
+[fp] innerHeight                800
+[fp] screen                     "1280x800@24"
+[fp] devicePixelRatio           1
+[fp] connection                 "4g/100"
+[fp] maxTouchPoints             0
+[fp] notificationPermission     "{\"permissionsState\":\"prompt\",\"notificationPermission\":\"default\",\"mismatch\":false}"
+[fp] webglVendor                "Google Inc. (NVIDIA)"
+[fp] webglRenderer              "ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+[fp] webglError                 null
+[fp] timezone                   "Europe/Amsterdam"
+[fp] permissionsQueryToString   "function query() { [native code] }"
+[fp] errorStackHasPuppeteer     false
+[fp] request headers: {"host":"127.0.0.1:54468","connection":"keep-alive","sec-ch-ua":"\"Not A(Brand\";v=\"99\", \"Chromium\";v=\"154\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"Windows\"","upgrade-insecure-requests":"1","user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36","accept-language":"en-US","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7","sec-fetch-site":"none","sec-fetch-mode":"navigate","sec-fetch-user":"?1","sec-fetch-dest":"document","accept-encoding":"gzip, deflate, br, zstd"}

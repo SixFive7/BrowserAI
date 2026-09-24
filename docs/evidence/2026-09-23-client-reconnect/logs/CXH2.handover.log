@@ -1,0 +1,20 @@
+2026-09-23T22:41:42.042Z 123756 LAUNCH role=A trigger=after-first-call
+2026-09-23T22:41:42.045Z 123756 IN {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}},"clientInfo":{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}}}
+2026-09-23T22:41:42.046Z 123756 OUT initialize result (protocolVersion=2025-06-18)
+2026-09-23T22:41:42.046Z 123756 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:41:42.047Z 123756 IN {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"progressToken":0}}}
+2026-09-23T22:41:42.047Z 123756 OUT tools/list
+2026-09-23T22:41:42.209Z 123756 IN {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"_meta":{"callId":"call_0","x-codex-turn-metadata":{"session_id":"01a0d06e-8fd0-7d81-b6ee-d13b3bbaef77","thread_id":"01a0d06e-8fd0-7d81-b6ee-d13b3bbaef77","model":"stub-model","turn_id":"01a0d06e-9073-7fb2-80be-662f5826adfd","turn_started_at_unix_ms":1790203302016,"thread_source":"user","sandbox":"none","sandbox_mode":"danger-full-access","au
+2026-09-23T22:41:42.210Z 123756 OUT tools/call #1 answered by A
+2026-09-23T22:41:42.211Z 123756 HANDOVER-STATE wrote C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CXH2.state.json residual=""
+2026-09-23T22:41:42.219Z 123756 HANDOVER-SPAWNED helper pid=143912 with inherited stdio
+2026-09-23T22:41:42.255Z 143912 LAUNCH role=H holding the pipe; not reading stdin
+2026-09-23T22:41:42.351Z 123756 HANDOVER-EXIT A exiting 0; the pipe is now held by H
+2026-09-23T22:41:42.351Z 123756 EXIT role=A code=0
+2026-09-23T22:41:43.506Z 143912 APPLY-DONE after 1250ms
+2026-09-23T22:41:43.522Z 143912 B-SPAWNED pid=17780 from C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-install/b.js with inherited stdio
+2026-09-23T22:41:43.577Z 17780 LAUNCH role=B adopting state from pid=123756 initializeDone=true protocolVersion=2025-06-18 callCount=1
+2026-09-23T22:41:43.675Z 143912 H-EXIT handing the pipe to B and exiting 0
+2026-09-23T22:41:43.676Z 143912 EXIT role=H code=0
+2026-09-23T22:41:51.517Z 17780 IN {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"_meta":{"callId":"call_1","x-codex-turn-metadata":{"session_id":"01a0d06e-8fd0-7d81-b6ee-d13b3bbaef77","thread_id":"01a0d06e-8fd0-7d81-b6ee-d13b3bbaef77","model":"stub-model","turn_id":"01a0d06e-9073-7fb2-80be-662f5826adfd","turn_started_at_unix_ms":1790203302016,"thread_source":"user","sandbox":"none","sandbox_mode":"danger-full-access","au
+2026-09-23T22:41:51.517Z 17780 OUT tools/call #2 answered by B

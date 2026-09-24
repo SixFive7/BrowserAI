@@ -1,0 +1,89 @@
+Every option of the MCP server command against what BrowserAI does with it.
+
+Command line BrowserAI actually passes (src/BrowserAI/Runtime/ChildLaunch.cs:147-160):
+    <payload>\node\node.exe  <payload>\mcp\node_modules\@playwright\mcp\cli.js  --config <file>  --sandbox
+Nothing else. Merge order in the child is config file -> environment -> CLI
+(see config-resolution.txt, resolveCLIConfigForMCP).
+
+53 options are declared. 1 is -V/--version, 2 are hidden (--remote-header, --vision),
+--sandbox and --no-sandbox share one attribute. So 49 distinct settings.
+
+KEY  SET     = BrowserAI writes the equivalent config key.
+     DIFF    = writes it deliberately to something other than upstream's default,
+               or writes upstream's default deliberately so it is on the record.
+     NOT SET = never written and never passed.
+     REFUSED = also blocked on the environment route, ChildEnvironment.Refused,
+               src/BrowserAI/Protocol/ChildEnvironment.cs:227-268.
+Line numbers unqualified below are src/BrowserAI/Runtime/BrowserConfiguration.cs.
+
+--config                          SET   the only reason the child reads anything (ChildLaunch.cs:151)
+--sandbox                         SET   the one flag, on the command line on purpose (ChildLaunch.cs:72,154)
+--no-sandbox                      n/a   same attribute as --sandbox; never passed
+--caps                            NEVER PASSED BY RULE. capabilities written in the file instead,
+                                        because --caps REPLACES the list rather than merging
+                                        (:41-45 and ChildLaunch.cs:156-159). PLAYWRIGHT_MCP_CAPS REFUSED.
+--browser                         SET   browser.browserName (:713)
+--headless                        SET   browser.launchOptions.headless (:751)
+--user-data-dir                   SET   browser.userDataDir (:714)
+--output-dir                      SET   outputDir (:836). PLAYWRIGHT_MCP_OUTPUT_DIR REFUSED.
+--save-session                    SET   saveSession, carrying BrowserAI's own "tracing" (:576-587, :837)
+--allow-unrestricted-file-access  DIFF  written FALSE explicitly (:851). Env route REFUSED.
+--console-level                   DIFF  "debug"; upstream default "info" (:127-152, :852)
+--codegen                         DIFF  "none"; upstream default "typescript" (:157-169, :869)
+--file-paths                      DIFF  "absolute"; upstream default "relative" (:171-221, :877).
+                                        PLAYWRIGHT_MCP_FILE_PATHS REFUSED.
+--snapshot-boxes                  DIFF  true; upstream default off (:863-864)
+--idle-timeout                    DIFF  3,600,000 written = upstream's own default, unreachable
+                                        behind BrowserAI's 10-minute timer (:252-289, :889)
+--no-webmcp                       DIFF  webmcp written TRUE (= upstream default) as a stance (:912)
+--viewport-size                   SET   contextOptions.viewport, 1920x1080 (:761-765)
+--ignore-https-errors             SET   contextOptions.ignoreHTTPSErrors, per-run argument (:773)
+--grant-permissions               SET   contextOptions.permissions = ["clipboard-read"], chromium only (:783)
+--block-service-workers           PARTIAL contextOptions.serviceWorkers = "block" ONLY when a HAR
+                                        capture is requested (:804). No independent control.
+--executable-path                 NOT SET  PLAYWRIGHT_BROWSERS_PATH + channel instead (ChildLaunch.cs:78)
+--device                          NOT SET  207 descriptors live in playwright.devices
+--mobile                          NOT SET
+--user-agent                      NOT SET
+--proxy-server / --proxy-bypass   NOT SET
+--allowed-origins                 NOT SET
+--blocked-origins                 NOT SET
+--allowed-hosts                   NOT SET  HTTP-transport-only DNS-rebinding guard; inert over stdio
+--port / --host                   NOT SET  stdio transport taken (coreBundle.js:73353-73358)
+--endpoint                        NOT SET  attach to a browser published in the machine-wide registry
+--remote-header (hidden)          NOT SET
+--cdp-endpoint / --cdp-header / --cdp-timeout   NOT SET
+--extension / --profile-dir-name  NOT SET  drive the user's own running Chrome/Edge
+--isolated                        NOT SET  in-memory profile, and the only multi-browser-per-config mode
+--shared-browser-context          NOT SET  HTTP-clients-only context sharing
+--init-page                       NOT SET  PLAYWRIGHT_MCP_INIT_PAGE REFUSED
+--init-script                     NOT SET  PLAYWRIGHT_MCP_INIT_SCRIPT REFUSED
+--secrets                         NOT SET
+--storage-state                   NOT SET  browser_set_storage_state is allowed instead
+--test-id-attribute               NOT SET  default "data-testid"
+--image-responses                 NOT SET  default "allow"
+--output-max-size                 NOT SET  deliberately, so _enforceOutputBudget never runs (:35-38).
+                                        PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE REFUSED.
+--snapshot-mode                   NOT SET  default "full"
+--timeout-action                  NOT SET  default 5,000 ms
+--timeout-navigation              NOT SET  default 60,000 ms
+--timeout-settle                  NOT SET  default 500 ms
+--vision (hidden, legacy)         NOT SET  vision granted through capabilities instead
+
+Config-schema and .ini keys with NO command-line option at all
+--------------------------------------------------------------
+browser.launchOptions.*     slowMo, timeout, tracesDir, downloadsPath (SET), handleSIGHUP,
+                            handleSIGINT, handleSIGTERM, ignoreDefaultArgs,
+                            firefoxUserPrefs (SET, Firefox only), proxy.username, proxy.password,
+                            chromiumSandbox (deliberately not written -- ChildLaunch.cs:36-63)
+browser.contextOptions.*    the whole playwright.BrowserContextOptions type, passed verbatim to
+                            launchPersistentContext. SET today: viewport, locale, timezoneId,
+                            ignoreHTTPSErrors, permissions, serviceWorkers, recordHar.
+                            NOT SET: recordVideo, baseURL, bypassCSP, colorScheme, contrast,
+                            deviceScaleFactor, forcedColors, hasTouch, isMobile, javaScriptEnabled,
+                            offline, reducedMotion, screen, strictSelectors, acceptDownloads,
+                            httpCredentials, extraHTTPHeaders, geolocation, clientCertificates
+browser.remoteEndpoint      as an object: exposeNetwork, headers, slowMo, timeout
+timeouts.expect             in config.d.ts; no CLI option; absent from the .ini table
+saveVideo                   in the .ini table ONLY (coreBundle.js:73598); nothing reads it -- a dead
+                            key of the same shape as the --output-mode no-op already on record

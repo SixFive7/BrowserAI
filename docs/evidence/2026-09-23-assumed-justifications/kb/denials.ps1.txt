@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+# Probe: who is in the OpenProcess-denied set?  kb/windows/detection.md "The 156 denials do not matter."
+# Reproduces the documented path: EnumProcesses -> OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)
+#  -> QueryFullProcessImageNameW, then asks a DIFFERENT oracle (WMI GetOwner) who owns the denied ones.
+$ErrorActionPreference = 'Stop'
+Add-Type -Namespace P -Name K -MemberDefinition @'
+[DllImport("psapi.dll", SetLastError=true)] public static extern bool EnumProcesses(uint[] p, uint cb, out uint needed);
+[DllImport("kernel32.dll", SetLastError=true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+[DllImport("kernel32.dll", SetLastError=true)] public static extern bool CloseHandle(IntPtr h);
+[DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)] public static extern bool QueryFullProcessImageNameW(IntPtr h, uint flags, System.Text.StringBuilder buf, ref uint size);
+'@
+$QLI = 0x1000
+$buf = New-Object uint32[] 4096
+$needed = 0
+[void][P.K]::EnumProcesses($buf, 4096*4, [ref]$needed)
+$pids = $buf[0..([int]($needed/4)-1)] | Where-Object { $_ -ne 0 }
+$opened = @(); $denied = @(); $pathRead = 0
+foreach ($procId in $pids) {
+  $h = [P.K]::OpenProcess($QLI, $false, $procId)
+  if ($h -eq [IntPtr]::Zero) {
+    $denied += [pscustomobject]@{ Pid=$procId; Err=[Runtime.InteropServices.Marshal]::GetLastWin32Error() }
+  } else {
+    $sb = New-Object Text.StringBuilder 1024; $sz = 1024
+    if ([P.K]::QueryFullProcessImageNameW($h, 0, $sb, [ref]$sz)) { $pathRead++ ; $p = $sb.ToString() } else { $p = '' }
+    $opened += [pscustomobject]@{ Pid=$procId; Path=$p }
+    [void][P.K]::CloseHandle($h)
+  }
+}
+"PIDs returned            : $($pids.Count)"
+"Opened successfully      : $($opened.Count)"
+"OpenProcess denied       : $($denied.Count)"
+"Image path read          : $pathRead / $($opened.Count)"
+"Denied error codes       : " + (($denied | Group-Object Err | ForEach-Object { "$($_.Name)x$($_.Count)" }) -join ' ')
+
+# Second oracle: WMI, which runs as SYSTEM and can report an owner we could not open.
+$wmi = @{}
+Get-CimInstance Win32_Process | ForEach-Object { $wmi[[uint32]$_.ProcessId] = $_ }
+function Owner($p) { try { $r = Invoke-CimMethod -InputObject $p -MethodName GetOwner -ErrorAction Stop; if ($r.ReturnValue -eq 0) { "$($r.Domain)\$($r.User)" } else { "GetOwner=$($r.ReturnValue)" } } catch { 'GetOwner-threw' } }
+
+"`n--- DENIED SET, owner per WMI ---"
+$rows = foreach ($d in $denied) {
+  $p = $wmi[[uint32]$d.Pid]
+  if ($null -eq $p) { [pscustomobject]@{ Pid=$d.Pid; Name='<gone-or-hidden-from-wmi>'; Owner='-'; Path='-' } }
+  else { [pscustomobject]@{ Pid=$d.Pid; Name=$p.Name; Owner=(Owner $p); Path=$p.ExecutablePath } }
+}
+$rows | Group-Object Owner | Sort-Object Count -Descending | ForEach-Object { "  {0,-40} {1}" -f $_.Name, $_.Count }
+"`n--- any denied process NOT owned by SYSTEM/LOCAL SERVICE/NETWORK SERVICE ---"
+$notSystem = $rows | Where-Object { $_.Owner -notmatch 'SYSTEM|LOCAL SERVICE|NETWORK SERVICE' }
+if ($notSystem) { $notSystem | Format-Table -AutoSize | Out-String -Width 200 } else { "  (none)" }
+
+"`n--- POSITIVE CONTROL 1: the oracle can report a non-SYSTEM owner at all ---"
+$mine = $wmi[[uint32]$PID]
+"  this PowerShell (pid $PID) owner per WMI = " + (Owner $mine)
+"`n--- POSITIVE CONTROL 2: the denied set is non-empty and the reader is a real reader ---"
+"  denied count = $($denied.Count); a run that could open everything would print 0 here"
+"`n--- full denied list ---"
+$rows | Sort-Object Name | Format-Table -AutoSize | Out-String -Width 250

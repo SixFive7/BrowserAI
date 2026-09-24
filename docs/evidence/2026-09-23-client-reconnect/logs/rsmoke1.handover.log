@@ -1,0 +1,46 @@
+2026-09-23T22:33:43.707Z 86240 R LAUNCH relay holding the client pipes; server dir=C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-install
+2026-09-23T22:33:43.721Z 86240 R CHILD-SPAWNED gen=1 pid=70060 from C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\ho-install\s.js
+2026-09-23T22:33:43.781Z 70060 S(v1.0.0) LAUNCH real server version=1.0.0
+2026-09-23T22:33:43.786Z 70060 S(v1.0.0) IN {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"roots":{"listChanged":true}},"clientInfo":{"name":"smoke","version":"1"}}}
+2026-09-23T22:33:43.788Z 70060 S(v1.0.0) IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:33:43.789Z 70060 S(v1.0.0) IN {"jsonrpc":"2.0","id":2,"method":"tools/list"}
+2026-09-23T22:33:43.790Z 70060 S(v1.0.0) OUT tools/list
+2026-09-23T22:33:43.790Z 70060 S(v1.0.0) IN {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"ping","arguments":{"note":"c1"}}}
+2026-09-23T22:33:43.791Z 70060 S(v1.0.0) OUT tools/call #1 answered
+2026-09-23T22:33:43.793Z 70060 S(v1.0.0) IN {"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"ping","arguments":{"note":"c2-during-swap"}}}
+2026-09-23T22:33:43.793Z 86240 R SWAP-REQUESTED marker present
+2026-09-23T22:33:43.793Z 70060 S(v1.0.0) OUT tools/call #2 answered
+2026-09-23T22:33:43.794Z 86240 R SWAP-BEGIN queueing client frames; in-flight=1
+2026-09-23T22:33:43.796Z 70060 S(v1.0.0) STDIN-END 
+2026-09-23T22:33:43.796Z 70060 S(v1.0.0) EXIT code=0
+2026-09-23T22:33:43.806Z 86240 R CHILD-EXIT gen=1 code=0 swapping=true
+2026-09-23T22:33:43.848Z 86240 R SWAP-OLD-GONE exitCode=0 after 53ms
+2026-09-23T22:33:44.155Z 86240 R SWAP-APPLY-DONE after 307ms
+2026-09-23T22:33:44.160Z 86240 R CHILD-SPAWNED gen=2 pid=137540 from C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\ho-install\s.js
+2026-09-23T22:33:44.161Z 86240 R SWAP-REPLAY initialize replayed to the new S
+2026-09-23T22:33:44.215Z 137540 S(v2.0.0) LAUNCH real server version=2.0.0
+2026-09-23T22:33:44.220Z 137540 S(v2.0.0) IN {"jsonrpc":"2.0","id":"__relay_init__","method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"roots":{"listChanged":true}},"clientInfo":{"name":"smoke","version":"1"}}}
+2026-09-23T22:33:44.221Z 137540 S(v2.0.0) IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:33:44.221Z 86240 R CHILD-REPLAY-INIT-OK gen=2
+2026-09-23T22:33:44.419Z 86240 R SWAP-END forwarding resumed; the client saw nothing
+2026-09-23T22:33:46.650Z 137540 S(v2.0.0) IN {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"ping","arguments":{"note":"c3"}}}
+2026-09-23T22:33:46.651Z 86240 R SWAP-REQUESTED marker present
+2026-09-23T22:33:46.651Z 137540 S(v2.0.0) OUT tools/call #1 answered
+2026-09-23T22:33:46.654Z 86240 R SWAP-BEGIN queueing client frames; in-flight=1
+2026-09-23T22:33:46.657Z 137540 S(v2.0.0) STDIN-END 
+2026-09-23T22:33:46.658Z 137540 S(v2.0.0) EXIT code=0
+2026-09-23T22:33:46.670Z 86240 R CHILD-EXIT gen=2 code=0 swapping=true
+2026-09-23T22:33:46.722Z 86240 R SWAP-OLD-GONE exitCode=0 after 66ms
+2026-09-23T22:33:46.725Z 86240 R SWAP-APPLY-DONE after 1ms
+2026-09-23T22:33:46.731Z 86240 R CHILD-SPAWNED gen=3 pid=68128 from C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\ho-install\s.js
+2026-09-23T22:33:46.731Z 86240 R SWAP-REPLAY initialize replayed to the new S
+2026-09-23T22:33:46.793Z 68128 S(v2.0.0) LAUNCH real server version=2.0.0
+2026-09-23T22:33:46.798Z 68128 S(v2.0.0) IN {"jsonrpc":"2.0","id":"__relay_init__","method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"roots":{"listChanged":true}},"clientInfo":{"name":"smoke","version":"1"}}}
+2026-09-23T22:33:46.798Z 68128 S(v2.0.0) IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:33:46.799Z 86240 R CHILD-REPLAY-INIT-OK gen=3
+2026-09-23T22:33:46.985Z 86240 R SWAP-END forwarding resumed; the client saw nothing
+2026-09-23T22:33:47.063Z 86240 R CLIENT-STDIN-END client closed; shutting the child down
+2026-09-23T22:33:47.065Z 68128 S(v2.0.0) STDIN-END 
+2026-09-23T22:33:47.066Z 68128 S(v2.0.0) EXIT code=0
+2026-09-23T22:33:47.075Z 86240 R CHILD-EXIT gen=3 code=0 swapping=false
+2026-09-23T22:33:47.573Z 86240 R EXIT code=0

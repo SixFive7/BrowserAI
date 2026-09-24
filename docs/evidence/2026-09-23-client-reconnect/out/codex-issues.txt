@@ -1,0 +1,33 @@
+######## Transport closed
+#35486 [open] 2026-07-26 c=3 :: PR approval for 'Transport Closed' bug for MCP servers
+#44518 [open] 2026-09-10 c=1 :: macOS: cua_repl does not respawn after launch.mjs/node_repl exit; createBrowserTab returns Transport closed in ~1ms
+#25848 [open] 2026-06-02 c=5 :: Browser / computer-use fails intermittently with “transport closed” and “kernel exited unexpectedly”
+#18486 [open] 2026-04-18 c=5 :: Windows Codex Desktop MCP tool wrapper reports `Transport closed` while same stdio server works directly
+#15365 [open] 2026-03-21 c=6 :: macOS desktop Browser MCP consistently returns `Transport closed` while Codex CLI succeeds on the same machine
+#38230 [open] 2026-08-12 c=5 :: MCP tool calls crash with aws-lc-rs jitter-entropy panic ("Transport closed") once they run past ~90 seconds — not specific to fan-out calls
+#7155 [open] 2025-11-22 c=5 :: Windows: MCP servers with heavy stderr output fail with "Transport closed" error
+#16899 [open] 2026-04-06 c=12 :: CLI session loses stdio MCP connections after initial successful calls; fresh codex exec still works
+
+######## reconnect mcp
+#21407 [open] 2026-05-06 c=1 :: MCP auth/session does not refresh after successful browser login
+#35006 [open] 2026-07-23 c=11 :: [MCP] Make OAuth lifecycle and reauthentication reliable for enterprise SSO
+#23700 [open] 2026-05-20 c=12 :: Stale Codex subagents
+#17265 [open] 2026-04-09 c=38 :: Codex does not auto-refresh routed MCP OAuth tokens even when a refresh token is stored
+
+######## restart mcp server
+#10338 [open] 2026-02-01 c=0 :: MCP initialize issue
+#19304 [open] 2026-04-24 c=3 :: Codex Desktop for Windows does not load local MCP plugin tools
+#20883 [open] 2026-05-03 c=22 :: Codex Desktop should use a project-scoped MCP process pool instead of starting MCP per session
+#4955 [open] 2025-10-08 c=9 :: Add tool support for restarting individual MCP servers
+#11324 [open] 2026-02-10 c=15 :: MCP servers eat up memory when multi-tasking in Codex App
+
+######## mcp server exited
+#45379 [open] 2026-09-14 c=0 :: Codex App enters restart loop when a local plugin MCP handshake fails
+#18977 [open] 2026-04-22 c=4 :: macOS: stdio MCP tool calls can fail with raw `Transport closed` even when the underlying operation is healthy
+#14144 [open] 2026-03-09 c=17 :: 🩹 MCP OAuth reauth succeeds but active session still uses stale refresh token (invalid_grant)
+#28361 [open] 2026-06-15 c=11 :: Windows: codex mcp-server / app-server and their child MCP servers are never reaped (accumulate to hundreds over time)
+#19937 [closed] 2026-04-28 c=3 :: Expose current thread ID to local stdio MCP servers
+#25744 [open] 2026-06-02 c=23 :: Codex for macOS accumulates Computer Use / MCP helper processes and unreaped zombie children, causing HID lag and WindowServer/TCC stalls
+#20673 [closed] 2026-05-01 c=1 :: mcp-search fails after clean reinstall on Windows: ChatGPT backend plugin/connectors requests return Cloudflare 403, Settings UI also breaks
+#4180 [closed] 2025-09-24 c=5 :: MCP servers fail to start on Windows due to missing inherited environment variables
+

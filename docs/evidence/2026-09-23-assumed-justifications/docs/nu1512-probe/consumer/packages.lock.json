@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "BrowserAi.Probe": {
+        "type": "Direct",
+        "requested": "[*, )",
+        "resolved": "1.0.0",
+        "contentHash": "lwWAXAg0kipgZfxM3ecRY4V4M6SsEA2sATvNnbtyjlvPbw9nsL0/96lqfFXpS1fYy2+hAlMxWzdtFdtdmfz+YA=="
+      }
+    }
+  }
+}

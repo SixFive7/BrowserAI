@@ -1,0 +1,21 @@
+PROBE: entry 9 -- "v26 is Current, not LTS, and its node.exe is 10 MB larger" (STACK.md:26)
+Machine: Windows 11 Pro 10.0.26200, 2026-09-23.
+
+nodejs.org/dist/index.json fetched 2026-09-23 (saved beside this file as node-dist-index.json):
+  v26 newest = v26.10.0  lts=false  date=2026-09-21
+  v25 newest = v25.9.0   lts=false  date=2026-03-31
+  v24 newest = v24.21.0  lts="Krypton" date=2026-09-07
+
+Downloads (curl, official dist):
+  https://nodejs.org/dist/v24.21.0/node-v24.21.0-win-x64.zip  37,618,919 B
+  https://nodejs.org/dist/v26.10.0/node-v26.10.0-win-x64.zip  41,688,989 B
+
+node.exe read out of each zip's central directory (python zipfile, no extraction):
+  v24.21.0  node-v24.21.0-win-x64/node.exe  uncompressed=93,580,104  compressed=33,094,348  crc=1fa0641c
+  v26.10.0  node-v26.10.0-win-x64/node.exe  uncompressed=104,714,056 compressed=37,301,064  crc=c89ccc2d
+
+DELTA: 104,714,056 - 93,580,104 = 11,133,952 B = 10.62 MiB = 11.13 MB decimal.
+
+Cross-check, the payload this repository actually ships:
+  payload/node/node.exe  93,580,104 B  (byte-count identical to the v24.21.0 archive entry)
+  payload/node/node.exe --version  ->  v24.21.0

@@ -1,0 +1,13 @@
+2026-09-23T22:40:38.627Z LISTENING 8933 script=["tool:mcp__probe/ping:{\"note\":\"turn1\"}","text:turn one done","tool:mcp__probe/ping:{\"note\":\"turn2-after-apply\"}","text:turn two done"]
+2026-09-23T22:40:40.201Z REQ POST /responses bytes=43618
+2026-09-23T22:40:40.210Z turn 0: function_call mcp__probe/ping {"note":"turn1"}
+2026-09-23T22:40:40.282Z REQ POST /responses bytes=44019
+2026-09-23T22:40:40.283Z turn 1: message
+2026-09-23T22:40:44.123Z REQ POST /responses bytes=44038
+2026-09-23T22:40:44.125Z SWAP: requesting the swap before turn 2
+2026-09-23T22:40:45.331Z SWAP: running the apply (VERSION -> 2.0.0)
+2026-09-23T22:40:45.641Z SWAP: relay reported the swap complete after 308ms
+2026-09-23T22:40:45.642Z SWAP: serving turn 2
+2026-09-23T22:40:45.643Z turn 2: function_call mcp__probe/ping {"note":"turn2-after-apply"}
+2026-09-23T22:40:45.707Z REQ POST /responses bytes=44704
+2026-09-23T22:40:45.709Z turn 3: message

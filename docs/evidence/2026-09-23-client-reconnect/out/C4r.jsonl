@@ -1,0 +1,7 @@
+{"type":"thread.started","thread_id":"01a0d020-22cb-7851-a6d4-be996a54e091"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"p2-after-resume"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{"note":"p2-after-resume"},"result":{"content":[{"type":"text","text":"pong #1 from C4-pid83184-1790198189736. note=p2-after-resume. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"structured_content":null},"error":null,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"phase2 done"}}
+{"type":"turn.completed","usage":{"input_tokens":168,"cached_input_tokens":48,"cache_write_input_tokens":0,"output_tokens":20,"reasoning_output_tokens":0}}

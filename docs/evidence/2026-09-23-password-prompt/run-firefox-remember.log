@@ -1,0 +1,23 @@
+[probe] arm=firefox/remember-control origin=http://127.0.0.1:61741 profile=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-remember-control\profile
+[probe] prefs=false switch=false seedPreferences=false
+[probe] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-remember-control\\downloads","viewport":{"width":1280,"height":800},"locale":"en-US","ignoreHTTPSErrors":true,"firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false,"signon.rememberSignons":true}}
+[probe] context.browser() gave no pid; rooting the pid walk at node itself
+[probe] pid walk root = 163684 (node pid 163684)
+[probe] before: 11 windows in pid tree 7804,20112,42232,59996,86948,98364,131668,141788,158144,163684
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-remember-control\screen-before.png
+[server] POST /login body=username=probe-user&password=Sup3rSecret%21probe
+[probe] navigation after submit completed (#ok present)
+[probe] new windows first seen after 2561 ms
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-remember-control\screen-after.png
+[probe] after: 14 windows; 3 not present before
+[probe]   NEW top 0x852048 pid=98364 visible=true class='MozillaDropShadowWindowClass' title='' rect=261,78,643,299
+[probe]     PrintWindow(852048) -> True, 382x221, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-remember-control\win-MozillaDropShadowWindowClass.png
+[probe]   NEW child-of-0x852048 0x9078E pid=141788 visible=true class='MozillaCompositorWindowClass' title='' rect=261,78,643,299
+[probe]     PrintWindow(9078E) -> True, 382x221, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-remember-control\win-MozillaCompositorWindowClass.png
+[probe]   NEW top 0x220B80 pid=98364 visible=true class='MozillaWindowClass' title='signed in - Nightly' rect=4,4,1300,897
+[probe]     PrintWindow(220B80) -> True, 1296x893, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-remember-control\win-signed_in_-_Nightly.png
+[probe] no Default/Preferences after launch
+[probe] prefs.js signon/password lines: user_pref("browser.safebrowsing.passwords.enabled", false); ~ user_pref("signon.autofillForms", false); ~ user_pref("signon.storage.rust.active", true);
+
+[probe] VERDICT newWindows=3 firstSeenMs=2561 outDir=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-remember-control
+EXIT=0

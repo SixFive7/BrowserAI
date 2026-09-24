@@ -1,0 +1,12 @@
+top 0xF0704 pid=50840 vis=false class='Chrome_WidgetWin_0' title='' rect=234,234,3114,1797
+top 0x1B0742 pid=50840 vis=false class='Base_PowerMessageWindow' title='' rect=0,0,0,0
+top 0x490B32 pid=16244 vis=false class='Chrome_WidgetWin_0' title='' rect=0,0,0,0
+top 0x73254E pid=50840 vis=false class='Chrome_WidgetWin_1' title='Save password?' rect=0,0,0,0
+top 0x16C24A8 pid=16244 vis=false class='Chrome_WidgetWin_0' title='' rect=0,0,0,0
+top 0x2552C8C pid=50840 vis=false class='Chrome_WidgetWin_0' title='' rect=0,0,0,0
+top 0x1AE2C86 pid=50840 vis=false class='Chrome_WidgetWin_1' title='signed in - Google Chrome for Testing' rect=10,10,790,590
+top 0x1C07A2 pid=50840 vis=false class='Chrome_StatusTrayWindow' title='' rect=0,0,0,0
+top 0x2B42A76 pid=38348 vis=false class='crashpad_SessionEndWatcher' title='' rect=0,0,136,39
+top 0x55C276A pid=50840 vis=false class='IME' title='Default IME' rect=0,0,0,0
+top 0x36D0662 pid=16244 vis=false class='IME' title='Default IME' rect=0,0,0,0
+top 0x1707CA pid=38348 vis=false class='IME' title='Default IME' rect=0,0,0,0

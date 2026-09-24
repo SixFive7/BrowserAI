@@ -1,0 +1,8 @@
+2026-09-23T20:53:25.959Z S-pid123128-1790196805958 LAUNCH mode=stay argv=[]
+2026-09-23T20:53:26.015Z S-pid123128-1790196805958 IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},"jsonrpc":"2.0","id":0}
+2026-09-23T20:53:26.017Z S-pid123128-1790196805958 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-11-25","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance S-pid123128-1790196805958."}}
+2026-09-23T20:53:26.094Z S-pid123128-1790196805958 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T20:53:26.101Z S-pid123128-1790196805958 IN {"method":"tools/list","jsonrpc":"2.0","id":1}
+2026-09-23T20:53:26.101Z S-pid123128-1790196805958 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T20:53:26.223Z S-pid123128-1790196805958 STDIN-END 
+2026-09-23T20:53:26.224Z S-pid123128-1790196805958 EXIT code=0

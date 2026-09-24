@@ -1,0 +1,118 @@
+PROBE: entry 8 -- "A one-step locked build passes while resolving nothing" (RELEASING.md:329-330)
+Machine 2026-09-23: Windows 11 Pro 10.0.26200; dotnet --version 10.0.401; dotnet nuget --version 7.9.0-rc.42413
+Local-only feed (NuGet.config clears all sources), package BrowserAi.Probe, consumer references Version="*" with RestorePackagesWithLockFile=true.
+
+== STEP A: feed holds 1.0.0 only; plain restore (generates the lock) ==
+         Generating MSBuild file C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\obj\Consumer.csproj.nuget.g.props.
+         Generating MSBuild file C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\obj\Consumer.csproj.nuget.g.targets.
+         Writing assets file to disk. Path: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\obj\project.assets.json
+         Writing packages lock file at disk. Path: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\packages.lock.json
+         NuGet Config files used:
+             C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\NuGet.Config
+             C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\NuGet.Config
+             C:\Users\jori\AppData\Roaming\NuGet\NuGet.Config
+             C:\Program Files (x86)\NuGet\Config\Microsoft.VisualStudio.FallbackLocation.config
+             C:\Program Files (x86)\NuGet\Config\Microsoft.VisualStudio.Offline.config
+         Feeds used:
+             C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\feed
+             C:\Program Files\dotnet\library-packs
+         Installed:
+             1 package(s) to C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj
+     1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (Restore target(s)).
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+Time Elapsed 00:00:00.67
+-- lock after STEP A: net10.0 BrowserAi.Probe requested=[*, ) resolved=1.0.0 ; assets libraries = BrowserAi.Probe/1.0.0
+== STEP B: feed now holds 1.0.0 AND 1.1.0; ONE-STEP LOCKED RESTORE ==
+exit=0
+        1>Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" on node 1 (Restore target(s)).
+        1>Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (1) is building "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (1:6) on node 1 (_GenerateProjectRestoreGraph target(s)).
+        1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (_GenerateProjectRestoreGraph target(s)).
+            Restoring packages for C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj...
+            Writing assets file to disk. Path: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\obj\project.assets.json
+            Restored C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj (in 232 ms).
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\NuGet.Config
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\NuGet.Config
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\feed
+        1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (Restore target(s)).
+   Build succeeded.
+       0 Warning(s)
+       0 Error(s)
+-- lock after STEP B:
+   net10.0  BrowserAi.Probe  requested=[*, )  resolved=1.0.0
+   assets libraries: ['BrowserAi.Probe/1.0.0']
+== STEP C: --force-evaluate (the other half of the two-step) ==
+exit=0
+   NU-code lines: 0
+       0 Warning(s)
+       0 Error(s)
+   net10.0  BrowserAi.Probe  requested=[*, )  resolved=1.1.0
+== STEP D (POSITIVE CONTROL for NU1512): BOTH --locked-mode AND --force-evaluate ==
+exit=0
+        1>Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" on node 1 (Restore target(s)).
+        1>Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (1) is building "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (1:6) on node 1 (_GenerateProjectRestoreGraph target(s)).
+        1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (_GenerateProjectRestoreGraph target(s)).
+            Restoring packages for C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj...
+            Writing assets file to disk. Path: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\obj\project.assets.json
+            Writing packages lock file at disk. Path: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\packages.lock.json
+            Restored C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj (in 115 ms).
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\NuGet.Config
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\NuGet.Config
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\feed
+        1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (Restore target(s)).
+       0 Warning(s)
+       0 Error(s)
+== STEP D2: same both-flags restore with SdkAnalysisLevel forced to 11.0.100 ==
+exit=0
+        1>Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" on node 1 (Restore target(s)).
+        1>Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (1) is building "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (1:6) on node 1 (_GenerateProjectRestoreGraph target(s)).
+        1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (_GenerateProjectRestoreGraph target(s)).
+        1>C:\Program Files\dotnet\sdk\10.0.401\NuGet.targets(198,5): warning NU1512: RestoreForceEvaluate overrides RestoreLockedMode; the packages lock file will be re-evaluated and regenerated, and locked mode is ignored. [C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj]
+            Restoring packages for C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj...
+            Writing assets file to disk. Path: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\obj\project.assets.json
+            Writing packages lock file at disk. Path: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\packages.lock.json
+            Restored C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj (in 123 ms).
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\NuGet.Config
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\NuGet.Config
+                C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\feed
+        1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (Restore target(s)).
+          "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (Restore target) (1) ->
+            C:\Program Files\dotnet\sdk\10.0.401\NuGet.targets(198,5): warning NU1512: RestoreForceEvaluate overrides RestoreLockedMode; the packages lock file will be re-evaluated and regenerated, and locked mode is ignored. [C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj]
+       1 Warning(s)
+       0 Error(s)
+== STEP E (the LOUD half): locked-mode where the lock genuinely disagrees with the graph ==
+exit=1
+   error NU1004: The package reference BrowserAi.Probe version has changed from 
+   error NU1004: The package reference BrowserAi.Probe version has changed from 
+       0 Warning(s)
+       1 Error(s)
+
+== WHAT THIS SETTLES ==
+1. THE BEHAVIOUR IS TRUE AND IS SILENT. Step B is the exact shape RELEASING.md describes --
+   a lock file present, --locked-mode, no --force-evaluate, and a newer version available.
+   It exited 0 with "0 Warning(s) 0 Error(s)", left the lock at resolved=1.0.0 and the assets
+   at BrowserAi.Probe/1.0.0, and said nothing about the 1.1.0 sitting on the feed. The float
+   was not re-evaluated and nothing reported that it was not.
+2. THE CITATION IS WRONG. NU1512 does not describe this case. Per Microsoft Learn
+   (https://learn.microsoft.com/nuget/reference/errors-and-warnings/nu1512, fetched 2026-09-23)
+   it reads "RestoreForceEvaluate overrides RestoreLockedMode; the packages lock file will be
+   re-evaluated and regenerated, and locked mode is ignored", and it fires only when BOTH
+   properties are set -- the opposite arrangement, and the one a one-step locked build does not
+   have. The Learn page's own Note gives the default: "This warning is raised by default
+   starting with the .NET 11 SDK (SdkAnalysisLevel value 11.0.100 or higher)."
+   POSITIVE CONTROL that the warning is reachable and is not just absent from this SDK: step D
+   (both flags, SDK default SdkAnalysisLevel) was silent, and step D2 (the same command with
+   -p:SdkAnalysisLevel=11.0.100) produced
+     C:\Program Files\dotnet\sdk\10.0.401\NuGet.targets(198,5): warning NU1512: RestoreForceEvaluate
+     overrides RestoreLockedMode; ... 1 Warning(s).
+   So the scan can find it; it simply does not fire in the case the document cites it for.
+3. WHAT LOCKED MODE IS LOUD ABOUT is a lock that disagrees with the graph, and that is a
+   different failure with a different code. Step E:
+     error NU1004: The package reference BrowserAi.Probe version has changed from [*, ) to
+     [1.1.0, ).The packages lock file is inconsistent with the project dependencies so restore
+     can't be run in locked mode. Disable the RestoreLockedMode MSBuild property or pass an
+     explicit --force-evaluate option to run restore to update the lock file.
+     exit=1, 1 Error(s).
+   That is precisely why the float going dead is silent: a float that is never re-evaluated
+   produces no disagreement for locked mode to be loud about.

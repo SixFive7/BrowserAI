@@ -1,0 +1,63 @@
+ENTRY 6 -- "IDE test discovery is not zero-config under MTP -- Visual Studio needs *Use
+testing platform server mode*, Rider needs Testing Platform support enabled" (HAZARDS.md:143)
+Two halves, settled differently.
+
+RIDER -- CITED. JetBrains Rider 2026.2 Help, "Testing Platform" page, last updated
+08 September 2026, fetched 2026-09-23 from
+https://www.jetbrains.com/help/rider/Reference__Options__Tools__Unit_Testing__Testing_Platform.html
+(saved beside this file as rider-testing-platform.html).
+  Settings path, verbatim from the page's own header:
+    "File | Settings | Build, Execution, Deployment | Unit Testing | Testing Platform"
+        (Windows and Linux)
+    "JetBrains Rider | Settings | Build, Execution, Deployment | Unit Testing | Testing Platform"
+        (macOS)
+  Verbatim: "JetBrains Rider can run tests from any custom test framework that uses
+             Microsoft.Testing.Platform, such as TUnit."
+  Verbatim: "Use the checkbox at the top of this options page to enable the discovery of the
+             corresponding tests."
+  Verbatim: "In contrast to test frameworks natively supported by JetBrains Rider, tests from
+             Testing Platform adapters are only discovered after test projects are built."
+  WHAT THE VENDOR DOES NOT SAY: the page never names the checkbox and never states whether it
+  is on or off by default. So "needs Testing Platform support enabled" is supported as to the
+  existence of an opt-in and unsupported as to it being off out of the box.
+
+VISUAL STUDIO -- MEASURED, AND THE ROW IS STALE.
+  Installed here (vswhere -all -prerelease -format json): Visual Studio Community 2026,
+  installationVersion 18.10.12210.168.
+  Scan of 6,311 files under Common7\IDE\CommonExtensions\Microsoft\TestWindow and
+  Common7\IDE\Extensions, reading each as BOTH ASCII and UTF-16LE (managed resource strings
+  are UTF-16, so an ASCII-only grep would have produced a false absence):
+     POSITIVE CONTROL  "Test Explorer"                -> 29 files
+                       "Testing Platform"             ->  5 files
+     TARGET            "testing platform server mode" ->  0 files
+  A separate plain recursive grep over the WHOLE Visual Studio 18 install tree for the same
+  phrase also returned nothing (exit 0, no hits).
+
+  What is there instead, read out of
+  Common7\IDE\CommonExtensions\Microsoft\TestWindow\Microsoft.VisualStudio.TestWindow.Internal.dll:
+     a built-in namespace Microsoft.VisualStudio.TestWindow.Internal.RemoteAgent.TestingPlatform
+     (TestingPlatformClient, TestingPlatformRunController, TestingPlatformRunnerProcess,
+     TestingPlatformTcpListener, TestingPlatformRpcManager), the literal
+     "Microsoft Visual Studio Testing Platform Client", the URI
+     "executor://testingplatform-bridge/v1", and the symbol "TestingPlatformServerCapability".
+
+  That last symbol matches what Microsoft Learn's MTP overview (fetched 2026-09-23,
+  https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-intro) says
+  the Microsoft.Testing.Platform.MSBuild package supplies: "Support for `ProjectCapability`
+  required by `Visual Studio` and `Visual Studio Code` Test Explorers."
+  And Learn's "Run and debug tests" page
+  (https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-run-and-debug,
+  fetched the same day) describes running and debugging MTP tests in Visual Studio Test
+  Explorer with no setting to turn on at all: "The MTP tests can be run (and debugged) in
+  Visual Studio, they integrate with Test Explorer".
+
+  So on this machine the named setting does not exist, and MTP discovery is driven by a project
+  capability the TEST PROJECT's own package declares rather than by a user opt-in. Nothing in
+  this repository declares it either -- a grep of tests/, build/ and the root .props for
+  TestingPlatformServer and ProjectCapability returns nothing, which is consistent with the
+  capability arriving transitively through TUnit's MTP MSBuild dependency.
+
+NOT ESTABLISHED: which Visual Studio version dropped the opt-in. Nothing here read a version
+older than 18.10.12210.168, and the search results naming 17.14 are secondary and were not
+confirmed against a Microsoft document. Establishing it needs either a VS release-note page
+that states it or an older VS installation to scan the same way.

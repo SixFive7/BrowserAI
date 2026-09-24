@@ -1,0 +1,12 @@
+2026-09-23T22:37:52.549Z LISTENING on 127.0.0.1:8923 script=["tool:mcp__probe__ping:{\"note\":\"c1\"}","tool:mcp__probe__ping:{\"note\":\"c2-after-handover\"}","text:done"]
+2026-09-23T22:37:53.783Z REQ HEAD /api/hello bytes=0
+2026-09-23T22:37:54.276Z REQ POST /v1/messages?beta=true bytes=64719
+2026-09-23T22:37:54.280Z turn 0: emitting tool_use mcp__probe__ping {"note":"c1"}
+2026-09-23T22:37:54.309Z REQ POST /v1/messages?beta=true bytes=65108
+2026-09-23T22:37:54.310Z SWAP: requesting the swap before turn 1
+2026-09-23T22:37:55.519Z SWAP: running the apply (VERSION -> 2.0.0)
+2026-09-23T22:38:00.563Z SWAP: TIMED OUT waiting for the relay to report the swap complete
+2026-09-23T22:38:00.564Z SWAP: serving turn 1
+2026-09-23T22:38:00.565Z turn 1: emitting tool_use mcp__probe__ping {"note":"c2-after-handover"}
+2026-09-23T22:38:00.655Z REQ POST /v1/messages?beta=true bytes=65527
+2026-09-23T22:38:00.657Z turn 2: emitting text

@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+# Probe v3, the control the claim actually needs: is a user-owned, non-elevated browser of exactly
+# the kind BrowserAI launches inside the OPENED set, with its image path readable?
+$ErrorActionPreference = 'Stop'
+Add-Type -Namespace P3 -Name K -MemberDefinition @'
+[DllImport("psapi.dll", SetLastError=true)] public static extern bool EnumProcesses(uint[] p, uint cb, out uint needed);
+[DllImport("kernel32.dll", SetLastError=true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid);
+[DllImport("kernel32.dll", SetLastError=true)] public static extern bool CloseHandle(IntPtr h);
+[DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)] public static extern bool QueryFullProcessImageNameW(IntPtr h, uint flags, System.Text.StringBuilder buf, ref uint size);
+'@
+function Sweep {
+  $buf = New-Object uint32[] 8192; $needed = 0
+  [void][P3.K]::EnumProcesses($buf, 8192*4, [ref]$needed)
+  $pids = $buf[0..([int]($needed/4)-1)] | Where-Object { $_ -ne 0 }
+  $o=@{}; $d=@()
+  foreach ($procId in $pids) {
+    $h = [P3.K]::OpenProcess(0x1000, $false, $procId)
+    if ($h -eq [IntPtr]::Zero) { $d += $procId }
+    else { $sb = New-Object Text.StringBuilder 1024; $sz=1024
+           if ([P3.K]::QueryFullProcessImageNameW($h,0,$sb,[ref]$sz)) { $o[[uint32]$procId]=$sb.ToString() } else { $o[[uint32]$procId]='<no-path>' }
+           [void][P3.K]::CloseHandle($h) }
+  }
+  @{ Opened=$o; Denied=$d }
+}
+$exe = 'C:\Users\jori\AppData\Local\ms-playwright\chromium_headless_shell-1246\chrome-headless-shell-win64\chrome-headless-shell.exe'
+$prof = 'C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\denial-profile'
+Remove-Item $prof -Recurse -Force -ErrorAction SilentlyContinue
+"launching a browser as this user, non-elevated: $exe"
+"am I elevated? " + ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$b = Start-Process -FilePath $exe -ArgumentList "--headless=new","--user-data-dir=$prof","--remote-debugging-port=9451","--no-first-run","--no-sandbox","about:blank" -WindowStyle Hidden -PassThru
+Start-Sleep -Seconds 6
+$tree = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*denial-profile*' }
+"browser processes launched (whole tree): $($tree.Count)"
+$s = Sweep
+$in = 0; $out = 0
+foreach ($t in $tree) {
+  $procId = [uint32]$t.ProcessId
+  if ($s.Opened.ContainsKey($procId)) { $in++; "  OPENED  pid=$procId path=$($s.Opened[$procId])" }
+  elseif ($s.Denied -contains $t.ProcessId) { $out++; "  DENIED  pid=$procId name=$($t.Name)" }
+  else { "  pid=$procId neither (exited between the two reads)" }
+}
+""
+"of the $($tree.Count) processes of a browser this user launched: OPENED=$in DENIED=$out"
+"the sweep as a whole this time      : opened=$($s.Opened.Count) denied=$($s.Denied.Count)"
+"NEGATIVE CONTROL -- the sweep still denies somebody, so it is not opening everything: $($s.Denied.Count) denials"
+foreach ($t in $tree) { try { Stop-Process -Id $t.ProcessId -Force -ErrorAction Stop } catch { } }
+Start-Sleep -Seconds 2
+"cleaned up; remaining: " + (Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*denial-profile*' }).Count

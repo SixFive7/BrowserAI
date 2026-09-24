@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "browserai": {
+      "type": "stdio",
+      "command": "C:\\Users\\jori\\AppData\\Local\\BrowserAI\\current\\BrowserAI.Server.exe"
+    }
+  }
+}

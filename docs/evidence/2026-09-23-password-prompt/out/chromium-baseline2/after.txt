@@ -1,0 +1,18 @@
+top 0x771494 pid=20572 vis=false class='Chrome_WidgetWin_0' title='' rect=0,0,0,0
+top 0x5079E pid=147088 vis=false class='Chrome_WidgetWin_0' title='' rect=0,0,0,0
+top 0x230B80 pid=20572 vis=false class='Chrome_WidgetWin_0' title='' rect=0,0,0,0
+top 0xB078E pid=147088 vis=true class='Chrome_WidgetWin_1' title='Save password?' rect=757,86,1219,476
+child-of-0xB078E 0x1018B2 pid=20572 vis=true class='Intermediate D3D Window' title='' rect=757,86,1219,476
+top 0x251706 pid=147088 vis=true class='Chrome_WidgetWin_1' title='signed in - Google Chrome for Testing' rect=10,10,1306,944
+child-of-0x251706 0x3AE24AC pid=147088 vis=true class='Chrome_RenderWidgetHostHWND' title='Chrome Legacy Window' rect=18,97,1298,897
+child-of-0x251706 0x592BF8 pid=147088 vis=false class='Chrome_RenderWidgetHostHWND' title='Chrome Legacy Window' rect=133,51,1219,95
+child-of-0x251706 0x2482C8C pid=147088 vis=false class='Chrome_RenderWidgetHostHWND' title='Chrome Legacy Window' rect=980,95,981,96
+child-of-0x251706 0x5074A pid=20572 vis=true class='Intermediate D3D Window' title='' rect=18,10,1298,936
+top 0x5076E pid=147088 vis=false class='Chrome_StatusTrayWindow' title='' rect=0,0,0,0
+top 0x4472A5E pid=147088 vis=false class='Chrome_WidgetWin_0' title='' rect=312,312,3192,1875
+top 0x50786 pid=147088 vis=false class='Base_PowerMessageWindow' title='' rect=0,0,0,0
+top 0xE0452 pid=166324 vis=false class='crashpad_SessionEndWatcher' title='' rect=0,0,136,39
+top 0x862048 pid=20572 vis=false class='IME' title='Default IME' rect=0,0,0,0
+top 0xA07A6 pid=147088 vis=false class='MSCTFIME UI' title='MSCTFIME UI' rect=0,0,0,0
+top 0xCD221E pid=147088 vis=false class='IME' title='Default IME' rect=0,0,0,0
+top 0x272094C pid=166324 vis=false class='IME' title='Default IME' rect=0,0,0,0

@@ -1,0 +1,8 @@
+2026-09-23T22:46:22.068Z 51708 R LAUNCH relay holding the client pipes; server dir=C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-install
+2026-09-23T22:46:22.081Z 51708 R CHILD-SPAWNED gen=1 pid=28548 from C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\ho-install\s.js
+2026-09-23T22:46:22.083Z 51708 R CLIENT-STDIN-END client closed; shutting the child down
+2026-09-23T22:46:22.127Z 28548 S(v2.0.0) LAUNCH real server version=2.0.0
+2026-09-23T22:46:22.131Z 28548 S(v2.0.0) STDIN-END 
+2026-09-23T22:46:22.131Z 28548 S(v2.0.0) EXIT code=0
+2026-09-23T22:46:22.139Z 51708 R CHILD-EXIT gen=1 code=0 swapping=false
+2026-09-23T22:46:22.589Z 51708 R EXIT code=0

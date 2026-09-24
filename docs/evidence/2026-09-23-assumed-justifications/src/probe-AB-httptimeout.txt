@@ -1,0 +1,21 @@
+############ PROBE A/B -- what bounds a stalled HTTP read?
+.NET 10.0.401 | Windows 11 Pro 10.0.26200 | 2026-09-23 | loopback:61752
+
+--- CONTROL: server ends the body at 2 s, client Timeout = 5 s
+    headers at 0.04 s, status 200, content-length 1000000
+    RESULT: THREW at 2.05 s -- System.Net.Http.HttpIOException
+            is OperationCanceledException: False   <-- UpdateService.RunOnceAsync catches this and logs UpdateLog.TripwireFired
+            message: The response ended prematurely, with at least 999998 additional bytes expected. (ResponseEnded)
+
+--- THE DOWNLOAD SHAPE: GetAsync(ResponseHeadersRead) + stream read, trickle 60 s, Timeout = 5 s
+    headers at 0.01 s, status 200, content-length 1000000
+    RESULT: THREW at 60.55 s -- System.Net.Http.HttpIOException
+            is OperationCanceledException: False   <-- UpdateService.RunOnceAsync catches this and logs UpdateLog.TripwireFired
+            message: The response ended prematurely, with at least 999940 additional bytes expected. (ResponseEnded)
+
+--- THE CHECK SHAPE: GetStringAsync (ResponseContentRead), trickle 60 s, Timeout = 5 s
+    RESULT: THREW at 5.00 s -- System.Threading.Tasks.TaskCanceledException
+            is OperationCanceledException: True   <-- UpdateService.RunOnceAsync catches this and logs UpdateLog.TripwireFired
+            message: The request was canceled due to the configured HttpClient.Timeout of 5 seconds elapsing.
+            inner: System.TimeoutException: The operation was canceled.
+

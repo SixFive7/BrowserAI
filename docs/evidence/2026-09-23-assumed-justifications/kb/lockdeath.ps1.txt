@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+# Probe: does an open-handle lock held FileAccess.ReadWrite / FileShare.Read -- which is exactly
+# how BrowserAI's browserai.lock is held (src/BrowserAI/Storage/LockFile.cs:184) -- get released
+# when the holder is killed outright, with no chance to run any teardown?
+$ErrorActionPreference = 'Stop'
+$dir = "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\kb\lockdeath"
+Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $dir | Out-Null
+$lock = Join-Path $dir 'browserai.lock'
+Set-Content -Path $lock -Value '{"processId":0}' -NoNewline
+
+function Try-TakeWrite($path) {
+  try {
+    $fs = [IO.File]::Open($path, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::Read)
+    $fs.Dispose(); return 'TAKEN'
+  } catch [IO.IOException] { return 'REFUSED: ' + $_.Exception.Message.Split([char]13)[0] }
+    catch { return 'REFUSED(' + $_.Exception.GetType().Name + '): ' + $_.Exception.Message }
+}
+
+"lock file: $lock"
+"before any holder      : " + (Try-TakeWrite $lock)
+
+# A holder that can never clean up after itself: it opens the handle the same way and then spins.
+$holderScript = Join-Path $dir 'holder.ps1'
+@"
+`$fs = [IO.File]::Open('$lock', [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::Read)
+Set-Content -Path '$dir\holder.ready' -Value `$PID
+while (`$true) { Start-Sleep -Seconds 1 }
+"@ | Set-Content -Path $holderScript
+
+$p = Start-Process pwsh -ArgumentList '-NoProfile', '-NonInteractive', '-File', $holderScript -WindowStyle Hidden -PassThru
+$t0 = Get-Date
+while (-not (Test-Path "$dir\holder.ready") -and ((Get-Date) - $t0).TotalSeconds -lt 30) { Start-Sleep -Milliseconds 200 }
+$holderPid = (Get-Content "$dir\holder.ready").Trim()
+"holder pid             : $holderPid (wrapper pid $($p.Id))"
+"while the holder lives : " + (Try-TakeWrite $lock)
+
+# Kill it the way force_stop_package would: TerminateProcess, no notification, no unwinding.
+$proc = Get-Process -Id $holderPid -ErrorAction Stop
+"holder image path      : $($proc.Path)"
+Stop-Process -Id $holderPid -Force
+$t0 = Get-Date
+$result = $null
+while (((Get-Date) - $t0).TotalSeconds -lt 20) {
+  $r = Try-TakeWrite $lock
+  if ($r -eq 'TAKEN') { $result = "TAKEN after $([math]::Round(((Get-Date) - $t0).TotalMilliseconds)) ms"; break }
+  Start-Sleep -Milliseconds 50
+}
+if (-not $result) { $result = "STILL REFUSED after 20 s -- " + (Try-TakeWrite $lock) }
+"process listed?        : " + [bool](Get-Process -Id $holderPid -ErrorAction SilentlyContinue)
+"after the hard kill    : $result"
+"lock file still exists : " + (Test-Path $lock) + "   (the FILE outlives the holder; the CLAIM on it does not)"
+if ($p -and -not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }

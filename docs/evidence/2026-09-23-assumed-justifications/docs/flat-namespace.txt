@@ -1,0 +1,38 @@
+ENTRY 4 -- the flat-namespace reason for the `browserai_` prefix (DECISIONS.md:723)
+Claim as it stands: "Bare names are worse still: MCP tool names share a flat namespace with
+every other server's, and a bare `destroy` is a name a model could reach for meaning something
+else entirely."
+
+HALF ONE -- THE PROTOCOL. CITED, and the citation is an absence with a positive control.
+Source: MCP specification 2025-06-18, Server / Tools, fetched 2026-09-23 from
+https://modelcontextprotocol.io/specification/2025-06-18/server/tools
+  The spec DOES speak to uniqueness, which is the control proving it would have spoken to
+  scope if scope were a protocol concern: "Each tool is uniquely identified by a name", and
+  under Data Types / Tool: "`name`: Unique identifier for the tool".
+  It says nothing anywhere about uniqueness ACROSS servers, and the words namespace, prefix
+  and disambiguate do not occur in the page. And `tools/call` carries only `params.name` --
+  there is no server field -- so a call is routed by the CONNECTION it is written to, never
+  by the name.
+  => at the protocol level tool names are scoped PER SERVER. There is no flat global namespace
+  for the protocol to collide in.
+
+HALF TWO -- THE CLIENT. MEASURED on this machine, 2026-09-23, Claude Code 2.1.281
+(`claude --version` -> "2.1.281 (Claude Code)").
+  Observed live: in this session BrowserAI's tools are presented to the model as
+  mcp__browserai__browser_click, mcp__browserai__browserai_init and so on -- the server name
+  interpolated between two double underscores.
+  Confirmed in the shipped client binary C:\Users\jori\.local\bin\claude.exe (240,767,648 B),
+  scanned as ASCII with a positive control ("Claude Code" -> 1,771 matches, so the scan is
+  demonstrably live):
+    the permission-rule regex   ^mcp__[\w-]+(?:__(?:[\w.-]+|\*))?$
+    and the client's own prose  "their tools appear in your tool list as `mcp__<id>__<toolName>`"
+  => the one client that matters namespaces by server before the model ever sees a name.
+
+WHAT SURVIVES AND WHAT DOES NOT. The row's CONCLUSION -- prefix the tools BrowserAI authors --
+is untouched, because the sentence above it carries the whole weight on its own: MCP spec
+SEP-2567 names destroy_* and list_* as the documented companions to a creation tool, upstream
+shipping browser_list is therefore the expected pattern, and upstream names are never renamed,
+so a collision would be unresolvable. That is a collision INSIDE one server's surface, which
+is exactly the scope the spec does govern. What does not survive is the "flat namespace with
+every other server's" reason: there is no such namespace in the protocol, and the client this
+product is built for removes the question before a model can reach it.

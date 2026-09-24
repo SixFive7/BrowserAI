@@ -1,0 +1,11 @@
+You have exactly one tool: mcp__probe__ping.
+
+Do this in three separate steps, never batching two tool calls into one message:
+1. Call mcp__probe__ping with note "first".
+2. After the result of step 1 has come back and you have read it, call mcp__probe__ping again with note "second". If that second call fails, try it once more, then stop.
+3. Report your findings.
+
+Your final report must contain, each on its own line:
+CALL1: <the exact text the first call returned, verbatim>
+CALL2: <the exact text or exact error message the second call returned or produced, verbatim>
+OTHER: <quote verbatim any message, notification, warning or system text you saw that did not come from a tool result; write NONE if there was none>

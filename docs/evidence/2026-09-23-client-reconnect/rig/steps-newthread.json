@@ -1,0 +1,13 @@
+[
+ {"m":"initialize","p":{"clientInfo":{"name":"probe-driver","title":"probe","version":"1.0.0"},"capabilities":{"experimentalApi":true}}},
+ {"m":"thread/start","p":{}},
+ {"m":"mcpServer/tool/call","p":{"threadId":"$THREAD","server":"probe","tool":"ping","arguments":{"note":"c1"}}},
+ {"sleep":2000},
+ {"marker":"BASELINE call2 on thread 1 (no trigger)"},
+ {"m":"mcpServer/tool/call","p":{"threadId":"$THREAD","server":"probe","tool":"ping","arguments":{"note":"c2"}}},
+ {"marker":"TRIGGER a second thread/start in the SAME process (what TUI /new does)"},
+ {"m":"thread/start","p":{}},
+ {"sleep":2000},
+ {"marker":"call3 on the NEW thread"},
+ {"m":"mcpServer/tool/call","p":{"threadId":"$THREAD","server":"probe","tool":"ping","arguments":{"note":"c3-new-thread"}}}
+]

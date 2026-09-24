@@ -1,0 +1,15 @@
+[cfg] C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed1\config.json
+[cfg] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-suppressed1\\downloads","firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false,"signon.rememberSignons":false}}
+[cfg] child node pid 98100
+[cfg] navigate -> ### Page | - Page URL: http://127.0.0.1:54480/ | - Page Title: BrowserAI password probe | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed1\output\page
+[cfg] before: 11 windows, 10 pids
+[cfg] browser command line (pid 121836): C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe -no-remote -wait-for-browser -foreground -profile C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed1\profile -juggler-pipe about:blank
+[cfg] refs username=e5 password=e7 go=e8
+[server] POST /login username=probe-user&password=Sup3rSecret%21probe
+[cfg] click -> ### Page | - Page URL: http://127.0.0.1:54480/login | - Page Title: signed in
+[cfg] after: 11 windows; 1 new
+[cfg]   NEW top 0x2682B58 pid=40852 visible=true class='MozillaWindowClass' title='signed in - Nightly' rect=4,4,1300,897
+[cfg]     PrintWindow(2682B58) -> True, 1296x893, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed1\win-signed_in_-_Nightly.png
+[cfg] browser_get_config launchOptions = {"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\firefox-suppressed1\\downloads","firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false,"signon.rememberSignons":false},"chromiumSandbox":true}
+
+[cfg] VERDICT promptSeen=false newWindows=1 root=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\firefox-suppressed1

@@ -450,6 +450,138 @@ the first browser call and not during startup, so it cannot reach a startup time
 `codex mcp add --help` for the option set. The probe is
 `.work/startup-probe.mjs` in the batch that produced this entry.
 
+## What a client does when the server exits, and what the pipe decides -- measured 2026-09-24
+
+`[FLOATS]` **Claude Code 2.1.281** and **codex-cli 0.155.0-alpha.9.2**, Windows
+10.0.26200. Measured against a purpose-built dummy MCP server with one tool and a
+scripted exit, driven through a local API stub so the model's tool calls are
+deterministic, with **every request body captured byte for byte**. Three rounds
+per scenario; every count below is out of three. Rigs, captures and logs:
+[`docs/evidence/2026-09-23-client-reconnect`](../../docs/evidence/2026-09-23-client-reconnect/README.md).
+
+⚠️ **This section answers a product question and not a curiosity.** BrowserAI's
+update applies only when it is the last live instance, and every client session
+holds one server alive for its whole life, so what a client does with a server
+that ends is what decides whether an update can ever be let in. The decision it
+fed is [Q254 and Q261](../../DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client).
+
+### Claude Code re-launches a dead server transparently, and never re-lists its tools
+
+**A stdio server that exits cleanly is started again on the next tool call, 3/3 in
+every scenario measured**: inside one session registered with `--mcp-config`,
+inside one registered with `claude mcp add --scope user`, after an idle exit that
+happened before any tool call, across `claude -p --continue`, and in a fresh
+`claude -p`. The model sees a clean result; nothing in the transcript says a
+process died. Each run's `*.launches.log` carries one `LAUNCH` line per server
+process, which is how *a new process answered* is established and not inferred.
+
+⭐ **The re-launched server is sent `initialize` and `tools/call`, and never
+`tools/list`.** Its `instructions` are read and discarded: the session keeps the
+tool list and the instructions it took at first connect. **That is the whole
+reason a rename or a removal across an update is dangerous** -- the model goes on
+calling a name the new server no longer has, and the error it gets back reads to
+it as its own mistake. Held over the captured request bodies, which are what the
+model actually saw.
+
+**It does honour `notifications/tools/list_changed`, 3/3**, and says so in its own
+`--debug-file`: *Received tools/list\_changed notification, refreshing tools*. One
+frame is enough; nothing else measured moves that cached list.
+
+⚠️ **A failed re-launch is sticky for the rest of the session.** When the server
+cannot start, the tool result is an error reading *MCP server "probe" is not
+connected*, and **no second dial is attempted** -- a third call, 3/3, produced no
+new `LAUNCH` line. So a window during which the binary is unstartable is not a
+window that heals itself.
+
+**Two channels a server might hope to reach the model with do not.**
+`notifications/message` is dropped outright, because the client declares no
+logging capability at `initialize`; **stderr reaches `--debug-file` and nothing
+else**, and the 42 zero-byte `*.stderr.txt` files in the batch are that result.
+The only channel to the model is a tool result.
+
+**At exit the client kills the server tree**, `taskkill /T /F` on the server's
+pid, which is why nothing of ours runs after the client goes.
+
+**What the documentation says and what the code does are not the same thing, and
+the difference is load-bearing.** `code.claude.com/docs/en/mcp` says a stdio
+server is *not* reconnected automatically, and that is true of the transport: the
+client does not reconnect, it **re-dials**. The `onclose` handler clears the
+cached client, so the next call constructs a new one. Read in the client's own MCP
+module at offset 230,400,000 of `claude.exe`, in `ensureConnectedClient`, and
+confirmed by the launch lines.
+
+### Codex never re-launches on the failure path, and does on the next refresh
+
+⚠️ ***Corrected 2026-09-24, and the maintainer was right to push back.*** The
+first round of this measurement concluded *Codex never re-launches a dead stdio
+server*, on three scenarios that all sat inside one turn. That is false as a
+general claim. **What is true is narrower: Codex re-launches on the next
+REFRESH, and nothing on the failure path fires one.**
+`reusable_client` rejects a client whose transport is closed on any refresh --
+`connection_manager.rs:93-107`, identical at tag `rust-v0.155.0-alpha.9.2`
+(commit `4607249e430dac1c961df4dc615beae88e33cec8`) and on `main`
+(`5f371ba30ae4a4bf4527eb0729ab6b36e3a0c123`, read 2026-09-23T21:35Z) -- and
+`Op::RefreshMcpServers` has **no production caller**.
+
+**Measured, 3/3 each. Does NOT recover:** a new tool call; a new turn in the same
+thread; `/mcp`, which reports the server's `runtimeStatus` as *failed* and dials a
+throwaway probe to find that out; an edit to `config.toml` on disk, because
+nothing watches the file. The model is told *Transport closed*.
+
+**Recovers:** `config/mcpServer/reload` from an app-server host, which is what an
+IDE or the desktop app is; a settings change on the thread, `cwd` or permissions,
+which the TUI reaches through `/cd` and `/permissions`; and a new thread. **A
+crash exit behaves exactly like a clean one** -- the exit code changes nothing.
+
+**Codex ignores `notifications/tools/list_changed`**, 3/3: one line in its own
+tracing log, *MCP server tool list changed*, and nothing else. On `main` as well.
+**It does not need to honour it**, and that is why this is recorded and not filed
+as a defect: a Codex thread's tool list is taken at first connect, and a restart
+or a new thread lists fresh by construction. The server's log notification and its
+stderr reach Codex's tracing log only. At exit it hard-kills the server.
+
+**Both behaviours are known upstream and open**: `openai/codex` **#16899** is
+exactly this, and **#4955** asks for a restart command.
+
+### Both clients decide from the PIPE, not from the process
+
+⭐ **Nothing on either side watches the child exit.** Claude Code's transport
+reports closed on Node's `close` event after the streams shut; Codex's `rmcp`
+transport reports the same thing from its own reader. **So a process that keeps
+the pipes open keeps the session alive, whatever happens behind it.**
+
+**A relay holds a transport across a full swap.** A process spawned by the client
+that never exits, forwards stdio to a child server and re-spawns that child from
+the replaced location: **3/3 Claude Code in one session, 3/3 `codex exec` in one
+turn, 3/3 Codex app-server on the second turn of the same thread** with no reload,
+no new thread and no user action. Swap **308-365 ms**.
+
+⚠️ **The handover shape is the one that looks equivalent and is not.** A server
+that hands its inherited pipes to a helper and exits works 3/3 under Codex, whose
+parent is a Rust/tokio process -- and **collapses 3/3 under Claude Code**, where
+the helper's inherited **stdin** reports EOF the moment the original exits. The
+minimal Windows experiments underneath that are in the batch: with `'inherit'` and
+no `detached`, the helper is killed with the parent's job object; with `detached`,
+**stdout survives** the parent's exit (`exit` fires on the parent, `close` does
+not) and **stdin still EOFs**, in all three of `destroy`, `pause` and doing
+nothing, and the parent's later write is lost.
+
+⚠️ **An in-flight request across the swap is recovered only by re-sending the
+frame**, 3/3 in both clients. That is at-least-once delivery, and a tool with side
+effects cannot have it. This is the measurement that priced the relay out of
+[the update-lane decision](../../DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client),
+and the relay prototype is kept in the batch as the direction not taken.
+
+**Re-establish it** with `rig/server.js` and `rig/apistub.js` (or
+`rig/openaistub.js` for Codex) out of the batch: point `CLAUDE_CONFIG_DIR` or
+`CODEX_HOME` at a scratch directory, set `PROBE_MODE` on the dummy server to
+`exit-after-first`, and read `logs/<run>.launches.log` for the process count and
+`logs/<run>.requests*.jsonl` for what the model was sent. ⚠️ **Never against the
+real client configuration** -- every run here wrote inside its own scratch home,
+and the runs that omitted `--strict-mcp-config` also connected this repository's
+own committed `.mcp.json` servers, which is noted in the batch because it is
+visible in the captures.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --

@@ -1,0 +1,19 @@
+[probe] arm=firefox/baseline origin=http://127.0.0.1:53903 profile=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-baseline\profile
+[probe] prefs=false switch=false seedPreferences=false
+[probe] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-baseline\\downloads","viewport":{"width":1280,"height":800},"locale":"en-US","ignoreHTTPSErrors":true,"firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false}}
+[probe] context.browser() gave no pid; rooting the pid walk at node itself
+[probe] pid walk root = 86568 (node pid 86568)
+[probe] before: 11 windows in pid tree 27620,82996,86028,86568,88780,115224,116980,145964,150124,166800
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-baseline\screen-before.png
+[server] POST /login body=username=probe-user&password=Sup3rSecret%21probe
+[probe] navigation after submit completed (#ok present)
+[probe] new windows first seen after 2463 ms
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-baseline\screen-after.png
+[probe] after: 11 windows; 1 not present before
+[probe]   NEW top 0x1503C6 pid=86028 visible=true class='MozillaWindowClass' title='signed in - Nightly' rect=4,4,1300,897
+[probe]     PrintWindow(1503C6) -> True, 1296x893, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-baseline\win-signed_in_-_Nightly.png
+[probe] no Default/Preferences after launch
+[probe] prefs.js signon/password lines: user_pref("browser.safebrowsing.passwords.enabled", false); ~ user_pref("signon.autofillForms", false); ~ user_pref("signon.rememberSignons", false); ~ user_pref("signon.storage.rust.active", true);
+
+[probe] VERDICT newWindows=1 firstSeenMs=2463 outDir=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-baseline
+EXIT=0

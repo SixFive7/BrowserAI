@@ -1,0 +1,296 @@
+- generic [active] [ref=f1e1] [box=0,0,1280,4408]:
+  - navigation "Primary" [ref=f1e2] [box=0,0,1280,57]:
+    - generic [ref=f1e4] [box=0,16,1280,39]:
+      - link [ref=f1e5] [cursor=pointer] [box=24,16,100,29]:
+        - /url: /en-US/
+        - img "Mozilla" [ref=f1e6] [box=24,16,100,24]
+      - list [ref=f1e10] [box=513,16,254,39]:
+        - listitem [ref=f1e11] [box=513,16,128,39]:
+          - link "Products" [ref=f1e12] [cursor=pointer] [box=537,16,80,23]:
+            - /url: /en-US/products/
+        - listitem [ref=f1e13] [box=641,16,126,39]:
+          - link "About us" [ref=f1e14] [cursor=pointer] [box=665,16,78,23]:
+            - /url: /en-US/about/
+  - generic [ref=f1e15] [box=0,57,1280,4352]:
+    - main [ref=f1e16] [box=0,57,1280,3442]:
+      - generic [ref=f1e18] [box=64,153,461,329]:
+        - heading "Your talents are needed for a better internet" [level=1] [ref=f1e19] [box=64,153,461,201]
+        - paragraph [ref=f1e20] [box=64,381,461,100]: Mozilla is a non-profit organization working to ensure the internet is open and welcoming to all. And we need your help. By joining our community, you can help drive innovation, enhance accountability and trust and make the internet a better place for everyone.
+      - generic [ref=f1e23] [box=0,597,1280,793]:
+        - heading "How you can contribute…" [level=2] [ref=f1e24] [box=176,645,928,117]
+        - generic [ref=f1e25] [box=64,762,1152,580]:
+          - link "Non Technical Individual and event organization Translate content The internet is only global if it’s understood everywhere. Help us translate Mozilla products and websites into your local language." [ref=f1e27] [cursor=pointer] [box=64,762,264,548]:
+            - /url: https://pontoon.mozilla.org/?utm_source=mozilla.org-contribute&utm_medium=referral&utm_campaign=contribute-page
+            - generic [ref=f1e30] [box=64,1026,264,284]:
+              - generic [ref=f1e31] [box=80,1042,232,48]:
+                - generic [ref=f1e32] [box=80,1042,232,18]: Non Technical
+                - generic [ref=f1e33] [box=80,1064,232,18]: Individual and event organization
+              - heading "Translate content" [level=2] [ref=f1e34] [box=80,1097,227,35]
+              - paragraph [ref=f1e35] [box=80,1133,232,100]: The internet is only global if it’s understood everywhere. Help us translate Mozilla products and websites into your local language.
+          - link "Technical Individual Contribute to the Mozilla codebase Actively improve Mozilla products by contributing to a variety of development opportunities." [ref=f1e37] [cursor=pointer] [box=360,762,264,548]:
+            - /url: https://firefox-source-docs.mozilla.org/contributing/contributing_to_mozilla.html?utm_source=mozilla.org-contribute&utm_medium=referral&utm_campaign=contribute-page
+            - generic [ref=f1e40] [box=360,1026,264,284]:
+              - generic [ref=f1e41] [box=376,1042,232,48]:
+                - generic [ref=f1e42] [box=376,1042,232,18]: Technical
+                - generic [ref=f1e43] [box=376,1064,232,18]: Individual
+              - heading "Contribute to the Mozilla codebase" [level=2] [ref=f1e44] [box=376,1097,223,66]
+              - paragraph [ref=f1e45] [box=376,1164,232,80]: Actively improve Mozilla products by contributing to a variety of development opportunities.
+          - link "Support Individual and event organization Individual and event organization Help make Mozilla products easy to use. Answer people’s “help” questions as part of the Mozilla Support Community forums." [ref=f1e47] [cursor=pointer] [box=656,762,264,548]:
+            - /url: https://community.mozilla.org/activities/answer-support-questions/?utm_source=mozilla.org-contribute&utm_medium=referral&utm_campaign=contribute-page
+            - generic [ref=f1e50] [box=656,1026,264,284]:
+              - generic [ref=f1e51] [box=672,1042,232,48]:
+                - generic [ref=f1e52] [box=672,1042,232,18]: Support
+                - generic [ref=f1e53] [box=672,1064,232,18]: Individual and event organization
+              - heading "Individual and event organization" [level=2] [ref=f1e54] [box=672,1097,198,97]
+              - paragraph [ref=f1e55] [box=672,1195,232,100]: Help make Mozilla products easy to use. Answer people’s “help” questions as part of the Mozilla Support Community forums.
+          - link "Technical and Non-technical Join the community Want to get more involved in the Mozilla community? Check out all the volunteer opportunities in our Community Portal." [ref=f1e57] [cursor=pointer] [box=952,762,264,548]:
+            - /url: https://community.mozilla.org/?utm_source=mozilla.org-contribute&utm_medium=referral&utm_campaign=contribute-page
+            - generic [ref=f1e60] [box=952,1026,264,284]:
+              - generic [ref=f1e61] [box=968,1042,232,48]: Technical and Non-technical
+              - heading "Join the community" [level=2] [ref=f1e63] [box=968,1097,217,66]
+              - paragraph [ref=f1e64] [box=968,1164,232,100]: Want to get more involved in the Mozilla community? Check out all the volunteer opportunities in our Community Portal.
+      - generic [ref=f1e66] [box=64,1439,1152,393]:
+        - generic [ref=f1e67] [box=64,1439,1152,137]:
+          - heading "Our Mission" [level=2] [ref=f1e68] [box=499,1439,282,53]
+          - paragraph [ref=f1e69] [box=256,1515,768,60]: Our mission is to ensure the internet is a global public resource, open and accessible to all. An internet that truly puts people first, where individuals can shape their own experience and are empowered, safe and independent.
+        - list [ref=f1e70] [box=64,1623,1152,208]:
+          - listitem [ref=f1e71] [box=160,1623,464,88]:
+            - link [ref=f1e72] [cursor=pointer] [box=160,1623,464,88]:
+              - /url: /en-US/about/
+              - heading "Learn about Mozilla" [level=3] [ref=f1e73] [box=212,1643,392,24]
+              - paragraph [ref=f1e74] [box=212,1671,392,20]: Read our manifesto
+          - listitem [ref=f1e75] [box=656,1623,464,88]:
+            - link [ref=f1e76] [cursor=pointer] [box=656,1623,464,88]:
+              - /url: https://community.mozilla.org/events/?utm_source=mozilla.org-contribute&utm_medium=referral&utm_campaign=contribute-page
+              - heading "Find an event" [level=3] [ref=f1e77] [box=708,1643,392,24]
+              - paragraph [ref=f1e78] [box=708,1671,392,20]: Meet our passionate volunteers
+          - listitem [ref=f1e79] [box=160,1743,464,88]:
+            - link [ref=f1e80] [cursor=pointer] [box=160,1743,464,88]:
+              - /url: https://www.mozillafoundation.org/?form=contribute
+              - heading "Donate" [level=3] [ref=f1e81] [box=212,1763,392,24]
+              - paragraph [ref=f1e82] [box=212,1791,392,20]: Help fund our mission
+          - listitem [ref=f1e83] [box=656,1743,464,88]:
+            - link [ref=f1e84] [cursor=pointer] [box=656,1743,464,88]:
+              - /url: https://bsky.app/profile/mozilla.org
+              - heading "Follow Mozilla" [level=3] [ref=f1e85] [box=708,1763,392,24]
+              - paragraph [ref=f1e86] [box=708,1791,392,20]: News and volunteer opportunities
+      - generic [ref=f1e90] [box=64,1905,544,330]:
+        - heading "Made by passionate people like you" [level=2] [ref=f1e91] [box=64,1905,544,106]
+        - paragraph [ref=f1e92] [box=64,2034,544,80]: When you contribute to Mozilla, you become part of a worldwide community made up of people from around the globe who believe that we all have a role in ensuring that the internet remains a force for good.
+        - paragraph [ref=f1e93] [box=64,2134,544,100]: We believe community collaboration is vital to creating an internet that is diverse, innovative, and accountable to the people who need it most. Whether you have a background in tech, community organizing, or just a computer and some free time, you can help us make the internet a better place.
+      - complementary [ref=f1e94] [box=0,2260,1280,623]:
+        - generic [ref=f1e98] [box=640,2308,384,503]:
+          - generic [ref=f1e99] [box=640,2372,384,231]:
+            - heading "Not sure yet?" [level=3] [ref=f1e100] [box=640,2372,384,53]
+            - heading "Get community and contribution news to your inbox" [level=4] [ref=f1e101] [box=640,2437,384,92]
+            - paragraph [ref=f1e102] [box=640,2543,384,60]: Subscribe to our newsletter, join Mozillians all around the world, and learn about impactful opportunities to support the Mozilla mission.
+          - group [ref=f1e103] [box=640,2623,384,188]:
+            - generic [ref=f1e104] [box=640,2623,384,26]: "Your email address:"
+            - textbox "Your email address:" [ref=f1e105] [box=640,2649,384,40]:
+              - /placeholder: yourname@example.com
+            - paragraph [ref=f1e106] [box=640,2713,384,78]:
+              - button "Sign Up Now" [ref=f1e107] [cursor=pointer] [box=640,2713,384,40]
+              - generic [ref=f1e108] [box=652,2761,360,30]: We will only send you Mozilla-related information. You can unsubscribe at any time.
+      - generic [ref=f1e109] [box=0,2883,1280,616]:
+        - generic [ref=f1e110] [box=96,2907,1088,260]:
+          - generic [ref=f1e111] [box=344,2975,432,124]:
+            - heading "Get Help" [level=2] [ref=f1e112] [box=344,2975,432,44]
+            - paragraph [ref=f1e113] [box=344,3039,432,40]: Mozilla has a dedicated team of volunteers to help with whatever issues you may be experiencing.
+          - link "Mozilla Support" [ref=f1e115] [cursor=pointer] [box=976,3017,160,40]:
+            - /url: https://support.mozilla.org/?utm_source=mozilla.org-contribute&utm_medium=referral&utm_campaign=contribute-page
+        - generic [ref=f1e116] [box=96,3231,1088,268]:
+          - generic [ref=f1e117] [box=348,3271,427,188]:
+            - heading "Problems with a web page?" [level=2] [ref=f1e119] [box=348,3271,427,88]
+            - paragraph [ref=f1e120] [box=348,3379,427,60]: If your experience of a website differs between browsers then you may have discovered a web compatibility issue. We would love to know about it!
+          - link "Report an issue" [ref=f1e122] [cursor=pointer] [box=975,3345,157,40]:
+            - /url: https://webcompat.com/?utm_source=mozilla.org-contribute&utm_medium=referral&utm_campaign=contribute-page
+    - contentinfo [ref=f1e123] [box=0,3595,1280,813]:
+      - generic [ref=f1e124] [box=0,3691,1280,717]:
+        - generic [ref=f1e126] [box=24,3691,1232,201]:
+          - generic [ref=f1e128] [box=24,3691,343,169]:
+            - heading [level=2] [ref=f1e129] [box=24,3691,343,53]:
+              - img "Mozilla Ads" [ref=f1e130] [box=24,3700,250,33]
+            - paragraph [ref=f1e131] [box=24,3767,343,20]: Add trust to your ad buy.
+            - link "Learn more about Mozilla Ads" [ref=f1e132] [cursor=pointer] [box=24,3819,166,40]:
+              - /url: /en-US/advertising/
+              - generic [ref=f1e133] [box=50,3830,93,19]:
+                - text: Learn more
+                - generic [ref=f1e134] [box=142,3828,1,1]: about Mozilla Ads
+          - generic [ref=f1e138] [box=379,3691,729,186]:
+            - generic [ref=f1e139] [box=391,3691,231,186]:
+              - heading "Company" [level=2] [ref=f1e140] [box=391,3691,223,18]
+              - list [ref=f1e141] [box=391,3716,231,140]:
+                - listitem [ref=f1e142] [box=391,3716,231,28]:
+                  - link "Leadership" [ref=f1e143] [cursor=pointer] [box=391,3717,87,19]:
+                    - /url: /en-US/about/leadership/
+                - listitem [ref=f1e144] [box=391,3744,231,28]:
+                  - link "Press Center" [ref=f1e145] [cursor=pointer] [box=391,3745,102,19]:
+                    - /url: https://blog.mozilla.org/category/mozilla/news/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer&utm_content=company
+                - listitem [ref=f1e146] [box=391,3772,231,28]:
+                  - link "Careers" [ref=f1e147] [cursor=pointer] [box=391,3773,62,19]:
+                    - /url: /en-US/careers/
+                - listitem [ref=f1e148] [box=391,3800,231,28]:
+                  - link "Merch Store" [ref=f1e149] [cursor=pointer] [box=391,3801,97,19]:
+                    - /url: https://shop.mozilla.com/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer&utm_content=company
+                - listitem [ref=f1e150] [box=391,3828,231,28]:
+                  - link "Contact" [ref=f1e151] [cursor=pointer] [box=391,3829,62,19]:
+                    - /url: /en-US/contact/
+            - generic [ref=f1e152] [box=634,3691,231,158]:
+              - heading "Support" [level=2] [ref=f1e153] [box=634,3691,223,18]
+              - list [ref=f1e154] [box=634,3716,231,112]:
+                - listitem [ref=f1e155] [box=634,3716,231,28]:
+                  - link "Product Help" [ref=f1e156] [cursor=pointer] [box=634,3717,102,19]:
+                    - /url: https://support.mozilla.org/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer&utm_content=support
+                - listitem [ref=f1e157] [box=634,3744,231,28]:
+                  - link "File a Bug" [ref=f1e158] [cursor=pointer] [box=634,3745,75,19]:
+                    - /url: https://bugzilla.mozilla.org/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer&utm_content=support
+                - listitem [ref=f1e159] [box=634,3772,231,28]:
+                  - link "Localize Mozilla" [ref=f1e160] [cursor=pointer] [box=634,3773,125,19]:
+                    - /url: https://pontoon.mozilla.org/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer&utm_content=support
+                - listitem [ref=f1e161] [box=634,3800,231,28]:
+                  - link "Security" [ref=f1e162] [cursor=pointer] [box=634,3801,67,19]:
+                    - /url: /en-US/security/
+            - generic [ref=f1e163] [box=877,3691,231,186]:
+              - heading "Developers" [level=2] [ref=f1e164] [box=877,3691,223,18]
+              - list [ref=f1e165] [box=877,3716,231,140]:
+                - listitem [ref=f1e166] [box=877,3716,231,28]:
+                  - link "Developer Edition" [ref=f1e167] [cursor=pointer] [box=877,3717,139,19]:
+                    - /url: https://www.firefox.com/channel/desktop/developer/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer
+                - listitem [ref=f1e168] [box=877,3744,231,28]:
+                  - link "Enterprise" [ref=f1e169] [cursor=pointer] [box=877,3745,83,19]:
+                    - /url: https://www.firefox.com/browsers/enterprise/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer
+                - listitem [ref=f1e170] [box=877,3772,231,28]:
+                  - link "Tools" [ref=f1e171] [cursor=pointer] [box=877,3773,41,19]:
+                    - /url: https://firefox-source-docs.mozilla.org/devtools-user/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer&utm_content=developers
+                - listitem [ref=f1e172] [box=877,3800,231,28]:
+                  - link "MDN" [ref=f1e173] [cursor=pointer] [box=877,3801,37,19]:
+                    - /url: https://developer.mozilla.org/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer
+                - listitem [ref=f1e174] [box=877,3828,231,28]:
+                  - link "Firefox Release Notes" [ref=f1e175] [cursor=pointer] [box=877,3829,170,19]:
+                    - /url: https://www.firefox.com/firefox/156.0.1/releasenotes/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer
+          - generic [ref=f1e176] [box=1120,3691,136,181]:
+            - generic [ref=f1e177] [box=1120,3691,136,59]:
+              - heading "Follow @Mozilla" [level=2] [ref=f1e178] [box=1131,3691,125,18]
+              - list [ref=f1e179] [box=1120,3724,136,25]:
+                - listitem [ref=f1e180] [box=1120,3724,24,25]:
+                  - link "Bluesky (@mozilla.org)" [ref=f1e181] [cursor=pointer] [box=1120,3724,24,25]:
+                    - /url: https://bsky.app/profile/mozilla.org
+                - listitem [ref=f1e182] [box=1148,3724,24,25]:
+                  - link "Instagram (@mozilla)" [ref=f1e183] [cursor=pointer] [box=1148,3724,24,25]:
+                    - /url: https://www.instagram.com/mozilla/
+                - listitem [ref=f1e184] [box=1176,3724,24,25]:
+                  - link "LinkedIn (@mozilla)" [ref=f1e185] [cursor=pointer] [box=1176,3724,24,25]:
+                    - /url: https://www.linkedin.com/company/mozilla-corporation/
+                - listitem [ref=f1e186] [box=1204,3724,24,25]:
+                  - link "TikTok (@mozilla)" [ref=f1e187] [cursor=pointer] [box=1204,3724,24,25]:
+                    - /url: https://www.tiktok.com/@mozilla
+                - listitem [ref=f1e188] [box=1232,3724,24,25]:
+                  - link "Spotify (@mozilla)" [ref=f1e189] [cursor=pointer] [box=1232,3724,24,25]:
+                    - /url: https://open.spotify.com/show/0vT7LJMeVDxyQ2ZamHKu08?si=_uDRD6bRR_6M5YZyISGXgA
+            - generic [ref=f1e190] [box=1120,3781,136,59]:
+              - heading "Follow @Firefox" [level=2] [ref=f1e191] [box=1133,3781,123,18]
+              - list [ref=f1e192] [box=1148,3815,108,25]:
+                - listitem [ref=f1e193] [box=1148,3815,24,25]:
+                  - link "Bluesky (@firefox.com)" [ref=f1e194] [cursor=pointer] [box=1148,3815,24,25]:
+                    - /url: https://bsky.app/profile/firefox.com
+                - listitem [ref=f1e195] [box=1176,3815,24,25]:
+                  - link "Instagram (@firefox)" [ref=f1e196] [cursor=pointer] [box=1176,3815,24,25]:
+                    - /url: https://www.instagram.com/firefox/
+                - listitem [ref=f1e197] [box=1204,3815,24,25]:
+                  - link "YouTube (@firefoxchannel)" [ref=f1e198] [cursor=pointer] [box=1204,3815,24,25]:
+                    - /url: https://www.youtube.com/user/firefoxchannel
+                - listitem [ref=f1e199] [box=1232,3815,24,25]:
+                  - link "TikTok (@firefox)" [ref=f1e200] [cursor=pointer] [box=1232,3815,24,25]:
+                    - /url: https://www.tiktok.com/@firefox
+        - generic [ref=f1e201] [box=24,3923,1232,74]:
+          - link [ref=f1e202] [cursor=pointer] [box=855,3923,133,40]:
+            - /url: https://www.mozillafoundation.org/?form=moco-donate-footer
+          - generic [ref=f1e208] [box=1000,3923,256,40]:
+            - link "All languages" [ref=f1e209] [cursor=pointer] [box=999,3898,1,1]:
+              - /url: /locales/
+            - generic [ref=f1e210] [box=999,3922,1,1]: Language
+            - combobox "Language" [ref=f1e211] [box=1000,3923,256,40]:
+              - option "عربي" [box=0,0,0,0]
+              - option "Беларуская" [box=0,0,0,0]
+              - option "Bosanski" [box=0,0,0,0]
+              - option "Maya Kaqchikel" [box=0,0,0,0]
+              - option "Čeština" [box=0,0,0,0]
+              - option "Cymraeg" [box=0,0,0,0]
+              - option "Deutsch" [box=0,0,0,0]
+              - option "Dolnoserbšćina" [box=0,0,0,0]
+              - option "Ελληνικά" [box=0,0,0,0]
+              - option "English (Canadian)" [box=0,0,0,0]
+              - option "English (British)" [box=0,0,0,0]
+              - option "English" [selected] [box=0,0,0,0]
+              - option "Español (de Argentina)" [box=0,0,0,0]
+              - option "Español (de Chile)" [box=0,0,0,0]
+              - option "Español (de España)" [box=0,0,0,0]
+              - option "Español (de México)" [box=0,0,0,0]
+              - option "suomi" [box=0,0,0,0]
+              - option "Français" [box=0,0,0,0]
+              - option "Frysk" [box=0,0,0,0]
+              - option "Galego" [box=0,0,0,0]
+              - option "Avañe'ẽ" [box=0,0,0,0]
+              - option "हिन्दी (भारत)" [box=0,0,0,0]
+              - option "Hrvatski" [box=0,0,0,0]
+              - option "Hornjoserbsce" [box=0,0,0,0]
+              - option "magyar" [box=0,0,0,0]
+              - option "Interlingua" [box=0,0,0,0]
+              - option "Bahasa Indonesia" [box=0,0,0,0]
+              - option "íslenska" [box=0,0,0,0]
+              - option "Italiano" [box=0,0,0,0]
+              - option "日本語" [box=0,0,0,0]
+              - option "ქართული" [box=0,0,0,0]
+              - option "Қазақ" [box=0,0,0,0]
+              - option "한국어" [box=0,0,0,0]
+              - option "ພາສາລາວ" [box=0,0,0,0]
+              - option "Melayu" [box=0,0,0,0]
+              - option "Norsk bokmål" [box=0,0,0,0]
+              - option "Nederlands" [box=0,0,0,0]
+              - option "Norsk nynorsk" [box=0,0,0,0]
+              - option "ਪੰਜਾਬੀ (ਭਾਰਤ)" [box=0,0,0,0]
+              - option "Polski" [box=0,0,0,0]
+              - option "Português (do Brasil)" [box=0,0,0,0]
+              - option "Português (Europeu)" [box=0,0,0,0]
+              - option "rumantsch" [box=0,0,0,0]
+              - option "Română" [box=0,0,0,0]
+              - option "Русский" [box=0,0,0,0]
+              - option "Scots" [box=0,0,0,0]
+              - option "slovenčina" [box=0,0,0,0]
+              - option "سرائیکی" [box=0,0,0,0]
+              - option "Slovenščina" [box=0,0,0,0]
+              - option "Shqip" [box=0,0,0,0]
+              - option "Српски" [box=0,0,0,0]
+              - option "Svenska" [box=0,0,0,0]
+              - option "Тоҷикӣ" [box=0,0,0,0]
+              - option "ไทย" [box=0,0,0,0]
+              - option "Türkçe" [box=0,0,0,0]
+              - option "Українська" [box=0,0,0,0]
+              - option "Tiếng Việt" [box=0,0,0,0]
+              - option "中文 (简体)" [box=0,0,0,0]
+              - option "正體中文 (繁體)" [box=0,0,0,0]
+        - generic [ref=f1e213] [box=24,4029,1232,63]:
+          - paragraph [ref=f1e214] [box=24,4029,616,63]:
+            - text: Donate to the not-for-profit
+            - link "Mozilla Foundation" [ref=f1e215] [cursor=pointer] [box=214,4029,129,21]:
+              - /url: https://www.mozillafoundation.org/?utm_source=www.mozilla.org&utm_medium=referral&utm_campaign=footer
+            - text: . Portions of this content are ©1998–2026 by individual mozilla.org contributors. Content available under a
+            - link "Creative Commons license" [ref=f1e216] [cursor=pointer] [box=144,4071,182,21]:
+              - /url: /en-US/foundation/licensing/website-content/
+            - text: .
+          - list [ref=f1e217] [box=763,4029,493,63]:
+            - listitem [ref=f1e218] [box=763,4029,182,21]:
+              - link "Website Privacy Notice" [ref=f1e219] [cursor=pointer] [box=763,4031,158,17]:
+                - /url: /en-US/privacy/websites/
+            - listitem [ref=f1e220] [box=949,4029,79,21]:
+              - link "Cookies" [ref=f1e221] [cursor=pointer] [box=949,4031,55,17]:
+                - /url: /en-US/privacy/websites/cookie-settings/
+            - listitem [ref=f1e222] [box=1031,4029,61,21]:
+              - link "Legal" [ref=f1e223] [cursor=pointer] [box=1031,4031,37,17]:
+                - /url: /en-US/about/legal/
+            - listitem [ref=f1e224] [box=763,4058,270,21]:
+              - link "Community Participation Guidelines" [ref=f1e225] [cursor=pointer] [box=763,4060,246,17]:
+                - /url: /en-US/about/governance/policies/participation/
+            - listitem [ref=f1e226] [box=1037,4058,124,21]:
+              - link "About this site" [ref=f1e227] [cursor=pointer] [box=1037,4060,100,17]:
+                - /url: /en-US/about/this-site/

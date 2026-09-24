@@ -1,0 +1,71 @@
+############ PROBE F -- can a .cmd shim be started without cmd.exe? ############
+host Windows 11 Pro 10.0.26200 | .NET SDK 10.0.401, net10.0 CoreCLR | 2026-09-23
+project .work/assumed-2026-09-23/src/probes/cmdshim
+rig: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig
+probe exe: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.exe
+
+
+================ 1a. CreateProcessW P/Invoke, lpApplicationName = the .cmd  (what the Win32 doc forbids)
+  lpApplicationName=C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig\shim.cmd
+  lpCommandLine=NULL
+  RESULT: CreateProcessW SUCCEEDED. pid=21036
+  WHICH IMAGE ACTUALLY RAN: C:\WINDOWS\system32\cmd.exe
+
+================ 1b. CreateProcessW P/Invoke, lpApplicationName = NULL, command line = "<the .cmd>"
+  lpApplicationName=NULL
+  lpCommandLine="C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig\shim.cmd"
+  RESULT: CreateProcessW SUCCEEDED. pid=141320
+  WHICH IMAGE ACTUALLY RAN: C:\WINDOWS\system32\cmd.exe
+
+================ 1c. CONTROL: CreateProcessW P/Invoke against a real .exe
+  lpApplicationName=C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.exe
+  lpCommandLine="C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.exe" --argv control
+  RESULT: CreateProcessW SUCCEEDED. pid=54208
+  WHICH IMAGE ACTUALLY RAN: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.exe
+
+================ 2a. Process.Start UseShellExecute=false against the .cmd -- and WHICH image ran
+  FileName=C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig\shim.cmd
+  ArgumentList=[plain]
+  RESULT: started. pid=135700 exit=0
+  WHICH IMAGE ACTUALLY RAN: C:\WINDOWS\SYSTEM32\ntdll.dll
+    out| SHIM-RAN
+    out|   CMDCMDLINE=C:\WINDOWS\system32\cmd.exe /c ""C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig\shim.cmd" plain"
+    out|   ARGS=plain
+    out|   ARG1=[plain]
+
+================ 2b. CONTROL: Process.Start UseShellExecute=false against the real .exe
+  FileName=C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.exe
+  ArgumentList=[--argv | control]
+  RESULT: started. pid=115668 exit=0
+  WHICH IMAGE ACTUALLY RAN: <null>
+    out| rig: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig
+    out| probe exe: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.exe
+    out| 
+    out| ARGV-EXE-RAN
+    out|   GetCommandLine=C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.dll --argv control
+    out|   ARG1=[control]
+
+================ 3a. HOSTILE ARGUMENTS through the .cmd shim
+  FileName=C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig\shim.cmd
+  ArgumentList=[%USERNAME% | a & b | C:\Program Files\x y\claude.exe]
+  RESULT: started. pid=10056 exit=0
+  WHICH IMAGE ACTUALLY RAN: C:\WINDOWS\system32\cmd.exe
+    out| SHIM-RAN
+    out|   CMDCMDLINE=C:\WINDOWS\system32\cmd.exe /c ""C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig\shim.cmd" %USERNAME% "a
+    out|   ARGS=jori "a & b" "C:\Program Files\x y\claude.exe"
+    out|   ARG1=[jori]
+    err| The filename, directory name, or volume label syntax is incorrect.
+
+================ 3b. CONTROL: the identical hostile arguments straight to the .exe
+  FileName=C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.exe
+  ArgumentList=[--argv | %USERNAME% | a & b | C:\Program Files\x y\claude.exe]
+  RESULT: started. pid=68676 exit=0
+  WHICH IMAGE ACTUALLY RAN: <null>
+    out| rig: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\rig
+    out| probe exe: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.exe
+    out| 
+    out| ARGV-EXE-RAN
+    out|   GetCommandLine=C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\src\probes\cmdshim\bin\Release\net10.0\cmdshim.dll --argv %USERNAME% "a & b" "C:\Program Files\x y\claude.exe"
+    out|   ARG1=[%USERNAME%]
+    out|   ARG2=[a & b]
+    out|   ARG3=[C:\Program Files\x y\claude.exe]

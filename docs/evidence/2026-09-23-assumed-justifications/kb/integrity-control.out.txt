@@ -1,0 +1,22 @@
+source            : C:/Source/SixFive7/BrowserAI/.work/assumed-2026-09-23/kb/profiles/kill-profile/Default/Network/Cookies
+size / page size  : 20480 B / 4096 B  (5 pages)
+undoctored        : integrity_check = ok
+undoctored tables : meta=3 cookies=0
+
+[midfile-1k] integrity_check = ok
+[midfile-1k] tables          = meta=3 cookies=0
+
+[page2-live] integrity_check = *** in database main ***
+Tree 2 page 2 cell 2: Offset 23130 out of range 4034..4092
+Tree 2 page 2 cell 1: Offset 23130 out of range 4034..4092
+Tree 2 page 2 cell 0: Offset 23130 out of range 4034..4092; NULL value in meta.key; row 1 missing from index sqlite_autoindex_meta_1; NULL value in meta.key;
+[page2-live] tables          = meta=3 cookies=0
+
+[every-page] integrity_check = OPEN FAILED: database disk image is malformed
+[every-page] tables          = meta=3 cookies=0
+
+[truncated] integrity_check = OPEN FAILED: database disk image is malformed
+[truncated] tables          = OPEN FAILED: database disk image is malformed
+
+[bad-header] integrity_check = OPEN FAILED: database disk image is malformed
+[bad-header] tables          = OPEN FAILED: database disk image is malformed

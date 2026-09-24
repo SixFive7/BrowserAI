@@ -1312,6 +1312,47 @@ assertion over an async pipeline cannot survive this and should not be written**
 the fix was a `TimeProvider` seam on the one timer in the product, so the test
 advances the clock itself. `[MACHINE]`
 
+## Reading the process log by pid alone misattributed four live servers -- measured 2026-09-23
+
+`[STABLE]` on the Windows property, `[MACHINE]` for the count. Windows
+**10.0.26200**, BrowserAI **1.0.0** running with **1.1.0** staged, 22 live
+servers. The census it came out of:
+[`docs/evidence/2026-09-23-instances`](../../docs/evidence/2026-09-23-instances/README.md).
+
+**The writer was never the problem.** Every record this product writes carries
+`pid=<n>@<createdFileTime>`, and
+[`FileLoggerProvider`](../../src/BrowserAI.Core/Logging/FileLoggerProvider.cs)
+explains at length why: Windows re-uses pids, the machine-wide log outlives its
+processes by thirty days, and the pair is this repository's standing identity for
+a process.
+
+⭐ **The reader was.** A census that grouped 22 live servers by the number alone
+**misattributed four of them**, and it did so in two different ways at once.
+Records written by a process that had exited hours earlier were read as the
+history of a live server that had inherited its pid -- the reuse the writer's
+comment predicts. And **a bare number is also a PREFIX of a longer one**: a search
+for `pid=178` matches `pid=178@...` and `pid=1786@...` equally, so a grep can
+merge two processes that never shared a number at all.
+
+⚠️ **And the log carries a second, bare shape that looks the same.** The writer
+field is the pair, but message text is not: `BrowserAI {Version} started.
+pid={ProcessId} ...` and the stray sweep's `Terminated a stray browser:
+pid={ProcessId} ...` write a **bare** pid inside the sentence, because there the
+number names *some other process* whose creation time the sentence does not carry.
+So one grep for `pid=` returns two kinds of thing, and only one of them is an
+identity.
+
+**What a reader has to do**: match on the pair, and anchor it -- `pid=<n>@`, never
+`pid=<n>`. That is what `ProcessLiveness.IsAlive(int, long)` takes, and it is
+spelled identically in `browserai.lock`'s `processCreatedFileTime`, so a log line
+and a lock record name the same writer with the same characters.
+
+**Re-establish it** by reading `server-identities.txt` in the batch -- each live
+server as pid and creation time -- against the process log's own records for those
+pids. ⚠️ **A deliberate reproduction needs a pid to come round**, which nothing can
+schedule, so this is a kb entry and not a suite arm; what the suite does hold is
+that the pair is what liveness takes.
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

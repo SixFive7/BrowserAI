@@ -1,0 +1,16 @@
+{
+ "mcpServers": {
+  "probe": {
+   "type": "stdio",
+   "command": "C:\\Program Files\\nodejs\\node.exe",
+   "args": [
+    "C:\\Source\\SixFive7\\BrowserAI\\.work\\q254-2026-09-23\\rig\\server.js"
+   ],
+   "env": {
+    "PROBE_LOGDIR": "C:\\Source\\SixFive7\\BrowserAI\\.work\\q254-2026-09-23\\logs",
+    "PROBE_TAG": "S",
+    "PROBE_MODE": "stay"
+   }
+  }
+ }
+}

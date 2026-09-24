@@ -1,0 +1,6 @@
+[marketplaces.mpw-d]
+source_type = "local"
+source = '\\?\C:\Source\SixFive7\BrowserAI\.work\codex-registration-2026-09-24\mpw-d'
+
+[plugins."p-d@mpw-d"]
+enabled = true

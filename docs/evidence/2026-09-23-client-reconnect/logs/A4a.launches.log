@@ -1,0 +1,26 @@
+2026-09-23T21:02:59.436Z A4a-pid142604-1790197379436 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T21:02:59.438Z A4a-pid142604-1790197379436 LAUNCHNO 1
+2026-09-23T21:02:59.443Z A4a-pid142604-1790197379436 IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},"jsonrpc":"2.0","id":0}
+2026-09-23T21:02:59.444Z A4a-pid142604-1790197379436 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-11-25","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance A4a-pid142604-1790197379436."}}
+2026-09-23T21:02:59.444Z A4a-pid142604-1790197379436 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:02:59.446Z A4a-pid142604-1790197379436 IN {"method":"tools/list","jsonrpc":"2.0","id":1}
+2026-09-23T21:02:59.446Z A4a-pid142604-1790197379436 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T21:02:59.530Z A4a-pid142604-1790197379436 IN {"method":"tools/call","params":{"name":"ping","arguments":{"note":"phase1"},"_meta":{"claudecode/toolUseId":"toolu_0","progressToken":2}},"jsonrpc":"2.0","id":2}
+2026-09-23T21:02:59.531Z A4a-pid142604-1790197379436 OUT {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"pong #1 from A4a-pid142604-1790197379436. note=phase1. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:02:59.531Z A4a-pid142604-1790197379436 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-A4a-pid142604-1790197379436: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:02:59.531Z A4a-pid142604-1790197379436 PLANNED-EXIT after first tools/call
+2026-09-23T21:02:59.595Z A4a-pid142604-1790197379436 STDIN-END 
+2026-09-23T21:02:59.596Z A4a-pid142604-1790197379436 EXIT code=0
+2026-09-23T21:03:02.502Z A4a-pid152804-1790197382502 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T21:03:02.504Z A4a-pid152804-1790197382502 LAUNCHNO 2
+2026-09-23T21:03:02.508Z A4a-pid152804-1790197382502 IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},"jsonrpc":"2.0","id":0}
+2026-09-23T21:03:02.509Z A4a-pid152804-1790197382502 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-11-25","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance A4a-pid152804-1790197382502."}}
+2026-09-23T21:03:02.510Z A4a-pid152804-1790197382502 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:03:02.511Z A4a-pid152804-1790197382502 IN {"method":"tools/list","jsonrpc":"2.0","id":1}
+2026-09-23T21:03:02.512Z A4a-pid152804-1790197382502 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T21:03:02.610Z A4a-pid152804-1790197382502 IN {"method":"tools/call","params":{"name":"ping","arguments":{"note":"phase2"},"_meta":{"claudecode/toolUseId":"toolu_0","progressToken":2}},"jsonrpc":"2.0","id":2}
+2026-09-23T21:03:02.611Z A4a-pid152804-1790197382502 OUT {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"pong #1 from A4a-pid152804-1790197382502. note=phase2. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:03:02.612Z A4a-pid152804-1790197382502 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-A4a-pid152804-1790197382502: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:03:02.612Z A4a-pid152804-1790197382502 PLANNED-EXIT after first tools/call
+2026-09-23T21:03:02.684Z A4a-pid152804-1790197382502 STDIN-END 
+2026-09-23T21:03:02.684Z A4a-pid152804-1790197382502 EXIT code=0

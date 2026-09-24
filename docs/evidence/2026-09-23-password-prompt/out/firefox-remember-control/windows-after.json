@@ -1,0 +1,145 @@
+{
+  "label": "after",
+  "rootPid": 163684,
+  "takenAt": "2026-09-23T23:09:32.0225909+02:00",
+  "pidsInTree": [
+    7804,
+    20112,
+    42232,
+    47640,
+    59996,
+    98364,
+    131668,
+    141788,
+    158144,
+    163684
+  ],
+  "windows": [
+    {
+      "level": "top",
+      "hwnd": "0xB91688",
+      "pid": 141788,
+      "class": "MozillaCompositorInitialParentClass",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,1,1"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x852048",
+      "pid": 98364,
+      "class": "MozillaDropShadowWindowClass",
+      "title": "",
+      "visible": true,
+      "rect": "261,78,643,299"
+    },
+    {
+      "level": "child-of-0x852048",
+      "hwnd": "0x9078E",
+      "pid": 141788,
+      "class": "MozillaCompositorWindowClass",
+      "title": "",
+      "visible": true,
+      "rect": "261,78,643,299"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x220B80",
+      "pid": 98364,
+      "class": "MozillaWindowClass",
+      "title": "signed in — Nightly",
+      "visible": true,
+      "rect": "4,4,1300,897"
+    },
+    {
+      "level": "child-of-0x220B80",
+      "hwnd": "0x4079E",
+      "pid": 98364,
+      "class": "InputNonClientPointerSource",
+      "title": "Non Client Input Sink Window",
+      "visible": true,
+      "rect": "12,4,1292,8"
+    },
+    {
+      "level": "child-of-0x220B80",
+      "hwnd": "0x4074A",
+      "pid": 98364,
+      "class": "ReunionWindowingCaptionControls",
+      "title": "ReunionCaptionControlsWindow",
+      "visible": true,
+      "rect": "1292,4,1292,4"
+    },
+    {
+      "level": "child-of-0x220B80",
+      "hwnd": "0x50684",
+      "pid": 141788,
+      "class": "MozillaCompositorWindowClass",
+      "title": "",
+      "visible": true,
+      "rect": "12,4,1292,889"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x40742",
+      "pid": 141788,
+      "class": "MozillaCompositorInitialParentClass",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,1,1"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x907A6",
+      "pid": 98364,
+      "class": "MozillaBatteryClass",
+      "title": "Battery Watcher",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x15037A",
+      "pid": 98364,
+      "class": "Mozilla_firefox-default_C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-remember-control\\profile_RemoteWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1B0B7E",
+      "pid": 98364,
+      "class": "MozillaHiddenWindowClass",
+      "title": "WinEventWindow",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x407C2",
+      "pid": 98364,
+      "class": "MSCTFIME UI",
+      "title": "MSCTFIME UI",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x11F0F3C",
+      "pid": 98364,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x50192",
+      "pid": 141788,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    }
+  ]
+}

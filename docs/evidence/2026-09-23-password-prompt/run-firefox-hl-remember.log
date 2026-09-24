@@ -1,0 +1,16 @@
+[probe] arm=firefox/hl-remember origin=http://127.0.0.1:64669 profile=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-hl-remember\profile
+[probe] prefs=false switch=false seedPreferences=false
+[probe] launchOptions={"headless":true,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-hl-remember\\downloads","viewport":{"width":1280,"height":800},"locale":"en-US","ignoreHTTPSErrors":true,"firefoxUserPrefs":{"toolkit.winRegisterApplicationRestart":false,"signon.rememberSignons":true}}
+[probe] context.browser() gave no pid; rooting the pid walk at node itself
+[probe] pid walk root = 91384 (node pid 91384)
+[probe] fingerprint {"webdriver":true,"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0"}
+[probe] before: 3 windows in pid tree 14024,26396,39548,57328,58700,61320,91384,94212,128324
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-hl-remember\screen-before.png
+[server] POST /login body=username=probe-user&password=Sup3rSecret%21probe
+[probe] navigation after submit completed (#ok present)
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-hl-remember\screen-after.png
+[probe] after: 3 windows; 0 not present before
+[probe] no Default/Preferences after launch
+[probe] prefs.js signon/password lines: user_pref("browser.safebrowsing.passwords.enabled", false); ~ user_pref("signon.autofillForms", false); ~ user_pref("signon.storage.rust.active", true);
+
+[probe] VERDICT newWindows=0 firstSeenMs=null outDir=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\firefox-hl-remember

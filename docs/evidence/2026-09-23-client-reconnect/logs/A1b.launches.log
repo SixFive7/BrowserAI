@@ -1,0 +1,23 @@
+2026-09-23T21:00:40.563Z A1b-pid43340-1790197240562 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T21:00:40.565Z A1b-pid43340-1790197240562 LAUNCHNO 1
+2026-09-23T21:00:40.569Z A1b-pid43340-1790197240562 IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},"jsonrpc":"2.0","id":0}
+2026-09-23T21:00:40.570Z A1b-pid43340-1790197240562 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-11-25","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance A1b-pid43340-1790197240562."}}
+2026-09-23T21:00:40.571Z A1b-pid43340-1790197240562 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:00:40.572Z A1b-pid43340-1790197240562 IN {"method":"tools/list","jsonrpc":"2.0","id":1}
+2026-09-23T21:00:40.573Z A1b-pid43340-1790197240562 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T21:00:40.659Z A1b-pid43340-1790197240562 IN {"method":"tools/call","params":{"name":"ping","arguments":{"note":"first"},"_meta":{"claudecode/toolUseId":"toolu_0","progressToken":2}},"jsonrpc":"2.0","id":2}
+2026-09-23T21:00:40.659Z A1b-pid43340-1790197240562 OUT {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"pong #1 from A1b-pid43340-1790197240562. note=first. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:00:40.660Z A1b-pid43340-1790197240562 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-A1b-pid43340-1790197240562: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:00:40.660Z A1b-pid43340-1790197240562 PLANNED-EXIT after first tools/call
+2026-09-23T21:00:40.912Z A1b-pid43340-1790197240562 EXIT code=0
+2026-09-23T21:00:41.070Z A1b-pid153908-1790197241070 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T21:00:41.072Z A1b-pid153908-1790197241070 LAUNCHNO 2
+2026-09-23T21:00:41.076Z A1b-pid153908-1790197241070 IN {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.281","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},"jsonrpc":"2.0","id":0}
+2026-09-23T21:00:41.076Z A1b-pid153908-1790197241070 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-11-25","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance A1b-pid153908-1790197241070."}}
+2026-09-23T21:00:41.077Z A1b-pid153908-1790197241070 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:00:41.078Z A1b-pid153908-1790197241070 IN {"method":"tools/call","params":{"name":"ping","arguments":{"note":"second"},"_meta":{"claudecode/toolUseId":"toolu_1","progressToken":1}},"jsonrpc":"2.0","id":1}
+2026-09-23T21:00:41.079Z A1b-pid153908-1790197241070 OUT {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"pong #1 from A1b-pid153908-1790197241070. note=second. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:00:41.079Z A1b-pid153908-1790197241070 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-A1b-pid153908-1790197241070: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:00:41.079Z A1b-pid153908-1790197241070 PLANNED-EXIT after first tools/call
+2026-09-23T21:00:41.130Z A1b-pid153908-1790197241070 STDIN-END 
+2026-09-23T21:00:41.131Z A1b-pid153908-1790197241070 EXIT code=0

@@ -1,0 +1,3 @@
+[mcp_servers.probe]
+command = 'C:\Windows\System32\cmd.exe'
+args = ["C:/", "echo", "hi"]

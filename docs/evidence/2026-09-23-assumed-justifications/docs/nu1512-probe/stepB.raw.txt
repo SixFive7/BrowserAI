@@ -1,0 +1,36 @@
+Build started 23-9-2026 22:55:29.
+     1>Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" on node 1 (Restore target(s)).
+     1>_GetAllRestoreProjectPathItems:
+         Determining projects to restore...
+     1>Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (1) is building "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (1:6) on node 1 (_GenerateProjectRestoreGraph target(s)).
+     1>AddPrunePackageReferences:
+         Loading prune package data from PrunePackageData folder
+         Failed to load prune package data from PrunePackageData folder, loading from targeting packs instead
+         Looking for targeting packs in C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref
+         Pack directories found: C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.12
+         Found package overrides file C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\10.0.12\data\PackageOverrides.txt
+     1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (_GenerateProjectRestoreGraph target(s)).
+     1>Restore:
+         X.509 certificate chain validation will use the default trust store selected by .NET for code signing.
+         X.509 certificate chain validation will use the default trust store selected by .NET for timestamping.
+         Restoring packages for C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj...
+         Writing assets file to disk. Path: C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\obj\project.assets.json
+         Restored C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj (in 232 ms).
+         
+         NuGet Config files used:
+             C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\NuGet.Config
+             C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\NuGet.Config
+             C:\Users\jori\AppData\Roaming\NuGet\NuGet.Config
+             C:\Program Files (x86)\NuGet\Config\Microsoft.VisualStudio.FallbackLocation.config
+             C:\Program Files (x86)\NuGet\Config\Microsoft.VisualStudio.Offline.config
+         
+         Feeds used:
+             C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\feed
+             C:\Program Files\dotnet\library-packs
+     1>Done Building Project "C:\Source\SixFive7\BrowserAI\.work\assumed-2026-09-23\docs\nu1512-probe\consumer\Consumer.csproj" (Restore target(s)).
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:01.92

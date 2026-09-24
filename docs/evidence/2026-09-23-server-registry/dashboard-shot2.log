@@ -1,0 +1,14 @@
+shooting http://127.0.0.1:55913
+landed on: http://127.0.0.1:55913/index.html?ws=7579045e1017458c6b5b74c7daf2c75f
+title    : "Playwright Dashboard"
+screenshot: C:\Source\SixFive7\BrowserAI\.work\t7-2026-09-23\dashboard-after-reload.png  (24397 bytes)
+--- page text ---
+Select a session
+SESSIONS
+C:\Source\SixFive7\BrowserAI\.work\t7-2026-09-23
+t7-dashboard-demo
+BrowserAI descriptor demo
+data:text/html,<title>BrowserAI descriptor demo</title><h1>a live bound browser</h1>
+second tab
+data:text/html,<title>second tab</title><p>second tab</p>
+--- end page text ---

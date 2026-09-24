@@ -1,0 +1,13 @@
+[cfg] C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-hl-both\config.json
+[cfg] launchOptions={"headless":true,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-both\\downloads","channel":"chrome-for-testing","args":["--enable-automation","--disable-blink-features=AutomationControlled"]}
+[cfg] child node pid 156752
+[cfg] navigate -> ### Page | - Page URL: http://127.0.0.1:60954/ | - Page Title: BrowserAI password probe | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-hl-both\output\page-20
+[cfg] before: 12 windows, 11 pids
+[cfg] browser command line (pid 70640): C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1246\chrome-win64\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-se
+[cfg] refs username=e5 password=e7 go=e8
+[server] POST /login username=probe-user&password=Sup3rSecret%21probe
+[cfg] click -> ### Page | - Page URL: http://127.0.0.1:60954/login | - Page Title: signed in
+[cfg] after: 12 windows; 0 new
+[cfg] browser_get_config launchOptions = {"headless":true,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-hl-both\\downloads","channel":"chrome-for-testing","args":["--enable-automation","--disable-blink-features=AutomationControlled"],"chromiumSandbox":true}
+
+[cfg] VERDICT promptSeen=false newWindows=0 root=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-hl-both

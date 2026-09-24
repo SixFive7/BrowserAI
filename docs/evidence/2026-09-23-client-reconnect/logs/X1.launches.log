@@ -1,0 +1,24 @@
+2026-09-23T21:52:12.476Z X1-pid142536-1790200332476 LAUNCH mode=crash-after-first argv=[]
+2026-09-23T21:52:12.479Z X1-pid142536-1790200332476 LAUNCHNO 1
+2026-09-23T21:52:12.482Z X1-pid142536-1790200332476 IN {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}},"clientInfo":{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}}}
+2026-09-23T21:52:12.483Z X1-pid142536-1790200332476 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance X1-pid142536-1790200332476."}}
+2026-09-23T21:52:12.484Z X1-pid142536-1790200332476 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:52:12.485Z X1-pid142536-1790200332476 IN {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"progressToken":0}}}
+2026-09-23T21:52:12.485Z X1-pid142536-1790200332476 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T21:52:12.486Z X1-pid142536-1790200332476 IN {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"_meta":{"threadId":"01a0d041-4017-79c2-ae08-0982ee0b0deb","progressToken":1},"name":"ping","arguments":{"note":"c1"}}}
+2026-09-23T21:52:12.486Z X1-pid142536-1790200332476 OUT {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"pong #1 from X1-pid142536-1790200332476. note=c1. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:52:12.487Z X1-pid142536-1790200332476 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-X1-pid142536-1790200332476: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:52:12.487Z X1-pid142536-1790200332476 PLANNED-EXIT after first tools/call
+2026-09-23T21:52:12.750Z X1-pid142536-1790200332476 EXIT code=3
+2026-09-23T21:52:14.590Z X1-pid70072-1790200334589 LAUNCH mode=crash-after-first argv=[]
+2026-09-23T21:52:14.592Z X1-pid70072-1790200334589 LAUNCHNO 2
+2026-09-23T21:52:14.596Z X1-pid70072-1790200334589 IN {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}},"clientInfo":{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}}}
+2026-09-23T21:52:14.597Z X1-pid70072-1790200334589 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance X1-pid70072-1790200334589."}}
+2026-09-23T21:52:14.598Z X1-pid70072-1790200334589 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:52:14.598Z X1-pid70072-1790200334589 IN {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"progressToken":0}}}
+2026-09-23T21:52:14.599Z X1-pid70072-1790200334589 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T21:52:16.531Z X1-pid70072-1790200334589 IN {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"_meta":{"threadId":"01a0d041-4017-79c2-ae08-0982ee0b0deb","progressToken":1},"name":"ping","arguments":{"note":"c3"}}}
+2026-09-23T21:52:16.531Z X1-pid70072-1790200334589 OUT {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"pong #1 from X1-pid70072-1790200334589. note=c3. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:52:16.532Z X1-pid70072-1790200334589 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-X1-pid70072-1790200334589: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:52:16.532Z X1-pid70072-1790200334589 PLANNED-EXIT after first tools/call
+2026-09-23T21:52:16.790Z X1-pid70072-1790200334589 EXIT code=3

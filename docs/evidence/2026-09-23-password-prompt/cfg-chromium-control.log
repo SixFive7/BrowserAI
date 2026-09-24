@@ -1,0 +1,19 @@
+[cfg] C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-control\config.json
+[cfg] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-control\\downloads","channel":"chrome-for-testing"}
+[cfg] child node pid 32572
+[cfg] navigate -> ### Page | - Page URL: http://127.0.0.1:53383/ | - Page Title: BrowserAI password probe | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-control\output\page-20
+[cfg] before: 17 windows, 11 pids
+[cfg] browser command line (pid 102748): C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1246\chrome-win64\chrome.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-se
+[cfg] refs username=e5 password=e7 go=e8
+[server] POST /login username=probe-user&password=Sup3rSecret%21probe
+[cfg] click -> ### Page | - Page URL: http://127.0.0.1:53383/login | - Page Title: signed in
+[cfg] after: 20 windows; 3 new
+[cfg]   NEW top 0x80756 pid=102748 visible=true class='Chrome_WidgetWin_1' title='Save password?' rect=757,86,1219,476
+[cfg]     PrintWindow(80756) -> True, 462x390, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-control\win-Save_password_.png
+[cfg]   NEW child-of-0x80756 0x2782A48 pid=165660 visible=true class='Intermediate D3D Window' title='' rect=757,86,1219,476
+[cfg]     PrintWindow(2782A48) -> True, 462x390, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-control\win-Intermediate_D3D_Window.png
+[cfg]   NEW top 0x12325C6 pid=102748 visible=true class='Chrome_WidgetWin_1' title='signed in - Google Chrome for Testing' rect=10,10,1306,944
+[cfg]     PrintWindow(12325C6) -> True, 1296x934, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-control\win-signed_in_-_Google_Chrome_for_Testing.png
+[cfg] browser_get_config launchOptions = {"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\cfg\\chromium-control\\downloads","channel":"chrome-for-testing","chromiumSandbox":true,"args":["--disable-blink-features=AutomationControlled"]}
+
+[cfg] VERDICT promptSeen=true newWindows=3 root=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\cfg\chromium-control

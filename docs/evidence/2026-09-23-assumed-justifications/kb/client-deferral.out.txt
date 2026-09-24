@@ -1,0 +1,44 @@
+PROBE: does the client load tool NAMES eagerly and tool SCHEMAS lazily?
+Taken 2026-09-23 from inside a Claude Code session. Client: Claude Code 2.1.281
+(`claude --version` -> "2.1.281 (Claude Code)"). Server: BrowserAI (the maintainer's
+installed one, read only -- no tool of it was CALLED).
+
+WHAT THE SESSION PROMPT CONTAINED BEFORE ANY TOOL CALL
+1. The BrowserAI server's `instructions` string, in full, verbatim, under a
+   "# MCP Server Instructions" / "## browserai" heading -- beginning
+   "BrowserAI drives a real browser. Call browserai_init first: ..." and running to
+   "... browserai_set_purpose rewrites what one says it is for."
+2. Seventy-nine BrowserAI tool NAMES, as a bare list, under the sentence:
+   "The following deferred tools are now available via ToolSearch. Their schemas are
+    NOT loaded -- calling them directly will fail with InputValidationError. Use
+    ToolSearch with query "select:<name>[,<name>...]" to load tool schemas before
+    calling them"
+   (mcp__browserai__browser_click ... mcp__browserai__browserai_set_purpose; counted 79)
+3. For three tools of a DIFFERENT server (mcp__claude_ai_Claude_Docs__batch / guide /
+   update) the full JSONSchema arrived eagerly, unasked. Five more tools of that SAME
+   server (create/delete/export/query/read) arrived deferred, names only.
+   So the eager/deferred split is per TOOL and not per SERVER.
+
+THE MEASUREMENT
+Before:  no description and no parameter schema for mcp__browserai__browserai_list
+         existed anywhere in the context.
+Call  :  ToolSearch(query="select:mcp__browserai__browserai_list", max_results=1)
+After :  the full definition arrived --
+         {"description": "Reports every session under the path you name: its browser,
+          recorded purpose, when it was created and last used, and its size on disk ...",
+          "name": "mcp__browserai__browserai_list",
+          "parameters": {"properties": {"directory": {"description": "Absolute path of
+          the tree to look under. A drive root lists everything on that volume.",
+          "type":"string"}}, "required":["directory"], "type":"object"}}
+
+CONCLUSION
+- names eagerly: YES (79 of 79)
+- server `instructions` eagerly: YES, in full
+- schemas (description + inputSchema) eagerly: NO for all 79; fetched on demand
+- but "instructions is the ONLY channel that reaches the model before it calls
+  anything" is too strong: the NAMES reach it too, and for an eagerly-loaded tool the
+  description and schema reach it as well. What is true is narrower -- for a tool the
+  client defers, nothing but its NAME reaches the model until something fetches it.
+
+LIMIT: one client, one session, one version. Which tools a client chooses to defer is
+the client's decision and is not a property of the server.

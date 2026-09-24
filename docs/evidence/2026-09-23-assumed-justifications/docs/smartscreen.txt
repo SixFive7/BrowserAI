@@ -1,0 +1,52 @@
+ENTRY 1 -- SmartScreen "instant reputation" for ~$10/mo (HAZARDS.md:237)
+Settled by CITATION to Microsoft's own documentation, fetched 2026-09-23.
+
+SOURCE: "SmartScreen reputation for Windows app developers", Microsoft Learn,
+https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation
+(fetched 2026-09-23 through the microsoft-learn MCP server).
+
+VERBATIM, the price half:
+  "### Artifact Signing (formerly Trusted Signing)
+   ... - **Cost** - Starts at $9.99/month. See [Artifact Signing pricing]
+   (https://azure.microsoft.com/pricing/details/artifact-signing/)."
+  -> the ~$10/mo figure is CORRECT and is now a dated citation rather than a guess.
+  (The Azure pricing page itself, fetched the same day, shows the quotas -- Basic
+   5,000 signatures/month, Premium 100,000/month -- and renders every price as
+   "$-", directing the reader to a quote. The Learn page is the one that states a
+   number, so it is the citation.)
+
+VERBATIM, the reputation half -- which CONTRADICTS "instant":
+  "- **SmartScreen behavior** - reputation accumulates over time based on download
+   volume and behavior"
+
+  | Certificate type        | First-download SmartScreen behavior |
+  | Valid Certificate (OV/EV) | Warning - app flagged as unrecognized until
+                                reputation accumulates; verified publisher name
+                                is displayed |
+
+  "EV certificates no longer bypass SmartScreen. Years ago, signing files with an
+   Extended Validation (EV) code signing certificate would result in positive
+   SmartScreen reputation by default, but this behavior no longer exists. EV
+   certificates may matter for enterprise procurement, but they no longer impact
+   SmartScreen behavior. Paying a premium for EV solely to avoid SmartScreen
+   warnings is no longer justified."
+
+  "**As downloads accumulate:** SmartScreen reputation builds up automatically.
+   The prompt will stop appearing once the file hash has sufficient download
+   history. There is no exact threshold, but it can take several weeks and
+   hundreds of clean installs from a wide audience."
+
+  "There is no need (or mechanism) to manually submit a file for SmartScreen
+   reputation review for consumer endpoints."
+
+FINDING: the price is right and the property is wrong, in BOTH directions the row
+guessed at. Signing does not buy instant reputation at any price; and the
+historically EV-only property the row hedged with does not exist any more either,
+so there is no tier -- EV, OV or Artifact Signing -- that confers it today. What
+$9.99/month buys is a verified publisher NAME inside the warning and a certificate
+identity that reputation can accumulate against across releases, instead of each
+new unsigned build starting from zero.
+
+CROSS-CHECK against this product's own numbers: the Learn page's stated route to a
+clean first run is "several weeks and hundreds of clean installs from a wide
+audience". CLAUDE.md records GitHub's counter for BrowserAI-win-Setup.exe at 1.

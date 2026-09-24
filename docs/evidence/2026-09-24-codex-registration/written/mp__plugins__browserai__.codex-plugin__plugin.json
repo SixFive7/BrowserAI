@@ -1,0 +1,7 @@
+{
+  "name": "browserai",
+  "version": "1.0.0",
+  "description": "Drive a real browser from Codex.",
+  "author": { "name": "SixFive7" },
+  "interface": { "displayName": "BrowserAI", "category": "Developer Tools" }
+}

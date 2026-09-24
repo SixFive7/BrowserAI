@@ -1,0 +1,48 @@
+######## QUERY: MCP server disconnected
+#80034 [open] created=2026-07-22 closed=0001-01-01 c=3 :: Task tools (TaskCreate/TaskUpdate/...) permanently lost mid-session after /login — 'MCP server disconnected'
+#91819 [open] created=2026-09-03 closed=0001-01-01 c=1 :: [BUG] Cowork scheduled task hangs when using Todoist MCP tools in a background session
+#85181 [open] created=2026-08-09 closed=0001-01-01 c=0 :: [BUG] Session process restarts orphaning background tasks + lost tool results + MCP disconnect cycles
+#77385 [open] created=2026-07-14 closed=0001-01-01 c=12 :: Cowork: remote-devices file bridge disconnects repeatedly, including mid-operation
+#82004 [open] created=2026-07-28 closed=0001-01-01 c=0 :: Stale deferred tool in session causes permanent 400 error after MCP server disconnect
+#80401 [open] created=2026-07-23 closed=0001-01-01 c=9 :: Built-in Task tools (TaskCreate/TaskGet/TaskList/TaskUpdate) intermittently unregistered, and can vanish mid-session — breaks the live task display
+#91542 [open] created=2026-09-02 closed=0001-01-01 c=0 :: [BUG] Remote HTTP MCP server never re-probed after a transient network drop; misreported as UNKNOWN_CERTIFICATE_VERIFICATION_ERROR
+#93556 [open] created=2026-09-11 closed=0001-01-01 c=2 :: [BUG] Cloud-run Cowork scheduled task fires on time, then stalls mid-run at the first turn boundary
+#80768 [open] created=2026-07-24 closed=0001-01-01 c=0 :: [BUG] claude-in-chrome MCP tools never connect — stuck at 1/13 MCP servers connected
+#67601 [closed] created=2026-06-11 closed=2026-07-22 c=2 :: Spurious 'MCP server disconnected' system-reminder causes model to falsely report MCP unavailable
+
+######## QUERY: reconnect
+#85567 [open] created=2026-08-10 closed=0001-01-01 c=0 :: Remote SSH: desktop app parks on "Reconnecting" for hours after a successful reconnect, and never retries
+#94049 [open] created=2026-09-13 closed=0001-01-01 c=5 :: Auto-update silently drops all Remote Control bridges; running sessions cannot reconnect
+#92632 [open] created=2026-09-07 closed=0001-01-01 c=0 :: MCP server "flow" fails to reconnect - HTTP 400 at flow.team
+#93995 [open] created=2026-09-13 closed=0001-01-01 c=0 :: Chrome extension reconnect: tab opens and closes in <1s, status stays disabled
+#91592 [open] created=2026-09-02 closed=0001-01-01 c=3 :: [BUG] Remote Control sessions require PC-side input to reconnect after restart; phone-side reconnection fails
+#95696 [open] created=2026-09-20 closed=0001-01-01 c=3 :: VS Code extension: session hangs indefinitely on stalled SSE stream (no idle-timeout/reconnect)
+#95351 [open] created=2026-09-18 closed=0001-01-01 c=0 :: [BUG] MCP connector (Linear) reported as "not connected" after /compact — requires manual disconnect/reconnect
+#93154 [open] created=2026-09-09 closed=0001-01-01 c=0 :: Remote SSH daemon destroys all running sessions on transient reconnect instead of reattaching
+#82746 [open] created=2026-07-30 closed=0001-01-01 c=0 :: Auto-reconnect (or provide `claude mcp reconnect <name>`) for dead stdio MCP servers — they currently wedge with no in-session recovery
+#83429 [open] created=2026-08-03 closed=0001-01-01 c=0 :: VS Code extension: /mcp reconnect and MCP servers panel intermittently fail with "terminal is still starting up or is showing another view"
+
+######## QUERY: restart mcp
+#84207 [open] created=2026-08-05 closed=0001-01-01 c=0 :: MCP elicitation dialogs intermittently fail to render (instant 'User cancelled', backend not called)
+#91470 [open] created=2026-09-02 closed=0001-01-01 c=1 :: stdio MCP servers stop responding after system sleep/wake; require full session restart to recover
+#10071 [open] created=2025-10-21 closed=0001-01-01 c=28 :: [FEATURE] Claude can reconnect to a broken MCP in a manner similar to how it performs other actions
+#65643 [open] created=2026-06-05 closed=0001-01-01 c=10 :: [BUG] Claude Desktop (Windows): MCP tool calls hard-terminated and bridge wedge after repeated timeouts
+#10447 [open] created=2025-10-27 closed=0001-01-01 c=15 :: Feature Request: CLI Commands for MCP Server Enable/Disable (Hook Automation Support)
+#54136 [closed] created=2026-04-28 closed=2026-08-25 c=6 :: [Feature] Reconnect/restart MCP servers from Claude Code in Claude Desktop without Cmd+Q (expose /mcp UI or auto-reconnect)
+#72678 [closed] created=2026-07-01 closed=2026-07-08 c=2 :: [BUG] Plugin update fails silently when MCP server holds open file handles; stale binary continues serving requests
+#75674 [closed] created=2026-07-08 closed=2026-09-02 c=1 :: [BUG] Plugin update fails silently when MCP server holds open file handles; stale binary continues serving requests
+#60953 [closed] created=2026-05-20 closed=2026-06-25 c=4 :: [FEATURE] Allow hooks to trigger MCP server reconnection
+#77290 [closed] created=2026-07-13 closed=2026-09-04 c=2 :: [BUG] Desktop app: concurrent Filesystem MCP access from parallel tabs times out (~4 min) and wedges the connector, requiring app restart (macOS)
+
+######## QUERY: server exited
+#88054 [open] created=2026-08-19 closed=0001-01-01 c=3 :: `claude remote-control` server exits on 401 after exactly 24h — does not refresh its OAuth access token, killing every attached session
+#93349 [open] created=2026-09-10 closed=0001-01-01 c=2 :: Feature request: Restart/revive a Remote Control session from the mobile app
+#93508 [open] created=2026-09-11 closed=0001-01-01 c=1 :: [BUG] Desktop preview_start fails for projects in ~/Documents on macOS: getcwd "Operation not permitted" despite Documents access (see #42914)
+#93151 [open] created=2026-09-09 closed=0001-01-01 c=0 :: [BUG] Desktop (Windows): shell PTYs started on session warm are not stopped when the session is paused by idle timeout; preview lifecycle opens a second PTY per session
+#82416 [open] created=2026-07-29 closed=0001-01-01 c=2 :: [Bug] TypeScript LSP server wedges silently, returning empty results instead of errors and never recovers after crash
+#93624 [open] created=2026-09-11 closed=0001-01-01 c=0 :: [Bug] macOS: teammate spawn "fork failed: Device not configured" — xnu ptmx slot-vector race triggered by cat placeholder + respawn-pane -k (root cause for #77211)
+#85270 [closed] created=2026-08-09 closed=2026-09-09 c=1 :: Remote Control: stale environment stays green/online in mobile app after server exits; sessions hang at "Allocating sandbox"
+#82453 [open] created=2026-07-30 closed=0001-01-01 c=0 :: [Bug] Claude Desktop extensions broken after MCP server upgrade
+#93082 [open] created=2026-09-09 closed=0001-01-01 c=0 :: [BUG] Windows-MCP extension: concurrent comtypes code generation corrupts the UIAutomation cache and crashes server startup
+#88514 [open] created=2026-08-21 closed=0001-01-01 c=3 :: [BUG] Claude Desktop leaks stdio MCP server processes when a renderer releases its port
+

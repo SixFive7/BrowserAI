@@ -1,0 +1,14 @@
+=== ARM SINGLE-SHELL (control): one chrome-headless-shell, one profile ===
+  launched pid=133112 CDP=true
+  exitCode after graceful close: 0
+  [single shell] Preferences: unreadable (ENOENT)
+  [single shell] 4 SQLite files under the profile, PRAGMA integrity_check each:
+      Default\declarative_performance_observer.db   ok
+      Default\DIPS                                  ok
+      Default\Network\Cookies                       ok
+      Default\Shared Dictionary\db                  ok
+  [single shell] not-ok: 0 of 4
+  [single shell] LevelDB stores present: Default\Local Storage\leveldb, Default\PersistentOriginTrials, Default\Session Storage, Default\shared_proto_db, Default\shared_proto_db\metadata
+  reopen pid=41768 CDP=true
+  state read back: {"lsKeys":240,"lsTags":["A0","A1","A2","A3","A4","A5"],"cookies":[]}
+ERROR: The process "41768" not found.

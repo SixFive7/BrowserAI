@@ -1,0 +1,12 @@
+{
+  "name": "browserai-test-mp",
+  "interface": { "displayName": "BrowserAI test marketplace" },
+  "plugins": [
+    {
+      "name": "browserai",
+      "source": { "source": "local", "path": "./plugins/browserai" },
+      "policy": { "installation": "AVAILABLE" },
+      "category": "Developer Tools"
+    }
+  ]
+}

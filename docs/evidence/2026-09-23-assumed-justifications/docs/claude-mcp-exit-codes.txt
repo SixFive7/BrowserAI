@@ -1,0 +1,37 @@
+PROBE: entry 2 -- the exit codes of `claude mcp list` / `get`, which the kb line records with no client version.
+Place of the claim: HAZARDS.md:243, closing sentence of the "Tooling and CI" row.
+Measured 2026-09-23, Windows 11 Pro 10.0.26200.
+
+CLIENT VERSION, read first and stamped: `claude --version` -> "2.1.281 (Claude Code)", exit 0.
+Binary: C:\Users\jori\.local\bin\claude
+
+ISOLATION (the maintainer's real client configuration was never read or written):
+CLAUDE_CONFIG_DIR=C:\Users\jori\Downloads\tmp-assumed-mcp-probe\cfg, an empty directory.
+Every `add`/`remove` below reported "File modified: ...\tmp-assumed-mcp-probe\cfg\.claude.json"
+and nothing else. The real ~/.claude.json was not in the path of any command.
+Two synthetic servers at USER scope (project scope is held at "Pending approval" and is never
+health-checked, which is itself why user scope is the right rig):
+  dead = C:\nonexistent\nothing.exe          (spawn fails)
+  hung = node -e process.stdin.resume()      (starts, never speaks MCP)
+
+MEASURED:
+  claude mcp add dead    -> exit 0   "Added stdio MCP server dead ... to user config"
+  claude mcp add hung    -> exit 0
+  claude mcp add dead    -> exit 1   "MCP server dead already exists in user config"   (duplicate)
+  claude mcp list        -> exit 0
+      dead: C:\nonexistent\nothing.exe  - X Failed to connect - CONNECTION_CLOSED: Connection closed
+      hung: node -e process.stdin.resume() - X Failed to connect - MCP server "hung" connection timed out after 30000ms
+  claude mcp get dead    -> exit 0   "Status: X Failed to connect / Issue: CONNECTION_CLOSED: Connection closed"
+  claude mcp get nosuchserver -> exit 1  "No MCP server named ..."
+  claude mcp remove dead -> exit 0
+  claude mcp remove dead -> exit 1   "No MCP server named \"dead\" in user scope"      (nothing to remove)
+
+THIRD, UNASKED READING, recorded because it widens the row: a project .mcp.json that is not
+valid JSON also produced `claude mcp list` exit 0, printing "MCP config diagnostics X" and
+"[Failed to parse] ... MCP config is not a valid JSON". So exit 0 covers a broken CONFIG as
+well as a broken SERVER.
+
+CONCLUSION: at client 2.1.281 the row's two properties both hold -- `list` and `get` exit 0
+with a server reported dead, and every failure the client does report exits 1 regardless of
+which failure it is (duplicate add and nothing-to-remove are indistinguishable by code).
+The scratch config directory was deleted after the run.

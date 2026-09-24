@@ -1,0 +1,118 @@
+{
+  "label": "before",
+  "rootPid": 86568,
+  "takenAt": "2026-09-23T23:07:21.6501285+02:00",
+  "pidsInTree": [
+    27620,
+    82996,
+    86028,
+    86568,
+    88780,
+    115224,
+    116980,
+    145964,
+    150124,
+    166800
+  ],
+  "windows": [
+    {
+      "level": "top",
+      "hwnd": "0x11E0F3C",
+      "pid": 145964,
+      "class": "MozillaCompositorInitialParentClass",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,1,1"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1A0B7E",
+      "pid": 86028,
+      "class": "MozillaBatteryClass",
+      "title": "Battery Watcher",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x210B80",
+      "pid": 86028,
+      "class": "Mozilla_firefox-default_C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\firefox-baseline\\profile_RemoteWindow",
+      "title": "",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1503C6",
+      "pid": 86028,
+      "class": "MozillaWindowClass",
+      "title": "BrowserAI password probe — Nightly",
+      "visible": true,
+      "rect": "4,4,1300,897"
+    },
+    {
+      "level": "child-of-0x1503C6",
+      "hwnd": "0x4452A5E",
+      "pid": 86028,
+      "class": "InputNonClientPointerSource",
+      "title": "Non Client Input Sink Window",
+      "visible": true,
+      "rect": "12,4,1292,8"
+    },
+    {
+      "level": "child-of-0x1503C6",
+      "hwnd": "0x9E2960",
+      "pid": 86028,
+      "class": "ReunionWindowingCaptionControls",
+      "title": "ReunionCaptionControlsWindow",
+      "visible": true,
+      "rect": "1292,4,1292,4"
+    },
+    {
+      "level": "child-of-0x1503C6",
+      "hwnd": "0x572BF8",
+      "pid": 145964,
+      "class": "MozillaCompositorWindowClass",
+      "title": "",
+      "visible": true,
+      "rect": "12,4,1292,889"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x502424",
+      "pid": 86028,
+      "class": "MozillaHiddenWindowClass",
+      "title": "WinEventWindow",
+      "visible": false,
+      "rect": "0,0,136,39"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x822048",
+      "pid": 145964,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x1172B66",
+      "pid": 86028,
+      "class": "IME",
+      "title": "Default IME",
+      "visible": false,
+      "rect": "0,0,0,0"
+    },
+    {
+      "level": "top",
+      "hwnd": "0x150B48",
+      "pid": 86028,
+      "class": "MSCTFIME UI",
+      "title": "MSCTFIME UI",
+      "visible": false,
+      "rect": "0,0,0,0"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+2026-09-23T21:12:04.896Z C0-pid77316-1790197924895 LAUNCH mode=stay argv=[]
+2026-09-23T21:12:04.899Z C0-pid77316-1790197924895 LAUNCHNO 1
+2026-09-23T21:12:04.903Z C0-pid77316-1790197924895 IN {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}},"clientInfo":{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}}}
+2026-09-23T21:12:04.904Z C0-pid77316-1790197924895 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance C0-pid77316-1790197924895."}}
+2026-09-23T21:12:04.905Z C0-pid77316-1790197924895 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:12:04.905Z C0-pid77316-1790197924895 IN {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"progressToken":0}}}
+2026-09-23T21:12:04.906Z C0-pid77316-1790197924895 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}

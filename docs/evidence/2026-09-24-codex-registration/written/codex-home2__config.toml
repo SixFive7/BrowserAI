@@ -1,0 +1,10 @@
+[mcp_servers.browserai]
+command = 'C:\Users\jori\AppData\Local\BrowserAI\current\BrowserAI.Server.exe'
+
+[mcp_servers.probe2]
+command = 'C:\Windows\System32\cmd.exe'
+args = ["/c", "echo", "hi"]
+
+[mcp_servers.probe2.env]
+BAZ = "qux"
+FOO = "bar"

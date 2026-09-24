@@ -1,0 +1,24 @@
+2026-09-23T21:47:00.463Z G3-pid50840-1790200020463 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T21:47:00.466Z G3-pid50840-1790200020463 LAUNCHNO 1
+2026-09-23T21:47:00.470Z G3-pid50840-1790200020463 IN {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}},"clientInfo":{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}}}
+2026-09-23T21:47:00.472Z G3-pid50840-1790200020463 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance G3-pid50840-1790200020463."}}
+2026-09-23T21:47:00.472Z G3-pid50840-1790200020463 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:47:00.473Z G3-pid50840-1790200020463 IN {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"progressToken":0}}}
+2026-09-23T21:47:00.473Z G3-pid50840-1790200020463 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T21:47:00.474Z G3-pid50840-1790200020463 IN {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"_meta":{"threadId":"01a0d03c-7d05-79c2-aa8b-8d0a6c97c704","progressToken":1},"name":"ping","arguments":{"note":"c1"}}}
+2026-09-23T21:47:00.475Z G3-pid50840-1790200020463 OUT {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"pong #1 from G3-pid50840-1790200020463. note=c1. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:47:00.475Z G3-pid50840-1790200020463 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-G3-pid50840-1790200020463: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:47:00.476Z G3-pid50840-1790200020463 PLANNED-EXIT after first tools/call
+2026-09-23T21:47:00.741Z G3-pid50840-1790200020463 EXIT code=0
+2026-09-23T21:47:02.532Z G3-pid49048-1790200022531 LAUNCH mode=exit-after-first argv=[]
+2026-09-23T21:47:02.534Z G3-pid49048-1790200022531 LAUNCHNO 2
+2026-09-23T21:47:02.538Z G3-pid49048-1790200022531 IN {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"experimental":{"codex/auth-change":{}},"elicitation":{"form":{},"url":{}}},"clientInfo":{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}}}
+2026-09-23T21:47:02.539Z G3-pid49048-1790200022531 OUT {"jsonrpc":"2.0","id":0,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true},"logging":{}},"serverInfo":{"name":"probe","version":"0.0.1"},"instructions":"Probe server instance G3-pid49048-1790200022531."}}
+2026-09-23T21:47:02.540Z G3-pid49048-1790200022531 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T21:47:02.541Z G3-pid49048-1790200022531 IN {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"progressToken":0}}}
+2026-09-23T21:47:02.541Z G3-pid49048-1790200022531 OUT {"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"ping","description":"Returns pong and the identity of the server process that answered.","inputSchema":{"type":"object","properties":{"note":{"type":"string","description":"Optional note echoed back."}},"additionalProperties":false}}]}}
+2026-09-23T21:47:04.502Z G3-pid49048-1790200022531 IN {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"_meta":{"threadId":"01a0d03c-7d05-79c2-aa8b-8d0a6c97c704","progressToken":1},"name":"ping","arguments":{"note":"c3"}}}
+2026-09-23T21:47:04.503Z G3-pid49048-1790200022531 OUT {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"pong #1 from G3-pid49048-1790200022531. note=c3. RESULT-MARKER-EXITING: this server is about to exit for a staged update."}],"isError":false}}
+2026-09-23T21:47:04.503Z G3-pid49048-1790200022531 OUT {"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","logger":"browserai-update","data":"NOTIFY-G3-pid49048-1790200022531: A BrowserAI update is staged and ready. No browser or session is open, so this MCP server is exiting now (code 0) to let the update apply. Please restart the BrowserAI MCP server, or start a new session, when you next need a browser."}}
+2026-09-23T21:47:04.504Z G3-pid49048-1790200022531 PLANNED-EXIT after first tools/call
+2026-09-23T21:47:04.766Z G3-pid49048-1790200022531 EXIT code=0

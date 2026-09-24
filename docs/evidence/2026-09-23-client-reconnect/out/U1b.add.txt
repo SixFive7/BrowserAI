@@ -1,0 +1,2 @@
+Added stdio MCP server probe with command: C:/Program Files/nodejs/node.exe C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/rig/server.js to user config
+File modified: C:\Source\SixFive7\BrowserAI\.work\q254-2026-09-23\cfg-user\.claude.json

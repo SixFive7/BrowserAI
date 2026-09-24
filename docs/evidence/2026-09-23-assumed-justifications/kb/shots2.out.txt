@@ -1,0 +1,11 @@
+full  chrome, static page : 3556 B df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+headless shell, static page: 3462 B 2a6c23a328fb4de940360fc61492c162871460bb6bf42331b5eb674e6e7a0135
+same binary? no -- identical bytes: false
+
+full chrome, page whose CONTENT varies, capture 1: 6492 B 77c625e5bf3077af98c3b96e62fb426570c30dda6863f992203cc00a30eb3883
+full chrome, page whose CONTENT varies, capture 2: 6548 B 7e4a8ef44fdcfb3f59f481201472e630c3686267000e7221749318ab3ca2ec07
+identical bytes: false
+
+fullPage capture 1: 3556 B df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+fullPage capture 2: 3556 B df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+identical bytes: true

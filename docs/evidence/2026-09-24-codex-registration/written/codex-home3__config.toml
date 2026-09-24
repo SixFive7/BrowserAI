@@ -1,0 +1,14 @@
+# My hand-written Codex config
+# Please keep this comment.
+model = "gpt-5-codex"
+approval_policy = "on-request"
+
+[tui]
+notifications = true
+
+[mcp_servers.other]
+command = "node"
+args = ["server.js"]
+
+[mcp_servers.browserai]
+command = 'C:\Users\jori\AppData\Local\BrowserAI\current\BrowserAI.Server.exe'

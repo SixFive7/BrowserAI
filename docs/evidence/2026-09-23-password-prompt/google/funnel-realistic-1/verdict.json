@@ -1,0 +1,24 @@
+{
+  "mode": "funnel",
+  "arm": "realistic-1",
+  "query": "windows structured exception handling",
+  "url": "https://www.google.com/?hl=en",
+  "rest": [
+    "--realistic"
+  ],
+  "verdict": {
+    "url": "https://www.google.com/?hl=en",
+    "title": "Google",
+    "rso": false,
+    "search": false,
+    "resultLinks": 0,
+    "recaptchaIframe": 0,
+    "gRecaptchaDiv": 0,
+    "unusualTraffic": false,
+    "sorryPath": false,
+    "consentHost": false,
+    "consentText": true,
+    "notRobot": false,
+    "bodyHead": "GmailImages\\nSign in\\n \\nGoogle offered in: Nederlands Frysk\\nNetherlands\\nAbout\\nAdvertising\\nBusiness\\nHow Search works\\nPrivacy\\nTerms\\nSettings\\nEN\\n‪English‬\\n‪Deutsch‬\\n‪English (United Kingdom)‬\\n‪Español (España)‬\\n‪Français (France)‬\\n‪Italiano‬\\nAll languages\\n‪Afrikaans‬\\n‪azərbaycan‬\\n‪bosanski‬\\n‪català‬\\n‪Čeština‬\\n‪Cymraeg‬\\n‪Dansk‬\\n‪Deutsch‬\\n‪eesti‬\\n‪English (United Kingdom)‬\\n‪English (United States)‬\\n‪Español (España)‬\\n‪Español (Latinoamérica)‬\\n‪euskara‬\\n‪Filipino‬\\n‪Français (Canada)‬\\n‪Français (France)‬"
+  }
+}

@@ -1,0 +1,19 @@
+[probe] arm=chromium/baseline2 origin=http://127.0.0.1:62006 profile=C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-baseline2\profile
+[probe] prefs=false switch=false seedPreferences=false
+[probe] launchOptions={"headless":false,"downloadsPath":"C:\\Source\\SixFive7\\BrowserAI\\.work\\password-2026-09-23\\out\\chromium-baseline2\\downloads","viewport":{"width":1280,"height":800},"locale":"en-US","ignoreHTTPSErrors":true,"channel":"chrome-for-testing","permissions":["clipboard-read"]}
+[probe] context.browser() gave no pid; rooting the pid walk at node itself
+[probe] pid walk root = 57500 (node pid 57500)
+[probe] before: 15 windows in pid tree 9340,20572,57500,82292,122276,143344,147088,149736,166324,169884
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-baseline2\screen-before.png
+[server] POST /login body=username=probe-user&password=Sup3rSecret%21probe
+[probe] navigation after submit completed (#ok present)
+[probe] new windows first seen after 2355 ms
+[probe] screenshot C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-baseline2\screen-after.png
+[probe] after: 18 windows; 3 not present before
+[probe]   NEW top 0xB078E pid=147088 visible=true class='Chrome_WidgetWin_1' title='Save password?' rect=757,86,1219,476
+[probe]     PrintWindow(B078E) -> True, 462x390, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-baseline2\win-Save_password_.png
+[probe]   NEW child-of-0xB078E 0x1018B2 pid=20572 visible=true class='Intermediate D3D Window' title='' rect=757,86,1219,476
+[probe]     PrintWindow(1018B2) -> True, 462x390, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-baseline2\win-Intermediate_D3D_Window.png
+[probe]   NEW top 0x251706 pid=147088 visible=true class='Chrome_WidgetWin_1' title='signed in - Google Chrome for Testing' rect=10,10,1306,944
+[probe]     PrintWindow(251706) -> True, 1296x934, C:\Source\SixFive7\BrowserAI\.work\password-2026-09-23\out\chromium-baseline2\win-signed_in_-_Google_Chrome_for_Testing.png
+[probe] Preferences after launch: 7821 bytes; credentials_enable_service=undefined profile.password_manager_enabled=undefined

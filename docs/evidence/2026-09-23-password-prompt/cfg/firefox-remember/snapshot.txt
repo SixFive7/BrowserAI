@@ -1,0 +1,16 @@
+### Page
+- Page URL: http://127.0.0.1:57128/
+- Page Title: BrowserAI password probe
+### Snapshot
+```yaml
+- generic [active] [ref=e1] [box=8,21,1264,81]:
+  - heading "probe login" [level=1] [ref=e2] [box=8,21,1264,38]
+  - generic [ref=e3] [box=8,81,1264,22]:
+    - generic [ref=e4] [box=8,83,234,17]:
+      - text: Username
+      - textbox "Username" [ref=e5] [box=77,81,165,22]
+    - generic [ref=e6] [box=246,83,230,17]:
+      - text: Password
+      - textbox "Password" [ref=e7] [box=311,81,165,22]
+    - button "Sign in" [ref=e8] [box=480,81,52,22]
+```

@@ -1,0 +1,8 @@
+{
+  "name": "browserai-portable-mp",
+  "interface": { "displayName": "BrowserAI portable test" },
+  "plugins": [
+    { "name": "browserai-portable", "source": { "source": "local", "path": "./plugins/browserai" },
+      "policy": { "installation": "AVAILABLE" }, "category": "Developer Tools" }
+  ]
+}

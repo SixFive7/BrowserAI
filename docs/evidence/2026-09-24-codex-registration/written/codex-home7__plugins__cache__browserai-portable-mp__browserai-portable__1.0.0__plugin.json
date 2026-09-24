@@ -1,0 +1,8 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "browserai-portable",
+  "version": "1.0.0",
+  "description": "Drive a real browser from Codex.",
+  "author": { "name": "SixFive7" },
+  "extensions": { "com.openai": { "interface": { "displayName": "BrowserAI", "category": "Developer Tools" } } }
+}

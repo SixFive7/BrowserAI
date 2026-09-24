@@ -1,0 +1,33 @@
+model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:8950"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.probe]
+command = "C:/Program Files/nodejs/node.exe"
+args = ["C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-helper/relay.js"]
+startup_timeout_sec = 25
+tool_timeout_sec = 45
+
+[mcp_servers.probe.env]
+HO_LOGDIR = "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs"
+HO_TAG = "CXF3"
+HO_INSTALL_DIR = "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-install"
+HO_HELPER_DIR = "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/ho-helper"
+HO_STATE = "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CXF3.state.json"
+HO_APPLY_DONE = "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CXF3.apply.done"
+HO_SWAP_REQUEST = "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CXF3.swap.request"
+HO_SWAP_DONE = "C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/CXF3.swap.done"
+HO_TRIGGER = "after-first-call"
+HO_ANNOUNCE_LIST_CHANGED = "0"
+HO_CALL_DELAY_MS = "4000"
+HO_SWAP_ON_CALL = "1"
+
+[projects.'c:\source\sixfive7\browserai']
+trust_level = "trusted"

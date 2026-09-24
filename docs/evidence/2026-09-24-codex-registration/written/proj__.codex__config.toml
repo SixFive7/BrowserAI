@@ -1,0 +1,3 @@
+[mcp_servers.proj_via_codex_toml]
+command = "node"
+args = ["a.js"]

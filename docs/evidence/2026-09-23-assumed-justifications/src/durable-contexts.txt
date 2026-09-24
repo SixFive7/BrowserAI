@@ -1,0 +1,108 @@
+===== src/BrowserAI.Core/Hosting/IAppPaths.cs:144 =====
+    /// be answerable before any session exists, and the child that answers it
+    /// needs a working directory and a profile of its own. The second is
+    /// <b>every session's generated config</b>, which is a per-run artifact
+    /// and not part of a session's durable state -- and no artifact is ever at
+    /// a session's root, so a third file there is out. See
+    /// <see cref="Sessions.SessionLayout"/> for what the root is allowed to hold
+    /// and why.
+
+===== src/BrowserAI.Core/Logging/ProcessLog.cs:59 =====
+        // The crash path. An unhandled exception is not guaranteed to unwind
+        // the stack, so no `finally` and no Dispose can be relied on here --
+        // this handler is the only thing that runs, and the record it writes is
+        // durable the moment it is written.
+        _onUnhandled = (_, e) => CrashLog.Unhandled(log, e.IsTerminating, e.ExceptionObject as Exception);
+
+        AppDomain.CurrentDomain.UnhandledException += _onUnhandled;
+
+===== src/BrowserAI.Core/Logging/ProcessLog.cs:194 =====
+    /// <see cref="SessionLogging"/> was already immune, because it disposes its
+    /// file explicitly after the factory -- that belt-and-braces second call was
+    /// the mechanism, not the redundancy it read as
+    /// ([kb](../../../kb/windows/processes.md#files-durable-writes-and-deletes)).
+    /// </remarks>
+    public void Dispose()
+    {
+
+===== src/BrowserAI.Core/Logging/RollingFileWriter.cs:131 =====
+    public bool RefusedNetworkDirectory { get; }
+
+    /// <inheritdoc />
+    /// <remarks>There is no buffer, so a record that has been written is already durable.</remarks>
+    public void Write(string record)
+    {
+        lock (_gate)
+
+===== src/BrowserAI.Core/Runtime/TreeDelete.cs:39 =====
+/// true)</c> inherits that behaviour because that is how it walks. The caller
+/// then sees an exception and no partial progress, which converts one locked
+/// file into a whole tree nobody ever cleans up").</b> Measured twice on .NET
+/// 10.0.11 ([kb](../../../kb/windows/processes.md#files-durable-writes-and-deletes)): the
+/// recursive delete <b>does</b> make partial progress. Against a tree with one
+/// file held <c>FileShare.None</c>, and again against one holding a subdirectory
+/// the caller may not read, it removed everything else and threw <b>one</b>
+
+===== src/BrowserAI/Runtime/BrowserProvisioner.cs:826 =====
+    /// reported success -- after which <c>IsComplete</c> reports installed for
+    /// ever, the first launch produces <c>spawn EFTYPE</c>, and upstream writes
+    /// <c>DEPENDENCIES_VALIDATED</c> into the corrupt directory and suppresses
+    /// revalidation for thirty days. A durable confident wrong answer.
+    /// </para>
+    /// <para>
+    /// <i>"Taking the provisioning mutex here would deadlock against the
+
+===== src/BrowserAI/Sessions/BrowserIdleTimer.cs:16 =====
+/// <para>
+/// <b>There is exactly one timer, and this is it.</b> No handle-expiry timer, no
+/// session TTL and no reclaim window -- <b>reclaim is forever</b>, because the
+/// durable thing is the profile and not the process: a resume after killing
+/// the node child preserves cookies, localStorage, IndexedDB, service workers and
+/// CacheStorage, losing only <c>sessionStorage</c>, in ~515 ms
+/// ([kb](../../../kb/playwright/provisioning-and-timings.md#timings-spawn-resume-idle-close-proxy-overhead)).
+
+===== src/BrowserAI/Sessions/SessionEnvironment.cs:70 =====
+    /// Never inside the session directory. <c>browserai.lock</c> and
+    /// <c>browserai.data</c> are the only files at a session's root; a third would
+    /// make the two that matter missable, and a config file is a per-run artifact
+    /// and not part of the session's durable state. *(Corrected 2026-08-26,
+    /// previously "<c>browserai.json</c> and the session log".)*
+    /// </remarks>
+    public required string InstanceDirectory { get; init; }
+
+===== src/BrowserAI/Sessions/SessionIndex.cs:56 =====
+/// reason, and the next use re-asserts the entry.
+/// </para>
+/// <para>
+/// <b>The write is <i>not</i> durable, and that is the difference from
+/// <see cref="SessionLock"/>.</b> <c>browserai.lock</c> is written
+/// <c>WriteThrough</c> plus <c>Flush(flushToDisk: true)</c> -- measured at ~17 ms
+/// -- because it is the whole ownership guard and its loss cannot be
+
+===== src/BrowserAI/Sessions/SessionIndex.cs:716 =====
+    /// </para>
+    /// <para>
+    /// <b>The temp file is the discriminator, and it is a positive signal and
+    /// not a timing guess.</b> A durable write creates
+    /// <see cref="SessionLayout.NewLockFilePattern"/> in the same directory
+    /// <i>before</i> it renames anything and deletes it only after the rename
+    /// has landed, so for the whole of the window in which the name can be
+
+===== src/BrowserAI/Sessions/SessionManager.cs:2357 =====
+    /// </summary>
+    /// <remarks>
+    /// <b>It runs before the lock is disposed and the failure payload is the
+    /// exception with its stack.</b> The row is the only durable evidence that
+    /// an <c>init</c> was attempted here at all -- the session never opened, so
+    /// there is no live session to ask -- and a caller resuming the directory
+    /// tomorrow meets *this browser would not start, and here is what it said*
+
+===== src/BrowserAI/Storage/SessionStore.cs:76 =====
+/// <b>No caps, anywhere.</b> Not on a <c>why</c>, not on a purpose, not on the
+/// number of log rows, not on a failure payload. That is the maintainer's
+/// explicit decision, and the reason it is affordable here and was not before
+/// is that an append is an <c>INSERT</c> and not a durable rewrite of the
+/// whole record.
+/// </para>
+/// </remarks>
+

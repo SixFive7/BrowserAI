@@ -1,0 +1,13 @@
+2026-09-23T22:27:15.394Z 83908 LAUNCH role=A trigger=after-first-call
+2026-09-23T22:27:15.397Z 83908 IN {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"roots":{"listChanged":true}},"clientInfo":{"name":"smoke","version":"1"}}}
+2026-09-23T22:27:15.398Z 83908 OUT initialize result (protocolVersion=2025-06-18)
+2026-09-23T22:27:15.399Z 83908 IN {"jsonrpc":"2.0","method":"notifications/initialized"}
+2026-09-23T22:27:15.400Z 83908 IN {"jsonrpc":"2.0","id":2,"method":"tools/list"}
+2026-09-23T22:27:15.400Z 83908 OUT tools/list
+2026-09-23T22:27:15.401Z 83908 IN {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"ping","arguments":{"note":"c1"}}}
+2026-09-23T22:27:15.401Z 83908 OUT tools/call #1 answered by A
+2026-09-23T22:27:15.402Z 83908 HANDOVER-STATE wrote C:/Source/SixFive7/BrowserAI/.work/q254-2026-09-23/logs/smoke1.state.json residual=""
+2026-09-23T22:27:15.410Z 83908 HANDOVER-SPAWNED helper pid=133892 with inherited stdio
+2026-09-23T22:27:15.444Z 133892 LAUNCH role=H holding the pipe; not reading stdin
+2026-09-23T22:27:15.536Z 83908 HANDOVER-EXIT A exiting 0; the pipe is now held by H
+2026-09-23T22:27:15.537Z 83908 EXIT role=A code=0

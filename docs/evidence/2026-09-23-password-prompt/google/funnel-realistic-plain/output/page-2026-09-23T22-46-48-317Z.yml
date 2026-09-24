@@ -1,0 +1,14 @@
+- generic [ref=f3e2] [box=28,37,400,407]:
+  - separator [ref=f3e3] [box=28,37,400,1]
+  - iframe [ref=f3e8] [box=28,68,304,78]:
+    - generic [ref=f4e2] [box=0,0,302,76]:
+      - generic [ref=f4e3] [box=1,1,206,74]:
+        - checkbox "I'm not a robot" [ref=f4e7] [box=13,23,28,28]
+        - generic [aria-hidden] [ref=f4e11] [box=53,1,152,74]: I'm not a robot
+      - generic [ref=f4e12] [box=207,1,70,74]: reCAPTCHA
+  - separator [ref=f3e9] [box=28,164,400,1]
+  - generic [ref=f3e10] [box=28,174,400,270]:
+    - text: About this page Our systems have detected unusual traffic from your computer network. This page checks to see if it's really you sending the requests, and not a robot.
+    - link "Why did this happen?" [ref=f3e11] [cursor=pointer] [box=180,234,125,15]:
+      - /url: "#"
+    - generic [ref=f3e12] [box=28,279,400,165]: "IP address: <residential address, redacted>Time: 2026-09-23T22:46:48ZURL: https://www.google.com/search?q=windows+structured+exception+handling&sca_esv=d35e14188c1eb546&hl=en&source=hp&ei=z1a0arCNIq6A9u8P4vKc2Aw&iflsig=ABILxe8AAAAAarRk3_7cPGnjN8t_0xGVcUeIICeGBa-f&ved=0ahUKEwjwsIKN5IWXAxUugP0HHWI5B8sQ4dUDCBk&uact=5&oq=windows+structured+exception+handling&gs_lp=Egdnd3Mtd2l6IiV3aW5kb3dzIHN0cnVjdHVyZWQgZXhjZXB0aW9uIGhhbmRsaW5nSBJQAFgAcAB4AJABAJgBAKABAKoBALgBA8gBAPgBAZgCAKACAJgDAJIHAKAHALIHALgHAMIHAMgHAIAIAQ&sclient=gws-wiz&sei=2Fa0aq7gFOqE9u8P2ualyQE"

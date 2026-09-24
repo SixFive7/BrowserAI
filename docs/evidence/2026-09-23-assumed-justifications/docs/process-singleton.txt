@@ -1,0 +1,39 @@
+ENTRY 5 -- "Chrome's ProcessSingleton would forward the launch into the user's running browser"
+(DECISIONS.md:727; the same mechanism is named at HAZARDS.md:135 and HAZARDS.md:193)
+Settled by CITATION to Chromium's own source, fetched 2026-09-23.
+
+SOURCE: chrome/browser/process_singleton_win.cc, refs/heads/main, fetched 2026-09-23 from
+https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/browser/process_singleton_win.cc?format=TEXT
+(513 lines; saved beside this file as process_singleton_win.cc). Line numbers are that file's.
+
+VERBATIM, the keying-on-user-data-dir half (lines 445-447, comment above ProcessSingleton::Create):
+  "// Look for a Chrome instance that uses the same profile directory. If there
+   // isn't one, create a message window with its title set to the profile
+   // directory path."
+
+VERBATIM, the advertisement (lines 484-489, inside Create()):
+  "// Set the window's title to the path of our user data directory so
+   // other Chrome instances can decide if they should forward to us."
+  followed by  window_.CreateNamed(base::BindRepeating(&ProcessLaunchNotification,
+                                   notification_callback_), user_data_dir_.value());
+
+VERBATIM, the forwarding (lines 347-360, ProcessSingleton::NotifyOtherProcess):
+  "switch (AttemptToNotifyRunningChrome(remote_window_)) {
+     case NotifyChromeResult::kSuccess:
+       return PROCESS_NOTIFIED;"
+
+VERBATIM, the receiving end (lines 142-165, ProcessLaunchNotification): the message window
+handles WM_COPYDATA, runs ParseCommandLine over the COPYDATASTRUCT and hands the resulting
+base::CommandLine and current_directory to notification_callback.Run(...).
+
+WHAT THIS ESTABLISHES, exactly: the singleton is keyed on the USER DATA DIRECTORY, the
+existing instance advertises that directory as a message-window title, and a second launch
+naming the same directory has its command line delivered to the running browser over
+WM_COPYDATA instead of starting a browser of its own. So the row's mechanism is real and its
+trigger is precise: it is the shared user-data-dir that forwards, which is why `channel:
+"chrome"` (whose fallback profile is %LOCALAPPDATA%\Google\Chrome\User Data) reaches the
+operator's own browser and a per-session profile under a BrowserAI directory cannot.
+
+NOT ESTABLISHED and not claimed: nothing here was run against a live Google Chrome on this
+machine -- no probe drove a second launch at the user's own profile, deliberately, because
+doing so is the thing the decision exists to prevent.
