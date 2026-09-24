@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using BrowserAI.Hosting;
+using BrowserAI.Interop;
 using BrowserAI.Registration;
 using BrowserAI.Tests.Harness;
 using BrowserAI.Updates;
@@ -287,6 +288,33 @@ internal sealed partial class RealInstallerTests
     /// would catch the one case the subsystem cannot: this process calling
     /// <c>AllocConsole</c> itself.
     /// </para>
+    /// <para>
+    /// ⚠️ <b>The app runs on a desktop nobody is looking at, since 2026-09-24 --
+    /// Q279.</b> <i>Previously it was started with <c>Process.Start</c> and
+    /// <c>CreateNoWindow = true</c> from the test host, on the host's own desktop,
+    /// and found through <c>EnumWindows</c>.</i> <c>CreateNoWindow</c> does nothing
+    /// for a Windows-subsystem binary, so for nine days this dialog came up on the
+    /// interactive desktop in every full run with the release installer and asked
+    /// for the foreground -- the testbed stealing focus from the person using the
+    /// machine, which the maintainer ruled out in as many words. The desktop is
+    /// created with <c>CreateDesktopW</c> and the app launched through
+    /// <c>JobLauncher</c> with <c>STARTUPINFO.lpDesktop</c> naming it; the dialog is
+    /// found with <c>EnumDesktopWindows</c> and closed by a thread attached to the
+    /// desktop, and the desktop is closed when the arm ends. Every assertion is the
+    /// one it was. Watched red first: the unmodified arm, run in a host on a private
+    /// desktop so that its dialog stayed off the screen, exited 10 under
+    /// <see cref="WindowWatch"/> naming the <c>#32770</c>.
+    /// </para>
+    /// <para>
+    /// <b>Two windows on that desktop are the input framework's, and they are named
+    /// and not counted as the app's.</b> A desktop with no taskbar gets the input
+    /// indicator from inside the process that has focus there: measured
+    /// 2026-09-24, a <c>UAC_InputIndicatorOverlayWnd</c> at 0x0 and a
+    /// <c>UAC Input Indicator</c> at 50x50 showed in the app's own pid about 40 to
+    /// 60 ms after the dialog. They are not the app's user interface, and the claim
+    /// that the app shows exactly one window of its own is kept by leaving out those
+    /// two classes and no other.
+    /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -324,40 +352,38 @@ internal sealed partial class RealInstallerTests
 
             await Assert.That(File.Exists(app)).IsTrue();
 
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo(app)
-                {
-                    UseShellExecute = false,
+            // ⚠️ ON A DESKTOP OF ITS OWN, Q279: a Windows-subsystem binary shows its
+            // window whatever CreateNoWindow says, and only a desktop nobody is
+            // looking at keeps it off the maintainer's screen. The environment is
+            // this process's, sandbox included, as Process.Start used to hand it on.
+            using var desktop = PrivateDesktop.Create("real-install-window");
+            using var job = JobObject.CreateKillOnClose();
+            using var process = desktop.Launch(job, app, [], installRoot.Path, PublishedSlice.InheritedEnvironment());
 
-                    // The house rule, and it is not decorative here: this arm
-                    // runs from a parent that has a console, so an omission
-                    // would be invisible in a suite run and visible on the
-                    // maintainer's screen.
-                    CreateNoWindow = true,
-                    WorkingDirectory = installRoot.Path,
-                },
-            };
-
-            await Assert.That(process.Start()).IsTrue();
+            // Drained, because a pipe nobody reads can stop a child that writes to
+            // it; the app is a GUI binary and is not expected to.
+            var drained = DrainAsync(process);
 
             try
             {
-                var dialog = await WaitForTheDialogAsync(process.Id);
+                var dialog = await WaitForTheDialogAsync(desktop, process.Id);
 
                 await Assert.That(dialog).IsNotEqualTo(nint.Zero);
 
-                var owned = TopLevelWindows.All()
+                var owned = desktop.TopLevelWindows()
                     .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id)
                     .Select(TopLevelWindows.ClassNameOf)
                     .ToList();
 
-                // Exactly one VISIBLE top-level window, and it is the dialog.
-                // The invisible ones are the input-method windows every GUI
-                // process on this machine carries.
-                var visible = TopLevelWindows.All()
+                // Exactly one VISIBLE top-level window of the app's own, and it is
+                // the dialog. The invisible ones are the input-method windows every
+                // GUI process on this machine carries; the two input-indicator
+                // classes are the input framework's on a desktop with no taskbar,
+                // named in the remarks and left out by name.
+                var visible = desktop.TopLevelWindows()
                     .Where(window => TopLevelWindows.ProcessIdOf(window) == process.Id && TopLevelWindows.IsVisible(window))
                     .Select(TopLevelWindows.ClassNameOf)
+                    .Where(name => !InputIndicatorClasses.Contains(name, StringComparer.Ordinal))
                     .ToList();
 
                 await Assert.That(string.Join(", ", visible)).IsEqualTo(TaskDialogWindowClass);
@@ -384,10 +410,13 @@ internal sealed partial class RealInstallerTests
                 await Assert.That(Directory.Exists(live)).IsTrue();
                 await Assert.That(Directory.EnumerateFiles(live, "*.live").Any()).IsTrue();
 
-                await Assert.That(TopLevelWindows.Close(dialog)).IsTrue();
+                // Posted from a thread attached to the app's desktop: window
+                // messages travel between processes of one desktop.
+                await Assert.That(desktop.Close(dialog)).IsTrue();
 
-                await Assert.That(await WaitForExitAsync(process)).IsTrue();
-                await Assert.That(process.ExitCode).IsEqualTo(0);
+                await Assert.That(await process.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+                await drained;
+                await Assert.That(process.TryReadExitCode()).IsEqualTo(0);
 
                 // And it leaves the census on the way out. The marker is
                 // released by the handle closing, so this is a property of the
@@ -396,10 +425,10 @@ internal sealed partial class RealInstallerTests
             }
             finally
             {
-                if (!process.HasExited)
-                {
-                    process.Kill();
-                }
+                // The job, and not a kill by pid: KILL_ON_JOB_CLOSE takes the app
+                // with it if an assertion above left it running, and the desktop
+                // goes when its last handle and its last thread do.
+                job.Dispose();
             }
 
             var update = Path.Combine(installRoot.Path, "Update.exe");
@@ -422,8 +451,21 @@ internal sealed partial class RealInstallerTests
     /// </remarks>
     private const string TaskDialogWindowClass = "#32770";
 
+    /// <summary>Reads both of a launched child's output pipes to their end.</summary>
+    /// <param name="process">The child.</param>
+    /// <returns>A task that completes when both pipes have closed.</returns>
+    private static Task DrainAsync(LaunchedProcess process) =>
+        Task.WhenAll(process.StandardOutput.CopyToAsync(Stream.Null), process.StandardError.CopyToAsync(Stream.Null));
+
     /// <summary>
-    /// Waits for the dialog to appear, polling instead of sleeping once.
+    /// The input framework's two windows on a desktop with no taskbar, measured
+    /// 2026-09-24 in the app's own pid and not the app's user interface.
+    /// </summary>
+    private static readonly string[] InputIndicatorClasses = ["UAC_InputIndicatorOverlayWnd", "UAC Input Indicator"];
+
+    /// <summary>
+    /// Waits for the dialog to appear on the app's desktop, polling instead of
+    /// sleeping once.
     /// </summary>
     /// <remarks>
     /// <b>A single sleep is what made this flake by hand.</b> Two runs of the
@@ -431,13 +473,13 @@ internal sealed partial class RealInstallerTests
     /// when polled, because the window arrives whenever the shell gets round to
     /// it. The bound is a hang detector and not a promptness claim.
     /// </remarks>
-    private static async Task<nint> WaitForTheDialogAsync(int processId)
+    private static async Task<nint> WaitForTheDialogAsync(PrivateDesktop desktop, int processId)
     {
         var deadline = DateTime.UtcNow + TestDefaults.ProcessHang;
 
         while (DateTime.UtcNow < deadline)
         {
-            foreach (var window in TopLevelWindows.All())
+            foreach (var window in desktop.TopLevelWindows())
             {
                 if (TopLevelWindows.ProcessIdOf(window) == processId
                     && TopLevelWindows.IsVisible(window)
@@ -453,19 +495,6 @@ internal sealed partial class RealInstallerTests
         return nint.Zero;
     }
 
-    /// <summary>Waits for a process to exit, bounded.</summary>
-    private static async Task<bool> WaitForExitAsync(Process process)
-    {
-        try
-        {
-            await process.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
-            return true;
-        }
-        catch (TimeoutException)
-        {
-            return false;
-        }
-    }
 
     /// <summary>The body of the arm, so the reclaim below can be a finally.</summary>
     /// <param name="setup">The test-id installer.</param>

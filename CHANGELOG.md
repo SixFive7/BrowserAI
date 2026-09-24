@@ -40,6 +40,16 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **The installed app's dialog arm runs on a desktop of its own, so a full run leaves the screen alone.**
+  Q279. `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow` creates
+  a desktop nobody is looking at, starts the installed app there through `JobLauncher` with
+  `STARTUPINFO.lpDesktop` naming it, finds the dialog with `EnumDesktopWindows` and closes it
+  from a thread attached to that desktop. Every assertion is the one it was: one `#32770`, no
+  console window, the live marker held while the dialog is open, exit 0, and the marker released
+  after. Red under the new window watch before the move, green three times after it with the
+  run's own `windows` row reading `CLEAN`. One thing the move showed, measured and named in the
+  arm: on a desktop with no taskbar the input framework shows its indicator from inside the
+  focused process, two windows of the app's own pid that are not the app's user interface.
 - ✅ **A suite run that shows a window or takes the foreground now fails, and names the window.**
   The maintainer, 2026-09-24, verbatim: *"make sure this focus stealing is not something that
   ends up in the testbed."* The test host watches its own desktop for the whole session from the

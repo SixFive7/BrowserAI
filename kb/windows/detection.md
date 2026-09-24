@@ -1064,6 +1064,17 @@ differ by less than this suite's run-to-run spread. `[MACHINE]`
 > that watch from 2026-09-24** -- `WindowWatch`, the `windows` row of the coverage
 > block -- so the next contradiction of this paragraph is a red run and not a
 > sentence somebody has to find. `[MACHINE]`
+>
+> **The arm moved onto a desktop of its own the same day (Q279)**: it creates one
+> with `CreateDesktopW`, starts the app through `JobLauncher` with
+> `STARTUPINFO.lpDesktop` naming it, finds the dialog with `EnumDesktopWindows` and
+> closes it from a thread attached to that desktop. Run three times from a host on
+> the default desktop under the installer lock: green each time, and the host's
+> `windows` row read `CLEAN` each time. **On a desktop with no taskbar the input
+> framework shows its indicator from inside the focused process**: a
+> `UAC_InputIndicatorOverlayWnd` at 0x0 and a `UAC Input Indicator` at 50x50 came
+> up in the app's own pid 41 and 61 ms after the dialog, which the arm names and
+> leaves out of the app's one window. `[MACHINE]`
 
 **`EnumWindows` returns invisible top-level windows in bulk.** The watcher's
 baseline sweep of the developer's own desktop, three times across the session:
