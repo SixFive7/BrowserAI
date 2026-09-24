@@ -595,6 +595,33 @@ times under scratch homes, and `rig/summarize.js` prints the table above from th
 result files. Against a newer CLI the first thing to look at is the `_cmd` rows: one
 that starts means Codex has begun expanding.
 
+## Every status list starts one more copy of each Codex server -- measured 2026-09-24
+
+`[FLOATS]` codex-cli **0.155.0-alpha.9.2**, Windows 10.0.26200, from the same Q288 runs
+([evidence](../../docs/evidence/2026-09-24-codex-expansion/README.md)). **A
+`mcpServerStatus/list` does not ask the servers a thread already holds. It starts each
+configured server again, asks it, and lets it go.** The driver sent two lists per run
+after the thread's servers were up, one with the thread's id and one without:
+
+| | |
+|---|---|
+| launches of each server that started, per run | **3**, in all 31 app-server runs: the thread's own and one per list |
+| the pid the list without a thread reported, against the list with one | different in **84 of 84** rows |
+| the pid either list reported, against the pid that answered the thread's own tool call | different in **86 of 86** rows |
+| the copies still running when the driver next took a census, after its tool calls | **none**, in 31 of 31 runs |
+
+**What that costs BrowserAI, read from its own startup and not measured under Codex:**
+every copy is a whole `BrowserAI.Server.exe` start. It joins the live census, opens its
+pipe, starts the stray sweep in the background, starts its Playwright child to learn the
+tool surface it reports, and on an installed build that is not a pre-release starts its
+one feed check once it is serving. How much of that a copy finishes before Codex ends it
+was not measured. The Codex desktop app and `/mcp` both ask for this list; how often the
+desktop app does was not measured either. See [the hazard index](../../HAZARDS.md#hazard-index).
+
+**Re-establish** with the evidence batch's rig: `result.json` of any run carries both
+lists' `serverInfo` and every tool call's own launch record, and `summary.json`'s rows
+put the pids side by side.
+
 ## What a client does when the server exits, and what the pipe decides -- measured 2026-09-24
 
 `[FLOATS]` **Claude Code 2.1.281** and **codex-cli 0.155.0-alpha.9.2**, Windows
