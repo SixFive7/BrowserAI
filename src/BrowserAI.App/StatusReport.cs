@@ -38,10 +38,14 @@ internal static class StatusReport
 {
     /// <summary>The schema version this build writes and reads.</summary>
     /// <remarks>
-    /// <b>2 since 2026-09-16</b>, when <c>apartment</c> was added. <i>Corrected
-    /// 2026-09-16 (previously <c>1</c>.)</i>
+    /// <b>3 since 2026-09-24</b>, when the window stopped being about one client:
+    /// <c>clientPath</c>, <c>clientFound</c>, <c>userScope</c> and
+    /// <c>projectScope</c> moved into a <c>clients</c> array, one entry per
+    /// client, and nothing at the top level describes a client any more.
+    /// <i>Corrected 2026-09-24 (previously <c>2</c> since 2026-09-16, when
+    /// <c>apartment</c> was added; and <c>1</c> before that.)</i>
     /// </remarks>
-    public const int SchemaVersion = 2;
+    public const int SchemaVersion = 3;
 
     /// <summary>Writes the report.</summary>
     /// <param name="state">What to write.</param>
@@ -100,25 +104,46 @@ internal static class StatusReport
             writer.WriteString("dataRoot", state.DataRoot);
             WriteNullable(writer, "serverCommand", state.ServerCommand);
             WriteNullable(writer, "serverRefusal", state.ServerRefusal);
-            WriteNullable(writer, "clientPath", state.ClientPath);
-            writer.WriteBoolean("clientFound", state.ClientFound);
             writer.WriteString("status", state.StatusSentence());
             WriteNullable(writer, "lastUpdateCheck", state.LastUpdateCheck);
 
-            writer.WritePropertyName("userScope");
-            WriteScope(writer, state.UserScope);
+            // ⚠️ ONE ENTRY PER CLIENT -- 2026-09-24. This file is the support
+            // artifact somebody attaches when they say it is not working, and
+            // with two clients the useful sentence is almost always about which
+            // ONE of them is wrong. A report that carried the first client's
+            // answers under unqualified names would be a report that looks
+            // complete and is half of one.
+            writer.WritePropertyName("clients");
+            writer.WriteStartArray();
 
-            writer.WritePropertyName("projectScope");
-
-            if (state.ProjectScope is { } project)
+            foreach (var client in state.Clients)
             {
-                WriteScope(writer, project);
-            }
-            else
-            {
-                writer.WriteNullValue();
+                writer.WriteStartObject();
+                writer.WriteString("key", client.Client.Key);
+                writer.WriteString("displayName", client.Client.DisplayName);
+                WriteNullable(writer, "clientPath", client.ClientPath);
+                writer.WriteBoolean("clientFound", client.ClientFound);
+                writer.WriteString("status", client.StatusSentence());
+                WriteNullable(writer, "projectDirectory", client.ProjectDirectory);
+
+                writer.WritePropertyName("userScope");
+                WriteScope(writer, client.UserScope);
+
+                writer.WritePropertyName("projectScope");
+
+                if (client.ProjectScope is { } project)
+                {
+                    WriteScope(writer, project);
+                }
+                else
+                {
+                    writer.WriteNullValue();
+                }
+
+                writer.WriteEndObject();
             }
 
+            writer.WriteEndArray();
             writer.WriteEndObject();
         }
 

@@ -65,9 +65,43 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     /// and sharing one here would hide the failure that matters most</b> -- a hook
     /// that registered with one client and reported success for both. See
     /// <see cref="IsScopeless"/> for how a call is attributed, and why the
-    /// attribution is a real property of the call rather than a flag a test sets.
+    /// attribution is a real property of the call and not a flag a test sets.
     /// </remarks>
     public Dictionary<string, string> CodexRegistered { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// What is registered with the scopeless client under a FORCED
+    /// <c>CODEX_HOME</c>, by that home.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>A registry per home, because for this client the home IS the
+    /// scope.</b> A project registration is the same command with
+    /// <c>CODEX_HOME</c> moved, so a double that kept one registry could not tell
+    /// a project write from a write into the user's own configuration -- which is
+    /// the one mistake that exits 0 and changes somebody's setup silently.
+    /// <see cref="CodexRegistered"/> is the inherited home; every forced one is
+    /// here.
+    /// </remarks>
+    public Dictionary<string, Dictionary<string, string>> CodexHomes { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The registry a scopeless call writes, chosen by the home it was given.</summary>
+    /// <param name="environment">The variables the call was run with.</param>
+    /// <returns>That home's registry.</returns>
+    private Dictionary<string, string> CodexRegistryFor(IReadOnlyDictionary<string, string> environment)
+    {
+        if (!environment.TryGetValue("CODEX_HOME", out var home) || home is not { Length: > 0 })
+        {
+            return CodexRegistered;
+        }
+
+        if (!CodexHomes.TryGetValue(home, out var registry))
+        {
+            registry = new Dictionary<string, string>(StringComparer.Ordinal);
+            CodexHomes[home] = registry;
+        }
+
+        return registry;
+    }
 
     /// <summary>The verbs this double was asked for, in order -- <c>add</c> or <c>remove</c>.</summary>
     public IReadOnlyList<string> Verbs => [.. Invocations.Select(arguments => arguments.Count > 1 ? arguments[1] : "<none>")];
@@ -141,12 +175,14 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
 
         if (IsScopeless(arguments))
         {
+            var registry = CodexRegistryFor(environment);
+
             return verb switch
             {
-                "add" => CodexAdd(name, arguments[^1]),
-                "remove" => CodexRemove(name),
-                "list" => new CommandOutcome(0, CodexList(), TimedOut: false, null),
-                "get" => new CommandOutcome(0, CodexList(), TimedOut: false, null),
+                "add" => CodexAdd(registry, name, arguments[^1]),
+                "remove" => CodexRemove(registry, name),
+                "list" => new CommandOutcome(0, CodexList(registry), TimedOut: false, null),
+                "get" => new CommandOutcome(0, CodexList(registry), TimedOut: false, null),
                 _ => new CommandOutcome(1, $"unknown command {verb}", TimedOut: false, null),
             };
         }
@@ -212,12 +248,13 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     /// second. A double that gave both clients one dialect would let the
     /// product's discrimination between them rot unnoticed.
     /// </remarks>
+    /// <param name="registry">The home's registry.</param>
     /// <param name="name">The server name.</param>
     /// <param name="command">What it is registered as.</param>
     /// <returns>Exit zero, always.</returns>
-    private CommandOutcome CodexAdd(string name, string command)
+    private static CommandOutcome CodexAdd(Dictionary<string, string> registry, string name, string command)
     {
-        CodexRegistered[name] = command;
+        registry[name] = command;
 
         return new CommandOutcome(
             0,
@@ -227,11 +264,12 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     }
 
     /// <summary>The scopeless client's remove, which exits zero even when there was nothing.</summary>
+    /// <param name="registry">The home's registry.</param>
     /// <param name="name">The server name.</param>
     /// <returns>Exit zero, always.</returns>
-    private CommandOutcome CodexRemove(string name)
+    private static CommandOutcome CodexRemove(Dictionary<string, string> registry, string name)
     {
-        _ = CodexRegistered.Remove(name);
+        _ = registry.Remove(name);
 
         return new CommandOutcome(
             0,
@@ -252,11 +290,12 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
     /// doubling reads through the product's own view as UNREADABLE -- which is a
     /// different state from the one an arm meant to arrange.
     /// </remarks>
+    /// <param name="registry">The home's registry.</param>
     /// <returns>The JSON.</returns>
-    private string CodexList() =>
+    private static string CodexList(Dictionary<string, string> registry) =>
         "[" + string.Join(
             ",",
-            CodexRegistered.Select(entry =>
+            registry.Select(entry =>
                 "{\"name\":" + System.Text.Json.JsonSerializer.Serialize(entry.Key)
                 + ",\"enabled\":true,\"transport\":{\"command\":"
                 + System.Text.Json.JsonSerializer.Serialize(entry.Value)

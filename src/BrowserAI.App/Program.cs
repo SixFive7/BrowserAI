@@ -258,22 +258,25 @@ internal sealed class ConfigurationSession(
             case ConfigurationDialog.Command.ApplyUpdate:
                 return ApplyUpdate();
 
-            case ConfigurationDialog.Command.Register:
-                return Apply(RegistrationIntent.Install);
-
-            case ConfigurationDialog.Command.Unregister:
-                return Apply(RegistrationIntent.Uninstall);
-
-            case ConfigurationDialog.Command.RegisterInProject:
-                return RegisterInProject();
-
             case ConfigurationDialog.Command.OpenLogs:
                 _ = Directory.CreateDirectory(paths.LogDirectory);
                 _ = ShellInterop.OpenInExplorer(paths.LogDirectory);
                 return ClickOutcome.Stay;
 
             default:
-                return ClickOutcome.Stay;
+                // ⚠️ EVERY REGISTRATION VERB IS PER CLIENT SINCE 2026-09-24, so the
+                // identifier carries which client as well as which verb, and the
+                // arithmetic is the dialog's. An identifier this does not
+                // recognise changes nothing, which is the same answer an unknown
+                // one has always had.
+                return ConfigurationDialog.Command.ClientCommandOf(id, _state.Clients.Count) switch
+                {
+                    (ConfigurationDialog.Command.Register, var index) => Apply(RegistrationIntent.Install, index),
+                    (ConfigurationDialog.Command.Unregister, var index) => Apply(RegistrationIntent.Uninstall, index),
+                    (ConfigurationDialog.Command.RegisterInProject, var index) => RegisterInProject(index),
+                    (ConfigurationDialog.Command.UnregisterFromProject, var index) => UnregisterFromProject(index),
+                    _ => ClickOutcome.Stay,
+                };
         }
     }
 
@@ -347,18 +350,20 @@ internal sealed class ConfigurationSession(
         _ = ShellInterop.OpenUrl(href);
     }
 
-    private ClickOutcome Apply(RegistrationIntent intent)
+    private ClickOutcome Apply(RegistrationIntent intent, int index)
     {
-        var report = McpRegistrar.Apply(intent, Environment.ProcessPath, commands, logger);
+        var who = _state.Clients[index].Client;
+        var report = McpRegistrar.Apply(who, intent, Environment.ProcessPath, commands, logger);
 
-        _note = ConfigurationDialog.NoteFor(report);
-        _state = AppState.Read(commands, Environment.CurrentDirectory) with { LastUpdateCheck = _state.LastUpdateCheck };
+        _note = ConfigurationDialog.NoteFor(report, who);
 
-        return ClickOutcome.Rerender;
+        return Reread();
     }
 
-    private ClickOutcome RegisterInProject()
+    private ClickOutcome RegisterInProject(int index)
     {
+        var who = _state.Clients[index].Client;
+
         // ⚠️ OWNED BY THE DIALOG. An unowned modal disables nothing, so the task
         // dialog underneath stays live: its command links can be clicked while
         // the picker is up, which re-enters this handler and can navigate the
@@ -366,7 +371,7 @@ internal sealed class ConfigurationSession(
         // dialog is created, which is before any command can arrive.
         var picked = ShellInterop.PickFolder(
             _host?.Window ?? 0,
-            "Choose the folder to register BrowserAI in. A .mcp.json is written at its root, to be committed with the project.");
+            $"Choose the folder to register BrowserAI in for {who.DisplayName}. A {who.ProjectFileName} is written under it, to be committed with the project.");
 
         if (picked.Outcome is FolderPickOutcome.Failed)
         {
@@ -379,48 +384,85 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Stay;
         }
 
-        var client = _state.ClientPath;
+        var command = ProjectCommand(who, out var absoluteBecause);
+        var report = McpRegistrar.ApplyToProject(who, register: true, folder, Environment.ProcessPath, commands, logger, command);
 
-        if (client is not { Length: > 0 })
+        _note = ConfigurationDialog.ProjectNoteFor(report, who, absoluteBecause);
+
+        return Reread();
+    }
+
+    /// <summary>
+    /// Removes the project registration this folder already has.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>No folder picker, and that is the difference from registering --
+    /// added 2026-09-24.</b> The link exists only when a registration OF OURS was
+    /// found at or above the working directory, so the folder is already known and
+    /// is named in the link's own text. An unregister that asked a person to find
+    /// the folder is an unregister that can be pointed at the wrong one, and the
+    /// consequence of that is a deleted entry in a repository nobody meant to
+    /// touch.
+    /// </remarks>
+    /// <param name="index">Which client.</param>
+    /// <returns>Whether the page has to be redrawn.</returns>
+    private ClickOutcome UnregisterFromProject(int index)
+    {
+        var client = _state.Clients[index];
+
+        if (client.ProjectDirectory is not { Length: > 0 } folder)
         {
-            _note = "Claude Code was not found, so nothing was written.";
+            _note = $"There is no {client.Client.DisplayName} project registration at or above this folder, so nothing was changed.";
             return ClickOutcome.Rerender;
         }
 
-        var command = ProjectCommand(out var portable);
-        var outcome = commands.Run(
-            client,
-            McpClientRegistration.AddArguments(command, McpClientRegistration.ProjectScope),
-            McpClientRegistration.Budget,
-            folder);
+        var report = McpRegistrar.ApplyToProject(
+            client.Client, register: false, folder, Environment.ProcessPath, commands, logger);
 
-        _note = outcome.Succeeded || McpClientRegistration.MeansAlreadyRegistered(outcome.ExitCode, outcome.Output)
-            ? $"Wrote {McpRegistryView.ProjectConfigFile(folder)} registering '{command}'. "
-                + (portable
-                    ? string.Empty
-                    : "This install is not at its default location, so the entry carries its absolute path and will not resolve on another machine. ")
-                + ConfigurationDialog.ProjectApprovalHint + " " + ConfigurationDialog.RestartHint
-            : $"Claude Code could not write the project file: {outcome.Output}";
+        _note = ConfigurationDialog.NoteFor(report, client.Client);
 
+        return Reread();
+    }
+
+    /// <summary>Reads the state again and keeps this session's update answer.</summary>
+    private ClickOutcome Reread()
+    {
         _state = AppState.Read(commands, Environment.CurrentDirectory) with { LastUpdateCheck = _state.LastUpdateCheck };
 
         return ClickOutcome.Rerender;
     }
 
     /// <summary>
-    /// The command a project file gets: portable when it expands to this
-    /// install, absolute otherwise.
+    /// The command a project file gets: portable when the client expands the
+    /// portable spelling and it expands to this install, absolute otherwise.
     /// </summary>
-    private string ProjectCommand(out bool portable)
+    /// <param name="who">The client the project file is for.</param>
+    /// <param name="absoluteBecause">
+    /// Why the absolute path was written, for the note, or <see langword="null"/>
+    /// when the portable spelling was.
+    /// </param>
+    /// <returns>The command to write.</returns>
+    private string ProjectCommand(RegistrationClient who, out string? absoluteBecause)
     {
         var absolute = _state.ServerCommand ?? string.Empty;
-        var candidate = McpClientRegistration.PortableCommandFor(InstallRootFolderName());
 
-        portable = absolute.Length > 0
+        if (who.PortableCommandFor(InstallRootFolderName()) is not { Length: > 0 } candidate)
+        {
+            absoluteBecause =
+                $"The entry carries this machine's absolute path, because BrowserAI does not rely on {who.DisplayName} expanding a variable in a server command, so it will not resolve on another machine.";
+
+            return absolute;
+        }
+
+        var portable = absolute.Length > 0
             && string.Equals(
                 Path.GetFullPath(McpRegistryView.Expand(candidate)),
                 Path.GetFullPath(absolute),
                 StringComparison.OrdinalIgnoreCase);
+
+        absoluteBecause = portable
+            ? null
+            : "This install is not at its default location, so the entry carries its absolute path and will not resolve on another machine.";
 
         return portable ? candidate : absolute;
     }

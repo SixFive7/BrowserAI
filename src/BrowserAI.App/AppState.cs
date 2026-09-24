@@ -43,17 +43,20 @@ internal sealed record AppState
     /// <summary>Why there is no server command, when there is not.</summary>
     public required string? ServerRefusal { get; init; }
 
-    /// <summary>What the client's user-scope configuration says.</summary>
-    public required RegistrationView UserScope { get; init; }
-
     /// <summary>
-    /// The nearest project configuration at or above the working directory, or
-    /// <see langword="null"/> when there is none.
+    /// Every MCP client, in <see cref="RegistrationClient.All"/> order, each with
+    /// its own state and its own actions.
     /// </summary>
-    public required RegistrationView? ProjectScope { get; init; }
-
-    /// <summary>The client executable, or <see langword="null"/> when none was found.</summary>
-    public required string? ClientPath { get; init; }
+    /// <remarks>
+    /// ⚠️ <b>A list since 2026-09-24, and there is deliberately no single
+    /// <c>UserScope</c>, <c>ProjectScope</c> or <c>ClientPath</c> any more.</b>
+    /// Those three read as <i>the</i> client's and silently meant Claude Code's;
+    /// keeping them beside the list would be two answers to the same question,
+    /// one of which is only ever right by accident. The order is
+    /// <see cref="RegistrationClient.All"/>'s, so the record on disk, the report
+    /// and the window read the same way.
+    /// </remarks>
+    public required IReadOnlyList<ClientState> Clients { get; init; }
 
     /// <summary>
     /// What the last update check in THIS session concluded, or
@@ -66,107 +69,45 @@ internal sealed record AppState
     /// </remarks>
     public string? LastUpdateCheck { get; init; }
 
-    /// <summary>Whether a client was found to talk to.</summary>
-    public bool ClientFound => ClientPath is { Length: > 0 };
-
     /// <summary>
-    /// The one sentence under the heading, which is what a person reads first.
+    /// The line under the heading: one sentence per client, in order.
     /// </summary>
     /// <remarks>
-    /// <b>The order is the order of what a person can do about it.</b> A machine
-    /// with no client cannot be registered at all, so that is said before
-    /// anything about registration; a foreign entry is said with its path,
-    /// because the only way out of it is for a person to decide which install
-    /// they meant.
+    /// ⚠️ <b>Joined and never reduced -- 2026-09-24.</b> Two clients are two
+    /// states, and any single sentence about both would have to drop one of them:
+    /// a person whose Claude Code registration is fine and whose Codex entry
+    /// belongs to another install must be told the second thing, not reassured
+    /// about the first. Each client's own sentence is
+    /// <see cref="ClientState.StatusSentence"/>, which already names the client it
+    /// is about, so the join needs no labels of its own.
     /// </remarks>
-    public string StatusSentence()
-    {
-        if (!ClientFound)
-        {
-            return "Claude Code was not found on this machine, so BrowserAI has not been registered with anything.";
-        }
-
-        if (UserScope.Unreadable is { } unreadable)
-        {
-            return unreadable;
-        }
-
-        return UserScope.Ownership switch
-        {
-            RegistrationOwnership.OursAndPresent =>
-                "Registered for all your Claude Code projects.",
-            RegistrationOwnership.OursAndStale => StaleSentence(),
-            RegistrationOwnership.Foreign =>
-                $"Another BrowserAI is registered at '{UserScope.Command}'. Nothing here will change it.",
-            _ => "Not registered for your Claude Code projects.",
-        };
-    }
+    /// <returns>The sentences, in <see cref="Clients"/> order.</returns>
+    public string StatusSentence() =>
+        string.Join(" ", Clients.Select(client => client.StatusSentence()));
 
     /// <summary>
-    /// The two ways an entry of ours can be stale, as two sentences.
+    /// Every client's state in two or three words, for the line under the
+    /// heading.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Added 2026-09-16, because one of them stopped being true.</b>
-    /// <c>OursAndStale</c> used to mean one thing -- the file is gone -- and the
-    /// sentence said so. Since the classifier started requiring the file to be
-    /// the <b>server</b> and not merely present, it also covers the state
-    /// every pre-split install is in: an entry naming
-    /// <c>current\BrowserAI.exe</c>, which is there and is this very
-    /// application. Telling that person the file "is not there any more" is a
-    /// sentence they can check and find false, which is the fastest way to lose
-    /// somebody's trust in a status line.
-    /// </para>
-    /// <para>
-    /// <b>The question asked here is whether the file exists, and that is not a
-    /// second classifier.</b> Ownership has already been decided; this picks the
-    /// wording for a state that has two causes and one remedy. The expansion is
-    /// <see cref="McpRegistryView.Expand"/>'s, so the path this asks about is the
-    /// path the classifier asked about.
-    /// </para>
+    /// <b>The heading gets the short form and the body gets the sentences</b>,
+    /// because the heading has one line and two clients to fit on it, while the
+    /// thing that makes a foreign entry actionable is the path -- and that belongs
+    /// where there is room for it.
     /// </remarks>
-    /// <returns>The sentence.</returns>
-    private string StaleSentence()
-    {
-        var named = UserScope.Command ?? "<none>";
+    /// <returns>One clause per client.</returns>
+    public string Headline() =>
+        string.Join("   ", Clients.Select(client => $"{client.Client.DisplayName}: {client.ShortStatus}"));
 
-        return File.Exists(McpRegistryView.Expand(named))
-            ? $"Registered to the wrong binary: the entry names '{named}', which is not the MCP server. Register again to repair it."
-            : $"Registered, but the entry names '{named}', which is not there any more. Register again to repair it.";
-    }
+    /// <summary>Whether any client was found to talk to.</summary>
+    public bool AnyClientFound => Clients.Any(client => client.ClientFound);
 
-    /// <summary>
-    /// Whether the <i>register</i> action is offered, as opposed to
-    /// <i>unregister</i> or nothing at all.
-    /// </summary>
-    public bool MayRegister =>
-        ClientFound
-        && ServerCommand is not null
-        && UserScope.Unreadable is null
-        && UserScope.Ownership is RegistrationOwnership.Absent or RegistrationOwnership.OursAndStale;
-
-    /// <summary>Whether the <i>unregister</i> action is offered.</summary>
-    /// <remarks>
-    /// <para>
-    /// <b>Only for an entry we wrote.</b> A foreign one is never removed -- that
-    /// is somebody else's install and removing it would be this product
-    /// uninstalling another.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>And never over a configuration that could not be read</b>, which
-    /// this did not check until a test constructed the combination. The reader
-    /// answers <see cref="RegistrationOwnership.Absent"/> whenever it fails, so
-    /// today the two cannot co-occur and the guard is unreachable -- which is
-    /// exactly the kind of guard that stops being unreachable when somebody
-    /// makes the reader smarter. It is here because the symmetry is the
-    /// invariant: <b>no action is offered on top of a state nobody
-    /// established</b>, and <see cref="MayRegister"/> already said so.
-    /// </para>
-    /// </remarks>
-    public bool MayUnregister =>
-        ClientFound
-        && UserScope.Unreadable is null
-        && UserScope.Ownership is RegistrationOwnership.OursAndPresent;
+    /// <summary>One client's state, by key.</summary>
+    /// <param name="key">The client's <see cref="RegistrationClient.Key"/>.</param>
+    /// <returns>That client's state.</returns>
+    /// <exception cref="InvalidOperationException">No such client was read.</exception>
+    public ClientState For(string key) =>
+        Clients.Single(client => string.Equals(client.Client.Key, key, StringComparison.Ordinal));
 
     /// <summary>Reads the whole state.</summary>
     /// <param name="commands">The seam over starting the client.</param>
@@ -187,37 +128,12 @@ internal sealed record AppState
             DataRoot = new LocalAppDataPaths(LocalAppDataPaths.Overridden()).RootAppDir,
             ServerCommand = resolved ? target!.Command : null,
             ServerRefusal = resolved ? null : refusal,
-            UserScope = McpRegistryView.User(installRoot ?? target?.InstallRoot),
-            ProjectScope = NearestProject(workingDirectory, installRoot ?? target?.InstallRoot),
-            ClientPath = commands.Locate(McpClientRegistration.ClientExecutable),
+            Clients = [.. RegistrationClient.All.Select(who => ClientState.Read(
+                who,
+                commands,
+                workingDirectory,
+                installRoot ?? target?.InstallRoot,
+                resolved))],
         };
-    }
-
-    /// <summary>
-    /// The nearest <c>.mcp.json</c> at or above a directory.
-    /// </summary>
-    /// <param name="start">Where to start looking.</param>
-    /// <param name="installRoot">The root ownership is judged against.</param>
-    /// <returns>What it says, or <see langword="null"/> when there is no such file.</returns>
-    /// <remarks>
-    /// <b>Upward, because that is how the client finds one.</b> A person running
-    /// this from inside a repository expects it to report that repository's
-    /// file, and a person running it from the Start Menu -- whose working
-    /// directory is the install root -- expects it to report nothing, which is
-    /// what an upward walk from there answers.
-    /// </remarks>
-    public static RegistrationView? NearestProject(string start, string? installRoot)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(start);
-
-        for (var directory = new DirectoryInfo(start); directory is not null; directory = directory.Parent)
-        {
-            if (File.Exists(McpRegistryView.ProjectConfigFile(directory.FullName)))
-            {
-                return McpRegistryView.Project(directory.FullName, installRoot);
-            }
-        }
-
-        return null;
     }
 }

@@ -241,6 +241,272 @@ internal static class McpRegistrar
     }
 
     /// <summary>
+    /// One pass against a repository's own configuration, in either direction.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-24, and the reason it is HERE is the ownership
+    /// rule.</b> Project-scope registration existed only as a hand-written
+    /// sequence inside the configuration app: locate the client, compose the
+    /// command, run <c>mcp add --scope project</c>, read the exit code. It had no
+    /// ownership check at all, so <i>register in a project</i> would happily
+    /// overwrite another BrowserAI's entry in somebody's repository -- the exact
+    /// thing the user-scope path refuses. And there was no unregister in that
+    /// direction at all. Both verbs go through this now, which means one answer to
+    /// <i>may I write this</i> for both scopes and both clients.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The scope lever is the client's, not this method's.</b> Claude Code
+    /// takes <c>--scope project</c> and must be RUN IN the repository; Codex takes
+    /// no scope at all and writes whichever configuration <c>CODEX_HOME</c> names.
+    /// Both are members of <see cref="RegistrationClient"/>, and all three are
+    /// applied here together -- arguments, environment and working directory --
+    /// because applying two of the three is how a project registration silently
+    /// becomes a user one.
+    /// </para>
+    /// <para>
+    /// <b>The command may be spelled by the caller, and that is a real product
+    /// behaviour and not a hook.</b> A project file is meant to be committed,
+    /// so the configuration window writes the <i>portable</i> spelling of this
+    /// install's path when the install is at its default location. Ownership is
+    /// still judged on the expanded form, by <see cref="McpRegistryView.Classify"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="who">The client to write to.</param>
+    /// <param name="register">Whether to add or to remove.</param>
+    /// <param name="project">The repository root.</param>
+    /// <param name="imagePath">This process's own image, which decides what may be registered.</param>
+    /// <param name="commands">The process runner.</param>
+    /// <param name="logger">Where the pass reports.</param>
+    /// <param name="commandToRegister">
+    /// What to write, or <see langword="null"/> for the resolved image's own
+    /// command.
+    /// </param>
+    /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
+    /// <exception cref="ArgumentNullException">A required argument is null.</exception>
+    public static RegistrationReport ApplyToProject(
+        RegistrationClient who,
+        bool register,
+        string project,
+        string? imagePath,
+        IRegistrationCommand commands,
+        ILogger logger,
+        string? commandToRegister = null)
+    {
+        ArgumentNullException.ThrowIfNull(who);
+        ArgumentException.ThrowIfNullOrWhiteSpace(project);
+        ArgumentNullException.ThrowIfNull(commands);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        try
+        {
+            if (!RegistrationTarget.TryResolve(imagePath, out var target, out var refusal))
+            {
+                RegistrationLog.Refused(logger, refusal);
+                return new RegistrationReport(RegistrationStatus.Refused, refusal, null, imagePath);
+            }
+
+            var command = commandToRegister is { Length: > 0 } spelled ? spelled : target!.Command;
+            var client = who.Locate(commands);
+
+            if (client is null)
+            {
+                var detail = who.NotFoundDetail(command);
+
+                RegistrationLog.NoClient(logger, who.Executable, ClientCommandLine.FallbackDirectory, command);
+                return new RegistrationReport(RegistrationStatus.ClientNotFound, detail, null, command);
+            }
+
+            // The same gate the user scope has, and it is read before either verb:
+            // an entry in somebody's repository that this install did not write
+            // belongs to another install, and neither writing over it nor
+            // deleting it is ours to do.
+            var view = who.ProjectView(commands, client, project, target!.InstallRoot);
+
+            if (NotOursToTouch(
+                    who,
+                    logger,
+                    client,
+                    command,
+                    register ? RegistrationIntent.Install : RegistrationIntent.Uninstall,
+                    view) is { } notOurs)
+            {
+                return notOurs;
+            }
+
+            if (!register && view.Ownership is RegistrationOwnership.Absent)
+            {
+                RegistrationLog.NothingToUnregister(logger, who.ServerName);
+
+                return new RegistrationReport(
+                    RegistrationStatus.NothingToUnregister,
+                    $"There is no '{who.ServerName}' registered in '{project}' for {who.DisplayName} to remove.",
+                    client,
+                    command);
+            }
+
+            // Codex refuses to write into a CODEX_HOME that is not there, and
+            // creating a directory inside somebody's repository is an act, so it
+            // is a named member and not an inference.
+            if (register && who.ProjectDirectoryToCreate(project) is { Length: > 0 } needed)
+            {
+                _ = Directory.CreateDirectory(needed);
+            }
+
+            // ⚠️ A REGISTER OVER AN ENTRY OF OURS REMOVES IT FIRST, the way the
+            // user-scope install does (Reassert). Claude Code's `mcp add` over an
+            // existing project entry exits 1 with "already exists", which the
+            // client's own predicate reads as success -- so without this, the one
+            // case a person clicks register for over an existing entry, a stale
+            // one, would be reported as written and left pointing where it was.
+            // Unexamined for the same reason Reassert's is: a remove that failed
+            // for any reason surfaces as the add failing, in the client's words.
+            if (register && view.Ownership is RegistrationOwnership.OursAndPresent or RegistrationOwnership.OursAndStale)
+            {
+                _ = commands.Run(
+                    client,
+                    who.ProjectRemoveArguments(project),
+                    who.Budget,
+                    who.ProjectWorkingDirectory(project),
+                    who.ProjectEnvironment(project));
+            }
+
+            var outcome = commands.Run(
+                client,
+                register ? who.ProjectAddArguments(command, project) : who.ProjectRemoveArguments(project),
+                who.Budget,
+                who.ProjectWorkingDirectory(project),
+                who.ProjectEnvironment(project));
+
+            RemoveResidue(who, project);
+
+            return register
+                ? ProjectAdded(who, logger, client, command, project, outcome)
+                : ProjectRemoved(who, logger, client, command, project, outcome);
+        }
+#pragma warning disable CA1031 // Same boundary as Apply: a registration failure is a report, never an exception into a click handler or a hook.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            RegistrationLog.PassFailed(logger, failure);
+
+            return new RegistrationReport(
+                RegistrationStatus.Failed,
+                $"The project registration pass threw: {failure.Message}. Nothing in '{project}' was changed by BrowserAI.",
+                null,
+                imagePath);
+        }
+    }
+
+    /// <summary>What a project add amounts to.</summary>
+    private static RegistrationReport ProjectAdded(
+        RegistrationClient who,
+        ILogger logger,
+        string client,
+        string command,
+        string project,
+        CommandOutcome outcome)
+    {
+        if (outcome.Succeeded || who.MeansAlreadyRegistered(outcome.ExitCode, outcome.Output))
+        {
+            RegistrationLog.Registered(logger, who.ServerName, command, client);
+
+            return new RegistrationReport(
+                RegistrationStatus.Registered,
+                $"Wrote '{who.ProjectFileIn(project)}' registering '{command}' for {who.DisplayName}.",
+                client,
+                command);
+        }
+
+        return Failed(who, logger, client, command, outcome, "register in a project");
+    }
+
+    /// <summary>What a project remove amounts to.</summary>
+    private static RegistrationReport ProjectRemoved(
+        RegistrationClient who,
+        ILogger logger,
+        string client,
+        string command,
+        string project,
+        CommandOutcome outcome)
+    {
+        if (outcome.Succeeded || who.MeansNothingToRemove(outcome.ExitCode, outcome.Output))
+        {
+            RegistrationLog.Unregistered(logger, who.ServerName);
+
+            return new RegistrationReport(
+                RegistrationStatus.Unregistered,
+                $"Removed '{who.ServerName}' from '{who.ProjectFileIn(project)}' for {who.DisplayName}.",
+                client,
+                command);
+        }
+
+        return Failed(who, logger, client, command, outcome, "unregister from a project");
+    }
+
+    /// <summary>
+    /// Deletes what a project-scope run left behind, when the client leaves
+    /// anything, and only while it is empty.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>It is not ours to leave in somebody's repository</b>, and it is
+    /// tolerated when absent: an earlier run on 2026-09-24 did not produce it at
+    /// all.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>IT IS A DIRECTORY, AND SO IS ITS PARENT -- measured 2026-09-24 at
+    /// 08:20Z @ codex-cli 0.155.0-alpha.9.2</b>, with <c>CODEX_HOME</c> at a
+    /// scratch project: an <c>mcp add</c>, an <c>mcp list --json</c> and an
+    /// <c>mcp remove</c> left <c>tmp\</c> and <c>tmp\arg0\</c>, both empty, beside
+    /// a <c>config.toml</c> of 0 bytes. The version of this method written before
+    /// that measurement called <c>File.Delete</c> on the path, which throws on a
+    /// directory and would have left it every time.
+    /// </para>
+    /// <para>
+    /// <b>Innermost first, each only while EMPTY, and never above the home the
+    /// client was pointed at.</b> The single-argument <c>Directory.Delete</c>
+    /// refuses a directory with anything in it, which is the property wanted
+    /// here: a <c>tmp</c> that somebody else put a file in is not this product's
+    /// to remove, and neither is the <c>config.toml</c> -- that file is the
+    /// client's, which is the whole charter.
+    /// </para>
+    /// </remarks>
+    private static void RemoveResidue(RegistrationClient who, string project)
+    {
+        if (who.ProjectResidue(project) is not { Length: > 0 } residue
+            || who.ProjectDirectoryToCreate(project) is not { Length: > 0 } home)
+        {
+            return;
+        }
+
+        var stop = Path.GetFullPath(home).TrimEnd(Path.DirectorySeparatorChar);
+
+        for (var directory = Path.GetFullPath(residue).TrimEnd(Path.DirectorySeparatorChar);
+             directory.Length > stop.Length
+                && directory.StartsWith(stop + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+             directory = Path.GetDirectoryName(directory) ?? stop)
+        {
+            try
+            {
+                if (!Directory.Exists(directory))
+                {
+                    continue;
+                }
+
+                Directory.Delete(directory);
+            }
+            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
+            {
+                // Not empty, or not ours to delete. Either way it is left, and so
+                // is everything above it: a parent cannot be empty while a child
+                // stands in it.
+                return;
+            }
+        }
+    }
+
+    /// <summary>
     /// An update: repair an entry of ours that has gone stale, and touch nothing
     /// else.
     /// </summary>

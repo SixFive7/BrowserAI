@@ -48,6 +48,9 @@ internal sealed class CodexRegistrationTests
     /// <summary>What the single-server read must be, exactly.</summary>
     private static readonly string[] ExpectedGet = ["mcp", "get", "browserai", "--json"];
 
+    /// <summary>What re-registering over an entry of ours asks the client, in order.</summary>
+    private static readonly string[] RemoveThenAdd = ["remove", "add"];
+
     /// <summary>The three intents, as one array so the analyzer is satisfied.</summary>
     private static readonly RegistrationIntent[] EveryIntent =
         [RegistrationIntent.Install, RegistrationIntent.Update, RegistrationIntent.Uninstall];
@@ -354,6 +357,236 @@ internal sealed class CodexRegistrationTests
         // And one server name between them: a caller reading two clients'
         // configurations should see one product.
         await Assert.That(RegistrationClient.All.Select(client => client.ServerName).Distinct().Single()).IsEqualTo("browserai");
+    }
+
+    // ---- Project scope through the registrar, both clients -------------------
+
+    /// <summary>
+    /// A project registration through the registrar writes the project's own
+    /// home, creates it first, and never touches the user's.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>THE END-TO-END HALF OF THE WORST MISTAKE AVAILABLE HERE.</b>
+    /// <c>AProjectRegistrationMovesTheHomeVariableAndNothingElse</c> holds that
+    /// the client's members name the right home; this holds that the registrar
+    /// actually APPLIES it to every call it makes -- the read that decides
+    /// ownership and the write -- because Codex takes no scope flag, and a call
+    /// that lost the variable would exit 0 having written the user's own
+    /// configuration.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by running the project write with an empty
+    /// environment: the project's home held no entry afterwards, because the
+    /// write had gone to the inherited one.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AProjectRegistrationThroughTheRegistrarWritesTheProjectHomeAndNeverTheUsers()
+    {
+        using var install = ScratchDirectory.Create("codex-project-register");
+        using var project = ScratchDirectory.Create("codex-project-repo");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var home = CodexRegistration.ProjectHome(project.Path);
+        var commands = new FakeClientCommandLine { Executable = @"C:\codex\codex.exe" };
+
+        // Not created beforehand: Codex refuses a home that is not there, so
+        // creating it is the registrar's job and part of what is asserted.
+        await Assert.That(Directory.Exists(home)).IsFalse();
+
+        var report = McpRegistrar.ApplyToProject(
+            RegistrationClient.Codex, register: true, project.Path, image, commands, NullLogger.Instance);
+
+        await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(Directory.Exists(home)).IsTrue();
+
+        // The project's home holds the entry, and the user's holds nothing.
+        await Assert.That(commands.CodexHomes.ContainsKey(home)).IsTrue();
+        await Assert.That(commands.CodexHomes[home]["browserai"]).IsEqualTo(server);
+        await Assert.That(commands.CodexRegistered.Count).IsEqualTo(0);
+
+        // Every call -- the ownership read AND the write -- carried the lever,
+        // and none carried a scope flag the client does not have.
+        await Assert.That(commands.Invocations.Count).IsGreaterThanOrEqualTo(2);
+
+        foreach (var environment in commands.Environments)
+        {
+            await Assert.That(environment.TryGetValue(CodexRegistration.HomeVariable, out var forced) ? forced : "<none>")
+                .IsEqualTo(home);
+        }
+
+        await Assert.That(commands.Invocations.Any(call => call.Contains("--scope"))).IsFalse();
+    }
+
+    /// <summary>
+    /// Registering over a project entry of ours removes it first, so a stale one
+    /// is actually rewritten and not reported as written.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The failure this closes was in the hand-written path the registrar
+    /// replaced.</b> Claude Code's <c>mcp add --scope project</c> over an existing
+    /// entry exits 1 with <i>already exists</i>, which the client's own predicate
+    /// reads as success -- so a person who clicked register to repair a stale
+    /// project entry was told the file had been written and was left with the
+    /// stale path. The user-scope install has removed first since 2026-09-16
+    /// (<c>Reassert</c>); the project path does the same now.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by deleting the remove-first: the report
+    /// still said Registered, and the only verb the client was asked was the
+    /// add that meets <i>already exists</i>.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ARegisterOverAProjectEntryOfOursRemovesItBeforeWriting()
+    {
+        using var install = ScratchDirectory.Create("project-reassert");
+        using var project = ScratchDirectory.Create("project-reassert-repo");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+
+        // Ours, and stale: the entry names the configuration APP, which is under
+        // this install root and is not the MCP server -- the state every
+        // pre-split registration is in.
+        await File.WriteAllTextAsync(
+            McpRegistryView.ProjectConfigFile(project.Path),
+            new System.Text.Json.Nodes.JsonObject
+            {
+                ["mcpServers"] = new System.Text.Json.Nodes.JsonObject
+                {
+                    ["browserai"] = new System.Text.Json.Nodes.JsonObject { ["command"] = image },
+                },
+            }.ToJsonString());
+
+        var commands = new FakeClientCommandLine();
+        commands.Registered["browserai"] = image;
+
+        var report = McpRegistrar.ApplyToProject(
+            RegistrationClient.ClaudeCode, register: true, project.Path, image, commands, NullLogger.Instance);
+
+        await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(commands.Verbs).IsEquivalentTo(RemoveThenAdd);
+        await Assert.That(commands.Registered["browserai"]).IsEqualTo(server);
+
+        // Both calls ran IN the repository, which is Claude Code's scope lever:
+        // a call that ran anywhere else would have written somewhere else.
+        await Assert.That(commands.Directories.All(directory => directory == project.Path)).IsTrue();
+        await Assert.That(commands.Invocations.All(call => call.Contains("project"))).IsTrue();
+    }
+
+    /// <summary>
+    /// A project unregister refuses an entry this install did not write, and
+    /// says so when there is nothing to remove.
+    /// </summary>
+    /// <remarks>
+    /// <b>The same gate the user scope has, now applied to a file in somebody's
+    /// repository.</b> An entry naming another install's server is that install's
+    /// to remove, and removing it would be this product uninstalling another one
+    /// from a repository its owner committed.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AProjectUnregisterRefusesAForeignEntryAndSaysWhenThereIsNothing()
+    {
+        using var install = ScratchDirectory.Create("project-unregister");
+        using var project = ScratchDirectory.Create("project-unregister-repo");
+        using var elsewhere = ScratchDirectory.Create("project-unregister-other");
+
+        var image = InstalledLayout.Create(install.Path);
+        _ = InstalledLayout.Create(elsewhere.Path);
+
+        var home = CodexRegistration.ProjectHome(project.Path);
+        _ = Directory.CreateDirectory(home);
+
+        var commands = new FakeClientCommandLine { Executable = @"C:\codex\codex.exe" };
+        commands.CodexHomes[home] = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["browserai"] = InstalledLayout.ServerIn(elsewhere.Path),
+        };
+
+        var refused = McpRegistrar.ApplyToProject(
+            RegistrationClient.Codex, register: false, project.Path, image, commands, NullLogger.Instance);
+
+        await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
+        await Assert.That(refused.Detail).Contains("never adopts, overwrites or removes");
+        await Assert.That(commands.CodexHomes[home].ContainsKey("browserai")).IsTrue();
+        await Assert.That(commands.Verbs.Contains("remove")).IsFalse();
+
+        // Nothing there: said, and nothing is run to remove it.
+        commands.CodexHomes[home].Clear();
+        commands.Invocations.Clear();
+
+        var nothing = McpRegistrar.ApplyToProject(
+            RegistrationClient.Codex, register: false, project.Path, image, commands, NullLogger.Instance);
+
+        await Assert.That(nothing.Status).IsEqualTo(RegistrationStatus.NothingToUnregister);
+        await Assert.That(commands.Verbs.Contains("remove")).IsFalse();
+    }
+
+    /// <summary>
+    /// The residue a Codex project run leaves is removed innermost first and
+    /// only while it is empty.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Measured 2026-09-24 at 08:20Z @ codex-cli 0.155.0-alpha.9.2</b>,
+    /// with <c>CODEX_HOME</c> at a scratch project: an add, a list and a remove
+    /// left <c>tmp\</c> and <c>tmp\arg0\</c>, BOTH DIRECTORIES and both empty. The
+    /// code written before that measurement called <c>File.Delete</c> on the
+    /// path, which throws on a directory, so it would have left the residue on
+    /// every run while looking as though it removed it.
+    /// </para>
+    /// <para>
+    /// <b>Only while empty, because a <c>tmp</c> with somebody else's file in it
+    /// is not ours.</b> The second half plants one and requires it to survive.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by restoring the <c>File.Delete</c>: the empty
+    /// <c>arg0</c> directory survived the run.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheResidueOfACodexProjectRunIsRemovedOnlyWhileItIsEmpty()
+    {
+        using var install = ScratchDirectory.Create("codex-residue");
+        using var project = ScratchDirectory.Create("codex-residue-repo");
+
+        var image = InstalledLayout.Create(install.Path);
+        var home = CodexRegistration.ProjectHome(project.Path);
+        var residue = RegistrationClient.Codex.ProjectResidue(project.Path)!;
+        var tmp = Path.GetDirectoryName(residue)!;
+
+        // The shape the real client left: two empty directories.
+        _ = Directory.CreateDirectory(residue);
+
+        var commands = new FakeClientCommandLine { Executable = @"C:\codex\codex.exe" };
+
+        _ = McpRegistrar.ApplyToProject(
+            RegistrationClient.Codex, register: true, project.Path, image, commands, NullLogger.Instance);
+
+        await Assert.That(Directory.Exists(residue)).IsFalse();
+        await Assert.That(Directory.Exists(tmp)).IsFalse();
+
+        // The home itself stays: it is where the client's own file lives.
+        await Assert.That(Directory.Exists(home)).IsTrue();
+
+        // And a tmp with anything else in it keeps that thing, and itself.
+        _ = Directory.CreateDirectory(residue);
+        var keep = Path.Combine(tmp, "somebody-elses.txt");
+        await File.WriteAllTextAsync(keep, "not ours");
+
+        _ = McpRegistrar.ApplyToProject(
+            RegistrationClient.Codex, register: true, project.Path, image, commands, NullLogger.Instance);
+
+        await Assert.That(Directory.Exists(residue)).IsFalse();
+        await Assert.That(File.Exists(keep)).IsTrue();
     }
 
     /// <summary>One <c>mcp list --json</c> answer, as a bare array.</summary>

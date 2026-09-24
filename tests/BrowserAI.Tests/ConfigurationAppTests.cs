@@ -33,33 +33,50 @@ namespace BrowserAI.Tests;
 internal sealed class ConfigurationAppTests
 {
     /// <summary>
-    /// The status sentence names the four states a person can be in, and never
-    /// offers to change one it does not own.
+    /// Each client's status sentence names the states a person can be in, and
+    /// never offers to change one it does not own.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>PER CLIENT SINCE 2026-09-24, and the one real change is
+    /// <c>MayRegister</c> over an entry that is already ours and present.</b> It
+    /// used to be false there, which meant a person whose registration was
+    /// correct had no way to make BrowserAI rewrite it -- the re-register
+    /// affordance the research found missing. It is true now, the LABEL is what
+    /// changes with the state, and the two states that must still offer nothing
+    /// are unchanged: foreign is somebody else's and unreadable is nobody's
+    /// business to write over.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheStatusSentenceAndTheOfferedActionsFollowTheState()
+    public async Task TheStatusSentenceAndTheOfferedActionsFollowTheStatePerClient()
     {
         using var install = ScratchDirectory.Create("app-state");
 
         var app = InstalledLayout.Create(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
 
-        var absent = StateFor(install.Path, server, null, RegistrationOwnership.Absent);
+        var absent = Claude(StateFor(install.Path, server, null, RegistrationOwnership.Absent));
 
-        await Assert.That(absent.StatusSentence()).Contains("Not registered");
+        await Assert.That(absent.StatusSentence()).Contains("Not registered for your Claude Code projects");
+        await Assert.That(absent.ShortStatus).IsEqualTo("not registered");
         await Assert.That(absent.MayRegister).IsTrue();
         await Assert.That(absent.MayUnregister).IsFalse();
 
-        var ours = StateFor(install.Path, server, server, RegistrationOwnership.OursAndPresent);
+        var ours = Claude(StateFor(install.Path, server, server, RegistrationOwnership.OursAndPresent));
 
         await Assert.That(ours.StatusSentence()).Contains("Registered for all your Claude Code projects");
-        await Assert.That(ours.MayRegister).IsFalse();
+        await Assert.That(ours.ShortStatus).IsEqualTo("registered");
         await Assert.That(ours.MayUnregister).IsTrue();
 
-        var stale = StateFor(install.Path, server, server + ".gone", RegistrationOwnership.OursAndStale);
+        // ⚠️ THE RE-REGISTER AFFORDANCE. Offered over an entry that is already
+        // correct, because the entry is ours and a person who edited it by hand
+        // needs a way back to what BrowserAI writes.
+        await Assert.That(ours.MayRegister).IsTrue();
+
+        var stale = Claude(StateFor(install.Path, server, server + ".gone", RegistrationOwnership.OursAndStale));
 
         await Assert.That(stale.StatusSentence()).Contains("not there any more");
+        await Assert.That(stale.ShortStatus).IsEqualTo("needs repair");
         await Assert.That(stale.MayRegister).IsTrue();
         await Assert.That(stale.MayUnregister).IsFalse();
 
@@ -68,9 +85,9 @@ internal sealed class ConfigurationAppTests
         // IS there and is the configuration app, so "which is not there any
         // more" would be a sentence a person could check and find false. The
         // offer is the same one either way: registering again re-points it.
-        var wrongBinary = StateFor(install.Path, server, app, RegistrationOwnership.OursAndStale);
+        var wrongBinary = Claude(StateFor(install.Path, server, app, RegistrationOwnership.OursAndStale));
 
-        await Assert.That(wrongBinary.StatusSentence()).Contains("Registered to the wrong binary");
+        await Assert.That(wrongBinary.StatusSentence()).Contains("to the wrong binary");
         await Assert.That(wrongBinary.StatusSentence()).Contains(app);
         await Assert.That(wrongBinary.StatusSentence()).DoesNotContain("not there any more");
         await Assert.That(wrongBinary.MayRegister).IsTrue();
@@ -79,18 +96,21 @@ internal sealed class ConfigurationAppTests
         // ⚠️ THE ONE THAT MUST NOT OFFER ANYTHING. A foreign entry is another
         // BrowserAI's, and neither registering over it nor removing it is this
         // product's to do.
-        var foreign = StateFor(install.Path, server, @"D:\someone\else\current\BrowserAI.Server.exe", RegistrationOwnership.Foreign);
+        var foreign = Claude(StateFor(install.Path, server, @"D:\someone\else\current\BrowserAI.Server.exe", RegistrationOwnership.Foreign));
 
-        await Assert.That(foreign.StatusSentence()).Contains("Another BrowserAI is registered at");
+        await Assert.That(foreign.StatusSentence()).Contains("Another BrowserAI is registered with Claude Code at");
         await Assert.That(foreign.StatusSentence()).Contains(@"D:\someone\else");
+        await Assert.That(foreign.ShortStatus).IsEqualTo("another BrowserAI");
         await Assert.That(foreign.MayRegister).IsFalse();
         await Assert.That(foreign.MayUnregister).IsFalse();
 
         // No client at all: said before anything about registration, because it
-        // is the thing a person can act on.
+        // is the thing a person can act on. And it is said about THAT client, not
+        // about the machine, which is the correction two clients force.
         var clientless = ours with { ClientPath = null };
 
-        await Assert.That(clientless.StatusSentence()).Contains("Claude Code was not found");
+        await Assert.That(clientless.StatusSentence()).Contains("Claude Code was not found on this machine");
+        await Assert.That(clientless.ShortStatus).IsEqualTo("not found");
         await Assert.That(clientless.MayRegister).IsFalse();
         await Assert.That(clientless.MayUnregister).IsFalse();
 
@@ -102,8 +122,158 @@ internal sealed class ConfigurationAppTests
         };
 
         await Assert.That(unreadable.StatusSentence()).Contains("unknown");
+        await Assert.That(unreadable.ShortStatus).IsEqualTo("unknown");
         await Assert.That(unreadable.MayRegister).IsFalse();
         await Assert.That(unreadable.MayUnregister).IsFalse();
+    }
+
+    /// <summary>
+    /// The two clients are told apart everywhere a person can see or act, and
+    /// neither one's state reaches the other's actions.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's third ask, and it is a requirement and not an
+    /// implementation detail:</b> <i>"I easy I want separate control over system
+    /// level registration between codex and claude."</i> What this holds is the
+    /// assertable half of it -- every link's identifier resolves to exactly one
+    /// client, every label names that client, and a state that offers an action
+    /// for one offers nothing for the other.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by giving both clients the same identifier
+    /// block, which is what a window with one register button and a client
+    /// dropdown would produce.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task EveryRegistrationActionBelongsToExactlyOneNamedClient()
+    {
+        using var install = ScratchDirectory.Create("app-per-client");
+
+        _ = InstalledLayout.Create(install.Path);
+
+        var server = InstalledLayout.ServerIn(install.Path);
+
+        // Claude Code registered, Codex not: one client offers unregister and the
+        // other offers register, and nothing offers both.
+        var state = StateFor(
+            install.Path,
+            server,
+            [
+                ClientFor(RegistrationClient.ClaudeCode, server, RegistrationOwnership.OursAndPresent),
+                ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
+            ]);
+
+        var commands = ConfigurationDialog.Commands(state, updateAvailable: null);
+
+        // Every per-client identifier resolves to one client and one verb, and
+        // the label names that client.
+        foreach (var command in commands)
+        {
+            if (ConfigurationDialog.Command.ClientCommandOf(command.Id, state.Clients.Count) is not { } resolved)
+            {
+                continue;
+            }
+
+            await Assert.That(command.Text).Contains(state.Clients[resolved.Index].Client.DisplayName);
+        }
+
+        var unregisterClaude = ConfigurationDialog.Command.For(ConfigurationDialog.Command.Unregister, 0);
+        var unregisterCodex = ConfigurationDialog.Command.For(ConfigurationDialog.Command.Unregister, 1);
+        var registerCodex = ConfigurationDialog.Command.For(ConfigurationDialog.Command.Register, 1);
+
+        await Assert.That(commands.Any(command => command.Id == unregisterClaude)).IsTrue();
+        await Assert.That(commands.Any(command => command.Id == unregisterCodex)).IsFalse();
+        await Assert.That(commands.Any(command => command.Id == registerCodex)).IsTrue();
+
+        // The identifiers are distinct across clients AND across verbs, which is
+        // the property a shared block would break.
+        await Assert.That(commands.Select(command => command.Id).Distinct().Count()).IsEqualTo(commands.Count);
+
+        // ⚠️ AND THE BLOCKS ARE WIDE ENOUGH FOR THE CLIENTS THERE ARE. A tenth
+        // client would make one verb's last identifier equal the next verb's
+        // first, and the link would fire the wrong action with nothing to say so.
+        await Assert.That(RegistrationClient.All.Count).IsLessThanOrEqualTo(ConfigurationDialog.Command.Slots);
+
+        // Both clients are named in the body whether or not they have an action,
+        // so "Codex is fine" and "BrowserAI has never heard of Codex" are not the
+        // same window.
+        var page = ConfigurationDialog.Page(state, Occasion.Ordinary);
+
+        foreach (var client in RegistrationClient.All)
+        {
+            await Assert.That(page.Content).Contains(client.DisplayName);
+        }
+
+        await Assert.That(page.Instruction).Contains("Claude Code: registered");
+        await Assert.That(page.Instruction).Contains("Codex: not registered");
+    }
+
+    /// <summary>
+    /// A project registration can be removed, and the link for it appears only
+    /// when there is one of ours to remove.
+    /// </summary>
+    /// <remarks>
+    /// <b>The gap this closes is named in the decision:</b> project-scope
+    /// unregister did not exist for either client. It is offered without a folder
+    /// picker, because the folder is the one the walk already found, and naming it
+    /// in the link is what stops the action being pointed somewhere else.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task RemovingAProjectRegistrationIsOfferedOnlyWhereThereIsOneOfOurs()
+    {
+        using var install = ScratchDirectory.Create("app-project-unregister");
+
+        _ = InstalledLayout.Create(install.Path);
+
+        var server = InstalledLayout.ServerIn(install.Path);
+        var folder = install.Path;
+
+        var ours = ClientFor(
+            RegistrationClient.ClaudeCode,
+            server,
+            RegistrationOwnership.OursAndPresent,
+            projectDirectory: folder,
+            projectScope: new RegistrationView(
+                RegistrationScope.Project,
+                RegistrationClient.ClaudeCode.ProjectFileIn(folder),
+                server,
+                RegistrationOwnership.OursAndPresent,
+                null));
+
+        await Assert.That(ours.MayUnregisterFromProject).IsTrue();
+
+        // Foreign: the entry is another install's, in somebody's repository, and
+        // deleting it would be this product uninstalling another.
+        var foreign = ours with
+        {
+            ProjectScope = ours.ProjectScope! with { Ownership = RegistrationOwnership.Foreign },
+        };
+
+        await Assert.That(foreign.MayUnregisterFromProject).IsFalse();
+
+        // Nothing found at all, which is what the Start Menu's working directory
+        // produces.
+        var none = ours with { ProjectScope = null, ProjectDirectory = null };
+
+        await Assert.That(none.MayUnregisterFromProject).IsFalse();
+
+        var state = StateFor(install.Path, server, [ours, ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent)]);
+        var commands = ConfigurationDialog.Commands(state, updateAvailable: null);
+        var remove = ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromProject, 0);
+
+        var link = commands.Single(command => command.Id == remove);
+
+        await Assert.That(link.Text).Contains("Claude Code");
+        await Assert.That(link.Text).Contains(RegistrationClient.ClaudeCode.ProjectFileIn(folder));
+
+        // And not offered for the client that has none.
+        await Assert.That(commands.Any(command =>
+                command.Id == ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromProject, 1)))
+            .IsFalse();
     }
 
     /// <summary>
@@ -135,12 +305,20 @@ internal sealed class ConfigurationAppTests
 
         // Not on an ordinary open: it would be a sentence about something that
         // did not just happen.
-        await Assert.That(ordinary.Content).DoesNotContain(ConfigurationDialog.RestartHint);
+        await Assert.That(ordinary.Content).DoesNotContain("will not see this change");
 
         var first = ConfigurationDialog.Page(state, Occasion.FirstRun);
 
         await Assert.That(first.Content).Contains("BrowserAI is installed and has registered itself");
-        await Assert.That(first.Content).Contains(ConfigurationDialog.RestartHint);
+        await Assert.That(first.Content).Contains("will not see it until they are started again");
+
+        // The hint a change is followed by is the CLIENT's own sentence, because
+        // the unit of staleness is a session for one client and a thread for the
+        // other, and a note about the wrong one is advice a person cannot act on.
+        await Assert.That(ConfigurationDialog.RestartHintFor(RegistrationClient.ClaudeCode))
+            .IsEqualTo("Claude Code reads its MCP configuration when a session starts. Sessions already open will not see this change until they are restarted.");
+        await Assert.That(ConfigurationDialog.RestartHintFor(RegistrationClient.Codex)).Contains("new thread");
+        await Assert.That(ConfigurationDialog.RestartHintFor(RegistrationClient.Codex)).DoesNotContain("session");
 
         var updated = ConfigurationDialog.Page(state, Occasion.AfterUpdate);
 
@@ -254,23 +432,44 @@ internal sealed class ConfigurationAppTests
         await Assert.That(root.GetProperty("installRoot").GetString()).IsEqualTo(install.Path);
         await Assert.That(root.GetProperty("dataRoot").GetString()).IsEqualTo(state.DataRoot);
         await Assert.That(root.GetProperty("serverCommand").GetString()).IsEqualTo(server);
-        await Assert.That(root.GetProperty("clientFound").GetBoolean()).IsTrue();
 
         // The one sentence the window leads with, in the file that stands in for
         // the window.
         await Assert.That(root.GetProperty("status").GetString()).IsEqualTo(state.StatusSentence());
 
-        var user = root.GetProperty("userScope");
+        // ONE ENTRY PER CLIENT SINCE 2026-09-24, and nothing at the top level
+        // describes a client any more: this file is what somebody attaches when
+        // they say it is not working, and with two clients the useful sentence is
+        // almost always about which ONE of them is wrong.
+        var clients = root.GetProperty("clients").EnumerateArray().ToList();
+
+        await Assert.That(clients.Count).IsEqualTo(RegistrationClient.All.Count);
+
+        for (var index = 0; index < clients.Count; index++)
+        {
+            await Assert.That(clients[index].GetProperty("key").GetString())
+                .IsEqualTo(RegistrationClient.All[index].Key);
+            await Assert.That(clients[index].GetProperty("displayName").GetString())
+                .IsEqualTo(RegistrationClient.All[index].DisplayName);
+            await Assert.That(clients[index].GetProperty("status").GetString())
+                .IsEqualTo(state.Clients[index].StatusSentence());
+
+            // Absent is a null, not a missing property: a reader that has to
+            // tell "no project file" from "this build did not write the field"
+            // has nothing to go on when the field is simply gone.
+            await Assert.That(clients[index].GetProperty("projectScope").ValueKind).IsEqualTo(JsonValueKind.Null);
+        }
+
+        var first = clients[0];
+
+        await Assert.That(first.GetProperty("clientFound").GetBoolean()).IsTrue();
+
+        var user = first.GetProperty("userScope");
 
         await Assert.That(user.GetProperty("scope").GetString()).IsEqualTo("User");
         await Assert.That(user.GetProperty("command").GetString()).IsEqualTo(server);
         await Assert.That(user.GetProperty("ownership").GetString()).IsEqualTo("OursAndPresent");
         await Assert.That(user.GetProperty("unreadable").ValueKind).IsEqualTo(JsonValueKind.Null);
-
-        // Absent is a null, not a missing property: a reader that has to
-        // tell "no project file" from "this build did not write the field" has
-        // nothing to go on when the field is simply gone.
-        await Assert.That(root.GetProperty("projectScope").ValueKind).IsEqualTo(JsonValueKind.Null);
 
         // And the argument is only honoured when it carries a path.
         await Assert.That(App.Program.ReportPathFrom(["--report", "x"])).IsEqualTo("x");
@@ -297,23 +496,35 @@ internal sealed class ConfigurationAppTests
         // What is asserted is the property the walk has -- the NEAREST file
         // wins -- which is machine-independent, and that nothing inside the
         // scratch tree is claimed before anything is planted there.
-        var above = AppState.NearestProject(deep.FullName, scratch.Path);
+        var above = ClientState.NearestProject(RegistrationClient.ClaudeCode, deep.FullName);
 
         if (above is not null)
         {
-            await Assert.That(above.File.StartsWith(scratch.Path, StringComparison.OrdinalIgnoreCase)).IsFalse();
+            await Assert.That(above.StartsWith(scratch.Path, StringComparison.OrdinalIgnoreCase)).IsFalse();
         }
 
         await File.WriteAllTextAsync(
             McpRegistryView.ProjectConfigFile(Path.Combine(scratch.Path, "a")),
             "{ \"mcpServers\": { \"browserai\": { \"command\": \"x\" } } }");
 
-        var found = AppState.NearestProject(deep.FullName, scratch.Path);
+        var found = ClientState.NearestProject(RegistrationClient.ClaudeCode, deep.FullName);
 
-        await Assert.That(found).IsNotNull();
-        await Assert.That(found!.Scope).IsEqualTo(RegistrationScope.Project);
-        await Assert.That(found.Command).IsEqualTo("x");
-        await Assert.That(found.File).IsEqualTo(McpRegistryView.ProjectConfigFile(Path.Combine(scratch.Path, "a")));
+        await Assert.That(found).IsEqualTo(Path.Combine(scratch.Path, "a"));
+
+        // The walk looks for the CLIENT's own file, so a folder carrying one
+        // client's project registration is not a project registration for the
+        // other -- which is the thing a shared marker would get wrong in a
+        // repository that registers only one of them.
+        await Assert.That(ClientState.NearestProject(RegistrationClient.Codex, deep.FullName))
+            .IsNotEqualTo(Path.Combine(scratch.Path, "a"));
+
+        Directory.CreateDirectory(Path.Combine(scratch.Path, "a", "b", ".codex"));
+        await File.WriteAllTextAsync(
+            RegistrationClient.Codex.ProjectFileIn(Path.Combine(scratch.Path, "a", "b")),
+            "[mcp_servers.browserai]\ncommand = \"x\"\n");
+
+        await Assert.That(ClientState.NearestProject(RegistrationClient.Codex, deep.FullName))
+            .IsEqualTo(Path.Combine(scratch.Path, "a", "b"));
     }
 
     /// <summary>
@@ -726,10 +937,27 @@ internal sealed class ConfigurationAppTests
     }
 
     /// <summary>
-    /// A state with the given registration, and everything else read from this
-    /// machine.
+    /// A state with the given registration for Claude Code and an unregistered
+    /// Codex beside it.
     /// </summary>
+    /// <remarks>
+    /// <b>Two clients in every state since 2026-09-24</b>, because one is no
+    /// longer a shape the product can be in: <c>AppState.Read</c> builds a
+    /// <c>ClientState</c> for every member of <c>RegistrationClient.All</c>, and a
+    /// helper that built one would let an arm pass against a window nobody can
+    /// open.
+    /// </remarks>
     private static AppState StateFor(string installRoot, string server, string? registered, RegistrationOwnership ownership) =>
+        StateFor(
+            installRoot,
+            server,
+            [
+                ClientFor(RegistrationClient.ClaudeCode, registered, ownership),
+                ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
+            ]);
+
+    /// <summary>A state carrying the given clients exactly.</summary>
+    private static AppState StateFor(string installRoot, string server, IReadOnlyList<ClientState> clients) =>
         new()
         {
             Version = "9.9.9",
@@ -737,8 +965,30 @@ internal sealed class ConfigurationAppTests
             DataRoot = Path.Combine(installRoot, "data"),
             ServerCommand = server,
             ServerRefusal = null,
-            UserScope = new RegistrationView(RegistrationScope.User, "<constructed>", registered, ownership, null),
-            ProjectScope = null,
-            ClientPath = @"C:\double\claude.exe",
+            Clients = clients,
         };
+
+    /// <summary>One client's state, constructed and not read.</summary>
+    private static ClientState ClientFor(
+        RegistrationClient who,
+        string? registered,
+        RegistrationOwnership ownership,
+        string? clientPath = @"C:\double\client.exe",
+        string? projectDirectory = null,
+        RegistrationView? projectScope = null) =>
+        new()
+        {
+            Client = who,
+            ClientPath = clientPath,
+            ServerComposed = true,
+            UserScope = new RegistrationView(RegistrationScope.User, "<constructed>", registered, ownership, null),
+            ProjectDirectory = projectDirectory,
+            ProjectScope = projectScope,
+        };
+
+    /// <summary>The Claude Code half of a state, which is what most arms are about.</summary>
+    private static ClientState Claude(AppState state) => state.For(RegistrationClient.ClaudeCode.Key);
+
+    /// <summary>The Codex half of a state.</summary>
+    private static ClientState Codex(AppState state) => state.For(RegistrationClient.Codex.Key);
 }

@@ -53,7 +53,79 @@ internal sealed record RegistrationClient
     public required Func<IReadOnlyList<string>> RemoveArguments { get; init; }
 
     /// <summary>What is registered at user scope, and whose it is.</summary>
-    public required Func<IRegistrationCommand, string, string?, RegistrationView> UserView { get; init; }
+    /// <remarks>
+    /// ⚠️ <b>The client path is nullable, and that is not tidiness -- 2026-09-24.</b>
+    /// Claude Code's reading is a file this product opens, so it answers with or
+    /// without a client on the machine. Codex's reading IS the client, so with no
+    /// binary there is nothing to ask and the honest answer is <i>unknown</i>,
+    /// never <i>nothing is registered</i>. The configuration window reads
+    /// this for every client whether or not it found one, so the difference has
+    /// to be expressible here.
+    /// </remarks>
+    public required Func<IRegistrationCommand, string?, string?, RegistrationView> UserView { get; init; }
+
+    /// <summary>
+    /// The sentence a person is told after a registration changed, in this
+    /// client's own terms.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Per client because the unit of staleness differs.</b> Claude Code
+    /// reads its MCP configuration when a <b>session</b> starts. Codex does not
+    /// pick up a change inside a <b>thread</b> that is already open: an edit to
+    /// its <c>config.toml</c> on disk left a live thread unchanged 3/3 (W1-W3 in
+    /// <c>docs/evidence/2026-09-23-client-reconnect</c>), while a new thread in the
+    /// same process dialled fresh 3/3 (N1-N3). Telling a Codex user to restart a
+    /// session is telling them to do something their client has no word for.
+    /// </remarks>
+    public required string RestartHint { get; init; }
+
+    /// <summary>What a person is told after a project registration is written.</summary>
+    /// <remarks>
+    /// <b>Two different conditions, and the Codex one is a caveat and not a
+    /// courtesy.</b> Claude Code asks each person to approve a project server
+    /// once. Codex reads a project's own configuration only in a project that has
+    /// been trusted, so a registration written into an untrusted folder is a file
+    /// that exists and does nothing.
+    /// </remarks>
+    public required string ProjectHint { get; init; }
+
+    /// <summary>
+    /// The project registration's file, relative to the repository root.
+    /// </summary>
+    /// <remarks>
+    /// <b>One member, two uses:</b> it is what a dialog names to a person, and it
+    /// is the marker an upward walk looks for to decide whether a folder carries
+    /// a project registration at all. A second member for the second use would be
+    /// two answers to <i>where does this client keep it</i>.
+    /// </remarks>
+    public required string ProjectFileName { get; init; }
+
+    /// <summary>
+    /// The spelling of this install's server path that resolves on every
+    /// machine, for a project file meant to be committed, or
+    /// <see langword="null"/> when this client offers no such spelling.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Per client because only one of them is known to expand a variable
+    /// in a server command -- 2026-09-24.</b> Claude Code expands <c>${VAR}</c>
+    /// inside <c>.mcp.json</c>, which is the only reason
+    /// <see cref="McpClientRegistration.PortableCommandFor"/> is usable. Codex's
+    /// own documentation of <c>mcp_servers.&lt;id&gt;.command</c> says nothing of
+    /// expansion, and a committed command that expands on one client and not the
+    /// other is a path that resolves to nothing on the second. So a Codex project
+    /// entry carries this machine's absolute path, and the window says so.
+    /// </remarks>
+    public required Func<string, string?> PortableCommandFor { get; init; }
+
+    /// <summary>The project registration's file, under a named repository.</summary>
+    /// <param name="projectDirectory">The repository root.</param>
+    /// <returns>The absolute path of the file whose existence means this folder has one.</returns>
+    public string ProjectFileIn(string projectDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectDirectory);
+
+        return Path.Combine(projectDirectory, ProjectFileName);
+    }
 
     /// <summary>Whether an add that failed means it was already there.</summary>
     public required Func<int, string, bool> MeansAlreadyRegistered { get; init; }
@@ -116,6 +188,12 @@ internal sealed record RegistrationClient
         AddArguments = McpClientRegistration.AddArguments,
         RemoveArguments = McpClientRegistration.RemoveArguments,
         UserView = (_, _, installRoot) => McpRegistryView.User(installRoot),
+        RestartHint =
+            "Claude Code reads its MCP configuration when a session starts. Sessions already open will not see this change until they are restarted.",
+        ProjectHint =
+            "Claude Code will ask you to approve this server the first time you open a session in that folder.",
+        ProjectFileName = McpRegistryView.ProjectConfigFileName,
+        PortableCommandFor = McpClientRegistration.PortableCommandFor,
         MeansAlreadyRegistered = McpClientRegistration.MeansAlreadyRegistered,
         MeansNothingToRemove = McpClientRegistration.MeansNothingToRemove,
         ManualCommandFor = McpClientRegistration.ManualCommandFor,
@@ -140,8 +218,15 @@ internal sealed record RegistrationClient
         NotFoundDetail = CodexRegistration.NotFoundDetail,
         AddArguments = CodexRegistration.AddArguments,
         RemoveArguments = CodexRegistration.RemoveArguments,
-        UserView = (commands, client, installRoot) =>
-            CodexRegistryView.Read(commands, client, installRoot, home: null, RegistrationScope.User),
+        UserView = (commands, client, installRoot) => client is { Length: > 0 }
+            ? CodexRegistryView.Read(commands, client, installRoot, home: null, RegistrationScope.User)
+            : CodexRegistryView.WithoutAClient(RegistrationScope.User, home: null),
+        RestartHint =
+            "Codex does not pick up this change in a thread that is already open. Start a new thread to use it.",
+        ProjectHint =
+            "Codex reads a project's own configuration only in a project you have trusted, so this entry does nothing in a folder Codex has not been trusted in.",
+        ProjectFileName = Path.Combine(CodexRegistration.ProjectDirectoryName, CodexRegistration.ConfigFileName),
+        PortableCommandFor = _ => null,
         MeansAlreadyRegistered = CodexRegistration.MeansAlreadyRegistered,
         MeansNothingToRemove = CodexRegistration.MeansNothingToRemove,
         ManualCommandFor = CodexRegistration.ManualCommandFor,

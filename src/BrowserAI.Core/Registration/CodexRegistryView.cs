@@ -84,6 +84,31 @@ internal static class CodexRegistryView
         return Parse(outcome.Output, where, installRoot, scope);
     }
 
+    /// <summary>
+    /// What can be said about Codex's configuration when there is no Codex to
+    /// ask.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b><c>Unreadable</c> and NOT <c>Absent</c>, which is the same
+    /// distinction the rest of this type is built on.</b> Nothing was read, so
+    /// nothing is known -- and a reader that answered <i>nothing is registered</i>
+    /// would let the configuration window offer to register over whatever is
+    /// actually in that file. <i>Added 2026-09-24 with the window's per-client
+    /// rows, which read every client whether or not one was found.</i>
+    /// </remarks>
+    /// <param name="scope">Which scope this reading would have been of.</param>
+    /// <param name="home">The <c>CODEX_HOME</c> it would have asked about, or null for the user's own.</param>
+    /// <returns>A reading that establishes nothing, and says so.</returns>
+    public static RegistrationView WithoutAClient(RegistrationScope scope, string? home) =>
+        new(
+            scope,
+            home is { Length: > 0 }
+                ? Path.Combine(home, CodexRegistration.ConfigFileName)
+                : $"{CodexRegistration.HomeVariable}'s own {CodexRegistration.ConfigFileName}",
+            null,
+            RegistrationOwnership.Absent,
+            $"No '{CodexRegistration.ClientExecutable}' was found, so what is registered in Codex is unknown. This is not the same as nothing being registered.");
+
     /// <summary>The environment one call runs under.</summary>
     /// <remarks>
     /// <b>Only the one variable, and only when a home was named.</b> A project

@@ -113,6 +113,13 @@ internal static class CodexRegistration
     /// <c>tmp\arg0</c> under it. It is harmless and it is not ours to leave in
     /// somebody's repository, so it is cleaned up and named here, and not left for
     /// whoever next runs <c>git status</c>.
+    /// <para>
+    /// ⚠️ <b>Both halves of that path are DIRECTORIES, and both were empty --
+    /// measured again 2026-09-24 at 08:20Z</b> against a scratch project, after an
+    /// earlier run the same day had not produced them at all. So it is removed
+    /// innermost first and only while empty; see
+    /// <see cref="McpRegistrar.ApplyToProject"/>.
+    /// </para>
     /// </remarks>
     public static string ProjectResidue { get; } = Path.Combine("tmp", "arg0");
 

@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using BrowserAI.App.Interop;
 using BrowserAI.App;
+using BrowserAI.Registration;
 using BrowserAI.Runtime;
 using BrowserAI.Tests.Harness;
 using W = Windows.Win32;
@@ -284,12 +285,24 @@ internal sealed class TaskDialogLayoutTests
 
         var report = Path.Combine(output.Path, "report.json");
 
-        using var process = Process.Start(new ProcessStartInfo(PublishedSlice.AppExecutable)
+        var start = new ProcessStartInfo(PublishedSlice.AppExecutable)
         {
             ArgumentList = { "--report", report },
             UseShellExecute = false,
             CreateNoWindow = true,
-        });
+        };
+
+        // ⚠️ CODEX_HOME ON THE CHILD, AND ONLY ON THE CHILD -- 2026-09-24. Since
+        // the window reads every client, `--report` runs `codex mcp list --json`,
+        // which reads whichever configuration CODEX_HOME names. Reading the
+        // maintainer's own is not something an arm should do, and starting his
+        // CLI against it is how a file nobody meant to touch acquires a log
+        // directory. Set on the child's environment and never on this process's,
+        // so no other arm inherits it and this file needs no [NotInParallel].
+        start.Environment[CodexRegistration.HomeVariable] =
+            Directory.CreateDirectory(Path.Combine(output.Path, "codex")).FullName;
+
+        using var process = Process.Start(start);
 
         await Assert.That(process is null ? "the published app would not start" : string.Empty).IsEmpty();
 
