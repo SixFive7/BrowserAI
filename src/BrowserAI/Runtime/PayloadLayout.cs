@@ -69,7 +69,7 @@ internal sealed class PayloadLayout(string? root = null)
     /// <see cref="ServerRegistryReap"/> starts at a session close, and a prune
     /// nobody asked for must never be a reason a session refuses to open -- so its
     /// absence is a record in the process log and nothing more. <b>It is also an
-    /// internal module rather than a documented entry point</b> (the package's
+    /// internal module and not a documented entry point</b> (the package's
     /// <c>exports</c> map names four subpaths and this is not one of them, which
     /// only gates a require by package name and not the absolute one used here),
     /// so a rename upstream is exactly what the re-verification row keyed on the

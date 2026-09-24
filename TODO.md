@@ -88,23 +88,6 @@ is named as candidates and says so.
       decide the layout are measured in
       [kb](kb/windows/notifications.md).
 
-- [ ] **T7: start Playwright's own `list` at session close, detached.** The
-      decision is
-      [T7](DECISIONS.md#processes-browsers-and-session-modes), taken 2026-09-24.
-      **One call, from the payload, never awaited, no throttle and no concurrency
-      arm.** It is the only code upstream has that unlinks a dead descriptor, and
-      nothing calls it today.
-
-      **What the item owes beyond the call itself**: the kb entry keeps the
-      measurements it already carries and gains what the implementation establishes
-      -- what the first call costs on a real backlog, which was measured at
-      **141,616 ms over 3,762 entries** and is milliseconds afterwards -- and
-      [the descriptor hazard row](HAZARDS.md#hazard-index) closes when the call
-      exists, not when the decision was taken. ⚠️ **The re-verification row is keyed
-      on the `playwright-core` version** and the fragile half is
-      `PWTEST_SERVER_REGISTRY`: a renamed or dropped variable sends any future probe
-      at the maintainer's real directory.
-
 - [ ] **Candidates from the feature catalogue, and none of them is a commitment.**
       The catalogue is [kb](kb/playwright/tools-and-artifacts.md#the-surface-browserai-does-not-use----read-2026-09-24)
       and the dumps are

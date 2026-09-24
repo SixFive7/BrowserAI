@@ -1550,7 +1550,7 @@ internal sealed class SessionManager : IAsyncDisposable
             // browserai.data have to be closed before any of it can be deleted.
             //
             // ⚠️ BY ITS OWN NAME, so that the reap this teardown starts says
-            // `destroy` in the log rather than the sentence a client going away
+            // `destroy` in the log and not the sentence a client going away
             // would have written -- and inside `await using` so that the object's
             // disposal is still visible where it is created. The second call the
             // scope makes is a no-op: `TearDownAsync` has already taken the

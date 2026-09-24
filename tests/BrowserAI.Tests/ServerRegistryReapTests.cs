@@ -50,7 +50,7 @@ internal sealed class ServerRegistryReapTests
     /// <remarks>
     /// <para>
     /// <b>It is a backlog and not a duration, and it is what makes the
-    /// "the close did not wait" assertion an event read rather than a
+    /// "the close did not wait" assertion an event read and not a
     /// stopwatch.</b> Reading this registry is quadratic -- 1,000 entries measured
     /// at 9,911 ms for <c>list()</c> plus about 6 s of watcher-ready, against a
     /// close that tears down a Chromium and deletes its profile in a few
@@ -362,7 +362,7 @@ internal sealed class ServerRegistryReapTests
         var at = records.IndexOf(needle, StringComparison.Ordinal);
 
         // MaxValue and not -1: an absent record must FAIL an ordering assertion
-        // rather than satisfy it by sorting first.
+        // and never satisfy it by sorting first.
         return at < 0 ? int.MaxValue : at;
     }
 }

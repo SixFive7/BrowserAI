@@ -53,7 +53,7 @@ namespace BrowserAI.Runtime;
 /// </para>
 /// <para>
 /// ⚠️ <b>It is the one-line <c>serverRegistry.list()</c> and not the CLI client's
-/// <c>list</c> command, and that is a decision rather than a shortcut.</b> Both
+/// <c>list</c> command, and that is a decision and not a shortcut.</b> Both
 /// reach the same reaper -- <c>collectList</c> in
 /// <c>lib/tools/cli-client/program.js</c> calls <c>serverRegistry.list()</c>
 /// before it needs anything from it, which is the <i>List early to GC</i> line --

@@ -1057,6 +1057,7 @@ answers about whatever file it is handed and is never actionable alone.
 | stderr classification | `src/BrowserAI/Protocol/StandardErrorClassifier.cs` and its pinned reference copy |
 | Logging -- one machine-wide file under a cross-process write gate | `src/BrowserAI.Core/Logging/`, `src/BrowserAI.Core/Interop/NativeFile.cs` *(the per-session file went 2026-08-26)* |
 | Where files live, installed or not | `src/BrowserAI.Core/Hosting/{IAppPaths, LocalAppDataPaths, BuildVersion}.cs`, `src/BrowserAI.Core/Updates/InstallLocation.cs` |
+| Playwright's own server registry, and the one call that prunes it -- **added 2026-09-24, T7** | `src/BrowserAI/Runtime/ServerRegistryReap.cs`, started from `Sessions/LiveSession.cs` (a destroy, an idle close, a client going away or a shutdown) and from `Sessions/StraySweep.cs` (a crashed session's browser this pass terminated), through `Interop/JobLauncher.StartDetached` |
 | Refusing to serve out of a root two users could share -- **both roots**, the data one and the install one, since 2026-09-15 | `src/BrowserAI.Core/Hosting/InstallRootScope.cs`, called from `Program.Main` before anything creates state, with `Updates.InstallLocation.RootAppDir` as the second argument and `null` when this process is not an install |
 
 ⚠️ ***Corrected 2026-08-26 (previously "Anything attributable to a session is
@@ -1076,6 +1077,19 @@ byte-range claim one byte past any possible end of file -- so no concurrent read
 is ever refused -- and the length read, the write stamp and the bytes all happen
 inside it. Write order and timestamp order therefore coincide, the file is sorted
 by construction, and rotation happens exactly at the cap, not near it.
+
+**One launch in this tree is deliberately in no job and inherits nothing**, and
+it is the registry reap: `%LOCALAPPDATA%\ms-playwright\b` fills with one
+descriptor per browser bind and only upstream's `serverRegistry.list()` unlinks a
+dead one, so every close that really put a browser tree down starts one detached
+`node` running that call and walks away. A job would kill it -- on the client-exit
+path this process is gone moments later -- and inheriting anything would put a
+duplicate of **our own `stdout`**, or a sibling launch's pipe ends, inside a process
+that may live for minutes. `CREATE_NO_WINDOW` gives it a console nothing reads.
+Nothing is awaited, nothing is throttled, and the record at event id 90 naming its
+pid and creation time is the only trace
+([T7](DECISIONS.md#processes-browsers-and-session-modes),
+[kb](kb/playwright/tools-and-artifacts.md#a-session-close-now-starts-upstreams-own-reaper----measured-2026-09-24)).
 
 **One unnamed, non-inheritable job per child**, carrying `KILL_ON_JOB_CLOSE` and
 nothing else, assigned at creation through `PROC_THREAD_ATTRIBUTE_JOB_LIST`, held

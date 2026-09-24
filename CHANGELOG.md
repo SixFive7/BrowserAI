@@ -117,6 +117,41 @@ release body; nothing else depends on it.
   the loader rejects. A product that does not write the TOML cannot set that key, and this one
   does not. Re-verification row 148 carries all of it, keyed on the codex-cli version.
 
+- ✨ **A session close now prunes Playwright's own browser registry, and never waits for it.**
+  T7, and the reaper it starts is Playwright's own. `playwright-core` writes one JSON descriptor per browser bind
+  into `%LOCALAPPDATA%\ms-playwright\b` -- a directory `PLAYWRIGHT_BROWSERS_PATH` does not move -- and
+  never deletes one for a **persistent** profile, which is every browser this product opens. The only
+  code upstream has that unlinks a dead descriptor is inside `serverRegistry.list()`, whose own call
+  site carries the comment *List early to GC*, and **nothing called it**: 4,059 descriptors stood on
+  the maintainer's machine the morning this landed, growing at about 499 a day from the suite and 3.5
+  a day from the installed product. **Nothing in BrowserAI reads that directory and disk was never
+  the problem** -- what degrades is Playwright's own dashboard, `list` and attach, because reading
+  the registry is quadratic.
+
+  **Four close paths start it and each starts exactly one**: a `browserai_destroy`, an idle close, a
+  client going away or the process shutting down, and the stray sweep's own kill of a crashed
+  session's browser, which is the one close no session is left to reap after. Each fires **only when
+  the session's job held more than the node child**, because a descriptor is written at a browser
+  *bind* and a session that never bound one made nothing dead. **The call is never awaited**, so no
+  caller's answer waits behind it: measured on this machine, one reap over 1,000 dead descriptors
+  takes 10.19 s and over 4,000 takes 309.5 s, and the close answers in about one.
+
+  ⚠️ **What is accepted, in the decision's own words: no throttle and no concurrency arm.** A
+  detached call that never runs, fails or hangs is one nobody hears -- the record naming its pid and
+  creation time at event id 90 is all there is. Eight concurrent callers reaped nothing live, 8 of 8,
+  and past eight the pipe-busy false positive is **unmeasured**: what it would cost is a live
+  browser missing from a list, and never a browser.
+
+  **It is the one-line `serverRegistry.list()` and not the CLI client's `list` command**, which
+  reaches the same reaper but also resolves a workspace from its working directory and then prunes
+  that workspace's dead daemon session configs -- a second registry this product never writes.
+  `PWTEST_SERVER_REGISTRY` is forwarded to every child as a documented test hook and nothing in the
+  product ever sets it; without it a test could not isolate a reap from the developer's own
+  registry. [kb](kb/playwright/tools-and-artifacts.md#a-session-close-now-starts-upstreams-own-reaper----measured-2026-09-24),
+  [evidence](docs/evidence/2026-09-23-server-registry/README.md), re-verification row 154. **This
+  closes the descriptor-registry hazard row on the condition that row set for itself in
+  2026-09-16**, and the two residues it does not close are named there.
+
 - ✅ **The five gate drivers live in the repository, and a test holds what each one declares.**
   [The two halves of the gate](TESTING.md#continuous-integration) force opposite drive-letter
   spellings and each declares what it forced, which is what makes a six-run gate cover two

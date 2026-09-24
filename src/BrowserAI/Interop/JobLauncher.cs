@@ -302,7 +302,7 @@ internal static partial class JobLauncher
     /// <para>
     /// <b>The pid comes back with its creation time, never alone.</b> Windows
     /// reuses pids and this process is recorded in the log for somebody to find
-    /// again, so the pair is what makes that record an identity rather than a
+    /// again, so the pair is what makes that record an identity and not a
     /// number -- the same pair <c>browserai.lock</c> writes. A creation time that
     /// could not be read comes back as <c>0</c>, which is what the log already
     /// means by <c>@0</c>.
@@ -362,7 +362,7 @@ internal static partial class JobLauncher
         finally
         {
             // Both, and neither is of any use to anybody: the child is running
-            // rather than suspended, and a process handle held open by a parent
+            // and not suspended, and a process handle held open by a parent
             // that will never wait on it is a handle leak with a long lifetime.
             _ = CloseHandle(information.Thread);
             _ = CloseHandle(information.Process);

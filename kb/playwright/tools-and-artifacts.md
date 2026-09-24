@@ -828,7 +828,123 @@ own `list` command from the payload at session close, detached and never awaited
 with no throttle and no concurrency arm. The paragraph above about *whether
 BrowserAI could call it safely is not established* is what those two probes were
 run to answer, and the answer is *yes at the concurrency this product produces,
-and unmeasured past eight*.
+and unmeasured past eight*. **Built 2026-09-24; the mechanism, what one reap
+costs and what was accepted are the section below.**
+
+## A session close now starts upstream's own reaper -- measured 2026-09-24
+
+**Every close that really put a browser tree down starts one detached `node`
+running upstream's `serverRegistry.list()`, and that is the whole mechanism.**
+`src/BrowserAI/Runtime/ServerRegistryReap.cs`; decided as
+[T7](../../DECISIONS.md#processes-browsers-and-session-modes). Four close paths
+reach it -- a `browserai_destroy`, an idle close, a client going away or the
+process shutting down, and the stray sweep's own kill, which is the one close no
+session is left to reap after -- and each fires **only when the child's job held
+more than the node child**, because a descriptor is written at a browser *bind*
+and a session that never bound one made nothing dead. The call is **never
+awaited**: it cannot delay the answer a destroy owes its caller, and it cannot
+throw into a teardown. `[FLOATS]`
+
+**It is the one-line `serverRegistry.list()` and not the CLI client's `list`
+command, and both reach the same reaper.** `collectList` in
+`lib/tools/cli-client/program.js` calls `serverRegistry.list()` before it needs
+anything out of it -- that is the *List early to GC* line -- but the command also
+resolves a **workspace** by walking up ten directories from its working directory
+looking for `.playwright`, and then deletes that workspace's dead **daemon
+session** configs under `%LOCALAPPDATA%\ms-playwright\daemon`: a second registry
+this product never writes, pruned differently depending on where a session
+directory happens to sit. `lib/serverRegistry.js` is an **internal** module --
+the package's `exports` map names four subpaths and not that one, which gates a
+require by package name and not the absolute path used here -- so
+[re-verification row 154](../re-verification.md) is keyed on the
+`playwright-core` version for exactly this.
+
+**Detached means in no job, inheriting nothing, and with its own invisible
+console.** `JobLauncher.StartDetached` passes `bInheritHandles: FALSE` and names
+no standard handle, which is what keeps a process that may live for minutes from
+holding a sibling launch's pipe ends -- or a duplicate of this product's
+`stdout`, which is the JSON-RPC channel; `CREATE_NO_WINDOW` then gives it a
+console nothing reads and that cannot fill. Its working directory is the user
+profile, never a session directory (a destroy deletes that tree the instant the
+reap starts, and an open directory handle there makes the delete report
+survivors) and never `current\` (an update replaces it wholesale). ⚠️ **A job
+this process is itself in still takes the reaper with it**, and no breakaway is
+attempted, because a job that forbids breakaway fails the launch outright; the
+cost either way is the prune and nothing else.
+
+**What one reap costs on this machine today, measured 2026-09-24 at
+`playwright-core` 1.64.0-alpha-1789764292000, node v24.21.0, single process,
+planted dead descriptors in a scratch registry named by
+`PWTEST_SERVER_REGISTRY`:** **1,000 entries in 10.19 s** and **4,000 entries in
+309.5 s (5 min 09 s)**. The shape is the quadratic curve the section above
+records and the absolute numbers are higher than that curve's -- 141,616 ms over
+3,762 on 2026-09-23 -- because the machine was carrying 44 live `node` processes
+and 77.4 % commit charge while these ran, which is what `[MACHINE]` means here.
+**The second reap is the cheap one**: a registry already pruned has nothing to
+unlink and the cost falls to the watcher-ready half. `[FLOATS]` `[MACHINE]`
+
+⚠️ **THE REAL DIRECTORY WAS REAPED FOR THE FIRST TIME ON 2026-09-24: 4,059
+descriptors in, 0 left, 4,059 unlinked, 1,053.09 s (17 min 33 s) -- and the
+TIMING is not a clean measurement, because two reapers ran at once when this
+session started the measurement twice.** The count is what the run is quotable
+for: **4,059** stood at `%LOCALAPPDATA%\ms-playwright\b` when it began, against
+3,815 earlier the same day, and the directory was empty when it ended. The two
+callers used **29.4 s and 23.3 s of CPU across 22 minutes of wall clock**, so
+they spent that time waiting on pipes and not working -- **the pipe-busy shape the
+accepted risk below names, arriving as a long wait and not as a wrong answer**.
+That is one observation of two callers and not a measurement of the class.
+
+⚠️ **Whether either of those two unlinked a descriptor belonging to a LIVE
+browser cannot be established after the fact, and the empty directory is not
+evidence that one did.** Live descriptors are a tiny fraction here: probe-e found
+**2 connectable out of 3,762** on 2026-09-23, and a reading taken minutes after
+this run found **0** descriptors on a machine whose BrowserAI sessions were all
+idle -- an idle session has closed its browser, so it has no live descriptor to
+lose. What is certain either way is that no browser was touched: the reap unlinks
+files and ends no process.
+
+**The second reap is the cheap one, measured immediately afterwards: 0.062 s over
+an empty directory.** That is the shape of every reap after the first on a given
+machine -- the watcher is ready at once and there is nothing to connect to or
+unlink -- and it is why a call at every session close costs nothing once the
+backlog is gone. `[MACHINE]`
+
+**What was accepted, in the maintainer's own words**
+([T7](../../DECISIONS.md#processes-browsers-and-session-modes)): *"I want to
+avoid complexity. Does throtthling not mean we need to implement anything
+ourselves? I'm leaning towards c."* So there is **no throttle and no concurrency
+arm**, and three things are accepted by name. **A detached call that never runs,
+fails or hangs is one nobody hears** -- the record at event id **90** names its
+pid and creation time and is all there is, with **91** for a launch that failed
+and **92** for a payload with no module to start. **Eight concurrent `list()`
+callers reaped nothing live, 8 of 8, and past eight the pipe-busy false positive
+is unmeasured**: a caller that cannot open a live browser's pipe would unlink a
+live descriptor, which costs discoverability and never a browser. And **the first
+call on a real backlog costs those minutes once**, in a process nobody is waiting
+for.
+
+**`PWTEST_SERVER_REGISTRY` is forwarded to every child as a documented test
+hook, and nothing in this product ever sets it.** Forwarding is the whole hook:
+without it the child that writes the descriptors and the reap that collects them
+would read two different directories, and the only arm that could exist would be
+one that pruned the developer's own registry. It is in
+`ChildEnvironment.InheritedWhenSet` and deliberately not in `Refused`, because
+that list names variables which override a key the config generator writes and
+this one overrides nothing anybody here wrote.
+
+**Re-establish the behaviour** by pointing `PWTEST_SERVER_REGISTRY` at a scratch
+directory, planting a descriptor whose `browser.guid` equals its file name and
+whose `endpoint` names a pipe nothing serves, and running
+`node -e "require('<payload>/mcp/node_modules/playwright-core/lib/serverRegistry.js').serverRegistry.list()"`
+-- **never without that variable set, unless the real directory is what you mean
+to prune**. The file name has to be the guid: the watcher keys its map on the
+file name and `list()` unlinks `descriptor.browser.guid`, so a plant whose two
+disagree is reaped by name and leaves the file, which reads as a reaper that does
+not work. In the suite it is
+`ServerRegistryReapTests.ADestroyReapsTheDeadDescriptorsSparesALiveOneAndDoesNotWaitForEither`,
+which drives the published binary, two real Chromiums and a thousand plants, and
+holds that the dead ones go, a live browser's stays, and the close answers its
+caller while the reaper is still running.
 
 ## Every artifact pointer a tool result carries is absolute -- measured 2026-09-17
 
