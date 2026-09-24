@@ -1361,7 +1361,7 @@ NativeAOT win-x64, Defender real-time protection on. Measured by the IPC review
 with a prototype published NativeAOT, whose stand-in servers held their live
 marker exactly as `LiveInstances.Join` does (`CreateNew`, `ReadWrite`,
 `FileShare.Read`, buffer size 1); sizes were measured on copies of the real
-server at `40df5db`. Everything it was read from:
+server at `245edac`. Everything it was read from:
 [`docs/evidence/2026-09-24-ipc-review`](../../docs/evidence/2026-09-24-ipc-review/README.md).
 It settled Q268 and, with the lifecycle research, Q284 -- the maintainer's words
 verbatim, *"Q284 a"*: one raw named pipe per server, answering `describe` from
@@ -1420,7 +1420,7 @@ A description is small: **419 bytes** of JSON with no sessions, 1,082 with three
 
 ### What the raw call costs the binary, and what only it can set
 
-| One probe each, NativeAOT, on the real server at `40df5db` | `BrowserAI.Server.exe` | Over the baseline |
+| One probe each, NativeAOT, on the real server at `245edac` | `BrowserAI.Server.exe` | Over the baseline |
 |---|---:|---:|
 | baseline, the same hook with nothing behind it | 19,318,784 B | -- |
 | `NamedPipeServerStream`, synchronous | 19,440,640 B | **+121,856 B** |
@@ -1431,7 +1431,7 @@ A description is small: **419 bytes** of JSON with no sessions, 1,082 with three
 
 **The product as built is larger than the probe**, because it carries the
 description, the dispatch and the logging as well as the call: the published
-server went from **19,317,760 to 19,361,280 bytes (+43,520)** between `0386365`
+server went from **19,317,760 to 19,361,280 bytes (+43,520)** between `acaaf86`
 and the first build of the pipe on 2026-09-24, measured by this writer.
 
 **What Windows gives a pipe by default, read off the handle with
@@ -1503,7 +1503,7 @@ is not in the file, so this establishes the shape and not the owner.
 
 The review counted **17** inter-process mechanisms and found **no named pipe, no
 named event and no shared memory** among them before this change; its list is not
-in the batch. This writer's own reading of the tree at `0386365`, taken to put a
+in the batch. This writer's own reading of the tree at `acaaf86`, taken to put a
 list beside the count, finds these, and the absence holds for every row:
 
 | Between | Mechanism | What it carries | How liveness is read |

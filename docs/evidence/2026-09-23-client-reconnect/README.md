@@ -96,3 +96,13 @@ terminal transcript is the one place they arrive honestly.
 **Line endings are this repository's**, per
 [the directory's own note](../README.md): captures written with CRLF are stored
 with LF.
+
+**The maintainer's decision Q295 a rewrote the history on 2026-09-24 to correct
+the author and committer address on 22 commits, so the `latest_git_commit_hash`
+values these captures keep byte for byte name commits that now carry new
+hashes:** `042e2fee5e6d49c68505d4d8c781b1622ba88e24` is now
+`92733e9b0e622ee952c74ce706e75910accedcc0`,
+`08e8d6163c767a4df09a5f24a90aa76bfd3c193c` is now
+`ca2b28cd5ddd281d6369f11a6a8f9164076623b2`, and
+`660af6d3302182eba6e7b4a28ea5fbffc56b5d37` is now
+`3e4998db40f5e63f280e6c5158bb250fd8c7d823`.

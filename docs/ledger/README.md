@@ -26,6 +26,16 @@ and no fact, number, date, name or claim moved. The heading change moves one
 GitHub anchor, which nothing in the tree links to; that was checked, not
 assumed.
 
+⚠️ **A SECOND EXCEPTION, DECIDED BY THE MAINTAINER ON 2026-09-24 AS Q295 a, in
+his words:** *"Q295 a - make sure to make a safety backup before messing with
+the history. leave statusai out of scope"* -- the history was rewritten to
+correct the author and committer address on 22 commits, so they and every commit
+descending from them took new hashes, and the 2026-09-23 snapshot's 61 citations
+of those commits were re-pointed at the new ones with no maintainer-verbatim
+line touched, its header saying so beside the body's new sha256 and the old one,
+and its eight changed headings moving eight GitHub anchors that nothing in the
+tree links to, which was checked.
+
 **It is a record, so it is read-only.** Nothing here is edited after the
 snapshot -- not to fix a typo, not to reconcile it with what the code ended up
 doing. A ledger that disagrees with the tree is telling you something about the

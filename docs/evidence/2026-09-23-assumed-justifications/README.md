@@ -14,7 +14,7 @@ documents, nine in `src/`. **This is the rigs and the raw output they produced.*
 
 **What it is not is the analysis.** Each reader wrote a `REPORT.md` naming every
 claim, what it now cites and what was measured for it; all three were consumed by
-the commits that settled the claims (`d7fd58e`, `a6f20ef`, `da28779`) and are not
+the commits that settled the claims (`4e71bbb`, `1dc270a`, `339d0a9`) and are not
 kept here, because what a report concluded is in the tree and what a rig produced
 is not.
 

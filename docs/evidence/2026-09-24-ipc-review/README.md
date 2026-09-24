@@ -40,7 +40,7 @@ screen.
 | `run/single.txt`, `run/single-*/` | The single-instance rounds: one file per contender, pid-named, three rounds of twenty for each shape, and the start after the winner was killed |
 | `run/derive.txt`, `run/jobreport.txt` | Reading a process's working directory and parent from outside it, and the job a started process found itself in |
 | `proto/` | The prototype's source, its project and its three build files; `editorconfig.txt` is its `.editorconfig`, renamed so it cannot apply to anything here |
-| `size/` | The six NativeAOT size probes, the script that built them over `git archive` of `40df5db`, and its logs |
+| `size/` | The six NativeAOT size probes, the script that built them over `git archive` of `245edac`, and its logs |
 | `cwdcount.py` | The read-only count of installed-server starts whose working directory is a repository, run by the writer on 2026-09-24 |
 
 ## What was cut
@@ -65,3 +65,10 @@ dispatched it, and its conclusions are recorded in that session's ledger and in
 and not from a file in this batch: the inventory's count of **17**, whose list is
 not preserved, and **143 of 162** installed-server starts in a repository, which
 the writer re-read with `cwdcount.py` the same day and recorded beside it.
+
+**The maintainer's decision Q295 a rewrote the history on 2026-09-24 to correct
+the author and committer address on 22 commits, so the commit these captures
+print byte for byte has a new hash:** `40df5db3d5e139c61f51d63afd4bfa7ee8ab0e84`
+in `MEASUREMENTS.txt`, `run/derive.txt` and `size/sizes.txt` is now
+`245edac4f3e6c931e01f614ae81139c7ee0e0496`, the commit the table above names for
+`size/`.
