@@ -293,6 +293,7 @@ internal sealed class SessionManager : IAsyncDisposable
     private readonly SessionIndex _index;
     private readonly ILogger _logger;
     private readonly Func<JsonRpcNotification, CancellationToken, ValueTask> _relay;
+    private readonly ServerRegistryReap _reap;
     private int _disposed;
 
     /// <summary>Creates the manager over one process's environment.</summary>
@@ -312,6 +313,13 @@ internal sealed class SessionManager : IAsyncDisposable
         _logger = loggerFactory.CreateLogger<SessionManager>();
         _index = new SessionIndex(environment.Paths, _logger);
         _relay = relay;
+
+        // ⚠️ ONE PER PROCESS, and its logger is the PROCESS log's and not a
+        // session's. Playwright's server registry is machine-wide, every reap of
+        // it is machine-wide, and a session's own diagnostics go to that session's
+        // stderr -- so a record of a reap in a session's log would be the one
+        // machine-wide event in a per-session file.
+        _reap = new ServerRegistryReap(environment.Payload, loggerFactory.CreateLogger<ServerRegistryReap>());
     }
 
     /// <summary>
@@ -1540,7 +1548,17 @@ internal sealed class SessionManager : IAsyncDisposable
             // Torn down first: the browser has to go before the tree it is
             // writing into, and this process's own handles on browserai.lock and
             // browserai.data have to be closed before any of it can be deleted.
-            await live.DisposeAsync().ConfigureAwait(false);
+            //
+            // ⚠️ BY ITS OWN NAME, so that the reap this teardown starts says
+            // `destroy` in the log rather than the sentence a client going away
+            // would have written -- and inside `await using` so that the object's
+            // disposal is still visible where it is created. The second call the
+            // scope makes is a no-op: `TearDownAsync` has already taken the
+            // one-shot guard, which is what makes naming the cause here safe.
+            await using (live)
+            {
+                await live.TearDownAsync(ServerRegistryReap.AfterDestroy).ConfigureAwait(false);
+            }
         }
 
         // The single check that makes it safe to hand a model a tool that
@@ -2328,7 +2346,7 @@ internal sealed class SessionManager : IAsyncDisposable
                 _relay,
                 cancellationToken).ConfigureAwait(false);
 
-            session = new LiveSession(location, held, claim, child, options, logging, config, configFile, createdHere, _environment.BrowserIdlePeriod, _environment.Clock);
+            session = new LiveSession(location, held, claim, child, options, logging, config, configFile, createdHere, _environment.BrowserIdlePeriod, _environment.Clock, _reap);
 #pragma warning restore CA2000
 
             if (!_live.TryAdd(location.Key, session))

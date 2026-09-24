@@ -56,6 +56,12 @@ internal sealed class LiveSession : IAsyncDisposable
     /// <param name="createdHere">Whether this connection is the one that created the session.</param>
     /// <param name="idlePeriod">How long this session's browser may sit unused before it is closed.</param>
     /// <param name="clock">The clock the idle timer reads. <see cref="TimeProvider.System"/> in the product.</param>
+    /// <param name="reap">
+    /// Playwright's own registry reaper, started detached whenever a close here
+    /// really put a browser tree down. This object does not own it: one reap
+    /// serves every session in the process, because the registry it prunes is
+    /// machine-wide and so is its log.
+    /// </param>
     public LiveSession(
         SessionPath location,
         SessionLock sessionLock,
@@ -67,9 +73,11 @@ internal sealed class LiveSession : IAsyncDisposable
         string configFile,
         bool createdHere,
         TimeSpan idlePeriod,
-        TimeProvider clock)
+        TimeProvider clock,
+        ServerRegistryReap reap)
     {
         ArgumentNullException.ThrowIfNull(logging);
+        ArgumentNullException.ThrowIfNull(reap);
 
         Location = location;
         Lock = sessionLock;
@@ -80,6 +88,7 @@ internal sealed class LiveSession : IAsyncDisposable
         Config = config;
         ConfigFile = configFile;
         CreatedHere = createdHere;
+        _reap = reap;
         Logger = logging.Factory.CreateLogger<LiveSession>();
 
         // ⚠️ LAST, AND IT READS `Child` , NOT THE ARGUMENT. The timer
@@ -89,7 +98,22 @@ internal sealed class LiveSession : IAsyncDisposable
         Idle = new BrowserIdleTimer(
             location.FullPath,
             idlePeriod,
-            token => CloseBrowserAsync(Child, sessionLock, token),
+            async token =>
+            {
+                var closed = await CloseBrowserAsync(Child, sessionLock, token).ConfigureAwait(false);
+
+                // ⚠️ AFTER the close and never before it, and only when there was
+                // something in the job besides the node child -- which is what
+                // says a browser tree was up and is now dead, and therefore that
+                // upstream's registry holds a descriptor nothing else will ever
+                // unlink. A close that found no browser wrote no descriptor.
+                if (closed.ProcessesBefore > 1)
+                {
+                    _reap.Start(ServerRegistryReap.AfterIdleClose);
+                }
+
+                return closed;
+            },
             logging.Factory.CreateLogger<BrowserIdleTimer>(),
             clock);
     }
@@ -131,6 +155,7 @@ internal sealed class LiveSession : IAsyncDisposable
         "BrowserAI closed this session's browser itself: nothing had been forwarded through the session for the idle period, "
         + "so the browser tree was released and the node child kept. Nothing was lost -- the next call relaunches the browser and answers normally.";
 
+    private readonly ServerRegistryReap _reap;
     private ChildConnection _child;
     private int _disposed;
 
@@ -252,7 +277,26 @@ internal sealed class LiveSession : IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    /// <remarks>
+    /// The teardown, under the cause a client going away or a process shutting
+    /// down has. A <c>destroy</c> calls <see cref="TearDownAsync"/> itself, so
+    /// that the reap it starts says which of the two it was.
+    /// </remarks>
+    public ValueTask DisposeAsync() => TearDownAsync(ServerRegistryReap.AfterTeardown);
+
+    /// <summary>
+    /// Tears this session down, saying what for.
+    /// </summary>
+    /// <remarks>
+    /// <b>The cause is not decoration: it is the only thing that tells the two
+    /// paths apart in the log.</b> One method serves a destroy, a client that went
+    /// away and a process shutting down -- the work is identical -- and the reap
+    /// below is machine-wide housekeeping somebody may one day have to account
+    /// for.
+    /// </remarks>
+    /// <param name="reapCause">Which close this is, for the reap's record.</param>
+    /// <returns>The teardown.</returns>
+    public async ValueTask TearDownAsync(string reapCause)
     {
         if (Interlocked.Exchange(ref _disposed, 1) is not 0)
         {
@@ -264,10 +308,27 @@ internal sealed class LiveSession : IAsyncDisposable
         // instead of failing noisily against a closed transport.
         await Idle.DisposeAsync().ConfigureAwait(false);
 
+        // ⚠️ READ BEFORE THE CHILD GOES, because afterwards there is no job to
+        // ask. More than the node child in it means a browser tree is about to
+        // die, and therefore that a descriptor in Playwright's registry is about
+        // to become one nothing else will ever unlink -- see the reap below.
+        var browserWasUp = Child.JobProcessIds().Count > 1;
+
         // The child next. Disposing it closes the child's stdin, which is
         // upstream's own graceful teardown path, and then closes the job handle,
         // which is what guarantees no browser is left behind.
         await Child.DisposeAsync().ConfigureAwait(false);
+
+        // ⚠️ STARTED, NOT AWAITED, and this is the one line of T7 in a teardown.
+        // A destroy awaits this method before it answers its caller, so awaiting
+        // a reap here would put upstream's quadratic `list()` -- 2.4 minutes on
+        // this machine's backlog the first time -- in front of a caller's answer.
+        // It is started after the child so that the descriptor it is meant to
+        // collect is already dead, and it can neither throw nor block.
+        if (browserWasUp)
+        {
+            _reap.Start(reapCause);
+        }
 
         Lock.Dispose();
 

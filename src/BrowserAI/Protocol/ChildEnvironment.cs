@@ -159,6 +159,25 @@ internal static class ChildEnvironment
     /// regardless
     /// ([kb](../../../kb/playwright/provisioning-and-timings.md#first-run-provisioning)).
     /// </para>
+    /// <para>
+    /// ⚠️ <b><c>PWTEST_SERVER_REGISTRY</c> is here as a documented test hook --
+    /// added 2026-09-24 with T7 -- and it is the only name on this list that no
+    /// machine has for its own reasons.</b> It moves the directory
+    /// <c>playwright-core</c> writes a descriptor into at every browser bind, read
+    /// first by <c>registryDirectory()</c>, and <b>nothing in this product ever
+    /// sets it</b>: forwarding is the whole of the hook. Without it the reap
+    /// <see cref="Runtime.ServerRegistryReap"/> starts and the child whose browser
+    /// wrote the descriptors would read <b>two different directories</b>, so no
+    /// test could isolate a reap and the only arm that could exist would be one
+    /// that pruned the developer's own registry -- 3,815 entries and 2.4 minutes of
+    /// it, which is precisely what the T7 probes were careful never to do. <b>What
+    /// it costs if a machine really carries it</b>: that machine's Playwright
+    /// descriptors go where it said, and BrowserAI reaps there; nothing in this
+    /// product reads the directory either way. It is <i>not</i> in
+    /// <see cref="Refused"/> for the reason <c>PLAYWRIGHT_MCP_WEBMCP</c> is not:
+    /// that list names variables that override a key the config generator writes,
+    /// and this one overrides nothing anybody here wrote.
+    /// </para>
     /// </remarks>
     public static FrozenSet<string> InheritedWhenSet { get; } = new[]
     {
@@ -176,6 +195,10 @@ internal static class ChildEnvironment
 
         // Egress under a corporate proxy or TLS inspection.
         "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "ALL_PROXY", "NODE_EXTRA_CA_CERTS",
+
+        // The one upstream TEST hook this product forwards, and the paragraph
+        // above says what it buys and what it cannot do.
+        Runtime.ServerRegistryReap.RegistryDirectoryVariable,
     }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Names set on every child, whatever this process's own value is.</summary>

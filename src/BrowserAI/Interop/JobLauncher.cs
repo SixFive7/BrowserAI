@@ -260,6 +260,116 @@ internal static partial class JobLauncher
     }
 
     /// <summary>
+    /// Starts <paramref name="command"/> in <b>no</b> job, inheriting
+    /// <b>nothing</b>, with a console of its own that has no window on it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One caller and one purpose:</b> <see cref="Runtime.ServerRegistryReap"/>,
+    /// which starts Playwright's own registry reaper at a session close and never
+    /// waits for it. Every other launch in this product is this one's opposite --
+    /// inside a job from the instant it exists, with its three streams on pipes --
+    /// and the difference is that this child must deliberately <b>outlive</b> the
+    /// close that started it, which a job whose last handle is about to close
+    /// cannot allow.
+    /// </para>
+    /// <para>
+    /// <b><c>bInheritHandles: FALSE</c> is the load-bearing argument.</b> With
+    /// TRUE, <c>CreateProcessW</c> duplicates <i>every inheritable handle in the
+    /// process</i> -- including the pipe ends of a session launch in flight on
+    /// another thread, which is the sibling leak
+    /// <see cref="ProcessAttributeList"/> exists to close, and including a route to
+    /// our own <c>stdout</c>. A detached process that may live for minutes is the
+    /// worst possible holder of either. <c>ProcessStartInfo</c> cannot express this
+    /// at all: it has no handle-inheritance surface, and a redirect there is a pipe
+    /// somebody has to keep reading.
+    /// </para>
+    /// <para>
+    /// <b>Where the output goes is therefore settled by the flags and not by a
+    /// redirect.</b> No standard handle is named, so with <c>CREATE_NO_WINDOW</c>
+    /// the child is given a new console and writes into that console's screen
+    /// buffer -- which nothing reads, cannot fill, and dies with it. An unread pipe
+    /// would do none of those three.
+    /// </para>
+    /// <para>
+    /// <b>No field of <c>STARTUPINFO</c> is set and no flag with it</b>, which is
+    /// the pairing rule the launch above is governed by, met from the other
+    /// direction. <c>Cb</c> is the <b>unextended</b> size deliberately: no
+    /// attribute list is present and <c>EXTENDED_STARTUPINFO_PRESENT</c> is not
+    /// passed, so the <c>STARTUPINFO</c> prefix is the whole of what Windows may
+    /// read here.
+    /// </para>
+    /// <para>
+    /// <b>The pid comes back with its creation time, never alone.</b> Windows
+    /// reuses pids and this process is recorded in the log for somebody to find
+    /// again, so the pair is what makes that record an identity rather than a
+    /// number -- the same pair <c>browserai.lock</c> writes. A creation time that
+    /// could not be read comes back as <c>0</c>, which is what the log already
+    /// means by <c>@0</c>.
+    /// </para>
+    /// </remarks>
+    /// <param name="command">The executable's absolute path. Nothing resolves it and no shell sees it.</param>
+    /// <param name="arguments">Arguments, quoted for <c>CreateProcessW</c> here.</param>
+    /// <param name="workingDirectory">The child's working directory. Required, never inherited.</param>
+    /// <param name="environment">The child's complete environment block. It replaces ours instead of adding to it.</param>
+    /// <returns>The pid and creation time of the started process, which is all a caller that never waits can use.</returns>
+    /// <exception cref="Win32Exception">Windows refused the launch, named in the message.</exception>
+    public static DetachedProcess StartDetached(
+        string command,
+        IReadOnlyList<string> arguments,
+        string workingDirectory,
+        IReadOnlyDictionary<string, string> environment)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentNullException.ThrowIfNull(workingDirectory);
+        ArgumentNullException.ThrowIfNull(environment);
+
+        var commandLine = BuildCommandLine(command, arguments);
+        var environmentBlock = BuildEnvironmentBlock(environment);
+
+        var startup = default(StartupInfoEx);
+        startup.StartupInfo.Cb = Unsafe.SizeOf<StartupInfo>();
+
+        if (!CreateProcessW(
+                command,
+                commandLine,
+                nint.Zero,
+                nint.Zero,
+                bInheritHandles: false,
+                CreateUnicodeEnvironment | CreateNoWindow,
+                environmentBlock,
+                workingDirectory,
+                ref startup,
+                out var information))
+        {
+            throw new Win32Exception(
+                Marshal.GetLastPInvokeError(),
+                $"CreateProcessW could not start '{command}' in '{workingDirectory}'.");
+        }
+
+        try
+        {
+            // Read while the handle is open, because it is the only moment there
+            // is: nothing here waits for this process, so the handle is closed
+            // below and the pair is all that survives the call.
+            var created = ProcessLiveness.TryCreationTimeOf(information.Process, out var creationFileTime)
+                ? creationFileTime
+                : 0;
+
+            return new DetachedProcess((int)information.ProcessId, created);
+        }
+        finally
+        {
+            // Both, and neither is of any use to anybody: the child is running
+            // rather than suspended, and a process handle held open by a parent
+            // that will never wait on it is a handle leak with a long lifetime.
+            _ = CloseHandle(information.Thread);
+            _ = CloseHandle(information.Process);
+        }
+    }
+
+    /// <summary>
     /// Quotes an argument list the way <c>CommandLineToArgvW</c> unquotes it,
     /// into a buffer <c>CreateProcessW</c> is allowed to write into.
     /// </summary>
@@ -746,3 +856,14 @@ internal static partial class JobLauncher
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool CloseHandle(nint hObject);
 }
+
+/// <summary>
+/// A process this product started and will never wait for: its pid, and the
+/// creation time that makes the pid an identity.
+/// </summary>
+/// <param name="ProcessId">The pid Windows assigned.</param>
+/// <param name="CreatedFileTime">
+/// Its creation time as a Windows FILETIME, or <c>0</c> when the query failed --
+/// the same thing <c>@0</c> means in a record in the process log.
+/// </param>
+internal readonly record struct DetachedProcess(int ProcessId, long CreatedFileTime);

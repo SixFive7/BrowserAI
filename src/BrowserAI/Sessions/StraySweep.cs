@@ -60,6 +60,7 @@ internal sealed class StraySweep
     private readonly SessionIndex? _index;
     private readonly string? _liveInstallRoot;
     private readonly ILogger _logger;
+    private readonly ServerRegistryReap? _reap;
 
     /// <summary>Creates a sweep over one set of browser executables.</summary>
     /// <param name="browserImages">
@@ -91,12 +92,20 @@ internal sealed class StraySweep
     /// derived here so that the seam is visible at the call site
     /// (<c>Program.CreateSweep</c>) instead of being a fact about this file.
     /// </param>
+    /// <param name="reap">
+    /// Playwright's own registry reaper, started detached when a pass really
+    /// terminated something, or <see langword="null"/> to skip that half. It is
+    /// optional for the reason the index and the install root are: a pass that
+    /// answers a question about processes must be constructible without the
+    /// machine-wide state the other halves act on.
+    /// </param>
     public StraySweep(
         IReadOnlyList<string> browserImages,
         SessionIndex? index,
         ILogger logger,
         IReadOnlyCollection<string>? profileLockImages = null,
-        string? liveInstallRoot = null)
+        string? liveInstallRoot = null,
+        ServerRegistryReap? reap = null)
     {
         ArgumentNullException.ThrowIfNull(browserImages);
         ArgumentNullException.ThrowIfNull(logger);
@@ -106,6 +115,7 @@ internal sealed class StraySweep
         _index = index;
         _liveInstallRoot = liveInstallRoot;
         _logger = logger;
+        _reap = reap;
     }
 
     /// <summary>
@@ -262,6 +272,19 @@ internal sealed class StraySweep
             {
                 var result = Pass(clock) with { GateWasAbandoned = acquisition is MutexAcquisition.AcquiredAbandoned };
                 SweepLog.Finished(_logger, result.Summary);
+
+                // ⚠️ THE FOURTH CLOSE PATH, and the one no session is left to
+                // start: a browser this pass ended belonged to a session that
+                // crashed, so its descriptor in Playwright's registry is dead and
+                // nothing else will ever unlink it. Started detached and never
+                // awaited, like the other three, and only when something really
+                // was terminated -- a pass that spared everything made nothing
+                // dead. See `ServerRegistryReap`.
+                if (result.Terminated.Count is not 0)
+                {
+                    _reap?.Start(ServerRegistryReap.AfterSweep);
+                }
+
                 return result;
             }
             finally

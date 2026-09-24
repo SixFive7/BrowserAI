@@ -569,7 +569,14 @@ internal static class Program
             // siblings since 2026-09-15 and this is the one place both are in
             // one expression, which is why the split is spelled here and not
             // resolved inside the sweep.
-            installRoot);
+            installRoot,
+
+            // A sweep that ends a crashed session's browser is the one close path
+            // no session is left to reap after, so this pass carries the reaper
+            // too -- started detached, never awaited, and only when something was
+            // really terminated. `SessionManager` builds its own for the three
+            // close paths a live session has.
+            new ServerRegistryReap(payload, factory.CreateLogger<ServerRegistryReap>()));
     }
 
     /// <summary>Runs one sweep and exits, for <see cref="SweepArgument"/>.</summary>

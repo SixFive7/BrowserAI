@@ -70,6 +70,33 @@ internal static partial class ProcessLiveness
             : throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not read this process's own creation time.");
 
     /// <summary>
+    /// The creation time of a process the caller <b>already holds a handle
+    /// to</b>, which is the other half of a pid this process has just created.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A Try shape and not a throw, because of where the one caller is.</b>
+    /// <c>JobLauncher.StartDetached</c> -- in the server assembly, which is why
+    /// this is not a cref -- starts a process nobody will ever wait for and
+    /// records it, so a creation time that cannot be read costs the
+    /// record's precision and must not cost the launch -- the log already spells
+    /// that outcome <c>@0</c>. <see cref="CreationTimeOfThisProcess"/> throws
+    /// because its caller is writing a lock record that would otherwise claim an
+    /// identity it does not have.
+    /// </para>
+    /// <para>
+    /// <b>The handle is the subject and it is not re-opened here</b>, for the
+    /// reason <see cref="StartedNoLaterThanThisProcess"/> gives: re-opening a pid
+    /// opens a window in which the number can already belong to somebody else.
+    /// </para>
+    /// </remarks>
+    /// <param name="processHandle">An open handle carrying <c>PROCESS_QUERY_LIMITED_INFORMATION</c>.</param>
+    /// <param name="createdFileTime">Its creation time as a Windows FILETIME, when it could be read.</param>
+    /// <returns><see langword="true"/> when the time was read.</returns>
+    public static bool TryCreationTimeOf(nint processHandle, out long createdFileTime) =>
+        GetProcessTimes(processHandle, out createdFileTime, out _, out _, out _);
+
+    /// <summary>
     /// Whether the exact process recorded as <paramref name="processId"/> +
     /// <paramref name="createdFileTime"/> is still running.
     /// </summary>
