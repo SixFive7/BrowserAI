@@ -135,11 +135,35 @@ internal sealed class OrphanedConsoleStart : IDisposable
         string appRoot,
         bool startedByTheInstaller,
         TimeSpan patience,
+        LauncherCorpse corpse = LauncherCorpse.Freed) =>
+        Begin(PublishedSlice.Executable, appRoot, startedByTheInstaller, patience, corpse);
+
+    /// <summary>
+    /// Starts a server binary of the caller's choosing the same way: a launcher
+    /// that is gone and a console standard input.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-09-24 for Q275</b>, whose arm starts the server a real
+    /// <c>Setup.exe</c> installed into a scratch root, and a byte-identical copy of
+    /// it outside any install, where the published slice is neither.
+    /// </remarks>
+    /// <param name="executable">The server's absolute path.</param>
+    /// <param name="appRoot">The scratch data root, under the user's profile.</param>
+    /// <param name="startedByTheInstaller">Whether to set <c>VELOPACK_FIRSTRUN=true</c>.</param>
+    /// <param name="patience">A hang detector for the start, never a budget.</param>
+    /// <param name="corpse">Which dead-launcher shape to produce.</param>
+    /// <returns>The started rig, whether or not the product wrote anything.</returns>
+    public static OrphanedConsoleStart Begin(
+        string executable,
+        string appRoot,
+        bool startedByTheInstaller,
+        TimeSpan patience,
         LauncherCorpse corpse = LauncherCorpse.Freed)
     {
+        ArgumentNullException.ThrowIfNull(executable);
         ArgumentNullException.ThrowIfNull(appRoot);
 
-        var rig = new OrphanedConsoleStart(PublishedSlice.Executable, appRoot);
+        var rig = new OrphanedConsoleStart(executable, appRoot);
 
         rig.Launch(startedByTheInstaller, corpse);
         rig.WaitUntilItSaysWhoItIs(patience);

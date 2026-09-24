@@ -496,6 +496,255 @@ internal sealed partial class RealInstallerTests
     }
 
 
+    /// <summary>
+    /// Two installs of one pack id into two roots share one Add/Remove key, and
+    /// uninstalling either root deletes it -- in both orders.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Re-verification row 123, made an arm on 2026-09-24 -- Q275 a.</b> It was a
+    /// manual row because the only id it could be measured under was the shipping
+    /// one, whose key a real install depends on; under the suite's test id no key
+    /// but <c>BrowserAI.app.test</c> is ever written, which is how the 2026-09-24
+    /// re-check was taken by hand and what makes it runnable here. Velopack
+    /// creates the key from the pack id alone (<c>registry.rs:40</c> at 1.2.158)
+    /// and deletes it with an unconditional <c>delete_subkey_all(&amp;app_id)</c>
+    /// (<c>registry.rs:65</c>), so the second install rewrites the first one's entry
+    /// and the first uninstall takes both.
+    /// </para>
+    /// <para>
+    /// <b>Both orders, because they are two claims.</b> Uninstalling the root the
+    /// key names deleting it is what anybody would expect; uninstalling the root the
+    /// key does NOT name deleting it too is the surprising half, and the half that
+    /// would take a real install's entry away. Silent installs only, the sandbox
+    /// every arm in this class uses, and the real key and Start Menu read before and
+    /// after and required byte-identical.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt()
+    {
+        var setup = SuiteEnvironment.RequireReleaseInstaller();
+
+        using var namedRootFirst = ScratchDirectory.CreateUnderProfile("two-roots-1a");
+        using var namedRootSecond = ScratchDirectory.CreateUnderProfile("two-roots-1b");
+        using var otherRootFirst = ScratchDirectory.CreateUnderProfile("two-roots-2a");
+        using var otherRootSecond = ScratchDirectory.CreateUnderProfile("two-roots-2b");
+        using var dataRoot = ScratchDirectory.CreateUnderProfile("two-roots-data");
+        using var clientConfig = ScratchDirectory.Create("two-roots-client");
+        using var logs = ScratchDirectory.Create("two-roots-logs");
+
+        // The same three variables every arm here sets, for the reason the first
+        // arm gives: the hooks register with both clients and write a record.
+        using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
+        {
+            [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
+            [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
+            [CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
+        });
+
+        var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
+        var startMenuBefore = ReadStartMenuShortcuts();
+
+        try
+        {
+            // The key's own root first, then the root the key no longer names.
+            await InstallTwoRootsAndUninstall(setup, namedRootFirst.Path, namedRootSecond.Path, uninstallTheNamedRootFirst: true, logs.Path);
+            await InstallTwoRootsAndUninstall(setup, otherRootFirst.Path, otherRootSecond.Path, uninstallTheNamedRootFirst: false, logs.Path);
+        }
+        finally
+        {
+            foreach (var root in new[] { namedRootFirst, namedRootSecond, otherRootFirst, otherRootSecond })
+            {
+                await ReclaimAsync(root.Path);
+            }
+        }
+
+        // The real entry and the real Start Menu are what they were, byte for byte.
+        await Assert.That(ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}")).IsEqualTo(realKeyBefore);
+        await Assert.That(Describe(ReadStartMenuShortcuts())).IsEqualTo(Describe(startMenuBefore));
+        await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
+    }
+
+    /// <summary>One order of the two-roots measurement.</summary>
+    /// <param name="setup">The test-id installer.</param>
+    /// <param name="first">The root installed first.</param>
+    /// <param name="second">The root installed second, which the key ends up naming.</param>
+    /// <param name="uninstallTheNamedRootFirst">Whether the first uninstall is the root the key names.</param>
+    /// <param name="logs">Where Velopack's own logs go.</param>
+    /// <returns>The assertion task.</returns>
+    private static async Task InstallTwoRootsAndUninstall(
+        string setup,
+        string first,
+        string second,
+        bool uninstallTheNamedRootFirst,
+        string logs)
+    {
+        var order = uninstallTheNamedRootFirst ? "named-first" : "other-first";
+
+        await Assert.That(await RunAsync(setup, ["--silent", "--log", Path.Combine(logs, $"{order}-install-1.log"), "--installto", first])).IsEqualTo(0);
+        await Assert.That(InstallLocationOfTheTestKey()).IsEqualTo(Normalised(first));
+
+        // ⚠️ THE SECOND INSTALL REWRITES THE ONE KEY, and the first root is still a
+        // complete install that no Add/Remove entry points at any more.
+        await Assert.That(await RunAsync(setup, ["--silent", "--log", Path.Combine(logs, $"{order}-install-2.log"), "--installto", second])).IsEqualTo(0);
+        await Assert.That(InstallLocationOfTheTestKey()).IsEqualTo(Normalised(second));
+        await Assert.That(IsACompleteInstall(first)).IsTrue();
+
+        var (goesFirst, staysBehind) = uninstallTheNamedRootFirst ? (second, first) : (first, second);
+
+        await Assert.That(await RunAsync(Path.Combine(goesFirst, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
+        await WaitOutTheDeferredRemoval(Path.Combine(goesFirst, RegistrationTarget.CurrentDirectoryName));
+
+        // ⚠️ THE CLAIM: either uninstall deletes the one key, while the other root
+        // still holds a complete install.
+        await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
+        await Assert.That(IsACompleteInstall(staysBehind)).IsTrue();
+
+        // And the root left behind still uninstalls cleanly, finding no key.
+        await Assert.That(await RunAsync(Path.Combine(staysBehind, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
+        await WaitOutTheDeferredRemoval(Path.Combine(staysBehind, RegistrationTarget.CurrentDirectoryName));
+        await Assert.That(ReadUninstallKey(ReleaseLayout.TestUninstallKey)).IsEqualTo("<absent>");
+    }
+
+    /// <summary>
+    /// An installed server started with the installer's variable takes the general
+    /// exit, and a byte-identical copy outside any install takes the one the build
+    /// carries for that variable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The installed half of re-verification row 126, made an arm on 2026-09-24
+    /// -- Q275 a.</b> <c>VelopackApp.Run()</c> clears <c>VELOPACK_FIRSTRUN</c> on
+    /// an installed process and only there (<c>VelopackApp.cs:227-238</c> at
+    /// 1.2.158), so the server a real <c>Setup.exe</c> installed never sees it, and
+    /// it ends through the general exit -- launcher gone, standard input a console --
+    /// which is <c>Startup[9]</c>. The copy outside any install still sees it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>What the copy logs depends on the BUILD, and the arm reads which build
+    /// it has.</b> The binaries are the last PACKED test pack's, not this tree's, for
+    /// the reason the first arm's remarks give. Up to 1.1.0 the server carried an
+    /// installer exit keyed on the variable, <c>Startup[8]</c>; Q276 deleted it on
+    /// 2026-09-24, so from the first pack cut after that day the copy ends through
+    /// <c>Startup[9]</c> as well. The expectation is therefore read out of the
+    /// binary -- whether it carries that exit's sentence -- and not typed here, which
+    /// keeps the arm true across the release that changes it and still refuses a
+    /// copy that took the wrong exit for the build it is.
+    /// </para>
+    /// <para>
+    /// <b>Through the orphan-console rig, silent install only</b>, so neither start
+    /// shows a window, and the real key and Start Menu are held byte-identical.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnInstalledServerNeverSeesTheInstallersVariableAndACopyOutsideAnyInstallDoes()
+    {
+        var setup = SuiteEnvironment.RequireReleaseInstaller();
+
+        using var installRoot = ScratchDirectory.CreateUnderProfile("firstrun-installed");
+        using var outside = ScratchDirectory.CreateUnderProfile("firstrun-outside");
+        using var installedData = ScratchDirectory.CreateUnderProfile("firstrun-installed-data");
+        using var outsideData = ScratchDirectory.CreateUnderProfile("firstrun-outside-data");
+        using var dataRoot = ScratchDirectory.CreateUnderProfile("firstrun-hooks-data");
+        using var clientConfig = ScratchDirectory.Create("firstrun-client");
+        using var logs = ScratchDirectory.Create("firstrun-logs");
+
+        using var sandbox = new EnvironmentScope(new Dictionary<string, string?>
+        {
+            [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
+            [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
+            [CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
+        });
+
+        var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
+        var startMenuBefore = ReadStartMenuShortcuts();
+
+        try
+        {
+            await Assert.That(await RunAsync(setup, ["--silent", "--log", Path.Combine(logs.Path, "setup.log"), "--installto", installRoot.Path])).IsEqualTo(0);
+
+            var installed = Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.ServerFileName);
+            var copy = Path.Combine(outside.Path, RegistrationTarget.ServerFileName);
+
+            await Assert.That(File.Exists(installed)).IsTrue();
+
+            File.Copy(installed, copy);
+
+            var carriesTheInstallerExit = Mentions(await File.ReadAllBytesAsync(copy), InstallerExitSentence);
+
+            // The installed server: Run() cleared the variable, so the general exit.
+            using (var run = OrphanedConsoleStart.Begin(installed, installedData.Path, startedByTheInstaller: true, TestDefaults.ProcessHang))
+            {
+                await Assert.That(run.Started).IsTrue();
+                await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, GeneralExitSentence, InstallerExitSentence, "Watching the MCP client"))
+                    .IsEqualTo(GeneralExitSentence)
+                    .Because(run.Records());
+                await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
+            }
+
+            // The copy outside any install: the variable is still set when the
+            // server reads it, so it takes whichever exit this build carries.
+            var expected = carriesTheInstallerExit ? InstallerExitSentence : GeneralExitSentence;
+
+            using (var run = OrphanedConsoleStart.Begin(copy, outsideData.Path, startedByTheInstaller: true, TestDefaults.ProcessHang))
+            {
+                await Assert.That(run.Started).IsTrue();
+                await Assert.That(run.WaitUntilItSaysOneOf(TestDefaults.ProcessHang, GeneralExitSentence, InstallerExitSentence, "Watching the MCP client"))
+                    .IsEqualTo(expected)
+                    .Because(run.Records());
+                await Assert.That(run.WaitUntilItExits(TestDefaults.ProcessHang)).IsTrue();
+            }
+
+            await Assert.That(await RunAsync(Path.Combine(installRoot.Path, "Update.exe"), ["--uninstall", "--silent"])).IsEqualTo(0);
+            await WaitOutTheDeferredRemoval(Path.Combine(installRoot.Path, RegistrationTarget.CurrentDirectoryName));
+        }
+        finally
+        {
+            await ReclaimAsync(installRoot.Path);
+        }
+
+        await Assert.That(ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}")).IsEqualTo(realKeyBefore);
+        await Assert.That(Describe(ReadStartMenuShortcuts())).IsEqualTo(Describe(startMenuBefore));
+    }
+
+    /// <summary>What the general exit, <c>Startup[9]</c>, says.</summary>
+    private const string GeneralExitSentence = "no client to serve and is exiting";
+
+    /// <summary>
+    /// What the installer exit, <c>Startup[8]</c>, said while a build carried it.
+    /// </summary>
+    /// <remarks>
+    /// Kept after Q276 deleted that exit on 2026-09-24, because the last packed
+    /// test pack is a 1.1.0 build that still carries it.
+    /// </remarks>
+    private const string InstallerExitSentence = "started by the installer";
+
+    /// <summary>The <c>InstallLocation</c> the test id's key names, or <c>&lt;absent&gt;</c>.</summary>
+    /// <returns>The value, normalised for comparison.</returns>
+    private static string InstallLocationOfTheTestKey()
+    {
+        using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(ReleaseLayout.TestUninstallKey);
+
+        return key?.GetValue("InstallLocation") is string location ? Normalised(location) : "<absent>";
+    }
+
+    /// <summary>A path as the comparisons above need it: no trailing separator, upper-case.</summary>
+    /// <param name="path">The path.</param>
+    /// <returns>The comparable form.</returns>
+    private static string Normalised(string path) =>
+        Path.TrimEndingDirectorySeparator(Path.GetFullPath(path)).ToUpperInvariant();
+
+    /// <summary>Whether a root still holds both binaries and its <c>Update.exe</c>.</summary>
+    /// <param name="root">The install root.</param>
+    /// <returns><see langword="true"/> when it does.</returns>
+    private static bool IsACompleteInstall(string root) =>
+        File.Exists(Path.Combine(root, "Update.exe"))
+        && File.Exists(Path.Combine(root, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName))
+        && File.Exists(Path.Combine(root, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.ServerFileName));
+
     /// <summary>The body of the arm, so the reclaim below can be a finally.</summary>
     /// <param name="setup">The test-id installer.</param>
     /// <param name="installRoot">The scratch install root.</param>

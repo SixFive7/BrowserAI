@@ -40,6 +40,18 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **Two installer facts that were manual rows are suite arms under the test pack's id.**
+  Q275. `RealInstallerTests.TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt`
+  installs the test pack silently into two scratch roots and shows the second install rewriting
+  the one Add/Remove key, then uninstalls in both orders: either uninstall deletes the key while
+  the other root still holds a complete install, which is re-verification row 123.
+  `RealInstallerTests.AnInstalledServerNeverSeesTheInstallersVariableAndACopyOutsideAnyInstallDoes`
+  starts the installed server through the orphan-console rig with `VELOPACK_FIRSTRUN=true` and
+  requires the general exit, `Startup[9]`, because Velopack clears the variable in an installed
+  process; a byte-identical copy outside any install takes whichever exit its build carries, read
+  out of the binary, so the arm stays true across the release that drops the installer exit. That
+  is the installed half of row 126. Both hold the real key and the Start Menu byte-identical, and
+  each was watched red against a planted wrong expectation.
 - ✅ **The gate's clearance reads the client registration out of its file and never starts the client.**
   Q281, the maintainer's words verbatim: *"Q281 a"*. The snapshot compared either side of every
   gate run read the real `browserai` registration with `claude mcp get`, which starts the client,
