@@ -1,0 +1,21 @@
+2026-09-24T11:38:05.5254700Z pid=58048 START args=[show | xml\protocol.xml | BrowserAI.Q254Test.Lnk | pb1 | q254 | 1 | nohandlers] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe show xml\protocol.xml BrowserAI.Q254Test.Lnk pb1 q254 1 nohandlers
+2026-09-24T11:38:05.5373183Z pid=58048 NOTIFIER aumid=BrowserAI.Q254Test.Lnk get_Setting hr=0x00000000 setting=0 (0 Enabled, 1 DisabledForApplication, 2 DisabledForUser, 3 DisabledByGroupPolicy, 4 DisabledByManifest)
+2026-09-24T11:38:05.5377488Z pid=58048 BEFORE-SHOW foreground=0x1122C pid=2980
+2026-09-24T11:38:05.5424263Z pid=58048 SHOWN aumid=BrowserAI.Q254Test.Lnk tag=pb1 group=q254 handlers=False suppressPopup=False wait=1s foreground=0x1122C pid=2980
+2026-09-24T11:38:05.5431346Z pid=58048 FOREGROUND t+0ms window=0x1122C pid=2980 process=Code
+2026-09-24T11:38:09.5781022Z pid=58048 SHOW-WAIT-EXPIRED no event arrived
+2026-09-24T11:38:09.5785349Z pid=58048 SHOW-EXIT
+2026-09-24T11:38:12.3387190Z pid=82932 START args=[browserai-q254test:review?from=body] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe browserai-q254test:review?from=body
+2026-09-24T11:38:12.3390874Z pid=82932 PROTOCOL-ACTIVATED uri=browserai-q254test:review?from=body
+2026-09-24T11:38:16.4597843Z pid=70416 START args=[history | BrowserAI.Q254Test.Lnk] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe history BrowserAI.Q254Test.Lnk
+2026-09-24T11:38:16.4740179Z pid=70416 HISTORY aumid=BrowserAI.Q254Test.Lnk count=0
+2026-09-24T11:39:00.3429080Z pid=78128 START args=[history | BrowserAI.Q254Test.Reg] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe history BrowserAI.Q254Test.Reg
+2026-09-24T11:39:00.3541703Z pid=78128 HISTORY aumid=BrowserAI.Q254Test.Reg count=0
+2026-09-24T11:39:00.3893130Z pid=3584 START args=[history | BrowserAI.Q254Test.Lnk] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe history BrowserAI.Q254Test.Lnk
+2026-09-24T11:39:00.4004501Z pid=3584 HISTORY aumid=BrowserAI.Q254Test.Lnk count=0
+2026-09-24T11:39:00.4472170Z pid=66376 START args=[history | velopack.BrowserAI.app] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe history velopack.BrowserAI.app
+2026-09-24T11:39:00.4573891Z pid=66376 HISTORY aumid=velopack.BrowserAI.app count=0
+2026-09-24T11:39:00.5395036Z pid=75664 START args=[clear | BrowserAI.Q254Test.Reg] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe clear BrowserAI.Q254Test.Reg
+2026-09-24T11:39:00.5492063Z pid=75664 CLEAR aumid=BrowserAI.Q254Test.Reg hr=0x00000000
+2026-09-24T11:39:00.5822982Z pid=84192 START args=[clear | BrowserAI.Q254Test.Lnk] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish\ToastProto.exe clear BrowserAI.Q254Test.Lnk
+2026-09-24T11:39:00.5919960Z pid=84192 CLEAR aumid=BrowserAI.Q254Test.Lnk hr=0x00000000

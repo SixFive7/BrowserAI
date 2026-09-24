@@ -89,3 +89,30 @@ NOT MEASURED (UI would be needed; method recorded in the report):
 
 HEADLESS MEASUREMENTS: share/results.txt (marker sharing, torn reads, timestamps, sidecar rename),
 stopevent/results.txt (named stop event, NativeAOT), boot/results.txt (boot time, logon time).
+
+=== SECOND UI WINDOW, 11:33Z-11:39Z (maintainer: "the machine is yours for the next +/- 15 min"), every action under .work/ui.lock ===
+Item 1 badge, SuppressPopup: shots/item1-badge-before.png, item1-badge-after.png, item1-badge-removed.png are identical;
+  the clock button's accessible name stays 'Clock hh:mm:ss | date' (no count). POSITIVE CONTROL: a normal toast moved to the
+  Notification Centre by the X (history count=1, 11:35:12Z) also shows no badge (shots/item1-badge-control-after-X.png).
+  -> NOT DISCRIMINATING on this machine: this taskbar shows no notification badge in either case.
+Item 3 Notification Centre after the X (registry AUMID + CustomActivator, raiser long gone): in the NC the toast is COLLAPSED
+  (ListItem with ExpandCollapse, 'Expand this notification'); its buttons exist only after Expand (uia/nc-group-dump.txt).
+  11:35:59.8420881Z INVOKED 'Ask me later' in the NC after Expand
+  11:35:59.8789771Z START args=[-ToastActivated | -Embedding]
+  11:35:59.8877005Z COM-ACTIVATE aumid='BrowserAI.Q254Test.Reg' invokedArgs='action=snooze' count=1 [snooze='6h']; history then 0.
+Item 2 foreground on Review (REAL mouse click via SetCursorPos+mouse_event on the button's UIA rectangle, cursor restored):
+  11:37:14.2034768Z START args=[-ToastActivated | -Embedding]
+  11:37:14.2101157Z COM-ACTIVATE invokedArgs='action=review' [snooze='6h']
+  11:37:16.2614512Z FOREGROUND-PROBE how=COM-activated-by-a-toast-click SetForegroundWindow=1 t+0ms:OURS t+300ms:OURS t+1000ms:OURS t+2000ms:OURS
+  CONTROL 11:36:49.2326324Z FOREGROUND-PROBE how=launched-from-a-background-shell SetForegroundWindow=0 t+0ms:other t+300ms:other t+1000ms:other
+  NOTE: changing LocalServer32 to another exe path did NOT take effect for the next activation (11:36:43Z still launched the old
+  path, logged in proto/publish/events.log); the probe build was then copied over the old path.
+Item 4 identity: shortcut 'BrowserAI Q254 test' (AUMID BrowserAI.Q254Test.Lnk, prototype icon) PLUS HKCU AppUserModelId key with
+  DisplayName 'BrowserAI Q254 REGISTRY NAME' and IconUri BrowserAI.ico -> SenderName = 'BrowserAI Q254 REGISTRY NAME' and the
+  BrowserAI icon (shots/item4-identity.png). The REGISTRY display name and icon win.
+Item 5 protocol, body click (dropdown set to 'After the next reboot'):
+  11:38:12.3387190Z START args=[browserai-q254test:review?from=body] (the toast's launch URI verbatim, 75 ms after the click; no input)
+Item 6 other scale: NOT MEASURED. All three monitors read 96 DPI / 100% (boot/dpi.txt); toasts render on the main display only, so
+  another scale needs a display-settings change, which would move other agents' windows on this shared desktop.
+Cleanup 11:39Z: all scratch keys and the shortcut removed, histories 0, Notifications\Settings list identical to the snapshot
+  (reg/notif-settings-after4.txt), 0 scratch processes, ui.lock absent, real shortcut LastWriteTime unchanged.

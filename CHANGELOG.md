@@ -761,6 +761,14 @@ release body; nothing else depends on it.
   holds were raised from Windows PowerShell 5.1**, not PowerShell 7, which cannot load the toast
   type at all; two documents said otherwise and are corrected.
 
+  A second window on the screen, later the same day, measured what needed a real click. **A
+  window opened by clicking a toast's button through the activator comes to the front**, where
+  one started in the background is refused; a click in the Notification Centre after the X still
+  reaches the activator with the dropdown's value; a registry display name and icon win over the
+  shortcut's; and a click on the body through a protocol launch drops the dropdown, as a
+  button's does. Whether a suppressed toast lights the taskbar's badge stays open, because no
+  toast shows one on this machine, and another display scale was not tried.
+
 - 📝 **The `webp` zero-byte watch is re-stamped, and it gains the instrument it was missing.**
   The ask that a `webp` screenshot past 16,383 px should error instead of returning an empty
   image has been open since 2026-09-14, and a watch whose last reading is nine days old reads

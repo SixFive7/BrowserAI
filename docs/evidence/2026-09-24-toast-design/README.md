@@ -10,7 +10,7 @@ headers and Velopack 1.2.158: three NativeAOT or console prototypes, the raw
 activation lines of every toast that was clicked, dismissed or scheduled, the
 real Start Menu shortcut's property store read without write access, the boot
 and logon time readings, the live-marker sharing matrix, the stop-event timings,
-and four screenshots. **62 files with this README, 0.5 MB.**
+and four screenshots. **77 files with this README, 0.5 MB** -- *corrected 2026-09-24, later the same day (previously "62 files with this README, 0.5 MB"), when the second screen window's files were added: the research took the machine again between 11:33Z and 11:39Z, at the maintainer's word, for the measurements the first window could not make.*
 
 ⚠️ **The design these facts feed is not decided.** The questions it raises were
 put to the maintainer as Q262 to Q277 on 2026-09-24, and nothing here is product
@@ -35,6 +35,7 @@ shortcut that was created.
 | [kb: notifications](../../../kb/windows/notifications.md#the-update-toast-from-browserais-own-binaries----measured-2026-09-24) | Every fact under *The update toast from BrowserAI's own binaries* |
 | [kb: re-verification](../../../kb/re-verification.md) | Rows 156, 157 and 158 |
 | [`docs/design/toast-2026-09-24`](../../design/toast-2026-09-24/README.md) | The correction of which PowerShell raised its renderings |
+| [kb: notifications](../../../kb/windows/notifications.md), the second window | A real click's window taking the foreground, the Notification Centre after the X, which identity wins, the protocol body click, the badge and the scale left open, and `LocalServer32` read once |
 
 ## What is here
 
@@ -51,6 +52,11 @@ shortcut that was created.
 | `shots/` | The four screenshots and the two scripts that took and cropped them |
 | `uia/` | The UI Automation drivers and window readers, and the one tree dump kept |
 | `xml/` | The three toast payloads the prototype raised |
+| `proto/Program-second-window.cs`, `proto/publish5.log`, `proto/events-second-window-*.log` | The prototype as rebuilt for the second window at 11:34Z, with its foreground probe, and the two event logs that window left: the foreground control and the protocol body click. The activator's own lines for the snooze in the Notification Centre (11:35:59Z) and for *Review* (11:37:14Z) were overwritten when the build was copied over the path `LocalServer32` named, and survive only as `MEASUREMENTS.txt` transcribes them |
+| `uia/nc-group-dump*.txt`, `uia/nc2.ps1`, `uia/realclick.ps1`, `uia/Click.cs`, `uia/traynames.ps1` | The Notification Centre's collapsed toast before and after *Expand*, and the drivers of the second window: the expand-and-invoke, the real mouse click, and the clock button's accessible name |
+| `shots/item4-identity.png` | The toast's header under a registry `DisplayName` beside a shortcut with the same id |
+| `boot/dpi.txt`, `boot/dpi.ps1` | The three monitors' DPI, read in the second window, and the reader |
+| `reg/created-second-window.txt`, `reg/notif-settings-after4.txt` | What the second window registered, and the `Notifications\Settings` list afterwards, identical to the one taken before the research began |
 | `Directory.Build.*`, `Directory.Packages.props`, `.editorconfig` | The scratch isolation that kept the prototypes from importing this repository's own build settings |
 
 ## What was left out
@@ -69,11 +75,13 @@ shortcut that was created.
   held the marker files and handshake files the probes created and deleted, and
   nothing the results do not already state.
 
+- **Four taskbar screenshots from the second window.** `shots/item1-badge-before.png`, 10,488 bytes, SHA-256 `DF4092400837DA9B5F196465AB08207E04DA603B804B3177D0230CEC665B6E45`; `item1-badge-after.png`, 10,477 bytes, `89A9EF29F23E274AFD3315E02754671D456F6416608997F0A0F790DC794B0323`; `item1-badge-removed.png`, 10,452 bytes, `3E7FB1C5A5A89A0B0A8F38FDBF5D3FE0B5909789064F33801565CA4CA37F7EA1`; and `item1-badge-control-after-X.png`, 10,478 bytes, `DDDABD8BAA4F90EDF53C83D362396E7A76C6C116107AB8F3EA9BFCC19D29E5E0`. Each is a crop of the maintainer's own notification area, which shows more than a BrowserAI or probe window, and what they show is written out in `MEASUREMENTS.txt`: no badge in any of the four.
+
 ## Two departures from the bytes as taken
 
-- **29 files gained the repository's two-line SPDX header**: every `.ps1`, every
+- **35 files gained the repository's two-line SPDX header**: every `.ps1`, every
   `.cs` and `REPORT.md`, because this tree requires one on each of those kinds.
-  Nothing else in them moved.
+  Nothing else in them moved. *29 before the second window's six scripts.*
 - **Line endings are this repository's**, per
   [the directory's own note](../README.md): captures written with CRLF are stored
   with LF.

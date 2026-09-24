@@ -177,6 +177,61 @@ Centre after the X, protocol activation from a click on the body, whether a
 process the activator started may take the foreground, and which identity wins
 when a shortcut and a registry `DisplayName` name the same id.
 
+**All four were measured later the same day**, in a second screen window the
+maintainer gave the research from 11:33Z to 11:39Z. *Corrected 2026-09-24 by
+addition (previously the paragraph above was the end of the section).* `[STABLE]`
+unless a line says otherwise.
+
+- **A window opened by a real click on a toast button, through the COM
+  activator, may take the foreground; one started in the background may not.** A
+  real mouse click on *Review* (the cursor moved to the button's own rectangle,
+  pressed, and put back) started the activator at 11:37:14.20Z with
+  `invokedArgs='action=review'` and the dropdown `[snooze='6h']`; the window it
+  then opened called `SetForegroundWindow` and got **1**, and held the foreground at
+  0, 300, 1,000 and 2,000 ms. The control, the same window opened by a process
+  started from a background shell at 11:36:49Z, got **0** and never held it. So a
+  window the update toast's *Review* opens comes to the front, which is what a
+  person who clicked it asked for.
+- **A click in the Notification Centre after the X reaches the activator, with the
+  dropdown's value.** There the toast is collapsed: a `ListItem` with
+  `ExpandCollapse`, *Expand this notification*, whose buttons exist only once it is
+  expanded (`uia/nc-group-dump.txt`). Expanded, *Ask me later* was invoked at
+  11:35:59.84Z with the raiser long gone; COM started the activator with
+  `-ToastActivated -Embedding` 37 ms later and it received the registry id,
+  `action=snooze` and `[snooze='6h']`, and the history then read 0. So the choice
+  survives the X for as long as the toast sits in the Notification Centre.
+- **Under `AppUserModelId\<id>`, the registry's display name and icon win over the
+  shortcut's.** A shortcut *BrowserAI Q254 test* carrying the id and the
+  prototype's icon, with `HKCU\Software\Classes\AppUserModelId\<id>` naming
+  `DisplayName` *BrowserAI Q254 REGISTRY NAME* and `IconUri` pointing at
+  `BrowserAI.ico`: the toast's header read *BrowserAI Q254 REGISTRY NAME* with the
+  BrowserAI icon (`shots/item4-identity.png`).
+- **A body click through protocol activation drops the dropdown's value**, as a
+  button click does. With the dropdown set to *After the next reboot*, a click on
+  the body started the prototype 75 ms later with the toast's `launch` URI verbatim,
+  `browserai-q254test:review?from=body`, and nothing else.
+- **Whether a suppressed toast lights the taskbar's badge is inconclusive on this
+  machine**, because no toast shows a badge here: the notification area read the
+  same before, after and once the suppressed toast was removed, and the positive
+  control -- an ordinary toast moved to the Notification Centre by the X --
+  showed none either; the clock button's accessible name carried no count in any
+  of them. `[MACHINE]`
+- **Another display scale was not measured.** All three monitors read 96 DPI, 100
+  percent (`boot/dpi.txt`), toasts render on
+  the main display only, and changing the scale would have moved other agents'
+  windows on a shared desktop.
+- **Changing `LocalServer32` to another executable did not take effect for the next
+  activation**: an activation at 11:36:43Z still started the path the key had
+  named before, and the research then copied its new build over that path. Read
+  once and not explained; a registration that changes the activator's path should
+  expect the old one to be started at least once. `[MACHINE]`
+
+Evidence: the second window's section of `MEASUREMENTS.txt` and the files the
+[batch README](../../docs/evidence/2026-09-24-toast-design/README.md) lists
+beside it. The activator's own log lines for 11:35:59Z and 11:37:14Z were
+overwritten when the build was copied over the old path, so for those two the
+transcription in `MEASUREMENTS.txt` is the only copy.
+
 **Re-establish it** with `reg/register.ps1` and the prototype's `show` mode, then a
 click; `reg/cleanup.ps1` removes what `register.ps1` wrote. ⚠️ **It needs a click
 on a real toast**, which is a person or UI Automation on the developer's screen.

@@ -1,0 +1,11 @@
+2026-09-24T11:36:37.2371931Z pid=61516 START args=[show | xml\background.xml | BrowserAI.Q254Test.Reg | fg1 | q254 | 1 | nohandlers] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish2\ToastProto.exe show xml\background.xml BrowserAI.Q254Test.Reg fg1 q254 1 nohandlers
+2026-09-24T11:36:37.2495492Z pid=61516 NOTIFIER aumid=BrowserAI.Q254Test.Reg get_Setting hr=0x00000000 setting=0 (0 Enabled, 1 DisabledForApplication, 2 DisabledForUser, 3 DisabledByGroupPolicy, 4 DisabledByManifest)
+2026-09-24T11:36:37.2500343Z pid=61516 BEFORE-SHOW foreground=0x101B2 pid=14840
+2026-09-24T11:36:37.2545610Z pid=61516 SHOWN aumid=BrowserAI.Q254Test.Reg tag=fg1 group=q254 handlers=False suppressPopup=False wait=1s foreground=0x101B2 pid=14840
+2026-09-24T11:36:37.2556099Z pid=61516 FOREGROUND t+0ms window=0x101B2 pid=14840 process=explorer
+2026-09-24T11:36:41.2859839Z pid=61516 SHOW-WAIT-EXPIRED no event arrived
+2026-09-24T11:36:41.2864184Z pid=61516 SHOW-EXIT
+2026-09-24T11:36:47.2019035Z pid=69100 START args=[fgcontrol] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish2\ToastProto.exe fgcontrol
+2026-09-24T11:36:49.2326324Z pid=69100 FOREGROUND-PROBE how=launched-from-a-background-shell window=0x4115CE foregroundBefore=0x101B2 SetForegroundWindow=0 t+0ms:other t+300ms:other t+1000ms:other
+2026-09-24T11:36:56.1973612Z pid=97756 START args=[history | BrowserAI.Q254Test.Reg] commandLine=C:\Source\SixFive7\BrowserAI\.work\q254-design\proto\publish2\ToastProto.exe history BrowserAI.Q254Test.Reg
+2026-09-24T11:36:56.2081808Z pid=97756 HISTORY aumid=BrowserAI.Q254Test.Reg count=0
