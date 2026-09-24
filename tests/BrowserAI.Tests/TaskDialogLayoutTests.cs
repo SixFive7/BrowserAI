@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using BrowserAI.App.Interop;
 using BrowserAI.App;
+using BrowserAI.Interop;
 using BrowserAI.Registration;
 using BrowserAI.Runtime;
 using BrowserAI.Tests.Harness;
@@ -285,13 +285,6 @@ internal sealed class TaskDialogLayoutTests
 
         var report = Path.Combine(output.Path, "report.json");
 
-        var start = new ProcessStartInfo(PublishedSlice.AppExecutable)
-        {
-            ArgumentList = { "--report", report },
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
         // ⚠️ CODEX_HOME ON THE CHILD, AND ONLY ON THE CHILD -- 2026-09-24. Since
         // the window reads every client, `--report` runs `codex mcp list --json`,
         // which reads whichever configuration CODEX_HOME names. Reading the
@@ -299,16 +292,34 @@ internal sealed class TaskDialogLayoutTests
         // CLI against it is how a file nobody meant to touch acquires a log
         // directory. Set on the child's environment and never on this process's,
         // so no other arm inherits it and this file needs no [NotInParallel].
-        start.Environment[CodexRegistration.HomeVariable] =
+        var environment = PublishedSlice.InheritedEnvironment();
+
+        environment[CodexRegistration.HomeVariable] =
             Directory.CreateDirectory(Path.Combine(output.Path, "codex")).FullName;
 
-        using var process = Process.Start(start);
+        // ⚠️ ON A PRIVATE DESKTOP SINCE 2026-09-24, Q278 (previously Process.Start
+        // with CreateNoWindow = true). This is a Windows-subsystem binary, where
+        // the flag does nothing; `--report` is windowless only because Main returns
+        // before the dialog is built, which is an ordering inside the app and not a
+        // property of the launch. A desktop nobody is looking at keeps that true
+        // whatever Main does next. The working directory is this host's, as it was.
+        using var desktop = PrivateDesktop.Create("app-report");
+        using var job = JobObject.CreateKillOnClose();
+        using var process = desktop.Launch(
+            job,
+            PublishedSlice.AppExecutable,
+            ["--report", report],
+            Environment.CurrentDirectory,
+            environment);
 
-        await Assert.That(process is null ? "the published app would not start" : string.Empty).IsEmpty();
+        var drained = Task.WhenAll(
+            process.StandardOutput.CopyToAsync(Stream.Null),
+            process.StandardError.CopyToAsync(Stream.Null));
 
-        await process!.WaitForExitAsync().WaitAsync(TestDefaults.ProcessHang);
+        await Assert.That(await process.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
+        await drained;
 
-        await Assert.That(process.ExitCode).IsEqualTo(0);
+        await Assert.That(process.TryReadExitCode()).IsEqualTo(0);
         await Assert.That(File.Exists(report)).IsTrue();
 
         using var document = JsonDocument.Parse(await File.ReadAllTextAsync(report));

@@ -102,6 +102,24 @@ internal static partial class JobLauncher
     /// <param name="arguments">Arguments, quoted for <c>CreateProcessW</c> here.</param>
     /// <param name="workingDirectory">The child's working directory. Required, never inherited.</param>
     /// <param name="environment">The child's complete environment block. It replaces ours instead of adding to it.</param>
+    /// <param name="desktop">
+    /// <para>
+    /// The desktop the child is created on, as <c>station\desktop</c>, or
+    /// <see langword="null"/> for this process's own. <b>The product never passes
+    /// one</b>, for the reason the show-window comment below gives: a private
+    /// desktop blinds the stray sweeper, whose message-window search is scoped to
+    /// a desktop.
+    /// </para>
+    /// <para>
+    /// <b>The suite does, and that is the whole reason it exists -- 2026-09-24,
+    /// Q279.</b> A Windows-subsystem child shows its window whatever
+    /// <c>CREATE_NO_WINDOW</c> says, because that flag governs a console and
+    /// nothing else; the only thing that keeps a test's dialog off the screen of
+    /// the person using the machine is a desktop nobody is looking at. The
+    /// maintainer's rule, verbatim: <i>"make sure this focus stealing is not
+    /// something that ends up in the testbed."</i>
+    /// </para>
+    /// </param>
     /// <returns>The running child, with its three streams.</returns>
     /// <exception cref="Win32Exception">Windows refused some step of the launch, named in the message.</exception>
     public static LaunchedProcess Start(
@@ -109,7 +127,8 @@ internal static partial class JobLauncher
         string command,
         IReadOnlyList<string> arguments,
         string workingDirectory,
-        IReadOnlyDictionary<string, string> environment)
+        IReadOnlyDictionary<string, string> environment,
+        string? desktop = null)
     {
         ArgumentNullException.ThrowIfNull(job);
         ArgumentNullException.ThrowIfNull(command);
@@ -118,6 +137,10 @@ internal static partial class JobLauncher
         ArgumentNullException.ThrowIfNull(environment);
 
         var pipes = ChildPipes.Create();
+
+        // Native, because STARTUPINFO carries a pointer and CreateProcessW reads it
+        // during the call; freed in the finally below, after the call returns.
+        var desktopName = desktop is null ? nint.Zero : Marshal.StringToHGlobalUni(desktop);
 
         try
         {
@@ -201,6 +224,14 @@ internal static partial class JobLauncher
             // the sweeper on Default with the same blindness.
             startupInfo.StartupInfo.ShowWindow = ShowNoActivate;
 
+            // ⚠️ THE ONE FIELD HERE WITH NO FLAG BESIDE IT, AND THAT IS NOT AN
+            // OMISSION. `lpDesktop` has no STARTF_ bit: CreateProcessW reads it
+            // whenever it is not NULL, and NULL means this process's own desktop,
+            // which is what the product always asks for. The pairing scan knows
+            // it as a field Windows reads unconditionally, and refuses a field it
+            // does not know at all.
+            startupInfo.StartupInfo.Desktop = desktopName;
+
             startupInfo.AttributeList = attributes.Pointer;
 
             // lpApplicationName is set as well as argv[0], so the executable is
@@ -256,6 +287,11 @@ internal static partial class JobLauncher
         finally
         {
             pipes.Dispose();
+
+            if (desktopName != nint.Zero)
+            {
+                Marshal.FreeHGlobal(desktopName);
+            }
         }
     }
 

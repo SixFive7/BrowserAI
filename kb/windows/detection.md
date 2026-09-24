@@ -1047,6 +1047,24 @@ Both runs took the same time to the tenth of a second -- **35.99 s** before and
 nothing measurable. Neither number should be read as a timing result: they
 differ by less than this suite's run-to-run spread. `[MACHINE]`
 
+> ⚠️ **Contradicted since 2026-09-15, recorded 2026-09-24 by addition; the
+> paragraph above stands as it was measured.** *Zero visible windows and zero
+> foreground events in a full run* was true of the 411-test suite of 2026-08-17 and
+> false of every full run with the release installer from `6602774` on:
+> `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow`
+> starts the installed test pack's configuration app from the test host, and its
+> `#32770` task dialog shows on whatever desktop the host is on. The 2026-09-24
+> focus audit found it by reading the tree, not by a run, and read in
+> `TaskDialogPage.cs` that the dialog never sets `TDF_NO_SET_FOREGROUND`.
+> **Measured the same day against the unmodified arm**, in a child test host
+> started on a private desktop so that nothing reached the screen: the suite's own
+> watch recorded `shown: #32770 'BrowserAI'`, 556x540, owned by the installed
+> `BrowserAI.exe` as a descendant of the test host, and two `UAC Input Indicator`
+> windows of the same process, and the run exited 10. **Every full run carries
+> that watch from 2026-09-24** -- `WindowWatch`, the `windows` row of the coverage
+> block -- so the next contradiction of this paragraph is a red run and not a
+> sentence somebody has to find. `[MACHINE]`
+
 **`EnumWindows` returns invisible top-level windows in bulk.** The watcher's
 baseline sweep of the developer's own desktop, three times across the session:
 **590, 586 and 587** top-level windows, of which **100** were visible each time.

@@ -128,6 +128,25 @@ internal static class ScratchRoot
         }
     }
 
+    /// <summary>
+    /// <see cref="Path"/> as it is composed, <b>without</b> the reclaim pass.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>For a reader that has to know where the scratch root is and must not
+    /// sweep it -- 2026-09-24.</b> <see cref="WindowWatch"/> needs the root at
+    /// session start in every process, and a child test host started by an arm is
+    /// such a process: taking <see cref="Path"/> there would run the reclaim in
+    /// the child and delete the parent's live scratch directories out from under
+    /// the parent's own arms.
+    /// </remarks>
+    public static string PathAsComposed => RepositoryScratch;
+
+    /// <summary>
+    /// <see cref="ProfileScratch"/> as it is composed, <b>without</b> the reclaim
+    /// pass, for <see cref="PathAsComposed"/>'s reason.
+    /// </summary>
+    public static string ProfileScratchAsComposed => ProfileAnchoredScratch;
+
     private static string RepositoryScratch =>
         Canonical(System.IO.Path.Combine(RepositoryLayout.Root.FullName, ".work", "test-scratch"));
 

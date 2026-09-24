@@ -1,0 +1,28 @@
+; SPDX-FileCopyrightText: 2026 Jori Huisman
+; SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+;
+; Format: <DocumentationCommentId>;<message shown at the call site>
+;
+; THE SUITE'S OWN BANS, read by both test projects and by nothing that ships.
+; Added 2026-09-24 with Q278, the maintainer's rule, verbatim: "make sure this
+; focus stealing is not something that ends up in the testbed."
+;
+; NO ORDINARY TEST RAISES A REAL TOAST. A toast is drawn by the shell, so the
+; suite's window watch cannot attribute it to the run that raised it: the banner
+; appears over whatever the person at the machine is doing and nothing in the run
+; says so. The release-run exception, one suppressed toast read back from the
+; notification history, arrives with the toast work and not before.
+;
+; ⚠️ WHAT THIS FILE CAN AND CANNOT SEE, stated here because an entry for a type
+; that does not resolve matches nothing and reads as coverage anyway, which is
+; ForbiddenDependencyTests' own observation about banned symbols. The two test
+; projects target net10.0-windows with no Windows SDK version, so the WinRT
+; projection below does not resolve in either of them today: these entries go
+; live the day a projection is referenced, at edit time. The route that needs no
+; projection at all, handing the runtime class name to RoGetActivationFactory,
+; is held by HouseRuleTests.NoTestRaisesARealToast, which reads the tests' code
+; for that name.
+
+T:Windows.UI.Notifications.ToastNotificationManager;No ordinary test raises a real toast: the shell draws it over whatever the person at the machine is doing, and the window watch cannot attribute it to the run. Test through the notifier seam the toast work brings; one suppressed toast read back from history is a release-run arm, not an ordinary one.
+T:Windows.UI.Notifications.ToastNotificationManagerForUser;No ordinary test raises a real toast. Same rule as ToastNotificationManager.
+T:Windows.UI.Notifications.ToastNotifier;No ordinary test raises a real toast. Same rule as ToastNotificationManager.

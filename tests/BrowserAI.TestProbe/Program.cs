@@ -53,6 +53,9 @@ internal static class Program
             "hold-file" when args.Length is 3 => SessionProbe.HoldFile(args[1], args[2]),
             "browsers-claim" when args.Length is 3 => SessionProbe.HoldBrowsersClaim(args[1], args[2]),
             "window" when args.Length is 5 => WindowProbe.Publish(args[1], args[2], args[3], args[4]),
+            // <className> <title> <reportPath>. Shows a window: started only on a
+            // private desktop, by WindowWatchTests' child. See WindowProbe.Show.
+            "window-show" when args.Length is 4 => WindowProbe.Show(args[1], args[2], args[3]),
             "session-sweep" when args.Length is 5 => SessionProbe.Sweep(args[1], args[2], args[3], args[4]),
             "stray-sweep" when args.Length is 4 =>
                 SessionProbe.StraySweepPass(args[1], args[2], int.Parse(args[3], CultureInfo.InvariantCulture)),

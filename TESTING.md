@@ -885,6 +885,56 @@ exactly: nothing anybody types makes a machine's commit charge healthy, so a
 capability would make a release from a loaded machine unreachable with no
 permitted remedy instead of telling the reader what to distrust.
 
+### The run fails when it puts a window on the screen
+
+**Added 2026-09-24, Q278, and it is the one row in the block that fails the run by
+itself.** The maintainer, verbatim: *"make sure this focus stealing is not
+something that ends up in the testbed."* The audit behind it found that
+`RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow`
+had put the configuration app's `#32770` task dialog on the interactive desktop in
+every full run with the release installer since 2026-09-15, asking for the
+foreground, and that every green gate in those nine days had passed through it
+without a line saying so.
+
+**The watch lives in the test host and runs from the session hooks.**
+`[Before(TestSession)]` takes a baseline of the visible top-level windows and
+starts one thread holding two out-of-context WinEvent hooks -- object create
+through show, and system foreground -- with no `WINEVENT_SKIPOWNPROCESS`, so the
+host's own windows count too. `[After(TestSession)]` stops it, sweeps for anything
+of the suite's still open, writes a **`windows`** row and then throws, so the host
+exits **10**. A filter cannot deselect it, for the reason the release refusal
+above cannot be deselected either.
+
+**A window is the suite's in three cases and no fourth**: the host's own; a process
+descending from the host by a live parent chain, each parent created before its
+child; or an image under the repository, `ScratchRoot.Path` or
+`ScratchRoot.ProfileScratch`. The machine's own browsers root is never one of
+them. The rule is `WindowWatch.Classify`, a pure function, and
+`WindowWatchTests` drives it both ways over synthetic sightings on every run.
+
+| State | What it means |
+|---|---|
+| `CLEAN` | Watched, and nothing the run started showed a window or took the foreground. The row names the desktop, the event count and the baseline |
+| `SHOWN` | Watched, and something of the suite's was shown, created visible, brought forward or left open. One line per window -- class, title, pid and creation time, image, rectangle, time and which of the three rules made it the suite's -- and **the run fails in every mode** |
+| `UNWATCH` | The hooks never went in. An ordinary run proceeds and says why; `BROWSERAI_RELEASE_RUN=1` makes it a failure, because a release may not claim a screen nobody watched |
+
+**What it cannot see is everything off its own desktop**, and that is the property
+the fix is built on: a child started on a `PrivateDesktop` shows its windows where
+nobody is looking and where the host's hooks do not reach. So a Windows-subsystem
+binary is started there, and never with `CreateNoWindow` alone -- the flag governs a
+console and does nothing for a GUI child, and
+`HouseRuleTests.EveryProcessLaunchInTheTreeSuppressesTheConsoleWindow` no longer
+credits it at such a launch. A toast is drawn by the shell and is not attributable
+here either; `HouseRuleTests.NoTestRaisesARealToast` and the suite's own
+`BannedSymbols.txt` cover that route.
+
+⚠️ **The positive control is a real child and not only a pure function.**
+`WindowWatchTests.AChildRunThatShowsAWindowExitsTenNamesItsClassAndThisRunNeverSeesIt`
+starts this same test host on a private desktop, filtered to one planted arm that
+shows a window through the probe's `window-show` mode, and requires exit 10, the
+class in the child's console and in its `windows` row, and nothing of that class in
+the parent's own reading. A watch that stopped seeing would fail it.
+
 ### The run states the publish freshness it established
 
 **Added 2026-08-30, and it exists because a check that is silent on success

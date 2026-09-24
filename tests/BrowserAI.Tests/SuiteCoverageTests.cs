@@ -80,10 +80,28 @@ internal static class SuiteCoverage
     [Before(TestSession)]
     public static void TakeTheCommitChargeReading() => CommitCharge.TakeTheStartReading();
 
+    /// <summary>
+    /// Takes the window baseline and starts the watch before the first test runs.
+    /// </summary>
+    /// <remarks>
+    /// <b>A session hook, so no filter can deselect it</b>, for the reason
+    /// <see cref="RefuseWhatThisRunsOwnReadingsForbid"/> gives about the refusal
+    /// at the other end. The maintainer's rule, 2026-09-24: <i>"make sure this
+    /// focus stealing is not something that ends up in the testbed."</i> See
+    /// <see cref="WindowWatch"/>.
+    /// </remarks>
+    [Before(TestSession)]
+    public static void WatchForWindows() => WindowWatch.Start();
+
     /// <summary>Writes the coverage block at the end of the session.</summary>
     [After(TestSession)]
     public static void ReportWhatThisRunExercised()
     {
+        // FIRST, so the windows row below is the whole run's: the hook thread is
+        // stopped after the events queued ahead of the stop are delivered, and the
+        // closing sweep counts anything of the suite's still open.
+        WindowWatch.Stop();
+
         var summary = SuiteEnvironment.Summary();
 
         // ⚠️ Console.WriteLine DOES NOT REACH THE RUN'S OUTPUT FROM A SESSION
@@ -136,14 +154,23 @@ internal static class SuiteCoverage
             File.WriteAllText(probe, SuiteFilter.Describe(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
         }
 
-        RefuseARunThatMayNotBeARelease();
+        RefuseWhatThisRunsOwnReadingsForbid();
     }
 
     /// <summary>
     /// Fails the whole run when its own filter reading says it may not be a
-    /// release.
+    /// release, or its own window watch saw it show a window.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Two refusals since 2026-09-24, and one exception carrying both.</b>
+    /// <i>Previously <c>RefuseARunThatMayNotBeARelease</c>, which carried the filter
+    /// refusal alone.</i> The window refusal is Q278: a run whose own processes put
+    /// a window on the screen or took the foreground fails in every mode, and a run
+    /// the watch could not cover fails only a release. Both are raised here for the
+    /// same reason -- a refusal a filter can deselect is not a refusal -- and both
+    /// sentences travel in one exception, so a run that earned both is told both.
+    /// </para>
     /// <para>
     /// ⚠️ <b>A refusal that a filter can remove is not a refusal, and this used
     /// to be one.</b> Until 2026-08-24 the refusal was an ordinary <c>[Test]</c>,
@@ -181,13 +208,25 @@ internal static class SuiteCoverage
     /// </para>
     /// </remarks>
     /// <exception cref="InvalidOperationException">
-    /// The run asked to be a release and its own reading forbids it.
+    /// The run's own filter reading or its own window watch forbids it.
     /// </exception>
-    private static void RefuseARunThatMayNotBeARelease()
+    private static void RefuseWhatThisRunsOwnReadingsForbid()
     {
+        var refusals = new List<string>();
+
         if (SuiteFilter.Decision is SuiteFilterDecision.Refuse)
         {
-            throw new InvalidOperationException(SuiteFilter.Refusal(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
+            refusals.Add(SuiteFilter.Refusal(SuiteFilter.Reading, SuiteEnvironment.IsReleaseRun));
+        }
+
+        if (WindowWatch.Refusal(WindowWatch.Reading, SuiteEnvironment.IsReleaseRun) is { } windows)
+        {
+            refusals.Add(windows);
+        }
+
+        if (refusals.Count is not 0)
+        {
+            throw new InvalidOperationException(string.Join(Environment.NewLine + Environment.NewLine, refusals));
         }
     }
 }
@@ -301,6 +340,12 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(summary)
             .Contains(CommitCharge.StateWord(CommitCharge.Classify(CommitCharge.AtStart, CommitChargeReading.Take())).Trim())
             .Because("the row states the band this machine is actually in, and a block that printed a number without classifying it would be an assurance the run has not earned");
+
+        // Not a capability either, and the only row that fails the run by itself:
+        // whether this run's own processes put a window on the screen or took the
+        // foreground. WindowWatchTests asserts what the row may contain.
+        await Assert.That(summary).Contains("  " + WindowWatch.Title.PadRight(20));
+        await Assert.That(summary).Contains(WindowWatch.StateWord(WindowWatch.Judge(WindowWatch.Reading)).Trim());
 
         // The start reading has to have been TAKEN, which is a statement about
         // the session hook and not about the machine: a run whose hook never

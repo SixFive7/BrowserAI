@@ -40,6 +40,15 @@
     <PackageReference Include="SourceGear.sqlite3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The suite's own bans, beside the repository-wide file every project
+         reads through Directory.Build.props. Added 2026-09-24 with Q278: no
+         ordinary test raises a real toast. The file says what it can and cannot
+         see, and HouseRuleTests.NoTestRaisesARealToast holds that both test
+         projects read it. -->
+    <AdditionalFiles Include="BannedSymbols.txt" />
+  </ItemGroup>
+
   <!-- The upstream-review gate: four snapshots regenerated from the resolved
        payload and diffed on every build, with the diff in the failure message.
        Imported here and not in Directory.Build.props because the gate is

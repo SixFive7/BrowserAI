@@ -40,6 +40,37 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✅ **A suite run that shows a window or takes the foreground now fails, and names the window.**
+  The maintainer, 2026-09-24, verbatim: *"make sure this focus stealing is not something that
+  ends up in the testbed."* The test host watches its own desktop for the whole session from the
+  session hooks, so no filter can deselect it: a baseline of the visible windows, then two
+  WinEvent hooks for windows created, shown and brought forward. A window is the suite's when
+  it is the host's own, when its process descends from the host by a live parent chain, or when
+  its image sits under the repository or either scratch root, and never by the machine's own
+  browsers root. The coverage block gains a `windows` row naming each such window with its pid,
+  image, rectangle and time, and the run then exits 10. A run the watch could not cover fails
+  only as a release.
+
+  **Watched red against the real offender before it moved.**
+  `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow`, unmodified and
+  run in a child test host on a private desktop so that nothing reached the screen, exited 10
+  naming `#32770 'BrowserAI'` from the installed app and two input-indicator windows of the same
+  process. It had put that dialog on the interactive desktop in every full run with the release
+  installer since 2026-09-15. The standing positive control is a child test host on a private
+  desktop that shows one window through a new `window-show` probe mode and must exit 10 naming
+  its class while the parent's own watch never sees it; with the watch's show events planted
+  out, that arm went red.
+
+  **Four source rules came with it.** A launch of a Windows-subsystem binary is no longer
+  credited with `CreateNoWindow`, which does nothing for a GUI child, and goes through a private
+  desktop instead; the configuration app's `--report` arm moved onto one, and
+  `JobLauncher.Start` takes the desktop, which the product itself never passes. The same scan
+  reads `.js`, `.cjs` and `.mjs` launches for `windowsHide: true` and `Start-Process` for
+  `-WindowStyle Hidden` or `-NoNewWindow`; the gate drivers' own hidden launch was measured to
+  show no window and hand nothing to Windows Terminal. No ordinary test raises a real toast: the
+  suite has a banned-symbols file of its own, and a scan refuses the runtime class name a raw
+  activation would hand to Windows. And the `STARTUPINFO` pairing scan refuses a field it does
+  not know, so `lpDesktop`, which has no flag, is named in its table.
 - ✨ **A reconnected session is told, once, that its tool list came from a BrowserAI that is
   gone.** Q261. A per-connection flag records whether a `tools/list` has
   arrived since the handshake; the first `tools/call` that precedes one is **refused once**,

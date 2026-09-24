@@ -169,6 +169,29 @@ internal sealed partial class HouseRuleTests
     /// is not credited, and that is the same judgement. (3) It reads text, so a
     /// launch through something it does not name -- a shell helper, a scheduled
     /// task, a script this repository does not hand-write -- is invisible to it.
+    /// (4) JavaScript composed inside a C# string, which two containment arms
+    /// hand to <c>node -e</c>, is read as a C# literal and not as a script.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Widened 2026-09-24 in three directions, Q278.</b> <i>Previously the
+    /// scan read <c>.cs</c> files only and credited <c>CreateNoWindow</c> wherever
+    /// it appeared.</i> (a) <b>A script's launches</b>: a <c>.js</c>, <c>.cjs</c> or
+    /// <c>.mjs</c> call into <c>child_process</c> must pass <c>windowsHide:
+    /// true</c>, Node's spelling of the same flag, and a <c>Start-Process</c> in a
+    /// <c>.ps1</c> must pass <c>-WindowStyle Hidden</c> or <c>-NoNewWindow</c>. The
+    /// first of those two is accepted because it was measured, not assumed: the
+    /// gate drivers' own shape, <c>Start-Process pwsh -WindowStyle Hidden ...
+    /// -RedirectStandardOutput</c>, left its console window invisible and started
+    /// no Windows Terminal or OpenConsole process at all, 0 visible windows over 23
+    /// seconds, measured 2026-09-24 and kept at
+    /// <c>docs/evidence/2026-09-24-velopack-rows/logs/I1-hidden-pwsh.txt</c>. (b)
+    /// <b>A Windows-subsystem binary is not credited with the flag</b>, because
+    /// <c>CREATE_NO_WINDOW</c> governs a console and does nothing for a GUI child's
+    /// window: a launch whose executable, or the ten lines above it, names
+    /// <see cref="WindowsSubsystemBinaries"/> is an offence however the flag is set,
+    /// and the way out is <see cref="PrivateDesktop.Launch"/>. It was credited at
+    /// two sites until this day, and one of them put a task dialog on the
+    /// maintainer's screen in every full run for nine days.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -177,22 +200,34 @@ internal sealed partial class HouseRuleTests
     {
         var offenders = new List<string>();
         var sites = 0;
+        var scriptSites = 0;
 
-        foreach (var file in RepositoryLayout.SourceAndScriptFiles.Where(file => file.Extension is ".cs"))
+        foreach (var file in RepositoryLayout.SourceAndScriptFiles)
         {
-            var lines = (await RepositoryLayout.ReadCodeAsync(file)).Split('\n');
-
-            foreach (var (line, what) in LaunchSites(lines))
+            if (file.Extension is ".cs")
             {
-                sites++;
+                var lines = (await RepositoryLayout.ReadCodeAsync(file)).Split('\n');
 
-                if (!Window(lines, line).Contains(Flag, StringComparison.Ordinal))
+                foreach (var (line, what) in LaunchSites(lines))
                 {
-                    offenders.Add(
-                        $"{Relative(file)}: {what} with no {Flag} within {LaunchWindowLines} lines"
-                        + " -- every suite run started by a windowless parent flashes a console window from it");
+                    sites++;
+                    offenders.AddRange(ConsoleOffences(lines, line, what).Select(offence => $"{Relative(file)}: {offence}"));
                 }
+
+                continue;
             }
+
+            if (file.Extension is not (".js" or ".cjs" or ".mjs" or ".ps1" or ".psm1"))
+            {
+                continue;
+            }
+
+            var code = CodeOnly(await File.ReadAllTextAsync(file.FullName), file.Extension).Split('\n');
+
+            var offences = ScriptLaunchOffences(code, file.Extension, out var found);
+
+            offenders.AddRange(offences.Select(offence => $"{Relative(file)}: {offence}"));
+            scriptSites += found;
         }
 
         await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
@@ -218,9 +253,179 @@ internal sealed partial class HouseRuleTests
         var corrected = planted.Take(4).Append("            " + Flag + " = true,").Append("        };").ToArray();
 
         await Assert.That(Window(corrected, LaunchSites(corrected)[0].Line).Contains(Flag, StringComparison.Ordinal)).IsTrue();
+        await Assert.That(ConsoleOffences(corrected, LaunchSites(corrected)[0].Line, LaunchSites(corrected)[0].What)).IsEmpty();
 
-        // Not vacuous over the tree either: ten launch sites as of 2026-08-23.
+        // ⚠️ A WINDOWS-SUBSYSTEM BINARY IS NOT CREDITED WITH THE FLAG, in both
+        // shapes the two real sites had: named on the launch line, and named in a
+        // local a few lines above it.
+        string[] gui =
+        [
+            "        var start = new Process" + "StartInfo(PublishedSlice." + WindowsSubsystemBinaries[0] + ")",
+            "        {",
+            "            " + Flag + " = true,",
+            "        };",
+        ];
+
+        string[] guiThroughALocal =
+        [
+            "        var app = Path.Combine(root, RegistrationTarget." + WindowsSubsystemBinaries[1] + ");",
+            "",
+            "        using var process = new Process { StartInfo = new Process" + "StartInfo(app)",
+            "        {",
+            "            " + Flag + " = true,",
+            "        } };",
+        ];
+
+        await Assert.That(ConsoleOffences(gui, LaunchSites(gui)[0].Line, LaunchSites(gui)[0].What).Count).IsEqualTo(1);
+        await Assert.That(ConsoleOffences(guiThroughALocal, LaunchSites(guiThroughALocal)[0].Line, LaunchSites(guiThroughALocal)[0].What).Count).IsEqualTo(1);
+
+        // ⚠️ THE SCRIPT HALVES, both directions each, over the same reader the
+        // tree goes through -- so a comment that mentions a launch is not one.
+        await Assert.That(ScriptLaunchOffences(["const c = spawn(node, [], { stdio: 'pipe' });"], ".mjs", out _).Count).IsEqualTo(1);
+        await Assert.That(ScriptLaunchOffences(["const c = spawn(node, [], {", "  windowsHide: true,", "});"], ".mjs", out _)).IsEmpty();
+        await Assert.That(ScriptLaunchOffences(["cp.execFileSync('pwsh', ['-c', 'x']);"], ".cjs", out _).Count).IsEqualTo(1);
+        await Assert.That(ScriptLaunchOffences(CodeOnly("// spawn(node) is how it used to be done\n", ".js").Split('\n'), ".js", out _)).IsEmpty();
+
+        await Assert.That(ScriptLaunchOffences(["Start-Process pwsh -ArgumentList '-NoProfile'"], ".ps1", out _).Count).IsEqualTo(1);
+        await Assert.That(ScriptLaunchOffences(["Start-Process pwsh -WindowStyle Hidden -ArgumentList '-NoProfile'"], ".ps1", out _)).IsEmpty();
+        await Assert.That(ScriptLaunchOffences(["Start-Process pwsh `", "    -NoNewWindow -Wait"], ".ps1", out _)).IsEmpty();
+        await Assert.That(ScriptLaunchOffences(CodeOnly("<#\n.EXAMPLE\n    Start-Process pwsh -ArgumentList x\n#>\n", ".ps1").Split('\n'), ".ps1", out _)).IsEmpty();
+
+        // Not vacuous over the tree either: ten launch sites as of 2026-08-23, and
+        // the two spawns in build/upstream-snapshots.mjs since the script half.
         await Assert.That(sites).IsGreaterThanOrEqualTo(8);
+        await Assert.That(scriptSites).IsGreaterThanOrEqualTo(2);
+    }
+
+    /// <summary>
+    /// The binaries this tree builds as Windows-subsystem executables, by the
+    /// names a launch site spells them with.
+    /// </summary>
+    /// <remarks>
+    /// <b>By name, so a launch through a variable holding another GUI binary is
+    /// invisible</b> -- Velopack's own <c>Setup.exe</c> and <c>Update.exe</c>, run
+    /// with <c>--silent</c>, are launched that way and are not asserted about here.
+    /// </remarks>
+    private static readonly string[] WindowsSubsystemBinaries = ["App" + "Executable", "App" + "FileName"];
+
+    /// <summary>How far above a launch a Windows-subsystem binary may be named and still be read as its executable.</summary>
+    private const int GuiLookbackLines = 10;
+
+    /// <summary>The complaints about one <c>.cs</c> launch site.</summary>
+    /// <param name="lines">The file, comment-only lines already removed.</param>
+    /// <param name="line">The launch's own line.</param>
+    /// <param name="what">What kind of launch it is.</param>
+    /// <returns>Nothing, or one complaint.</returns>
+    private static List<string> ConsoleOffences(string[] lines, int line, string what)
+    {
+        var above = string.Join('\n', lines.Skip(Math.Max(0, line - GuiLookbackLines)).Take(Math.Min(line, GuiLookbackLines) + 1));
+
+        if (WindowsSubsystemBinaries.FirstOrDefault(name => above.Contains(name, StringComparison.Ordinal)) is { } gui)
+        {
+            return [$"{what} starts a Windows-subsystem binary ({gui}), where {Flag} does nothing for the window it shows"
+                + " -- start it on a PrivateDesktop through PrivateDesktop.Launch"];
+        }
+
+        return Window(lines, line).Contains(Flag, StringComparison.Ordinal)
+            ? []
+            : [$"{what} with no {Flag} within {LaunchWindowLines} lines"
+                + " -- every suite run started by a windowless parent flashes a console window from it"];
+    }
+
+    /// <summary>A script's text with its comments blanked, line structure kept.</summary>
+    /// <param name="text">The file's text.</param>
+    /// <param name="suffix">Its extension, with the dot.</param>
+    /// <returns>The code, every comment character a space.</returns>
+    private static string CodeOnly(string text, string suffix)
+    {
+        var characters = text.ToCharArray();
+
+        foreach (var (start, end) in Harness.Commentary.SpansOf(text, suffix))
+        {
+            for (var at = start; at < end; at++)
+            {
+                if (characters[at] is not '\n')
+                {
+                    characters[at] = ' ';
+                }
+            }
+        }
+
+        return new string(characters);
+    }
+
+    /// <summary>A <c>child_process</c> call, bare or through the usual module aliases.</summary>
+    [GeneratedRegex(@"(?:(?<![\w.$])|\b(?:cp|childProcess|child_process)\.)(?:spawnSync|spawn|execFileSync|execFile|execSync|exec|fork)\s*\(", RegexOptions.CultureInvariant)]
+    private static partial Regex NodeLaunch();
+
+    /// <summary>Node's spelling of the flag.</summary>
+    [GeneratedRegex(@"windowsHide\s*:\s*true", RegexOptions.CultureInvariant)]
+    private static partial Regex NodeHide();
+
+    /// <summary>A <c>Start-Process</c> invocation.</summary>
+    [GeneratedRegex(@"\bStart-Process\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex PowerShellLaunch();
+
+    /// <summary>What keeps a <c>Start-Process</c> child's console off the screen.</summary>
+    [GeneratedRegex(@"-WindowStyle\s+['""]?Hidden\b|-NoNewWindow\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex PowerShellHide();
+
+    /// <summary>The complaints about one script's launches.</summary>
+    /// <param name="code">The script, comments blanked, split into lines.</param>
+    /// <param name="suffix">Its extension, with the dot.</param>
+    /// <param name="sites">How many launches were read.</param>
+    /// <returns>One complaint per launch that is not hidden.</returns>
+    private static List<string> ScriptLaunchOffences(string[] code, string suffix, out int sites)
+    {
+        var offences = new List<string>();
+        sites = 0;
+
+        for (var line = 0; line < code.Length; line++)
+        {
+            if (suffix is ".ps1" or ".psm1")
+            {
+                if (!PowerShellLaunch().IsMatch(code[line]))
+                {
+                    continue;
+                }
+
+                sites++;
+
+                // The invocation is the line and every line a trailing backtick
+                // carries it onto.
+                var invocation = code[line];
+
+                for (var next = line; next < code.Length - 1 && next - line < GuiLookbackLines && code[next].TrimEnd().EndsWith('`'); next++)
+                {
+                    invocation += "\n" + code[next + 1];
+                }
+
+                if (!PowerShellHide().IsMatch(invocation))
+                {
+                    offences.Add(
+                        $"line {line + 1}: Start-Process with neither -WindowStyle Hidden nor -NoNewWindow"
+                        + " -- the child gets a console window of its own on whatever screen is in front of it");
+                }
+
+                continue;
+            }
+
+            if (!NodeLaunch().IsMatch(code[line]))
+            {
+                continue;
+            }
+
+            sites++;
+
+            if (!NodeHide().IsMatch(Window(code, line)))
+            {
+                offences.Add(
+                    $"line {line + 1}: a child_process launch with no windowsHide: true within {LaunchWindowLines} lines"
+                    + " -- Node's spelling of " + Flag + ", and without it a console child of a windowless parent flashes a window");
+            }
+        }
+
+        return offences;
     }
 
     /// <summary>
@@ -280,6 +485,101 @@ internal sealed partial class HouseRuleTests
 
         return found;
     }
+
+    /// <summary>
+    /// <b>No ordinary test raises a real toast</b>, by either route to one, and
+    /// both test projects read the file that bans the first.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q278, added 2026-09-24.</b> A toast is drawn by the shell, so
+    /// <see cref="WindowWatch"/> cannot attribute one to the run that raised it:
+    /// the banner lands over whatever the person at the machine is doing and the
+    /// run's own rows say nothing. The maintainer's rule, verbatim: <i>"make sure
+    /// this focus stealing is not something that ends up in the testbed."</i>
+    /// </para>
+    /// <para>
+    /// <b>Two routes and two mechanisms.</b> The WinRT projection is banned in
+    /// <c>tests/BrowserAI.Tests/BannedSymbols.txt</c>, which both test projects
+    /// read; neither resolves the projection today, so that half goes live the
+    /// day one is referenced. The route that needs no projection -- the runtime
+    /// class name handed to <c>RoGetActivationFactory</c>, which is how the
+    /// NativeAOT prototype of 2026-09-24 raised one -- is what this reads the
+    /// tests' code for. Comments are blanked first, so writing down why is not an
+    /// offence.
+    /// </para>
+    /// <para>
+    /// <b>The release-run exception is not here yet</b>: one suppressed toast read
+    /// back from the notification history belongs to the toast work, and arrives
+    /// with it as a named exception to this arm and not as a hole in it.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task NoTestRaisesARealToast()
+    {
+        var offenders = new List<string>();
+        var read = 0;
+
+        foreach (var file in RepositoryLayout.SourceFilesUnder(["tests"], ["*.cs"]))
+        {
+            read++;
+
+            var code = CodeOnly(await File.ReadAllTextAsync(file.FullName), ".cs");
+
+            offenders.AddRange(ToastActivations(code).Select(needle =>
+                $"{Relative(file)}: names {needle}, which is how a real toast is raised"
+                + " -- no ordinary test raises one; the shell draws it over whatever the person at the machine is doing"));
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, offenders)).IsEmpty();
+
+        // Both test projects read the ban. A project that did not would be the
+        // one place a projection could be referenced without it going live.
+        foreach (var project in new[] { "BrowserAI.Tests.csproj", "BrowserAI.TestProbe.csproj" })
+        {
+            var file = RepositoryLayout.ProjectFiles.Single(candidate => string.Equals(candidate.Name, project, StringComparison.OrdinalIgnoreCase));
+            var text = await File.ReadAllTextAsync(file.FullName);
+
+            await Assert.That(ReadsTheSuitesBans(text)).IsTrue().Because($"{project} must read tests/BrowserAI.Tests/BannedSymbols.txt");
+        }
+
+        // ⚠️ THE POSITIVE CONTROL, both directions, through the same reader: the
+        // activation is named, and the same words in a comment are not.
+        var activation = "var factory = Activate(\"Windows.UI.Notifications." + "ToastNotificationManager\");";
+
+        await Assert.That(ToastActivations(CodeOnly(activation, ".cs")).Count).IsEqualTo(1);
+        await Assert.That(ToastActivations(CodeOnly("// " + activation, ".cs"))).IsEmpty();
+        await Assert.That(ReadsTheSuitesBans("<AdditionalFiles Include=\"..\\BrowserAI.Tests\\" + "BannedSymbols.txt\" />")).IsTrue();
+        await Assert.That(ReadsTheSuitesBans("<AdditionalFiles Include=\"..\\..\\build\\" + "BannedSymbols.txt\" />")).IsFalse();
+
+        // Not vacuous: the whole of the suite's code was read.
+        await Assert.That(read).IsGreaterThan(100);
+    }
+
+    /// <summary>What names a real toast's activation, built from halves so this file carries none of it.</summary>
+    private static readonly string[] ToastNeedles =
+    [
+        "Windows.UI.Notifications." + "ToastNotificationManager",
+        "Windows.UI.Notifications." + "ToastNotifier",
+        "CreateToast" + "Notifier",
+    ];
+
+    /// <summary>Every toast needle one file's code carries.</summary>
+    /// <param name="code">The code, comments blanked.</param>
+    /// <returns>The needles found.</returns>
+    private static List<string> ToastActivations(string code) =>
+        [.. ToastNeedles.Where(needle => code.Contains(needle, StringComparison.Ordinal))];
+
+    /// <summary>Whether a project file reads the suite's own banned-symbols file.</summary>
+    /// <param name="project">The project file's text.</param>
+    /// <returns><see langword="true"/> when an additional file names it.</returns>
+    private static bool ReadsTheSuitesBans(string project) =>
+        SuitesBans().IsMatch(project);
+
+    /// <summary>An additional file that is the suite's banned-symbols file and not the repository's.</summary>
+    [GeneratedRegex(@"<AdditionalFiles\s+Include=""(?:\.\.\\BrowserAI\.Tests\\)?BannedSymbols\.txt""", RegexOptions.CultureInvariant)]
+    private static partial Regex SuitesBans();
 
     /// <summary>The lines a launch's flag may be set in.</summary>
     /// <param name="lines">The file's lines.</param>
@@ -1439,6 +1739,18 @@ internal sealed partial class HouseRuleTests
 
         await Assert.That(Unpaired(StartupInfoSites(opaque)[0])).IsNotEmpty();
 
+        // ⚠️ A FIELD THE TABLE DOES NOT NAME IS AN OFFENCE. Title is read with no
+        // flag for a console child and means something else under two STARTF_
+        // bits, so it has to be named in the table before anything may assign it.
+        var unnamed = $"{Constants}\n{declared}\n            startupInfo.{Struct}.Flags = UseStd;\n{handles}\n            startupInfo.{Struct}.Title = title;";
+
+        await Assert.That(Unpaired(StartupInfoSites(unnamed)[0])).IsNotEmpty();
+
+        // And the one field with no flag at all, named, is assigned freely.
+        var desktop = $"{Constants}\n{declared}\n            startupInfo.{Struct}.Flags = UseStd;\n{handles}\n            startupInfo.{Struct}.Desktop = name;";
+
+        await Assert.That(Unpaired(StartupInfoSites(desktop)[0])).IsEmpty();
+
         // Not vacuous over the tree: the product's launcher and the breakaway
         // probe, as of 2026-08-23. The probe assigns no gated field and sets no
         // flags, which is the compliant shape and not an exemption.
@@ -1553,7 +1865,22 @@ internal sealed partial class HouseRuleTests
         (0x00000008, "STARTF_USECOUNTCHARS", ["XCountChars", "YCountChars"]),
         (0x00000010, "STARTF_USEFILLATTRIBUTE", ["FillAttribute"]),
         (0x00000100, "STARTF_USESTDHANDLES", ["StdInput", "StdOutput", "StdError"]),
+
+        // ⚠️ NO FLAG, AND THAT IS AN ENTRY AND NOT AN ABSENCE -- 2026-09-24. A field
+        // this table does not name is refused, so a field Windows reads with no
+        // flag at all has to be named here, with no bit, to be assigned anywhere.
+        (NoFlag, "no flag: the size CreateProcessW reads first", ["Cb"]),
+
+        // lpDesktop, which JobLauncher sets when the suite starts a child on a
+        // PrivateDesktop -- Q279. CreateProcessW reads it whenever it is not NULL,
+        // and NULL means the caller's own desktop. Watched red without this entry
+        // on 2026-09-24, naming JobLauncher.cs and the field.
+        (NoFlag, "no flag: read whenever it is not NULL", ["Desktop"]),
+        (NoFlag, "no flag: read under EXTENDED_STARTUPINFO_PRESENT, which is a creation flag", ["AttributeList"]),
     ];
+
+    /// <summary>The bit an entry carries when Windows reads its field with no flag.</summary>
+    private const uint NoFlag = 0;
 
     /// <summary>Every <c>STARTUPINFO</c> a file builds, with what it assigned.</summary>
     /// <param name="code">One file's code.</param>
@@ -1627,6 +1954,11 @@ internal sealed partial class HouseRuleTests
 
         foreach (var (bit, flag, gated) in GatedFields)
         {
+            if (bit is NoFlag)
+            {
+                continue;
+            }
+
             var assigned = gated.Where(site.Fields.Contains).ToList();
             var set = (bits & bit) is not 0;
 
@@ -1643,6 +1975,19 @@ internal sealed partial class HouseRuleTests
                     $"{flag} is set and none of {string.Join(", ", gated)} is assigned"
                     + " -- the struct promises Windows a value it does not carry, so the zero from `default` is honoured as if it had been chosen");
             }
+        }
+
+        // ⚠️ A FIELD THIS SCAN DOES NOT KNOW IS AN OFFENCE, AND NOT A SILENT PASS
+        // -- 2026-09-24. Until then an assignment to a field outside the table was
+        // ignored, so the one field with no flag at all could be set, or a new
+        // gated one added, and the pairing rule would have said nothing about it.
+        var known = GatedFields.SelectMany(entry => entry.Fields).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var field in site.Fields.Where(field => !known.Contains(field)).Order(StringComparer.Ordinal))
+        {
+            complaints.Add(
+                $"{field} is assigned and this scan does not know whether CreateProcessW reads it"
+                + " -- name it in the table with the flag that makes Windows read it, or with no flag");
         }
 
         return complaints;

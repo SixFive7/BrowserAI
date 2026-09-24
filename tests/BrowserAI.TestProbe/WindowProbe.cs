@@ -228,6 +228,106 @@ internal static partial class WindowProbe
     }
 
     /// <summary>
+    /// Shows one ordinary top-level window of a class the caller names, reports,
+    /// and stays alive -- the planted offence for the suite's own window watch.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>The one mode in this probe that puts a window on a desktop, and it is
+    /// only ever started on a private one.</b> Its single caller is the child test
+    /// host <c>WindowWatchTests</c> starts on a desktop nobody is looking at, so the
+    /// window exists, is visible to that desktop's hooks, and never reaches the
+    /// screen. Everything else in this file creates windows that are never shown,
+    /// and that is still the rule: the suite stopped putting windows in front of
+    /// the developer on purpose.
+    /// </para>
+    /// <para>
+    /// <b>Shown with <c>SW_SHOWNOACTIVATE</c> and created without
+    /// <c>WS_VISIBLE</c></b>, so the show is one explicit call this code makes and
+    /// never asks for the foreground: what is planted is a window appearing, which
+    /// is enough to make the watch refuse the run.
+    /// </para>
+    /// </remarks>
+    /// <param name="className">The class to register. A GUID in it makes it this run's alone.</param>
+    /// <param name="title">The window's caption.</param>
+    /// <param name="reportPath">Where to write what was shown.</param>
+    /// <returns>Zero once it is asked to stop, or one if the window could not be made.</returns>
+    public static unsafe int Show(string className, string title, string reportPath)
+    {
+        var classNameBuffer = Marshal.StringToHGlobalUni(className);
+        var titleBuffer = Marshal.StringToHGlobalUni(title);
+        var instance = GetModuleHandleW(nint.Zero);
+
+        var registration = new WindowClass
+        {
+            Size = (uint)Unsafe.SizeOf<WindowClass>(),
+            WindowProcedure = (nint)(delegate* unmanaged<nint, uint, nint, nint, nint>)&Procedure,
+            Instance = instance,
+            ClassName = classNameBuffer,
+        };
+
+        if (RegisterClassExW(ref registration) is 0)
+        {
+            Write(reportPath, new JsonObject
+            {
+                ["pid"] = Environment.ProcessId,
+                ["error"] = $"RegisterClassExW failed with {Marshal.GetLastPInvokeError()}",
+            });
+
+            return 1;
+        }
+
+        var window = CreateWindowExW(0, classNameBuffer, titleBuffer, OverlappedWindow, 40, 40, 320, 200, nint.Zero, nint.Zero, instance, nint.Zero);
+
+        if (window == nint.Zero)
+        {
+            Write(reportPath, new JsonObject
+            {
+                ["pid"] = Environment.ProcessId,
+                ["error"] = $"CreateWindowExW failed with {Marshal.GetLastPInvokeError()}",
+            });
+
+            return 1;
+        }
+
+        _ = ShowWindow(window, ShowNoActivate);
+
+        Write(reportPath, new JsonObject
+        {
+            ["pid"] = Environment.ProcessId,
+            ["window"] = window.ToInt64(),
+            ["className"] = className,
+            ["title"] = title,
+            ["visible"] = IsWindowVisible(window),
+        });
+
+        var clock = Stopwatch.StartNew();
+
+        while (clock.Elapsed < Patience)
+        {
+            while (PeekMessageW(out var message, nint.Zero, 0, 0, PmRemove))
+            {
+                if (message.Message is WmClose)
+                {
+                    return 0;
+                }
+
+                _ = DispatchMessageW(ref message);
+            }
+
+            Thread.Sleep(10);
+        }
+
+        return 0;
+    }
+
+    /// <summary><c>WS_OVERLAPPEDWINDOW</c>, without <c>WS_VISIBLE</c>.</summary>
+    private const uint OverlappedWindow = 0x00CF0000;
+
+    /// <summary><c>SW_SHOWNOACTIVATE</c>.</summary>
+    private const int ShowNoActivate = 4;
+
+    /// <summary>
     /// The WndProc, which lies about <c>WM_GETTEXT</c> when asked to.
     /// </summary>
     /// <remarks>
@@ -392,4 +492,14 @@ internal static partial class WindowProbe
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll")]
     private static partial nint GetModuleHandleW(nint moduleName);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool ShowWindow(nint window, int command);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool IsWindowVisible(nint window);
 }

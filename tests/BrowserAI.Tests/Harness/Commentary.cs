@@ -77,7 +77,7 @@ internal static class Commentary
 
         return suffix switch
         {
-            ".cs" or ".js" or ".mjs" => CStyle(text),
+            ".cs" or ".js" or ".mjs" or ".cjs" => CStyle(text),
             ".ps1" or ".psm1" => Shell(text, powershell: true),
             ".sh" => Shell(text, powershell: false),
             ".csproj" or ".props" or ".targets" or ".slnx" or ".xml" or ".manifest" => Xml(text),
@@ -281,7 +281,7 @@ internal static class Commentary
         return suffix switch
         {
             ".cs" => CStyleLiterals(text, script: false),
-            ".js" or ".mjs" => CStyleLiterals(text, script: true),
+            ".js" or ".mjs" or ".cjs" => CStyleLiterals(text, script: true),
             ".ps1" or ".psm1" => ShellLiterals(text, powershell: true),
             ".sh" => ShellLiterals(text, powershell: false),
             ".csproj" or ".props" or ".targets" or ".slnx" or ".xml" or ".manifest" => XmlText(text),

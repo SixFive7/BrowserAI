@@ -526,6 +526,15 @@ internal static class SuiteEnvironment
         // CommitCharge, and HAZARDS.md for what asked for it.
         _ = report.Append(CommitCharge.CoverageRow).Append('\n');
 
+        // ⚠️ WHETHER THIS RUN PUT A WINDOW ON THE SCREEN OR TOOK THE FOREGROUND,
+        // which is the one row here that fails the run by itself. Added 2026-09-24
+        // at the maintainer's word -- "make sure this focus stealing is not
+        // something that ends up in the testbed" -- after a task dialog had shown
+        // in every full run for nine days and no row said so. The watch runs from
+        // the session hooks, so the row printed at the end is the whole session's;
+        // see WindowWatch, and SuiteCoverage for where the refusal is raised.
+        _ = report.Append(WindowWatch.CoverageRow).Append('\n');
+
         _ = report.Append(rule).Append('\n');
 
         var absent = All.Count(capability => StateOf(capability) is not CapabilityState.Present);

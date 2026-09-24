@@ -165,7 +165,7 @@ internal static class RepositoryLayout
     /// the shape an analyzer cannot see.
     /// </remarks>
     public static IReadOnlyList<FileInfo> SourceAndScriptFiles { get; } =
-        SourceFilesUnder(["src", "tests", "build"], ["*.cs", "*.ps1", "*.psm1", "*.mjs", "*.js", "*.sh"]);
+        SourceFilesUnder(["src", "tests", "build"], ["*.cs", "*.ps1", "*.psm1", "*.mjs", "*.cjs", "*.js", "*.sh"]);
 
     /// <summary>
     /// Every hand-written file in the repository that can carry a Markdown link:

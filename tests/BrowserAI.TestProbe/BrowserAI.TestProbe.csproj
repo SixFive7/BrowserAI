@@ -46,6 +46,10 @@
     -->
     <PackageReference Include="SourceGear.sqlite3" />
     <ProjectReference Include="..\..\src\BrowserAI\BrowserAI.csproj" />
+    <!-- The suite's own bans, the same file the test host reads: a probe is
+         test code, and a toast raised from one would reach the screen the same
+         way. Added 2026-09-24 with Q278. -->
+    <AdditionalFiles Include="..\BrowserAI.Tests\BannedSymbols.txt" />
   </ItemGroup>
 
   <ItemGroup>
