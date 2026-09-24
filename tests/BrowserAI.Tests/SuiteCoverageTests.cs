@@ -634,6 +634,49 @@ internal sealed partial class SuiteCoverageTests
         await Assert.That(absentRow).Contains("nothing was compared");
         await Assert.That(absentRow).DoesNotContain(PublishedSlice.FreshState);
 
+        // ⚠️ THE VERSION HALF -- N16, 2026-09-24. Every file time agrees and the
+        // binary was still built at another commit: the version is derived from
+        // the git height, so a commit touching no input moves it and leaves every
+        // timestamp alone. Measured the same day, 1.1.1-alpha.0.72 against a tree
+        // at 1.1.1-alpha.0.73, while this row said FRESH. Planted red 2026-09-24
+        // by making the comparison say the versions agree whatever they are.
+        var behind = fresh with { PublishedVersion = "1.1.1-alpha.0.72", TreeVersion = "1.1.1-alpha.0.73" };
+
+        await Assert.That(PublishedSlice.Judge(behind)).IsEqualTo(PublishFreshnessVerdict.Stale);
+        await Assert.That(PublishedSlice.RefusalFor(behind)).Contains("built as 1.1.1-alpha.0.72 and this tree derives 1.1.1-alpha.0.73");
+        await Assert.That(PublishedSlice.RefusalFor(behind)).Contains(PublishedSlice.PublishCommand);
+
+        var behindRow = PublishedSlice.RowFor(behind);
+
+        await Assert.That(behindRow).Contains(PublishedSlice.StaleState);
+        await Assert.That(behindRow).Contains("BUILT AS 1.1.1-alpha.0.72 AND THIS TREE DERIVES");
+        await Assert.That(behindRow).DoesNotContain(PublishedSlice.FreshState);
+
+        // ⚠️ AND THE FILE TIMES ARE STILL REPORTED AS WHAT THEY ARE. A version
+        // staleness is not a file-time one: this binary is newer than every input,
+        // and the first rendering of this row said "OLDER than" because it chose
+        // the word from the verdict -- seen live on the first run after the
+        // version check landed, beside a refusal that was right.
+        await Assert.That(behindRow).Contains("2h51m36s newer than the newest of 95 inputs");
+        await Assert.That(behindRow).DoesNotContain("OLDER than");
+
+        // And versions that agree change nothing, in the verdict or the row
+        // beyond saying which version it was.
+        var level = fresh with { PublishedVersion = "1.1.1-alpha.0.73", TreeVersion = "1.1.1-alpha.0.73" };
+
+        await Assert.That(PublishedSlice.Judge(level)).IsEqualTo(PublishFreshnessVerdict.Fresh);
+        await Assert.That(PublishedSlice.RowFor(level)).Contains("exe and tree both 1.1.1-alpha.0.73");
+
+        // The live reading looks at both, which is what makes the two halves one
+        // comparison and not two.
+        var live = PublishedSlice.Measure();
+
+        if (live.Absence is null)
+        {
+            await Assert.That(live.TreeVersion).IsEqualTo(BrowserAI.Hosting.BuildVersion.Current);
+            await Assert.That(live.PublishedVersion).IsNotNull();
+        }
+
         // And the refusals, driven from readings and not by arranging a
         // stale publish -- which would leave this tree needing a re-publish to
         // go green again, on the one message a developer reads at the worst

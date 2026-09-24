@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Diagnostics;
 using System.Globalization;
+using BrowserAI.Hosting;
 
 namespace BrowserAI.Tests.Harness;
 
@@ -40,14 +42,43 @@ internal enum PublishFreshnessVerdict
 /// <param name="Inputs">How many inputs were compared.</param>
 /// <param name="Newer">Every input newer than the binary, repository-relative and ordered.</param>
 /// <param name="Absence">Why nothing could be compared, or <see langword="null"/> when something was.</param>
+/// <param name="PublishedVersion">
+/// The version baked into the published binary, or <see langword="null"/> when
+/// this reading did not look.
+/// </param>
+/// <param name="TreeVersion">
+/// The version this tree derives, as the test host was built with it, or
+/// <see langword="null"/> when this reading did not look.
+/// </param>
 internal sealed record PublishFreshnessReading(
     DateTime? Published,
     DateTime? Newest,
     string? NewestInput,
     int Inputs,
     IReadOnlyList<string> Newer,
-    string? Absence)
+    string? Absence,
+    string? PublishedVersion = null,
+    string? TreeVersion = null)
 {
+    /// <summary>
+    /// Whether the binary was built at a different version from the tree.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Added 2026-09-24 (N16), and it is the half the file times cannot
+    /// see.</b> The version is derived from the git height, so a commit that
+    /// touches no input -- a test, a document -- moves the tree's version and
+    /// leaves every file time where it was. Measured the same day: the published
+    /// server said 1.1.1-alpha.0.72 while the test host built 1.1.1-alpha.0.73,
+    /// the freshness row said FRESH, and
+    /// <c>ClientReconnectTests.ARealClaudeCodeMeetsTheRefusalOnceAndItsRetryGoesThrough</c>
+    /// went red in both shells over a refusal naming the other version. A reading
+    /// that did not look at the versions -- both null -- compares nothing here and
+    /// says so by leaving the file-time verdict alone.
+    /// </remarks>
+    public bool VersionsDisagree =>
+        TreeVersion is not null
+        && !string.Equals(PublishedVersion, TreeVersion, StringComparison.Ordinal);
+
     /// <summary>A reading that established nothing, and why.</summary>
     /// <param name="why">What was missing.</param>
     /// <returns>The reading.</returns>
@@ -353,8 +384,27 @@ internal static class PublishedSlice
             newest is null ? null : Path.GetRelativePath(RepositoryLayout.Root.FullName, newest.FullName),
             FreshnessInputs.Count,
             newer,
-            Absence: null);
+            Absence: null,
+            PublishedVersion: BakedVersion(),
+            TreeVersion: BuildVersion.Current);
     }
+
+    /// <summary>
+    /// The version the published binary was built as, read off the binary.
+    /// </summary>
+    /// <remarks>
+    /// <b>The product version resource, which is the informational version</b> --
+    /// measured 2026-09-24 on the published server: <c>ProductVersion</c> reads
+    /// <c>1.1.1-alpha.0.75</c> where <c>FileVersion</c> reads the four-part
+    /// <c>1.1.1.0</c>, which is the collapse <c>BuildVersion</c> exists to avoid.
+    /// A binary that carries none reads as <c>&lt;none&gt;</c>, which disagrees
+    /// with every tree and is refused, never waved through.
+    /// </remarks>
+    /// <returns>The version, or <c>&lt;none&gt;</c>.</returns>
+    public static string BakedVersion() =>
+        FileVersionInfo.GetVersionInfo(Executable).ProductVersion is { Length: > 0 } version
+            ? version
+            : "<none>";
 
     /// <summary>What this run's own reading amounts to.</summary>
     public static PublishFreshnessVerdict Verdict => Judge(Measure());
@@ -383,7 +433,9 @@ internal static class PublishedSlice
         // newer than it, and the two would part company at exactly that tick.
         return reading.Absence is not null || reading.Published is null || reading.Newest is null
             ? PublishFreshnessVerdict.NotEstablished
-            : reading.Newer.Count is 0 ? PublishFreshnessVerdict.Fresh : PublishFreshnessVerdict.Stale;
+            : reading.Newer.Count is 0 && !reading.VersionsDisagree
+                ? PublishFreshnessVerdict.Fresh
+                : PublishFreshnessVerdict.Stale;
     }
 
     /// <summary>
@@ -408,7 +460,13 @@ internal static class PublishedSlice
             return $"There is no published binary to test against -- {reading.Absence} -- so this test would prove nothing about the code in the tree. Run: {PublishCommand}";
         }
 
+        if (reading.Newer.Count is 0 && reading.VersionsDisagree)
+        {
+            return $"The published binary at '{Executable}' was built as {reading.PublishedVersion} and this tree derives {reading.TreeVersion}, so this test would be comparing against a server built at a different commit. Every input's file time agrees -- a commit that touched no input still moves the version. Run: {PublishCommand}";
+        }
+
         return $"The published binary at '{Executable}' is older than {reading.Newer.Count.ToString(CultureInfo.InvariantCulture)} source file(s), so this test would prove nothing about the code in the tree. Run: {PublishCommand}"
+            + (reading.VersionsDisagree ? $" It was also built as {reading.PublishedVersion}, and this tree derives {reading.TreeVersion}." : string.Empty)
             + Environment.NewLine + string.Join(Environment.NewLine, reading.Newer);
     }
 
@@ -467,12 +525,19 @@ internal static class PublishedSlice
         // word without its consequence is an assurance a reader has to assemble,
         // and a stale publish means every slice arm in the run refused and
         // did not run.
-        return verdict is not PublishFreshnessVerdict.Stale
-            ? row
-            : row + "\n"
+        if (verdict is not PublishFreshnessVerdict.Stale)
+        {
+            return row;
+        }
+
+        return reading.Newer.Count > 0
+            ? row + "\n"
                 + "      ⚠️  THE PUBLISHED BINARY IS OLDER THAN THE SOURCE THAT GOES INTO IT, so every\n"
                 + "      slice arm in this run refused rather than proving anything about the code in\n"
-                + $"      the tree. Run: {PublishCommand}";
+                + $"      the tree. Run: {PublishCommand}"
+            : row + "\n"
+                + $"      ⚠️  THE PUBLISHED BINARY WAS BUILT AS {reading.PublishedVersion} AND THIS TREE DERIVES\n"
+                + $"      {reading.TreeVersion}, so every slice arm in this run refused. Run: {PublishCommand}";
     }
 
     /// <summary>The state word the block prints, padded to the width the other rows use.</summary>
@@ -500,15 +565,27 @@ internal static class PublishedSlice
 
         var inputs = reading.Inputs.ToString(CultureInfo.InvariantCulture);
         var margin = Humanise(reading.Margin!.Value);
-        var direction = verdict is PublishFreshnessVerdict.Stale ? "OLDER than" : "newer than";
+        // ⚠️ The word follows the FILE TIMES and never the verdict -- corrected
+        // 2026-09-24 (previously `verdict is Stale ? "OLDER than" : "newer than"`).
+        // Since the version check, a stale verdict can come from the versions
+        // alone, with the binary newer than every input, and the verdict-driven
+        // word called that binary older. The same list EnsureFresh refuses on
+        // decides it, so a tie at the millisecond still reads as newer.
+        var direction = reading.Newer.Count > 0 ? "OLDER than" : "newer than";
 
         var sentence =
             $"exe {Stamp(reading.Published)} is {margin} {direction} the newest of {inputs} inputs"
             + $" ({reading.NewestInput}, {Stamp(reading.Newest)})";
 
+        var versions = reading.TreeVersion is null
+            ? string.Empty
+            : reading.VersionsDisagree
+                ? $" · exe built as {reading.PublishedVersion}, tree derives {reading.TreeVersion}"
+                : $" · exe and tree both {reading.TreeVersion}";
+
         return verdict is PublishFreshnessVerdict.Stale
-            ? sentence + $" · {reading.Newer.Count.ToString(CultureInfo.InvariantCulture)} of {inputs} are newer · the comparison PublishedSlice.EnsureFresh refused on"
-            : sentence + " · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30";
+            ? sentence + $" · {reading.Newer.Count.ToString(CultureInfo.InvariantCulture)} of {inputs} are newer" + versions + " · the comparison PublishedSlice.EnsureFresh refused on"
+            : sentence + versions + " · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30";
     }
 
     /// <summary>A modification time, in UTC, to the millisecond that settled the misreading.</summary>

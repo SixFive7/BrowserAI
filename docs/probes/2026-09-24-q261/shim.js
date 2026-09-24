@@ -127,7 +127,13 @@ forward(process.stdin, child.stdin, 'client->server', (frame) => {
 });
 
 forward(child.stdout, process.stdout, 'server->client', (frame) => {
-    wire('server->client', { id: frame.id, method: frame.method });
+    // The server's own version, off its initialize answer -- added 2026-09-24
+    // (N16) so an arm can compose the sentence the SERVER it is talking to would
+    // write, and not the one the test host's own build would.
+    const info = frame.result && frame.result.serverInfo;
+    wire('server->client', info && info.version
+        ? { id: frame.id, method: frame.method, serverVersion: info.version }
+        : { id: frame.id, method: frame.method });
 
     if (frame.id !== undefined && callIds.has(String(frame.id))) {
         callIds.delete(String(frame.id));

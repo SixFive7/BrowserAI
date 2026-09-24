@@ -6,7 +6,6 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json.Nodes;
-using BrowserAI.Hosting;
 using BrowserAI.Interop;
 using BrowserAI.Proxy;
 using BrowserAI.Registration;
@@ -200,9 +199,22 @@ internal sealed class ClientReconnectTests
         // Read out of the request bodies the stub captured, which are exactly what
         // the model was sent.
         //
+        // ⚠️ THE VERSION IN IT IS THE ONE THE RE-DIALLED SERVER NAMED ON THE WIRE
+        // -- N16, 2026-09-24 (previously BuildVersion.Current, the TEST HOST's). The
+        // refusal names the version of the server that wrote it, and that is the
+        // published binary, which a commit touching no source can leave one
+        // version behind the tree: measured the same day, 1.1.1-alpha.0.72 against
+        // a host built as 1.1.1-alpha.0.73, and this arm went red in both shells
+        // over a sentence that was right. The freshness guard now refuses that
+        // state by name; this is the half that makes the arm right by construction.
+        var served = second.Select(frame => frame.ServerVersion).FirstOrDefault(version => version is not null);
+
+        await Assert.That(served).IsNotNull()
+            .Because("the re-dialled server's initialize answer names its version, and the shim records it; without it this arm would be comparing against a guess");
+
         var refusal = SessionErrors.ToolListPredatesThisServer(
             SessionToolSurface.List,
-            BuildVersion.Current,
+            served!,
             KnownClients.ClaudeCode);
 
         var received = ToolResults(Path.Combine(work.FullName, $"{run}.requests.jsonl"));
@@ -650,7 +662,11 @@ internal sealed class ClientReconnectTests
     /// <summary>One frame the shim saw, reduced to what these arms read.</summary>
     /// <param name="Shim">Which shim process it passed through, which is which server.</param>
     /// <param name="Method">The JSON-RPC method, or null for a response.</param>
-    private readonly record struct WireFrame(int Shim, string? Method);
+    /// <param name="ServerVersion">
+    /// The version the server named in its <c>initialize</c> answer, on that one
+    /// frame, and null on every other.
+    /// </param>
+    private readonly record struct WireFrame(int Shim, string? Method, string? ServerVersion);
 
     /// <summary>The shim's wire log, in order.</summary>
     /// <param name="path">The log the shim wrote.</param>
@@ -671,9 +687,12 @@ internal sealed class ClientReconnectTests
                 continue;
             }
 
+            var frame = row["frame"] as JsonObject;
+
             frames.Add(new WireFrame(
                 (int?)row["shim"] ?? 0,
-                row["frame"] is JsonObject frame ? (string?)frame["method"] : null));
+                frame is null ? null : (string?)frame["method"],
+                frame is null ? null : (string?)frame["serverVersion"]));
         }
 
         return frames;
