@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using BrowserAI.Updates;
 
 namespace BrowserAI.Tests.Harness;
@@ -32,6 +33,11 @@ namespace BrowserAI.Tests.Harness;
 /// handle -- <c>GetConsoleMode</c> succeeds on it, which is the predicate
 /// <see cref="Interop.StandardInput.IsAConsole"/> actually asks -- with no
 /// terminal anywhere.
+/// <i>Since 2026-09-24 the launcher is the test probe, started with
+/// <c>CreateNoWindow</c>, and it starts the product with <c>CREATE_NO_WINDOW</c>
+/// and suspended: the product's console is its own and has no window either, and
+/// the product runs only once the launcher is gone. See
+/// <c>LaunchSuspendedThenResume</c>.</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>Nothing is redirected, and that is load-bearing, not lazy.</b>
@@ -81,7 +87,7 @@ namespace BrowserAI.Tests.Harness;
 /// about.
 /// </para>
 /// </remarks>
-internal sealed class OrphanedConsoleStart : IDisposable
+internal sealed partial class OrphanedConsoleStart : IDisposable
 {
     private readonly string _executable;
     private readonly string _appRoot;
@@ -91,6 +97,13 @@ internal sealed class OrphanedConsoleStart : IDisposable
     /// that its handle -- and with it its pid -- outlives the process.
     /// </summary>
     private Process? _launcher;
+
+    /// <summary>
+    /// Where the suspended launcher reports the product's pid and main thread,
+    /// kept out of the product's own data root so that nothing the product finds
+    /// there is the rig's.
+    /// </summary>
+    private ScratchDirectory? _launcherReport;
 
     private OrphanedConsoleStart(string executable, string appRoot)
     {
@@ -297,6 +310,8 @@ internal sealed class OrphanedConsoleStart : IDisposable
             // its client.
             _launcher?.Dispose();
             _launcher = null;
+            _launcherReport?.Dispose();
+            _launcherReport = null;
         }
     }
 
@@ -375,49 +390,65 @@ internal sealed class OrphanedConsoleStart : IDisposable
             _ = environment.Remove(VelopackStartup.FirstRunVariable);
         }
 
-        var start = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"))
+        // ⚠️ BOTH SHAPES THROUGH ONE SUSPENDED LAUNCHER since 2026-09-24
+        // (previously `cmd /c start /b`, one level for Openable and two for
+        // Freed). The shapes differ in one thing only: whether this rig goes on
+        // holding the launcher's handle once it has exited.
+        LaunchSuspendedThenResume(environment, keepTheLauncher: corpse is LauncherCorpse.Openable);
+    }
+
+    /// <summary>
+    /// A dead launcher, in an order that is a fact: the launcher starts the
+    /// product suspended and exits, and the product is resumed only then.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-09-24, after a gate half went red on the order this
+    /// guarantees.</b> Until then the launcher was <c>cmd /c start /b</c>, and
+    /// nothing ordered cmd's exit before the product's look at its parent: the
+    /// product read its launcher ALIVE, said <i>Watching the MCP client</i>, and
+    /// <c>InstallerHandoffTests.ThePublishedBinaryTreatsALauncherThatExitedButStillOpensAsNobodyToServe</c>
+    /// went red on a decision that was correct for what it saw. Planting a
+    /// two-second linger after cmd's <c>start</c> made that red every time, and
+    /// the same linger after the inner <c>start</c> of the two-level Freed
+    /// launcher made both <c>ThePublishedBinaryExitsWhenItsLauncherIsGoneAndStdinIsAConsole</c>
+    /// arms red, so the Freed shape carried the same race.
+    /// </para>
+    /// <para>
+    /// <b>The launcher is <c>BrowserAI.TestProbe.exe launch-suspended</c></b>,
+    /// started here with <c>CreateNoWindow</c> and kept, because the kept handle is
+    /// what leaves the corpse openable. The product has a console of its own with
+    /// no window, which keeps its standard input a console.
+    /// </para>
+    /// </remarks>
+    /// <param name="environment">The environment the product is to have.</param>
+    /// <param name="keepTheLauncher">
+    /// Whether this rig goes on holding the exited launcher's handle: the
+    /// openable corpse when it does, the freed pid when it lets it go before the
+    /// product is resumed.
+    /// </param>
+    private void LaunchSuspendedThenResume(Dictionary<string, string> environment, bool keepTheLauncher)
+    {
+        _launcherReport = ScratchDirectory.Create("orphan-launcher");
+
+        var report = Path.Combine(_launcherReport.Path, "launched.txt");
+        var start = new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "BrowserAI.TestProbe.exe"))
         {
-            // Freed: the INNER `start /b` is what makes the product's parent a
-            // pid nothing holds a handle to, and the outer one is what gives
-            // both of them the windowless console.
-            //
-            // Openable: one level, because the launcher this rig keeps a handle
-            // on has to BE the product's parent. `start` is an internal command
-            // of cmd, so cmd itself calls CreateProcess and cmd itself is the
-            // parent.
-            Arguments = corpse is LauncherCorpse.Freed
-                ? $"/c start /b \"\" cmd.exe /c start /b \"\" \"{_executable}\""
-                : $"/c start /b \"\" \"{_executable}\"",
             WorkingDirectory = _appRoot,
             UseShellExecute = false,
 
-            // ⚠️ The console is allocated and has no window. Removing this does
-            // not merely break the rig: it puts a terminal over whatever is on
-            // the maintainer's screen, which is the defect under test.
+            // ⚠️ The launcher's own console, with no window: see the Freed branch.
             CreateNoWindow = true,
         };
 
+        start.ArgumentList.Add("launch-suspended");
+        start.ArgumentList.Add(_executable);
+        start.ArgumentList.Add(report);
         start.Environment.Clear();
 
         foreach (var (name, value) in environment)
         {
             start.Environment[name] = value;
-        }
-
-        var launcher = Process.Start(start)
-            ?? throw new InvalidOperationException("cmd.exe did not start.");
-
-        if (corpse is LauncherCorpse.Freed)
-        {
-            // Waited for, so that by the time an arm reads anything the outer
-            // launcher is already gone. The inner one exits a syscall later and
-            // is held by nothing, which is the whole point of the arrangement.
-            using (launcher)
-            {
-                launcher.WaitForExit();
-            }
-
-            return;
         }
 
         // ⚠️ KEPT, AND THE KEEPING IS THE MECHANISM. `Process` holds the handle
@@ -426,9 +457,100 @@ internal sealed class OrphanedConsoleStart : IDisposable
         // OpenProcess for as long as this rig lives, and answers it about a
         // process that has exited. Disposing it here, as `using` would, is the
         // one thing that would turn this mode back into the other one.
-        _launcher = launcher;
-        _launcher.WaitForExit();
+        var launcher = Process.Start(start)
+            ?? throw new InvalidOperationException("The launcher probe did not start.");
+
+        launcher.WaitForExit();
+
+        var exitCode = launcher.ExitCode;
+
+        if (keepTheLauncher)
+        {
+            _launcher = launcher;
+        }
+        else
+        {
+            // FREED: let go before the product can look, so nothing of this
+            // rig's names the launcher when it does.
+            launcher.Dispose();
+        }
+
+        var said = File.Exists(report) ? File.ReadAllText(report).Trim() : "<no report>";
+        var parts = said.Split(' ');
+
+        if (exitCode is not 0
+            || parts.Length is not 2
+            || !int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var processId)
+            || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var threadId))
+        {
+            throw new InvalidOperationException(
+                $"The launcher probe exited {exitCode.ToString(CultureInfo.InvariantCulture)} and reported '{said}' for '{_executable}'.");
+        }
+
+        // ONLY NOW, with the launcher provably gone: the product's first look at
+        // its parent happens after this line and not before it.
+        Resume(processId, threadId);
     }
+
+    /// <summary>Resumes a suspended process's main thread, after proving whose thread it is.</summary>
+    /// <param name="processId">The process the launcher reported.</param>
+    /// <param name="threadId">Its main thread.</param>
+    private static void Resume(int processId, int threadId)
+    {
+        var thread = OpenThread(ThreadSuspendResume | ThreadQueryLimitedInformation, bInheritHandle: false, (uint)threadId);
+
+        if (thread == nint.Zero)
+        {
+            throw new Win32Exception(Marshal.GetLastPInvokeError(), $"Could not open thread {threadId.ToString(CultureInfo.InvariantCulture)} to resume process {processId.ToString(CultureInfo.InvariantCulture)}.");
+        }
+
+        try
+        {
+            // A thread id is a number like a pid, so it is checked against the
+            // process it was reported for before anything is done with it.
+            if (GetProcessIdOfThread(thread) != (uint)processId)
+            {
+                throw new InvalidOperationException(
+                    $"Thread {threadId.ToString(CultureInfo.InvariantCulture)} does not belong to process {processId.ToString(CultureInfo.InvariantCulture)}.");
+            }
+
+            if (ResumeThread(thread) == uint.MaxValue)
+            {
+                throw new Win32Exception(Marshal.GetLastPInvokeError(), $"Could not resume process {processId.ToString(CultureInfo.InvariantCulture)}.");
+            }
+        }
+        finally
+        {
+            _ = CloseHandle(thread);
+        }
+    }
+
+    /// <summary><c>THREAD_SUSPEND_RESUME</c>.</summary>
+    private const uint ThreadSuspendResume = 0x0002;
+
+    /// <summary><c>THREAD_QUERY_LIMITED_INFORMATION</c>, which <c>GetProcessIdOfThread</c> needs.</summary>
+    private const uint ThreadQueryLimitedInformation = 0x0800;
+
+    // System32 only, on every P/Invoke in this repository (CA5392).
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial nint OpenThread(
+        uint dwDesiredAccess,
+        [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
+        uint dwThreadId);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint GetProcessIdOfThread(nint thread);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial uint ResumeThread(nint hThread);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseHandle(nint hObject);
 
     private void WaitUntilItSaysWhoItIs(TimeSpan patience)
     {
@@ -542,6 +664,9 @@ internal enum LauncherCorpse
     /// is left holding the number. Reached with two <c>start /b</c>s, so that
     /// the process which is the product's parent is one this rig never had a
     /// handle on.
+    /// <i>Since 2026-09-24 the launcher is <c>BrowserAI.TestProbe.exe
+    /// launch-suspended</c>, whose handle this rig lets go of once it has exited
+    /// and before the product is resumed (previously the two <c>start /b</c>s).</i>
     /// </remarks>
     Freed,
 
@@ -563,6 +688,11 @@ internal enum LauncherCorpse
     /// the whole life of the rig, so the corpse is openable <i>by
     /// construction</i> and not by luck. That is what makes the arms over
     /// this mode deterministic where the 2026-09-15 flake was a coin toss.
+    /// </para>
+    /// <para>
+    /// <i>The launcher is <c>BrowserAI.TestProbe.exe launch-suspended</c> since
+    /// 2026-09-24 (previously <c>cmd /c start /b</c>), so that the product is
+    /// resumed only once it is gone: see <c>LaunchSuspendedThenResume</c>.</i>
     /// </para>
     /// </remarks>
     Openable,
