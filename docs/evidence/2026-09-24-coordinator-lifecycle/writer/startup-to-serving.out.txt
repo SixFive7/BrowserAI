@@ -1,0 +1,9 @@
+$ python3 startup-to-serving.py 2026-09-24T15:00:00Z   (the read DECISIONS and HAZARDS quote)
+installed starts from 2026-09-15T14:39:27.209985 to 2026-09-24T13:29:16.608134
+installed n 414 p50 0.392 p10 0.302 p90 2.174 min 0.276
+other n 18548 p50 2.335 p10 0.976 p90 3.735 min 0.281
+
+$ python3 startup-to-serving.py   (the same read, re-run at 15:10Z with no cut-off)
+installed starts from 2026-09-15T14:39:27.209985 to 2026-09-24T15:02:04.684790
+installed n 415 p50 0.392 p10 0.302 p90 2.174 min 0.276
+other n 18548 p50 2.335 p10 0.976 p90 3.735 min 0.281

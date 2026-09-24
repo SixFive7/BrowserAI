@@ -100,6 +100,18 @@ so *not corruption* here means *no corruption `integrity_check` can see*.
 `[FLOATS]` on the browser build. But it bypasses the job object entirely,
 and a hook must never leave a helper running under the root.
 
+⚠️ ***Corrected 2026-09-24 @ Velopack 1.2.158, by addition (previously, and still
+above, "runs on `apply`, `install`, `start`, `uninstall` **and after every hook
+returns**").*** **At this release `start` calls it on one branch only**: while
+migrating a legacy install whose versions live in `app-` folders
+(`src/bins/src/commands/start_windows_impl.rs:146`), which a Velopack-native
+install such as BrowserAI's never is. `apply` calls it after each hook and once
+more immediately before the swap, and `install` and `uninstall` call it. Read at
+tag `1.2.158`, commit `3c7f52c`, and measured the same day against real servers:
+[what an apply does to every process under the root](#what-an-apply-does-to-every-process-under-the-root----read-and-measured-at-12158-2026-09-24).
+Whether 1.2.0's `start` called it was not re-read; the kill the 2026-08-15 spike
+observed was an update's.
+
 ## The nine landmines, claim and verdict
 
 Each entry is the standing record first -- what was read out of Velopack and out
@@ -165,6 +177,12 @@ asking.
 > **path** and runs on `apply`, `install`, `start`, `uninstall` **and after every
 > hook returns** -- see
 > [the provisioning finding above](#where-state-may-live----the-finding-the-provisioning-design-rests-on).
+
+> **Re-read 2026-09-24 @ Velopack 1.2.158: still real, and `start` is the one
+> word that no longer holds.** It is called by `start` only on the legacy `app-`
+> migration branch; the rest stands, and a measured apply, with twenty-one
+> servers started before and during it, is in
+> [what an apply does to every process under the root](#what-an-apply-does-to-every-process-under-the-root----read-and-measured-at-12158-2026-09-24).
 
 ### 5. Reading the installed version must not touch the network
 
@@ -884,6 +902,94 @@ neither applied.** The version stayed at 0.9.0.
   independent guard nobody wrote here**: it
   serialises concurrent *downloads* but says nothing about concurrent processes,
   so it does not replace the gate.
+
+### What an apply does to every process under the root -- read and measured at 1.2.158, 2026-09-24
+
+`[FLOATS]` Read from Velopack's source at **tag `1.2.158`, commit
+`3c7f52c1bf17d10ad21b794b006d5ebd1a879a3b`**, and measured the same day against
+BrowserAI servers installed from the suite's test pack into a scratch root, under the
+installer lock, with the real install read before and after and unchanged:
+[`docs/evidence/2026-09-24-coordinator-lifecycle`](../../docs/evidence/2026-09-24-coordinator-lifecycle/README.md).
+It answers the maintainer's *"I have a hard time believing it only monitors the
+process calling update. That would mean it kills all instances of a multi instance
+app!?"*: **it does.**
+
+| Step | Where, at the tag | What it does |
+|---|---|---|
+| Wait | `src/bins/src/shared/util_common.rs:14-26`, `src/lib-rust/src/process_win.rs:466-498` | Opens the one pid `--waitPid` names, with `SYNCHRONIZE` only, and waits up to 60 s for it. No other process is looked at |
+| Kill | `src/bins/src/shared/util_windows.rs:81-102`, `src/lib-rust/src/process_win.rs:427-436` | `force_stop_package`: every process whose image path is under the install root is ended with `TerminateProcess(handle, 1)`. Its own pid is the only exclusion. No message, no grace period, no count of who is running |
+| When, in an apply | `src/bins/src/windows/util.rs:59-60`, `src/bins/src/commands/apply_windows_impl.rs:159` | After every hook returns (*"in case the hook left running processes"*), and once more immediately before the old `current\` is renamed away |
+| When, otherwise | `src/bins/src/commands/install.rs:106` and `:160`, `src/bins/src/commands/uninstall.rs:21`, `src/bins/src/commands/start_windows_impl.rs:146` | Install and uninstall; `start` only on its legacy `app-` migration branch |
+
+**Nothing in it knows that an app may run more than once.** The waited-on pid is the
+process that asked; every other process under the root is in the kill set, and so,
+once its wait is over, is the one that asked.
+
+**Run 1: one apply, three servers, and eighteen more started while it ran.**
+Servers A, B and C were serving; the rig started `Update.exe apply --waitPid <A>`
+and from then on started another server about every 415 ms. It closed A's standard
+input so that A ended, as a server that has asked for an apply does.
+
+- **A exited on its own**, code 0, 0.02 s after its input closed.
+- **B, C and the six servers started up to +2,065 ms were terminated at once**, exit
+  code **1**, at 11:46:31.79Z, by the kill pass after the `--veloapp-obsolete`
+  hook: *"Inspected 706 running processes in 211ms, 17 matched directory"*, then
+  sixteen `Killing process` lines, eight servers and their eight `node.exe`
+  children, and *"Skipping killing self"*. The seventh, started at +2,494 ms, was
+  terminated by the second pass immediately before the swap.
+- **The eleven started from +2,897 ms onward ran from the NEW `current\`** -- their
+  logs report `manifestVersion=1.1.1` -- and survived; `Update.exe` exited 0 at
+  +4,247 ms.
+
+So a server that starts during an apply is killed if it starts before the swap and
+runs the new version if it starts after it. **A lock the servers took among
+themselves could not change that**: a server waiting on one would be waiting in a
+process whose image is under `current\`, and the kill pass would end it with the
+rest. Every killed server's own log simply stops, with no line about why, and its
+client saw a server that exited 1.
+
+**Run 2: two applies at once, for a pid that never exits.** A's standard input was
+left open, so A never ended, and two `Update.exe apply --waitPid <A>` were started
+21 ms apart.
+
+- **Both waited the full 60 s and logged nothing when the wait ran out**: *"Waiting
+  60000ms for process handle to exit."* at 11:50:14Z, then *"Getting ready to apply
+  package"* at 11:51:14Z, with no line between. A timeout comes back as
+  `Ok(WaitTimeout)`, and `operation_wait` warns only on an error.
+- **The second took the packages lock**; the first retried it three times, *"The
+  process cannot access the file because it is being used by another process."*,
+  after 333, 666 and 1,000 ms. The second's first kill pass then ended A, the pid both
+  had waited on, together with B, both `node.exe` children **and the first
+  `Update.exe`**, which exited 1. **The kill pass decided which apply won, not the
+  lock.**
+
+⚠️ **Every apply whose wait works logs that the wait failed.** In run 1, A exited
+normally and the wait returned, and the log still says *"Failed to wait for process
+(66536) to exit (Access is denied. (os error -2147024891)). Continuing..."*. The wait
+opens the pid with `SYNCHRONIZE` only (`process_win.rs:496`) and, once
+`WaitForSingleObject` returns, calls `GetExitCodeProcess` (`:489`), which needs a
+query right that handle does not carry. So the warning marks a wait that worked, and
+a wait that ran out marks nothing: **read the two cases off this log backwards, or
+better, read an apply's wait from the asking process's exit time**. `[FLOATS]`
+
+**`SetAutoApplyOnStartup` still defaults to true at 1.2.158**
+(`src/lib-csharp/VelopackApp.cs:35`, `_autoApply = true`), so
+[landmine 2](#2-setautoapplyonstartupfalse-is-mandatory) stands, and both BrowserAI
+binaries still turn it off in `VelopackStartup`.
+
+**What BrowserAI does about it, not part of the measurement:** the design set by
+Q280 b and Q285 a applies only when a path scan under the install root finds nothing
+but the coordinator itself, which is exactly the set `force_stop_package` would end,
+and Q286 b makes a server stopped for an update, or started while this install's
+`Update.exe` runs, refuse its calls with a sentence
+([DECISIONS](../../DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)).
+
+**Re-establish it** with the batch's `kill-measure.ps1.txt` and
+`linger-measure.ps1.txt`, renamed back to `.ps1`: each installs the suite's test pack
+into a scratch root under the installer lock, stages a repacked version, runs the
+apply against live servers and removes everything again. And read the eight files
+the table cites, and `VelopackApp.cs`, at the release under review.
+[Re-verification rows](../re-verification.md) 159 and 160.
 
 ### Two things the toolchain does that nothing else records
 

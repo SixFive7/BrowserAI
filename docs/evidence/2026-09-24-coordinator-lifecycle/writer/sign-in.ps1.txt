@@ -1,0 +1,124 @@
+# Read-only: this morning's sign-in, as the event logs, the running processes, the task
+# scheduler and BrowserAI's own process log record it. Names of the maintainer's own
+# programs are withheld; each is counted or described by the mechanism that started it.
+param([string]$Out)
+$ErrorActionPreference = 'Stop'
+[Threading.Thread]::CurrentThread.CurrentCulture = [Globalization.CultureInfo]::InvariantCulture
+$logonUtc = [datetime]::Parse('2026-09-24T07:38:51.6853118Z').ToUniversalTime()
+$from = $logonUtc.AddMinutes(-1).ToLocalTime(); $to = $logonUtc.AddMinutes(8).ToLocalTime()
+$lines = [Collections.Generic.List[string]]::new()
+function Off([datetime]$t) { '+{0,8:F3} s' -f ($t.ToUniversalTime() - $logonUtc).TotalSeconds }
+function Add([string]$s) { $lines.Add($s) }
+
+Add "Read 2026-09-24, read-only, on $([Environment]::OSVersion.VersionString) by the phase 1 writer."
+Add 'Offsets are from the System log''s Winlogon 7001 record. Times are UTC.'
+Add ''
+$w = Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Microsoft-Windows-Winlogon'; Id = 7001; StartTime = $from; EndTime = $to }
+foreach ($e in $w) { Add ("SIGN-IN   {0:HH:mm:ss.fffffff}Z {1}  System log, Winlogon 7001 (user logon notification)" -f $e.TimeCreated.ToUniversalTime(), (Off $e.TimeCreated)) }
+Add ''
+
+# Explorer's own log-on tasks (Shell-Core 62170/62171).
+$lt = Get-WinEvent -FilterHashtable @{ LogName = 'Microsoft-Windows-Shell-Core/Operational'; Id = 62170, 62171; StartTime = $from; EndTime = $to } | Sort-Object TimeCreated
+$ltStart = $lt | Where-Object Id -eq 62170 | Select-Object -First 1
+$ltEnd = $lt | Where-Object { $_.Id -eq 62171 -and $_.Message -like "*'AllLogonTasks'*" } | Select-Object -First 1
+Add ("SHELL     {0} first of Explorer's own log-on tasks started (Shell-Core 62170); {1} started in all" -f (Off $ltStart.TimeCreated), ($lt | Where-Object Id -eq 62170).Count)
+Add ("SHELL     {0} 'AllLogonTasks' finished (Shell-Core 62171)" -f (Off $ltEnd.TimeCreated))
+$phase = Get-WinEvent -FilterHashtable @{ LogName = 'Microsoft-Windows-Shell-Core/Operational'; Id = 9648, 9649; StartTime = $from; EndTime = $to } | Sort-Object TimeCreated
+foreach ($e in $phase) {
+    $name = [string]$e.Properties[0].Value
+    if ($name -in 'DesktopStartupApps', 'RestartSavedApps') { Add ("SHELL     {0} phase {1} {2} (Shell-Core {3})" -f (Off $e.TimeCreated), $name, ($(if ($e.Id -eq 9648) { 'began' } else { 'ended' })), $e.Id) }
+}
+Add ''
+
+# Run and RunOnce enumerations (Shell-Core 9705-9708). The event names the key and never the hive.
+$run = Get-WinEvent -FilterHashtable @{ LogName = 'Microsoft-Windows-Shell-Core/Operational'; Id = 9705, 9706, 9707, 9708; StartTime = $from; EndTime = $to } | Sort-Object TimeCreated, RecordId
+$n = 0; $open = $null; $cmds = 0; $longest = 0.0; $cmdStart = $null; $capped = 0
+foreach ($e in $run) {
+    switch ($e.Id) {
+        9705 { $n++; $open = $e; $cmds = 0; $longest = 0.0; $capped = 0; $key = [regex]::Match($e.Message, "'([^']+)'").Groups[1].Value }
+        9707 { $cmds++; $cmdStart = $e.TimeCreated }
+        9708 { if ($cmdStart) { $d = ($e.TimeCreated - $cmdStart).TotalSeconds; if ($d -gt $longest) { $longest = $d }; if ($d -ge 29.9) { $capped++ } } }
+        9706 { Add ("KEYS      {0} to {1}  enumeration {2} of {3}: {4} command(s), started one after another; the longest ran {5:F1} s before the next began, and {6} ran 29.9 s or more (Shell-Core 9705-9708)" -f (Off $open.TimeCreated), (Off $e.TimeCreated), $n, $key, $cmds, $longest, $capped) }
+    }
+}
+Add ''
+
+# Packaged apps' startup tasks (Shell-Core 62408/62409).
+$pk = Get-WinEvent -FilterHashtable @{ LogName = 'Microsoft-Windows-Shell-Core/Operational'; Id = 62408, 62409; StartTime = $from; EndTime = $to } | Sort-Object TimeCreated, RecordId
+if ($pk) {
+    $starts = $pk | Where-Object Id -eq 62408
+    Add ("STARTUP   {0} to {1}  {2} packaged app startup task(s), started one after another (Shell-Core 62408/62409)" -f (Off ($starts | Select-Object -First 1).TimeCreated), (Off ($pk | Select-Object -Last 1).TimeCreated), $starts.Count)
+}
+Add ''
+
+# Scheduled tasks with a logon trigger that last ran in the window. Whole seconds only: that is all the API gives.
+$tasks = Get-ScheduledTask | Where-Object { $_.Triggers | Where-Object { $_.CimClass.CimClassName -eq 'MSFT_TaskLogonTrigger' } }
+foreach ($t in $tasks) {
+    $i = $t | Get-ScheduledTaskInfo
+    if (-not $i.LastRunTime -or $i.LastRunTime.Year -lt 2000) { continue }
+    $d = ($i.LastRunTime.ToUniversalTime() - $logonUtc).TotalSeconds
+    if ($d -lt -5 -or $d -gt 480) { continue }
+    $tr = $t.Triggers | Where-Object { $_.CimClass.CimClassName -eq 'MSFT_TaskLogonTrigger' } | Select-Object -First 1
+    $scope = if ($tr.UserId) { 'the signing-in user' } else { 'any user' }
+    $delay = if ($tr.Delay) { $tr.Delay } else { 'none' }
+    $who = if ($t.TaskPath -like '\Microsoft\*') { 'a task under \Microsoft' } else { 'a third-party task' }
+    Add ("TASK      {0:HH:mm:ss}Z (whole seconds, +{1:F0} s) {2}; logon trigger for {3}; delay {4}; principal {5}, run level {6}" -f $i.LastRunTime.ToUniversalTime(), $d, $who, $scope, $delay, $t.Principal.LogonType, $t.Principal.RunLevel)
+}
+Add ''
+
+# Processes still running that were created in the window, by the mechanism that started them.
+$all = Get-CimInstance Win32_Process -Property ProcessId, ParentProcessId, Name, CreationDate, SessionId
+$byPid = @{}; foreach ($p in $all) { $byPid[[int]$p.ProcessId] = $p }
+$schedule = (Get-CimInstance Win32_Service -Filter "Name = 'Schedule'" -Property ProcessId).ProcessId
+$early = $all | Where-Object { $_.CreationDate -and $_.SessionId -ne 0 -and ($_.CreationDate.ToUniversalTime() - $logonUtc).TotalSeconds -ge -2 -and ($_.CreationDate.ToUniversalTime() - $logonUtc).TotalSeconds -le 480 } | Sort-Object CreationDate
+$first = @{}; $script:taskChildren = 0
+foreach ($p in $early) {
+    $parent = $byPid[[int]$p.ParentProcessId]
+    $kind = $null
+    if ($p.ParentProcessId -eq $schedule) {
+        $script:taskChildren++
+        if ($script:taskChildren -le 2) {
+            $img = (Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue).Path
+            $what = if ($img -and $img -like "$env:WINDIR\*") { "$($p.Name), a Windows binary" } else { 'a third-party program' }
+            $kind = "process $($script:taskChildren) the task scheduler started: $what (parent: the svchost hosting Schedule)"
+        }
+    }
+    elseif ($p.Name -eq 'explorer.exe') { $kind = 'explorer.exe' }
+    elseif ($p.Name -eq 'Code.exe' -and $parent -and $parent.Name -eq 'explorer.exe') { $kind = 'Code.exe, started by explorer.exe' }
+    elseif ($p.Name -eq 'claude.exe' -and $parent -and $parent.Name -eq 'Code.exe') { $kind = 'the first claude.exe started by Code.exe' }
+    elseif ($p.Name -eq 'BrowserAI.Server.exe') { $kind = 'the first BrowserAI.Server.exe still running' }
+    if ($kind -and -not $first.ContainsKey($kind)) { $first[$kind] = $true; Add ("PROCESS   {0:HH:mm:ss.fff}Z {1}  {2}" -f $p.CreationDate.ToUniversalTime(), (Off $p.CreationDate), $kind) }
+}
+$startup = [Environment]::GetFolderPath('Startup')
+Add ("PROCESS   the user's Startup folder holds {0} item(s), one of them 'Visual Studio Code.lnk': {1}" -f (Get-ChildItem -LiteralPath $startup -File | Where-Object Name -ne 'desktop.ini').Count, (Test-Path -LiteralPath (Join-Path $startup 'Visual Studio Code.lnk')))
+Add ''
+
+# BrowserAI's own process log: every server start and the client each one met.
+$logDir = Join-Path $env:LOCALAPPDATA 'BrowserAI\logs'
+$records = Get-ChildItem -LiteralPath $logDir -Filter 'browserai-20260924-*.log' | ForEach-Object { Get-Content -LiteralPath $_.FullName } |
+    Where-Object { $_ -ge '2026-09-24T07:38' -and $_ -lt '2026-09-24T07:46' }
+$clients = @{}
+foreach ($r in $records) {
+    $m = [regex]::Match($r, 'pid=(\d+)@\d+\s+ModelContextProtocol\.Server\.McpServer\[\d+\]\s+Server \(BrowserAI [^)]+\), Client \(([^)]+)\) method ''initialize''')
+    if ($m.Success -and -not $clients.ContainsKey($m.Groups[1].Value)) { $clients[$m.Groups[1].Value] = $m.Groups[2].Value }
+}
+foreach ($r in $records) {
+    $m = [regex]::Match($r, '^(\S+)\s.*pid=(\d+)@\d+\s+BrowserAI\.Startup\[1\]\s+BrowserAI (\S+) started\..* cwd=(.*?) sqlite=')
+    if (-not $m.Success) { continue }
+    $cwd = $m.Groups[4].Value
+    $class = if ($cwd.TrimEnd('\') -like '*\Windows\System32') { 'C:\Windows\System32' } elseif (Test-Path -LiteralPath (Join-Path $cwd '.git')) { 'a repository' } else { 'another directory' }
+    $t = [datetime]::Parse($m.Groups[1].Value).ToUniversalTime()
+    $client = if ($clients.ContainsKey($m.Groups[2].Value)) { $clients[$m.Groups[2].Value] } else { 'no initialize in the window' }
+    Add ("SERVER    {0:HH:mm:ss.fff}Z {1}  BrowserAI {2} started (Startup[1]); working directory {3}; client {4}" -f $t, (Off $t), $m.Groups[3].Value, $class, $client)
+}
+foreach ($r in $records) {
+    if ($r -match 'BrowserAI\.Updates\[(5|7|9)\]|BrowserAI\.Registration\[1\]') {
+        $t = [datetime]::Parse(($r -split '\s+')[0]).ToUniversalTime()
+        $what = [regex]::Match($r, '(BrowserAI\.(Updates|Registration)\[\d+\])\s+(.*)$')
+        $text = $what.Groups[3].Value -replace ' image=.*$', ''
+        Add ("UPDATE    {0:HH:mm:ss.fff}Z {1}  {2} {3}" -f $t, (Off $t), $what.Groups[1].Value, $text)
+    }
+}
+
+[IO.File]::WriteAllLines($Out, $lines, [Text.UTF8Encoding]::new($false))
+"wrote $($lines.Count) lines to $Out"

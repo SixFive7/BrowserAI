@@ -1,0 +1,25 @@
+[13:50:14] [INFO] --
+[13:50:14] [INFO] Starting Velopack Updater (1.2.158)
+[13:50:14] [INFO]     Location: "C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\Update.exe"
+[13:50:14] [INFO]     CWD: "C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root"
+[13:50:14] [INFO]     Verbose: true
+[13:50:14] [INFO]     Silent: true
+[13:50:14] [INFO]     Root Directory: Some("C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root")
+[13:50:14] [INFO]     Log File: "C:\\Source\\SixFive7\\BrowserAI\\.work\\coordinator-lifecycle\\logs2\\update-apply-1.log"
+[13:50:14] [INFO]     Context: FromSpecifiedRootDir("C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root", Some("C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\packages"))
+[13:50:14] [INFO] Command: Apply
+[13:50:14] [INFO]     Restart: false
+[13:50:14] [INFO]     Wait: WaitPid(83444)
+[13:50:14] [INFO]     Package: Some("C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\packages\\BrowserAI.app.test-1.1.1-full.nupkg")
+[13:50:14] [INFO]     Exe Args: None
+[13:50:14] [INFO] Auto-locating app manifest...
+[13:50:14] [INFO] Root directory 'C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root' writable: true
+[13:50:14] [INFO] Using root packages directory: C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\packages
+[13:50:14] [INFO] Waiting for process pid-83444 to exit.
+[13:50:14] [INFO] Waiting 60000ms for process handle to exit.
+[13:51:14] [INFO] Getting ready to apply package to BrowserAI.app.test ver 1.1.0: "C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\packages\\BrowserAI.app.test-1.1.1-full.nupkg"
+[13:51:14] [DEBUG] (2) velopack::bundle: Loading bundle from file '"C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\packages\\BrowserAI.app.test-1.1.1-full.nupkg"'...
+[13:51:14] [INFO] Attempting to acquire exclusive lock on packages directory (non-blocking)...
+[13:51:14] [WARN] Retrying operation in 333ms... (error was: Os { code: 32, kind: Uncategorized, message: "The process cannot access the file because it is being used by another process." })
+[13:51:14] [WARN] Retrying operation in 666ms... (error was: Os { code: 32, kind: Uncategorized, message: "The process cannot access the file because it is being used by another process." })
+[13:51:15] [WARN] Retrying operation in 1000ms... (error was: Os { code: 32, kind: Uncategorized, message: "The process cannot access the file because it is being used by another process." })

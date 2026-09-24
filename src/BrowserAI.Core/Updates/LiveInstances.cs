@@ -178,6 +178,13 @@ internal sealed record LiveMarkerReclaim
 /// agent sessions each -- one process deciding to update destroys every other
 /// live session mid-task, and it is precisely the landmine the only prior art
 /// available cannot have hit, that product being single-instance.
+/// <i>Corrected 2026-09-24 @ Velopack 1.2.158, by addition (previously, and still
+/// above, a list that named <c>start</c> without a qualifier)</i>: <c>start</c>
+/// calls it only on its legacy <c>app-</c> migration branch, and <c>apply</c>
+/// calls it once more immediately before the swap. Measured that day, an apply
+/// ended every server still running under the root before the swap, and the ones
+/// started after it ran the new version
+/// ([kb](../../../kb/packaging/velopack.md#what-an-apply-does-to-every-process-under-the-root----read-and-measured-at-12158-2026-09-24)).
 /// </para>
 /// <para>
 /// <b>The handle is the mechanism, exactly as it is for a session directory</b>

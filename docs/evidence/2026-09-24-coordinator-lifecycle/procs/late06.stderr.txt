@@ -1,0 +1,12 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 1.1.0 started. pid=95692 image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\cwd sqlite=3.53.4 sqliteBuild=intended
+info: BrowserAI.Updates[17]
+      Installed at C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root. channel=win manifestVersion=1.1.0 assemblyVersion=1.1.0
+warn: BrowserAI.Startup[4]
+      BROWSERAI_ROOT is set, so this BrowserAI's app root is C:\Users\jori\Downloads\tmp-coordinator-lifecycle\data rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 62600, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\payload\node\node.exe' as pid 45028 in 'C:\Users\jori\Downloads\tmp-coordinator-lifecycle\data\instances\95692-d4db14bb0fc04b1ab33d5b5c7199aec8'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=32.8ms processes=701/541 candidates=0 images=2 aliasedImages=0 unresolvedImages=0 windows=50 titled=11 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=1 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=8 undetermined=0 abandonedGate=False why=-] abandonedGate=False

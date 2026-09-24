@@ -1,0 +1,85 @@
+
+[11:46:10.363] LOCK taken: C:\Source\SixFive7\BrowserAI\.work\installer.lock (waited 0 s)
+[11:46:10.592] CLEARANCE before | real ARP BrowserAI.app: sha256=4AC81C23A1963B8D85FE38A3154D1D32C07B4CEE3692E06C0AE6BDA31ECC788F
+[11:46:10.594] CLEARANCE before | test ARP BrowserAI.app.test: ABSENT
+[11:46:10.599] CLEARANCE before | StartMenu BrowserAI.lnk: sha256=F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145 mtime=2026-09-24T07:40:44.1118316Z
+[11:46:10.604] CLEARANCE before | StartMenu BrowserAI (suite).lnk: ABSENT
+[11:46:10.609] CLEARANCE before | ~/.claude.json mcpServers.browserai sha256=6A7F3482972AB48760991C97DF547C702613597EE41FDE0ACBDEF8C737808328
+[11:46:10.614] CLEARANCE before | TEMP velopack_BrowserAI.app.test: ABSENT
+[11:46:10.619] CLEARANCE before | processes under the real root (observed, not touched): 28
+[11:46:10.643] SETUP pid=95784 created=11:46:10.633
+[11:46:13.572] SETUP exit=0 exited=11:46:13.548
+[11:46:13.593] INSTALLED version=1.1.0
+[11:46:13.659] START srvA pid=66536 created=11:46:13.645 image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:13.668] START srvB pid=90032 created=11:46:13.665 image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:13.676] START srvC pid=20576 created=11:46:13.673 image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:28.830] CHILD of srvA: pid=62812 exe=conhost.exe image=C:\Windows\System32\conhost.exe
+[11:46:28.838] CHILD of srvA: pid=80692 exe=node.exe image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\payload\node\node.exe
+[11:46:28.903] CHILD of srvB: pid=88880 exe=conhost.exe image=C:\Windows\System32\conhost.exe
+[11:46:28.907] CHILD of srvB: pid=70476 exe=node.exe image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\payload\node\node.exe
+[11:46:28.951] CHILD of srvC: pid=100092 exe=conhost.exe image=C:\Windows\System32\conhost.exe
+[11:46:28.955] CHILD of srvC: pid=92224 exe=node.exe image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\payload\node\node.exe
+[11:46:29.019] SERVING: 3 of 3 alive after 15 s
+[11:46:29.059] STAGED C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\packages\BrowserAI.app.test-1.1.1-full.nupkg
+[11:46:29.275] UPDATE.EXE pid=69780 created=11:46:29.240 args=--silent apply --package "C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\packages\BrowserAI.app.test-1.1.1-full.nupkg" --waitPid 66536 --norestart --rootDir "C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root" --packageDir "C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\packages" --verbose --log "C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\logs\update-apply.log"
+[11:46:29.306] START late01 pid=88660 created=11:46:29.285 +1 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:29.706] START late02 pid=58292 created=11:46:29.702 +421 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:30.120] START late03 pid=39908 created=11:46:30.116 +835 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:30.286] CLOSED stdin of srvA pid=66536 (the asker ends, as the server does after UpdateExe.Apply)
+[11:46:30.318] EXIT srvA pid=66536 code=0 exited=11:46:30.306 lifeMs=16661
+[11:46:30.326] EXIT srvA-child pid=62812 exe=conhost.exe code=0 exited=11:46:30.310
+[11:46:30.330] EXIT srvA-child pid=80692 exe=node.exe code=0 exited=11:46:30.292
+[11:46:30.522] START late04 pid=96796 created=11:46:30.518 +1236 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:30.934] START late05 pid=83232 created=11:46:30.931 +1649 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:31.349] START late06 pid=95692 created=11:46:31.346 +2065 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:31.778] START late07 pid=46224 created=11:46:31.775 +2494 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:31.820] EXIT srvB pid=90032 code=1 exited=11:46:31.792 lifeMs=18128
+[11:46:31.822] EXIT srvC pid=20576 code=1 exited=11:46:31.793 lifeMs=18120
+[11:46:31.832] EXIT late01 pid=88660 code=1 exited=11:46:31.794 lifeMs=2509
+[11:46:31.840] EXIT late02 pid=58292 code=1 exited=11:46:31.795 lifeMs=2093
+[11:46:31.855] EXIT late03 pid=39908 code=1 exited=11:46:31.796 lifeMs=1680
+[11:46:31.864] EXIT late04 pid=96796 code=1 exited=11:46:31.796 lifeMs=1278
+[11:46:31.873] EXIT late05 pid=83232 code=1 exited=11:46:31.797 lifeMs=866
+[11:46:31.882] EXIT late06 pid=95692 code=1 exited=11:46:31.797 lifeMs=451
+[11:46:31.891] EXIT srvB-child pid=88880 exe=conhost.exe code=0 exited=11:46:31.804
+[11:46:31.898] EXIT srvB-child pid=70476 exe=node.exe code=1 exited=11:46:31.796
+[11:46:31.906] EXIT srvC-child pid=100092 exe=conhost.exe code=0 exited=11:46:31.808
+[11:46:31.915] EXIT srvC-child pid=92224 exe=node.exe code=1 exited=11:46:31.797
+[11:46:32.052] EXIT late07 pid=46224 code=1 exited=11:46:32.029 lifeMs=254
+[11:46:32.235] START late08 pid=97056 created=11:46:32.229 +2897 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:32.611] START late09 pid=89240 created=11:46:32.608 +3327 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:33.025] START late10 pid=34088 created=11:46:33.022 +3740 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:33.438] START late11 pid=38256 created=11:46:33.436 +4154 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:33.527] UPDATE.EXE exit=0 exited= (+4247 ms)
+[11:46:33.838] START late12 pid=84580 created=11:46:33.836 +4554 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:34.254] START late13 pid=67196 created=11:46:34.251 +4970 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:34.688] START late14 pid=90496 created=11:46:34.685 +5403 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:35.114] START late15 pid=80284 created=11:46:35.112 +5819 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:35.521] START late16 pid=97720 created=11:46:35.519 +6237 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:35.937] START late17 pid=99912 created=11:46:35.935 +6653 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:36.354] START late18 pid=72712 created=11:46:36.351 +7070 ms image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.538] VERSION after apply: 1.1.1
+[11:46:37.584] SURVIVORS: late08:97056, late09:89240, late10:34088, late11:38256, late12:84580, late13:67196, late14:90496, late15:80284, late16:97720, late17:99912, late18:72712
+[11:46:37.586] SURVIVOR late08 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.593] SURVIVOR late09 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.599] SURVIVOR late10 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.606] SURVIVOR late11 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.611] SURVIVOR late12 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.618] SURVIVOR late13 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.625] SURVIVOR late14 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.632] SURVIVOR late15 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.638] SURVIVOR late16 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.644] SURVIVOR late17 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.650] SURVIVOR late18 image now=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe
+[11:46:37.737] TEARDOWN exit late08 pid=97056 code=0
+[11:46:39.406] UNINSTALL exit=0
+[11:46:41.442] LEFT under C:\Users\jori\Downloads\tmp-coordinator-lifecycle: 59 entries
+[11:46:41.486] REMOVED C:\Users\jori\Downloads\tmp-coordinator-lifecycle : gone
+[11:46:41.671] CLEARANCE after | real ARP BrowserAI.app: sha256=4AC81C23A1963B8D85FE38A3154D1D32C07B4CEE3692E06C0AE6BDA31ECC788F
+[11:46:41.673] CLEARANCE after | test ARP BrowserAI.app.test: ABSENT
+[11:46:41.680] CLEARANCE after | StartMenu BrowserAI.lnk: sha256=F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145 mtime=2026-09-24T07:40:44.1118316Z
+[11:46:41.687] CLEARANCE after | StartMenu BrowserAI (suite).lnk: ABSENT
+[11:46:41.693] CLEARANCE after | ~/.claude.json mcpServers.browserai sha256=6A7F3482972AB48760991C97DF547C702613597EE41FDE0ACBDEF8C737808328
+[11:46:41.700] CLEARANCE after | TEMP velopack_BrowserAI.app.test: ABSENT
+[11:46:41.707] CLEARANCE after | processes under the real root (observed, not touched): 28
+[11:46:41.716] LOCK released: deleted

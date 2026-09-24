@@ -1,0 +1,1 @@
+12:10:39.212080 pid=61276 ts=178150177189 FGINFO SPI_GETFOREGROUNDLOCKTIMEOUT ok=True ms=2147483647 foregroundPid=2980 foregroundImage=Code AllowSetForegroundWindow(self)=False lastError=5

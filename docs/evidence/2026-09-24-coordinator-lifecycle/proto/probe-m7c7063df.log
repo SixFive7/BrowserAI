@@ -1,0 +1,64 @@
+12:01:13.324271 pid=86996 ts=172491299281 FGINFO SPI_GETFOREGROUNDLOCKTIMEOUT ok=True ms=2147483647 foregroundPid=2980 foregroundImage=Code AllowSetForegroundWindow(self)=True lastError=0
+12:01:13.343152 pid=17648 ts=172491487856 PRIMARY READY mutex=created startupUs=367 hwnd=0x5A163C messageOnly=true visible=False showMsg=0xC4C3
+12:01:13.373493 pid=69820 ts=172491791148 SECONDARY mutex=ALREADY_EXISTS startupUs=268 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172491789751 eventSetTs=172491789924 eventSet=True
+12:01:13.373895 pid=17648 ts=172491795088 PRIMARY SHOW from pid=69820 latencyUs=525 n=1 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:13.555165 pid=17648 ts=172493607790 PRIMARY EVENT signalled
+12:01:13.555239 pid=59816 ts=172493608589 SECONDARY mutex=ALREADY_EXISTS startupUs=236 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172493607377 eventSetTs=172493607546 eventSet=True
+12:01:13.555184 pid=17648 ts=172493607946 PRIMARY SHOW from pid=59816 latencyUs=46 n=2 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:13.738760 pid=17648 ts=172495443713 PRIMARY SHOW from pid=45044 latencyUs=35 n=3 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:13.738837 pid=45044 ts=172495444573 SECONDARY mutex=ALREADY_EXISTS startupUs=251 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172495443325 eventSetTs=172495443449 eventSet=True
+12:01:13.738754 pid=17648 ts=172495443675 PRIMARY EVENT signalled
+12:01:13.908137 pid=17648 ts=172497137515 PRIMARY EVENT signalled
+12:01:13.908221 pid=83652 ts=172497138413 SECONDARY mutex=ALREADY_EXISTS startupUs=254 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172497137155 eventSetTs=172497137282 eventSet=True
+12:01:13.908150 pid=17648 ts=172497137611 PRIMARY SHOW from pid=83652 latencyUs=35 n=4 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:14.077062 pid=17648 ts=172498826730 PRIMARY SHOW from pid=41196 latencyUs=42 n=5 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:14.077136 pid=41196 ts=172498827553 SECONDARY mutex=ALREADY_EXISTS startupUs=463 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172498826271 eventSetTs=172498826445 eventSet=True
+12:01:14.077054 pid=17648 ts=172498826683 PRIMARY EVENT signalled
+12:01:14.244436 pid=17648 ts=172500500509 PRIMARY EVENT signalled
+12:01:14.244532 pid=93028 ts=172500501574 SECONDARY mutex=ALREADY_EXISTS startupUs=314 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172500500012 eventSetTs=172500500223 eventSet=True
+12:01:14.244448 pid=17648 ts=172500500590 PRIMARY SHOW from pid=93028 latencyUs=47 n=6 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:14.416220 pid=17648 ts=172502218305 PRIMARY SHOW from pid=51988 latencyUs=35 n=7 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:14.416307 pid=51988 ts=172502219285 SECONDARY mutex=ALREADY_EXISTS startupUs=281 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172502217907 eventSetTs=172502218044 eventSet=True
+12:01:14.416214 pid=17648 ts=172502218290 PRIMARY EVENT signalled
+12:01:14.599900 pid=80992 ts=172504055210 SECONDARY mutex=ALREADY_EXISTS startupUs=260 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172504053927 eventSetTs=172504054085 eventSet=True
+12:01:14.599818 pid=17648 ts=172504054314 PRIMARY EVENT signalled
+12:01:14.599826 pid=17648 ts=172504054372 PRIMARY SHOW from pid=80992 latencyUs=39 n=8 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:14.769354 pid=17648 ts=172505749675 PRIMARY EVENT signalled
+12:01:14.769435 pid=67744 ts=172505750555 SECONDARY mutex=ALREADY_EXISTS startupUs=250 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172505749303 eventSetTs=172505749441 eventSet=True
+12:01:14.769366 pid=17648 ts=172505749769 PRIMARY SHOW from pid=67744 latencyUs=35 n=9 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:14.937411 pid=17648 ts=172507430253 PRIMARY EVENT signalled
+12:01:14.937496 pid=96396 ts=172507431157 SECONDARY mutex=ALREADY_EXISTS startupUs=266 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172507429865 eventSetTs=172507430027 eventSet=True
+12:01:14.937420 pid=17648 ts=172507430306 PRIMARY SHOW from pid=96396 latencyUs=40 n=10 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:15.106096 pid=17648 ts=172509117101 PRIMARY EVENT signalled
+12:01:15.106175 pid=100168 ts=172509117973 SECONDARY mutex=ALREADY_EXISTS startupUs=247 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172509116697 eventSetTs=172509116861 eventSet=True
+12:01:15.106121 pid=17648 ts=172509117323 PRIMARY SHOW from pid=100168 latencyUs=40 n=11 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:15.276561 pid=73744 ts=172510821820 SECONDARY mutex=ALREADY_EXISTS startupUs=300 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172510820460 eventSetTs=172510820613 eventSet=True
+12:01:15.276473 pid=17648 ts=172510820877 PRIMARY EVENT signalled
+12:01:15.276480 pid=17648 ts=172510820931 PRIMARY SHOW from pid=73744 latencyUs=40 n=12 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:15.461414 pid=17648 ts=172512670291 PRIMARY EVENT signalled
+12:01:15.461544 pid=85844 ts=172512671662 SECONDARY mutex=ALREADY_EXISTS startupUs=303 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172512669352 eventSetTs=172512669953 eventSet=True
+12:01:15.461501 pid=17648 ts=172512671138 PRIMARY SHOW from pid=85844 latencyUs=169 n=13 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:15.642219 pid=17648 ts=172514478331 PRIMARY EVENT signalled
+12:01:15.642304 pid=68488 ts=172514479246 SECONDARY mutex=ALREADY_EXISTS startupUs=272 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172514477907 eventSetTs=172514478074 eventSet=True
+12:01:15.642236 pid=17648 ts=172514478493 PRIMARY SHOW from pid=68488 latencyUs=44 n=14 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:15.812612 pid=17648 ts=172516182233 PRIMARY SHOW from pid=66080 latencyUs=47 n=15 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:15.812691 pid=66080 ts=172516183201 SECONDARY mutex=ALREADY_EXISTS startupUs=324 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172516181706 eventSetTs=172516181869 eventSet=True
+12:01:15.812602 pid=17648 ts=172516182193 PRIMARY EVENT signalled
+12:01:15.980065 pid=17648 ts=172517856799 PRIMARY EVENT signalled
+12:01:15.980151 pid=89588 ts=172517857720 SECONDARY mutex=ALREADY_EXISTS startupUs=477 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172517856410 eventSetTs=172517856554 eventSet=True
+12:01:15.980076 pid=17648 ts=172517857097 PRIMARY SHOW from pid=89588 latencyUs=35 n=16 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:16.162427 pid=17648 ts=172519680387 PRIMARY SHOW from pid=60708 latencyUs=30 n=17 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:16.162520 pid=60708 ts=172519681417 SECONDARY mutex=ALREADY_EXISTS startupUs=246 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172519680027 eventSetTs=172519680141 eventSet=True
+12:01:16.162424 pid=17648 ts=172519680380 PRIMARY EVENT signalled
+12:01:16.337523 pid=17648 ts=172521431388 PRIMARY EVENT signalled
+12:01:16.337610 pid=78812 ts=172521432305 SECONDARY mutex=ALREADY_EXISTS startupUs=509 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172521430898 eventSetTs=172521431086 eventSet=True
+12:01:16.337539 pid=17648 ts=172521431528 PRIMARY SHOW from pid=78812 latencyUs=48 n=18 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:16.521880 pid=17648 ts=172523274952 PRIMARY EVENT signalled
+12:01:16.521961 pid=82132 ts=172523275813 SECONDARY mutex=ALREADY_EXISTS startupUs=257 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172523274544 eventSetTs=172523274707 eventSet=True
+12:01:16.521896 pid=17648 ts=172523275090 PRIMARY SHOW from pid=82132 latencyUs=47 n=19 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:16.706505 pid=17648 ts=172525121200 PRIMARY EVENT signalled
+12:01:16.706589 pid=89004 ts=172525122085 SECONDARY mutex=ALREADY_EXISTS startupUs=264 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172525120804 eventSetTs=172525120937 eventSet=True
+12:01:16.706514 pid=17648 ts=172525121275 PRIMARY SHOW from pid=89004 latencyUs=34 n=20 (the real app would show its window and call SetForegroundWindow here; not executed)
+12:01:16.878440 pid=17648 ts=172526840539 PRIMARY EVENT signalled
+12:01:16.878563 pid=98200 ts=172526841882 SECONDARY mutex=ALREADY_EXISTS startupUs=283 target=0x5A163C targetPid=17648 AllowSetForegroundWindow=True lastError=0 posted=True sentTs=172526840029 eventSetTs=172526840253 eventSet=True
+12:01:16.878457 pid=17648 ts=172526840679 PRIMARY EXIT received=20

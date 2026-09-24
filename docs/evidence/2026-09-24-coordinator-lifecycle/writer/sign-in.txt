@@ -1,0 +1,57 @@
+Read 2026-09-24, read-only, on Microsoft Windows NT 10.0.26200.0 by the phase 1 writer.
+Offsets are from the System log's Winlogon 7001 record. Times are UTC.
+
+SIGN-IN   07:38:51.6853118Z +   0.000 s  System log, Winlogon 7001 (user logon notification)
+
+SHELL     +   1.548 s first of Explorer's own log-on tasks started (Shell-Core 62170); 67 started in all
+SHELL     +   3.903 s 'AllLogonTasks' finished (Shell-Core 62171)
+SHELL     +   5.291 s phase RestartSavedApps began (Shell-Core 9648)
+SHELL     +  20.111 s phase RestartSavedApps ended (Shell-Core 9649)
+SHELL     +  20.160 s phase DesktopStartupApps began (Shell-Core 9648)
+SHELL     + 334.714 s phase DesktopStartupApps ended (Shell-Core 9649)
+
+KEYS      +   1.912 s to +   5.046 s  enumeration 1 of Software\Microsoft\Windows\CurrentVersion\RunOnce: 2 command(s), started one after another; the longest ran 3.1 s before the next began, and 0 ran 29.9 s or more (Shell-Core 9705-9708)
+KEYS      +  20.802 s to +  22.382 s  enumeration 2 of Software\Microsoft\Windows\CurrentVersion\Run: 2 command(s), started one after another; the longest ran 1.1 s before the next began, and 0 ran 29.9 s or more (Shell-Core 9705-9708)
+KEYS      +  22.382 s to + 161.061 s  enumeration 3 of Software\Microsoft\Windows\CurrentVersion\Run: 10 command(s), started one after another; the longest ran 30.1 s before the next began, and 3 ran 29.9 s or more (Shell-Core 9705-9708)
+KEYS      + 245.289 s to + 246.433 s  enumeration 4 of Software\Microsoft\Windows\CurrentVersion\Run: 1 command(s), started one after another; the longest ran 1.1 s before the next began, and 0 ran 29.9 s or more (Shell-Core 9705-9708)
+KEYS      + 334.683 s to + 334.714 s  enumeration 5 of Software\Microsoft\Windows\CurrentVersion\RunOnce: 1 command(s), started one after another; the longest ran 0.0 s before the next began, and 0 ran 29.9 s or more (Shell-Core 9705-9708)
+
+STARTUP   + 161.144 s to + 245.250 s  6 packaged app startup task(s), started one after another (Shell-Core 62408/62409)
+
+TASK      07:38:52Z (whole seconds, +0 s) a third-party task; logon trigger for any user; delay none; principal Group, run level Highest
+TASK      07:39:08Z (whole seconds, +16 s) a task under \Microsoft; logon trigger for the signing-in user; delay PT15S; principal Interactive, run level Limited
+TASK      07:38:52Z (whole seconds, +0 s) a task under \Microsoft; logon trigger for any user; delay none; principal Group, run level Limited
+TASK      07:39:23Z (whole seconds, +31 s) a task under \Microsoft; logon trigger for any user; delay PT30S; principal Group, run level Limited
+TASK      07:38:52Z (whole seconds, +0 s) a task under \Microsoft; logon trigger for any user; delay none; principal Group, run level Highest
+TASK      07:38:52Z (whole seconds, +0 s) a task under \Microsoft; logon trigger for any user; delay none; principal Group, run level Limited
+TASK      07:38:52Z (whole seconds, +0 s) a task under \Microsoft; logon trigger for any user; delay none; principal Group, run level Limited
+TASK      07:38:52Z (whole seconds, +0 s) a task under \Microsoft; logon trigger for any user; delay none; principal Group, run level Highest
+TASK      07:38:52Z (whole seconds, +0 s) a task under \Microsoft; logon trigger for any user; delay none; principal Group, run level Limited
+TASK      07:38:52Z (whole seconds, +0 s) a task under \Microsoft; logon trigger for any user; delay none; principal Group, run level Limited
+TASK      07:38:52Z (whole seconds, +0 s) a task under \Microsoft; logon trigger for any user; delay none; principal Group, run level Limited
+
+PROCESS   07:38:52.745Z +   1.061 s  process 1 the task scheduler started: taskhostw.exe, a Windows binary (parent: the svchost hosting Schedule)
+PROCESS   07:38:52.934Z +   1.249 s  process 2 the task scheduler started: a third-party program (parent: the svchost hosting Schedule)
+PROCESS   07:38:53.081Z +   1.396 s  explorer.exe
+PROCESS   07:43:26.144Z + 274.459 s  Code.exe, started by explorer.exe
+PROCESS   07:43:38.592Z + 286.908 s  the first claude.exe started by Code.exe
+PROCESS   07:43:44.444Z + 292.759 s  the first BrowserAI.Server.exe still running
+PROCESS   the user's Startup folder holds 4 item(s), one of them 'Visual Studio Code.lnk': True
+
+SERVER    07:40:36.476Z + 104.791 s  BrowserAI 1.0.0 started (Startup[1]); working directory C:\Windows\System32; client claude-code 2.1.281
+SERVER    07:43:35.335Z + 283.650 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:38.576Z + 286.891 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:39.658Z + 287.973 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:39.808Z + 288.123 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:42.106Z + 290.421 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:43.413Z + 291.728 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client no initialize in the window
+SERVER    07:43:45.207Z + 293.522 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:45.292Z + 293.607 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:46.869Z + 295.184 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:48.958Z + 297.273 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:50.562Z + 298.877 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+SERVER    07:43:51.722Z + 300.037 s  BrowserAI 1.1.0 started (Startup[1]); working directory a repository; client claude-code 2.1.280
+UPDATE    07:40:38.854Z + 107.169 s  BrowserAI.Updates[5] Update 1.1.0 is available. rollback=False deltas=0 fullPackageBytes=55022716
+UPDATE    07:40:38.870Z + 107.186 s  BrowserAI.Updates[7] Update 1.1.0 downloaded and staged in 0.6s.
+UPDATE    07:40:38.975Z + 107.291 s  BrowserAI.Updates[9] Update 1.1.0 will be applied by Update.exe once this process exits. It is waiting on pid 20368; BrowserAI is shutting down so the session locks release first.
+UPDATE    07:40:40.479Z + 108.794 s  BrowserAI.Registration[1] Velopack Update hook running for BrowserAI 1.1.0.

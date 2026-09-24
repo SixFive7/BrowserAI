@@ -1,0 +1,32 @@
+# Drives SingleProbe.exe headless: one primary (message-only window), N second starts, then quit.
+param([int]$N = 20)
+$ErrorActionPreference = 'Stop'
+$p = 'C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\proto'
+$exe = "$p\out\SingleProbe.exe"
+$name = 'm' + [Guid]::NewGuid().ToString('N').Substring(0, 8)
+$log = "$p\probe-$name.log"
+$h = "$p\harness-$name.txt"
+function Start-Probe([string[]]$a) {
+    $psi = [Diagnostics.ProcessStartInfo]::new($exe)
+    foreach ($x in $a) { $psi.ArgumentList.Add($x) }
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    return [Diagnostics.Process]::Start($psi)
+}
+$fg = Start-Probe @('fg-info', $name, $log); $fg.WaitForExit()
+$primary = Start-Probe @('auto', $name, $log)
+$deadline = [DateTime]::UtcNow.AddSeconds(10)
+while (-not ((Test-Path $log) -and (Select-String -Path $log -Pattern 'PRIMARY READY' -Quiet))) { if ([DateTime]::UtcNow -gt $deadline) { throw 'primary not ready' }; Start-Sleep -Milliseconds 20 }
+for ($i = 1; $i -le $N; $i++) {
+    $t = [Diagnostics.Stopwatch]::GetTimestamp()
+    $s = Start-Probe @('auto', $name, $log)
+    if (-not $s.WaitForExit(5000)) { Add-Content -LiteralPath $h -Value "SPAWN i=$i pid=$($s.Id) DID NOT EXIT in 5 s (became a primary?); stopping our own probe"; $s.Kill(); $s.WaitForExit(); continue }
+    $s.WaitForExit()
+    $t2 = [Diagnostics.Stopwatch]::GetTimestamp()
+    Add-Content -LiteralPath $h -Value "SPAWN i=$i pid=$($s.Id) spawnTs=$t exitTs=$t2 exit=$($s.ExitCode)"
+    Start-Sleep -Milliseconds 150
+}
+$q = Start-Probe @('quit', $name, $log); $q.WaitForExit()
+if (-not $primary.WaitForExit(10000)) { $primary.Kill() }
+$primary.WaitForExit()
+"primary exit=$($primary.ExitCode) log=$log harness=$h freq=$([Diagnostics.Stopwatch]::Frequency)"

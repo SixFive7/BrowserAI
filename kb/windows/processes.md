@@ -1549,6 +1549,115 @@ started for before that server has made a single call.
 deduplicated by pid and creation time, each working directory tested for `.git`
 on the day of reading.
 
+## What starts first after sign-in, and what a task-started process may do -- measured 2026-09-24
+
+`[MACHINE]` for every time and count; `[STABLE]` only where a paragraph says so.
+Windows 11 Pro **10.0.26200**, the morning's sign-in after a restart. The order was
+re-read by this writer, read-only, from the System and Shell-Core logs, the processes
+still running, the task scheduler and BrowserAI's own process log; the foreground
+and single-instance figures are the lifecycle researcher's. Everything it was read
+from, with the maintainer's own programs counted and never named:
+[`docs/evidence/2026-09-24-coordinator-lifecycle`](../../docs/evidence/2026-09-24-coordinator-lifecycle/README.md).
+It answers the maintainer's *"Research how we can reliably start earlier than vscode
+starting dozens of servers simultainiously"*: **nothing guarantees going first, and
+a logon task comes closest.**
+
+### The order this machine started things in
+
+| From sign-in | What | Read from |
+|---|---|---|
+| 0 | the sign-in, 07:38:51.685Z | System log, Winlogon 7001 |
+| +1.061 s | the first process the task scheduler started, a Windows task host | a running process whose parent is the `svchost.exe` hosting `Schedule` |
+| **+1.249 s** | the first process a third-party logon task started | the same |
+| +1.396 s | `explorer.exe` | a running process |
+| +1.5 to +3.9 s | Explorer's own 67 log-on tasks | Shell-Core 62170 and 62171 |
+| +1.9 to +5.0 s | a `RunOnce` key, 2 commands | Shell-Core 9705 to 9708 |
+| +20.2 s | Explorer's `DesktopStartupApps` phase begins; it ends at +334.7 s | Shell-Core 9648 and 9649 |
+| +20.8 to +161.1 s | two `Run` keys, 2 commands and then 10, **started one after another**: Explorer waits for each, and 3 of the 10 held it for 30.0 to 30.1 s | Shell-Core 9705 to 9708 |
+| +161.1 to +245.3 s | 6 packaged apps' startup tasks, one after another | Shell-Core 62408 and 62409 |
+| +245.3 to +246.4 s | a third `Run` key, 1 command | Shell-Core 9705 to 9708 |
+| **+274.5 s** | `Code.exe`, with `explorer.exe` as its parent | a running process |
+| **+283.7 s** | VS Code's first BrowserAI server, 07:43:35.335Z, and **12 of them by +300.0 s** | the process log's `Startup[1]` records |
+
+**The event names the key and never the hive**, so which `Run` key is the user's is
+not in this table. **Nothing records the Startup folder by itself**: `Code.exe`'s
+start falls inside Explorer's startup phase, after the `Run` keys and the packaged
+tasks, and the user's Startup folder holds a `Visual Studio Code.lnk`, which is
+consistent with that shortcut starting it; a click on a pinned icon would have given
+it the same parent. **The task scheduler's own log is switched off on this machine**
+(`Microsoft-Windows-TaskScheduler/Operational`, `IsEnabled` false), so a task is timed
+by the process it started, and `Get-ScheduledTaskInfo` gives its last run in whole
+seconds only.
+
+**One server came first this morning, and nothing here says what started it.** At
++104.8 s, 07:40:36.476Z, a BrowserAI **1.0.0** server started with `C:\Windows\System32`
+as its working directory for a client that named itself `claude-code 2.1.281`, where
+every one of VS Code's servers met `claude-code 2.1.280`. Its census found only itself,
+so it applied the pending 1.1.0: staged in 0.6 s, handed to `Update.exe` at +107.3 s,
+the update hook running at +108.8 s. VS Code's twelve servers, three minutes later,
+were all 1.1.0. The client's process is gone, and neither the `Run` keys nor any
+logon task that ran names a Claude Code executable.
+
+**So a logon task is the earliest mechanism an installer can register**: its process
+started 0.15 s before `explorer.exe`, 103.5 s before that first server and 282.4 s
+before VS Code's first. It is not a guarantee: a client started by a task or a `Run`
+key of its own can start a server at any point in the table, and the first one this
+morning was started by something no record here names.
+
+### A logon task registers without elevation when its trigger names the user
+
+A non-elevated token may register a logon trigger **scoped to the registering user**
+and is refused one **for any user**, `0x80070005`; the table and the deleted
+definition that met the refusal in 2026-08 are in
+[detection](detection.md#the-logon-sweep-task). **A scoped trigger fired within two
+seconds of the unscoped ones**: the only task this morning
+whose trigger was scoped to the user carries a 15 s delay and last ran at 07:39:08Z,
+so its trigger fired between +1.3 and +2.3 s, against +0.3 to +1.3 s for the tasks
+whose trigger is for any user. The record bounds the difference at two seconds and
+does not measure it.
+
+### A process a task starts may not take the foreground
+
+Three times the researcher started the probe through a registered task, between
+12:07Z and 12:11Z, and each time it read **`AllowSetForegroundWindow` on its own pid
+as false, error 5**, with the foreground lock timeout at 2147483647 ms and the
+foreground window belonging to `Code.exe`. The same probe started from the
+researcher's own shell read **true**. `[STABLE]` for what a false means: the call
+[fails when the calling process cannot set the foreground window](https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-allowsetforegroundwindow).
+With this machine's lock
+[effectively infinite](detection.md#this-machines-foreground-lock-is-effectively-infinite-so-it-cannot-see-a-focus-steal----measured-2026-08-24),
+**a coordinator the logon task starts can bring its own window forward only when a
+process that holds the right grants it first**, which is why Q284 a has a second start
+learn the first one's pid before it asks for the window.
+
+### A single instance through a mutex and a message-only window
+
+The researcher's prototype, published NativeAOT with the Windows subsystem: the first
+start creates `Local\CLProbe-<name>` and a message-only window and waits; a second
+start finds the mutex taken, finds the window with `FindWindowExW(HWND_MESSAGE, ...)`,
+grants the first one's pid the foreground with `AllowSetForegroundWindow`, posts a
+registered `show` message and exits. Twenty second starts, one at a time, from a
+harness holding foreground rights:
+
+| | Result |
+|---|---|
+| second starts that handed over | **20 of 20**, every `AllowSetForegroundWindow` true, every post delivered |
+| a second start finding the mutex taken, from entering `Main` | 236 to 509 µs, median 267 µs |
+| post to the first start's window procedure | 30 to 525 µs, median 40 µs |
+| **launch to the first start showing** | **10.67 to 23.06 ms, median 11.35 ms** |
+| launch to the second start's exit | 13.99 to 26.07 ms, median 14.82 ms |
+
+Medians are over the 20, the mean of the two middle values. **Q284 a took the pipe
+for this job instead**, measured in
+[a second start finds the first through a pipe](#a-second-start-finds-the-first-through-a-pipe-and-learns-its-pid):
+a pipe's name is machine-wide and its reply carries the pid, where a message-only
+window is found only from the same desktop.
+
+**Re-establish it** with the batch's `writer/sign-in.ps1.txt`, read-only, against the
+morning of a sign-in, and `proto/measure.ps1.txt` over a publish of `proto/`; a
+task-started reading needs a task registered with the probe's `fg-info` mode as its
+action, removed afterwards.
+
 ## The Win32 interop surface
 
 **`NtQueryInformationProcess` reads a parent PID in ~0.77 µs/call**, against

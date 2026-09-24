@@ -1,0 +1,222 @@
+# Scratch rig, 2026-09-24: does a Velopack 1.2.158 apply kill every BrowserAI.Server.exe under the root,
+# and what happens to servers that start while the apply runs? Installs the SUITE's test pack
+# (BrowserAI.app.test) silently, under .work\installer.lock, and uninstalls it again.
+# The install and data roots are under the profile because BrowserAI refuses to serve from a root outside it
+# (src/BrowserAI.Core/Hosting/InstallRootScope.cs); everything else is under .work\coordinator-lifecycle.
+param(
+    [int]$LateIntervalMs = 400,
+    [int]$LateMax = 40,
+    [int]$ServeWaitSeconds = 15
+)
+$ErrorActionPreference = 'Stop'
+$PSStyle.OutputRendering = 'PlainText'
+$repo = 'C:\Source\SixFive7\BrowserAI'
+$base = "$repo\.work\coordinator-lifecycle"
+$lockPath = "$repo\.work\installer.lock"
+$prof = 'C:\Users\jori\Downloads\tmp-coordinator-lifecycle'
+$root = "$prof\root"
+$data = "$prof\data"
+$logs = "$base\logs"
+$procDir = "$base\procs"
+$setup = "$repo\Releases\test-pack\BrowserAI.test-installer.exe"
+$pkgSrc = "$base\feed\BrowserAI.app.test-1.1.1-full.nupkg"
+$evFile = "$logs\events.txt"
+
+New-Item -ItemType Directory -Force $logs, $procDir, "$base\sandbox\client", "$base\sandbox\codex", "$base\emptyfeed", "$base\cwd", $prof, $data | Out-Null
+Add-Type -Path "$base\Rig.cs"
+Set-Content -LiteralPath $evFile -Value '' -Encoding utf8NoBOM
+function Log([string]$s) { $line = '[{0}] {1}' -f [CL.Rig]::Now(), $s; Add-Content -LiteralPath $evFile -Value $line -Encoding utf8NoBOM; Write-Host $line }
+
+# Seed the sandboxed client exactly as the suite does (OnboardedClientConfig.Contents), plus the autoupdater off.
+[IO.File]::WriteAllText("$base\sandbox\client\.claude.json", '{"hasCompletedOnboarding":true,"autoUpdates":false,"bypassPermissionsModeAccepted":false}', [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText("$base\sandbox\client\settings.json", "{`n  `"env`": {`n    `"DISABLE_AUTOUPDATER`": `"1`"`n  }`n}`n", [Text.UTF8Encoding]::new($false))
+
+$env2 = [System.Collections.Generic.Dictionary[string,string]]::new()
+$env2['CLAUDE_CONFIG_DIR'] = "$base\sandbox\client"
+$env2['CODEX_HOME'] = "$base\sandbox\codex"
+$env2['BROWSERAI_ROOT'] = $data
+$env2['BROWSERAI_UPDATE_FEED'] = "$base\emptyfeed"
+$env2['VELOPACK_FIRSTRUN'] = $null
+$env2['VELOPACK_RESTART'] = $null
+
+function Clearance([string]$tag) {
+    $o = [System.Collections.Generic.List[string]]::new()
+    $u = 'Software\Microsoft\Windows\CurrentVersion\Uninstall'
+    $exp = "$logs\$tag-arp-real.reg"
+    $null = & reg.exe export "HKCU\$u\BrowserAI.app" $exp /y 2>&1
+    $o.Add('real ARP BrowserAI.app: ' + $(if (Test-Path $exp) { 'sha256=' + (Get-FileHash $exp -Algorithm SHA256).Hash } else { 'ABSENT' }))
+    $t = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("$u\BrowserAI.app.test")
+    $o.Add('test ARP BrowserAI.app.test: ' + $(if ($t) { $t.Dispose(); 'PRESENT' } else { 'ABSENT' }))
+    $programs = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs)
+    foreach ($n in 'BrowserAI.lnk', 'BrowserAI (suite).lnk') {
+        $p = Join-Path $programs $n
+        $o.Add("StartMenu ${n}: " + $(if (Test-Path -LiteralPath $p) { 'sha256=' + (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash + ' mtime=' + (Get-Item -LiteralPath $p).LastWriteTimeUtc.ToString('o') } else { 'ABSENT' }))
+    }
+    try {
+        $fs = [IO.FileStream]::new("$env:USERPROFILE\.claude.json", 'Open', 'Read', 'ReadWrite,Delete'); $txt = [IO.StreamReader]::new($fs).ReadToEnd(); $fs.Dispose()
+        $entry = ($txt | ConvertFrom-Json -AsHashtable)['mcpServers']['browserai']
+        $j = if ($entry) { $entry | ConvertTo-Json -Compress -Depth 8 } else { '<absent>' }
+        $o.Add('~/.claude.json mcpServers.browserai sha256=' + [BitConverter]::ToString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($j))).Replace('-', ''))
+    } catch { $o.Add("~/.claude.json read FAILED: $_") }
+    $o.Add('TEMP velopack_BrowserAI.app.test: ' + $(if (Test-Path -LiteralPath "$env:TEMP\velopack_BrowserAI.app.test") { 'PRESENT' } else { 'ABSENT' }))
+    $realRoot = "$env:LOCALAPPDATA\BrowserAI.app\"
+    $n = 0; foreach ($p in [Diagnostics.Process]::GetProcesses()) { try { if ($p.MainModule.FileName.StartsWith($realRoot, [StringComparison]::OrdinalIgnoreCase)) { $n++ } } catch { } }
+    $o.Add("processes under the real root (observed, not touched): $n")
+    foreach ($l in $o) { Log "CLEARANCE $tag | $l" }
+    return $o
+}
+
+# ---- 0. The installer lock --------------------------------------------------------------------------
+$waitStart = Get-Date
+while ($true) {
+    try {
+        $fs = [IO.File]::Open($lockPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+        $b = [Text.Encoding]::UTF8.GetBytes("coordinator-lifecycle researcher, pid $PID, $(Get-Date -AsUTC -Format o)`n")
+        $fs.Write($b, 0, $b.Length); $fs.Dispose(); break
+    } catch [System.IO.IOException] {
+        if (((Get-Date) - $waitStart).TotalMinutes -gt 90) { Log 'LOCK: waited 90 min, giving up'; exit 3 }
+        Start-Sleep -Seconds 15
+    }
+}
+Log "LOCK taken: $lockPath (waited $([int]((Get-Date) - $waitStart).TotalSeconds) s)"
+
+$tracked = [System.Collections.Generic.List[object]]::new()
+$servers = [System.Collections.Generic.List[CL.Spawned]]::new()
+$installed = $false
+try {
+    $before = Clearance 'before'
+    if ($before -match 'test ARP BrowserAI.app.test: PRESENT') { throw 'the test ARP key already exists; refusing to install over somebody else''s test install' }
+    if (Test-Path "$root\current") { throw "$root already holds an install" }
+
+    # ---- 1. Silent install of the test pack ------------------------------------------------------------
+    $s = [CL.Rig]::Start('setup', $setup, "--silent --verbose --log `"$logs\setup.log`" --installto `"$root`"", (Split-Path $setup), $env2, $procDir, $false)
+    if ($s.Error) { throw "setup did not start: $($s.Error)" }
+    Log "SETUP pid=$($s.Pid) created=$([CL.Rig]::Ft($s.CreatedFt))"
+    if (-not $s.P.WaitForExit(300000)) { throw 'setup did not exit in 300 s' }
+    $s.P.WaitForExit()
+    Log "SETUP exit=$($s.P.ExitCode) exited=$([CL.Rig]::Ft([CL.Rig]::Exited($s.P.Handle)))"
+    $installed = Test-Path "$root\current\BrowserAI.Server.exe"
+    if ($s.P.ExitCode -ne 0 -or -not $installed) { throw 'install failed' }
+    $sq = Get-Content "$root\current\sq.version" -Raw
+    Log ("INSTALLED version=" + ([regex]::Match($sq, '<version>([^<]+)</version>').Groups[1].Value))
+
+    # ---- 2. Three servers, CreateNoWindow, stdin held open ------------------------------------------------
+    $exe = "$root\current\BrowserAI.Server.exe"
+    foreach ($label in 'srvA', 'srvB', 'srvC') {
+        $sp = [CL.Rig]::Start($label, $exe, '', "$base\cwd", $env2, $procDir, $true)
+        if ($sp.Error) { throw "$label did not start: $($sp.Error)" }
+        $servers.Add($sp)
+        Log "START $label pid=$($sp.Pid) created=$([CL.Rig]::Ft($sp.CreatedFt)) image=$($sp.ImageAtStart)"
+    }
+    Start-Sleep -Seconds $ServeWaitSeconds
+    $snap = [CL.Rig]::Snapshot()
+    foreach ($sp in @($servers)) {
+        if ($sp.P.HasExited) { Log "EARLY-EXIT $($sp.Label) pid=$($sp.Pid) code=$($sp.P.ExitCode)"; continue }
+        foreach ($c in ($snap | Where-Object { $_.Ppid -eq $sp.Pid })) {
+            $h = [CL.Rig]::OpenForObservation($c.Pid)
+            if ($h -eq [IntPtr]::Zero) { continue }
+            if ([CL.Rig]::Created($h) -lt $sp.CreatedFt) { continue } # pid reuse guard: a child is created after its parent
+            $tracked.Add([pscustomobject]@{ Label = "$($sp.Label)-child"; Pid = $c.Pid; Exe = $c.Exe; H = $h; Image = [CL.Rig]::Image($h); Created = [CL.Rig]::Created($h); Reported = $false })
+            Log "CHILD of $($sp.Label): pid=$($c.Pid) exe=$($c.Exe) image=$([CL.Rig]::Image($h))"
+        }
+    }
+    $alive = @($servers | Where-Object { -not $_.P.HasExited })
+    Log "SERVING: $($alive.Count) of 3 alive after $ServeWaitSeconds s"
+    if ($alive.Count -ne 3) { throw 'not all three servers stayed up' }
+
+    # ---- 3. Stage 1.1.1 where DownloadUpdatesAsync leaves it, then apply exactly as WaitExitThenApplyUpdates(silent: true, restart: false) does
+    Copy-Item -LiteralPath $pkgSrc -Destination "$root\packages\" -Force
+    Log "STAGED $root\packages\$(Split-Path $pkgSrc -Leaf)"
+    $a = $servers[0]
+    $updArgs = "--silent apply --package `"$root\packages\$(Split-Path $pkgSrc -Leaf)`" --waitPid $($a.Pid) --norestart --rootDir `"$root`" --packageDir `"$root\packages`" --verbose --log `"$logs\update-apply.log`""
+    $u = [CL.Rig]::Start('update-apply', "$root\Update.exe", $updArgs, $root, $env2, $procDir, $false)
+    if ($u.Error) { throw "Update.exe did not start: $($u.Error)" }
+    Log "UPDATE.EXE pid=$($u.Pid) created=$([CL.Rig]::Ft($u.CreatedFt)) args=$updArgs"
+
+    $sw = [Diagnostics.Stopwatch]::StartNew()
+    $closedA = $false
+    $late = 0
+    $nextLate = 0
+    $updExitAt = $null
+    $reported = @{}
+    while ($true) {
+        $ms = $sw.ElapsedMilliseconds
+        if (-not $closedA -and $ms -ge 1000) {
+            $a.Stdin.Close(); $closedA = $true
+            Log "CLOSED stdin of srvA pid=$($a.Pid) (the asker ends, as the server does after UpdateExe.Apply)"
+        }
+        if ($ms -ge $nextLate -and $late -lt $LateMax -and ($null -eq $updExitAt -or $ms - $updExitAt -lt 3000)) {
+            $late++
+            $label = 'late{0:D2}' -f $late
+            $sp = [CL.Rig]::Start($label, $exe, '', "$base\cwd", $env2, $procDir, $true)
+            $servers.Add($sp)
+            if ($sp.Error) { Log "START $label FAILED at +$ms ms: $($sp.Error)" }
+            else { Log "START $label pid=$($sp.Pid) created=$([CL.Rig]::Ft($sp.CreatedFt)) +$ms ms image=$($sp.ImageAtStart)" }
+            $nextLate = $ms + $LateIntervalMs
+        }
+        foreach ($sp in @($servers)) {
+            if ($sp.Error -or $reported.ContainsKey($sp.Label)) { continue }
+            if ($sp.P.HasExited) {
+                $reported[$sp.Label] = $true
+                Log "EXIT $($sp.Label) pid=$($sp.Pid) code=$($sp.P.ExitCode) exited=$([CL.Rig]::Ft([CL.Rig]::Exited($sp.P.Handle))) lifeMs=$([int](([CL.Rig]::Exited($sp.P.Handle) - $sp.CreatedFt) / 10000))"
+            }
+        }
+        foreach ($t in @($tracked)) {
+            if ($t.Reported) { continue }
+            $e = [CL.Rig]::Exited($t.H)
+            if ($e -ne 0) { $t.Reported = $true; Log "EXIT $($t.Label) pid=$($t.Pid) exe=$($t.Exe) code=$([CL.Rig]::ExitCode($t.H)) exited=$([CL.Rig]::Ft($e))" }
+        }
+        if ($null -eq $updExitAt -and $u.P.HasExited) {
+            $updExitAt = $ms
+            Log "UPDATE.EXE exit=$($u.P.ExitCode) exited=$([CL.Rig]::Ft([CL.Rig]::Exited($u.P.Handle))) (+$ms ms)"
+        }
+        if ($null -ne $updExitAt -and $ms - $updExitAt -ge 4000) { break }
+        if ($ms -gt 240000) { Log 'TIMEOUT waiting for Update.exe'; break }
+        Start-Sleep -Milliseconds 20
+    }
+    $u.P.WaitForExit()
+    Log ("VERSION after apply: " + ([regex]::Match((Get-Content "$root\current\sq.version" -Raw), '<version>([^<]+)</version>').Groups[1].Value))
+    $snap = [CL.Rig]::Snapshot()
+    $survivors = @($servers | Where-Object { -not $_.Error -and -not $_.P.HasExited })
+    Log "SURVIVORS: $(($survivors | ForEach-Object { "$($_.Label):$($_.Pid)" }) -join ', ')"
+    foreach ($sp in $survivors) { Log "SURVIVOR $($sp.Label) image now=$([CL.Rig]::Image($sp.P.Handle))" }
+}
+catch {
+    Log "ERROR: $_"
+}
+finally {
+    # ---- 4. Teardown: our own servers only, by the Process objects this script created ----------------
+    foreach ($sp in @($servers)) {
+        if ($sp.Error -or $sp.P.HasExited) { continue }
+        try { $sp.Stdin.Close() } catch { }
+    }
+    foreach ($sp in @($servers)) {
+        if ($sp.Error -or $sp.P.HasExited) { continue }
+        if (-not $sp.P.WaitForExit(30000)) { Log "TEARDOWN: $($sp.Label) pid=$($sp.Pid) did not exit 30 s after stdin EOF; terminating our own process"; $sp.P.Kill($true) }
+        $sp.P.WaitForExit()
+        Log "TEARDOWN exit $($sp.Label) pid=$($sp.Pid) code=$($sp.P.ExitCode)"
+    }
+    foreach ($t in @($tracked)) {
+        if ([CL.Rig]::Exited($t.H) -eq 0) { Log "TEARDOWN: child $($t.Label) pid=$($t.Pid) still alive; terminating (verified child of our server)"; try { [Diagnostics.Process]::GetProcessById($t.Pid).Kill() } catch { Log "  kill failed: $_" } }
+    }
+    # ---- 5. Uninstall and remove what was installed ---------------------------------------------------
+    if (Test-Path "$root\Update.exe") {
+        $un = [CL.Rig]::Start('uninstall', "$root\Update.exe", "--uninstall --silent --verbose --log `"$logs\uninstall.log`"", $root, $env2, $procDir, $false)
+        if ($un.Error) { Log "UNINSTALL did not start: $($un.Error)" }
+        else {
+            if (-not $un.P.WaitForExit(300000)) { Log 'UNINSTALL did not exit in 300 s' }
+            $un.P.WaitForExit()
+            Log "UNINSTALL exit=$($un.P.ExitCode)"
+        }
+    }
+    Start-Sleep -Seconds 2
+    if (Test-Path $prof) {
+        $left = @(Get-ChildItem -Recurse -Force $prof -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
+        Log "LEFT under ${prof}: $($left.Count) entries"
+        Remove-Item -Recurse -Force -LiteralPath $prof -ErrorAction SilentlyContinue
+        Log ("REMOVED $prof : " + $(if (Test-Path $prof) { 'STILL PRESENT' } else { 'gone' }))
+    }
+    $after = Clearance 'after'
+    Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
+    Log ("LOCK released: " + $(if (Test-Path $lockPath) { 'STILL PRESENT' } else { 'deleted' }))
+}

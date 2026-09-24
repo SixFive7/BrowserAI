@@ -1,0 +1,13 @@
+Run by the phase 1 writer on 2026-09-24 shortly before 15:08Z, in PowerShell 7 from a non-elevated
+interactive token, as task-registration.ps1.txt beside this file. Each task was removed in the
+same pass; neither trigger ever fired, because nobody signed in while one existed.
+
+elevated=False os=10.0.26200.0
+trigger=user REGISTERED in 56 ms; read back: triggerUserScoped=True principal=Interactive/Limited
+  removed BrowserAI-kbprobe-15ddc1ec
+  still registered afterwards: False
+trigger=any REFUSED in 23 ms: hr=0x80131500 type=CimException msg=Access is denied. native=2147942405
+  still registered afterwards: False
+
+native=2147942405 is 0x80070005, E_ACCESSDENIED. hr=0x80131500 is the CimException's own
+HResult, the generic .NET one, and says nothing about the cause.

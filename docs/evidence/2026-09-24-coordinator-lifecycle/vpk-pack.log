@@ -1,0 +1,22 @@
+[13:39:09 INF] Velopack CLI 1.2.158, for distributing applications.
+[13:39:09 INF] Beginning to package Velopack release 1.1.1.
+[13:39:09 INF] Releases Directory: C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\feed
+[13:39:09 INF] Starting: Pre-process steps
+[13:39:09 INF] Shortcuts: StartMenuRoot
+[13:39:10 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[13:39:10 WRN] No architecture specified with --runtime, defaulting to x86. If this was not intended please specify via the --runtime parameter
+[13:39:10 INF] Complete: Pre-process steps
+[13:39:10 INF] Starting: Code-sign application
+[13:39:10 WRN] No signing parameters provided, 5 file(s) will not be signed.
+[13:39:10 INF] Complete: Code-sign application
+[13:39:10 INF] Starting: Building portable package
+[13:39:10 INF] Starting: Building release 1.1.1
+[13:39:16 INF] Complete: Building portable package
+[13:39:16 INF] Complete: Building release 1.1.1
+[13:39:16 INF] Starting: Building setup package
+[13:39:16 INF] Setup bundle created 'BrowserAI.app.test-win-Setup.exe'.
+[13:39:16 WRN] No signing parameters provided, 1 file(s) will not be signed.
+[13:39:16 INF] Complete: Building setup package
+[13:39:16 INF] Starting: Post-process steps
+[13:39:16 INF] Complete: Post-process steps
+[13:39:16 INF] Finished in 00:00:06.5515543.

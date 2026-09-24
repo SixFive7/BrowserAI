@@ -1,0 +1,14 @@
+{
+  "hasCompletedOnboarding": true,
+  "bypassPermissionsModeAccepted": false,
+  "firstStartTime": "2026-09-24T11:49:58.185Z",
+  "firstStartVersion": "2.1.281",
+  "machineID": "19a982fec8188cb9b527d8b05d911a5d040810ae6fb7754823c320bc820272bc",
+  "userID": "23b36e49e52aef4f3485bc3caa0f3b97dd4f35e9fc7667ecc70cf19c56e3750a",
+  "opusProMigrationComplete": true,
+  "sonnet1m45MigrationComplete": true,
+  "seenNotifications": {},
+  "hasResetAutoModeOptInForDefaultOffer": true,
+  "migrationVersion": 14,
+  "mcpServers": {}
+}

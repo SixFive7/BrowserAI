@@ -254,6 +254,35 @@ UAC-filtered administrator** token.
 > that is now final, not owed**: step 19 dropped the task instead of
 > elevating for it, so nothing depends on the answer.
 
+> ⚠️ ***Corrected 2026-09-24, by addition (previously, and still above,
+> "Registering a scheduled task non-elevated fails on this machine").*** **It fails
+> for one trigger shape, and the definition measured here had that shape.** The
+> deleted `LogonSweepTask.cs` wrote a `<LogonTrigger>` with no `<UserId>` in it
+> (read at `874f9ff`), and a logon trigger with no user is one that
+> [fires for any user's logon](https://learn.microsoft.com/windows/win32/taskschd/logontrigger-userid).
+> That is the shape a non-elevated token may not register. Re-measured 2026-09-24
+> on Windows 10.0.26200 from a non-elevated interactive token, through
+> `Register-ScheduledTask` in the task library's root, with one `cmd.exe` action
+> and the principal `Interactive` / `Limited` for the current user:
+>
+> | Logon trigger | Result |
+> |---|---|
+> | scoped to the registering user, `-AtLogOn -User <domain\user>` | **registered**, in 56 ms, and read back with the trigger still scoped to the user |
+> | for any user, `-AtLogOn` | **refused**, *Access is denied.*, `0x80070005`, in 23 ms |
+>
+> Both tasks were removed in the same pass, and the lifecycle researcher had
+> measured the same split earlier that day. **So a per-user logon task is open to a
+> non-elevated installer hook**, which is what Q282 a rests on
+> ([DECISIONS](../../DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client)).
+> What the paragraph above established still holds for the any-user shape: it is
+> refused, and the filesystem is not the gate. `schtasks /Create /XML` and a new
+> task folder were not re-tried. `[MACHINE]`: what a non-elevated token may register
+> is not documented on the pages cited here, and a domain policy can change it.
+> [Evidence](../../docs/evidence/2026-09-24-coordinator-lifecycle/README.md),
+> `writer/task-registration.out.txt`; what a started task's process may do with the
+> foreground is in
+> [processes](processes.md#what-starts-first-after-sign-in-and-what-a-task-started-process-may-do----measured-2026-09-24).
+
 **`LogonType` is valid only beside a `UserId`, never beside a `GroupId`.**
 Measured: with `<GroupId>S-1-5-32-545</GroupId>` and
 `<LogonType>InteractiveToken</LogonType>`, `schtasks /Create` refuses the file
@@ -1536,6 +1565,20 @@ rests on. `[MACHINE]`: a domain policy can grant or remove that privilege
 elsewhere.
 
 ### 2. The DACL the kernel puts on it names three SIDs and no group
+
+`[STALE]` **A re-measurement is owed as of 2026-09-24**, and the reading below is
+left exactly as taken. That day the IPC review read the DACL of a `Global\` **event**
+created with default security by the same kind of token on this machine, and it
+named a different set: the user, **`BUILTIN\Administrators`** and `SYSTEM`, each with
+`0x1F0003`, and **no logon-session SID**:
+`D:(A;;0x1f0003;;;<user>)(A;;0x1f0003;;;BA)(A;;0x1f0003;;;SY)`
+([evidence](../../docs/evidence/2026-09-24-ipc-review/README.md), `run/sddl.txt`).
+An event is not a mutex and the token's default DACL was not read either day, so
+this does not say which reading is wrong. It says the heading's *no group* is not to
+be relied on until a `Global\` **mutex** is read again with the token's default DACL
+beside it. A standard second user holds no entry in either reading, so sections 3
+and 5 are not contradicted; an administrators entry would matter to the elevated
+peer [section 6](#6-what-is-still-not-established) already lists as unmeasured.
 
 Read off the created handle:
 

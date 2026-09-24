@@ -1,0 +1,29 @@
+$ErrorActionPreference = 'Stop'
+$me = "$env:USERDOMAIN\$env:USERNAME"
+$action = New-ScheduledTaskAction -Execute "$env:WINDIR\System32\cmd.exe" -Argument '/d /c exit 0'
+$principal = New-ScheduledTaskPrincipal -UserId $me -LogonType Interactive -RunLevel Limited
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$elev = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+"elevated=$elev os=$([Environment]::OSVersion.Version)"
+$results = @()
+foreach ($shape in 'user','any') {
+  $name = 'BrowserAI-kbprobe-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
+  $trigger = if ($shape -eq 'user') { New-ScheduledTaskTrigger -AtLogOn -User $me } else { New-ScheduledTaskTrigger -AtLogOn }
+  $sw = [Diagnostics.Stopwatch]::StartNew()
+  try {
+    $t = Register-ScheduledTask -TaskPath '\' -TaskName $name -Action $action -Trigger $trigger -Principal $principal -Settings $settings
+    $sw.Stop()
+    $back = Get-ScheduledTask -TaskPath '\' -TaskName $name
+    $results += "trigger=$shape REGISTERED in $([int]$sw.ElapsedMilliseconds) ms; read back: triggerUserScoped=$([bool]$back.Triggers[0].UserId) principal=$($back.Principal.LogonType)/$($back.Principal.RunLevel)"
+  } catch {
+    $sw.Stop()
+    $hr = if ($_.Exception.HResult) { '0x{0:X8}' -f $_.Exception.HResult } else { 'n/a' }
+    $inner = $_.Exception.InnerException
+    $results += "trigger=$shape REFUSED in $([int]$sw.ElapsedMilliseconds) ms: hr=$hr type=$($_.Exception.GetType().Name) msg=$($_.Exception.Message.Trim()) native=$($_.Exception.ErrorData.error_Code)"
+  } finally {
+    if (Get-ScheduledTask -TaskPath '\' -TaskName $name -ErrorAction SilentlyContinue) { Unregister-ScheduledTask -TaskPath '\' -TaskName $name -Confirm:$false; $results += "  removed $name" }
+    $left = [bool](Get-ScheduledTask -TaskPath '\' -TaskName $name -ErrorAction SilentlyContinue)
+    $results += "  still registered afterwards: $left"
+  }
+}
+$results

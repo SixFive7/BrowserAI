@@ -1,0 +1,1 @@
+primary exit=0 log=C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\proto\probe-m7c7063df.log harness=C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\proto\harness-m7c7063df.txt freq=10000000

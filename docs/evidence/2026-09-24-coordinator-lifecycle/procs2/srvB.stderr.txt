@@ -1,0 +1,22 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 1.1.0 started. pid=66636 image=C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\cwd sqlite=3.53.4 sqliteBuild=intended
+info: BrowserAI.Updates[17]
+      Installed at C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root. channel=win manifestVersion=1.1.0 assemblyVersion=1.1.0
+warn: BrowserAI.Startup[4]
+      BROWSERAI_ROOT is set, so this BrowserAI's app root is C:\Users\jori\Downloads\tmp-coordinator-lifecycle\data rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 66160, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\current\payload\node\node.exe' as pid 79376 in 'C:\Users\jori\Downloads\tmp-coordinator-lifecycle\data\instances\66636-650819f65c9d4f66b1d459e063ea75d6'.
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.1.0) client received server '{"name":"Playwright","version":"1.64.0-alpha-1789764292000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.1.0) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+warn: BrowserAI.Updates[2]
+      BROWSERAI_UPDATE_FEED is set, so this BrowserAI checks C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\emptyfeed/releases.win.json for updates rather than the feed it shipped with.
+info: BrowserAI.Updates[3]
+      Checking for updates at C:\Source\SixFive7\BrowserAI\.work\coordinator-lifecycle\emptyfeed/releases.win.json.

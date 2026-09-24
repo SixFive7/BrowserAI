@@ -1,0 +1,43 @@
+[13:46:37] [INFO] --
+[13:46:37] [INFO] Starting Velopack Updater (1.2.158)
+[13:46:37] [INFO]     Location: "C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\Update.exe"
+[13:46:37] [INFO]     CWD: "C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root"
+[13:46:37] [INFO]     Verbose: true
+[13:46:37] [INFO]     Silent: true
+[13:46:37] [INFO]     Root Directory: None
+[13:46:37] [INFO]     Log File: "C:\\Source\\SixFive7\\BrowserAI\\.work\\coordinator-lifecycle\\logs\\uninstall.log"
+[13:46:37] [INFO]     Context: IAmUpdateExe
+[13:46:37] [INFO] Command: Uninstall
+[13:46:37] [INFO] Auto-locating app manifest...
+[13:46:37] [INFO] Root directory 'C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root' writable: true
+[13:46:37] [INFO] Using root packages directory: C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\packages
+[13:46:37] [INFO] Command: Uninstall
+[13:46:37] [INFO] Checking for running processes in: C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root
+[13:46:37] [INFO] Inspected 675 running processes in 210ms, 1 matched directory
+[13:46:37] [WARN] Skipping killing self: C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\Update.exe (12112)
+[13:46:37] [INFO] Force-stop check complete.
+[13:46:37] [INFO] Running --veloapp-uninstall hook...
+[13:46:37] [INFO] About to launch: 'WideString("C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\current\\BrowserAI.exe")' in dir 'Some(WideString("C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\current"))' with arguments: WideString("\"C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\current\\BrowserAI.exe\" --veloapp-uninstall 1.1.1\0")
+[13:46:37] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[13:46:37] [INFO] Waiting 60000ms for process handle to exit.
+[13:46:38] [INFO] Hook executed successfully (took 536.6964ms)
+[13:46:38] [INFO] Checking for running processes in: C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root
+[13:46:38] [INFO] Inspected 674 running processes in 199ms, 1 matched directory
+[13:46:38] [WARN] Skipping killing self: C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root\Update.exe (12112)
+[13:46:38] [INFO] Force-stop check complete.
+[13:46:38] [INFO] COM context initialized in 5ms
+[13:46:38] [INFO] Searching for shortcuts containing root: '"C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root"'
+[13:46:38] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\Users\jori\Desktop/*.lnk)
+[13:46:38] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[13:46:38] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[13:46:38] [DEBUG] (3) velopack_bins::windows::shortcuts: Loading link: "C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"
+[13:46:38] [INFO] Selected shortcut for update '"C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' because target '"C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root\\current\\BrowserAI.exe"' matched.
+[13:46:39] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\Users\jori\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[13:46:39] [INFO] Removing shortcut '"C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' (ShortcutLocationFlags(START_MENU)).
+[13:46:39] [INFO] Removing directory '"C:\\Users\\jori\\Downloads\\tmp-coordinator-lifecycle\\root"'
+[13:46:39] [INFO] Removing directory '"C:\\Users\\jori\\AppData\\Local\\Temp\\velopack_BrowserAI.app.test"'
+[13:46:39] [INFO] Removing uninstall registry keys...
+[13:46:39] [INFO] Finished successfully.
+[13:46:39] [INFO] Scheduling removal of install directory...
+[13:46:39] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "C:\Users\jori\Downloads\tmp-coordinator-lifecycle\root"
+Y
