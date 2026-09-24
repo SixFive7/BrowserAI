@@ -129,8 +129,18 @@ internal sealed class WindowWatchTests
 
     /// <summary>
     /// The row and the refusal say what a watch saw, in all three states, and
-    /// only a shown window or an unwatched release costs a run.
+    /// a shown window or a run nobody watched costs every run.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>An unwatched run fails in every mode since 2026-09-24 -- Q290, the
+    /// maintainer's answer verbatim: <i>"Q290 a"</i>.</b> <i>Previously only a
+    /// release failed for it, and an ordinary run proceeded and said why.</i> A
+    /// <c>CLEAN</c> row is a claim about the screen, and a run whose hooks never
+    /// went in can make no claim about it at all; letting it pass is letting it
+    /// pass silently on the one question the watch exists to answer. Planted red:
+    /// this arm, with the expectation moved first, against the decision table as
+    /// it stood.
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
     public async Task TheRowAndTheRefusalSayWhatTheWatchSaw()
@@ -145,12 +155,12 @@ internal sealed class WindowWatchTests
         await Assert.That(WindowWatch.Judge(shown)).IsEqualTo(WindowWatchVerdict.Shown);
         await Assert.That(WindowWatch.Judge(unwatched)).IsEqualTo(WindowWatchVerdict.Unwatched);
 
-        // A shown window fails every run; a run nobody watched fails only a release.
+        // A shown window fails every run, and so does a run nobody watched (Q290 a).
         await Assert.That(WindowWatch.Decide(WindowWatchVerdict.Clean, isReleaseRun: false)).IsEqualTo(WindowWatchDecision.Proceed);
         await Assert.That(WindowWatch.Decide(WindowWatchVerdict.Clean, isReleaseRun: true)).IsEqualTo(WindowWatchDecision.Proceed);
         await Assert.That(WindowWatch.Decide(WindowWatchVerdict.Shown, isReleaseRun: false)).IsEqualTo(WindowWatchDecision.Refuse);
         await Assert.That(WindowWatch.Decide(WindowWatchVerdict.Shown, isReleaseRun: true)).IsEqualTo(WindowWatchDecision.Refuse);
-        await Assert.That(WindowWatch.Decide(WindowWatchVerdict.Unwatched, isReleaseRun: false)).IsEqualTo(WindowWatchDecision.Proceed);
+        await Assert.That(WindowWatch.Decide(WindowWatchVerdict.Unwatched, isReleaseRun: false)).IsEqualTo(WindowWatchDecision.Refuse);
         await Assert.That(WindowWatch.Decide(WindowWatchVerdict.Unwatched, isReleaseRun: true)).IsEqualTo(WindowWatchDecision.Refuse);
 
         // Three words, none another's prefix, so a reader of one log can tell them apart.
@@ -181,12 +191,20 @@ internal sealed class WindowWatchTests
         await Assert.That(WindowWatch.RowFor(unwatched)).Contains(WindowWatch.UnwatchedState);
         await Assert.That(WindowWatch.RowFor(unwatched)).Contains("SetWinEventHook refused");
 
+        // The row no longer says the release variable is what makes this a
+        // failure, because it is not any more.
+        await Assert.That(WindowWatch.RowFor(unwatched)).DoesNotContain(SuiteEnvironment.ReleaseRunVariable);
+
         // The refusal names the window and is the only place the marker appears.
         await Assert.That(WindowWatch.Refusal(shown, isReleaseRun: false)).Contains("#32770");
         await Assert.That(WindowWatch.Refusal(shown, isReleaseRun: false)).Contains(WindowWatch.RefusalMarker);
         await Assert.That(WindowWatch.Refusal(clean, isReleaseRun: true)).IsNull();
-        await Assert.That(WindowWatch.Refusal(unwatched, isReleaseRun: false)).IsNull();
-        await Assert.That(WindowWatch.Refusal(unwatched, isReleaseRun: true)).Contains(SuiteEnvironment.ReleaseRunVariable);
+        // An unwatched run is refused with the reason the hooks gave, and the
+        // refusal is the same sentence whether or not the run asked to be a
+        // release: unsetting the variable is no longer a way out of it.
+        await Assert.That(WindowWatch.Refusal(unwatched, isReleaseRun: false)).Contains("SetWinEventHook refused");
+        await Assert.That(WindowWatch.Refusal(unwatched, isReleaseRun: true)).IsEqualTo(WindowWatch.Refusal(unwatched, isReleaseRun: false));
+        await Assert.That(WindowWatch.Refusal(unwatched, isReleaseRun: false)).DoesNotContain(SuiteEnvironment.ReleaseRunVariable);
         await Assert.That(WindowWatch.RowFor(shown)).DoesNotContain(WindowWatch.RefusalMarker);
     }
 

@@ -125,7 +125,8 @@ release body; nothing else depends on it.
   its image sits under the repository or either scratch root, and never by the machine's own
   browsers root. The coverage block gains a `windows` row naming each such window with its pid,
   image, rectangle and time, and the run then exits 10. A run the watch could not cover fails
-  only as a release.
+  too, in every mode: Q290, the maintainer's answer verbatim, *"Q290 a"*. Until that answer
+  only a release failed for it.
 
   **Watched red against the real offender before it moved.**
   `RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow`, unmodified and

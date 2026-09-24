@@ -166,8 +166,9 @@ internal static class SuiteCoverage
     /// ⚠️ <b>Two refusals since 2026-09-24, and one exception carrying both.</b>
     /// <i>Previously <c>RefuseARunThatMayNotBeARelease</c>, which carried the filter
     /// refusal alone.</i> The window refusal is Q278: a run whose own processes put
-    /// a window on the screen or took the foreground fails in every mode, and a run
-    /// the watch could not cover fails only a release. Both are raised here for the
+    /// a window on the screen or took the foreground fails in every mode, and since
+    /// Q290 a so does a run the watch could not cover (<i>previously "fails only a
+    /// release"</i>). Both are raised here for the
     /// same reason -- a refusal a filter can deselect is not a refusal -- and both
     /// sentences travel in one exception, so a run that earned both is told both.
     /// </para>

@@ -513,17 +513,25 @@ internal static partial class WindowWatch
     }
 
     /// <summary>
-    /// What a verdict costs: a shown window fails every run, and a run nobody
-    /// watched fails only a release.
+    /// What a verdict costs: a shown window fails every run, and so does a run
+    /// nobody watched.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Every mode since 2026-09-24 -- Q290, the maintainer's answer
+    /// verbatim: <i>"Q290 a"</i>.</b> <i>Previously <c>isReleaseRun ? Refuse :
+    /// Proceed</c> for an unwatched run: an ordinary run proceeded and said why in
+    /// its row.</i> A run that could not watch cannot say it left the screen alone,
+    /// and a row that said so in words was a row nobody had to act on. The
+    /// parameter stays because the table is still asked with it and the answer is
+    /// the same either way; <c>WindowWatchTests</c> holds all six cells.
+    /// </remarks>
     /// <param name="verdict">The verdict.</param>
-    /// <param name="isReleaseRun">Whether this run asked to be a release.</param>
+    /// <param name="isReleaseRun">Whether this run asked to be a release, which no longer changes the answer.</param>
     /// <returns>The decision.</returns>
     public static WindowWatchDecision Decide(WindowWatchVerdict verdict, bool isReleaseRun) => verdict switch
     {
         WindowWatchVerdict.Clean => WindowWatchDecision.Proceed,
-        WindowWatchVerdict.Shown => WindowWatchDecision.Refuse,
-        _ => isReleaseRun ? WindowWatchDecision.Refuse : WindowWatchDecision.Proceed,
+        _ => WindowWatchDecision.Refuse,
     };
 
     /// <summary>The seven-character state the block prints.</summary>
@@ -569,9 +577,7 @@ internal static partial class WindowWatch
 
             default:
                 _ = row.Append(reading.Failure ?? "the watch was never started")
-                    .Append(", so this run cannot say whether it showed a window; ")
-                    .Append(SuiteEnvironment.ReleaseRunVariable)
-                    .Append("=1 makes this state a failure");
+                    .Append(", so this run cannot say whether it showed a window, and it fails for it (Q290 a)");
                 break;
         }
 
@@ -595,8 +601,8 @@ internal static partial class WindowWatch
 
         if (verdict is WindowWatchVerdict.Unwatched)
         {
-            return $"The window watch did not run ({reading.Failure ?? "never started"}), and a release run may not claim a screen it never watched. "
-                + $"Unset {SuiteEnvironment.ReleaseRunVariable} or run where SetWinEventHook answers.";
+            return $"The window watch did not run ({reading.Failure ?? "never started"}), and no run may claim a screen it never watched (Q290 a). "
+                + "Run where SetWinEventHook answers: an interactive session, on the desktop the run is started from.";
         }
 
         var shown = string.Join(

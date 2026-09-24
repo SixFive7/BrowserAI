@@ -916,7 +916,7 @@ them. The rule is `WindowWatch.Classify`, a pure function, and
 |---|---|
 | `CLEAN` | Watched, and nothing the run started showed a window or took the foreground. The row names the desktop, the event count and the baseline |
 | `SHOWN` | Watched, and something of the suite's was shown, created visible, brought forward or left open. One line per window -- class, title, pid and creation time, image, rectangle, time and which of the three rules made it the suite's -- and **the run fails in every mode** |
-| `UNWATCH` | The hooks never went in. An ordinary run proceeds and says why; `BROWSERAI_RELEASE_RUN=1` makes it a failure, because a release may not claim a screen nobody watched |
+| `UNWATCH` | The hooks never went in, and **the run fails in every mode** since 2026-09-24 -- Q290, the maintainer's answer verbatim: *"Q290 a"*. *Previously "An ordinary run proceeds and says why; `BROWSERAI_RELEASE_RUN=1` makes it a failure, because a release may not claim a screen nobody watched".* A run that could not watch has nothing to say about the screen, and a row reporting that in words let it pass anyway. `WindowWatchTests.TheRowAndTheRefusalSayWhatTheWatchSaw` holds all six cells of the table, planted red against the old one |
 
 **What it cannot see is everything off its own desktop**, and that is the property
 the fix is built on: a child started on a `PrivateDesktop` shows its windows where
