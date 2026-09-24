@@ -487,9 +487,16 @@ internal sealed class ServerPipeTests
         await Assert.That(Directory.Exists(instance)).IsFalse();
         await Assert.That(IsReleased(lockFile)).IsTrue();
 
+        // ⚠️ WAITED FOR ON ITS HANDLE, NOT READ ONCE -- 2026-09-24. The server's
+        // exit does not wait for the last process of its Chromium tree, so a read
+        // taken the instant the server is gone can find a browser that is on its
+        // way out; this went red once in a gate on exactly that. Each is waited for,
+        // bounded by the suite's hang detector: the claim is that the stop ends
+        // them, never how fast. Watched red first with the old single read planted
+        // at the earliest moment after the stop answered, and green there with this.
         foreach (var (pid, created) in browsers)
         {
-            await Assert.That(ProcessIdentity.IsAlive(pid, created)).IsFalse();
+            await Assert.That(await Task.Run(() => ProcessIdentity.WaitUntilGone(pid, created, TestDefaults.ProcessHang))).IsTrue();
         }
     }
 
