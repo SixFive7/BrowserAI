@@ -191,21 +191,21 @@ internal static class CodexRegistration
     public static bool MeansNothingToRemove(int exitCode, string output) => false;
 
     /// <summary>The command a person can run by hand, when the client was not found.</summary>
+    /// <remarks>
+    /// ⚠️ <b>There is no project-scope sibling, and there was one until
+    /// 2026-09-24.</b> <c>ManualProjectCommandFor</c> put
+    /// <c>set CODEX_HOME=&lt;repo&gt;\.codex &amp;&amp;</c> in front of this line.
+    /// Nothing called it, and the line was only right in <c>cmd.exe</c>: pasted into
+    /// PowerShell, <c>set</c> is <c>Set-Variable</c>, the variable never reaches
+    /// <c>codex</c>, and the add writes the person's own
+    /// <c>~\.codex\config.toml</c> instead of the repository's. A line that does
+    /// the opposite of what it says in the shell most people here use is deleted,
+    /// not fixed, because nothing needs it.
+    /// </remarks>
     /// <param name="command">The absolute path to the server executable.</param>
     /// <returns>One line, copy-pasteable.</returns>
     public static string ManualCommandFor(string command) =>
         $"codex mcp add {ServerName} -- \"{command}\"";
-
-    /// <summary>The same line for a repository, with the home lever in front of it.</summary>
-    /// <param name="command">The absolute path to the server executable.</param>
-    /// <param name="projectDirectory">The repository root.</param>
-    /// <returns>One line, copy-pasteable.</returns>
-    public static string ManualProjectCommandFor(string command, string projectDirectory)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(projectDirectory);
-
-        return $"set {HomeVariable}={ProjectHome(projectDirectory)} && codex mcp add {ServerName} -- \"{command}\"";
-    }
 
     /// <summary>The home directory a repository-scoped registration is written into.</summary>
     /// <param name="projectDirectory">The repository root.</param>
