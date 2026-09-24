@@ -237,7 +237,7 @@ internal sealed record RegistrationClient
         ProjectDirectoryToCreate = CodexRegistration.ProjectHome,
         ProjectResidue = project => Path.Combine(CodexRegistration.ProjectHome(project), CodexRegistration.ProjectResidue),
         ProjectView = (commands, client, project, installRoot) =>
-            CodexRegistryView.Read(commands, client, installRoot, CodexRegistration.ProjectHome(project), RegistrationScope.Project),
+            CodexRegistryView.ReadProject(commands, client, installRoot, CodexRegistration.ProjectHome(project)),
     };
 
     /// <summary>Both clients, in the order a report lists them.</summary>

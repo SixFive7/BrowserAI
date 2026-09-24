@@ -175,6 +175,21 @@ internal sealed class FakeClientCommandLine : IRegistrationCommand
 
         if (IsScopeless(arguments))
         {
+            // ⚠️ A FORCED HOME THAT IS NOT THERE IS REFUSED, EVERY VERB -- measured
+            // 2026-09-24 @ codex-cli 0.155.0-alpha.9.2: `mcp list`, `mcp remove` and
+            // `mcp add` each exit 1 with "CODEX_HOME points to ..., but that path
+            // does not exist" and create nothing. A double that answered anyway
+            // let the registrar ask a repository's home before creating it, and
+            // only the real client caught that.
+            if (environment.TryGetValue("CODEX_HOME", out var forced) && forced is { Length: > 0 } && !Directory.Exists(forced))
+            {
+                return new CommandOutcome(
+                    1,
+                    string.Create(CultureInfo.InvariantCulture, $"CODEX_HOME points to \"{forced}\", but that path does not exist\nError: failed to resolve CODEX_HOME"),
+                    TimedOut: false,
+                    null);
+            }
+
             var registry = CodexRegistryFor(environment);
 
             return verb switch

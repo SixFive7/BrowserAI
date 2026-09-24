@@ -51,6 +51,12 @@ internal sealed class CodexRegistrationTests
     /// <summary>What re-registering over an entry of ours asks the client, in order.</summary>
     private static readonly string[] RemoveThenAdd = ["remove", "add"];
 
+    /// <summary>A first project registration into a repository with no home: the write alone.</summary>
+    private static readonly string[] AddOnly = ["add"];
+
+    /// <summary>That, then a second pass over the home it created: read, remove ours, add.</summary>
+    private static readonly string[] AddListRemoveAdd = ["add", "list", "remove", "add"];
+
     /// <summary>The three intents, as one array so the analyzer is satisfied.</summary>
     private static readonly RegistrationIntent[] EveryIntent =
         [RegistrationIntent.Install, RegistrationIntent.Update, RegistrationIntent.Uninstall];
@@ -359,6 +365,53 @@ internal sealed class CodexRegistrationTests
         await Assert.That(RegistrationClient.All.Select(client => client.ServerName).Distinct().Single()).IsEqualTo("browserai");
     }
 
+    /// <summary>
+    /// An uninstall over nothing runs nothing and says so, for every client.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The defect this closes arrived with the second client.</b> An uninstall
+    /// used to run the client's remove whatever the ownership read had said, and
+    /// leave the verdict to the exit code: Claude Code exits 1 with <i>No MCP
+    /// server named</i>, which reads as nothing to remove. Codex exits 0 on a
+    /// remove of a server that is not there -- measured at 0.155.0-alpha.9.2 --
+    /// so the same path wrote <i>Removed 'browserai' from Codex</i> into the
+    /// record on every machine where Codex had never been registered.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by running it against the code before the
+    /// fix: the first client in the loop ran a <c>remove</c> the reading had
+    /// already answered. The Codex half -- <c>Unregistered</c> over nothing -- is
+    /// what the real-client arm in <c>RegistrationTests</c> was watched failing
+    /// on.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnUninstallOverNothingRunsNothingAndSaysSoForEveryClient()
+    {
+        using var install = ScratchDirectory.Create("uninstall-nothing");
+
+        var image = InstalledLayout.Create(install.Path);
+
+        foreach (var who in RegistrationClient.All)
+        {
+            var commands = new FakeClientCommandLine();
+
+            var report = McpRegistrar.Apply(
+                who,
+                RegistrationIntent.Uninstall,
+                image,
+                commands,
+                NullLogger.Instance,
+                _ => new RegistrationView(RegistrationScope.User, "<constructed>", null, RegistrationOwnership.Absent, null));
+
+            await Assert.That(report.Status).IsEqualTo(RegistrationStatus.NothingToUnregister);
+            await Assert.That(report.Detail).Contains(who.DisplayName);
+            await Assert.That(commands.Verbs).IsEmpty();
+        }
+    }
+
     // ---- Project scope through the registrar, both clients -------------------
 
     /// <summary>
@@ -408,10 +461,24 @@ internal sealed class CodexRegistrationTests
         await Assert.That(commands.CodexHomes[home]["browserai"]).IsEqualTo(server);
         await Assert.That(commands.CodexRegistered.Count).IsEqualTo(0);
 
-        // Every call -- the ownership read AND the write -- carried the lever,
-        // and none carried a scope flag the client does not have.
-        await Assert.That(commands.Invocations.Count).IsGreaterThanOrEqualTo(2);
+        // ⚠️ A FRESH REPOSITORY NEEDS NO OWNERSHIP READ -- 2026-09-24. Its home is
+        // not there, so nothing is registered in it, and asking Codex is refused
+        // outright (measured: "CODEX_HOME points to ..., but that path does not
+        // exist"). The one call is the write.
+        await Assert.That(commands.Verbs).IsEquivalentTo(AddOnly);
 
+        // A second registration over the home that now exists DOES read, and then
+        // removes and re-adds its own entry -- so this pass is where the read and
+        // the write can both be seen carrying the lever.
+        var again = McpRegistrar.ApplyToProject(
+            RegistrationClient.Codex, register: true, project.Path, image, commands, NullLogger.Instance);
+
+        await Assert.That(again.Status).IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(commands.Verbs).IsEquivalentTo(AddListRemoveAdd);
+        await Assert.That(commands.CodexRegistered.Count).IsEqualTo(0);
+
+        // Every call, in both passes, carried the lever, and none carried a scope
+        // flag the client does not have.
         foreach (var environment in commands.Environments)
         {
             await Assert.That(environment.TryGetValue(CodexRegistration.HomeVariable, out var forced) ? forced : "<none>")

@@ -411,6 +411,13 @@ which is the opposite of Claude Code on both counts.
 here*: the only file under `<repo>\.codex` afterwards was `config.toml`. So the
 residue is not reliably produced, and anything that cleans it up has to tolerate its
 absence.
+⚠️ *Added 2026-09-24 at 08:20Z, by addition: a later run DID produce it, and it is
+two DIRECTORIES.* An `mcp add`, an `mcp list --json` and an `mcp remove` under a
+scratch project home left `tmp\` and `tmp\arg0\`, both empty, beside a
+`config.toml` of 0 bytes; the CLI's own warning line calls what it tried to put
+there *PATH aliases*. Both readings are true of their moment. The registrar removes
+the two innermost first and only while they are empty, and never the `config.toml`
+-- see [what Codex hands a stdio server](#what-codex-hands-a-stdio-server-and-how-it-ends-one----measured-2026-09-24).
 
 ⚠️ **`codex mcp add` ACCEPTS NOTHING THAT PERSISTS A STARTUP TIMEOUT.** Its whole
 option set is `-c key=value`, `--env KEY=VALUE`, `--enable FEATURE`, `--url` and
@@ -449,6 +456,75 @@ the first browser call and not during startup, so it cannot reach a startup time
 `initialize` and timing the first framed answer, then `tools/list`; and by reading
 `codex mcp add --help` for the option set. The probe is
 `.work/startup-probe.mjs` in the batch that produced this entry.
+
+## What Codex hands a stdio server, and how it ends one -- measured 2026-09-24
+
+`[FLOATS]` codex-cli **0.155.0-alpha.9.2**, Windows 10.0.26200, measured while
+building the Codex hooks and window (Q258 steps 2 to 4). **Every call ran under a
+scratch `CODEX_HOME`**; the real `~/.codex` was never written.
+
+**Four findings, and each one changed code or a test.**
+
+**1. The environment a stdio server gets is an allowlist, 3/3.** A stand-in server
+that recorded its own environment (`envdump.js` in
+[the Q261 rig](../../docs/probes/2026-09-24-q261/README.md)) was handed exactly
+**20** variables: `APPDATA`, `COMSPEC`, `HOMEDRIVE`, `HOMEPATH`, `LOCALAPPDATA`,
+`PATH`, `PATHEXT`, `PROGRAMDATA`, `PROGRAMFILES`, `PROGRAMFILES(X86)`,
+`PROGRAMW6432`, `SHELL`, `SYSTEMDRIVE`, `SYSTEMROOT`, `TEMP`, `TMP`, `USERDOMAIN`,
+`USERNAME`, `USERPROFILE` and `WINDIR`. A `BROWSERAI_ROOT` and a marker variable set
+on the `codex app-server` process were not among them, in any round. **So a
+variable reaches a Codex-started BrowserAI only through the registration's own
+`env` table** (`codex mcp add ... --env K=V`). `LOCALAPPDATA` is on the list, which
+is why a Codex-hosted BrowserAI finds its ordinary app root; `BROWSERAI_ROOT` in a
+person's environment does nothing to it.
+
+**2. A home that does not exist is refused, by every verb.** With `CODEX_HOME` at a
+missing directory, `mcp list --json`, `mcp remove` and `mcp add` each exit **1**
+with *CODEX_HOME points to "...", but that path does not exist*, followed by
+*failed to resolve CODEX_HOME* or *failed to load configuration*, and create
+nothing. **The registrar's first project registration asked about a repository
+before creating its `.codex`, read that exit as UNREADABLE, and refused** -- so a
+repository could never be registered the first time. The real-client arm found it
+and the double did not, because the double answered regardless; the double
+models the refusal now, and `CodexRegistryView.ReadProject` answers *absent* for a
+home that is not there instead of asking.
+
+**3. The project-scope residue is two empty directories**, `tmp\` and `tmp\arg0\`
+-- recorded above as a correction to the earlier reading that saw none.
+
+**4. Codex ends a server by TERMINATING it, not by closing its stdin, 3/3.** The
+published BrowserAI server was registered in a scratch home, started by a real
+`codex app-server`, and served one `browserai_list`; then the driver ended the
+app-server's stdin and waited ten seconds before killing anything:
+
+| | round 1 | round 2 | round 3 |
+|---|---|---|---|
+| app-server exits after its stdin EOF, exit code 0 | 56 ms | 50 ms | 47 ms |
+| BrowserAI server gone, polled every 100 ms from the EOF by a copy of the driver that also watched the pid | 101 ms | 115 ms | 100 ms |
+
+**The server's own log carries no end-of-stream line and no client-exit line**,
+and its `live\<pid>-<guid>.live` marker was left behind -- the shape of a process
+that was ended from outside before it could tear down. ⭐ **That marker is not
+held**: it opened exclusively in all four runs, so the census in `LiveInstances`
+does not count it and an update is not blocked by a Codex-hosted server whose host
+has gone. The suite holds this half on every run where Codex is installed:
+`ClientReconnectTests.ABrowserAiRegisteredInCodexServesACallAndLeavesNothingThatHoldsAnUpdate`,
+with the positive control inside the arm -- the same reclaim pass finds the marker
+HELD while the server is serving.
+
+⚠️ **What this does not establish.** It says nothing about how long a desktop-app
+thread keeps its server; nothing written down measures that, and the census after
+the 2026-09-24 reboot found the desktop app-server holding no BrowserAI server to
+measure. And no run had a browser open, so what a termination does to a session's
+browser tree was not exercised here.
+
+**Re-establish** finding 1 with `envdump.js` as its rig row describes, finding 2 by
+running any `codex mcp` verb with `CODEX_HOME` at a directory that is not there,
+and finding 4 with `appserver.js` and `DRIVER_KILL_AFTER_MS=10000`: the driver log
+carries `APPSERVER EXIT` before `KILLING`, and the server's pid is read off its own
+start line under the scratch app root. The millisecond row above came from a copy of
+the driver that polled that pid every 100 ms after the EOF, which is one
+`setInterval` around `process.kill(pid, 0)`.
 
 ## What a client does when the server exits, and what the pipe decides -- measured 2026-09-24
 

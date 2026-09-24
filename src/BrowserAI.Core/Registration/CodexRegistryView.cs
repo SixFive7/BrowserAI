@@ -84,6 +84,44 @@ internal static class CodexRegistryView
         return Parse(outcome.Output, where, installRoot, scope);
     }
 
+    /// <summary>What Codex reports in a repository's own home.</summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>A repository with no home has nothing registered, and asking Codex
+    /// about it is not a way to find that out -- measured 2026-09-24 @ codex-cli
+    /// 0.155.0-alpha.9.2.</b> With <c>CODEX_HOME</c> at a directory that does not
+    /// exist, <c>mcp list --json</c>, <c>mcp remove</c> and <c>mcp add</c> each exit
+    /// 1 with <i>CODEX_HOME points to ..., but that path does not exist</i> and
+    /// create nothing. The first project registration through the registrar asked
+    /// before the home existed, read that exit as UNREADABLE, and refused -- so a
+    /// repository could never be registered the first time. Found by the
+    /// real-client arm; the double did not model the refusal until then.
+    /// </para>
+    /// <para>
+    /// <b>Absent and not unreadable</b>, because this one is established: the
+    /// configuration file Codex would read is inside a directory that is not
+    /// there.
+    /// </para>
+    /// </remarks>
+    /// <param name="commands">The process runner.</param>
+    /// <param name="client">The CLI, absolute.</param>
+    /// <param name="installRoot">The install root ownership is judged against.</param>
+    /// <param name="home">The repository's <c>.codex</c> directory.</param>
+    /// <returns>What is registered there, and whose it is.</returns>
+    public static RegistrationView ReadProject(IRegistrationCommand commands, string client, string? installRoot, string home)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(home);
+
+        return Directory.Exists(home)
+            ? Read(commands, client, installRoot, home, RegistrationScope.Project)
+            : new RegistrationView(
+                RegistrationScope.Project,
+                Path.Combine(home, CodexRegistration.ConfigFileName),
+                null,
+                RegistrationOwnership.Absent,
+                null);
+    }
+
     /// <summary>
     /// What can be said about Codex's configuration when there is no Codex to
     /// ask.

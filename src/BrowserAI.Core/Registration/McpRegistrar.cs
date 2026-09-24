@@ -219,6 +219,20 @@ internal static class McpRegistrar
                 return notOurs;
             }
 
+            // ⚠️ AN UNINSTALL OVER NOTHING RUNS NOTHING -- 2026-09-24. Until the
+            // second client this was left to the client's own exit code: Claude
+            // Code exits 1 with "No MCP server named", which reads as nothing to
+            // remove. Codex exits 0 on removing a server that is not there
+            // (measured at 0.155.0-alpha.9.2), so the same path reported
+            // "Removed 'browserai' from Codex" on every machine where nothing had
+            // been registered -- a sentence in the record a person could check and
+            // find false. The reading taken above is the answer to the question,
+            // and it has already been trusted to refuse and to add.
+            if (intent is RegistrationIntent.Uninstall && view.Ownership is RegistrationOwnership.Absent)
+            {
+                return NothingThere(who, logger, client, command);
+            }
+
             return intent switch
             {
                 RegistrationIntent.Uninstall => Remove(who, commands, logger, client, command),
@@ -719,16 +733,27 @@ internal static class McpRegistrar
 
         if (who.MeansNothingToRemove(outcome.ExitCode, outcome.Output))
         {
-            RegistrationLog.NothingToUnregister(logger, who.ServerName);
-
-            return new RegistrationReport(
-                RegistrationStatus.NothingToUnregister,
-                $"There was no '{who.ServerName}' registered with {who.DisplayName} for this user to remove, which is what an uninstall of a BrowserAI somebody had already unregistered looks like.",
-                client,
-                command);
+            return NothingThere(who, logger, client, command);
         }
 
         return Failed(who, logger, client, command, outcome, "unregister");
+    }
+
+    /// <summary>The report for an uninstall that found nothing of ours to remove.</summary>
+    /// <param name="who">The client.</param>
+    /// <param name="logger">Where the pass reports.</param>
+    /// <param name="client">The client executable.</param>
+    /// <param name="command">What this install would have registered.</param>
+    /// <returns>The report.</returns>
+    private static RegistrationReport NothingThere(RegistrationClient who, ILogger logger, string client, string command)
+    {
+        RegistrationLog.NothingToUnregister(logger, who.ServerName);
+
+        return new RegistrationReport(
+            RegistrationStatus.NothingToUnregister,
+            $"There was no '{who.ServerName}' registered with {who.DisplayName} for this user to remove, which is what an uninstall of a BrowserAI somebody had already unregistered looks like.",
+            client,
+            command);
     }
 
     private static RegistrationReport Failed(RegistrationClient who, ILogger logger, string client, string command, CommandOutcome outcome, string verb)

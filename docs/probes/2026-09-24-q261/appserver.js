@@ -84,7 +84,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     if (step.after) await sleep(step.after);
   }
   await sleep(1500);
+  // Added 2026-09-24 for the update-effect arm: the app-server's own exit is
+  // logged, so a reader can tell "it left on its own after the EOF" from "the
+  // kill below took it", and the kill waits DRIVER_KILL_AFTER_MS (default 2000,
+  // which is what every earlier run of this rig used).
+  child.on('exit', (code, signal) => log(`APPSERVER EXIT code=${code} signal=${signal}`));
   log('DONE');
   child.stdin.end();
-  setTimeout(() => { child.kill(); process.exit(0); }, 2000);
+  const killAfter = Number(process.env.DRIVER_KILL_AFTER_MS || 2000);
+  setTimeout(() => { log('KILLING the app-server'); child.kill(); process.exit(0); }, killAfter);
 })();

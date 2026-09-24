@@ -43,7 +43,8 @@ name, no image path, no enumeration -- the same rule the product holds itself to
 | `cc-q261.sh` | One headless Claude Code run: `cc-q261.sh <run-name> <port> [hold-seconds-before-the-retry]`. The third argument is what decides whether the notification did anything -- it leaves the MCP connection idle between the refusal and the retry, so a `tools/list` that is going to arrive has time to |
 | `cx-q261.sh` | One `codex app-server` run: `cx-q261.sh <run-name>`. No model, no stub, no credential -- `mcpServer/tool/call` makes the client connect and call without a turn |
 | `apistub.js` | The Anthropic Messages API stub, which scripts the model's moves |
-| `appserver.js` | The `codex app-server` driver |
+| `envdump.js` | *Added 2026-09-24.* A stand-in stdio MCP server that writes the environment it was started with to `ENVDUMP_OUT` (default `env-seen.json` beside it) and answers `initialize` and `tools/list` with nothing. Register it in a scratch `CODEX_HOME` with `codex mcp add envdump -- <node> <this file>`, set a marker variable on `codex app-server`, drive `thread/start` and `mcpServerStatus/list` through `appserver.js`, and read which names arrived. ⚠️ **The dump carries the machine's own values** -- paths under the profile among them -- **so it is read and never committed** |
+| `appserver.js` | The `codex app-server` driver. *Two additions of 2026-09-24, made for the Codex update-effect arm and inert for every run before it*: it logs `APPSERVER EXIT code=... signal=...` when the app-server leaves, and the kill it sends after ending the app-server's stdin waits `DRIVER_KILL_AFTER_MS`, default **2000**, which is what every earlier run used. With a longer wait, the log says whether the app-server left on its own after the EOF or was taken by the kill |
 
 ⚠️ **`apistub.js` and `appserver.js` are copies taken from
 [`2026-09-23-client-reconnect`](../../evidence/2026-09-23-client-reconnect/README.md)'s

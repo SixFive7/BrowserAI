@@ -7,9 +7,13 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.Json.Nodes;
 using BrowserAI.Hosting;
+using BrowserAI.Interop;
 using BrowserAI.Proxy;
+using BrowserAI.Registration;
 using BrowserAI.Sessions;
 using BrowserAI.Tests.Harness;
+using BrowserAI.Updates;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.Tests;
 
@@ -195,6 +199,7 @@ internal sealed class ClientReconnectTests
         // And the refusal reached the MODEL, which is the only place it matters.
         // Read out of the request bodies the stub captured, which are exactly what
         // the model was sent.
+        //
         var refusal = SessionErrors.ToolListPredatesThisServer(
             SessionToolSurface.List,
             BuildVersion.Current,
@@ -306,6 +311,296 @@ internal sealed class ClientReconnectTests
 
         await Assert.That(driverLog).Contains("No BrowserAI sessions under");
         await Assert.That(driverLog).DoesNotContain("has never asked BrowserAI for its tool list");
+    }
+
+    /// <summary>
+    /// A BrowserAI registered in Codex the product's own way serves a call, does
+    /// not outlive the Codex that started it, and leaves nothing that could hold
+    /// an update.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The maintainer's ask, verbatim:</b> <i>"I want the same update effects to
+    /// be tested on coded."</i> An update applies only when no other BrowserAI is
+    /// live, and a live instance is a HELD marker under the app root -- so the
+    /// update effect of a Codex-hosted server is two questions: does the process
+    /// go when its host goes, and does anything it leaves stay held.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>THE PREMISE THIS ARM WAS WRITTEN AGAINST DID NOT HOLD, AND IT WAS
+    /// MEASURED AND NOT ASSUMED.</b> It was briefed as "exits on stdin EOF the way
+    /// Codex ends it". Measured 2026-09-24 @ codex-cli 0.155.0-alpha.9.2, 3/3,
+    /// against the published server under a scratch <c>CODEX_HOME</c>: after the
+    /// app-server's own stdin EOF it exits cleanly within about 50 ms, and the
+    /// BrowserAI server is gone about 100 ms after that EOF -- with NO
+    /// end-of-stream line and no client-exit line in its own log, and its live
+    /// marker left behind. Codex TERMINATES it; the server never meets an EOF it
+    /// could act on. What the update lane needs survives that: the process is
+    /// gone, and the marker it left is not held, so the census does not count it.
+    /// </para>
+    /// <para>
+    /// <b>Registered through <c>McpRegistrar</c>, into a scratch home forced on
+    /// every call the runner makes</b> -- never on this process's environment, so
+    /// this file needs no <c>[NotInParallel]</c> and no other arm inherits it.
+    /// The install root's <c>current\</c> is a junction to the published slice, so
+    /// the registrar composes and checks the server exactly as it does for an
+    /// install, and Codex starts the published binary with its payload beside it.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b><c>BROWSERAI_ROOT</c> is added to that registration with Codex's
+    /// own <c>--env</c>, and the arm cannot do without it.</b> Codex hands a stdio
+    /// server a fixed allowlist of variables and nothing else -- measured
+    /// 2026-09-24 @ codex-cli 0.155.0-alpha.9.2, 3/3, with a stand-in server that
+    /// recorded what it was given: exactly 20 variables, <c>APPDATA</c> to
+    /// <c>WINDIR</c>, and a <c>BROWSERAI_ROOT</c> set on the app-server was not
+    /// among them. A server started without it would run its stray sweep over the
+    /// developer's own app root.
+    /// </para>
+    /// <para>
+    /// <b>Both directions of the marker check are in the arm.</b> While the server
+    /// is serving, the product's own reclaim pass finds its marker HELD; after
+    /// Codex has ended, the same pass finds it not held and takes it. A check that
+    /// could only ever answer "not held" would pass against a server that never
+    /// wrote one.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ABrowserAiRegisteredInCodexServesACallAndLeavesNothingThatHoldsAnUpdate()
+    {
+        var codex = SuiteEnvironment.RequireCodexCommandLine();
+
+        PublishedSlice.EnsureFresh();
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        var run = $"suite-cu-{Guid.NewGuid():N}"[..20];
+        var work = Directory.CreateDirectory(Path.Combine(ScratchRoot.Path, run));
+        var home = Directory.CreateDirectory(Path.Combine(work.FullName, "codexhome")).FullName;
+        var sessions = Directory.CreateDirectory(Path.Combine(work.FullName, "sessions")).FullName;
+        var install = Directory.CreateDirectory(Path.Combine(work.FullName, "install")).FullName;
+        var appRoot = Directory.CreateDirectory(Path.Combine(ScratchRoot.ProfileScratch, run)).FullName;
+
+        var current = Path.Combine(install, RegistrationTarget.CurrentDirectoryName);
+
+        await PathAliases.JunctionAsync(current, PublishedSlice.Directory);
+
+        await File.WriteAllTextAsync(Path.Combine(home, "config.toml"), "approval_policy = \"never\"\nsandbox_mode = \"read-only\"\n");
+
+        // ---- Registered the product's way --------------------------------------
+        IRegistrationCommand runner = new ForcedEnvironment(
+            new ClientCommandLine(),
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [CodexRegistration.HomeVariable] = home });
+
+        var image = Path.Combine(current, RegistrationTarget.AppFileName);
+        var server = Path.Combine(current, RegistrationTarget.ServerFileName);
+
+        var registered = McpRegistrar.Apply(
+            RegistrationClient.Codex, RegistrationIntent.Install, image, runner, NullLogger.Instance);
+
+        await Assert.That(registered.Status).IsEqualTo(RegistrationStatus.Registered);
+
+        var listed = CodexRegistryView.Read(runner, codex, install, home: null, RegistrationScope.User);
+
+        await Assert.That(listed.Command).IsEqualTo(server);
+        await Assert.That(listed.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
+
+        // The sandbox, added through the client's own flag and not by writing its
+        // file: the same entry, with the one variable Codex would otherwise drop.
+        var sandboxed = runner.Run(
+            codex,
+            ["mcp", "add", CodexRegistration.ServerName, "--env", $"{BrowserAiPaths.AppRootOverride}={appRoot}", "--", server],
+            CodexRegistration.Budget);
+
+        await Assert.That(sandboxed.Succeeded).IsTrue();
+
+        // ---- Started by the real client, one call ------------------------------
+        var steps = new JsonArray(
+            new JsonObject { ["m"] = "initialize", ["p"] = new JsonObject { ["clientInfo"] = new JsonObject { ["name"] = "browserai-suite", ["title"] = "suite", ["version"] = "1" } } },
+            new JsonObject { ["m"] = "thread/start", ["p"] = new JsonObject() },
+            new JsonObject
+            {
+                ["m"] = "mcpServer/tool/call",
+                ["p"] = new JsonObject
+                {
+                    ["threadId"] = "$THREAD",
+                    ["server"] = CodexRegistration.ServerName,
+                    ["tool"] = SessionToolSurface.List,
+                    ["arguments"] = new JsonObject { ["directory"] = sessions },
+                },
+            },
+            new JsonObject { ["sleep"] = 6000 }).ToJsonString();
+
+        var driverLog = Path.Combine(work.FullName, $"{run}.driver.log");
+
+        using var driver = StartNode(
+            Path.Combine(Rig, "appserver.js"),
+            work,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["CODEX_EXE"] = codex,
+                ["CODEX_HOME"] = home,
+                ["DRIVER_LOG"] = driverLog,
+
+                // Long enough that the app-server's own exit, if it comes, is on
+                // the log before the driver's kill could have caused it.
+                ["DRIVER_KILL_AFTER_MS"] = "10000",
+            },
+            steps);
+
+        // ---- While it serves: its marker is HELD -------------------------------
+        await UntilTheLogSays(driverLog, "RESP id=3", driver);
+
+        var serving = LiveInstances.ReclaimStaleMarkers(appRoot, NullLogger.Instance);
+
+        await Assert.That(serving.Held).IsGreaterThanOrEqualTo(1)
+            .Because("the positive control: a live server's marker must read as held, or the check below proves nothing");
+
+        await WaitFor(driver, "the real Codex app-server run");
+
+        var log = await File.ReadAllTextAsync(driverLog);
+
+        // It served the call.
+        await Assert.That(log).Contains("No BrowserAI sessions under");
+
+        // The app-server left on its own after its stdin EOF, before the kill.
+        var exited = log.IndexOf("APPSERVER EXIT code=0", StringComparison.Ordinal);
+        var killed = log.IndexOf("KILLING the app-server", StringComparison.Ordinal);
+
+        await Assert.That(exited).IsGreaterThanOrEqualTo(0);
+        await Assert.That(killed < 0 || exited < killed).IsTrue();
+
+        // ---- After Codex: the process is gone, and nothing it left is held ------
+        var (pid, created) = ServerStartedIn(appRoot);
+
+        await Assert.That(ProcessLiveness.IsAlive(pid, created)).IsFalse()
+            .Because($"BrowserAI pid {pid.ToString(CultureInfo.InvariantCulture)} outlived the Codex app-server that started it, and a server that outlives its host holds every update");
+
+        var after = LiveInstances.ReclaimStaleMarkers(appRoot, NullLogger.Instance);
+
+        await Assert.That(after.Held).IsEqualTo(0);
+        await Assert.That(after.Reclaimed).IsGreaterThanOrEqualTo(1);
+
+        // The control for the liveness read itself: it can say "alive".
+        await Assert.That(ProcessLiveness.IsAlive(Environment.ProcessId, ProcessLiveness.CreationTimeOfThisProcess())).IsTrue();
+    }
+
+    /// <summary>
+    /// The pid and creation time the server stamped on its own start line.
+    /// </summary>
+    /// <remarks>
+    /// <b>The pair and never the pid alone</b>, read off the <c>pid=N@FILETIME</c>
+    /// stamp every line of the process log carries: a pid on its own can be
+    /// Windows' next process by the time it is asked about, and a liveness answer
+    /// about a stranger is worse than none.
+    /// </remarks>
+    /// <param name="appRoot">The app root the server was given.</param>
+    /// <returns>The pid and its creation time.</returns>
+    private static (int Pid, long Created) ServerStartedIn(string appRoot)
+    {
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(appRoot, "logs"), "*.log"))
+        {
+            foreach (var line in File.ReadLines(file))
+            {
+                if (!line.Contains(" started. pid=", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var stamp = line.IndexOf(" pid=", StringComparison.Ordinal);
+                var at = line.IndexOf('@', stamp);
+                var end = line.IndexOf(' ', at);
+
+                return (
+                    int.Parse(line[(stamp + 5)..at], CultureInfo.InvariantCulture),
+                    long.Parse(line[(at + 1)..end], CultureInfo.InvariantCulture));
+            }
+        }
+
+        throw new InvalidOperationException($"No BrowserAI start line under '{appRoot}': the server Codex was asked to start never logged one.");
+    }
+
+    /// <summary>
+    /// Waits until a log carries a line, or the process writing it has gone.
+    /// </summary>
+    /// <remarks>
+    /// <b>A hang detector and not a promptness claim</b>, on the same derived
+    /// bound <see cref="WaitFor"/> uses.
+    /// </remarks>
+    /// <param name="path">The log.</param>
+    /// <param name="needle">What to wait for.</param>
+    /// <param name="writer">The process that writes it.</param>
+    /// <returns>The wait.</returns>
+    private static async Task UntilTheLogSays(string path, string needle, Started writer)
+    {
+        using var deadline = new CancellationTokenSource(TestDefaults.RealClientHang);
+
+        while (!deadline.IsCancellationRequested)
+        {
+            if (File.Exists(path) && ReadShared(path).Contains(needle, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (writer.Process.HasExited)
+            {
+                throw new InvalidOperationException($"The driver exited before its log said '{needle}'. Its log: {(File.Exists(path) ? ReadShared(path) : "<none>")}");
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100), deadline.Token).ConfigureAwait(false);
+        }
+
+        throw new TimeoutException($"'{path}' never said '{needle}'. That bound is a hang detector: the real run takes seconds.");
+    }
+
+    /// <summary>A file another process is still appending to, read without taking it.</summary>
+    /// <param name="path">The file.</param>
+    /// <returns>Its text.</returns>
+    private static string ReadShared(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var reader = new StreamReader(stream);
+
+        return reader.ReadToEnd();
+    }
+
+    /// <summary>
+    /// The real process runner with named variables forced on every call.
+    /// </summary>
+    /// <remarks>
+    /// <b>The child's environment and never this process's.</b> Forcing
+    /// <c>CODEX_HOME</c> here is what keeps every call the registrar makes --
+    /// the ownership read and the write -- inside a scratch home, without the
+    /// process-wide override that would make every other arm's children inherit
+    /// it.
+    /// </remarks>
+    /// <param name="inner">The real runner.</param>
+    /// <param name="forced">What to force.</param>
+    private sealed class ForcedEnvironment(IRegistrationCommand inner, IReadOnlyDictionary<string, string> forced) : IRegistrationCommand
+    {
+        /// <inheritdoc />
+        public string? Locate(string executableName) => inner.Locate(executableName);
+
+        /// <inheritdoc />
+        public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory) =>
+            Run(executable, arguments, budget, workingDirectory, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+
+        /// <inheritdoc />
+        public CommandOutcome Run(
+            string executable,
+            IReadOnlyList<string> arguments,
+            TimeSpan budget,
+            string? workingDirectory,
+            IReadOnlyDictionary<string, string> environment)
+        {
+            var merged = new Dictionary<string, string>(environment, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (name, value) in forced)
+            {
+                merged[name] = value;
+            }
+
+            return inner.Run(executable, arguments, budget, workingDirectory, merged);
+        }
     }
 
     /// <summary>

@@ -1700,6 +1700,246 @@ internal sealed class RegistrationTests
         await Assert.That(new ClientCommandLine().Locate("browserai-no-such-client.exe")).IsNull();
     }
 
+    // ---- The real Codex, under a scratch CODEX_HOME ---------------------------
+
+    /// <summary>
+    /// The real Codex answers a duplicate add and a remove of nothing with exit
+    /// zero, which is the dialect the product and the double both assume.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The mirror of <see cref="TheClientStillSaysWhatTheExitCodesCannot"/>,
+    /// and it pins the opposite fact.</b> Claude Code exits 1 on both and the
+    /// product reads its words; Codex exits 0 on both, so its two predicates answer
+    /// <see langword="false"/> always and the double models exit 0. If a Codex
+    /// release started refusing a duplicate, the product would report a failed
+    /// registration where there is none -- and this is the arm that would say so.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b><c>CODEX_HOME</c> is a scratch directory for every call</b>, set by
+    /// <see cref="PointTheClientAt"/>; the maintainer's own <c>~\.codex</c> is read
+    /// at the end only to prove this run's GUID-bearing path is not in it.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by making
+    /// <c>CodexRegistration.MeansAlreadyRegistered</c> answer true on a clean exit,
+    /// which is what a reader that expected Claude Code's dialect would do.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRealCodexAnswersADuplicateAddAndARemoveOfNothingWithExitZero()
+    {
+        var codex = SuiteEnvironment.RequireCodexCommandLine();
+
+        using var config = ScratchDirectory.Create("codex-wording");
+        using var install = ScratchDirectory.Create("codex-wording-install");
+
+        _ = InstalledLayout.Create(install.Path);
+
+        var server = InstalledLayout.ServerIn(install.Path);
+        var commands = new ClientCommandLine();
+
+        using (PointTheClientAt(config.Path))
+        {
+            var first = commands.Run(codex, CodexRegistration.AddArguments(server), CodexRegistration.Budget);
+            var duplicate = commands.Run(codex, CodexRegistration.AddArguments(server), CodexRegistration.Budget);
+            var removed = commands.Run(codex, CodexRegistration.RemoveArguments(), CodexRegistration.Budget);
+            var absent = commands.Run(codex, CodexRegistration.RemoveArguments(), CodexRegistration.Budget);
+
+            await Assert.That(first.Succeeded).IsTrue();
+            await Assert.That(duplicate.Succeeded).IsTrue();
+            await Assert.That(removed.Succeeded).IsTrue();
+            await Assert.That(absent.Succeeded).IsTrue();
+
+            // Which is why the two predicates answer false, and must.
+            await Assert.That(CodexRegistration.MeansAlreadyRegistered(duplicate.ExitCode, duplicate.Output)).IsFalse();
+            await Assert.That(CodexRegistration.MeansNothingToRemove(absent.ExitCode, absent.Output)).IsFalse();
+        }
+
+        await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
+    }
+
+    /// <summary>
+    /// The whole mechanism against the real Codex: registered, idempotent,
+    /// removable, an uninstall over nothing says so -- and the maintainer's own
+    /// home untouched.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The mirror of
+    /// <see cref="TheRealClientRegistersBrowserAiAtUserScopeAndNothingElseIsTouched"/></b>,
+    /// driven through <c>McpRegistrar.Apply</c> with the real runner. The entry is
+    /// asserted in the file Codex wrote -- a TOML literal string, so the path
+    /// needs no escaping -- and ownership in what <c>mcp list --json</c> answers.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> against the uninstall that ran the client's
+    /// remove whatever the reading said: the second uninstall came back
+    /// <c>Unregistered</c>, because Codex exits 0 on removing nothing, and the
+    /// record would have said "Removed 'browserai' from Codex".
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRealCodexRegistersBrowserAiAtUserScopeAndTheMaintainersOwnHomeIsUntouched()
+    {
+        _ = SuiteEnvironment.RequireCodexCommandLine();
+
+        using var config = ScratchDirectory.Create("codex-live");
+        using var install = ScratchDirectory.Create("codex-live-install");
+
+        var command = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var commands = new ClientCommandLine();
+        var (logger, _) = Capture();
+
+        using (PointTheClientAt(config.Path))
+        {
+            var file = Path.Combine(
+                Environment.GetEnvironmentVariable(CodexRegistration.HomeVariable)!,
+                CodexRegistration.ConfigFileName);
+
+            var installed = McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Install, command, commands, logger);
+
+            await Assert.That(installed.Status).IsEqualTo(RegistrationStatus.Registered);
+            await Assert.That(File.Exists(file)).IsTrue();
+
+            var written = await File.ReadAllTextAsync(file);
+
+            await Assert.That(written).Contains("[mcp_servers.browserai]");
+            await Assert.That(written).Contains(server);
+
+            // Idempotence, against the client and not against the double.
+            await Assert.That(McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Update, command, commands, logger).Status)
+                .IsEqualTo(RegistrationStatus.AlreadyRegistered);
+            await Assert.That(McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Install, command, commands, logger).Status)
+                .IsEqualTo(RegistrationStatus.Registered);
+            await Assert.That(Occurrences(await File.ReadAllTextAsync(file), "[mcp_servers.browserai]")).IsEqualTo(1);
+
+            var removed = McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Uninstall, command, commands, logger);
+
+            await Assert.That(removed.Status).IsEqualTo(RegistrationStatus.Unregistered);
+            await Assert.That(await File.ReadAllTextAsync(file)).DoesNotContain("[mcp_servers.browserai]");
+
+            await Assert.That(McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Uninstall, command, commands, logger).Status)
+                .IsEqualTo(RegistrationStatus.NothingToUnregister);
+        }
+
+        // ⚠️ The negative that matters: the registered path carries this run's
+        // GUID, so its absence from the maintainer's own configuration is proof
+        // and not an argument.
+        await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
+    }
+
+    /// <summary>
+    /// The real Codex writes a project registration into the repository, and into
+    /// nothing else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The lever the decision recorded as undocumented, driven for real.</b>
+    /// A project registration is <c>codex mcp add</c> with <c>CODEX_HOME</c> moved
+    /// to <c>&lt;repo&gt;\.codex</c>; the user-scope home is ALSO a scratch
+    /// directory here, so a registration that lost the lever lands somewhere this
+    /// arm can see, and not in the maintainer's configuration.
+    /// </para>
+    /// <para>
+    /// <b>And the residue is gone afterwards.</b> Measured the same morning: a run
+    /// leaves <c>tmp\arg0\</c>, two empty directories.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by restoring the <c>File.Delete</c> the
+    /// residue removal was first written with: <c>tmp\arg0</c> survived the run.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheRealCodexWritesAProjectRegistrationIntoTheRepositoryAndNowhereElse()
+    {
+        _ = SuiteEnvironment.RequireCodexCommandLine();
+
+        using var config = ScratchDirectory.Create("codex-project-live");
+        using var install = ScratchDirectory.Create("codex-project-live-install");
+        using var project = ScratchDirectory.Create("codex-project-live-repo");
+
+        var command = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var commands = new ClientCommandLine();
+        var (logger, _) = Capture();
+        var projectFile = RegistrationClient.Codex.ProjectFileIn(project.Path);
+
+        using (PointTheClientAt(config.Path))
+        {
+            var userFile = Path.Combine(
+                Environment.GetEnvironmentVariable(CodexRegistration.HomeVariable)!,
+                CodexRegistration.ConfigFileName);
+
+            var written = McpRegistrar.ApplyToProject(RegistrationClient.Codex, register: true, project.Path, command, commands, logger);
+
+            await Assert.That(written.Status).IsEqualTo(RegistrationStatus.Registered);
+            await Assert.That(File.Exists(projectFile)).IsTrue();
+            await Assert.That(await File.ReadAllTextAsync(projectFile)).Contains("[mcp_servers.browserai]");
+            await Assert.That(await File.ReadAllTextAsync(projectFile)).Contains(server);
+
+            // Nowhere else: the user-scope home this process points at holds no
+            // such entry, whether or not the client created the file.
+            await Assert.That(File.Exists(userFile) ? await File.ReadAllTextAsync(userFile) : string.Empty)
+                .DoesNotContain("[mcp_servers.browserai]");
+
+            // The residue the client leaves is gone.
+            await Assert.That(Directory.Exists(Path.Combine(CodexRegistration.ProjectHome(project.Path), "tmp"))).IsFalse();
+
+            var removed = McpRegistrar.ApplyToProject(RegistrationClient.Codex, register: false, project.Path, command, commands, logger);
+
+            await Assert.That(removed.Status).IsEqualTo(RegistrationStatus.Unregistered);
+            await Assert.That(await File.ReadAllTextAsync(projectFile)).DoesNotContain("[mcp_servers.browserai]");
+        }
+
+        await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
+    }
+
+    /// <summary>
+    /// The product finds the real Codex CLI the way it says it does, and it is an
+    /// executable.
+    /// </summary>
+    /// <remarks>
+    /// The mirror of <see cref="TheClientIsLocatedByFileNameAndNeverAsAShim"/>. On
+    /// this machine the CLI is on no search path at all and is found through the
+    /// desktop app's own manifest, which is the shape the discovery order exists
+    /// for.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheCodexCliIsLocatedAsAnExecutableAndNeverAsAShim()
+    {
+        var located = SuiteEnvironment.RequireCodexCommandLine();
+
+        await Assert.That(Path.IsPathFullyQualified(located)).IsTrue();
+        await Assert.That(Path.GetFileName(located)).IsEqualTo(CodexRegistration.ClientExecutable);
+        await Assert.That(File.Exists(located)).IsTrue();
+        await Assert.That(CodexRegistration.ClientExecutable).EndsWith(".exe");
+    }
+
+    /// <summary>
+    /// The maintainer's own Codex configuration, or nothing when there is none.
+    /// </summary>
+    /// <remarks>
+    /// <b>Read, never written, and read only to prove an absence.</b> The path
+    /// is the default home's, composed from the profile and never from
+    /// <c>CODEX_HOME</c>, which is exactly what these arms move.
+    /// </remarks>
+    /// <returns>Its text.</returns>
+    private static string TheMaintainersOwnCodexConfiguration()
+    {
+        var file = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
+            CodexRegistration.ProjectDirectoryName,
+            CodexRegistration.ConfigFileName);
+
+        return File.Exists(file) ? File.ReadAllText(file) : string.Empty;
+    }
+
     // ---- Helpers ------------------------------------------------------------
 
     /// <summary>
