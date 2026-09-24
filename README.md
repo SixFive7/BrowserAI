@@ -71,11 +71,14 @@ neither has been measured end to end.
 *(Until 2026-09-24 the entry carried this machine's absolute path, which was right on
 the machine that wrote it and on no other.)*
 
-**Removing a project registration is in the window too**: start `BrowserAI.exe` from a
-terminal inside the repository, and each client with a registration of ours at or
-above that folder offers *Remove BrowserAI from this project*. Opened from the Start
-Menu the window starts in its own install folder and finds none, so no such link
-appears there. It never removes another install's entry.
+**Removing a project registration is in the window too**: each client offers
+*Remove from a project...*, which asks for the project folder and removes BrowserAI's
+entry from that folder's own `.mcp.json` or `.codex\config.toml`. Started from a
+terminal inside the repository, each client with a registration of ours at or above
+that folder also offers *Remove BrowserAI from this project*, naming the file. Opened
+from the Start Menu the window starts in its own install folder and finds none, so
+only the first link appears there. Neither removes another install's entry: one
+found in the folder you pick is reported and left alone.
 
 This is an addition, not a replacement: registering for **all** your
 projects is still one entry in your own configuration with no file in any

@@ -99,6 +99,14 @@ release body; nothing else depends on it.
   out of the binary, so the arm stays true across the release that drops the installer exit. That
   is the installed half of row 126. Both hold the real key and the Start Menu byte-identical, and
   each was watched red against a planted wrong expectation.
+- ✨ **The configuration window removes BrowserAI from a project you pick, for each client.**
+  Q289, the maintainer's words verbatim: *"Q289 b"*. *Remove from a project...* asks for the
+  folder and removes BrowserAI's entry from its `.mcp.json` or `.codex\config.toml`, for Claude
+  Code and Codex each. Until now the only removal link was the one for a registration found at
+  or above the folder the window started in, which appears only when the window is started
+  inside such a project; it stays. An entry another install wrote is refused and reported, and a
+  folder with none is told so. The picker opens only on that click and is owned by the window.
+  Each change was watched red first.
 - ✨ **A Codex project entry names `BrowserAI.Server.exe`, and the installer puts its folder on your PATH.**
   Q294, the maintainer's words verbatim: *"Q294 b"*. Codex expands no variable in a server's command,
   measured in 48 attempts across four spellings of `LOCALAPPDATA` and read in its launcher, so the

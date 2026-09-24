@@ -165,7 +165,15 @@ internal static class Program
 
         AppLog.Opening(logger, state.Version, occasion, status);
 
-        using var session = new ConfigurationSession(state, commands, paths, logger, occasion);
+        using var session = new ConfigurationSession(
+            state,
+            commands,
+            paths,
+            logger,
+            occasion,
+            Environment.ProcessPath,
+            ShellInterop.PickFolder,
+            () => AppState.Read(commands, Environment.CurrentDirectory));
 
         return session.Show();
     }
@@ -201,21 +209,42 @@ internal static class Program
 /// it.
 /// </summary>
 /// <remarks>
+/// <para>
 /// <b>Every action is one explicit click and nothing runs on open.</b> The
 /// window is built from state that was read; the update check, the registration
 /// calls and the folder picker all wait to be asked.
+/// </para>
+/// <para>
+/// ⚠️ <b>The image path, the folder picker and the re-read are handed in -- Q289 b,
+/// 2026-09-24</b> -- so the suite can drive a click through
+/// <see cref="TaskDialogHost.Dispatch"/> with a picker that opens nothing, a
+/// scratch install and a state it built. The product passes
+/// <c>Environment.ProcessPath</c>, <see cref="ShellInterop.PickFolder"/> and
+/// <see cref="AppState.Read"/>, which is what this class reached for itself
+/// until then.
+/// </para>
 /// </remarks>
+/// <param name="state">What the window opens on.</param>
+/// <param name="commands">The seam over starting a client.</param>
+/// <param name="paths">Where the logs are.</param>
+/// <param name="logger">Where the records go.</param>
+/// <param name="occasion">Why the window opened.</param>
+/// <param name="imagePath">This process's own image, which every registration is judged from.</param>
+/// <param name="pickFolder">Asks for a folder, modal to the window it is given.</param>
+/// <param name="read">Reads the state again after a change.</param>
 internal sealed class ConfigurationSession(
     AppState state,
     IRegistrationCommand commands,
     IAppPaths paths,
     ILogger logger,
-    Occasion occasion) : IDisposable
+    Occasion occasion,
+    string? imagePath,
+    Func<nint, string, FolderPick> pickFolder,
+    Func<AppState> read) : IDisposable
 {
     private readonly BackgroundWork<UpdateAnswer> _work = new();
 
     private AppState _state = state;
-    private string? _note;
     private string? _available;
 #pragma warning disable CA2213 // Borrowed, not owned: Show() creates the host in a using and clears this in its finally.
     private TaskDialogHost? _host;
@@ -236,14 +265,7 @@ internal sealed class ConfigurationSession(
             ? LiveInstances.Join(root, logger)
             : null;
 
-        using var host = new TaskDialogHost(
-            () => ConfigurationDialog.Page(_state, occasion, _note, _available),
-            OnCommand,
-            OnLink,
-            OnTick,
-            OnFailure);
-
-        _host = host;
+        using var host = Attach();
 
         try
         {
@@ -254,6 +276,30 @@ internal sealed class ConfigurationSession(
             _host = null;
         }
     }
+
+    /// <summary>The dialog this session answers for, built and not shown.</summary>
+    /// <remarks>
+    /// <b>What <see cref="Show"/> opens, and what the suite dispatches clicks
+    /// into</b> without a window: with none, a re-render builds the page and
+    /// returns before it calls Windows.
+    /// </remarks>
+    /// <returns>The host, which the caller disposes.</returns>
+    internal TaskDialogHost Attach()
+    {
+        var host = new TaskDialogHost(
+            () => ConfigurationDialog.Page(_state, occasion, Note, _available),
+            OnCommand,
+            OnLink,
+            OnTick,
+            OnFailure);
+
+        _host = host;
+
+        return host;
+    }
+
+    /// <summary>The sentence the window shows above everything else, or <see langword="null"/>.</summary>
+    internal string? Note { get; private set; }
 
     private ClickOutcome OnCommand(int id)
     {
@@ -282,6 +328,7 @@ internal sealed class ConfigurationSession(
                     (ConfigurationDialog.Command.Unregister, var index) => Apply(RegistrationIntent.Uninstall, index),
                     (ConfigurationDialog.Command.RegisterInProject, var index) => RegisterInProject(index),
                     (ConfigurationDialog.Command.UnregisterFromProject, var index) => UnregisterFromProject(index),
+                    (ConfigurationDialog.Command.UnregisterFromAProject, var index) => UnregisterFromAProject(index),
                     _ => ClickOutcome.Stay,
                 };
         }
@@ -303,7 +350,7 @@ internal sealed class ConfigurationSession(
     {
         AppLog.ClickFailed(logger, failure);
 
-        _note = $"Something went wrong and BrowserAI has changed nothing: {failure.Message}";
+        Note = $"Something went wrong and BrowserAI has changed nothing: {failure.Message}";
     }
 
     /// <summary>Lets go of anything still in flight.</summary>
@@ -338,9 +385,9 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Stay;
         }
 
-        _note = poll.Refusal ?? poll.Result?.Note;
+        Note = poll.Refusal ?? poll.Result?.Note;
         _available = poll.Result?.Available;
-        _state = _state with { LastUpdateCheck = _note };
+        _state = _state with { LastUpdateCheck = Note };
 
         return ClickOutcome.Rerender;
     }
@@ -360,9 +407,9 @@ internal sealed class ConfigurationSession(
     private ClickOutcome Apply(RegistrationIntent intent, int index)
     {
         var who = _state.Clients[index].Client;
-        var report = McpRegistrar.Apply(who, intent, Environment.ProcessPath, commands, logger);
+        var report = McpRegistrar.Apply(who, intent, imagePath, commands, logger);
 
-        _note = ConfigurationDialog.NoteFor(report, who);
+        Note = ConfigurationDialog.NoteFor(report, who);
 
         return Reread();
     }
@@ -376,13 +423,13 @@ internal sealed class ConfigurationSession(
         // the picker is up, which re-enters this handler and can navigate the
         // page out from under a modal child. The window is zero only before the
         // dialog is created, which is before any command can arrive.
-        var picked = ShellInterop.PickFolder(
+        var picked = pickFolder(
             _host?.Window ?? 0,
             $"Choose the folder to register BrowserAI in for {who.DisplayName}. A {who.ProjectFileName} is written under it, to be committed with the project.");
 
         if (picked.Outcome is FolderPickOutcome.Failed)
         {
-            _note = picked.Reason;
+            Note = picked.Reason;
             return ClickOutcome.Rerender;
         }
 
@@ -402,9 +449,9 @@ internal sealed class ConfigurationSession(
         // itself and wrote Codex's as the absolute path, "because BrowserAI does not
         // rely on Codex expanding a variable in a server command".*
         var project = who.ProjectCommandFor(_state.ServerCommand ?? string.Empty, _state.InstallRoot);
-        var report = McpRegistrar.ApplyToProject(who, register: true, folder, Environment.ProcessPath, commands, logger, project.Command);
+        var report = McpRegistrar.ApplyToProject(who, register: true, folder, imagePath, commands, logger, project.Command);
 
-        _note = ConfigurationDialog.ProjectNoteFor(report, who, project.Note);
+        Note = ConfigurationDialog.ProjectNoteFor(report, who, project.Note);
 
         return Reread();
     }
@@ -420,6 +467,10 @@ internal sealed class ConfigurationSession(
     /// the folder is an unregister that can be pointed at the wrong one, and the
     /// consequence of that is a deleted entry in a repository nobody meant to
     /// touch.
+    /// <i>Superseded the same day by Q289 b, the maintainer's answer verbatim
+    /// "Q289 b": <see cref="UnregisterFromAProject"/> asks for the folder, and it
+    /// is safe because the registrar removes only an entry this install wrote. This
+    /// link stays for the folder the walk found, which it names.</i>
     /// </remarks>
     /// <param name="index">Which client.</param>
     /// <returns>Whether the page has to be redrawn.</returns>
@@ -429,14 +480,63 @@ internal sealed class ConfigurationSession(
 
         if (client.ProjectDirectory is not { Length: > 0 } folder)
         {
-            _note = $"There is no {client.Client.DisplayName} project registration at or above this folder, so nothing was changed.";
+            Note = $"There is no {client.Client.DisplayName} project registration at or above this folder, so nothing was changed.";
             return ClickOutcome.Rerender;
         }
 
         var report = McpRegistrar.ApplyToProject(
-            client.Client, register: false, folder, Environment.ProcessPath, commands, logger);
+            client.Client, register: false, folder, imagePath, commands, logger);
 
-        _note = ConfigurationDialog.NoteFor(report, client.Client);
+        Note = ConfigurationDialog.NoteFor(report, client.Client);
+
+        return Reread();
+    }
+
+    /// <summary>
+    /// Asks for a project folder and removes this client's registration from it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q289, decided 2026-09-24 by the maintainer, verbatim: <i>"Q289 b"</i></b>
+    /// -- a folder picker for removing a project registration, safe because only an
+    /// entry this install wrote is ever removed. The link
+    /// <see cref="UnregisterFromProject"/> offers exists only when the window was
+    /// started at or below a project with a registration of ours, which a window
+    /// opened from the Start Menu is not.
+    /// </para>
+    /// <para>
+    /// <b>The folder picked, exactly, and no walk upwards</b>: the entry is looked for
+    /// in that folder's own <c>.mcp.json</c> or <c>.codex</c>, the way
+    /// <see cref="RegisterInProject"/> writes into the folder picked. The
+    /// registrar refuses an entry another install wrote and says when there is
+    /// none, so a wrong folder costs a sentence and not an entry.
+    /// </para>
+    /// </remarks>
+    /// <param name="index">Which client.</param>
+    /// <returns>Whether the page has to be redrawn.</returns>
+    private ClickOutcome UnregisterFromAProject(int index)
+    {
+        var who = _state.Clients[index].Client;
+
+        // ⚠️ OWNED BY THE DIALOG, for the reason RegisterInProject's picker is.
+        var picked = pickFolder(
+            _host?.Window ?? 0,
+            $"Choose the project folder to remove BrowserAI from for {who.DisplayName}. Only an entry this install wrote in its {who.ProjectFileName} is removed.");
+
+        if (picked.Outcome is FolderPickOutcome.Failed)
+        {
+            Note = picked.Reason;
+            return ClickOutcome.Rerender;
+        }
+
+        if (picked.Outcome is not FolderPickOutcome.Picked || picked.Path is not { Length: > 0 } folder)
+        {
+            return ClickOutcome.Stay;
+        }
+
+        var report = McpRegistrar.ApplyToProject(who, register: false, folder, imagePath, commands, logger);
+
+        Note = ConfigurationDialog.NoteFor(report, who);
 
         return Reread();
     }
@@ -444,7 +544,7 @@ internal sealed class ConfigurationSession(
     /// <summary>Reads the state again and keeps this session's update answer.</summary>
     private ClickOutcome Reread()
     {
-        _state = AppState.Read(commands, Environment.CurrentDirectory) with { LastUpdateCheck = _state.LastUpdateCheck };
+        _state = read() with { LastUpdateCheck = _state.LastUpdateCheck };
 
         return ClickOutcome.Rerender;
     }
@@ -453,7 +553,7 @@ internal sealed class ConfigurationSession(
     {
         if (UpdateConfiguration.Resolve(logger) is not { } feed)
         {
-            _note = "No release feed is configured for this build, so there is nothing to check.";
+            Note = "No release feed is configured for this build, so there is nothing to check.";
             return ClickOutcome.Rerender;
         }
 
@@ -464,8 +564,8 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Stay;
         }
 
-        _note = _work.Progress;
-        _state = _state with { LastUpdateCheck = _note };
+        Note = _work.Progress;
+        _state = _state with { LastUpdateCheck = Note };
 
         return ClickOutcome.Rerender;
     }
@@ -513,7 +613,7 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Stay;
         }
 
-        _note = _work.Progress;
+        Note = _work.Progress;
 
         return ClickOutcome.Rerender;
     }

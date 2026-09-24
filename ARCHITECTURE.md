@@ -177,6 +177,7 @@ costs.
 | Entry point, wiring, `--sweep` | `src/BrowserAI/Program.cs` |
 | The configuration app: modes, dialog content, status report | `src/BrowserAI.App/{Program, AppState, ClientState, ConfigurationDialog, StatusReport}.cs` -- *`ClientState` added 2026-09-24: one client's state and every predicate the window asks of it, one per client, so no link acts on both* |
 | The task dialog, the folder picker and Explorer | `src/BrowserAI.App/Interop/{TaskDialogInterop, ShellInterop}.cs`, `src/BrowserAI.App/Ui/TaskDialogPage.cs` |
+| Removing BrowserAI from a project you pick -- **added 2026-09-24, Q289 b** | `ConfigurationSession.UnregisterFromAProject` in `src/BrowserAI.App/Program.cs`, offered by `ConfigurationDialog.Command.UnregisterFromAProject` when `ClientState.MayUnregisterFromAProject`; the session is handed its picker, image path and re-read, and `ConfigurationSession.Attach` is the host the suite dispatches into |
 | Reading what a client has been told, and whose it is | `src/BrowserAI.Core/Registration/McpRegistryView.cs` |
 | Telling a console binary from a window one | `src/BrowserAI.Core/Runtime/PeSubsystem.cs` |
 | Registering BrowserAI with the client | `src/BrowserAI.Core/Registration/{McpClientRegistration, RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar, RegistrationRecord, HookRegistration}.cs` |

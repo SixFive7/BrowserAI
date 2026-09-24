@@ -8,6 +8,7 @@ using BrowserAI.App.Ui;
 using BrowserAI.Registration;
 using BrowserAI.Updates;
 using BrowserAI.Tests.Harness;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.Tests;
 
@@ -220,6 +221,8 @@ internal sealed class ConfigurationAppTests
     /// unregister did not exist for either client. It is offered without a folder
     /// picker, because the folder is the one the walk already found, and naming it
     /// in the link is what stops the action being pointed somewhere else.
+    /// <i>A picker was added beside it the same day, Q289 b:
+    /// <see cref="RemovingFromAProjectYouPickAsksOnlyOnItsClickAndRemovesOnlyOurEntry"/>.</i>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -275,6 +278,225 @@ internal sealed class ConfigurationAppTests
                 command.Id == ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromProject, 1)))
             .IsFalse();
     }
+
+    /// <summary>
+    /// Removing BrowserAI from a project you pick asks for the folder only when
+    /// its link is clicked, owns the picker by the dialog, and removes only an
+    /// entry of ours.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Q289, decided 2026-09-24 by the maintainer, verbatim: <i>"Q289 b"</i></b>
+    /// -- a folder picker for removing a project registration, safe because only an
+    /// entry this install wrote is ever removed. The link the walk offers exists
+    /// only below a project with a registration of ours, which a window opened from
+    /// the Start Menu is not.
+    /// </para>
+    /// <para>
+    /// <b>Driven through the dialog's own dispatch, and nothing is shown.</b> The
+    /// session is handed a picker that records what it was asked and answers what
+    /// the arm says. The host has no window, so a re-render builds the page and
+    /// stops. The owner half comes last: it dispatches <c>TDN_DIALOG_CREATED</c>
+    /// with a made-up handle and then a click whose picker cancels, which
+    /// re-renders nothing, so the made-up handle is never sent a message.
+    /// </para>
+    /// <para>
+    /// <b>Planted red 2026-09-24</b> by leaving the new verb out of the session's
+    /// <c>OnCommand</c>: the click changed nothing and the picker was never asked.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task RemovingFromAProjectYouPickAsksOnlyOnItsClickAndRemovesOnlyOurEntry()
+    {
+        using var install = ScratchDirectory.Create("app-pick-unregister");
+        using var project = ScratchDirectory.Create("app-pick-unregister-repo");
+        using var data = ScratchDirectory.Create("app-pick-unregister-data");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+
+        // Ours, in the picked folder's own file, and known to the double the way
+        // the real client would find it there.
+        await File.WriteAllTextAsync(McpRegistryView.ProjectConfigFile(project.Path), ProjectFileNaming(server));
+
+        var commands = new FakeClientCommandLine();
+        commands.Registered["browserai"] = server;
+
+        var state = StateFor(
+            install.Path,
+            server,
+            [
+                ClientFor(RegistrationClient.ClaudeCode, server, RegistrationOwnership.OursAndPresent),
+                ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
+            ]);
+
+        var asked = new List<(nint Owner, string Prompt)>();
+        var answer = FolderPick.Of(project.Path);
+
+        using var session = new ConfigurationSession(
+            state,
+            commands,
+            new BrowserAI.Hosting.LocalAppDataPaths(data.Path),
+            NullLogger.Instance,
+            Occasion.Ordinary,
+            image,
+            (owner, prompt) =>
+            {
+                asked.Add((owner, prompt));
+                return answer;
+            },
+            () => state);
+
+        using var host = session.Attach();
+
+        // Offered for each client, and each label names its own.
+        var links = ConfigurationDialog.Commands(state, updateAvailable: null);
+        var claude = ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromAProject, 0);
+        var codex = ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromAProject, 1);
+
+        await Assert.That(links.Single(link => link.Id == claude).Text).Contains(RegistrationClient.ClaudeCode.DisplayName);
+        await Assert.That(links.Single(link => link.Id == codex).Text).Contains(RegistrationClient.Codex.DisplayName);
+
+        // Nothing is asked when the window opens, nor on the timer that ticks
+        // five times a second whether anybody clicks or not.
+        _ = host.Dispatch(0, TaskDialogInterop.Notification.Timer, 0, 0);
+
+        await Assert.That(asked).IsEmpty();
+        await Assert.That(commands.Invocations).IsEmpty();
+
+        // The click asks once, and the entry is removed in the folder picked.
+        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
+
+        await Assert.That(asked.Count).IsEqualTo(1);
+        await Assert.That(asked[0].Prompt).Contains(RegistrationClient.ClaudeCode.DisplayName);
+        await Assert.That(commands.Verbs).IsEquivalentTo(RemoveOnly);
+        await Assert.That(commands.Directories.All(directory => directory == project.Path)).IsTrue();
+        await Assert.That(commands.Registered.ContainsKey("browserai")).IsFalse();
+        await Assert.That(session.Note).IsNotNull();
+        await Assert.That(session.Note!).Contains(RegistrationClient.ClaudeCode.RestartHint);
+
+        // ANOTHER INSTALL'S ENTRY in a picked folder is refused and reported, and
+        // nothing is run to remove it.
+        using var elsewhere = ScratchDirectory.Create("app-pick-unregister-other");
+
+        _ = InstalledLayout.Create(elsewhere.Path);
+        await File.WriteAllTextAsync(McpRegistryView.ProjectConfigFile(project.Path), ProjectFileNaming(InstalledLayout.ServerIn(elsewhere.Path)));
+        commands.Invocations.Clear();
+
+        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
+
+        await Assert.That(asked.Count).IsEqualTo(2);
+        await Assert.That(commands.Verbs.Contains("remove")).IsFalse();
+        await Assert.That(session.Note!).Contains("never adopts, overwrites or removes");
+
+        // A picker that could not turn the folder into a path says so, and a
+        // cancel says nothing; neither runs anything.
+        answer = FolderPick.Broke("Windows could not give a path for that folder.");
+        commands.Invocations.Clear();
+
+        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
+
+        await Assert.That(session.Note).IsEqualTo("Windows could not give a path for that folder.");
+        await Assert.That(commands.Invocations).IsEmpty();
+
+        answer = FolderPick.Cancelled;
+
+        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
+
+        await Assert.That(asked.Count).IsEqualTo(4);
+        await Assert.That(session.Note).IsEqualTo("Windows could not give a path for that folder.");
+        await Assert.That(commands.Invocations).IsEmpty();
+
+        // ⚠️ THE OWNER, LAST. Before the dialog exists the picker is owned by
+        // nothing; once it exists, by the dialog's own window. The click cancels,
+        // so the made-up handle is never sent a message.
+        await Assert.That(asked[^1].Owner).IsEqualTo(nint.Zero);
+
+        _ = host.Dispatch(4321, TaskDialogInterop.Notification.Created, 0, 0);
+        _ = host.Dispatch(4321, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
+
+        await Assert.That(asked[^1].Owner).IsEqualTo((nint)4321);
+    }
+
+    /// <summary>
+    /// Removing BrowserAI from a picked folder for Codex moves the home to that
+    /// folder's own, and the user's own entry stays.
+    /// </summary>
+    /// <remarks>
+    /// <b>Codex takes its scope as <c>CODEX_HOME</c> and no flag</b>, so a removal
+    /// that lost the variable would exit 0 having removed the user's own entry.
+    /// The absolute spelling is registered here on purpose: a bare name is judged
+    /// by the file it finds on this machine's PATH, which an arm cannot own.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task RemovingFromAPickedCodexProjectMovesTheHomeAndLeavesTheUsersEntry()
+    {
+        using var install = ScratchDirectory.Create("app-pick-codex");
+        using var project = ScratchDirectory.Create("app-pick-codex-repo");
+        using var data = ScratchDirectory.Create("app-pick-codex-data");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var home = CodexRegistration.ProjectHome(project.Path);
+
+        _ = Directory.CreateDirectory(home);
+
+        var commands = new FakeClientCommandLine { Executable = @"C:\codex\codex.exe" };
+        commands.CodexHomes[home] = new Dictionary<string, string>(StringComparer.Ordinal) { ["browserai"] = server };
+        commands.CodexRegistered["browserai"] = server;
+
+        var state = StateFor(
+            install.Path,
+            server,
+            [
+                ClientFor(RegistrationClient.ClaudeCode, null, RegistrationOwnership.Absent),
+                ClientFor(RegistrationClient.Codex, server, RegistrationOwnership.OursAndPresent),
+            ]);
+
+        using var session = new ConfigurationSession(
+            state,
+            commands,
+            new BrowserAI.Hosting.LocalAppDataPaths(data.Path),
+            NullLogger.Instance,
+            Occasion.Ordinary,
+            image,
+            (_, _) => FolderPick.Of(project.Path),
+            () => state);
+
+        using var host = session.Attach();
+
+        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromAProject, 1), 0);
+
+        // The project's home lost the entry; the user's own kept it.
+        await Assert.That(commands.CodexHomes[home].ContainsKey("browserai")).IsFalse();
+        await Assert.That(commands.CodexRegistered["browserai"]).IsEqualTo(server);
+        await Assert.That(commands.Verbs.Contains("remove")).IsTrue();
+
+        foreach (var environment in commands.Environments)
+        {
+            await Assert.That(environment.TryGetValue(CodexRegistration.HomeVariable, out var forced) ? forced : "<none>")
+                .IsEqualTo(home);
+        }
+
+        await Assert.That(session.Note!).Contains(RegistrationClient.Codex.RestartHint);
+    }
+
+    /// <summary>What <c>mcp remove</c> alone looks like to the double.</summary>
+    private static readonly string[] RemoveOnly = ["remove"];
+
+    /// <summary>A project <c>.mcp.json</c> whose <c>browserai</c> entry names a command.</summary>
+    /// <param name="command">The command.</param>
+    /// <returns>The file's text.</returns>
+    private static string ProjectFileNaming(string command) =>
+        new System.Text.Json.Nodes.JsonObject
+        {
+            ["mcpServers"] = new System.Text.Json.Nodes.JsonObject
+            {
+                ["browserai"] = new System.Text.Json.Nodes.JsonObject { ["command"] = command },
+            },
+        }.ToJsonString();
 
     /// <summary>
     /// The page carries the version, both locations as links, the restart hint

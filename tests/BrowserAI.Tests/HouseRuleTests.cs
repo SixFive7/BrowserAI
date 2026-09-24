@@ -2393,6 +2393,15 @@ internal sealed partial class HouseRuleTests
     private const string PickerCall = "ShellInterop.PickFolder(";
 
     /// <summary>
+    /// The same call through the delegate the configuration session is handed --
+    /// Q289 b, 2026-09-24.
+    /// </summary>
+    private const string PickerDelegateCall = "pickFolder(";
+
+    /// <summary>Every spelling of a folder-picker call this scan reads.</summary>
+    private static readonly string[] PickerCalls = [PickerCall, PickerDelegateCall];
+
+    /// <summary>
     /// Every folder picker this tree opens is owned by the dialog's own window.
     /// </summary>
     /// <remarks>
@@ -2420,6 +2429,14 @@ internal sealed partial class HouseRuleTests
     /// or whether it is zero at the moment of the call. It holds that the owner
     /// is read from a dialog and not written as a constant, which is the
     /// assertable half.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Two spellings since Q289 b, 2026-09-24.</b> The configuration session
+    /// calls a picker it is handed, so the suite can drive a click without opening
+    /// anything, and the product hands it <c>ShellInterop.PickFolder</c> by name.
+    /// The call sites are the delegate's now. With the first needle alone the
+    /// scan read zero sites and went red on its own not-vacuous check, which is
+    /// how the second was found to be needed; the controls below plant both.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -2479,6 +2496,18 @@ internal sealed partial class HouseRuleTests
 
         await Assert.That(PickerOwners(wrappedOwned).Count).IsEqualTo(1);
         await Assert.That(PickerOwners(wrappedOwned)[0].Owner.Contains("Window", StringComparison.Ordinal)).IsTrue();
+
+        // And the delegate's spelling, unowned and owned, which is what both of
+        // the session's call sites are.
+        string[] delegateUnowned = ["        var picked = " + PickerDelegateCall, "            0,", "            \"Choose a folder.\");"];
+
+        await Assert.That(PickerOwners(delegateUnowned).Count).IsEqualTo(1);
+        await Assert.That(PickerOwners(delegateUnowned)[0].Owner).IsEqualTo("0");
+
+        string[] delegateOwned = ["        var picked = " + PickerDelegateCall, "            _host?.Window ?? 0,", "            \"Choose a folder.\");"];
+
+        await Assert.That(PickerOwners(delegateOwned).Count).IsEqualTo(1);
+        await Assert.That(PickerOwners(delegateOwned)[0].Owner.Contains("Window", StringComparison.Ordinal)).IsTrue();
     }
 
     /// <summary>How many lines of a wrapped call are read looking for its first argument.</summary>
@@ -2500,14 +2529,16 @@ internal sealed partial class HouseRuleTests
 
         for (var index = 0; index < lines.Length; index++)
         {
-            var at = lines[index].IndexOf(PickerCall, StringComparison.Ordinal);
+            var line = lines[index];
+            var needle = Array.Find(PickerCalls, call => line.Contains(call, StringComparison.Ordinal));
 
-            if (at < 0)
+            if (needle is null)
             {
                 continue;
             }
 
-            var rest = new StringBuilder(lines[index][(at + PickerCall.Length)..]);
+            var at = line.IndexOf(needle, StringComparison.Ordinal);
+            var rest = new StringBuilder(line[(at + needle.Length)..]);
 
             for (var next = index + 1;
                  next < lines.Length

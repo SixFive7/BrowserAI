@@ -60,6 +60,10 @@ internal static class ConfigurationDialog
     /// is first</i> is exactly the ambiguity separate control per client exists to
     /// remove.
     /// </para>
+    /// <para>
+    /// <i>Five blocks since Q289 b, the same day (previously "The four registration
+    /// verbs"):</i> <see cref="UnregisterFromAProject"/> is the fifth.
+    /// </para>
     /// </remarks>
     internal static class Command
     {
@@ -94,9 +98,18 @@ internal static class ConfigurationDialog
         /// <summary>Remove one client's registration from the project that has one.</summary>
         public const int UnregisterFromProject = 140;
 
+        /// <summary>Pick a folder and remove one client's registration from it.</summary>
+        /// <remarks>
+        /// ⚠️ <b>Q289, decided 2026-09-24 by the maintainer, verbatim: <i>"Q289 b"</i></b>
+        /// -- a folder picker for removing a project registration, safe because only an
+        /// entry this install wrote is ever removed. A fifth block, so a person who
+        /// opened the window from the Start Menu can reach a project registration at all.
+        /// </remarks>
+        public const int UnregisterFromAProject = 150;
+
         /// <summary>Every per-client verb, in the order the links are offered.</summary>
         public static IReadOnlyList<int> Verbs { get; } =
-            [Register, Unregister, RegisterInProject, UnregisterFromProject];
+            [Register, Unregister, RegisterInProject, UnregisterFromProject, UnregisterFromAProject];
 
         /// <summary>The identifier for one verb against one client.</summary>
         /// <param name="verb">The verb's block.</param>
@@ -340,6 +353,13 @@ internal static class ConfigurationDialog
             commands.Add(new TaskDialogCommand(
                 Command.For(Command.UnregisterFromProject, index),
                 $"Remove BrowserAI from this project for {name}\nEdits {client.Client.ProjectFileIn(client.ProjectDirectory!)}, which is the registration this folder already has."));
+        }
+
+        if (client.MayUnregisterFromAProject)
+        {
+            commands.Add(new TaskDialogCommand(
+                Command.For(Command.UnregisterFromAProject, index),
+                $"Remove from a project for {name}...\nRemoves BrowserAI's entry from {client.Client.ProjectFileName} in a folder you choose. An entry another install wrote is left alone."));
         }
     }
 

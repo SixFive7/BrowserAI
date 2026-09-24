@@ -221,12 +221,30 @@ internal sealed record ClientState
     /// folder picker for the removal instead was considered and dropped, because
     /// an unregister that asks a person to find the folder is an unregister that
     /// can be pointed at the wrong one.
+    /// <i>Superseded the same day by Q289 b, the maintainer's answer verbatim
+    /// "Q289 b": the picker exists beside this link, as
+    /// <see cref="MayUnregisterFromAProject"/>, and it is safe for the reason the
+    /// drop missed -- only an entry this install wrote is ever removed, so a folder
+    /// picked by mistake loses nothing that is not ours.</i>
     /// </remarks>
     public bool MayUnregisterFromProject =>
         ClientFound
         && ProjectDirectory is { Length: > 0 }
         && ProjectScope is { Unreadable: null } view
         && view.Ownership is RegistrationOwnership.OursAndPresent or RegistrationOwnership.OursAndStale;
+
+    /// <summary>
+    /// Whether <i>remove from a project</i>, with a folder picker, is offered for
+    /// this client.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Q289 b, 2026-09-24.</b> Offered whenever the client is found and this
+    /// install composed a server, which is when the registrar can judge ownership at
+    /// all -- the same condition as <see cref="MayRegisterInProject"/>. What makes
+    /// a picked folder safe is the registrar's gate, not this: an entry another
+    /// install wrote is refused and reported, and a folder with none is told so.
+    /// </remarks>
+    public bool MayUnregisterFromAProject => ClientFound && ServerComposed;
 
     /// <summary>Reads one client's whole state.</summary>
     /// <param name="who">The client to read.</param>
