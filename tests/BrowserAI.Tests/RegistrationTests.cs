@@ -1060,9 +1060,9 @@ internal sealed class RegistrationTests
     /// a third client added later fails this arm until the record carries it.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-09-24</b>: against the one-client hook this replaced,
-    /// the record carried no <c>clients</c> array at all and the double was asked
-    /// to add once.
+    /// <b>Planted red 2026-09-24</b> by a hook that registered only the first
+    /// client (<c>.Take(1)</c> over the client list): the record carried no
+    /// <c>codex</c> entry, and the arm failed on exactly that.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -1125,8 +1125,8 @@ internal sealed class RegistrationTests
     /// this arm would drive somebody's installed CLI.
     /// </para>
     /// <para>
-    /// <b>Planted red 2026-09-24</b> by giving the absent client the found one's
-    /// report, which is what a hook that stopped at the first client produces.
+    /// <b>Planted red 2026-09-24</b> by the same one-client hook: there was no
+    /// Codex pass to report at all, and asking for it threw.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
