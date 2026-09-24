@@ -498,6 +498,8 @@ to the previous build re-downloads 207.3 MB, because the revision it names has
 already been pruned. *(Re-measured 2026-09-16 at chromium 1244; previously
 203.8 MB.)*
 
+⚠️ **AND A MODEL-FACING TOOL NAME MAY NOT BE RENAMED OR REMOVED IN A RELEASE A LIVE SESSION CAN CROSS.** *Added 2026-09-24.* Measured that day at Claude Code **2.1.281** and codex-cli **0.155.0-alpha.9.2**, 3/3 each: a Claude Code session whose server exits is served by a re-launched one that receives `initialize` and `tools/call` and **no `tools/list`**, so the tool list the client cached before the update stands for the rest of that session; a Codex thread's list is frozen at first connect and Codex ignores `notifications/tools/list_changed` outright. An update applied under a live session therefore leaves a model calling a name that is no longer there, and what comes back is an error the model reads as its own mistake. **Adding a tool is safe; renaming one and removing one are not**, and the way through is a release that keeps the old name forwarding while the new one appears. **Evidence:** for every name `tools-list.json` or [`tool-verdicts.json`](tool-verdicts.json) removed or renamed, the statement that it moved and the forwarding decision taken for it -- and *none* where nothing moved, which is the usual answer. The behaviour is [a hazard row](HAZARDS.md#hazard-index); how a re-connected session learns anything at all is [open with the maintainer](DECISIONS.md#still-open).
+
 ### 5. Upstream tool-description drift adjudicated
 
 **New, and it closes a gap nothing else covers.** BrowserAI's tool descriptions
