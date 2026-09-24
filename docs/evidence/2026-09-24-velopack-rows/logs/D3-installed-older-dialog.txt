@@ -1,0 +1,20 @@
+     33,6ms 11:47:26.875 launched Setup pid=93036 created=11:47:26.8648069 root=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a mode=Invoke
+    547,2ms 11:47:27.388 TOP hwnd=0x17141C class='#32770' title='BrowserAI (suite) Setup' visible=True rect=1668,932-2155,1118 size=487x186
+    548,5ms 11:47:27.389 TOP hwnd=0x15141E class='IME' title='Default IME' visible=False rect=0,0-0,0 size=0x0
+    555,1ms 11:47:27.396 TOP hwnd=0x1C12C4 class='MSCTFIME UI' title='MSCTFIME UI' visible=False rect=0,0-0,0 size=0x0
+    560,0ms 11:47:27.400 UIA:
+    606,0ms 11:47:27.446   [Window] name='BrowserAI (suite) Setup' class='#32770' id='' invoke=False rect=487x186
+    627,1ms 11:47:27.468     [Pane] name='BrowserAI (suite) Setup' class='TaskDialog' id='Window' invoke=False rect=471x147
+    634,2ms 11:47:27.475       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=74x23
+    644,5ms 11:47:27.485       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=150x23
+    653,6ms 11:47:27.494       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=74x23
+    659,5ms 11:47:27.500       [Image] name='MainInstructionIcon' class='Element' id='MainIcon' invoke=False rect=32x32
+    662,7ms 11:47:27.503       [Text] name='BrowserAI (suite) is already installed' class='Element' id='MainInstruction' invoke=False rect=250x21
+    669,2ms 11:47:27.510       [Text] name='Version 1.0.0 is currently installed. Would you like to update to version 1.1.0? /  / Installed at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a' class='Element' id='ContentText' invoke=False rect=409x45
+    676,0ms 11:47:27.516       [Pane] name='Cancel' class='CCPushButton' id='CommandButton_2' invoke=False rect=74x23
+    683,7ms 11:47:27.524       [Pane] name='Open Install Directory' class='CCPushButton' id='CommandButton_1' invoke=False rect=150x23
+    688,3ms 11:47:27.529       [Pane] name='Update' class='CCPushButton' id='CommandButton_0' invoke=False rect=74x23
+    717,8ms 11:47:27.558 'Cancel' found but has no InvokePattern; posting WM_CLOSE instead
+    839,4ms 11:47:27.680 dialog gone, 0,7 s after it was first seen
+    842,0ms 11:47:27.682 Setup exited=11:47:27.5790172 code=0 lifeS=0,714 (dialog first seen at +119,0 ms after launch)
+    847,3ms 11:47:27.688 DONE

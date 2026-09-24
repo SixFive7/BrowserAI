@@ -1,0 +1,31 @@
+[setup:95552] [11:47:51] [INFO] Starting Velopack Setup (1.2.158)
+[setup:95552] [11:47:51] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\Releases\\test-pack\\BrowserAI.test-installer.exe"
+[setup:95552] [11:47:51] [INFO]     Silent: false
+[setup:95552] [11:47:51] [INFO]     Verbose: true
+[setup:95552] [11:47:51] [INFO]     Log: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\logs\\D5-nonempty-noinstall-setup.log"
+[setup:95552] [11:47:51] [INFO]     Install To: Some("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-c")
+[setup:95552] [11:47:51] [TRACE] (2) os_info::imp: [C:\Users\runneradmin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\os_info-3.15.0\src\windows\mod.rs:8] windows::current_platform is called
+[setup:95552] [11:47:51] [TRACE] (2) os_info::imp: [C:\Users\runneradmin\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\os_info-3.15.0\src\windows\mod.rs:10] Returning Info { os_type: Windows, version: Semantic(10, 0, 26200), edition: Some("Windows 11 Professional"), codename: None, bitness: X64, architecture: Some("x86_64") }
+[setup:95552] [11:47:51] [INFO] OS: Windows 10.0.26200 (Windows 11 Professional) [64-bit], Arch=Some(
+    X64,
+)
+[setup:95552] [11:47:51] [INFO] Reading bundle header...
+[setup:95552] [11:47:51] [INFO] Bundle offset = 7562752, length = 55022766
+[setup:95552] [11:47:51] [INFO] Loading bundle from embedded zip...
+[setup:95552] [11:47:51] [INFO] No channel override tag found in installer signature.
+[setup:95552] [11:47:51] [INFO] Loading bundle from embedded zip...
+[setup:95552] [11:47:51] [INFO] Reading package manifest...
+[setup:95552] [11:47:51] [INFO] Package manifest loaded successfully.
+[setup:95552] [11:47:51] [INFO]     Package ID: BrowserAI.app.test
+[setup:95552] [11:47:51] [INFO]     Package Version: 1.1.0
+[setup:95552] [11:47:51] [INFO]     Package Title: BrowserAI (suite)
+[setup:95552] [11:47:51] [INFO]     Package Authors: Jori Huisman
+[setup:95552] [11:47:51] [INFO]     Package Description: BrowserAI (suite)
+[setup:95552] [11:47:51] [INFO]     Package Machine Architecture: x64
+[setup:95552] [11:47:51] [INFO]     Package Runtime Dependencies: 
+[setup:95552] [11:47:51] [INFO] Checking application pre-requisites...
+[setup:95552] [11:47:51] [INFO] Determining install directory...
+[setup:95552] [11:47:51] [INFO] Installation Directory: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-c"
+[setup:95552] [11:47:51] [INFO] There is 382.47 GB free space available at destination, this package requires 253.22 MB.
+[setup:95552] [11:47:51] [INFO] Auto-locating app manifest...
+[setup:95552] [11:47:51] [ERROR] Directory already exists, and user cancelled overwrite.

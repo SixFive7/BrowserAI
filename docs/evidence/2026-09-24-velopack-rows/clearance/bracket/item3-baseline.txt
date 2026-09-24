@@ -1,0 +1,26 @@
+ARP BrowserAI.app PRESENT
+  DisplayIcon String = C:\Users\jori\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+  DisplayName String = BrowserAI
+  DisplayVersion String = 1.1.0
+  EstimatedSize DWord = 140351
+  InstallDate String = 20260924
+  InstallLocation String = C:\Users\jori\AppData\Local\BrowserAI.app
+  Language DWord = 1033
+  NoModify DWord = 1
+  NoRepair DWord = 1
+  Publisher String = Jori Huisman
+  QuietUninstallString String = "C:\Users\jori\AppData\Local\BrowserAI.app\Update.exe" --uninstall --silent
+  UninstallString String = "C:\Users\jori\AppData\Local\BrowserAI.app\Update.exe" --uninstall
+ARP BrowserAI.app.test: ABSENT
+--- claude mcp get browserai ---
+browserai:
+  Scope: User config (available in all your projects)
+  Status: Γ£ö Connected
+  Type: stdio
+  Command: C:\Users\jori\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe
+  Args:
+  Environment:
+To remove this server, run: claude mcp remove browserai -s user
+TEMP velopack_BrowserAI.app: ABSENT
+StartMenu BrowserAI.lnk PRESENT len=2323 sha256=F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145
+Codex config.toml PRESENT len=3689 sha256=E210B8FECC7066AAEC29C382A777A3DE383BCF46DEF687A3E10F3D7F5C953FC6

@@ -1,0 +1,20 @@
+     45,2ms 11:41:37.228 launched Setup pid=9576 created=11:41:37.2143970 root=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a mode=Invoke
+    682,6ms 11:41:37.864 TOP hwnd=0xB0CEC class='#32770' title='BrowserAI (suite) Setup' visible=True rect=1626,924-2198,1125 size=572x201
+    684,3ms 11:41:37.865 TOP hwnd=0x4159A class='MSCTFIME UI' title='MSCTFIME UI' visible=False rect=0,0-0,0 size=0x0
+    685,1ms 11:41:37.866 TOP hwnd=0x80CF8 class='IME' title='Default IME' visible=False rect=0,0-0,0 size=0x0
+    685,9ms 11:41:37.867 UIA:
+    745,0ms 11:41:37.926   [Window] name='BrowserAI (suite) Setup' class='#32770' id='' invoke=False rect=572x201
+    765,5ms 11:41:37.946     [Pane] name='BrowserAI (suite) Setup' class='TaskDialog' id='Window' invoke=False rect=556x162
+    771,4ms 11:41:37.952       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=72x23
+    782,6ms 11:41:37.964       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=150x23
+    788,8ms 11:41:37.970       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=72x23
+    796,5ms 11:41:37.977       [Image] name='MainInstructionIcon' class='Element' id='MainIcon' invoke=False rect=32x32
+    799,4ms 11:41:37.980       [Text] name='BrowserAI (suite) is already installed' class='Element' id='MainInstruction' invoke=False rect=250x21
+    806,7ms 11:41:37.988       [Text] name='This application is already installed on your computer. If it is not working correctly, you can try repairing it by reinstalling. /  / Installed at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a' class='Element' id='ContentText' invoke=False rect=494x60
+    814,1ms 11:41:37.995       [Pane] name='Cancel' class='CCPushButton' id='CommandButton_2' invoke=False rect=72x23
+    821,1ms 11:41:38.002       [Pane] name='Open Install Directory' class='CCPushButton' id='CommandButton_1' invoke=False rect=150x23
+    829,2ms 11:41:38.010       [Pane] name='Repair' class='CCPushButton' id='CommandButton_0' invoke=False rect=72x23
+    860,7ms 11:41:38.042 'Cancel' found but has no InvokePattern; posting WM_CLOSE instead
+   1005,2ms 11:41:38.186 dialog gone, 0,8 s after it was first seen
+   1009,4ms 11:41:38.190 Setup exited=11:41:38.1039094 code=0 lifeS=0,890 (dialog first seen at +242,4 ms after launch)
+   1015,6ms 11:41:38.197 DONE

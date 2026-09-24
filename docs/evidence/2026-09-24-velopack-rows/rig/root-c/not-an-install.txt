@@ -1,0 +1,1 @@
+a non-empty directory that holds no install

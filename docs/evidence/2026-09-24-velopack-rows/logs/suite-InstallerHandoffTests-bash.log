@@ -1,0 +1,51 @@
+11:54:51 starting filtered run
+Running tests from c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) passed (1s 490ms)
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Passed!
+  total: 9
+  failed: 0
+  succeeded: 9
+  skipped: 0
+  duration: 2s 161ms
+exit=0
+--- coverage block:
+==============================================================================
+BrowserAI suite coverage -- what this run actually exercised
+==============================================================================
+  published slice     PRESENT  c:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe
+  repository payload  PRESENT  c:\Source\SixFive7\BrowserAI\payload\payload.json
+  Chromium            PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\chromium-1246\chrome-win64\chrome.exe
+  Firefox             PRESENT  C:\Users\jori\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe
+  packed release      PRESENT  c:\Source\SixFive7\BrowserAI\Releases\BrowserAI.app-1.1.0-full.nupkg
+  client CLI          PRESENT  C:\Users\jori\.local\bin\claude.exe
+  release installer   PRESENT  c:\Source\SixFive7\BrowserAI\Releases\test-pack\BrowserAI.test-installer.exe
+  git                 PRESENT  git -C c:\Source\SixFive7\BrowserAI rev-parse --is-inside-work-tree said true
+  Codex CLI           PRESENT  C:\Users\jori\.codex\plugins\.plugin-appserver\codex.exe
+  publish freshness   FRESH      exe 2026-09-24T09:15:36.738Z is 1m46s newer than the newest of 118 inputs (src\BrowserAI.Core\Registration\McpRegistrar.cs, 2026-09-24T09:13:50.442Z) · exe and tree both 1.1.1-alpha.0.82 · the comparison PublishedSlice.EnsureFresh passed silently until 2026-08-30
+  release run         no       BROWSERAI_RELEASE_RUN=1 turns every skip below into a failure
+  expected absent     not declared   BROWSERAI_EXPECTED_ABSENT is unset, so nothing here pins WHICH capabilities may be absent
+  first-run bytes     NOT RUN  no first-run test has run in this session yet
+  drive letter        LOWER c:\  c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\ · cwd c:\Source\SixFive7\BrowserAI\tests\BrowserAI.Tests\bin\Debug\net10.0-windows · BROWSERAI_DRIVE_CASE=lower and it took, so this half is a different instrument from the other
+  filter              FILTERED   --treenode-filter '/*/*/InstallerHandoffTests/*' · this run selected a subset and is evidence about that subset only · read from TUnit's GlobalContext.TestFilter, which carries the ITestExecutionFilter the platform put on the execute request -- never this process's command line
+      ⚠️  THIS RUN IS A DEVELOPMENT CONVENIENCE AND NOT A VERIFICATION. It is evidence
+      about what it selected and about nothing else, and its total/failed/succeeded
+      block is character-for-character the shape a full run's is. --treenode-filter
+      also reads '|' as an OR INSIDE one path segment and never between whole path
+      patterns, so a filter can select far more or far less than it looks like it
+      selects -- see kb/toolchain.md. BROWSERAI_RELEASE_RUN=1 makes this state a failure.
+  foreground lock     BLIND    SPI_GETFOREGROUNDLOCKTIMEOUT is 2147483647 ms (24.9 days) -- it outlasts the 30 min an experiment here may take, so Windows refuses a foreground change in the general case
+      ⚠️  THIS RUN DID NOT ANSWER whether a browser takes the foreground on launch.
+      A focus experiment answers 'no steal' on BOTH arms here unless the foreground
+      window belongs to an ancestor of the launching process, so a change that stole
+      focus on a default install would read as clean on this machine. It is a blind
+      spot in the checking rather than a defect to repair, and nothing here may
+      change the setting: see HAZARDS.md and kb/windows/detection.md.
+  commit charge       HEALTHY    start 90,089 MiB (63.8%) · end 90,473 MiB (64.1%) · limit 141,229 MiB · \Memory\Committed Bytes, both ends read through GetPerformanceInfo
+==============================================================================
+  This run exercised every layer. No test took a degraded path.
+==============================================================================
+11:55:14 DONE

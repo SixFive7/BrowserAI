@@ -1,0 +1,10 @@
+    117,7ms launched stub pid=82688 created=11:48:16.5367730
+    274,8ms proc+ pid=7288 ppid=82688 exe=Update.exe created=11:48:16.6669212 cmd=
+    316,8ms proc+ pid=83992 ppid=7288 exe=BrowserAI.exe created=11:48:16.6991241 cmd="C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\BrowserAI.exe"
+    401,4ms app window visible class=#32770 title='BrowserAI' size=556x525
+   2911,6ms tree pid=83992 ppid=7288 exe=BrowserAI.exe created=11:48:16.6991241 exited= code=-2147483648
+   2912,8ms tree pid=82688 ppid=0 exe=BrowserAI (suite).exe created=11:48:16.5367730 exited=11:48:16.6812776 code=0
+   2917,7ms tree pid=7288 ppid=82688 exe=Update.exe created=11:48:16.6669212 exited=11:48:16.7052617 code=0
+   2925,2ms WM_CLOSE posted to the app dialog
+   2982,0ms app exited=11:48:19.3779268 code=0
+   2982,9ms DONE

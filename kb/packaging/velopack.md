@@ -290,7 +290,7 @@ every step. **The method above is superseded, and kept because it is what the
 measures it without writing the real key at all, and nothing needs exporting or
 restoring. Point
 `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and `BROWSERAI_ROOT` at scratch first, because
-the install hooks run ([re-verification row 123](../re-verification.md)).
+the install hooks run ([re-verification row 123](../re-verification.md), [evidence](../../docs/evidence/2026-09-24-velopack-rows/README.md)).
 
 ## The restart handover race, and why `Update.exe` is the answer
 
@@ -1268,7 +1268,7 @@ the 254 s above belongs to the published v1.0.0. *The sandbox is narrower now*:
 under the test pack's id no key but `BrowserAI.app.test` is written, so nothing
 needs exporting, and `CODEX_HOME` and `BROWSERAI_ROOT` go to scratch beside
 `CLAUDE_CONFIG_DIR` because the hooks register with both clients
-([re-verification row 124](../re-verification.md)).
+([re-verification row 124](../re-verification.md), [evidence](../../docs/evidence/2026-09-24-velopack-rows/README.md)).
 
 ### Re-measured 2026-09-15 against the published v1.0.0, and the paragraph above was half wrong
 
@@ -1313,7 +1313,7 @@ measured @ Velopack 1.2.158 through the orphan-console rig with
 `BrowserAI.Server.exe`. The copy inside an installed scratch root logged
 `Updates[17]`, `Startup[72]` and `Startup[9]`; the copy outside any install
 logged `Startup[8]`, 47 ms after its own creation
-([re-verification row 126](../re-verification.md)). Nothing depends on the
+([re-verification row 126](../re-verification.md), [evidence](../../docs/evidence/2026-09-24-velopack-rows/README.md)). Nothing depends on the
 answer: see the next paragraph.
 
 ⚠️ **So this product's own installer branch cannot fire on an installed
@@ -1812,7 +1812,9 @@ the same way; that half is read from source and was not measured. **1.2.0 armed
 it too**, at `setup.rs:110-112` over xdialog 2.1.1, so *indefinitely* was wrong
 at the version it was written for. It is one more thing
 [re-verification row 130](../re-verification.md) watches, beside the trigger,
-the wording and the labels.
+the wording and the labels. The dialog reads, the Setup logs and the clearance
+readings are the
+[2026-09-24 evidence batch](../../docs/evidence/2026-09-24-velopack-rows/README.md).
 
 The dialog, read through UI Automation:
 

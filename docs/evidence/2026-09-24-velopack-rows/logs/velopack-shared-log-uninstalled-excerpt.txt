@@ -1,0 +1,7 @@
+# Lines of %LOCALAPPDATA%\velopack\velopack.log written by the two UNINSTALLED server copies of 2026-09-24 11:49 (pids 30792 and 76884), verbatim.
+[lib-csharp:30792] [11:49:43] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:30792] [11:49:43] [Warning] Failed to initialize WindowsVelopackLocator. This could be because the program is not installed or packaged properly.
+[lib-csharp:30792] [11:49:43] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:76884] [11:49:46] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:76884] [11:49:46] [Warning] Failed to initialize WindowsVelopackLocator. This could be because the program is not installed or packaged properly.
+[lib-csharp:76884] [11:49:46] [Information] Starting VelopackApp.Run (library version 1.2.158).

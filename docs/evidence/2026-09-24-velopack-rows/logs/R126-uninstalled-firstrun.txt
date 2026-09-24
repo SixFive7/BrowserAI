@@ -1,0 +1,10 @@
+11:49:43.864 launch exe=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\uninstalled\BrowserAI.Server.exe firstRun=True dataRoot=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\sandbox\data-uninstalled-fr
+11:49:43.917 outer cmd pid=81928 exited code=0 at +42.5ms
+11:49:44.028 identity pid=30792 created=11:49:43.9447695
+11:49:44.031 decision=BrowserAI.Startup[8] at +160.2ms
+11:49:44.038 product already gone before attach (or pid reused): no handle, exit code unread
+11:49:44.040 RECORDS:
+  2026-09-24T09:49:43.9913813Z  made=2026-09-24T09:49:43.9909113Z  INFO   pid=30792@134347169839447695  BrowserAI.Startup[1]  BrowserAI 1.1.0 started. pid=30792 image=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\uninstalled\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\sandbox\data-uninstalled-fr sqlite=3.53.4 sqliteBuild=intended
+  2026-09-24T09:49:43.9915993Z  made=2026-09-24T09:49:43.9915813Z  WARN   pid=30792@134347169839447695  BrowserAI.Startup[4]  BROWSERAI_ROOT is set, so this BrowserAI's app root is C:\Source\SixFive7\BrowserAI\.work\velopack-rows\sandbox\data-uninstalled-fr rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+  2026-09-24T09:49:43.9918119Z  made=2026-09-24T09:49:43.9917972Z  INFO   pid=30792@134347169839447695  BrowserAI.Startup[8]  BrowserAI was started by the installer (VELOPACK_FIRSTRUN=true) and there is nothing to serve: no MCP client is on the other end of this process. Exiting without starting a browser server. This is how an install ends; a client starts BrowserAI itself when it needs one.
+11:49:44.048 DONE

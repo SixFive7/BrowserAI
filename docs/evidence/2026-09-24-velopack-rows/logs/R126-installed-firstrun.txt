@@ -1,0 +1,12 @@
+11:49:42.799 launch exe=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\BrowserAI.Server.exe firstRun=True dataRoot=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\sandbox\data-installed-fr
+11:49:42.852 outer cmd pid=93540 exited code=0 at +43.5ms
+11:49:42.976 identity pid=78324 created=11:49:42.8845651
+11:49:42.979 decision=BrowserAI.Startup[9] at +174.2ms
+11:49:42.990 product exited=11:49:42.9365677 code=0 lifeMs=52.0026
+11:49:42.991 RECORDS:
+  2026-09-24T09:49:42.9338107Z  made=2026-09-24T09:49:42.9333779Z  INFO   pid=78324@134347169828845651  BrowserAI.Startup[1]  BrowserAI 1.1.0 started. pid=78324 image=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\sandbox\data-installed-fr sqlite=3.53.4 sqliteBuild=intended
+  2026-09-24T09:49:42.9340858Z  made=2026-09-24T09:49:42.9340692Z  INFO   pid=78324@134347169828845651  BrowserAI.Updates[17]  Installed at C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a. channel=win manifestVersion=1.1.0 assemblyVersion=1.1.0
+  2026-09-24T09:49:42.9345630Z  made=2026-09-24T09:49:42.9345467Z  WARN   pid=78324@134347169828845651  BrowserAI.Startup[4]  BROWSERAI_ROOT is set, so this BrowserAI's app root is C:\Source\SixFive7\BrowserAI\.work\velopack-rows\sandbox\data-installed-fr rather than the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+  2026-09-24T09:49:42.9350578Z  made=2026-09-24T09:49:42.9350478Z  WARN   pid=78324@134347169828845651  BrowserAI.Startup[72]  A handle could not be opened on the MCP client, pid 96908 (The parameter is incorrect.), so there is no client-liveness watch. Teardown falls back to stdin EOF alone.
+  2026-09-24T09:49:42.9351806Z  made=2026-09-24T09:49:42.9351657Z  WARN   pid=78324@134347169828845651  BrowserAI.Startup[9]  BrowserAI has no client to serve and is exiting: the process that started it (pid=96908) could not be opened or is gone, and standard input is a console rather than a pipe, so neither of the two teardown signals can ever arrive. A client that starts BrowserAI gives it a pipe and stays alive on the other end of it.
+11:49:42.997 DONE

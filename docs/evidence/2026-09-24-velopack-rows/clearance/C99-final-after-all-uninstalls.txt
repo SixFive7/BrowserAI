@@ -1,0 +1,21 @@
+tag=C99-final-after-all-uninstalls at=2026-09-24T11:52:10.926+02:00
+ARP BrowserAI.app PRESENT
+  DisplayIcon String = C:\Users\jori\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+  DisplayName String = BrowserAI
+  DisplayVersion String = 1.1.0
+  EstimatedSize DWord = 140351
+  InstallDate String = 20260924
+  InstallLocation String = C:\Users\jori\AppData\Local\BrowserAI.app
+  Language DWord = 1033
+  NoModify DWord = 1
+  NoRepair DWord = 1
+  Publisher String = Jori Huisman
+  QuietUninstallString String = "C:\Users\jori\AppData\Local\BrowserAI.app\Update.exe" --uninstall --silent
+  UninstallString String = "C:\Users\jori\AppData\Local\BrowserAI.app\Update.exe" --uninstall
+ARP BrowserAI.app reg-export len=1424 sha256=4AC81C23A1963B8D85FE38A3154D1D32C07B4CEE3692E06C0AE6BDA31ECC788F
+ARP BrowserAI.app.test: ABSENT
+TEMP velopack_BrowserAI.app: ABSENT
+TEMP velopack_BrowserAI.app.test: ABSENT
+StartMenu BrowserAI.lnk PRESENT len=2323 sha256=F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145 mtime=2026-09-24T07:40:44.1118316Z
+StartMenu BrowserAI (suite).lnk ABSENT
+RealRoot processes: 23 (node.exe:6484,node.exe:20588,BrowserAI.Server.exe:20864,BrowserAI.Server.exe:31472,BrowserAI.Server.exe:36252,node.exe:51012,BrowserAI.Server.exe:51100,BrowserAI.Server.exe:53432,node.exe:54984,BrowserAI.Server.exe:55040,node.exe:56196,node.exe:58028,BrowserAI.Server.exe:58036,BrowserAI.Server.exe:58588,BrowserAI.Server.exe:59464,node.exe:60844,node.exe:61080,node.exe:62224,BrowserAI.Server.exe:66264,BrowserAI.Server.exe:67416,node.exe:67588,node.exe:69560,node.exe:72700)

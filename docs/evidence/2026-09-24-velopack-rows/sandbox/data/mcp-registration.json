@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "when": "2026-09-24T11:52:06.6031229+02:00",
+  "intent": "Uninstall",
+  "outcome": "NothingToUnregister",
+  "isWhatWasAskedFor": true,
+  "server": "browserai",
+  "scope": "user",
+  "browserAiVersion": "1.1.0",
+  "client": "C:\\Users\\jori\\.local\\bin\\claude.exe",
+  "command": "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current\\BrowserAI.Server.exe",
+  "detail": "There was no 'browserai' at user scope to remove, which is what an uninstall of a BrowserAI somebody had already unregistered looks like."
+}

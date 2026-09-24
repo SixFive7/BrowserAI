@@ -1,0 +1,19 @@
+     19,8ms 11:42:00.941 launched Setup pid=76976 created=11:42:00.9293810 root=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a mode=Leave
+    634,8ms 11:42:01.554 TOP hwnd=0xC159E class='#32770' title='BrowserAI (suite) Setup' visible=True rect=1626,924-2198,1125 size=572x201
+    636,0ms 11:42:01.555 TOP hwnd=0x90CF8 class='MSCTFIME UI' title='MSCTFIME UI' visible=False rect=0,0-0,0 size=0x0
+    636,7ms 11:42:01.556 TOP hwnd=0xE0CEC class='IME' title='Default IME' visible=False rect=0,0-0,0 size=0x0
+    642,4ms 11:42:01.562 UIA:
+    690,4ms 11:42:01.610   [Window] name='BrowserAI (suite) Setup' class='#32770' id='' invoke=False rect=572x201
+    706,5ms 11:42:01.626     [Pane] name='BrowserAI (suite) Setup' class='TaskDialog' id='Window' invoke=False rect=556x162
+    711,7ms 11:42:01.631       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=72x23
+    718,8ms 11:42:01.638       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=150x23
+    723,3ms 11:42:01.643       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=72x23
+    728,2ms 11:42:01.648       [Image] name='MainInstructionIcon' class='Element' id='MainIcon' invoke=False rect=32x32
+    730,8ms 11:42:01.650       [Text] name='BrowserAI (suite) is already installed' class='Element' id='MainInstruction' invoke=False rect=250x21
+    735,4ms 11:42:01.655       [Text] name='This application is already installed on your computer. If it is not working correctly, you can try repairing it by reinstalling. /  / Installed at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a' class='Element' id='ContentText' invoke=False rect=494x60
+    741,9ms 11:42:01.661       [Pane] name='Cancel' class='CCPushButton' id='CommandButton_2' invoke=False rect=72x23
+    747,5ms 11:42:01.667       [Pane] name='Open Install Directory' class='CCPushButton' id='CommandButton_1' invoke=False rect=150x23
+    752,5ms 11:42:01.672       [Pane] name='Repair' class='CCPushButton' id='CommandButton_0' invoke=False rect=72x23
+ 300088,9ms 11:47:01.008 dialog gone, 299,9 s after it was first seen
+ 300091,4ms 11:47:01.011 Setup exited=11:47:00.9752231 code=0 lifeS=300,046 (dialog first seen at +200,8 ms after launch)
+ 300095,2ms 11:47:01.015 DONE

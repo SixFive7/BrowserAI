@@ -1,0 +1,6 @@
+start
+out=[10.0.401] exit=0
+errors: 
+dotnet via Process: [10.0.401
+] code=0
+DONE

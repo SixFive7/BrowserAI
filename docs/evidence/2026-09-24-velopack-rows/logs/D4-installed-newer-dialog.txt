@@ -1,0 +1,20 @@
+      7,2ms 11:47:29.591 launched Setup pid=11652 created=11:47:29.5859883 root=C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a mode=Invoke
+    539,0ms 11:47:30.123 TOP hwnd=0xD1460 class='#32770' title='BrowserAI (suite) Setup' visible=True rect=1626,924-2198,1125 size=572x201
+    540,5ms 11:47:30.125 TOP hwnd=0x715B0 class='IME' title='Default IME' visible=False rect=0,0-0,0 size=0x0
+    541,2ms 11:47:30.125 TOP hwnd=0x715AE class='MSCTFIME UI' title='MSCTFIME UI' visible=False rect=0,0-0,0 size=0x0
+    547,0ms 11:47:30.131 UIA:
+    554,3ms 11:47:30.139   [Window] name='BrowserAI (suite) Setup' class='#32770' id='' invoke=False rect=572x201
+    572,3ms 11:47:30.157     [Pane] name='BrowserAI (suite) Setup' class='TaskDialog' id='Window' invoke=False rect=556x162
+    577,1ms 11:47:30.161       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=72x23
+    585,7ms 11:47:30.170       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=150x23
+    592,8ms 11:47:30.177       [Pane] name='' class='CtrlNotifySink' id='' invoke=False rect=97x23
+    598,9ms 11:47:30.183       [Image] name='MainInstructionIcon' class='Element' id='MainIcon' invoke=False rect=32x32
+    603,9ms 11:47:30.188       [Text] name='A newer version of BrowserAI (suite) is already installed' class='Element' id='MainInstruction' invoke=False rect=384x21
+    609,5ms 11:47:30.194       [Text] name='Version 9.9.9 is currently installed, which is newer than this installer. Downgrading is not recommended and may cause problems. Continue anyway? /  / Installed at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a' class='Element' id='ContentText' invoke=False rect=494x60
+    616,8ms 11:47:30.201       [Pane] name='Cancel' class='CCPushButton' id='CommandButton_2' invoke=False rect=72x23
+    623,6ms 11:47:30.208       [Pane] name='Open Install Directory' class='CCPushButton' id='CommandButton_1' invoke=False rect=150x23
+    629,6ms 11:47:30.214       [Pane] name='Downgrade' class='CCPushButton' id='CommandButton_0' invoke=False rect=97x23
+    650,9ms 11:47:30.235 'Cancel' found but has no InvokePattern; posting WM_CLOSE instead
+    751,3ms 11:47:30.336 dialog gone, 0,6 s after it was first seen
+    752,5ms 11:47:30.337 Setup exited=11:47:30.2570356 code=0 lifeS=0,671 (dialog first seen at +117,8 ms after launch)
+    753,4ms 11:47:30.338 DONE

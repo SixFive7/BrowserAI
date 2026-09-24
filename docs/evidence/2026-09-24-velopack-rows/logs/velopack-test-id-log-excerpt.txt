@@ -1,0 +1,272 @@
+# Excerpt of C:\Users\jori\AppData\Local/velopack/velopack_BrowserAI.app.test.log from line 543 (the first line this session wrote), copied 2026-09-24 for evidence. Lines are verbatim.
+[lib-csharp:80788] [11:36:20] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:80788] [11:36:20] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\sq.version
+[lib-csharp:80788] [11:36:20] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[lib-csharp:80788] [11:36:20] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:80788] [11:36:20] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:80788] [11:36:20] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:80788] [11:36:20] [Information] Found fast exit hook: --veloapp-install
+[lib-csharp:80788] [11:36:21] [Information] Completed hook, exiting...
+[lib-csharp:98412] [11:36:21] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:98412] [11:36:21] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\sq.version
+[lib-csharp:98412] [11:36:21] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[lib-csharp:98412] [11:36:21] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:98412] [11:36:21] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:98412] [11:36:21] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[stub:82688] [11:48:16] [INFO] --
+[stub:82688] [11:48:16] [INFO] Starting Velopack Stub (at "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\BrowserAI (suite).exe")
+[stub:82688] [11:48:16] [INFO] Stub about to start Update.exe ("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\Update.exe") with args: ["start", "--"]
+[stub:82688] [11:48:16] [INFO] Successfully started Update.exe
+[update:7288] [11:48:16] [INFO] --
+[update:7288] [11:48:16] [INFO] Starting Velopack Updater (1.2.158)
+[update:7288] [11:48:16] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\Update.exe"
+[update:7288] [11:48:16] [INFO]     CWD: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a"
+[update:7288] [11:48:16] [INFO]     Verbose: false
+[update:7288] [11:48:16] [INFO]     Silent: false
+[update:7288] [11:48:16] [INFO]     Root Directory: None
+[update:7288] [11:48:16] [INFO]     Log File: "C:\\Users\\jori\\AppData\\Local\\velopack\\velopack_BrowserAI.app.test.log"
+[update:7288] [11:48:16] [INFO]     Context: IAmUpdateExe
+[update:7288] [11:48:16] [INFO] Command: Start
+[update:7288] [11:48:16] [INFO]     Wait: NoWait
+[update:7288] [11:48:16] [INFO]     Exe Name: None
+[update:7288] [11:48:16] [INFO]     Exe Args: None
+[update:7288] [11:48:16] [INFO] Auto-locating app manifest...
+[update:7288] [11:48:16] [INFO] Root directory 'C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a' writable: true
+[update:7288] [11:48:16] [INFO] Using root packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[update:7288] [11:48:16] [INFO] About to launch: '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\current\\BrowserAI.exe"' in dir '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\current"'
+[lib-csharp:83992] [11:48:16] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:83992] [11:48:16] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\sq.version
+[lib-csharp:83992] [11:48:16] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[lib-csharp:83992] [11:48:16] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:83992] [11:48:16] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:83992] [11:48:16] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:78324] [11:49:42] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:78324] [11:49:42] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\sq.version
+[lib-csharp:78324] [11:49:42] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[lib-csharp:78324] [11:49:42] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:78324] [11:49:42] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:78324] [11:49:42] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:92352] [11:49:45] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:92352] [11:49:45] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\sq.version
+[lib-csharp:92352] [11:49:45] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[lib-csharp:92352] [11:49:45] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:92352] [11:49:45] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:92352] [11:49:45] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:2552] [11:50:33] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:2552] [11:50:33] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\current\sq.version
+[lib-csharp:2552] [11:50:33] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\packages
+[lib-csharp:2552] [11:50:33] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:2552] [11:50:33] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:2552] [11:50:33] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:2552] [11:50:33] [Information] Found fast exit hook: --veloapp-install
+[lib-csharp:2552] [11:50:33] [Information] Completed hook, exiting...
+[update:71988] [11:50:56] [INFO] --
+[update:71988] [11:50:56] [INFO] Starting Velopack Updater (1.2.158)
+[update:71988] [11:50:56] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\Update.exe"
+[update:71988] [11:50:56] [INFO]     CWD: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b"
+[update:71988] [11:50:56] [INFO]     Verbose: false
+[update:71988] [11:50:56] [INFO]     Silent: true
+[update:71988] [11:50:56] [INFO]     Root Directory: None
+[update:71988] [11:50:56] [INFO]     Log File: "C:\\Users\\jori\\AppData\\Local\\velopack\\velopack_BrowserAI.app.test.log"
+[update:71988] [11:50:56] [INFO]     Context: IAmUpdateExe
+[update:71988] [11:50:56] [INFO] Command: Uninstall
+[update:71988] [11:50:56] [INFO] Auto-locating app manifest...
+[update:71988] [11:50:56] [INFO] Root directory 'C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b' writable: true
+[update:71988] [11:50:56] [INFO] Using root packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\packages
+[update:71988] [11:50:56] [INFO] Command: Uninstall
+[update:71988] [11:50:56] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b
+[update:71988] [11:50:56] [INFO] Inspected 604 running processes in 179ms, 1 matched directory
+[update:71988] [11:50:56] [WARN] Skipping killing self: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\Update.exe (71988)
+[update:71988] [11:50:56] [INFO] Force-stop check complete.
+[update:71988] [11:50:56] [INFO] Running --veloapp-uninstall hook...
+[update:71988] [11:50:56] [INFO] About to launch: 'WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current\\BrowserAI.exe")' in dir 'Some(WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current"))' with arguments: WideString("\"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current\\BrowserAI.exe\" --veloapp-uninstall 1.1.0\0")
+[update:71988] [11:50:56] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[update:71988] [11:50:56] [INFO] Waiting 60000ms for process handle to exit.
+[lib-csharp:92884] [11:50:56] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:92884] [11:50:56] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\current\sq.version
+[lib-csharp:92884] [11:50:56] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\packages
+[lib-csharp:92884] [11:50:56] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:92884] [11:50:56] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:92884] [11:50:56] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:92884] [11:50:56] [Information] Found fast exit hook: --veloapp-uninstall
+[lib-csharp:92884] [11:50:56] [Information] Completed hook, exiting...
+[update:71988] [11:50:56] [INFO] Hook executed successfully (took 58.8606ms)
+[update:71988] [11:50:56] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b
+[update:71988] [11:50:57] [INFO] Inspected 600 running processes in 193ms, 1 matched directory
+[update:71988] [11:50:57] [WARN] Skipping killing self: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\Update.exe (71988)
+[update:71988] [11:50:57] [INFO] Force-stop check complete.
+[update:71988] [11:50:57] [INFO] COM context initialized in 4ms
+[update:71988] [11:50:57] [INFO] Searching for shortcuts containing root: '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b"'
+[update:71988] [11:50:57] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\Users\jori\Desktop/*.lnk)
+[update:71988] [11:50:57] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[update:71988] [11:50:57] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[update:71988] [11:50:57] [INFO] Selected shortcut for update '"C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' because target '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current\\BrowserAI.exe"' matched.
+[update:71988] [11:50:57] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\Users\jori\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[update:71988] [11:50:57] [INFO] Removing shortcut '"C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' (ShortcutLocationFlags(START_MENU)).
+[update:71988] [11:50:57] [INFO] Removing directory '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b"'
+[update:71988] [11:50:57] [INFO] Removing directory '"C:\\Users\\jori\\AppData\\Local\\Temp\\velopack_BrowserAI.app.test"'
+[update:71988] [11:50:57] [INFO] Removing uninstall registry keys...
+[update:71988] [11:50:57] [INFO] Finished successfully.
+[update:71988] [11:50:57] [INFO] Scheduling removal of install directory...
+[update:71988] [11:50:57] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b"
+[update:72012] [11:51:11] [INFO] --
+[update:72012] [11:51:11] [INFO] Starting Velopack Updater (1.2.158)
+[update:72012] [11:51:11] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\Update.exe"
+[update:72012] [11:51:11] [INFO]     CWD: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a"
+[update:72012] [11:51:11] [INFO]     Verbose: false
+[update:72012] [11:51:11] [INFO]     Silent: true
+[update:72012] [11:51:11] [INFO]     Root Directory: None
+[update:72012] [11:51:11] [INFO]     Log File: "C:\\Users\\jori\\AppData\\Local\\velopack\\velopack_BrowserAI.app.test.log"
+[update:72012] [11:51:11] [INFO]     Context: IAmUpdateExe
+[update:72012] [11:51:11] [INFO] Command: Uninstall
+[update:72012] [11:51:11] [INFO] Auto-locating app manifest...
+[update:72012] [11:51:11] [INFO] Root directory 'C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a' writable: true
+[update:72012] [11:51:11] [INFO] Using root packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[update:72012] [11:51:11] [INFO] Command: Uninstall
+[update:72012] [11:51:11] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a
+[update:72012] [11:51:12] [INFO] Inspected 601 running processes in 187ms, 1 matched directory
+[update:72012] [11:51:12] [WARN] Skipping killing self: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\Update.exe (72012)
+[update:72012] [11:51:12] [INFO] Force-stop check complete.
+[update:72012] [11:51:12] [INFO] Running --veloapp-uninstall hook...
+[update:72012] [11:51:12] [INFO] About to launch: 'WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\current\\BrowserAI.exe")' in dir 'Some(WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\current"))' with arguments: WideString("\"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\current\\BrowserAI.exe\" --veloapp-uninstall 1.1.0\0")
+[update:72012] [11:51:12] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[update:72012] [11:51:12] [INFO] Waiting 60000ms for process handle to exit.
+[lib-csharp:72976] [11:51:12] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:72976] [11:51:12] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\sq.version
+[lib-csharp:72976] [11:51:12] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[lib-csharp:72976] [11:51:12] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:72976] [11:51:12] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:72976] [11:51:12] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:72976] [11:51:12] [Information] Found fast exit hook: --veloapp-uninstall
+[lib-csharp:72976] [11:51:12] [Information] Completed hook, exiting...
+[update:72012] [11:51:12] [INFO] Hook executed successfully (took 632.4828ms)
+[update:72012] [11:51:12] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a
+[update:72012] [11:51:12] [INFO] Inspected 603 running processes in 210ms, 1 matched directory
+[update:72012] [11:51:12] [WARN] Skipping killing self: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\Update.exe (72012)
+[update:72012] [11:51:12] [INFO] Force-stop check complete.
+[update:72012] [11:51:12] [INFO] COM context initialized in 4ms
+[update:72012] [11:51:12] [INFO] Searching for shortcuts containing root: '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a"'
+[update:72012] [11:51:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\Users\jori\Desktop/*.lnk)
+[update:72012] [11:51:13] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[update:72012] [11:51:13] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[update:72012] [11:51:13] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\Users\jori\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[update:72012] [11:51:13] [INFO] Removing directory '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a"'
+[update:72012] [11:51:13] [INFO] Removing directory '"C:\\Users\\jori\\AppData\\Local\\Temp\\velopack_BrowserAI.app.test"'
+[update:72012] [11:51:13] [INFO] Removing uninstall registry keys...
+[update:72012] [11:51:13] [ERROR] Unable to remove uninstall registry entry (The system cannot find the file specified. (os error 2)).
+[update:72012] [11:51:13] [INFO] Finished successfully.
+[update:72012] [11:51:13] [INFO] Scheduling removal of install directory...
+[update:72012] [11:51:13] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a"
+[lib-csharp:84820] [11:51:43] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:84820] [11:51:43] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\sq.version
+[lib-csharp:84820] [11:51:43] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[lib-csharp:84820] [11:51:43] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:84820] [11:51:43] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:84820] [11:51:43] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:84820] [11:51:43] [Information] Found fast exit hook: --veloapp-install
+[lib-csharp:84820] [11:51:44] [Information] Completed hook, exiting...
+[lib-csharp:70480] [11:51:48] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:70480] [11:51:48] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\current\sq.version
+[lib-csharp:70480] [11:51:48] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\packages
+[lib-csharp:70480] [11:51:48] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:70480] [11:51:48] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:70480] [11:51:48] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:70480] [11:51:48] [Information] Found fast exit hook: --veloapp-install
+[lib-csharp:70480] [11:51:48] [Information] Completed hook, exiting...
+[update:85312] [11:51:51] [INFO] --
+[update:85312] [11:51:51] [INFO] Starting Velopack Updater (1.2.158)
+[update:85312] [11:51:51] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\Update.exe"
+[update:85312] [11:51:51] [INFO]     CWD: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a"
+[update:85312] [11:51:51] [INFO]     Verbose: false
+[update:85312] [11:51:51] [INFO]     Silent: true
+[update:85312] [11:51:51] [INFO]     Root Directory: None
+[update:85312] [11:51:51] [INFO]     Log File: "C:\\Users\\jori\\AppData\\Local\\velopack\\velopack_BrowserAI.app.test.log"
+[update:85312] [11:51:51] [INFO]     Context: IAmUpdateExe
+[update:85312] [11:51:51] [INFO] Command: Uninstall
+[update:85312] [11:51:51] [INFO] Auto-locating app manifest...
+[update:85312] [11:51:51] [INFO] Root directory 'C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a' writable: true
+[update:85312] [11:51:51] [INFO] Using root packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[update:85312] [11:51:51] [INFO] Command: Uninstall
+[update:85312] [11:51:51] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a
+[update:85312] [11:51:51] [INFO] Inspected 602 running processes in 179ms, 1 matched directory
+[update:85312] [11:51:51] [WARN] Skipping killing self: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\Update.exe (85312)
+[update:85312] [11:51:51] [INFO] Force-stop check complete.
+[update:85312] [11:51:51] [INFO] Running --veloapp-uninstall hook...
+[update:85312] [11:51:51] [INFO] About to launch: 'WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\current\\BrowserAI.exe")' in dir 'Some(WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\current"))' with arguments: WideString("\"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a\\current\\BrowserAI.exe\" --veloapp-uninstall 1.1.0\0")
+[update:85312] [11:51:51] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[update:85312] [11:51:51] [INFO] Waiting 60000ms for process handle to exit.
+[lib-csharp:95180] [11:51:51] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:95180] [11:51:51] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\current\sq.version
+[lib-csharp:95180] [11:51:51] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\packages
+[lib-csharp:95180] [11:51:51] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:95180] [11:51:51] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:95180] [11:51:51] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:95180] [11:51:51] [Information] Found fast exit hook: --veloapp-uninstall
+[lib-csharp:95180] [11:51:51] [Information] Completed hook, exiting...
+[update:85312] [11:51:51] [INFO] Hook executed successfully (took 559.0024ms)
+[update:85312] [11:51:51] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a
+[update:85312] [11:51:52] [INFO] Inspected 602 running processes in 175ms, 1 matched directory
+[update:85312] [11:51:52] [WARN] Skipping killing self: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a\Update.exe (85312)
+[update:85312] [11:51:52] [INFO] Force-stop check complete.
+[update:85312] [11:51:52] [INFO] COM context initialized in 5ms
+[update:85312] [11:51:52] [INFO] Searching for shortcuts containing root: '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a"'
+[update:85312] [11:51:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\Users\jori\Desktop/*.lnk)
+[update:85312] [11:51:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[update:85312] [11:51:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[update:85312] [11:51:52] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\Users\jori\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[update:85312] [11:51:52] [INFO] Removing directory '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-a"'
+[update:85312] [11:51:52] [INFO] Removing directory '"C:\\Users\\jori\\AppData\\Local\\Temp\\velopack_BrowserAI.app.test"'
+[update:85312] [11:51:52] [INFO] Removing uninstall registry keys...
+[update:85312] [11:51:52] [INFO] Finished successfully.
+[update:85312] [11:51:52] [INFO] Scheduling removal of install directory...
+[update:85312] [11:51:52] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-a"
+[update:87968] [11:52:05] [INFO] --
+[update:87968] [11:52:05] [INFO] Starting Velopack Updater (1.2.158)
+[update:87968] [11:52:05] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\Update.exe"
+[update:87968] [11:52:05] [INFO]     CWD: "C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b"
+[update:87968] [11:52:05] [INFO]     Verbose: false
+[update:87968] [11:52:05] [INFO]     Silent: true
+[update:87968] [11:52:05] [INFO]     Root Directory: None
+[update:87968] [11:52:05] [INFO]     Log File: "C:\\Users\\jori\\AppData\\Local\\velopack\\velopack_BrowserAI.app.test.log"
+[update:87968] [11:52:05] [INFO]     Context: IAmUpdateExe
+[update:87968] [11:52:05] [INFO] Command: Uninstall
+[update:87968] [11:52:05] [INFO] Auto-locating app manifest...
+[update:87968] [11:52:05] [INFO] Root directory 'C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b' writable: true
+[update:87968] [11:52:05] [INFO] Using root packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\packages
+[update:87968] [11:52:05] [INFO] Command: Uninstall
+[update:87968] [11:52:05] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b
+[update:87968] [11:52:06] [INFO] Inspected 604 running processes in 176ms, 1 matched directory
+[update:87968] [11:52:06] [WARN] Skipping killing self: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\Update.exe (87968)
+[update:87968] [11:52:06] [INFO] Force-stop check complete.
+[update:87968] [11:52:06] [INFO] Running --veloapp-uninstall hook...
+[update:87968] [11:52:06] [INFO] About to launch: 'WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current\\BrowserAI.exe")' in dir 'Some(WideString("C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current"))' with arguments: WideString("\"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current\\BrowserAI.exe\" --veloapp-uninstall 1.1.0\0")
+[update:87968] [11:52:06] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[update:87968] [11:52:06] [INFO] Waiting 60000ms for process handle to exit.
+[lib-csharp:93048] [11:52:06] [Information] Initializing WindowsVelopackLocator
+[lib-csharp:93048] [11:52:06] [Information] WindowsVelopackLocator: Update.exe in parent dir, Located valid manifest file at: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\current\sq.version
+[lib-csharp:93048] [11:52:06] [Information] Root directory is writable, using packages directory: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\packages
+[lib-csharp:93048] [11:52:06] [Information] Initialized WindowsVelopackLocator for BrowserAI.app.test v1.1.0
+[lib-csharp:93048] [11:52:06] [Information] Starting VelopackApp.Run (library version 1.2.158).
+[lib-csharp:93048] [11:52:06] [Information] Setting current process explicit AppUserModelID to 'velopack.BrowserAI.app.test'
+[lib-csharp:93048] [11:52:06] [Information] Found fast exit hook: --veloapp-uninstall
+[lib-csharp:93048] [11:52:06] [Information] Completed hook, exiting...
+[update:87968] [11:52:06] [INFO] Hook executed successfully (took 474.5251ms)
+[update:87968] [11:52:06] [INFO] Checking for running processes in: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b
+[update:87968] [11:52:06] [INFO] Inspected 605 running processes in 189ms, 1 matched directory
+[update:87968] [11:52:06] [WARN] Skipping killing self: C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b\Update.exe (87968)
+[update:87968] [11:52:06] [INFO] Force-stop check complete.
+[update:87968] [11:52:06] [INFO] COM context initialized in 4ms
+[update:87968] [11:52:06] [INFO] Searching for shortcuts containing root: '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b"'
+[update:87968] [11:52:06] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (C:\Users\jori\Desktop/*.lnk)
+[update:87968] [11:52:06] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[update:87968] [11:52:06] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (C:\Users\jori\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[update:87968] [11:52:06] [INFO] Selected shortcut for update '"C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' because target '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b\\current\\BrowserAI.exe"' matched.
+[update:87968] [11:52:07] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (C:\Users\jori\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[update:87968] [11:52:07] [INFO] Removing shortcut '"C:\\Users\\jori\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' (ShortcutLocationFlags(START_MENU)).
+[update:87968] [11:52:07] [INFO] Removing directory '"C:\\Source\\SixFive7\\BrowserAI\\.work\\velopack-rows\\root-b"'
+[update:87968] [11:52:07] [INFO] Removing directory '"C:\\Users\\jori\\AppData\\Local\\Temp\\velopack_BrowserAI.app.test"'
+[update:87968] [11:52:07] [INFO] Removing uninstall registry keys...
+[update:87968] [11:52:07] [ERROR] Unable to remove uninstall registry entry (The system cannot find the file specified. (os error 2)).
+[update:87968] [11:52:07] [INFO] Finished successfully.
+[update:87968] [11:52:07] [INFO] Scheduling removal of install directory...
+[update:87968] [11:52:07] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "C:\Source\SixFive7\BrowserAI\.work\velopack-rows\root-b"

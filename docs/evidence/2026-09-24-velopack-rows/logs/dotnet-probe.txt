@@ -1,0 +1,4 @@
+start
+C:\Program Files\dotnet\dotnet.exe
+exit=
+DONE

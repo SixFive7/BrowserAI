@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+<metadata>
+<id>BrowserAI.app.test</id>
+<title>BrowserAI (suite)</title>
+<description>BrowserAI (suite)</description>
+<authors>Jori Huisman</authors>
+<version>1.1.0</version>
+<channel>win</channel>
+<mainExe>BrowserAI.exe</mainExe>
+<os>win</os>
+<rid>win</rid>
+<shortcutLocations>StartMenuRoot</shortcutLocations>
+<shortcutAumid>velopack.BrowserAI.app.test</shortcutAumid>
+</metadata>
+</package>
