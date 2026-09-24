@@ -1,0 +1,16 @@
+{"at":"2026-09-24T02:45:30.057Z","shim":108672,"direction":"client->server","frame":{"id":0,"method":"initialize"}}
+{"at":"2026-09-24T02:45:30.459Z","shim":108672,"direction":"server->client","frame":{"id":0}}
+{"at":"2026-09-24T02:45:30.467Z","shim":108672,"direction":"client->server","frame":{"method":"notifications/initialized"}}
+{"at":"2026-09-24T02:45:30.470Z","shim":108672,"direction":"client->server","frame":{"id":1,"method":"tools/list"}}
+{"at":"2026-09-24T02:45:30.479Z","shim":108672,"direction":"server->client","frame":{"id":1}}
+{"at":"2026-09-24T02:45:30.582Z","shim":108672,"direction":"client->server","frame":{"id":2,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:45:30.583Z","shim":108672,"direction":"server->client","frame":{"id":2}}
+{"at":"2026-09-24T02:45:30.636Z","shim":108672,"direction":"client->server","frame":{"id":3,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:45:30.946Z","shim":110256,"direction":"client->server","frame":{"id":0,"method":"initialize"}}
+{"at":"2026-09-24T02:45:31.319Z","shim":110256,"direction":"server->client","frame":{"id":0}}
+{"at":"2026-09-24T02:45:31.329Z","shim":110256,"direction":"client->server","frame":{"method":"notifications/initialized"}}
+{"at":"2026-09-24T02:45:31.334Z","shim":110256,"direction":"client->server","frame":{"id":1,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:45:31.334Z","shim":110256,"direction":"server->client","frame":{"method":"notifications/tools/list_changed"}}
+{"at":"2026-09-24T02:45:31.335Z","shim":110256,"direction":"server->client","frame":{"id":1}}
+{"at":"2026-09-24T02:45:36.356Z","shim":110256,"direction":"client->server","frame":{"id":2,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:45:36.357Z","shim":110256,"direction":"server->client","frame":{"id":2}}

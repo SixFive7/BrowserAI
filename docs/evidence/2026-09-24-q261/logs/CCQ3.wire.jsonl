@@ -1,0 +1,16 @@
+{"at":"2026-09-24T02:44:28.117Z","shim":151328,"direction":"client->server","frame":{"id":0,"method":"initialize"}}
+{"at":"2026-09-24T02:44:28.488Z","shim":151328,"direction":"server->client","frame":{"id":0}}
+{"at":"2026-09-24T02:44:28.496Z","shim":151328,"direction":"client->server","frame":{"method":"notifications/initialized"}}
+{"at":"2026-09-24T02:44:28.499Z","shim":151328,"direction":"client->server","frame":{"id":1,"method":"tools/list"}}
+{"at":"2026-09-24T02:44:28.507Z","shim":151328,"direction":"server->client","frame":{"id":1}}
+{"at":"2026-09-24T02:44:28.607Z","shim":151328,"direction":"client->server","frame":{"id":2,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:44:28.609Z","shim":151328,"direction":"server->client","frame":{"id":2}}
+{"at":"2026-09-24T02:44:28.646Z","shim":151328,"direction":"client->server","frame":{"id":3,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:44:28.964Z","shim":93672,"direction":"client->server","frame":{"id":0,"method":"initialize"}}
+{"at":"2026-09-24T02:44:29.321Z","shim":93672,"direction":"server->client","frame":{"id":0}}
+{"at":"2026-09-24T02:44:29.322Z","shim":93672,"direction":"client->server","frame":{"method":"notifications/initialized"}}
+{"at":"2026-09-24T02:44:29.322Z","shim":93672,"direction":"client->server","frame":{"id":1,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:44:29.323Z","shim":93672,"direction":"server->client","frame":{"method":"notifications/tools/list_changed"}}
+{"at":"2026-09-24T02:44:29.323Z","shim":93672,"direction":"server->client","frame":{"id":1}}
+{"at":"2026-09-24T02:44:29.359Z","shim":93672,"direction":"client->server","frame":{"id":2,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:44:29.360Z","shim":93672,"direction":"server->client","frame":{"id":2}}

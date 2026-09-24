@@ -85,15 +85,33 @@ internal static class SessionErrors
     /// </para>
     /// <para>
     /// <b>The remedy is per client because the recovery genuinely differs</b>, and
-    /// each half is measured rather than assumed. Claude Code honours
-    /// <c>notifications/tools/list_changed</c> -- 3/3, with the client's own debug
-    /// line <i>"Received tools/list_changed notification, refreshing tools"</i> --
-    /// so its remedy is <i>retry</i>, and the notification has already gone out
-    /// with this refusal. Codex ignores that notification -- 3/3, one line in its
-    /// own tracing log and nothing else -- and takes its list at first connect, so
-    /// its remedy is <i>a new thread</i>, which lists fresh. A client this build
-    /// has never met is told to ask for the list, which is the only advice that is
-    /// true of every client.
+    /// each half is measured and not assumed. <b>Claude Code re-dials a dead
+    /// stdio server on its own</b> -- 3/3 -- so the connection this refusal arrives
+    /// on is already a live one and a <i>retry</i> reaches it: measured 3/3 at
+    /// 2.1.281 against the published slice, the call immediately after the refusal
+    /// was forwarded and answered. <b>Codex never re-dials on the failure
+    /// path</b> -- 3/3 -- so there is nothing for a retry to reach, and its remedy
+    /// is <i>a new thread</i>, which lists fresh. A client this build has never met
+    /// is told to ask for the list, which is the only advice true of every client.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>Corrected 2026-09-24, before the sentence had ever shipped (previously
+    /// "Claude Code honours <c>notifications/tools/list_changed</c> -- 3/3, with
+    /// the client's own debug line <i>Received tools/list_changed notification,
+    /// refreshing tools</i> -- so its remedy is retry, and the notification has
+    /// already gone out with this refusal").</b> That is true of a connection the
+    /// client established and listed from, which is what the 2026-09-23 arms
+    /// measured, and it is <b>false of a re-dialled one</b>: measured 3/3 on
+    /// 2026-09-24 at Claude Code 2.1.281, with 5.1 s of idle connection deliberately
+    /// left between the refusal and the retry, <b>no <c>tools/list</c> arrived on
+    /// the re-dialled connection at all</b> and the client's debug log carried
+    /// <i>"Cleared connection cache for reconnection"</i> and no refresh line. So
+    /// the notification is still sent -- it costs nothing and a client that acts on
+    /// one is helped -- but the refusal no longer tells a model that its list has
+    /// been refreshed, because on the one path this row exists for it has not been.
+    /// <b>It is also the strongest argument for this row existing:</b> on that path
+    /// the notification alone does nothing, so without the sentence nothing at all
+    /// would reach the model.
     /// </para>
     /// <para>
     /// ⚠️ <b>It fires ONCE per connection and is never a wall.</b> A second call
@@ -134,10 +152,10 @@ internal static class SessionErrors
     /// <returns>One sentence naming the fix.</returns>
     private static string Remedy(string? clientName) =>
         KnownClients.Matches(clientName, KnownClients.ClaudeCode)
-            ? "BrowserAI has just sent your client a tools/list_changed notification and your client refreshes its tool list on that notification, so RETRY this call: the names you have will be the names this server has."
+            ? "RETRY this call and it will go through: your client re-dialled BrowserAI on its own, this refusal is made once per connection, and the connection is live. BrowserAI has also sent a tools/list_changed notification; do not assume it refreshed anything -- if a tool you expected is missing, or a name is not one this server just confirmed, ask for the tool list before you call it."
             : KnownClients.Matches(clientName, KnownClients.Codex)
-                ? "Your client takes its tool list once per thread and does not act on the tools/list_changed notification BrowserAI has just sent, so START A NEW THREAD: a new one lists fresh and every name in it is this server's. Until then, treat any missing tool as gone rather than as a mistake of yours."
-                : "Ask BrowserAI for its tool list before calling again -- BrowserAI has also sent a tools/list_changed notification, in case your client acts on one -- and call from the list that comes back rather than from the one you are holding.";
+                ? "START A NEW THREAD: your client takes its tool list once per thread, it does not act on the tools/list_changed notification BrowserAI has just sent, and it does not re-launch a server that has gone -- so a retry has nothing to reach. A new thread lists fresh and every name in it is this server's. Until then, treat any missing tool as gone and not as a mistake of yours."
+                : "Ask BrowserAI for its tool list before calling again -- BrowserAI has also sent a tools/list_changed notification, in case your client acts on one -- and call from the list that comes back and not from the one you are holding.";
 
     /// <summary>Row 1 -- the call named no session.</summary>
     /// <param name="tool">The tool that was called.</param>

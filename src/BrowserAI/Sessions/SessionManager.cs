@@ -238,7 +238,7 @@ internal sealed class SessionManager : IAsyncDisposable
         $"this session's record was last written by BrowserAI {recorded} and the BrowserAI serving you now is {BuildVersion.Current}. "
         + "Nothing is wrong and nothing needs repairing -- the directory, the profile and the log are unchanged and this session works normally. "
         + "What may be stale is the TOOL LIST you are calling from: if you have not asked this server for its tools since it started, ask now, "
-        + "because a tool name can have been added, removed or renamed between those two versions and a call to a name that has gone reads as your mistake rather than as a moved surface.";
+        + "because a tool name can have been added, removed or renamed between those two versions and a call to a name that has gone reads as your mistake and not as a moved surface.";
 
     /// <summary>
     /// One line per item up to <see cref="SurvivorsNamed"/>, and a sentence

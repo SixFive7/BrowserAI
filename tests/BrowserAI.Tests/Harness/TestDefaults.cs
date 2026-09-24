@@ -140,6 +140,29 @@ internal static class TestDefaults
     public static TimeSpan InitializationHang { get; } = ProcessHang;
 
     /// <summary>
+    /// A hang detector for a whole headless run of a <b>real third-party
+    /// client</b> against a published BrowserAI.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Not a budget; nothing may assert on it.</b> The runs it bounds take
+    /// 2-4 s measured on 2026-09-24 -- a client process, two published servers and
+    /// four scripted turns against a local stub -- so this is hundreds of times the
+    /// normal cost and <b>a slow machine must never reach it</b>.
+    /// </para>
+    /// <para>
+    /// <b>Derived and not written, and it is <see cref="BrowserHang"/> and not
+    /// <see cref="ProcessHang"/> for one reason:</b> the thing on the far end is
+    /// somebody else's binary with its own internal timeouts, and a bound at or
+    /// below theirs always wins the race and replaces their diagnosis with
+    /// <i>"the budget expired"</i>. Claude Code's own MCP startup timeout is 30 s
+    /// by default and its tool timeout is longer; this has to sit above whatever
+    /// they choose, for the same reason the browser bound sits above Playwright's.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan RealClientHang { get; } = BrowserHang;
+
+    /// <summary>
     /// The <c>server/discover</c> probe timeout every test client pins.
     /// </summary>
     /// <remarks>

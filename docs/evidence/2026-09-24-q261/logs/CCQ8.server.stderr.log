@@ -1,0 +1,46 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 1.1.1-alpha.0.65 started. pid=170824 image=C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\q261-2026-09-24\proj sqlite=3.53.4 sqliteBuild=intended
+warn: BrowserAI.Startup[4]
+      BROWSERAI_ROOT is set, so this BrowserAI's app root is C:/Users/jori/Downloads/tmp-q261-clients/CCQ8, not the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 31620, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 31920 in 'C:/Users/jori/Downloads/tmp-q261-clients/CCQ8\instances\170824-d74cb06d969c4a408d998a20dceb4603'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=29.7ms processes=799/628 candidates=0 images=2 aliasedImages=2 unresolvedImages=0 windows=70 titled=15 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=3 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.1.1-alpha.0.65) client received server '{"name":"Playwright","version":"1.64.0-alpha-1789764292000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.1.1-alpha.0.65) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.1.1-alpha.0.65) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.1.1-alpha.0.65), Client (claude-code 2.1.281) method 'initialize' request handler completed in 0.1311ms.
+info: BrowserAI.Startup[1]
+      BrowserAI 1.1.1-alpha.0.65 started. pid=127964 image=C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\q261-2026-09-24\proj sqlite=3.53.4 sqliteBuild=intended
+warn: BrowserAI.Startup[4]
+      BROWSERAI_ROOT is set, so this BrowserAI's app root is C:/Users/jori/Downloads/tmp-q261-clients/CCQ8, not the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 163632, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Protocol.DirectStdioClientTransport[7]
+      playwright-mcp[surface]: started 'C:\Source\SixFive7\BrowserAI\src\BrowserAI\bin\Release\net10.0-windows\win-x64\publish\payload\node\node.exe' as pid 158128 in 'C:/Users/jori/Downloads/tmp-q261-clients/CCQ8\instances\127964-23e3ceaa10e242d0833793a2a3d143cd'.
+info: BrowserAI.Sweep[1]
+      Stray sweep: outcome=Ran elapsed=26.5ms processes=797/626 candidates=0 images=2 aliasedImages=2 unresolvedImages=0 windows=70 titled=15 restarts=0 truncated=False terminated=0 spared=0 byProfileLock=0 unattributable=0 rejectedTitles=3 indexRemoved=0 liveMarkers=[outcome=Ran reclaimed=0 held=1 undetermined=0 abandonedGate=False why=-] abandonedGate=False
+info: ModelContextProtocol.Client.McpClient[1434756563]
+      Client (BrowserAI 1.1.1-alpha.0.65) client received server '{"name":"Playwright","version":"1.64.0-alpha-1789764292000"}' capabilities: '{"tools":{"listChanged":true}}'.
+info: ModelContextProtocol.Client.McpClient[1017245113]
+      Client (BrowserAI 1.1.1-alpha.0.65) client created and connected.
+info: BrowserAI.Proxy.ChildConnection[1]
+      Child protocol negotiated. requested=2025-11-25 negotiated=2025-11-25
+info: BrowserAI.Startup[2]
+      BrowserAI is serving stdio. childProtocol=2025-11-25
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.1.1-alpha.0.65) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.1.1-alpha.0.65), Client (claude-code 2.1.281) method 'initialize' request handler completed in 0.1239ms.
+info: BrowserAI.Proxy.BrowserProxy[18]
+      'browserai_list' arrived from client 'claude-code' before any tools/list on this connection, so its tool list predates BrowserAI 1.1.1-alpha.0.65. Refused once, and notifications/tools/list_changed was sent with the refusal.

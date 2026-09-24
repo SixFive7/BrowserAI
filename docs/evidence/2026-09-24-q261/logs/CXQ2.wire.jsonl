@@ -1,0 +1,9 @@
+{"at":"2026-09-24T02:48:27.742Z","shim":94856,"direction":"client->server","frame":{"id":0,"method":"initialize"}}
+{"at":"2026-09-24T02:48:28.129Z","shim":94856,"direction":"server->client","frame":{"id":0}}
+{"at":"2026-09-24T02:48:28.130Z","shim":94856,"direction":"client->server","frame":{"method":"notifications/initialized"}}
+{"at":"2026-09-24T02:48:28.131Z","shim":94856,"direction":"client->server","frame":{"id":1,"method":"tools/list"}}
+{"at":"2026-09-24T02:48:28.140Z","shim":94856,"direction":"server->client","frame":{"id":1}}
+{"at":"2026-09-24T02:48:28.141Z","shim":94856,"direction":"client->server","frame":{"id":2,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:48:28.143Z","shim":94856,"direction":"server->client","frame":{"id":2}}
+{"at":"2026-09-24T02:48:29.149Z","shim":94856,"direction":"client->server","frame":{"id":3,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:48:29.149Z","shim":94856,"direction":"server->client","frame":{"id":3}}

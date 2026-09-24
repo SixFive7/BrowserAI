@@ -18,7 +18,7 @@ namespace BrowserAI.Proxy;
 /// and codex-cli <b>0.155.0-alpha.9.2</b> sends
 /// <c>{"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"}</c>.
 /// The <c>name</c> is what is matched, because it is the only member of the three
-/// that is a stable identifier rather than a display string.
+/// that is a stable identifier and not a display string.
 /// </para>
 /// <para>
 /// ⚠️ <b>Codex's name is the one a reader will get wrong.</b> It is

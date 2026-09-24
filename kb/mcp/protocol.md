@@ -582,6 +582,87 @@ and the runs that omitted `--strict-mcp-config` also connected this repository's
 own committed `.mcp.json` servers, which is noted in the batch because it is
 visible in the captures.
 
+## What Q261's refusal does at the other end -- measured 2026-09-24
+
+`[FLOATS]` **Claude Code 2.1.281** and **codex-cli 0.155.0-alpha.9.2**, Windows
+10.0.26200, against the **published** BrowserAI -- 1.1.1-alpha.0.64 for the runs
+that established the behaviour and 1.1.1-alpha.0.65 for the three that re-took it
+against the wording they corrected. Eleven runs, three rounds per claim; a local
+API stub scripts the model's moves, so no credential is used and no inference
+happens anywhere. Rig:
+[`docs/probes/2026-09-24-q261`](../../docs/probes/2026-09-24-q261/README.md).
+Captures:
+[`docs/evidence/2026-09-24-q261`](../../docs/evidence/2026-09-24-q261/README.md).
+
+⚠️ **The section above establishes the DEFECT; this one establishes what the
+answer to it actually achieves.** They are separate measurements against separate
+servers: that one drove a dummy server, this one drives the product.
+
+### The refusal fires on exactly the connection it was designed for, 3/3
+
+**A Claude Code session whose BrowserAI exits after answering one call re-dials and
+sends `initialize`, `notifications/initialized` and `tools/call` -- and no
+`tools/list`.** So the per-connection flag is unset when that call arrives, the
+call is refused once, `notifications/tools/list_changed` goes out ahead of the
+refusal on the same pipe, and **the next call is forwarded and answered**. 3/3 in
+`CCQ7`-`CCQ9`, read off the shim's wire log, which carries one line per frame with
+the pid of the shim it passed through -- so *two server processes* is counted and
+not inferred.
+
+⭐ **The exact sentence reaches the model, once, as `is_error: true`.** Read out of
+the API request bodies, which are literally what the model was sent: the refusal
+appears as a `tool_result` in turn 3 and the ordinary answer to the same tool
+appears after it in turn 4. It is also in the client's own `--debug-file` twice,
+once at `[ERROR]` and once as `Tool 'browserai_list' failed after 0s`. The model
+was offered **79** tool definitions on every turn of every run, unchanged --
+which is the control that says nothing about the surface actually moved between
+the two servers, so what the arms measure is the mechanism and not a real rename.
+
+### The list-changed notification does NOTHING on a re-dialled connection, 3/3
+
+⚠️ **This is the finding that corrected the product's own wording before it
+shipped.** `CCQ4`-`CCQ6` left **5.1 s of idle connection deliberately between the
+refusal and the retry** -- the only window in which a refresh could land and still
+be the thing that fixed the turn -- and **no `tools/list` reached the re-dialled
+server at all**, in any of the three. `CCQ3` left the same window after the retry,
+with the same result. The client's debug log carries
+`Cleared connection cache for reconnection` and **no** refresh line; the string
+`refreshing tools` appears **0** times in any of these runs.
+
+**That does not contradict the 3/3 refetch measured on 2026-09-23** -- those runs
+sent the notification to a connection the client had established and listed from,
+unprompted, mid-session. A **transparently re-dialled** connection is a different
+connection and behaves differently. Both are true; the second is the one Q261's
+path meets.
+
+**The consequence is the useful half.** On the one path this mechanism exists for,
+the notification alone recovers nothing -- so the refusal is not belt-and-braces
+beside it, it is the only thing that reaches the model. BrowserAI still sends the
+notification, because it costs one frame and a client that honours it is helped,
+and the refusal's wording now says *do not assume it refreshed anything* and no
+longer promises a refresh.
+
+### A Codex thread lists before it calls, so it never meets the refusal, 3/3
+
+**`initialize`, `notifications/initialized`, `tools/list`, `tools/call`** -- in
+that order, every time, driven through `codex app-server` with
+`mcpServer/tool/call` and no model at all. The flag is therefore set before the
+first call arrives, **no refusal is ever made and no notification is ever sent**,
+and a second call on the same thread is answered normally. `CXQ1`-`CXQ3`. This is
+why Codex needs the *new thread* remedy and not a retry: it is not that a
+Codex thread meets the refusal and cannot recover, it is that a Codex thread never
+meets it, and the case the remedy addresses is a thread whose server was replaced
+and which Codex will not re-dial at all.
+
+**Re-establish it** with `cc-q261.sh <run> <port> 5` and `cx-q261.sh <run>` out of
+the rig, after `dotnet publish src/BrowserAI/BrowserAI.csproj -c Release -r win-x64
+--self-contained`. Read `logs/<run>.wire.jsonl` for the frame order and the server
+count, and `logs/<run>.requests.jsonl` for what the model was handed. ⚠️ **Never
+against the real client configuration or the default app root** -- every run here
+wrote inside its own scratch `CLAUDE_CONFIG_DIR` or `CODEX_HOME`, and every server
+ran with `BROWSERAI_ROOT` at a scratch app root, because the stray sweep is
+machine-wide and the default root is shared with an installed BrowserAI.
+
 ## Tooling around the protocol
 
 **`claude mcp list` and `claude mcp get` exit 0 even when the server is dead** --

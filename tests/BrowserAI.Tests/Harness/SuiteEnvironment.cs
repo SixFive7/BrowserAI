@@ -81,6 +81,24 @@ internal enum SuiteCapability
     /// tree scan is unverified.
     /// </remarks>
     Git,
+
+    /// <summary>
+    /// The Codex CLI on this machine, which is the only thing that can answer
+    /// what a real Codex thread does with BrowserAI's tool surface.
+    /// </summary>
+    /// <remarks>
+    /// <b>A second client capability and not a widening of the first, because the
+    /// two are installed independently and answer different questions.</b>
+    /// <see cref="ClientCommandLine"/> is Claude Code, which re-dials a stdio
+    /// server that has gone; this one is Codex, which does not and which takes its
+    /// tool list once per thread. Absent, the Codex arms skip loudly; under
+    /// <c>BROWSERAI_RELEASE_RUN=1</c> they fail, which is correct -- BrowserAI
+    /// registers itself with this client, so a release that has never seen one
+    /// connect is one whose second client is untested. Found the way the product
+    /// finds it, through <c>CodexRegistration.Locate</c>, so a machine where the
+    /// product would find no CLI is a machine where these arms cannot run either.
+    /// </remarks>
+    CodexCommandLine,
 }
 
 /// <summary>
@@ -290,6 +308,31 @@ internal static class SuiteEnvironment
     /// <returns>The path, or <see langword="null"/>.</returns>
     public static string? ClientExecutable() =>
         new ClientCommandLine().Locate(McpClientRegistration.ClientExecutable);
+
+    /// <summary>
+    /// The Codex CLI, or a skip.
+    /// </summary>
+    /// <param name="test">Filled in by the compiler.</param>
+    /// <returns>The path to the CLI.</returns>
+    public static string RequireCodexCommandLine([CallerMemberName] string test = "")
+    {
+        Require(SuiteCapability.CodexCommandLine, test);
+        return CodexExecutable()!;
+    }
+
+    /// <summary>
+    /// The Codex CLI on this machine, found exactly the way the product finds it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Through the product's own <see cref="CodexRegistration.Locate"/></b>, so
+    /// the four places it looks -- the search path, the fallback directory, the
+    /// Codex desktop manifest and the npm global package -- are the four places
+    /// these arms look, and a machine the product would find no CLI on is a
+    /// machine these arms skip on.
+    /// </remarks>
+    /// <returns>The path, or <see langword="null"/>.</returns>
+    public static string? CodexExecutable() =>
+        CodexRegistration.Locate(new ClientCommandLine());
 
     /// <summary>
     /// Whether the repository payload is available, recording its absence
@@ -717,6 +760,13 @@ internal static class SuiteEnvironment
             ? CapabilityState.Present
             : CapabilityState.AbsentAsAWhole,
 
+        // Same reasoning as the line above, and the same absence of a Partial
+        // state: the product's own four-place discovery either answers with a
+        // path or it does not.
+        SuiteCapability.CodexCommandLine => CodexExecutable() is not null
+            ? CapabilityState.Present
+            : CapabilityState.AbsentAsAWhole,
+
         // No Partial state for this one either. An installer packed under
         // another id is not a half-installed capability -- it is somebody else's
         // artefact wearing the same file name, and the answer to both is the
@@ -841,6 +891,7 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => "Chromium",
         SuiteCapability.ProvisionedFirefox => "Firefox",
         SuiteCapability.ClientCommandLine => "client CLI",
+        SuiteCapability.CodexCommandLine => "Codex CLI",
         SuiteCapability.ReleaseInstaller => "release installer",
         SuiteCapability.Git => "git",
         _ => "packed release",
@@ -853,6 +904,7 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => BrowserAiPaths.ExpectedChromiumExecutable,
         SuiteCapability.ProvisionedFirefox => BrowserAiPaths.FirefoxExecutable,
         SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{McpClientRegistration.ClientExecutable} (not on PATH, nor at {BrowserAI.Registration.ClientCommandLine.FallbackDirectory})",
+        SuiteCapability.CodexCommandLine => CodexExecutable() ?? CodexRegistration.NotFoundDetail("mcp list"),
         SuiteCapability.ReleaseInstaller => ReleaseLayout.Witness(),
         SuiteCapability.Git => GitOracle.IsAvailable
             ? $"git -C {RepositoryLayout.Root.FullName} rev-parse --is-inside-work-tree said true"
@@ -867,6 +919,7 @@ internal static class SuiteEnvironment
         SuiteCapability.ProvisionedChromium => "Provision it: BrowserAI downloads it on first use, or run the suite once with a payload present.",
         SuiteCapability.ProvisionedFirefox => "Provision it: BrowserAI downloads it on first use of a Firefox session.",
         SuiteCapability.ClientCommandLine => $"Install the MCP client, so that '{McpClientRegistration.ClientExecutable}' is on PATH. Nothing is written to it: the real-client arms point it at a scratch configuration directory.",
+        SuiteCapability.CodexCommandLine => "Install the Codex CLI. Nothing is written to it: the real-client arms force CODEX_HOME at a scratch directory and never read the user's own.",
         SuiteCapability.ReleaseInstaller => $"Run: pwsh -File build/New-Release.ps1, or set {ReleaseLayout.FeedVariable} to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed.",
         SuiteCapability.Git => "Install git and run the suite from a checkout rather than from an export. Nothing is written: the only command asked for is 'git ls-files'.",
         _ => $"Run: pwsh -File build/New-Release.ps1, or set {ReleasePackageVariable} to a packed .nupkg.",

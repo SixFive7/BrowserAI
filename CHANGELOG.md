@@ -40,6 +40,56 @@ release body; nothing else depends on it.
 
 ### Added
 
+- ✨ **A reconnected session is told, once, that its tool list came from a BrowserAI that is
+  gone.** Q261. A per-connection flag records whether a `tools/list` has
+  arrived since the handshake; the first `tools/call` that precedes one is **refused once**,
+  with a message naming the running version and the remedy for the client at the other end,
+  and `notifications/tools/list_changed` goes out ahead of it on the same pipe. **A first
+  connect lists before it calls, so an ordinary session never meets this**, and a second call
+  with no list behind it is forwarded normally -- it is one sentence, not a wall.
+
+  ⚠️ **Why it is needed at all:** a client whose stdio server exits re-launches it
+  transparently and sends `initialize` and `tools/call` and **no** `tools/list`, so after an
+  update the model goes on calling the surface of a server that no longer exists, and a tool
+  that was renamed or removed answers it with an error it reads as its own mistake. Measured
+  3/3 at Claude Code 2.1.281.
+
+  **The remedy is per client because the recovery genuinely differs, and both names are read
+  values**: `claude-code` is told to retry, because its client re-dialled and the connection is
+  live; `codex-mcp-client` is told to start a new thread, because Codex never re-dials on the
+  failure path and a retry has nothing to reach; anything else is told to ask for the tool
+  list. The identifiers came off the wire out of the 2026-09-23 captures -- Codex calls itself
+  `codex-mcp-client` and not `codex`, which is the thing a reader guesses wrong.
+
+  ⚠️ **THE NOTIFICATION IS NOT WHAT RECOVERS THE TURN, and the wording was corrected
+  before it shipped.** With 5.1 s of idle connection deliberately left between the refusal and
+  the retry, **no `tools/list` reached the re-dialled server in any of three runs**; the
+  client's debug log carried `Cleared connection cache for reconnection` and no refresh line.
+  The 3/3 refetch measured on 2026-09-23 was on a connection the client had established and
+  listed from, which is a different connection. So the notification is kept -- it is one frame
+  and a client that honours it is helped -- and the refusal no longer tells a model its list
+  has been refreshed. **On the one path this exists for, the sentence is the only thing that
+  reaches the model.**
+
+  **Driven against the published binary, end to end**: the refusal arrives at the model as an
+  `is_error` `tool_result`, byte for byte, and the call after it is answered -- 3/3. A Codex
+  thread lists before it calls, 3/3, so it never meets the refusal and no notification is ever
+  sent to it. [kb](kb/mcp/protocol.md#what-q261s-refusal-does-at-the-other-end----measured-2026-09-24),
+  [evidence](docs/evidence/2026-09-24-q261/README.md),
+  [rig](docs/probes/2026-09-24-q261/README.md), re-verification row 153. **This closes the
+  frozen-tool-list hazard row on the condition that row set for itself**, and the two things it
+  does not close are named there.
+
+- ✨ **`browserai_resume` and `browserai_catch_up` say when another BrowserAI wrote the session
+  last.** The second half of Q261, and it is a courtesy line and never a
+  refusal: nothing about such a session is wrong, the directory and the profile and the log are
+  the same files, and it resumes and answers normally. What the line adds is the one thing a
+  model cannot see -- that the tool list it is holding may have been read from the older build.
+  Resume compares the record **as it is on disk**, because re-acquiring the directory stamps
+  this build and a comparison made after that can never differ; catch-up carries it on page 1
+  only and **writes nothing**, which is what keeps that tool read-only against a session
+  somebody else is driving.
+
 - ✨ **BrowserAI knows how to register itself with Codex, and nothing yet asks it to.**
   A second client sits beside Claude Code in the registration library: `CodexRegistration`
   builds the `codex mcp add` and `codex mcp remove` command lines, `CodexRegistryView` reads
@@ -314,6 +364,29 @@ release body; nothing else depends on it.
   funding it.
 
 ### Changed
+
+- ✅ **The suite starts both real clients against the published binary, and the rig lists
+  first.** Two arms in `ClientReconnectTests` drive the real Claude Code and
+  the real Codex CLI, each skipping loudly through its own `SuiteCapability` when the binary is
+  absent and failing under `BROWSERAI_RELEASE_RUN=1` -- which is the right way round, because
+  BrowserAI registers itself with both clients and a release that has never seen one connect is
+  one whose founding promise is untested. **Both point every client override at a scratch
+  directory and every server's app root at `ScratchRoot.ProfileScratch`**, the last of those
+  because the stray sweep is machine-wide by design and would otherwise hunt the developer's own
+  browsers. The Claude Code arm was **planted red** by forcing the connection flag set at the
+  handshake: it went red on the notification count, against the product and not against the rig.
+
+  ⚠️ **The defect that made the arm pass an hour of not working is worth the sentence.**
+  The suite may itself be running underneath one of these clients, and the variables that say so
+  are inherited by every child; a nested client that reads them takes a different path entirely --
+  it connected to BrowserAI, asked the API stub nothing but `HEAD /api/hello`, and exited. Nine
+  variables are removed from the child's environment before anything is added, and both children's
+  streams are now drained **into files** so a run that did nothing can say why.
+
+  **And the in-process rig asks for the tool list before its first call**, because a real client
+  does. Without it every arm in that layer would meet Q261's refusal on the harness's own
+  `browserai_init`. The arms that assert the refusal pass `listsBeforeCalling: false`, which is
+  the whole condition.
 
 - 📝 **No trace of AI is a repository directive, and two scans keep the half a machine can see.**
   The maintainer's instruction, 2026-09-23, verbatim: *"Ensure there is no trace of AI both in

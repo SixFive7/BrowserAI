@@ -1,0 +1,17 @@
+model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "read-only"
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:8999"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.browserai]
+command = "C:/Program Files/nodejs/node.exe"
+args = ["C:/Source/SixFive7/BrowserAI/docs/probes/2026-09-24-q261/shim.js"]
+env = { Q261_SERVER = "C:/Source/SixFive7/BrowserAI/src/BrowserAI/bin/Release/net10.0-windows/win-x64/publish/BrowserAI.Server.exe", Q261_LOGDIR = "C:/Source/SixFive7/BrowserAI/.work/q261-2026-09-24/logs", Q261_TAG = "CXQ3", Q261_DIE_AFTER_CALLS = "0", BROWSERAI_ROOT = "C:/Users/jori/Downloads/tmp-q261-clients/CXQ3" }
+startup_timeout_sec = 30
+tool_timeout_sec = 60

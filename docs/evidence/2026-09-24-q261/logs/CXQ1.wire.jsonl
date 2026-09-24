@@ -1,0 +1,9 @@
+{"at":"2026-09-24T02:48:12.153Z","shim":158116,"direction":"client->server","frame":{"id":0,"method":"initialize"}}
+{"at":"2026-09-24T02:48:12.520Z","shim":158116,"direction":"server->client","frame":{"id":0}}
+{"at":"2026-09-24T02:48:12.521Z","shim":158116,"direction":"client->server","frame":{"method":"notifications/initialized"}}
+{"at":"2026-09-24T02:48:12.521Z","shim":158116,"direction":"client->server","frame":{"id":1,"method":"tools/list"}}
+{"at":"2026-09-24T02:48:12.529Z","shim":158116,"direction":"server->client","frame":{"id":1}}
+{"at":"2026-09-24T02:48:12.531Z","shim":158116,"direction":"client->server","frame":{"id":2,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:48:12.532Z","shim":158116,"direction":"server->client","frame":{"id":2}}
+{"at":"2026-09-24T02:48:13.542Z","shim":158116,"direction":"client->server","frame":{"id":3,"method":"tools/call","name":"browserai_list"}}
+{"at":"2026-09-24T02:48:13.543Z","shim":158116,"direction":"server->client","frame":{"id":3}}

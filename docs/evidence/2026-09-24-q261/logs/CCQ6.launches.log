@@ -1,0 +1,9 @@
+2026-09-24T02:45:30.054Z LAUNCH shim=108672 server=164248 exe=C:/Source/SixFive7/BrowserAI/src/BrowserAI/bin/Release/net10.0-windows/win-x64/publish/BrowserAI.Server.exe dieAfterCalls=1
+2026-09-24T02:45:30.584Z ENDING server=164248 after 1 tools/call answer(s): Q261_DIE_AFTER_CALLS=1
+2026-09-24T02:45:30.605Z server=164248 exited code=null signal=SIGTERM
+2026-09-24T02:45:30.850Z EXIT shim=108672
+2026-09-24T02:45:30.944Z LAUNCH shim=110256 server=95188 exe=C:/Source/SixFive7/BrowserAI/src/BrowserAI/bin/Release/net10.0-windows/win-x64/publish/BrowserAI.Server.exe dieAfterCalls=1
+2026-09-24T02:45:36.432Z client closed its end; ending server=95188
+2026-09-24T02:45:36.433Z ENDING server=95188 after 2 tools/call answer(s): the client closed the pipe
+2026-09-24T02:45:36.455Z server=95188 exited code=null signal=SIGTERM
+2026-09-24T02:45:36.690Z EXIT shim=110256

@@ -1,0 +1,8 @@
+[
+ {"m":"initialize","p":{"clientInfo":{"name":"probe-driver","title":"probe","version":"1.0.0"}}},
+ {"m":"thread/start","p":{}},
+ {"m":"mcpServer/tool/call","p":{"threadId":"$THREAD","server":"browserai","tool":"browserai_list","arguments":{"directory":"C:/Source/SixFive7/BrowserAI/.work/q261-2026-09-24/sessions"}}},
+ {"sleep":1000},
+ {"marker":"a second call on the same thread"},
+ {"m":"mcpServer/tool/call","p":{"threadId":"$THREAD","server":"browserai","tool":"browserai_list","arguments":{"directory":"C:/Source/SixFive7/BrowserAI/.work/q261-2026-09-24/sessions"}}}
+]

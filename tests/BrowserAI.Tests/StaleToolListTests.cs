@@ -189,7 +189,7 @@ internal sealed class StaleToolListTests
 
         // The history block prints the chain underneath, because the resume above
         // stamped this build beside the planted one. That is the second half of
-        // the stamp and it is asserted here rather than taken on trust.
+        // the stamp and it is asserted here and not taken on trust.
         await Assert.That(TextOf(resumedOlder)).Contains(AnOlderBuild);
         await Assert.That(TextOf(resumedOlder)).Contains(BuildVersion.Current);
 

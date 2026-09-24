@@ -90,7 +90,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <b>A field and not a dictionary, because a stdio server has exactly one
     /// connection.</b> One process, one pipe pair, one client -- which is the same
     /// premise <see cref="_caller"/> already rests on. It is reset on
-    /// <c>initialize</c> rather than only at construction, so *since the
+    /// <c>initialize</c> and not only at construction, so *since the
     /// handshake* is literally what it means and a second handshake on the same
     /// transport starts the question again.
     /// </para>
@@ -430,11 +430,23 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// error it reads as its own mistake.
     /// </para>
     /// <para>
-    /// <b>The notification goes out BEFORE the refusal, and the ordering is the
-    /// useful half.</b> Both are frames on one pipe, so the client sees the
-    /// notification first and can already be refreshing while the model reads the
-    /// sentence telling it to retry. Sent the other way round, a model that acts
-    /// immediately retries against the list it still has.
+    /// <b>The notification goes out BEFORE the refusal, so that a client which
+    /// does act on one has it first.</b> Both are frames on one pipe, so the order
+    /// is the order the client reads them in, and it costs nothing.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>AND ON THE PATH THIS EXISTS FOR, THE NOTIFICATION DOES NOTHING --
+    /// measured 2026-09-24 @ Claude Code 2.1.281, 3/3.</b> Against the published
+    /// slice, with the first server made to exit after answering one call and 5.1 s
+    /// of idle connection deliberately left between the refusal and the retry,
+    /// <b>no <c>tools/list</c> ever arrived on the re-dialled connection</b>. The
+    /// client's debug log carried <i>"Cleared connection cache for reconnection"</i>
+    /// and no refresh line. The 3/3 refetch measured on 2026-09-23 was on a
+    /// connection the client had established and listed from, which is a different
+    /// connection. So the notification is kept -- it is free, it is correct, and a
+    /// client that honours it is helped -- and the <b>refusal is the thing that
+    /// actually recovers the turn</b>, which is why the wording no longer promises
+    /// a refresh. The retry itself was forwarded and answered 3/3.
     /// </para>
     /// <para>
     /// <b>Three directions were dropped and the reasons are in

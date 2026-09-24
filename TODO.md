@@ -88,41 +88,6 @@ is named as candidates and says so.
       decide the layout are measured in
       [kb](kb/windows/notifications.md).
 
-- [ ] **Q261: one informed refusal, and the version stamp.** The decision is
-      [the row in `DECISIONS.md`](DECISIONS.md#the-update-lane-the-sessions-that-hold-it-and-the-second-client),
-      taken 2026-09-24 in the maintainer's words: _"Q261 b"_.
-
-      **What to build.** A per-connection flag holding whether a `tools/list` has
-      arrived since this connection's handshake. The first `tools/call` that
-      precedes one is **refused once**, with a message naming the running BrowserAI
-      version and the remedy for the client at the other end -- Claude Code, that the
-      list-changed notification has been sent and the call can be retried; Codex,
-      that a new thread lists fresh -- and `notifications/tools/list_changed` goes out
-      with that refusal. A first connect lists before it calls, so a new session
-      pays nothing. **And the serving version is stamped into the session record on
-      every call**, with `browserai_resume` and `browserai_catch_up` carrying a
-      courtesy line when it differs from the server answering now. ⚠️ **The stamp is
-      never a refusal.**
-
-      **The acceptance, and the second half of it is the maintainer's, verbatim:**
-      _"MAke sure to test Q261 from a subagent once implemented and make sure to
-      have test coverage."_
-
-      1. **Suite coverage, four arms.** A stub client that calls before listing is
-         refused once with the informed message and receives the notification, and a
-         stub that lists first is never refused -- **planted red**. A real Claude
-         Code headless arm under a scratch configuration directory: the server exits
-         mid-session, the client re-dials, the first call is refused, the list is
-         refreshed on the notification, the second call succeeds. A Codex arm under
-         a scratch `CODEX_HOME`: a new thread lists fresh and is never refused. And
-         the resume and catch-up courtesy line when the stamped version differs.
-      2. **A sub-agent drives the real clients before the item is called done**, at
-         implementation time, against the **published slice** and through the same
-         rigs the 2026-09-23 research used --
-         [`docs/evidence/2026-09-23-client-reconnect`](docs/evidence/2026-09-23-client-reconnect/README.md)
-         -- **never the real install and never the maintainer's own client state**,
-         reporting byte-exact results.
-
 - [ ] **T7: start Playwright's own `list` at session close, detached.** The
       decision is
       [T7](DECISIONS.md#processes-browsers-and-session-modes), taken 2026-09-24.
