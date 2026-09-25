@@ -140,6 +140,16 @@ internal static partial class CoordinatorLog
         Message = "Coordinator wake: {Outcome}, {Why}")]
     public static partial void Woke(ILogger logger, string outcome, string why);
 
+    /// <summary>The coordinator waits for what runs from the install to go.</summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="version">What is staged.</param>
+    /// <param name="running">What runs, in the sign-in step's own clause.</param>
+    [LoggerMessage(
+        EventId = 8,
+        Level = LogLevel.Information,
+        Message = "The coordinator waits to apply {Version}: {Running} It looks again when one of them exits or a verb arrives.")]
+    public static partial void Waiting(ILogger logger, string version, string running);
+
     /// <summary>The coordinator is done and lets its pipe go.</summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="why">Why it stops.</param>

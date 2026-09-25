@@ -18,7 +18,8 @@ namespace BrowserAI.Tests;
 
 /// <summary>
 /// The coordinator's pipe, end to end: what it is called, what it is, who wins
-/// when many start at once, and what a second start does.
+/// when many start at once, and what a second start does; and the coordinator's
+/// loop, which waits for the install to be free and applies.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -245,7 +246,8 @@ internal sealed class CoordinatorTests
     /// host, holding the pipe through <see cref="CoordinatorStart.Settle"/>, with a
     /// staged update the arm controls and a window that records. The grant records
     /// the pid it would have handed <c>AllowSetForegroundWindow</c>, which in one
-    /// process is this process's own.
+    /// process is this process's own. One stand-in the scan reports runs from the
+    /// install the whole time, so the loop waits and never applies.
     /// </para>
     /// <para>
     /// <b>The order is asserted, not only the calls</b>: the grant is made before
@@ -259,6 +261,7 @@ internal sealed class CoordinatorTests
     {
         using var root = ScratchDirectory.Create("coordinator-show");
         using var inbox = new CoordinatorInbox();
+        using var blocker = new ScriptedScan(root.Path, standIns: 1);
 
         var events = new ConcurrentQueue<string>();
         var staged = new ScriptedStaged { Candidate = Candidate("9.9.9") };
@@ -269,14 +272,7 @@ internal sealed class CoordinatorTests
 
         using var pipe = start.Pipe;
 
-        var ended = default(CoordinatorEnd?);
-        var loop = new Thread(() => ended = new CoordinatorLoop(inbox, staged, window, NullLogger.Instance).Run())
-        {
-            IsBackground = true,
-            Name = "coordinator loop under test",
-        };
-
-        loop.Start();
+        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, staged, blocker.Next, window, NullLogger.Instance));
 
         // A person's start.
         using (var person = new CoordinatorInbox())
@@ -306,9 +302,186 @@ internal sealed class CoordinatorTests
         var last = await CoordinatorClient.SendAsync(root.Path, CoordinatorVerb.Recheck, grant: null, TestDefaults.InProcessHang);
 
         await Assert.That(last.Outcome).IsEqualTo(HandOverOutcome.Answered).Because(last.Why);
-        await Assert.That(loop.Join(TestDefaults.InProcessHang)).IsTrue();
-        await Assert.That(ended).IsEqualTo(CoordinatorEnd.NothingPending);
+        await Assert.That(await run.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(CoordinatorEnd.NothingPending);
         await Assert.That(window.Shows).IsEqualTo(1);
+        await Assert.That(staged.Applies).IsEqualTo(0);
+    }
+
+    /// <summary>
+    /// The coordinator holds what runs from the install, counts in the census while
+    /// it waits, and applies once that has exited, woken by the exit and nothing else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q285 a, the maintainer's words verbatim: <i>"Q285 a"</i>. The product's own
+    /// scan against a real process.</b> The stand-in is a copy of <c>cmd.exe</c>
+    /// planted under the scratch root's <c>current</c> directory, waited for until the
+    /// product's enumeration sees it, in a job the arm owns. Ending that job is the
+    /// exit the loop has to wake on; the loop has no timer to wake it instead.
+    /// </para>
+    /// <para>
+    /// <b>The census is read by a second member</b>, the way a server finishing its
+    /// update pass reads it, so the arm fails if the coordinator stops counting as
+    /// somebody who is there: a server alone would apply on its own exit, and the
+    /// apply's kill pass would end the coordinator.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheCoordinatorWaitsWhileAProcessRunsFromTheInstallAndAppliesOnceItHasExited()
+    {
+        using var root = ScratchDirectory.Create("coordinator-wait");
+        using var inbox = new CoordinatorInbox();
+        using var logs = new CapturingLoggerProvider();
+        using var scanned = new SemaphoreSlim(0);
+        using var censusRead = new ManualResetEventSlim();
+        using var window = new RecordedWindow(new ConcurrentQueue<string>());
+        using var scope = new JobObjectScope();
+
+        var (standIn, _) = await PlantedProcess.StartInAsync(scope, Path.Combine(root.Path, RegistrationTarget.CurrentDirectoryName), root.Path);
+        var standInId = standIn.Id;
+        var staged = new ScriptedStaged { Candidate = Candidate("9.9.9") };
+        var scans = 0;
+
+        var run = RunOnItsOwnThread(new CoordinatorLoop(
+            root.Path,
+            inbox,
+            staged,
+            () =>
+            {
+                var found = BrowserProcesses.HeldUnder(root.Path, Environment.ProcessId);
+
+                // The first pass stops here while the arm reads the census, between
+                // the loop's join and its verdict on what the scan found.
+                if (Interlocked.Increment(ref scans) is 1)
+                {
+                    _ = scanned.Release();
+                    _ = censusRead.Wait(TestDefaults.InProcessHang);
+                }
+
+                return found;
+            },
+            window,
+            logs.CreateLogger("coordinator")));
+
+        await Assert.That(await scanned.WaitAsync(TestDefaults.InProcessHang)).IsTrue();
+
+        try
+        {
+            // A second member of the census counts the coordinator.
+            using var peer = LiveInstances.Join(root.Path, NullLogger.Instance);
+
+            await Assert.That(peer).IsNotNull();
+
+            var census = peer!.Census();
+
+            await Assert.That(census.State).IsEqualTo(Liveness.NotAlone).Because(census.Why ?? "the census gave no reason");
+            await Assert.That(census.Others).IsEqualTo(1);
+        }
+        finally
+        {
+            censusRead.Set();
+        }
+
+        // The stand-in ends with its job.
+        scope.Dispose();
+
+        await Assert.That(await run.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(CoordinatorEnd.Applied);
+        await Assert.That(staged.Applies).IsEqualTo(1);
+
+        // It waited on the stand-in, said so once naming it, and looked again when it exited.
+        var waiting = logs.Records.Where(record => record.EventId.Id is 8).Select(record => record.Message).ToList();
+
+        await Assert.That(waiting.Count).IsEqualTo(1);
+        await Assert.That(waiting[0]).Contains($"pid {standInId} ");
+        await Assert.That(Volatile.Read(ref scans)).IsEqualTo(2);
+
+        // And it left the census when it stopped.
+        using var after = LiveInstances.Join(root.Path, NullLogger.Instance);
+
+        await Assert.That(after).IsNotNull();
+        await Assert.That(after!.Census().State).IsEqualTo(Liveness.Alone);
+    }
+
+    /// <summary>
+    /// With nothing staged the coordinator stops on its first pass, before it scans
+    /// anything or joins the census.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is every start of a build that is not installed</b>, whose staged
+    /// updates are <see cref="NothingStaged"/>'s: it adds no marker to the census of
+    /// the root it was keyed to, and scans nothing under it. The live directory not
+    /// being there is the reading; the arm above, which joins, is its positive control.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task WithNothingStagedTheCoordinatorStopsAtOnceWithoutScanningOrJoiningTheCensus()
+    {
+        using var root = ScratchDirectory.Create("coordinator-nothing");
+        using var inbox = new CoordinatorInbox();
+        using var scan = new ScriptedScan(root.Path, standIns: 1);
+        using var window = new RecordedWindow(new ConcurrentQueue<string>());
+
+        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, NothingStaged.Instance, scan.Next, window, NullLogger.Instance));
+
+        await Assert.That(await run.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(CoordinatorEnd.NothingPending);
+        await Assert.That(scan.Passes.Count).IsEqualTo(0);
+        await Assert.That(Directory.Exists(LiveInstances.DirectoryUnder(root.Path))).IsFalse();
+    }
+
+    /// <summary>
+    /// More processes than one wait can hold are all held and all waited for, 63
+    /// at a time beside the pipe; a verb and an exit are each a new pass, and the
+    /// apply waits for the last of them.
+    /// </summary>
+    /// <remarks>
+    /// <b>One wait holds at most 64 handles</b>, and the loop's holds the pipe's and
+    /// up to 63 processes'. Seventy real processes would cost the machine more than the
+    /// rule is worth, so here the scan is scripted: each stand-in is an event the arm
+    /// sets, handed to the loop through a fresh handle on every pass, the way the
+    /// product's scan opens a fresh handle to every process.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task MoreProcessesThanOneWaitCanHoldAreAllWaitedForSixtyThreeAtATime()
+    {
+        const int StandIns = CoordinatorLoop.ProcessesPerWait + 7;
+
+        using var root = ScratchDirectory.Create("coordinator-many");
+        using var inbox = new CoordinatorInbox();
+        using var logs = new CapturingLoggerProvider();
+        using var scan = new ScriptedScan(root.Path, StandIns);
+        using var window = new RecordedWindow(new ConcurrentQueue<string>());
+
+        var staged = new ScriptedStaged { Candidate = Candidate("9.9.9") };
+        var run = RunOnItsOwnThread(new CoordinatorLoop(root.Path, inbox, staged, scan.Next, window, logs.CreateLogger("coordinator")));
+
+        // The first pass holds all seventy.
+        await Assert.That(await scan.PassesAsync(1, run)).IsTrue();
+
+        // A recheck is a new pass over the same seventy.
+        inbox.Post(CoordinatorVerb.Recheck, from: 1);
+
+        await Assert.That(await scan.PassesAsync(2, run)).IsTrue();
+
+        // The first 63 exit, and the next pass holds the other seven.
+        scan.Exit(0, CoordinatorLoop.ProcessesPerWait);
+
+        await Assert.That(await scan.PassesAsync(3, run)).IsTrue();
+
+        // The last seven exit, and the pass after them applies.
+        scan.Exit(CoordinatorLoop.ProcessesPerWait, StandIns - CoordinatorLoop.ProcessesPerWait);
+
+        await Assert.That(await run.WaitAsync(TestDefaults.InProcessHang)).IsEqualTo(CoordinatorEnd.Applied);
+        await Assert.That(staged.Applies).IsEqualTo(1);
+        await Assert.That(string.Join(" ", scan.Passes)).IsEqualTo($"{StandIns} {StandIns} 7 0");
+
+        // One line each time the count changed, and none for the recheck that changed nothing.
+        var waiting = logs.Records.Where(record => record.EventId.Id is 8).Select(record => record.Message).ToList();
+
+        await Assert.That(waiting.Count).IsEqualTo(2);
+        await Assert.That(waiting[0]).Contains($"{StandIns} process(es) run from this install");
+        await Assert.That(waiting[1]).Contains("7 process(es) run from this install");
     }
 
     /// <summary>
@@ -471,6 +644,35 @@ internal sealed class CoordinatorTests
         return arrived;
     }
 
+    /// <summary>Runs the loop on a thread of its own, the way the app runs it on its main thread.</summary>
+    /// <param name="loop">The loop.</param>
+    /// <returns>How it ended, or what it threw.</returns>
+    private static Task<CoordinatorEnd> RunOnItsOwnThread(CoordinatorLoop loop)
+    {
+        var completion = new TaskCompletionSource<CoordinatorEnd>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                completion.SetResult(loop.Run());
+            }
+#pragma warning disable CA1031 // Whatever the loop threw belongs to the awaiting arm, not to this thread.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                completion.SetException(failure);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "coordinator loop under test",
+        };
+
+        thread.Start();
+        return completion.Task;
+    }
+
     /// <summary>A candidate the loop can be handed.</summary>
     /// <param name="version">Its version.</param>
     /// <returns>The candidate.</returns>
@@ -498,6 +700,149 @@ internal sealed class CoordinatorTests
         public UpdateCandidate? Pending() => Candidate;
 
         public void ApplyAfterThisProcessExits(UpdateCandidate candidate) => Applies++;
+    }
+
+    /// <summary>
+    /// A scan the arm scripts: stand-ins the loop is told run from the install, each
+    /// an event the arm sets, so an exit is a call and never a kill.
+    /// </summary>
+    /// <remarks>
+    /// <b>Every pass hands the loop a fresh handle to each stand-in still running</b>,
+    /// the way the product's scan opens a fresh handle to each process, and the loop
+    /// disposes them with the pass. The events are named so that the arm's handle and
+    /// each pass's are different handles to one event: one wait refuses the same
+    /// handle twice, and the arm has to be able to set what a pass holds.
+    /// </remarks>
+    private sealed class ScriptedScan : IDisposable
+    {
+        private const int FirstProcessId = 100_000;
+
+        private readonly Lock _gate = new();
+        private readonly string _root;
+        private readonly string[] _names;
+        private readonly EventWaitHandle[] _exits;
+        private readonly bool[] _exited;
+        private readonly List<int> _passes = [];
+        private readonly SemaphoreSlim _scanned = new(0);
+
+        public ScriptedScan(string root, int standIns)
+        {
+            var prefix = $"BrowserAI-coordinator-loop-{Guid.NewGuid():N}-";
+
+            _root = root;
+            _names = [.. Enumerable.Range(0, standIns).Select(index => $"{prefix}{index}")];
+            _exits = [.. _names.Select(name => new EventWaitHandle(initialState: false, EventResetMode.ManualReset, name))];
+            _exited = new bool[standIns];
+        }
+
+        /// <summary>How many stand-ins each pass held, in order.</summary>
+        public IReadOnlyList<int> Passes
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return [.. _passes];
+                }
+            }
+        }
+
+        /// <summary>One pass: a fresh handle to every stand-in that has not exited.</summary>
+        /// <returns>The scan, which the loop disposes.</returns>
+        public RootScan Next()
+        {
+            List<HeldProcess> held = [];
+
+            lock (_gate)
+            {
+                for (var index = 0; index < _names.Length; index++)
+                {
+                    if (!_exited[index])
+                    {
+                        held.Add(Hold(index));
+                    }
+                }
+
+                _passes.Add(held.Count);
+            }
+
+            _ = _scanned.Release();
+
+            return new RootScan(held, []);
+        }
+
+        /// <summary>Ends a run of stand-ins: gone from every later pass first, then set.</summary>
+        /// <param name="first">The first to end.</param>
+        /// <param name="count">How many.</param>
+        public void Exit(int first, int count)
+        {
+            lock (_gate)
+            {
+                Array.Fill(_exited, true, first, count);
+            }
+
+            foreach (var exit in _exits.AsSpan(first, count))
+            {
+                _ = exit.Set();
+            }
+        }
+
+        /// <summary>
+        /// Waits until the loop has made this many passes, the loop has ended, or the
+        /// hang detector runs out.
+        /// </summary>
+        /// <remarks>
+        /// <b>A loop that threw ends the wait with what it threw</b>, so an arm whose
+        /// loop failed says why at once and not after the hang detector.
+        /// </remarks>
+        /// <param name="count">How many passes.</param>
+        /// <param name="loop">The loop's run.</param>
+        /// <returns>Whether it made them.</returns>
+        public async Task<bool> PassesAsync(int count, Task loop)
+        {
+            while (Passes.Count < count)
+            {
+                var next = _scanned.WaitAsync(TestDefaults.InProcessHang);
+
+                if (await Task.WhenAny(next, loop) == loop)
+                {
+                    await loop;
+                    return Passes.Count >= count;
+                }
+
+                if (!await next)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public void Dispose()
+        {
+            foreach (var exit in _exits)
+            {
+                exit.Dispose();
+            }
+
+            _scanned.Dispose();
+        }
+
+        /// <summary>A fresh handle to one stand-in's event, owned by the held process it is given to.</summary>
+        /// <param name="index">Which stand-in.</param>
+        /// <returns>The held process.</returns>
+        private HeldProcess Hold(int index)
+        {
+            using var opened = new EventWaitHandle(initialState: false, EventResetMode.ManualReset, _names[index]);
+
+            var handle = opened.SafeWaitHandle;
+
+            // The held process owns the handle from here, and the emptied wrapper disposes nothing.
+            opened.SafeWaitHandle = null;
+
+            return new HeldProcess(FirstProcessId + index, 0, Path.Combine(_root, RegistrationTarget.CurrentDirectoryName, $"stand-in-{index}.exe"), handle);
+        }
     }
 
     /// <summary>A window that records each time it is shown.</summary>

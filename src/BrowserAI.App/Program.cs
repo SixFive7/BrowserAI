@@ -232,9 +232,11 @@ internal static class Program
         // the pass -- a person's start asking for the window, or a blocked server's
         // start handing over its recheck -- which the loop below then answers, since
         // the start that sent it has already exited.
+        RootScan scanRoot() => BrowserProcesses.HeldUnder(root, Environment.ProcessId);
+
         if (mode is StartMode.SignIn)
         {
-            var signIn = SignInStep.Run(staged, () => BrowserProcesses.HeldUnder(root, Environment.ProcessId), logger);
+            var signIn = SignInStep.Run(staged, scanRoot, logger);
 
             if (signIn.Outcome is SignInOutcome.Applied || inbox.IsEmpty)
             {
@@ -242,7 +244,11 @@ internal static class Program
             }
         }
 
-        _ = new CoordinatorLoop(inbox, staged, window, logger).Run();
+        // ⚠️ THE APPLY LOOP -- Q285 a, 2026-09-25, phase 2's minimal form. It waits on
+        // every process the scan holds and on the pipe, re-scans on each exit and each
+        // verb, applies once nothing else runs from the install, and stops when nothing
+        // is staged. A build with no update feed has nothing staged, so it stops at once.
+        _ = new CoordinatorLoop(root, inbox, staged, scanRoot, window, logger).Run();
 
         return shown;
     }

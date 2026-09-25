@@ -73,55 +73,132 @@ internal enum CoordinatorEnd
 {
     /// <summary>No newer package is staged, so there is nothing to coordinate.</summary>
     NothingPending,
+
+    /// <summary>Nothing else ran from the install, and the staged package was handed to Velopack.</summary>
+    Applied,
 }
 
 /// <summary>
 /// What the coordinator does while it holds its pipe: act on the verbs it is
-/// handed, for as long as a newer package is staged.
+/// handed, and apply the staged package once nothing else runs from the install.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>It is not resident</b>, Q280 b's design in the maintainer's words: the
-/// coordinator runs when it is needed. It stops as soon as no newer package is
-/// staged, and every verb it takes is a reason to ask again.
+/// <b>Q280 b and Q285 a, the maintainer's words verbatim: <i>"Q285 a"</i>. Phase
+/// 2's minimal form.</b> Each pass asks whether a newer package is staged and
+/// stops when none is; scans every process whose image lies under the install
+/// root, with itself left out, exactly the set Velopack's kill pass would end;
+/// applies, silent and without a restart, when that scan is empty, and stops;
+/// and otherwise holds a handle on every process it found and waits on those
+/// handles and the pipe's own. Any exit and any verb is a new pass. The toast
+/// (phase 3) and the graceful close with its page (phase 4) are not here.
 /// </para>
 /// <para>
-/// <b>It waits on one handle and on nothing that ticks.</b> The one timer in the
-/// update lane is the server's; the coordinator wakes when a verb arrives, and
-/// sleeps otherwise.
+/// <b>No timer.</b> The one timer in the update lane is the server's
+/// (DECISIONS, <i>Instance teardown</i>); the coordinator sleeps in the kernel
+/// until a process it holds exits or a verb arrives.
+/// </para>
+/// <para>
+/// ⚠️ <b>At most 63 processes are waited on at once</b>, with the pipe's handle the
+/// 64th, which is what one wait can hold. More than that are still held open and
+/// still counted; the wait wakes on the first of the 63 to go, and the next pass
+/// waits on the next 63. The apply waits for all of them either way, because it
+/// only happens on a pass whose scan finds nothing.
+/// </para>
+/// <para>
+/// <b>It joins the live census on the first pass that finds a package staged, and
+/// stays in it until it stops</b>, so a server finishing an update pass counts it
+/// and wakes it instead of applying on its own exit, whose kill pass would end the
+/// coordinator. It joins before it scans, so a server that starts after the scan
+/// already counts it. A coordinator with nothing staged stops before it joins, which
+/// is every start of a build that is not installed: such a build has no feed and
+/// never touches a census.
+/// </para>
+/// <para>
+/// <b>It waits on the main thread, which is the dialog's single-threaded
+/// apartment</b>, through <see cref="WaitHandle.WaitAny(WaitHandle[])"/>, which on
+/// such a thread keeps the thread's messages moving while it waits.
+/// </para>
+/// <para>
+/// <b>A scan that could not establish how the root is spelled waits for a verb</b>:
+/// it holds no handle, so no exit can wake it, and it applies nothing, which is the
+/// sign-in step's rule. The next blocked server's <c>recheck</c> is what looks again.
 /// </para>
 /// </remarks>
+/// <param name="installRoot">The install root, or the data root of a process that is not installed.</param>
 /// <param name="inbox">The verbs the pipe has taken.</param>
-/// <param name="staged">Whether a newer package is on disk.</param>
+/// <param name="staged">Whether a newer package is on disk, and the apply.</param>
+/// <param name="scan">The path scan under the install root, this process left out.</param>
 /// <param name="window">The window a <c>show</c> opens.</param>
 /// <param name="logger">Where the coordinator reports.</param>
 internal sealed class CoordinatorLoop(
+    string installRoot,
     CoordinatorInbox inbox,
     IStagedUpdates staged,
+    Func<RootScan> scan,
     ICoordinatorWindow window,
     ILogger logger)
 {
-    /// <summary>Runs until there is nothing left to coordinate.</summary>
+    /// <summary>The most process handles one wait holds: the kernel's 64, less the pipe's.</summary>
+    public const int ProcessesPerWait = 63;
+
+    /// <summary>Runs until there is nothing left to coordinate, or the package has been handed over.</summary>
     /// <returns>Why it stopped.</returns>
     public CoordinatorEnd Run()
     {
-        while (true)
+        LiveInstances? member = null;
+
+        try
         {
-            while (inbox.TryTake(out var arrival))
+            var waitedOn = -1;
+
+            while (true)
             {
-                if (arrival!.Verb is CoordinatorVerb.Show)
+                while (inbox.TryTake(out var arrival))
                 {
-                    _ = window.Show();
+                    if (arrival!.Verb is CoordinatorVerb.Show)
+                    {
+                        _ = window.Show();
+                    }
                 }
-            }
 
-            if (staged.Pending() is null)
-            {
-                CoordinatorLog.Stopping(logger, "no newer package is staged, so there is nothing to coordinate.");
-                return CoordinatorEnd.NothingPending;
-            }
+                if (staged.Pending() is not { } pending)
+                {
+                    CoordinatorLog.Stopping(logger, "no newer package is staged, so there is nothing to coordinate.");
+                    return CoordinatorEnd.NothingPending;
+                }
 
-            _ = inbox.Arrived.WaitOne();
+                member ??= LiveInstances.Join(installRoot, logger);
+
+                using var found = scan();
+
+                if (found.Held.Count is 0 && found.Unresolved.Count is 0)
+                {
+                    staged.ApplyAfterThisProcessExits(pending);
+
+                    var handed = $"{pending.Version} is staged and nothing else runs from this install, so it was handed to Update.exe, silent and with no restart, to apply once this process exits.";
+
+                    CoordinatorLog.Stopping(logger, handed);
+                    return CoordinatorEnd.Applied;
+                }
+
+                if (found.Held.Count != waitedOn)
+                {
+                    waitedOn = found.Held.Count;
+
+                    var running = SignInStep.Running(found);
+
+                    CoordinatorLog.Waiting(logger, pending.Version, running);
+                }
+
+                WaitHandle[] handles = [inbox.Arrived, .. found.Held.Take(ProcessesPerWait)];
+
+                _ = WaitHandle.WaitAny(handles);
+            }
+        }
+        finally
+        {
+            member?.Dispose();
         }
     }
 }
