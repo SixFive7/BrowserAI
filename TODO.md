@@ -80,9 +80,11 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
 - [ ] **Q313: a report to Playwright about the safe-mode hang.**
       [microsoft/playwright#40882](https://github.com/microsoft/playwright/issues/40882),
       a Firefox hang in `newPage` on Windows 11, was closed as not planned on
-      2026-06-15 because nobody could reproduce it. Recommended: once Q312 lands,
-      draft a comment with the cause and a reproduction, and show the maintainer
-      the exact text; nothing is posted without that go-ahead.
+      2026-06-15 because nobody could reproduce it, and its symptom is not quite
+      ours. Recommended: once Q312 lands, draft a new issue with the cause, a
+      reproduction and the one-line fix, plus a short comment on #40882 pointing
+      at it, and show the maintainer the exact text of both; nothing is posted
+      without that go-ahead.
 
 ### Paused work
 
