@@ -77,6 +77,12 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
       mechanism test recorded as the second named exception to the plant-it-red
       rule, and a live check that fails a run whenever a Firefox starts in safe
       mode.
+- [ ] **Q313: a report to Playwright about the safe-mode hang.**
+      [microsoft/playwright#40882](https://github.com/microsoft/playwright/issues/40882),
+      a Firefox hang in `newPage` on Windows 11, was closed as not planned on
+      2026-06-15 because nobody could reproduce it. Recommended: once Q312 lands,
+      draft a comment with the cause and a reproduction, and show the maintainer
+      the exact text; nothing is posted without that go-ahead.
 
 ### Paused work
 
@@ -103,6 +109,10 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
 - [ ] **Two remarks say `firefoxUserPrefs` are written to `user.js`**, at
       `BrowserConfiguration.cs:725-731` and `FirefoxProfile.cs:87-90`; upstream
       sends them at runtime, in `Browser.enable`.
+- [ ] **The "Residue outside the app root" item further down may already be
+      answered.** T7 c built the reap on 2026-09-24 (`ad4537b`, on `master`).
+      Check what the item still leaves open, then retire it with a pointer to
+      what implements it.
 
 ### Research that exists only under `.work`, owed to `docs/evidence/` and `kb/` before the session closes
 
