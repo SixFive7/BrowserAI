@@ -360,7 +360,7 @@ release body; nothing else depends on it.
   and which reads and never repairs. Each derives the repository root from its own location,
   so none is machine-specific the way the wiped copies were.
 
-  ⚠️ **This is not the shared wrapper [`CLAUDE.md`](CLAUDE.md) forbids**, and
+  ⚠️ **This is not the shared wrapper [`AGENTS.md`](AGENTS.md) forbids**, and
   [`TESTING.md`](TESTING.md) and [`RELEASING.md`](RELEASING.md) say so in place: the
   prohibition is against one script both shells call, which would erase the difference that
   makes two shells worth running. These are five scripts, one per shell per level plus the
@@ -439,7 +439,7 @@ release body; nothing else depends on it.
   per italicised or named claim in three hand-counted lists, and it is now one per marker --
   and **the number was 27 before and after**, which is the check that the tagging matched the
   lists. Three files are exempt because their job is to DISCUSS the marker: `TODO.md`,
-  `CLAUDE.md` and the test itself, with both directions asserted so a fourth cannot quietly
+  `AGENTS.md` and the test itself, with both directions asserted so a fourth cannot quietly
   join them.
 
   **Where they are:** 10 in the top-level documents, 9 under `src/`, 8 in `kb/`. Nine of the
@@ -667,7 +667,7 @@ release body; nothing else depends on it.
 - 📝 **No trace of AI is a repository directive, and two scans keep the half a machine can see.**
   The maintainer's instruction, 2026-09-23, verbatim: *"Ensure there is no trace of AI both in
   wording and character use. Both as a directive and as part of the sweep."* It is a rule in
-  [`CLAUDE.md`](CLAUDE.md) with both halves named and with the second one honest about needing
+  [`AGENTS.md`](AGENTS.md) with both halves named and with the second one honest about needing
   a reader.
 
   **The character half: 12,518 characters in two passes.** Em dash to `--`, en dash to `-`,
@@ -703,7 +703,7 @@ release body; nothing else depends on it.
   it that way; it is built from code points now.
 
 - 📝 **The first documents a reader meets name the standing release, and the tagline names the features.**
-  [`README.md`](README.md) and [`CLAUDE.md`](CLAUDE.md) said *tagged `v1.0.0` and published* on
+  [`README.md`](README.md) and [`AGENTS.md`](AGENTS.md) said *tagged `v1.0.0` and published* on
   the day `1.1.0` was published, and `1.1.0` appeared nowhere in the README at all. Both say
   `v1.1.0` now; the *no install is known* half is untouched, because nothing measured it.
 
@@ -770,7 +770,7 @@ release body; nothing else depends on it.
 
   **Five departures from the bytes as taken are named in the batches they belong to**: the
   request captures are trimmed of a third-party client's own system prompt, this repository's
-  `CLAUDE.md` and the tool schemas, with the SHA-256 of all 69 originals kept; the full-desktop
+  `AGENTS.md` and the tool schemas, with the SHA-256 of all 69 originals kept; the full-desktop
   screenshots and every browser profile tree are dropped; a cookie jar is deleted and one public
   address is redacted; ANSI escapes are stripped from five terminal captures; and eighteen
   fetched documents and rigs are renamed so a scan does not try to resolve somebody else's links
@@ -1042,6 +1042,20 @@ release body; nothing else depends on it.
   One mention of the file name survived the README sweep -- not as a download, but inside the
   status paragraph's account of a planted red, where it was a true sentence about a test. It says
   the declaration "came back naming it" now. A reader who wants the name can read the test.
+
+- 📝 **The instruction files are `AGENTS.md` now: the root file and the four beside the code.**
+  Claude Code reads them through its built-in agents-md plugin since 2.1.277, and in its default mode
+  only while no `CLAUDE.md`, `.claude/CLAUDE.md` or `CLAUDE.local.md` stands on the path from the
+  drive root to the working directory, so all five moved in one commit, and every link, test, hook
+  and remark that named them moved with them. The root file now says to read any `AGENTS.md` from
+  a subfolder up to the root that has not been read yet before working there, because a folder's
+  file is attached only when a file in that folder is read. `.claude/settings.json` keeps any stray
+  `CLAUDE.md` or `CLAUDE.local.md` out of Claude's context and denies edits to them, and keeps
+  `.work` out; `.gitignore` lists both names. The three links inside the 1.0.0 section were
+  re-pointed under the maintainer's grant and the section's seal re-recorded: the same length, two
+  new digests. Added in 2.1.277: https://code.claude.com/docs/en/changelog#2-1-277; extended in
+  2.1.281: https://code.claude.com/docs/en/changelog#2-1-281; remaining differences:
+  https://github.com/anthropics/claude-code/tree/main/mods/agents-md#where-it-still-differs-from-claudemd
 
 ### Removed
 
@@ -2287,7 +2301,7 @@ Read [`README.md`](README.md) first.
   nothing and together match everything. The correct syntax, the counts side by
   side and a re-establishment procedure are in the article; the rule -- **a
   filtered run is a development convenience, never a verification** -- is in
-  [`CLAUDE.md`](CLAUDE.md), in the list of rules that need a person, with the
+  [`AGENTS.md`](AGENTS.md), in the list of rules that need a person, with the
   reason no mechanism can close it stated there and not implied.
 
 - 📝 **The 2026-08-24 adversarial review is a dated record, not a file in
@@ -5165,7 +5179,7 @@ Read [`README.md`](README.md) first.
   wide instead of seven rigs wide**, and `2026-09-14-firstrun/observe.ps1` is the
   one true positive: it watches for a console host appearing anywhere on the
   machine, which no pid or path form expresses, so re-spelling it would falsify
-  the record of method and not fix anything. [`CLAUDE.md`](CLAUDE.md) says so
+  the record of method and not fix anything. [`AGENTS.md`](AGENTS.md) says so
   by addition with the open question it replaces quoted. And
   [`TODO.md`](TODO.md)'s ask #1 records that
   [`dgozman`'s request for a repro was finally answered](https://github.com/microsoft/playwright/issues/42497#issuecomment-5713988873)
@@ -5255,7 +5269,7 @@ Read [`README.md`](README.md) first.
   against the observing it permits -- and it cannot be re-spelled pid-keyed,
   because what it watches for is a console host appearing anywhere on the machine.
   The move was performed and reverted; `docs/probes/README.md` and
-  [`CLAUDE.md`](CLAUDE.md) are corrected by addition, and both said every use was
+  [`AGENTS.md`](AGENTS.md) are corrected by addition, and both said every use was
   by pid or parent pid, which was true of fourteen files and false of this one.
   **Three false positives outside the rigs were found and removed by the same
   change**, in `build/New-Release.ps1`, `build/Write-ReleaseManifest.ps1` and three

@@ -448,7 +448,7 @@ with its output.
 ### 3. Upstream drift adjudicated
 
 Resolve the five upstreams **the way the build resolves them** -- the table in
-[`CLAUDE.md` → the daily drift check](CLAUDE.md#the-daily-drift-check). A
+[`AGENTS.md` → the daily drift check](AGENTS.md#the-daily-drift-check). A
 registry query's defaults are not that: on 2026-08-15, npm `latest` for
 `playwright-core` was `1.62.1` while the shipping version was
 `1.63.0-alpha-2026-08-05`.
@@ -1204,7 +1204,7 @@ the legend and the footer.
 
 ⚠️ **IT IS A REPOSITORY RULE SINCE 2026-09-23 AND THIS IS NO LONGER WHERE
 IT LIVES** -- *added by addition; the paragraph above stood alone as a RELEASE
-rule until then.* [`CLAUDE.md`](CLAUDE.md) carries the directive for the whole
+rule until then.* [`AGENTS.md`](AGENTS.md) carries the directive for the whole
 tree, the character half as a scan over every tracked text file and the wording
 half as a rule that needs a reader. **What is below is still true and is now the
 narrower case**: a release body is the one place where getting it wrong is
@@ -1627,7 +1627,7 @@ The cost, stated plainly so it is inherited as a decision:
 - **The gate is only as good as the person invoking it.** It rests entirely on
   the run happening and not on its being assumed.
 - The one gap it leaves -- *upstream moved while nobody was looking* -- is covered
-  by the [daily drift check](CLAUDE.md#the-daily-drift-check), which is a
+  by the [daily drift check](AGENTS.md#the-daily-drift-check), which is a
   directive and not a job, and which fires by construction because this
   project is built entirely through an agent: the check happens because the work
   happens.

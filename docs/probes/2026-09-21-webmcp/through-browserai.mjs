@@ -18,7 +18,7 @@
 //
 // WARNING It creates a real session under the app root's index and DESTROYS it
 // at the end. Point <sessionDir> inside .work/ and nowhere else. It does not
-// set BROWSERAI_ROOT, because setting it does not isolate a run (CLAUDE.md).
+// set BROWSERAI_ROOT, because setting it does not isolate a run (AGENTS.md).
 
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';

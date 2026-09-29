@@ -37,7 +37,7 @@
 
 .PARAMETER ScratchRoot
     Working directory for the regenerated copies and the rendered diff. Under
-    .work/, per CLAUDE.md.
+    .work/, per AGENTS.md.
 
 .EXAMPLE
     pwsh -File build/Update-UpstreamSnapshots.ps1

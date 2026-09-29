@@ -143,7 +143,7 @@ file with no headings is an offence of its own. The retitling that moved 53 anch
 links across 20 files would go red today. The gap this entry is about was the *only*
 reason the split was risky, and it no longer exists.
 
-### B. Where the three directory-scoped `CLAUDE.md` files go
+### B. Where the three directory-scoped `AGENTS.md` files go
 
 **Taken:** `src/BrowserAI/Interop/`, `src/BrowserAI/Sessions/`, and
 `src/BrowserAI/Runtime/` -- measured as carrying 59% of all prohibition language
@@ -269,7 +269,7 @@ deliberately deleted, name this entry, and say what the loss of it means; the re
 procedure for the upstream half now ends in *run `git check-ignore -v` over `src/` and
 `tests/` by hand*, not *run the suite*. **That is a comment where there was a
 mechanism, and the comment says so about itself** -- which is precisely what
-[`CLAUDE.md`](CLAUDE.md) means by the second list needing a reader, not a
+[`AGENTS.md`](AGENTS.md) means by the second list needing a reader, not a
 build.
 
 **To reverse:** restore the method and its `TrackedFilesAsync` helper from `d8689cd`.
@@ -900,7 +900,7 @@ that process. Within one test host that is exactly right: it runs before any
 browser exists. **Across two, it is a machine-wide kill with no interlock**: a
 second harness process reading a live run's record ends that run's browsers,
 probes and slices with exit code 1, and then deletes the scratch tree they are
-using. Measured 2026-08-29: 18 of 18. `CLAUDE.md` already warns that concurrent
+using. Measured 2026-08-29: 18 of 18. `AGENTS.md` already warns that concurrent
 suite runs eat each other and names *"a browser vanished"* as one of the shapes;
 what was not known is that the eating leaves a **1**, which is indistinguishable
 from a great many other things until somebody measures the alternatives.
@@ -1041,7 +1041,7 @@ opened with.
 
 ⚠️ **What was not taken, and what is still true.** (c) -- the machine-wide
 interlock -- was not taken, so *"run the suite twice at once"* is still undefined,
-not serialised, and everything `CLAUDE.md` says about two suites sharing
+not serialised, and everything `AGENTS.md` says about two suites sharing
 an app root still holds: they sweep each other's browsers, race each other's index
 and interleave in one log. One residual belongs to (b) itself and is named in the
 code: **the rewrite is not atomic against a concurrent append**, so a live run can
@@ -2021,7 +2021,7 @@ promptness assertions left comments where each one had been, which is why they
 were findable -- but `HouseRuleTests` has two arms and neither of them is *no
 test asserts on a wall clock*. The reclaim arm was added on 2026-08-20, after
 that sweep, by someone who had read the doctrine. **That is what a habit looks
-like**, and it is a candidate for the mechanism column in `CLAUDE.md`,
+like**, and it is a candidate for the mechanism column in `AGENTS.md`,
 not the reader column.
 
 

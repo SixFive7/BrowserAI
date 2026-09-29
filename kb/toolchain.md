@@ -135,7 +135,7 @@ message, which quotes the entry's own text. `[FLOATS]`
 
 All four measured 2026-08-16 on SDK **10.0.302**, by planting the failure and
 rebuilding with `--no-incremental` and not by reading documentation. They
-matter here because [a severity is never weakened to make code pass](../CLAUDE.md#rules-a-mechanism-enforces) and a
+matter here because [a severity is never weakened to make code pass](../AGENTS.md#rules-a-mechanism-enforces) and a
 severity that is quietly inert is the same defect as a config key
 `loadConfig` discards.
 
@@ -590,7 +590,7 @@ and will move when that moves.
 **The rule this earns: a filtered run is a development convenience, never a
 verification.** Only a full run is evidence, which is what
 [the gate](../TESTING.md#continuous-integration) already requires in practice and
-what [`CLAUDE.md`](../CLAUDE.md) now says in the list of rules that need a person.
+what [`AGENTS.md`](../AGENTS.md) now says in the list of rules that need a person.
 **It is in that list and not the mechanised one, and honestly so.** A
 filtered run is a correct run: every number it prints is true of what it ran.
 What is false is the sentence somebody writes underneath it, and no test can read

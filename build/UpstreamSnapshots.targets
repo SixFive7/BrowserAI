@@ -8,7 +8,7 @@
     BUILD, with the diff itself in the failure message.
 
     Imported by the test project and not by Directory.Build.props, for two
-    reasons. The gate is the suite (CLAUDE.md), so the project that owns the
+    reasons. The gate is the suite (AGENTS.md), so the project that owns the
     suite owns the gate; and a shared import would run it three times per
     build, once per project, for one answer.
 

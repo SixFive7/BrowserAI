@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The rule <c>src\BrowserAI\Interop\CLAUDE.md</c> states and no analyzer can
+/// The rule <c>src\BrowserAI\Interop\AGENTS.md</c> states and no analyzer can
 /// see: <b>a process is <c>(pid, creationFileTime)</c>, never a bare pid.</b>
 /// </summary>
 /// <remarks>

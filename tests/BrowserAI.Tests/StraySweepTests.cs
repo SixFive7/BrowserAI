@@ -1432,7 +1432,7 @@ internal sealed class StraySweepTests
         // exactly that reason before it was: `ours.Real` is composed in this
         // process from a working directory the shell spelled `c:\...`, and
         // QueryFullProcessImageNameW reports the drive letter upper-case whatever
-        // started the host. See DriveLetterCase, and `Sessions\CLAUDE.md`, which
+        // started the host. See DriveLetterCase, and `Sessions\AGENTS.md`, which
         // records the same defect arriving three times.
         await Assert.That(reported.ImagePath).IsEqualTo(ours.Real, StringComparison.OrdinalIgnoreCase);
         await Assert.That(string.Equals(reported.ImagePath, ours.Composed, StringComparison.OrdinalIgnoreCase)).IsFalse();

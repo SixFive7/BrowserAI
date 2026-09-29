@@ -126,7 +126,7 @@ internal sealed class ToolVerdictTests
     /// <c>answer</c> row changes nothing a caller can observe, and only this arm
     /// would notice. That makes the rows <b>build-and-test-time data</b>, and it
     /// is stated in <c>tool-verdicts.json</c> itself, in <c>ToolVerdicts</c>'
-    /// remarks and in <c>Sessions/CLAUDE.md</c> and not left for a reader to
+    /// remarks and in <c>Sessions/AGENTS.md</c> and not left for a reader to
     /// infer from a file whose other half is load-bearing at the door.
     /// </remarks>
     /// <returns>The assertion task.</returns>

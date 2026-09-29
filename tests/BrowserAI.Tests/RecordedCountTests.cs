@@ -63,7 +63,7 @@ namespace BrowserAI.Tests;
 /// file exists to prevent. Re-measure it from a run.
 /// </item>
 /// <item>
-/// <c>CLAUDE.md</c>'s <i>"kept by 222 files out of 224"</i> is a measurement of a
+/// <c>AGENTS.md</c>'s <i>"kept by 222 files out of 224"</i> is a measurement of a
 /// past moment -- the day before the rule became a test -- and is now false by
 /// construction, because <c>HouseRuleTests</c> holds it at 100%.
 /// </item>
@@ -210,19 +210,19 @@ internal sealed partial class RecordedCountTests
     [Test]
     public async Task TheFragmentCountInClaudeMdIsWhatTheScanFinds()
     {
-        var claude = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "CLAUDE.md"));
+        var claude = await File.ReadAllTextAsync(Path.Combine(RepositoryLayout.Root.FullName, "AGENTS.md"));
         var recorded = FragmentCount().Match(Whitespace().Replace(claude, " "));
 
         await Assert.That(recorded.Success).IsTrue();
 
         // The same scan that produces the number, called, not copied. The
-        // figure in CLAUDE.md is a stamp on THIS count and on nothing else.
+        // figure in AGENTS.md is a stamp on THIS count and on nothing else.
         var live = await DocumentationLinkTests.FragmentCountAsync();
         var stated = int.Parse(recorded.Groups["fragments"].Value, CultureInfo.InvariantCulture);
 
         await Assert.That(stated)
             .IsEqualTo(live)
-            .Because($"CLAUDE.md publishes {stated} `#fragment` links and the scan finds {live}. Re-measure and stamp it -- never adjust it by counting the links in a diff.");
+            .Because($"AGENTS.md publishes {stated} `#fragment` links and the scan finds {live}. Re-measure and stamp it -- never adjust it by counting the links in a diff.");
     }
 
     /// <summary>
@@ -391,7 +391,7 @@ internal sealed partial class RecordedCountTests
         await Assert.That(StampedArticles([("prose.md", "The guard used to match [STALE] anywhere, so discussing it turned the suite red.")]).Count).IsEqualTo(0);
 
         // ⚠️ THE POSITIVE CONTROL, because a search that returns zero is
-        // indistinguishable from a search that cannot match. CLAUDE.md states the
+        // indistinguishable from a search that cannot match. AGENTS.md states the
         // rule in as many words: prove the search can find something before
         // believing that it found nothing. kb/README.md is outside the article
         // corpus and spells the marker the way an article stamps it, twice, so it
@@ -624,7 +624,7 @@ internal sealed partial class RecordedCountTests
 
     /// <summary>Compares one named group against a live count.</summary>
     /// <param name="disagreements">Where a mismatch is recorded.</param>
-    /// <param name="predicate">The predicate, quoted before the number as CLAUDE.md requires.</param>
+    /// <param name="predicate">The predicate, quoted before the number as AGENTS.md requires.</param>
     /// <param name="recorded">The matched sentence.</param>
     /// <param name="group">The capture group holding the published figure.</param>
     /// <param name="live">What the scan found.</param>
@@ -668,7 +668,7 @@ internal sealed partial class RecordedCountTests
     [GeneratedRegex(@"(?<area>[^,]+?)\s+(?<count>\d+)(?:,|$)")]
     private static partial Regex CategoryTally();
 
-    /// <summary>The fragment count published in <c>CLAUDE.md</c>'s mechanism table.</summary>
+    /// <summary>The fragment count published in <c>AGENTS.md</c>'s mechanism table.</summary>
     [GeneratedRegex(@"`DocumentationLinkTests` -- (?<fragments>\d+) fragments as of \d{4}-\d{2}-\d{2}")]
     private static partial Regex FragmentCount();
 
@@ -779,7 +779,7 @@ internal sealed partial class RecordedCountTests
     /// <para>
     /// <b>The corpus is the whole repository, minus the three files whose job is to
     /// DISCUSS the marker.</b> <c>TODO.md</c> publishes the count and names every
-    /// claim; <c>CLAUDE.md</c> states the rule; this file implements it. A scan
+    /// claim; <c>AGENTS.md</c> states the rule; this file implements it. A scan
     /// that read those would count the prohibition as a violation, which is the
     /// shape the <c>[FLOATS]</c> counter is scoped away from for the same reason.
     /// <b>Both directions are asserted</b>, so a fourth file cannot quietly join
@@ -858,7 +858,7 @@ internal sealed partial class RecordedCountTests
     private static string[] DiscussesTheMarker { get; } =
     [
         "TODO.md",
-        "CLAUDE.md",
+        "AGENTS.md",
         "tests/BrowserAI.Tests/RecordedCountTests.cs",
     ];
 

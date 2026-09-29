@@ -19,7 +19,7 @@
       - BROWSERAI_RELEASE_RUN=1, which turns every capability skip into a
         failure and makes a filtered run refuse itself from the session hook.
 
-    ⚠️ NOT THE SHARED WRAPPER CLAUDE.md FORBIDS, for the reason
+    ⚠️ NOT THE SHARED WRAPPER AGENTS.md FORBIDS, for the reason
     `Invoke-OrdinaryGate.ps1` gives: the Git Bash half forces the other spelling
     and is a different instrument, and nothing here stands in for it.
 

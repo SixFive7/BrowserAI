@@ -134,7 +134,7 @@ what it cost to remove.
 
 Two things close it, and neither is a scheduled job:
 
-- **[The daily drift check](CLAUDE.md#the-daily-drift-check)** -- a directive that
+- **[The daily drift check](AGENTS.md#the-daily-drift-check)** -- a directive that
   fires at the start of a working session, not on a clock.
   ***Corrected 2026-08-18 (previously "It runs by construction, because the check
   happens when the work happens").*** **That is reasoned, not measured, and the
@@ -208,7 +208,7 @@ The reclaim pass runs before anything else and is idempotent:
   ends**: one `WARN` per terminated process in the machine's process log, naming
   the identity, the owner it found gone, the exit code and the record it was
   honouring; a pass that ended nothing stays silent. This does *not* make two
-  concurrent suite runs safe -- see [the working rules](CLAUDE.md) -- it makes them
+  concurrent suite runs safe -- see [the working rules](AGENTS.md) -- it makes them
   stop killing each other's processes.
 - **The scratch root is deleted with the routine that survives a locked file**
   (`TreeDelete`), because the common leftover is a session directory a browser
@@ -309,7 +309,7 @@ Four drivers, two per shell, plus the clearance snapshot they share:
 | [`build/InstallerLock.ps1`](build/InstallerLock.ps1) | the drivers' half of `.work\installer.lock`: each driver takes it for its own pid before its first clearance snapshot, declares the token in `BROWSERAI_INSTALLER_LOCK_HELD` for the run it starts, and lets it go at the end -- *added 2026-09-24, Q291 a; see [the installer lock](#the-installer-lock-is-the-suites-own)* |
 | [`build/Get-ClearanceSnapshot.ps1`](build/Get-ClearanceSnapshot.ps1) | the six readings compared either side of every run, and it never repairs what it finds -- *six since 2026-09-24 (previously five), when the hooks began registering with Codex and `~\.codex\config.toml` became a file a run must not change*. ⚠️ *The registration reading is a read-only parse of the `browserai` entry in `~/.claude.json` since 2026-09-24 (previously `claude mcp get browserai`), Q281, the maintainer's words verbatim: "Q281 a". The client's own verb starts the client, which health-checks the server and can write that very file; `SuiteCoverageTests.TheClearanceSnapshotReadsTheRegistrationWithoutStartingTheClient` holds the parse*. ⚠️ *The Codex reading is the `[mcp_servers.browserai]` entry of `~\.codex\config.toml`, line for line, since 2026-09-24 (previously the whole file by length and SHA-256), Q292, the maintainer's words verbatim: "Q292 a - Same for claude code". The Codex desktop app rewrites that file when it starts, and a whole-file hash stopped a gate on it; the Claude Code reading was already the entry alone. `SuiteCoverageTests.TheClearanceComparesOnlyEachClientsBrowserAiEntry` runs the script against a scratch profile, rewrites both files around the entry and then the entry itself, and holds both halves*. ⚠️ *And a seventh reading since 2026-09-24, Q294 b: `HKCU\Environment\Path` read raw -- its kind, its length and the SHA-256 of its unexpanded text, and every entry naming BrowserAI. The install and uninstall hooks write it now and the test pack runs them in every gate, so it must come out of every gate byte-identical; `SuiteCoverageTests.TheClearanceReadsTheUserPathByteForByte` compares the line with the test host's own read* |
 
-⚠️ **THIS IS NOT THE SHARED WRAPPER SCRIPT `CLAUDE.md` FORBIDS, and the
+⚠️ **THIS IS NOT THE SHARED WRAPPER SCRIPT `AGENTS.md` FORBIDS, and the
 difference is the whole reason there are four files.** That rule is about one
 script standing in for both halves, which would run one instrument twice and
 report what two report. Each of these forces and declares **its own** spelling,
@@ -421,7 +421,7 @@ until grep -q "Test run summary" "$log"; do sleep 5; done; tail -12 "$log"
   summary arrived.
 - **The window is hidden, not absent**, because a detached run still
   starts a process and [every launch in this tree suppresses its
-  console](CLAUDE.md). A run started this way puts nothing on the screen.
+  console](AGENTS.md). A run started this way puts nothing on the screen.
 
 **`BROWSERAI_RELEASE_RUN=1` goes on the same invocation** -- set it in the
 detached shell's own environment, not the caller's, or the variable is not where
@@ -1662,7 +1662,7 @@ property the approval prompt never had.
 > row** -- around forty of them, where the reviews that have happened answer a named
 > handful each. That is a review that did not happen, typed out to make a suite green,
 > which is the same act as
-> [editing the marker to make a test pass](CLAUDE.md#rules-a-mechanism-enforces).
+> [editing the marker to make a test pass](AGENTS.md#rules-a-mechanism-enforces).
 > The fields land with the **first real bump**, when there is something true to
 > write in them; until then the marker test is what fires, and it fires on exactly
 > the event that creates the obligation.
@@ -1719,7 +1719,7 @@ consequences a reader has to carry:
 
   ⚠️ **And publish the slice again after any `src/` change, before either run --
   *added 2026-09-17 by addition*.** Neither this paragraph nor
-  [`CLAUDE.md`](CLAUDE.md)'s said so, and the only place it was written down was
+  [`AGENTS.md`](AGENTS.md)'s said so, and the only place it was written down was
   the refusal it produces: a gate attempt on 2026-09-17 cost **34 reds** reading
   *the published binary ... is older than 7 source file(s), so this test would
   prove nothing about the code in the tree*. Around thirty arms drive the
@@ -1775,7 +1775,7 @@ against whatever runs the suite next is part of
 
 **What a capability skip means, kept because it did not depend on CI.** *Settled
 2026-08-18, because a green build reporting skips reads like a rule being broken
-and is not.* [The house rule](CLAUDE.md) -- *no skipped, quarantined or
+and is not.* [The house rule](AGENTS.md) -- *no skipped, quarantined or
 conditionally-ignored test in the tree* -- is about the **tree**, and
 `HouseRuleTests.NoTestInTheTreeIsSkipped` enforces exactly that: no `[Skip]`
 attribute anywhere. A capability skip is a different thing. It is decided at run

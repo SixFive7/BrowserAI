@@ -30,7 +30,7 @@
     "the argument was a merged upstream fix one wrapper release had not caught up",
     "with, which is a condition that expires, and it expired.",
     "",
-    "See CLAUDE.md, 'Versioning: everything floats, the build freezes it'."
+    "See AGENTS.md, 'Versioning: everything floats, the build freezes it'."
   ],
   "dependencies": {
     "@playwright/mcp": "latest"

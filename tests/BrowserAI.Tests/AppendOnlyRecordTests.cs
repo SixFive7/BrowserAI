@@ -219,6 +219,19 @@ internal sealed partial class AppendOnlyRecordTests
     /// re-shaped and no sentence of the existing body was rewritten.</b>
     /// </para>
     /// <para>
+    /// ⚠️ <b>AND AGAIN ON 2026-09-29, FOR THREE LINK TARGETS AND NOTHING ELSE.</b>
+    /// <i>Corrected 2026-09-29 (previously sealed at <c>CHANGELOG.md#1.0.0</c>
+    /// <c>342,298</c> characters / <c>6c7835b2...</c> / <c>cf24f4aa...</c>)</i>.
+    /// The instruction files were renamed from <c>CLAUDE.md</c> to <c>AGENTS.md</c>,
+    /// and three links in this section still named the old file, which
+    /// <see cref="DocumentationLinkTests"/> refuses once it is gone. The
+    /// maintainer's grant, verbatim: <i>"Maintainer approval: re-record the
+    /// CHANGELOG 1.0.0 seal for the CLAUDE.md → AGENTS.md rename."</i> The link
+    /// texts and targets changed and nothing else did: the record is still
+    /// <c>342,298</c> characters, because both names are six letters, and both
+    /// digests moved.
+    /// </para>
+    /// <para>
     /// <b>Three lifts is not a rule that lifts are free; it is the same version
     /// being cut a third time.</b> Each has been ordered in advance by the
     /// person who owns the record, and each has been narrower than the one
@@ -265,7 +278,7 @@ internal sealed partial class AppendOnlyRecordTests
     private static readonly Seal[] Sealed =
     [
         new("CHANGELOG.md#0.1.0", 3691, "06cc0bf329ac09ccefe767e0f967a7a8a123f94693be8d044189d7e9a262efa7", "bb565ea0ffbac9ba51823dd1c3737b263bd1e0453c86d2b38ed8fa7b271c2a39"),
-        new("CHANGELOG.md#1.0.0", 342298, "6c7835b29858a31cc2daef7e4549aea62e3816e81399d64e80568e0882fb1cae", "cf24f4aa0bed803a15f2504dc83b179c77568802a8fd98261bf183ec9bb7a520"),
+        new("CHANGELOG.md#1.0.0", 342298, "bda41f54fa002c43aaa9e24d3a61b02ad55ba105f199d1c6e7e6aa2a3ac8d378", "329069eb5a4f188bc0967505525f8558e1d54726d4f2a5b680b196f5393c3ebe"),
         new("CHANGELOG.md#1.1.0", 65555, "9aacb1bf3421013dafae5ee5a8624ee7e2b1460836b058a43a8ff681b62ee63c", "7d81b6e9a41df62a3258146255c56ecfb8af9685e78feec1c5f1158b9e1784e5"),
         new("docs/reviews/2026-08-18-adversarial-locking.md", 39697, "0b7cdccb8d7784118eabe52b86894d10b292c078ed75545ca1adec10d5a0d43b", "9bf8d7cae9df67b961bb7079d327e573c0c8ad994646e7406c1cd604323cfe81"),
         new("docs/reviews/2026-08-18-adversarial-processes.md", 28565, "19a20cc649fe8bbe28099c206bcfe2736838e8abbeef1b50ce6ec5cd1398b995", "b37235076bc2c506e539a41bc0c43e703ad58b57d637b63b22ad7727bcd28cd1"),

@@ -32,7 +32,7 @@ internal sealed class ForbiddenDependencyTests
     [Test]
     public async Task NoProjectDrivesPlaywrightDirectly()
     {
-        // The scope boundary, from CLAUDE.md: "Never drive Playwright directly
+        // The scope boundary, from AGENTS.md: "Never drive Playwright directly
         // -- no Microsoft.Playwright, no reimplementation of the snapshot/ref
         // system, response formatting or error shaping." BrowserAI is a proxy;
         // it spawns @playwright/mcp and forwards JSON-RPC. Taking the .NET
@@ -46,7 +46,7 @@ internal sealed class ForbiddenDependencyTests
     [Test]
     public async Task NeitherFluentAssertionsNorTheTestSdkIsReferenced()
     {
-        // Both are named in CLAUDE.md and in Directory.Packages.props's own
+        // Both are named in AGENTS.md and in Directory.Packages.props's own
         // comment, and both were held by nothing but that comment until
         // 2026-08-17.
         //

@@ -208,7 +208,7 @@ internal sealed partial class DocumentationLinkTests
         // set gained or lost a fragment link**, checked file by file against
         // HEAD. The cause is not established and is deliberately not guessed at;
         // the number above is what the scan returned. The total is separately
-        // asserted against the sentence in `CLAUDE.md` by
+        // asserted against the sentence in `AGENTS.md` by
         // `RecordedCountTests.TheFragmentCountInClaudeMdIsWhatTheScanFinds`, so
         // it is now a red build and not a stamp somebody has to remember. The floors are a long way under
         // these numbers on purpose: they exist to catch a narrowing that empties
@@ -238,7 +238,7 @@ internal sealed partial class DocumentationLinkTests
     // DROPS the character instead of hyphenating it -- the branch of the rule
     // that made 105 anchors move when the prose was swept. Rewriting it to two
     // hyphens would leave that branch unexercised, which is the only thing this
-    // worked example is for. *(It mirrored CLAUDE.md's own heading until that
+    // worked example is for. *(It mirrored AGENTS.md's own heading until that
     // sweep; the heading is ASCII now and this example is no longer a quotation
     // of it.)*
     [Arguments("BrowserAI — working instructions", "browserai--working-instructions")]
@@ -818,7 +818,7 @@ internal sealed partial class DocumentationLinkTests
 
     /// <summary>
     /// How many <c>#fragment</c> links the repository carries, for the sentence
-    /// in <c>CLAUDE.md</c> that publishes the number.
+    /// in <c>AGENTS.md</c> that publishes the number.
     /// </summary>
     /// <remarks>
     /// <b>Exposed so the published count and its check come from one

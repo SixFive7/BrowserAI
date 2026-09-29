@@ -1666,7 +1666,7 @@ internal sealed class SessionManager : IAsyncDisposable
         // predicted.
         //
         // INLINE, NOT IN `SessionErrors`, deliberately, and the
-        // directory's own CLAUDE.md is why the question comes up: refusals live
+        // directory's own AGENTS.md is why the question comes up: refusals live
         // in the catalogue. This is not a refusal. Nothing was declined, the
         // work was done, and what is returned is a report composed out of the
         // summary, the tally and the listing -- three things a catalogue row

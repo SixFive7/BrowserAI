@@ -70,7 +70,7 @@ namespace BrowserAI.Runtime;
 /// <c>Directory.Delete(path, recursive: true)</c> checks
 /// <c>FILE_ATTRIBUTE_REPARSE_POINT</c> during its own walk and calls
 /// <c>RemoveDirectory</c> on the link. Neither this file's remarks, nor
-/// <c>Runtime\CLAUDE.md</c>, nor the ban message in
+/// <c>Runtime\AGENTS.md</c>, nor the ban message in
 /// [`build/BannedSymbols.txt`](../../../build/BannedSymbols.txt) mentioned
 /// reparse points at all -- the ban justified itself on <i>reporting</i> alone,
 /// so a reader comparing the two would have concluded this routine was a

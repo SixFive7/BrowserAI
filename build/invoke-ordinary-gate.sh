@@ -12,7 +12,7 @@
 # SuiteCoverageTests.TheRunReportsTheDriveLetterSpellingItActuallyReceived fails
 # a run that did not receive what it declared.
 #
-# THIS IS NOT THE SHARED WRAPPER SCRIPT CLAUDE.md FORBIDS. That rule is about
+# THIS IS NOT THE SHARED WRAPPER SCRIPT AGENTS.md FORBIDS. That rule is about
 # one script standing in for both halves, which would run one instrument twice
 # and report what two report. There are four gate scripts here, two per shell,
 # and each forces and declares its own spelling.

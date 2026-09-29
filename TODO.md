@@ -115,6 +115,36 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
       answered.** T7 c built the reap on 2026-09-24 (`ad4537b`, on `master`).
       Check what the item still leaves open, then retire it with a pointer to
       what implements it.
+- [ ] **Delete the two superseded `worktree-agent-*` branches.**
+      `worktree-agent-a2253a433fdfeb5ea` (`2ff706b`) and
+      `worktree-agent-a3b63ac364740c938` (`6460917`) each hold one commit of
+      2026-08-24 that `master` carries reworded, as `1838823` and `0d4c4fb`.
+      Neither has a worktree or a remote, and both still hold the instruction
+      files under their old names, so merging either would conflict. Compare
+      each with its reworded twin, then `git branch -D` both.
+      Added in 2.1.277: https://code.claude.com/docs/en/changelog#2-1-277
+      Extended in 2.1.281: https://code.claude.com/docs/en/changelog#2-1-281
+      Remaining differences: https://github.com/anthropics/claude-code/tree/main/mods/agents-md#where-it-still-differs-from-claudemd
+- [ ] **Decide whether the two hook scripts keep their UTF-8 BOM.**
+      `.claude/hooks/process-identity-reminder.ps1` and
+      `.claude/hooks/upstream-review-gate.ps1` are the only 2 of the 81 tracked
+      `.ps1` files saved with a BOM. Their headers require it, because Windows
+      PowerShell 5.x reads a BOM-less script as Windows-1252, which changes
+      only bytes above 0x7F. The same headers also require an ASCII-only body,
+      and both bodies are ASCII (checked 2026-09-29), so the BOM changes
+      nothing today. Dropping it means rewording that header paragraph to
+      require ASCII alone.
+      Added in 2.1.277: https://code.claude.com/docs/en/changelog#2-1-277
+      Extended in 2.1.281: https://code.claude.com/docs/en/changelog#2-1-281
+      Remaining differences: https://github.com/anthropics/claude-code/tree/main/mods/agents-md#where-it-still-differs-from-claudemd
+- [ ] **Clean up old `.work` folders** (`.work/codex-eof-probe`, `.work/p1b`,
+      `.work/q261-2026-09-24`, `.work/q295`, `.work/zoomout`): their copies and
+      clones carry CLAUDE.md/AGENTS.md files. `.claude/settings.json` keeps them
+      out of Claude's context (`claudeMdExcludes`), but delete what is no longer
+      needed.
+      Added in 2.1.277: https://code.claude.com/docs/en/changelog#2-1-277
+      Extended in 2.1.281: https://code.claude.com/docs/en/changelog#2-1-281
+      Remaining differences: https://github.com/anthropics/claude-code/tree/main/mods/agents-md#where-it-still-differs-from-claudemd
 
 ### Research that exists only under `.work`, owed to `docs/evidence/` and `kb/` before the session closes
 
@@ -917,7 +947,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
 
       **WHAT MONITORS IT, so it cannot be forgotten silently.** Two things, and
       neither is a person remembering. **(1)** The
-      [daily drift check](CLAUDE.md#the-daily-drift-check) resolves
+      [daily drift check](AGENTS.md#the-daily-drift-check) resolves
       `@playwright/mcp` `latest` and its exact `playwright-core` dependency on
       every day of work, which is the read the condition above is stated in --
       `drift-check.json`'s `_how_to_resolve` now says where to take that number
@@ -960,7 +990,7 @@ directions cost was needed. [Hazard row](HAZARDS.md#hazard-index), closed;
       **What is left to watch, and it is a different question.**
       [PR #42673](https://github.com/microsoft/playwright/pull/42673) shipping.
       When it lands in a released `@playwright/mcp`, the
-      [daily drift check](CLAUDE.md#the-daily-drift-check) surfaces the version,
+      [daily drift check](AGENTS.md#the-daily-drift-check) surfaces the version,
       [the review](UPSTREAM-REVIEW.md) adopts `--file-paths=absolute` -- a CLI
       flag, a `filePaths` config key and `PLAYWRIGHT_MCP_FILE_PATHS`, so the
       `cli-help.txt` and `config-schema.d.ts` snapshots both move and the

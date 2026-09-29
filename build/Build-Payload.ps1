@@ -36,7 +36,7 @@
        text, the reinstall tool -- is a different thing and is not this.
 
     Nothing here reads a version from a file. `latest` is resolved by npm and
-    the Node LTS by nodejs.org/dist/index.json, per CLAUDE.md, "Versioning:
+    the Node LTS by nodejs.org/dist/index.json, per AGENTS.md, "Versioning:
     everything floats, the build freezes it".
 
 .PARAMETER PayloadRoot

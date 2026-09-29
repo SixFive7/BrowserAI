@@ -39,7 +39,7 @@ namespace BrowserAI.Tests;
 /// <b>The count is scoped to the articles, and that is a fix and not a
 /// convenience.</b> It used to sweep every tracked <c>.md</c> in the
 /// repository, which meant five sentences of prose <i>about</i> the convention --
-/// in <c>CLAUDE.md</c>, <c>TODO.md</c> and the plan -- were counted as if they
+/// in <c>AGENTS.md</c>, <c>TODO.md</c> and the plan -- were counted as if they
 /// stamped facts, and the recorded number was 195 for 190 stamped facts. The
 /// counter now reads <c>kb/</c> and nothing else, minus the two pages whose job
 /// is to discuss the convention. A real marker added anywhere in an article is
@@ -88,7 +88,7 @@ internal sealed partial class ReVerificationIndexTests
     /// ⚠️ <b>The <c>previously "..."</c> clause is stripped first, and it was not
     /// until 2026-08-26.</b> <c>HazardIndexTests</c> has read around it since
     /// the day that gate provoked its first correction; this one did not, so a
-    /// superseded test name quoted the way <c>CLAUDE.md</c> requires -- verbatim,
+    /// superseded test name quoted the way <c>AGENTS.md</c> requires -- verbatim,
     /// in backticks -- failed here while the identical correction passed there.
     /// The cost was paid in the document: rows 19 and 96 of the index quoted
     /// dead test names <b>without</b> backticks and explained the gate in prose,

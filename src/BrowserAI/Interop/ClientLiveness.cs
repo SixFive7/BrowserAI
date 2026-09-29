@@ -145,7 +145,7 @@ internal sealed partial class ClientLivenessWatcher : IDisposable
     /// long-lived the watch never fires at all, in precisely the case it was
     /// built for. Found by
     /// [the adversarial review](../../../docs/reviews/2026-08-18-adversarial-processes.md),
-    /// finding 1; <c>Interop\CLAUDE.md</c> had already stated the rule it broke.
+    /// finding 1; <c>Interop\AGENTS.md</c> had already stated the rule it broke.
     /// </para>
     /// <para>
     /// <b>The check runs on the handle that will be held, never on a re-opened

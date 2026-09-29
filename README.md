@@ -829,7 +829,7 @@ This is **not** the canonical FSL and must not be referred to by, or distributed
 
 Copyright 2026 Jori Huisman.
 
-**Source files carry the two-line SPDX header** -- `SPDX-FileCopyrightText` plus `SPDX-License-Identifier`, always in the `LicenseRef-BrowserAI-FSL-1.1-MIT-5yr` form, as [`CLAUDE.md`](CLAUDE.md) requires and as every article under [`kb/`](kb/README.md), `CLAUDE.md` and `UPSTREAM-REVIEW.md` already do.
+**Source files carry the two-line SPDX header** -- `SPDX-FileCopyrightText` plus `SPDX-License-Identifier`, always in the `LicenseRef-BrowserAI-FSL-1.1-MIT-5yr` form, as [`AGENTS.md`](AGENTS.md) requires and as every article under [`kb/`](kb/README.md), `AGENTS.md` and `UPSTREAM-REVIEW.md` already do.
 
 The licence does not demand it -- [`LICENSE`](LICENSE) is the notice and shipping it satisfies the Redistribution clause -- so this is a house rule, kept for a different reason: **a file that names its own licence cannot be copied out of the repository and quietly become unlicensed**, which is exactly what happened to the launcher this project replaces, thirteen times.
 

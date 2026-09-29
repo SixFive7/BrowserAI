@@ -66,7 +66,7 @@ internal sealed partial class HazardIndexTests
     /// for" has one definition.</b> <c>ReVerificationIndexTests</c> asks the same
     /// question of its own index and searched the test assembly alone, which is
     /// one of the three axes on which the two gates had silently diverged -- and
-    /// <c>CLAUDE.md</c> presents them as one class of mechanism.
+    /// <c>AGENTS.md</c> presents them as one class of mechanism.
     /// </para>
     /// <para>
     /// ⚠️ <b>FOUR since 2026-09-15 (previously two, "the suite and the

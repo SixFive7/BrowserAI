@@ -11,7 +11,7 @@ namespace BrowserAI.Tests.Harness;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b><c>CLAUDE.md</c> calls the clause the load-bearing half of a
+/// <b><c>AGENTS.md</c> calls the clause the load-bearing half of a
 /// correction</b> -- it is what tells a reader who learned the old value that it
 /// was reviewed and replaced, not lost, and it requires the superseded
 /// text to be quoted <i>verbatim</i>. Every gate that reads a document for

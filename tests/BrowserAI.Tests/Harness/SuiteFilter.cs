@@ -88,7 +88,7 @@ internal sealed record SuiteFilterReading(bool Taken, bool SessionContextPopulat
 /// filtered run is indistinguishable from a full one in everything the run
 /// publishes about itself.</b> Every number a filtered run prints is true of what
 /// it ran; what is false is the sentence a human writes underneath it, and
-/// [`CLAUDE.md`](../../../CLAUDE.md) says plainly that no test can read that
+/// [`AGENTS.md`](../../../AGENTS.md) says plainly that no test can read that
 /// sentence. What a test *can* do is make the run state the premise, so the
 /// sentence can be checked against something. That is this row, and it is why it
 /// is a row and not a refusal: a mechanism that forbade filtered runs would

@@ -292,7 +292,7 @@ The largest area, and the one everything else keys on.
 | Concern | Implemented by |
 |---|---|
 | The directory, the guard and the record | `src/BrowserAI/Sessions/{CanonicalPath, SessionLock, SessionRecord}.cs`, `src/BrowserAI.Core/Sessions/{SessionPath, SessionLayout}.cs` over `src/BrowserAI/Storage/{LockFile, SessionStore}.cs` *(`LockRecord.cs` and the whole `browserai.json` serialisation were deleted 2026-08-26; `SessionDirectoryGuard.cs` the same day, into `CanonicalPath`)* |
-| The two files themselves, and the SQLite they rest on | `src/BrowserAI/Storage/` -- [its own rules](src/BrowserAI/Storage/CLAUDE.md) |
+| The two files themselves, and the SQLite they rest on | `src/BrowserAI/Storage/` -- [its own rules](src/BrowserAI/Storage/AGENTS.md) |
 | The authored tools, and routing a call to a session's child | `src/BrowserAI/Sessions/{SessionToolSurface, ToolVerdicts, SessionManager, SessionEnvironment, LiveSession}.cs` *(`SessionMode.cs` was deleted 2026-08-20; `SessionToolPolicy.cs` 2026-08-26, into `ToolVerdicts` and the file it reads)* |
 | The machine-wide inventory | `src/BrowserAI/Sessions/SessionIndex.cs` |
 | Lifetime | `src/BrowserAI/Sessions/BrowserIdleTimer.cs`, `src/BrowserAI/Interop/ClientLiveness.cs` |

@@ -48,7 +48,7 @@ catch {
     exit 0
 }
 
-# GIST + POINTER, not a copy. The directory's own CLAUDE.md is five lines away on
+# GIST + POINTER, not a copy. The directory's own AGENTS.md is five lines away on
 # disk and is the authority; restating it here would put a second copy of the rules
 # in a file nobody diffs, and the last project to try that had its hook's summary
 # drift across four repositories while still reading as authoritative. So: enough to
@@ -59,7 +59,7 @@ You are editing under Sessions\ or Interop\. Two invariants here are ones no
 mechanism in this repository can fully catch: a process is (pid, creationFileTime)
 and never a bare pid, and a browser is found by full image path and never by image
 name -- the banned-symbol analyzer stops the framework calls and cannot see a new
-native declaration. This directory has its own CLAUDE.md, beside the code. Read it.
+native declaration. This directory has its own AGENTS.md, beside the code. Read it.
 '@
 
 # No permissionDecision. This hook decides nothing, blocks nothing, prompts nobody,

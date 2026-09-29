@@ -588,7 +588,7 @@ TestResults/
 *.trx
 
 # --- Agent scratch space -----------------------------------------------------
-# CLAUDE.md, "Scratch work": agent-produced temporary files go here. In practice
+# AGENTS.md, "Scratch work": agent-produced temporary files go here. In practice
 # that means multi-gigabyte browser trees and probe output, so leaving it
 # untracked and not ignored puts the whole lot one `git add -A` away from
 # history. Deliberately not slash-anchored, unlike the paths above -- a leading
@@ -606,6 +606,10 @@ TestResults/
 .claude/*
 !.claude/settings.json
 !.claude/hooks/
+
+# Instructions live in AGENTS.md; a CLAUDE.md makes Claude Code skip it
+CLAUDE.md
+CLAUDE.local.md
 
 # --- Secrets: certificates, keys and signing material ------------------------
 # Matched by artifact class, never by filename. The evidence is from this

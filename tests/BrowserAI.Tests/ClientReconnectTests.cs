@@ -261,6 +261,11 @@ internal sealed class ClientReconnectTests
             '\n',
             "approval_policy = \"never\"",
             "sandbox_mode = \"read-only\"",
+            // Codex reads AGENTS.md from the git root down to its working directory when
+            // a thread starts (codex-rs 0.155.0-alpha.9.2, agents_md.rs), and this one is
+            // inside the repository. A budget of zero keeps the repository's instructions
+            // out of the client, as before the instruction files were renamed.
+            "project_doc_max_bytes = 0",
             string.Empty,
             "[mcp_servers.browserai]",
             $"command = {Quote(RepositoryPayload.Layout.NodeExecutable)}",
@@ -396,7 +401,8 @@ internal sealed class ClientReconnectTests
 
         await PathAliases.JunctionAsync(current, PublishedSlice.Directory);
 
-        await File.WriteAllTextAsync(Path.Combine(home, "config.toml"), "approval_policy = \"never\"\nsandbox_mode = \"read-only\"\n");
+        // project_doc_max_bytes = 0: see ARealCodexThreadListsAtFirstConnectAndIsNeverRefused.
+        await File.WriteAllTextAsync(Path.Combine(home, "config.toml"), "approval_policy = \"never\"\nsandbox_mode = \"read-only\"\nproject_doc_max_bytes = 0\n");
 
         // ---- Registered the product's way --------------------------------------
         IRegistrationCommand runner = new ForcedEnvironment(

@@ -9,7 +9,7 @@ using BrowserAI.Tests.Harness;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// Eight rules from <c>CLAUDE.md</c> that were held by habit alone -- two until
+/// Eight rules from <c>AGENTS.md</c> that were held by habit alone -- two until
 /// 2026-08-17, four until 2026-08-23, one until 2026-08-24 and one until
 /// 2026-09-15.
 /// </summary>
@@ -696,7 +696,7 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// <b>This is the assertable part of a fix that could not be planted
     /// red</b>, and the exception is recorded where the rule is, in
-    /// [the working instructions](../../CLAUDE.md). It cannot
+    /// [the working instructions](../../AGENTS.md). It cannot
     /// prove the pair is correctly placed and it does not claim to: what it
     /// holds is that a file where a raw value escapes carries one at all, so the
     /// next escape written without one is a red build and not a review
@@ -3407,7 +3407,7 @@ internal sealed partial class HouseRuleTests
     /// <b>The character half of a repository directive.</b> The maintainer,
     /// 2026-09-23, verbatim: <i>"Ensure there is no trace of AI both in wording
     /// and character use."</i> The wording half needs a reader and says so in
-    /// <c>CLAUDE.md</c>; this is the half a build can hold. Five classes: an em
+    /// <c>AGENTS.md</c>; this is the half a build can hold. Five classes: an em
     /// dash, an en dash, an ellipsis character, a curly quote of either kind and
     /// a non-breaking space.
     /// </para>

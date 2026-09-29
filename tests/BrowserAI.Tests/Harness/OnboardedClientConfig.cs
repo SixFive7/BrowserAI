@@ -73,7 +73,7 @@ namespace BrowserAI.Tests.Harness;
 /// and that the file carries what the CLI reads
 /// (<see cref="BrowserAI.Tests.RegistrationTests.TheScratchConfigurationIsSeededWithWhatTheClientReadsAsOnboarded"/>).
 /// That is a weaker claim than a red test and is stated as one, on the
-/// <c>DangerousAddRef</c> precedent in <c>CLAUDE.md</c>.
+/// <c>DangerousAddRef</c> precedent in <c>AGENTS.md</c>.
 /// </para>
 /// <para>
 /// ⚠️ <b>THERE IS NO NON-INTERACTIVE SIGNAL TO SET INSTEAD, and that was

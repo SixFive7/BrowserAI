@@ -41,7 +41,7 @@ Run them under the payload's own `node.exe`, which is what the product runs.
 ⚠️ **`through-browserai.mjs` creates a real session in the app root's index and
 destroys it at the end.** Point its directory inside `.work/` and nowhere else.
 It does not set `BROWSERAI_ROOT`, because
-[setting it does not isolate a run](../../../CLAUDE.md) and would provoke a
+[setting it does not isolate a run](../../../AGENTS.md) and would provoke a
 provisioning download into an empty tree.
 
 Both rigs reach the shared provisioned browsers root through
