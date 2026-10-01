@@ -1,0 +1,205 @@
+{
+  "versions": {
+    "playwrightCore": "1.64.0-alpha-1789764292000",
+    "node": "v24.21.0"
+  },
+  "experiments": {
+    "E0": {
+      "realBefore": 8,
+      "scratchRegistry": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\reg",
+      "socketsDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\sockets"
+    },
+    "E1": {
+      "ownerGuid": "browser@f8b6f1b6a3ff049519938fe0d9cc6406",
+      "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@f8b6f1-0915bec1",
+      "scratchFiles": [
+        "browser@f8b6f1b6a3ff049519938fe0d9cc6406"
+      ],
+      "realCountAfterBind": 8,
+      "descriptorKeys": [
+        "playwrightVersion",
+        "playwrightLib",
+        "title",
+        "browser",
+        "endpoint",
+        "workspaceDir"
+      ],
+      "launchOptionKeys": [
+        "ignoreAllDefaultArgs",
+        "handleSIGINT",
+        "handleSIGTERM",
+        "headless",
+        "noDefaultViewport",
+        "viewport",
+        "selectorEngines",
+        "userDataDir"
+      ]
+    },
+    "E2": {
+      "planted": 5,
+      "scratchCount": 6
+    },
+    "E3": {
+      "url": "http://127.0.0.1:63044",
+      "pid": 76892,
+      "startMs": 314,
+      "rootStatus": 302,
+      "location": "/index.html?ws=860849c7a1fc03e20542d08162b9f7d0",
+      "badHostStatus": 403,
+      "rebindHostStatus": 403,
+      "indexStatus": 200,
+      "indexHeaders": {
+        "content-type": "text/html",
+        "content-length": "1078",
+        "date": "Fri, 25 Sep 2026 03:57:11 GMT",
+        "connection": "keep-alive",
+        "keep-alive": "timeout=5"
+      },
+      "traversalStatus": [
+        404,
+        404
+      ],
+      "optionsStatus": 200,
+      "optionsHeaders": {
+        "date": "Fri, 25 Sep 2026 03:57:11 GMT",
+        "connection": "keep-alive",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "E4": {
+      "openWithForeignOrigin": {
+        "ok": true
+      },
+      "firstSessionsMs": 67,
+      "titles": [
+        "zoomout-c-owner"
+      ],
+      "scratchAfterList": [
+        "browser@f8b6f1b6a3ff049519938fe0d9cc6406"
+      ],
+      "deadLeft": 0,
+      "sessionKeys": [
+        "playwrightVersion",
+        "playwrightLib",
+        "title",
+        "browser",
+        "endpoint",
+        "workspaceDir"
+      ],
+      "clientInfoKeys": [
+        "version",
+        "workspaceDirHash",
+        "daemonProfilesDir",
+        "homeDir"
+      ],
+      "homeDirExposed": true
+    },
+    "E5": {
+      "iconHitsBeforeDashboard": 0,
+      "iconHitsAfterListing": 14,
+      "iconHitsAroundOneOwnerNavigation": [
+        14,
+        16
+      ],
+      "allHits": {
+        "/page": 2,
+        "/icon.png": 16
+      }
+    },
+    "E6": {
+      "selectTab": {
+        "id": 1
+      },
+      "firstFrameMs": 25,
+      "framesIn3s": 7,
+      "firstFrameBytes": 7093,
+      "isJpeg": true
+    },
+    "E7": {
+      "ownerInputValueAfterDashboardKeys": "hi",
+      "navigateResult": {
+        "id": 6
+      },
+      "ownerUrlAfter": "http://127.0.0.1:51984/other",
+      "ownerTitleAfter": "navigated by the dashboard",
+      "screenshotPngBytes": 4913,
+      "ariaExcerpt": "- heading \"other\" [level=1] [ref=f2e2] [box=8,8,984,37]"
+    },
+    "E9": {
+      "newTab": {
+        "id": 8
+      },
+      "ownerPagesBefore": 1,
+      "ownerPagesAfter": 2
+    },
+    "E8": {
+      "tracePath": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\evidence\\owner-trace.zip",
+      "traceBytes": 3994
+    },
+    "E10": {
+      "pauseResp": {
+        "id": 10
+      },
+      "evalAfterDashboardLeft": {
+        "ok": false,
+        "timedOut": true,
+        "label": "owner evaluate after the dashboard left",
+        "ms": 12000
+      },
+      "ownerResume": {
+        "ok": true
+      },
+      "evalAfterResume": {
+        "ok": true,
+        "value": 43
+      }
+    },
+    "E11": {
+      "bListed": true,
+      "dListed": true,
+      "dSawArrivalAfterBLeft": false,
+      "freshConnectionSawIt": true
+    },
+    "E12": {
+      "firstLoadMs": 245,
+      "reloadsMs": [
+        208,
+        208,
+        212,
+        211,
+        211,
+        212,
+        211,
+        210,
+        214,
+        213
+      ],
+      "reloadsListed": 10,
+      "reloadsTried": 10,
+      "secondTabFirstMs": 238,
+      "secondTabHeardNewBrowserAfterFirstClosedMs": null
+    },
+    "E13": {
+      "closeSession": {
+        "ok": true,
+        "value": {
+          "id": 1
+        }
+      },
+      "ownerDisconnectedMs": 21,
+      "ownerIsConnected": false,
+      "scratchAfterClose": [
+        "browser@418726d16f6c71a460f5a490bf0fa7c5",
+        "browser@8a9b2c59cf6e9245e2566ef9404e967c",
+        "browser@f8b6f1b6a3ff049519938fe0d9cc6406"
+      ]
+    },
+    "E14": {
+      "realBefore": 8,
+      "realAfter": 8,
+      "missingFromBefore": [],
+      "dashboardExitCode": null
+    }
+  }
+}

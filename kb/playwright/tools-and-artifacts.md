@@ -822,6 +822,31 @@ fresh connection against the same server lists normally. Open the bare URL in a
 new tab. The rig that shows this is a probe record:
 [`docs/probes/2026-09-24-playwright-dashboard`](../../docs/probes/2026-09-24-playwright-dashboard/README.md).
 
+⚠️ *Corrected 2026-10-01 @ `playwright-core` 1.64.0-alpha-1789764292000
+(previously "The dashboard cannot be reloaded" and "a reloaded tab never receives
+`SessionsChanged` and its session list never fills").* **A tab reloaded on its
+own listed its sessions 20 times out of 20 in headless Chromium**, measured
+2026-09-25: ten reloads in one rig, the list back after 208 to 214 ms,
+and ten in a second rig, the list back after 116 to 119 ms and a registry change
+made after each reload shown within 106 to 109 ms. The mechanism in the paragraph
+above is right and a reload is not what triggers it. `dispose()` runs when **any**
+connection closes, so the viewer that stops updating is one that **stays** while
+another leaves: 2 of 2, once over raw websockets and once in two tabs of the real
+page. A reloaded tab is exposed only if its old socket closes after its new one
+has connected, and the ten reloads that were checked for it all went on
+updating. A reload in a headed desktop browser was not run, and what the
+2026-09-24 observation was made with is not recorded.
+The measurements are
+[below](#a-reload-works-and-a-viewer-that-stays-stops-updating-when-another-leaves).
+
+⚠️ **And the evidence that paragraph points at does not show a reload**, checked
+2026-10-01 against the files as committed. `dashboard.png` and
+`dashboard-after-reload.png` are one git blob, SHA-256 `d0f35108...`.
+`dashboard-shot.cjs` navigates once and never reloads; the word appears in it
+once, in the name of the file it writes. Both of its logs print a session list
+that filled. What the batch does and does not hold is corrected in
+[its own README](../../docs/evidence/2026-09-23-server-registry/README.md).
+
 **What this project decided to do about it** is
 [T7](../../DECISIONS.md#processes-browsers-and-session-modes): start Playwright's
 own `list` command from the payload at session close, detached and never awaited,
@@ -954,6 +979,333 @@ not work. In the suite it is
 which drives the published binary, two real Chromiums and a thousand plants, and
 holds that the dead ones go, a live browser's stays, and the close answers its
 caller while the reaper is still running.
+
+## What Playwright's dashboard does to a browser it did not launch -- measured 2026-09-25
+
+**Measured 2026-09-25 @ `@playwright/mcp` 0.0.82 / `playwright-core`
+1.64.0-alpha-1789764292000 / node v24.21.0 / headless Chromium 154.0.8037.0, on
+Windows 11 Pro 26200.** Four rigs, each against browsers it launched itself.
+`PWTEST_SERVER_REGISTRY` moved the registry into scratch and `PWTEST_SOCKETS_DIR`
+moved the dashboard's singleton pipe, and the dashboard always ran with
+`--port=0 --host=127.0.0.1`, which serves over HTTP and opens no window. The
+rigs are a probe record at
+[`docs/probes/2026-09-25-dashboard-exposure`](../../docs/probes/2026-09-25-dashboard-exposure/README.md)
+and what they printed is at
+[`docs/evidence/2026-09-25-dashboard-exposure`](../../docs/evidence/2026-09-25-dashboard-exposure/README.md).
+An `E` number below is the tag a rig logs that experiment under.
+
+**The real registry was read by name and never written.**
+`%LOCALAPPDATA%\ms-playwright\b` held the same 8 names before the first rig and
+before and after each of the first two: five listings, one digest.
+
+**Each sentence below is one of two kinds and says which.** *Measured* is what a
+rig printed. *Read* is `lib/coreBundle.js` in the payload, 77,300 lines, at the
+line given. It was read on 2026-09-25 during the research, and every line cited
+here was read again on 2026-10-01 in the same payload. Nothing under
+`packages/playwright-core/src/tools/dashboard` has changed on upstream `main`
+since 2026-07-23 (#41711), read 2026-10-01 at `82db81d`.
+
+**What was decided on the strength of this** is
+[the dashboard row in DECISIONS](../../DECISIONS.md#processes-browsers-and-session-modes):
+BrowserAI does not expose, host or proxy it.
+
+### Opening the page lists every bound browser, connects to it and runs script in its pages
+
+**Nobody has to click for any of it.** Read: the session provider lists the
+registry when a viewer connects and again on every registry add, remove or
+change (`onconnect` at :75995, `start` at :76658). `list()` unlinks every
+descriptor it cannot connect to. For each one it can, the provider loads the
+`playwrightLib` path that descriptor names and connects a full Playwright client
+(`connectToBrowserAcrossVersions`, :74750). Then, for every page of every listed
+browser and again on every tab change, it reads the title and runs an `evaluate`
+that fetches the page's icon, or `/favicon.ico` when the page names none
+(`faviconUrl`, :75954).
+
+Measured, E2 to E5 in `probe.log` and E21 in `probe2.log`:
+
+- **The first list arrived 67 ms after the websocket opened.** Five dead
+  descriptors planted beside the live one were gone when the directory was read
+  1.5 s later, and the live one was still there.
+- **A page with an icon link served 0 requests for it before the dashboard
+  started and 14 about 2.6 s after it began listing**, with no tab selected. One
+  navigation by the owner added 2 more.
+- **Through a real `@playwright/mcp` child, on a page with no icon link,
+  `browser_console_messages` at level `error` carried no 404 before the
+  dashboard listed the session and 3 after**: each is
+  `Failed to load resource: the server responded with a status of 404 (Not Found)`
+  at `/favicon.ico`, and the page server counted 3 requests. They are in the
+  session's own console log, which is where an agent reads a page's errors, and
+  the requests reach the site under test. The same log held 5 once the dashboard
+  had selected the tab (`probe2-snapshot-while-parked.txt`).
+- **Every `sessions` event carries each descriptor whole**: `playwrightVersion`,
+  `playwrightLib`, `title`, `browser` with its `launchOptions` and `userDataDir`,
+  `endpoint` and `workspaceDir`, beside a `clientInfo` whose keys include
+  `homeDir`. The rig recorded the keys and not the values.
+
+⚠️ **The reap has a false positive that upstream has diagnosed and not fixed.**
+PR #42128 (2026-08-05) says it in its own description: Windows pipe servers
+pre-post 4 accept instances, so a burst of concurrent probes can fail to
+connect, and `list()` then deletes a live session's entry. It was closed
+unmerged on 2026-08-13, and `serverRegistry.ts` on `main` still unlinks on any
+failed probe, read 2026-10-01. That is the pipe-busy shape
+[T7 accepted as unmeasured past eight callers](#a-session-close-now-starts-upstreams-own-reaper----measured-2026-09-24),
+and what it costs is a browser's place in Playwright's own lists, never a
+browser. `[FLOATS]` `[MACHINE]`
+
+### One call attaches, and from then on it drives the page
+
+Measured, E6, E7 and E9 in `probe.log`, on a browser the dashboard did not
+launch:
+
+- **`selectTab` started a screencast.** The first frame arrived 25 ms after the
+  call and 7 frames arrived in about 3 s of a static page. The first is a
+  7,093-byte JPEG of the owner's 1000 by 700 viewport (`screencast-frame.jpg`).
+- **Keys typed through the dashboard landed in the owner's page.** Two `keydown`
+  and `keyup` pairs left `hi` in the owner's input, read back by the owner.
+- **`navigate` moved the owner's page**, and the owner's own `page.url()` and
+  `page.title()` reported the new address and title.
+- **`screenshot` returned a 4,913-byte PNG and an ARIA snapshot of the page.**
+- **`newTab` took the owner's context from 1 page to 2.**
+
+Read: the connection's `dispatch` (:76043) calls whatever method name the client
+sends, first on the connection and then on the attached page. On the connection
+that is `selectTab`, `newTab`, `closeTab`, `closeSession`, `setVisible`,
+`debuggerPause`, `debuggerResume`, `debuggerStep`, `reveal` and `readStream`
+(from :76054). On the attached page it is `navigate`, `back`, `forward`,
+`reload`, the six mouse and key events, `screenshot`, `startRecording` and
+`stopRecording` (`AttachedPage`, :76424). The process takes seven arguments,
+`--port`, `--host`, `--sessionName`, `--workspaceDir`, `--pageId`, `--annotate`
+and `--kill` (`parseOpenArgs`, :76957), and none of them makes it read-only.
+`reveal` runs `explorer /select,` on a path the client chooses (:76128). It was
+never called, because it opens a window. `[FLOATS]` `[MACHINE]`
+
+### Nothing it does is an action in the session's own trace
+
+Measured, E8 in `probe.log` and the trace itself under `owner-trace/`: the owner
+recorded a trace across eight dashboard calls, which were one `selectTab`, two
+`keydown`, two `keyup`, one `navigate`, one `screenshot` and one `newTab`. **The
+trace's action list holds three entries and all three are the owner's own**:
+`trace.stacks` places them at lines 282, 286 and 304 of the rig as it ran, which
+are 285, 289 and 307 of the stored copy with its header. What the
+dashboard did shows only as effects: the value `hi` in a snapshot of the input,
+a document request for `/other` and two `fetch` requests for `/icon.png` in
+`trace.network`, a second `page` event, and five console errors for
+`/favicon.ico`.
+
+Read: `createBeforeActionTraceEvent` returns nothing for a call whose metadata
+is `internal` (:26165), and the dashboard wraps every call it makes with
+`internal: true` (`wrapInternal`, :75942).
+
+⚠️ **No rig started a BrowserAI server**, so what follows is read from how the
+product is built and was not measured. The dashboard connects to the pipe a
+browser's descriptor names. BrowserAI is not on that path, so its lock is not
+asked, no `why` is required and no row reaches the session's record
+([sessions](../../ARCHITECTURE.md#sessions)). `[FLOATS]`
+
+### A pause armed from the dashboard outlives it, and the session's next call parks
+
+Measured twice, with the dashboard's socket closed after `debuggerPause` and no
+resume sent:
+
+- **E10, against a library owner.** The owner's next `page.evaluate` had not
+  returned after 12 s. The owner's own `context.debugger.resume()` released it,
+  and the next evaluate answered.
+- **E22, through the payload's own `@playwright/mcp` over stdio**, which is the
+  child BrowserAI forwards to. `browser_navigate` had no answer after 15 s. A
+  `browser_snapshot` sent while it was parked did answer, with a `### Paused`
+  section naming the parked navigation (`probe2-snapshot-while-parked.txt`). A
+  `browser_resume` then released it: the navigation answered 15,053 ms after it
+  was sent.
+
+Read: `debuggerPause` reaches `requestPause` on the context's server-side
+debugger, which arms a pause before the next action (:13271), and nothing in the
+connection's `onclose` resumes it (:76023). A call the dashboard makes itself is
+`internal` and is never paused (:13307), so the dashboard does not notice.
+
+**BrowserAI's forward path has no timeout**, by design
+([the MCP server](../../ARCHITECTURE.md#the-mcp-server)), so a call parked this way
+stays parked. `[FLOATS]`
+
+### `browser_resume` releases the parked call and then parks itself
+
+Measured, E22: the `browser_resume` that released the navigation had no answer
+of its own 20 s later.
+
+Read: in all three of its branches the handler awaits a promise that resolves on
+the next pause or when the context closes (:67350 to :67382). Upstream chose
+that: issue #41304 was closed on 2026-06-16 by PR #41293, *wait for next pause
+or context closure in browser_resume*, read 2026-09-25 and again 2026-10-01. A
+session's context closes when its browser does, so a plain resume that meets no
+second pause waits until then.
+
+`browser_resume` is `allow` in
+[`tool-verdicts.json`](../../tool-verdicts.json). It cannot arm a pause on a
+context that is not paused: the debugger's `doResume`, `next` and `runTo` each
+throw `Debugger is not paused` first (:13277, :13282, :13289; read, not run).
+Whether code a caller supplies through `browser_run_code_unsafe` can arm one was
+not run. `[FLOATS]`
+
+### A close from the dashboard leaves the session on a blank page, and no call fails
+
+Measured:
+
+- **E13.** `closeSession` on the library owner's browser: the owner's
+  `disconnected` event fired 21 ms after the call.
+- **E23, through the `@playwright/mcp` child.** Before the close, `browser_tabs`
+  listed one tab on the page the child had navigated to. After it, the next two
+  `browser_tabs` calls each answered `0: (current) [](about:blank)` and neither
+  was an error. The scratch registry then held a second descriptor for the same
+  profile directory, titled `zoomout-c-mcp (2)`.
+
+So the child starts a new browser on its next call and says nothing about the
+old one. The open pages and whatever they held are gone. What the profile on
+disk kept was not measured.
+
+Read: `closeSession` closes every context of the browser and then the browser
+(:76706). `[FLOATS]` `[MACHINE]`
+
+### The port's only key is handed out by its own redirect
+
+Measured, E3 and E4 in `probe.log`:
+
+- **`GET /` answered 302 to `/index.html?ws=<guid>`**, and the websocket's path
+  is that guid. The request that would need the key is the one that gives it
+  out.
+- **A websocket opened with `Origin: https://evil.example` was accepted.** Every
+  experiment in the first rig ran on that connection.
+- `GET /` with `Host: evil.example` and with `Host: attacker.localtest.me`
+  answered 403.
+- `/index.html` answered 200 with five headers, `content-type`,
+  `content-length`, `date`, `connection` and `keep-alive`. No `X-Frame-Options`
+  and no `Content-Security-Policy` is among them.
+- Two path-traversal shapes answered 404, and `OPTIONS /` with a foreign
+  `Origin` answered 200.
+
+Read: the Host check is `computeAllowedHosts` (:9119). It admits `localhost`,
+`127.0.0.1` and `[::1]` when the server was started on a loopback host, and it
+is switched off when a host that is not loopback is asked for, `0.0.0.0`
+included. The websocket upgrade checks the Host and never the Origin (:9210).
+
+⚠️ **Whether another Windows user on the same machine can reach that port was
+not tested**: this machine has one user. A loopback TCP port carries no user in
+its address, where the browser's own pipe has an ACL, and that ACL was not read
+either. `[UNVERIFIED]` `[FLOATS]`
+
+### One dashboard per Windows user, on a port too
+
+Measured, `probe3.log`: a second dashboard started with `--port=0` printed
+`Dashboard is running pid=8184`, which was the first one's pid, and exited 0
+within 0.4 s without serving anything. The first still answered. A third
+process started with `--kill` exited 0, the first exited 0 with it, and its
+port then refused connections.
+
+Read: the singleton is the pipe from `makeSocketPath("dashboard", "app")`
+(:8556, :76954), named from a hash of the user name, and `acquireSingleton`
+(:76970) hands the loser's arguments to the winner. It is the pipe
+[the `browser_annotate` entry](#what-browser_annotate-actually-does----measured-2026-08-18)
+already records, with `PWTEST_SOCKETS_DIR` the only thing that moves it. What is
+measured here is that `--port` goes through it too, which upstream made so on
+2026-06-26 (#41466).
+
+Read and not run: `playwright-cli kill-all` stops every process on the machine
+whose command line contains `dashboardApp.js` (`killAllDaemons`, :73003, the
+pattern list at :73126). And when the winner is a dashboard with a window, a
+forwarded start brings that window to the front (:77080).
+
+So a dashboard this product started would not start at all on a machine where
+the user already runs one, and anybody's `show --kill` would stop it.
+`[FLOATS]` `[MACHINE]`
+
+### A reload works, and a viewer that stays stops updating when another leaves
+
+Measured:
+
+- **20 reloads of a lone tab, 20 lists.** E12: the real page in a headless tab,
+  reloaded 10 times, showed its session list after 208 to 214 ms each time. E24:
+  10 more in the second rig listed after 116 to 119 ms, and after each of those
+  the tab showed a registry change made afterwards within 106 to 109 ms.
+- **E11, two viewers over raw websockets.** Both listed. One closed. A browser
+  bound 1.5 s later never reached the one that stayed, in 10 s. A new connection
+  listed it at once.
+- **E12, two tabs of the real page.** The second listed after 238 ms. The first
+  was closed. A browser bound 1.5 s later never appeared in the second, in 10 s,
+  and its screenshot is byte-identical to the one taken at the first load
+  (`ui-first-load.png` and `ui-second-tab-after-first-closed.png`, one SHA-256).
+
+Read: one `RegistrySessionProvider` is made per server (:77027) and handed to
+every connection (:76849). A connection's `onclose` calls `provider.dispose()`
+(:76024), which stops the registry watch and removes every listener, the other
+connections' included (:76665 to :76674). A new connection calls `start()`
+again. That is why a fresh connection works, and why a reload works when the old
+socket closes before the new one connects. `main` carries the same two calls,
+read 2026-10-01. `[FLOATS]` `[MACHINE]`
+
+### The trace viewer serves one trace's folder and attaches to nothing
+
+Measured, `probe4.log`: `playwright-core/cli.js show-trace --host 127.0.0.1
+--port 0` on the trace the first rig wrote printed a URL and served it. `GET /`
+answered 302 into `./trace/index.html`. `/trace/file?path=` answered 200 and
+3,994 bytes for the trace, 403 for `C:\Windows\win.ini`, and 403 for a file in
+a sibling directory of the same scratch root. A headless page loaded the URL and
+showed the trace's actions (`trace-viewer.png`).
+
+Read: the server answers `/trace/file` only for a path inside its allowed roots
+and 403 otherwise (:57095, :57103), and the root is the directory the trace file
+sits in (`traceFileRoots`, :57197). So every file beside the trace is served
+too. With `CLAUDECODE` set the command opens no browser of its own (:8323,
+:57243), which is how the rig kept it off the screen.
+
+It reads a file a session has already written. It connects to no browser, so
+nothing in the sections above applies to it. `[FLOATS]`
+
+### A browser's registry title is its MCP client's name, so every BrowserAI session is titled alike
+
+Measured, E20 and E23 in `probe2.log`: the child was initialised with the client
+name `zoomout-c-mcp`, and the descriptor its browser wrote was titled
+`zoomout-c-mcp`. The browser it started after the dashboard's close was titled
+`zoomout-c-mcp (2)` (`reg/browser@cebeeaac058682825ca3e34fb012e25b`).
+
+Read: the MCP server takes the client's name from `initialize` (:73442) and
+binds every browser it launches under it (:74795, :75008), with a counter
+suffix from the second one on (:75033). The bind has no condition around it; a
+browser that fails to bind is closed. BrowserAI's child client name is the
+constant `BrowserAI`
+([`ChildConnection`](../../src/BrowserAI/Proxy/ChildConnection.cs)), which is
+why the 26 descriptors the installed product had left by 2026-09-23 all carry
+that title
+([above](#every-launched-browser-leaves-a-descriptor-in-localappdatams-playwrightb-and-nothing-reaps-it----measured-2026-09-16)).
+
+Read and not run: `@playwright/mcp --endpoint <name>` looks the name up with
+`serverRegistry.find`, which returns the first descriptor whose title matches
+(:74853, and `find` at :1837 of `lib/serverRegistry.js`). With every session
+titled alike, a name does not pick one.
+
+⚠️ **This stands today, whatever is decided about the dashboard.** BrowserAI's
+browsers are bound like any other, so their descriptors sit in the machine-wide
+registry beside everybody else's. It follows that a person's own
+`playwright-cli show` lists them and can do to them what is measured above. That
+was not run against a BrowserAI session. `[FLOATS]`
+
+### What these rigs did not run
+
+Each of these is also a row in [what is not established](../not-established.md).
+
+- **A reload in a headed desktop browser.** Every viewer here was headless.
+- **`reveal`, a forwarded start reaching a dashboard that has a window, and
+  `newTab` on a headed session.** Each would put a window on the operator's
+  screen. The first two are read in the bundle, above. Whether a new tab in a
+  headed browser takes the foreground was neither read nor run. `[UNVERIFIED]`
+- **A Firefox session.** Every browser was Chromium.
+- **A second Windows user**, and the ACL on a browser's pipe.
+- **BrowserAI itself, and a real Claude Code or Codex.** The second rig drove
+  the payload's `@playwright/mcp` directly.
+- **What a profile keeps across a close from the dashboard.**
+- **Whether `browser_run_code_unsafe` can arm a pause.**
+
+**Re-establish it** with the four rigs, in order, under the payload's node and
+with both `PWTEST_` variables pointing into scratch. Each of the first three
+refuses to start otherwise. The probe record says what each one needs and what
+it leaves behind.
 
 ## Every artifact pointer a tool result carries is absolute -- measured 2026-09-17
 

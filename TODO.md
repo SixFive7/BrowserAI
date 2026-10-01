@@ -31,7 +31,7 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
 `codex-cli` 0.155.0-alpha.9.2; the session's record is its
 [ledger](docs/ledger/2026-09-24-development-session.md).
 
-### Next: the zoom-out, four research tracks
+### Next: the zoom-out, three research tracks
 
 - [ ] **A. A maintained registrar for MCP servers.** Find a library or tool that
       registers servers with Claude Code, Codex and the other harnesses people
@@ -39,11 +39,6 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
       instead of its own registration code.
 - [ ] **B. A local web management interface**, in place of the task-dialog
       configuration window.
-- [ ] **C. The Playwright dashboard inside that interface**, and its downsides
-      under the per-directory session design. Named so far: it reaps the
-      machine-wide registry when it lists, can take over live browsers, bypasses
-      session locks, hangs on a reload, and would expose live screencasts on a
-      local port.
 - [ ] **D. [Hacker News item 49756671](https://news.ycombinator.com/item?id=49756671)
       as a Playwright replacement.** Deep research into the downsides, and a
       detailed pros and cons comparison.
@@ -93,8 +88,10 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
       HAZARDS, CHANGELOG, the fragment count) and the measurements that exist
       only under `.work/phase2/`; step 7, the gate and the merge.
 - [ ] **Phase 3, the toast, and phase 4, the sessions page and window.** Not
-      started; both wait on tracks B and C. Q309 b and the defects the Q303
-      rendering found go with phase 4.
+      started; both wait on track B. Track C is decided, and what it leaves
+      open for phase 4 is in
+      [its row](DECISIONS.md#processes-browsers-and-session-modes). Q309 b and
+      the defects the Q303 rendering found go with phase 4.
 
 ### Small fixes, ready once decided or scheduled
 

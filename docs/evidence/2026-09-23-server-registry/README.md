@@ -46,3 +46,40 @@ that launch created, named in the log by GUID.
 the probes created are not here, for the reason every profile tree is absent from
 this directory: they are the rig's working state and none of them is read by a
 finding.
+
+## Corrected 2026-10-01: what the dashboard files show
+
+⚠️ *Corrected 2026-10-01 by addition (previously, in the last row of the table
+above, "The Playwright dashboard the maintainer asked to see, and the reload that
+hangs its session list", over seven file names).* Checked against the files as
+committed, while the dashboard measurements of 2026-09-25 were being written up.
+Nothing in this directory was changed.
+
+- **Five of the seven files are here and two never were.** `dashboard-demo.log`
+  and `dashboard-demo-relaunch.log` are in no commit on any branch of this
+  repository. The 18 files and 89,296 bytes counted at the top are the 18 that
+  are here, this README among them.
+- **The two screenshots are one file.** `dashboard.png` and
+  `dashboard-after-reload.png` are 24,397 bytes each, one git blob, SHA-256
+  `d0f351087250435163d92b2e3ad87278d9cb777516924769cecf3886f8a18182`.
+- **Neither capture is of a reload.** `dashboard-shot.cjs` in the probe record
+  goes to the URL once and takes one screenshot. It never reloads; the word is
+  in it once, in the name of the file it writes. `dashboard-shot.log` is a run
+  that wrote `dashboard.png`, and `dashboard-shot2.log` is a run that wrote
+  `dashboard-after-reload.png`, which is the name the stored script carries.
+  Both went to the same URL, and both print a session list that filled: the
+  demo session and its two tabs.
+- **`dashboard-url.txt` is from another start.** It holds port 61165, and both
+  logs are of port 55913.
+  [The session's ledger](../../ledger/2026-09-23-development-session.md) records
+  a relaunch of the demo at 61165, with the second of the two missing logs as
+  its log.
+
+So no file here shows a reload, hung or otherwise. What a reload does was
+measured on 2026-09-25: a lone tab, reloaded, listed its sessions 20 times out
+of 20, and the viewer that stops updating is one that stays while another
+leaves. That
+is in
+[`2026-09-25-dashboard-exposure`](../2026-09-25-dashboard-exposure/README.md)
+and in
+[the kb](../../../kb/playwright/tools-and-artifacts.md#a-reload-works-and-a-viewer-that-stays-stops-updating-when-another-leaves).

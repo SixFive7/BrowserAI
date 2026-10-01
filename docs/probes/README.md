@@ -60,6 +60,20 @@ for; incrementing them would be adjusting a measurement instead of taking one.
 **A second true positive would be a new decision, not a precedent**, and
 this rig is not one.
 
+⚠️ *Added 2026-10-01, when
+[`2026-09-25-dashboard-exposure`](2026-09-25-dashboard-exposure/README.md)
+arrived* -- four `.cjs` files taken during the research into Playwright's
+dashboard. **It selects no process either, so the blind spot is still one file
+wide.** That was searched for and not run through the scan, whose corpus is
+`src`, `tests` and `build` as it always was: no file in any of the five rigs
+added since the 2026-09-17 measurement carries one of the eight spellings
+`ProcessSelection` keys on, and the same search finds one in
+`2026-09-14-firstrun/observe.ps1`. The five are `2026-09-17-file-paths`,
+`2026-09-21-webmcp`, `2026-09-24-playwright-dashboard`, `2026-09-24-q261` and
+this one. **The directory holds nineteen rigs now, counted as its
+subdirectories**, eighteen before this one. The table further down lists
+eighteen of them, because `2026-09-21-webmcp` never had a row there.
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -119,5 +133,6 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-09-16-resume`](2026-09-16-resume/README.md) | What a resume costs and which stores survive it |  |
 | [`2026-09-17-cost-ratios`](2026-09-17-cost-ratios/README.md) | Firefox against Chromium on RAM, first paint, idle CPU and profile disk |  |
 | [`2026-09-17-file-paths`](2026-09-17-file-paths/README.md) | Which artifact pointers in a tool result `filePaths: "absolute"` reaches |  |
-| [`2026-09-24-playwright-dashboard`](2026-09-24-playwright-dashboard/README.md) | Playwright's own dashboard over a scratch registry, and the reload that hangs its session list | |
+| [`2026-09-24-playwright-dashboard`](2026-09-24-playwright-dashboard/README.md) | Playwright's own dashboard over a scratch registry, and the reload that hangs its session list. ⚠️ *Corrected 2026-10-01 by addition: the rig never reloads, and a reload did not hang when it was measured on 2026-09-25. The rig's README says what it does show* | |
 | [`2026-09-24-q261`](2026-09-24-q261/README.md) | Q261's refusal at the other end: a real client's re-dial, the sentence the model got, and what the notification did | |
+| [`2026-09-25-dashboard-exposure`](2026-09-25-dashboard-exposure/README.md) | What Playwright's dashboard does to a browser it did not launch: listing, control, a pause left behind, a close, its port, its singleton, and the trace viewer beside it | |

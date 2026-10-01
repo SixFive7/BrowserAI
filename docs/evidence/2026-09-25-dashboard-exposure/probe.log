@@ -1,0 +1,51 @@
+[+   240 ms] E0 real registry (names only) before: 8
+[+   241 ms] E0 scratch registry: C:\Source\SixFive7\BrowserAI\.work\zoomout\c\reg sockets dir: C:\Source\SixFive7\BrowserAI\.work\zoomout\c\sockets TEMP: C:\Source\SixFive7\BrowserAI\.work\zoomout\c\tmp
+[+   247 ms] E0 page server http://127.0.0.1:51984/page
+[+   819 ms] E1 owner bound guid=browser@f8b6f1b6a3ff049519938fe0d9cc6406 endpoint=\\.\pipe\pw-e52b5188-browser-browser@f8b6f1-0915bec1
+[+   820 ms] E1 scratch registry holds ["browser@f8b6f1b6a3ff049519938fe0d9cc6406"] real registry count 8 (was 8)
+[+   820 ms] E1 descriptor keys ["playwrightVersion","playwrightLib","title","browser","endpoint","workspaceDir"] browser keys ["guid","browserName","launchOptions","userDataDir"] launchOptions keys ["ignoreAllDefaultArgs","handleSIGINT","handleSIGTERM","headless","noDefaultViewport","viewport","selectorEngines","userDataDir"]
+[+   825 ms] E2 planted dead descriptors 5 scratch now 6
+[+   842 ms] E3 dashboard pid 76892
+[+  1143 ms] E3 dashboard url http://127.0.0.1:63044 after 300 ms; stdout: Listening on http://127.0.0.1:63044 stderr: 
+[+  1156 ms] E3 GET / -> 302 /index.html?ws=860849c7a1fc03e20542d08162b9f7d0
+[+  1156 ms] E3 GET / with Host evil.example -> 403 ; Host attacker.localtest.me -> 403
+[+  1157 ms] E3 GET /index.html -> 200 headers {"content-type":"text/html","content-length":"1078","date":"Fri, 25 Sep 2026 03:57:11 GMT","connection":"keep-alive","keep-alive":"timeout=5"}
+[+  1157 ms] E3 traversal -> 404 404 ; OPTIONS with evil Origin -> 200 {"date":"Fri, 25 Sep 2026 03:57:11 GMT","connection":"keep-alive","keep-alive":"timeout=5","transfer-encoding":"chunked"}
+[+  1161 ms] E4 ws open with Origin https://evil.example -> {"ok":true}
+[+  2739 ms] E4 first non-empty sessions after 67 ms: ["zoomout-c-owner"]
+[+  2739 ms] E4 scratch registry after the listing: ["browser@f8b6f1b6a3ff049519938fe0d9cc6406"] dead left: 0
+[+  2740 ms] E4 a session entry carries keys ["playwrightVersion","playwrightLib","title","browser","endpoint","workspaceDir"] and clientInfo carries ["version","workspaceDirHash","daemonProfilesDir","homeDir"]
+[+  3755 ms] E5 tabs: [{"title":"owner page","url":"http://127.0.0.1:51984/page","hasFavicon":true}]
+[+  3756 ms] E5 /icon.png requests: before dashboard 0 after listing 14
+[+  6270 ms] E5 after one owner navigation: /icon.png requests 14 -> 16
+[+  9318 ms] E6 selectTab -> {"id":1} first frame after 25 ms; frames in ~3 s: 7 ; first frame 7093 bytes, jpeg: true viewport [1000,700]
+[+ 10738 ms] E7 typed via dashboard, owner reads input value: "hi"
+[+ 10738 ms] E7 navigate -> {"id":6} ; owner page.url() now http://127.0.0.1:51984/other title navigated by the dashboard
+[+ 10739 ms] E7 screenshot -> 4913 bytes png; aria: - heading "other" [level=1] [ref=f2e2] [box=8,8,984,37]
+[+ 11800 ms] E9 newTab -> {"id":8} ; owner context pages 1 -> 2
+[+ 11845 ms] E8 owner trace written C:\Source\SixFive7\BrowserAI\.work\zoomout\c\evidence\owner-trace.zip 3994 bytes
+[+ 11855 ms] E10 debuggerPause -> {"id":10}
+[+ 11859 ms] E10 dashboard connection A closed WITHOUT resuming
+[+ 25380 ms] E10 owner page.evaluate after the dashboard left -> {"ok":false,"timedOut":true,"label":"owner evaluate after the dashboard left","ms":12000} after 12013 ms
+[+ 25382 ms] E10 owner-side ctx.debugger.resume() -> {"ok":true} ; next evaluate -> {"ok":true,"value":43}
+[+ 25406 ms] E11 B listed true ; D listed true
+[+ 25408 ms] E11 B closed; D stays
+[+ 37070 ms] E11 after B left, did D see the second browser arrive within 10 s? false
+[+ 37074 ms] E11 control: a fresh connection E sees the second browser? true
+[+ 38583 ms] E12 first load: list shown after 245 ms
+[+ 38814 ms] E12 reload 1 -> list shown after 208 ms
+[+ 39060 ms] E12 reload 2 -> list shown after 208 ms
+[+ 39296 ms] E12 reload 3 -> list shown after 212 ms
+[+ 39529 ms] E12 reload 4 -> list shown after 211 ms
+[+ 39777 ms] E12 reload 5 -> list shown after 211 ms
+[+ 40011 ms] E12 reload 6 -> list shown after 212 ms
+[+ 40245 ms] E12 reload 7 -> list shown after 211 ms
+[+ 40477 ms] E12 reload 8 -> list shown after 210 ms
+[+ 40728 ms] E12 reload 9 -> list shown after 214 ms
+[+ 40963 ms] E12 reload 10 -> list shown after 213 ms
+[+ 53186 ms] E12 second tab listed after 238 ms; after the first tab closed, it showed a newly bound browser after null ms (null = never within 10 s)
+[+ 54717 ms] E13 closeSession(owner) -> {"ok":true,"value":{"id":1}} ; owner browser disconnected: 21 ms ; isConnected false
+[+ 54718 ms] E13 scratch registry after the close: ["browser@418726d16f6c71a460f5a490bf0fa7c5","browser@8a9b2c59cf6e9245e2566ef9404e967c","browser@f8b6f1b6a3ff049519938fe0d9cc6406"]
+[+ 55381 ms] dashboard exited code=null sig=SIGTERM
+[+ 56883 ms] E14 real registry after: 8 ; entries that existed before and are missing now: 0 []
+[+ 56883 ms] E14 dashboard child exitCode null killed true

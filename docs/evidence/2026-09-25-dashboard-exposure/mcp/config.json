@@ -1,0 +1,24 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\profile",
+    "launchOptions": {
+      "headless": true
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1000,
+        "height": 700
+      }
+    }
+  },
+  "capabilities": [
+    "devtools"
+  ],
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\out",
+  "console": {
+    "level": "debug"
+  },
+  "codegen": "none",
+  "filePaths": "absolute"
+}

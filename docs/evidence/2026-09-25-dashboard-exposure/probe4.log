@@ -1,0 +1,6 @@
+[+   312 ms] show-trace pid 63232 says Listening on http://127.0.0.1:56696
+[+   324 ms] GET / -> 302 ./trace/index.html?pathSeparator=%5C&trace=file%3Fpath%3DC%253A%255CSource%255CSixFive7%255CBrowserAI%255C.work%255Czoomout%255Cc%255Cevidence%255Cowner-trace.zip
+[+   325 ms] trace file inside the allowed root -> 200 3994 bytes; C:\Windows\win.ini -> 403 ; a sibling directory -> 403
+[+   325 ms] index headers {"location":"./trace/index.html?pathSeparator=%5C&trace=file%3Fpath%3DC%253A%255CSource%255CSixFive7%255CBrowserAI%255C.work%255Czoomout%255Cc%255Cevidence%255Cowner-trace.zip","date":"Fri, 25 Sep 2026 04:11:44 GMT","connection":"keep-alive","keep-alive":"timeout=5","content-length":"0"}
+[+  1093 ms] trace viewer text (first 600 chars): Playwright 0ms 500ms 1.0s 1.5s 2.0s 2.5s 3.0s 3.5s 4.0s 4.5s 5.0s 5.5s 6.0s Action Before After 1x http://127.0.0.1:51984/page?owner-own-goto Actions Metadata 1 hidden Evaluate 7ms 2 Navigate 11ms 127.0.0.1:51984/page?owner-own-goto Locator Call Log Errors Console 2 Network 4 Source Attachments Navigate 127.0.0.1:51984/page?owner-own-goto TIME start: 5.5s duration: 11ms PARAMETERS url: "http://127.0.0.1:51984/page?owner-own-goto" waitUntil: "load" timeout: 30000 RETURN VALUE response: "<Response>"
+[+  1648 ms] show-trace exit null killed true

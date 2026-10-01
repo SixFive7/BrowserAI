@@ -1,0 +1,121 @@
+{
+  "versions": {
+    "playwrightCore": "1.64.0-alpha-1789764292000",
+    "playwrightMcp": "0.0.82",
+    "node": "v24.21.0"
+  },
+  "experiments": {
+    "E20": {
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1789764292000"
+      },
+      "scratch": [
+        "browser@4ac916947898413559b349239bc15345"
+      ],
+      "title": "zoomout-c-mcp",
+      "workspaceDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\out",
+      "realCount": 8
+    },
+    "E21": {
+      "dashboardUrl": "http://127.0.0.1:55232",
+      "console404sBefore": 0,
+      "console404sAfter": 3,
+      "faviconHits": 3,
+      "consoleAfterExcerpt": "### Result\nTotal messages: 3 (Errors: 3, Warnings: 0)\n\n[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:54584/favicon.ico:0\n[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:54584/favicon.ico:0\n[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:54584/favicon.ico:0\n### Page\n- Page URL: http://127.0.0.1:54584/noicon\n- Page Title: /noicon\n- Console: 3 errors, 0 warnings\n### Events\n- New console entries: C:\\Source\\SixFive7\\BrowserAI"
+    },
+    "E22": {
+      "pauseResp": {
+        "id": 2
+      },
+      "navigateAnsweredWithin15s": false,
+      "navigateAnsweredAtMs": 15053,
+      "snapshotWhileParked": "answered",
+      "snapshotSaysPaused": true,
+      "resume": {
+        "ok": false,
+        "timedOut": true,
+        "label": "resume",
+        "ms": 20000
+      },
+      "navigateText": "### Page\n- Page URL: http://127.0.0.1:54584/after-pause\n- Page Title: /after-pause\n### Snapshot\n- [Snapshot](C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\out\\page-2026-09-25T04-02-00-607Z.yml)"
+    },
+    "E23": {
+      "tabsBefore": "### Result | - 0: (current) [/after-pause](http://127.0.0.1:54584/after-pause) | ### Events | - New console entries: C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\out\\console-2026-09-25T04-01-45-558Z.log#L1-L3",
+      "closeSession": {
+        "ok": true,
+        "value": {
+          "id": 1
+        }
+      },
+      "firstCallAfter": "### Result | - 0: (current) [](about:blank)",
+      "secondCallAfter": "### Result | - 0: (current) [](about:blank)",
+      "scratchAfter": [
+        "browser@4ac916947898413559b349239bc15345",
+        "browser@cebeeaac058682825ca3e34fb012e25b"
+      ]
+    },
+    "E24": {
+      "trials": [
+        {
+          "i": 1,
+          "listedMs": 116,
+          "heardChangeMs": 108
+        },
+        {
+          "i": 2,
+          "listedMs": 118,
+          "heardChangeMs": 106
+        },
+        {
+          "i": 3,
+          "listedMs": 116,
+          "heardChangeMs": 109
+        },
+        {
+          "i": 4,
+          "listedMs": 118,
+          "heardChangeMs": 108
+        },
+        {
+          "i": 5,
+          "listedMs": 118,
+          "heardChangeMs": 109
+        },
+        {
+          "i": 6,
+          "listedMs": 119,
+          "heardChangeMs": 107
+        },
+        {
+          "i": 7,
+          "listedMs": 119,
+          "heardChangeMs": 108
+        },
+        {
+          "i": 8,
+          "listedMs": 118,
+          "heardChangeMs": 109
+        },
+        {
+          "i": 9,
+          "listedMs": 119,
+          "heardChangeMs": 107
+        },
+        {
+          "i": 10,
+          "listedMs": 118,
+          "heardChangeMs": 107
+        }
+      ],
+      "listed": 10,
+      "live": 10,
+      "of": 10
+    },
+    "E25": {
+      "realBefore": 8,
+      "realAfter": 8,
+      "missing": []
+    }
+  }
+}

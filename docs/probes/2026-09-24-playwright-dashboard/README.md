@@ -54,3 +54,29 @@ the payload to be assembled at `payload/mcp/node_modules` -- they read
 ⚠️ **The two SPDX lines at the head of each file were added when they were
 persisted**, which is what every script this repository holds carries; nothing
 else about either file moved.
+
+## Corrected 2026-10-01
+
+⚠️ *Corrected 2026-10-01 by addition (previously "`dashboard-shot.cjs` drives a
+second browser to the printed URL and captures the page, once as served and once
+after a reload", "The reload hang is a property of the dashboard and not of the
+rig", and "a reloaded tab never receives `SessionsChanged` and its session list
+never fills").* Three things in this record did not hold when they were checked.
+
+- **`dashboard-shot.cjs` does not reload.** It goes to the URL once and takes
+  one screenshot. The word appears in it once, in the name of the file it
+  writes. The two captures it left are one file, and both of its logs print a
+  session list that filled. The detail is in
+  [the evidence batch's README](../../evidence/2026-09-23-server-registry/README.md).
+- **A reload did not hang when it was measured.** On 2026-09-25, at the same
+  `playwright-core`, a lone headless tab, reloaded, listed its sessions 20 times
+  out of 20. The shared provider and its `dispose()` are as this record describes
+  them, and what they break is a viewer that stays while another one leaves, 2
+  of 2. A reload in a headed desktop browser was not run. The measurement and
+  its rigs are
+  [`2026-09-25-dashboard-exposure`](../2026-09-25-dashboard-exposure/README.md).
+- **The count of `3815` cannot be checked from the tree.** The demo log this
+  record quotes for it was never committed.
+
+So the advice above, to open the bare URL in a new tab and not reload, guards
+against the wrong thing. What to avoid is closing one of two open viewers.

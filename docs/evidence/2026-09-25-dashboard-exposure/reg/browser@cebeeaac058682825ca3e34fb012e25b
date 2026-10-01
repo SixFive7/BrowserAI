@@ -1,0 +1,33 @@
+{
+  "playwrightVersion": "1.64.0-alpha-1789764292000",
+  "playwrightLib": "C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\playwright-core",
+  "title": "zoomout-c-mcp (2)",
+  "browser": {
+    "guid": "browser@cebeeaac058682825ca3e34fb012e25b",
+    "browserName": "chromium",
+    "launchOptions": {
+      "args": [
+        "--disable-blink-features=AutomationControlled"
+      ],
+      "ignoreAllDefaultArgs": false,
+      "ignoreDefaultArgs": [
+        "--disable-extensions"
+      ],
+      "handleSIGINT": false,
+      "handleSIGTERM": false,
+      "headless": true,
+      "tracesDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\out\\traces",
+      "chromiumSandbox": true,
+      "noDefaultViewport": false,
+      "viewport": {
+        "width": 1000,
+        "height": 700
+      },
+      "selectorEngines": [],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\profile"
+    },
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\profile"
+  },
+  "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@cebeea-0915bec1",
+  "workspaceDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\mcp\\out"
+}

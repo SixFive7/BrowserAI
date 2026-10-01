@@ -1057,6 +1057,33 @@ release body; nothing else depends on it.
   2.1.281: https://code.claude.com/docs/en/changelog#2-1-281; remaining differences:
   https://github.com/anthropics/claude-code/tree/main/mods/agents-md#where-it-still-differs-from-claudemd
 
+- 📝 **Playwright's dashboard is not exposed, and the measurements behind that are written down.**
+  The maintainer decided it on 2026-10-01, verbatim: *"C Ok, lets not provide access to the
+  dashboard and document in the repo why we took that decission (the risks associated)."* BrowserAI
+  does not expose, host or proxy upstream's dashboard, and
+  [`DECISIONS.md`](DECISIONS.md#processes-browsers-and-session-modes) carries the row: the five
+  risks that decided it, what containing it was estimated to cost, the one thing given up, and
+  three things the row does not decide. Nothing in the product changes.
+
+  **What was measured on 2026-09-25, against browsers the dashboard did not launch**, is in
+  [the kb](kb/playwright/tools-and-artifacts.md#what-playwrights-dashboard-does-to-a-browser-it-did-not-launch----measured-2026-09-25),
+  each number against a file. Opening the page connects to every listed browser and runs script in
+  its pages before anybody clicks. One call later it types, navigates and closes, and none of that
+  is an action in the browser's own trace. A pause left behind parks the next tool call, and
+  `browser_resume` then waits itself. A close leaves the session on `about:blank` with no error.
+  The port hands out its own key, and the dashboard is one per Windows user even on a port. The
+  four rigs are a probe record, and what they printed is an evidence batch with the research
+  report beside it. The re-verification index gains four rows, one per rig, and is re-stamped
+  through its own scan: 162 rows to 166, 276 markers to 287.
+
+  ⚠️ **One earlier claim is corrected by addition.** The kb said the dashboard cannot be reloaded.
+  A lone tab, reloaded, listed its sessions 20 times out of 20, and what stops updating is a
+  viewer that stays while another leaves. The evidence that claim pointed at shows no reload either: its two
+  screenshots are one file, its rig never reloads, and two logs its README lists were never
+  committed. Both READMEs say so now.
+
+  Track C leaves [`TODO.md`](TODO.md)'s zoom-out tree, and phases 3 and 4 wait on track B.
+
 ### Removed
 
 - 🗑️ **The server's own installer exit is deleted, because it could never fire on a real install.**

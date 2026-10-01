@@ -40,6 +40,23 @@ the same omission this page exists to prevent, one level up.
 | How long a Playwright-launched Firefox stays **registered for restart** before the preference unregisters it | Not established | The preference arrives over the wire after startup, so there is a window. Measuring it means sampling `GetApplicationRestartSettings` from the instant the process appears. The steady state -- what a reboot hours later would find -- **is** measured. [kb](chromium/resurrection.md) |
 | What actually resurrected the browsers that motivated this project | Not established, and now unfalsifiable cheaply | By elimination it is the Windows sign-in restore path; `RegisterApplicationRestart` is excluded by measurement. Observing the sign-in path directly requires a reboot, which was not performed. A diagnostic is recorded for if it recurs. [kb](chromium/resurrection.md) |
 
+## Playwright's dashboard
+
+*Added 2026-10-01, with the measurements of 2026-09-25.* Every rig behind them
+was headless, ran on one Windows user, and drove the payload's `@playwright/mcp`
+and never BrowserAI.
+
+| Question | Status | Why, and what it would take |
+|---|---|---|
+| Whether reloading the dashboard in a **headed desktop browser** leaves its session list empty | Not established | A lone tab reloaded in headless Chromium listed its sessions 20 times out of 20, measured 2026-09-25. The 2026-09-24 entry that says a reload hangs points at evidence that shows no reload, and what that observation was made with is not recorded. Settling it takes a window on the operator's screen. [kb](playwright/tools-and-artifacts.md#a-reload-works-and-a-viewer-that-stays-stops-updating-when-another-leaves) |
+| What the dashboard's `reveal` does, what a forwarded start does to a dashboard that has a window, and whether `newTab` on a headed session takes the foreground | **Deliberately** not established | Each puts a window on the operator's screen. The first two are read in the bundle and were not run; the third was neither read nor run. [kb](playwright/tools-and-artifacts.md#what-these-rigs-did-not-run) |
+| Whether the dashboard does the same to a **Firefox** session | Not established | Every browser the rigs launched was Chromium. [kb](playwright/tools-and-artifacts.md#what-these-rigs-did-not-run) |
+| Whether **another Windows user** can reach the dashboard's loopback port, and what ACL a browser's own pipe carries | Not established | The machine has one user. The pipe's default ACL was taken from Microsoft Learn during the research, and the call libuv creates the pipe with was not read. [kb](playwright/tools-and-artifacts.md#the-ports-only-key-is-handed-out-by-its-own-redirect) |
+| What the dashboard does to a session **BrowserAI holds**, with a real Claude Code or Codex at the other end | Not established | No rig started a BrowserAI server. That the lock, the `why` and the session record see nothing is read from where the dashboard connects, which is the browser's own pipe. [kb](playwright/tools-and-artifacts.md#nothing-it-does-is-an-action-in-the-sessions-own-trace) |
+| What a profile keeps after the dashboard closes its browser | Not established | The child's next call answered on `about:blank`, and nothing read the profile afterwards. [kb](playwright/tools-and-artifacts.md#a-close-from-the-dashboard-leaves-the-session-on-a-blank-page-and-no-call-fails) |
+| Whether a caller can arm a debugger pause from inside a session through `browser_run_code_unsafe` | Not established | `browser_resume` cannot arm one on a context that is not paused, read in the bundle. Code a caller supplies was not tried. [kb](playwright/tools-and-artifacts.md#browser_resume-releases-the-parked-call-and-then-parks-itself) |
+| Whether more than **eight** concurrent `list()` callers unlink a live descriptor | Not established | Eight spared it, 8 of 8, measured 2026-09-24. Upstream's PR #42128 says a burst of concurrent probes can fail on Windows and delete a live entry; it was closed unmerged on 2026-08-13. The cost is a browser missing from Playwright's own lists, never a browser. [kb](playwright/tools-and-artifacts.md#every-launched-browser-leaves-a-descriptor-in-localappdatams-playwrightb-and-nothing-reaps-it----measured-2026-09-16) |
+
 ## Windows
 
 | Question | Status | Why, and what it would take |

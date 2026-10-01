@@ -1,0 +1,13 @@
+### Page
+- Page URL: http://127.0.0.1:54584/noicon
+- Page Title: /noicon
+- Console: 5 errors, 0 warnings
+### Snapshot
+```yaml
+- generic [active] [ref=e1]:
+  - heading "/noicon" [level=1] [ref=e2]
+  - textbox [ref=e3]
+```
+### Paused
+- Navigate 127.0.0.1:54584/after-pause at C:\Source\SixFive7\BrowserAI\.work\zoomout\c\mcp\out\async C:\Source\SixFive7\BrowserAI\payload\mcp\node_modules\playwright-core\lib\coreBundle.js:73333
+- Use any tools to explore and interact, resume by calling resume/step-over/pause-at

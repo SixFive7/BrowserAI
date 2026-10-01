@@ -1,0 +1,21 @@
+{
+  "playwrightVersion": "1.64.0-alpha-1789764292000",
+  "playwrightLib": "C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\playwright-core",
+  "title": "zoomout-c-live-v10",
+  "browser": {
+    "guid": "browser@53fcda926246339c501089374ba08daa",
+    "browserName": "chromium",
+    "launchOptions": {
+      "ignoreAllDefaultArgs": false,
+      "handleSIGINT": false,
+      "handleSIGTERM": false,
+      "headless": true,
+      "noDefaultViewport": false,
+      "selectorEngines": [],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\profile-live"
+    },
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c\\profile-live"
+  },
+  "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@53fcda-0915bec1",
+  "workspaceDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\zoomout\\c"
+}

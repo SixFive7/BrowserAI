@@ -46,6 +46,17 @@ for privacy, not for size, with the original's SHA-256 beside each. Found by
 reading every batch README for the header on 2026-09-24; a README that says
 nothing about its headers was not compared against originals, which are gone.
 
+⚠️ *Corrected 2026-10-01 by addition (previously "Five more batches depart from
+the bytes as taken").* **Two more do, and each one's own README says how.**
+[`2026-09-24-codex-expansion`](2026-09-24-codex-expansion/README.md) was
+committed 18 minutes after that note: it prepended the header to ten files and
+cut this machine's PATH from 323, which it keeps under the `.trimmed.` name with
+the originals' digests beside them.
+[`2026-09-25-dashboard-exposure`](2026-09-25-dashboard-exposure/README.md)
+prepended the header to the one `.md` it holds, a research report, and gives the
+digest of the file as written. Found by reading the READMEs of the two batches
+added since that reading; the commit times say there are two.
+
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
 reasons that have nothing to do with a record. Adding a pattern below that
@@ -89,3 +100,4 @@ negation silently drops evidence from the tree.
 | [`2026-09-24-q261`](2026-09-24-q261/README.md) | Q261 against the real clients: eleven runs of the refusal, the retry and the notification | [kb](../../kb/mcp/protocol.md#what-q261s-refusal-does-at-the-other-end----measured-2026-09-24), [`HAZARDS.md`](../../HAZARDS.md#hazard-index), [re-verification row 150](../../kb/re-verification.md), `ClientReconnectTests` |
 | [`2026-09-24-toast-design`](2026-09-24-toast-design/README.md) | The update toast and the sessions page, researched: the prototypes, every activation line, the shortcut's property store, the marker sharing matrix, the stop-event timings and four screenshots | [kb](../../kb/windows/notifications.md#the-update-toast-from-browserais-own-binaries----measured-2026-09-24), [re-verification rows 156 to 158](../../kb/re-verification.md), [`docs/design/toast-2026-09-24`](../design/toast-2026-09-24/README.md) |
 | [`2026-09-24-velopack-rows`](2026-09-24-velopack-rows/README.md) | Re-verification rows 123, 124, 126 and 130 re-run at Velopack 1.2.158 against the suite's test pack, with the 19 clearance readings that show the real install untouched | [kb](../../kb/packaging/velopack.md), [re-verification rows 123, 124, 126 and 130](../../kb/re-verification.md), `upstream-review.json` |
+| [`2026-09-25-dashboard-exposure`](2026-09-25-dashboard-exposure/README.md) | What Playwright's dashboard does to a browser it did not launch: four rigs' logs, the owner's own trace, the screenshots, and the research report the decision was read from | [kb](../../kb/playwright/tools-and-artifacts.md#what-playwrights-dashboard-does-to-a-browser-it-did-not-launch----measured-2026-09-25), [`DECISIONS.md`](../../DECISIONS.md#processes-browsers-and-session-modes), [re-verification rows 163 to 166](../../kb/re-verification.md) |
