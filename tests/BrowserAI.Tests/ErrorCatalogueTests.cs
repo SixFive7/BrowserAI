@@ -98,6 +98,59 @@ internal sealed partial class ErrorCatalogueTests
     }
 
     /// <summary>
+    /// The still-installing row, provoked by a call to a proxy whose install's
+    /// updater is running -- and the same call served once the updater has gone.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q296 c, decided 2026-10-03 by the maintainer, in his words: <i>"Q296
+    /// c"</i>.</b> The published binary's own arm is <c>UpdateInProgressTests</c>,
+    /// which drives a real updater going away; this one is the census's, and it
+    /// also holds the door itself: the refused call never reaches the child, and
+    /// the call after <c>TheUpdateHasGone</c> does, once.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheStillInstallingRowIsEmittedWhileTheUpdaterRunsAndTheCallIsServedAfter()
+    {
+        await using var sessions = RigSessionEnvironment.Create(child =>
+            child.Tools["browser_snapshot"] = new FakeToolBehaviour
+            {
+                RawResult = """{"content":[{"type":"text","text":"a snapshot"}]}""",
+            });
+
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions);
+
+        rig.Proxy.RefuseCallsWhileAnUpdateInstalls();
+
+        var refused = await CallAsync(rig, "browser_snapshot", new JsonObject
+        {
+            ["session"] = rig.Session!,
+            ["why"] = "the suite calling while an update installs",
+        });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+
+        Match(
+            TextOf(refused),
+            nameof(SessionErrors.UpdateIsStillInstalling),
+            SessionErrors.UpdateIsStillInstalling("browser_snapshot", "BrowserAI.RawPipeClient"));
+
+        await Assert.That(rig.Child.ToolCallsReceived).DoesNotContain("browser_snapshot");
+
+        // ---- The updater has gone: the same call is served.
+        rig.Proxy.TheUpdateHasGone();
+
+        var served = await CallAsync(rig, "browser_snapshot", new JsonObject
+        {
+            ["session"] = rig.Session!,
+            ["why"] = "the suite calling once the update is done",
+        });
+
+        await Assert.That((bool?)served["isError"]).IsNotEqualTo(true).Because(TextOf(served));
+        await Assert.That(rig.Child.ToolCallsReceived.Count(name => name == "browser_snapshot")).IsEqualTo(1);
+    }
+
+    /// <summary>
     /// The update row, provoked both ways it happens: a call cut off in flight
     /// by a stop, and a call made once the stop has begun -- and the cut-off call
     /// gets that one answer and no other.
@@ -1531,7 +1584,14 @@ internal sealed partial class ErrorCatalogueTests
         // two different things about what may have happened, for the reason the
         // stale-list row gives -- one condition, one recovery, and a census that
         // would otherwise demand two provocations of it.
-        await Assert.That(rows.Count).IsEqualTo(35);
+        //
+        // ⚠️ **Corrected 2026-10-03 to 36 (previously 35).**
+        // `UpdateIsStillInstalling` arrived with Q296 c, and it is a row of its own
+        // and not a third clause on the one above, because its server is the one
+        // that will most likely answer the next call: `UpdateIsBeingInstalled` is
+        // said by a server that is ending, and this by one that serves once the
+        // updater has gone. Two different futures, two recoveries.
+        await Assert.That(rows.Count).IsEqualTo(36);
     }
 
     /// <summary>

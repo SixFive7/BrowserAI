@@ -192,8 +192,14 @@ internal sealed record ServerDescription(
 
         /// <summary>
         /// Started while its own install's updater was running, so it refuses
-        /// every tool call and starts no browser server.
+        /// every tool call until the updater has gone, and then says
+        /// <see cref="Serving"/>.
         /// </summary>
+        /// <remarks>
+        /// ⚠️ <b>Corrected 2026-10-03, Q296 c</b> (previously "so it refuses every
+        /// tool call and starts no browser server"): such a server starts its own
+        /// child for the real tool list, and serves once the updater has gone.
+        /// </remarks>
         public const string Updating = "updating";
 
         /// <summary>Asked to stop, and on its way out.</summary>

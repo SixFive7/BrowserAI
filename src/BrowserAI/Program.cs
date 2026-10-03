@@ -321,12 +321,23 @@ internal static class Program
 
         // ⚠️ IS THIS INSTALL'S UPDATER RUNNING -- Q286 b, 2026-09-24, the
         // maintainer's words verbatim: "Q286 b". Asked BEFORE the sweep, because a
-        // server that starts during an apply must start nothing of its own: the
-        // updater's kill pass ends every process under the install root, and
-        // anything this server started there would hold files the swap needs.
-        // The match is the full image path <install root>\Update.exe, read with
-        // QueryFullProcessImageNameW, and the handle it holds can wait and cannot
-        // terminate: this is detection and nothing else.
+        // server that starts during an apply starts no sweep of its own until the
+        // updater has gone. The match is the full image path
+        // <install root>\Update.exe, read with QueryFullProcessImageNameW, and the
+        // handle it holds can wait and cannot terminate: this is detection and
+        // nothing else.
+        //
+        // ⚠️ CORRECTED 2026-10-03 WITH Q296 c, the maintainer's words verbatim:
+        // "Q296 c" (previously "Asked BEFORE the sweep, because a server that
+        // starts during an apply must start nothing of its own: the updater's kill
+        // pass ends every process under the install root, and anything this server
+        // started there would hold files the swap needs"). Such a server now starts
+        // its own child, because the real tool list comes from nowhere else. A
+        // server started before the swap is ended by the kill pass, and the child
+        // with it: measured 2026-09-24 at Velopack 1.2.158, the kill pass ended
+        // eight servers and their eight node.exe children together. One started
+        // after the swap runs the new version from the new current\, which the
+        // swap no longer needs.
         using var updater = FindTheUpdater(installRoot, logger);
 
         // Fire-and-forget, on its own background thread, before anything that
@@ -334,10 +345,15 @@ internal static class Program
         // and it is deliberately never a startup gate: a BrowserAI that cannot
         // sweep is degraded, one that will not start is broken. Not during an
         // update: a sweep that ends a stray browser starts a registry reap, and
-        // that is a node process from the payload under the install root.
+        // that is a node process from the payload under the install root. A
+        // server that started during one sweeps when the updater has gone, through
+        // this same function: one way to start the background sweep, so the two
+        // moments a server does it cannot come to build two different sweeps.
+        void startTheSweep() => StraySweep.StartInBackground(() => CreateSweep(paths, installRoot, log.Factory), logger);
+
         if (updater is null)
         {
-            StraySweep.StartInBackground(() => CreateSweep(paths, installRoot, log.Factory), logger);
+            startTheSweep();
         }
 
         // ⚠️ TAKEN BY EVERY RUN, NOT ONLY BY ONE THAT CHECKS FOR UPDATES, and
@@ -382,15 +398,15 @@ internal static class Program
 
         using var pipe = OpenPipe(live, responder, log.Factory.CreateLogger("BrowserAI.Pipe"));
 
-        // ⚠️ A SERVER THAT STARTED DURING AN UPDATE -- Q286 b. It answers the
-        // handshake, refuses every tool call with the update refusal, starts no
-        // browser server and never checks the feed; its pipe describes it as
-        // "updating". The updater's kill pass ends it, and the client starts one
-        // again on its next call.
-        if (updater is not null)
-        {
-            return await ServeWhileUpdatingAsync(updater, activity, stopping, log.Factory, logger).ConfigureAwait(false);
-        }
+        // ⚠️ A SERVER THAT STARTED DURING AN UPDATE TAKES THE ORDINARY PATH -- Q296
+        // c, 2026-10-03. Corrected (previously "A SERVER THAT STARTED DURING AN
+        // UPDATE -- Q286 b. It answers the handshake, refuses every tool call with
+        // the update refusal, starts no browser server and never checks the feed;
+        // its pipe describes it as "updating". The updater's kill pass ends it, and
+        // the client starts one again on its next call", and a branch here returned
+        // into a server of its own). It starts its child, answers tools/list with
+        // the real list, refuses every call until the updater has gone, and then
+        // serves: see BeginServing below.
 
         // One run, one directory. It holds this run's own child -- the one that
         // answers `tools/list` before any session exists -- together with its
@@ -451,6 +467,14 @@ internal static class Program
 
             var proxy = await BrowserProxy.ConnectAsync(options, log.Factory, environment, activity).ConfigureAwait(false);
 
+            // ⚠️ Q296 c: BEFORE the conversation opens, so no call can arrive
+            // ahead of the refusal. tools/list is answered as ever, from the child
+            // just started; every tools/call is refused until the updater goes.
+            if (updater is not null)
+            {
+                proxy.RefuseCallsWhileAnUpdateInstalls();
+            }
+
             // The pipe describes the sessions from here on; until this line it
             // said "starting" and listed none, which was the truth. And a stop
             // from here on refuses this proxy's calls in flight before it acts.
@@ -503,23 +527,41 @@ internal static class Program
                 () => _ = EndTheConversationAsync(transport, logger));
 
             StartupLog.Serving(logger, proxy.NegotiatedChildProtocolVersion ?? "<none>");
-            activity.Serving();
 
-            // Off the message loop and after the server is up, because a
-            // `tools/call` has to stay answerable while a package is in flight.
-            // It ends the conversation exactly the way the client watcher does
-            // -- there is one shutdown path, not two -- so the session locks are
-            // released and the job objects closed before Update.exe, which is
-            // waiting on this pid, swaps current\.
-            if (UpdateConfiguration.Resolve(updateLogger) is { } feed)
+            if (updater is null)
             {
-                new UpdateService(
-                    new VelopackUpdateClient(feed),
-                    live,
-                    updateLogger,
-                    stopping.Cancel,
-                    new CoordinatorWake(installRoot, InstallLocation.AppId, Registration.ScheduledTasks.Instance, updateLogger))
-                    .StartInBackground(BuildVersion.Current, InstallLocation.IsInstalled, stopping.Token);
+                activity.Serving();
+                StartTheUpdateLane(installRoot, live, updateLogger, stopping);
+            }
+            else
+            {
+                // ⚠️ A SERVER THAT STARTED DURING AN UPDATE -- Q296 c, 2026-10-03,
+                // the maintainer's words verbatim: "Q296 c". It answers the
+                // handshake and tools/list as any server does, refuses every call
+                // while the updater runs, and describes itself on its pipe as
+                // "updating". When the updater goes it becomes an ordinary server:
+                // its calls are served, its pipe says "serving", and the stray sweep
+                // and the update lane it skipped start then. A server the updater's
+                // kill pass ends never gets that far, and its client starts one
+                // again on its next call.
+                StartupLog.UpdateInProgress(logger, updater.ProcessId, updater.ImagePath);
+                activity.Updating();
+
+                updater.WhenExited(() =>
+                {
+                    // The conversation may have ended first -- the client went, or
+                    // a stop arrived -- and then there is nothing left to serve.
+                    if (stopping.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    StartupLog.UpdaterExited(logger, updater.ProcessId);
+                    proxy.TheUpdateHasGone();
+                    activity.Serving();
+                    startTheSweep();
+                    StartTheUpdateLane(installRoot, live, updateLogger, stopping);
+                });
             }
 
             try
@@ -616,73 +658,43 @@ internal static class Program
     public const string UpdaterFileName = "Update.exe";
 
     /// <summary>
-    /// Serves a client while this install's updater runs: the handshake, and a
-    /// refusal for every tool call, until the updater or the client goes.
+    /// Starts the update lane: one feed check off the message loop, when this build
+    /// has a feed to check.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>It ends its own conversation when the updater has gone, and that is
-    /// an addition to Q286 b's text, measured and not reasoned.</b> Velopack's
-    /// kill pass ends every server that started before it, but a server can also
-    /// start AFTER it: on 2026-09-24 at 1.2.158, four servers started between the
-    /// swap and the updater's own exit -- 2.9 to 4.2 s into a 4.25 s apply -- were
-    /// running the new version with <c>Update.exe</c> still alive, and nothing
-    /// would ever have killed them. Left alone, each would refuse every call for
-    /// the rest of its session. So the watch on the updater stops this
-    /// conversation the moment it goes, and the client's next call starts a
-    /// server from whatever the update left in place.
+    /// Off the message loop and after the server is up, because a
+    /// <c>tools/call</c> has to stay answerable while a package is in flight. It
+    /// ends the conversation exactly the way the client watcher does -- there is
+    /// one shutdown path, not two -- so the session locks are released and the job
+    /// objects closed before <c>Update.exe</c>, which is waiting on this pid, swaps
+    /// <c>current\</c>.
     /// </para>
     /// <para>
-    /// <b>A stop through the pipe works here too</b>, and it has no calls to
-    /// refuse: every call this server receives is answered as it arrives.
+    /// ⚠️ <b>A method since 2026-10-03, Q296 c, because it has two callers</b>: the
+    /// ordinary start, and the moment a server that started during an update sees
+    /// its updater go. <i>Previously the block stood inline in <c>Main</c>, and a
+    /// server that started during an update never checked the feed at all, because
+    /// it ended with the updater (Q286 b): <c>ServeWhileUpdatingAsync</c>, deleted
+    /// that day with <c>UpdateInProgressServer</c>.</i>
     /// </para>
     /// </remarks>
-    /// <param name="updater">The updater found at startup.</param>
-    /// <param name="activity">What this server has been doing, for its pipe.</param>
-    /// <param name="stopping">The process's own stop signal.</param>
-    /// <param name="factory">Where the transport and the server log.</param>
-    /// <param name="logger">Where this startup reports.</param>
-    /// <returns>Zero, once the conversation has ended.</returns>
-    private static async Task<int> ServeWhileUpdatingAsync(
-        WatchedProcess updater,
-        ServerActivity activity,
-        CancellationTokenSource stopping,
-        ILoggerFactory factory,
-        ILogger logger)
+    /// <param name="installRoot">The root whose census an apply consults.</param>
+    /// <param name="live">This process's membership of that census, when it joined.</param>
+    /// <param name="updateLogger">Where the lane reports.</param>
+    /// <param name="stopping">The process's own stop signal, which an apply fires.</param>
+    private static void StartTheUpdateLane(string installRoot, LiveInstances? live, ILogger updateLogger, CancellationTokenSource stopping)
     {
-        StartupLog.UpdateInProgress(logger, updater.ProcessId, updater.ImagePath);
-
-        using var channel = StdioChannel.OpenStandardStreams();
-
-        var transport = new DirectStdioServerTransport(channel, factory);
-        await using var transportScope = transport.ConfigureAwait(false);
-
-        var surface = new UpdateInProgressServer(activity, factory.CreateLogger<UpdateInProgressServer>());
-        var server = McpServer.Create(transport, surface.ServerOptions(), factory);
-        await using var serverScope = server.ConfigureAwait(false);
-
-        using var closeOnDeparture = stopping.Token.Register(
-            () => _ = EndTheConversationAsync(transport, logger));
-
-        updater.WhenExited(() =>
+        if (UpdateConfiguration.Resolve(updateLogger) is { } feed)
         {
-            StartupLog.UpdaterExited(logger, updater.ProcessId);
-            RequestStop(stopping);
-        });
-
-        activity.Updating();
-
-        try
-        {
-            await server.RunAsync(stopping.Token).ConfigureAwait(false);
+            new UpdateService(
+                new VelopackUpdateClient(feed),
+                live,
+                updateLogger,
+                stopping.Cancel,
+                new CoordinatorWake(installRoot, InstallLocation.AppId, Registration.ScheduledTasks.Instance, updateLogger))
+                .StartInBackground(BuildVersion.Current, InstallLocation.IsInstalled, stopping.Token);
         }
-        catch (OperationCanceledException)
-        {
-            // The updater went, the client went, or a stop arrived. Each has
-            // already said so.
-        }
-
-        return 0;
     }
 
     /// <summary>
@@ -994,12 +1006,22 @@ internal static partial class StartupLog
 
     /// <summary>
     /// This install's updater is running, so this server refuses every tool call
-    /// and starts nothing until it has gone.
+    /// until it has gone.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Warning: the client this server answers cannot use it for the length of
     /// the update, which is the state an investigator of a failed call wants to
     /// find first.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The same event with a new consequence since 2026-10-03, Q296 c</b>
+    /// (previously the message said the server "answers its client's handshake,
+    /// refuses every tool call and starts no browser server until the updater has
+    /// gone"): it starts its child and answers the tool list now. The event is
+    /// still <i>an updater was running when this server started</i>, so the id
+    /// stays.
+    /// </para>
     /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="updater">The updater's pid.</param>
@@ -1007,16 +1029,23 @@ internal static partial class StartupLog
     [LoggerMessage(
         EventId = 10,
         Level = LogLevel.Warning,
-        Message = "This install's updater is running (pid={Updater}, {Image}), so this server answers its client's handshake, refuses every tool call and starts no browser server until the updater has gone.")]
+        Message = "This install's updater is running (pid={Updater}, {Image}), so this server answers its client's handshake and tool list and refuses every tool call until the updater has gone; then it serves them.")]
     public static partial void UpdateInProgress(ILogger logger, int updater, string image);
 
-    /// <summary>The updater this server found at startup has gone, so the conversation ends.</summary>
+    /// <summary>The updater this server found at startup has gone, so its calls are served from here on.</summary>
+    /// <remarks>
+    /// ⚠️ <b>The same event with a new consequence since 2026-10-03, Q296 c</b>
+    /// (previously "so this server ends its conversation; the client's next call
+    /// starts a server from whatever the update left in place"): the conversation
+    /// goes on. The event is still <i>the updater this server found has gone</i>, so
+    /// the id stays.
+    /// </remarks>
     /// <param name="logger">Where to write.</param>
     /// <param name="updater">The updater's pid.</param>
     [LoggerMessage(
         EventId = 11,
         Level = LogLevel.Information,
-        Message = "The updater (pid={Updater}) has gone, so this server ends its conversation; the client's next call starts a server from whatever the update left in place.")]
+        Message = "The updater (pid={Updater}) has gone, so this server now serves its client's tool calls, and starts the stray sweep and the update check it held back.")]
     public static partial void UpdaterExited(ILogger logger, int updater);
 
     /// <summary>The refusals a stop sends to the calls in flight failed; the stop went ahead.</summary>

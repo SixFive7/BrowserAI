@@ -130,6 +130,12 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <summary>Whether a stop for an update has begun: every call from here on is refused.</summary>
     private int _stoppingForAnUpdate;
 
+    /// <summary>
+    /// Whether this install's updater was running when this server started and has
+    /// not gone yet: every call is refused until it has, and served after.
+    /// </summary>
+    private int _updateInstalling;
+
     private BrowserProxy(ChildConnection surface, SessionManager sessions, ToolVerdicts verdicts, ServerActivity activity, ILogger logger)
     {
         _surface = surface;
@@ -299,10 +305,14 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// it speaks and the one capability it declares.
     /// </summary>
     /// <remarks>
-    /// <b>Shared with <see cref="UpdateInProgressServer"/></b>, which answers a
-    /// client while its install's updater runs and has to introduce itself exactly
-    /// as the full server would -- a second copy of these lines would be a second
-    /// place for the instructions to drift.
+    /// <b>One copy, so the instructions have one place to live.</b> ⚠️ <i>Corrected
+    /// 2026-10-03 with Q296 c (previously "Shared with <c>UpdateInProgressServer</c>,
+    /// which answers a client while its install's updater runs and has to introduce
+    /// itself exactly as the full server would -- a second copy of these lines would
+    /// be a second place for the instructions to drift")</i>: that server is gone,
+    /// and a server that starts during an update is this one, refusing its calls
+    /// through <see cref="RefuseCallsWhileAnUpdateInstalls"/>. The reason it was
+    /// shared is why it stays one method.
     /// </remarks>
     /// <returns>Options with no incoming filter yet.</returns>
     internal static McpServerOptions CallerFacingOptions()
@@ -491,6 +501,16 @@ internal sealed class BrowserProxy : IAsyncDisposable
                             return;
                         }
 
+                        // ⚠️ THIS INSTALL'S UPDATER IS STILL RUNNING -- Q296 c. The
+                        // call is refused at the door and nothing is forwarded; the
+                        // refusal says this server answers once the update is done,
+                        // because it does. See RefuseCallsWhileAnUpdateInstalls.
+                        if (Volatile.Read(ref _updateInstalling) is not 0)
+                        {
+                            await RefuseWhileAnUpdateInstallsAsync(context.Server, request, cancellationToken).ConfigureAwait(false);
+                            return;
+                        }
+
                         var call = new CallInFlight(context.Server, ToolNameOf(request));
                         _calls[request.Id] = call;
 
@@ -674,6 +694,57 @@ internal sealed class BrowserProxy : IAsyncDisposable
                 ProxyLog.RefusalNotSent(_logger, call.Tool, failure);
             }
         }
+    }
+
+    /// <summary>
+    /// Refuses every tool call from here on, until <see cref="TheUpdateHasGone"/>,
+    /// because this install's updater is running.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q296 c, decided 2026-10-03 by the maintainer, in his words: <i>"Q296
+    /// c"</i>.</b> A server that starts while its own install's <c>Update.exe</c> is
+    /// running answers <c>tools/list</c> with the real list, refuses calls while the
+    /// update runs, and keeps serving once the updater has exited. This is the
+    /// middle third; the list is the ordinary answer, from the run's own child, and
+    /// the last third is <see cref="TheUpdateHasGone"/>.
+    /// </para>
+    /// <para>
+    /// ⚠️ <i>Previously, under Q286 b, such a server was a different server
+    /// altogether</i>: <c>UpdateInProgressServer</c> answered the handshake, refused
+    /// every call, answered <c>tools/list</c> with a JSON-RPC error carrying the same
+    /// sentence, started no child and ended its conversation when the updater went.
+    /// Measured 2026-09-25 at Claude Code 2.1.282, 3 of 3: that error left Claude Code
+    /// connected with ZERO BrowserAI tools for the whole session, and neither client
+    /// ever showed the model the sentence. With the real list and calls refused, both
+    /// clients showed it, and both were served by the same process once it went on
+    /// serving.
+    /// </para>
+    /// <para>
+    /// <b>Called before the conversation opens</b>, so no call can arrive before it.
+    /// </para>
+    /// </remarks>
+    public void RefuseCallsWhileAnUpdateInstalls() => Volatile.Write(ref _updateInstalling, 1);
+
+    /// <summary>The updater has gone: every call from here on is served.</summary>
+    public void TheUpdateHasGone() => Volatile.Write(ref _updateInstalling, 0);
+
+    /// <summary>Refuses one call at the door, because this install's updater is running.</summary>
+    /// <param name="caller">The connection to answer.</param>
+    /// <param name="request">The call.</param>
+    /// <param name="cancellationToken">The caller's token.</param>
+    /// <returns>The send.</returns>
+    private async Task RefuseWhileAnUpdateInstallsAsync(McpServer caller, JsonRpcRequest request, CancellationToken cancellationToken)
+    {
+        var tool = ToolNameOf(request);
+
+        ProxyLog.RefusedForAnUpdate(_logger, tool);
+
+        await RefuseAsync(
+            caller,
+            request.Id,
+            SessionErrors.UpdateIsStillInstalling(tool, caller.ClientInfo?.Name),
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>The tool a <c>tools/call</c> names, read leniently: a name that is not a string is <c>&lt;none&gt;</c>.</summary>

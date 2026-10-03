@@ -197,6 +197,56 @@ internal static class SessionErrors
         + UpdateRemedy(clientName)
         + $" A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call {SessionToolSurface.Resume} on its directory before you use it again.";
 
+    /// <summary>
+    /// Row 0's second companion -- this server started while its install's updater
+    /// was running, so the call was refused, and this server serves calls once the
+    /// updater has gone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q296 c, decided 2026-10-03 by the maintainer, in his words: <i>"Q296
+    /// c"</i>.</b> An updating server answers <c>tools/list</c> with the real list,
+    /// refuses calls while the update runs, and keeps serving once the updater has
+    /// exited. <see cref="UpdateIsBeingInstalled"/> is the sentence of a server that
+    /// is ENDING; this one belongs to a server that may well be the one that answers
+    /// the next call, and the remedy says both outcomes, because the server cannot
+    /// tell which it will be: a server started before the swap is ended by the
+    /// updater's kill pass, and one started after it runs the new version and is not.
+    /// </para>
+    /// <para>
+    /// <b>Measured 2026-09-25 against a stand-in server</b> (the client-behaviour
+    /// research behind Q296): with the real list and calls refused, Claude Code
+    /// 2.1.282 and codex-cli 0.155.0-alpha.9.2 both saw the refusal and both were
+    /// served by the same process once it went on serving, 3 of 3 each; with the
+    /// error this replaces, Claude Code kept zero BrowserAI tools for its whole
+    /// session.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool the call named, whatever the caller said.</param>
+    /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
+    /// <returns>The refusal.</returns>
+    public static string UpdateIsStillInstalling(string tool, string? clientName) =>
+        $"BrowserAI is installing an update, so '{tool}' was NOT run: nothing reached a browser and nothing changed. "
+        + StillInstallingRemedy(clientName)
+        + $" A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call {SessionToolSurface.Resume} on its directory before you use it again.";
+
+    /// <summary>
+    /// What to do while an update installs beside a server that will go on serving,
+    /// spelled for the client at the other end.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not a public row, for <see cref="Remedy"/>'s reason.</b> Both outcomes are
+    /// said, for the reason <see cref="UpdateIsStillInstalling"/> gives.
+    /// </remarks>
+    /// <param name="clientName">What the client called itself.</param>
+    /// <returns>One or two sentences naming the fix.</returns>
+    private static string StillInstallingRemedy(string? clientName) =>
+        KnownClients.Matches(clientName, KnownClients.ClaudeCode)
+            ? "Wait about a minute, then call again: this BrowserAI answers once the update has finished, and if the update ends it, your client starts the updated BrowserAI by itself on that call."
+            : KnownClients.Matches(clientName, KnownClients.Codex)
+                ? "Wait about a minute, then call again: this BrowserAI answers once the update has finished. If the update ends it, your client does not start a server again, so these tools then need a new thread, or a reconnect of the BrowserAI server."
+                : "Wait about a minute, then call again: this BrowserAI answers once the update has finished. If your client then reports that the server has gone, reconnect the BrowserAI server.";
+
     /// <summary>What to do while an update installs, spelled for the client at the other end.</summary>
     /// <remarks>
     /// <b>Not a public row, for <see cref="Remedy"/>'s reason</b>: one condition,

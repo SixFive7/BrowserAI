@@ -49,7 +49,8 @@ internal sealed class ServerActivity(TimeProvider time, string workingDirectory)
 
     /// <summary>
     /// This server began answering its client while its install's updater was
-    /// running, and refuses every tool call.
+    /// running, and refuses every tool call until the updater has gone, when
+    /// <see cref="Serving"/> follows (Q296 c, 2026-10-03).
     /// </summary>
     public void Updating() => Begin(ServerDescription.States.Updating);
 

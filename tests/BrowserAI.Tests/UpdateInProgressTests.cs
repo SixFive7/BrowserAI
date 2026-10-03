@@ -120,27 +120,33 @@ internal sealed class UpdateInProgressTests
     }
 
     /// <summary>
-    /// A server started while its own install's updater runs answers the
-    /// handshake, refuses a call with the update refusal, starts no child, says
-    /// so on its pipe -- and ends its conversation when the updater goes.
+    /// A server started while its own install's updater runs lists its real
+    /// tools, refuses a call with the update refusal, says so on its pipe -- and
+    /// once the updater goes, says <i>serving</i> and serves the same call.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>No child is read off the job the suite put the server in</b>: nothing in
-    /// it runs an image from the published payload, where the node child lives.
-    /// The control is the next arm, the same server without the stand-in, whose
-    /// job does hold one.
+    /// <b>Q296 c, decided 2026-10-03 by the maintainer, in his words: <i>"Q296
+    /// c"</i>.</b> An updating server answers <c>tools/list</c> with the real list,
+    /// refuses calls while the update runs, and keeps serving once the updater has
+    /// exited. ⚠️ <i>Previously
+    /// <c>AServerStartedWhileItsInstallsUpdaterRunsRefusesCallsStartsNoChildAndEndsWithTheUpdater</c></i>,
+    /// which held Q286 b's shape: no child in the job, and a conversation that
+    /// ended when the updater went. Measured 2026-09-25, the tool-list error that
+    /// shape answered left Claude Code with zero BrowserAI tools for the whole
+    /// session.
     /// </para>
     /// <para>
-    /// <b>The last half is an addition to Q286 b's text, and it is measured.</b>
-    /// Four servers in the 2026-09-24 kill run started after Velopack's kill pass
-    /// and before its updater exited; nothing would ever have ended them, so a
-    /// server in this state ends itself when the updater it found has gone.
+    /// <b>The list is the one a server without an updater gives</b>: every authored
+    /// name, and the upstream tools with BrowserAI's <c>session</c> parameter
+    /// injected, which only the run's own child can supply. So the child is in the
+    /// server's job here, and that is the cost the decision took: a server started
+    /// before an apply's swap is ended by its kill pass, child and all.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task AServerStartedWhileItsInstallsUpdaterRunsRefusesCallsStartsNoChildAndEndsWithTheUpdater()
+    public async Task AServerStartedWhileItsInstallsUpdaterRunsListsItsToolsRefusesCallsAndServesOnceTheUpdaterHasGone()
     {
         SuiteEnvironment.RequirePublishedSlice();
         PublishedSlice.EnsureFresh();
@@ -157,6 +163,22 @@ internal sealed class UpdateInProgressTests
 
         _ = await client.InitializeAsync(SliceRun.OfferedProtocolVersion);
 
+        // ---- The real list, while the updater runs.
+        var listed = await client.RoundTripAsync("tools/list", new JsonObject());
+        var tools = (listed["tools"]?.AsArray() ?? []).OfType<JsonObject>().ToList();
+        var names = tools.Select(tool => (string?)tool["name"]).ToList();
+
+        foreach (var authored in SessionToolSurface.Names)
+        {
+            await Assert.That(names).Contains(authored);
+        }
+
+        var navigate = tools.SingleOrDefault(tool => (string?)tool["name"] == "browser_navigate");
+
+        await Assert.That(navigate).IsNotNull();
+        await Assert.That(navigate!["inputSchema"]?["properties"]?[SessionToolSurface.SessionParameter]).IsNotNull();
+
+        // ---- A call, refused while the updater runs.
         var refused = await client.RoundTripAsync("tools/call", new JsonObject
         {
             ["name"] = SessionToolSurface.List,
@@ -165,9 +187,9 @@ internal sealed class UpdateInProgressTests
 
         await Assert.That((bool?)refused["isError"]).IsTrue();
         await Assert.That(TextOfResult(refused)).IsEqualTo(
-            SessionErrors.UpdateIsBeingInstalled(SessionToolSurface.List, wasRunning: false, RawStdioClient.DefaultClientName));
+            SessionErrors.UpdateIsStillInstalling(SessionToolSurface.List, RawStdioClient.DefaultClientName));
 
-        await Assert.That(PayloadChildrenIn(client).Count).IsEqualTo(0);
+        await Assert.That(PayloadChildrenIn(client).Count).IsGreaterThan(0);
 
         var marker = await ServerPipeRig.MarkerOfAsync(client.ProcessId, root.Path, TestDefaults.ProcessHang);
         var described = await ServerPipeRig.DescribeWhenListeningAsync(marker, TestDefaults.ProcessHang);
@@ -177,8 +199,28 @@ internal sealed class UpdateInProgressTests
         // ---- The updater goes, by its handle: the job the arm owns is closed.
         updaterJob.Dispose();
 
-        await Assert.That(await client.WaitForExitAsync(TestDefaults.ProcessHang)).IsTrue();
-        await Assert.That(client.ExitCode).IsEqualTo(0);
+        // Until the server itself says it is serving: an event read off the
+        // server, with a hang detector behind it.
+        var waited = Stopwatch.StartNew();
+        var after = await ServerPipeClient.DescribeAsync(marker, TestDefaults.ProcessHang);
+
+        while (after.Description?.State != ServerDescription.States.Serving && waited.Elapsed < TestDefaults.ProcessHang)
+        {
+            await Task.Delay(20);
+            after = await ServerPipeClient.DescribeAsync(marker, TestDefaults.ProcessHang);
+        }
+
+        await Assert.That(after.Description?.State).IsEqualTo(ServerDescription.States.Serving).Because(after.Why);
+
+        // ---- The same call, served by the same process.
+        var served = await client.RoundTripAsync("tools/call", new JsonObject
+        {
+            ["name"] = SessionToolSurface.List,
+            ["arguments"] = new JsonObject { ["directory"] = root.Path },
+        });
+
+        await Assert.That((bool?)served["isError"]).IsNotEqualTo(true).Because(TextOfResult(served));
+        await Assert.That(after.Description!.ProcessId).IsEqualTo(client.ProcessId);
     }
 
     /// <summary>

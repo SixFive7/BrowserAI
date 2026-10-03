@@ -87,6 +87,14 @@ release body; nothing else depends on it.
   a stand-in `Update.exe` that is a copy of `cmd.exe` in a scratch install root, ended through its
   own job; and the error catalogue's census, now 35. Each was watched red against a planted defect.
 
+  ⚠️ ***Corrected 2026-10-03 by Q296 c, before any release carried it (previously the first
+  paragraph said such a server "answers `tools/list` with an error that carries it, starts no
+  browser server, skips its feed check and its stray sweep, and ends its conversation when the
+  updater exits, so Claude Code starts the new version on its next call").*** That error left
+  Claude Code with zero BrowserAI tools for the whole session. Such a server now lists its real
+  tools, refuses calls with its own sentence while the updater runs, and serves once it has gone;
+  see the entry under *Changed*. The server stopped through its pipe is unchanged.
+
 - ✅ **Two installer facts that were manual rows are suite arms under the test pack's id.**
   Q275. `RealInstallerTests.TwoRootsOfOnePackIdShareOneUninstallKeyAndEitherUninstallDeletesIt`
   installs the test pack silently into two scratch roots and shows the second install rewriting
@@ -644,6 +652,24 @@ release body; nothing else depends on it.
   cost deferred are corrected, each with what it said before. Watched red first: the config arm
   read `true` for all four sessions it builds, and the instructions arm named the phrases it
   could not find.
+
+- 🔧 **A server that starts during an update lists its real tools, and serves once the updater has gone.**
+  Q296 c, the maintainer's words verbatim: *"Q296 c"*. Until now such a server answered
+  `tools/list` with a JSON-RPC error carrying the update sentence, started no child, and ended
+  its conversation when the updater went. Measured 2026-09-25 at Claude Code 2.1.282, 3 of 3:
+  that error left Claude Code connected with zero BrowserAI tools for the whole session, and
+  neither client ever showed the model the sentence. Now the server takes the ordinary path: it
+  starts its child and answers `tools/list` from it, refuses every tool call while
+  `<install root>\Update.exe` runs, and when the updater goes, says `serving` on its pipe, serves
+  the same calls in the same process, and starts the stray sweep and the update check it held
+  back. The refusal is a new catalogue row, `UpdateIsStillInstalling`, because its server is the
+  one likely to answer the next call: it tells the model to wait and call again, and what to do if
+  the update ends this server after all, which it does to one started before the swap. The
+  catalogue's census is 36. `UpdateInProgressServer` is deleted. **The cost the decision took**:
+  the child now starts during an apply, and an apply's kill pass ends it with its server, as it
+  ended eight servers and their eight `node.exe` children in the 2026-09-24 measurement. Watched
+  red first against a binary published without the change: the tool list came back as `-32603`
+  carrying the update sentence.
 
 - 🔧 **A server's pipe serves its connections in parallel, so a caller that never finishes holds nobody up.**
   Q297 b, the maintainer's words verbatim: *"Q297 b"*. One thread served one instance, reading
