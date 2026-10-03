@@ -72,22 +72,30 @@ internal sealed class RegisterAiTool(string executable) : IRegisterAi
 
     /// <summary>The tool an install ships, beside the image that is running.</summary>
     /// <param name="imagePath">The running image, normally <see cref="Environment.ProcessPath"/>.</param>
-    /// <returns>The tool at <c>&lt;image folder&gt;\payload\registerai\RegisterAI.exe</c>.</returns>
-    public static RegisterAiTool Beside(string? imagePath)
-    {
-        var folder = imagePath is { Length: > 0 } && Path.GetDirectoryName(imagePath) is { Length: > 0 } directory
-            ? directory
-            : AppContext.BaseDirectory;
-
-        return new RegisterAiTool(Path.Combine(folder, "payload", FolderName, FileName));
-    }
+    /// <returns>
+    /// The tool at <c>&lt;image folder&gt;\payload\registerai\RegisterAI.exe</c>. An image
+    /// with no folder gives the same path without one, which <c>Run</c> refuses as not
+    /// there, so nothing is looked for in a working directory or on PATH.
+    /// </returns>
+    /// <remarks>
+    /// <i>Corrected 2026-10-03 (previously an image with no folder fell back to
+    /// <c>AppContext.BaseDirectory</c>)</i>: that directory is inside <c>current\</c>,
+    /// and <c>UpdateTests.NoProductPathIsResolvedFromAppContextBaseDirectory</c> keeps it
+    /// for the payload's own type. The gate found it.
+    /// </remarks>
+    public static RegisterAiTool Beside(string? imagePath) =>
+        new(imagePath is { Length: > 0 } && Path.GetDirectoryName(imagePath) is { Length: > 0 } folder
+            ? Path.Combine(folder, "payload", FolderName, FileName)
+            : Path.Combine("payload", FolderName, FileName));
 
     /// <inheritdoc/>
     public ToolRun Run(IReadOnlyList<string> arguments, TimeSpan budget)
     {
         ArgumentNullException.ThrowIfNull(arguments);
 
-        if (!File.Exists(Executable))
+        // A path that is not fully qualified would be looked for in the working
+        // directory, so it is refused the way a missing file is.
+        if (!Path.IsPathFullyQualified(Executable) || !File.Exists(Executable))
         {
             return new ToolRun(null, string.Empty, string.Empty, TimedOut: false, $"'{Executable}' is not there");
         }
@@ -106,7 +114,7 @@ internal sealed class RegisterAiTool(string executable) : IRegisterAi
             RedirectStandardError = true,
             StandardOutputEncoding = Utf8,
             StandardErrorEncoding = Utf8,
-            WorkingDirectory = Path.GetDirectoryName(Executable) ?? AppContext.BaseDirectory,
+            WorkingDirectory = Path.GetDirectoryName(Executable)!,
         };
 
         foreach (var argument in arguments)

@@ -44,6 +44,9 @@ internal sealed class RegisterAiTests
     /// <summary>The action words the registrar matches on.</summary>
     private static readonly string[] ActionWords = ["none", "added", "replaced", "removed", "refused-foreign", "refused-unreadable", "client-not-found", "failed"];
 
+    /// <summary>The one argument that asks a RegisterAI for its version.</summary>
+    private static readonly string[] VersionOnly = ["--version"];
+
     /// <summary>The state words the reader matches on.</summary>
     private static readonly string[] StateWords = ["absent", "ours", "ours-stale", "foreign", "unreadable", "unknown"];
 
@@ -229,6 +232,36 @@ internal sealed class RegisterAiTests
 
         await Assert.That(outcome.IsWhatWasAskedFor).IsFalse();
         await Assert.That(await File.ReadAllTextAsync(Path.Combine(data.Path, RegistrationRecord.FileName))).Contains("\"outcome\": \"Failed\"");
+    }
+
+    /// <summary>
+    /// An image with no folder of its own gives a RegisterAI path that is not fully
+    /// qualified, and such a path is refused before anything starts, so the tool is never
+    /// looked for in a working directory, on PATH or beside the host running this code.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-03, when the ordinary gate found the fallback.</b>
+    /// <c>UpdateTests.NoProductPathIsResolvedFromAppContextBaseDirectory</c> went red on
+    /// <c>Beside</c> falling back to <c>AppContext.BaseDirectory</c>, which is inside
+    /// <c>current\</c>. Red against that fallback, which gave a fully qualified path.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AnImageWithNoFolderGivesARegisterAiThatIsRefusedBeforeItStarts()
+    {
+        string?[] images = [null, string.Empty, "BrowserAI.exe"];
+
+        foreach (var image in images)
+        {
+            var tool = RegisterAiTool.Beside(image);
+
+            await Assert.That(Path.IsPathFullyQualified(tool.Executable)).IsFalse().Because(tool.Executable);
+
+            var run = tool.Run(VersionOnly, McpRegistrar.ToolBudget);
+
+            await Assert.That(run.Failure).IsNotNull();
+            await Assert.That(run.Failure!).Contains("is not there");
+        }
     }
 
     /// <summary>
