@@ -142,7 +142,16 @@ internal sealed class ServerRegistryReapTests
             },
         });
 
-        await Assert.That((bool?)destroyed["isError"]).IsNotEqualTo(true);
+        // ⚠️ HELD TO THE ANSWER AND NOT TO AN EMPTY TREE. Corrected 2026-10-03
+        // (previously "isError is not true" was asserted here). Destroy promises that
+        // its answer and the disk agree, and since 2026-08-19 its survivor arm is
+        // isError: true. A closing browser that still holds a file in its profile
+        // when the walk runs leaves that file behind and says so. The ordinary gate
+        // of 2026-10-03 reached that arm here under load, 3 items, and the old
+        // assertion read it as a failed destroy; three runs of this class alone were
+        // green. HAZARDS.md's row on a test that demanded a stronger guarantee than
+        // the tool it was testing makes names this shape as the one that re-opens it.
+        await DestroyAnswer.AccountsForWhatItLeftAsync(TextOf(destroyed), (bool?)destroyed["isError"], closing);
 
         // The record, read out of the machine's process log and scoped to this
         // slice's own identity -- never the whole file, which every BrowserAI on
@@ -425,6 +434,16 @@ internal sealed class ServerRegistryReapTests
 
         return planted;
     }
+
+    /// <summary>The text blocks of one tool answer, joined.</summary>
+    /// <param name="answer">The answer as it came off the wire.</param>
+    /// <returns>The text.</returns>
+    private static string TextOf(JsonObject answer) =>
+        string.Join(
+            "\n",
+            (answer["content"]?.AsArray() ?? [])
+                .Where(block => (string?)block!["type"] == "text")
+                .Select(block => (string?)block!["text"] ?? string.Empty));
 
     /// <summary>Where a record first appears in one process's records.</summary>
     /// <param name="records">The records, as <see cref="ProcessLogRecords"/> returns them.</param>
