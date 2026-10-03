@@ -57,6 +57,16 @@ prepended the header to the one `.md` it holds, a research report, and gives the
 digest of the file as written. Found by reading the READMEs of the two batches
 added since that reading; the commit times say there are two.
 
+⚠️ *Added 2026-10-03 by addition, and each batch's own README says how.*
+**The batches lane ev added on 2026-10-03 depart from the bytes as taken in two
+named ways**: a capture whose terminal escapes or whose user-profile path were
+removed is stored under a `.trimmed.` name with the original's SHA-256 in that
+batch's `originals.sha256`, and a file left out whole is listed with its SHA-256
+in `left-out.sha256`.
+[`2026-09-25-firefox-safe-mode`](2026-09-25-firefox-safe-mode/README.md) and
+[`2026-10-03-client-exit`](2026-10-03-client-exit/README.md) are the first of
+them, and every batch the index lists below them is one too.
+
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
 reasons that have nothing to do with a record. Adding a pattern below that
@@ -103,3 +113,8 @@ negation silently drops evidence from the tree.
 | [`2026-09-25-dashboard-exposure`](2026-09-25-dashboard-exposure/README.md) | What Playwright's dashboard does to a browser it did not launch: four rigs' logs, the owner's own trace, the screenshots, and the research report the decision was read from | [kb](../../kb/playwright/tools-and-artifacts.md#what-playwrights-dashboard-does-to-a-browser-it-did-not-launch----measured-2026-09-25), [`DECISIONS.md`](../../DECISIONS.md#processes-browsers-and-session-modes), [re-verification rows 163 to 166](../../kb/re-verification.md) |
 | [`2026-10-03-debugger-0.0.83`](2026-10-03-debugger-0.0.83/README.md) | What a debugger pause does to a session at `@playwright/mcp` 0.0.83: `browser_resume` waiting until the browser closes, and the wedge a pause met first by a close leaves behind, eighteen runs over both families with the rig that took them | [kb](../../kb/playwright/tools-and-artifacts.md#browser_resume-releases-the-parked-call-and-then-parks-itself), [re-verification rows 164 and 167](../../kb/re-verification.md), [`HAZARDS.md`](../../HAZARDS.md#hazard-index), `tool-verdicts.json` |
 | [`2026-10-03-provisioning-1247`](2026-10-03-provisioning-1247/README.md) | First-run provisioning at chromium 1247 and firefox 1553, the first roll since 1244 on which Chromium's archive moved, taken in the batch that reviewed `@playwright/mcp` 0.0.83 | [kb](../../kb/playwright/provisioning-and-timings.md#first-run-provisioning), [re-verification row 21](../../kb/re-verification.md), `BrowserProvisioner.FirstRunDownloadBytes` |
+| [`2026-09-25-firefox-safe-mode`](2026-09-25-firefox-safe-mode/README.md) | Q302: 341 headless Firefox launches, the nine that stalled read down to their process trees, and the arms that rule out load, memory and the sweep | [kb](../../kb/playwright/provisioning-and-timings.md#a-headless-firefox-that-starts-while-shift-is-held-never-finishes-launching----measured-2026-09-25), [re-verification rows 34 and 168](../../kb/re-verification.md) |
+| [`2026-10-03-client-exit`](2026-10-03-client-exit/README.md) | Q356 a: 491 runs of what Claude Code and Codex do to a stdio server when a session ends, with every client log of one run per scenario and the rest of the runs in one archive | [kb](../../kb/mcp/protocol.md#what-each-client-does-to-a-stdio-server-when-the-session-ends----measured-2026-10-03), [re-verification row 169](../../kb/re-verification.md) |
+| [`2026-10-03-hard-kill`](2026-10-03-hard-kill/README.md) | Q356 a: how old a browser's writes must be before a hard kill keeps them, the force kill an `@playwright/mcp` child does on its own stdin end, and what a hard-killed session holder leaves | [kb](../../kb/playwright/provisioning-and-timings.md#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03), [re-verification row 170](../../kb/re-verification.md) |
+| [`2026-10-03-state-across-close`](2026-10-03-state-across-close/README.md) | Q325 and Q328: what a session keeps across `browser_close` and a child teardown, what the browsers' restore options bring back, a close with no browser, and the network capture across a relaunch | [kb](../../kb/playwright/provisioning-and-timings.md#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03), [re-verification row 171](../../kb/re-verification.md) |
+| [`2026-10-03-debugger-tools`](2026-10-03-debugger-tools/README.md) | Q321: a pause armed from inside a session and every way out of it, the armed-close wedge, the tool lists of 0.0.82 and 0.0.83, and the 72-tool audit | [kb](../../kb/playwright/tools-and-artifacts.md#a-pause-armed-from-inside-a-session-and-every-way-out----measured-2026-10-03), [re-verification row 172](../../kb/re-verification.md) |

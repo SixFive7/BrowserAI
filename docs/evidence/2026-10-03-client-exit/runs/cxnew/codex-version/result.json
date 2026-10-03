@@ -1,0 +1,42 @@
+{
+  "name": "codex-version",
+  "startUtc": "2026-10-03T02:12:27.5272952Z",
+  "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-exit\\npm-codex-0.160.0\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+  "clientPid": 82472,
+  "clientCreatedUtc": "2026-10-03T02:12:28.1407225Z",
+  "launchQpcMs": "149790580.431",
+  "closeStdinQpcMs": "149791175.719",
+  "clientExitCode": 0,
+  "stillAliveAfterSettle": [],
+  "snapshots": 14,
+  "vars": {},
+  "procs": [
+    {
+      "pid": 82472,
+      "ppid": -1,
+      "role": "client",
+      "image": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-exit\\npm-codex-0.160.0\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+      "cmd": "\u0022C:\\Source\\SixFive7\\BrowserAI\\.work\\client-exit\\npm-codex-0.160.0\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe\u0022 --version",
+      "createdUtc": "2026-10-03T02:12:28.1407225Z",
+      "foundQpcMs": "149791170.109",
+      "exitQpcMs": "149791227.375",
+      "exitUtc": "2026-10-03T02:12:28.2010991Z",
+      "exitCode": 0,
+      "inJob": true
+    },
+    {
+      "pid": 28164,
+      "ppid": 82472,
+      "role": "conhost",
+      "image": "C:\\Windows\\System32\\conhost.exe",
+      "cmd": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "createdUtc": "2026-10-03T02:12:28.1519350Z",
+      "foundQpcMs": "149791205.481",
+      "exitQpcMs": "149791226.147",
+      "exitUtc": "2026-10-03T02:12:28.2041861Z",
+      "exitCode": 0,
+      "inJob": true
+    }
+  ],
+  "endUtc": "2026-10-03T02:12:28.5388145Z"
+}

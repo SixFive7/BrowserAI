@@ -1,0 +1,23 @@
+batch	scenario	delay_ms	runs	eof_seen	outcomes	eof_to_server_exit_ms(min/med/max)	standin	standin_minus_server_ms(min/med/max)	client_exit_codes	client_exit_minus_server_exit_ms(min/med/max)	late_killers
+extra	d3	100	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	-0/-0/1 (n=3)	1:3	-50/-36/-31 (n=3)	-
+extra	d3	15000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	-0/0/-0 (n=3)	1:3	-44/-34/-6 (n=3)	-
+extra	e4	100	3	yes:3	self-exit (77):3	102/109/110 (n=3)	code 0:3	-1/-0/-0 (n=3)	1:3	24/25/26 (n=3)	KILLER:taskkill:3
+extra	e4	15000	3	yes:3	KILLED code 1:3	592/681/878 (n=3)	code 1:3	-0/-0/-0 (n=3)	1:3	21/22/24 (n=3)	KILLER:taskkill:3
+tui	e1-cli	0	3	yes:3	self-exit (77):3	3/4/6 (n=3)	code 0:3	-1/-0/7 (n=3)	0:3	61/124/161 (n=3)	KILLER:taskkill:3
+tui	e1-cli	100	3	yes:3	self-exit (77):3	103/109/121 (n=3)	code 0:3	-0/-0/-0 (n=3)	0:3	20/22/23 (n=3)	KILLER:taskkill:3
+tui	e1-cli	1000	3	yes:3	KILLED code 1:2,self-exit (77):1	695/927/1003 (n=3)	code 1:2,code 0:1	-0/-0/0 (n=3)	0:3	18/18/24 (n=3)	KILLER:taskkill:3
+tui	e1-cli	3000	3	yes:3	KILLED code 1:3	789/790/834 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	19/21/21 (n=3)	KILLER:taskkill:3
+tui	e1-cli	6000	3	yes:3	KILLED code 1:3	841/908/1116 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	15/17/26 (n=3)	KILLER:taskkill:3
+tui	e1-cli	15000	3	yes:3	KILLED code 1:3	1037/1108/1154 (n=3)	code 1:3	-2/-0/-0 (n=3)	0:3	16/17/20 (n=3)	KILLER:taskkill:3
+tui	e2-cli	0	3	yes:3	self-exit (77):3	3/3/10 (n=3)	code 0:3	-1/-1/-0 (n=3)	0:3	52/69/209 (n=3)	KILLER:taskkill:3
+tui	e2-cli	100	3	yes:3	self-exit (77):3	109/114/133 (n=3)	code 0:3	-6/-0/0 (n=3)	0:3	19/31/92 (n=3)	KILLER:taskkill:3
+tui	e2-cli	1000	3	yes:3	KILLED code 1:3	683/750/822 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	13/14/17 (n=3)	KILLER:taskkill:3
+tui	e2-cli	3000	3	yes:3	KILLED code 1:3	564/733/812 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	20/22/60 (n=3)	KILLER:taskkill:3
+tui	e2-cli	6000	3	yes:3	KILLED code 1:3	652/722/919 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	11/17/20 (n=3)	KILLER:taskkill:3
+tui	e2-cli	15000	3	yes:3	KILLED code 1:3	631/648/736 (n=3)	code 1:3	0/-0/0 (n=3)	0:3	14/15/15 (n=3)	KILLER:taskkill:3
+tui	e3-cli	0	3	yes:3	self-exit (77):3	2/4/18 (n=3)	code 0:3	-5/-1/-0 (n=3)	129:3	30/41/52 (n=3)	KILLER:taskkill:3
+tui	e3-cli	100	3	yes:3	self-exit (77):3	104/108/110 (n=3)	code 0:3	-6/-5/-0 (n=3)	129:3	20/24/33 (n=3)	KILLER:taskkill:3
+tui	e3-cli	1000	3	yes:3	KILLED code 1:3	549/551/689 (n=3)	code 1:3	-0/-0/-0 (n=3)	129:3	12/14/14 (n=3)	KILLER:taskkill:3
+tui	e3-cli	3000	3	yes:3	KILLED code 1:3	620/666/832 (n=3)	code 1:3	0/-0/0 (n=3)	129:3	14/16/18 (n=3)	KILLER:taskkill:3
+tui	e3-cli	6000	3	yes:3	KILLED code 1:3	567/618/700 (n=3)	code 1:3	-0/-0/-0 (n=3)	129:3	11/12/15 (n=3)	KILLER:taskkill:3
+tui	e3-cli	15000	3	yes:3	KILLED code 1:3	700/727/743 (n=3)	code 1:3	-0/-0/0 (n=3)	129:3	12/16/16 (n=3)	KILLER:taskkill:3

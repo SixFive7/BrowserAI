@@ -1,0 +1,218 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using Microsoft.Win32.SafeHandles;
+
+namespace ExitRig;
+
+/// <summary>
+/// Runs a client inside a pseudoconsole (ConPTY): a terminal with no window, driven by
+/// writing keystrokes into its input pipe. ClosePseudoConsole is what closing a terminal
+/// tab does (CTRL_CLOSE_EVENT to every attached client).
+/// </summary>
+static class PtyHarness
+{
+    [StructLayout(LayoutKind.Sequential)] struct COORD { public short X, Y; }
+    [DllImport("kernel32.dll", SetLastError = true)] static extern int CreatePseudoConsole(COORD size, SafeFileHandle hInput, SafeFileHandle hOutput, uint flags, out IntPtr hPC);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern void ClosePseudoConsole(IntPtr hPC);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool CreatePipe(out SafeFileHandle r, out SafeFileHandle w, IntPtr sa, int size);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool InitializeProcThreadAttributeList(IntPtr list, int count, int flags, ref IntPtr size);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern bool UpdateProcThreadAttribute(IntPtr list, uint flags, IntPtr attr, IntPtr value, IntPtr size, IntPtr prev, IntPtr retSize);
+    [DllImport("kernel32.dll", SetLastError = true)] static extern void DeleteProcThreadAttributeList(IntPtr list);
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    struct STARTUPINFOEXW { public Native.STARTUPINFOW StartupInfo; public IntPtr lpAttributeList; }
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    static extern bool CreateProcessW(string? app, StringBuilder cmd, IntPtr pa, IntPtr ta, bool inherit, uint flags, IntPtr env, string? cwd, ref STARTUPINFOEXW si, out Native.PROCESS_INFORMATION pi);
+
+    const uint EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
+    static readonly IntPtr PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE = (IntPtr)0x00020016;
+    static readonly Regex Ansi = new(@"\x1B\[[0-?]*[ -/]*[@-~]|\x1B\][^\x07\x1B]*(?:\x07|\x1B\\)|\x1B[@-Z\\-_]|[\x00-\x08\x0B-\x1F]", RegexOptions.Compiled);
+
+    static string Quote(string a) => a.Length > 0 && a.IndexOfAny(new[] { ' ', '\t', '"' }) < 0 ? a : "\"" + a.Replace("\\\"", "\\\\\"").Replace("\"", "\\\"") + "\"";
+
+    public static int Run(RunSpec spec, Dictionary<string, string> env)
+    {
+        var ev = new Log(Path.Combine(spec.Dir, "harness.log"));
+        var outLog = new Log(Path.Combine(spec.Dir, "client-stdout.log"));
+        var result = new JsonObject { ["name"] = spec.Name, ["startUtc"] = Clock.Utc(), ["exe"] = spec.Exe, ["console"] = "pty" };
+        var tracker = new Tracker(ev, Environment.ProcessPath!);
+
+        if (!CreatePipe(out var inRead, out var inWrite, IntPtr.Zero, 0) || !CreatePipe(out var outRead, out var outWrite, IntPtr.Zero, 0))
+            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "CreatePipe");
+        int hr = CreatePseudoConsole(new COORD { X = 140, Y = 45 }, inRead, outWrite, 0, out IntPtr hPC);
+        if (hr != 0) throw new Exception($"CreatePseudoConsole hr=0x{hr:X8}");
+        inRead.Dispose(); outWrite.Dispose();
+
+        IntPtr size = IntPtr.Zero;
+        InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref size);
+        IntPtr attrs = Marshal.AllocHGlobal(size);
+        if (!InitializeProcThreadAttributeList(attrs, 1, 0, ref size)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "InitializeProcThreadAttributeList");
+        if (!UpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, hPC, (IntPtr)IntPtr.Size, IntPtr.Zero, IntPtr.Zero))
+            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "UpdateProcThreadAttribute");
+
+        var envSb = new StringBuilder();
+        foreach (var kv in env.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase)) envSb.Append(kv.Key).Append('=').Append(kv.Value).Append('\0');
+        envSb.Append('\0');
+        IntPtr envBlock = Marshal.StringToHGlobalUni(envSb.ToString());
+        ev.W("harness", "ENV", string.Join(" ", env.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase)));
+
+        var cmd = new StringBuilder(Quote(spec.Exe));
+        foreach (var a in spec.Args) cmd.Append(' ').Append(Quote(a));
+        ev.W("harness", "LAUNCH_PTY", $"cmd={cmd} cwd={spec.Cwd}");
+        var si = new STARTUPINFOEXW { lpAttributeList = attrs };
+        si.StartupInfo.cb = Marshal.SizeOf<STARTUPINFOEXW>();
+        if (spec.PtyNullStdHandles) si.StartupInfo.dwFlags = 0x00000100; // STARTF_USESTDHANDLES, all three left NULL
+        ev.W("harness", "PTY_STARTUP", $"nullStdHandles={spec.PtyNullStdHandles}");
+        long tLaunch = Clock.Now();
+        if (!CreateProcessW(spec.Exe, cmd, IntPtr.Zero, IntPtr.Zero, false, EXTENDED_STARTUPINFO_PRESENT | Native.CREATE_UNICODE_ENVIRONMENT, envBlock, spec.Cwd ?? spec.Dir, ref si, out var pi))
+            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "CreateProcessW (pty)");
+        Native.CloseHandle(pi.hThread);
+        var ph = new SafeProcessHandle(pi.hProcess, true);
+        var root = tracker.AddRoot(ph, pi.dwProcessId, "client");
+        tracker.Start();
+        result["clientPid"] = pi.dwProcessId;
+        result["clientCreatedUtc"] = Clock.Ft(root.CreateFt);
+        result["launchQpcMs"] = Clock.Ms(tLaunch);
+
+        var screen = new StringBuilder();
+        var gate = new object();
+        var outStream = new FileStream(outRead, FileAccess.Read, 1);
+        var reader = new Thread(() =>
+        {
+            var buf = new byte[65536];
+            var dec = new UTF8Encoding(false).GetDecoder();
+            var chars = new char[65536 * 2];
+            try
+            {
+                int n;
+                while ((n = outStream.Read(buf, 0, buf.Length)) > 0)
+                {
+                    int c = dec.GetChars(buf, 0, n, chars, 0);
+                    var s = new string(chars, 0, c);
+                    var plain = Ansi.Replace(s, " ");
+                    outLog.W("pty", "OUT", plain.Length > 3000 ? plain[..3000] : plain);
+                    lock (gate) { screen.Append(plain); Monitor.PulseAll(gate); }
+                }
+                outLog.W("pty", "OUT_EOF", "");
+            }
+            catch (Exception e) { outLog.W("pty", "OUT_ERR", e.Message); }
+            lock (gate) Monitor.PulseAll(gate);
+        }) { IsBackground = true };
+        reader.Start();
+
+        var input = new FileStream(inWrite, FileAccess.Write, 1);
+        bool ptyClosed = false;
+        void Type(string text)
+        {
+            try { var b = Encoding.UTF8.GetBytes(text); input.Write(b, 0, b.Length); input.Flush(); ev.W("harness", "TYPED", JsonSerializer.Serialize(text)); }
+            catch (Exception e) { ev.W("harness", "TYPE_FAILED", e.Message); }
+        }
+        bool Exited() => Native.WaitForSingleObject(ph, 0) == 0;
+        int cursor = 0;
+        foreach (var step in spec.Steps)
+        {
+            string kind = step["do"]!.GetValue<string>();
+            ev.W("harness", "STEP", step.ToJsonString());
+            switch (kind)
+            {
+                case "type":
+                    Type(step["text"]!.GetValue<string>());
+                    break;
+                case "sleep":
+                    Thread.Sleep(step["ms"]!.GetValue<int>());
+                    break;
+                case "mark":
+                    ev.W("harness", "MARK", step["text"]?.GetValue<string>() ?? "");
+                    break;
+                case "waitScreen":
+                {
+                    var re = new Regex(step["pattern"]!.GetValue<string>(), RegexOptions.Singleline);
+                    int timeout = step["timeoutMs"]?.GetValue<int>() ?? 60000;
+                    var sw = Stopwatch.StartNew();
+                    bool matched = false;
+                    lock (gate)
+                    {
+                        while (true)
+                        {
+                            var m = re.Match(screen.ToString(), cursor);
+                            if (m.Success) { matched = true; cursor = m.Index + m.Length; break; }
+                            if (Exited() && !reader.IsAlive) break;
+                            long left = timeout - sw.ElapsedMilliseconds;
+                            if (left <= 0) break;
+                            Monitor.Wait(gate, (int)Math.Min(left, 200));
+                        }
+                    }
+                    ev.W("harness", matched ? "WAIT_MATCHED" : "WAIT_TIMEOUT", $"pattern={step["pattern"]} afterMs={sw.ElapsedMilliseconds}");
+                    if (!matched) result["waitTimeout"] = (result["waitTimeout"]?.GetValue<string>() ?? "") + step["pattern"]!.GetValue<string>() + ";";
+                    break;
+                }
+                case "closePty":
+                {
+                    long t = Clock.Now();
+                    ClosePseudoConsole(hPC);
+                    ptyClosed = true;
+                    ev.W("harness", "ACTION_CLOSE_PTY", $"qpcBefore={Clock.Ms(t)} returnedAfterMs={((Clock.Now() - t) * Clock.TickMs):F1}");
+                    result["closePtyQpcMs"] = Clock.Ms(t);
+                    break;
+                }
+                case "terminate":
+                {
+                    long t = Clock.Now();
+                    bool ok = Native.TerminateProcess(ph, 1);
+                    ev.W("harness", "ACTION_TERMINATE_CLIENT", $"ok={ok} qpcBefore={Clock.Ms(t)}");
+                    result["terminateQpcMs"] = Clock.Ms(t);
+                    break;
+                }
+            }
+        }
+
+        var deadline = Stopwatch.StartNew();
+        while (!Exited() && deadline.ElapsedMilliseconds < spec.MaxMs) Thread.Sleep(50);
+        if (!Exited())
+        {
+            ev.W("harness", "CLIENT_OVERRAN", $"maxMs={spec.MaxMs}");
+            result["harnessKilledClient"] = true;
+            Native.TerminateProcess(ph, 1);
+            Native.WaitForSingleObject(ph, 10000);
+        }
+        Native.GetExitCodeProcess(ph, out uint code);
+        ev.W("harness", "CLIENT_EXITED", $"code={code}");
+        result["clientExitCode"] = (int)code;
+        if (!ptyClosed) { ClosePseudoConsole(hPC); ev.W("harness", "PTY_CLOSED_AFTER_EXIT", ""); }
+        try { input.Dispose(); } catch { }
+
+        var settle = Stopwatch.StartNew();
+        while (!tracker.AllExited && settle.ElapsedMilliseconds < spec.SettleMs) Thread.Sleep(50);
+        Thread.Sleep(300);
+        while (!tracker.AllExited && settle.ElapsedMilliseconds < spec.SettleMs) Thread.Sleep(50);
+        tracker.Stop();
+        var stillAlive = tracker.All.Where(p => !p.Exited).Select(p => $"{p.Pid}:{p.Role}").ToList();
+        if (stillAlive.Count > 0) ev.W("harness", "STILL_ALIVE_AFTER_SETTLE", string.Join(",", stillAlive));
+        result["stillAliveAfterSettle"] = new JsonArray(stillAlive.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
+        result["snapshots"] = tracker.Snapshots;
+        var procs = new JsonArray();
+        foreach (var p in tracker.All)
+        {
+            procs.Add(new JsonObject
+            {
+                ["pid"] = p.Pid, ["ppid"] = p.Ppid, ["role"] = p.Role, ["image"] = p.Image, ["cmd"] = p.Cmd,
+                ["createdUtc"] = Clock.Ft(p.CreateFt), ["foundQpcMs"] = Clock.Ms(p.FoundQpc),
+                ["exitQpcMs"] = p.Exited ? Clock.Ms(p.ExitQpc) : null, ["exitUtc"] = Clock.Ft(p.ExitFt),
+                ["exitCode"] = p.ExitCode, ["inJob"] = p.InJob,
+            });
+        }
+        result["procs"] = procs;
+        result["endUtc"] = Clock.Utc();
+        File.WriteAllText(Path.Combine(spec.Dir, "result.json"), result.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        DeleteProcThreadAttributeList(attrs);
+        Marshal.FreeHGlobal(attrs);
+        Marshal.FreeHGlobal(envBlock);
+        return (int)code;
+    }
+}

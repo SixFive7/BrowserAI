@@ -1,0 +1,37 @@
+[
+{
+"id": "smoke-cr-mcp-job-D0",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 0,
+"keep": true
+},
+{
+"id": "smoke-fx-mcp-job-D0",
+"browser": "firefox",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 0,
+"keep": true
+},
+{
+"id": "smoke-cr-core-taskkill-D0",
+"browser": "chromium",
+"path": "core",
+"D": 0,
+"kill": "taskkill",
+"rep": 0
+},
+{
+"id": "smoke-cr-core-warm-job-D0",
+"browser": "chromium",
+"path": "core",
+"D": 0,
+"kill": "job",
+"rep": 0,
+"warm": true
+}
+]

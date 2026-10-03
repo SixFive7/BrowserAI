@@ -1,0 +1,18 @@
+server: {"listening":47811,"pid":69120}
+[1/16] fx-core-warm-job-D10-r1 10s actualD=10,031 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (18,4s)
+[2/16] fx-core-warm-job-D0-r1 0s actualD=0,019 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (7,6s)
+[3/16] fx-core-warm-job-D0-r2 0s actualD=0,014 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (7,3s)
+[4/16] cr-core-warm-job-D5-r1 5s actualD=5,005 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (9,6s)
+[5/16] cr-core-warm-job-D10-r1 10s actualD=10,015 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (14,5s)
+[6/16] cr-core-warm-job-D5-r2 5s actualD=5,007 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (10,4s)
+[7/16] fx-core-warm-job-D5-r1 5s actualD=5,013 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (12,9s)
+[8/16] fx-core-warm-job-D30-r2 30s actualD=30,015 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (37,5s)
+[9/16] cr-core-warm-job-D0-r1 0s actualD=0,017 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3,3s)
+[10/16] fx-core-warm-job-D5-r2 5s actualD=5,004 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (13s)
+[11/16] cr-core-warm-job-D30-r1 30s actualD=30,011 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (33,5s)
+[12/16] cr-core-warm-job-D10-r2 10s actualD=10,017 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (13,4s)
+[13/16] cr-core-warm-job-D0-r2 0s actualD=0,02 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3,4s)
+[14/16] fx-core-warm-job-D10-r2 10s actualD=10,017 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (17,5s)
+[15/16] cr-core-warm-job-D30-r2 30s actualD=30,006 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (33,2s)
+[16/16] fx-core-warm-job-D30-r1 30s actualD=30,017 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (36,2s)
+server exited: True

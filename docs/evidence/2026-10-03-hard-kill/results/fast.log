@@ -1,0 +1,14 @@
+server: {"listening":47811,"pid":48760}
+[1/12] fx-core-fast-taskkill-D0-r1 0s actualD=0,164 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (7,1s)
+[2/12] fx-core-fast-taskkill-D0-r3 0s actualD=0,062 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (7,2s)
+[3/12] fx-core-fast-job-D0-r1 0s actualD=0,016 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (6,4s)
+[4/12] cr-core-fast-taskkill-D0-r3 0s actualD=0,176 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3,9s)
+[5/12] cr-core-fast-taskkill-D0-r2 0s actualD=0,266 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (5,1s)
+[6/12] cr-core-fast-job-D0-r3 0s actualD=0,068 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3s)
+[7/12] fx-core-fast-job-D0-r2 0s actualD=0,021 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (7,5s)
+[8/12] cr-core-fast-taskkill-D0-r1 0s actualD=0,174 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (5,8s)
+[9/12] cr-core-fast-job-D0-r2 0s actualD=0,114 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (4,2s)
+[10/12] fx-core-fast-job-D0-r3 0s actualD=0,015 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (5,9s)
+[11/12] cr-core-fast-job-D0-r1 0s actualD=0,017 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (2,6s)
+[12/12] fx-core-fast-taskkill-D0-r2 0s actualD=0,067 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (6,4s)
+server exited: True

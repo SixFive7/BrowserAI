@@ -1369,6 +1369,48 @@ with both `PWTEST_` variables pointing into scratch. Each of the first three
 refuses to start otherwise. The probe record says what each one needs and what
 it leaves behind.
 
+## A pause armed from inside a session, and every way out -- measured 2026-10-03
+
+`[FLOATS]` `@playwright/mcp` **0.0.82** (`playwright-core`
+1.64.0-alpha-1789764292000), Chromium and Firefox headless, each child driven
+over stdio the way BrowserAI drives it, three runs per family per scenario,
+both families alike. Q321.
+[Evidence](../../docs/evidence/2026-10-03-debugger-tools/README.md),
+[rig](../../docs/probes/2026-10-03-debugger-tools/README.md). The review of 0.0.83
+re-took the resume and the armed close on the newer build;
+[its entries](#a-pause-met-first-by-a-close-wedges-the-session-and-nothing-in-browserais-surface-releases-it----measured-2026-10-03)
+are the ones to read for those, and this one is the rest of the matrix.
+
+**A caller can pause its own session.** `browser_run_code_unsafe` arming
+`page.context().debugger.requestPause()` answered *"armed"* in every run, and the
+next call did not answer. Armed without a delay inside the same code, the
+`browser_run_code_unsafe` call itself is the one that parks. A second
+`@playwright/mcp` attached with `--endpoint` armed it in the first one's browser
+the same way, and the first one's call stayed parked after the second had gone.
+
+| What the caller does next | The parked call | Afterwards |
+|---|---|---|
+| `browser_resume` | answered 67 to 129 ms later | the resume itself had no answer 20 s later; `browser_tabs` still answered; a `browser_close` answered in 251 to 518 ms, and then the waiting resume did |
+| `browser_resume` with `step` or `location` | answered | the session stays paused |
+| `browser_run_code_unsafe` calling `debugger.resume()` | answered 64 to 127 ms later | not paused |
+| `browser_close` | **never answered** | the close answered in 140 to 571 ms and ended the pause; the next call relaunched |
+| another `browser_navigate`, any `browser_tabs` verb, or a cancel notification for the parked call | never answered | the other call answered and the session stayed paused |
+| nothing, with upstream's own idle timeout set to 12 s | not answered within 30 s | the next call worked |
+| closing the child's stdin | not answered within 10 s | the child exited 753 to 1,541 ms after the close |
+
+**A close sent as the first call after arming wedges the session at 0.0.82 as it
+does at 0.0.83**, 3 of 3 per family, and here too only `browser_resume` got it
+out, in 46 to 769 ms. **`browser_set_storage_state` with an empty state clears
+the live context**: it answered *"Storage state restored"* and left the page
+with no cookies and no `localStorage`, and its `sessionStorage` as it was.
+
+⚠️ **Not established:** the rows of the table other than the resume and the close
+at 0.0.83, and what a headed window shows while paused.
+
+**Re-establish** with the rig: `batch.ps1` runs each scenario three times per
+family through `rig.cjs`, and `summarize.cjs` writes the aggregate table every
+number above is read from.
+
 ## Every artifact pointer a tool result carries is absolute -- measured 2026-09-17
 
 **`filePaths: "absolute"` makes every one of them absolute, and two of the shapes

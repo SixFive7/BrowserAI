@@ -1,0 +1,10 @@
+2026-09-24T23:52:14.2118004Z run=forced1 count=3 batch=1 timeoutMs=30000 suspectMs=12000 jobMemoryMB=0 cpuRate=0 debug=pw:protocol
+2026-09-24T23:52:14.3139490Z launched forced1-0001 arm=control+MOZ_SAFE_MODE_RESTART=1 nodePid=50392 batch=1 suiteActive=False 
+2026-09-24T23:52:45.1872217Z closed forced1-0001 exited=True peakJobCommitMB=390,4 peakProcessCommitMB=139,0 cpuUserMs=2844 cpuKernelMs=1906 totalProcesses=14 activeProcesses=0 pageFaults=331211
+2026-09-24T23:52:46.7172404Z launched forced1-0002 arm=control+MOZ_SAFE_MODE_RESTART=1 nodePid=103204 batch=2 suiteActive=False 
+2026-09-24T23:53:17.6717501Z closed forced1-0002 exited=True peakJobCommitMB=372,4 peakProcessCommitMB=137,8 cpuUserMs=2688 cpuKernelMs=1359 totalProcesses=14 activeProcesses=0 pageFaults=329527
+2026-09-24T23:53:19.2059718Z waiting for quiet: growing: p2-step4-scans.log
+2026-09-24T23:54:04.2321427Z quiet after 45 s
+2026-09-24T23:54:04.2501534Z launched forced1-0003 arm=control+MOZ_SAFE_MODE_RESTART=1 nodePid=80456 batch=3 suiteActive=False 
+2026-09-24T23:54:35.0788112Z closed forced1-0003 exited=True peakJobCommitMB=377,6 peakProcessCommitMB=138,0 cpuUserMs=3031 cpuKernelMs=1484 totalProcesses=14 activeProcesses=0 pageFaults=335226
+2026-09-24T23:54:36.5955199Z run forced1 done: 3 launched

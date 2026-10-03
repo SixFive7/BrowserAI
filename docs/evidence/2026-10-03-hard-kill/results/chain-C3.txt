@@ -1,0 +1,5 @@
+=== C3 took the suite lock after waiting 0s 2026-10-03T05:48:53Z
+=== confirm start 2026-10-03T05:48:53Z
+=== confirm exit=0 2026-10-03T05:50:01Z
+=== chain done 2026-10-03T05:50:02Z
+=== C3 released the suite lock 2026-10-03T05:50:02Z

@@ -1,0 +1,90 @@
+2026-09-25T00:00:55.904Z +234.1 START node=v24.21.0 pid=91256 id=mem300-0002
+2026-09-25T00:00:55.920Z +250.0 SPAWN pid=16872 C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem300\mem300-0002\firefox\profile -juggler-pipe about:blank
+2026-09-25T00:00:55.973Z +302.6 [ff:err] *** You are running in headless mode.
+2026-09-25T00:00:56.036Z +366.1 [ff:err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+2026-09-25T00:00:56.257Z +587.0 [ff:out] Juggler listening to the pipe
+2026-09-25T00:00:56.259Z +588.4 [dbg]   pw:protocol SEND ► {"method":"Browser.enable","params":{"attachToDefaultContext":true,"userPrefs":[{"name":"toolkit.winRegisterApplicationRestart","value":false},{"name":"signon.rememberSignons","value":false}]},"id":1} +0ms
+2026-09-25T00:00:56.259Z +589.1 [dbg]   pw:protocol SEND ► {"method":"Browser.getInfo","id":2} +1ms
+2026-09-25T00:00:56.261Z +590.7 [dbg]   pw:protocol SEND ► {"method":"Browser.setInitScripts","params":{"scripts":[]},"id":3} +2ms
+2026-09-25T00:00:56.261Z +590.8 [dbg]   pw:protocol SEND ► {"method":"Browser.setDownloadOptions","params":{"downloadOptions":{"behavior":"saveToDisk","downloadsDir":"C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\mem300\\mem300-0002\\downloads"}},"id":4} +0ms
+2026-09-25T00:00:56.261Z +590.9 [dbg]   pw:protocol SEND ► {"method":"Browser.setDefaultViewport","params":{"viewport":{"viewportSize":{"width":1920,"height":1080},"deviceScaleFactor":1,"isMobile":false}},"id":5} +0ms
+2026-09-25T00:00:56.261Z +591.0 [dbg]   pw:protocol SEND ► {"method":"Browser.setLocaleOverride","params":{"locale":"nl-NL"},"id":6} +0ms
+2026-09-25T00:00:56.261Z +591.0 [dbg]   pw:protocol SEND ► {"method":"Browser.setTimezoneOverride","params":{"timezoneId":"Europe/Amsterdam"},"id":7} +0ms
+2026-09-25T00:00:56.261Z +591.1 [dbg]   pw:protocol SEND ► {"method":"Browser.setExtraHTTPHeaders","params":{"headers":[]},"id":8} +0ms
+2026-09-25T00:00:56.261Z +591.2 [dbg]   pw:protocol SEND ► {"method":"Browser.setColorScheme","params":{"colorScheme":"light"},"id":9} +0ms
+2026-09-25T00:00:56.330Z +659.9 [dbg]   pw:protocol ◀ RECV {"id":2,"result":{"version":"Firefox/156.0","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0"}} +69ms
+2026-09-25T00:00:56.330Z +660.1 [dbg]   pw:protocol ◀ RECV {"id":3} +0ms
+2026-09-25T00:00:56.330Z +660.2 [dbg]   pw:protocol ◀ RECV {"id":4} +0ms
+2026-09-25T00:00:56.330Z +660.2 [dbg]   pw:protocol ◀ RECV {"id":5} +0ms
+2026-09-25T00:00:56.330Z +660.3 [dbg]   pw:protocol ◀ RECV {"id":6} +0ms
+2026-09-25T00:00:56.333Z +662.5 [dbg]   pw:protocol ◀ RECV {"id":7} +3ms
+2026-09-25T00:00:56.333Z +662.6 [dbg]   pw:protocol ◀ RECV {"id":8} +0ms
+2026-09-25T00:00:56.333Z +662.6 [dbg]   pw:protocol ◀ RECV {"id":9} +0ms
+2026-09-25T00:00:56.333Z +662.7 [dbg]   pw:protocol SEND ► {"method":"Browser.setReducedMotion","params":{"reducedMotion":"no-preference"},"id":10} +0ms
+2026-09-25T00:00:56.339Z +668.7 [dbg]   pw:protocol ◀ RECV {"id":10} +6ms
+2026-09-25T00:00:56.339Z +668.8 [dbg]   pw:protocol SEND ► {"method":"Browser.setForcedColors","params":{"forcedColors":"none"},"id":11} +0ms
+2026-09-25T00:00:56.348Z +678.1 [dbg]   pw:protocol ◀ RECV {"id":11} +9ms
+2026-09-25T00:00:56.348Z +678.1 [dbg]   pw:protocol SEND ► {"method":"Browser.setContrast","params":{"contrast":"no-preference"},"id":12} +0ms
+2026-09-25T00:00:56.367Z +696.8 [dbg]   pw:protocol ◀ RECV {"id":12} +19ms
+2026-09-25T00:00:56.456Z +786.2 [ff:out] Crash Annotation GraphicsCriti
+2026-09-25T00:00:56.457Z +786.4 [ff:out] calError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.530238) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+2026-09-25T00:00:56.578Z +908.1 [ff:err] [Child 110992, MediaDecoderStateMachine #1] WARNING: Decoder=2516df4fe00 Decode error: NS_ERROR_DOM_MEDIA_FATAL_ERR (0x806e0005) - MediaResult __cdecl mozilla::WMFVideoMFTManager::InitInternal(void): Fail to set the decoder media types: file dom\media\MediaDecoderStateMachineBase.cpp:168
+2026-09-25T00:00:56.872Z +1201.7 [ff:err] out of memory: 0x0000000000000018 bytes requested
+2026-09-25T00:00:56.872Z +1201.8 [ff:err] out of memory: 0x0000000000000018 bytes requested
+2026-09-25T00:00:56.872Z +1202.0 [ff:err] out of memory: 0x0000000000000018 bytes requested
+2026-09-25T00:00:56.872Z +1202.0 [ff:err] out of memory: 0x0000000000000018 bytes requested
+2026-09-25T00:00:56.872Z +1202.0 [ff:err] out of memory: 0x0000000000000018 bytes requested
+2026-09-25T00:00:56.949Z +1278.9 [ff:err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+2026-09-25T00:00:57.343Z +1673.3 [ff:err] out of memory: 0x0000000000000038 bytes requested
+2026-09-25T00:00:58.047Z +2377.3 [ff:err] JavaScript error: resource://gre/modules/extensionProcessScriptLoader.js, line 7: uncaught exception: out of memory
+2026-09-25T00:00:59.090Z +3419.8 [ff:err] <jemalloc>: (malloc) Error initializing arena
+2026-09-25T00:00:59.090Z +3419.8 [ff:err] out of memory: 0x0000000000001500 bytes requested
+2026-09-25T00:00:59.090Z +3420.0 [ff:err] out of memory: 0x0000000000000038 bytes requested
+2026-09-25T00:00:59.128Z +3457.4 FIREFOX-EXIT code=2147483651 signal=null
+2026-09-25T00:00:59.535Z +3865.3 FAILED after 3631 ms: browserType.launchPersistentContext: Target page, context or browser has been closed
+Browser logs:
+
+<launching> C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem300\mem300-0002\firefox\profile -juggler-pipe about:blank
+<launched> pid=16872
+[pid=16872][err] *** You are running in headless mode.
+[pid=16872][err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+[pid=16872][out] 
+[pid=16872][out] Juggler listening to the pipe
+[pid=16872][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.530238) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+[pid=16872][err] [Child 110992, MediaDecoderStateMachine #1] WARNING: Decoder=2516df4fe00 Decode error: NS_ERROR_DOM_MEDIA_FATAL_ERR (0x806e0005) - MediaResult __cdecl mozilla::WMFVideoMFTManager::InitInternal(void): Fail to set the decoder media types: file dom\media\MediaDecoderStateMachineBase.cpp:168
+[pid=16872][err] out of memory: 0x0000000000000018 bytes requested
+[pid=16872][err] out of memory: 0x0000000000000018 bytes requested
+[pid=16872][err] out of memory: 0x0000000000000018 bytes requested
+[pid=16872][err] out of memory: 0x0000000000000018 bytes requested
+[pid=16872][err] out of memory: 0x0000000000000018 bytes requested
+[pid=16872][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=16872][err] out of memory: 0x0000000000000038 bytes requested
+[pid=16872][err] JavaScript error: resource://gre/modules/extensionProcessScriptLoader.js, line 7: uncaught exception: out of memory
+[pid=16872][err] <jemalloc>: (malloc) Error initializing arena
+[pid=16872][err] out of memory: 0x0000000000001500 bytes requested
+[pid=16872][err] out of memory: 0x0000000000000038 bytes requested
+Call log:
+  - <launching> C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem300\mem300-0002\firefox\profile -juggler-pipe about:blank
+  - <launched> pid=16872
+  - [pid=16872][err] *** You are running in headless mode.
+  - [pid=16872][err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+  - [pid=16872][out]
+  - [pid=16872][out] Juggler listening to the pipe
+  - [pid=16872][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.530238) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+  - [pid=16872][err] [Child 110992, MediaDecoderStateMachine #1] WARNING: Decoder=2516df4fe00 Decode error: NS_ERROR_DOM_MEDIA_FATAL_ERR (0x806e0005) - MediaResult __cdecl mozilla::WMFVideoMFTManager::InitInternal(void): Fail to set the decoder media types: file dom\media\MediaDecoderStateMachineBase.cpp:168
+  5 × [pid=16872][err] out of memory: 0x0000000000000018 bytes requested
+  - [pid=16872][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+  - [pid=16872][err] out of memory: 0x0000000000000038 bytes requested
+  - [pid=16872][err] JavaScript error: resource://gre/modules/extensionProcessScriptLoader.js, line 7: uncaught exception: out of memory
+  - [pid=16872][err] <jemalloc>: (malloc) Error initializing arena
+  - [pid=16872][err] out of memory: 0x0000000000001500 bytes requested
+  - [pid=16872][err] out of memory: 0x0000000000000038 bytes requested
+  - [pid=16872] <gracefully close start>
+  - [pid=16872] <kill>
+  - [pid=16872] <will force kill>
+  - [pid=16872] <process did exit: exitCode=2147483651, signal=null>
+  - [pid=16872] starting temporary directories cleanup
+  - [pid=16872] finished temporary directories cleanup
+  - [pid=16872] <gracefully close end>
+
+2026-09-25T00:00:59.541Z +3870.5 DONE {"id":"mem300-0002","batch":2,"mode":"b1-mem300","nodePid":91256,"startUtc":"2026-09-25T00:00:55.904Z","ok":false,"failMs":3631,"error":"browserType.launchPersistentContext: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\firefox-1549\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\Brows

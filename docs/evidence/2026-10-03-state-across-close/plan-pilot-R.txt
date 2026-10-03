@@ -1,0 +1,5 @@
+R 082 chromium p1 pref
+R 082 chromium p1 flag
+R 082 chromium p1 both
+R 082 firefox p1 ffpref
+R 082 firefox p1 userjs

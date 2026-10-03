@@ -1,0 +1,170 @@
+[
+{
+"id": "cr-mcp-job-D0-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-mcp-clean-D0-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "clean",
+"rep": 1
+},
+{
+"id": "cr-mcp-clean-D0-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "clean",
+"rep": 3
+},
+{
+"id": "cr-mcp-job-D30-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-mcp-job-D5-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 5,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-mcp-taskkill-D0-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "taskkill",
+"rep": 1
+},
+{
+"id": "cr-mcp-job-D0-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-mcp-job-D0-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-mcp-job-D5-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 5,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-mcp-taskkill-D5-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 5,
+"kill": "taskkill",
+"rep": 1
+},
+{
+"id": "cr-mcp-taskkill-D0-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "taskkill",
+"rep": 2
+},
+{
+"id": "cr-mcp-job-D5-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 5,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-mcp-taskkill-D30-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "taskkill",
+"rep": 3
+},
+{
+"id": "cr-mcp-taskkill-D0-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "taskkill",
+"rep": 3
+},
+{
+"id": "cr-mcp-taskkill-D30-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "taskkill",
+"rep": 2
+},
+{
+"id": "cr-mcp-taskkill-D30-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "taskkill",
+"rep": 1
+},
+{
+"id": "cr-mcp-taskkill-D5-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 5,
+"kill": "taskkill",
+"rep": 3
+},
+{
+"id": "cr-mcp-taskkill-D5-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 5,
+"kill": "taskkill",
+"rep": 2
+},
+{
+"id": "cr-mcp-job-D30-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-mcp-clean-D0-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "clean",
+"rep": 2
+},
+{
+"id": "cr-mcp-job-D30-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "job",
+"rep": 3
+}
+]

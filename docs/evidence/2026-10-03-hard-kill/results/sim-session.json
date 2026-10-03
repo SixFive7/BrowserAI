@@ -1,0 +1,59 @@
+{
+  "startedUtc": "2026-10-03T01:36:42.6452214Z",
+  "results": [
+    {
+      "rep": 1,
+      "lockHolder": "READY",
+      "storeHolder": "READY {\"pid\":65736,\"journal\":{\"journal_mode\":\"wal\"},\"files\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\"]}",
+      "probeWhileHeld": "refused: IOException: The process cannot access the file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\hard-kill\\sim\\session-1\\browserai.lock' because it is being used by another process.",
+      "lockFileProbeWhileHeld": "The process cannot access the file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\hard-kill\\sim\\session-1\\browserai.lock' because it is being used by another process.",
+      "killToExitedMs": 39,
+      "alive": 0,
+      "lockReopenableAfterMs": 49,
+      "lockContent": "{\"pid\":80664}",
+      "filesAfterKill": [
+        "browserai.data:4096",
+        "browserai.data-shm:32768",
+        "browserai.data-wal:37112",
+        "browserai.lock:13"
+      ],
+      "reader": "READ {\"before\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\",\"browserai.lock:13\"],\"after\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\",\"browserai.lock:13\"],\"rows\":[{\"id\":1,\"tool\":\"browser_navigate\",\"outcome\":\"successful\",\"settled_at\":\"2026-10-03T01:36:42.852Z\"},{\"id\":2,\"tool\":\"browser_click\",\"outcome\":\"in-flight\",\"settled_at\":null}],\"integrity\":{\"integrity_check\":\"ok\"}}"
+    },
+    {
+      "rep": 2,
+      "lockHolder": "READY",
+      "storeHolder": "READY {\"pid\":45824,\"journal\":{\"journal_mode\":\"wal\"},\"files\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\"]}",
+      "probeWhileHeld": "refused: IOException: The process cannot access the file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\hard-kill\\sim\\session-2\\browserai.lock' because it is being used by another process.",
+      "lockFileProbeWhileHeld": "The process cannot access the file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\hard-kill\\sim\\session-2\\browserai.lock' because it is being used by another process.",
+      "killToExitedMs": 37,
+      "alive": 0,
+      "lockReopenableAfterMs": 37,
+      "lockContent": "{\"pid\":57460}",
+      "filesAfterKill": [
+        "browserai.data:4096",
+        "browserai.data-shm:32768",
+        "browserai.data-wal:37112",
+        "browserai.lock:13"
+      ],
+      "reader": "READ {\"before\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\",\"browserai.lock:13\"],\"after\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\",\"browserai.lock:13\"],\"rows\":[{\"id\":1,\"tool\":\"browser_navigate\",\"outcome\":\"successful\",\"settled_at\":\"2026-10-03T01:36:44.028Z\"},{\"id\":2,\"tool\":\"browser_click\",\"outcome\":\"in-flight\",\"settled_at\":null}],\"integrity\":{\"integrity_check\":\"ok\"}}"
+    },
+    {
+      "rep": 3,
+      "lockHolder": "READY",
+      "storeHolder": "READY {\"pid\":81452,\"journal\":{\"journal_mode\":\"wal\"},\"files\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\"]}",
+      "probeWhileHeld": "refused: IOException: The process cannot access the file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\hard-kill\\sim\\session-3\\browserai.lock' because it is being used by another process.",
+      "lockFileProbeWhileHeld": "The process cannot access the file 'C:\\Source\\SixFive7\\BrowserAI\\.work\\hard-kill\\sim\\session-3\\browserai.lock' because it is being used by another process.",
+      "killToExitedMs": 40,
+      "alive": 0,
+      "lockReopenableAfterMs": 40,
+      "lockContent": "{\"pid\":60676}",
+      "filesAfterKill": [
+        "browserai.data:4096",
+        "browserai.data-shm:32768",
+        "browserai.data-wal:37112",
+        "browserai.lock:13"
+      ],
+      "reader": "READ {\"before\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\",\"browserai.lock:13\"],\"after\":[\"browserai.data:4096\",\"browserai.data-shm:32768\",\"browserai.data-wal:37112\",\"browserai.lock:13\"],\"rows\":[{\"id\":1,\"tool\":\"browser_navigate\",\"outcome\":\"successful\",\"settled_at\":\"2026-10-03T01:36:44.648Z\"},{\"id\":2,\"tool\":\"browser_click\",\"outcome\":\"in-flight\",\"settled_at\":null}],\"integrity\":{\"integrity_check\":\"ok\"}}"
+    }
+  ]
+}

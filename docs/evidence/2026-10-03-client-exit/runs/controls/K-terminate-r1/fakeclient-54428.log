@@ -1,0 +1,6 @@
+147196294.943	2026-10-03T01:29:13.2762449Z	54428	fakeclient	SPAWNED	pid=52028 action=terminate
+147196423.385	2026-10-03T01:29:13.4041230Z	54428	fakeclient	RESP	{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"exitprobe","version":"1.0.0"}}}
+147196423.980	2026-10-03T01:29:13.4046944Z	54428	fakeclient	RESP	{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"ping","description":"Returns pong.","inputSchema":{"type":"object","properties":{}}}]}}
+147196424.410	2026-10-03T01:29:13.4051274Z	54428	fakeclient	RESP	{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"pong from pid 52028"}],"isError":false}}
+147196726.147	2026-10-03T01:29:13.7068682Z	54428	fakeclient	TERMINATE	ok=True
+147196740.510	2026-10-03T01:29:13.7212314Z	54428	fakeclient	SERVER_DONE	exited=True code=1

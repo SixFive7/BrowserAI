@@ -1,0 +1,13 @@
+2026-10-03T01:56:38.768Z LISTENING 127.0.0.1:8935 pid=52172
+2026-10-03T01:57:27.692Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=52172_1_ffd632ac
+2026-10-03T01:57:27.784Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=52172_2_c169e298
+2026-10-03T01:57:32.578Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=52172_3_dc1cee9c
+2026-10-03T01:57:32.661Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=52172_4_f49103bc
+2026-10-03T01:57:37.693Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=52172_5_4a2a140a
+2026-10-03T01:57:37.778Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=52172_6_c1097864
+2026-10-03T01:57:43.418Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=52172_7_88ee9478
+2026-10-03T01:57:43.555Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=52172_8_f3c6d739
+2026-10-03T01:57:48.341Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=52172_9_f2260f62
+2026-10-03T01:57:48.442Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=52172_10_83e42208
+2026-10-03T01:57:54.457Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=52172_11_05616a06
+2026-10-03T01:57:54.556Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=52172_12_b07b4ab4

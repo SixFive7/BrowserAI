@@ -1,0 +1,38 @@
+[
+{
+"id": "fx-core-job-second10-D7-r1",
+"browser": "firefox",
+"path": "core",
+"D": 7,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "fx-core-job-second10-D7-r2",
+"browser": "firefox",
+"path": "core",
+"D": 7,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "fx-core-job-second10-D3-r2",
+"browser": "firefox",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "fx-core-job-second10-D3-r1",
+"browser": "firefox",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 1,
+"second": 10
+}
+]

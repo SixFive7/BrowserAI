@@ -1,0 +1,6 @@
+147189559.667	2026-10-03T01:29:06.5407938Z	47292	fakeclient	SPAWNED	pid=25680 action=close
+147189690.569	2026-10-03T01:29:06.6712993Z	47292	fakeclient	RESP	{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"exitprobe","version":"1.0.0"}}}
+147189691.069	2026-10-03T01:29:06.6717845Z	47292	fakeclient	RESP	{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"ping","description":"Returns pong.","inputSchema":{"type":"object","properties":{}}}]}}
+147189691.677	2026-10-03T01:29:06.6723946Z	47292	fakeclient	RESP	{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"pong from pid 25680"}],"isError":false}}
+147189992.675	2026-10-03T01:29:06.9734074Z	47292	fakeclient	CLOSED_STDIN	
+147191014.486	2026-10-03T01:29:07.9952040Z	47292	fakeclient	SERVER_DONE	exited=True code=77

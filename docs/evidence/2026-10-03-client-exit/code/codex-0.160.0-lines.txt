@@ -1,0 +1,18 @@
+codex-rs/utils/pty/src/win/job.rs:63: pub fn create_without_breakaway() -> io::Result<Self> {
+codex-rs/utils/pty/src/win/job.rs:65: Self::set_limit_flags(&job.handle, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)?;
+codex-rs/utils/pty/src/win/job.rs:132: .kill_on_drop(true);
+codex-rs/utils/pty/src/win/job.rs:188: command.creation_flags(CREATE_NO_WINDOW).kill_on_drop(true);
+codex-rs/utils/pty/src/win/job.rs:236: pub fn terminate(&self) -> io::Result<()> {
+codex-rs/utils/pty/src/win/job.rs:246: TerminateJobObject(self.handle.as_raw_handle().cast(), /*uExitCode*/ 1)
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:139: async fn close(&mut self) -> std::result::Result<(), Self::Error> {
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:140: self.process.terminate().await?;
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:298: let job = match codex_utils_pty::JobObject::create_without_breakaway() {
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:443: Self::Job(job) => job.terminate(),
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:510: impl Drop for StdioServerProcessHandleInner {
+codex-rs/rmcp-client/src/local_stdio_transport.rs:92: async fn close(&mut self) -> io::Result<()> {
+codex-rs/rmcp-client/src/local_stdio_transport.rs:97: match tokio::time::timeout(Duration::from_secs(3), self.child.wait()).await {
+codex-rs/rmcp-client/src/local_stdio_transport.rs:99: Err(_) => self.child.kill().await,
+codex-rs/rmcp-client/src/rmcp_client.rs:1059: pub async fn shutdown(&self) {
+codex-rs/rmcp-client/src/rmcp_client.rs:1066: && let Err(error) = process.terminate().await
+codex-rs/rmcp-client/src/rmcp_client.rs:1071: drop(previous_state);
+codex-rs/core/src/session/handlers.rs:318: sess.services.mcp_runtime.shutdown().await;

@@ -1,0 +1,6 @@
+2026-09-24T23:54:36.6191624Z run=forced2 count=2 batch=1 timeoutMs=30000 suspectMs=12000 jobMemoryMB=0 cpuRate=0 debug=pw:protocol
+2026-09-24T23:54:36.6367084Z launched forced2-0001 arm=control+MOZ_SAFE_MODE_RESTART=1+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=98608 batch=1 suiteActive=False 
+2026-09-24T23:55:07.6898521Z closed forced2-0001 exited=True peakJobCommitMB=392,1 peakProcessCommitMB=138,9 cpuUserMs=2719 cpuKernelMs=1797 totalProcesses=14 activeProcesses=0 pageFaults=337610
+2026-09-24T23:55:09.2187752Z launched forced2-0002 arm=control+MOZ_SAFE_MODE_RESTART=1+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=76468 batch=2 suiteActive=False 
+2026-09-24T23:55:40.2649061Z closed forced2-0002 exited=True peakJobCommitMB=394,5 peakProcessCommitMB=139,3 cpuUserMs=3016 cpuKernelMs=1375 totalProcesses=14 activeProcesses=0 pageFaults=334103
+2026-09-24T23:55:41.7921541Z run forced2 done: 2 launched

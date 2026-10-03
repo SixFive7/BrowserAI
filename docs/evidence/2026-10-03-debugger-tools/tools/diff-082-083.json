@@ -1,0 +1,109 @@
+{
+  "a": {
+    "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\debugger-tools\\tools\\tools-0.0.82.json",
+    "count": 72
+  },
+  "b": {
+    "file": "C:\\Source\\SixFive7\\BrowserAI\\.work\\debugger-tools\\tools\\tools-0.0.83.json",
+    "count": 72
+  },
+  "sameOrder": true,
+  "rows": [
+    {
+      "name": "browser_find",
+      "change": "changed",
+      "diffs": [
+        {
+          "field": "inputSchema",
+          "from": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "text": {
+                "description": "Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.",
+                "type": "string"
+              },
+              "regex": {
+                "description": "Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. \"/error/i\" for case-insensitive. Provide either text or regex, not both.",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "to": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "text": {
+                "description": "Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.",
+                "type": "string"
+              },
+              "regex": {
+                "description": "Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. \"/error/i\" for case-insensitive. Provide either text or regex, not both.",
+                "type": "string"
+              },
+              "filename": {
+                "description": "Save results to a file instead of returning them in the response. Relative file names are resolved against the workspace root.",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "browser_wait_for",
+      "change": "changed",
+      "diffs": [
+        {
+          "field": "inputSchema",
+          "from": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "time": {
+                "description": "The time to wait in seconds",
+                "type": "number"
+              },
+              "text": {
+                "description": "The text to wait for",
+                "type": "string"
+              },
+              "textGone": {
+                "description": "The text to wait for to disappear",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "to": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "time": {
+                "description": "The time to wait in seconds, at most 30",
+                "type": "number"
+              },
+              "text": {
+                "description": "The text to wait for",
+                "type": "string"
+              },
+              "textGone": {
+                "description": "The text to wait for to disappear",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      ]
+    }
+  ],
+  "goldenVsA": {
+    "goldenCount": 72,
+    "liveCount": 72,
+    "sameNames": true,
+    "differing": []
+  }
+}

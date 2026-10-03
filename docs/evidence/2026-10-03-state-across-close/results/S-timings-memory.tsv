@@ -1,0 +1,13 @@
+run	version	browser	child1SpawnToInitMs	firstNavMs	close1Ms	relaunchFirstCallMs	teardownBrowserOpenExitMs	teardownBrowserOpenJobEmptyMs	child2SpawnToInitMs	child2FirstNavMs	close2Ms	teardownNodeOnlyExitMs	nodeOnlyWsMB	nodeOnlyPrivMB	open2LocalTabsTotalWsMB	open2LocalTabsTotalPrivMB	open2LocalTabsBrowserProcs	relaunchedBlankTotalWsMB	relaunchedBlankBrowserProcs
+S-082-chromium-r1	082	chromium	318.7	465.4	151.1	312	520.3	523.3	299.7	383.5	182	14	123.1	176.4	671	537.1	9	471.9	8
+S-082-chromium-r2	082	chromium	600.2	720.5	477.5	665.7	1058.4	1063.5	684.1	712.4	282.1	18.8	124.1	176.5	671.9	530.7	9	421.3	8
+S-082-chromium-r3	082	chromium	372.9	617.1	156.3	355.4	857.7	863.4	380.2	496.6	198.6	15.7	124.4	175.9	672.8	542.5	9	483.3	9
+S-082-firefox-r1	082	firefox	354.5	2803.7	483	1528.1	824.8	829	421.2	1463.2	270.8	35.8	122.9	176.1	836.1	836.2	8	627.9	7
+S-082-firefox-r2	082	firefox	420.9	2849.4	693.8	1737.2	902.3	906.8	472.5	1645	236.1	15.9	124.3	175	837.4	836.1	8	629.2	7
+S-082-firefox-r3	082	firefox	565	4218	536.2	1277.9	629.4	633.2	330.4	1173.3	228.6	17.5	123.9	175	831.1	825.6	8	630.3	7
+S-083-chromium-r1	083	chromium	565.4	777.5	914.8	527.6	894.5	899.8	482.8	628.6	217.9	26.8	123.7	176.7	667.7	526.6	9	467.4	8
+S-083-chromium-r2	083	chromium	408.2	1457.6	217	565	669.4	673	386	515.8	304.5	18.5	124.1	176.8	679.2	544.1	10	475.8	9
+S-083-chromium-r3	083	chromium	332.6	1571.1	234.3	610.5	803.9	809.7	475.6	834.8	260	20.5	124.6	176.6	680.3	541.7	10	473.7	9
+S-083-firefox-r1	083	firefox	380.3	3312	699.8	1820.8	894	899.6	563.2	1857.1	303.2	29.3	122.7	175.6	833.1	829.7	8	614.4	7
+S-083-firefox-r2	083	firefox	446.2	2886.1	527.5	1710.7	863.5	867.2	385.2	1581.6	252.5	21.1	124.1	175.5	829.1	833.3	8	628.4	7
+S-083-firefox-r3	083	firefox	421.8	2160.5	513.3	1068.6	573.2	576.4	326	1391.4	203.7	14.7	124.3	176.1	840.3	837.1	8	630	7

@@ -1,0 +1,17 @@
+a	runs=18	EOF=18/18	self-exit[d0:3 d100:3]	killed[d1000:3 d3000:3 d6000:3 d15000:3] code 1 x12	EOF->kill ms 644-1.154 (median 884)	stand-in: code 0 x6, code 1 x12
+b1	runs=36	EOF=36/36	self-exit[d0:6 d100:6 d1000:1]	killed[d1000:5 d3000:6 d6000:6 d15000:6] code 1 x23	EOF->kill ms 533-963 (median 787)	stand-in: code 0 x13, code 1 x23
+b2	runs=36	EOF=0/36	self-exit[]	killed[d0:6 d100:6 d1000:6 d3000:6 d6000:6 d15000:6] code 0 (job close) x36	EOF->kill ms -	stand-in: code 0 x36
+c1	runs=36	EOF=36/36	self-exit[d0:6 d100:6]	killed[d1000:6 d3000:6 d6000:6 d15000:6] code 1 x24	EOF->kill ms 676-1.062 (median 911)	stand-in: code 0 x12, code 1 x24
+c2	runs=36	EOF=0/36	self-exit[]	killed[d0:6 d100:6 d1000:6 d3000:6 d6000:6 d15000:6] code 0 (job close) x36	EOF->kill ms -	stand-in: code 0 x36
+d1	runs=18	EOF=0/18	self-exit[]	killed[d0:3 d100:3 d1000:3 d3000:3 d6000:3 d15000:3] code 1 x18	EOF->kill ms -	stand-in: code 1 x18
+d1(0.160)	runs=6	EOF=0/6	self-exit[]	killed[d100:3 d15000:3] code 1 x6	EOF->kill ms -	stand-in: code 1 x6
+d2	runs=18	EOF=0/18	self-exit[]	killed[d0:3 d100:3 d1000:3 d3000:3 d6000:3 d15000:3] code 1 x18	EOF->kill ms -	stand-in: code 1 x18
+d2(0.160)	runs=6	EOF=0/6	self-exit[]	killed[d100:3 d15000:3] code 1 x6	EOF->kill ms -	stand-in: code 1 x6
+d3	runs=6	EOF=0/6	self-exit[]	killed[d100:3 d15000:3] code 0 (job close) x6	EOF->kill ms -	stand-in: code 0 x6
+d3(0.160)	runs=6	EOF=1/6	self-exit[]	killed[d100:3 d15000:3] code 0 (job close) x6	EOF->kill ms 3-3 (median 3)	stand-in: code 0 x6
+e1	runs=18	EOF=18/18	self-exit[d0:3 d100:3 d1000:1]	killed[d1000:2 d3000:3 d6000:3 d15000:3] code 1 x11	EOF->kill ms 695-1.154 (median 908)	stand-in: code 0 x7, code 1 x11
+e2	runs=18	EOF=18/18	self-exit[d0:3 d100:3]	killed[d1000:3 d3000:3 d6000:3 d15000:3] code 1 x12	EOF->kill ms 564-919 (median 733)	stand-in: code 0 x6, code 1 x12
+e3	runs=18	EOF=18/18	self-exit[d0:3 d100:3]	killed[d1000:3 d3000:3 d6000:3 d15000:3] code 1 x12	EOF->kill ms 549-832 (median 689)	stand-in: code 0 x6, code 1 x12
+e4	runs=6	EOF=6/6	self-exit[d100:3]	killed[d15000:3] code 1 x3	EOF->kill ms 592-878 (median 681)	stand-in: code 0 x3, code 1 x3
+e5	runs=18	EOF=0/18	self-exit[]	killed[d0:3 d100:3 d1000:3 d3000:3 d6000:3 d15000:3] code 0 (job close) x18	EOF->kill ms -	stand-in: code 0 x18
+e6	runs=18	EOF=18/18	self-exit[d0:3 d100:3 d1000:2]	killed[d1000:1 d3000:3 d6000:3 d15000:3] code 1 x10	EOF->kill ms 629-1.112 (median 706)	stand-in: code 0 x8, code 1 x10

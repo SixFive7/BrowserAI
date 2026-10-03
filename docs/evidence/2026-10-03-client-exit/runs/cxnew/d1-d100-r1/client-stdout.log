@@ -1,0 +1,8 @@
+149793651.108	2026-10-03T02:12:30.6318373Z	39000	client	OUT	{"type":"thread.started","thread_id":"01a0ff88-cbfb-7210-b561-0b1e9e73bb13"}
+149793692.401	2026-10-03T02:12:30.6731162Z	39000	client	OUT	{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+149794029.788	2026-10-03T02:12:31.0105152Z	39000	client	OUT	{"type":"turn.started"}
+149794174.564	2026-10-03T02:12:31.1552790Z	39000	client	OUT	{"type":"item.started","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{},"result":null,"error":null,"status":"in_progress"}}
+149794191.324	2026-10-03T02:12:31.1720365Z	39000	client	OUT	{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"probe","tool":"ping","arguments":{},"result":{"content":[{"type":"text","text":"pong from pid 85860"}],"structured_content":null},"error":null,"status":"completed"}}
+149794254.143	2026-10-03T02:12:31.2348583Z	39000	client	OUT	{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"done"}}
+149794346.071	2026-10-03T02:12:31.3267871Z	39000	client	OUT	{"type":"turn.completed","usage":{"input_tokens":84,"cached_input_tokens":24,"cache_write_input_tokens":0,"output_tokens":10,"reasoning_output_tokens":0}}
+149794543.241	2026-10-03T02:12:31.5239577Z	39000	client	OUT_EOF	

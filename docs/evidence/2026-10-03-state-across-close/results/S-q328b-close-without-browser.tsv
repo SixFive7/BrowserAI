@@ -1,0 +1,25 @@
+run	version	browser	sample	ms	processesCreatedDuringCall	maxActiveInJobDuringCall	activeAfter	browserExesSeen	samples	isError	text
+S-082-chromium-r1	082	chromium	close3	453.1	8	10	2	8	141	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-chromium-r1	082	chromium	close4	422.9	8	10	2	8	136	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-chromium-r2	082	chromium	close3	688.9	9	11	2	9	213	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-chromium-r2	082	chromium	close4	715.2	8	10	2	8	260	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-chromium-r3	082	chromium	close3	580.5	9	11	2	9	178	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-chromium-r3	082	chromium	close4	557.4	8	10	2	8	178	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-firefox-r1	082	firefox	close3	1459.3	8	9	2	8	510	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-firefox-r1	082	firefox	close4	1769.5	8	9	2	8	595	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-firefox-r2	082	firefox	close3	1722.8	8	9	2	8	533	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-firefox-r2	082	firefox	close4	1462.6	8	10	2	8	447	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-firefox-r3	082	firefox	close3	1244.2	8	9	2	8	403	false	### Result No open tabs. Navigate to a URL to create one.
+S-082-firefox-r3	082	firefox	close4	1731.3	8	10	2	8	567	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-chromium-r1	083	chromium	close3	742	9	11	2	9	248	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-chromium-r1	083	chromium	close4	729.6	8	10	2	8	241	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-chromium-r2	083	chromium	close3	786.9	9	11	2	9	160	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-chromium-r2	083	chromium	close4	551.7	8	10	2	8	176	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-chromium-r3	083	chromium	close3	747.8	9	11	2	9	230	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-chromium-r3	083	chromium	close4	796.5	9	11	2	9	246	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-firefox-r1	083	firefox	close3	2130.3	8	10	2	8	606	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-firefox-r1	083	firefox	close4	1921.8	8	9	2	8	607	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-firefox-r2	083	firefox	close3	1823.9	8	10	2	8	559	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-firefox-r2	083	firefox	close4	2008.4	8	10	2	8	590	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-firefox-r3	083	firefox	close3	1374.8	8	10	2	8	434	false	### Result No open tabs. Navigate to a URL to create one.
+S-083-firefox-r3	083	firefox	close4	1527.5	8	9	2	8	477	false	### Result No open tabs. Navigate to a URL to create one.

@@ -1,0 +1,4 @@
+server: {"listening":47811,"pid":56876}
+[1/2] smoke-cr-core-job-D0 0s actualD=0,222 procs=9 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3,5s)
+[2/2] smoke-fx-core-job-D0 0s actualD=0,017 procs=8 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (6,7s)
+server exited: True

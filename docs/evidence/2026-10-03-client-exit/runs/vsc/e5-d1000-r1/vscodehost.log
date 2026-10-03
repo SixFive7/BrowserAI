@@ -1,0 +1,5 @@
+2026-10-03T02:05:56.586Z SPAWNED pid=58424 mode=host-exit
+2026-10-03T02:05:56.588Z SENT initialize
+2026-10-03T02:05:57.196Z SENT user message
+2026-10-03T02:05:57.445Z RESULT seen; ending in 2000 ms
+2026-10-03T02:05:59.446Z HOST_EXIT: stdin.end() then process.exit(0)

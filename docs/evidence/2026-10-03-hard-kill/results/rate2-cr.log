@@ -1,0 +1,8 @@
+server: {"listening":47811,"pid":74188}
+[1/6] cr-core-job-second10-D45-r2 45s actualD=45,024 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=0 idb=True err= (57,7s)
+[2/6] cr-core-job-second10-D55-r1 55s actualD=55,005 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=40 idb=True err= (67,6s)
+[3/6] cr-core-job-second10-D20-r1 20s actualD=20,002 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=0 idb=True err= (32,8s)
+[4/6] cr-core-job-second10-D45-r1 45s actualD=45,008 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=0 idb=True err= (57,3s)
+[5/6] cr-core-job-second10-D20-r2 20s actualD=20,007 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=0 idb=True err= (32,3s)
+[6/6] cr-core-job-second10-D55-r2 55s actualD=55,01 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=40 idb=True err= (67,8s)
+server exited: True

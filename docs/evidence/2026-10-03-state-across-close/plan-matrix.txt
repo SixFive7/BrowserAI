@@ -1,0 +1,124 @@
+S 082 chromium r1
+S 082 firefox r1
+S 083 chromium r1
+S 083 firefox r1
+H 082 chromium r1
+H 082 firefox r1
+H 083 chromium r1
+H 083 firefox r1
+T 082 chromium r1
+T 082 firefox r1
+T 083 chromium r1
+T 083 firefox r1
+D 082 chromium r1
+D 082 firefox r1
+D 083 chromium r1
+D 083 firefox r1
+M 082 chromium r1
+M 082 firefox r1
+M 083 chromium r1
+M 083 firefox r1
+R 082 chromium r1 flag
+R 082 chromium r1 flagnb
+R 082 chromium r1 oneshot
+R 082 chromium r1 oneshotnb
+R 082 firefox r1 ffeager
+R 082 firefox r1 ffeagernb
+R 082 firefox r1 oneshot
+R 082 firefox r1 oneshotnb
+R 083 chromium r1 flag
+R 083 chromium r1 flagnb
+R 083 chromium r1 oneshot
+R 083 chromium r1 oneshotnb
+R 083 firefox r1 ffeager
+R 083 firefox r1 ffeagernb
+R 083 firefox r1 oneshot
+R 083 firefox r1 oneshotnb
+R 082 chromium r1 pref
+R 082 firefox r1 ffpref
+R 082 firefox r1 userjs
+R 082 firefox r1 ffonce
+R 083 chromium r1 pref
+R 083 firefox r1 ffpref
+R 083 firefox r1 userjs
+R 083 firefox r1 ffonce
+S 082 chromium r2
+S 082 firefox r2
+S 083 chromium r2
+S 083 firefox r2
+H 082 chromium r2
+H 082 firefox r2
+H 083 chromium r2
+H 083 firefox r2
+T 082 chromium r2
+T 082 firefox r2
+T 083 chromium r2
+T 083 firefox r2
+D 082 chromium r2
+D 082 firefox r2
+D 083 chromium r2
+D 083 firefox r2
+M 082 chromium r2
+M 082 firefox r2
+M 083 chromium r2
+M 083 firefox r2
+R 082 chromium r2 flag
+R 082 chromium r2 flagnb
+R 082 chromium r2 oneshot
+R 082 chromium r2 oneshotnb
+R 082 firefox r2 ffeager
+R 082 firefox r2 ffeagernb
+R 082 firefox r2 oneshot
+R 082 firefox r2 oneshotnb
+R 083 chromium r2 flag
+R 083 chromium r2 flagnb
+R 083 chromium r2 oneshot
+R 083 chromium r2 oneshotnb
+R 083 firefox r2 ffeager
+R 083 firefox r2 ffeagernb
+R 083 firefox r2 oneshot
+R 083 firefox r2 oneshotnb
+R 082 chromium r2 pref
+R 082 firefox r2 ffpref
+R 082 firefox r2 userjs
+R 082 firefox r2 ffonce
+S 082 chromium r3
+S 082 firefox r3
+S 083 chromium r3
+S 083 firefox r3
+H 082 chromium r3
+H 082 firefox r3
+H 083 chromium r3
+H 083 firefox r3
+T 082 chromium r3
+T 082 firefox r3
+T 083 chromium r3
+T 083 firefox r3
+D 082 chromium r3
+D 082 firefox r3
+D 083 chromium r3
+D 083 firefox r3
+M 082 chromium r3
+M 082 firefox r3
+M 083 chromium r3
+M 083 firefox r3
+R 082 chromium r3 flag
+R 082 chromium r3 flagnb
+R 082 chromium r3 oneshot
+R 082 chromium r3 oneshotnb
+R 082 firefox r3 ffeager
+R 082 firefox r3 ffeagernb
+R 082 firefox r3 oneshot
+R 082 firefox r3 oneshotnb
+R 083 chromium r3 flag
+R 083 chromium r3 flagnb
+R 083 chromium r3 oneshot
+R 083 chromium r3 oneshotnb
+R 083 firefox r3 ffeager
+R 083 firefox r3 ffeagernb
+R 083 firefox r3 oneshot
+R 083 firefox r3 oneshotnb
+R 082 chromium r3 pref
+R 082 firefox r3 ffpref
+R 082 firefox r3 userjs
+R 082 firefox r3 ffonce

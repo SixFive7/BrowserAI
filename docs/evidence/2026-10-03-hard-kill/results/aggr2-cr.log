@@ -1,0 +1,16 @@
+server: {"listening":47811,"pid":22420}
+[1/14] cr-core-aggr2-job-D2.5-r2 2,5s actualD=2,532 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (5,1s)
+[2/14] cr-core-aggr2-job-D1.5-r3 1,5s actualD=1,51 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (3,7s)
+[3/14] cr-core-aggr2-job-D1-r2 1s actualD=1,009 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (3,6s)
+[4/14] cr-core-aggr2-job-D2.5-r3 2,5s actualD=2,518 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (4,7s)
+[5/14] cr-core-aggr2-job-D1.5-r1 1,5s actualD=1,511 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (3,8s)
+[6/14] cr-core-aggr2-job-D0.5-r3 0,5s actualD=0,514 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3,1s)
+[7/14] cr-core-aggr2-job-D2.5-r1 2,5s actualD=2,511 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (4,7s)
+[8/14] cr-core-aggr2-job-D1.5-r2 1,5s actualD=1,506 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (3,7s)
+[9/14] cr-core-aggr2-job-second10-D2-r2 2s actualD=2,019 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False | B: cookieHttpOnly=False cookieJs=False ls=40 idb=True err= (14,3s)
+[10/14] cr-core-aggr2-job-D1-r3 1s actualD=1,012 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (3,2s)
+[11/14] cr-core-aggr2-job-D0.5-r1 0,5s actualD=0,516 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (2,7s)
+[12/14] cr-core-aggr2-job-D1-r1 1s actualD=1,002 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (3,2s)
+[13/14] cr-core-aggr2-job-D0.5-r2 0,5s actualD=0,505 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (2,7s)
+[14/14] cr-core-aggr2-job-second10-D2-r1 2s actualD=2,012 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False | B: cookieHttpOnly=False cookieJs=False ls=40 idb=True err= (14,2s)
+server exited: True

@@ -1,0 +1,7 @@
+147194216.338	2026-10-03T01:29:11.1979100Z	49348	fakeclient	SPAWNED	pid=78812 action=taskkill
+147194360.880	2026-10-03T01:29:11.3416170Z	49348	fakeclient	RESP	{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"exitprobe","version":"1.0.0"}}}
+147194361.644	2026-10-03T01:29:11.3423592Z	49348	fakeclient	RESP	{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"ping","description":"Returns pong.","inputSchema":{"type":"object","properties":{}}}]}}
+147194362.189	2026-10-03T01:29:11.3429071Z	49348	fakeclient	RESP	{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"pong from pid 78812"}],"isError":false}}
+147194669.541	2026-10-03T01:29:11.6502613Z	49348	fakeclient	TASKKILL_SPAWNED	pid=80812
+147195341.984	2026-10-03T01:29:12.3227094Z	49348	fakeclient	TASKKILL_DONE	code=0 out=SUCCESS: The process with PID 59996 (child process of PID 64272) has been terminated.  SUCCESS: The process with PID 76728 (child process of PID 78812) has been terminated.  SUCCESS: The process with PID 64272 (child process of PID 78812) has been terminated.  SUCCESS: The process with PID 78812 (child process of PID 49348) has been terminated.  
+147195344.344	2026-10-03T01:29:12.3250635Z	49348	fakeclient	SERVER_DONE	exited=True code=1

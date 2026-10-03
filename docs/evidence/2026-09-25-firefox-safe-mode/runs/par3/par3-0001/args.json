@@ -1,0 +1,16 @@
+{
+  "id": "par3-0001",
+  "batch": 1,
+  "mode": "b3",
+  "playwrightCore": "C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\playwright-core",
+  "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\firefox-1549\\firefox\\firefox.exe",
+  "profile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\par3\\par3-0001\\firefox\\profile",
+  "downloads": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\par3\\par3-0001\\downloads",
+  "artifacts": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\par3\\par3-0001\\artifacts",
+  "log": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\par3\\par3-0001\\probe.log",
+  "results": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\par3\\results.jsonl",
+  "timeoutMs": 60000,
+  "suspectMs": 20000,
+  "debug": "pw:protocol",
+  "arm": "control"
+}

@@ -1,0 +1,6 @@
+2026-09-25T00:01:01.3188449Z run=cpu100 count=2 batch=1 timeoutMs=60000 suspectMs=30000 jobMemoryMB=0 cpuRate=100 debug=pw:protocol
+2026-09-25T00:01:01.3337016Z launched cpu100-0001 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=56384 batch=1 suiteActive=False 
+2026-09-25T00:01:21.5391473Z closed cpu100-0001 exited=True peakJobCommitMB=602,5 peakProcessCommitMB=346,0 cpuUserMs=4125 cpuKernelMs=2391 totalProcesses=13 activeProcesses=0 pageFaults=411509
+2026-09-25T00:01:23.1137019Z launched cpu100-0002 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=96120 batch=2 suiteActive=False 
+2026-09-25T00:01:44.3102234Z closed cpu100-0002 exited=True peakJobCommitMB=599,1 peakProcessCommitMB=332,7 cpuUserMs=4266 cpuKernelMs=2250 totalProcesses=13 activeProcesses=0 pageFaults=404763
+2026-09-25T00:01:45.8766163Z run cpu100 done: 2 launched

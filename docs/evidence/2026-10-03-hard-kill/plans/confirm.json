@@ -1,0 +1,70 @@
+[
+{
+"id": "cr-mcp-eof-D1-G5-debug",
+"browser": "chromium",
+"path": "mcp",
+"D": 1,
+"kill": "eof",
+"grace": 5,
+"rep": 1,
+"debug": true
+},
+{
+"id": "fx-mcp-eof-D1-G5-debug",
+"browser": "firefox",
+"path": "mcp",
+"D": 1,
+"kill": "eof",
+"grace": 5,
+"rep": 1,
+"debug": true
+},
+{
+"id": "cr-mcp-toolclose-D1-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 1,
+"kill": "toolclose",
+"rep": 1
+},
+{
+"id": "cr-mcp-toolclose-D1-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 1,
+"kill": "toolclose",
+"rep": 2
+},
+{
+"id": "cr-mcp-toolclose-D1-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 1,
+"kill": "toolclose",
+"rep": 3
+},
+{
+"id": "fx-mcp-toolclose-D1-r1",
+"browser": "firefox",
+"path": "mcp",
+"D": 1,
+"kill": "toolclose",
+"rep": 1
+},
+{
+"id": "fx-mcp-toolclose-D1-r2",
+"browser": "firefox",
+"path": "mcp",
+"D": 1,
+"kill": "toolclose",
+"rep": 2
+},
+{
+"id": "fx-mcp-toolclose-D1-r3",
+"browser": "firefox",
+"path": "mcp",
+"D": 1,
+"kill": "toolclose",
+"rep": 3
+}
+]

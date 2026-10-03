@@ -1,0 +1,3 @@
+R 082 firefox p2 ffpref
+R 082 firefox p2 ffonce
+R 082 firefox p2 ffboth

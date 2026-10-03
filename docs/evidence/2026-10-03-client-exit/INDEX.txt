@@ -1,0 +1,50 @@
+client-exit -- what a client does to a stdio MCP server when the session ends (Q356 a), 2026-10-03, all times UTC.
+Everything here is scratch (gitignored). Nothing under docs\ was written.
+
+RIG
+  rig\ExitRig\*.cs        one .NET 10 console app, several modes:
+                            server     the dummy MCP server (tool "ping"); logs QPC + precise UTC; creates an unnamed,
+                                       non-inheritable KILL_ON_JOB_CLOSE job and starts a stand-in in it (CREATE_SUSPENDED,
+                                       AssignProcessToJobObject, ResumeThread, CREATE_NO_WINDOW); on stdin EOF waits
+                                       --delay-ms, closes the job, exits 77. --call-delay-ms delays tools/call answers.
+                                       --keeper child|orphan starts a keeper OUTSIDE its job (option-c probe).
+                            standin    sits in the server's job and logs.
+                            keeper / launcher   the option-c probe (keeper watches the server by handle, then needs 5 s, exits 88).
+                            run/batch  the harness: launches the client (CreateNoWindow, pipes) or runs it in a ConPTY
+                                       (Pty.cs), observes the tree by parent pid with a ~1 ms toolhelp poll, opens a handle on
+                                       every descendant at once and records exit time (kernel FILETIME and QPC) and exit code.
+                            fakeclient the controls (runs\controls): close / taskkill / taskkill-then-close / terminate / exit-self.
+                            ttyprobe   proved that a ConPTY child picks up the harness's redirected handles unless
+                                       STARTF_USESTDHANDLES is set with NULL handles (runs\ttyprobe).
+  rig\vscodehost.js       node stand-in for the extension host's transport (sdk-close / host-exit), as read in extension.js.
+  stub\anthropic-stub.js  stateless Messages API stub (tool_use until a tool_result exists, then "stub-turn-finished").
+  stub\openai-stub.js     stateless Responses API stub (function_call to mcp__probe/ping, then "done").
+  tools\gen*.ps1          batch generators (gen = cc/cx, gen2 = cc2/extra, gen3 = vsc, gen4 = keeper, gen5 = cxnew, gen-tui = tui).
+  tools\analyze.py        one TSV row per server instance per run; tools\summarize.py groups them; tools\ranges.py timings.
+
+BINARIES (copies; sha256 in binaries.tsv)
+  bin\cli\claude.exe      Claude Code 2.1.288 (= %USERPROFILE%\.local\bin\claude.exe)
+  bin\vscode\claude.exe   Claude Code 2.1.287 (= the extension's resources\native-binary\claude.exe)
+  bin\codex\codex.exe     codex-cli 0.155.0-alpha.9.2 (= %LOCALAPPDATA%\OpenAI\Codex\bin\247581e40ee272fb\codex.exe)
+  npm-codex-0.160.0\...\codex.exe   codex-cli 0.160.0 (npm, scratch prefix)
+
+RUNS (runs\<batch>\<scenario>-d<delay>-r<rep>\: harness.log, server-<pid>.log, standin-<pid>.log, result.json,
+      client-stdout.log, client-stderr.log, claude-debug.log, mcp.json / wrote-config.toml.txt)
+  controls  15  positive controls for every signature the analysis reads
+  cc        90  a, b1, b2, c1, c2 (stream-json turns failed authentication: key not approved; MCP connected)
+  cc2       72  b1, b2, c1, c2 with the stub key approved (turn and tool call succeed)
+  cx        36  d1 (codex exec), d2 (app-server, stdin closed)               codex 0.155.0-alpha.9.2
+  cxnew     19  d1, d2, d3 + --version                                      codex 0.160.0
+  extra     12  e4 (interrupt an in-flight call, then stdin closed), d3 (app-server terminated)
+  tui       54  e1 /exit, e2 Ctrl+C twice, e3 terminal closed (ClosePseudoConsole), interactive TUI in a ConPTY
+  vsc       36  e5 extension host exits, e6 SDK close(), via rig\vscodehost.js + the VS Code binary
+  keeper    30  option-c probe: keeper child|orphan under ka/kb1/kb2/kd1/kd2
+  smoke, tuiexplore, ttyprobe: rig shake-down (smoke a-run looped against the first stub and was harness-killed)
+
+RESULTS
+  analysis-<batch>.tsv, summary-all.tsv, table-by-scenario.tsv, ranges.txt, analysis-keeper.tsv
+CODE READ
+  code\INDEX.txt (offsets into the Claude binaries, extension.js offsets), code\codex-0.155.0-alpha.9.2-lines.txt,
+  code\codex-0.160.0-lines.txt, code\codex-src (tag rust-v0.155.0-alpha.9.2), code\codex-src-0.160.0 (rust-v0.160.0, sparse)
+ISOLATION
+  real-config-hashes.tsv (before/after), cfg\claude, cfg\claude-sdk, cfg\claude-tui, cfg\codex (scratch homes)

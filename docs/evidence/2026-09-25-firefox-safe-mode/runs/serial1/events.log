@@ -1,0 +1,68 @@
+2026-09-24T23:08:12.2628335Z run=serial1 count=30 batch=1 timeoutMs=60000 suspectMs=15000 jobMemoryMB=0 cpuRate=0 debug=pw:protocol
+2026-09-24T23:08:12.3160912Z waiting for quiet: growing: p2-step2-installer.log
+2026-09-24T23:08:27.3962791Z quiet after 15 s
+2026-09-24T23:08:27.5861417Z launched serial1-0001 nodePid=39264 batch=1 suiteActive=False 
+2026-09-24T23:08:32.3375388Z closed serial1-0001 exited=True peakJobCommitMB=598,0 peakProcessCommitMB=338,0 cpuUserMs=3766 cpuKernelMs=2641 totalProcesses=11 activeProcesses=0 pageFaults=279833
+2026-09-24T23:08:33.9847246Z launched serial1-0002 nodePid=8548 batch=2 suiteActive=False 
+2026-09-24T23:08:38.1930648Z closed serial1-0002 exited=True peakJobCommitMB=596,5 peakProcessCommitMB=336,9 cpuUserMs=3328 cpuKernelMs=2547 totalProcesses=11 activeProcesses=0 pageFaults=277280
+2026-09-24T23:08:39.7985727Z launched serial1-0003 nodePid=103564 batch=3 suiteActive=False 
+2026-09-24T23:08:55.4903146Z SUSPECT serial1-0003 firefoxPid=86220; inspecting
+2026-09-24T23:09:41.2802325Z closed serial1-0003 exited=True peakJobCommitMB=374,0 peakProcessCommitMB=138,6 cpuUserMs=1938 cpuKernelMs=1234 totalProcesses=12 activeProcesses=0 pageFaults=167175
+2026-09-24T23:09:42.8488989Z launched serial1-0004 nodePid=111440 batch=4 suiteActive=False 
+2026-09-24T23:09:47.5735271Z closed serial1-0004 exited=True peakJobCommitMB=595,0 peakProcessCommitMB=336,1 cpuUserMs=3766 cpuKernelMs=2516 totalProcesses=11 activeProcesses=0 pageFaults=227042
+2026-09-24T23:09:49.1839188Z launched serial1-0005 nodePid=98096 batch=5 suiteActive=False 
+2026-09-24T23:09:53.3779710Z closed serial1-0005 exited=True peakJobCommitMB=592,2 peakProcessCommitMB=333,0 cpuUserMs=3531 cpuKernelMs=2703 totalProcesses=11 activeProcesses=0 pageFaults=277789
+2026-09-24T23:09:55.0411473Z launched serial1-0006 nodePid=91828 batch=6 suiteActive=False 
+2026-09-24T23:09:59.4998433Z closed serial1-0006 exited=True peakJobCommitMB=594,9 peakProcessCommitMB=335,0 cpuUserMs=3891 cpuKernelMs=2391 totalProcesses=11 activeProcesses=0 pageFaults=278810
+2026-09-24T23:10:01.1433132Z launched serial1-0007 nodePid=107604 batch=7 suiteActive=False 
+2026-09-24T23:10:05.6075211Z closed serial1-0007 exited=True peakJobCommitMB=594,8 peakProcessCommitMB=335,3 cpuUserMs=3719 cpuKernelMs=2703 totalProcesses=11 activeProcesses=0 pageFaults=277761
+2026-09-24T23:10:07.2306286Z launched serial1-0008 nodePid=47688 batch=8 suiteActive=False 
+2026-09-24T23:10:11.4291148Z closed serial1-0008 exited=True peakJobCommitMB=593,6 peakProcessCommitMB=334,5 cpuUserMs=3938 cpuKernelMs=2734 totalProcesses=11 activeProcesses=0 pageFaults=278827
+2026-09-24T23:10:13.0437544Z launched serial1-0009 nodePid=57208 batch=9 suiteActive=False 
+2026-09-24T23:10:17.5010254Z closed serial1-0009 exited=True peakJobCommitMB=598,7 peakProcessCommitMB=337,6 cpuUserMs=3891 cpuKernelMs=2594 totalProcesses=11 activeProcesses=0 pageFaults=276768
+2026-09-24T23:10:19.1408530Z launched serial1-0010 nodePid=67800 batch=10 suiteActive=False 
+2026-09-24T23:10:24.1278659Z closed serial1-0010 exited=True peakJobCommitMB=592,5 peakProcessCommitMB=332,1 cpuUserMs=3484 cpuKernelMs=2359 totalProcesses=11 activeProcesses=0 pageFaults=227954
+2026-09-24T23:10:25.7459479Z launched serial1-0011 nodePid=54884 batch=11 suiteActive=False 
+2026-09-24T23:10:29.9457360Z closed serial1-0011 exited=True peakJobCommitMB=597,4 peakProcessCommitMB=337,1 cpuUserMs=3281 cpuKernelMs=2547 totalProcesses=11 activeProcesses=0 pageFaults=227532
+2026-09-24T23:10:31.5563089Z launched serial1-0012 nodePid=63888 batch=12 suiteActive=False 
+2026-09-24T23:10:35.4968948Z closed serial1-0012 exited=True peakJobCommitMB=596,8 peakProcessCommitMB=337,1 cpuUserMs=3531 cpuKernelMs=2328 totalProcesses=11 activeProcesses=0 pageFaults=278995
+2026-09-24T23:10:37.1248062Z launched serial1-0013 nodePid=5160 batch=13 suiteActive=False 
+2026-09-24T23:10:41.0649402Z closed serial1-0013 exited=True peakJobCommitMB=596,1 peakProcessCommitMB=336,8 cpuUserMs=3344 cpuKernelMs=2547 totalProcesses=11 activeProcesses=0 pageFaults=278367
+2026-09-24T23:10:42.6951161Z launched serial1-0014 nodePid=85400 batch=14 suiteActive=False 
+2026-09-24T23:10:47.1576628Z closed serial1-0014 exited=True peakJobCommitMB=593,8 peakProcessCommitMB=334,0 cpuUserMs=3594 cpuKernelMs=2734 totalProcesses=11 activeProcesses=0 pageFaults=278803
+2026-09-24T23:10:48.7824755Z launched serial1-0015 nodePid=106564 batch=15 suiteActive=False 
+2026-09-24T23:10:53.5142395Z closed serial1-0015 exited=True peakJobCommitMB=594,4 peakProcessCommitMB=335,2 cpuUserMs=3938 cpuKernelMs=2422 totalProcesses=11 activeProcesses=0 pageFaults=227918
+2026-09-24T23:10:55.1601808Z launched serial1-0016 nodePid=104460 batch=16 suiteActive=False 
+2026-09-24T23:11:10.8569737Z SUSPECT serial1-0016 firefoxPid=102436; inspecting
+2026-09-24T23:11:56.6030849Z closed serial1-0016 exited=True peakJobCommitMB=375,3 peakProcessCommitMB=138,0 cpuUserMs=1641 cpuKernelMs=1281 totalProcesses=12 activeProcesses=0 pageFaults=156531
+2026-09-24T23:11:58.1701543Z launched serial1-0017 nodePid=83520 batch=17 suiteActive=False 
+2026-09-24T23:12:02.1253677Z closed serial1-0017 exited=True peakJobCommitMB=613,7 peakProcessCommitMB=353,6 cpuUserMs=4000 cpuKernelMs=2609 totalProcesses=11 activeProcesses=0 pageFaults=278303
+2026-09-24T23:12:03.7486578Z launched serial1-0018 nodePid=86688 batch=18 suiteActive=False 
+2026-09-24T23:12:11.6310046Z closed serial1-0018 exited=True peakJobCommitMB=590,7 peakProcessCommitMB=332,4 cpuUserMs=3938 cpuKernelMs=3188 totalProcesses=11 activeProcesses=0 pageFaults=277975
+2026-09-24T23:12:13.2621685Z launched serial1-0019 nodePid=102000 batch=19 suiteActive=False 
+2026-09-24T23:12:18.2454779Z closed serial1-0019 exited=True peakJobCommitMB=603,2 peakProcessCommitMB=343,3 cpuUserMs=4000 cpuKernelMs=3328 totalProcesses=11 activeProcesses=0 pageFaults=277977
+2026-09-24T23:12:19.8720670Z launched serial1-0020 nodePid=98756 batch=20 suiteActive=False 
+2026-09-24T23:12:25.1138773Z closed serial1-0020 exited=True peakJobCommitMB=594,1 peakProcessCommitMB=334,4 cpuUserMs=4062 cpuKernelMs=2812 totalProcesses=11 activeProcesses=0 pageFaults=228266
+2026-09-24T23:12:26.7134613Z waiting for quiet: installer.lock present
+2026-09-24T23:13:26.7655493Z quiet after 60 s
+2026-09-24T23:13:26.7783892Z launched serial1-0021 nodePid=83668 batch=21 suiteActive=False 
+2026-09-24T23:13:29.6752510Z closed serial1-0021 exited=True peakJobCommitMB=597,6 peakProcessCommitMB=336,9 cpuUserMs=3000 cpuKernelMs=1531 totalProcesses=11 activeProcesses=0 pageFaults=226481
+2026-09-24T23:13:31.2750210Z launched serial1-0022 nodePid=80404 batch=22 suiteActive=False 
+2026-09-24T23:13:34.1465244Z closed serial1-0022 exited=True peakJobCommitMB=599,9 peakProcessCommitMB=337,1 cpuUserMs=3188 cpuKernelMs=1625 totalProcesses=11 activeProcesses=0 pageFaults=276966
+2026-09-24T23:13:35.7515203Z launched serial1-0023 nodePid=96588 batch=23 suiteActive=False 
+2026-09-24T23:13:38.9103337Z closed serial1-0023 exited=True peakJobCommitMB=596,2 peakProcessCommitMB=335,3 cpuUserMs=2938 cpuKernelMs=1781 totalProcesses=11 activeProcesses=0 pageFaults=279110
+2026-09-24T23:13:40.5306583Z launched serial1-0024 nodePid=34408 batch=24 suiteActive=False 
+2026-09-24T23:13:44.7285409Z closed serial1-0024 exited=True peakJobCommitMB=595,7 peakProcessCommitMB=337,1 cpuUserMs=3250 cpuKernelMs=2859 totalProcesses=11 activeProcesses=0 pageFaults=278804
+2026-09-24T23:13:46.3774826Z launched serial1-0025 nodePid=110304 batch=25 suiteActive=False 
+2026-09-24T23:13:50.8408778Z closed serial1-0025 exited=True peakJobCommitMB=594,9 peakProcessCommitMB=335,3 cpuUserMs=2984 cpuKernelMs=2719 totalProcesses=11 activeProcesses=0 pageFaults=228130
+2026-09-24T23:13:52.4660159Z launched serial1-0026 nodePid=4664 batch=26 suiteActive=False 
+2026-09-24T23:13:56.4082353Z closed serial1-0026 exited=True peakJobCommitMB=592,6 peakProcessCommitMB=333,5 cpuUserMs=3125 cpuKernelMs=2656 totalProcesses=11 activeProcesses=0 pageFaults=228111
+2026-09-24T23:13:58.0305560Z launched serial1-0027 nodePid=80856 batch=27 suiteActive=False 
+2026-09-24T23:14:02.2314140Z closed serial1-0027 exited=True peakJobCommitMB=593,1 peakProcessCommitMB=332,3 cpuUserMs=3797 cpuKernelMs=2672 totalProcesses=11 activeProcesses=0 pageFaults=278325
+2026-09-24T23:14:03.8404438Z launched serial1-0028 nodePid=92576 batch=28 suiteActive=False 
+2026-09-24T23:14:07.5285761Z closed serial1-0028 exited=True peakJobCommitMB=595,1 peakProcessCommitMB=335,4 cpuUserMs=3000 cpuKernelMs=2719 totalProcesses=11 activeProcesses=0 pageFaults=228077
+2026-09-24T23:14:09.1525812Z launched serial1-0029 nodePid=90976 batch=29 suiteActive=False 
+2026-09-24T23:14:13.3357102Z closed serial1-0029 exited=True peakJobCommitMB=594,5 peakProcessCommitMB=335,6 cpuUserMs=3281 cpuKernelMs=2531 totalProcesses=11 activeProcesses=0 pageFaults=228345
+2026-09-24T23:14:14.9415112Z launched serial1-0030 nodePid=96228 batch=30 suiteActive=False 
+2026-09-24T23:14:18.8728197Z closed serial1-0030 exited=True peakJobCommitMB=595,2 peakProcessCommitMB=335,2 cpuUserMs=3406 cpuKernelMs=2500 totalProcesses=11 activeProcesses=0 pageFaults=226953
+2026-09-24T23:14:20.4715588Z run serial1 done: 30 launched

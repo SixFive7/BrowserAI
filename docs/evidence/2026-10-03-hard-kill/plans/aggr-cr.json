@@ -1,0 +1,272 @@
+[
+{
+"id": "cr-core-aggr-job-D2-r2",
+"browser": "chromium",
+"path": "core",
+"D": 2,
+"kill": "job",
+"rep": 2,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D1-r2",
+"browser": "chromium",
+"path": "core",
+"D": 1,
+"kill": "job",
+"rep": 2,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D3-r3",
+"browser": "chromium",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 3,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D1.5-r3",
+"browser": "chromium",
+"path": "core",
+"D": 1.5,
+"kill": "job",
+"rep": 3,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-second10-D3-r2",
+"browser": "chromium",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 2,
+"second": 10,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D1-r3",
+"browser": "chromium",
+"path": "core",
+"D": 1,
+"kill": "job",
+"rep": 3,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D1-r1",
+"browser": "chromium",
+"path": "core",
+"D": 1,
+"kill": "job",
+"rep": 1,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D1.5-r2",
+"browser": "chromium",
+"path": "core",
+"D": 1.5,
+"kill": "job",
+"rep": 2,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-second10-D1-r1",
+"browser": "chromium",
+"path": "core",
+"D": 1,
+"kill": "job",
+"rep": 1,
+"second": 10,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D0-r3",
+"browser": "chromium",
+"path": "core",
+"D": 0,
+"kill": "job",
+"rep": 3,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-second10-D1-r2",
+"browser": "chromium",
+"path": "core",
+"D": 1,
+"kill": "job",
+"rep": 2,
+"second": 10,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D1.5-r1",
+"browser": "chromium",
+"path": "core",
+"D": 1.5,
+"kill": "job",
+"rep": 1,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-second10-D2-r1",
+"browser": "chromium",
+"path": "core",
+"D": 2,
+"kill": "job",
+"rep": 1,
+"second": 10,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D3-r2",
+"browser": "chromium",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 2,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D0.5-r3",
+"browser": "chromium",
+"path": "core",
+"D": 0.5,
+"kill": "job",
+"rep": 3,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D2-r1",
+"browser": "chromium",
+"path": "core",
+"D": 2,
+"kill": "job",
+"rep": 1,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-second10-D3-r1",
+"browser": "chromium",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 1,
+"second": 10,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-second10-D2-r2",
+"browser": "chromium",
+"path": "core",
+"D": 2,
+"kill": "job",
+"rep": 2,
+"second": 10,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D0.5-r2",
+"browser": "chromium",
+"path": "core",
+"D": 0.5,
+"kill": "job",
+"rep": 2,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D3-r1",
+"browser": "chromium",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 1,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D0.5-r1",
+"browser": "chromium",
+"path": "core",
+"D": 0.5,
+"kill": "job",
+"rep": 1,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D2-r3",
+"browser": "chromium",
+"path": "core",
+"D": 2,
+"kill": "job",
+"rep": 3,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D0-r1",
+"browser": "chromium",
+"path": "core",
+"D": 0,
+"kill": "job",
+"rep": 1,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+},
+{
+"id": "cr-core-aggr-job-D0-r2",
+"browser": "chromium",
+"path": "core",
+"D": 0,
+"kill": "job",
+"rep": 2,
+"extraArgs": [
+"--enable-aggressive-domstorage-flushing"
+]
+}
+]

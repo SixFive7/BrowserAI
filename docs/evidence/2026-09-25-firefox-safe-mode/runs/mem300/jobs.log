@@ -1,0 +1,2 @@
+mem300-0001 exited=True peakJobCommitMB=316,8 peakProcessCommitMB=193,3 cpuUserMs=1500 cpuKernelMs=1094 totalProcesses=23 activeProcesses=0 pageFaults=197645
+mem300-0002 exited=True peakJobCommitMB=316,9 peakProcessCommitMB=152,6 cpuUserMs=1188 cpuKernelMs=656 totalProcesses=16 activeProcesses=0 pageFaults=171065

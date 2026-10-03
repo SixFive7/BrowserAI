@@ -1,0 +1,3 @@
+147787811.199	2026-10-03T01:39:04.7927712Z	65548	standin	START	ppid=22420 inJob=True immediateJobLimitFlags=0x2000 assigned=2 listed=2 first64=[65548,66664] consoleWindow=0x0 visible=False consoleProcs=[65548]
+147788322.001	2026-10-03T01:39:05.3027600Z	65548	standin	ALIVE	
+147788822.746	2026-10-03T01:39:05.8034862Z	65548	standin	ALIVE	

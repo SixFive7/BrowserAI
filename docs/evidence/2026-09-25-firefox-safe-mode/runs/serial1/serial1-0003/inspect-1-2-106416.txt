@@ -1,0 +1,97 @@
+inspect at 2026-09-24T23:08:58.7233611Z firefoxPid=106416
+process cpu 1266 ms total, +0 ms over 2 s; threads=78; handles=1046; privateMB=118,1 wsMB=146,4
+
+   Tid Start        State         Wait  CpuMs DeltaMs
+   --- -----        -----         ----  ----- -------
+ 78248 01:08:40.238  Wait  UserRequest 812,00    0,00
+ 84680 01:08:40.304  Wait EventPairLow   0,00    0,00
+ 96260 01:08:40.307  Wait      Unknown   0,00    0,00
+ 68276 01:08:40.316  Wait      Unknown   0,00    0,00
+ 95488 01:08:40.320  Wait EventPairLow  31,00    0,00
+112124 01:08:40.330  Wait  UserRequest   0,00    0,00
+ 54992 01:08:40.330  Wait  UserRequest  16,00    0,00
+ 66568 01:08:40.331  Wait      Unknown  16,00    0,00
+108340 01:08:40.331  Wait  UserRequest   0,00    0,00
+ 96264 01:08:40.337  Wait  UserRequest   0,00    0,00
+ 98620 01:08:40.337  Wait EventPairLow   0,00    0,00
+102072 01:08:40.338  Wait EventPairLow   0,00    0,00
+ 86572 01:08:40.342  Wait EventPairLow   0,00    0,00
+ 34408 01:08:40.346  Wait EventPairLow   0,00    0,00
+ 92340 01:08:40.347  Wait      Unknown   0,00    0,00
+ 93792 01:08:40.350  Wait      Unknown   0,00    0,00
+ 93768 01:08:40.350  Wait      Unknown  16,00    0,00
+ 75656 01:08:40.350  Wait      Unknown   0,00    0,00
+106744 01:08:40.350  Wait      Unknown  16,00    0,00
+109388 01:08:40.350  Wait      Unknown  16,00    0,00
+103228 01:08:40.356  Wait      Unknown   0,00    0,00
+ 69204 01:08:40.357  Wait  UserRequest   0,00    0,00
+ 99940 01:08:40.383  Wait      Unknown   0,00    0,00
+ 90236 01:08:40.385  Wait      Unknown   0,00    0,00
+ 68240 01:08:40.416  Wait      Unknown   0,00    0,00
+ 88164 01:08:40.416  Wait      Unknown   0,00    0,00
+ 95956 01:08:40.416  Wait      Unknown   0,00    0,00
+ 13368 01:08:40.416  Wait      Unknown   0,00    0,00
+ 27348 01:08:40.416  Wait      Unknown   0,00    0,00
+ 46272 01:08:40.416  Wait      Unknown   0,00    0,00
+ 28368 01:08:40.416  Wait      Unknown   0,00    0,00
+ 56784 01:08:40.416  Wait      Unknown   0,00    0,00
+ 55072 01:08:40.418  Wait      Unknown   0,00    0,00
+ 56732 01:08:40.427  Wait      Unknown   0,00    0,00
+ 57820 01:08:40.440  Wait EventPairLow   0,00    0,00
+ 44204 01:08:40.472  Wait      Unknown   0,00    0,00
+ 59456 01:08:40.472  Wait      Unknown   0,00    0,00
+ 96124 01:08:40.472  Wait      Unknown   0,00    0,00
+ 77808 01:08:40.573  Wait      Unknown   0,00    0,00
+ 20864 01:08:40.577  Wait      Unknown  62,00    0,00
+ 52792 01:08:40.604  Wait      Unknown  16,00    0,00
+ 70568 01:08:40.634  Wait  UserRequest  31,00    0,00
+109004 01:08:40.641  Wait  UserRequest   0,00    0,00
+ 88076 01:08:40.648  Wait      Unknown  16,00    0,00
+ 95696 01:08:40.648  Wait      Unknown  16,00    0,00
+106880 01:08:40.648  Wait      Unknown   0,00    0,00
+111484 01:08:40.649  Wait  UserRequest   0,00    0,00
+ 91944 01:08:40.649  Wait      Unknown   0,00    0,00
+ 84868 01:08:40.649  Wait      Unknown   0,00    0,00
+109296 01:08:40.649  Wait      Unknown   0,00    0,00
+104116 01:08:40.649  Wait      Unknown   0,00    0,00
+102164 01:08:40.649  Wait      Unknown   0,00    0,00
+ 82476 01:08:40.649  Wait      Unknown   0,00    0,00
+ 46860 01:08:40.649  Wait      Unknown   0,00    0,00
+ 84684 01:08:40.649  Wait      Unknown   0,00    0,00
+ 69980 01:08:40.649  Wait      Unknown   0,00    0,00
+ 46408 01:08:40.649  Wait      Unknown   0,00    0,00
+ 91544 01:08:40.649  Wait      Unknown   0,00    0,00
+105756 01:08:40.649  Wait      Unknown   0,00    0,00
+ 80152 01:08:40.649  Wait      Unknown   0,00    0,00
+ 24392 01:08:40.649  Wait      Unknown   0,00    0,00
+112256 01:08:40.649  Wait      Unknown   0,00    0,00
+ 81444 01:08:40.649  Wait      Unknown   0,00    0,00
+ 81940 01:08:40.651  Wait      Unknown  16,00    0,00
+ 80636 01:08:40.652  Wait      Unknown   0,00    0,00
+ 30304 01:08:40.659  Wait      Unknown   0,00    0,00
+ 64396 01:08:40.664  Wait      Unknown  31,00    0,00
+ 88932 01:08:40.699  Wait      Unknown  16,00    0,00
+ 10160 01:08:40.705  Wait    Executive   0,00    0,00
+ 91304 01:08:40.706  Wait      Unknown   0,00    0,00
+ 35556 01:08:40.868  Wait      Unknown   0,00    0,00
+ 15428 01:08:40.870  Wait      Unknown   0,00    0,00
+ 56096 01:08:40.870  Wait      Unknown   0,00    0,00
+109440 01:08:40.931  Wait EventPairLow   0,00    0,00
+ 71884 01:08:40.931  Wait EventPairLow   0,00    0,00
+ 67292 01:08:40.931  Wait EventPairLow   0,00    0,00
+112152 01:08:40.974  Wait      Unknown   0,00    0,00
+104820 01:08:40.980  Wait      Unknown   0,00    0,00
+
+
+windows of the pid:
+hwnd=0x462322 tid=78248 class=MozillaHiddenWindowClass hung=False wmNullAnswered=True in 0 ms
+hwnd=0x380E6C tid=78248 class=IME hung=False wmNullAnswered=True in 0 ms
+hwnd=0x36232C tid=111484 class=Chrome_MessagePumpWindow hung=False wmNullAnswered=True in 0 ms
+hwnd=0xE021AA tid=109004 class=Chrome_MessagePumpWindow hung=False wmNullAnswered=True in 0 ms
+hwnd=0x641806 tid=78248 class=nsAppShell:EventWindowClass hung=False wmNullAnswered=True in 0 ms
+hwnd=0x3F2398 tid=78248 class=OleMainThreadWndClass hung=False wmNullAnswered=True in 0 ms
+
+child pid=98736 cpuMs=47 cmd=-contentproc -parentBuildID 20260917210045 -prefsHandle 2756:27337 -prefMapHandle 2760:302938 -ipcHandle 2776 -initialChannelId {03aa92f6-50a6-4261-8d37-1dbeb8bafb46} -parentPid 106416 -win32kLockedDown -appDir "C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\browser" - 1 socket
+child pid=13912 cpuMs=47 cmd=-contentproc -parentBuildID 20260917210045 -prefsHandle 3732:27533 -prefMapHandle 3736:302938 -ipcHandle 3484 -initialChannelId {0500c1a4-1f9b-4ae2-a3c9-30a23f68d85a} -parentPid 106416 -appDir "C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\browser" - 3 rdd
+child pid=92652 cpuMs=391 cmd=-contentproc -isForBrowser -prefsHandle 3964:27720 -prefMapHandle 3968:302938 -safeMode -parentBuildID 20260917210045 -ipcHandle 3976 -initialChannelId {c87ffd1e-2368-4e45-b738-2e434840936a} -parentPid 106416 -win32kLockedDown -appDir "C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\browser" - 4 tab
+

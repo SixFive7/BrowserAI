@@ -1,0 +1,105 @@
+2026-09-25T00:00:30.592Z +232.5 START node=v24.21.0 pid=68328 id=mem450-0002
+2026-09-25T00:00:30.608Z +248.4 SPAWN pid=41084 C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem450\mem450-0002\firefox\profile -juggler-pipe about:blank
+2026-09-25T00:00:30.664Z +304.7 [ff:err] *** You are running in headless mode.
+2026-09-25T00:00:30.733Z +372.8 [ff:err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+2026-09-25T00:00:30.957Z +597.0 [ff:out] Juggler listening to the pipe
+2026-09-25T00:00:30.958Z +598.5 [dbg]   pw:protocol SEND ► {"method":"Browser.enable","params":{"attachToDefaultContext":true,"userPrefs":[{"name":"toolkit.winRegisterApplicationRestart","value":false},{"name":"signon.rememberSignons","value":false}]},"id":1} +0ms
+2026-09-25T00:00:30.959Z +599.2 [dbg]   pw:protocol SEND ► {"method":"Browser.getInfo","id":2} +1ms
+2026-09-25T00:00:30.960Z +600.3 [dbg]   pw:protocol SEND ► {"method":"Browser.setInitScripts","params":{"scripts":[]},"id":3} +1ms
+2026-09-25T00:00:30.960Z +600.4 [dbg]   pw:protocol SEND ► {"method":"Browser.setDownloadOptions","params":{"downloadOptions":{"behavior":"saveToDisk","downloadsDir":"C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\mem450\\mem450-0002\\downloads"}},"id":4} +0ms
+2026-09-25T00:00:30.960Z +600.6 [dbg]   pw:protocol SEND ► {"method":"Browser.setDefaultViewport","params":{"viewport":{"viewportSize":{"width":1920,"height":1080},"deviceScaleFactor":1,"isMobile":false}},"id":5} +0ms
+2026-09-25T00:00:30.960Z +600.6 [dbg]   pw:protocol SEND ► {"method":"Browser.setLocaleOverride","params":{"locale":"nl-NL"},"id":6} +0ms
+2026-09-25T00:00:30.960Z +600.7 [dbg]   pw:protocol SEND ► {"method":"Browser.setTimezoneOverride","params":{"timezoneId":"Europe/Amsterdam"},"id":7} +0ms
+2026-09-25T00:00:30.961Z +600.8 [dbg]   pw:protocol SEND ► {"method":"Browser.setExtraHTTPHeaders","params":{"headers":[]},"id":8} +1ms
+2026-09-25T00:00:30.961Z +600.9 [dbg]   pw:protocol SEND ► {"method":"Browser.setColorScheme","params":{"colorScheme":"light"},"id":9} +0ms
+2026-09-25T00:00:31.034Z +673.9 [dbg]   pw:protocol ◀ RECV {"id":2,"result":{"version":"Firefox/156.0","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0"}} +73ms
+2026-09-25T00:00:31.034Z +674.0 [dbg]   pw:protocol ◀ RECV {"id":3} +0ms
+2026-09-25T00:00:31.034Z +674.1 [dbg]   pw:protocol ◀ RECV {"id":4} +0ms
+2026-09-25T00:00:31.034Z +674.2 [dbg]   pw:protocol ◀ RECV {"id":5} +0ms
+2026-09-25T00:00:31.034Z +674.2 [dbg]   pw:protocol ◀ RECV {"id":6} +0ms
+2026-09-25T00:00:31.036Z +676.4 [dbg]   pw:protocol ◀ RECV {"id":7} +2ms
+2026-09-25T00:00:31.036Z +676.5 [dbg]   pw:protocol ◀ RECV {"id":8} +0ms
+2026-09-25T00:00:31.036Z +676.5 [dbg]   pw:protocol ◀ RECV {"id":9} +0ms
+2026-09-25T00:00:31.036Z +676.6 [dbg]   pw:protocol SEND ► {"method":"Browser.setReducedMotion","params":{"reducedMotion":"no-preference"},"id":10} +0ms
+2026-09-25T00:00:31.037Z +677.5 [dbg]   pw:protocol ◀ RECV {"id":10} +1ms
+2026-09-25T00:00:31.037Z +677.6 [dbg]   pw:protocol SEND ► {"method":"Browser.setForcedColors","params":{"forcedColors":"none"},"id":11} +0ms
+2026-09-25T00:00:31.043Z +683.1 [dbg]   pw:protocol ◀ RECV {"id":11} +6ms
+2026-09-25T00:00:31.043Z +683.2 [dbg]   pw:protocol SEND ► {"method":"Browser.setContrast","params":{"contrast":"no-preference"},"id":12} +0ms
+2026-09-25T00:00:31.052Z +692.2 [dbg]   pw:protocol ◀ RECV {"id":12} +9ms
+2026-09-25T00:00:31.153Z +793.2 [ff:out] Crash Annotation GraphicsCriticalEr
+2026-09-25T00:00:31.153Z +793.3 [ff:out] ror: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.538029) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+2026-09-25T00:00:31.433Z +1073.4 [ff:err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+2026-09-25T00:00:32.152Z +1792.4 [ff:out] console.error: "Error in processing browser-first-window-ready for IPProtectionActivator.init"
+2026-09-25T00:00:32.153Z +1792.7 [ff:out] console.error: "out of memory"
+2026-09-25T00:00:32.775Z +2414.8 [ff:out] console.error: "Error in processing browser-first-window-ready for PlacesBrowserStartup.onFirstWindowReady"
+2026-09-25T00:00:32.775Z +2415.0 [ff:out] console.error: "out of memory"
+2026-09-25T00:00:33.403Z +3043.6 [ff:out] console.error: "Error in processing browser-first-window-ready for ContentBlockingPrefs.init"
+2026-09-25T00:00:33.403Z +3043.7 [ff:out] console.error: "out of memory"
+2026-09-25T00:00:34.030Z +3670.3 [ff:out] console.error: "Error in processing browser-first-window-ready for CaptchaDetectionPingUtils.init"
+2026-09-25T00:00:34.030Z +3670.5 [ff:out] console.error: "out of memory"
+2026-09-25T00:00:35.272Z +4912.3 [ff:out] console.error: "Unable to load MigrationUtils.sys.mjs: out of memory"
+2026-09-25T00:00:35.898Z +5538.6 [ff:out] console.error: "Error in processing browser-first-window-ready for AboutNewTab.init"
+2026-09-25T00:00:35.899Z +5538.8 [ff:out] console.error: "out of memory"
+2026-09-25T00:00:37.631Z +7271.6 [ff:out] Crash Annotation GraphicsCritica
+2026-09-25T00:00:37.632Z +7271.8 [ff:out] lError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.538029) |[1][GFX1]: Failed to create DrawTarget, Type: 2 Size: Size(1229,691) (t=7.01644) 
+2026-09-25T00:00:38.249Z +7889.7 [ff:out] [GFX1]: Failed to create DrawTarget, 
+2026-09-25T00:00:38.250Z +7889.9 [ff:out] Type: 2 Size: Size(1229,691)
+2026-09-25T00:00:38.263Z +7903.3 [ff:err] Exiting due to channel error.
+2026-09-25T00:00:38.264Z +7904.3 [ff:err] Exiting due to channel error.
+2026-09-25T00:00:38.287Z +7927.0 FIREFOX-EXIT code=3221225477 signal=null
+2026-09-25T00:00:38.748Z +8388.0 FAILED after 8155.3 ms: browserType.launchPersistentContext: Target page, context or browser has been closed
+Browser logs:
+
+<launching> C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem450\mem450-0002\firefox\profile -juggler-pipe about:blank
+<launched> pid=41084
+[pid=41084][err] *** You are running in headless mode.
+[pid=41084][err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+[pid=41084][out] 
+[pid=41084][out] Juggler listening to the pipe
+[pid=41084][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.538029) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+[pid=41084][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=41084][out] console.error: "Error in processing browser-first-window-ready for IPProtectionActivator.init"
+[pid=41084][out] console.error: "out of memory"
+[pid=41084][out] console.error: "Error in processing browser-first-window-ready for PlacesBrowserStartup.onFirstWindowReady"
+[pid=41084][out] console.error: "out of memory"
+[pid=41084][out] console.error: "Error in processing browser-first-window-ready for ContentBlockingPrefs.init"
+[pid=41084][out] console.error: "out of memory"
+[pid=41084][out] console.error: "Error in processing browser-first-window-ready for CaptchaDetectionPingUtils.init"
+[pid=41084][out] console.error: "out of memory"
+[pid=41084][out] console.error: "Unable to load MigrationUtils.sys.mjs: out of memory"
+[pid=41084][out] console.error: "Error in processing browser-first-window-ready for AboutNewTab.init"
+[pid=41084][out] console.error: "out of memory"
+[pid=41084][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.538029) |[1][GFX1]: Failed to create DrawTarget, Type: 2 Size: Size(1229,691) (t=7.01644) [GFX1]: Failed to create DrawTarget, Type: 2 Size: Size(1229,691)
+[pid=41084][err] Exiting due to channel error.
+[pid=41084][err] Exiting due to channel error.
+Call log:
+  - <launching> C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem450\mem450-0002\firefox\profile -juggler-pipe about:blank
+  - <launched> pid=41084
+  - [pid=41084][err] *** You are running in headless mode.
+  - [pid=41084][err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+  - [pid=41084][out]
+  - [pid=41084][out] Juggler listening to the pipe
+  - [pid=41084][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.538029) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+  - [pid=41084][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+  - [pid=41084][out] console.error: "Error in processing browser-first-window-ready for IPProtectionActivator.init"
+  - [pid=41084][out] console.error: "out of memory"
+  - [pid=41084][out] console.error: "Error in processing browser-first-window-ready for PlacesBrowserStartup.onFirstWindowReady"
+  - [pid=41084][out] console.error: "out of memory"
+  - [pid=41084][out] console.error: "Error in processing browser-first-window-ready for ContentBlockingPrefs.init"
+  - [pid=41084][out] console.error: "out of memory"
+  - [pid=41084][out] console.error: "Error in processing browser-first-window-ready for CaptchaDetectionPingUtils.init"
+  - [pid=41084][out] console.error: "out of memory"
+  - [pid=41084][out] console.error: "Unable to load MigrationUtils.sys.mjs: out of memory"
+  - [pid=41084][out] console.error: "Error in processing browser-first-window-ready for AboutNewTab.init"
+  - [pid=41084][out] console.error: "out of memory"
+  - [pid=41084][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.538029) |[1][GFX1]: Failed to create DrawTarget, Type: 2 Size: Size(1229,691) (t=7.01644) [GFX1]: Failed to create DrawTarget, Type: 2 Size: Size(1229,691)
+  2 × [pid=41084][err] Exiting due to channel error.
+  - [pid=41084] <gracefully close start>
+  - [pid=41084] <kill>
+  - [pid=41084] <will force kill>
+  - [pid=41084] <process did exit: exitCode=3221225477, signal=null>
+  - [pid=41084] starting temporary directories cleanup
+  - [pid=41084] finished temporary directories cleanup
+  - [pid=41084] <gracefully close end>
+
+2026-09-25T00:00:38.755Z +8395.6 DONE {"id":"mem450-0002","batch":2,"mode":"b1-mem450","nodePid":68328,"startUtc":"2026-09-25T00:00:30.592Z","ok":false,"failMs":8155.3,"error":"browserType.launchPersistentContext: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\firefox-1549\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\Bro

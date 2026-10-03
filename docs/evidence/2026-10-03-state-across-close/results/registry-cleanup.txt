@@ -1,0 +1,11 @@
+removed at 2026-10-03T05:21:40.6820132Z
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Image
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Blocklist
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Launcher
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Browser
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Telemetry
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Image
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Blocklist
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Launcher
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Browser
+C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Telemetry

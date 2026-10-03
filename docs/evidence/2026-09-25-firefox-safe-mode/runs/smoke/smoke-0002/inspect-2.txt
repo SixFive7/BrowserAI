@@ -1,0 +1,12 @@
+inspect at 2026-09-24T23:02:45.9719751Z firefoxPid=87336
+process cpu 0 ms total, +0 ms over 2 s; threads=1; handles=83; privateMB=1,3 wsMB=6,7
+
+  Tid Start        State        Wait CpuMs DeltaMs
+  --- -----        -----        ---- ----- -------
+77160 01:01:53.111  Wait UserRequest  0,00    0,00
+
+
+windows of the pid:
+
+child pid=78552 cpuMs=1344 cmd=-no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\smoke\smoke-0002\firefox\profile -juggler-pipe about:blank
+

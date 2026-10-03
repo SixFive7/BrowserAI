@@ -1,0 +1,8 @@
+server: {"listening":47811,"pid":42960}
+[1/6] fx-mcp-eof-D1-G5-r3 1s actualD=1,027 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (11,4s)
+[2/6] fx-mcp-eof-D1-G5-r4 1s actualD=1,011 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (10,8s)
+[3/6] fx-mcp-eof-D1-G5-r5 1s actualD=1,012 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (11,3s)
+[4/6] fx-mcp-eof-D1-G5-r6 1s actualD=1,009 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (11,5s)
+[5/6] cr-mcp-eof-D1-G5-r3 1s actualD=1,019 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (9,1s)
+[6/6] cr-mcp-eof-D1-G5-r4 1s actualD=1,018 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=40 idb=True ss=False err= (9s)
+server exited: True

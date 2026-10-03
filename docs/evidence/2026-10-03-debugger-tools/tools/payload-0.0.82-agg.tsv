@@ -1,0 +1,497 @@
+scenario	family	step	n	answered	isError	paused	latencyMs(min/median/max)	distinctTexts
+armedclose chromium init	3	3	0	0		
+armedclose chromium toolsList	3	0	0	0		
+armedclose chromium navigateStart	3	3	0	0	595/636/645	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+armedclose chromium markers	3	3	0	0	510/513/516	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+armedclose chromium arm	3	3	0	0	507/508/509	### Result | "armed"
+armedclose chromium closeAsFirstCallAfterArm	3	0	0	0		
+armedclose chromium snapshotWhileCloseParked	3	3	3	0	34/57/64	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedclose chromium tabsWhileCloseParked	3	3	3	0	39/62/252	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedclose chromium releaseByCode	3	3	3	0	44/63/125	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedclose chromium closeAfterRelease	3	0	0	0		
+armedclose chromium navigateAfter	3	3	3	0	38/51/54	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedclose firefox init	3	3	0	0		
+armedclose firefox toolsList	3	0	0	0		
+armedclose firefox navigateStart	3	3	0	0	3155/3181/4514	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+armedclose firefox markers	3	3	0	0	518/519/523	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+armedclose firefox arm	3	3	0	0	512/514/517	### Result | "armed"
+armedclose firefox closeAsFirstCallAfterArm	3	0	0	0		
+armedclose firefox snapshotWhileCloseParked	3	3	3	0	289/298/412	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedclose firefox tabsWhileCloseParked	3	3	3	0	288/292/349	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedclose firefox releaseByCode	3	3	3	0	266/308/384	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedclose firefox closeAfterRelease	3	0	0	0		
+armedclose firefox navigateAfter	3	3	3	0	283/328/353	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedcloseresume chromium init	3	3	0	0		
+armedcloseresume chromium toolsList	3	0	0	0		
+armedcloseresume chromium navigateStart	3	3	0	0	565/595/653	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+armedcloseresume chromium markers	3	3	0	0	510/514/552	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+armedcloseresume chromium arm	3	3	0	0	506/507/508	### Result | "armed"
+armedcloseresume chromium closeAsFirstCallAfterArm	3	0	0	0		
+armedcloseresume chromium snapshotInWedge	3	3	3	0	31/39/50	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedcloseresume chromium getConfigInWedge	3	3	0	3	2/2/2	
+armedcloseresume chromium tabsNewInWedge	3	3	0	3	31/42/51	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Close context at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\arm
+armedcloseresume chromium secondCloseInWedge	3	3	0	3	2/2/3	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Close context at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\arm
+armedcloseresume chromium snapshotAfterSecondClose	3	3	3	0	29/47/48	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedcloseresume chromium resumeInWedge	3	3	0	0	46/71/75	
+armedcloseresume chromium firstCloseAfterResume	3	3	0	0	186/270/283	### Result | No open tabs. Navigate to a URL to create one.
+armedcloseresume chromium navigateAfter	3	3	0	0	417/510/655	### Page | - Page URL: http://#.0.0.1:#/p/after-wedge | - Page Title: /p/after-wedge | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\S
+armedcloseresume chromium final.navigate	3	3	0	0	51/63/66	### Page | - Page URL: http://#.0.0.1:#/p/check-armedcloseresume | - Page Title: /p/check-armedcloseresume | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+armedcloseresume chromium final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": null, |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-armedcloseresume" | }
+armedcloseresume chromium final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-armedcloseresume](http://#.0.0.1:#/p/check-armedcloseresume)
+armedcloseresume chromium final.pausedStillShown	3	0	0	0		false
+armedcloseresume firefox init	3	3	0	0		
+armedcloseresume firefox toolsList	3	0	0	0		
+armedcloseresume firefox navigateStart	3	3	0	0	3063/3754/4580	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+armedcloseresume firefox markers	3	3	0	0	525/527/553	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+armedcloseresume firefox arm	3	3	0	0	510/512/512	### Result | "armed"
+armedcloseresume firefox closeAsFirstCallAfterArm	3	0	0	0		
+armedcloseresume firefox snapshotInWedge	3	3	3	0	197/224/307	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedcloseresume firefox getConfigInWedge	3	3	0	3	2/2/3	
+armedcloseresume firefox tabsNewInWedge	3	3	0	3	232/244/281	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Close context at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\arm
+armedcloseresume firefox secondCloseInWedge	3	3	0	3	2/2/3	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Close context at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\arm
+armedcloseresume firefox snapshotAfterSecondClose	3	3	3	0	224/230/320	### Error | TypeError: Cannot read properties of undefined (reading 'waitForInitialized')
+armedcloseresume firefox resumeInWedge	3	3	0	0	440/508/769	
+armedcloseresume firefox firstCloseAfterResume	3	3	0	0	442/509/771	### Result | No open tabs. Navigate to a URL to create one.
+armedcloseresume firefox navigateAfter	3	3	0	0	1347/1430/1622	### Page | - Page URL: http://#.0.0.1:#/p/after-wedge | - Page Title: /p/after-wedge | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-t
+armedcloseresume firefox final.navigate	3	3	0	0	74/81/87	### Page | - Page URL: http://#.0.0.1:#/p/check-armedcloseresume | - Page Title: /p/check-armedcloseresume | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+armedcloseresume firefox final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": null, |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-armedcloseresume" | }
+armedcloseresume firefox final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-armedcloseresume](http://#.0.0.1:#/p/check-armedcloseresume)
+armedcloseresume firefox final.pausedStillShown	3	0	0	0		false
+artifacts chromium init	3	3	0	0		
+artifacts chromium toolsList	3	0	0	0		
+artifacts chromium navigateStart	3	3	0	0	566/598/743	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+artifacts chromium markers	3	3	0	0	514/519/521	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+artifacts chromium storageState	3	3	0	0	11/12/13	### Result | - [Storage state](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\1\session\output\storage-state-#-#-#T#-#-#-#Z.j || ### Result | - [Storage state](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\2\session\output\storage-state-#-#-#T#-#-#-#Z.j || ### Result | - [Storage state](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\3\session\output\storage-state-#-#-#T#-#-#-#Z.j
+artifacts chromium getConfig	3	3	0	0		
+artifacts chromium startTracing	3	3	0	0	16/18/25	### Result | Trace recording started | - [Action log](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\1\session\output\traces\ || ### Result | Trace recording started | - [Action log](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\2\session\output\traces\ || ### Result | Trace recording started | - [Action log](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\3\session\output\traces\
+artifacts chromium tracedNavigate	3	3	0	0	64/70/106	### Page | - Page URL: http://#.0.0.1:#/p/traced | - Page Title: /p/traced | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+artifacts chromium stopTracing	3	3	0	0	7/7/7	### Result | Trace recording stopped. | - [Trace](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\1\session\output\traces\trac || ### Result | Trace recording stopped. | - [Trace](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\2\session\output\traces\trac || ### Result | Trace recording stopped. | - [Trace](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\3\session\output\traces\trac
+artifacts chromium traceFiles	3	0	0	0		
+artifacts chromium setStorageStateEmpty	3	3	0	0	198/219/256	### Result | Storage state restored from C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\1\session\output\empty-state.json || ### Result | Storage state restored from C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\2\session\output\empty-state.json || ### Result | Storage state restored from C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\chromium\3\session\output\empty-state.json
+artifacts chromium markersAfterSet	3	0	0	0		### Result | { |   "ls": null, |   "ss": "kept", |   "ck": "" | }
+artifacts chromium close	3	3	0	0	195/223/306	### Result | No open tabs. Navigate to a URL to create one.
+artifacts chromium final.navigate	3	3	0	0	542/622/677	### Page | - Page URL: http://#.0.0.1:#/p/check-artifacts | - Page Title: /p/check-artifacts | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\
+artifacts chromium final.markers	3	0	0	0		### Result | { |   "ls": null, |   "ss": null, |   "ck": "", |   "url": "http://#.0.0.1:#/p/check-artifacts" | }
+artifacts chromium final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-artifacts](http://#.0.0.1:#/p/check-artifacts)
+artifacts chromium final.pausedStillShown	3	0	0	0		false
+artifacts firefox init	3	3	0	0		
+artifacts firefox toolsList	3	0	0	0		
+artifacts firefox navigateStart	3	3	0	0	2499/2766/3479	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+artifacts firefox markers	3	3	0	0	517/519/554	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+artifacts firefox storageState	3	3	0	0	9/11/20	### Result | - [Storage state](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\1\session\output\storage-state-#-#-#T#-#-#-#Z.js || ### Result | - [Storage state](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\2\session\output\storage-state-#-#-#T#-#-#-#Z.js || ### Result | - [Storage state](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\3\session\output\storage-state-#-#-#T#-#-#-#Z.js
+artifacts firefox getConfig	3	3	0	0		
+artifacts firefox startTracing	3	3	0	0	17/19/25	### Result | Trace recording started | - [Action log](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\1\session\output\traces\t || ### Result | Trace recording started | - [Action log](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\2\session\output\traces\t || ### Result | Trace recording started | - [Action log](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\3\session\output\traces\t
+artifacts firefox tracedNavigate	3	3	0	0	76/86/109	### Page | - Page URL: http://#.0.0.1:#/p/traced | - Page Title: /p/traced | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+artifacts firefox stopTracing	3	3	0	0	8/9/12	### Result | Trace recording stopped. | - [Trace](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\1\session\output\traces\trace || ### Result | Trace recording stopped. | - [Trace](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\2\session\output\traces\trace || ### Result | Trace recording stopped. | - [Trace](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\3\session\output\traces\trace
+artifacts firefox traceFiles	3	0	0	0		
+artifacts firefox setStorageStateEmpty	3	3	0	0	356/413/544	### Result | Storage state restored from C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\1\session\output\empty-state.json || ### Result | Storage state restored from C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\2\session\output\empty-state.json || ### Result | Storage state restored from C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\payload\artifacts\firefox\3\session\output\empty-state.json
+artifacts firefox markersAfterSet	3	0	0	0		### Result | { |   "ls": null, |   "ss": "kept", |   "ck": "" | }
+artifacts firefox close	3	3	0	0	547/686/698	### Result | No open tabs. Navigate to a URL to create one.
+artifacts firefox final.navigate	3	3	0	0	1354/1587/1610	### Page | - Page URL: http://#.0.0.1:#/p/check-artifacts | - Page Title: /p/check-artifacts | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\de
+artifacts firefox final.markers	3	0	0	0		### Result | { |   "ls": null, |   "ss": null, |   "ck": "", |   "url": "http://#.0.0.1:#/p/check-artifacts" | }
+artifacts firefox final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-artifacts](http://#.0.0.1:#/p/check-artifacts)
+artifacts firefox final.pausedStillShown	3	0	0	0		false
+cancel chromium init	3	3	0	0		
+cancel chromium toolsList	3	0	0	0		
+cancel chromium navigateStart	3	3	0	0	546/564/618	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+cancel chromium markers	3	3	0	0	511/513/519	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+cancel chromium arm	3	3	0	0	508/509/512	### Result | "armed"
+cancel chromium park	3	0	0	3		
+cancel chromium parkedAfterCancel	3	0	0	0		
+cancel chromium snapshotAfterCancel	3	3	0	3	7/8/10	
+cancel chromium navigateAfterCancel	3	3	0	3	62/65/78	### Page | - Page URL: http://#.0.0.1:#/p/after-cancel | - Page Title: /p/after-cancel | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger
+cancel chromium snapshotAfterCancelPlus3s	3	3	0	3	8/9/10	
+cancel chromium final.navigate	3	3	0	3	59/67/71	### Page | - Page URL: http://#.0.0.1:#/p/check-cancel | - Page Title: /p/check-cancel | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger
+cancel chromium final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-cancel" | } | ### Paused | - Navigate #.0.0.1:#/
+cancel chromium final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-cancel](http://#.0.0.1:#/p/check-cancel) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.wor
+cancel chromium final.pausedStillShown	3	0	0	0		true
+cancel chromium serverSawParkedPathBeforeClose	3	0	0	0		[]
+cancel chromium closeAtEnd.close	3	3	0	3	186/208/237	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+cancel chromium closeAtEnd.parkedAfterClose	3	0	0	0		
+cancel chromium serverSawParkedPathAfterClose	3	0	0	0		[]
+cancel chromium navigateAfterClose	3	3	0	0	463/633/846	### Page | - Page URL: http://#.0.0.1:#/p/relaunch | - Page Title: /p/relaunch | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive
+cancel firefox init	3	3	0	0		
+cancel firefox toolsList	3	0	0	0		
+cancel firefox navigateStart	3	3	0	0	2251/3079/3469	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+cancel firefox markers	3	3	0	0	512/517/523	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+cancel firefox arm	3	3	0	0	508/511/526	### Result | "armed"
+cancel firefox park	3	0	0	3		
+cancel firefox parkedAfterCancel	3	0	0	0		
+cancel firefox snapshotAfterCancel	3	3	0	3	10/12/13	
+cancel firefox navigateAfterCancel	3	3	0	3	74/84/99	### Page | - Page URL: http://#.0.0.1:#/p/after-cancel | - Page Title: /p/after-cancel | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger
+cancel firefox snapshotAfterCancelPlus3s	3	3	0	3	11/11/12	
+cancel firefox final.navigate	3	3	0	3	70/78/85	### Page | - Page URL: http://#.0.0.1:#/p/check-cancel | - Page Title: /p/check-cancel | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger
+cancel firefox final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-cancel" | } | ### Paused | - Navigate #.0.0.1:#/
+cancel firefox final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-cancel](http://#.0.0.1:#/p/check-cancel) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.wor
+cancel firefox final.pausedStillShown	3	0	0	0		true
+cancel firefox serverSawParkedPathBeforeClose	3	0	0	0		[]
+cancel firefox closeAtEnd.close	3	3	0	3	436/493/495	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+cancel firefox closeAtEnd.parkedAfterClose	3	0	0	0		
+cancel firefox serverSawParkedPathAfterClose	3	0	0	0		[]
+cancel firefox navigateAfterClose	3	3	0	0	1441/1816/1900	### Page | - Page URL: http://#.0.0.1:#/p/relaunch | - Page Title: /p/relaunch | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\r
+close chromium init	3	3	0	0		
+close chromium toolsList	3	0	0	0		
+close chromium navigateStart	3	3	0	0	470/484/539	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+close chromium markers	3	3	0	0	513/527/529	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+close chromium arm	3	3	0	0	506/507/507	### Result | "armed"
+close chromium park	3	0	0	3		
+close chromium close	3	3	0	3	140/144/156	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+close chromium parkedAfterClose	3	0	0	0		
+close chromium serverSawParkedPath	3	0	0	0		[]
+close chromium final.navigate	3	3	0	0	359/381/409	### Page | - Page URL: http://#.0.0.1:#/p/check-close | - Page Title: /p/check-close | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\S
+close chromium final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": null, |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-close" | }
+close chromium final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-close](http://#.0.0.1:#/p/check-close)
+close chromium final.pausedStillShown	3	0	0	0		false
+close chromium serverSawParkedPathAtEnd	3	0	0	0		[]
+close firefox init	3	3	0	0		
+close firefox toolsList	3	0	0	0		
+close firefox navigateStart	3	3	0	0	2850/2886/3035	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+close firefox markers	3	3	0	0	517/518/522	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+close firefox arm	3	3	0	0	508/509/514	### Result | "armed"
+close firefox park	3	0	0	3		
+close firefox close	3	3	0	3	418/432/571	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+close firefox parkedAfterClose	3	0	0	0		
+close firefox serverSawParkedPath	3	0	0	0		[]
+close firefox final.navigate	3	3	0	0	1160/1438/1490	### Page | - Page URL: http://#.0.0.1:#/p/check-close | - Page Title: /p/check-close | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-t
+close firefox final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": null, |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-close" | }
+close firefox final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-close](http://#.0.0.1:#/p/check-close)
+close firefox final.pausedStillShown	3	0	0	0		false
+close firefox serverSawParkedPathAtEnd	3	0	0	0		[]
+direct chromium init	3	3	0	0		
+direct chromium toolsList	3	0	0	0		
+direct chromium navigateStart	3	3	0	0	712/723/822	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+direct chromium markers	3	3	0	0	514/516/518	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+direct chromium runCodeDirectWithin8s	3	0	0	0		
+direct chromium snapshot	3	3	0	3		
+direct chromium releaseByCode	3	3	0	0	510/513/520	### Result | "resumed"
+direct chromium runCodeDirectAfterRelease	3	3	0	0	509/512/519	### Result | "armed directly"
+direct chromium navigateAfter	3	3	0	0	53/67/80	### Page | - Page URL: http://#.0.0.1:#/p/after-direct | - Page Title: /p/after-direct | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger
+direct firefox init	3	3	0	0		
+direct firefox toolsList	3	0	0	0		
+direct firefox navigateStart	3	3	0	0	2546/2920/4291	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+direct firefox markers	3	3	0	0	514/517/536	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+direct firefox runCodeDirectWithin8s	3	0	0	0		
+direct firefox snapshot	3	3	0	3		
+direct firefox releaseByCode	3	3	0	0	510/597/1074	### Result | "resumed"
+direct firefox runCodeDirectAfterRelease	3	3	0	0	510/595/1074	### Result | "armed directly"
+direct firefox navigateAfter	3	3	0	0	71/90/204	### Page | - Page URL: http://#.0.0.1:#/p/after-direct | - Page Title: /p/after-direct | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger
+endpoint chromium init	3	3	0	0		
+endpoint chromium toolsList	3	0	0	0		
+endpoint chromium navigateStart	3	3	0	0	605/715/731	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+endpoint chromium markers	3	3	0	0	513/515/516	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+endpoint chromium attachInit	3	3	0	0		
+endpoint chromium attachTabs	3	3	0	0	69/89/398	### Result | - 0: (current) [/p/start](http://#.0.0.1:#/p/start) | ### Events | - New console entries: output\console-#-#-#T#-#-#-#Z.log#L1
+endpoint chromium armFromB	3	3	0	0	514/515/515	### Result | "armed" | ### Ran Playwright code | ```js | await (async (page) => { page.waitForTimeout(#).then(() => page.context().debugger.requestPause()).catc
+endpoint chromium parkInA	3	0	0	0		
+endpoint chromium attachedExited	3	0	0	0		
+endpoint chromium parkedAfterAttachedLeft	3	0	0	0		
+endpoint chromium releaseFromA	3	3	0	0	20/22/24	### Result | "resumed from A" | ### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: Loading http://#.0.0.1:#/p/parked || ### Result | "resumed from A" | ### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: Loading http://#.0.0.1:#/p/parked | - Console: 1 errors, 0 warn
+endpoint chromium parkedAfterRelease	3	3	0	0	55/65/68	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+endpoint firefox init	3	3	0	0		
+endpoint firefox toolsList	3	0	0	0		
+endpoint firefox navigateStart	3	3	0	0	2332/2827/3454	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+endpoint firefox markers	3	3	0	0	513/518/521	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+endpoint firefox attachInit	3	3	0	0		
+endpoint firefox attachTabs	3	3	0	0	52/66/72	### Result | - 0: (current) [/p/start](http://#.0.0.1:#/p/start)
+endpoint firefox armFromB	3	3	0	0	511/556/580	### Result | "armed" | ### Ran Playwright code | ```js | await (async (page) => { page.waitForTimeout(#).then(() => page.context().debugger.requestPause()).catc
+endpoint firefox parkInA	3	0	0	0		
+endpoint firefox attachedExited	3	0	0	0		
+endpoint firefox parkedAfterAttachedLeft	3	0	0	0		
+endpoint firefox releaseFromA	3	3	0	0	33/51/83	### Result | "resumed from A" | ### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: Loading http://#.0.0.1:#/p/parked || ### Result | "resumed from A" | ### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked
+endpoint firefox parkedAfterRelease	3	3	0	0	72/96/128	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+idleparked chromium init	3	3	0	0		
+idleparked chromium toolsList	3	0	0	0		
+idleparked chromium navigateStart	3	3	0	0	551/568/1070	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+idleparked chromium markers	3	3	0	0	512/513/513	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+idleparked chromium arm	3	3	0	0	508/509/521	### Result | "armed"
+idleparked chromium park	3	0	0	3		
+idleparked chromium parkedWithin30sOfIdleTimer	3	0	0	0		
+idleparked chromium navigateAfter	3	3	0	0	467/479/547	### Page | - Page URL: http://#.0.0.1:#/p/after-idle | - Page Title: /p/after-idle | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\Six
+idleparked chromium serverSawParkedPath	3	0	0	0		[]
+idleparked firefox init	3	3	0	0		
+idleparked firefox toolsList	3	0	0	0		
+idleparked firefox navigateStart	3	3	0	0	3093/3303/4049	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+idleparked firefox markers	3	3	0	0	521/525/569	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+idleparked firefox arm	3	3	0	0	511/511/513	### Result | "armed"
+idleparked firefox park	3	0	0	3		
+idleparked firefox parkedWithin30sOfIdleTimer	3	0	0	0		
+idleparked firefox navigateAfter	3	3	0	0	1444/1511/1636	### Page | - Page URL: http://#.0.0.1:#/p/after-idle | - Page Title: /p/after-idle | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-too
+idleparked firefox serverSawParkedPath	3	0	0	0		[]
+idleresume chromium init	3	3	0	0		
+idleresume chromium toolsList	3	0	0	0		
+idleresume chromium navigateStart	3	3	0	0	554/577/595	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+idleresume chromium markers	3	3	0	0	511/513/515	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+idleresume chromium arm	3	3	0	0	507/508/509	### Result | "armed"
+idleresume chromium park	3	0	0	3		
+idleresume chromium parkedAfterResume	3	3	0	0	45/46/47	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+idleresume chromium resumeWithin30s	3	3	0	0	12039/12041/12056	
+idleresume chromium navigateAfter	3	3	0	0	1427/1542/1648	### Page | - Page URL: http://#.0.0.1:#/p/after-idle | - Page Title: /p/after-idle | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\Six
+idleresume firefox init	3	3	0	0		
+idleresume firefox toolsList	3	0	0	0		
+idleresume firefox navigateStart	3	3	0	0	2614/2652/3323	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+idleresume firefox markers	3	3	0	0	519/521/523	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+idleresume firefox arm	3	3	0	0	509/512/513	### Result | "armed"
+idleresume firefox park	3	0	0	3		
+idleresume firefox parkedAfterResume	3	3	0	0	120/133/266	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+idleresume firefox resumeWithin30s	3	3	0	0	12444/12451/12528	
+idleresume firefox navigateAfter	3	3	0	0	1432/1911/1936	### Page | - Page URL: http://#.0.0.1:#/p/after-idle | - Page Title: /p/after-idle | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-too
+location chromium init	3	3	0	0		
+location chromium toolsList	3	0	0	0		
+location chromium navigateStart	3	3	0	0	554/596/765	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+location chromium markers	3	3	0	0	513/516/517	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+location chromium arm	3	3	0	0	507/510/510	### Result | "armed"
+location chromium park	3	0	0	3		
+location chromium parkedAfterLocationResume	3	3	0	3	53/64/74	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+location chromium locationResumeWithin5s	3	3	0	3	45/54/65	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Paused | - Wait for load state "load" at C:\Source\SixFive7\BrowserAI\.work\deb
+location chromium nextCallAfterLocation	3	3	0	3	45/57/62	### Page | - Page URL: http://#.0.0.1:#/p/location-next | - Page Title: /p/location-next | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugg
+location chromium locationResumeAfterNextCall	3	3	0	3	-11/-11/-9	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Paused | - Wait for load state "load" at C:\Source\SixFive7\BrowserAI\.work\deb
+location chromium releaseByCode	3	3	0	0	507/509/524	### Result | "resumed"
+location firefox init	3	3	0	0		
+location firefox toolsList	3	0	0	0		
+location firefox navigateStart	3	3	0	0	2731/2794/3297	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+location firefox markers	3	3	0	0	515/515/516	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+location firefox arm	3	3	0	0	510/510/510	### Result | "armed"
+location firefox park	3	0	0	3		
+location firefox parkedAfterLocationResume	3	3	0	3	75/79/369	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+location firefox locationResumeWithin5s	3	3	0	3	64/65/353	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Paused | - Wait for load state "load" at C:\Source\SixFive7\BrowserAI\.work\deb
+location firefox nextCallAfterLocation	3	3	0	3	59/63/115	### Page | - Page URL: http://#.0.0.1:#/p/location-next | - Page Title: /p/location-next | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugg
+location firefox locationResumeAfterNextCall	3	3	0	3	-18/-15/-13	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Paused | - Wait for load state "load" at C:\Source\SixFive7\BrowserAI\.work\deb
+location firefox releaseByCode	3	3	0	0	509/511/520	### Result | "resumed"
+longpark chromium init	3	3	0	0		
+longpark chromium toolsList	3	0	0	0		
+longpark chromium navigateStart	3	3	0	0	801/1095/1231	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+longpark chromium markers	3	3	0	0	516/520/562	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+longpark chromium arm	3	3	0	0	510/512/516	### Result | "armed"
+longpark chromium park	3	0	0	3		
+longpark chromium parkedChecks	3	0	0	0		
+longpark chromium snapshotAfterWait	3	3	0	3	6/10/13	
+longpark chromium serverSawParkedPath	3	0	0	0		[]
+longpark chromium closeAtEnd.close	3	3	0	3	270/895/952	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+longpark chromium closeAtEnd.parkedAfterClose	3	0	0	0		
+longpark firefox init	3	3	0	0		
+longpark firefox toolsList	3	0	0	0		
+longpark firefox navigateStart	3	3	0	0	1900/2012/2585	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+longpark firefox markers	3	3	0	0	511/511/514	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+longpark firefox arm	3	3	0	0	508/509/510	### Result | "armed"
+longpark firefox park	3	0	0	3		
+longpark firefox parkedChecks	3	0	0	0		
+longpark firefox snapshotAfterWait	3	3	0	3	10/12/12	
+longpark firefox serverSawParkedPath	3	0	0	0		[]
+longpark firefox closeAtEnd.close	3	3	0	3	179/186/205	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+longpark firefox closeAtEnd.parkedAfterClose	3	0	0	0		
+navigate chromium init	3	3	0	0		
+navigate chromium toolsList	3	0	0	0		
+navigate chromium navigateStart	3	3	0	0	501/532/904	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+navigate chromium markers	3	3	0	0	513/515/525	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+navigate chromium arm	3	3	0	0	506/509/522	### Result | "armed"
+navigate chromium park	3	0	0	3		
+navigate chromium secondNavigate	3	3	0	3	57/68/71	### Page | - Page URL: http://#.0.0.1:#/p/second | - Page Title: /p/second | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+navigate chromium parkedAfterSecondNavigate	3	0	0	0		
+navigate chromium snapshotAfterSecondNavigate	3	3	0	3	7/9/9	### Page | - Page URL: http://#.0.0.1:#/p/second | - Page Title: /p/second | ### Snapshot | ```yaml | - heading "/p/second" [level=1] [ref=f1e2] [box=8,#,#,#] |
+navigate chromium serverSawParkedPath	3	0	0	0		[]
+navigate chromium final.navigate	3	3	0	3	44/60/78	### Page | - Page URL: http://#.0.0.1:#/p/check-navigate | - Page Title: /p/check-navigate | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debu
+navigate chromium final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-navigate" | } | ### Paused | - Navigate #.0.0.1:
+navigate chromium final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-navigate](http://#.0.0.1:#/p/check-navigate) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\
+navigate chromium final.pausedStillShown	3	0	0	0		true
+navigate chromium closeAtEnd.close	3	3	0	3	149/207/270	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+navigate chromium closeAtEnd.parkedAfterClose	3	0	0	0		
+navigate chromium serverSawParkedPathAfterClose	3	0	0	0		[]
+navigate firefox init	3	3	0	0		
+navigate firefox toolsList	3	0	0	0		
+navigate firefox navigateStart	3	3	0	0	3245/3634/3789	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+navigate firefox markers	3	3	0	0	515/521/526	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+navigate firefox arm	3	3	0	0	509/513/527	### Result | "armed"
+navigate firefox park	3	0	0	3		
+navigate firefox secondNavigate	3	3	0	3	100/118/544	### Page | - Page URL: http://#.0.0.1:#/p/second | - Page Title: /p/second | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+navigate firefox parkedAfterSecondNavigate	3	0	0	0		
+navigate firefox snapshotAfterSecondNavigate	3	3	0	3	11/17/22	### Page | - Page URL: http://#.0.0.1:#/p/second | - Page Title: /p/second | ### Snapshot | ```yaml | - heading "/p/second" [level=1] [ref=f1e2] [box=8,#,#,#] |
+navigate firefox serverSawParkedPath	3	0	0	0		[]
+navigate firefox final.navigate	3	3	0	3	66/100/141	### Page | - Page URL: http://#.0.0.1:#/p/check-navigate | - Page Title: /p/check-navigate | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debu
+navigate firefox final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-navigate" | } | ### Paused | - Navigate #.0.0.1:
+navigate firefox final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-navigate](http://#.0.0.1:#/p/check-navigate) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\
+navigate firefox final.pausedStillShown	3	0	0	0		true
+navigate firefox closeAtEnd.close	3	3	0	3	420/452/467	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+navigate firefox closeAtEnd.parkedAfterClose	3	0	0	0		
+navigate firefox serverSawParkedPathAfterClose	3	0	0	0		[]
+notpaused chromium init	3	3	0	0		
+notpaused chromium toolsList	3	0	0	0		
+notpaused chromium navigateStart	3	3	0	0	674/817/1265	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+notpaused chromium markers	3	3	0	0	515/517/517	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+notpaused chromium resume_plain	3	3	3	0	5/5/13	### Error | Error: browserBackend.callTool: Debugger is not paused
+notpaused chromium resume_step	3	3	3	0	3/4/4	### Error | Error: browserBackend.callTool: Debugger is not paused
+notpaused chromium resume_location	3	3	3	0	4/4/5	### Error | Error: browserBackend.callTool: Debugger is not paused
+notpaused chromium navigateAfter	3	3	0	0	71/76/82	### Page | - Page URL: http://#.0.0.1:#/p/after-notpaused | - Page Title: /p/after-notpaused | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\de
+notpaused firefox init	3	3	0	0		
+notpaused firefox toolsList	3	0	0	0		
+notpaused firefox navigateStart	3	3	0	0	2915/3588/4023	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+notpaused firefox markers	3	3	0	0	520/520/523	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+notpaused firefox resume_plain	3	3	3	0	4/4/4	### Error | Error: browserBackend.callTool: Debugger is not paused
+notpaused firefox resume_step	3	3	3	0	3/3/3	### Error | Error: browserBackend.callTool: Debugger is not paused
+notpaused firefox resume_location	3	3	3	0	4/4/4	### Error | Error: browserBackend.callTool: Debugger is not paused
+notpaused firefox navigateAfter	3	3	0	0	89/93/99	### Page | - Page URL: http://#.0.0.1:#/p/after-notpaused | - Page Title: /p/after-notpaused | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\de
+pagepause chromium init	3	3	0	0		
+pagepause chromium toolsList	3	0	0	0		
+pagepause chromium navigateStart	3	3	0	0	648/739/752	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+pagepause chromium markers	3	3	0	0	514/515/515	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+pagepause chromium pagePauseFreshContext	3	3	0	0	508/508/508	### Result | "returned from page.pause()"
+pagepause chromium arm	3	3	0	0	506/508/510	### Result | "armed"
+pagepause chromium park	3	0	0	3		
+pagepause chromium cycleRelease	3	3	0	0	17/17/17	### Result | "resumed" | ### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: Loading http://#.0.0.1:#/p/parked
+pagepause chromium cycleParkedAnswered	3	3	0	0	47/50/51	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+pagepause chromium pagePauseAfterCycle	3	0	0	0		
+pagepause chromium snapshotAfterPagePause	3	3	0	3		
+pagepause chromium release2	3	3	0	0	508/508/509	### Result | "resumed"
+pagepause chromium pagePauseAfterCycleReleased	3	3	0	0	509/509/510	### Result | "returned from page.pause()"
+pagepause firefox init	3	3	0	0		
+pagepause firefox toolsList	3	0	0	0		
+pagepause firefox navigateStart	3	3	0	0	2623/2640/2817	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+pagepause firefox markers	3	3	0	0	515/519/519	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+pagepause firefox pagePauseFreshContext	3	3	0	0	510/510/512	### Result | "returned from page.pause()"
+pagepause firefox arm	3	3	0	0	508/509/511	### Result | "armed"
+pagepause firefox park	3	0	0	3		
+pagepause firefox cycleRelease	3	3	0	0	26/40/80	### Result | "resumed" | ### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked || ### Result | "resumed" | ### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: Loading http://#.0.0.1:#/p/parked
+pagepause firefox cycleParkedAnswered	3	3	0	0	66/93/99	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+pagepause firefox pagePauseAfterCycle	3	0	0	0		
+pagepause firefox snapshotAfterPagePause	3	3	0	3		
+pagepause firefox release2	3	3	0	0	508/509/511	### Result | "resumed"
+pagepause firefox pagePauseAfterCycleReleased	3	3	0	0	509/510/512	### Result | "returned from page.pause()"
+resume chromium init	3	3	0	0		
+resume chromium toolsList	3	0	0	0		
+resume chromium navigateStart	3	3	0	0	588/802/865	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+resume chromium markers	3	3	0	0	512/519/535	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+resume chromium arm	3	3	0	0	511/512/512	### Result | "armed"
+resume chromium park	3	0	0	3		
+resume chromium parkedAfterResume	3	3	0	0	67/68/76	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+resume chromium resumeWithin20s	3	0	0	0		
+resume chromium tabsWhileResumePending	3	3	0	0	8/9/10	### Result | - 0: (current) [/p/parked](http://#.0.0.1:#/p/parked)
+resume chromium closeWhileResumePending	3	3	0	0	251/251/258	### Result | No open tabs. Navigate to a URL to create one.
+resume chromium resumeAfterClose	3	3	0	0	58/61/80	
+resume chromium serverSawParkedPath	3	0	0	0		[#]
+resume chromium final.navigate	3	3	0	0	563/577/592	### Page | - Page URL: http://#.0.0.1:#/p/check-resume | - Page Title: /p/check-resume | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source
+resume chromium final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": null, |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-resume" | }
+resume chromium final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-resume](http://#.0.0.1:#/p/check-resume)
+resume chromium final.pausedStillShown	3	0	0	0		false
+resume firefox init	3	3	0	0		
+resume firefox toolsList	3	0	0	0		
+resume firefox navigateStart	3	3	0	0	3426/3712/4244	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+resume firefox markers	3	3	0	0	519/523/523	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+resume firefox arm	3	3	0	0	511/517/520	### Result | "armed"
+resume firefox park	3	0	0	3		
+resume firefox parkedAfterResume	3	3	0	0	71/86/129	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+resume firefox resumeWithin20s	3	0	0	0		
+resume firefox tabsWhileResumePending	3	3	0	0	11/13/26	### Result | - 0: (current) [/p/parked](http://#.0.0.1:#/p/parked)
+resume firefox closeWhileResumePending	3	3	0	0	500/504/518	### Result | No open tabs. Navigate to a URL to create one.
+resume firefox resumeAfterClose	3	3	0	0	497/501/515	
+resume firefox serverSawParkedPath	3	0	0	0		[#]
+resume firefox final.navigate	3	3	0	0	1880/2098/2428	### Page | - Page URL: http://#.0.0.1:#/p/check-resume | - Page Title: /p/check-resume | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger
+resume firefox final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": null, |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-resume" | }
+resume firefox final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-resume](http://#.0.0.1:#/p/check-resume)
+resume firefox final.pausedStillShown	3	0	0	0		false
+runcode chromium init	3	3	0	0		
+runcode chromium toolsList	3	0	0	0		
+runcode chromium navigateStart	3	3	0	0	838/933/1082	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+runcode chromium markers	3	3	0	0	519/523/565	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+runcode chromium arm	3	3	0	0	507/514/519	### Result | "armed"
+runcode chromium park	3	0	0	3		
+runcode chromium runCodeResume	3	3	0	0	19/28/32	### Result | "resumed from code" | ### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: Loading http://#.0.0.1:#/p/parked
+runcode chromium parkedAfterRunCodeResume	3	3	0	0	64/75/102	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+runcode chromium serverSawParkedPath	3	0	0	0		[#]
+runcode chromium snapshotAfter	3	3	0	0	7/8/12	
+runcode chromium final.navigate	3	3	0	0	67/72/82	### Page | - Page URL: http://#.0.0.1:#/p/check-runcode | - Page Title: /p/check-runcode | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugg
+runcode chromium final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-runcode" | }
+runcode chromium final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-runcode](http://#.0.0.1:#/p/check-runcode)
+runcode chromium final.pausedStillShown	3	0	0	0		false
+runcode firefox init	3	3	0	0		
+runcode firefox toolsList	3	0	0	0		
+runcode firefox navigateStart	3	3	0	0	3309/3531/3667	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+runcode firefox markers	3	3	0	0	522/525/578	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+runcode firefox arm	3	3	0	0	513/514/527	### Result | "armed"
+runcode firefox park	3	0	0	3		
+runcode firefox runCodeResume	3	3	0	0	40/40/51	### Result | "resumed from code" | ### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: Loading http://#.0.0.1:#/p/parked
+runcode firefox parkedAfterRunCodeResume	3	3	0	0	96/99/127	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+runcode firefox serverSawParkedPath	3	0	0	0		[#]
+runcode firefox snapshotAfter	3	3	0	0	14/16/18	
+runcode firefox final.navigate	3	3	0	0	75/76/126	### Page | - Page URL: http://#.0.0.1:#/p/check-runcode | - Page Title: /p/check-runcode | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugg
+runcode firefox final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-runcode" | }
+runcode firefox final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-runcode](http://#.0.0.1:#/p/check-runcode)
+runcode firefox final.pausedStillShown	3	0	0	0		false
+stdin chromium init	3	3	0	0		
+stdin chromium toolsList	3	0	0	0		
+stdin chromium navigateStart	3	3	0	0	647/693/715	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+stdin chromium markers	3	3	0	0	516/516/519	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+stdin chromium arm	3	3	0	0	511/511/513	### Result | "armed"
+stdin chromium park	3	0	0	3		
+stdin chromium parkedAfterStdinEnd	3	0	0	0		
+stdin chromium childExit	3	0	0	0		
+stdin chromium serverSawParkedPath	3	0	0	0		[]
+stdin firefox init	3	3	0	0		
+stdin firefox toolsList	3	0	0	0		
+stdin firefox navigateStart	3	3	0	0	3248/3361/3444	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+stdin firefox markers	3	3	0	0	519/522/532	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+stdin firefox arm	3	3	0	0	511/512/513	### Result | "armed"
+stdin firefox park	3	0	0	3		
+stdin firefox parkedAfterStdinEnd	3	0	0	0		
+stdin firefox childExit	3	0	0	0		
+stdin firefox serverSawParkedPath	3	0	0	0		[]
+step chromium init	3	3	0	0		
+step chromium toolsList	3	0	0	0		
+step chromium navigateStart	3	3	0	0	586/614/624	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+step chromium markers	3	3	0	0	512/514/522	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+step chromium arm	3	3	0	0	507/508/510	### Result | "armed"
+step chromium park	3	0	0	3		
+step chromium parkedAfterStepResume	3	3	0	3	5027/5031/5032	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+step chromium stepResumeWithin5s	3	3	0	3	33/38/39	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Paused | - Evaluate at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\p
+step chromium nextCallAfterStep	3	3	0	3	43/48/49	### Page | - Page URL: http://#.0.0.1:#/p/step-next | - Page Title: /p/step-next | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools
+step chromium stepResumeAfterNextCall	3	3	0	3	-4996/-4995/-4994	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Paused | - Evaluate at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\p
+step chromium snapshot	3	0	0	3		
+step chromium releaseByCode	3	3	0	0	507/509/514	### Result | "resumed"
+step firefox init	3	3	0	0		
+step firefox toolsList	3	0	0	0		
+step firefox navigateStart	3	3	0	0	2759/2811/3501	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+step firefox markers	3	3	0	0	517/519/522	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+step firefox arm	3	3	0	0	509/510/517	### Result | "armed"
+step firefox park	3	0	0	3		
+step firefox parkedAfterStepResume	3	3	0	3	5034/5044/5057	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\
+step firefox stepResumeWithin5s	3	3	0	3	51/64/94	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Paused | - Evaluate at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\p
+step firefox nextCallAfterStep	3	3	0	3	52/98/112	### Page | - Page URL: http://#.0.0.1:#/p/step-next | - Page Title: /p/step-next | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools
+step firefox stepResumeAfterNextCall	3	3	0	3	-4984/-4981/-4964	### Page | - Page URL: http://#.0.0.1:#/p/parked | - Page Title: /p/parked | ### Paused | - Evaluate at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\p
+step firefox snapshot	3	0	0	3		
+step firefox releaseByCode	3	3	0	0	507/510/512	### Result | "resumed"
+tabs chromium init	3	3	0	0		
+tabs chromium toolsList	3	0	0	0		
+tabs chromium navigateStart	3	3	0	0	773/785/872	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | - Console: 1 errors, 0 warnings | ### Snapshot | - [Snapshot](C:\Source\SixFive7\Brow
+tabs chromium markers	3	3	0	0	515/520/534	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+tabs chromium arm	3	3	0	0	510/510/512	### Result | "armed"
+tabs chromium park	3	0	0	3		
+tabs chromium tabsList	3	3	0	3	7/10/16	### Result | - 0: (current) [/p/start](http://#.0.0.1:#/p/start) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-too
+tabs chromium tabsNew	3	3	0	3	104/189/270	### Result | - 0: [/p/start](http://#.0.0.1:#/p/start) | - 1: (current) [/p/newtab](http://#.0.0.1:#/p/newtab) | ### Open tabs | - 0: [/p/start](http://#.0.0.1:
+tabs chromium tabsSelect0	3	3	0	3	25/34/44	### Result | - 0: (current) [/p/start](http://#.0.0.1:#/p/start) | - 1: [/p/newtab](http://#.0.0.1:#/p/newtab) | ### Paused | - Navigate #.0.0.1:#/p/parked at C
+tabs chromium tabsClose0	3	3	0	3	33/42/44	### Result | - 0: (current) [/p/newtab](http://#.0.0.1:#/p/newtab) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-t
+tabs chromium parkedAfterTabClose	3	0	0	0		
+tabs chromium snapshotAfterTabClose	3	3	0	3	9/9/13	### Page | - Page URL: http://#.0.0.1:#/p/newtab | - Page Title: /p/newtab | ### Snapshot | ```yaml | - heading "/p/newtab" [level=1] [ref=e2] [box=8,#,#,#] | `
+tabs chromium serverSawParkedPath	3	0	0	0		[]
+tabs chromium final.navigate	3	3	0	3	58/68/72	### Page | - Page URL: http://#.0.0.1:#/p/check-tabs | - Page Title: /p/check-tabs | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-too
+tabs chromium final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": null, |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-tabs" | } | ### Paused | - Navigate #.0.0.1:#/p/pa
+tabs chromium final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-tabs](http://#.0.0.1:#/p/check-tabs) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\de
+tabs chromium final.pausedStillShown	3	0	0	0		true
+tabs chromium closeAtEnd.close	3	3	0	3	216/227/476	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+tabs chromium closeAtEnd.parkedAfterClose	3	0	0	0		
+tabs firefox init	3	3	0	0		
+tabs firefox toolsList	3	0	0	0		
+tabs firefox navigateStart	3	3	0	0	3621/3687/5798	### Page | - Page URL: http://#.0.0.1:#/p/start | - Page Title: /p/start | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-tools\runs\pa
+tabs firefox markers	3	3	0	0	518/525/544	### Result | { |   "ls": "kept", |   "ss": "kept", |   "ck": "dbgck=kept" | }
+tabs firefox arm	3	3	0	0	512/513/516	### Result | "armed"
+tabs firefox park	3	0	0	3		
+tabs firefox tabsList	3	3	0	3	8/11/12	### Result | - 0: (current) [/p/start](http://#.0.0.1:#/p/start) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-too
+tabs firefox tabsNew	3	3	0	3	331/499/644	### Result | - 0: [/p/start](http://#.0.0.1:#/p/start) | - 1: (current) [/p/newtab](http://#.0.0.1:#/p/newtab) | ### Open tabs | - 0: [/p/start](http://#.0.0.1:
+tabs firefox tabsSelect0	3	3	0	3	23/34/35	### Result | - 0: (current) [/p/start](http://#.0.0.1:#/p/start) | - 1: [/p/newtab](http://#.0.0.1:#/p/newtab) | ### Paused | - Navigate #.0.0.1:#/p/parked at C
+tabs firefox tabsClose0	3	3	0	3	58/58/65	### Result | - 0: (current) [/p/newtab](http://#.0.0.1:#/p/newtab) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-t
+tabs firefox parkedAfterTabClose	3	0	0	0		
+tabs firefox snapshotAfterTabClose	3	3	0	3	11/19/32	### Page | - Page URL: http://#.0.0.1:#/p/newtab | - Page Title: /p/newtab | ### Snapshot | ```yaml | - heading "/p/newtab" [level=1] [ref=e2] [box=8,#,#,#] | `
+tabs firefox serverSawParkedPath	3	0	0	0		[]
+tabs firefox final.navigate	3	3	0	3	76/88/137	### Page | - Page URL: http://#.0.0.1:#/p/check-tabs | - Page Title: /p/check-tabs | ### Snapshot | - [Snapshot](C:\Source\SixFive7\BrowserAI\.work\debugger-too
+tabs firefox final.markers	3	0	0	0		### Result | { |   "ls": "kept", |   "ss": null, |   "ck": "dbgck=kept", |   "url": "http://#.0.0.1:#/p/check-tabs" | } | ### Paused | - Navigate #.0.0.1:#/p/pa
+tabs firefox final.tabs	3	0	0	0		### Result | - 0: (current) [/p/check-tabs](http://#.0.0.1:#/p/check-tabs) | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\de
+tabs firefox final.pausedStillShown	3	0	0	0		true
+tabs firefox closeAtEnd.close	3	3	0	3	419/447/634	### Result | No open tabs. Navigate to a URL to create one. | ### Paused | - Navigate #.0.0.1:#/p/parked at C:\Source\SixFive7\BrowserAI\.work\debugger-tools\ru
+tabs firefox closeAtEnd.parkedAfterClose	3	0	0	0		

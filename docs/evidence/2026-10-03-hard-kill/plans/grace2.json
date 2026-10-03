@@ -1,0 +1,56 @@
+[
+{
+"id": "fx-mcp-eof-D1-G5-r3",
+"browser": "firefox",
+"path": "mcp",
+"D": 1,
+"kill": "eof",
+"grace": 5,
+"rep": 3
+},
+{
+"id": "fx-mcp-eof-D1-G5-r4",
+"browser": "firefox",
+"path": "mcp",
+"D": 1,
+"kill": "eof",
+"grace": 5,
+"rep": 4
+},
+{
+"id": "fx-mcp-eof-D1-G5-r5",
+"browser": "firefox",
+"path": "mcp",
+"D": 1,
+"kill": "eof",
+"grace": 5,
+"rep": 5
+},
+{
+"id": "fx-mcp-eof-D1-G5-r6",
+"browser": "firefox",
+"path": "mcp",
+"D": 1,
+"kill": "eof",
+"grace": 5,
+"rep": 6
+},
+{
+"id": "cr-mcp-eof-D1-G5-r3",
+"browser": "chromium",
+"path": "mcp",
+"D": 1,
+"kill": "eof",
+"grace": 5,
+"rep": 3
+},
+{
+"id": "cr-mcp-eof-D1-G5-r4",
+"browser": "chromium",
+"path": "mcp",
+"D": 1,
+"kill": "eof",
+"grace": 5,
+"rep": 4
+}
+]

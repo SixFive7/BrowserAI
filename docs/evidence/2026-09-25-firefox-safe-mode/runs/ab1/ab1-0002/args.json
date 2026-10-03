@@ -1,0 +1,16 @@
+{
+  "id": "ab1-0002",
+  "batch": 2,
+  "mode": "b1",
+  "playwrightCore": "C:\\Source\\SixFive7\\BrowserAI\\payload\\mcp\\node_modules\\playwright-core",
+  "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\firefox-1549\\firefox\\firefox.exe",
+  "profile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\ab1\\ab1-0002\\firefox\\profile",
+  "downloads": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\ab1\\ab1-0002\\downloads",
+  "artifacts": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\ab1\\ab1-0002\\artifacts",
+  "log": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\ab1\\ab1-0002\\probe.log",
+  "results": "C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\ab1\\results.jsonl",
+  "timeoutMs": 30000,
+  "suspectMs": 12000,
+  "debug": "pw:protocol",
+  "arm": "treatment:MOZ_DISABLE_SAFE_MODE_KEY=1"
+}

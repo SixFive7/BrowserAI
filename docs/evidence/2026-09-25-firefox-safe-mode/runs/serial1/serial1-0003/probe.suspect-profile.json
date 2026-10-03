@@ -1,0 +1,128 @@
+[
+ {
+  "p": ".startup-incomplete",
+  "size": 0,
+  "mtime": "2026-09-24T23:08:40.315Z",
+  "birth": "2026-09-24T23:08:40.315Z"
+ },
+ {
+  "p": "addonStartup.json.lz4",
+  "size": 3832,
+  "mtime": "2026-09-24T23:08:42.076Z",
+  "birth": "2026-09-24T23:08:42.075Z"
+ },
+ {
+  "p": "bounce-tracking-protection.sqlite",
+  "size": 98304,
+  "mtime": "2026-09-24T23:08:40.991Z",
+  "birth": "2026-09-24T23:08:40.979Z"
+ },
+ {
+  "p": "compatibility.ini",
+  "size": 294,
+  "mtime": "2026-09-24T23:08:40.316Z",
+  "birth": "2026-09-24T23:08:40.316Z"
+ },
+ {
+  "p": "containers.json",
+  "size": 710,
+  "mtime": "2026-09-24T23:08:42.262Z",
+  "birth": "2026-09-24T23:08:42.262Z"
+ },
+ {
+  "p": "cookies.sqlite",
+  "size": 98304,
+  "mtime": "2026-09-24T23:08:40.431Z",
+  "birth": "2026-09-24T23:08:40.386Z"
+ },
+ {
+  "p": "extension-preferences.json",
+  "size": 1073,
+  "mtime": "2026-09-24T23:08:42.264Z",
+  "birth": "2026-09-24T23:08:42.264Z"
+ },
+ {
+  "p": "extension-store\\data.safe.bin",
+  "size": 109140,
+  "mtime": "2026-09-24T23:08:41.357Z",
+  "birth": "2026-09-24T23:08:41.289Z"
+ },
+ {
+  "p": "extensions.json",
+  "size": 9768,
+  "mtime": "2026-09-24T23:08:40.984Z",
+  "birth": "2026-09-24T23:08:40.983Z"
+ },
+ {
+  "p": "parent.lock",
+  "size": 0,
+  "mtime": "2026-09-24T23:08:40.313Z",
+  "birth": "2026-09-24T23:08:40.313Z"
+ },
+ {
+  "p": "permissions.sqlite",
+  "size": 163840,
+  "mtime": "2026-09-24T23:08:40.634Z",
+  "birth": "2026-09-24T23:08:40.604Z"
+ },
+ {
+  "p": "prefs.js",
+  "size": 9012,
+  "mtime": "2026-09-24T23:08:41.414Z",
+  "birth": "2026-09-24T23:08:40.895Z"
+ },
+ {
+  "p": "sessionCheckpoints.json",
+  "size": 53,
+  "mtime": "2026-09-24T23:08:40.708Z",
+  "birth": "2026-09-24T23:08:40.707Z"
+ },
+ {
+  "p": "startupCache\\webext.sc.lz4",
+  "size": 114363,
+  "mtime": "2026-09-24T23:08:45.999Z",
+  "birth": "2026-09-24T23:08:45.999Z"
+ },
+ {
+  "p": "storage\\ls-archive.sqlite",
+  "size": 131072,
+  "mtime": "2026-09-24T23:08:40.632Z",
+  "birth": "2026-09-24T23:08:40.601Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\.metadata-v2",
+  "size": 62,
+  "mtime": "2026-09-24T23:08:40.647Z",
+  "birth": "2026-09-24T23:08:40.646Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite",
+  "size": 49152,
+  "mtime": "2026-09-24T23:08:42.787Z",
+  "birth": "2026-09-24T23:08:40.663Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:08:40.711Z",
+  "birth": "2026-09-24T23:08:40.679Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite-wal",
+  "size": 0,
+  "mtime": "2026-09-24T23:08:42.789Z",
+  "birth": "2026-09-24T23:08:40.678Z"
+ },
+ {
+  "p": "storage.sqlite",
+  "size": 28672,
+  "mtime": "2026-09-24T23:08:40.659Z",
+  "birth": "2026-09-24T23:08:40.578Z"
+ },
+ {
+  "p": "times.json",
+  "size": 50,
+  "mtime": "2026-09-24T23:08:40.934Z",
+  "birth": "2026-09-24T23:08:40.720Z"
+ }
+]

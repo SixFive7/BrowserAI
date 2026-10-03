@@ -1,0 +1,18 @@
+server: {"listening":47811,"pid":55180}
+[1/16] cr-mcp-taskkill-D0-r2 0s actualD=0,187 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3,7s)
+[2/16] fx-mcp-taskkill-D30-r2 30s actualD=30,062 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (36,1s)
+[3/16] fx-mcp-taskkill-D0-r2 0s actualD=0,125 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (8,2s)
+[4/16] fx-mcp-job-D0-r1 0s actualD=0,022 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (7,7s)
+[5/16] fx-mcp-job-D30-r2 30s actualD=30,015 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (36,7s)
+[6/16] fx-mcp-taskkill-D0-r1 0s actualD=0,084 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (6,4s)
+[7/16] fx-mcp-taskkill-D30-r1 30s actualD=30,047 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (35,3s)
+[8/16] fx-mcp-job-D0-r2 0s actualD=0,01 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (5,4s)
+[9/16] cr-mcp-job-D30-r2 30s actualD=30,008 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (32,6s)
+[10/16] cr-mcp-job-D30-r1 30s actualD=30,027 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (32,7s)
+[11/16] cr-mcp-taskkill-D0-r1 0s actualD=0,103 procs=11 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3,3s)
+[12/16] cr-mcp-taskkill-D30-r2 30s actualD=30,047 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (33s)
+[13/16] fx-mcp-job-D30-r1 30s actualD=30,003 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (35,3s)
+[14/16] cr-mcp-job-D0-r1 0s actualD=0,042 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (3s)
+[15/16] cr-mcp-taskkill-D30-r1 30s actualD=30,049 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (33,3s)
+[16/16] cr-mcp-job-D0-r2 0s actualD=0,049 procs=10 alive=0 cookieHttpOnly=False cookieJs=False ls=0 idb=True ss=False err= (2,8s)
+server exited: True

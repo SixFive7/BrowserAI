@@ -1,0 +1,7 @@
+2026-09-24T23:01:46.1240315Z run=smoke count=2 batch=1 timeoutMs=180000 suspectMs=30000 jobMemoryMB=0 cpuRate=0 debug=pw:protocol
+2026-09-24T23:01:46.2430775Z launched smoke-0001 nodePid=94680 batch=1 suiteActive=False 
+2026-09-24T23:01:51.0314641Z closed smoke-0001 exited=True peakJobCommitMB=595,0 peakProcessCommitMB=334,6 cpuUserMs=4016 cpuKernelMs=2922 totalProcesses=11 activeProcesses=0 pageFaults=229380
+2026-09-24T23:01:52.6628839Z launched smoke-0002 nodePid=82868 batch=2 suiteActive=False 
+2026-09-24T23:02:23.2740603Z SUSPECT smoke-0002 firefoxPid=87336; inspecting
+2026-09-24T23:04:53.7776809Z closed smoke-0002 exited=True peakJobCommitMB=358,3 peakProcessCommitMB=137,8 cpuUserMs=2266 cpuKernelMs=1391 totalProcesses=12 activeProcesses=0 pageFaults=183224
+2026-09-24T23:04:55.3095670Z run smoke done: 2 launched

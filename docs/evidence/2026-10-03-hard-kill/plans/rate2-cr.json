@@ -1,0 +1,56 @@
+[
+{
+"id": "cr-core-job-second10-D45-r2",
+"browser": "chromium",
+"path": "core",
+"D": 45,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D55-r1",
+"browser": "chromium",
+"path": "core",
+"D": 55,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D20-r1",
+"browser": "chromium",
+"path": "core",
+"D": 20,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D45-r1",
+"browser": "chromium",
+"path": "core",
+"D": 45,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D20-r2",
+"browser": "chromium",
+"path": "core",
+"D": 20,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D55-r2",
+"browser": "chromium",
+"path": "core",
+"D": 55,
+"kill": "job",
+"rep": 2,
+"second": 10
+}
+]

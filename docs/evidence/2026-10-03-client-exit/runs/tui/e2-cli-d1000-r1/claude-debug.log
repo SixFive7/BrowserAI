@@ -1,0 +1,234 @@
+2026-10-03T02:01:21.820Z [DEBUG] MDM settings load completed in 2ms
+2026-10-03T02:01:21.832Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Program Files\ClaudeCode\managed-settings.json
+2026-10-03T02:01:21.835Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-exit\proj\.claude\settings.json
+2026-10-03T02:01:21.838Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-exit\proj\.claude\settings.local.json
+2026-10-03T02:01:21.839Z [DEBUG] CA certs: Config fallback - globalEnv keys: , settingsEnv keys: DISABLE_AUTOUPDATER
+2026-10-03T02:01:21.857Z [DEBUG] [init] configureGlobalMTLS starting
+2026-10-03T02:01:21.857Z [DEBUG] [init] configureGlobalMTLS complete
+2026-10-03T02:01:21.857Z [DEBUG] [init] configureGlobalAgents starting
+2026-10-03T02:01:21.857Z [DEBUG] CA certs: stores=bundled,system, extraCertsPath=undefined
+2026-10-03T02:01:21.857Z [DEBUG] CA certs: Loaded 121 bundled root certificates
+2026-10-03T02:01:21.879Z [DEBUG] CA certs: Dropped 18 expired certificate(s) from system store
+2026-10-03T02:01:21.879Z [DEBUG] CA certs: Loaded 184 system CA certificates
+2026-10-03T02:01:21.880Z [DEBUG] mTLS: Creating HTTPS agent with custom certificates
+2026-10-03T02:01:21.880Z [DEBUG] [init] configureGlobalAgents complete
+2026-10-03T02:01:21.882Z [DEBUG] Using bash path: "C:\Program Files\Git\bin\bash.exe"
+2026-10-03T02:01:21.886Z [DEBUG] Error log sink initialized
+2026-10-03T02:01:21.907Z [DEBUG] [Claude in Chrome] Disabled: OAuth token has no scope accepted by /api/oauth/validate (needs user:profile, user:office, or user:ccr_inference; env-var and setup-token sessions default to user:inference only)
+2026-10-03T02:01:21.911Z [DEBUG] [ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:8933 is not a first-party Anthropic host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.
+2026-10-03T02:01:22.098Z [DEBUG] [STARTUP] Loading MCP configs...
+2026-10-03T02:01:22.098Z [DEBUG] [STARTUP] Running setup()...
+2026-10-03T02:01:22.102Z [DEBUG] [win32-kernel32] bun:ffi loaded
+2026-10-03T02:01:22.116Z [DEBUG] Loading skills from: managed=C:\Program Files\ClaudeCode\.claude\skills, user=C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\skills, project=[]
+2026-10-03T02:01:22.118Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\agents: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\agents'
+2026-10-03T02:01:22.118Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\agents: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\agents'
+2026-10-03T02:01:22.118Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-10-03T02:01:22.118Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\commands: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\commands'
+2026-10-03T02:01:22.119Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\commands: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\commands'
+2026-10-03T02:01:22.119Z [DEBUG] Loaded 0 unique skills (0 unconditional, 0 conditional, managed: 0, user: 0, project: 0, additional: 0, legacy commands: 0)
+2026-10-03T02:01:22.121Z [DEBUG] Found 3 plugins (3 enabled, 0 disabled)
+2026-10-03T02:01:22.121Z [DEBUG] getPluginSkills: Processing 3 enabled plugins
+2026-10-03T02:01:22.121Z [DEBUG] Checking plugin cc-plugin-agents-md: skillsPath=none, skillsPaths=0 paths
+2026-10-03T02:01:22.121Z [DEBUG] Checking plugin cc-plugin-plugin-authoring: skillsPath=none, skillsPaths=0 paths
+2026-10-03T02:01:22.121Z [DEBUG] Checking plugin cc-plugin-diff: skillsPath=none, skillsPaths=0 paths
+2026-10-03T02:01:22.121Z [DEBUG] Total plugin workflows loaded: 0
+2026-10-03T02:01:22.121Z [DEBUG] Total plugin commands loaded: 0
+2026-10-03T02:01:22.122Z [DEBUG] Total plugin skills loaded: 0 (0 duplicate/user-owned entries skipped)
+2026-10-03T02:01:22.122Z [DEBUG] Total plugin agents loaded: 0
+2026-10-03T02:01:22.134Z [INFO] [uds-messaging] Listening: \\.\pipe\LOCAL\cc-msg-396ad4b43bf84d8f388f9e0d3b1e90ef
+2026-10-03T02:01:22.134Z [INFO] [uds-messaging] Inject messages (auth line REQUIRED here; a pipe is not reachable via socat/AF_UNIX): node -e "const c=require('net').connect(process.argv[1],()=>{c.write(JSON.stringify({type:'auth',token:[REDACTED]})+'\n'+JSON.stringify({type:'user',message:{role:'user',content:'hello'}})+'\n');c.end()})" "\\.\pipe\LOCAL\cc-msg-396ad4b43bf84d8f388f9e0d3b1e90ef"
+2026-10-03T02:01:22.134Z [INFO] [uds-messaging] Connect when the data is ready (run the command first, then connect and write its output as ONE line, as in the node recipe above): a connection that sends no complete line within 30000 ms is closed
+2026-10-03T02:01:22.136Z [DEBUG] Error log sink initialized
+2026-10-03T02:01:22.139Z [DEBUG] cc-plugin-sec-default@builtin not seated: no managed settings and not a Team or Enterprise organization (none)
+2026-10-03T02:01:22.141Z [DEBUG] [STARTUP] setup() completed in 43ms
+2026-10-03T02:01:22.142Z [DEBUG] [STARTUP] Loading commands and agents...
+2026-10-03T02:01:22.144Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills, 39 bundled skills, 1 builtin plugin skills
+2026-10-03T02:01:22.151Z [DEBUG] [STARTUP] Commands and agents loaded in 9ms
+2026-10-03T02:01:22.156Z [DEBUG] [STARTUP] Running showSetupScreens()...
+2026-10-03T02:01:22.173Z [DEBUG] plugin cc-plugin-agents-md: no pluginConfigs["agents-md@builtin" or "cc-plugin-agents-md@builtin"].options in user, --settings or managed settings (project settings are not read); every option is its default
+2026-10-03T02:01:22.176Z [DEBUG] hooks module cc-plugin-agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call
+2026-10-03T02:01:22.178Z [DEBUG] hooks module cc-plugin-diff@builtin loaded (native, environment 2, tier builtin); events: session.start,ui.render,command.run,ui.close,ui.focus,ui.scroll,tool.call,prompt.submit
+2026-10-03T02:01:22.180Z [DEBUG] engine.create: no plugin-provided interfaces; $ built for cc-plugin-agents-md,cc-plugin-diff
+2026-10-03T02:01:22.180Z [DEBUG] plugin.register: cc-plugin-agents-md (builtin, cc-plugin-agents-md@builtin), judged by core alone: admitted
+2026-10-03T02:01:22.180Z [DEBUG] plugin.register: cc-plugin-diff (builtin, cc-plugin-diff@builtin), judged by core alone: admitted
+2026-10-03T02:01:22.183Z [DEBUG] Registered 0 hooks from 3 plugins
+2026-10-03T02:01:22.189Z [DEBUG] Cleared mTLS configuration cache
+2026-10-03T02:01:22.189Z [DEBUG] Cleared proxy agent cache
+2026-10-03T02:01:22.189Z [DEBUG] mTLS: Creating HTTPS agent with custom certificates
+2026-10-03T02:01:22.190Z [DEBUG] [STARTUP] showSetupScreens() completed in 33ms
+2026-10-03T02:01:22.191Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-10-03T02:01:22.191Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-10-03T02:01:22.191Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-10-03T02:01:22.191Z [DEBUG] Starting background startup prefetches
+2026-10-03T02:01:22.191Z [DEBUG] [Bootstrap] Skipped: Nonessential traffic disabled
+2026-10-03T02:01:22.192Z [DEBUG] [STARTUP] MCP configs resolved in 0ms (awaited at +94ms)
+2026-10-03T02:01:22.197Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:22.198Z [DEBUG] Total LSP servers loaded: 0
+2026-10-03T02:01:22.199Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2026-10-03T02:01:22.199Z [DEBUG] [LSP SERVER MANAGER] getAllLspServers returned 0 server(s)
+2026-10-03T02:01:22.199Z [DEBUG] LSP manager initialized with 0 servers
+2026-10-03T02:01:22.200Z [DEBUG] LSP server manager initialized successfully
+2026-10-03T02:01:22.200Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-10-03T02:01:22.244Z [DEBUG] [Perfetto] initializePerfettoTracing called, env value: undefined
+2026-10-03T02:01:22.244Z [DEBUG] [3P telemetry] isTelemetryEnabled=false (CLAUDE_CODE_ENABLE_TELEMETRY=undefined)
+2026-10-03T02:01:22.265Z [DEBUG] [3P telemetry] Event dropped (no event logger initialized): plugin_loaded
+2026-10-03T02:01:22.266Z [DEBUG] Git remote URL: null
+2026-10-03T02:01:22.266Z [DEBUG] No git remote URL found
+2026-10-03T02:01:22.267Z [DEBUG] Ripgrep first use test: PASSED (mode=embedded, path=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\cli\claude.exe)
+2026-10-03T02:01:22.272Z [DEBUG] "rg error (signal=undefined, code=2, stderr: rg: C:\\Source\\SixFive7\\BrowserAI\\.work\\client-exit\\cfg\\claude-tui\\plugins\\cache: IO error for operation on C:\\Source\\SixFive7\\BrowserAI\\.work\\client-exit\\cfg\\claude-tui\\plugins\\cache: The system cannot find the file specified. (os error 2)\n), 0 results"
+2026-10-03T02:01:22.278Z [DEBUG] [sessionRegistry] sweep permitted (domain win32:pc657)
+2026-10-03T02:01:22.284Z [DEBUG] Preserving file permissions: 100666
+2026-10-03T02:01:22.284Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.93e573cce2da
+2026-10-03T02:01:22.285Z [DEBUG] Applied original permissions to temp file
+2026-10-03T02:01:22.288Z [DEBUG] Temp file written successfully, size: 3950 bytes
+2026-10-03T02:01:22.288Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.93e573cce2da to C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json
+2026-10-03T02:01:22.289Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json written atomically
+2026-10-03T02:01:22.299Z [DEBUG] Preserving file permissions: 100666
+2026-10-03T02:01:22.300Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.4651dd4fed5b
+2026-10-03T02:01:22.301Z [DEBUG] Applied original permissions to temp file
+2026-10-03T02:01:22.303Z [DEBUG] Temp file written successfully, size: 4118 bytes
+2026-10-03T02:01:22.303Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.4651dd4fed5b to C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json
+2026-10-03T02:01:22.305Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json written atomically
+2026-10-03T02:01:22.346Z [DEBUG] [keybindings] KeybindingSetup initialized with 223 bindings, 0 warnings
+2026-10-03T02:01:22.372Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:22.393Z [DEBUG] [engine] send set_max_thinking_tokens max=null
+2026-10-03T02:01:22.393Z [DEBUG] [engine] send set_model model=claude-sonnet-5-5
+2026-10-03T02:01:22.398Z [DEBUG] prompt.edit: unhooked; the composer relays nothing
+2026-10-03T02:01:22.408Z [DEBUG] mcp runtime arm: v2 (source: default)
+2026-10-03T02:01:22.429Z [DEBUG] performStartupChecks called
+2026-10-03T02:01:22.434Z [DEBUG] [jobStateNameSync] watch skipped: Error: ENOENT: no such file or directory, watch 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\jobs\aa45da99'
+2026-10-03T02:01:22.437Z [DEBUG] [REPL:mount] REPL mounted, disabled=false
+2026-10-03T02:01:22.437Z [DEBUG] Official marketplace auto-install skipped: already_installed
+2026-10-03T02:01:22.440Z [INFO] 1 setup issue: settings (run `claude doctor` for details)
+2026-10-03T02:01:22.445Z [DEBUG] [ScheduledTasks] scheduler start() — enabled=false, hasTasks=false
+2026-10-03T02:01:22.451Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-exit\proj\.claude\settings.json
+2026-10-03T02:01:22.452Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-exit\proj\.claude\settings.local.json
+2026-10-03T02:01:22.454Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Program Files\ClaudeCode\managed-settings.json
+2026-10-03T02:01:22.475Z [DEBUG] [servedCatalog] off (essential_traffic)
+2026-10-03T02:01:22.522Z [DEBUG] Starting background plugin installations
+2026-10-03T02:01:22.522Z [DEBUG] session.start: raised (surface terminal, interactive)
+2026-10-03T02:01:22.529Z [DEBUG] MCP server "probe": Starting connection with timeout of 30000ms
+2026-10-03T02:01:22.538Z [DEBUG] [auto-mode] verifyAutoModeGateAccess: enabledState=enabled disabledBySettings=false model=claude-sonnet-5-5 modelSupported=true disableFastModeBreakerFires=false carouselAvailable=true canEnterAuto=true
+2026-10-03T02:01:22.538Z [DEBUG] performBackgroundPluginInstallations called
+2026-10-03T02:01:22.659Z [DEBUG] hooks module cc-plugin-diff@builtin ui.render settled in 187.3ms (native link, next() included)
+2026-10-03T02:01:22.663Z [DEBUG] $.command.register (cc-plugin-diff): /diff listed
+2026-10-03T02:01:22.673Z [DEBUG] hooks module cc-plugin-diff@builtin session.start settled in 150.2ms (native link, next() included)
+2026-10-03T02:01:22.673Z [DEBUG] hooks module cc-plugin-agents-md@builtin session.start settled in 150.5ms (native link, next() included)
+2026-10-03T02:01:22.683Z [DEBUG] [keybindings] Watching for changes to C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\keybindings.json
+2026-10-03T02:01:22.686Z [DEBUG] [sessionRegistry] sweep permitted (domain win32:pc657)
+2026-10-03T02:01:22.686Z [DEBUG] [sessionRegistry] sweep permitted (domain win32:pc657)
+2026-10-03T02:01:22.688Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\skills: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\skills'
+2026-10-03T02:01:22.688Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\skills: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\skills'
+2026-10-03T02:01:22.688Z [DEBUG] No CLAUDE.md/rules files found
+2026-10-03T02:01:22.713Z [DEBUG] [FileIndex] getProjectFiles called, respectGitignore=true
+2026-10-03T02:01:22.713Z [DEBUG] [FileIndex] getFilesUsingGit called
+2026-10-03T02:01:22.721Z [DEBUG] Git remote URL: null
+2026-10-03T02:01:22.722Z [DEBUG] No git remote URL found
+2026-10-03T02:01:22.722Z [DEBUG] Not in a GitHub repository, skipping path mapping update
+2026-10-03T02:01:22.724Z [DEBUG] XTVERSION: no reply (terminal ignored query)
+2026-10-03T02:01:22.724Z [DEBUG] Terminal capabilities: extendedKeys=no (env: terminal=xterm-256color, no answer); synchronizedOutput=no (env: no known terminal, no answer); kittyKeyboard=no (probe: no reply to CSI ? u); kittyGraphics=no (env: terminal=xterm-256color, not asked yet, no answer); mousePixels=no (env: terminal=xterm-256color, not asked yet, no answer); terminal said: no reply to CSI ? u; DECRQM 2026 not asked (no XTVERSION reply)
+2026-10-03T02:01:22.724Z [DEBUG] DECSTBM: gated (TMUX=unset ZELLIJ=unset TERM_PROGRAM=unset TERM=xterm-256color)
+2026-10-03T02:01:22.726Z [DEBUG] MCP server "probe": Successfully connected (transport: stdio) in 200ms
+2026-10-03T02:01:22.727Z [DEBUG] MCP server "probe": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"exitprobe","version":"1.0.0"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-10-03T02:01:22.727Z [DEBUG] [MCP] Server "probe" connected with subscribe=false
+2026-10-03T02:01:22.788Z [DEBUG] Loaded plugins - Enabled: 3, Disabled: 0, Commands: 0, Agents: 0, Errors: 0
+2026-10-03T02:01:22.788Z [DEBUG] Plugin autoupdate: command-source refresh disabled by tengu_plugin_command_source_refresh (still excluding command-sourced plugins from the regular pass)
+2026-10-03T02:01:22.792Z [DEBUG] Watching C:\Source\SixFive7\BrowserAI\.work\client-exit\proj for C:\Source\SixFive7\BrowserAI\.work\client-exit\proj\.claude to appear
+2026-10-03T02:01:22.792Z [DEBUG] Watching for changes in setting files C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\settings.json...
+2026-10-03T02:01:22.793Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\output-styles: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\output-styles'
+2026-10-03T02:01:22.793Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\output-styles: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\output-styles'
+2026-10-03T02:01:22.793Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\workflows: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\workflows'
+2026-10-03T02:01:22.793Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\routines: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\routines'
+2026-10-03T02:01:22.793Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\workflows: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\workflows'
+2026-10-03T02:01:22.794Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\routines: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\routines'
+2026-10-03T02:01:22.798Z [DEBUG] Lock acquisition took longer than expected - another Claude instance may be running
+2026-10-03T02:01:22.810Z [DEBUG] [FileIndex] git ls-files (tracked) took 96ms
+2026-10-03T02:01:22.814Z [DEBUG] [FileIndex] git ls-files: 0 tracked files in 101ms
+2026-10-03T02:01:22.821Z [DEBUG] [FileIndex] using git ls-files result (0 files)
+2026-10-03T02:01:22.821Z [DEBUG] [FileIndex] cache refresh completed in 108ms
+2026-10-03T02:01:22.824Z [DEBUG] Preserving file permissions: 100666
+2026-10-03T02:01:22.824Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.4bfc1f6860a3
+2026-10-03T02:01:22.830Z [DEBUG] MCP server "probe": Channel notifications skipped: server did not declare claude/channel capability
+2026-10-03T02:01:22.835Z [DEBUG] Applied original permissions to temp file
+2026-10-03T02:01:22.836Z [DEBUG] $.fs.ancestors (cc-plugin-agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 6 directories
+2026-10-03T02:01:22.857Z [DEBUG] Temp file written successfully, size: 4119 bytes
+2026-10-03T02:01:22.857Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.4bfc1f6860a3 to C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json
+2026-10-03T02:01:22.858Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json written atomically
+2026-10-03T02:01:22.914Z [DEBUG] [FileIndex] background untracked fetch: 0 files
+2026-10-03T02:01:22.921Z [DEBUG] $.fs.ancestors (cc-plugin-agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 6 directories
+2026-10-03T02:01:22.922Z [DEBUG] [cc-plugin-agents-md] $.ui.log (to debug): no CLAUDE.md found; AGENTS.md loaded: C:\Source\SixFive7\BrowserAI\AGENTS.md
+2026-10-03T02:01:22.922Z [DEBUG] hooks module cc-plugin-agents-md@builtin prompt.context settled in 227.4ms (native link, next() included)
+2026-10-03T02:01:23.226Z [DEBUG] [fs.watch probe] verdict: delivers
+2026-10-03T02:01:24.010Z [DEBUG] hooks module cc-plugin-diff@builtin ui.render settled in 4.4ms (native link, next() included)
+2026-10-03T02:01:24.010Z [DEBUG] hooks module cc-plugin-diff@builtin ui.render settled in 2.0ms (native link, next() included)
+2026-10-03T02:01:24.406Z [DEBUG] Plugin autoupdate: skipped (auto-updater disabled)
+2026-10-03T02:01:24.411Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-10-03T02:01:24.412Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-10-03T02:01:24.412Z [DEBUG] Total plugin output styles loaded: 0
+2026-10-03T02:01:24.421Z [DEBUG] FileHistory: Added snapshot for 55482f62-f3db-4c42-b4ed-11a38be40fb8, tracking 0 files
+2026-10-03T02:01:24.433Z [DEBUG] act_dont_rederive_arm_active source=growthbook
+2026-10-03T02:01:24.435Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.288.07f; cc_entrypoint=cli;
+2026-10-03T02:01:24.435Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.436Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.439Z [DEBUG] hooks module cc-plugin-diff@builtin prompt.submit settled in 20.3ms (native link, next() included)
+2026-10-03T02:01:24.459Z [DEBUG] [engine] yield system/init (first)
+2026-10-03T02:01:24.459Z [DEBUG] [engine] turn 1 start
+2026-10-03T02:01:24.466Z [DEBUG] autocompact: tokens=[REDACTED] level=ok effectiveWindow=980000
+2026-10-03T02:01:24.483Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.288.73a; cc_entrypoint=cli;
+2026-10-03T02:01:24.483Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.484Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.489Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.490Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5-5
+2026-10-03T02:01:24.491Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.492Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5-5
+2026-10-03T02:01:24.494Z [DEBUG] [API REQUEST] /v1/messages source=generate_session_title
+2026-10-03T02:01:24.494Z [DEBUG] [API REQUEST] /v1/messages source=repl_main_thread
+2026-10-03T02:01:24.522Z [DEBUG] hooks module cc-plugin-diff@builtin ui.render settled in 6.1ms (native link, next() included)
+2026-10-03T02:01:24.522Z [DEBUG] hooks module cc-plugin-diff@builtin ui.render settled in 2.4ms (native link, next() included)
+2026-10-03T02:01:24.526Z [DEBUG] Stream started - received first chunk
+2026-10-03T02:01:24.527Z [DEBUG] [API:timing] first byte after 38ms
+2026-10-03T02:01:24.533Z [DEBUG] Stream started - received first chunk
+2026-10-03T02:01:24.533Z [DEBUG] [API:timing] first byte after 42ms
+2026-10-03T02:01:24.544Z [INFO] [Stall] tool_dispatch_start tool=mcp_tool toolUseId=toolu_81240_74_edea417a permissionDecisionMs=2
+2026-10-03T02:01:24.546Z [DEBUG] MCP server "probe": Calling MCP tool: ping
+2026-10-03T02:01:24.565Z [DEBUG] MCP server "probe": Tool 'ping' completed successfully in 19ms
+2026-10-03T02:01:24.566Z [INFO] [Stall] tool_dispatch_end tool=mcp_tool toolUseId=toolu_81240_74_edea417a outcome=ok durationMs=22
+2026-10-03T02:01:24.573Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-10-03T02:01:24.573Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-10-03T02:01:24.574Z [DEBUG] autocompact: tokens=[REDACTED] level=ok effectiveWindow=980000
+2026-10-03T02:01:24.578Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.288.73a; cc_entrypoint=cli;
+2026-10-03T02:01:24.578Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.579Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.588Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:01:24.588Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5-5
+2026-10-03T02:01:24.589Z [DEBUG] [API REQUEST] /v1/messages source=repl_main_thread
+2026-10-03T02:01:24.592Z [DEBUG] Stream started - received first chunk
+2026-10-03T02:01:24.592Z [DEBUG] [API:timing] first byte after 4ms
+2026-10-03T02:01:24.598Z [DEBUG] [engine] turn 1 end (turns=2 usage in=30 out=15 cost=$0.0002 api=177ms stop=end_turn resultLen=18)
+2026-10-03T02:01:24.605Z [DEBUG] [sessionRegistry] sweep permitted (domain win32:pc657)
+2026-10-03T02:01:24.605Z [DEBUG] [sessionRegistry] sweep permitted (domain win32:pc657)
+2026-10-03T02:01:24.627Z [DEBUG] hooks module cc-plugin-diff@builtin ui.render settled in 4.2ms (native link, next() included)
+2026-10-03T02:01:24.627Z [DEBUG] hooks module cc-plugin-diff@builtin ui.render settled in 2.1ms (native link, next() included)
+2026-10-03T02:01:24.638Z [DEBUG] Preserving file permissions: 100666
+2026-10-03T02:01:24.638Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.0ebf397206e2
+2026-10-03T02:01:24.640Z [DEBUG] Applied original permissions to temp file
+2026-10-03T02:01:24.644Z [DEBUG] Temp file written successfully, size: 4119 bytes
+2026-10-03T02:01:24.644Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.0ebf397206e2 to C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json
+2026-10-03T02:01:24.645Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json written atomically
+2026-10-03T02:01:27.245Z [DEBUG] [REPL:unmount] REPL unmounting
+2026-10-03T02:01:27.249Z [DEBUG] [uds-messaging] Shutting down
+2026-10-03T02:01:27.251Z [DEBUG] MCP server "probe": Terminating MCP server process tree
+2026-10-03T02:01:27.260Z [DEBUG] LSP server manager shut down successfully
+2026-10-03T02:01:27.280Z [DEBUG] Preserving file permissions: 100666
+2026-10-03T02:01:27.280Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.85e1f9989e19
+2026-10-03T02:01:27.282Z [DEBUG] Applied original permissions to temp file
+2026-10-03T02:01:27.284Z [DEBUG] Temp file written successfully, size: 4119 bytes
+2026-10-03T02:01:27.284Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.85e1f9989e19 to C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json
+2026-10-03T02:01:27.286Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json written atomically
+2026-10-03T02:01:27.296Z [DEBUG] Preserving file permissions: 100666
+2026-10-03T02:01:27.296Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.fa7b23a6de4b
+2026-10-03T02:01:27.297Z [DEBUG] Applied original permissions to temp file
+2026-10-03T02:01:27.299Z [DEBUG] Temp file written successfully, size: 3951 bytes
+2026-10-03T02:01:27.299Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json.tmp.78960.fa7b23a6de4b to C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json
+2026-10-03T02:01:27.301Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-tui\.claude.json written atomically
+2026-10-03T02:01:27.301Z [DEBUG] fullscreen boot canary: healthy

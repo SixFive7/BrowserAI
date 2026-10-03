@@ -1,0 +1,115 @@
+scenario	family	run	outcome	mcp	childExitedOnStdinEnd	http
+armedclose	chromium	1	completed	0.0.82	true	/p/start@906
+armedclose	chromium	2	completed	0.0.82	true	/p/start@1031
+armedclose	chromium	3	completed	0.0.82	true	/p/start@1048
+armedclose	firefox	1	completed	0.0.82	true	/p/start@4924
+armedclose	firefox	2	completed	0.0.82	true	/p/start@3738
+armedclose	firefox	3	completed	0.0.82	true	/p/start@3512
+armedcloseresume	chromium	1	completed	0.0.82	true	/p/start@933 /p/after-wedge@15689 /p/check-armedcloseresume@15748
+armedcloseresume	chromium	2	completed	0.0.82	true	/p/start@950 /p/after-wedge@15913 /p/check-armedcloseresume@15993
+armedcloseresume	chromium	3	completed	0.0.82	true	/p/start@950 /p/after-wedge@16150 /p/check-armedcloseresume@16225
+armedcloseresume	firefox	1	completed	0.0.82	true	/p/start@4905 /p/after-wedge@21815 /p/check-armedcloseresume@21951
+armedcloseresume	firefox	2	completed	0.0.82	true	/p/start@4250 /p/after-wedge@21236 /p/check-armedcloseresume@21322
+armedcloseresume	firefox	3	completed	0.0.82	true	/p/start@3343 /p/after-wedge@20138 /p/check-armedcloseresume@20246
+artifacts	chromium	1	completed	0.0.82	true	/p/start@882 /p/traced@1519 /p/check-artifacts@2970
+artifacts	chromium	2	completed	0.0.82	true	/p/start@981 /p/traced@1667 /p/check-artifacts@3401
+artifacts	chromium	3	completed	0.0.82	true	/p/start@1269 /p/traced@1925 /p/check-artifacts@3553
+artifacts	firefox	1	completed	0.0.82	true	/p/start@2851 /p/traced@3542 /p/check-artifacts@6514
+artifacts	firefox	2	completed	0.0.82	true	/p/start@3842 /p/traced@4584 /p/check-artifacts@7587
+artifacts	firefox	3	completed	0.0.82	true	/p/start@3079 /p/traced@3777 /p/check-artifacts@7132
+cancel	chromium	1	completed	0.0.82	true	/p/start@952 /p/after-cancel@18081 /p/check-cancel@21150 /p/relaunch@32332
+cancel	chromium	2	completed	0.0.82	true	/p/start@835 /p/after-cancel@18021 /p/check-cancel@21108 /p/relaunch@32489
+cancel	chromium	3	completed	0.0.82	true	/p/start@908 /p/after-cancel@18041 /p/check-cancel@21120 /p/relaunch@32659
+cancel	firefox	1	completed	0.0.82	true	/p/start@2553 /p/after-cancel@19715 /p/check-cancel@22802 /p/relaunch@35229
+cancel	firefox	2	completed	0.0.82	true	/p/start@3492 /p/after-cancel@20671 /p/check-cancel@23768 /p/relaunch@36572
+cancel	firefox	3	completed	0.0.82	true	/p/start@2938 /p/after-cancel@21001 /p/check-cancel@24117 /p/relaunch@36822
+close	chromium	1	completed	0.0.82	true	/p/start@782 /p/check-close@28430
+close	chromium	2	completed	0.0.82	true	/p/start@848 /p/check-close@28455
+close	chromium	3	completed	0.0.82	true	/p/start@753 /p/check-close@28332
+close	firefox	1	completed	0.0.82	true	/p/start@3317 /p/check-close@31974
+close	firefox	2	completed	0.0.82	true	/p/start@3177 /p/check-close@32327
+close	firefox	3	completed	0.0.82	true	/p/start@3288 /p/check-close@32238
+direct	chromium	1	completed	0.0.82	true	/p/start@1271 /p/after-direct@10402
+direct	chromium	2	completed	0.0.82	true	/p/start@1150 /p/after-direct@10285
+direct	chromium	3	completed	0.0.82	true	/p/start@1198 /p/after-direct@10351
+direct	firefox	1	completed	0.0.82	true	/p/start@4838 /p/after-direct@14047
+direct	firefox	2	completed	0.0.82	true	/p/start@3169 /p/after-direct@12462
+direct	firefox	3	completed	0.0.82	true	/p/start@2895 /p/after-direct@12624
+endpoint	chromium	1	completed	0.0.82	true	/p/start@1145 /p/parked@19379
+endpoint	chromium	2	completed	0.0.82	true	/p/start@938 /p/parked@18956
+endpoint	chromium	3	completed	0.0.82	true	/p/start@1255 /p/parked@19051
+endpoint	firefox	1	completed	0.0.82	true	/p/start@3257 /p/parked@21177
+endpoint	firefox	2	completed	0.0.82	true	/p/start@2617 /p/parked@20371
+endpoint	firefox	3	completed	0.0.82	true	/p/start@3866 /p/parked@21813
+idleparked	chromium	1	completed	0.0.82	true	/p/start@892 /p/after-idle@43505
+idleparked	chromium	2	completed	0.0.82	true	/p/start@1655 /p/after-idle@44199
+idleparked	chromium	3	completed	0.0.82	true	/p/start@905 /p/after-idle@43441
+idleparked	firefox	1	completed	0.0.82	true	/p/start@4337 /p/after-idle@47735
+idleparked	firefox	2	completed	0.0.82	true	/p/start@3618 /p/after-idle@47333
+idleparked	firefox	3	completed	0.0.82	true	/p/start@3436 /p/after-idle@46999
+idleresume	chromium	1	completed	0.0.82	true	/p/start@881 /p/parked@12994 /p/after-idle@26513
+idleresume	chromium	2	completed	0.0.82	true	/p/start@864 /p/parked@12973 /p/after-idle@26396
+idleresume	chromium	3	completed	0.0.82	true	/p/start@894 /p/parked@13013 /p/after-idle@26597
+idleresume	firefox	1	completed	0.0.82	true	/p/start@2962 /p/parked@15204 /p/after-idle@29397
+idleresume	firefox	2	completed	0.0.82	true	/p/start@2978 /p/parked@15190 /p/after-idle@28962
+idleresume	firefox	3	completed	0.0.82	true	/p/start@3725 /p/parked@15939 /p/after-idle@30246
+location	chromium	1	completed	0.0.82	true	/p/start@904 /p/parked@13084 /p/location-next@13147
+location	chromium	2	completed	0.0.82	true	/p/start@1087 /p/parked@13308 /p/location-next@13381
+location	chromium	3	completed	0.0.82	true	/p/start@924 /p/parked@13037 /p/location-next@13089
+location	firefox	1	completed	0.0.82	true	/p/start@3698 /p/parked@15842 /p/location-next@15915
+location	firefox	2	completed	0.0.82	true	/p/start@3099 /p/parked@15250 /p/location-next@15320
+location	firefox	3	completed	0.0.82	true	/p/start@3075 /p/parked@15252 /p/location-next@15612
+longpark	chromium	1	completed	0.0.82	true	/p/start@1944
+longpark	chromium	2	completed	0.0.82	true	/p/start@1773
+longpark	chromium	3	completed	0.0.82	true	/p/start@1343
+longpark	firefox	1	completed	0.0.82	true	/p/start@2869
+longpark	firefox	2	completed	0.0.82	true	/p/start@2150
+longpark	firefox	3	completed	0.0.82	true	/p/start@2302
+navigate	chromium	1	completed	0.0.82	true	/p/start@902 /p/second@13015 /p/check-navigate@21101
+navigate	chromium	2	completed	0.0.82	true	/p/start@1128 /p/second@13548 /p/check-navigate@21625
+navigate	chromium	3	completed	0.0.82	true	/p/start@799 /p/second@12920 /p/check-navigate@20992
+navigate	firefox	1	completed	0.0.82	true	/p/start@4035 /p/second@16248 /p/check-navigate@24816
+navigate	firefox	2	completed	0.0.82	true	/p/start@3567 /p/second@15803 /p/check-navigate@23932
+navigate	firefox	3	completed	0.0.82	true	/p/start@4347 /p/second@16528 /p/check-navigate@24637
+notpaused	chromium	1	completed	0.0.82	true	/p/start@2087 /p/after-notpaused@2768
+notpaused	chromium	2	completed	0.0.82	true	/p/start@1356 /p/after-notpaused@1998
+notpaused	chromium	3	completed	0.0.82	true	/p/start@1164 /p/after-notpaused@1810
+notpaused	firefox	1	completed	0.0.82	true	/p/start@5057 /p/after-notpaused@5746
+notpaused	firefox	2	completed	0.0.82	true	/p/start@3244 /p/after-notpaused@3926
+notpaused	firefox	3	completed	0.0.82	true	/p/start@3916 /p/after-notpaused@4576
+pagepause	chromium	1	completed	0.0.82	true	/p/start@1037 /p/parked@13680
+pagepause	chromium	2	completed	0.0.82	true	/p/start@1184 /p/parked@13807
+pagepause	chromium	3	completed	0.0.82	true	/p/start@1129 /p/parked@13769
+pagepause	firefox	1	completed	0.0.82	true	/p/start@2930 /p/parked@15618
+pagepause	firefox	2	completed	0.0.82	true	/p/start@3129 /p/parked@15808
+pagepause	firefox	3	completed	0.0.82	true	/p/start@2965 /p/parked@15608
+resume	chromium	1	completed	0.0.82	true	/p/start@1364 /p/parked@13537 /p/check-resume@34342
+resume	chromium	2	completed	0.0.82	true	/p/start@916 /p/parked@13062 /p/check-resume@33931
+resume	chromium	3	completed	0.0.82	true	/p/start@1256 /p/parked@13461 /p/check-resume@34293
+resume	firefox	1	completed	0.0.82	true	/p/start@4669 /p/parked@16880 /p/check-resume@39492
+resume	firefox	2	completed	0.0.82	true	/p/start@4199 /p/parked@16425 /p/check-resume@39328
+resume	firefox	3	completed	0.0.82	true	/p/start@4103 /p/parked@16265 /p/check-resume@38604
+runcode	chromium	1	completed	0.0.82	true	/p/start@1403 /p/parked@13624 /p/check-runcode@13746
+runcode	chromium	2	completed	0.0.82	true	/p/start@1369 /p/parked@13578 /p/check-runcode@13662
+runcode	chromium	3	completed	0.0.82	true	/p/start@2331 /p/parked@14491 /p/check-runcode@14569
+runcode	firefox	1	completed	0.0.82	true	/p/start@3920 /p/parked@16101 /p/check-runcode@16219
+runcode	firefox	2	completed	0.0.82	true	/p/start@4147 /p/parked@16376 /p/check-runcode@16489
+runcode	firefox	3	completed	0.0.82	true	/p/start@3634 /p/parked@15936 /p/check-runcode@16077
+stdin	chromium	1	completed	0.0.82	undefined	/p/start@980
+stdin	chromium	2	completed	0.0.82	undefined	/p/start@1083
+stdin	chromium	3	completed	0.0.82	undefined	/p/start@1366
+stdin	firefox	1	completed	0.0.82	undefined	/p/start@3801
+stdin	firefox	2	completed	0.0.82	undefined	/p/start@3580
+stdin	firefox	3	completed	0.0.82	undefined	/p/start@3949
+step	chromium	1	completed	0.0.82	true	/p/start@966 /p/parked@13092 /p/step-next@18125
+step	chromium	2	completed	0.0.82	true	/p/start@945 /p/parked@13064 /p/step-next@18099
+step	chromium	3	completed	0.0.82	true	/p/start@959 /p/parked@13079 /p/step-next@18107
+step	firefox	1	completed	0.0.82	true	/p/start@3083 /p/parked@15238 /p/step-next@20271
+step	firefox	2	completed	0.0.82	true	/p/start@3055 /p/parked@15202 /p/step-next@20253
+step	firefox	3	completed	0.0.82	true	/p/start@3791 /p/parked@16010 /p/step-next@21077
+tabs	chromium	1	completed	0.0.82	true	/p/start@1205 /p/newtab@13456 /p/check-tabs@23681
+tabs	chromium	2	completed	0.0.82	true	/p/start@1205 /p/newtab@13391 /p/check-tabs@23539
+tabs	chromium	3	completed	0.0.82	true	/p/start@1468 /p/newtab@13751 /p/check-tabs@24030
+tabs	firefox	1	completed	0.0.82	true	/p/start@3943 /p/newtab@16417 /p/check-tabs@26636
+tabs	firefox	2	completed	0.0.82	true	/p/start@4167 /p/newtab@16868 /p/check-tabs@27199
+tabs	firefox	3	completed	0.0.82	true	/p/start@5908 /p/newtab@18861 /p/check-tabs@29166

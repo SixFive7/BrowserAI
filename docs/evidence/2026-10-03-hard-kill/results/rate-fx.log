@@ -1,0 +1,6 @@
+server: {"listening":47811,"pid":77932}
+[1/4] fx-core-job-second10-D7-r1 7s actualD=7,044 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=40 idb=True err= (24,2s)
+[2/4] fx-core-job-second10-D7-r2 7s actualD=7,004 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=40 idb=True err= (23,6s)
+[3/4] fx-core-job-second10-D3-r2 3s actualD=3,004 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=0 idb=True err= (19,8s)
+[4/4] fx-core-job-second10-D3-r1 3s actualD=3,002 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False | B: cookieHttpOnly=True cookieJs=True ls=0 idb=True err= (20,4s)
+server exited: True

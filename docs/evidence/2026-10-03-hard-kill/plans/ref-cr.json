@@ -1,0 +1,218 @@
+[
+{
+"id": "cr-core-job-D28-r2",
+"browser": "chromium",
+"path": "core",
+"D": 28,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-core-job-D4-r2",
+"browser": "chromium",
+"path": "core",
+"D": 4,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-core-job-D5.5-r2",
+"browser": "chromium",
+"path": "core",
+"D": 5.5,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-core-job-D4.5-r2",
+"browser": "chromium",
+"path": "core",
+"D": 4.5,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-core-job-D6-r2",
+"browser": "chromium",
+"path": "core",
+"D": 6,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-core-job-D30.5-r3",
+"browser": "chromium",
+"path": "core",
+"D": 30.5,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D6-r1",
+"browser": "chromium",
+"path": "core",
+"D": 6,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D4.5-r3",
+"browser": "chromium",
+"path": "core",
+"D": 4.5,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D4-r1",
+"browser": "chromium",
+"path": "core",
+"D": 4,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D31-r1",
+"browser": "chromium",
+"path": "core",
+"D": 31,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D28-r3",
+"browser": "chromium",
+"path": "core",
+"D": 28,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D5.5-r1",
+"browser": "chromium",
+"path": "core",
+"D": 5.5,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D28-r1",
+"browser": "chromium",
+"path": "core",
+"D": 28,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D30.5-r1",
+"browser": "chromium",
+"path": "core",
+"D": 30.5,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D4.5-r1",
+"browser": "chromium",
+"path": "core",
+"D": 4.5,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D5.5-r3",
+"browser": "chromium",
+"path": "core",
+"D": 5.5,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D29.5-r2",
+"browser": "chromium",
+"path": "core",
+"D": 29.5,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-core-job-D6-r3",
+"browser": "chromium",
+"path": "core",
+"D": 6,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D29-r1",
+"browser": "chromium",
+"path": "core",
+"D": 29,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D29.5-r1",
+"browser": "chromium",
+"path": "core",
+"D": 29.5,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-core-job-D4-r3",
+"browser": "chromium",
+"path": "core",
+"D": 4,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D30.5-r2",
+"browser": "chromium",
+"path": "core",
+"D": 30.5,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-core-job-D29-r3",
+"browser": "chromium",
+"path": "core",
+"D": 29,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D31-r3",
+"browser": "chromium",
+"path": "core",
+"D": 31,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D29.5-r3",
+"browser": "chromium",
+"path": "core",
+"D": 29.5,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "cr-core-job-D31-r2",
+"browser": "chromium",
+"path": "core",
+"D": 31,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-core-job-D29-r2",
+"browser": "chromium",
+"path": "core",
+"D": 29,
+"kill": "job",
+"rep": 2
+}
+]

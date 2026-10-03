@@ -1,0 +1,5 @@
+2026-10-03T01:34:41.893Z LISTENING 127.0.0.1:8932 pid=59820
+2026-10-03T01:37:22.318Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=59820_1_fc08e8b3
+2026-10-03T01:37:22.415Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=59820_2_2887f0d8
+2026-10-03T01:37:25.534Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=59820_3_b3654137
+2026-10-03T01:37:25.600Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=59820_4_dc6ee527

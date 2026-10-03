@@ -1,0 +1,50 @@
+[04:14:29.099] batch followup start: scenarios=armedcloseresume,idleparked,idleresume,longpark families=chromium,firefox runs=3 mcp=C:\Source\SixFive7\BrowserAI\payload\mcp\node_modules\@playwright\mcp
+[04:14:29.120] run armedcloseresume/chromium/1
+[04:14:50.560] done armedcloseresume/chromium/1 in 21,4 s: completed
+[04:14:50.569] run armedcloseresume/chromium/2
+[04:15:11.238] done armedcloseresume/chromium/2 in 20,7 s: completed
+[04:15:11.247] run armedcloseresume/chromium/3
+[04:15:32.391] done armedcloseresume/chromium/3 in 21,1 s: completed
+[04:15:32.399] run armedcloseresume/firefox/1
+[04:15:59.491] done armedcloseresume/firefox/1 in 27,1 s: completed
+[04:15:59.495] run armedcloseresume/firefox/2
+[04:16:25.865] done armedcloseresume/firefox/2 in 26,4 s: completed
+[04:16:25.869] run armedcloseresume/firefox/3
+[04:16:51.042] done armedcloseresume/firefox/3 in 25,2 s: completed
+[04:16:51.046] run idleparked/chromium/1
+[04:17:38.819] done idleparked/chromium/1 in 47,8 s: completed
+[04:17:38.823] run idleparked/chromium/2
+[04:18:27.298] done idleparked/chromium/2 in 48,5 s: completed
+[04:18:27.301] run idleparked/chromium/3
+[04:19:15.074] done idleparked/chromium/3 in 47,8 s: completed
+[04:19:15.083] run idleparked/firefox/1
+[04:20:07.686] done idleparked/firefox/1 in 52,6 s: completed
+[04:20:07.691] run idleparked/firefox/2
+[04:20:59.543] done idleparked/firefox/2 in 51,8 s: completed
+[04:20:59.546] run idleparked/firefox/3
+[04:21:51.406] done idleparked/firefox/3 in 51,9 s: completed
+[04:21:51.410] run idleresume/chromium/1
+[04:22:22.081] done idleresume/chromium/1 in 30,7 s: completed
+[04:22:22.084] run idleresume/chromium/2
+[04:22:52.747] done idleresume/chromium/2 in 30,7 s: completed
+[04:22:52.750] run idleresume/chromium/3
+[04:23:24.444] done idleresume/chromium/3 in 31,7 s: completed
+[04:23:24.447] run idleresume/firefox/1
+[04:23:58.908] done idleresume/firefox/1 in 34,5 s: completed
+[04:23:58.913] run idleresume/firefox/2
+[04:24:32.702] done idleresume/firefox/2 in 33,8 s: completed
+[04:24:32.707] run idleresume/firefox/3
+[04:25:07.992] done idleresume/firefox/3 in 35,3 s: completed
+[04:25:07.996] run longpark/chromium/1
+[04:27:46.662] done longpark/chromium/1 in 158,7 s: completed
+[04:27:46.668] run longpark/chromium/2
+[04:30:25.645] done longpark/chromium/2 in 159,0 s: completed
+[04:30:25.649] run longpark/chromium/3
+[04:33:03.756] done longpark/chromium/3 in 158,1 s: completed
+[04:33:03.759] run longpark/firefox/1
+[04:35:42.637] done longpark/firefox/1 in 158,9 s: completed
+[04:35:42.640] run longpark/firefox/2
+[04:38:20.826] done longpark/firefox/2 in 158,2 s: completed
+[04:38:20.835] run longpark/firefox/3
+[04:40:59.031] done longpark/firefox/3 in 158,2 s: completed
+[04:40:59.037] batch followup end

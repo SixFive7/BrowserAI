@@ -1,0 +1,2 @@
+smoke-0001 exited=True peakJobCommitMB=595,0 peakProcessCommitMB=334,6 cpuUserMs=4016 cpuKernelMs=2922 totalProcesses=11 activeProcesses=0 pageFaults=229380
+smoke-0002 exited=True peakJobCommitMB=358,3 peakProcessCommitMB=137,8 cpuUserMs=2266 cpuKernelMs=1391 totalProcesses=12 activeProcesses=0 pageFaults=183224

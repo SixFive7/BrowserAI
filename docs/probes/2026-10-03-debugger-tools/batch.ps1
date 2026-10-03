@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: 2026 Jori Huisman
+# SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+# Runs scenario x family x run sequentially, one browser at a time, each inside its
+# own job object (supervise.ps1). Progress goes to logs\batch-<name>.log.
+param(
+    [Parameter(Mandatory)][string]$Name,
+    [Parameter(Mandatory)][string[]]$Scenarios,
+    [string[]]$Families = @('chromium', 'firefox'),
+    [int]$Runs = 3,
+    [string]$Mcp = 'payload',
+    [int]$MaxSeconds = 240
+)
+$ErrorActionPreference = 'Stop'
+$scratch = 'C:\Source\SixFive7\BrowserAI\.work\debugger-tools'
+$node = 'C:\Source\SixFive7\BrowserAI\payload\node\node.exe'
+$mcpDir = if ($Mcp -eq 'payload') { 'C:\Source\SixFive7\BrowserAI\payload\mcp\node_modules\@playwright\mcp' } else { Join-Path $scratch 'mcp083\node_modules\@playwright\mcp' }
+$browsers = 'C:\Source\SixFive7\BrowserAI\.work\browsers-cache'
+$log = Join-Path $scratch "logs\batch-$Name.log"
+function Log([string]$m) { "[{0}] {1}" -f (Get-Date).ToString('HH:mm:ss.fff'), $m | Add-Content -LiteralPath $log }
+Log "batch $Name start: scenarios=$($Scenarios -join ',') families=$($Families -join ',') runs=$Runs mcp=$mcpDir"
+foreach ($scenario in $Scenarios) {
+    foreach ($family in $Families) {
+        for ($i = 1; $i -le $Runs; $i++) {
+            $runDir = Join-Path $scratch "runs\$Mcp\$scenario\$family\$i"
+            $existing = Join-Path $runDir 'result.json'
+            if ((Test-Path -LiteralPath $existing) -and ((Get-Content -Raw -LiteralPath $existing) -match '"outcome"')) { Log "skip $scenario/$family/$i (complete)"; continue }
+            if (Test-Path -LiteralPath $runDir) {
+                # A run cut off part-way is kept for the record and re-run from scratch.
+                $partial = "$runDir.partial-$(Get-Date -Format 'HHmmss')"
+                if (Test-Path -LiteralPath $existing) { Move-Item -LiteralPath $runDir -Destination $partial; Log "moved partial $scenario/$family/$i to $partial" }
+            }
+            New-Item -ItemType Directory -Force -Path $runDir | Out-Null
+            Log "run $scenario/$family/$i"
+            $sw = [Diagnostics.Stopwatch]::StartNew()
+            try {
+                & (Join-Path $scratch 'rig\supervise.ps1') -Node $node -Script (Join-Path $scratch 'rig\rig.cjs') -OutDir $runDir -RigArgs @($scenario, $family, "$i", $runDir, $mcpDir, $browsers) -MaxSeconds $MaxSeconds
+            }
+            catch { Log "supervisor error: $_" }
+            $outcome = try { (Get-Content -Raw -LiteralPath (Join-Path $runDir 'result.json') | ConvertFrom-Json).outcome } catch { 'no result.json' }
+            Log ("done $scenario/$family/$i in {0:n1} s: {1}" -f $sw.Elapsed.TotalSeconds, ($outcome -split "`n")[0])
+        }
+    }
+}
+Log "batch $Name end"

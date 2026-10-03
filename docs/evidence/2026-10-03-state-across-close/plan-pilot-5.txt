@@ -1,0 +1,6 @@
+R 082 chromium p5 flagnb
+R 082 chromium p5 oneshot
+R 082 chromium p5 oneshotnb
+R 082 firefox p5 ffeagernb
+R 082 firefox p5 oneshot
+R 082 firefox p5 oneshotnb

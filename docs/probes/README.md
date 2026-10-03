@@ -74,6 +74,39 @@ this one. **The directory holds nineteen rigs now, counted as its
 subdirectories**, eighteen before this one. The table further down lists
 eighteen of them, because `2026-09-21-webmcp` never had a row there.
 
+⚠️ *Corrected 2026-10-03 by addition (previously "The directory holds nineteen
+rigs now").* **Twenty-one**, counted as its subdirectories when
+[`2026-09-25-firefox-safe-mode`](2026-09-25-firefox-safe-mode/README.md) and
+[`2026-10-03-client-exit`](2026-10-03-client-exit/README.md) arrived. Neither
+selects a process by image name, and that was put to the real scan and not only
+searched for: both rigs were copied under `build/`, `NeverByImageNameTests` was
+run, and the copy was removed, with `observe.ps1` copied beside them as the
+positive control, which the scan named. **The first rig passed. The second was
+flagged in two files, and both are false positives of the scan's own wording**:
+`ExitRig/Harness.cs` spells `taskkill` on lines that carry no `/PID` (a role
+label for a process the harness found by parent pid, a method name and two case
+labels, while the one launch passes `/PID` on the next line), and
+`ExitRig/Native.cs` declares the `szExeFile` field of the toolhelp struct, which
+nothing in the rig reads. ⚠️ **So the blind spot is still one TRUE positive
+wide, and the scan would now flag three files here, not one.** Editing the rig
+to quiet the scan would make it no longer the thing that ran, which the warning
+at the top forbids. Whether these two false positives change the 2026-09-17
+decision is the rule owner's to say; they are recorded here and not decided.
+
+⚠️ *Added 2026-10-03, later the same night.* **Twenty-four**, counted as its
+subdirectories, when
+[`2026-10-03-hard-kill`](2026-10-03-hard-kill/README.md),
+[`2026-10-03-state-across-close`](2026-10-03-state-across-close/README.md) and
+[`2026-10-03-debugger-tools`](2026-10-03-debugger-tools/README.md) arrived. They
+went through the same real scan, copied under `build/` with `observe.ps1` as the
+positive control and removed after. **The second and third passed. The first was
+flagged in three files, all false positives of the same kind**: `hk.cs` declares
+the `szExeFile` field for a parent-pid walk; `orchestrate.ps1` spells `taskkill`
+on lines without `/PID` while its one launch passes `/T /F /PID` with the root
+it holds; and `reap-test.ps1` compares `Name -like` on a directory listing, not
+on a process. **The scan would now flag six files across the two rigs here and
+`observe.ps1`, and only `observe.ps1` selects a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -136,3 +169,8 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-09-24-playwright-dashboard`](2026-09-24-playwright-dashboard/README.md) | Playwright's own dashboard over a scratch registry, and the reload that hangs its session list. ⚠️ *Corrected 2026-10-01 by addition: the rig never reloads, and a reload did not hang when it was measured on 2026-09-25. The rig's README says what it does show* | |
 | [`2026-09-24-q261`](2026-09-24-q261/README.md) | Q261's refusal at the other end: a real client's re-dial, the sentence the model got, and what the notification did | |
 | [`2026-09-25-dashboard-exposure`](2026-09-25-dashboard-exposure/README.md) | What Playwright's dashboard does to a browser it did not launch: listing, control, a pause left behind, a close, its port, its singleton, and the trace viewer beside it | |
+| [`2026-09-25-firefox-safe-mode`](2026-09-25-firefox-safe-mode/README.md) | A headless Firefox launch stalling at 180 s when Shift is held as it starts, and the arms that rule out load, memory and CPU | |
+| [`2026-10-03-client-exit`](2026-10-03-client-exit/README.md) | What Claude Code and Codex do to a stdio server when a session ends: whether it gets end of file, when it is killed, and how long it has | false positives |
+| [`2026-10-03-hard-kill`](2026-10-03-hard-kill/README.md) | How old a browser's writes must be before a hard kill keeps them, and what an `@playwright/mcp` child does to its browser when its stdin ends | false positives |
+| [`2026-10-03-state-across-close`](2026-10-03-state-across-close/README.md) | What a session keeps across a browser close, what the browsers' restore options bring back, and a close with no browser | |
+| [`2026-10-03-debugger-tools`](2026-10-03-debugger-tools/README.md) | A pause armed from inside a session, and what each tool does to the call it parks | |

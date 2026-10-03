@@ -1,0 +1,73 @@
+tool	capability	verdictToday	in0.0.83	overlap	note	recommendation
+browser_close	core	allow	yes	LIFE	Closes the context; BrowserAI's idle close sends it. Not destroy: directory, profile and record stay, next call relaunches. Ends a lingering pause (fresh context, 12/12 no Paused after). Does NOT answer a parked call (0/24). As the first call after an armed pause it parks itself and wedges the child (6/6 per family).	allow
+browser_resize	core	allow	yes	RUN	Changes the viewport mid-run; BrowserAI's `viewport` is per-run and a live session's resume changes nothing, so this is the only mid-run lever.	allow
+browser_get_config	config	allow	yes	RUN (readback)	Shows headless/saveSession/userDataDir of THIS run; reads like a session setting.	allow
+browser_console_messages	core	allow	yes	-		allow
+browser_cookie_list	storage	allow	yes	-		allow
+browser_cookie_get	storage	allow	yes	-		allow
+browser_cookie_set	storage	allow	yes	-		allow
+browser_cookie_delete	storage	allow	yes	-		allow
+browser_cookie_clear	storage	allow	yes	STATE (explicit)	Wipes the profile's cookies, which persist across resume.	allow
+browser_resume	devtools	allow	yes	NAME+LIFE	Debugger release; one word from browserai_resume. Measured 0.0.82: releases the parked call in 45-266 ms, then waits for the next pause or the context close (0/6 answered in 20 s; answered when the browser closed). In BrowserAI that is upstream's 1 h idle timer; the in-flight call keeps BrowserAI's own idle close off. Only in-band recovery from the armed-close wedge (6/6).	deny (+ internal use by BrowserAI's idle close, see T1)
+browser_highlight	devtools	allow	yes	-	DevTools group, page overlay only.	allow
+browser_hide_highlight	devtools	allow	yes	-	DevTools group, page overlay only.	allow
+browser_annotate	devtools	deny	yes	LIFE	Already denied (liveness, dashboard window). The dashboard it opens has pause/resume/step.	deny (unchanged)
+browser_handle_dialog	core	allow	yes	-		allow
+browser_emulate_media	core	allow	yes	-		allow
+browser_evaluate	core	allow	yes	-		allow
+browser_file_upload	core	allow	yes	-		allow
+browser_drop	core	allow	yes	-		allow
+browser_find	core	allow	yes	-		allow
+browser_fill_form	core	allow	yes	-		allow
+browser_press_key	core-input	allow	yes	-		allow
+browser_type	core-input	allow	yes	-		allow
+browser_mouse_move_xy	vision	allow	yes	-		allow
+browser_mouse_click_xy	vision	allow	yes	-		allow
+browser_mouse_drag_xy	vision	allow	yes	-		allow
+browser_mouse_down	vision	allow	yes	-		allow
+browser_mouse_up	vision	allow	yes	-		allow
+browser_mouse_wheel	vision	allow	yes	-		allow
+browser_navigate	core-navigation	allow	yes	-		allow
+browser_navigate_back	core-navigation	allow	yes	-		allow
+browser_network_requests	core	allow	yes	RUN (minor)	Requests since page load; captureNetwork is the launch-time HAR. Different artifacts, no conflict.	allow
+browser_network_request	core	allow	yes	-		allow
+browser_network_state_set	network	allow	yes	-		allow
+browser_pdf_save	pdf	allow	yes	-		allow
+browser_start_recording	devtools	allow	yes	WORD	Records a human's actions as code; useless headless; shares "record" with tracing/captureNetwork. Mutes the debugger while recording.	allow
+browser_stop_recording	devtools	allow	yes	WORD	Pair of browser_start_recording.	allow
+browser_route	network	allow	yes	-		allow
+browser_route_list	network	allow	yes	-		allow
+browser_unroute	network	allow	yes	-		allow
+browser_run_code_unsafe	core	allow	yes	CODE	Can arm (debugger.requestPause, page.pause) and release (debugger.resume) a pause, close the context, export storage state; denying browser_resume leaves all of it reachable here.	allow (unchanged)
+browser_take_screenshot	core	allow	yes	-		allow
+browser_snapshot	core	allow	yes	-		allow
+browser_click	core	allow	yes	-		allow
+browser_drag	core	allow	yes	-		allow
+browser_hover	core	allow	yes	-		allow
+browser_select_option	core	allow	yes	-		allow
+browser_generate_locator	testing	allow	yes	-		allow
+browser_storage_state	storage	allow	yes	STATE	Measured 6/6: 413-416 byte plaintext JSON in output\ holding the cookie value and localStorage; browserai_catch_up names .har only. Not needed to keep a login: the profile is the session.	allow
+browser_set_storage_state	storage	allow	yes	STATE+LIFE	Measured 6/6: an empty state file wiped the cookie and localStorage, and both were still gone after browser_close and relaunch (the profile is the session).	allow (or deny, direction C)
+browser_tabs	core-tabs	allow	yes	LIFE (minor)	close of the last tab leaves no page; next call opens one. No session effect.	allow
+browser_start_tracing	devtools	allow	yes	WORD+RUN	Real Playwright trace into output\traces; BrowserAI's `tracing` per-run arg is upstream saveSession (a session.md log), not this. Trace network log carries cookies.	allow
+browser_stop_tracing	devtools	allow	yes	WORD+RUN	Pair of browser_start_tracing.	allow
+browser_verify_element_visible	testing	allow	yes	-		allow
+browser_verify_text_visible	testing	allow	yes	-		allow
+browser_verify_list_visible	testing	allow	yes	-		allow
+browser_verify_value	testing	allow	yes	-		allow
+browser_start_video	devtools	allow	yes	WORD	Video into output\; needs the shared ffmpeg that browserai_reinstall_browser repairs.	allow
+browser_stop_video	devtools	allow	yes	WORD	Pair of browser_start_video.	allow
+browser_video_chapter	devtools	allow	yes	-	Video overlay.	allow
+browser_video_show_actions	devtools	allow	yes	-	Video overlay.	allow
+browser_video_hide_actions	devtools	allow	yes	-	Video overlay.	allow
+browser_wait_for	core	allow	yes	-	time is capped at 30 s in 0.0.82 code (0.0.83 says so in the schema).	allow
+browser_localstorage_list	storage	allow	yes	-		allow
+browser_localstorage_get	storage	allow	yes	-		allow
+browser_localstorage_set	storage	allow	yes	-		allow
+browser_localstorage_delete	storage	allow	yes	-		allow
+browser_localstorage_clear	storage	allow	yes	STATE (explicit)	Wipes the profile's localStorage, which persists across resume.	allow
+browser_sessionstorage_list	storage	allow	yes	-		allow
+browser_sessionstorage_get	storage	allow	yes	-		allow
+browser_sessionstorage_set	storage	allow	yes	-		allow
+browser_sessionstorage_delete	storage	allow	yes	-		allow
+browser_sessionstorage_clear	storage	allow	yes	-	sessionStorage is lost on every browser close anyway.	allow

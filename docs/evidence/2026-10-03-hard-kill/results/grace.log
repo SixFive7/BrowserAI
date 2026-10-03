@@ -1,0 +1,82 @@
+server: {"listening":47811,"pid":84684}
+[1/28] cr-mcp-eof-D1-G0.75-r1 1s actualD=1,024 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (4,4s)
+[2/28] fx-mcp-eof-D1-G1.5-r1 1s actualD=1,015 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (7,1s)
+[3/28] cr-mcp-eof-D1-G1-r1 1s actualD=1,011 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (4,4s)
+retry fx-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (71248 parent=65456 image=cmd.exe createdAfterParentMs=3187,3 real=True; 76212 parent=71248 image=conhost.exe createdAfterParentMs=9,6 real=False): refusing to taskkill @ 306
+retry fx-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (74952 parent=77604 image=cmd.exe createdAfterParentMs=2284,5 real=True; 56092 parent=74952 image=conhost.exe createdAfterParentMs=9,6 real=False): refusing to taskkill @ 306
+retry fx-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (69380 parent=69352 image=cmd.exe createdAfterParentMs=3259,6 real=True; 82960 parent=69380 image=conhost.exe createdAfterParentMs=9,8 real=False): refusing to taskkill @ 306
+[4/28] fx-mcp-eof-D1-G0-r1 1s actualD= procs=9 alive= no survival err=taskkill tree holds 1 pid(s) that are not provably ours (79388 parent=76768 image=cmd.exe createdAfterParentMs=2651,6 real=True; 84920 parent=79388 image=conhost.exe createdAfterParentMs=10,8 real=False): refusing to taskkill @ 306 (12,4s)
+[5/28] cr-mcp-eof-D1-G1-r2 1s actualD=1,025 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (4,5s)
+retry cr-mcp-eof-D1-G0.25-r2 after: taskkill tree holds 2 pid(s) that are not provably ours (83092 parent=8908 image=cmd.exe createdAfterParentMs=1803 real=True; 80564 parent=83092 image=conhost.exe createdAfterParentMs=10,4 real=False; 67232 parent=83092 image=taskkill.exe createdAfterParentMs=38,5 real=False): refusing to taskkill @ 306
+retry cr-mcp-eof-D1-G0.25-r2 after: taskkill tree holds 2 pid(s) that are not provably ours (48216 parent=43588 image=cmd.exe createdAfterParentMs=756,1 real=True; 45192 parent=48216 image=conhost.exe createdAfterParentMs=9,7 real=False; 62748 parent=48216 image=taskkill.exe createdAfterParentMs=39 real=False): refusing to taskkill @ 306
+retry cr-mcp-eof-D1-G0.25-r2 after: taskkill tree holds 2 pid(s) that are not provably ours (43792 parent=67436 image=cmd.exe createdAfterParentMs=758 real=True; 73976 parent=43792 image=conhost.exe createdAfterParentMs=10 real=False; 77256 parent=43792 image=taskkill.exe createdAfterParentMs=41,5 real=False): refusing to taskkill @ 306
+[6/28] cr-mcp-eof-D1-G0.25-r2 1s actualD= procs=10 alive= no survival err=taskkill tree holds 2 pid(s) that are not provably ours (64064 parent=14984 image=cmd.exe createdAfterParentMs=748,3 real=True; 49864 parent=64064 image=conhost.exe createdAfterParentMs=10,2 real=False; 83384 parent=64064 image=taskkill.exe createdAfterParentMs=41,8 real=False): refusing to taskkill @ 306 (5,9s)
+[7/28] cr-mcp-eof-D1-G0.75-r2 1s actualD=1,017 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (4,1s)
+[8/28] cr-mcp-eof-D1-G0.5-r1 1s actualD=1,005 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (3,8s)
+retry cr-mcp-eof-D1-G0.25-r1 after: taskkill tree holds 2 pid(s) that are not provably ours (79792 parent=45860 image=cmd.exe createdAfterParentMs=1787,7 real=True; 85552 parent=79792 image=conhost.exe createdAfterParentMs=13,6 real=False; 80748 parent=79792 image=taskkill.exe createdAfterParentMs=40,4 real=False): refusing to taskkill @ 306
+retry cr-mcp-eof-D1-G0.25-r1 after: taskkill tree holds 2 pid(s) that are not provably ours (5828 parent=56720 image=cmd.exe createdAfterParentMs=765,7 real=True; 72892 parent=5828 image=conhost.exe createdAfterParentMs=9,9 real=False; 56968 parent=5828 image=taskkill.exe createdAfterParentMs=36,6 real=False): refusing to taskkill @ 306
+retry cr-mcp-eof-D1-G0.25-r1 after: taskkill tree holds 2 pid(s) that are not provably ours (62804 parent=82752 image=cmd.exe createdAfterParentMs=749,8 real=True; 77364 parent=62804 image=conhost.exe createdAfterParentMs=10,3 real=False; 80060 parent=62804 image=taskkill.exe createdAfterParentMs=36,9 real=False): refusing to taskkill @ 306
+[9/28] cr-mcp-eof-D1-G0.25-r1 1s actualD= procs=10 alive= no survival err=taskkill tree holds 2 pid(s) that are not provably ours (35204 parent=76900 image=cmd.exe createdAfterParentMs=740,2 real=True; 44092 parent=35204 image=conhost.exe createdAfterParentMs=15,1 real=False; 83288 parent=35204 image=taskkill.exe createdAfterParentMs=43,9 real=False): refusing to taskkill @ 306 (5,8s)
+retry fx-mcp-eof-D1-G0.5-r2 after: taskkill tree holds 2 pid(s) that are not provably ours (83256 parent=56092 image= createdAfterParentMs=3695,4 real=True; 65108 parent=83256 image=conhost.exe createdAfterParentMs=9,8 real=False; 70392 parent=83256 image=? createdAfterParentMs=? real=False): refusing to taskkill @ 306
+[10/28] fx-mcp-eof-D1-G0.5-r2 1s actualD=1,003 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (10,7s)
+[11/28] fx-mcp-eof-D1-G1-r2 1s actualD=1,009 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (6,6s)
+[12/28] fx-mcp-eof-D1-G0.75-r1 1s actualD=1,003 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (6,1s)
+[13/28] fx-mcp-eof-D1-G0.75-r2 1s actualD=1,007 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (6,2s)
+retry cr-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (38344 parent=54912 image=cmd.exe createdAfterParentMs=1794,9 real=True; 83692 parent=38344 image=conhost.exe createdAfterParentMs=10,1 real=False): refusing to taskkill @ 306
+retry cr-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (26540 parent=84680 image=cmd.exe createdAfterParentMs=1747,8 real=True; 12808 parent=26540 image=conhost.exe createdAfterParentMs=9,9 real=False): refusing to taskkill @ 306
+retry cr-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (85432 parent=8000 image=cmd.exe createdAfterParentMs=768,7 real=True; 85180 parent=85432 image=conhost.exe createdAfterParentMs=12 real=False): refusing to taskkill @ 306
+[14/28] cr-mcp-eof-D1-G0-r1 1s actualD= procs=10 alive= no survival err=taskkill tree holds 1 pid(s) that are not provably ours (65340 parent=57260 image=cmd.exe createdAfterParentMs=737,7 real=True; 72716 parent=65340 image=conhost.exe createdAfterParentMs=12,7 real=False): refusing to taskkill @ 306 (6,1s)
+[15/28] cr-mcp-eof-D1-G1.5-r2 1s actualD=1,007 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (4,9s)
+[16/28] cr-mcp-eof-D1-G0-r2 1s actualD=1,013 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (3,8s)
+[17/28] fx-mcp-eof-D1-G1-r1 1s actualD=1,009 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (6,5s)
+[18/28] fx-mcp-eof-D1-G5-r2 1s actualD=1,003 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (10,5s)
+[19/28] fx-mcp-eof-D1-G0.5-r1 1s actualD=1,01 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (5,9s)
+[20/28] fx-mcp-eof-D1-G0-r2 1s actualD=1,011 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (5,9s)
+[21/28] cr-mcp-eof-D1-G5-r1 1s actualD=1,013 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (8,3s)
+retry fx-mcp-eof-D1-G0.25-r1 after: taskkill tree holds 2 pid(s) that are not provably ours (29992 parent=74680 image=cmd.exe createdAfterParentMs=3162,9 real=True; 40336 parent=29992 image=conhost.exe createdAfterParentMs=9,1 real=False; 62800 parent=29992 image=taskkill.exe createdAfterParentMs=28,6 real=False): refusing to taskkill @ 306
+retry fx-mcp-eof-D1-G0.25-r1 after: taskkill tree holds 2 pid(s) that are not provably ours (81680 parent=62008 image=cmd.exe createdAfterParentMs=3167,2 real=True; 60100 parent=81680 image=conhost.exe createdAfterParentMs=9,7 real=False; 79724 parent=81680 image=taskkill.exe createdAfterParentMs=30,1 real=False): refusing to taskkill @ 306
+retry fx-mcp-eof-D1-G0.25-r1 after: taskkill tree holds 2 pid(s) that are not provably ours (77472 parent=76100 image=cmd.exe createdAfterParentMs=3157,1 real=True; 82636 parent=77472 image=conhost.exe createdAfterParentMs=9 real=False; 60292 parent=77472 image=taskkill.exe createdAfterParentMs=27,8 real=False): refusing to taskkill @ 306
+[22/28] fx-mcp-eof-D1-G0.25-r1 1s actualD= procs=9 alive= no survival err=taskkill tree holds 2 pid(s) that are not provably ours (18536 parent=75136 image=cmd.exe createdAfterParentMs=3620,2 real=True; 44812 parent=18536 image=conhost.exe createdAfterParentMs=9,6 real=False; 81708 parent=18536 image=taskkill.exe createdAfterParentMs=29,7 real=False): refusing to taskkill @ 306 (15s)
+[23/28] cr-mcp-eof-D1-G0.5-r2 1s actualD=1,007 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (3,8s)
+[24/28] fx-mcp-eof-D1-G5-r1 1s actualD=1,003 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=0 idb=True ss=False err= (10,8s)
+[25/28] fx-mcp-eof-D1-G1.5-r2 1s actualD=1,026 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (7s)
+retry fx-mcp-eof-D1-G0.25-r2 after: taskkill tree holds 2 pid(s) that are not provably ours (67948 parent=44928 image=cmd.exe createdAfterParentMs=3320,1 real=True; 70328 parent=67948 image=conhost.exe createdAfterParentMs=9,3 real=False; 50868 parent=67948 image=taskkill.exe createdAfterParentMs=29,4 real=False): refusing to taskkill @ 306
+retry fx-mcp-eof-D1-G0.25-r2 after: taskkill tree holds 2 pid(s) that are not provably ours (5000 parent=83040 image=cmd.exe createdAfterParentMs=3217,4 real=True; 70976 parent=5000 image=conhost.exe createdAfterParentMs=9,2 real=False; 75244 parent=5000 image=taskkill.exe createdAfterParentMs=28,6 real=False): refusing to taskkill @ 306
+retry fx-mcp-eof-D1-G0.25-r2 after: taskkill tree holds 2 pid(s) that are not provably ours (59776 parent=10132 image=cmd.exe createdAfterParentMs=2358,2 real=True; 72920 parent=59776 image=conhost.exe createdAfterParentMs=9,3 real=False; 72220 parent=59776 image=taskkill.exe createdAfterParentMs=30,5 real=False): refusing to taskkill @ 306
+[26/28] fx-mcp-eof-D1-G0.25-r2 1s actualD= procs=9 alive= no survival err=taskkill tree holds 2 pid(s) that are not provably ours (71324 parent=51856 image=cmd.exe createdAfterParentMs=3258,3 real=True; 74216 parent=71324 image=conhost.exe createdAfterParentMs=9,4 real=False; 78648 parent=71324 image=taskkill.exe createdAfterParentMs=29,8 real=False): refusing to taskkill @ 306 (14s)
+[27/28] cr-mcp-eof-D1-G5-r2 1s actualD=1,005 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (8,4s)
+[28/28] cr-mcp-eof-D1-G1.5-r1 1s actualD=1,004 procs=10 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (5s)
+server exited: True
+server: {"listening":47811,"pid":48784}
+skip cr-mcp-eof-D1-G0.75-r1
+skip fx-mcp-eof-D1-G1.5-r1
+skip cr-mcp-eof-D1-G1-r1
+[4/28] fx-mcp-eof-D1-G0-r1 1s actualD=1,036 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (8s)
+skip cr-mcp-eof-D1-G1-r2
+[6/28] cr-mcp-eof-D1-G0.25-r2 1s actualD=1,014 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (4,4s)
+skip cr-mcp-eof-D1-G0.75-r2
+skip cr-mcp-eof-D1-G0.5-r1
+[9/28] cr-mcp-eof-D1-G0.25-r1 1s actualD=1,004 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (4,5s)
+skip fx-mcp-eof-D1-G0.5-r2
+skip fx-mcp-eof-D1-G1-r2
+skip fx-mcp-eof-D1-G0.75-r1
+skip fx-mcp-eof-D1-G0.75-r2
+retry cr-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (37928 parent=52600 image=cmd.exe createdAfterParentMs=1923,5 real=True; 64552 parent=37928 image=conhost.exe createdAfterParentMs=11,5 real=False): refusing to taskkill @ 308
+retry cr-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (6300 parent=70396 image=cmd.exe createdAfterParentMs=795,5 real=True; 19648 parent=6300 image=conhost.exe createdAfterParentMs=10,5 real=False): refusing to taskkill @ 308
+retry cr-mcp-eof-D1-G0-r1 after: taskkill tree holds 1 pid(s) that are not provably ours (67068 parent=42668 image=cmd.exe createdAfterParentMs=758,3 real=True; 75064 parent=67068 image=conhost.exe createdAfterParentMs=13,6 real=False): refusing to taskkill @ 308
+[14/28] cr-mcp-eof-D1-G0-r1 1s actualD= procs=10 alive= no survival err=taskkill tree holds 1 pid(s) that are not provably ours (12860 parent=66980 image=cmd.exe createdAfterParentMs=777,1 real=True; 59848 parent=12860 image=conhost.exe createdAfterParentMs=11 real=False): refusing to taskkill @ 308 (6s)
+skip cr-mcp-eof-D1-G1.5-r2
+skip cr-mcp-eof-D1-G0-r2
+skip fx-mcp-eof-D1-G1-r1
+skip fx-mcp-eof-D1-G5-r2
+skip fx-mcp-eof-D1-G0.5-r1
+skip fx-mcp-eof-D1-G0-r2
+skip cr-mcp-eof-D1-G5-r1
+[22/28] fx-mcp-eof-D1-G0.25-r1 1s actualD=1,015 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (6,8s)
+skip cr-mcp-eof-D1-G0.5-r2
+skip fx-mcp-eof-D1-G5-r1
+skip fx-mcp-eof-D1-G1.5-r2
+[26/28] fx-mcp-eof-D1-G0.25-r2 1s actualD=1,003 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (6,7s)
+skip cr-mcp-eof-D1-G5-r2
+skip cr-mcp-eof-D1-G1.5-r1
+server exited: True

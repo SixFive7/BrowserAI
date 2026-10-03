@@ -1,0 +1,13 @@
+148240403.652	2026-10-03T01:46:37.3850839Z	76652	server	START	delayMs=1000 ppid=3820 parentImage=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\codex\codex.exe cmdline=C:\Source\SixFive7\BrowserAI\.work\client-exit\rig\bin\ExitRig.dll server --logdir C:\Source\SixFive7\BrowserAI\.work\client-exit\runs\cx\d1-d1000-r1 --delay-ms 1000
+148240415.657	2026-10-03T01:46:37.3963961Z	76652	server	CONSOLE	consoleWindow=0x0 visible=False consoleProcs=[76652,3820]
+148240419.858	2026-10-03T01:46:37.4005819Z	76652	server	JOB	inJob=True immediateJobLimitFlags=0x2000 assigned=1 listed=1 first64=[76652]
+148240423.413	2026-10-03T01:46:37.4041346Z	76652	server	STDIO	stdin=pipe stdout=pipe stderr=pipe
+148240425.438	2026-10-03T01:46:37.4061547Z	76652	server	PARENT_WATCH	pid=3820 image=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\codex\codex.exe created=2026-10-03T01:46:36.7978414Z
+148240441.144	2026-10-03T01:46:37.4218621Z	76652	server	STANDIN	pid=12264 jobFlagsReadBack=0x2000 
+148240452.909	2026-10-03T01:46:37.4336313Z	76652	server	RECV	method=initialize id=0 bytes=267
+148240460.877	2026-10-03T01:46:37.4415981Z	76652	server	SENT	id=0 for=initialize
+148240461.404	2026-10-03T01:46:37.4421170Z	76652	server	RECV	method=notifications/initialized id=- bytes=54
+148240463.151	2026-10-03T01:46:37.4438653Z	76652	server	RECV	method=tools/list id=1 bytes=85
+148240463.477	2026-10-03T01:46:37.4441903Z	76652	server	SENT	id=1 for=tools/list
+148241320.681	2026-10-03T01:46:38.3014003Z	76652	server	RECV	method=tools/call id=2 bytes=875
+148241321.428	2026-10-03T01:46:38.3021429Z	76652	server	SENT	id=2 for=tools/call

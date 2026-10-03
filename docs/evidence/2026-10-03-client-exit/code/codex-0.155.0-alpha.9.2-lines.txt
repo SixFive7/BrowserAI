@@ -1,0 +1,36 @@
+codex-rs/utils/pty/src/win/job.rs:62: pub fn create_without_breakaway() -> io::Result<Self> {
+codex-rs/utils/pty/src/win/job.rs:64: Self::set_limit_flags(&job.handle, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)?;
+codex-rs/utils/pty/src/win/job.rs:126: command.creation_flags(CREATE_SUSPENDED).kill_on_drop(true);
+codex-rs/utils/pty/src/win/job.rs:193: pub fn preserve_descendants(&self) -> io::Result<()> {
+codex-rs/utils/pty/src/win/job.rs:208: pub fn terminate(&self) -> io::Result<()> {
+codex-rs/utils/pty/src/win/job.rs:218: TerminateJobObject(self.handle.as_raw_handle().cast(), /*uExitCode*/ 1)
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:139: async fn close(&mut self) -> std::result::Result<(), Self::Error> {
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:140: self.process.terminate().await?;
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:297: let job = match codex_utils_pty::JobObject::create_without_breakaway() {
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:346: Some(job) => Some(LocalProcessTerminator::Job(job)),
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:442: Self::Job(job) => job.terminate(),
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:483: pub(crate) async fn terminate(&self) -> io::Result<()> {
+codex-rs/rmcp-client/src/stdio_server_launcher.rs:509: impl Drop for StdioServerProcessHandleInner {
+codex-rs/rmcp-client/src/local_stdio_transport.rs:87: async fn close(&mut self) -> io::Result<()> {
+codex-rs/rmcp-client/src/local_stdio_transport.rs:92: match tokio::time::timeout(Duration::from_secs(3), self.child.wait()).await {
+codex-rs/rmcp-client/src/local_stdio_transport.rs:94: Err(_) => self.child.kill().await,
+codex-rs/rmcp-client/src/local_child.rs:22: .kill_on_drop(true)
+codex-rs/rmcp-client/src/rmcp_client.rs:1031: pub async fn shutdown(&self) {
+codex-rs/rmcp-client/src/rmcp_client.rs:1038: && let Err(error) = process.terminate().await
+codex-rs/rmcp-client/src/rmcp_client.rs:1043: drop(previous_state);
+codex-rs/codex-mcp/src/connection_manager.rs:138: self.client.shutdown().await;
+codex-rs/codex-mcp/src/connection_manager.rs:893: pub async fn shutdown(&self) {
+codex-rs/codex-mcp/src/connection_manager.rs:902: connection.shutdown().await;
+codex-rs/core/src/session/handlers.rs:284: pub(super) async fn shutdown_session_runtime(sess: &Arc<Session>) {
+codex-rs/core/src/session/handlers.rs:309: sess.services.mcp_runtime.shutdown().await;
+codex-rs/core/src/session/handlers.rs:585: Op::Shutdown => shutdown(&sess, sub.id.clone()).await,
+codex-rs/core/src/session/handlers.rs:606: if !shutdown_received {
+codex-rs/exec/src/lib.rs:1282: CodexStatus::InitiateShutdown => {
+codex-rs/exec/src/lib.rs:1305: if let Err(err) = client.shutdown().await {
+codex-rs/exec/src/lib.rs:1918: async fn request_shutdown(
+codex-rs/app-server-transport/src/transport/stdio.rs:131: .send(TransportEvent::ConnectionClosed { connection_id })
+codex-rs/app-server-transport/src/transport/stdio.rs:133: debug!("stdin reader finished (EOF)");
+codex-rs/app-server-transport/src/transport/stdio.rs:160: .send(TransportEvent::ConnectionClosed { connection_id })
+codex-rs/app-server/src/request_processors/thread_processor.rs:1277: pub(crate) async fn shutdown_threads(&self) {
+codex-rs/app-server/src/request_processors/thread_processor.rs:1280: .shutdown_all_threads_bounded(Duration::from_secs(10))
+codex-rs/app-server/src/request_processors/thread_lifecycle.rs:425: info!("thread {thread_id} has no subscribers and is idle; shutting down");

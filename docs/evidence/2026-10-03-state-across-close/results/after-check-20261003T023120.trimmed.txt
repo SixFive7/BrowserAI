@@ -1,0 +1,43 @@
+utc=2026-10-03T02:31:15.4657771Z
+ms-playwright\b before=6 after=6
+scratch registry (PWTEST_SERVER_REGISTRY) entries=540  <- positive control that the variable took
+Local\Mozilla\Firefox folderLastWriteUtc=2026-10-03T02:31:15.0633356Z
+  same  Profiles	d----	1	2023-05-12T22:45:37.5829444Z
+  same  SkeletonUILock-082abfe3	-a---	0	2026-10-01T08:36:17.9664702Z
+  NEW  SkeletonUILock-f8c53c04	-a---	0	2026-10-03T02:31:15.0633356Z
+Launcher values before=55 now=65 added=10
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Image [DWord] 1789679329 ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Blocklist [String] %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-42EED6A0A4E7F4B2 ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Launcher [QWord] 1509180549944 ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Browser [QWord] 1509180707930 ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Telemetry [DWord] 0 ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Image [DWord] 1790534950 ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Blocklist [String] %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-F24BD46C2077FF9A ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Launcher [QWord] 1507546271218 ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Browser [QWord] 1507546406054 ours=True
+    REMOVED
+  added: C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Telemetry [DWord] 0 ours=True
+    REMOVED
+  left in place (not authorised to remove): HKCU\Software\Mozilla\Firefox\PreXULSkeletonUISettings : C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe|Progress
+  left in place (not authorised to remove): HKCU\Software\Mozilla\Firefox\PreXULSkeletonUISettings : C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe|Progress
+  left in place (not authorised to remove): HKCU\Software\Mozilla\Firefox\DllPrefetchExperiment : C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1549\firefox\firefox.exe
+  left in place (not authorised to remove): HKCU\Software\Mozilla\Firefox\DllPrefetchExperiment : C:\Source\SixFive7\BrowserAI\.work\browsers-cache\firefox-1553\firefox\firefox.exe
+browsers-cache files before=748 now=748 differing lines=0
+launched pid 67396 start 2026-10-03T01:26:36.6579450Z : gone
+launched pid 63924 start 2026-10-03T01:27:26.8437043Z : gone
+launched pid 27768 start 2026-10-03T01:28:34.9589597Z : gone
+launched pid 79800 start 2026-10-03T01:30:35.5778112Z : gone
+launched pid 68976 start 2026-10-03T01:31:50.0282104Z : gone
+launched pid 76780 start 2026-10-03T01:34:22.8929365Z : gone
+launched pid 79784 start 2026-10-03T01:39:04.9646089Z : gone
+launched pid 74112 start 2026-10-03T01:41:46.4082263Z : gone
+launched pid 54684 start 2026-10-03T01:42:39.9114112Z : gone
+scratch: files=31124 bytes=4546025868 MiB=4335.4

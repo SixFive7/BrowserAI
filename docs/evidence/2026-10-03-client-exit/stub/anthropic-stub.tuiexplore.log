@@ -1,0 +1,7 @@
+2026-10-03T01:46:37.424Z LISTENING 127.0.0.1:8933 pid=67056
+2026-10-03T01:46:39.115Z REQ HEAD /api/hello -> 404
+2026-10-03T01:49:18.877Z LISTENING 127.0.0.1:8933 pid=12780
+2026-10-03T01:49:20.601Z REQ HEAD /api/hello -> 404
+2026-10-03T01:49:29.002Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=0 probe=null msgs=[user:text] -> text id=12780_1_ece0af0d
+2026-10-03T01:49:29.012Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=12780_2_969f20d4
+2026-10-03T01:49:29.163Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=12780_3_07ce9e31

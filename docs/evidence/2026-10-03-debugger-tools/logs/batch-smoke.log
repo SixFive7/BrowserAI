@@ -1,0 +1,4 @@
+[03:26:13.472] batch smoke start: scenarios=notpaused families=chromium runs=1 mcp=C:\Source\SixFive7\BrowserAI\payload\mcp\node_modules\@playwright\mcp
+[03:26:13.496] run notpaused/chromium/1
+[03:26:20.236] done notpaused/chromium/1 in 6,7 s: completed
+[03:26:20.243] batch smoke end

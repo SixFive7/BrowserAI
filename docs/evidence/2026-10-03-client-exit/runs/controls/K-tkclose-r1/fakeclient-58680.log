@@ -1,0 +1,8 @@
+147191976.618	2026-10-03T01:29:08.9580064Z	58680	fakeclient	SPAWNED	pid=72836 action=taskkill-then-close
+147192119.318	2026-10-03T01:29:09.1000554Z	58680	fakeclient	RESP	{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"exitprobe","version":"1.0.0"}}}
+147192119.832	2026-10-03T01:29:09.1005469Z	58680	fakeclient	RESP	{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"ping","description":"Returns pong.","inputSchema":{"type":"object","properties":{}}}]}}
+147192120.404	2026-10-03T01:29:09.1011215Z	58680	fakeclient	RESP	{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"pong from pid 72836"}],"isError":false}}
+147192447.064	2026-10-03T01:29:09.4277956Z	58680	fakeclient	TASKKILL_SPAWNED	pid=68528
+147192447.195	2026-10-03T01:29:09.4279127Z	58680	fakeclient	CLOSED_STDIN	
+147193261.330	2026-10-03T01:29:10.2420571Z	58680	fakeclient	TASKKILL_DONE	code=0 out=SUCCESS: The process with PID 75732 (child process of PID 69732) has been terminated.  SUCCESS: The process with PID 7212 (child process of PID 72836) has been terminated.  SUCCESS: The process with PID 69732 (child process of PID 72836) has been terminated.  SUCCESS: The process with PID 72836 (child process of PID 58680) has been terminated.  
+147193262.556	2026-10-03T01:29:10.2432713Z	58680	fakeclient	SERVER_DONE	exited=True code=1

@@ -1,0 +1,295 @@
+== S timings and memory: median [min-max] n
+-- chromium 082
+   child1SpawnToInitMs                373 [319-600] n=3
+   firstNavMs                         617 [465-721] n=3
+   close1Ms                           156 [151-478] n=3
+   relaunchFirstCallMs                355 [312-666] n=3
+   teardownBrowserOpenExitMs          858 [520-1058] n=3
+   teardownBrowserOpenJobEmptyMs      863 [523-1064] n=3
+   child2SpawnToInitMs                380 [300-684] n=3
+   child2FirstNavMs                   497 [384-712] n=3
+   close2Ms                           199 [182-282] n=3
+   teardownNodeOnlyExitMs             16 [14-19] n=3
+   nodeOnlyWsMB                       124 [123-124] n=3
+   nodeOnlyPrivMB                     176 [176-177] n=3
+   open2LocalTabsTotalWsMB            672 [671-673] n=3
+   open2LocalTabsTotalPrivMB          537 [531-543] n=3
+   open2LocalTabsBrowserProcs         9 [9-9] n=3
+   relaunchedBlankTotalWsMB           472 [421-483] n=3
+   relaunchedBlankBrowserProcs        8 [8-9] n=3
+-- firefox 082
+   child1SpawnToInitMs                421 [355-565] n=3
+   firstNavMs                         2849 [2804-4218] n=3
+   close1Ms                           536 [483-694] n=3
+   relaunchFirstCallMs                1528 [1278-1737] n=3
+   teardownBrowserOpenExitMs          825 [629-902] n=3
+   teardownBrowserOpenJobEmptyMs      829 [633-907] n=3
+   child2SpawnToInitMs                421 [330-473] n=3
+   child2FirstNavMs                   1463 [1173-1645] n=3
+   close2Ms                           236 [229-271] n=3
+   teardownNodeOnlyExitMs             18 [16-36] n=3
+   nodeOnlyWsMB                       124 [123-124] n=3
+   nodeOnlyPrivMB                     175 [175-176] n=3
+   open2LocalTabsTotalWsMB            836 [831-837] n=3
+   open2LocalTabsTotalPrivMB          836 [826-836] n=3
+   open2LocalTabsBrowserProcs         8 [8-8] n=3
+   relaunchedBlankTotalWsMB           629 [628-630] n=3
+   relaunchedBlankBrowserProcs        7 [7-7] n=3
+-- chromium 083
+   child1SpawnToInitMs                408 [333-565] n=3
+   firstNavMs                         1458 [778-1571] n=3
+   close1Ms                           234 [217-915] n=3
+   relaunchFirstCallMs                565 [528-611] n=3
+   teardownBrowserOpenExitMs          804 [669-895] n=3
+   teardownBrowserOpenJobEmptyMs      810 [673-900] n=3
+   child2SpawnToInitMs                476 [386-483] n=3
+   child2FirstNavMs                   629 [516-835] n=3
+   close2Ms                           260 [218-305] n=3
+   teardownNodeOnlyExitMs             21 [19-27] n=3
+   nodeOnlyWsMB                       124 [124-125] n=3
+   nodeOnlyPrivMB                     177 [177-177] n=3
+   open2LocalTabsTotalWsMB            679 [668-680] n=3
+   open2LocalTabsTotalPrivMB          542 [527-544] n=3
+   open2LocalTabsBrowserProcs         10 [9-10] n=3
+   relaunchedBlankTotalWsMB           474 [467-476] n=3
+   relaunchedBlankBrowserProcs        9 [8-9] n=3
+-- firefox 083
+   child1SpawnToInitMs                422 [380-446] n=3
+   firstNavMs                         2886 [2161-3312] n=3
+   close1Ms                           528 [513-700] n=3
+   relaunchFirstCallMs                1711 [1069-1821] n=3
+   teardownBrowserOpenExitMs          864 [573-894] n=3
+   teardownBrowserOpenJobEmptyMs      867 [576-900] n=3
+   child2SpawnToInitMs                385 [326-563] n=3
+   child2FirstNavMs                   1582 [1391-1857] n=3
+   close2Ms                           253 [204-303] n=3
+   teardownNodeOnlyExitMs             21 [15-29] n=3
+   nodeOnlyWsMB                       124 [123-124] n=3
+   nodeOnlyPrivMB                     176 [176-176] n=3
+   open2LocalTabsTotalWsMB            833 [829-840] n=3
+   open2LocalTabsTotalPrivMB          833 [830-837] n=3
+   open2LocalTabsBrowserProcs         8 [8-8] n=3
+   relaunchedBlankTotalWsMB           628 [614-630] n=3
+   relaunchedBlankBrowserProcs        7 [7-7] n=3
+
+== Q328 b: browser_close with no browser open
+-- chromium 082: samples=6 ms 569 [423-715] n=6 | created 8/9 | maxActive 10/11 | browserExesSeen 8/9 | activeAfter 2 | isError false | text ### Result No open tabs. Navigate to a URL to create one.
+-- firefox 082: samples=6 ms 1593 [1244-1770] n=6 | created 8 | maxActive 9/10 | browserExesSeen 8 | activeAfter 2 | isError false | text ### Result No open tabs. Navigate to a URL to create one.
+-- chromium 083: samples=6 ms 745 [552-797] n=6 | created 9/8 | maxActive 11/10 | browserExesSeen 9/8 | activeAfter 2 | isError false | text ### Result No open tabs. Navigate to a URL to create one.
+-- firefox 083: samples=6 ms 1873 [1375-2130] n=6 | created 8 | maxActive 10/9 | browserExesSeen 8 | activeAfter 2 | isError false | text ### Result No open tabs. Navigate to a URL to create one.
+
+== S survival tallies (kept = after equals before)
+-- chromium 082 (n=3)
+   cookie_pc            browser_close: persistent-cookie -> persistent-cookie x3 | designB: persistent-cookie x3
+   cookie_jpc           browser_close: js-persistent-cookie -> js-persistent-cookie x3 | designB: js-persistent-cookie x3
+   cookie_sc            browser_close: session-cookie ->  x3 | designB:  x3
+   cookie_jsc           browser_close: js-session-cookie ->  x3 | designB:  x3
+   local                browser_close: local-value -> local-value x3 | designB: local-value x3
+   session              browser_close: session-value ->  x3 | designB:  x3
+   idb                  browser_close: idb-value -> idb-value x3 | designB: idb-value x3
+   formName             browser_close: typed-name-value ->  x3 | designB:  x3
+   scrollY              browser_close: 1500 -> 0 x3 | designB: 0 x3
+   historyLength        browser_close: 3 -> 2 x3 | designB: 2 x3
+   perm_geolocation     browser_close: granted -> denied x3 | designB: denied x3
+   perm_clipboard_read  browser_close: denied -> granted x3 | designB: granted x3
+   tabs: /b?x=1 /c#frag* -> about:blank* x3
+   firstCallText: "### Page - Page URL: about:blank ### Snapshot ```yaml  ```" x3
+   staleClick: "### Error Error: Ref e4 not found in the current page snapshot. Try capturing new snapshot." x3
+-- firefox 082 (n=3)
+   cookie_pc            browser_close: persistent-cookie -> persistent-cookie x3 | designB: persistent-cookie x3
+   cookie_jpc           browser_close: js-persistent-cookie -> js-persistent-cookie x3 | designB: js-persistent-cookie x3
+   cookie_sc            browser_close: session-cookie ->  x3 | designB:  x3
+   cookie_jsc           browser_close: js-session-cookie ->  x3 | designB:  x3
+   local                browser_close: local-value -> local-value x3 | designB: local-value x3
+   session              browser_close: session-value ->  x3 | designB:  x3
+   idb                  browser_close: idb-value -> idb-value x3 | designB: idb-value x3
+   formName             browser_close: typed-name-value ->  x3 | designB:  x3
+   scrollY              browser_close: 1500 -> 0 x3 | designB: 0 x3
+   historyLength        browser_close: 3 -> 2 x3 | designB: 2 x3
+   perm_geolocation     browser_close: granted -> granted x3 | designB: granted x3
+   perm_clipboard_read  browser_close: n/a: TypeError -> n/a: TypeError x3 | designB: n/a: TypeError x3
+   tabs: /b?x=1 /c#frag* -> about:blank* x3
+   firstCallText: "### Page - Page URL: about:blank ### Snapshot ```yaml  ```" x3
+   staleClick: "### Error Error: Ref e4 not found in the current page snapshot. Try capturing new snapshot." x3
+-- chromium 083 (n=3)
+   cookie_pc            browser_close: persistent-cookie -> persistent-cookie x3 | designB: persistent-cookie x3
+   cookie_jpc           browser_close: js-persistent-cookie -> js-persistent-cookie x3 | designB: js-persistent-cookie x3
+   cookie_sc            browser_close: session-cookie ->  x3 | designB:  x3
+   cookie_jsc           browser_close: js-session-cookie ->  x3 | designB:  x3
+   local                browser_close: local-value -> local-value x3 | designB: local-value x3
+   session              browser_close: session-value ->  x3 | designB:  x3
+   idb                  browser_close: idb-value -> idb-value x3 | designB: idb-value x3
+   formName             browser_close: typed-name-value ->  x3 | designB:  x3
+   scrollY              browser_close: 1500 -> 0 x3 | designB: 0 x3
+   historyLength        browser_close: 3 -> 2 x3 | designB: 2 x3
+   perm_geolocation     browser_close: granted -> denied x3 | designB: denied x3
+   perm_clipboard_read  browser_close: denied -> granted x3 | designB: granted x3
+   tabs: /b?x=1 /c#frag* -> about:blank* x3
+   firstCallText: "### Page - Page URL: about:blank ### Snapshot ```yaml  ```" x3
+   staleClick: "### Error Error: Ref e4 not found in the current page snapshot. Try capturing new snapshot." x3
+-- firefox 083 (n=3)
+   cookie_pc            browser_close: persistent-cookie -> persistent-cookie x3 | designB: persistent-cookie x3
+   cookie_jpc           browser_close: js-persistent-cookie -> js-persistent-cookie x3 | designB: js-persistent-cookie x3
+   cookie_sc            browser_close: session-cookie ->  x3 | designB:  x3
+   cookie_jsc           browser_close: js-session-cookie ->  x3 | designB:  x3
+   local                browser_close: local-value -> local-value x3 | designB: local-value x3
+   session              browser_close: session-value ->  x3 | designB:  x3
+   idb                  browser_close: idb-value -> idb-value x3 | designB: idb-value x3
+   formName             browser_close: typed-name-value ->  x3 | designB:  x3
+   scrollY              browser_close: 1500 -> 0 x3 | designB: 0 x3
+   historyLength        browser_close: 3 -> 2 x3 | designB: 2 x3
+   perm_geolocation     browser_close: granted -> granted x3 | designB: granted x3
+   perm_clipboard_read  browser_close: n/a: TypeError -> n/a: TypeError x3 | designB: n/a: TypeError x3
+   tabs: /b?x=1 /c#frag* -> about:blank* x3
+   firstCallText: "### Page - Page URL: about:blank ### Snapshot ```yaml  ```" x3
+   staleClick: "### Error Error: Ref e4 not found in the current page snapshot. Try capturing new snapshot." x3
+
+== H HAR
+   H-082-chromium-r1: close1=2e[/a,/b] 5328B 9185eae4663e39ea | b2open=2e[/a,/b] 5328B 9185eae4663e39ea | close2=1e[/c] 2545B 3ef617a3a6312e7b | closeNoBrowser=0e[] 324B f45fd2e6599a2584 | teardown=1e[/a] 2789B c8090898092ece9f | created=9
+   H-082-chromium-r2: close1=2e[/a,/b] 5330B bbfb4bf0aa3edae9 | b2open=2e[/a,/b] 5330B bbfb4bf0aa3edae9 | close2=1e[/c] 2533B 80c3b295c31d1b61 | closeNoBrowser=0e[] 324B 3b2b64fa9d5967d7 | teardown=1e[/a] 2789B b3ea9673e5bf7aec | created=9
+   H-082-chromium-r3: close1=2e[/a,/b] 5328B 87738ce0feb3253f | b2open=2e[/a,/b] 5328B 87738ce0feb3253f | close2=1e[/c] 2534B ffebaa22e803582f | closeNoBrowser=0e[] 324B 6eb6af2f1690f783 | teardown=1e[/a] 2788B 4700ac1a03b0b204 | created=9
+   H-082-firefox-r1: close1=2e[/a,/b] 4828B 3c564ebc1c3c5716 | b2open=2e[/a,/b] 4828B 3c564ebc1c3c5716 | close2=1e[/c] 2290B 2791b503e6477449 | closeNoBrowser=0e[] 316B a5f94e678daf2782 | teardown=1e[/a] 2545B 3fdfe6bc9781b7a3 | created=8
+   H-082-firefox-r2: close1=2e[/a,/b] 4801B dbcc207ca51d8ea5 | b2open=2e[/a,/b] 4801B dbcc207ca51d8ea5 | close2=1e[/c] 2290B 073353f089753e33 | closeNoBrowser=0e[] 316B cb5f068d1d498d22 | teardown=1e[/a] 2532B 3f0aa5bd918c5572 | created=8
+   H-082-firefox-r3: close1=2e[/a,/b] 4803B 6f39c0725c0f461d | b2open=2e[/a,/b] 4803B 6f39c0725c0f461d | close2=1e[/c] 2278B cfed3b4e9fc362f3 | closeNoBrowser=0e[] 316B 4edf988881861928 | teardown=1e[/a] 2533B b88774979e6c9b03 | created=8
+   H-083-chromium-r1: close1=2e[/a,/b] 5351B c27912feb710eaf7 | b2open=2e[/a,/b] 5351B c27912feb710eaf7 | close2=1e[/c] 2547B 485b8f47859dcd14 | closeNoBrowser=0e[] 325B cf21f35ac994491e | teardown=1e[/a] 2800B 6b84646d7553238c | created=9
+   H-083-chromium-r2: close1=2e[/a,/b] 5350B 905080801bb4c9b9 | b2open=2e[/a,/b] 5350B 905080801bb4c9b9 | close2=1e[/c] 2558B 576a9ae1771979ae | closeNoBrowser=0e[] 325B 45b7b182baa518ee | teardown=1e[/a] 2800B ef11a1135550ee6a | created=8
+   H-083-chromium-r3: close1=2e[/a,/b] 5335B bc003f8ac7a9b814 | b2open=2e[/a,/b] 5335B bc003f8ac7a9b814 | close2=1e[/c] 2545B 4f17af2714579eac | closeNoBrowser=0e[] 325B 1a51d6eb53345dc7 | teardown=1e[/a] 2798B acdc4bb09d2f5661 | created=8
+   H-083-firefox-r1: close1=2e[/a,/b] 4802B 6adfee8c5387bdc4 | b2open=2e[/a,/b] 4802B 6adfee8c5387bdc4 | close2=1e[/c] 2275B 32baf7069ac3a422 | closeNoBrowser=0e[] 316B 8a8bf706a03c1a91 | teardown=1e[/a] 2545B 56de607b84ce42ef | created=8
+   H-083-firefox-r2: close1=2e[/a,/b] 4815B 8527142c872daf35 | b2open=2e[/a,/b] 4815B 8527142c872daf35 | close2=1e[/c] 2290B 49e8cd23d0ce3deb | closeNoBrowser=0e[] 316B 6543d8259f230a99 | teardown=1e[/a] 2532B 4f60f0e46dcb9c49 | created=8
+   H-083-firefox-r3: close1=2e[/a,/b] 4815B 15c06f0b6a07ddcb | b2open=2e[/a,/b] 4815B 15c06f0b6a07ddcb | close2=1e[/c] 2278B a7bb9730607eb4b1 | closeNoBrowser=0e[] 316B 1fa5e21d0bfc743d | teardown=1e[/a] 2533B 39b83064f315bca8 | created=8
+
+== R restore
+-- chromium 082 flag (n=3) firstCallMs 983 [497-1006] n=3
+   R-082-chromium-flag-r1: after=[/c#frag* /b?x=1 chrome-error://chromewebdata/ about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[/a* about:blank about:blank chrome-error://chromewebdata/ /c#frag] | child2=[about:blank* about:blank /c#frag chrome-error://chromewebdata/ about:blank /c?child=1] armed=0
+   R-082-chromium-flag-r2: after=[chrome-error://chromewebdata/* /b?x=1 /c#frag about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[/a* about:blank /c#frag about:blank chrome-error://chromewebdata/] | child2=[about:blank* about:blank /c?child=1 /c#frag about:blank chrome-error://chromewebdata/] armed=0
+   R-082-chromium-flag-r3: after=[/b?x=1* about:blank /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[about:blank* chrome-error://chromewebdata/ about:blank /a /c#frag] | child2=[/a* about:blank chrome-error://chromewebdata/ about:blank /c?child=1 /c#frag] armed=0
+-- chromium 082 flagnb (n=3) firstCallMs 614 [537-636] n=3
+   R-082-chromium-flagnb-r1: after=[chrome-error://chromewebdata/* /b?x=1 /c#frag] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[/c#frag* chrome-error://chromewebdata/ /a] | child2=[/c?child=1* /a chrome-error://chromewebdata/] armed=0
+   R-082-chromium-flagnb-r2: after=[/b?x=1* /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[/a* /c#frag chrome-error://chromewebdata/] | child2=[/c#frag* chrome-error://chromewebdata/ /c?child=1] armed=0
+   R-082-chromium-flagnb-r3: after=[chrome-error://chromewebdata/* /b?x=1 /c#frag] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[/a* chrome-error://chromewebdata/ /c#frag] | child2=[/c?child=1* /c#frag chrome-error://chromewebdata/] armed=0
+-- chromium 082 oneshot (n=3) firstCallMs 602 [487-728] n=3
+   R-082-chromium-oneshot-r1: after=[/c#frag* chrome-error://chromewebdata/ about:blank /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[about:blank*] | child2=[/c?child=1* about:blank] armed=2
+   R-082-chromium-oneshot-r2: after=[/b?x=1* /c#frag chrome-error://chromewebdata/ about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[about:blank*] | child2=[/c?child=1* about:blank] armed=2
+   R-082-chromium-oneshot-r3: after=[/b?x=1* /c#frag chrome-error://chromewebdata/ about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+-- chromium 082 oneshotnb (n=3) firstCallMs 461 [424-802] n=3
+   R-082-chromium-oneshotnb-r1: after=[/b?x=1* /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome://new-tab-page/*] | child2=[/c?child=1*] armed=2
+   R-082-chromium-oneshotnb-r2: after=[/b?x=1* /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome://new-tab-page/*] | child2=[/c?child=1*] armed=2
+   R-082-chromium-oneshotnb-r3: after=[/b?x=1* /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome://new-tab-page/*] | child2=[/c?child=1*] armed=2
+-- chromium 082 pref (n=3) firstCallMs 444 [354-494] n=3
+   R-082-chromium-pref-r1: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+   R-082-chromium-pref-r2: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+   R-082-chromium-pref-r3: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+-- firefox 082 ffeager (n=3) firstCallMs 2091 [2033-2475] n=3
+   R-082-firefox-ffeager-r1: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank* /c#frag /posted /a about:blank] | child2=[about:blank* /c#frag /posted /a about:blank /c?child=1] armed=0
+   R-082-firefox-ffeager-r2: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank* /c#frag /posted /a about:blank] | child2=[about:blank* /c#frag /posted /a about:blank /c?child=1] armed=0
+   R-082-firefox-ffeager-r3: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank* /c#frag /posted /a about:blank] | child2=[about:blank* /c#frag /posted /a about:blank /c?child=1] armed=0
+-- firefox 082 ffeagernb (n=3) firstCallMs 2326 [1732-3257] n=3
+   R-082-firefox-ffeagernb-r1: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[/a* /c#frag /posted] | child2=[/c?child=1* /c#frag /posted] armed=0
+   R-082-firefox-ffeagernb-r2: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[/a* /c#frag /posted] | child2=[/c?child=1* /c#frag /posted] armed=0
+   R-082-firefox-ffeagernb-r3: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[/a* /c#frag /posted] | child2=[/c?child=1* /c#frag /posted] armed=0
+-- firefox 082 ffonce (n=3) firstCallMs 1852 [1830-2140] n=3
+   R-082-firefox-ffonce-r1: after=[about:blank* /c#frag /posted] B:session= form= scroll= hist= sc=session-cookie post=Not posted (GET) /posted drive=/ back= | cycle2=[about:blank* /c#frag /posted] | child2=[about:blank* /c#frag /posted] armed=0
+   R-082-firefox-ffonce-r2: after=[about:blank* /c#frag /posted] B:session= form= scroll= hist= sc=session-cookie post=Not posted (GET) /posted drive=/ back= | cycle2=[about:blank* /c#frag /posted] | child2=[about:blank* /c#frag /posted] armed=0
+   R-082-firefox-ffonce-r3: after=[about:blank* /c#frag /posted] B:session= form= scroll= hist= sc=session-cookie post=Not posted (GET) /posted drive=/ back= | cycle2=[about:blank* /c#frag /posted] | child2=[about:blank* /c#frag /posted] armed=0
+-- firefox 082 ffpref (n=3) firstCallMs 1471 [999-1543] n=3
+   R-082-firefox-ffpref-r1: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+   R-082-firefox-ffpref-r2: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+   R-082-firefox-ffpref-r3: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+-- firefox 082 oneshot (n=3) firstCallMs 2019 [1844-4117] n=3
+   R-082-firefox-oneshot-r1: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+   R-082-firefox-oneshot-r2: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+   R-082-firefox-oneshot-r3: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+-- firefox 082 oneshotnb (n=3) firstCallMs 2128 [1895-2526] n=3
+   R-082-firefox-oneshotnb-r1: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[/c?child=1*] armed=2
+   R-082-firefox-oneshotnb-r2: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[/c?child=1*] armed=2
+   R-082-firefox-oneshotnb-r3: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[/c?child=1*] armed=2
+-- firefox 082 userjs (n=3) firstCallMs 1573 [1326-1701] n=3
+   R-082-firefox-userjs-r1: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+   R-082-firefox-userjs-r2: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+   R-082-firefox-userjs-r3: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+-- chromium 083 flag (n=3) firstCallMs 615 [564-774] n=3
+   R-083-chromium-flag-r1: after=[about:blank* /b?x=1 chrome-error://chromewebdata/ /c#frag] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[/a* /c#frag about:blank about:blank chrome-error://chromewebdata/] | child2=[about:blank* about:blank about:blank chrome-error://chromewebdata/ /c#frag /c?child=1] armed=0
+   R-083-chromium-flag-r2: after=[/b?x=1* /c#frag chrome-error://chromewebdata/ about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome-error://chromewebdata/* /a about:blank /c#frag about:blank] | child2=[about:blank* about:blank about:blank /c#frag /a /c?child=1] armed=0
+   R-083-chromium-flag-r3: after=[/c#frag* chrome-error://chromewebdata/ /b?x=1 about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome-error://chromewebdata/* about:blank /a /c#frag about:blank] | child2=[about:blank* /a about:blank /c?child=1 /c#frag about:blank] armed=0
+-- chromium 083 flagnb (n=3) firstCallMs 646 [501-659] n=3
+   R-083-chromium-flagnb-r1: after=[/c#frag* /b?x=1 chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[/c#frag* /a chrome-error://chromewebdata/] | child2=[chrome-error://chromewebdata/* /a /c?child=1] armed=0
+   R-083-chromium-flagnb-r2: after=[/b?x=1* /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[/a* chrome-error://chromewebdata/ /c#frag] | child2=[/c#frag* /c?child=1 chrome-error://chromewebdata/] armed=0
+   R-083-chromium-flagnb-r3: after=[chrome-error://chromewebdata/* /b?x=1 /c#frag] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome-error://chromewebdata/* /a /c#frag] | child2=[/a* /c#frag /c?child=1] armed=0
+-- chromium 083 oneshot (n=3) firstCallMs 627 [597-666] n=3
+   R-083-chromium-oneshot-r1: after=[/b?x=1* /c#frag chrome-error://chromewebdata/ about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+   R-083-chromium-oneshot-r2: after=[/b?x=1* /c#frag chrome-error://chromewebdata/ about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+   R-083-chromium-oneshot-r3: after=[/b?x=1* /c#frag chrome-error://chromewebdata/ about:blank] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+-- chromium 083 oneshotnb (n=3) firstCallMs 708 [504-795] n=3
+   R-083-chromium-oneshotnb-r1: after=[/b?x=1* /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome://new-tab-page/*] | child2=[/c?child=1*] armed=2
+   R-083-chromium-oneshotnb-r2: after=[/b?x=1* /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome://new-tab-page/*] | child2=[/c?child=1*] armed=2
+   R-083-chromium-oneshotnb-r3: after=[/b?x=1* /c#frag chrome-error://chromewebdata/] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=127.0.0.1 chrome-error://chromewebdata/ drive=true/true back=/a | cycle2=[chrome://new-tab-page/*] | child2=[/c?child=1*] armed=2
+-- chromium 083 pref (n=1) firstCallMs 585 [585-585] n=1
+   R-083-chromium-pref-r1: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+-- firefox 083 ffeager (n=3) firstCallMs 2448 [1682-2768] n=3
+   R-083-firefox-ffeager-r1: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank* /c#frag /posted /a about:blank] | child2=[about:blank* /c#frag /posted /a about:blank /c?child=1] armed=0
+   R-083-firefox-ffeager-r2: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank* /c#frag /posted /a about:blank] | child2=[about:blank* /c#frag /posted /a about:blank /c?child=1] armed=0
+   R-083-firefox-ffeager-r3: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank* /c#frag /posted /a about:blank] | child2=[about:blank* /c#frag /posted /a about:blank /c?child=1] armed=0
+-- firefox 083 ffeagernb (n=3) firstCallMs 2388 [2323-2477] n=3
+   R-083-firefox-ffeagernb-r1: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[/a* /c#frag /posted] | child2=[/c?child=1* /c#frag /posted] armed=0
+   R-083-firefox-ffeagernb-r2: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[/a* /c#frag /posted] | child2=[/c?child=1* /c#frag /posted] armed=0
+   R-083-firefox-ffeagernb-r3: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[/a* /c#frag /posted] | child2=[/c?child=1* /c#frag /posted] armed=0
+-- firefox 083 ffonce (n=1) firstCallMs 2516 [2516-2516] n=1
+   R-083-firefox-ffonce-r1: after=[about:blank* /c#frag /posted] B:session= form= scroll= hist= sc=session-cookie post=Not posted (GET) /posted drive=/ back= | cycle2=[about:blank* /c#frag /posted] | child2=[about:blank* /c#frag /posted] armed=0
+-- firefox 083 ffpref (n=1) firstCallMs 1265 [1265-1265] n=1
+   R-083-firefox-ffpref-r1: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+-- firefox 083 oneshot (n=3) firstCallMs 2076 [1946-2369] n=3
+   R-083-firefox-oneshot-r1: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+   R-083-firefox-oneshot-r2: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+   R-083-firefox-oneshot-r3: after=[about:blank* /c#frag /posted /b?x=1] B:session=session-value form=typed-name-value scroll=1500 hist=3 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[about:blank* /c?child=1] armed=2
+-- firefox 083 oneshotnb (n=3) firstCallMs 1988 [1816-2013] n=3
+   R-083-firefox-oneshotnb-r1: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[/c?child=1*] armed=2
+   R-083-firefox-oneshotnb-r2: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[/c?child=1*] armed=2
+   R-083-firefox-oneshotnb-r3: after=[/b?x=1* /c#frag /posted] B:session=session-value form=typed-name-value scroll=1500 hist=2 sc=session-cookie post=Not posted (GET) /posted drive=true/true back=/a | cycle2=[about:blank*] | child2=[/c?child=1*] armed=2
+-- firefox 083 userjs (n=1) firstCallMs 1764 [1764-1764] n=1
+   R-083-firefox-userjs-r1: after=[about:blank*] B:session= form= scroll= hist= sc= post= drive=/ back= | cycle2=[about:blank*] | child2=[about:blank*] armed=0
+
+== T reopen recorded URLs
+-- chromium 082 (n=3) reopenMs 996 [674-1166] n=3
+   T-082-chromium-r1: url 3/3 title 2/3 current true calls 542+186+233+30 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+   T-082-chromium-r2: url 3/3 title 2/3 current true calls 914+147+83+18 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+   T-082-chromium-r3: url 3/3 title 2/3 current true calls 400+124+127+20 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+-- firefox 082 (n=3) reopenMs 2225 [2214-2427] n=3
+   T-082-firefox-r1: url 3/3 title 2/3 current true calls 1496+441+448+39 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+   T-082-firefox-r2: url 3/3 title 2/3 current true calls 1457+436+308+20 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+   T-082-firefox-r3: url 3/3 title 2/3 current true calls 1466+457+266+21 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+-- chromium 083 (n=3) reopenMs 1127 [744-1208] n=3
+   T-083-chromium-r1: url 3/3 title 2/3 current true calls 762+208+193+41 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+   T-083-chromium-r2: url 3/3 title 2/3 current true calls 428+93+196+24 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+   T-083-chromium-r3: url 3/3 title 2/3 current true calls 760+211+122+30 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+-- firefox 083 (n=3) reopenMs 2567 [2091-2722] n=3
+   T-083-firefox-r1: url 3/3 title 2/3 current true calls 1861+487+335+33 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+   T-083-firefox-r2: url 3/3 title 2/3 current true calls 1434+330+307+17 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+   T-083-firefox-r3: url 3/3 title 2/3 current true calls 1889+323+328+23 | B session session-value-> form typed-name-value-> scroll 1500->0 hist 3->2 sc_after= post Posted->Not posted (GET)
+
+== M memory (total WS MB / total private MB (browser procs))
+   M-082-chromium-r1: node0=117.6/170.4 (0p) open3=1108.3/916.5 (10p) blank3=1048.4/807.9 (10p) blank1=714.2/582.2 (8p) again=1156.8/946.1 (10p) pressure=1044.4/752 (10p) freeze=1044.8/751.9 (10p) nodeAfterClose=123.9/131.8 (0p) | nav 1506.8 close 227.3 relaunch 971.1
+   M-082-chromium-r2: node0=117.8/169.1 (0p) open3=1119/928.9 (11p) blank3=1054.3/835.6 (11p) blank1=721.7/585.6 (9p) again=1156.4/950 (11p) pressure=1052.7/753.8 (11p) freeze=1052.7/753.4 (11p) nodeAfterClose=123.9/131 (0p) | nav 1216.8 close 260.4 relaunch 948.2
+   M-082-chromium-r3: node0=117.5/168.6 (0p) open3=1149.5/954.8 (11p) blank3=1078/861.4 (11p) blank1=726.6/611.1 (9p) again=1170.3/959 (11p) pressure=1057.8/773.8 (11p) freeze=1058/773.7 (11p) nodeAfterClose=125.2/148.4 (0p) | nav 846.7 close 789.2 relaunch 955.1
+   M-082-firefox-r1: node0=117.2/169.4 (0p) open3=1377.2/1491.7 (9p) blank3=1179.9/1236.7 (9p) blank1=779.5/668 (7p) again=1350.1/1452.8 (9p) pressure= freeze= nodeAfterClose=131.9/150.1 (0p) | nav 4603.4 close 598.8 relaunch 3831.5
+   M-082-firefox-r2: node0=117.1/168.2 (0p) open3=1364.9/1483.2 (9p) blank3=1179.9/1232.2 (9p) blank1=764.6/649.4 (7p) again=1367.9/1472.8 (9p) pressure= freeze= nodeAfterClose=134/150.4 (0p) | nav 3559.6 close 662.3 relaunch 2733.3
+   M-082-firefox-r3: node0=117.7/168.6 (0p) open3=1388.9/1526.7 (9p) blank3=1165.1/1234 (9p) blank1=769.7/664.6 (7p) again=1366.6/1467.7 (9p) pressure= freeze= nodeAfterClose=130.7/148.2 (0p) | nav 3515.6 close 465.3 relaunch 2310.9
+   M-083-chromium-r1: node0=117.9/169.6 (0p) open3=1088.9/870.6 (11p) blank3=1074.2/846.5 (11p) blank1=723.4/588.6 (9p) again=1140.5/921.7 (11p) pressure=1045.7/746.1 (11p) freeze=1029.7/727 (11p) nodeAfterClose=111.7/118.1 (0p) | nav 1607.2 close 298.3 relaunch 1420.7
+   M-083-chromium-r2: node0=118/170.2 (0p) open3=1076.8/864.1 (11p) blank3=1062.5/849.4 (11p) blank1=713.7/608.4 (9p) again=1154.6/963.5 (11p) pressure=1045.6/764.5 (11p) freeze=1045.7/764.1 (11p) nodeAfterClose=124.8/146.2 (0p) | nav 1124.1 close 224.5 relaunch 1185.6
+   M-083-chromium-r3: node0=117.9/169.7 (0p) open3=1069/852.1 (10p) blank3=1052.5/821 (10p) blank1=701.2/571.7 (8p) again=1149.4/939.8 (10p) pressure=1027.6/735.9 (10p) freeze=1027.6/735.9 (10p) nodeAfterClose=124/129.6 (0p) | nav 1086.6 close 314.8 relaunch 1082.6
+   M-083-firefox-r1: node0=117.3/168.8 (0p) open3=1313.6/1406.6 (9p) blank3=1194.6/1255.6 (9p) blank1=786.3/678.1 (7p) again=1349.8/1472 (9p) pressure= freeze= nodeAfterClose=125/145.9 (0p) | nav 6197.4 close 494.7 relaunch 3273.4
+   M-083-firefox-r2: node0=117.5/168.9 (0p) open3=1346.4/1456.5 (9p) blank3=1170/1227.5 (9p) blank1=773.7/661.4 (7p) again=1376.3/1477.7 (9p) pressure= freeze= nodeAfterClose=132.1/149.5 (0p) | nav 3357.5 close 441.8 relaunch 2074.7
+   M-083-firefox-r3: node0=117.7/169.4 (0p) open3=1358.3/1453.9 (9p) blank3=1237.2/1305.5 (9p) blank1=772.8/661.7 (7p) again=1384.5/1490.5 (9p) pressure= freeze= nodeAfterClose=128.7/145.5 (0p) | nav 4913.2 close 386.3 relaunch 2037.8
+
+== D storage state
+   D-082-chromium-r1: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=- jpc=- sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-082-chromium-r2: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=- jpc=- sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-082-chromium-r3: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=- jpc=- sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-082-firefox-r1: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=Y jpc=Y sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-082-firefox-r2: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=Y jpc=Y sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-082-firefox-r3: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=Y jpc=Y sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-083-chromium-r1: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=- jpc=- sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-083-chromium-r2: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=- jpc=- sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-083-chromium-r3: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=- jpc=- sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-083-firefox-r1: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=Y jpc=Y sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-083-firefox-r2: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=Y jpc=Y sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}
+   D-083-firefox-r3: file=[pc(persistent) sc(session) jsc(session) jpc(persistent)] [1 localStorage, idb=absent] | before pc=Y jpc=Y sc=Y jsc=Y local=Y session=Y idb=Y | unclean pc=Y jpc=Y sc=- jsc=- local=- session=- idb=Y | afterSet pc=Y jpc=Y sc=Y jsc=Y local=Y session=- idb=- | ctxOpt {"cookie":"","local":null}

@@ -1,0 +1,108 @@
+2026-09-25T00:00:40.782Z +241.9 START node=v24.21.0 pid=16100 id=mem300-0001
+2026-09-25T00:00:40.798Z +257.1 SPAWN pid=59420 C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem300\mem300-0001\firefox\profile -juggler-pipe about:blank
+2026-09-25T00:00:40.853Z +312.7 [ff:err] *** You are running in headless mode.
+2026-09-25T00:00:40.917Z +376.8 [ff:err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+2026-09-25T00:00:41.110Z +569.0 [ff:out] Juggler listening to the pipe
+2026-09-25T00:00:41.112Z +571.0 [dbg]   pw:protocol SEND ► {"method":"Browser.enable","params":{"attachToDefaultContext":true,"userPrefs":[{"name":"toolkit.winRegisterApplicationRestart","value":false},{"name":"signon.rememberSignons","value":false}]},"id":1} +0ms
+2026-09-25T00:00:41.112Z +571.6 [dbg]   pw:protocol SEND ► {"method":"Browser.getInfo","id":2} +1ms
+2026-09-25T00:00:41.113Z +572.7 [dbg]   pw:protocol SEND ► {"method":"Browser.setInitScripts","params":{"scripts":[]},"id":3} +1ms
+2026-09-25T00:00:41.113Z +572.8 [dbg]   pw:protocol SEND ► {"method":"Browser.setDownloadOptions","params":{"downloadOptions":{"behavior":"saveToDisk","downloadsDir":"C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\mem300\\mem300-0001\\downloads"}},"id":4} +0ms
+2026-09-25T00:00:41.113Z +572.9 [dbg]   pw:protocol SEND ► {"method":"Browser.setDefaultViewport","params":{"viewport":{"viewportSize":{"width":1920,"height":1080},"deviceScaleFactor":1,"isMobile":false}},"id":5} +0ms
+2026-09-25T00:00:41.114Z +573.0 [dbg]   pw:protocol SEND ► {"method":"Browser.setLocaleOverride","params":{"locale":"nl-NL"},"id":6} +1ms
+2026-09-25T00:00:41.114Z +573.0 [dbg]   pw:protocol SEND ► {"method":"Browser.setTimezoneOverride","params":{"timezoneId":"Europe/Amsterdam"},"id":7} +0ms
+2026-09-25T00:00:41.114Z +573.1 [dbg]   pw:protocol SEND ► {"method":"Browser.setExtraHTTPHeaders","params":{"headers":[]},"id":8} +0ms
+2026-09-25T00:00:41.114Z +573.2 [dbg]   pw:protocol SEND ► {"method":"Browser.setColorScheme","params":{"colorScheme":"light"},"id":9} +0ms
+2026-09-25T00:00:41.179Z +638.2 [dbg]   pw:protocol ◀ RECV {"id":2,"result":{"version":"Firefox/156.0","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0"}} +65ms
+2026-09-25T00:00:41.179Z +638.4 [dbg]   pw:protocol ◀ RECV {"id":3} +0ms
+2026-09-25T00:00:41.179Z +638.5 [dbg]   pw:protocol ◀ RECV {"id":4} +0ms
+2026-09-25T00:00:41.179Z +638.6 [dbg]   pw:protocol ◀ RECV {"id":5} +0ms
+2026-09-25T00:00:41.179Z +638.6 [dbg]   pw:protocol ◀ RECV {"id":6} +0ms
+2026-09-25T00:00:41.181Z +640.9 [dbg]   pw:protocol ◀ RECV {"id":7} +2ms
+2026-09-25T00:00:41.182Z +641.0 [dbg]   pw:protocol ◀ RECV {"id":8} +1ms
+2026-09-25T00:00:41.182Z +641.0 [dbg]   pw:protocol ◀ RECV {"id":9} +0ms
+2026-09-25T00:00:41.182Z +641.1 [dbg]   pw:protocol SEND ► {"method":"Browser.setReducedMotion","params":{"reducedMotion":"no-preference"},"id":10} +0ms
+2026-09-25T00:00:41.188Z +647.3 [dbg]   pw:protocol ◀ RECV {"id":10} +6ms
+2026-09-25T00:00:41.188Z +647.4 [dbg]   pw:protocol SEND ► {"method":"Browser.setForcedColors","params":{"forcedColors":"none"},"id":11} +0ms
+2026-09-25T00:00:41.199Z +658.8 [dbg]   pw:protocol ◀ RECV {"id":11} +11ms
+2026-09-25T00:00:41.199Z +658.9 [dbg]   pw:protocol SEND ► {"method":"Browser.setContrast","params":{"contrast":"no-preference"},"id":12} +0ms
+2026-09-25T00:00:41.211Z +670.2 [dbg]   pw:protocol ◀ RECV {"id":12} +12ms
+2026-09-25T00:00:41.313Z +772.9 [ff:out] Crash Annotation GraphicsCriticalError:
+2026-09-25T00:00:41.314Z +773.1 [ff:out]  |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+2026-09-25T00:00:41.454Z +913.5 [ff:err] [Child 99464, MediaDecoderStateMachine #1] WARNING: Decoder=1f865656e00 Decode error: NS_ERROR_DOM_MEDIA_FATAL_ERR (0x806e0005) - MediaResult __cdecl mozilla::WMFVideoMFTManager::InitInternal(void): Fail to set the decoder media types: file dom\media\MediaDecoderStateMachineBase.cpp:168
+2026-09-25T00:00:41.751Z +1210.1 [ff:err] Hit MOZ_CRASH([unhandlable oom] js::wasm::Init) at ..\..\..\..\js\src\vm\JSContext.cpp:1567
+2026-09-25T00:00:41.827Z +1286.6 [ff:err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+2026-09-25T00:00:42.220Z +1679.8 [ff:err] out of memory: 0x0000000000000088 bytes requested
+2026-09-25T00:00:42.612Z +2071.6 [ff:err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147024865): file ipc\glue\GeckoChildProcessHost.cpp:837
+2026-09-25T00:00:42.620Z +2079.5 [ff:err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+2026-09-25T00:00:42.627Z +2086.5 [ff:err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+2026-09-25T00:00:42.634Z +2093.9 [ff:err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+2026-09-25T00:00:42.642Z +2101.6 [ff:err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+2026-09-25T00:00:42.649Z +2108.8 [ff:err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+2026-09-25T00:00:42.652Z +2111.8 [ff:err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+2026-09-25T00:00:42.652Z +2111.9 [ff:err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+2026-09-25T00:00:42.652Z +2111.9 [ff:err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+2026-09-25T00:00:42.652Z +2111.9 [ff:err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+2026-09-25T00:00:42.652Z +2111.9 [ff:err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+2026-09-25T00:00:42.652Z +2111.9 [ff:err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+2026-09-25T00:00:42.966Z +2425.0 [ff:err] out of memory: 0x0000000000000088 bytes requested
+2026-09-25T00:00:46.591Z +6050.0 [ff:out] console.error: [Exception... "Component returned failure code: 0x8007000e (NS_ERROR_OUT_OF_MEMORY) [amIAddonManagerStartup.encodeBlob]"  nsresult: "0x8007000e (NS_ERROR_OUT_OF_MEMORY)"  location: "JS frame :: resource://gre/modules/ExtensionParent.sys.mjs :: _saveNow :: line 2458"  data: no]
+2026-09-25T00:00:48.940Z +8399.4 [ff:out] Crash Annotation GraphicsCrit
+2026-09-25T00:00:48.940Z +8399.6 [ff:out] icalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) |[1][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13635) [GFX1-]: wr_renderer_render: OutOfMemory
+2026-09-25T00:00:48.940Z +8399.6 [ff:out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: Re
+2026-09-25T00:00:48.940Z +8399.7 [ff:out] nderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) |[1][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13635) |[2][GFX1-]
+2026-09-25T00:00:48.940Z +8399.8 [ff:out] : wr_renderer_render: OutOfMemory (t=8.13657) [GFX1-]: w
+2026-09-25T00:00:48.940Z +8399.9 [ff:out] r_renderer_render: OutOfMemory
+2026-09-25T00:00:49.069Z +8528.4 [ff:out] Crash Annotation GraphicsCriti
+2026-09-25T00:00:49.069Z +8528.5 [ff:out] calError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) |[1][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13635) |[2][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13657)
+2026-09-25T00:00:49.069Z +8528.6 [ff:out]  |[3][GFX1-]: Handling webrender error 2 (t=8.26526) [GFX1-
+2026-09-25T00:00:49.069Z +8528.7 [ff:out] ]: Handling webrender error 2
+2026-09-25T00:00:49.069Z +8528.8 [ff:out] Crash Annotation Graph
+2026-09-25T00:00:49.069Z +8528.9 [ff:out] icsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) |[1][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13635) |[2][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13657) |[3][GFX1-]: Handlin
+2026-09-25T00:00:49.070Z +8529.0 [ff:out] g webrender error 2 (t=8.26526) |[4][GFX1-]: Fall
+2026-09-25T00:00:49.070Z +8529.0 [ff:out] back SW-WR + D3D11 to SW-WR (t=8.26569) [GFX1-]: Fallback SW-WR + D3D11 to SW-WR
+2026-09-25T00:00:51.441Z +10900.8 [ff:out] console.warn: "Failed to resolve chat model choice from Remote Settings:" "out of memory"
+2026-09-25T00:00:51.442Z +10901.0 [ff:out] console.warn: "Failed to resolve chat model choice from Remote Settings:" "out of memory"
+2026-09-25T00:00:51.442Z +10901.1 [ff:out] console.warn: "Failed to resolve chat model choice from Remote Settings:" "out of memory"
+2026-09-25T00:00:53.430Z +12889.3 [ff:err] out of memory: 0x0000000000004000 bytes requested
+2026-09-25T00:00:53.482Z +12941.2 FIREFOX-EXIT code=2147483651 signal=null
+2026-09-25T00:00:53.916Z +13375.7 FAILED after 13133.7 ms: browserType.launchPersistentContext: Target page, context or browser has been closed
+Browser logs:
+
+<launching> C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem300\mem300-0001\firefox\profile -juggler-pipe about:blank
+<launched> pid=59420
+[pid=59420][err] *** You are running in headless mode.
+[pid=59420][err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+[pid=59420][out] 
+[pid=59420][out] Juggler listening to the pipe
+[pid=59420][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+[pid=59420][err] [Child 99464, MediaDecoderStateMachine #1] WARNING: Decoder=1f865656e00 Decode error: NS_ERROR_DOM_MEDIA_FATAL_ERR (0x806e0005) - MediaResult __cdecl mozilla::WMFVideoMFTManager::InitInternal(void): Fail to set the decoder media types: file dom\media\MediaDecoderStateMachineBase.cpp:168
+[pid=59420][err] Hit MOZ_CRASH([unhandlable oom] js::wasm::Init) at ..\..\..\..\js\src\vm\JSContext.cpp:1567
+[pid=59420][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=59420][err] out of memory: 0x0000000000000088 bytes requested
+[pid=59420][err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147024865): file ipc\glue\GeckoChildProcessHost.cpp:837
+[pid=59420][err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+[pid=59420][err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+[pid=59420][err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+[pid=59420][err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+[pid=59420][err] [Parent 82328, IPC I/O Parent] WARNING: Failed to launch tab subprocess @SB::LA::SpawnTarget (Error:-2147023441): file ipc\glue\GeckoChildProcessHost.cpp:837
+[pid=59420][err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+[pid=59420][err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+[pid=59420][err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+[pid=59420][err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+[pid=59420][err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+[pid=59420][err] JavaScript error: resource://gre/modules/ExtensionParent.sys.mjs, line 2046: TypeError: can't access property "addMessageListener", messageManager is null
+[pid=59420][err] out of memory: 0x0000000000000088 bytes requested
+[pid=59420][out] console.error: [Exception... "Component returned failure code: 0x8007000e (NS_ERROR_OUT_OF_MEMORY) [amIAddonManagerStartup.encodeBlob]"  nsresult: "0x8007000e (NS_ERROR_OUT_OF_MEMORY)"  location: "JS frame :: resource://gre/modules/ExtensionParent.sys.mjs :: _saveNow :: line 2458"  data: no]
+[pid=59420][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) |[1][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13635) [GFX1-]: wr_renderer_render: OutOfMemory
+[pid=59420][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) |[1][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13635) |[2][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13657) [GFX1-]: wr_renderer_render: OutOfMemory
+[pid=59420][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) |[1][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13635) |[2][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13657) |[3][GFX1-]: Handling webrender error 2 (t=8.26526) [GFX1-]: Handling webrender error 2
+[pid=59420][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.509817) |[1][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13635) |[2][GFX1-]: wr_renderer_render: OutOfMemory (t=8.13657) |[3][GFX1-]: Handling webrender error 2 (t=8.26526) |[4][GFX1-]: Fallback SW-WR + D3D11 to SW-WR (t=8.26569) [GFX1-]: Fallback SW-WR + D3D11 to SW-WR
+[pid=59420][out] console.warn: "Failed to resolve chat model choice from Remote Settings:" "out of memory"
+[pid=59420][out] console.warn: "Failed to resolve chat model choice from Remote Settings:" "out of memory"
+[pid=59420][out] console.warn: "Failed to resolve chat model choice from Remote Settings:" "out of memory"
+[pid=59420][err] out of memory: 0x0000000000004000 bytes requested
+Call log:
+  - <launching> C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\mem300\mem300-0001\firefox\profile -juggler-pipe about:blank
+  - <launched> pid=59420
+  - [pid=59420][err] *** You are ru
+2026-09-25T00:00:53.927Z +13386.0 DONE {"id":"mem300-0001","batch":1,"mode":"b1-mem300","nodePid":16100,"startUtc":"2026-09-25T00:00:40.783Z","ok":false,"failMs":13133.7,"error":"browserType.launchPersistentContext: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\firefox-1549\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\Br

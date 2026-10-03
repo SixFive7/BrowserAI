@@ -1,0 +1,15 @@
+inspect at 2026-09-24T23:11:11.4401219Z firefoxPid=102436
+process cpu 16 ms total, +0 ms over 2 s; threads=4; handles=83; privateMB=1,4 wsMB=6,8
+
+   Tid Start        State         Wait CpuMs DeltaMs
+   --- -----        -----         ---- ----- -------
+ 41084 01:10:55.714  Wait  UserRequest 16,00    0,00
+ 81572 01:10:55.725  Wait EventPairLow  0,00    0,00
+108124 01:10:55.726  Wait EventPairLow  0,00    0,00
+ 99524 01:10:55.726  Wait EventPairLow  0,00    0,00
+
+
+windows of the pid:
+
+child pid=61820 cpuMs=1156 cmd=-no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\serial1\serial1-0016\firefox\profile -juggler-pipe about:blank
+

@@ -1,0 +1,130 @@
+[
+{
+"id": "cr-mcp-taskkill-D0-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "taskkill",
+"rep": 2
+},
+{
+"id": "fx-mcp-taskkill-D30-r2",
+"browser": "firefox",
+"path": "mcp",
+"D": 30,
+"kill": "taskkill",
+"rep": 2
+},
+{
+"id": "fx-mcp-taskkill-D0-r2",
+"browser": "firefox",
+"path": "mcp",
+"D": 0,
+"kill": "taskkill",
+"rep": 2
+},
+{
+"id": "fx-mcp-job-D0-r1",
+"browser": "firefox",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "fx-mcp-job-D30-r2",
+"browser": "firefox",
+"path": "mcp",
+"D": 30,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "fx-mcp-taskkill-D0-r1",
+"browser": "firefox",
+"path": "mcp",
+"D": 0,
+"kill": "taskkill",
+"rep": 1
+},
+{
+"id": "fx-mcp-taskkill-D30-r1",
+"browser": "firefox",
+"path": "mcp",
+"D": 30,
+"kill": "taskkill",
+"rep": 1
+},
+{
+"id": "fx-mcp-job-D0-r2",
+"browser": "firefox",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-mcp-job-D30-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "cr-mcp-job-D30-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-mcp-taskkill-D0-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "taskkill",
+"rep": 1
+},
+{
+"id": "cr-mcp-taskkill-D30-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "taskkill",
+"rep": 2
+},
+{
+"id": "fx-mcp-job-D30-r1",
+"browser": "firefox",
+"path": "mcp",
+"D": 30,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-mcp-job-D0-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "cr-mcp-taskkill-D30-r1",
+"browser": "chromium",
+"path": "mcp",
+"D": 30,
+"kill": "taskkill",
+"rep": 1
+},
+{
+"id": "cr-mcp-job-D0-r2",
+"browser": "chromium",
+"path": "mcp",
+"D": 0,
+"kill": "job",
+"rep": 2
+}
+]

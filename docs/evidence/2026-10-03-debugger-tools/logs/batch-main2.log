@@ -1,0 +1,182 @@
+[03:32:09.380] batch main2 start: scenarios=close,cancel,runcode,navigate,tabs,resume,stdin,armedclose,notpaused,direct,pagepause,step,location,endpoint,artifacts families=chromium,firefox runs=3 mcp=C:\Source\SixFive7\BrowserAI\payload\mcp\node_modules\@playwright\mcp
+[03:32:09.398] run close/chromium/1
+[03:32:43.283] done close/chromium/1 in 33,9 s: completed
+[03:32:43.291] run close/chromium/2
+[03:33:16.482] done close/chromium/2 in 33,2 s: completed
+[03:33:16.484] run close/chromium/3
+[03:33:49.710] done close/chromium/3 in 33,2 s: completed
+[03:33:49.732] run close/firefox/1
+[03:34:26.528] done close/firefox/1 in 36,8 s: completed
+[03:34:26.533] run close/firefox/2
+[03:35:04.301] done close/firefox/2 in 37,8 s: completed
+[03:35:04.305] run close/firefox/3
+[03:35:41.556] done close/firefox/3 in 37,2 s: completed
+[03:35:41.565] run cancel/chromium/1
+[03:36:18.352] done cancel/chromium/1 in 36,8 s: completed
+[03:36:18.355] run cancel/chromium/2
+[03:36:55.733] done cancel/chromium/2 in 37,4 s: completed
+[03:36:55.736] run cancel/chromium/3
+[03:37:33.014] done cancel/chromium/3 in 37,3 s: completed
+[03:37:33.018] run cancel/firefox/1
+[03:38:12.910] done cancel/firefox/1 in 39,9 s: completed
+[03:38:12.914] run cancel/firefox/2
+[03:38:54.302] done cancel/firefox/2 in 41,3 s: completed
+[03:38:54.306] run cancel/firefox/3
+[03:39:36.237] done cancel/firefox/3 in 41,9 s: completed
+[03:39:36.242] run runcode/chromium/1
+[03:39:55.507] done runcode/chromium/1 in 19,3 s: completed
+[03:39:55.511] run runcode/chromium/2
+[03:40:14.784] done runcode/chromium/2 in 19,3 s: completed
+[03:40:14.789] run runcode/chromium/3
+[03:40:35.039] done runcode/chromium/3 in 20,2 s: completed
+[03:40:35.042] run runcode/firefox/1
+[03:40:56.753] done runcode/firefox/1 in 21,7 s: completed
+[03:40:56.758] run runcode/firefox/2
+[03:41:18.550] done runcode/firefox/2 in 21,8 s: completed
+[03:41:18.553] run runcode/firefox/3
+[03:41:39.820] done runcode/firefox/3 in 21,3 s: completed
+[03:41:39.823] run navigate/chromium/1
+[03:42:15.578] done navigate/chromium/1 in 35,7 s: completed
+[03:42:15.583] run navigate/chromium/2
+[03:42:51.845] done navigate/chromium/2 in 36,2 s: completed
+[03:42:51.848] run navigate/chromium/3
+[03:43:27.675] done navigate/chromium/3 in 35,8 s: completed
+[03:43:27.679] run navigate/firefox/1
+[03:44:07.508] done navigate/firefox/1 in 39,8 s: completed
+[03:44:07.512] run navigate/firefox/2
+[03:44:46.338] done navigate/firefox/2 in 38,8 s: completed
+[03:44:46.341] run navigate/firefox/3
+[03:45:25.669] done navigate/firefox/3 in 39,3 s: completed
+[03:45:25.672] run tabs/chromium/1
+[03:46:04.188] done tabs/chromium/1 in 38,5 s: completed
+[03:46:04.192] run tabs/chromium/2
+[03:46:42.509] done tabs/chromium/2 in 38,3 s: completed
+[03:46:42.515] run tabs/chromium/3
+[03:47:21.346] done tabs/chromium/3 in 38,8 s: completed
+[03:47:21.349] run tabs/firefox/1
+[03:48:02.666] done tabs/firefox/1 in 41,3 s: completed
+[03:48:02.670] run tabs/firefox/2
+[03:48:45.049] done tabs/firefox/2 in 42,4 s: completed
+[03:48:45.054] run tabs/firefox/3
+[03:49:28.951] done tabs/firefox/3 in 43,9 s: completed
+[03:49:28.956] run resume/chromium/1
+[03:50:08.297] done resume/chromium/1 in 39,3 s: completed
+[03:50:08.301] run resume/chromium/2
+[03:50:47.684] done resume/chromium/2 in 39,4 s: completed
+[03:50:47.689] run resume/chromium/3
+[03:51:27.493] done resume/chromium/3 in 39,8 s: completed
+[03:51:27.497] run resume/firefox/1
+[03:52:12.067] done resume/firefox/1 in 44,6 s: completed
+[03:52:12.072] run resume/firefox/2
+[03:52:57.015] done resume/firefox/2 in 44,9 s: completed
+[03:52:57.019] run resume/firefox/3
+[03:53:40.845] done resume/firefox/3 in 43,8 s: completed
+[03:53:40.849] run stdin/chromium/1
+[03:54:07.602] done stdin/chromium/1 in 26,7 s: completed
+[03:54:07.607] run stdin/chromium/2
+[03:54:34.400] done stdin/chromium/2 in 26,8 s: completed
+[03:54:34.403] run stdin/chromium/3
+[03:55:01.685] done stdin/chromium/3 in 27,3 s: completed
+[03:55:01.690] run stdin/firefox/1
+[03:55:31.473] done stdin/firefox/1 in 29,8 s: completed
+[03:55:31.477] run stdin/firefox/2
+[03:56:00.776] done stdin/firefox/2 in 29,3 s: completed
+[03:56:00.781] run stdin/firefox/3
+[03:56:30.538] done stdin/firefox/3 in 29,7 s: completed
+[03:56:30.542] run armedclose/chromium/1
+[03:57:04.731] done armedclose/chromium/1 in 34,2 s: completed
+[03:57:04.734] run armedclose/chromium/2
+[03:57:39.626] done armedclose/chromium/2 in 34,9 s: completed
+[03:57:39.630] run armedclose/chromium/3
+[03:58:14.001] done armedclose/chromium/3 in 34,4 s: completed
+[03:58:14.004] run armedclose/firefox/1
+[03:58:53.875] done armedclose/firefox/1 in 39,9 s: completed
+[03:58:53.881] run armedclose/firefox/2
+[03:59:33.322] done armedclose/firefox/2 in 39,4 s: completed
+[03:59:33.326] run armedclose/firefox/3
+[04:00:11.641] done armedclose/firefox/3 in 38,3 s: completed
+[04:00:11.645] run notpaused/chromium/1
+[04:00:19.309] done notpaused/chromium/1 in 7,7 s: completed
+[04:00:19.313] run notpaused/chromium/2
+[04:00:26.457] done notpaused/chromium/2 in 7,1 s: completed
+[04:00:26.461] run notpaused/chromium/3
+[04:00:33.117] done notpaused/chromium/3 in 6,6 s: completed
+[04:00:33.121] run notpaused/firefox/1
+[04:00:43.807] done notpaused/firefox/1 in 10,7 s: completed
+[04:00:43.810] run notpaused/firefox/2
+[04:00:52.440] done notpaused/firefox/2 in 8,6 s: completed
+[04:00:52.443] run notpaused/firefox/3
+[04:01:01.571] done notpaused/firefox/3 in 9,1 s: completed
+[04:01:01.577] run direct/chromium/1
+[04:01:16.732] done direct/chromium/1 in 15,1 s: completed
+[04:01:16.735] run direct/chromium/2
+[04:01:31.930] done direct/chromium/2 in 15,2 s: completed
+[04:01:31.934] run direct/chromium/3
+[04:01:47.099] done direct/chromium/3 in 15,2 s: completed
+[04:01:47.103] run direct/firefox/1
+[04:02:05.765] done direct/firefox/1 in 18,7 s: completed
+[04:02:05.769] run direct/firefox/2
+[04:02:22.928] done direct/firefox/2 in 17,2 s: completed
+[04:02:22.933] run direct/firefox/3
+[04:02:40.084] done direct/firefox/3 in 17,1 s: completed
+[04:02:40.087] run pagepause/chromium/1
+[04:03:06.763] done pagepause/chromium/1 in 26,7 s: completed
+[04:03:06.766] run pagepause/chromium/2
+[04:03:33.974] done pagepause/chromium/2 in 27,2 s: completed
+[04:03:33.976] run pagepause/chromium/3
+[04:04:00.667] done pagepause/chromium/3 in 26,7 s: completed
+[04:04:00.670] run pagepause/firefox/1
+[04:04:29.404] done pagepause/firefox/1 in 28,7 s: completed
+[04:04:29.408] run pagepause/firefox/2
+[04:04:58.128] done pagepause/firefox/2 in 28,7 s: completed
+[04:04:58.131] run pagepause/firefox/3
+[04:05:26.796] done pagepause/firefox/3 in 28,7 s: completed
+[04:05:26.798] run step/chromium/1
+[04:05:49.972] done step/chromium/1 in 23,2 s: completed
+[04:05:49.975] run step/chromium/2
+[04:06:13.633] done step/chromium/2 in 23,7 s: completed
+[04:06:13.636] run step/chromium/3
+[04:06:36.808] done step/chromium/3 in 23,2 s: completed
+[04:06:36.810] run step/firefox/1
+[04:07:01.975] done step/firefox/1 in 25,2 s: completed
+[04:07:01.978] run step/firefox/2
+[04:07:27.143] done step/firefox/2 in 25,2 s: completed
+[04:07:27.146] run step/firefox/3
+[04:07:53.926] done step/firefox/3 in 26,8 s: completed
+[04:07:53.929] run location/chromium/1
+[04:08:12.088] done location/chromium/1 in 18,2 s: completed
+[04:08:12.092] run location/chromium/2
+[04:08:30.750] done location/chromium/2 in 18,6 s: completed
+[04:08:30.753] run location/chromium/3
+[04:08:48.916] done location/chromium/3 in 18,2 s: completed
+[04:08:48.921] run location/firefox/1
+[04:09:10.082] done location/firefox/1 in 21,2 s: completed
+[04:09:10.085] run location/firefox/2
+[04:09:30.364] done location/firefox/2 in 20,3 s: completed
+[04:09:30.368] run location/firefox/3
+[04:09:51.038] done location/firefox/3 in 20,7 s: completed
+[04:09:51.041] run endpoint/chromium/1
+[04:10:14.790] done endpoint/chromium/1 in 23,7 s: completed
+[04:10:14.793] run endpoint/chromium/2
+[04:10:38.463] done endpoint/chromium/2 in 23,7 s: completed
+[04:10:38.467] run endpoint/chromium/3
+[04:11:02.146] done endpoint/chromium/3 in 23,7 s: completed
+[04:11:02.149] run endpoint/firefox/1
+[04:11:27.816] done endpoint/firefox/1 in 25,7 s: completed
+[04:11:27.819] run endpoint/firefox/2
+[04:11:52.970] done endpoint/firefox/2 in 25,1 s: completed
+[04:11:52.974] run endpoint/firefox/3
+[04:12:19.665] done endpoint/firefox/3 in 26,7 s: completed
+[04:12:19.668] run artifacts/chromium/1
+[04:12:27.754] done artifacts/chromium/1 in 8,1 s: completed
+[04:12:27.759] run artifacts/chromium/2
+[04:12:36.397] done artifacts/chromium/2 in 8,6 s: completed
+[04:12:36.402] run artifacts/chromium/3
+[04:12:45.022] done artifacts/chromium/3 in 8,6 s: completed
+[04:12:45.025] run artifacts/firefox/1
+[04:12:56.632] done artifacts/firefox/1 in 11,6 s: completed
+[04:12:56.636] run artifacts/firefox/2
+[04:13:09.759] done artifacts/firefox/2 in 13,1 s: completed
+[04:13:09.762] run artifacts/firefox/3
+[04:13:21.885] done artifacts/firefox/3 in 12,1 s: completed
+[04:13:21.886] batch main2 end

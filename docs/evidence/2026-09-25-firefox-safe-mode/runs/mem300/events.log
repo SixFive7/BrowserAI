@@ -1,0 +1,6 @@
+2026-09-25T00:00:40.4591441Z run=mem300 count=2 batch=1 timeoutMs=30000 suspectMs=15000 jobMemoryMB=300 cpuRate=0 debug=pw:protocol
+2026-09-25T00:00:40.4793743Z launched mem300-0001 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=16100 batch=1 suiteActive=False 
+2026-09-25T00:00:54.0687752Z closed mem300-0001 exited=True peakJobCommitMB=316,8 peakProcessCommitMB=193,3 cpuUserMs=1500 cpuKernelMs=1094 totalProcesses=23 activeProcesses=0 pageFaults=197645
+2026-09-25T00:00:55.6207464Z launched mem300-0002 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=91256 batch=2 suiteActive=False 
+2026-09-25T00:00:59.7599862Z closed mem300-0002 exited=True peakJobCommitMB=316,9 peakProcessCommitMB=152,6 cpuUserMs=1188 cpuKernelMs=656 totalProcesses=16 activeProcesses=0 pageFaults=171065
+2026-09-25T00:01:01.3023155Z run mem300 done: 2 launched

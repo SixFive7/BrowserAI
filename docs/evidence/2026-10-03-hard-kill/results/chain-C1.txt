@@ -1,0 +1,7 @@
+=== C1 took the suite lock after waiting 180s 2026-10-03T05:21:35Z
+=== grace start 2026-10-03T05:21:35Z
+=== grace exit=0 2026-10-03T05:24:54Z
+=== aggr2-cr start 2026-10-03T05:24:55Z
+=== aggr2-cr exit=0 2026-10-03T05:26:09Z
+=== chain done 2026-10-03T05:26:09Z
+=== C1 released the suite lock 2026-10-03T05:26:10Z

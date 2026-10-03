@@ -1,0 +1,4 @@
+[03:30:19.070] batch smoke2 start: scenarios=close families=chromium runs=1 mcp=C:\Source\SixFive7\BrowserAI\payload\mcp\node_modules\@playwright\mcp
+[03:30:19.090] run close/chromium/1
+[03:30:52.999] done close/chromium/1 in 33,9 s: completed
+[03:30:53.001] batch smoke2 end

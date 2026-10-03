@@ -674,6 +674,17 @@ The only channel to the model is a tool result.
 **At exit the client kills the server tree**, `taskkill /T /F` on the server's
 pid, which is why nothing of ours runs after the client goes.
 
+⚠️ *Corrected 2026-10-03 @ Claude Code 2.1.288 by addition (previously "At exit
+the client kills the server tree, `taskkill /T /F` on the server's pid, which is
+why nothing of ours runs after the client goes").* **The kill is real and the
+conclusion was too strong.** Measured over 168 graceful Claude Code exits, the
+server's stdin reaches end of file first, every time, and the tree kill lands
+**0.53 to 1.15 s** later; a server that finishes inside about half a second
+gets out by itself. When `claude` is itself killed there is no end of file at
+all, and the server dies within 19 ms. No capture behind the sentence above was
+found in the batch it sits beside. See
+[what each client does to a stdio server when the session ends](#what-each-client-does-to-a-stdio-server-when-the-session-ends----measured-2026-10-03).
+
 **What the documentation says and what the code does are not the same thing, and
 the difference is load-bearing.** `code.claude.com/docs/en/mcp` says a stdio
 server is *not* reconnected automatically, and that is true of the transport: the
@@ -852,6 +863,70 @@ against the real client configuration or the default app root** -- every run her
 wrote inside its own scratch `CLAUDE_CONFIG_DIR` or `CODEX_HOME`, and every server
 ran with `BROWSERAI_ROOT` at a scratch app root, because the stray sweep is
 machine-wide and the default root is shared with an installed BrowserAI.
+
+## What each client does to a stdio server when the session ends -- measured 2026-10-03
+
+`[FLOATS]` **Claude Code 2.1.288** (the CLI) and **2.1.287** (the binary the VS
+Code extension ships), **codex-cli 0.155.0-alpha.9.2** and **0.160.0**,
+Windows 11. 491 runs of a purpose-built .NET server with one tool, which logs
+its end of file and its own death on a QPC clock, delays its exit after end of
+file by 0, 100, 1,000, 3,000, 6,000 or 15,000 ms, and keeps a stand-in child in
+a `KILL_ON_JOB_CLOSE` job of its own; a harness opens a handle on every
+descendant and records how and when each one died. Every client ran under a
+scratch configuration against a local API stub, so no model was called. Q356 a.
+[Evidence](../../docs/evidence/2026-10-03-client-exit/README.md),
+[rig](../../docs/probes/2026-10-03-client-exit/README.md).
+
+| How the session ended | Runs | End of file reached the server | How the server died, when it did not exit first |
+|---|--:|---|---|
+| Claude Code, every graceful end: `-p` finishing, stream-json input closed (CLI and VS Code binary), `/exit`, Ctrl+C twice, the terminal closed, an in-flight call interrupted, the SDK's `close()` | 168 | **168 of 168** | `taskkill /T /F`, exit code 1, **533 to 1,154 ms after the end of file**; per-scenario medians 681 to 911 ms |
+| `claude` itself killed (CLI and VS Code binary) | 72 | **0 of 72** | with `claude`'s own job, exit code 0, **2.2 to 18.9 ms** after `claude` |
+| The VS Code extension host exiting, through a stand-in for it | 18 | 0 of 18 | `claude` died 2.0 to 5.9 ms after the host and the server 0.0 to 7.7 ms after `claude`, by job |
+| `codex exec` finishing | 24 | **0 of 24** | its own job terminated, exit code 1, **111 to 348 ms before** `codex exec` itself exited |
+| `codex app-server`, its stdin closed | 24 | **0 of 24** | its own job terminated, exit code 1, 2.4 to 10.7 ms after the close |
+| `codex app-server` killed | 12 | 1 of 12 | with the app-server's job, exit code 0, 5.4 to 49.5 ms after it |
+
+⭐ **In Claude Code's graceful exits a server has about half a second.** A server
+that exits within 0 or 100 ms of the end of file got out by itself in every run;
+one that needed 1,000 ms was killed in most runs and got out in four; every
+server that needed 3,000 ms or more was killed. **The order is the client's
+own:** read at offset 238,874,235 of the 2.1.288 bundle, its MCP cleanup starts
+`taskkill.exe /PID <pid> /T /F` without waiting for it and only then closes the
+transport, which is the end of file. The measured runs agree: in all 166 runs
+where the harness saw it, the `taskkill` process was created 5.2 to 112.6 ms
+before the server saw its end of file. The SDK transport's
+own close, which would wait 2 s before a `SIGTERM`, is never what ends the
+server. The 2.1.287 binary carries the same cleanup.
+
+⭐ **Codex never closes a server's stdin. It terminates the server's job, at
+once.** Read in `openai/codex` at `rust-v0.155.0-alpha.9.2`: each stdio server
+starts in a job created with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`
+(`codex-rs/utils/pty/src/win/job.rs:62-64`), and shutdown calls
+`TerminateJobObject(job, 1)` (`:218`) through
+`stdio_server_launcher.rs:139-140` and `:442`. 0.160.0 measured the same. This
+is consistent with
+[what Codex hands a stdio server](#what-codex-hands-a-stdio-server-and-how-it-ends-one----measured-2026-09-24),
+whose fourth finding saw the BrowserAI server gone about 100 ms after the
+app-server's own end of file.
+
+**What it means for BrowserAI, read and not measured here:** a clean shutdown
+starts with end of file, closes node's stdin and waits up to 5 s for it. Under
+Claude Code that wait is cut at about half a second by the tree kill, and under
+Codex and a killed Claude Code it never starts. What a browser loses when it is
+killed and not closed is
+[a separate measurement](../playwright/provisioning-and-timings.md#a-browser-server-that-ends-itself-loses-the-same-stores-as-one-that-is-killed----measured-2026-09-22).
+
+⚠️ **Not established.** The VS Code extension itself was not driven: a node
+stand-in for its host was written from a reading of its `extension.js`. The Codex
+desktop app was not driven either. Only one delay grid was run, so where between
+100 and 1,000 ms a Claude Code server stops getting out is a range and not a
+figure.
+
+**Re-establish** with the rig: `tools\gen.ps1` writes a batch for the scenarios
+and delays, `ExitRig.exe run` drives it, `tools\analyze.py` writes one row per
+server instance and `tools\summarize.py` and `tools\ranges.py` print the table.
+The positive controls in `runs\controls` are the first thing to run: each
+signature the analysis reads, planted by a fake client.
 
 ## Tooling around the protocol
 

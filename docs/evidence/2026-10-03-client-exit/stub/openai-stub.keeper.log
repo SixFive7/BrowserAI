@@ -1,0 +1,25 @@
+2026-10-03T02:09:03.962Z LISTENING 127.0.0.1:8938 pid=84524
+2026-10-03T02:11:33.996Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_1_cbddd0fa
+2026-10-03T02:11:34.058Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_2_892e3557
+2026-10-03T02:11:36.888Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_3_841c7cc3
+2026-10-03T02:11:36.965Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_4_c743429f
+2026-10-03T02:11:39.623Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_5_871bf5c3
+2026-10-03T02:11:39.685Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_6_31970bcd
+2026-10-03T02:11:43.444Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_7_d1e0f46a
+2026-10-03T02:11:43.511Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_8_7a921113
+2026-10-03T02:11:46.157Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_9_9e3bab2d
+2026-10-03T02:11:46.226Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_10_62babf4a
+2026-10-03T02:11:48.896Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_11_82f99004
+2026-10-03T02:11:48.971Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_12_9e3fba45
+2026-10-03T02:11:51.655Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_13_25572993
+2026-10-03T02:11:51.719Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_14_7998feec
+2026-10-03T02:11:56.789Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_15_70d7fff8
+2026-10-03T02:11:56.866Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_16_95884f71
+2026-10-03T02:12:01.337Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_17_6554aeb2
+2026-10-03T02:12:01.394Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_18_bc72a847
+2026-10-03T02:12:05.852Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_19_12d42190
+2026-10-03T02:12:05.923Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_20_5ea9602c
+2026-10-03T02:12:10.478Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_21_dcce3e86
+2026-10-03T02:12:10.552Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_22_0f2bab52
+2026-10-03T02:12:15.160Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=false -> tool id=84524_23_2bf761ca
+2026-10-03T02:12:15.230Z REQ POST /responses model=stub-model tools=13 ns=mcp__probe answered=true -> text id=84524_24_839717f5

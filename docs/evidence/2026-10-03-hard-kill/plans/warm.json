@@ -1,0 +1,146 @@
+[
+{
+"id": "fx-core-warm-job-D10-r1",
+"browser": "firefox",
+"path": "core",
+"D": 10,
+"kill": "job",
+"rep": 1,
+"warm": true
+},
+{
+"id": "fx-core-warm-job-D0-r1",
+"browser": "firefox",
+"path": "core",
+"D": 0,
+"kill": "job",
+"rep": 1,
+"warm": true
+},
+{
+"id": "fx-core-warm-job-D0-r2",
+"browser": "firefox",
+"path": "core",
+"D": 0,
+"kill": "job",
+"rep": 2,
+"warm": true
+},
+{
+"id": "cr-core-warm-job-D5-r1",
+"browser": "chromium",
+"path": "core",
+"D": 5,
+"kill": "job",
+"rep": 1,
+"warm": true
+},
+{
+"id": "cr-core-warm-job-D10-r1",
+"browser": "chromium",
+"path": "core",
+"D": 10,
+"kill": "job",
+"rep": 1,
+"warm": true
+},
+{
+"id": "cr-core-warm-job-D5-r2",
+"browser": "chromium",
+"path": "core",
+"D": 5,
+"kill": "job",
+"rep": 2,
+"warm": true
+},
+{
+"id": "fx-core-warm-job-D5-r1",
+"browser": "firefox",
+"path": "core",
+"D": 5,
+"kill": "job",
+"rep": 1,
+"warm": true
+},
+{
+"id": "fx-core-warm-job-D30-r2",
+"browser": "firefox",
+"path": "core",
+"D": 30,
+"kill": "job",
+"rep": 2,
+"warm": true
+},
+{
+"id": "cr-core-warm-job-D0-r1",
+"browser": "chromium",
+"path": "core",
+"D": 0,
+"kill": "job",
+"rep": 1,
+"warm": true
+},
+{
+"id": "fx-core-warm-job-D5-r2",
+"browser": "firefox",
+"path": "core",
+"D": 5,
+"kill": "job",
+"rep": 2,
+"warm": true
+},
+{
+"id": "cr-core-warm-job-D30-r1",
+"browser": "chromium",
+"path": "core",
+"D": 30,
+"kill": "job",
+"rep": 1,
+"warm": true
+},
+{
+"id": "cr-core-warm-job-D10-r2",
+"browser": "chromium",
+"path": "core",
+"D": 10,
+"kill": "job",
+"rep": 2,
+"warm": true
+},
+{
+"id": "cr-core-warm-job-D0-r2",
+"browser": "chromium",
+"path": "core",
+"D": 0,
+"kill": "job",
+"rep": 2,
+"warm": true
+},
+{
+"id": "fx-core-warm-job-D10-r2",
+"browser": "firefox",
+"path": "core",
+"D": 10,
+"kill": "job",
+"rep": 2,
+"warm": true
+},
+{
+"id": "cr-core-warm-job-D30-r2",
+"browser": "chromium",
+"path": "core",
+"D": 30,
+"kill": "job",
+"rep": 2,
+"warm": true
+},
+{
+"id": "fx-core-warm-job-D30-r1",
+"browser": "firefox",
+"path": "core",
+"D": 30,
+"kill": "job",
+"rep": 1,
+"warm": true
+}
+]

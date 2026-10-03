@@ -1,0 +1,107 @@
+batch	scenario	delay_ms	runs	eof_seen	outcomes	eof_to_server_exit_ms(min/med/max)	standin	standin_minus_server_ms(min/med/max)	client_exit_codes	client_exit_minus_server_exit_ms(min/med/max)	late_killers
+cc	a	0	3	yes:3	self-exit (77):3	3/4/24 (n=3)	code 0:3	-1/0/0 (n=3)	0:3	24/31/344 (n=3)	KILLER:taskkill:3
+cc	a	100	3	yes:3	self-exit (77):3	104/104/107 (n=3)	code 0:3	-0/-0/-0 (n=3)	0:3	26/32/36 (n=3)	KILLER:taskkill:3
+cc	a	1000	3	yes:3	KILLED code 1:3	820/878/967 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	21/23/202 (n=3)	KILLER:taskkill:3
+cc	a	3000	3	yes:3	KILLED code 1:3	644/808/968 (n=3)	code 1:3	-0/-0/0 (n=3)	0:3	30/36/47 (n=3)	KILLER:taskkill:3
+cc	a	6000	3	yes:3	KILLED code 1:3	712/884/1154 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	19/24/35 (n=3)	KILLER:taskkill:3
+cc	a	15000	3	yes:3	KILLED code 1:3	856/1079/1086 (n=3)	code 1:3	-0/0/0 (n=3)	0:3	26/29/36 (n=3)	KILLER:taskkill:3
+cc	b1	0	3	yes:3	self-exit (77):3	3/4/11 (n=3)	code 0:3	-0/-0/6 (n=3)	1:3	33/45/48 (n=3)	KILLER:taskkill:3
+cc	b1	100	3	yes:3	self-exit (77):3	111/127/128 (n=3)	code 0:3	-6/-0/0 (n=3)	1:3	32/47/96 (n=3)	KILLER:taskkill:3
+cc	b1	1000	3	yes:3	KILLED code 1:3	533/898/963 (n=3)	code 1:3	-1/-0/-0 (n=3)	1:3	18/30/31 (n=3)	KILLER:taskkill:3
+cc	b1	3000	3	yes:3	KILLED code 1:3	683/703/822 (n=3)	code 1:3	-0/-0/-0 (n=3)	1:3	21/23/29 (n=3)	KILLER:taskkill:3
+cc	b1	6000	3	yes:3	KILLED code 1:3	593/662/737 (n=3)	code 1:3	-0/-0/-0 (n=3)	1:3	19/22/47 (n=3)	KILLER:taskkill:3
+cc	b1	15000	3	yes:3	KILLED code 1:3	658/907/954 (n=3)	code 1:3	-0/-0/-0 (n=3)	1:3	17/22/25 (n=3)	KILLER:taskkill:3
+cc	b2	0	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	3/4/9 (n=3)	1:3	-3/-3/-3 (n=3)	-
+cc	b2	100	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/5/6 (n=3)	1:3	-8/-7/-4 (n=3)	-
+cc	b2	1000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	3/3/6 (n=3)	1:3	-7/-3/-2 (n=3)	-
+cc	b2	3000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/4/8 (n=3)	1:3	-4/-3/-3 (n=3)	-
+cc	b2	6000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	2/3/3 (n=3)	1:3	-3/-3/-2 (n=3)	-
+cc	b2	15000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/5/5 (n=3)	1:3	-5/-4/-4 (n=3)	-
+cc	c1	0	3	yes:3	self-exit (77):3	3/3/4 (n=3)	code 0:3	-1/-0/-0 (n=3)	1:3	28/32/37 (n=3)	KILLER:taskkill:3
+cc	c1	100	3	yes:3	self-exit (77):3	104/104/113 (n=3)	code 0:3	-1/-0/0 (n=3)	1:3	32/33/40 (n=3)	KILLER:taskkill:3
+cc	c1	1000	3	yes:3	KILLED code 1:3	823/933/976 (n=3)	code 1:3	-0/-0/-0 (n=3)	1:3	27/29/30 (n=3)	KILLER:taskkill:3
+cc	c1	3000	3	yes:3	KILLED code 1:3	844/993/996 (n=3)	code 1:3	-10/-0/-0 (n=3)	1:3	26/30/34 (n=3)	KILLER:taskkill:3
+cc	c1	6000	3	yes:3	KILLED code 1:3	676/744/783 (n=3)	code 1:3	-0/-0/-0 (n=3)	1:3	20/21/22 (n=3)	KILLER:taskkill:3
+cc	c1	15000	3	yes:3	KILLED code 1:3	769/931/1030 (n=3)	code 1:3	-0/-0/-0 (n=3)	1:3	18/24/26 (n=3)	KILLER:taskkill:3
+cc	c2	0	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	3/5/7 (n=3)	1:3	-5/-4/-4 (n=3)	-
+cc	c2	100	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/5/14 (n=3)	1:3	-11/-3/-3 (n=3)	-
+cc	c2	1000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	3/4/8 (n=3)	1:3	-10/-4/-3 (n=3)	-
+cc	c2	3000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/4/8 (n=3)	1:3	-5/-4/-3 (n=3)	-
+cc	c2	6000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/9/10 (n=3)	1:3	-12/-5/-3 (n=3)	-
+cc	c2	15000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	5/6/7 (n=3)	1:3	-7/-5/-4 (n=3)	-
+cc2	b1	0	3	yes:3	self-exit (77):3	2/2/6 (n=3)	code 0:3	-0/-0/-0 (n=3)	0:3	23/26/27 (n=3)	KILLER:taskkill:2
+cc2	b1	100	3	yes:3	self-exit (77):3	102/104/106 (n=3)	code 0:3	-0/-0/-0 (n=3)	0:3	27/28/37 (n=3)	KILLER:taskkill:3
+cc2	b1	1000	3	yes:3	KILLED code 1:2,self-exit (77):1	690/720/1011 (n=3)	code 1:2,code 0:1	-5/-0/-0 (n=3)	0:3	23/27/27 (n=3)	KILLER:taskkill:3
+cc2	b1	3000	3	yes:3	KILLED code 1:3	715/787/847 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	18/21/29 (n=3)	KILLER:taskkill:3
+cc2	b1	6000	3	yes:3	KILLED code 1:3	658/817/843 (n=3)	code 1:3	-0/0/0 (n=3)	0:3	24/30/39 (n=3)	KILLER:taskkill:3
+cc2	b1	15000	3	yes:3	KILLED code 1:3	794/816/906 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	22/26/27 (n=3)	KILLER:taskkill:3
+cc2	b2	0	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/5/7 (n=3)	1:3	-8/-7/-3 (n=3)	-
+cc2	b2	100	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	5/7/12 (n=3)	1:3	-11/-5/-5 (n=3)	-
+cc2	b2	1000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	5/5/11 (n=3)	1:3	-12/-6/-3 (n=3)	-
+cc2	b2	3000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	3/5/28 (n=3)	1:3	-19/-5/-3 (n=3)	-
+cc2	b2	6000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/5/5 (n=3)	1:3	-4/-4/-3 (n=3)	-
+cc2	b2	15000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/4/6 (n=3)	1:3	-6/-4/-3 (n=3)	-
+cc2	c1	0	3	yes:3	self-exit (77):3	3/4/4 (n=3)	code 0:3	-1/-0/0 (n=3)	0:3	23/32/36 (n=3)	KILLER:taskkill:2
+cc2	c1	100	3	yes:3	self-exit (77):3	104/105/108 (n=3)	code 0:3	-1/-1/-0 (n=3)	0:3	26/29/30 (n=3)	KILLER:taskkill:3
+cc2	c1	1000	3	yes:3	KILLED code 1:3	820/911/952 (n=3)	code 1:3	-0/0/-0 (n=3)	0:3	19/30/32 (n=3)	KILLER:taskkill:3
+cc2	c1	3000	3	yes:3	KILLED code 1:3	775/1027/1062 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	26/32/38 (n=3)	KILLER:taskkill:3
+cc2	c1	6000	3	yes:3	KILLED code 1:3	714/772/1060 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	23/24/27 (n=3)	KILLER:taskkill:3
+cc2	c1	15000	3	yes:3	KILLED code 1:3	789/852/926 (n=3)	code 1:3	-1/-0/-0 (n=3)	0:3	20/22/35 (n=3)	KILLER:taskkill:3
+cc2	c2	0	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/12/12 (n=3)	1:3	-6/-4/-4 (n=3)	-
+cc2	c2	100	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	5/7/12 (n=3)	1:3	-9/-5/-3 (n=3)	-
+cc2	c2	1000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	3/5/7 (n=3)	1:3	-5/-4/-4 (n=3)	-
+cc2	c2	3000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	5/13/15 (n=3)	1:3	-6/-4/-3 (n=3)	-
+cc2	c2	6000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/5/6 (n=3)	1:3	-6/-4/-3 (n=3)	-
+cc2	c2	15000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	3/4/4 (n=3)	1:3	-4/-3/-3 (n=3)	-
+cx	d1	0	3	NO:3	KILLED code 1:3	-	code 1:3	0/-0/0 (n=3)	0:3	134/139/348 (n=3)	-
+cx	d1	100	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	131/161/226 (n=3)	-
+cx	d1	1000	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/0 (n=3)	0:3	132/143/144 (n=3)	-
+cx	d1	3000	3	NO:3	KILLED code 1:3	-	code 1:3	0/0/0 (n=3)	0:3	149/152/168 (n=3)	-
+cx	d1	6000	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	111/137/156 (n=3)	-
+cx	d1	15000	3	NO:3	KILLED code 1:3	-	code 1:3	-6/-0/-0 (n=3)	0:3	119/128/147 (n=3)	-
+cx	d2	0	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	10/11/13 (n=3)	-
+cx	d2	100	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	11/12/12 (n=3)	-
+cx	d2	1000	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	12/286/795 (n=3)	-
+cx	d2	3000	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/0 (n=3)	0:3	8/11/18 (n=3)	-
+cx	d2	6000	3	NO:3	KILLED code 1:3	-	code 1:3	-0/0/50 (n=3)	0:3	11/13/20 (n=3)	-
+cx	d2	15000	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	16/16/26 (n=3)	-
+cxnew	d1	100	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	138/163/188 (n=3)	-
+cxnew	d1	15000	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	134/150/174 (n=3)	-
+cxnew	d2	100	3	NO:3	KILLED code 1:3	-	code 1:3	-4/-0/-0 (n=3)	0:3	10/10/14 (n=3)	-
+cxnew	d2	15000	3	NO:3	KILLED code 1:3	-	code 1:3	-0/-0/-0 (n=3)	0:3	16/19/81 (n=3)	-
+cxnew	d3	100	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	-0/0/0 (n=3)	1:3	-9/-8/-5 (n=3)	-
+cxnew	d3	15000	3	NO:2,yes:1	KILLED code 0 (job close):3	3/3/3 (n=1)	code 0:3	-0/-0/-0 (n=3)	1:3	-15/-12/-9 (n=3)	-
+extra	d3	100	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	-0/-0/1 (n=3)	1:3	-50/-36/-31 (n=3)	-
+extra	d3	15000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	-0/0/-0 (n=3)	1:3	-44/-34/-6 (n=3)	-
+extra	e4	100	3	yes:3	self-exit (77):3	102/109/110 (n=3)	code 0:3	-1/-0/-0 (n=3)	1:3	24/25/26 (n=3)	KILLER:taskkill:3
+extra	e4	15000	3	yes:3	KILLED code 1:3	592/681/878 (n=3)	code 1:3	-0/-0/-0 (n=3)	1:3	21/22/24 (n=3)	KILLER:taskkill:3
+tui	e1-cli	0	3	yes:3	self-exit (77):3	3/4/6 (n=3)	code 0:3	-1/-0/7 (n=3)	0:3	61/124/161 (n=3)	KILLER:taskkill:3
+tui	e1-cli	100	3	yes:3	self-exit (77):3	103/109/121 (n=3)	code 0:3	-0/-0/-0 (n=3)	0:3	20/22/23 (n=3)	KILLER:taskkill:3
+tui	e1-cli	1000	3	yes:3	KILLED code 1:2,self-exit (77):1	695/927/1003 (n=3)	code 1:2,code 0:1	-0/-0/0 (n=3)	0:3	18/18/24 (n=3)	KILLER:taskkill:3
+tui	e1-cli	3000	3	yes:3	KILLED code 1:3	789/790/834 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	19/21/21 (n=3)	KILLER:taskkill:3
+tui	e1-cli	6000	3	yes:3	KILLED code 1:3	841/908/1116 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	15/17/26 (n=3)	KILLER:taskkill:3
+tui	e1-cli	15000	3	yes:3	KILLED code 1:3	1037/1108/1154 (n=3)	code 1:3	-2/-0/-0 (n=3)	0:3	16/17/20 (n=3)	KILLER:taskkill:3
+tui	e2-cli	0	3	yes:3	self-exit (77):3	3/3/10 (n=3)	code 0:3	-1/-1/-0 (n=3)	0:3	52/69/209 (n=3)	KILLER:taskkill:3
+tui	e2-cli	100	3	yes:3	self-exit (77):3	109/114/133 (n=3)	code 0:3	-6/-0/0 (n=3)	0:3	19/31/92 (n=3)	KILLER:taskkill:3
+tui	e2-cli	1000	3	yes:3	KILLED code 1:3	683/750/822 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	13/14/17 (n=3)	KILLER:taskkill:3
+tui	e2-cli	3000	3	yes:3	KILLED code 1:3	564/733/812 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	20/22/60 (n=3)	KILLER:taskkill:3
+tui	e2-cli	6000	3	yes:3	KILLED code 1:3	652/722/919 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	11/17/20 (n=3)	KILLER:taskkill:3
+tui	e2-cli	15000	3	yes:3	KILLED code 1:3	631/648/736 (n=3)	code 1:3	0/-0/0 (n=3)	0:3	14/15/15 (n=3)	KILLER:taskkill:3
+tui	e3-cli	0	3	yes:3	self-exit (77):3	2/4/18 (n=3)	code 0:3	-5/-1/-0 (n=3)	129:3	30/41/52 (n=3)	KILLER:taskkill:3
+tui	e3-cli	100	3	yes:3	self-exit (77):3	104/108/110 (n=3)	code 0:3	-6/-5/-0 (n=3)	129:3	20/24/33 (n=3)	KILLER:taskkill:3
+tui	e3-cli	1000	3	yes:3	KILLED code 1:3	549/551/689 (n=3)	code 1:3	-0/-0/-0 (n=3)	129:3	12/14/14 (n=3)	KILLER:taskkill:3
+tui	e3-cli	3000	3	yes:3	KILLED code 1:3	620/666/832 (n=3)	code 1:3	0/-0/0 (n=3)	129:3	14/16/18 (n=3)	KILLER:taskkill:3
+tui	e3-cli	6000	3	yes:3	KILLED code 1:3	567/618/700 (n=3)	code 1:3	-0/-0/-0 (n=3)	129:3	11/12/15 (n=3)	KILLER:taskkill:3
+tui	e3-cli	15000	3	yes:3	KILLED code 1:3	700/727/743 (n=3)	code 1:3	-0/-0/0 (n=3)	129:3	12/16/16 (n=3)	KILLER:taskkill:3
+vsc	e5	0	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/4/12 (n=3)	0:3	-5/-3/-3 (n=3)	-
+vsc	e5	100	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	5/7/8 (n=3)	0:3	-5/-4/-3 (n=3)	-
+vsc	e5	1000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/5/8 (n=3)	0:3	-6/-5/-4 (n=3)	-
+vsc	e5	3000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	6/9/9 (n=3)	0:3	-6/-4/-3 (n=3)	-
+vsc	e5	6000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	3/4/7 (n=3)	0:3	-4/-3/-2 (n=3)	-
+vsc	e5	15000	3	NO:3	KILLED code 0 (job close):3	-	code 0:3	4/5/6 (n=3)	0:3	-11/-6/-5 (n=3)	-
+vsc	e6	0	3	yes:3	self-exit (77):3	2/3/9 (n=3)	code 0:3	-1/-0/-0 (n=3)	0:3	1056/1072/1085 (n=3)	KILLER:taskkill:3
+vsc	e6	100	3	yes:3	self-exit (77):3	104/104/104 (n=3)	code 0:3	-1/-0/-0 (n=3)	0:3	1061/1062/1075 (n=3)	KILLER:taskkill:3
+vsc	e6	1000	3	yes:3	KILLED code 1:1,self-exit (77):2	706/1004/1008 (n=3)	code 1:1,code 0:2	-0/-0/0 (n=3)	0:3	1054/1080/1131 (n=3)	KILLER:taskkill:3
+vsc	e6	3000	3	yes:3	KILLED code 1:3	681/681/1112 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	1057/1062/1068 (n=3)	KILLER:taskkill:3
+vsc	e6	6000	3	yes:3	KILLED code 1:3	680/692/863 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	1069/1080/1082 (n=3)	KILLER:taskkill:3
+vsc	e6	15000	3	yes:3	KILLED code 1:3	629/882/930 (n=3)	code 1:3	-0/-0/-0 (n=3)	0:3	1062/1067/1081 (n=3)	KILLER:taskkill:3

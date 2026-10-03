@@ -1,0 +1,44 @@
+What was READ (not measured), and where. Byte offsets are into the copies under bin\ (sha256 in ..\binaries.tsv).
+Excerpts were cut with ..\tools\ctx.py (needle + window) and ..\tools\slice.py (offset, before, after).
+
+CLAUDE CODE 2.1.288 (bin\cli\claude.exe = %USERPROFILE%\.local\bin\claude.exe, Bun single-file bundle)
+  238,874,235  MCP connection cleanup "_e" (cli-2.1.288-mcp-stdio-cleanup.txt):
+               if (r.type==="stdio"||!r.type) { let L=D.pid; if (L) ne(e,"Terminating MCP server process tree"), Um(L);
+               else if (L) { ...SIGINT -> 100 ms -> SIGTERM -> 400 ms -> SIGKILL... }   <- unreachable: same condition as the if
+               } ... try { await K.close() }                                           <- client close (stdin.end) AFTER the kill is launched
+               ve = wt(_e)  (registered as an exit cleanup); le = cleanup property of the connected client
+  206,337,803  function Um(e,r="SIGKILL"){...return T(e),Promise.resolve(new Set)}  (cli-2.1.288-killProcessTree-module.txt)
+  206,339,633  function T(e): spawn(%SYSTEMROOT%\System32\taskkill.exe, ["/PID",String(e),"/T","/F"], {stdio:"ignore",windowsHide:!0})
+               not awaited; on spawn error falls back to process.kill(e)
+  238,832,130  StdioClientTransport.close() (MCP TS SDK, bundled): stdin.end(); wait 'close' up to 2000 ms; kill("SIGTERM");
+               wait 2000 ms; kill("SIGKILL")   (cli-2.1.288-stdio-transport-class.txt)
+  238,834,862  class at extends Ut (BoundedStdioClientTransport): start() arms alt(child) ("exit-time reaper"),
+               handOffExitCleanup() disarms it once connected
+  238,731,741  function alt(e){let r=wt(()=>Te(e));...}; Te(): on Windows "[MCP] stdio server process <pid> has no established
+               connection at exit; terminating its process tree", Um(pid), wait 100+400+100 ms
+  204,086,082  var jie=2000; function wt(e){return se().cleanup.register(e)}; async function Wtt(){await se().cleanup.drain()}
+               (drain = Promise.allSettled over every registered cleanup)        (cli-2.1.288-cleanup-registry.txt)
+  211,905,275  shutdown(): armShutdownFailsafe(Math.max(5000, S+5000)); race(Wtt(), 2000 ms "Cleanup timeout"); ... SessionEnd hooks
+               (AbortSignal.timeout(S)); flush; forceExit -> process.exit   (cli-2.1.288-shutdown-module.txt)
+  214,057,830  var jMo=1500  (SESSION_END_HOOK_TIMEOUT_MS_DEFAULT; so the failsafe is max(5000, 1500+5000) = 6500 ms)
+  211,897,608  install(): process.on("SIGINT") -> shutdown(0) [skipped in print mode]; "SIGTERM" -> shutdown(143) [skipped in print
+               mode]; "SIGBREAK" -> shutdown(0); "SIGHUP" -> shutdown(129)
+  206,941,078  trust key: projects[KB(gitRoot ?? cwd)].hasTrustDialogAccepted; KB replaces "\" with "/" on Windows
+  207,037,283  ANTHROPIC_API_KEY used outside -p only when customApiKeyResponses.approved holds key.trim().slice(-20)
+
+CLAUDE CODE 2.1.287 (bin\vscode\claude.exe = the VS Code extension's resources\native-binary\claude.exe)
+  237,490,889  same cleanup: if(D) te(e,"Terminating MCP server process tree"), Om(D); else if(D) {SIGINT...}  (vscode-2.1.287-mcp-cleanup.txt)
+  205,535,090  same taskkill.exe /PID <pid> /T /F spawn                     (vscode-2.1.287-killProcessTree.txt)
+  203,058,598  same cleanup registry, var Xse=2000                          (vscode-2.1.287-cleanup-registry.txt)
+
+VS CODE EXTENSION 2.1.287 (extension.js; this install is patched: startClaudeGroup(){return;...}, BOM added; unrelated to process lifetime)
+  2,589,xxx    spawnLocalProcess: spawn(claude, args, {stdio:["pipe","pipe","pipe"], signal, env, windowsHide:!0})  (not detached)
+  2,598,154    ProcessTransport.close(): processStdin.end(); if still running: setTimeout(2000) -> win32: setTimeout(5000) ->
+               kill("SIGKILL"); non-win32: SIGTERM at 2000, SIGKILL at 7000   (ext-2.1.287-ProcessTransport-close.txt)
+  2,584,892    class cb1 (BI): process.on("exit", killAll); killAll(): win32 -> stdin.end() for every tracked child, else SIGTERM
+  2,662,569    user message shape {"type":"user","session_id":"","message":{...},"parent_tool_use_id":null}; env defaults
+               CLAUDE_CODE_ENTRYPOINT=sdk-ts, CLAUDE_AGENT_SDK_VERSION=0.3.287 (ext-2.1.287-entrypoint-msgs.txt)
+
+CODEX 0.155.0-alpha.9.2 (bin\codex\codex.exe = %LOCALAPPDATA%\OpenAI\Codex\bin\247581e40ee272fb\codex.exe)
+  source: code\codex-src = openai/codex tag rust-v0.155.0-alpha.9.2, commit 4607249e430dac1c961df4dc615beae88e33cec8
+  file:line list: codex-0.155.0-alpha.9.2-lines.txt

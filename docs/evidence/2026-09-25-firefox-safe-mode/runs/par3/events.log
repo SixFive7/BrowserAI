@@ -1,0 +1,62 @@
+2026-09-24T23:56:06.1110701Z run=par3 count=30 batch=3 timeoutMs=60000 suspectMs=20000 jobMemoryMB=0 cpuRate=0 debug=pw:protocol
+2026-09-24T23:56:06.2067115Z launched par3-0001 arm=control nodePid=90440 batch=1 suiteActive=False 
+2026-09-24T23:56:06.2376733Z launched par3-0002 arm=control nodePid=101844 batch=1 suiteActive=False 
+2026-09-24T23:56:06.2543709Z launched par3-0003 arm=control nodePid=80492 batch=1 suiteActive=False 
+2026-09-24T23:56:12.7901237Z closed par3-0001 exited=True peakJobCommitMB=660,9 peakProcessCommitMB=334,9 cpuUserMs=5297 cpuKernelMs=3703 totalProcesses=12 activeProcesses=0 pageFaults=449035
+2026-09-24T23:56:12.8566234Z closed par3-0002 exited=True peakJobCommitMB=666,7 peakProcessCommitMB=336,1 cpuUserMs=5734 cpuKernelMs=3891 totalProcesses=13 activeProcesses=0 pageFaults=458142
+2026-09-24T23:56:12.9265020Z closed par3-0003 exited=True peakJobCommitMB=659,6 peakProcessCommitMB=330,4 cpuUserMs=5328 cpuKernelMs=3594 totalProcesses=13 activeProcesses=0 pageFaults=454874
+2026-09-24T23:56:14.5421505Z launched par3-0004 arm=control nodePid=55744 batch=2 suiteActive=False 
+2026-09-24T23:56:14.5654693Z launched par3-0005 arm=control nodePid=44328 batch=2 suiteActive=False 
+2026-09-24T23:56:14.5822116Z launched par3-0006 arm=control nodePid=28388 batch=2 suiteActive=False 
+2026-09-24T23:56:24.0551909Z closed par3-0004 exited=True peakJobCommitMB=674,6 peakProcessCommitMB=352,5 cpuUserMs=5375 cpuKernelMs=3719 totalProcesses=13 activeProcesses=0 pageFaults=454956
+2026-09-24T23:56:24.1259749Z closed par3-0005 exited=True peakJobCommitMB=673,2 peakProcessCommitMB=351,8 cpuUserMs=5516 cpuKernelMs=3125 totalProcesses=12 activeProcesses=0 pageFaults=402200
+2026-09-24T23:56:24.1915983Z closed par3-0006 exited=True peakJobCommitMB=667,0 peakProcessCommitMB=339,8 cpuUserMs=5484 cpuKernelMs=4047 totalProcesses=13 activeProcesses=0 pageFaults=456317
+2026-09-24T23:56:25.7938373Z launched par3-0007 arm=control nodePid=74748 batch=3 suiteActive=False 
+2026-09-24T23:56:25.8136967Z launched par3-0008 arm=control nodePid=95996 batch=3 suiteActive=False 
+2026-09-24T23:56:25.8333285Z launched par3-0009 arm=control nodePid=112236 batch=3 suiteActive=False 
+2026-09-24T23:56:35.5900661Z closed par3-0007 exited=True peakJobCommitMB=660,9 peakProcessCommitMB=336,1 cpuUserMs=6203 cpuKernelMs=4750 totalProcesses=13 activeProcesses=0 pageFaults=466787
+2026-09-24T23:56:35.6822284Z closed par3-0008 exited=True peakJobCommitMB=659,2 peakProcessCommitMB=348,6 cpuUserMs=6312 cpuKernelMs=4234 totalProcesses=13 activeProcesses=0 pageFaults=409252
+2026-09-24T23:56:35.7675729Z closed par3-0009 exited=True peakJobCommitMB=656,0 peakProcessCommitMB=345,1 cpuUserMs=6188 cpuKernelMs=4328 totalProcesses=12 activeProcesses=0 pageFaults=402468
+2026-09-24T23:56:37.3777808Z launched par3-0010 arm=control nodePid=111540 batch=4 suiteActive=False 
+2026-09-24T23:56:37.4227663Z launched par3-0011 arm=control nodePid=90852 batch=4 suiteActive=False 
+2026-09-24T23:56:37.4469110Z launched par3-0012 arm=control nodePid=75828 batch=4 suiteActive=False 
+2026-09-24T23:56:47.8614226Z closed par3-0010 exited=True peakJobCommitMB=670,6 peakProcessCommitMB=347,8 cpuUserMs=6484 cpuKernelMs=4562 totalProcesses=12 activeProcesses=0 pageFaults=454219
+2026-09-24T23:56:47.9504681Z closed par3-0011 exited=True peakJobCommitMB=682,7 peakProcessCommitMB=352,5 cpuUserMs=6359 cpuKernelMs=4203 totalProcesses=13 activeProcesses=0 pageFaults=412812
+2026-09-24T23:56:48.0321322Z closed par3-0012 exited=True peakJobCommitMB=661,6 peakProcessCommitMB=336,1 cpuUserMs=6359 cpuKernelMs=3797 totalProcesses=13 activeProcesses=0 pageFaults=408434
+2026-09-24T23:56:49.6418726Z launched par3-0013 arm=control nodePid=84752 batch=5 suiteActive=False 
+2026-09-24T23:56:49.6827067Z launched par3-0014 arm=control nodePid=98812 batch=5 suiteActive=False 
+2026-09-24T23:56:49.7011842Z launched par3-0015 arm=control nodePid=92820 batch=5 suiteActive=False 
+2026-09-24T23:56:57.0046814Z closed par3-0013 exited=True peakJobCommitMB=675,0 peakProcessCommitMB=352,1 cpuUserMs=5453 cpuKernelMs=4109 totalProcesses=13 activeProcesses=0 pageFaults=408513
+2026-09-24T23:56:57.0928852Z closed par3-0014 exited=True peakJobCommitMB=663,2 peakProcessCommitMB=351,5 cpuUserMs=6000 cpuKernelMs=4141 totalProcesses=13 activeProcesses=0 pageFaults=454705
+2026-09-24T23:56:57.1711042Z closed par3-0015 exited=True peakJobCommitMB=662,4 peakProcessCommitMB=333,3 cpuUserMs=5781 cpuKernelMs=3828 totalProcesses=13 activeProcesses=0 pageFaults=403065
+2026-09-24T23:56:58.7961725Z launched par3-0016 arm=control nodePid=98412 batch=6 suiteActive=False 
+2026-09-24T23:56:58.8142610Z launched par3-0017 arm=control nodePid=107768 batch=6 suiteActive=False 
+2026-09-24T23:56:58.8333200Z launched par3-0018 arm=control nodePid=86240 batch=6 suiteActive=False 
+2026-09-24T23:57:06.4132583Z closed par3-0016 exited=True peakJobCommitMB=665,3 peakProcessCommitMB=336,5 cpuUserMs=5328 cpuKernelMs=3438 totalProcesses=13 activeProcesses=0 pageFaults=403929
+2026-09-24T23:57:06.4976430Z closed par3-0017 exited=True peakJobCommitMB=662,8 peakProcessCommitMB=352,3 cpuUserMs=4781 cpuKernelMs=3203 totalProcesses=12 activeProcesses=0 pageFaults=403493
+2026-09-24T23:57:06.5774827Z closed par3-0018 exited=True peakJobCommitMB=662,1 peakProcessCommitMB=335,5 cpuUserMs=5062 cpuKernelMs=3922 totalProcesses=13 activeProcesses=0 pageFaults=453432
+2026-09-24T23:57:08.1746022Z launched par3-0019 arm=control nodePid=111236 batch=7 suiteActive=False 
+2026-09-24T23:57:08.1927753Z launched par3-0020 arm=control nodePid=66864 batch=7 suiteActive=False 
+2026-09-24T23:57:08.2118531Z launched par3-0021 arm=control nodePid=91768 batch=7 suiteActive=False 
+2026-09-24T23:57:15.2523815Z closed par3-0019 exited=True peakJobCommitMB=667,0 peakProcessCommitMB=337,5 cpuUserMs=5000 cpuKernelMs=3453 totalProcesses=13 activeProcesses=0 pageFaults=405384
+2026-09-24T23:57:15.3293315Z closed par3-0020 exited=True peakJobCommitMB=661,6 peakProcessCommitMB=333,3 cpuUserMs=5125 cpuKernelMs=3578 totalProcesses=12 activeProcesses=0 pageFaults=451307
+2026-09-24T23:57:15.4042133Z closed par3-0021 exited=True peakJobCommitMB=662,7 peakProcessCommitMB=332,1 cpuUserMs=5188 cpuKernelMs=3266 totalProcesses=13 activeProcesses=0 pageFaults=401586
+2026-09-24T23:57:17.0173723Z launched par3-0022 arm=control nodePid=73776 batch=8 suiteActive=False 
+2026-09-24T23:57:17.0346452Z launched par3-0023 arm=control nodePid=44700 batch=8 suiteActive=False 
+2026-09-24T23:57:17.0510701Z launched par3-0024 arm=control nodePid=46296 batch=8 suiteActive=False 
+2026-09-24T23:57:24.0799078Z closed par3-0022 exited=True peakJobCommitMB=663,5 peakProcessCommitMB=334,8 cpuUserMs=4938 cpuKernelMs=3766 totalProcesses=13 activeProcesses=0 pageFaults=403233
+2026-09-24T23:57:24.1561798Z closed par3-0023 exited=True peakJobCommitMB=660,1 peakProcessCommitMB=333,5 cpuUserMs=5547 cpuKernelMs=2922 totalProcesses=12 activeProcesses=0 pageFaults=406728
+2026-09-24T23:57:24.2386267Z closed par3-0024 exited=True peakJobCommitMB=661,3 peakProcessCommitMB=333,1 cpuUserMs=5469 cpuKernelMs=3766 totalProcesses=13 activeProcesses=0 pageFaults=408822
+2026-09-24T23:57:25.8507362Z launched par3-0025 arm=control nodePid=63252 batch=9 suiteActive=False 
+2026-09-24T23:57:25.8707562Z launched par3-0026 arm=control nodePid=99908 batch=9 suiteActive=False 
+2026-09-24T23:57:25.8900678Z launched par3-0027 arm=control nodePid=100296 batch=9 suiteActive=False 
+2026-09-24T23:57:32.9609771Z closed par3-0025 exited=True peakJobCommitMB=665,3 peakProcessCommitMB=335,4 cpuUserMs=5062 cpuKernelMs=3531 totalProcesses=13 activeProcesses=0 pageFaults=402415
+2026-09-24T23:57:33.0619411Z closed par3-0026 exited=True peakJobCommitMB=662,3 peakProcessCommitMB=333,9 cpuUserMs=5172 cpuKernelMs=4000 totalProcesses=13 activeProcesses=0 pageFaults=450535
+2026-09-24T23:57:33.1536707Z closed par3-0027 exited=True peakJobCommitMB=664,2 peakProcessCommitMB=336,3 cpuUserMs=5156 cpuKernelMs=3906 totalProcesses=12 activeProcesses=0 pageFaults=456497
+2026-09-24T23:57:34.7996458Z launched par3-0028 arm=control nodePid=4076 batch=10 suiteActive=False 
+2026-09-24T23:57:34.8175176Z launched par3-0029 arm=control nodePid=97508 batch=10 suiteActive=False 
+2026-09-24T23:57:34.8379839Z launched par3-0030 arm=control nodePid=80176 batch=10 suiteActive=False 
+2026-09-24T23:57:43.1349682Z closed par3-0028 exited=True peakJobCommitMB=664,9 peakProcessCommitMB=338,4 cpuUserMs=5875 cpuKernelMs=3906 totalProcesses=13 activeProcesses=0 pageFaults=455423
+2026-09-24T23:57:43.2065800Z closed par3-0029 exited=True peakJobCommitMB=669,1 peakProcessCommitMB=336,2 cpuUserMs=5531 cpuKernelMs=4062 totalProcesses=13 activeProcesses=0 pageFaults=460580
+2026-09-24T23:57:43.3309437Z closed par3-0030 exited=True peakJobCommitMB=663,8 peakProcessCommitMB=337,8 cpuUserMs=5609 cpuKernelMs=3891 totalProcesses=13 activeProcesses=0 pageFaults=407593
+2026-09-24T23:57:44.9124991Z run par3 done: 30 launched

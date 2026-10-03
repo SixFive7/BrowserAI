@@ -1,0 +1,13 @@
+run	version	browser	recorded	reopened	urlMatches	titleMatches	currentMatches	reopenMs	perCallMs	upstreamCalls	B_session_before	B_session_after	B_form_before	B_form_after	B_scroll_before	B_scroll_after	B_hist_before	B_hist_after	sessionCookie_after	post_title_before	post_title_after
+T-082-chromium-r1	082	chromium	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	995.8	542+186+233+30	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-082-chromium-r2	082	chromium	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	1165.7	914+147+83+18	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-082-chromium-r3	082	chromium	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	674.4	400+124+127+20	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-082-firefox-r1	082	firefox	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	2427.3	1496+441+448+39	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-082-firefox-r2	082	firefox	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	2225.2	1457+436+308+20	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-082-firefox-r3	082	firefox	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	2214.3	1466+457+266+21	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-083-chromium-r1	083	chromium	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	1208.2	762+208+193+41	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-083-chromium-r2	083	chromium	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	743.9	428+93+196+24	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-083-chromium-r3	083	chromium	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	1126.8	760+211+122+30	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-083-firefox-r1	083	firefox	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	2722.4	1861+487+335+33	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-083-firefox-r2	083	firefox	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	2091.4	1434+330+307+17	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)
+T-083-firefox-r3	083	firefox	/b?x=1 /c#frag* /posted	/b?x=1 /c#frag* /posted	3/3	2/3	true	2567	1889+323+328+23	4	session-value		typed-name-value		1500	0	3	2		Posted	Not posted (GET)

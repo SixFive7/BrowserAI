@@ -1,0 +1,50 @@
+2026-09-24T23:59:12.3855842Z run=par6k count=24 batch=6 timeoutMs=60000 suspectMs=20000 jobMemoryMB=0 cpuRate=0 debug=pw:protocol
+2026-09-24T23:59:12.4068595Z launched par6k-0001 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=15432 batch=1 suiteActive=False 
+2026-09-24T23:59:12.4240038Z launched par6k-0002 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=79112 batch=1 suiteActive=False 
+2026-09-24T23:59:12.4413644Z launched par6k-0003 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=98656 batch=1 suiteActive=False 
+2026-09-24T23:59:12.4574311Z launched par6k-0004 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=81500 batch=1 suiteActive=False 
+2026-09-24T23:59:12.4780829Z launched par6k-0005 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=88492 batch=1 suiteActive=False 
+2026-09-24T23:59:12.5007833Z launched par6k-0006 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=109672 batch=1 suiteActive=False 
+2026-09-24T23:59:22.4622937Z closed par6k-0001 exited=True peakJobCommitMB=664,8 peakProcessCommitMB=340,2 cpuUserMs=5875 cpuKernelMs=4188 totalProcesses=12 activeProcesses=0 pageFaults=400985
+2026-09-24T23:59:22.5539733Z closed par6k-0002 exited=True peakJobCommitMB=670,9 peakProcessCommitMB=349,0 cpuUserMs=6359 cpuKernelMs=4047 totalProcesses=13 activeProcesses=0 pageFaults=401282
+2026-09-24T23:59:22.6376467Z closed par6k-0003 exited=True peakJobCommitMB=667,3 peakProcessCommitMB=348,5 cpuUserMs=6484 cpuKernelMs=4203 totalProcesses=13 activeProcesses=0 pageFaults=453771
+2026-09-24T23:59:22.7093692Z closed par6k-0004 exited=True peakJobCommitMB=669,1 peakProcessCommitMB=351,1 cpuUserMs=7000 cpuKernelMs=4016 totalProcesses=12 activeProcesses=0 pageFaults=401059
+2026-09-24T23:59:22.7688513Z closed par6k-0005 exited=True peakJobCommitMB=675,0 peakProcessCommitMB=350,6 cpuUserMs=6344 cpuKernelMs=3812 totalProcesses=13 activeProcesses=0 pageFaults=397944
+2026-09-24T23:59:22.8381793Z closed par6k-0006 exited=True peakJobCommitMB=667,1 peakProcessCommitMB=350,2 cpuUserMs=6406 cpuKernelMs=4516 totalProcesses=13 activeProcesses=0 pageFaults=451405
+2026-09-24T23:59:24.4348856Z launched par6k-0007 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=91480 batch=2 suiteActive=False 
+2026-09-24T23:59:24.4511545Z launched par6k-0008 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=111512 batch=2 suiteActive=False 
+2026-09-24T23:59:24.4700857Z launched par6k-0009 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=84188 batch=2 suiteActive=False 
+2026-09-24T23:59:24.4902654Z launched par6k-0010 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=100140 batch=2 suiteActive=False 
+2026-09-24T23:59:24.5124525Z launched par6k-0011 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=70636 batch=2 suiteActive=False 
+2026-09-24T23:59:24.5319534Z launched par6k-0012 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=95224 batch=2 suiteActive=False 
+2026-09-24T23:59:34.4483879Z closed par6k-0007 exited=True peakJobCommitMB=664,7 peakProcessCommitMB=352,3 cpuUserMs=6172 cpuKernelMs=4328 totalProcesses=13 activeProcesses=0 pageFaults=412002
+2026-09-24T23:59:34.5148118Z closed par6k-0008 exited=True peakJobCommitMB=672,2 peakProcessCommitMB=350,0 cpuUserMs=6734 cpuKernelMs=3938 totalProcesses=12 activeProcesses=0 pageFaults=456645
+2026-09-24T23:59:34.5770108Z closed par6k-0009 exited=True peakJobCommitMB=672,1 peakProcessCommitMB=349,0 cpuUserMs=6422 cpuKernelMs=4062 totalProcesses=13 activeProcesses=0 pageFaults=403502
+2026-09-24T23:59:34.6489048Z closed par6k-0010 exited=True peakJobCommitMB=658,1 peakProcessCommitMB=332,7 cpuUserMs=5672 cpuKernelMs=4219 totalProcesses=12 activeProcesses=0 pageFaults=452075
+2026-09-24T23:59:34.7086428Z closed par6k-0011 exited=True peakJobCommitMB=676,4 peakProcessCommitMB=352,2 cpuUserMs=6438 cpuKernelMs=4203 totalProcesses=13 activeProcesses=0 pageFaults=412092
+2026-09-24T23:59:34.7705513Z closed par6k-0012 exited=True peakJobCommitMB=663,5 peakProcessCommitMB=335,8 cpuUserMs=5812 cpuKernelMs=3859 totalProcesses=13 activeProcesses=0 pageFaults=405645
+2026-09-24T23:59:36.3556209Z launched par6k-0013 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=89156 batch=3 suiteActive=False 
+2026-09-24T23:59:36.4001532Z launched par6k-0014 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=53000 batch=3 suiteActive=False 
+2026-09-24T23:59:36.4181858Z launched par6k-0015 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=97932 batch=3 suiteActive=False 
+2026-09-24T23:59:36.4347777Z launched par6k-0016 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=104200 batch=3 suiteActive=False 
+2026-09-24T23:59:36.4512310Z launched par6k-0017 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=73188 batch=3 suiteActive=False 
+2026-09-24T23:59:36.4697465Z launched par6k-0018 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=44556 batch=3 suiteActive=False 
+2026-09-24T23:59:45.9041692Z closed par6k-0013 exited=True peakJobCommitMB=675,2 peakProcessCommitMB=351,0 cpuUserMs=5859 cpuKernelMs=4203 totalProcesses=13 activeProcesses=0 pageFaults=406302
+2026-09-24T23:59:45.9644592Z closed par6k-0014 exited=True peakJobCommitMB=660,9 peakProcessCommitMB=336,7 cpuUserMs=5922 cpuKernelMs=3859 totalProcesses=13 activeProcesses=0 pageFaults=402965
+2026-09-24T23:59:46.0232978Z closed par6k-0015 exited=True peakJobCommitMB=682,1 peakProcessCommitMB=351,0 cpuUserMs=6891 cpuKernelMs=3750 totalProcesses=13 activeProcesses=0 pageFaults=462785
+2026-09-24T23:59:46.0905022Z closed par6k-0016 exited=True peakJobCommitMB=660,7 peakProcessCommitMB=336,2 cpuUserMs=5719 cpuKernelMs=4344 totalProcesses=13 activeProcesses=0 pageFaults=404617
+2026-09-24T23:59:46.1559485Z closed par6k-0017 exited=True peakJobCommitMB=664,6 peakProcessCommitMB=352,1 cpuUserMs=6375 cpuKernelMs=4062 totalProcesses=12 activeProcesses=0 pageFaults=452190
+2026-09-24T23:59:46.2189854Z closed par6k-0018 exited=True peakJobCommitMB=662,4 peakProcessCommitMB=350,3 cpuUserMs=6688 cpuKernelMs=4172 totalProcesses=13 activeProcesses=0 pageFaults=454851
+2026-09-24T23:59:47.8122583Z launched par6k-0019 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=111916 batch=4 suiteActive=False 
+2026-09-24T23:59:47.8272035Z launched par6k-0020 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=102780 batch=4 suiteActive=False 
+2026-09-24T23:59:47.8424706Z launched par6k-0021 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=51040 batch=4 suiteActive=False 
+2026-09-24T23:59:47.8585036Z launched par6k-0022 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=105204 batch=4 suiteActive=False 
+2026-09-24T23:59:47.8744877Z launched par6k-0023 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=94104 batch=4 suiteActive=False 
+2026-09-24T23:59:47.8895388Z launched par6k-0024 arm=control+MOZ_DISABLE_SAFE_MODE_KEY=1 nodePid=78960 batch=4 suiteActive=False 
+2026-09-24T23:59:56.5498708Z closed par6k-0019 exited=True peakJobCommitMB=667,3 peakProcessCommitMB=348,2 cpuUserMs=5984 cpuKernelMs=3562 totalProcesses=13 activeProcesses=0 pageFaults=404678
+2026-09-24T23:59:56.6258025Z closed par6k-0020 exited=True peakJobCommitMB=663,3 peakProcessCommitMB=350,5 cpuUserMs=6188 cpuKernelMs=3578 totalProcesses=13 activeProcesses=0 pageFaults=408136
+2026-09-24T23:59:56.6901469Z closed par6k-0021 exited=True peakJobCommitMB=670,9 peakProcessCommitMB=350,1 cpuUserMs=5625 cpuKernelMs=4109 totalProcesses=12 activeProcesses=0 pageFaults=405914
+2026-09-24T23:59:56.7470603Z closed par6k-0022 exited=True peakJobCommitMB=658,6 peakProcessCommitMB=333,3 cpuUserMs=5547 cpuKernelMs=3859 totalProcesses=12 activeProcesses=0 pageFaults=400005
+2026-09-24T23:59:56.8055224Z closed par6k-0023 exited=True peakJobCommitMB=673,1 peakProcessCommitMB=348,5 cpuUserMs=6062 cpuKernelMs=3828 totalProcesses=13 activeProcesses=0 pageFaults=458428
+2026-09-24T23:59:56.8696857Z closed par6k-0024 exited=True peakJobCommitMB=672,4 peakProcessCommitMB=350,1 cpuUserMs=5703 cpuKernelMs=3922 totalProcesses=12 activeProcesses=0 pageFaults=402069
+2026-09-24T23:59:58.4379714Z run par6k done: 24 launched

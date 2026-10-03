@@ -1,0 +1,44 @@
+2026-09-24T23:52:14.610Z +243.5 START node=v24.21.0 pid=50392 id=forced1-0001
+2026-09-24T23:52:14.626Z +259.4 SPAWN pid=84440 C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\forced1\forced1-0001\firefox\profile -juggler-pipe about:blank
+2026-09-24T23:52:14.718Z +351.5 [ff:err] *** You are running in headless mode.
+2026-09-24T23:52:14.797Z +430.5 [ff:err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+2026-09-24T23:52:15.104Z +736.8 [ff:out] Juggler listening to the pipe
+2026-09-24T23:52:15.105Z +738.4 [dbg]   pw:protocol SEND ► {"method":"Browser.enable","params":{"attachToDefaultContext":true,"userPrefs":[{"name":"toolkit.winRegisterApplicationRestart","value":false},{"name":"signon.rememberSignons","value":false}]},"id":1} +0ms
+2026-09-24T23:52:15.106Z +739.1 [dbg]   pw:protocol SEND ► {"method":"Browser.getInfo","id":2} +1ms
+2026-09-24T23:52:15.107Z +740.2 [dbg]   pw:protocol SEND ► {"method":"Browser.setInitScripts","params":{"scripts":[]},"id":3} +1ms
+2026-09-24T23:52:15.107Z +740.4 [dbg]   pw:protocol SEND ► {"method":"Browser.setDownloadOptions","params":{"downloadOptions":{"behavior":"saveToDisk","downloadsDir":"C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\runs\\forced1\\forced1-0001\\downloads"}},"id":4} +0ms
+2026-09-24T23:52:15.107Z +740.5 [dbg]   pw:protocol SEND ► {"method":"Browser.setDefaultViewport","params":{"viewport":{"viewportSize":{"width":1920,"height":1080},"deviceScaleFactor":1,"isMobile":false}},"id":5} +0ms
+2026-09-24T23:52:15.107Z +740.6 [dbg]   pw:protocol SEND ► {"method":"Browser.setLocaleOverride","params":{"locale":"nl-NL"},"id":6} +0ms
+2026-09-24T23:52:15.107Z +740.6 [dbg]   pw:protocol SEND ► {"method":"Browser.setTimezoneOverride","params":{"timezoneId":"Europe/Amsterdam"},"id":7} +0ms
+2026-09-24T23:52:15.108Z +740.7 [dbg]   pw:protocol SEND ► {"method":"Browser.setExtraHTTPHeaders","params":{"headers":[]},"id":8} +0ms
+2026-09-24T23:52:15.108Z +740.8 [dbg]   pw:protocol SEND ► {"method":"Browser.setColorScheme","params":{"colorScheme":"light"},"id":9} +1ms
+2026-09-24T23:52:15.118Z +751.1 [dbg]   pw:protocol ◀ RECV {"id":2,"result":{"version":"Firefox/156.0","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0"}} +10ms
+2026-09-24T23:52:15.118Z +751.3 [dbg]   pw:protocol ◀ RECV {"id":3} +0ms
+2026-09-24T23:52:15.118Z +751.4 [dbg]   pw:protocol ◀ RECV {"id":4} +0ms
+2026-09-24T23:52:15.118Z +751.4 [dbg]   pw:protocol ◀ RECV {"id":5} +0ms
+2026-09-24T23:52:15.118Z +751.5 [dbg]   pw:protocol ◀ RECV {"id":6} +0ms
+2026-09-24T23:52:15.120Z +753.7 [dbg]   pw:protocol ◀ RECV {"id":7} +2ms
+2026-09-24T23:52:15.121Z +753.8 [dbg]   pw:protocol ◀ RECV {"id":8} +1ms
+2026-09-24T23:52:15.121Z +753.9 [dbg]   pw:protocol ◀ RECV {"id":9} +0ms
+2026-09-24T23:52:15.121Z +753.9 [dbg]   pw:protocol SEND ► {"method":"Browser.setReducedMotion","params":{"reducedMotion":"no-preference"},"id":10} +0ms
+2026-09-24T23:52:15.130Z +763.4 [dbg]   pw:protocol ◀ RECV {"id":10} +9ms
+2026-09-24T23:52:15.130Z +763.5 [dbg]   pw:protocol SEND ► {"method":"Browser.setForcedColors","params":{"forcedColors":"none"},"id":11} +0ms
+2026-09-24T23:52:15.145Z +777.8 [dbg]   pw:protocol ◀ RECV {"id":11} +15ms
+2026-09-24T23:52:15.145Z +777.9 [dbg]   pw:protocol SEND ► {"method":"Browser.setContrast","params":{"contrast":"no-preference"},"id":12} +0ms
+2026-09-24T23:52:15.149Z +782.5 [dbg]   pw:protocol ◀ RECV {"id":12} +4ms
+2026-09-24T23:52:15.273Z +906.0 [ff:out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.608728) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+2026-09-24T23:52:15.462Z +1095.3 [ff:err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+2026-09-24T23:52:26.615Z +12248.5 SUSPECT no context after 12000 ms; firefoxPid=84440; profile files=21 bytes=850344
+2026-09-24T23:52:28.247Z +13880.6 SUSPECT-TREE {"processes":5,"contentProcesses":3,"safeModeProcesses":1}
+2026-09-24T23:52:44.618Z +30251.7 FAILED after 30008 ms: browserType.launchPersistentContext: Timeout 30000ms exceeded.
+Call log:
+  - <launching> C:\Source\SixFive7\BrowserAI\.work\firefox-launch\firefox-1549\firefox\firefox.exe -no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\firefox-launch\runs\forced1\forced1-0001\firefox\profile -juggler-pipe about:blank
+  - <launched> pid=84440
+  - [pid=84440][err] *** You are running in headless mode.
+  - [pid=84440][err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+  - [pid=84440][out]
+  - [pid=84440][out] Juggler listening to the pipe
+  - [pid=84440][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=0.608728) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+  - [pid=84440][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+
+2026-09-24T23:52:44.624Z +30256.9 DONE {"id":"forced1-0001","batch":1,"mode":"b1","nodePid":50392,"startUtc":"2026-09-24T23:52:14.610Z","ok":false,"failMs":30008,"error":"browserType.launchPersistentContext: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - <launching> C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox-launch\\firefox-1549\\firefox\\firefox.exe -no-remote -headless -profile C:\\Source\\SixFive7\\BrowserAI\\.work\\firefox

@@ -1,0 +1,18 @@
+[03:27:33.107] batch main start: scenarios=close,cancel,runcode,navigate,tabs,resume,stdin,notpaused,direct,pagepause,step,location,endpoint families=chromium,firefox runs=3 mcp=C:\Source\SixFive7\BrowserAI\payload\mcp\node_modules\@playwright\mcp
+[03:27:33.130] run close/chromium/1
+[03:27:44.524] done close/chromium/1 in 11,4 s: completed
+[03:27:44.553] run close/chromium/2
+[03:27:55.935] done close/chromium/2 in 11,3 s: completed
+[03:27:55.945] run close/chromium/3
+[03:28:06.068] done close/chromium/3 in 10,1 s: completed
+[03:28:06.077] run close/firefox/1
+[03:28:23.723] done close/firefox/1 in 17,6 s: completed
+[03:28:23.731] run close/firefox/2
+[03:28:35.841] done close/firefox/2 in 12,1 s: completed
+[03:28:35.851] run close/firefox/3
+[03:28:50.506] done close/firefox/3 in 14,6 s: completed
+[03:28:50.510] run cancel/chromium/1
+[03:29:03.633] done cancel/chromium/1 in 13,1 s: completed
+[03:29:03.642] run cancel/chromium/2
+[03:29:16.783] done cancel/chromium/2 in 13,1 s: completed
+[03:29:16.792] run cancel/chromium/3

@@ -1,0 +1,129 @@
+{"t":1791004897454,"ev":"write-served","run":"cr-mcp-eof-D1-G0.75-r1","tag":"a","cookie":""}
+{"t":1791004897557,"ev":"done","run":"cr-mcp-eof-D1-G0.75-r1","tag":"a","done":{"t0":1791004897467,"t":1791004897556,"error":null,"at":1791004897557}}
+{"t":1791004900341,"ev":"read-served","run":"cr-mcp-eof-D1-G0.75-r1","cookie":"hk_srv_a=cr-mcp-eof-D1-G0.75-r1; hk_js_a=cr-mcp-eof-D1-G0.75-r1"}
+{"t":1791004900403,"ev":"report","run":"cr-mcp-eof-D1-G0.75-r1"}
+{"t":1791004903335,"ev":"write-served","run":"fx-mcp-eof-D1-G1.5-r1","tag":"a","cookie":""}
+{"t":1791004903416,"ev":"done","run":"fx-mcp-eof-D1-G1.5-r1","tag":"a","done":{"t0":1791004903346,"t":1791004903415,"error":null,"at":1791004903416}}
+{"t":1791004907489,"ev":"read-served","run":"fx-mcp-eof-D1-G1.5-r1","cookie":"hk_srv_a=fx-mcp-eof-D1-G1.5-r1; hk_js_a=fx-mcp-eof-D1-G1.5-r1"}
+{"t":1791004907565,"ev":"report","run":"fx-mcp-eof-D1-G1.5-r1"}
+{"t":1791004908972,"ev":"write-served","run":"cr-mcp-eof-D1-G1-r1","tag":"a","cookie":""}
+{"t":1791004909088,"ev":"done","run":"cr-mcp-eof-D1-G1-r1","tag":"a","done":{"t0":1791004908984,"t":1791004909088,"error":null,"at":1791004909088}}
+{"t":1791004911941,"ev":"read-served","run":"cr-mcp-eof-D1-G1-r1","cookie":"hk_srv_a=cr-mcp-eof-D1-G1-r1; hk_js_a=cr-mcp-eof-D1-G1-r1"}
+{"t":1791004911972,"ev":"report","run":"cr-mcp-eof-D1-G1-r1"}
+{"t":1791004914721,"ev":"write-served","run":"fx-mcp-eof-D1-G0-r1","tag":"a","cookie":""}
+{"t":1791004914798,"ev":"done","run":"fx-mcp-eof-D1-G0-r1","tag":"a","done":{"t0":1791004914733,"t":1791004914797,"error":null,"at":1791004914798}}
+{"t":1791004918307,"ev":"write-served","run":"fx-mcp-eof-D1-G0-r1","tag":"a","cookie":""}
+{"t":1791004918381,"ev":"done","run":"fx-mcp-eof-D1-G0-r1","tag":"a","done":{"t0":1791004918317,"t":1791004918379,"error":null,"at":1791004918381}}
+{"t":1791004920812,"ev":"write-served","run":"fx-mcp-eof-D1-G0-r1","tag":"a","cookie":""}
+{"t":1791004920897,"ev":"done","run":"fx-mcp-eof-D1-G0-r1","tag":"a","done":{"t0":1791004920823,"t":1791004920895,"error":null,"at":1791004920897}}
+{"t":1791004924695,"ev":"write-served","run":"fx-mcp-eof-D1-G0-r1","tag":"a","cookie":""}
+{"t":1791004925734,"ev":"write-served","run":"cr-mcp-eof-D1-G1-r2","tag":"a","cookie":""}
+{"t":1791004925832,"ev":"done","run":"cr-mcp-eof-D1-G1-r2","tag":"a","done":{"t0":1791004925743,"t":1791004925832,"error":null,"at":1791004925832}}
+{"t":1791004928739,"ev":"read-served","run":"cr-mcp-eof-D1-G1-r2","cookie":"hk_srv_a=cr-mcp-eof-D1-G1-r2; hk_js_a=cr-mcp-eof-D1-G1-r2"}
+{"t":1791004928772,"ev":"report","run":"cr-mcp-eof-D1-G1-r2"}
+{"t":1791004930211,"ev":"write-served","run":"cr-mcp-eof-D1-G0.25-r2","tag":"a","cookie":""}
+{"t":1791004930303,"ev":"done","run":"cr-mcp-eof-D1-G0.25-r2","tag":"a","done":{"t0":1791004930221,"t":1791004930302,"error":null,"at":1791004930303}}
+{"t":1791004932481,"ev":"write-served","run":"cr-mcp-eof-D1-G0.25-r2","tag":"a","cookie":""}
+{"t":1791004933698,"ev":"write-served","run":"cr-mcp-eof-D1-G0.25-r2","tag":"a","cookie":""}
+{"t":1791004934900,"ev":"write-served","run":"cr-mcp-eof-D1-G0.25-r2","tag":"a","cookie":""}
+{"t":1791004936135,"ev":"write-served","run":"cr-mcp-eof-D1-G0.75-r2","tag":"a","cookie":""}
+{"t":1791004936214,"ev":"done","run":"cr-mcp-eof-D1-G0.75-r2","tag":"a","done":{"t0":1791004936145,"t":1791004936214,"error":null,"at":1791004936214}}
+{"t":1791004938812,"ev":"read-served","run":"cr-mcp-eof-D1-G0.75-r2","cookie":"hk_srv_a=cr-mcp-eof-D1-G0.75-r2; hk_js_a=cr-mcp-eof-D1-G0.75-r2"}
+{"t":1791004938844,"ev":"report","run":"cr-mcp-eof-D1-G0.75-r2"}
+{"t":1791004940165,"ev":"write-served","run":"cr-mcp-eof-D1-G0.5-r1","tag":"a","cookie":""}
+{"t":1791004940253,"ev":"done","run":"cr-mcp-eof-D1-G0.5-r1","tag":"a","done":{"t0":1791004940174,"t":1791004940253,"error":null,"at":1791004940253}}
+{"t":1791004942572,"ev":"read-served","run":"cr-mcp-eof-D1-G0.5-r1","cookie":"hk_srv_a=cr-mcp-eof-D1-G0.5-r1; hk_js_a=cr-mcp-eof-D1-G0.5-r1"}
+{"t":1791004942610,"ev":"report","run":"cr-mcp-eof-D1-G0.5-r1"}
+{"t":1791004943972,"ev":"write-served","run":"cr-mcp-eof-D1-G0.25-r1","tag":"a","cookie":""}
+{"t":1791004944056,"ev":"done","run":"cr-mcp-eof-D1-G0.25-r1","tag":"a","done":{"t0":1791004943980,"t":1791004944056,"error":null,"at":1791004944056}}
+{"t":1791004946240,"ev":"write-served","run":"cr-mcp-eof-D1-G0.25-r1","tag":"a","cookie":""}
+{"t":1791004947435,"ev":"write-served","run":"cr-mcp-eof-D1-G0.25-r1","tag":"a","cookie":""}
+{"t":1791004948620,"ev":"write-served","run":"cr-mcp-eof-D1-G0.25-r1","tag":"a","cookie":""}
+{"t":1791004951731,"ev":"write-served","run":"fx-mcp-eof-D1-G0.5-r2","tag":"a","cookie":""}
+{"t":1791004951809,"ev":"done","run":"fx-mcp-eof-D1-G0.5-r2","tag":"a","done":{"t0":1791004951741,"t":1791004951807,"error":null,"at":1791004951809}}
+{"t":1791004956046,"ev":"write-served","run":"fx-mcp-eof-D1-G0.5-r2","tag":"a","cookie":""}
+{"t":1791004956132,"ev":"done","run":"fx-mcp-eof-D1-G0.5-r2","tag":"a","done":{"t0":1791004956057,"t":1791004956131,"error":null,"at":1791004956132}}
+{"t":1791004959129,"ev":"read-served","run":"fx-mcp-eof-D1-G0.5-r2","cookie":"hk_srv_a=fx-mcp-eof-D1-G0.5-r2; hk_js_a=fx-mcp-eof-D1-G0.5-r2"}
+{"t":1791004959205,"ev":"report","run":"fx-mcp-eof-D1-G0.5-r2"}
+{"t":1791004962032,"ev":"write-served","run":"fx-mcp-eof-D1-G1-r2","tag":"a","cookie":""}
+{"t":1791004962107,"ev":"done","run":"fx-mcp-eof-D1-G1-r2","tag":"a","done":{"t0":1791004962042,"t":1791004962106,"error":null,"at":1791004962107}}
+{"t":1791004965538,"ev":"read-served","run":"fx-mcp-eof-D1-G1-r2","cookie":"hk_srv_a=fx-mcp-eof-D1-G1-r2; hk_js_a=fx-mcp-eof-D1-G1-r2"}
+{"t":1791004965614,"ev":"report","run":"fx-mcp-eof-D1-G1-r2"}
+{"t":1791004968489,"ev":"write-served","run":"fx-mcp-eof-D1-G0.75-r1","tag":"a","cookie":""}
+{"t":1791004968568,"ev":"done","run":"fx-mcp-eof-D1-G0.75-r1","tag":"a","done":{"t0":1791004968499,"t":1791004968565,"error":null,"at":1791004968568}}
+{"t":1791004971757,"ev":"read-served","run":"fx-mcp-eof-D1-G0.75-r1","cookie":"hk_srv_a=fx-mcp-eof-D1-G0.75-r1; hk_js_a=fx-mcp-eof-D1-G0.75-r1"}
+{"t":1791004971839,"ev":"report","run":"fx-mcp-eof-D1-G0.75-r1"}
+{"t":1791004974631,"ev":"write-served","run":"fx-mcp-eof-D1-G0.75-r2","tag":"a","cookie":""}
+{"t":1791004974703,"ev":"done","run":"fx-mcp-eof-D1-G0.75-r2","tag":"a","done":{"t0":1791004974640,"t":1791004974701,"error":null,"at":1791004974703}}
+{"t":1791004977923,"ev":"read-served","run":"fx-mcp-eof-D1-G0.75-r2","cookie":"hk_srv_a=fx-mcp-eof-D1-G0.75-r2; hk_js_a=fx-mcp-eof-D1-G0.75-r2"}
+{"t":1791004978001,"ev":"report","run":"fx-mcp-eof-D1-G0.75-r2"}
+{"t":1791004979340,"ev":"write-served","run":"cr-mcp-eof-D1-G0-r1","tag":"a","cookie":""}
+{"t":1791004979431,"ev":"done","run":"cr-mcp-eof-D1-G0-r1","tag":"a","done":{"t0":1791004979349,"t":1791004979430,"error":null,"at":1791004979431}}
+{"t":1791004981345,"ev":"write-served","run":"cr-mcp-eof-D1-G0-r1","tag":"a","cookie":""}
+{"t":1791004981419,"ev":"done","run":"cr-mcp-eof-D1-G0-r1","tag":"a","done":{"t0":1791004981354,"t":1791004981418,"error":null,"at":1791004981419}}
+{"t":1791004983375,"ev":"write-served","run":"cr-mcp-eof-D1-G0-r1","tag":"a","cookie":""}
+{"t":1791004984390,"ev":"write-served","run":"cr-mcp-eof-D1-G0-r1","tag":"a","cookie":""}
+{"t":1791004985429,"ev":"write-served","run":"cr-mcp-eof-D1-G1.5-r2","tag":"a","cookie":""}
+{"t":1791004985516,"ev":"done","run":"cr-mcp-eof-D1-G1.5-r2","tag":"a","done":{"t0":1791004985437,"t":1791004985516,"error":null,"at":1791004985516}}
+{"t":1791004988875,"ev":"read-served","run":"cr-mcp-eof-D1-G1.5-r2","cookie":"hk_srv_a=cr-mcp-eof-D1-G1.5-r2; hk_js_a=cr-mcp-eof-D1-G1.5-r2"}
+{"t":1791004988921,"ev":"report","run":"cr-mcp-eof-D1-G1.5-r2"}
+{"t":1791004990287,"ev":"write-served","run":"cr-mcp-eof-D1-G0-r2","tag":"a","cookie":""}
+{"t":1791004990369,"ev":"done","run":"cr-mcp-eof-D1-G0-r2","tag":"a","done":{"t0":1791004990296,"t":1791004990368,"error":null,"at":1791004990369}}
+{"t":1791004992722,"ev":"read-served","run":"cr-mcp-eof-D1-G0-r2","cookie":"hk_srv_a=cr-mcp-eof-D1-G0-r2; hk_js_a=cr-mcp-eof-D1-G0-r2"}
+{"t":1791004992753,"ev":"report","run":"cr-mcp-eof-D1-G0-r2"}
+{"t":1791004995525,"ev":"write-served","run":"fx-mcp-eof-D1-G1-r1","tag":"a","cookie":""}
+{"t":1791004995606,"ev":"done","run":"fx-mcp-eof-D1-G1-r1","tag":"a","done":{"t0":1791004995536,"t":1791004995606,"error":null,"at":1791004995606}}
+{"t":1791004999103,"ev":"read-served","run":"fx-mcp-eof-D1-G1-r1","cookie":"hk_srv_a=fx-mcp-eof-D1-G1-r1; hk_js_a=fx-mcp-eof-D1-G1-r1"}
+{"t":1791004999186,"ev":"report","run":"fx-mcp-eof-D1-G1-r1"}
+{"t":1791005002126,"ev":"write-served","run":"fx-mcp-eof-D1-G5-r2","tag":"a","cookie":""}
+{"t":1791005002197,"ev":"done","run":"fx-mcp-eof-D1-G5-r2","tag":"a","done":{"t0":1791005002136,"t":1791005002195,"error":null,"at":1791005002197}}
+{"t":1791005009650,"ev":"read-served","run":"fx-mcp-eof-D1-G5-r2","cookie":"hk_srv_a=fx-mcp-eof-D1-G5-r2; hk_js_a=fx-mcp-eof-D1-G5-r2"}
+{"t":1791005009734,"ev":"report","run":"fx-mcp-eof-D1-G5-r2"}
+{"t":1791005012529,"ev":"write-served","run":"fx-mcp-eof-D1-G0.5-r1","tag":"a","cookie":""}
+{"t":1791005012605,"ev":"done","run":"fx-mcp-eof-D1-G0.5-r1","tag":"a","done":{"t0":1791005012540,"t":1791005012604,"error":null,"at":1791005012605}}
+{"t":1791005015572,"ev":"read-served","run":"fx-mcp-eof-D1-G0.5-r1","cookie":"hk_srv_a=fx-mcp-eof-D1-G0.5-r1; hk_js_a=fx-mcp-eof-D1-G0.5-r1"}
+{"t":1791005015656,"ev":"report","run":"fx-mcp-eof-D1-G0.5-r1"}
+{"t":1791005018487,"ev":"write-served","run":"fx-mcp-eof-D1-G0-r2","tag":"a","cookie":""}
+{"t":1791005018564,"ev":"done","run":"fx-mcp-eof-D1-G0-r2","tag":"a","done":{"t0":1791005018496,"t":1791005018563,"error":null,"at":1791005018564}}
+{"t":1791005021509,"ev":"read-served","run":"fx-mcp-eof-D1-G0-r2","cookie":"hk_srv_a=fx-mcp-eof-D1-G0-r2; hk_js_a=fx-mcp-eof-D1-G0-r2"}
+{"t":1791005021592,"ev":"report","run":"fx-mcp-eof-D1-G0-r2"}
+{"t":1791005022894,"ev":"write-served","run":"cr-mcp-eof-D1-G5-r1","tag":"a","cookie":""}
+{"t":1791005022980,"ev":"done","run":"cr-mcp-eof-D1-G5-r1","tag":"a","done":{"t0":1791005022904,"t":1791005022978,"error":null,"at":1791005022980}}
+{"t":1791005029880,"ev":"read-served","run":"cr-mcp-eof-D1-G5-r1","cookie":"hk_srv_a=cr-mcp-eof-D1-G5-r1; hk_js_a=cr-mcp-eof-D1-G5-r1"}
+{"t":1791005029914,"ev":"report","run":"cr-mcp-eof-D1-G5-r1"}
+{"t":1791005032629,"ev":"write-served","run":"fx-mcp-eof-D1-G0.25-r1","tag":"a","cookie":""}
+{"t":1791005032709,"ev":"done","run":"fx-mcp-eof-D1-G0.25-r1","tag":"a","done":{"t0":1791005032639,"t":1791005032706,"error":null,"at":1791005032709}}
+{"t":1791005036230,"ev":"write-served","run":"fx-mcp-eof-D1-G0.25-r1","tag":"a","cookie":""}
+{"t":1791005036306,"ev":"done","run":"fx-mcp-eof-D1-G0.25-r1","tag":"a","done":{"t0":1791005036238,"t":1791005036304,"error":null,"at":1791005036306}}
+{"t":1791005039846,"ev":"write-served","run":"fx-mcp-eof-D1-G0.25-r1","tag":"a","cookie":""}
+{"t":1791005039933,"ev":"done","run":"fx-mcp-eof-D1-G0.25-r1","tag":"a","done":{"t0":1791005039856,"t":1791005039928,"error":null,"at":1791005039933}}
+{"t":1791005043935,"ev":"write-served","run":"fx-mcp-eof-D1-G0.25-r1","tag":"a","cookie":""}
+{"t":1791005044014,"ev":"done","run":"fx-mcp-eof-D1-G0.25-r1","tag":"a","done":{"t0":1791005043944,"t":1791005044013,"error":null,"at":1791005044014}}
+{"t":1791005046247,"ev":"write-served","run":"cr-mcp-eof-D1-G0.5-r2","tag":"a","cookie":""}
+{"t":1791005046346,"ev":"done","run":"cr-mcp-eof-D1-G0.5-r2","tag":"a","done":{"t0":1791005046256,"t":1791005046344,"error":null,"at":1791005046346}}
+{"t":1791005048697,"ev":"read-served","run":"cr-mcp-eof-D1-G0.5-r2","cookie":"hk_srv_a=cr-mcp-eof-D1-G0.5-r2; hk_js_a=cr-mcp-eof-D1-G0.5-r2"}
+{"t":1791005048738,"ev":"report","run":"cr-mcp-eof-D1-G0.5-r2"}
+{"t":1791005051548,"ev":"write-served","run":"fx-mcp-eof-D1-G5-r1","tag":"a","cookie":""}
+{"t":1791005051628,"ev":"done","run":"fx-mcp-eof-D1-G5-r1","tag":"a","done":{"t0":1791005051557,"t":1791005051626,"error":null,"at":1791005051628}}
+{"t":1791005059496,"ev":"read-served","run":"fx-mcp-eof-D1-G5-r1","cookie":"hk_srv_a=fx-mcp-eof-D1-G5-r1; hk_js_a=fx-mcp-eof-D1-G5-r1"}
+{"t":1791005059564,"ev":"report","run":"fx-mcp-eof-D1-G5-r1"}
+{"t":1791005062315,"ev":"write-served","run":"fx-mcp-eof-D1-G1.5-r2","tag":"a","cookie":""}
+{"t":1791005062390,"ev":"done","run":"fx-mcp-eof-D1-G1.5-r2","tag":"a","done":{"t0":1791005062324,"t":1791005062389,"error":null,"at":1791005062390}}
+{"t":1791005066379,"ev":"read-served","run":"fx-mcp-eof-D1-G1.5-r2","cookie":"hk_srv_a=fx-mcp-eof-D1-G1.5-r2; hk_js_a=fx-mcp-eof-D1-G1.5-r2"}
+{"t":1791005066464,"ev":"report","run":"fx-mcp-eof-D1-G1.5-r2"}
+{"t":1791005069384,"ev":"write-served","run":"fx-mcp-eof-D1-G0.25-r2","tag":"a","cookie":""}
+{"t":1791005069466,"ev":"done","run":"fx-mcp-eof-D1-G0.25-r2","tag":"a","done":{"t0":1791005069393,"t":1791005069464,"error":null,"at":1791005069466}}
+{"t":1791005073081,"ev":"write-served","run":"fx-mcp-eof-D1-G0.25-r2","tag":"a","cookie":""}
+{"t":1791005073161,"ev":"done","run":"fx-mcp-eof-D1-G0.25-r2","tag":"a","done":{"t0":1791005073090,"t":1791005073159,"error":null,"at":1791005073161}}
+{"t":1791005076893,"ev":"write-served","run":"fx-mcp-eof-D1-G0.25-r2","tag":"a","cookie":""}
+{"t":1791005076974,"ev":"done","run":"fx-mcp-eof-D1-G0.25-r2","tag":"a","done":{"t0":1791005076903,"t":1791005076971,"error":null,"at":1791005076974}}
+{"t":1791005079604,"ev":"write-served","run":"fx-mcp-eof-D1-G0.25-r2","tag":"a","cookie":""}
+{"t":1791005079681,"ev":"done","run":"fx-mcp-eof-D1-G0.25-r2","tag":"a","done":{"t0":1791005079613,"t":1791005079679,"error":null,"at":1791005079681}}
+{"t":1791005081818,"ev":"write-served","run":"cr-mcp-eof-D1-G5-r2","tag":"a","cookie":""}
+{"t":1791005081920,"ev":"done","run":"cr-mcp-eof-D1-G5-r2","tag":"a","done":{"t0":1791005081826,"t":1791005081919,"error":null,"at":1791005081920}}
+{"t":1791005088784,"ev":"read-served","run":"cr-mcp-eof-D1-G5-r2","cookie":"hk_srv_a=cr-mcp-eof-D1-G5-r2; hk_js_a=cr-mcp-eof-D1-G5-r2"}
+{"t":1791005088816,"ev":"report","run":"cr-mcp-eof-D1-G5-r2"}
+{"t":1791005090264,"ev":"write-served","run":"cr-mcp-eof-D1-G1.5-r1","tag":"a","cookie":""}
+{"t":1791005090365,"ev":"done","run":"cr-mcp-eof-D1-G1.5-r1","tag":"a","done":{"t0":1791005090277,"t":1791005090363,"error":null,"at":1791005090365}}
+{"t":1791005093753,"ev":"read-served","run":"cr-mcp-eof-D1-G1.5-r1","cookie":"hk_srv_a=cr-mcp-eof-D1-G1.5-r1; hk_js_a=cr-mcp-eof-D1-G1.5-r1"}
+{"t":1791005093792,"ev":"report","run":"cr-mcp-eof-D1-G1.5-r1"}

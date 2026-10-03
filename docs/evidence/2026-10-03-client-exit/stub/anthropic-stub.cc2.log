@@ -1,0 +1,217 @@
+2026-10-03T01:50:03.530Z LISTENING 127.0.0.1:8934 pid=16260
+2026-10-03T01:50:05.229Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:05.974Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_1_539c124a
+2026-10-03T01:50:06.063Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_2_3b2923b3
+2026-10-03T01:50:10.364Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:11.350Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_3_5ec540a1
+2026-10-03T01:50:11.464Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_4_e8238a9a
+2026-10-03T01:50:15.842Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:16.717Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_5_9c1b9b41
+2026-10-03T01:50:16.801Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_6_6c8d33c9
+2026-10-03T01:50:21.114Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:22.075Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_7_c3f0bd93
+2026-10-03T01:50:22.211Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_8_9d91b364
+2026-10-03T01:50:26.664Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:27.414Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_9_2846b556
+2026-10-03T01:50:27.556Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_10_44ed7a45
+2026-10-03T01:50:31.856Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:32.543Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_11_bab4cc9e
+2026-10-03T01:50:32.597Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_12_f9917c72
+2026-10-03T01:50:36.914Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:37.622Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_13_7317ea2a
+2026-10-03T01:50:37.699Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_14_afa2dfea
+2026-10-03T01:50:42.642Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:43.365Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_15_0fe8f1ca
+2026-10-03T01:50:43.487Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_16_795c1a7e
+2026-10-03T01:50:48.536Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:49.561Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_17_3bf04d52
+2026-10-03T01:50:49.664Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_18_4dd40028
+2026-10-03T01:50:55.025Z REQ HEAD /api/hello -> 404
+2026-10-03T01:50:55.888Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_19_a0c49584
+2026-10-03T01:50:56.041Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_20_90740e09
+2026-10-03T01:51:01.080Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:01.861Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_21_98635631
+2026-10-03T01:51:02.023Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_22_140cc9eb
+2026-10-03T01:51:07.029Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:07.778Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_23_3b9dd500
+2026-10-03T01:51:07.861Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_24_1d044148
+2026-10-03T01:51:12.785Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:13.315Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_25_700f89c0
+2026-10-03T01:51:13.369Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_26_a65b5aaa
+2026-10-03T01:51:18.252Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:19.203Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_27_9f9b0096
+2026-10-03T01:51:19.285Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_28_e1d2e6bd
+2026-10-03T01:51:24.405Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:25.256Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_29_c87151e3
+2026-10-03T01:51:25.356Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_30_bc7db384
+2026-10-03T01:51:30.550Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:31.502Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_31_c5fb3050
+2026-10-03T01:51:31.576Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_32_4d81d59e
+2026-10-03T01:51:36.645Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:37.411Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_33_d070e25a
+2026-10-03T01:51:37.534Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_34_5e59d7ff
+2026-10-03T01:51:42.732Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:43.489Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_35_d707d0db
+2026-10-03T01:51:43.609Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_36_e32a67c7
+2026-10-03T01:51:48.734Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:49.750Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_37_6ccc07e1
+2026-10-03T01:51:49.921Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_38_5af753a1
+2026-10-03T01:51:54.215Z REQ HEAD /api/hello -> 404
+2026-10-03T01:51:55.142Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_39_8e8b79b5
+2026-10-03T01:51:55.258Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_40_8d2b2b68
+2026-10-03T01:51:59.551Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:00.337Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_41_f09ecbc4
+2026-10-03T01:52:00.427Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_42_9c7e1c4e
+2026-10-03T01:52:04.713Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:05.575Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_43_6f08ba76
+2026-10-03T01:52:05.660Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_44_1db9ec0b
+2026-10-03T01:52:09.874Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:10.506Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_45_7d24ec23
+2026-10-03T01:52:10.580Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_46_6ea5a1d5
+2026-10-03T01:52:15.028Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:16.154Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_47_76fac073
+2026-10-03T01:52:16.244Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_48_f3a6ca62
+2026-10-03T01:52:20.634Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:21.650Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_49_3dfb839c
+2026-10-03T01:52:21.837Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_50_49a97e5c
+2026-10-03T01:52:26.101Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:26.819Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_51_8e383c00
+2026-10-03T01:52:26.894Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_52_713888a8
+2026-10-03T01:52:31.187Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:31.961Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_53_e382ec7b
+2026-10-03T01:52:32.099Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_54_4bdb21a1
+2026-10-03T01:52:36.351Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:37.043Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_55_04ce744f
+2026-10-03T01:52:37.104Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_56_a87afaef
+2026-10-03T01:52:41.337Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:41.995Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_57_42963d76
+2026-10-03T01:52:42.078Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_58_b94dfde0
+2026-10-03T01:52:46.444Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:47.435Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_59_2eb369e2
+2026-10-03T01:52:47.539Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_60_a83135c6
+2026-10-03T01:52:52.484Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:53.691Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_61_3a073b9b
+2026-10-03T01:52:53.860Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_62_17b4a826
+2026-10-03T01:52:58.244Z REQ HEAD /api/hello -> 404
+2026-10-03T01:52:59.195Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_63_7ae76e59
+2026-10-03T01:52:59.321Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_64_42dedc9c
+2026-10-03T01:53:03.563Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:04.302Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_65_878cbc64
+2026-10-03T01:53:04.396Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_66_fee783a2
+2026-10-03T01:53:08.606Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:09.317Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_67_f62ee924
+2026-10-03T01:53:09.393Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_68_ae41664c
+2026-10-03T01:53:13.542Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:14.114Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_69_983ba38e
+2026-10-03T01:53:14.178Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_70_27796228
+2026-10-03T01:53:18.312Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:18.919Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_71_e0a891de
+2026-10-03T01:53:19.010Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_72_5aeb07fd
+2026-10-03T01:53:23.231Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:23.992Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_73_e7a59e82
+2026-10-03T01:53:24.113Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_74_84971cfd
+2026-10-03T01:53:28.332Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:28.967Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_75_46a8420d
+2026-10-03T01:53:29.064Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_76_d4a4d51f
+2026-10-03T01:53:33.511Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:34.399Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_77_1fbd8758
+2026-10-03T01:53:34.504Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_78_a07601f4
+2026-10-03T01:53:38.700Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:39.368Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_79_7d3f4a61
+2026-10-03T01:53:39.435Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_80_5d60f895
+2026-10-03T01:53:43.802Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:44.474Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_81_c1332937
+2026-10-03T01:53:44.524Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_82_a1c0633d
+2026-10-03T01:53:48.778Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:49.386Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_83_9530265f
+2026-10-03T01:53:49.449Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_84_bfd8c29d
+2026-10-03T01:53:53.794Z REQ HEAD /api/hello -> 404
+2026-10-03T01:53:54.583Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_85_1ba62efd
+2026-10-03T01:53:54.716Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_86_3253ed90
+2026-10-03T01:53:59.779Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:00.436Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_87_b095cd1e
+2026-10-03T01:54:00.489Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_88_c53ad0d7
+2026-10-03T01:54:05.572Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:06.146Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_89_edd623b5
+2026-10-03T01:54:06.228Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_90_d6df14b2
+2026-10-03T01:54:11.487Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:12.422Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_91_81b29c52
+2026-10-03T01:54:12.484Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_92_93b912d8
+2026-10-03T01:54:17.510Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:18.318Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_93_63521e6d
+2026-10-03T01:54:18.470Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_94_82ad9828
+2026-10-03T01:54:23.967Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:25.046Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_95_cca8eb92
+2026-10-03T01:54:25.150Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_96_cfb8837c
+2026-10-03T01:54:30.416Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:31.096Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_97_4e9da39f
+2026-10-03T01:54:31.157Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_98_954ed8ef
+2026-10-03T01:54:36.150Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:36.941Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_99_27a47d8e
+2026-10-03T01:54:37.022Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_100_44b266ec
+2026-10-03T01:54:42.042Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:42.816Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_101_897b22f5
+2026-10-03T01:54:42.880Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_102_a998f5d6
+2026-10-03T01:54:48.767Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:49.464Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_103_79956ff2
+2026-10-03T01:54:49.557Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_104_f17fd209
+2026-10-03T01:54:54.602Z REQ HEAD /api/hello -> 404
+2026-10-03T01:54:55.299Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_105_f63b13e8
+2026-10-03T01:54:55.419Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_106_1bbeab06
+2026-10-03T01:55:00.759Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:01.924Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_107_2234d61e
+2026-10-03T01:55:02.021Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_108_c8a89513
+2026-10-03T01:55:07.127Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:07.917Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_109_000d8b21
+2026-10-03T01:55:08.007Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_110_28a504ee
+2026-10-03T01:55:12.326Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:13.139Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_111_91defad3
+2026-10-03T01:55:13.222Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_112_e0625dbe
+2026-10-03T01:55:17.974Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:18.931Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_113_e438d3cc
+2026-10-03T01:55:19.040Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_114_76d2d9c0
+2026-10-03T01:55:23.216Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:23.878Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_115_0aac84da
+2026-10-03T01:55:23.937Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_116_8c4051c1
+2026-10-03T01:55:28.175Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:28.904Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_117_b501bfeb
+2026-10-03T01:55:29.000Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_118_d6e3de1e
+2026-10-03T01:55:33.278Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:34.075Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_119_3bb48878
+2026-10-03T01:55:34.194Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_120_920a366a
+2026-10-03T01:55:38.434Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:39.273Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_121_d7b773b5
+2026-10-03T01:55:39.372Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_122_97eddb36
+2026-10-03T01:55:43.643Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:44.409Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_123_17717962
+2026-10-03T01:55:44.512Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_124_8017b071
+2026-10-03T01:55:48.789Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:49.561Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_125_aff5d407
+2026-10-03T01:55:49.618Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_126_8a8a3188
+2026-10-03T01:55:53.858Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:54.773Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_127_d50384ab
+2026-10-03T01:55:54.881Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_128_13bd7be1
+2026-10-03T01:55:59.098Z REQ HEAD /api/hello -> 404
+2026-10-03T01:55:59.722Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_129_6aa58112
+2026-10-03T01:55:59.823Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_130_dace7187
+2026-10-03T01:56:04.008Z REQ HEAD /api/hello -> 404
+2026-10-03T01:56:04.875Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_131_28a6776e
+2026-10-03T01:56:04.995Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_132_a8cdf19b
+2026-10-03T01:56:09.163Z REQ HEAD /api/hello -> 404
+2026-10-03T01:56:09.792Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_133_bb12788e
+2026-10-03T01:56:09.850Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_134_c54a6c85
+2026-10-03T01:56:13.977Z REQ HEAD /api/hello -> 404
+2026-10-03T01:56:14.608Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_135_4d78dca7
+2026-10-03T01:56:14.675Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_136_8e4b09e0
+2026-10-03T01:56:18.954Z REQ HEAD /api/hello -> 404
+2026-10-03T01:56:19.781Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_137_ce1f1175
+2026-10-03T01:56:19.842Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_138_3c44adb5
+2026-10-03T01:56:24.114Z REQ HEAD /api/hello -> 404
+2026-10-03T01:56:24.779Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_139_fbaf84ac
+2026-10-03T01:56:24.848Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_140_2b095285
+2026-10-03T01:56:29.001Z REQ HEAD /api/hello -> 404
+2026-10-03T01:56:29.573Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_141_962b20b5
+2026-10-03T01:56:29.626Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_142_723467c0
+2026-10-03T01:56:33.817Z REQ HEAD /api/hello -> 404
+2026-10-03T01:56:34.465Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=16260_143_2983b99d
+2026-10-03T01:56:34.538Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=16260_144_732d0149

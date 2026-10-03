@@ -1,0 +1,254 @@
+Q302 - the stuck Firefox launch. Research report, 2026-09-25 (runs 2026-09-24T23:01Z to 2026-09-25T00:02Z).
+Read-only against the repository; all scratch under .work/firefox-launch/. Firefox 1549 (156.0), playwright-core 1.64.0-alpha-1789764292000, node v24.21.0 from payload/.
+
+=====================================================================
+ANSWER
+=====================================================================
+The stuck launch is Firefox starting in SAFE MODE. If Shift is down (and Ctrl/Alt are not) at the moment
+Firefox's browser process starts, it enters safe mode unless the environment variable MOZ_DISABLE_SAFE_MODE_KEY
+is set. In safe mode, BrowserGlue opens a modal "Troubleshoot Mode" window before any browser window. In
+headless mode nobody can see or dismiss that window, so the first browser window never opens, the
+"browser-idle-startup-tasks-finished" notification never fires, juggler never answers Browser.enable, and
+Playwright gives up at its own 180 s launch timeout. The suite then reports
+"async initializeServer: Timeout 180000ms exceeded".
+It is not contention, not memory pressure, not the stray sweep, and not a profile lock. Serializing the Firefox
+tests would not help. The fix is one line: set MOZ_DISABLE_SAFE_MODE_KEY=1 in ChildEnvironment.Forced.
+It also affects real users, not just the suite: anyone holding Shift at the instant a Firefox session starts gets a
+180 s failure.
+
+=====================================================================
+EVIDENCE CHAIN (each link measured or read, with where)
+=====================================================================
+1. Reproduced on an idle machine, one launch at a time, no suite running:
+   4 stuck in 133 serial launches without the override (smoke 1/2, serial1 2/30, A/B control 1/101).
+   smoke-0002 ran to the full budget: 180,009.3 ms, "browserType.launchPersistentContext: Timeout 180000ms
+   exceeded." Its call log is line for line the suite's PasswordPromptTests failure (.work/suite/p1b-bash-1.log):
+   "Juggler listening to the pipe", "RenderCompositorSWGL failed mapping default framebuffer, no dt",
+   "Helper.js, line 82 ... removeProgressListener", and then nothing.
+2. Those three log lines are noise. They appear in 40/40 healthy launches and 3/3 stuck ones
+   (runs/*/probe.log). What separates the two groups:
+   - Browser.enable (id 1): answered in 40/40 healthy launches and never answered in any stuck one. In the
+     stuck ones, requests 2 to 12 were answered in 20 to 90 ms (runs/smoke/smoke-0002/probe.log).
+   - Browser.attachedToTarget and the delayed-startup output ("[ERROR shell_windows::limited_access_features]"):
+     40/40 healthy, 0/3 stuck.
+   - sessionCheckpoints.json stops at {"profile-after-change":true,"final-ui-startup":true}. Healthy launches
+     add "sessionstore-windows-restored".
+3. The stuck browser is idle, not deadlocked. Browser pid 106416 used +0 ms CPU over 2 s. Its main thread
+   (tid 78248, which owns MozillaHiddenWindowClass / nsAppShell:EventWindowClass) is in Wait:UserRequest and
+   answered WM_NULL in 0 ms (runs/serial1/serial1-0003/inspect-1-2-106416.txt). The pid Playwright spawns is
+   Firefox's launcher (1 thread, 0 ms CPU). The browser is the launcher's child.
+4. Every stuck browser was in safe mode. Its tab content process was started with "-safeMode": 3 of 3
+   organic stalls inspected (serial1-0003, serial1-0016 inspect files, ab1-0109 probe.suspect-tree.txt) and
+   5 of 5 forced stalls. 0 of 287 healthy trees read had it.
+   Firefox passes -safeMode to content processes exactly when the parent's gSafeMode is set:
+   mozilla-firefox/firefox dom/ipc/ContentParent.cpp "geckoargs::sSafeMode.Put(gSafeMode, extraArgs)", and
+   toolkit/xre/GeckoArgs.h sSafeMode{"-safeMode"}.
+5. Forcing safe mode through Firefox's own switch reproduces the exact signature 5 of 5, deterministically,
+   with no keyboard involved: MOZ_SAFE_MODE_RESTART=1 gave 3/3 stuck (runs/forced1). All had Browser.enable
+   unanswered, a -safeMode content process, and a 21-file profile of about 850 KB at 30 s, the same as the
+   organic stalls at 30 s (serial1-0003 850,726 B, ab1-0109 850,019 B). Adding MOZ_DISABLE_SAFE_MODE_KEY=1 on
+   top still gave 2/2 stuck (runs/forced2), so the override covers the key trigger only, as the source says.
+6. The override removed every stall where it was applied: 0 of 101 serial launches (the A/B treatment arm,
+   interleaved launch by launch with the control) and 0 of 54 in parallel batches. Stated with its limit: the
+   interleaved A/B alone is 1/101 against 0/101, which by itself is not significant, because the trigger
+   depends on keyboard state that nothing here controls. The case rests on links 4, 5 and 7 together.
+7. The source chain, read from the shipped build:
+   - toolkit/xre/SafeMode.h (mozilla-firefox/firefox @3682546) IsSafeModeRequested: on Windows,
+     GetKeyState(VK_SHIFT) down with Ctrl and Alt up enters safe mode, unless EnvHasValue("MOZ_DISABLE_SAFE_MODE_KEY").
+     The same function returns true for MOZ_SAFE_MODE_RESTART. The DisableSafeMode registry policy is the only
+     other off switch, and it is machine or user wide.
+   - nsAppRunner.cpp: "IsSafeModeRequested(gArgc, gArgv)" (the key check is on) sets gSafeMode in the browser
+     process. browser/app/winlauncher/LauncherProcessWin.cpp passes SafeModeFlag::NoKeyPressCheck, so the
+     launcher never checks the key.
+   - This build carries the switches: "MOZ_DISABLE_SAFE_MODE_KEY" occurs 1x in xul.dll and 1x in firefox.exe of
+     firefox-1549 (grep -a), and MOZ_SAFE_MODE_RESTART 3x and 2x.
+   - browser/omni.ja modules/BrowserGlue.sys.mjs:205-206: final-ui-startup calls _beforeUIStartup. At :395-407,
+     "before the first window is opened", `if (Services.appinfo.inSafeMode) Services.ww.openWindow(null,
+     "chrome://browser/content/safeMode.xhtml", "_blank", "chrome,centerscreen,modal,resizable=no", null)`.
+     Nothing checks for headless mode.
+   - The observer order explains why "Juggler listening" still prints: xpcom/ds/nsObserverList.h says observers
+     are notified "in last-added-first order". Juggler registers for final-ui-startup later, at
+     command-line-startup, so it runs first.
+   - omni.ja chrome/juggler/content/components/Juggler.js:47-48 and :90-91: the startup promise resolves only on
+     "browser-idle-startup-tasks-finished", or immediately under -silent at :83-87, which Playwright passes only
+     for non-persistent launches. :149 prints "Juggler listening to the pipe".
+     protocol/BrowserHandler.js:30-33: Browser.enable awaits that promise.
+   - browser/omni.ja chrome/browser/content/browser/browser-init.js:411-412 waits for "MozAfterPaint" before it
+     runs _delayedStartup. :728-737 then runs promiseAllWindowsRestored, the idle tasks, and
+     "browser-delayed-startup-finished". :1052 fires "browser-idle-startup-tasks-finished".
+   - playwright-core lib/coreBundle.js:4684 DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT = 3*60*1e3, applied by
+     _launchTimeout at :58317-58325. FFBrowser.connect sends Browser.enable at :46316-46340. Firefox's
+     waitForReadyState resolves on "Juggler listening" at :46701-46708, which is why the launch passes that stage.
+8. The suite's own records fit. In p1b-ps-3 (FirefoxSessionTests, 3m01.8s) the stuck Firefox, pid 79400, was
+   alive and holding its profile lock at 21:34:13, 21:34:16 and 21:34:21Z (Sweep[8] records from pids
+   28092/103868/79000 in %LOCALAPPDATA%\BrowserAI\logs\browserai-20260924-001.log). Its error text was not
+   kept, so it is classified by duration and liveness alone. kb row 34's failed cost-ratio round had its
+   profile stall at 1,159,208 B across 25 files. smoke-0002's profile at 180 s was 1,159,281 B across 25 files.
+   Healthy profiles have 56 to 64 files and 21.3 to 36.3 MB, and always include cert9.db, key4.db and
+   places.sqlite. No stuck profile has any of the three.
+
+=====================================================================
+HYPOTHESES, RANKED, WITH EVIDENCE FOR AND AGAINST
+=====================================================================
+1. Safe mode from a held Shift key at browser-process start: ESTABLISHED (see chain above).
+   Against: nothing observed contradicts it. The keyboard state itself was not observed: this rig does not read
+   input. Whether a person or some software held Shift at those instants is therefore not measured. The observed
+   rate moved with time: 3 of the first 32 launches (23:01 to 23:14Z), then 1 of the next 200. That fits a trigger
+   tied to human activity, but proves nothing about it.
+2. Contention between parallel Firefox launches: RULED OUT as the cause.
+   - Batches of 3 without the override: 0 stuck in 30.
+   - Batches of 3 and 6 with it: 0 stuck in 54.
+   - Stalls occur with one launch at a time on an idle machine.
+   Against ruling it out: nothing. Concurrency only slows launches (see the tables).
+3. Memory or commit pressure: RULED OUT as the cause of this signature.
+   - A commit limit on Firefox's own job fails FAST, not stuck: 450 MB (2/2) and 300 MB (2/2) failed in 3.6 to
+     13.1 s. The logs show "out of memory" and the browser exiting 0xC0000005, and Playwright reports "Target page,
+     context or browser has been closed".
+   - Commit percentage is not physical pressure on this machine: 128 GB RAM and a 10 GB pagefile. At 73.4%
+     commit (2026-09-24 ~23:0xZ), 73.5 GB was available and the pagefile held 137 MB in use. One game process
+     alone was 26.2 GB private with 8.4 GB resident.
+   - The TIGHT label on both failing runs sits 0.2 to 0.7 points above HEALTHY runs that passed (74.8%, 74.4%).
+   Against: available physical memory at the two failure times was not recorded by anything, so it was not read.
+4. First start in a fresh profile under CPU starvation: RULED OUT as the cause. A job CPU cap of 1% of the
+   machine (about 0.32 logical CPU) slowed launch to 9.4 s against 2.4 s at p50, and 2 of 2 completed.
+5. The stray sweep killing a browser mid-launch: RULED OUT. All 20 sweeps in the two failure windows logged
+   terminated=0: 11 in 21:00 to 21:07Z and 9 in 21:33 to 21:40Z. A killed browser fails fast through Playwright's
+   exit race (coreBundle.js:40592-40603) instead of timing out.
+6. A profile lock: RULED OUT for both 2026-09-24 instances. "Juggler listening" comes after profile locking, and
+   the front-door Firefox was attributed through its own lock. It remains a candidate for the 2026-09-22 row-38
+   instance, which stopped before "Juggler listening" (see NOT ESTABLISHED).
+7. Defender scanning a new profile: NOT NEEDED AND NOT SUPPORTED. The stuck browsers were idle, with 0 CPU and
+   message pumps answering, not blocked in I/O. Real-time protection is on, and exclusions cannot be read
+   without admin.
+8. The Firefox content-process limit: RULED OUT. playwright.cfg sets dom.ipc.processCount 60000 and
+   processPrelaunch off. Stuck trees had 3 content processes.
+9. The GFX "no dt" error and the Helper.js removeProgressListener error: NOISE, present in 40/40 healthy launches.
+
+=====================================================================
+MEASUREMENTS (runs/*/results.jsonl; rig/summary.py prints this table)
+=====================================================================
+arm                                                     n   stuck  launch ms p50 / p90 / max   -safeMode (stuck, healthy)
+serial, no override (smoke+serial1+A/B control)       133     4     2410 / 2989 / 6449          3/3 read, 0/100 read
+  of which A/B control, interleaved                   101     1     2347 / 2902 / 6449          1/1, 0/100
+serial, MOZ_DISABLE_SAFE_MODE_KEY=1 (A/B treatment)   101     0     2323 / 3419 / 5939          -, 0/101
+batches of 3, no override                              30     0     3774 / 4989 / 6340          -, 0/30
+batches of 3, override                                 30     0     2980 / 5466 / 6093          -, 0/30
+batches of 6, override                                 24     0     4084 / 5873 / 6838          -, 0/24
+forced MOZ_SAFE_MODE_RESTART=1                          3     3     -                           3/3
+forced MOZ_SAFE_MODE_RESTART=1 + override               2     2     -                           2/2
+job commit limit 450 MB, override                       2     2     failed fast, OOM crash (one node died before writing its row)
+job commit limit 300 MB, override                       2     2     failed fast in 13.1 s and 3.6 s, "browser has been closed"
+job CPU cap 1% of machine, override                     2     0     9390 / - / 9421
+First navigation, serial healthy: p50 355 ms, max 1517 ms. Peak job commit, node + Firefox: median 595 MB.
+Stall rate without the override, all serial launches: 4/133 (3.0%). Suite history for comparison: 2 in 24
+Firefox launches on 2026-09-24, and 2 in about 20 on 2026-09-22 (kb).
+Rig: rig/run-batch.ps1 and rig/run-ab.ps1 put each node+Firefox tree in its own KILL_ON_JOB_CLOSE job
+(rig/Rig.cs), using the product's allow-listed environment and launch options (rig/ffprobe2.js). Firefox 1549
+was copied outside the browsers root. Parallel batches ran only while .work/installer.lock was absent and no
+.work/suite log had grown in 20 s.
+
+=====================================================================
+NOT ESTABLISHED / NOT DONE
+=====================================================================
+- Who or what held Shift. The keyboard was deliberately not observed.
+- The 2026-09-22 row-38 resume stall ended with "headless mode" and no "Juggler listening". That is an earlier
+  stop than safe mode produces, so it is unclassified. A profile lock on a resumed profile is one candidate,
+  not tested.
+- The 2026-08-29/30 instances: their call logs were truncated to 400 characters (docs/evidence/2026-08-30-release-gate).
+  The recorded "NSS init after a 32 s stall" does not match the stuck profiles here, none of which ever
+  created cert9.db. Not classifiable.
+- No headed launch was run. From source, a headed Firefox would put the Troubleshoot Mode dialog on screen.
+- No test for the fix was written (read-only brief). No upstream issue was filed.
+- Firefox's own %TEMP% use was not audited. Playwright's temp directories were avoided by passing artifactsDir.
+
+=====================================================================
+DIRECTIONS FOR Q302
+=====================================================================
+1. (RECOMMENDED) Add ["MOZ_DISABLE_SAFE_MODE_KEY"] = "1" to ChildEnvironment.Forced
+   (src/BrowserAI/Protocol/ChildEnvironment.cs:217-221).
+   How it reaches Firefox: node gets it through ChildLaunch.cs:162-163, and Playwright hands process.env to
+   Firefox (coreBundle.js:40539/40547). Juggler's amendEnvironment adds nothing on Windows (:46666).
+   Coverage: the product and all four suite Firefox arms (ChildLaunch.Create in PasswordPromptTests.cs:230 and
+   FirefoxTests.cs:484; Harness/JobObjectScope.cs:62 for containment; the published slice for
+   FirefoxSessionTests, after a republish).
+   Precedent: Mozilla sets the same variable in devtools/client/framework/browser-toolbox/Launcher.sys.mjs
+   ("Disable safe mode for the new process in case this was opened via the keyboard shortcut"), as does
+   mozilla/mozregression launchers.py.
+   Cost: one line, a doc comment, a republish, kb and HAZARDS rows.
+   Test:
+   (a) ChildEnvironmentTests asserts Build() carries the pair. It goes red by deleting the line.
+   (b) One live Firefox launch asserts that no content process carries -safeMode. The harness reads command lines
+       already (Harness/ProcessCommandLine.cs). Reading the browser's environment block would need a new PEB
+       reader. The detector's deterministic positive control is MOZ_SAFE_MODE_RESTART=1, 5/5 here.
+   What a test cannot do: the behaviour under a real held Shift cannot be planted red in this suite without
+   driving the machine's keyboard state. A behaviour-level red is therefore not available, and accepting a
+   mechanism-level test would be a second named exception to the plant-it-red rule. That is the maintainer's call.
+2. Detect and recover in the product. After launch, look for -safeMode or an unanswered Browser.enable, then
+   refuse with a named error and relaunch. This covers every safe-mode trigger. Cost: new product code on the
+   launch path.
+   Test: deterministic, through a test-only MOZ_SAFE_MODE_RESTART seam. The other triggers cannot reach a child
+   today: the environment is an allow-list (ChildEnvironment.cs:133-202) and the product writes the arguments.
+   Heavier than needed on top of 1.
+3. Shorter launch budget, through browser.launchOptions.timeout in the generated config. A stuck launch fails in,
+   say, 60 s instead of 180 s, and the next call relaunches, because upstream clears the failed backend
+   (coreBundle.js:73325-73328).
+   Cost: one key. It treats the symptom, and it is a promptness bound in product code: a 1%-CPU Firefox took
+   9.4 s here, and the suite has seen 6 s.
+   Test: deterministic through the same seam. Not recommended alone.
+4. Report upstream to microsoft/playwright with this reproduction. Juggler Firefox's amendEnvironment could set
+   the variable, as the BiDi path already sets MOZ_CRASHREPORTER* (coreBundle.js:44593-44601). Link #40882
+   ("newPage sometimes hangs indefinitely on Firefox", Windows 11), which was closed 2026-06-15 because nobody
+   had a reproduction.
+   Cost: one issue. It complements 1.
+5. Serialize the Firefox tests: WOULD NOT HELP. The trigger is per launch and independent of concurrency
+   (4/133 serial on an idle machine, 0/84 in batches). It costs suite wall clock and the race detection that
+   SuiteParallelism.cs:26-32 keeps unbounded for.
+RECOMMENDATION: 1, with 4 alongside.
+
+=====================================================================
+WHAT kb/re-verification.md ROW 34 SHOULD SAY NOW (by addition, replacing "What it was is NOT established")
+=====================================================================
+"The failed round is EXPLAINED and was reproduced deliberately, 2026-09-25 @ firefox 1549 (156.0) / playwright-core
+1.64.0-alpha-1789764292000. Corrected 2026-09-25 (previously "What it was is NOT established, and the reason is
+the rig, not the machine").
+Cause: Firefox started in safe mode. A Shift key down at the moment its browser process starts triggers it
+(toolkit/xre/SafeMode.h, disabled by MOZ_DISABLE_SAFE_MODE_KEY). BrowserGlue then opens the modal safeMode.xhtml
+before any browser window (browser/omni.ja BrowserGlue.sys.mjs:395-407), which nothing dismisses headless. So
+juggler's Browser.enable, which waits for browser-idle-startup-tasks-finished, is never answered, and Playwright
+stops at DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, 180 s. That timeout is Playwright's own, not BrowserAI's.
+Reproduced one launch at a time on an idle machine: 4 in 133 launches. One ran the full 180,009 ms, and its
+profile ended at 25 files / 1,159,281 B, against this round's 25 files / 1,159,208 B. Every stuck browser read had
+a content process started with -safeMode (3/3 organic, 5/5 forced with MOZ_SAFE_MODE_RESTART=1); 0 of 287 healthy
+ones did. With MOZ_DISABLE_SAFE_MODE_KEY=1: 0 in 155 launches, serial and batched. The rate is a property of the
+keyboard at launch instants, not of load or memory. Re-establish with the rig in .work/firefox-launch/rig (to be
+moved to docs/probes/ if kept)."
+Consider amending the kb provisioning-and-timings section, README.md:354 ("not this tree's") and the HAZARDS
+six-run-gate row by addition in the same way.
+
+=====================================================================
+TANGENTIAL FINDINGS
+=====================================================================
+- BrowserConfiguration.cs:725-731 and FirefoxProfile.cs:87-90 say upstream writes firefoxUserPrefs into user.js
+  before the browser starts. At this pin the juggler path sends them at runtime inside Browser.enable
+  (coreBundle.js:46321-46329; juggler BrowserHandler.js:37-46). None of 30 profiles contained a user.js.
+  containment-firefox.json (.work, 2026-09-24T21:51Z) records processesRegisteredForRestart: 1 for Firefox.
+  That may be related; not investigated.
+- The commit-charge TIGHT band does not mean physical memory pressure on this machine (see hypothesis 3). Its
+  warning "a timing failure here is not safely attributable" did not apply to this failure, which is not a timing
+  failure.
+- PasswordPromptTests.cs:166-172 attributes an earlier "three-minute navigate timeout in the attribution arm" to
+  contention. That fits this cause too, but it cannot be reclassified now.
+
+=====================================================================
+CLEANUP (done 2026-09-25 ~00:04Z)
+=====================================================================
+Removed:
+- the scratch Firefox copy .work/firefox-launch/firefox-1549 (346 MB);
+- every profile directory under runs/ (9 directories, 7,973,199 bytes, the stuck ones included);
+- 658 empty downloads/artifacts folders.
+Checked by image path and command line that no process of this rig remains: 0 found. Every job object belonged to
+an orchestrator process that has exited, and KILL_ON_JOB_CLOSE closed with it. No process was terminated by name;
+nothing outside this rig was touched.
+Kept, all small and all text: rig/, runs/ (logs, results, listings, process trees; 20 MB), and omni-juggler/ and
+omni-browser/, which are the extracted juggler and browser startup scripts cited above. The provisioned
+browsers root was only read.

@@ -1,0 +1,25 @@
+model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:8932"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.probe]
+command = 'C:\Source\SixFive7\BrowserAI\.work\client-exit\rig\bin\ExitRig.exe'
+args = ['server', '--logdir', 'C:\Source\SixFive7\BrowserAI\.work\client-exit\runs\cx\d2-d1000-r1', '--delay-ms', '1000']
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+
+[projects.'C:\Source\SixFive7\BrowserAI\.work\client-exit\proj']
+trust_level = "trusted"
+
+[projects.'c:\source\sixfive7\browserai\.work\client-exit\proj']
+trust_level = "trusted"

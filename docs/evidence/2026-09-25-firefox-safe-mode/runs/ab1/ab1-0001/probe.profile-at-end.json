@@ -1,0 +1,380 @@
+[
+ {
+  "p": ".startup-incomplete",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:39.320Z",
+  "birth": "2026-09-24T23:15:39.320Z"
+ },
+ {
+  "p": "activity-stream.shortcut_cache.json",
+  "size": 220,
+  "mtime": "2026-09-24T23:15:41.676Z",
+  "birth": "2026-09-24T23:15:41.621Z"
+ },
+ {
+  "p": "addonStartup.json.lz4",
+  "size": 3960,
+  "mtime": "2026-09-24T23:15:42.104Z",
+  "birth": "2026-09-24T23:15:42.104Z"
+ },
+ {
+  "p": "bounce-tracking-protection.sqlite",
+  "size": 98304,
+  "mtime": "2026-09-24T23:15:40.373Z",
+  "birth": "2026-09-24T23:15:40.361Z"
+ },
+ {
+  "p": "cache2\\entries\\3A0AAC311E2AEB3FBB9121F04D1B4A255AD59461",
+  "size": 595,
+  "mtime": "2026-09-24T23:15:42.878Z",
+  "birth": "2026-09-24T23:15:42.877Z"
+ },
+ {
+  "p": "cache2\\entries\\3EBD6344FF4F209359B271B505E148EA661FF757",
+  "size": 628,
+  "mtime": "2026-09-24T23:15:42.811Z",
+  "birth": "2026-09-24T23:15:42.810Z"
+ },
+ {
+  "p": "cert9.db",
+  "size": 229376,
+  "mtime": "2026-09-24T23:15:41.036Z",
+  "birth": "2026-09-24T23:15:41.021Z"
+ },
+ {
+  "p": "compatibility.ini",
+  "size": 274,
+  "mtime": "2026-09-24T23:15:39.321Z",
+  "birth": "2026-09-24T23:15:39.321Z"
+ },
+ {
+  "p": "containers.json",
+  "size": 710,
+  "mtime": "2026-09-24T23:15:42.109Z",
+  "birth": "2026-09-24T23:15:42.109Z"
+ },
+ {
+  "p": "content-prefs.sqlite",
+  "size": 262144,
+  "mtime": "2026-09-24T23:15:41.227Z",
+  "birth": "2026-09-24T23:15:41.093Z"
+ },
+ {
+  "p": "content-prefs.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:41.233Z",
+  "birth": "2026-09-24T23:15:41.233Z"
+ },
+ {
+  "p": "content-prefs.sqlite-wal",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:41.232Z",
+  "birth": "2026-09-24T23:15:41.232Z"
+ },
+ {
+  "p": "cookies.sqlite",
+  "size": 98304,
+  "mtime": "2026-09-24T23:15:39.437Z",
+  "birth": "2026-09-24T23:15:39.388Z"
+ },
+ {
+  "p": "datareporting\\glean\\db\\data.safe.bin",
+  "size": 2578,
+  "mtime": "2026-09-24T23:15:42.671Z",
+  "birth": "2026-09-24T23:15:42.128Z"
+ },
+ {
+  "p": "datareporting\\state.json",
+  "size": 236,
+  "mtime": "2026-09-24T23:15:41.630Z",
+  "birth": "2026-09-24T23:15:41.629Z"
+ },
+ {
+  "p": "domain_to_categories.sqlite",
+  "size": 98304,
+  "mtime": "2026-09-24T23:15:41.701Z",
+  "birth": "2026-09-24T23:15:41.671Z"
+ },
+ {
+  "p": "domain_to_categories.sqlite-journal",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:41.704Z",
+  "birth": "2026-09-24T23:15:41.677Z"
+ },
+ {
+  "p": "e861e906.sqlite",
+  "size": 229376,
+  "mtime": "2026-09-24T23:15:41.225Z",
+  "birth": "2026-09-24T23:15:40.902Z"
+ },
+ {
+  "p": "e861e906.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:41.127Z",
+  "birth": "2026-09-24T23:15:41.126Z"
+ },
+ {
+  "p": "e861e906.sqlite-wal",
+  "size": 524704,
+  "mtime": "2026-09-24T23:15:41.268Z",
+  "birth": "2026-09-24T23:15:41.125Z"
+ },
+ {
+  "p": "extension-preferences.json",
+  "size": 1073,
+  "mtime": "2026-09-24T23:15:42.112Z",
+  "birth": "2026-09-24T23:15:42.112Z"
+ },
+ {
+  "p": "extension-store\\data.safe.bin",
+  "size": 109140,
+  "mtime": "2026-09-24T23:15:41.569Z",
+  "birth": "2026-09-24T23:15:41.564Z"
+ },
+ {
+  "p": "extensions.json",
+  "size": 13568,
+  "mtime": "2026-09-24T23:15:42.193Z",
+  "birth": "2026-09-24T23:15:41.222Z"
+ },
+ {
+  "p": "favicons.sqlite",
+  "size": 5242880,
+  "mtime": "2026-09-24T23:15:41.500Z",
+  "birth": "2026-09-24T23:15:41.471Z"
+ },
+ {
+  "p": "favicons.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:41.516Z",
+  "birth": "2026-09-24T23:15:41.490Z"
+ },
+ {
+  "p": "favicons.sqlite-wal",
+  "size": 655872,
+  "mtime": "2026-09-24T23:15:41.667Z",
+  "birth": "2026-09-24T23:15:41.489Z"
+ },
+ {
+  "p": "handlers.json",
+  "size": 328,
+  "mtime": "2026-09-24T23:15:43.660Z",
+  "birth": "2026-09-24T23:15:43.660Z"
+ },
+ {
+  "p": "key4.db",
+  "size": 294912,
+  "mtime": "2026-09-24T23:15:41.065Z",
+  "birth": "2026-09-24T23:15:41.038Z"
+ },
+ {
+  "p": "logins.db",
+  "size": 360448,
+  "mtime": "2026-09-24T23:15:41.168Z",
+  "birth": "2026-09-24T23:15:41.125Z"
+ },
+ {
+  "p": "parent.lock",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:39.318Z",
+  "birth": "2026-09-24T23:15:39.318Z"
+ },
+ {
+  "p": "permissions.sqlite",
+  "size": 163840,
+  "mtime": "2026-09-24T23:15:39.713Z",
+  "birth": "2026-09-24T23:15:39.674Z"
+ },
+ {
+  "p": "pkcs11.txt",
+  "size": 522,
+  "mtime": "2026-09-24T23:15:41.017Z",
+  "birth": "2026-09-24T23:15:41.016Z"
+ },
+ {
+  "p": "places.sqlite",
+  "size": 5242880,
+  "mtime": "2026-09-24T23:15:41.538Z",
+  "birth": "2026-09-24T23:15:41.460Z"
+ },
+ {
+  "p": "places.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:41.520Z",
+  "birth": "2026-09-24T23:15:41.518Z"
+ },
+ {
+  "p": "places.sqlite-wal",
+  "size": 2098720,
+  "mtime": "2026-09-24T23:15:42.846Z",
+  "birth": "2026-09-24T23:15:41.517Z"
+ },
+ {
+  "p": "prefs.js",
+  "size": 13161,
+  "mtime": "2026-09-24T23:15:42.784Z",
+  "birth": "2026-09-24T23:15:40.050Z"
+ },
+ {
+  "p": "search.json.mozlz4",
+  "size": 301,
+  "mtime": "2026-09-24T23:15:42.249Z",
+  "birth": "2026-09-24T23:15:42.249Z"
+ },
+ {
+  "p": "sessionCheckpoints.json",
+  "size": 90,
+  "mtime": "2026-09-24T23:15:40.943Z",
+  "birth": "2026-09-24T23:15:39.936Z"
+ },
+ {
+  "p": "shield-preference-experiments.json",
+  "size": 18,
+  "mtime": "2026-09-24T23:15:42.197Z",
+  "birth": "2026-09-24T23:15:42.197Z"
+ },
+ {
+  "p": "startupCache\\startupCache.8.little",
+  "size": 4812644,
+  "mtime": "2026-09-24T23:15:42.771Z",
+  "birth": "2026-09-24T23:15:42.319Z"
+ },
+ {
+  "p": "startupCache\\webext.sc.lz4",
+  "size": 114265,
+  "mtime": "2026-09-24T23:15:44.483Z",
+  "birth": "2026-09-24T23:15:44.483Z"
+ },
+ {
+  "p": "storage\\ls-archive.sqlite",
+  "size": 131072,
+  "mtime": "2026-09-24T23:15:39.700Z",
+  "birth": "2026-09-24T23:15:39.664Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\.metadata-v2",
+  "size": 62,
+  "mtime": "2026-09-24T23:15:39.742Z",
+  "birth": "2026-09-24T23:15:39.740Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1451318868ntouromlalnodry--epcr.sqlite",
+  "size": 49152,
+  "mtime": "2026-09-24T23:15:43.662Z",
+  "birth": "2026-09-24T23:15:40.971Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1451318868ntouromlalnodry--epcr.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:41.021Z",
+  "birth": "2026-09-24T23:15:40.988Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1451318868ntouromlalnodry--epcr.sqlite-wal",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:43.664Z",
+  "birth": "2026-09-24T23:15:40.986Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1657114595AmcateirvtiSty.sqlite",
+  "size": 49152,
+  "mtime": "2026-09-24T23:15:44.247Z",
+  "birth": "2026-09-24T23:15:42.099Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1657114595AmcateirvtiSty.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:42.153Z",
+  "birth": "2026-09-24T23:15:42.117Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1657114595AmcateirvtiSty.sqlite-wal",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:44.249Z",
+  "birth": "2026-09-24T23:15:42.117Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1974846527meornoittso-r.sqlite",
+  "size": 49152,
+  "mtime": "2026-09-24T23:15:43.662Z",
+  "birth": "2026-09-24T23:15:41.691Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1974846527meornoittso-r.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:41.745Z",
+  "birth": "2026-09-24T23:15:41.712Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\1974846527meornoittso-r.sqlite-wal",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:43.664Z",
+  "birth": "2026-09-24T23:15:41.710Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\2823318777ntouromlalnodry--naod.sqlite",
+  "size": 49152,
+  "mtime": "2026-09-24T23:15:43.662Z",
+  "birth": "2026-09-24T23:15:41.650Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\2823318777ntouromlalnodry--naod.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:41.701Z",
+  "birth": "2026-09-24T23:15:41.669Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\2823318777ntouromlalnodry--naod.sqlite-wal",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:43.664Z",
+  "birth": "2026-09-24T23:15:41.668Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3561288849sdhlie.sqlite",
+  "size": 49152,
+  "mtime": "2026-09-24T23:15:43.662Z",
+  "birth": "2026-09-24T23:15:40.044Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3561288849sdhlie.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:40.093Z",
+  "birth": "2026-09-24T23:15:40.063Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3561288849sdhlie.sqlite-wal",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:43.664Z",
+  "birth": "2026-09-24T23:15:40.062Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite",
+  "size": 49152,
+  "mtime": "2026-09-24T23:15:44.946Z",
+  "birth": "2026-09-24T23:15:39.801Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite-shm",
+  "size": 32768,
+  "mtime": "2026-09-24T23:15:39.873Z",
+  "birth": "2026-09-24T23:15:39.840Z"
+ },
+ {
+  "p": "storage\\permanent\\chrome\\idb\\3870112724rsegmnoittet-es.sqlite-wal",
+  "size": 0,
+  "mtime": "2026-09-24T23:15:44.949Z",
+  "birth": "2026-09-24T23:15:39.840Z"
+ },
+ {
+  "p": "storage.sqlite",
+  "size": 28672,
+  "mtime": "2026-09-24T23:15:39.797Z",
+  "birth": "2026-09-24T23:15:39.640Z"
+ },
+ {
+  "p": "times.json",
+  "size": 50,
+  "mtime": "2026-09-24T23:15:40.434Z",
+  "birth": "2026-09-24T23:15:40.051Z"
+ }
+]

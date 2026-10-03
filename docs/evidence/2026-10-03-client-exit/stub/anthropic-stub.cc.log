@@ -1,0 +1,127 @@
+2026-10-03T01:38:43.832Z LISTENING 127.0.0.1:8931 pid=59584
+2026-10-03T01:38:45.519Z REQ HEAD /api/hello -> 404
+2026-10-03T01:38:46.124Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_1_ace395f2
+2026-10-03T01:38:46.161Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_2_21f4307d
+2026-10-03T01:38:48.343Z REQ HEAD /api/hello -> 404
+2026-10-03T01:38:49.209Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_3_6b7ca5d6
+2026-10-03T01:38:49.372Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_4_718d7940
+2026-10-03T01:38:51.919Z REQ HEAD /api/hello -> 404
+2026-10-03T01:38:52.564Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_5_d35e53ae
+2026-10-03T01:38:52.605Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_6_71630ee0
+2026-10-03T01:38:54.744Z REQ HEAD /api/hello -> 404
+2026-10-03T01:38:55.425Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_7_6ba960a3
+2026-10-03T01:38:55.482Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_8_fdf7b285
+2026-10-03T01:38:58.150Z REQ HEAD /api/hello -> 404
+2026-10-03T01:38:58.884Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_9_a4f23e2e
+2026-10-03T01:38:58.942Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_10_aadf4750
+2026-10-03T01:39:01.194Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:01.813Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_11_298b0bc2
+2026-10-03T01:39:01.846Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_12_13132769
+2026-10-03T01:39:04.102Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:04.791Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_13_da85ff6a
+2026-10-03T01:39:04.833Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_14_8b7ce27a
+2026-10-03T01:39:08.031Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:08.759Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_15_6f9a24ca
+2026-10-03T01:39:08.798Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_16_b1bb2cbf
+2026-10-03T01:39:11.829Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:12.756Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_17_8230fe1c
+2026-10-03T01:39:12.807Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_18_f8b5205d
+2026-10-03T01:39:16.089Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:16.723Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_19_4137d9f3
+2026-10-03T01:39:16.761Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_20_4c962780
+2026-10-03T01:39:19.801Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:20.516Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_21_2d440b3f
+2026-10-03T01:39:20.558Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_22_899a1efa
+2026-10-03T01:39:23.796Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:24.536Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_23_1678aa4c
+2026-10-03T01:39:24.582Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_24_fede1391
+2026-10-03T01:39:27.491Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:28.734Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_25_7c841828
+2026-10-03T01:39:28.791Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_26_0ae35278
+2026-10-03T01:39:31.993Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:33.019Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_27_bb8403a9
+2026-10-03T01:39:33.103Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_28_e03e803e
+2026-10-03T01:39:36.204Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:37.051Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_29_e606a941
+2026-10-03T01:39:37.120Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_30_10dd8ed1
+2026-10-03T01:39:40.617Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:41.705Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_31_d6fe9871
+2026-10-03T01:39:41.755Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_32_b796af4c
+2026-10-03T01:39:45.061Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:46.028Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_33_84af393e
+2026-10-03T01:39:46.086Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_34_a1b962fd
+2026-10-03T01:39:49.193Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:50.140Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:text] -> tool id=59584_35_f3c9f2a3
+2026-10-03T01:39:50.211Z REQ POST /v1/messages?beta=true model=claude-sonnet-5-5 stream=true tools=1 probe=mcp__probe__ping msgs=[user:text+text+text,system:string,assistant:tool_use,user:tool_result,system:text] -> text id=59584_36_161e5e8e
+2026-10-03T01:39:53.889Z REQ HEAD /api/hello -> 404
+2026-10-03T01:39:59.263Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:04.260Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:09.685Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:15.822Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:21.598Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:27.457Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:33.611Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:39.805Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:45.234Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:50.848Z REQ HEAD /api/hello -> 404
+2026-10-03T01:40:56.413Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:02.403Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:08.345Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:13.813Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:19.802Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:25.634Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:31.618Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:37.470Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:42.405Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:47.155Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:51.808Z REQ HEAD /api/hello -> 404
+2026-10-03T01:41:56.456Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:01.113Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:05.825Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:10.485Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:15.242Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:20.419Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:25.294Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:30.026Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:34.656Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:39.215Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:43.774Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:48.401Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:53.091Z REQ HEAD /api/hello -> 404
+2026-10-03T01:42:57.833Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:02.696Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:07.798Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:12.910Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:18.131Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:23.537Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:28.774Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:33.964Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:39.671Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:46.283Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:52.389Z REQ HEAD /api/hello -> 404
+2026-10-03T01:43:58.925Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:05.078Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:11.138Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:17.220Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:22.945Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:28.814Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:34.566Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:40.529Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:46.688Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:51.938Z REQ HEAD /api/hello -> 404
+2026-10-03T01:44:56.804Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:01.665Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:06.518Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:11.458Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:16.313Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:21.310Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:26.496Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:31.865Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:37.370Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:42.560Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:47.484Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:52.640Z REQ HEAD /api/hello -> 404
+2026-10-03T01:45:57.627Z REQ HEAD /api/hello -> 404
+2026-10-03T01:46:02.519Z REQ HEAD /api/hello -> 404
+2026-10-03T01:46:07.354Z REQ HEAD /api/hello -> 404
+2026-10-03T01:46:12.425Z REQ HEAD /api/hello -> 404

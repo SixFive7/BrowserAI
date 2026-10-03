@@ -1039,6 +1039,14 @@ conclude the timer does nothing. Called again with no browser open it answers th
 same text, is **not** an error, and costs 156-514 ms -- so a close that races
 anything costs a round trip and not a failure.
 
+⚠️ *Corrected 2026-10-03 by addition (previously "Called again with no browser
+open it answers the same text, is not an error, and costs 156-514 ms").* **It
+answers the same text and is not an error, and it LAUNCHES A BROWSER to close
+it**: 8 or 9 Chromium processes and 8 Firefox processes were created and gone
+again inside the call, 6 of 6 per family at `@playwright/mcp` 0.0.82 and 0.0.83,
+taking 423 to 797 ms on Chromium and 1,244 to 2,130 ms on Firefox. See
+[what a session keeps across a close](#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03).
+
 **How to re-establish all of the above:** drive a real child directly --
 `node <payload>/mcp/node_modules/@playwright/mcp/cli.js --config <cfg> --sandbox`
 with `PLAYWRIGHT_BROWSERS_PATH` set -- through `initialize` → `browser_navigate`
@@ -1393,6 +1401,240 @@ product.
 **Suite costs, for cadence decisions:** real-child contract 2-5 s, smoke 10-30 s,
 update 1-3 min. Estimates, not stopwatch figures. `[UNVERIFIED]`
 
+### What a session keeps across a browser close, and what brings the rest back -- measured 2026-10-03
+
+`[FLOATS]` `@playwright/mcp` **0.0.82** (`playwright-core`
+1.64.0-alpha-1789764292000, `chromium-1246`, `firefox-1549`) and **0.0.83**
+(1.64.0-alpha-1790635538000, `chromium-1247`, `firefox-1553`), each driven over
+stdio the way BrowserAI drives it, headless, three runs per cell. Q325 and
+Q328. [Evidence](../../docs/evidence/2026-10-03-state-across-close/README.md),
+[rig](../../docs/probes/2026-10-03-state-across-close/README.md).
+
+**`browser_close`, which is also what the idle close sends, keeps the profile
+and loses the session.** A page set every kind of state, then the browser was
+closed and the next call relaunched it; all four combinations of version and
+family gave the same answer, and so did tearing the whole child down and
+starting a new one in its place (design B, in the evidence):
+
+| Kept | Lost |
+|---|---|
+| Persistent cookies, `HttpOnly` and script-set; `localStorage`; IndexedDB | Session cookies, `sessionStorage`, a typed form value, the scroll position, the tabs and their history |
+| Firefox: a geolocation grant | Chromium: the geolocation grant, back to *denied*; and the page's own *denied* on clipboard-read came back *granted*, because BrowserAI's configuration grants it at every launch |
+
+**The next call runs on `about:blank`**, and says so only in its page block:
+*"Page URL: about:blank"* with an empty snapshot. A click on a ref taken before
+the close answers *"Ref e4 not found in the current page snapshot"*, 3 of 3 in
+every cell.
+
+⭐ **The browsers can bring the session back themselves, through launch options
+and nothing BrowserAI builds.** Chromium launched with `--restore-last-session`
+reopened the closed tabs with their session cookies, `sessionStorage`, form
+value, scroll position and history, 3 of 3 at both versions; Firefox did the same
+with `browser.sessionstore.resume_session_once` together with
+`restore_on_demand` and `restore_tabs_lazily` off. **The weaker settings do not:**
+Chromium's `session.restore_on_startup` preference alone restored nothing,
+Firefox's `browser.startup.page = 3` alone restored nothing, and
+`resume_session_once` alone restored the tabs and the session cookie and none
+of the rest. A page reached by a POST came back as an error page in Chromium and
+by a GET in Firefox; neither posted it again. Playwright's own startup tab is one more blank tab beside the restored
+ones unless `about:blank` is dropped from its default arguments. Armed for one
+launch only, the next launch starts clean. The first call after a restoring
+launch cost 424 to 1,006 ms on Chromium and 1.7 to 4.1 s on Firefox.
+
+**The same holds after the caller's own close**: closing, tearing the child
+down in 15 to 22 ms, and resuming in a new child launched with the restore
+options brought those stores back, 3 of 3 per cell, with Firefox's history one
+entry short; the first call
+of the resumed session took 376 to 439 ms on Chromium and 1.39 to 1.58 s on
+Firefox.
+
+**Saved storage state is the other route, and it is narrower.** A storage-state
+file carried cookies, session cookies included, and `localStorage`, and no
+IndexedDB; after the browser died uncleanly Chromium had lost every cookie and
+`localStorage` key and Firefox its session cookies and `localStorage`, and
+setting the saved state brought those back, 3 of 3 per cell.
+
+**A browser relaunch overwrites the network capture.** With capture on, the
+archive written at a close holds only what the browser that just closed loaded:
+after a relaunch and a second close it held the second browser's one request and
+not the first browser's two, and a close with no browser open wrote an archive
+with no entries at all. The archive is named once per child, so each browser of
+that child writes over the last.
+
+**Costs of the two designs**, medians over three runs at 0.0.82: a child with
+the browser open tears down in 858 ms on Chromium and 825 ms on Firefox, and one
+with only node in 16 and 18 ms; node alone holds 124 MB resident and 176 MB
+private, against about 672 MB (Chromium) and 836 MB (Firefox) resident with two
+local tabs open.
+
+⚠️ **Not established:** whether the restore options survive a browser that was
+killed and not closed, which is how a client ends a session; what a restored
+page re-runs on load, beyond the one POST; and what a headed window does.
+
+**Re-establish** with the rig: `batch.js` runs a plan of scenarios, each a real
+`@playwright/mcp` child driven over stdio for one version and family;
+`aggregate.js` writes the tables and `summarise.js` prints `summary.txt`, whose
+sections are the findings above.
+
+### How old a write must be before a hard kill keeps it -- measured 2026-10-03
+
+`[FLOATS]` Chrome for Testing **154.0.8037.0** (`chromium-1246`) and Firefox
+**156.0** (`firefox-1549`) under `playwright-core`
+**1.64.0-alpha-1789764292000** and `@playwright/mcp` **0.0.82**, all from the
+payload and run on its node, headless, with BrowserAI's own launch options.
+Q356 a. [Evidence](../../docs/evidence/2026-10-03-hard-kill/README.md),
+[rig](../../docs/probes/2026-10-03-hard-kill/README.md).
+
+**The question is what the browser has written to disk at the instant it is
+killed**, because
+[that is how a client ends a session](../mcp/protocol.md#what-each-client-does-to-a-stdio-server-when-the-session-ends----measured-2026-10-03).
+A page in a persistent profile writes an `HttpOnly` cookie, a script cookie, 40
+`localStorage` keys, an IndexedDB record and a `sessionStorage` key; `D` seconds
+later the whole tree is killed, by terminating its job or by
+`taskkill /T /F`; the same profile is then launched again and read back. Three
+runs per cell unless stated; the two kills gave the same results.
+
+| Kept after a kill `D` s after the write | Chromium | Firefox |
+|---|---|---|
+| Cookies, both kinds | **only from D = 30 s**: 0 of 3 at every D up to 29.5 s, 3 of 3 from 30 s | **always**, from D = 0 |
+| 40 `localStorage` keys | **from D = 5 s**: 0 of 3 up to 4.5 s, 3 of 3 from 5 s | **from D = 5.5 s**: 0 of 3 up to 4.5 s, 2 of 6 at 5 s, 3 of 3 from 5.5 s |
+| The same keys with `--enable-aggressive-domstorage-flushing` | **from D = 1 s**: 0 of 3 at 0.5 s, 3 of 3 at 1, 1.5 and 2.5 s; cookies unchanged | - |
+| IndexedDB | always | always |
+| `sessionStorage` | never | never |
+| A clean close, the control | everything but `sessionStorage` | everything but `sessionStorage` |
+
+⭐ **A Chromium cookie needs thirty seconds and nothing shortens it.** The
+switch that brings `localStorage` down to a second does not touch cookies, and
+neither does a profile that has been through a full launch and close before
+(two runs per cell, `warm` in the evidence: one of two cookies survived at 30 s).
+**A second write is slower than the first in Chromium**: with a second write 10 s
+after the first, its `localStorage` keys were lost at 20 and 45 s and kept at
+55 s, two runs each, and its cookie was kept at all three. Why is not
+established. Every profile that was checked, killed or not, reopened with its
+SQLite stores intact.
+
+⭐ **A clean shutdown of the `@playwright/mcp` child force-kills its own browser
+1 ms after starting to close it.** When the child's stdin closes, two handlers
+call `gracefullyClose()` on the same browser, the transport's end-of-stream
+handler and the exit watchdog's stdin-close handler; the second finds the first
+in progress and takes the force branch, which on Windows starts `cmd.exe` and
+`taskkill /T /F`. Read at `coreBundle.js:9521-9533`, `:9571-9578`, `:73356`
+and `:74118` of 1.64.0-alpha-1789764292000, and the same code at
+1.64.0-alpha-1790635538000 and on `main` at `c2a031e`
+(`processLauncher.ts:209-221` and `:272-275`, `watchdog.ts:35`, `server.ts:193`).
+Measured: `taskkill.exe` under `cmd.exe` joined the tree 76 to 105 ms after the
+stdin closed, in all 11 runs that traced it; the node child exited 411 to 566 ms
+after the close; and of the 35 runs that wrote 1 s before the close and
+completed, **one Chromium run lost its cookie and one Firefox run lost its 40
+keys**, 16 and 19 runs of each. **A `browser_close` first kept everything, 6 of
+6**, even with the tree killed the moment the tool answered: 203 to 286 ms for
+Chromium and 533 to 592 ms for Firefox.
+
+**What a hard kill leaves of a session**, read off a stand-in for BrowserAI's
+session holders and not off the product, 3 of 3: the process is gone 37 to 40
+ms after the kill, `browserai.lock` can be opened again 37 to 49 ms after it,
+the store's `-wal` and `-shm` stay beside it, and the next reader sees every row,
+the one that was in flight still marked in flight. Playwright's registry
+descriptor for the killed browser stays until the next reap, which removed it
+in 93 to 175 ms in every run that had one.
+
+⚠️ **Not established:** why the second write is slower; whether the
+aggressive-flushing switch costs anything a page can notice, or anything on disk
+over a long session; and what a headed window does differently. Many runs of the
+rig refused to kill a tree that held a process it could not prove its own, and
+are recorded as refusals and not counted.
+
+**Re-establish** with the rig: `orchestrate.ps1` runs a plan from `plans/` and
+writes one `results/*.jsonl` row per run; `summarize.py` prints the table above
+as `survival-summary.txt`.
+
+### A headless Firefox that starts while Shift is held never finishes launching -- measured 2026-09-25
+
+`[FLOATS]` Firefox **156.0** (`firefox-1549`, build 20260917210045) under
+`playwright-core` **1.64.0-alpha-1789764292000** and node **v24.21.0** from the
+payload, 341 launches between 2026-09-24T23:01Z and 2026-09-25T00:02Z
+([evidence](../../docs/evidence/2026-09-25-firefox-safe-mode/README.md),
+[rig](../../docs/probes/2026-09-25-firefox-safe-mode/README.md)).
+
+**The Firefox launch that stops at 180 s is Firefox in safe mode.** On Windows a
+Firefox browser process that starts while Shift is down, with Ctrl and Alt up,
+enters safe mode unless `MOZ_DISABLE_SAFE_MODE_KEY` is set in its environment
+(`IsSafeModeRequested`, `toolkit/xre/SafeMode.h`). The launcher process that
+Playwright spawns skips that check and its child, the browser, makes it. In
+safe mode `BrowserGlue._beforeUIStartup` opens the modal
+`chrome://browser/content/safeMode.xhtml` before the first browser window
+(`BrowserGlue.sys.mjs:395-407` in 1549's `browser/omni.ja`), and nothing there
+checks for headless. So the first window never opens,
+`browser-idle-startup-tasks-finished` never fires, juggler's startup promise
+never resolves (`Juggler.js:48` and `:89-91`), `Browser.enable` waits on it
+forever (`BrowserHandler.js:30-33`), and `launchPersistentContext` ends at
+upstream's `DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT`, 180 s. *"Juggler listening to
+the pipe"* is still printed, because juggler registers its startup observer
+later and observers run last-added-first, so the call log looks like any
+launch.
+
+| Arm, one launch at a time unless stated | Launches | Stuck | Launch p50 / p90 / max |
+|---|--:|--:|---|
+| No override: two smoke, 30 serial and the A/B control | 133 | **4** | 2,410 / 2,989 / 6,449 ms |
+| of which the A/B control, interleaved launch by launch | 101 | 1 | 2,347 / 2,902 / 6,449 ms |
+| `MOZ_DISABLE_SAFE_MODE_KEY=1`, the A/B treatment | 101 | **0** | 2,323 / 3,419 / 5,939 ms |
+| Batches of three, no override | 30 | 0 | 3,774 / 4,989 / 6,340 ms |
+| Batches of three and of six, `MOZ_DISABLE_SAFE_MODE_KEY=1` | 54 | 0 | 2,980 and 4,084 at p50 |
+| `MOZ_SAFE_MODE_RESTART=1`, which forces the same state | 3 | **3** | - |
+| `MOZ_SAFE_MODE_RESTART=1` and `MOZ_DISABLE_SAFE_MODE_KEY=1` | 2 | **2** | - |
+
+**Every stuck browser read down to its content processes had one started with
+`-safeMode`**: three of the four organic stalls (the fourth's capture stopped at
+the browser process) and all five forced ones. **None of 287 healthy trees
+had one.** Firefox hands that switch to a content process exactly when the
+browser itself is in safe mode. A stuck profile stops at 21 files of about
+850 KB at 30 s and at 25 files of 1,159,281 B at 180 s, with no `cert9.db`,
+`key4.db` or `places.sqlite`; a healthy one has 56 to 64 files and 21.3 to
+36.3 MB. The stuck browser is idle and not deadlocked: 0 ms of CPU over 2 s,
+its main thread waiting on user input and answering `WM_NULL` at once.
+
+⭐ **The override removes the keyboard trigger and only that.** 0 stalls in
+155 launches with it, serial and batched. With both variables set the forced
+arm still hung 2 of 2, which is what the source says: the variable gates the
+key check, and `MOZ_SAFE_MODE_RESTART` and `-safe-mode` are separate entries to
+the same state. **Stated with its limit:** the interleaved A/B alone is 1 in
+101 against 0 in 101, which by itself is not significant, because the trigger
+is the keyboard at an instant nobody recorded. The case rests on the
+`-safeMode` signature, the forced reproduction and the source chain together.
+The observed rate moved with time, 3 of the first 32 launches and then 1 of
+the next 200, which fits a person typing nearby and proves nothing about it.
+
+**What it is not, each measured:** contention (0 stalls in 30 launches in
+batches of three without the override); memory (a commit limit on the launch's
+own job fails FAST, in 3.6 to 13.1 s with *"Target page, context or browser has
+been closed"*, and in one of the three runs with the browser exiting
+`0xC0000005`); CPU starvation (a job held to 1% of the machine launched in
+9.4 s, 2 of 2); and the stray sweep (all 20 sweeps in the two 2026-09-24 suite
+windows that had this failure logged `terminated=0`, read in the product's own
+log, which the batch does not keep).
+
+**A launch without a persistent profile should get past it, read in the
+source and not measured here**: `firefox.launch()` passes `-silent`, which
+resolves juggler's startup promise at once (`Juggler.js:83-87`).
+`@playwright/mcp`, and so BrowserAI, uses the persistent path.
+
+⚠️ **Not established:** who or what held Shift, because the keyboard was
+deliberately not observed; what a HEADED launch does, which from the same
+source is the Troubleshoot Mode dialog on the screen; and the 2026-09-22 row 38
+stall, which stopped before *"Juggler listening"* and is earlier than safe mode
+stops, so it stays unclassified. The fix decided on 2026-10-03 is Q312 b: the
+variable in the child's environment, and a check that fails any suite run in
+which a Firefox starts in safe mode. This entry records the measurement and not
+the fix.
+
+**Re-establish** with the rig: `run-batch.ps1` and `run-ab.ps1` launch headless
+Firefox through the payload's `playwright-core`, each node and Firefox tree in a
+`KILL_ON_JOB_CLOSE` job of its own, and write one `results.jsonl` row per launch;
+`summary.py` prints the table above. **`-ForceEnv MOZ_SAFE_MODE_RESTART=1` is the
+deterministic arm and the one to run first**: three of three stuck, no keyboard
+involved. A newer Firefox that launches under it, or a `playwright-core` that
+sets the variable itself, is the change to look for.
+
 ## Firefox against Chromium: the standing cost ratios
 
 ✅ **RE-ESTABLISHED 2026-09-22 at chromium 1246 and firefox 1549 (`browserVersion`
@@ -1482,6 +1724,22 @@ clean, so the observed rate is **1 in 9**. The medians above are over the eight
 rounds that produced a browser; **including the failed round would have put a
 180-second navigate and a zero resident set into a median**, which is a different
 claim, not a more honest one.
+
+✅ *Added 2026-10-03 by addition: the round that produced no browser matches a
+cause that has since been reproduced, and the row 38 stall does not.* The
+2026-09-25 research reproduced a 180-second Firefox stall one launch at a time on
+an idle machine, 4 in 133 launches, and it is Firefox in safe mode: a Shift key
+down when the browser process starts, a modal Troubleshoot Mode window nobody can
+see, and a `Browser.enable` that is never answered. One reproduction ran the full
+180,009 ms and its profile ended at **25 files and 1,159,281 B**, against this
+round's **25 files and 1,159,208 B**. That is a match and not a proof, because
+this round's error text went with its session. See
+[the safe-mode entry](#a-headless-firefox-that-starts-while-shift-is-held-never-finishes-launching----measured-2026-09-25).
+⚠️ **The row 38 stall is NOT the same signature, and the paragraph above that
+calls it one is narrowed by this note**: its call log ends at *"You are running in
+headless mode"*, before *"Juggler listening to the pipe"*, and every safe-mode
+stall printed that line. It stops earlier, and what stopped it is not
+established. The readings above are unchanged.
 
 > ⚠️ **THE CHROMIUM CONTROL IS STRONGER THAN IT WAS: 1246 IS 1245 IS 1244.**
 > All three revisions hold the same 308 files at the same 308 sizes and

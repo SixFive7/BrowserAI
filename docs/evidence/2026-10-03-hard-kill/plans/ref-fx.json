@@ -1,0 +1,170 @@
+[
+{
+"id": "fx-core-job-D4.5-r1",
+"browser": "firefox",
+"path": "core",
+"D": 4.5,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "fx-core-job-D4.5-r2",
+"browser": "firefox",
+"path": "core",
+"D": 4.5,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "fx-core-job-D7-r1",
+"browser": "firefox",
+"path": "core",
+"D": 7,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "fx-core-job-D6-r3",
+"browser": "firefox",
+"path": "core",
+"D": 6,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "fx-core-job-D4-r1",
+"browser": "firefox",
+"path": "core",
+"D": 4,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "fx-core-job-D5-r3",
+"browser": "firefox",
+"path": "core",
+"D": 5,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "fx-core-job-D7-r2",
+"browser": "firefox",
+"path": "core",
+"D": 7,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "fx-core-job-D3-r3",
+"browser": "firefox",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "fx-core-job-D5-r1",
+"browser": "firefox",
+"path": "core",
+"D": 5,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "fx-core-job-D7-r3",
+"browser": "firefox",
+"path": "core",
+"D": 7,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "fx-core-job-D5-r2",
+"browser": "firefox",
+"path": "core",
+"D": 5,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "fx-core-job-D5.5-r3",
+"browser": "firefox",
+"path": "core",
+"D": 5.5,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "fx-core-job-D3-r2",
+"browser": "firefox",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "fx-core-job-D6-r1",
+"browser": "firefox",
+"path": "core",
+"D": 6,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "fx-core-job-D3-r1",
+"browser": "firefox",
+"path": "core",
+"D": 3,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "fx-core-job-D6-r2",
+"browser": "firefox",
+"path": "core",
+"D": 6,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "fx-core-job-D5.5-r1",
+"browser": "firefox",
+"path": "core",
+"D": 5.5,
+"kill": "job",
+"rep": 1
+},
+{
+"id": "fx-core-job-D5.5-r2",
+"browser": "firefox",
+"path": "core",
+"D": 5.5,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "fx-core-job-D4.5-r3",
+"browser": "firefox",
+"path": "core",
+"D": 4.5,
+"kill": "job",
+"rep": 3
+},
+{
+"id": "fx-core-job-D4-r2",
+"browser": "firefox",
+"path": "core",
+"D": 4,
+"kill": "job",
+"rep": 2
+},
+{
+"id": "fx-core-job-D4-r3",
+"browser": "firefox",
+"path": "core",
+"D": 4,
+"kill": "job",
+"rep": 3
+}
+]

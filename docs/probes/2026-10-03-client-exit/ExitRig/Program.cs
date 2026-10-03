@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+namespace ExitRig;
+
+static class Program
+{
+    static int Main(string[] args)
+    {
+        if (args.Length == 0) { Console.Error.WriteLine("usage: ExitRig server|standin|fakeclient|run <spec>|batch <batch>"); return 2; }
+        return args[0] switch
+        {
+            "server" => DummyServer.Run(args),
+            "standin" => StandIn.Run(args),
+            "fakeclient" => FakeClient.Run(args),
+            "run" => Harness.RunOne(args[1]),
+            "batch" => Harness.RunBatch(args[1]),
+            "ttyprobe" => TtyProbe.Run(args),
+            "launcher" => Keeper.Launcher(args),
+            "keeper" => Keeper.Run(args),
+            _ => 2,
+        };
+    }
+}

@@ -1,0 +1,21 @@
+148843959.768	2026-10-03T01:56:40.9409001Z	57056	server	START	delayMs=100 ppid=77768 parentImage=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\cli\claude.exe cmdline=C:\Source\SixFive7\BrowserAI\.work\client-exit\rig\bin2\ExitRig.dll server --logdir C:\Source\SixFive7\BrowserAI\.work\client-exit\runs\extra\e4-d100-r1 --delay-ms 100 --call-delay-ms 20000
+148843963.887	2026-10-03T01:56:40.9446125Z	57056	server	CONSOLE	consoleWindow=0x0 visible=False consoleProcs=[57056]
+148843965.503	2026-10-03T01:56:40.9462175Z	57056	server	JOB	inJob=True immediateJobLimitFlags=0x3C00 assigned=2 listed=2 first64=[77768,57056]
+148843966.091	2026-10-03T01:56:40.9468030Z	57056	server	STDIO	stdin=pipe stdout=pipe stderr=pipe
+148843967.391	2026-10-03T01:56:40.9481035Z	57056	server	PARENT_WATCH	pid=77768 image=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\cli\claude.exe created=2026-10-03T01:56:40.2298767Z
+148843976.911	2026-10-03T01:56:40.9576325Z	57056	server	STANDIN	pid=81744 jobFlagsReadBack=0x2000 
+148843986.295	2026-10-03T01:56:40.9670130Z	57056	server	RECV	method=initialize id=0 bytes=341
+148843993.145	2026-10-03T01:56:40.9738642Z	57056	server	SENT	id=0 for=initialize
+148843994.560	2026-10-03T01:56:40.9752792Z	57056	server	RECV	method=notifications/initialized id=- bytes=54
+148843996.826	2026-10-03T01:56:40.9775437Z	57056	server	RECV	method=tools/list id=1 bytes=46
+148843997.172	2026-10-03T01:56:40.9778855Z	57056	server	SENT	id=1 for=tools/list
+148844091.030	2026-10-03T01:56:41.0717492Z	57056	server	RECV	method=tools/call id=2 bytes=162
+148844091.423	2026-10-03T01:56:41.0721346Z	57056	server	CALL_DELAYED	id=2 ms=20000
+148845586.442	2026-10-03T01:56:42.5671634Z	57056	server	RECV	method=notifications/cancelled id=- bytes=114
+148848605.227	2026-10-03T01:56:45.5859564Z	57056	server	EOF	how=EOF messagesReceived=5
+148848630.619	2026-10-03T01:56:45.6113361Z	57056	server	ALIVE	sinceEofMs=25.3
+148848656.234	2026-10-03T01:56:45.6369490Z	57056	server	ALIVE	sinceEofMs=50.9
+148848682.444	2026-10-03T01:56:45.6631647Z	57056	server	ALIVE	sinceEofMs=77.1
+148848711.888	2026-10-03T01:56:45.6926079Z	57056	server	ALIVE	sinceEofMs=106.5
+148848711.957	2026-10-03T01:56:45.6926681Z	57056	server	CLOSING_JOB	sinceEofMs=106.6
+148848712.050	2026-10-03T01:56:45.6927620Z	57056	server	EXIT	code=77

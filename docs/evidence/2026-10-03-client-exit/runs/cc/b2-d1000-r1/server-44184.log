@@ -1,0 +1,11 @@
+147969270.426	2026-10-03T01:42:06.2515734Z	44184	server	START	delayMs=1000 ppid=13700 parentImage=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\cli\claude.exe cmdline=C:\Source\SixFive7\BrowserAI\.work\client-exit\rig\bin\ExitRig.dll server --logdir C:\Source\SixFive7\BrowserAI\.work\client-exit\runs\cc\b2-d1000-r1 --delay-ms 1000
+147969274.783	2026-10-03T01:42:06.2555056Z	44184	server	CONSOLE	consoleWindow=0x0 visible=False consoleProcs=[44184]
+147969276.423	2026-10-03T01:42:06.2571365Z	44184	server	JOB	inJob=True immediateJobLimitFlags=0x3C00 assigned=4 listed=4 first64=[13700,44184,2456,57304]
+147969277.464	2026-10-03T01:42:06.2581819Z	44184	server	STDIO	stdin=pipe stdout=pipe stderr=pipe
+147969279.120	2026-10-03T01:42:06.2598361Z	44184	server	PARENT_WATCH	pid=13700 image=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\cli\claude.exe created=2026-10-03T01:42:05.6054536Z
+147969288.311	2026-10-03T01:42:06.2690300Z	44184	server	STANDIN	pid=72684 jobFlagsReadBack=0x2000 
+147969297.354	2026-10-03T01:42:06.2780739Z	44184	server	RECV	method=initialize id=0 bytes=341
+147969303.412	2026-10-03T01:42:06.2841343Z	44184	server	SENT	id=0 for=initialize
+147969345.591	2026-10-03T01:42:06.3263110Z	44184	server	RECV	method=notifications/initialized id=- bytes=54
+147969349.108	2026-10-03T01:42:06.3298250Z	44184	server	RECV	method=tools/list id=1 bytes=46
+147969349.325	2026-10-03T01:42:06.3300373Z	44184	server	SENT	id=1 for=tools/list

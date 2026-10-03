@@ -1,0 +1,146 @@
+[
+{
+"id": "cr-core-job-second10-D65-r1",
+"browser": "chromium",
+"path": "core",
+"D": 65,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D65-r2",
+"browser": "chromium",
+"path": "core",
+"D": 65,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D15-r1",
+"browser": "chromium",
+"path": "core",
+"D": 15,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D55-r2",
+"browser": "chromium",
+"path": "core",
+"D": 55,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D25-r1",
+"browser": "chromium",
+"path": "core",
+"D": 25,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D55-r1",
+"browser": "chromium",
+"path": "core",
+"D": 55,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D52-r1",
+"browser": "chromium",
+"path": "core",
+"D": 52,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D25-r2",
+"browser": "chromium",
+"path": "core",
+"D": 25,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D45-r2",
+"browser": "chromium",
+"path": "core",
+"D": 45,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D45-r1",
+"browser": "chromium",
+"path": "core",
+"D": 45,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D48-r2",
+"browser": "chromium",
+"path": "core",
+"D": 48,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D40-r1",
+"browser": "chromium",
+"path": "core",
+"D": 40,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D52-r2",
+"browser": "chromium",
+"path": "core",
+"D": 52,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D40-r2",
+"browser": "chromium",
+"path": "core",
+"D": 40,
+"kill": "job",
+"rep": 2,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D48-r1",
+"browser": "chromium",
+"path": "core",
+"D": 48,
+"kill": "job",
+"rep": 1,
+"second": 10
+},
+{
+"id": "cr-core-job-second10-D15-r2",
+"browser": "chromium",
+"path": "core",
+"D": 15,
+"kill": "job",
+"rep": 2,
+"second": 10
+}
+]

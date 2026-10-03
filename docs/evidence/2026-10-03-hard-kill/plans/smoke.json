@@ -1,0 +1,4 @@
+[
+ {"id":"smoke-cr-core-job-D0","browser":"chromium","path":"core","D":0,"kill":"job","rep":0,"keep":true},
+ {"id":"smoke-fx-core-job-D0","browser":"firefox","path":"core","D":0,"kill":"job","rep":0,"keep":true}
+]

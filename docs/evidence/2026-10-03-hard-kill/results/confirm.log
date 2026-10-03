@@ -1,0 +1,10 @@
+server: {"listening":47811,"pid":62620}
+[1/8] cr-mcp-eof-D1-G5-debug 1s actualD=1,024 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (9,9s)
+[2/8] fx-mcp-eof-D1-G5-debug 1s actualD=1,005 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (13s)
+[3/8] cr-mcp-toolclose-D1-r1 1s actualD=1,006 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (5,2s)
+[4/8] cr-mcp-toolclose-D1-r2 1s actualD=1,006 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (6,4s)
+[5/8] cr-mcp-toolclose-D1-r3 1s actualD=1,005 procs=11 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (5,4s)
+[6/8] fx-mcp-toolclose-D1-r1 1s actualD=1,008 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (9s)
+[7/8] fx-mcp-toolclose-D1-r2 1s actualD=1,004 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (8,3s)
+[8/8] fx-mcp-toolclose-D1-r3 1s actualD=1,01 procs=9 alive=0 cookieHttpOnly=True cookieJs=True ls=40 idb=True ss=False err= (8,7s)
+server exited: True

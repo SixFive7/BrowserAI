@@ -1,0 +1,147 @@
+2026-10-03T02:07:30.806Z [DEBUG] MDM settings load completed in 2ms
+2026-10-03T02:07:30.823Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Program Files\ClaudeCode\managed-settings.json
+2026-10-03T02:07:30.827Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-exit\proj\.claude\settings.json
+2026-10-03T02:07:30.830Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-exit\proj\.claude\settings.local.json
+2026-10-03T02:07:30.831Z [DEBUG] CA certs: Config fallback - globalEnv keys: , settingsEnv keys: DISABLE_AUTOUPDATER
+2026-10-03T02:07:30.837Z [DEBUG] [init] configureGlobalMTLS starting
+2026-10-03T02:07:30.837Z [DEBUG] [init] configureGlobalMTLS complete
+2026-10-03T02:07:30.837Z [DEBUG] [init] configureGlobalAgents starting
+2026-10-03T02:07:30.837Z [DEBUG] CA certs: stores=bundled,system, extraCertsPath=undefined
+2026-10-03T02:07:30.837Z [DEBUG] CA certs: Loaded 121 bundled root certificates
+2026-10-03T02:07:30.868Z [DEBUG] CA certs: Dropped 18 expired certificate(s) from system store
+2026-10-03T02:07:30.868Z [DEBUG] CA certs: Loaded 184 system CA certificates
+2026-10-03T02:07:30.869Z [DEBUG] mTLS: Creating HTTPS agent with custom certificates
+2026-10-03T02:07:30.869Z [DEBUG] [init] configureGlobalAgents complete
+2026-10-03T02:07:30.873Z [DEBUG] Using bash path: "C:\Program Files\Git\bin\bash.exe"
+2026-10-03T02:07:30.877Z [DEBUG] Git remote URL: null
+2026-10-03T02:07:30.877Z [DEBUG] No git remote URL found
+2026-10-03T02:07:30.878Z [DEBUG] Error log sink initialized
+2026-10-03T02:07:30.907Z [DEBUG] [Claude in Chrome] Disabled: OAuth token has no scope accepted by /api/oauth/validate (needs user:profile, user:office, or user:ccr_inference; env-var and setup-token sessions default to user:inference only)
+2026-10-03T02:07:30.914Z [DEBUG] [ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:8936 is not a first-party Anthropic host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.
+2026-10-03T02:07:31.149Z [DEBUG] [STARTUP] Loading MCP configs...
+2026-10-03T02:07:31.150Z [DEBUG] [STARTUP] Running setup()...
+2026-10-03T02:07:31.171Z [DEBUG] [win32-kernel32] bun:ffi loaded
+2026-10-03T02:07:31.186Z [DEBUG] Loading skills from: managed=C:\Program Files\ClaudeCode\.claude\skills, user=C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-sdk\skills, project=[]
+2026-10-03T02:07:31.189Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\agents: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\agents'
+2026-10-03T02:07:31.189Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-sdk\agents: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-sdk\agents'
+2026-10-03T02:07:31.190Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-10-03T02:07:31.190Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-sdk\commands: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-sdk\commands'
+2026-10-03T02:07:31.190Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\commands: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\commands'
+2026-10-03T02:07:31.191Z [DEBUG] Loaded 0 unique skills (0 unconditional, 0 conditional, managed: 0, user: 0, project: 0, additional: 0, legacy commands: 0)
+2026-10-03T02:07:31.193Z [DEBUG] Found 2 plugins (2 enabled, 0 disabled)
+2026-10-03T02:07:31.193Z [DEBUG] getPluginSkills: Processing 2 enabled plugins
+2026-10-03T02:07:31.194Z [DEBUG] Checking plugin cc-plugin-agents-md: skillsPath=none, skillsPaths=0 paths
+2026-10-03T02:07:31.194Z [DEBUG] Checking plugin cc-plugin-plugin-authoring: skillsPath=none, skillsPaths=0 paths
+2026-10-03T02:07:31.194Z [DEBUG] Total plugin workflows loaded: 0
+2026-10-03T02:07:31.194Z [DEBUG] Total plugin commands loaded: 0
+2026-10-03T02:07:31.194Z [DEBUG] Total plugin skills loaded: 0 (0 duplicate/user-owned entries skipped)
+2026-10-03T02:07:31.194Z [DEBUG] Total plugin agents loaded: 0
+2026-10-03T02:07:31.236Z [INFO] [uds-messaging] Listening: \\.\pipe\LOCAL\cc-msg-f8bec36735308657f5818c7c6b9f61c8
+2026-10-03T02:07:31.236Z [INFO] [uds-messaging] Inject messages (auth line REQUIRED here; a pipe is not reachable via socat/AF_UNIX): node -e "const c=require('net').connect(process.argv[1],()=>{c.write(JSON.stringify({type:'auth',token:[REDACTED]})+'\n'+JSON.stringify({type:'user',message:{role:'user',content:'hello'}})+'\n');c.end()})" "\\.\pipe\LOCAL\cc-msg-f8bec36735308657f5818c7c6b9f61c8"
+2026-10-03T02:07:31.236Z [INFO] [uds-messaging] Connect when the data is ready (run the command first, then connect and write its output as ONE line, as in the node recipe above): a connection that sends no complete line within 30000 ms is closed
+2026-10-03T02:07:31.241Z [DEBUG] Error log sink initialized
+2026-10-03T02:07:31.244Z [DEBUG] cc-plugin-sec-default@builtin not seated: no managed settings and not a Team or Enterprise organization (none)
+2026-10-03T02:07:31.246Z [DEBUG] [STARTUP] setup() completed in 96ms
+2026-10-03T02:07:31.247Z [DEBUG] Cleared mTLS configuration cache
+2026-10-03T02:07:31.247Z [DEBUG] Cleared proxy agent cache
+2026-10-03T02:07:31.247Z [DEBUG] mTLS: Creating HTTPS agent with custom certificates
+2026-10-03T02:07:31.289Z [DEBUG] [STARTUP] Loading commands and agents...
+2026-10-03T02:07:31.294Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills, 39 bundled skills, 1 builtin plugin skills
+2026-10-03T02:07:31.307Z [DEBUG] [STARTUP] Commands and agents loaded in 18ms
+2026-10-03T02:07:31.310Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-10-03T02:07:31.310Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-10-03T02:07:31.310Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-10-03T02:07:31.311Z [DEBUG] Starting background startup prefetches
+2026-10-03T02:07:31.311Z [DEBUG] [Bootstrap] Skipped: Nonessential traffic disabled
+2026-10-03T02:07:31.312Z [DEBUG] [STARTUP] MCP configs resolved in 1ms (awaited at +163ms)
+2026-10-03T02:07:31.317Z [DEBUG] Cleared mTLS configuration cache
+2026-10-03T02:07:31.317Z [DEBUG] Cleared proxy agent cache
+2026-10-03T02:07:31.317Z [DEBUG] mTLS: Creating HTTPS agent with custom certificates
+2026-10-03T02:07:31.320Z [DEBUG] Total LSP servers loaded: 0
+2026-10-03T02:07:31.320Z [DEBUG] [LSP SERVER MANAGER] getAllLspServers returned 0 server(s)
+2026-10-03T02:07:31.320Z [DEBUG] LSP manager initialized with 0 servers
+2026-10-03T02:07:31.323Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.324Z [DEBUG] [MCP] --mcp-config servers running fully async (nonblocking)
+2026-10-03T02:07:31.324Z [DEBUG] [MCP] claude.ai connectors running fully async (nonblocking)
+2026-10-03T02:07:31.324Z [DEBUG] LSP server manager initialized successfully
+2026-10-03T02:07:31.325Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-10-03T02:07:31.326Z [DEBUG] [auto-mode] verifyAutoModeGateAccess: enabledState=enabled disabledBySettings=false model=claude-sonnet-5-5 modelSupported=true disableFastModeBreakerFires=false carouselAvailable=true canEnterAuto=true
+2026-10-03T02:07:31.327Z [DEBUG] [servedCatalog] off (essential_traffic)
+2026-10-03T02:07:31.342Z [DEBUG] plugin cc-plugin-agents-md: no pluginConfigs["agents-md@builtin" or "cc-plugin-agents-md@builtin"].options in user, --settings or managed settings (project settings are not read); every option is its default
+2026-10-03T02:07:31.346Z [DEBUG] hooks module cc-plugin-agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call
+2026-10-03T02:07:31.348Z [DEBUG] engine.create: no plugin-provided interfaces; $ built for cc-plugin-agents-md
+2026-10-03T02:07:31.348Z [DEBUG] plugin.register: cc-plugin-agents-md (builtin, cc-plugin-agents-md@builtin), judged by core alone: admitted
+2026-10-03T02:07:31.350Z [DEBUG] Registered 0 hooks from 2 plugins
+2026-10-03T02:07:31.375Z [DEBUG] [ScheduledTasks] scheduler start() — enabled=false, hasTasks=false
+2026-10-03T02:07:31.377Z [DEBUG] session.start: raised (surface none, not interactive)
+2026-10-03T02:07:31.379Z [DEBUG] [claudeai-mcp] Disabled: API-key auth precedence active
+2026-10-03T02:07:31.392Z [DEBUG] hooks module cc-plugin-agents-md@builtin session.start settled in 13.6ms (native link, next() included)
+2026-10-03T02:07:31.396Z [DEBUG] installPluginsForHeadless: starting
+2026-10-03T02:07:31.396Z [DEBUG] installPluginsForHeadless: no marketplaces declared
+2026-10-03T02:07:31.417Z [DEBUG] [sessionRegistry] sweep permitted (domain win32:pc657)
+2026-10-03T02:07:31.419Z [DEBUG] mcp runtime arm: v2 (source: default)
+2026-10-03T02:07:31.456Z [DEBUG] MCP server "probe": Starting connection with timeout of 30000ms
+2026-10-03T02:07:31.512Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\output-styles: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\output-styles'
+2026-10-03T02:07:31.512Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-sdk\output-styles: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-sdk\output-styles'
+2026-10-03T02:07:31.512Z [DEBUG] Total plugin output styles loaded: 0
+2026-10-03T02:07:31.516Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.524Z [DEBUG] Watching C:\Source\SixFive7\BrowserAI\.work\client-exit\proj for C:\Source\SixFive7\BrowserAI\.work\client-exit\proj\.claude to appear
+2026-10-03T02:07:31.524Z [DEBUG] Watching for changes in setting files C:\Source\SixFive7\BrowserAI\.work\client-exit\cfg\claude-sdk\settings.json...
+2026-10-03T02:07:31.526Z [DEBUG] [startupWorkGate] open (host_initialized) after 279ms; running 5 held task(s): tengu_init, permission_context_log, plugin_init, telemetry_init, idle_startup_work
+2026-10-03T02:07:31.552Z [DEBUG] [startupWorkGate] a turn started during the idle release; 5 task(s) wait for it
+2026-10-03T02:07:31.571Z [DEBUG] $.fs.ancestors (cc-plugin-agents-md): CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md found 0 of 6 directories
+2026-10-03T02:07:31.681Z [DEBUG] Git remote URL: null
+2026-10-03T02:07:31.681Z [DEBUG] No git remote URL found
+2026-10-03T02:07:31.684Z [DEBUG] MCP server "probe": Successfully connected (transport: stdio) in 231ms
+2026-10-03T02:07:31.685Z [DEBUG] MCP server "probe": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"exitprobe","version":"1.0.0"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-10-03T02:07:31.685Z [DEBUG] [MCP] Server "probe" connected with subscribe=false
+2026-10-03T02:07:31.714Z [DEBUG] act_dont_rederive_arm_active source=growthbook
+2026-10-03T02:07:31.727Z [DEBUG] $.fs.ancestors (cc-plugin-agents-md): AGENTS.md, .claude/AGENTS.md found 1 of 6 directories
+2026-10-03T02:07:31.728Z [DEBUG] [cc-plugin-agents-md] $.ui.log (to debug): no CLAUDE.md found; AGENTS.md loaded: C:\Source\SixFive7\BrowserAI\AGENTS.md
+2026-10-03T02:07:31.730Z [DEBUG] hooks module cc-plugin-agents-md@builtin prompt.context settled in 323.0ms (native link, next() included)
+2026-10-03T02:07:31.738Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-10-03T02:07:31.738Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-10-03T02:07:31.760Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.761Z [DEBUG] [session-notices] advertise=false mode=acceptEdits flag=false(disabled) pollChannel=false remote=false remoteEnv=false nonInteractive=true
+2026-10-03T02:07:31.765Z [DEBUG] [engine] turn 1 start
+2026-10-03T02:07:31.776Z [DEBUG] autocompact: tokens=[REDACTED] level=ok effectiveWindow=980000
+2026-10-03T02:07:31.806Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.287.573; cc_entrypoint=claude-vscode;
+2026-10-03T02:07:31.807Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.809Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.822Z [DEBUG] [startupWorkGate] draining remainder (turn_started) after 575ms; running 5 held task(s): tengu_init, permission_context_log, plugin_init, telemetry_init, idle_startup_work
+2026-10-03T02:07:31.825Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.827Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5-5
+2026-10-03T02:07:31.829Z [DEBUG] [API REQUEST] /v1/messages source=sdk
+2026-10-03T02:07:31.848Z [DEBUG] Stream started - received first chunk
+2026-10-03T02:07:31.848Z [DEBUG] [API:timing] first byte after 24ms
+2026-10-03T02:07:31.869Z [INFO] [Stall] tool_dispatch_start tool=mcp_tool toolUseId=toolu_73384_49_efc6c0e6 permissionDecisionMs=2
+2026-10-03T02:07:31.873Z [DEBUG] MCP server "probe": Calling MCP tool: ping
+2026-10-03T02:07:31.885Z [DEBUG] MCP server "probe": Tool 'ping' completed successfully in 13ms
+2026-10-03T02:07:31.886Z [INFO] [Stall] tool_dispatch_end tool=mcp_tool toolUseId=toolu_73384_49_efc6c0e6 outcome=ok durationMs=18
+2026-10-03T02:07:31.898Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-10-03T02:07:31.898Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-10-03T02:07:31.901Z [DEBUG] autocompact: tokens=[REDACTED] level=ok effectiveWindow=980000
+2026-10-03T02:07:31.909Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.287.573; cc_entrypoint=claude-vscode;
+2026-10-03T02:07:31.910Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.910Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.914Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2026-10-03T02:07:31.950Z [DEBUG] [fs.watch probe] verdict: delivers
+2026-10-03T02:07:31.951Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:31.952Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5-5
+2026-10-03T02:07:31.953Z [DEBUG] [API REQUEST] /v1/messages source=sdk
+2026-10-03T02:07:31.958Z [DEBUG] [Perfetto] initializePerfettoTracing called, env value: undefined
+2026-10-03T02:07:31.958Z [DEBUG] [3P telemetry] isTelemetryEnabled=false (CLAUDE_CODE_ENABLE_TELEMETRY=undefined)
+2026-10-03T02:07:31.977Z [DEBUG] Stream started - received first chunk
+2026-10-03T02:07:31.978Z [DEBUG] [API:timing] first byte after 26ms
+2026-10-03T02:07:31.986Z [DEBUG] [3P telemetry] Event dropped (no event logger initialized): api_request
+2026-10-03T02:07:31.990Z [DEBUG] [engine] turn 1 end (turns=2 usage in=20 out=10 cost=$0.0001 api=146ms stop=end_turn resultLen=18)
+2026-10-03T02:07:31.990Z [DEBUG] Fast mode unavailable: Fast mode is currently unavailable
+2026-10-03T02:07:32.016Z [DEBUG] Plugin autoupdate: command-source refresh disabled by tengu_plugin_command_source_refresh (still excluding command-sourced plugins from the regular pass)
+2026-10-03T02:07:32.017Z [DEBUG] Plugin autoupdate: skipped (auto-updater disabled)
+2026-10-03T02:07:32.018Z [DEBUG] Ripgrep first use test: PASSED (mode=embedded, path=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\vscode\claude.exe)
+2026-10-03T02:07:32.019Z [DEBUG] "rg error (signal=undefined, code=2, stderr: rg: C:\\Source\\SixFive7\\BrowserAI\\.work\\client-exit\\cfg\\claude-sdk\\plugins\\cache: IO error for operation on C:\\Source\\SixFive7\\BrowserAI\\.work\\client-exit\\cfg\\claude-sdk\\plugins\\cache: The system cannot find the path specified. (os error 3)\n), 0 results"
+2026-10-03T02:07:34.037Z [DEBUG] MCP server "probe": Terminating MCP server process tree
+2026-10-03T02:07:34.760Z [DEBUG] MCP server "probe": STDIO connection closed after 3s (cleanly)
+2026-10-03T02:07:34.761Z [DEBUG] MCP server "probe": Cleared connection cache for reconnection
+2026-10-03T02:07:34.763Z [DEBUG] [uds-messaging] Shutting down
+2026-10-03T02:07:34.764Z [DEBUG] LSP server manager shut down successfully

@@ -1,0 +1,5 @@
+147197684.418	2026-10-03T01:29:14.6656076Z	72108	fakeclient	SPAWNED	pid=43224 action=exit-self
+147197814.243	2026-10-03T01:29:14.7949826Z	72108	fakeclient	RESP	{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"serverInfo":{"name":"exitprobe","version":"1.0.0"}}}
+147197814.807	2026-10-03T01:29:14.7955219Z	72108	fakeclient	RESP	{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"ping","description":"Returns pong.","inputSchema":{"type":"object","properties":{}}}]}}
+147197815.322	2026-10-03T01:29:14.7960396Z	72108	fakeclient	RESP	{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"pong from pid 43224"}],"isError":false}}
+147198116.144	2026-10-03T01:29:15.0968758Z	72108	fakeclient	EXIT_SELF	exiting without closing anything
