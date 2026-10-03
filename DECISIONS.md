@@ -73,10 +73,12 @@ This is the core justification for BrowserAI. It is **not** token cost -- see [N
 ⚠️ **That chain is the one in force when this section was written, and the sentence above calling `chromium-1237` *the one at the end of our chain* has not been true of what ships for some time.** *Corrected 2026-09-21 @ `@playwright/mcp` 0.0.81 / `playwright-core` 1.64.0-alpha-2026-09-17 / chromium 1245 (previously the worked example stood alone, with no successor beside it, so its present tense read as a claim about today, not as a record of one day).* **Corrected by addition, not by replacement:** the 0.0.79 chain is a true record of what `launch.ps1` resolved on the day this argument was made, and the argument is about the *shape* of the chain, not about any link in it. What the payload ships today, read from [the payload lock](build/payload/package-lock.json) and [the committed `browsers.json` snapshot](upstream-snapshots/browsers.json), not from memory:
 
 ```
-@playwright/mcp 0.0.82
-  └── playwright-core 1.64.0-alpha-1789764292000
-        └── browsers.json → chromium rev 1246 (154.0.8037.0)
+@playwright/mcp 0.0.83
+  └── playwright-core 1.64.0-alpha-1790635538000
+        └── browsers.json → chromium rev 1247 (155.0.8059.12)
 ```
+
+*Corrected 2026-10-03 by addition (previously `@playwright/mcp 0.0.82`, `playwright-core 1.64.0-alpha-1789764292000` and `chromium rev 1246 (154.0.8037.0)`), when the payload rolled to 0.0.83: all three links moved, and for the first time since 1244 the browser version moved with the revision.*
 
 **Each chain is a snapshot of one day and neither is the source of truth** -- the live values are `packages` in [`build/payload/package-lock.json`](build/payload/package-lock.json) and the `chromium` entry in [`upstream-snapshots/browsers.json`](upstream-snapshots/browsers.json), both committed, both regenerated from the resolved payload, and both held to the four versions printed above by `PayloadTests.TheWorkedExampleStatesTheChainTheCommittedRecordsState`, so this example goes **red, not stale**. *Corrected 2026-09-21, later the same day (previously `@playwright/mcp` **0.0.81** → `playwright-core` **1.64.0-alpha-2026-09-17**, annotated *the DATED OVERRIDE, above the wrapper's own exact pin of 1.64.0-alpha-2026-09-14* → chromium rev **1245**, with a following sentence reading "**The middle link is the one variation the 0.0.79 chain could not show:** since 2026-09-17 it is a dated override sitting above upstream's own exact pin, not upstream's pin itself -- a second way for the chain to move, and the reason that exception carries a written exit").* **The chain has three links again.** `@playwright/mcp` 0.0.82 ships a `playwright-core` carrying the fix the override existed for, [the exception ended](#the-two-exceptions-to-the-versioning-policy), and the middle link is upstream's own exact pin once more -- so the parenthetical that named a fourth version has nothing left to name. **The variation it showed was real and is worth remembering**: a chain whose middle link came from somewhere other than the link above it, for four days.
 

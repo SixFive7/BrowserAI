@@ -361,7 +361,13 @@ internal sealed class ModelSurfaceTests
         // judged `allow` on 2026-09-15. The ten are still the ten: the addend is
         // the capability grant, and the base is whatever upstream ships.
         //
-        // ⚠️ The base is 61 since 2026-09-21 (previously 62), and it went DOWN
+        // ⚠️ The base is 60 since 2026-10-03 (previously 61), and this time a
+        // decision moved it: the maintainer denied browser_resume, which was
+        // `allow` and is not one of the ten, so the base lost one and the
+        // surface did not. It went red on the first gate after the deny,
+        // naming 70 against 71.
+        //
+        // ⚠️ The base was 61 from 2026-09-21 (previously 62), and it went DOWN
         // for the first time. @playwright/mcp 0.0.82 marked
         // browser_webmcp_list and browser_webmcp_call `skillOnly`, so both left
         // the exposed surface entirely and their verdict rows were deleted as
@@ -385,7 +391,7 @@ internal sealed class ModelSurfaceTests
         // mean a denial had stopped withholding, and one lower would mean a
         // tool had never arrived.
         await Assert.That(advertised.Count(entry => !SessionToolSurface.IsAuthored(entry.Key)))
-            .IsEqualTo(61 + TheNewlyGrantedTen.Length);
+            .IsEqualTo(60 + TheNewlyGrantedTen.Length);
     }
 
     /// <summary>The generated config's capability list, as JSON, for one headedness.</summary>
