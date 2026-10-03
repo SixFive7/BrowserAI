@@ -1145,12 +1145,15 @@ and the likely cause is the product's.** Since 2026-10-03 every session launch
 carries the browsers' own restore options
 ([below](#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03)),
 and the resume now answers that the first browser call *"starts the browser, and
-its own session restore reopens the tabs this profile last recorded"*; a reopened
-tab carries its `sessionStorage`. That is read from the answer and the build, and
-no arm without the options separated it from the new browser revisions. **Path B,
+its own session restore reopens the tabs this profile last recorded"*, and the
+hard-kill measurement of the same day saw a restored tab bring its
+`sessionStorage` back in every run but one
+([below](#committing-to-disk-sooner-and-session-restore-after-a-hard-kill----measured-2026-10-03)).
+No arm here ran without the options, so the resume runs do not separate it from
+the new browser revisions themselves. **Path B,
 which relaunches after the child was killed, kept no `sessionStorage`, 4 of 4**,
-so on that path nothing brought it back; that is the first reading of the
-question that section leaves open, on this one path.
+so on that path nothing brought it back, which agrees with the hard-kill
+measurement of the same day in that section.
 
 ⚠️ **ONE FIREFOX PATH A RUN IN SIX LOST `localStorage`, AND THE FIRST SERVER'S OWN
 LOG SAYS THE BROWSER WAS NOT CLOSED.** Its stderr carries *"The browser on the
@@ -1580,8 +1583,9 @@ local tabs open.
 ⚠️ **Not established:** whether the restore options survive a browser that was
 killed and not closed, which is how a client ends a session; what a restored
 page re-runs on load, beyond the one POST; and what a headed window does.
-*Narrowed 2026-10-03 by addition:* on one path it is now read. A resume after the
-session's child was killed, Path B of
+*Added 2026-10-03 by addition:* the resume re-measurement of the same day agrees
+with the hard-kill reading below on one more path. A resume after the session's
+child was killed, Path B of
 [the resume re-measurement](#timings-spawn-resume-idle-close-proxy-overhead), came
 back without `sessionStorage` 4 of 4 at chromium 1247 and firefox 1553, where a
 resume through a second server kept it 10 of 10.
