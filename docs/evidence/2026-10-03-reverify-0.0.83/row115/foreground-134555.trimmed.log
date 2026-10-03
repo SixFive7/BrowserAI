@@ -1,0 +1,16 @@
+[2026-10-03T13:45:57.450Z] SPI_GETFOREGROUNDLOCKTIMEOUT = 2147483647 ms
+[2026-10-03T13:45:57.471Z] ancestors of this process: 61292,71908,61548,54820,54008,12396
+[2026-10-03T13:45:57.510Z] --- ARM firefox-flag: foreground before launch pid=54008 ancestor=True
+[2026-10-03T13:46:02.782Z]   t=0 launched pid=54348 flag=True
+[2026-10-03T13:46:02.791Z]   t=283 tree=2 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=0
+[2026-10-03T13:46:02.799Z]   t=568 tree=4 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=0
+[2026-10-03T13:46:02.808Z]   t=843 tree=4 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=0
+[2026-10-03T13:46:02.818Z]   t=1126 tree=6 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:46:02.828Z]   t=1402 tree=6 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:46:02.839Z]   t=1678 tree=7 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:46:02.849Z]   t=1958 tree=8 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:46:02.859Z]   t=2234 tree=8 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:46:02.867Z]   t=2505 tree=8 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:46:02.877Z]   t=2777 tree=8 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:46:02.887Z]   t=3046 tree=8 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:46:02.896Z]   t=3328 tree=8 fgInTree=True fg=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x290548 pid=14616 class=MozillaWindowClass title=Nightly]

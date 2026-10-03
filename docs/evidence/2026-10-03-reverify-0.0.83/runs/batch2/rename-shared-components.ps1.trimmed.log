@@ -1,0 +1,29 @@
+[15:36:09.795] ================ family: chromium ================
+[15:36:09.884] started pid 72204
+[15:36:13.197] live: tree=10 processes
+[15:36:13.207] live (chromium): rename ffmpeg-1011 (shared component) : MOVED
+[15:36:13.211]   renamed ffmpeg-1011 back
+[15:36:13.214] live (chromium): rename winldd-1007 (shared component) : MOVED
+[15:36:13.217]   renamed winldd-1007 back
+[15:36:13.236] live (chromium): rename the browsers ROOT : REFUSED -- IOException: Exception calling "Move" with "2" argument(s): "Access to the path '%USERPROFILE%\AppData\Local\BrowserAI\browsers' is denied."
+[15:36:15.747] --- CONTROL (chromium gone) ---
+[15:36:15.750] dead: rename ffmpeg-1011 : MOVED
+[15:36:15.756] dead: rename winldd-1007 : MOVED
+[15:36:15.762] dead: rename the browsers ROOT : MOVED
+[15:36:15.881] ================ family: firefox ================
+[15:36:15.897] started pid 27508
+[15:36:21.514] live: tree=6 processes
+[15:36:21.517] live (firefox): rename ffmpeg-1011 (shared component) : MOVED
+[15:36:21.519]   renamed ffmpeg-1011 back
+[15:36:21.522] live (firefox): rename winldd-1007 (shared component) : MOVED
+[15:36:21.523]   renamed winldd-1007 back
+[15:36:21.527] live (firefox): rename the browsers ROOT : REFUSED -- IOException: Exception calling "Move" with "2" argument(s): "Access to the path '%USERPROFILE%\AppData\Local\BrowserAI\browsers' is denied."
+[15:36:24.028] --- CONTROL (firefox gone) ---
+[15:36:24.031] dead: rename ffmpeg-1011 : MOVED
+[15:36:24.035] dead: rename winldd-1007 : MOVED
+[15:36:24.037] dead: rename the browsers ROOT : MOVED
+[15:36:24.077] restored: chromium present = True
+[15:36:24.078] restored: firefox  present = True
+[15:36:24.080] restored: ffmpeg   present = True
+[15:36:24.081] restored: winldd   present = True
+[15:36:24.082] done

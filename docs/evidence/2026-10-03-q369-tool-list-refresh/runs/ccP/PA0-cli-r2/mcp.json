@@ -1,0 +1,1 @@
+{"mcpServers":{"browserai":{"type":"stdio","command":"C:\\Program Files\\nodejs\\node.exe","args":["C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\rig\\phserver.js"],"env":{"PH_LOGDIR":"C:\\Source\\SixFive7\\BrowserAI\\.work\\q369\\runs\\ccP\\PA0-cli-r2","PH_TAG":"ph","PH_CAP":"none","PH_MODES":"placeholder","PH_DONE_AFTER_CALL_MS":"1000","PH_NOTIFY_ON_DONE":"1"}}}}

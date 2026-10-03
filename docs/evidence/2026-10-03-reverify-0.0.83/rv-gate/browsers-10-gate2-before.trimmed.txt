@@ -1,0 +1,14 @@
+reading 10-gate2-before at 2026-10-03T06:12:23.941Z of %USERPROFILE%\AppData\Local\BrowserAI\browsers
+.downloads	dir	0 files	0 bytes	created 2026-09-15T15:25:13Z
+.links	dir	3 files	277 bytes	created 2026-09-15T15:27:28Z
+chromium-1244	dir	308 files	454699952 bytes	created 2026-09-15T15:27:34Z
+chromium-1245	dir	308 files	454699952 bytes	created 2026-09-17T13:49:43Z
+chromium-1246	dir	308 files	454699952 bytes	created 2026-09-21T15:53:45Z
+chromium-1247	dir	307 files	458240242 bytes	created 2026-10-03T02:25:09Z
+ffmpeg-1011	dir	4 files	3517342 bytes	created 2026-09-15T15:27:37Z
+firefox-1544	dir	61 files	358344918 bytes	created 2026-09-15T15:27:42Z
+firefox-1548	dir	61 files	358345820 bytes	created 2026-09-17T14:33:07Z
+firefox-1549	dir	63 files	361803942 bytes	created 2026-09-21T16:40:48Z
+firefox-1553	dir	63 files	361805454 bytes	created 2026-10-03T02:25:21Z
+reinstall.lock	file	0 bytes
+winldd-1007	dir	3 files	258560 bytes	created 2026-09-15T15:27:38Z

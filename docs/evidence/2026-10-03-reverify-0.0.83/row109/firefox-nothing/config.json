@@ -1,0 +1,10 @@
+{
+  "browser": {
+    "browserName": "firefox",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-nothing\\profile",
+    "launchOptions": {
+      "headless": true
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-nothing\\output"
+}

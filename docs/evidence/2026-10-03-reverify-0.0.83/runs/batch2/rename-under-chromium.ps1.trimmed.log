@@ -1,0 +1,23 @@
+[15:35:26.573] chrome.exe: %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe (exists: True)
+[15:35:26.638] started pid 60276
+[15:35:30.157] BEFORE: alive=True tree=11 processes
+[15:35:30.192] BEFORE: new target ok=True code=200
+[15:35:30.192] --- with the browser LIVE ---
+[15:35:30.213] live: rename chrome-win64 (the executable's own directory) : REFUSED -- IOException: Exception calling "Move" with "2" argument(s): "The process cannot access the file because it is being used by another process."
+[15:35:30.217] live: rename chromium-1247 (the revision directory) : REFUSED -- IOException: Exception calling "Move" with "2" argument(s): "Access to the path '%USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247' is denied."
+[15:35:30.224]   tree pid 60276 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.225]   tree pid 71704 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.227]   tree pid 50552 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.227]   tree pid 51996 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.228]   tree pid 31576 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.229]   tree pid 71772 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.230]   tree pid 24332 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.231]   tree pid 64948 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.232]   tree pid 25604 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.233]   tree pid 54056 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:30.234]   tree pid 69924 %USERPROFILE%\AppData\Local\BrowserAI\browsers\chromium-1247\chrome-win64\chrome.exe
+[15:35:31.743] --- CONTROL: the same two renames with the browser GONE ---
+[15:35:31.746] dead: rename chrome-win64 : MOVED
+[15:35:31.749] dead: rename chromium-1247 : MOVED
+[15:35:31.752] restored: chrome.exe present = True
+[15:35:31.850] done

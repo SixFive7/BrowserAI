@@ -1,0 +1,25 @@
+# The lines of claude-debug.log that match
+# ToolSearch|list_changed|tools/list|render-time tools|[Rr]econnect|disconnected|MCP server \"browserai\"|browserai.*(failed|connected|Connection)
+# in file order, with the profile path, the user name and the machine name cut.
+# The whole log is listed in left-out.sha256.
+2026-10-03T13:58:02.407Z [DEBUG] [ToolSearch:optimistic] mode=tst, ENABLE_TOOL_SEARCH=true, result=true
+2026-10-03T13:58:02.729Z [DEBUG] MCP server "browserai": Starting connection with timeout of 30000ms
+2026-10-03T13:58:02.892Z [DEBUG] MCP server "browserai": Successfully connected (transport: stdio) in 163ms
+2026-10-03T13:58:02.892Z [DEBUG] MCP server "browserai": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"BrowserAI","version":"9.9.9-placeholder-stub"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-10-03T13:58:02.892Z [DEBUG] [MCP] Server "browserai" connected with subscribe=false
+2026-10-03T13:58:03.192Z [INFO] [Stall] tool_dispatch_start tool=ToolSearch toolUseId=toolu_71880_1_5bc845db permissionDecisionMs=2
+2026-10-03T13:58:03.194Z [DEBUG] ToolSearchTool: cache invalidated - deferred tools changed
+2026-10-03T13:58:03.194Z [DEBUG] ToolSearchTool: selected mcp__browserai__update_in_flight
+2026-10-03T13:58:03.194Z [INFO] [Stall] tool_dispatch_end tool=ToolSearch toolUseId=toolu_71880_1_5bc845db outcome=ok durationMs=2
+2026-10-03T13:58:03.286Z [DEBUG] MCP server "browserai": Calling MCP tool: update_in_flight
+2026-10-03T13:58:03.291Z [DEBUG] MCP server "browserai": Tool 'update_in_flight' completed successfully in 5ms
+2026-10-03T13:58:03.432Z [DEBUG] MCP server "browserai": Received tools/list_changed notification, refreshing tools
+2026-10-03T13:58:06.372Z [INFO] [Stall] tool_dispatch_start tool=ToolSearch toolUseId=toolu_71880_4_a3620e75 permissionDecisionMs=0
+2026-10-03T13:58:06.373Z [DEBUG] ToolSearchTool: cache invalidated - deferred tools changed
+2026-10-03T13:58:06.373Z [DEBUG] ToolSearchTool: selected mcp__browserai__browserai_init, mcp__browserai__browserai_list
+2026-10-03T13:58:06.374Z [INFO] [Stall] tool_dispatch_end tool=ToolSearch toolUseId=toolu_71880_4_a3620e75 outcome=ok durationMs=2
+2026-10-03T13:58:06.405Z [DEBUG] MCP server "browserai": Calling MCP tool: browserai_list
+2026-10-03T13:58:06.409Z [DEBUG] MCP server "browserai": Tool 'browserai_list' completed successfully in 4ms
+2026-10-03T13:58:07.475Z [DEBUG] MCP server "browserai": Terminating MCP server process tree
+2026-10-03T13:58:07.546Z [DEBUG] MCP server "browserai": STDIO connection closed after 4s (cleanly)
+2026-10-03T13:58:07.547Z [DEBUG] MCP server "browserai": Cleared connection cache for reconnection

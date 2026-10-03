@@ -1,0 +1,12 @@
+[2026-10-03T06:12:23.5570991Z] gate round 2 waiting for the suite lock
+[2026-10-03T06:12:23.6493354Z] lock taken; HEAD 5856f8d
+[2026-10-03T06:12:24.1498356Z] publishing both slices
+[2026-10-03T06:13:11.0061811Z] server publish exit 0
+[2026-10-03T06:13:27.2115735Z] app publish exit 0
+[2026-10-03T06:13:27.2179180Z] PowerShell half starting
+[2026-10-03T06:17:34.3901008Z] PowerShell half exit 0
+[2026-10-03T06:17:34.3918952Z] Git Bash half starting
+[2026-10-03T06:21:46.3944543Z] Git Bash half exit 0
+[2026-10-03T06:21:46.9115601Z] ms-playwright-mcp after: False
+[2026-10-03T06:21:46.9325357Z] lock released
+[2026-10-03T06:21:46.9389111Z] GATE-DONE

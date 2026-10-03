@@ -1,0 +1,92 @@
+[2026-10-03T13:43:15.964Z] SPI_GETFOREGROUNDLOCKTIMEOUT = 2147483647 ms
+[2026-10-03T13:43:15.975Z] ancestors of this process: 47632,3552,12216
+[2026-10-03T13:43:15.995Z] --- ARM firefox-flag: foreground before launch pid=69096 ancestor=False
+[2026-10-03T13:43:21.089Z]   t=0 launched pid=60740 flag=True
+[2026-10-03T13:43:21.098Z]   t=282 tree=2 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:21.107Z]   t=560 tree=4 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:21.115Z]   t=843 tree=6 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:21.123Z]   t=1126 tree=6 fgInTree=True fg=[hwnd=0x282034 pid=700 class=MozillaDialogClass title=] visible=1 first=[hwnd=0x282034 pid=700 class=MozillaDialogClass title=]
+[2026-10-03T13:43:21.131Z]   t=1405 tree=7 fgInTree=True fg=[hwnd=0x282034 pid=700 class=MozillaDialogClass title=] visible=1 first=[hwnd=0x282034 pid=700 class=MozillaDialogClass title=]
+[2026-10-03T13:43:21.141Z]   t=1678 tree=8 fgInTree=True fg=[hwnd=0x282034 pid=700 class=MozillaDialogClass title=] visible=1 first=[hwnd=0x282034 pid=700 class=MozillaDialogClass title=]
+[2026-10-03T13:43:21.149Z]   t=1968 tree=8 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.157Z]   t=2243 tree=8 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.165Z]   t=2529 tree=9 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.173Z]   t=2828 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.182Z]   t=3105 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.190Z]   t=3382 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.199Z]   t=3662 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.207Z]   t=3935 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.216Z]   t=4227 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.230Z]   t=4503 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.238Z]   t=4790 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.249Z]   t=5064 tree=10 fgInTree=True fg=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0x29009E pid=700 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:21.258Z]   TREE 60740,700,14876,12820,53508,53972,36812,63096,16292,26168
+[2026-10-03T13:43:22.873Z]   ended at 13:43:22.869Z; still alive from the tree: 0; foreground after: pid=69096
+[2026-10-03T13:43:22.884Z] --- ARM firefox-noflag: foreground before launch pid=69096 ancestor=False
+[2026-10-03T13:43:27.952Z]   t=0 launched pid=60316 flag=False
+[2026-10-03T13:43:27.961Z]   t=299 tree=2 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:27.970Z]   t=575 tree=4 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:27.978Z]   t=860 tree=6 fgInTree=True fg=[hwnd=0x1815FE pid=71788 class=MozillaDialogClass title=] visible=1 first=[hwnd=0x1815FE pid=71788 class=MozillaDialogClass title=]
+[2026-10-03T13:43:27.992Z]   t=1146 tree=7 fgInTree=True fg=[hwnd=0x1815FE pid=71788 class=MozillaDialogClass title=] visible=1 first=[hwnd=0x1815FE pid=71788 class=MozillaDialogClass title=]
+[2026-10-03T13:43:28.000Z]   t=1425 tree=8 fgInTree=True fg=[hwnd=0x1815FE pid=71788 class=MozillaDialogClass title=] visible=1 first=[hwnd=0x1815FE pid=71788 class=MozillaDialogClass title=]
+[2026-10-03T13:43:28.009Z]   t=1704 tree=8 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.018Z]   t=1983 tree=8 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.027Z]   t=2260 tree=8 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.036Z]   t=2552 tree=8 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.046Z]   t=2836 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.055Z]   t=3120 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.063Z]   t=3397 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.072Z]   t=3676 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.080Z]   t=3952 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.090Z]   t=4229 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.097Z]   t=4502 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.106Z]   t=4778 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.115Z]   t=5057 tree=9 fgInTree=True fg=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly] visible=1 first=[hwnd=0xB06F8 pid=71788 class=MozillaWindowClass title=Nightly]
+[2026-10-03T13:43:28.122Z]   TREE 60316,71788,53700,12064,17108,54464,9824,70140,71436
+[2026-10-03T13:43:29.672Z]   ended at 13:43:29.672Z; still alive from the tree: 0; foreground after: pid=69096
+[2026-10-03T13:43:29.683Z] --- ARM chromium-flag: foreground before launch pid=69096 ancestor=False
+[2026-10-03T13:43:34.736Z]   t=0 launched pid=24432 flag=True
+[2026-10-03T13:43:34.744Z]   t=280 tree=4 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:34.752Z]   t=568 tree=4 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:34.759Z]   t=854 tree=4 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:34.768Z]   t=1129 tree=4 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:34.775Z]   t=1404 tree=4 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:34.783Z]   t=1685 tree=6 fgInTree=False fg=[hwnd=0x2131E pid=69096 class=CASCADIA_HOSTING_WINDOW_CLASS title=<cut>] visible=0
+[2026-10-03T13:43:34.791Z]   t=1974 tree=11 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.799Z]   t=2245 tree=11 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.810Z]   t=2524 tree=11 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.818Z]   t=2796 tree=11 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.828Z]   t=3069 tree=11 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.835Z]   t=3344 tree=11 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.843Z]   t=3620 tree=11 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.852Z]   t=3908 tree=13 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.860Z]   t=4194 tree=14 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.868Z]   t=4480 tree=14 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.878Z]   t=4757 tree=14 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.891Z]   t=5032 tree=14 fgInTree=False fg=[hwnd=0x111F0 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x160E42 pid=24432 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:34.912Z]   TREE 24432,65440,71300,57040,70080,70956,24280,40864,31764,42744,48312,24580,57396,16656
+[2026-10-03T13:43:36.487Z]   ended at 13:43:36.486Z; still alive from the tree: 0; foreground after: pid=54008
+[2026-10-03T13:43:36.498Z] --- ARM chromium-noflag: foreground before launch pid=54008 ancestor=False
+[2026-10-03T13:43:41.740Z]   t=0 launched pid=12232 flag=False
+[2026-10-03T13:43:41.749Z]   t=275 tree=3 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=0
+[2026-10-03T13:43:41.757Z]   t=553 tree=7 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=Untitled – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=Untitled – Google Chrome for Testing]
+[2026-10-03T13:43:41.764Z]   t=832 tree=10 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.773Z]   t=1114 tree=10 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.780Z]   t=1387 tree=10 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.788Z]   t=1666 tree=10 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.795Z]   t=1954 tree=10 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.803Z]   t=2230 tree=10 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.809Z]   t=2507 tree=10 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.816Z]   t=2784 tree=13 fgInTree=True fg=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.824Z]   t=3059 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.831Z]   t=3336 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.840Z]   t=3605 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.848Z]   t=3875 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.856Z]   t=4145 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.864Z]   t=4416 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.871Z]   t=4686 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.878Z]   t=4964 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.885Z]   t=5233 tree=14 fgInTree=False fg=[hwnd=0x111E6 pid=54008 class=Chrome_WidgetWin_1 title=<cut>] visible=1 first=[hwnd=0x22054C pid=12232 class=Chrome_WidgetWin_1 title=about:blank – Google Chrome for Testing]
+[2026-10-03T13:43:41.893Z]   TREE 12232,69656,72172,19896,70544,31808,18800,71940,45960,14432,25692,47296,60328,39948
+[2026-10-03T13:43:43.429Z]   ended at 13:43:43.429Z; still alive from the tree: 0; foreground after: pid=54008
+[2026-10-03T13:43:43.439Z] done

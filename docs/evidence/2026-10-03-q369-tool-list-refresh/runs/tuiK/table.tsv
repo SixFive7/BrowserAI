@@ -1,0 +1,7 @@
+run	launches	lists	calls	list_changed_sent	client_refresh_lines	first_req_with_real_tool	real_served_by	placeholder_still_offered_after_real	no_such_tool_errors	mcp_status	inits	exit	waitTimeout
+TBr-cli-r1	2	L1:1,L2:1	L1:browserai_list L2:browserai_list	L2@14:05:42	0	2	L1,L2	no	0	-	-	0	-
+TBr-cli-r2	2	L1:1,L2:2	L1:browserai_list L2:browserai_list	L2@14:06:43	1	2	L1,L2	no	0	-	-	0	-
+TBr-cli-r3	2	L1:1,L2:1	L1:browserai_list L2:browserai_list	L2@14:07:45	0	2	L1,L2	no	0	-	-	0	-
+TK-cli-r1	2	L1:0,L2:1	L1:- L2:browserai_list	-	0	4	L2	no	0	-	-	0	-
+TK-cli-r2	2	L1:0,L2:1	L1:- L2:browserai_list	-	0	4	L2	no	0	-	-	0	-
+TK-cli-r3	2	L1:0,L2:1	L1:- L2:browserai_list	-	0	4	L2	no	0	-	-	0	-

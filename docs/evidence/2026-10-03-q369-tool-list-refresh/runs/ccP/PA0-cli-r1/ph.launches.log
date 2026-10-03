@@ -1,0 +1,9 @@
+2026-10-03T13:45:54.366Z +2ms launch=1 pid=70380 LAUNCH mode=placeholder cap=none ppid=69892
+2026-10-03T13:45:54.371Z +7ms launch=1 pid=70380 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.288","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T13:45:54.404Z +40ms launch=1 pid=70380 tools/list answered with the PLACEHOLDER (update_in_flight)
+2026-10-03T13:45:54.494Z +130ms launch=1 pid=70380 tools/call #1 update_in_flight answered with the PLACEHOLDER text
+2026-10-03T13:45:55.496Z +1132ms launch=1 pid=70380 UPDATE DONE (1000 ms after the first call): serving the real list from now on, in this process
+2026-10-03T13:45:55.496Z +1132ms launch=1 pid=70380 SEND notifications/tools/list_changed (the update is done)
+2026-10-03T13:45:58.533Z +4169ms launch=1 pid=70380 tools/call #2 update_in_flight answered with the STALE text (the update is done)
+2026-10-03T13:46:02.584Z +8220ms launch=1 pid=70380 stdin EOF after 8220 ms; exiting 0
+2026-10-03T13:46:02.635Z +8271ms launch=1 pid=70380 process exit code=0

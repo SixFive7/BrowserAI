@@ -1,0 +1,13 @@
+run 1 shot 1     3556 B  df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+run 1 shot 2     3556 B  df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+run 1 shot 3     3556 B  df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+run 2 shot 1     3556 B  df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+run 2 shot 2     3556 B  df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+run 2 shot 3     3556 B  df2be9a4097ff1557ced4a6939e0cc05613e4b644603551095862536e9c04b90
+run CONTROL shot different-page     3627 B  f8b918fa36c0641b4b0e46062fe424e8967fee63c65b89cc3eb42a6c47afb238
+
+distinct hashes over 6 captures of the SAME page: 1
+within run 1 identical: true
+within run 2 identical: true
+run1 == run2          : true
+CONTROL (different page) differs from run 2: true

@@ -1,0 +1,5 @@
+# Row 5, Playwright's own Firefox changes at 8db0830825: browser_patches/firefox/patches/bootstrap.diff and the 35 juggler files.
+bootstrap.diff bytes: 110116, lines naming BREAKAWAY, start_independent, CreateJobObject or AssignProcessToJobObject: 0
+positive control, lines naming juggler in the same file: 18
+juggler files: 35, naming breakaway, start_independent, Subprocess, CreateProcess or nsIProcess: 0
+positive control, juggler files naming juggler: 22

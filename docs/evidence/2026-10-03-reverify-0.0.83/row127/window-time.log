@@ -1,0 +1,9 @@
+[2026-10-03T13:39:31.699Z] exe C:\Source\SixFive7\BrowserAI\.work\wt\stale\src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\publish\BrowserAI.exe (10916864 bytes, 58E0AAEE6C7708A2983CC5A6518D9D4D902CD8CCCC3E1A2A6E2B7003F3242363)
+[2026-10-03T13:39:32.582Z] run 1 pid=72108 dialogAfterMs=843 startReturnedAfterMs=50,4 rect=556x444 title=BrowserAI
+[2026-10-03T13:39:32.692Z] run 1 WM_CLOSE posted 3.5 ms after the dialog was seen; exit code 0; still alive: False
+[2026-10-03T13:39:34.740Z] run 2 pid=14880 dialogAfterMs=534.7 startReturnedAfterMs=7,4 rect=556x444 title=BrowserAI
+[2026-10-03T13:39:34.816Z] run 2 WM_CLOSE posted 0.5 ms after the dialog was seen; exit code 0; still alive: False
+[2026-10-03T13:39:36.789Z] run 3 pid=28916 dialogAfterMs=460.6 startReturnedAfterMs=4,6 rect=556x444 title=BrowserAI
+[2026-10-03T13:39:36.930Z] run 3 WM_CLOSE posted 0.4 ms after the dialog was seen; exit code 0; still alive: False
+[2026-10-03T13:39:38.471Z] scratch CODEX_HOME now holds: 2 entries; scratch CLAUDE_CONFIG_DIR: 0
+[2026-10-03T13:39:38.479Z] done

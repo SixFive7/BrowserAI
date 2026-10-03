@@ -1,0 +1,9 @@
+# SHA-256 of the file as lane q369 wrote it, its path, the name it is stored under, and what was changed.
+2c534cac3ff571b45abcfcaf0803fb34789ebb6039eaa5cf2fd0ef7dd73b04d1  rig/phserver.js  ->  rig/phserver.js  (SPDX header added)
+29f3bd95e737cd67ef511df85058a025c08d4e52c93de73eb3535d0938745120  rig/ccmodel.js  ->  rig/ccmodel.js  (SPDX header added)
+44f7dbd698e47b959b6757b2e87460451723bdb7ddfc5069ba93f2b239fa16c9  rig/gen.js  ->  rig/gen.js  (SPDX header added)
+76db9a60fea50d4227c538d71f6d706516a2bfac6953ec05632278ce0e4dce45  rig/gen-tui.js  ->  rig/gen-tui.js.txt  (renamed, because the link scan reads SCEN[sc](run) on line 103 as a link)
+086a724567aa511bce0d45f13a8a914d5e9d1a284fb2f4ac9110491f76f62f0f  rig/ExitRig/Harness.cs  ->  rig/ExitRig/Harness.cs  (SPDX header added)
+27462ec18c907aacdae72d1919f4aabbb2c2771d72556b9c96a831f50ab5a958  rig/ExitRig/Pty.cs  ->  rig/ExitRig/Pty.cs  (SPDX header added)
+dd4444d54978edd0501dc3467abeef93ac163914e1259130a8d7a976cc9d7aa9  isolation/binaries.tsv  ->  isolation/binaries.trimmed.tsv  (user name)
+c3a9aa19bc3f035ce0bcda82db664b71469564e96dfdf9cbbcda7d99d1e2b57c  isolation/real-config-hashes.tsv  ->  isolation/real-config-hashes.trimmed.tsv  (profile path)

@@ -1,0 +1,37 @@
+run	launches	lists	calls	list_changed_sent	client_refresh_lines	first_req_with_real_tool	real_served_by	placeholder_still_offered_after_real	no_such_tool_errors	mcp_status	inits	exit	waitTimeout
+SA-cli-r1	1	L1:2	L1:update_in_flight+browserai_list	L1@13:45:21	1	3	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SA-cli-r2	1	L1:2	L1:update_in_flight+browserai_list	L1@13:45:29	1	3	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SA-cli-r3	1	L1:2	L1:update_in_flight+browserai_list	L1@13:45:36	1	3	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SA-vsc287-r1	1	L1:2	L1:update_in_flight+browserai_list	L1@13:45:43	1	3	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SA-vsc287-r2	1	L1:2	L1:update_in_flight+browserai_list	L1@13:45:50	1	3	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SA-vsc287-r3	1	L1:2	L1:update_in_flight+browserai_list	L1@13:45:57	1	3	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SA0-cli-r1	1	L1:1	L1:update_in_flight+update_in_flight	L1@13:46:04	0	-	-	-	0	pending: | connected:update_in_flight	update_in_flight	0	-
+SA0-cli-r2	1	L1:1	L1:update_in_flight+update_in_flight	L1@13:46:12	0	-	-	-	0	pending: | connected:update_in_flight	update_in_flight	0	-
+SA0-cli-r3	1	L1:1	L1:update_in_flight+update_in_flight	L1@13:46:19	0	-	-	-	0	pending: | connected:update_in_flight	update_in_flight	0	-
+SA0-vsc287-r1	1	L1:1	L1:update_in_flight+update_in_flight	L1@13:46:26	0	-	-	-	0	pending: | connected:update_in_flight	update_in_flight	0	-
+SA0-vsc287-r2	1	L1:1	L1:update_in_flight+update_in_flight	L1@13:46:33	0	-	-	-	0	pending: | connected:update_in_flight	update_in_flight	0	-
+SA0-vsc287-r3	1	L1:1	L1:update_in_flight+update_in_flight	L1@13:46:40	0	-	-	-	0	pending: | connected:update_in_flight	update_in_flight	0	-
+SB-cli-r1	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:46:58	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SB-cli-r2	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:47:16	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SB-cli-r3	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:47:35	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SB-vsc287-r1	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:47:54	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SB-vsc287-r2	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:48:12	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SB-vsc287-r3	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:48:30	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SC-cli-r1	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	5	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	update_in_flight | browserai_init+browserai_list	0	-
+SC-cli-r2	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	5	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	update_in_flight | browserai_init+browserai_list	0	-
+SC-cli-r3	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	5	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	update_in_flight | browserai_init+browserai_list	0	-
+SC-vsc287-r1	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	5	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	update_in_flight | browserai_init+browserai_list	0	-
+SC-vsc287-r2	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	5	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	update_in_flight | browserai_init+browserai_list	0	-
+SC-vsc287-r3	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	5	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	update_in_flight | browserai_init+browserai_list	0	-
+SCd-cli-r1	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCd-cli-r2	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCd-cli-r3	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCd-vsc287-r1	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCd-vsc287-r2	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCd-vsc287-r3	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:update_in_flight | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCt-cli-r1	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCt-cli-r2	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCt-cli-r3	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCt-vsc287-r1	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCt-vsc287-r2	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SCt-vsc287-r3	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	-	0	3	L2	yes	2	connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-

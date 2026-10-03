@@ -1,0 +1,118 @@
+[
+  {
+    "arm": "chromium-nothing",
+    "config": {
+      "browserName": "chromium",
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\chromium-nothing\\profile",
+      "launchOptions": {
+        "headless": true,
+        "channel": "chrome-for-testing"
+      }
+    },
+    "navigateError": false,
+    "raw": "### Result\n\"{\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\\\",\\\"webdriver\\\":false}\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })');\n```",
+    "value": {
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+      "webdriver": false
+    },
+    "exitCode": 0
+  },
+  {
+    "arm": "chromium-contextOptions-userAgent",
+    "config": {
+      "browserName": "chromium",
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\chromium-contextOptions-userAgent\\profile",
+      "launchOptions": {
+        "headless": true,
+        "channel": "chrome-for-testing"
+      },
+      "contextOptions": {
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+      }
+    },
+    "navigateError": false,
+    "raw": "### Result\n\"{\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36\\\",\\\"webdriver\\\":false}\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })');\n```",
+    "value": {
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "webdriver": false
+    },
+    "exitCode": 0
+  },
+  {
+    "arm": "firefox-nothing",
+    "config": {
+      "browserName": "firefox",
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-nothing\\profile",
+      "launchOptions": {
+        "headless": true
+      }
+    },
+    "navigateError": false,
+    "raw": "### Result\n\"{\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"webdriver\\\":true}\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })');\n```",
+    "value": {
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "webdriver": true
+    },
+    "exitCode": 0
+  },
+  {
+    "arm": "firefox-contextOptions-userAgent",
+    "config": {
+      "browserName": "firefox",
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-contextOptions-userAgent\\profile",
+      "launchOptions": {
+        "headless": true
+      },
+      "contextOptions": {
+        "userAgent": "BrowserAI-probe/1.0 distinct-context-option"
+      }
+    },
+    "navigateError": false,
+    "raw": "### Result\n\"{\\\"ua\\\":\\\"BrowserAI-probe/1.0 distinct-context-option\\\",\\\"webdriver\\\":true}\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })');\n```",
+    "value": {
+      "ua": "BrowserAI-probe/1.0 distinct-context-option",
+      "webdriver": true
+    },
+    "exitCode": 0
+  },
+  {
+    "arm": "firefox-pref-dom.webdriver.enabled-false",
+    "config": {
+      "browserName": "firefox",
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-pref-dom.webdriver.enabled-false\\profile",
+      "launchOptions": {
+        "headless": true,
+        "firefoxUserPrefs": {
+          "dom.webdriver.enabled": false
+        }
+      }
+    },
+    "navigateError": false,
+    "raw": "### Result\n\"{\\\"ua\\\":\\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0\\\",\\\"webdriver\\\":true}\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })');\n```",
+    "value": {
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0",
+      "webdriver": true
+    },
+    "exitCode": 0
+  },
+  {
+    "arm": "firefox-pref-general.useragent.override-CONTROL",
+    "config": {
+      "browserName": "firefox",
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-pref-general.useragent.override-CONTROL\\profile",
+      "launchOptions": {
+        "headless": true,
+        "firefoxUserPrefs": {
+          "general.useragent.override": "BrowserAI-probe/1.0 distinct-pref"
+        }
+      }
+    },
+    "navigateError": false,
+    "raw": "### Result\n\"{\\\"ua\\\":\\\"BrowserAI-probe/1.0 distinct-pref\\\",\\\"webdriver\\\":true}\"\n### Ran Playwright code\n```js\nawait page.evaluate('() => JSON.stringify({ ua: navigator.userAgent, webdriver: navigator.webdriver })');\n```",
+    "value": {
+      "ua": "BrowserAI-probe/1.0 distinct-pref",
+      "webdriver": true
+    },
+    "exitCode": 0
+  }
+]

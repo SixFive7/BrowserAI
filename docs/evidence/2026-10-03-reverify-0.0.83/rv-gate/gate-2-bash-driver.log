@@ -1,0 +1,20 @@
+=== ORDINARY RUN rv-bash-2 starting 08:17:34 ===
+Took C:\Source\SixFive7\BrowserAI\.work\installer.lock (pid=84044 created=134354818545042148).
+installer lock held: pid=84044 created=134354818545042148
+vpk pack of BrowserAI.app.test took 8.2 s.
+vpk pack of the twin took 7.6 s.
+scratch released after 2s
+Running tests from c:\Source\SixFive7\BrowserAI\.work\wt\rv\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64)
+c:\Source\SixFive7\BrowserAI\.work\wt\rv\tests\BrowserAI.Tests\bin\Debug\net10.0-windows\BrowserAI.Tests.dll (net10.0|x64) passed (3m 24s 816ms)
+
+  In process file artifacts produced:
+    - C:\Source\SixFive7\BrowserAI\.work\wt\rv\TestResults\BrowserAI.Tests-windows-net10.0-report.html
+
+Test run summary: Passed!
+  total: 896
+  failed: 0
+  succeeded: 896
+  skipped: 0
+  duration: 3m 25s 272ms
+=== ORDINARY RUN rv-bash-2 done 08:21:45, clearance clean ===
+ORDINARY-BASH-DONE

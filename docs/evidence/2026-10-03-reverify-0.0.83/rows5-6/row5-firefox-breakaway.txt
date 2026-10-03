@@ -1,0 +1,65 @@
+# Row 5, Firefox half. mozilla-firefox/firefox at 3bf8f468258c2181f455e23d4ffcd6acb8f4cdb1, the BASE_REVISION browser_patches/firefox/UPSTREAM_CONFIG.sh names at microsoft/playwright 8db0830825 (feat(firefox): roll to r1553), fetched at depth 1 on 2026-10-03.
+3bf8f468258c2181f455e23d4ffcd6acb8f4cdb1 2026-09-09T17:05:55Z No Bug - Update configs after merge day operations a=release
+milestone: 156.0
+== every line naming CREATE_BREAKAWAY_FROM_JOB, vendored Rust bindings left out
+ipc/chromium/src/base/process_util.h:123:  // parent job. This will pass the flag CREATE_BREAKAWAY_FROM_JOB.
+ipc/chromium/src/base/process_util_win.cc:296:    dwCreationFlags |= CREATE_BREAKAWAY_FROM_JOB;
+testing/mozbase/mozprocess/mozprocess/processhandler.py:342:                    creationflags |= winprocess.CREATE_BREAKAWAY_FROM_JOB
+testing/mozbase/mozprocess/mozprocess/winprocess.py:254:CREATE_BREAKAWAY_FROM_JOB = 0x01000000
+toolkit/crashreporter/nsExceptionHandler.cpp:1220:          NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB,
+toolkit/modules/subprocess/subprocess_shared_win.js:77:  CREATE_BREAKAWAY_FROM_JOB: 0x01000000,
+toolkit/modules/subprocess/subprocess_win.worker.js:722:      // the child process was created with the CREATE_BREAKAWAY_FROM_JOB flag,
+toolkit/modules/subprocess/test/xpcshell/data_test_child.py:63:        creationflags = subprocess.CREATE_BREAKAWAY_FROM_JOB
+toolkit/modules/subprocess/test/xpcshell/test_subprocess_child.js:172:  // parent, we have to launch it with the CREATE_BREAKAWAY_FROM_JOB flag.
+toolkit/xre/nsWindowsRestart.cpp:140:      NeedToBreakAwayFromJob() ? CREATE_BREAKAWAY_FROM_JOB : 0;
+== who sets start_independent, which ipc/chromium turns into the flag
+ipc/chromium/src/base/process_util.h:124:  bool start_independent = false;
+ipc/chromium/src/base/process_util_win.cc:295:  if (options.start_independent) {
+toolkit/components/backgroundtasks/BackgroundTasksRunner.cpp:38:  options.start_independent = true;
+== the launcher's creation flags
+496:  DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
+508:    creationFlags |= EXTENDED_STARTUPINFO_PRESENT;
+537:                               nullptr, nullptr, inheritHandles, creationFlags,
+541:                                inheritHandles, creationFlags, nullptr, nullptr,
+== NeedToBreakAwayFromJob
+ * CreateProcess fails if we try to break away from a job but it's not allowed.
+ * So if we cannot determine the result due to a failure, we assume we don't
+ * need to break away and this returns false.
+ */
+static bool NeedToBreakAwayFromJob() {
+  // If we can't determine if we are in a job, we assume we're not in a job.
+  BOOL inJob = FALSE;
+  if (!::IsProcessInJob(::GetCurrentProcess(), nullptr, &inJob)) {
+    return false;
+  }
+
+  // If there is no job, there is nothing to worry about.
+  if (!inJob) {
+    return false;
+  }
+
+  // If we can't get the job object flags, we assume no need to break away from
+  // it.
+  JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_info = {};
+  if (!::QueryInformationJobObject(nullptr, JobObjectExtendedLimitInformation,
+                                   &job_info, sizeof(job_info), nullptr)) {
+    return false;
+  }
+
+  // If JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE is not set, no need to worry about
+  // the job.
+  if (!(job_info.BasicLimitInformation.LimitFlags &
+        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)) {
+    return false;
+  }
+
+  // If we can't break away from the current job, there is nothing we can do.
+  if (!(job_info.BasicLimitInformation.LimitFlags &
+        JOB_OBJECT_LIMIT_BREAKAWAY_OK)) {
+    return false;
+  }
+
+  // We can and need to break away from the job.
+  return true;
+}
+

@@ -1,0 +1,118 @@
+// Q369 batch generator for the interactive TUI of Claude Code 2.1.288, run in a pseudoconsole.
+// usage: node gen-tui.js <batch> <scenario[,scenario...]> <reps> [port]
+'use strict';
+const fs = require('fs');
+
+const [batch, scenArg, repsArg, portArg] = process.argv.slice(2);
+const S = 'C:\\Source\\SixFive7\\BrowserAI\\.work\\q369';
+const NODE = 'C:\\Program Files\\nodejs\\node.exe';
+const PH = `${S}\\rig\\phserver.js`;
+const PROJ = `${S}\\proj`;
+const PORT = portArg || '8963';
+const CLAUDE = `${S}\\bin\\cli\\claude.exe`;
+const BATCHDIR = `${S}\\runs\\${batch}`;
+const POLICY = `${BATCHDIR}\\policy.json`;
+fs.mkdirSync(BATCHDIR, { recursive: true });
+
+const env = (run) => ({
+  CLAUDE_CONFIG_DIR: `${run}\\cfg`, CODEX_HOME: `${S}\\cfg\\codex-unused`, DISABLE_AUTOUPDATER: '1',
+  ANTHROPIC_BASE_URL: `http://127.0.0.1:${PORT}`, ANTHROPIC_API_KEY: 'stub-key-not-real',
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1',
+  GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', DOTNET_CLI_TELEMETRY_OPTOUT: '1',
+  TEMP: `${S}\\tmp`, TMP: `${S}\\tmp`, APPDATA: `${S}\\appdata\\roaming`, LOCALAPPDATA: `${S}\\appdata\\local`,
+  GIT_CEILING_DIRECTORIES: S, TERM: 'xterm-256color',
+});
+const seed = JSON.stringify({
+  hasCompletedOnboarding: true, autoUpdates: false, bypassPermissionsModeAccepted: false,
+  customApiKeyResponses: { approved: ['stub-key-not-real'], rejected: [] }, lastReleaseNotesSeen: '2.1.288',
+  projects: { [PROJ.replace(/\\/g, '/')]: { hasTrustDialogAccepted: true, hasCompletedProjectOnboarding: true, allowedTools: [] } },
+});
+const mcpJson = (run, serverEnv) => JSON.stringify({ mcpServers: { browserai: { type: 'stdio', command: NODE, args: [PH], env: Object.assign({ PH_LOGDIR: run, PH_TAG: 'ph' }, serverEnv) } } });
+const ALLOWED = 'mcp__browserai__update_in_flight,mcp__browserai__browserai_init,mcp__browserai__browserai_list';
+const args = (run, def) => ['--mcp-config', `${run}\\mcp.json`, '--strict-mcp-config', ...(def && def.defaultTools ? ['--allowedTools', `${ALLOWED},RefreshMcpTools,WaitForMcpServers`] : ['--tools', '', '--allowedTools', ALLOWED]), '--permission-mode', 'acceptEdits', '--debug-file', `${run}\\claude-debug.log`, '--model', 'sonnet'];
+
+const ESC = '\u001b';
+const DOWN = `${ESC}[B`;
+const prompt = (text, label) => [{ do: 'type', text }, { do: 'sleep', ms: 500 }, { do: 'type', text: '\r' }, { do: 'waitScreen', pattern: 'stub-turn-finished', timeoutMs: 60000 }, { do: 'sleep', ms: 2000 }, { do: 'snap', text: label }];
+const ready = [{ do: 'waitScreen', pattern: 'for shortcuts|bypass permissions|accept edits', timeoutMs: 30000 }, { do: 'sleep', ms: 2500 }, { do: 'snap', text: 'startup' }];
+const exitSteps = [{ do: 'type', text: '/exit' }, { do: 'sleep', ms: 500 }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 3000 }];
+// /mcp: open the list, then Enter on the (only) server for its menu.
+const mcpOpen = (label) => [{ do: 'type', text: '/mcp' }, { do: 'sleep', ms: 800 }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 2500 }, { do: 'snap', text: `${label}: /mcp list` }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 2000 }, { do: 'snap', text: `${label}: server menu` }];
+const back = (n) => Array.from({ length: n }, () => [{ do: 'type', text: ESC }, { do: 'sleep', ms: 900 }]).flat();
+
+const CTRL_O = '\u000f';
+const viewTools = (label) => [{ do: 'type', text: '\r' }, { do: 'sleep', ms: 2000 }, { do: 'snap', text: `${label}: View tools` }];
+const reconnect = (label) => [{ do: 'type', text: DOWN }, { do: 'sleep', ms: 700 }, { do: 'snap', text: `${label}: Reconnect selected` }, { do: 'type', text: '\r' }, { do: 'sleep', ms: 4000 }, { do: 'snap', text: `${label}: after Reconnect` }];
+const transcript = (label) => [{ do: 'type', text: CTRL_O }, { do: 'sleep', ms: 1500 }, { do: 'snap', text: `${label}: transcript (ctrl+o)` }, { do: 'type', text: CTRL_O }, { do: 'sleep', ms: 1200 }];
+const SCEN = {
+  // Arm a: the update ends between turns and the server sends list_changed in the same process.
+  TA: (run) => ({ server: { PH_CAP: 'listChanged', PH_MODES: 'placeholder', PH_DONE_FILE: `${run}\\update.done`, PH_NOTIFY_ON_DONE: '1' },
+    steps: [...ready, ...prompt('Use the browserai tools.', 'after turn 1'), ...transcript('turn 1'),
+      ...mcpOpen('before the update ends'), ...viewTools('before the update ends'), ...back(3), { do: 'snap', text: 'menus closed' },
+      { do: 'mark', text: 'UPDATE ENDS' }, { do: 'touch', path: `${run}\\update.done` }, { do: 'sleep', ms: 3000 }, { do: 'snap', text: 'after the update ended' },
+      ...mcpOpen('after the update ended'), ...viewTools('after the update ended'), ...back(3),
+      ...prompt('Try the browserai tools again.', 'after turn 2'), ...transcript('turn 2'), ...exitSteps] }),
+  // Arm b: launch 1 ends itself after its first call; turn 2 re-dials launch 2, which sends list_changed.
+  // In the interactive UI a server that ends is marked failed, so the second turn is the client's own
+  // refusal; then 10 s idle (does anything re-dial?); then /mcp, whose failed-server menu opens on
+  // "1. Reconnect", and Enter; launch 2 sends list_changed right after notifications/initialized.
+  TB: (run) => ({ server: { PH_CAP: 'listChanged', PH_MODES: 'placeholder,real', PH_KILL_AFTER_CALL: '1', PH_NOTIFY_AFTER_INIT: '2,3,4' },
+    steps: [...ready, ...prompt('Use the browserai tools.', 'after turn 1'), { do: 'sleep', ms: 3000 },
+      ...mcpOpen('after launch 1 ended'), ...back(2),
+      ...prompt('Try the browserai tools again.', 'after turn 2'), { do: 'mark', text: 'IDLE 10 s' }, { do: 'sleep', ms: 10000 },
+      ...mcpOpen('before Reconnect'), { do: 'type', text: '\r' }, { do: 'sleep', ms: 4000 }, { do: 'snap', text: 'after Reconnect (Enter on 1. Reconnect)' }, ...back(3),
+      ...mcpOpen('after Reconnect'), ...viewTools('after Reconnect'), ...back(3),
+      ...prompt('And once more.', 'after turn 3'), ...transcript('turn 3'), ...exitSteps] }),
+  // TBclean: the control for TB, with a server that ends its own conversation cleanly (exit 0).
+  TBclean: (run) => { const d = SCEN.TB(run); d.server.PH_KILL_MODE = 'clean'; return d; },
+  // TBr: TB with the REAL list at first connect (the control for the directions).
+  TBr: (run) => { const d = SCEN.TB(run); d.server.PH_MODES = 'real,real'; return d; },
+  // TK: launch 1 is killed on receiving initialize (Q369's hazard); what /mcp shows; Reconnect.
+  TK: (run) => ({ server: { PH_CAP: 'listChanged', PH_MODES: 'real,real', PH_DIE_ON: 'initialize', PH_KILL_LAUNCHES: '1' },
+    steps: [...ready, { do: 'sleep', ms: 2000 }, ...mcpOpen('after launch 1 died mid-handshake'), ...back(2),
+      ...prompt('Use the browserai tools.', 'after turn 1'),
+      ...mcpOpen('before Reconnect'), { do: 'type', text: '\r' }, { do: 'sleep', ms: 4000 }, { do: 'snap', text: 'after Reconnect' }, ...back(3),
+      ...prompt('Try the browserai tools again.', 'after turn 2'), ...exitSteps] }),
+  // TR: TC with the default tools on, to see whether the interactive UI offers RefreshMcpTools.
+  TR: (run) => Object.assign(SCEN.TC(run), { defaultTools: true, policy: { phPerTurn: 1, refreshTool: 'RefreshMcpTools', refreshInput: { server: 'browserai' } } }),
+  // Arm c: the update ends without a notification; turn 2 meets the stale text; /mcp Reconnect; turn 3.
+  TC: (run) => ({ server: { PH_CAP: 'listChanged', PH_MODES: 'placeholder', PH_DONE_FILE: `${run}\\update.done`, PH_NOTIFY_ON_DONE: '0' },
+    steps: [...ready, ...prompt('Use the browserai tools.', 'after turn 1'),
+      { do: 'mark', text: 'UPDATE ENDS (no notification)' }, { do: 'touch', path: `${run}\\update.done` }, { do: 'sleep', ms: 2000 },
+      ...prompt('Try the browserai tools again.', 'after turn 2'),
+      ...mcpOpen('before Reconnect'), ...reconnect('reconnect'), ...back(3), { do: 'snap', text: 'menus closed after Reconnect' },
+      ...mcpOpen('after Reconnect'), ...viewTools('after Reconnect'), ...back(3),
+      ...prompt('And once more.', 'after turn 3'), ...transcript('turn 3'), ...exitSteps] }),
+  // Exploration: what the TUI shows for the placeholder, and what /mcp offers.
+  TX: (run) => ({ server: { PH_CAP: 'listChanged', PH_MODES: 'placeholder', PH_DONE_FILE: `${run}\\update.done`, PH_NOTIFY_ON_DONE: '1' },
+    steps: [...ready, ...prompt('Use the browserai tools.', 'after turn 1'), ...mcpOpen('explore'),
+      { do: 'type', text: DOWN }, { do: 'sleep', ms: 700 }, { do: 'snap', text: 'menu down 1' },
+      { do: 'type', text: DOWN }, { do: 'sleep', ms: 700 }, { do: 'snap', text: 'menu down 2' },
+      { do: 'type', text: DOWN }, { do: 'sleep', ms: 700 }, { do: 'snap', text: 'menu down 3' },
+      ...back(3), { do: 'snap', text: 'after escape' }, ...exitSteps] }),
+};
+
+const scens = scenArg.split(',');
+const reps = Number(repsArg || 1);
+const runs = [];
+for (const sc of scens) for (let r = 1; r <= reps; r++) {
+  const name = `${sc}-cli-r${r}`;
+  const run = `${BATCHDIR}\\${name}`;
+  const def = SCEN[sc](run);
+  runs.push({
+    name, dir: run, exe: CLAUDE, args: args(run, def), cwd: PROJ, console: 'pty', ptyNullStdHandles: true, maxMs: 240000, settleMs: 20000, env: env(run),
+    writeFiles: [
+      { path: `${run}\\cfg\\.claude.json`, content: seed },
+      { path: `${run}\\mcp.json`, content: mcpJson(run, def.server) },
+      { path: POLICY, content: JSON.stringify(Object.assign({ logDir: run, tag: 'model' }, def.policy || { phPerTurn: 1 })) },
+    ],
+    steps: def.steps,
+  });
+}
+fs.writeFileSync(`${BATCHDIR}\\batch.json`, JSON.stringify({
+  progress: `${BATCHDIR}\\progress.log`, gapMs: 1500,
+  stubs: [{ name: 'anthropic', exe: NODE, args: [`${S}\\rig\\ccmodel.js`], env: { STUB_PORT: PORT, STUB_POLICY_FILE: POLICY, STUB_LOGDIR: BATCHDIR, STUB_TAG: 'stub-fallback' } }],
+  runs,
+}, null, 1));
+console.log(`${batch}: ${runs.length} runs`);
+module.exports = { SCEN };

@@ -1,0 +1,247 @@
+6711192.747	2026-10-03T13:58:37.3865957Z	72004	harness	WROTE	C:\Source\SixFive7\BrowserAI\.work\q369\runs\tui2\TBclean-cli-r1\cfg\.claude.json
+6711194.191	2026-10-03T13:58:37.3880385Z	72004	harness	WROTE	C:\Source\SixFive7\BrowserAI\.work\q369\runs\tui2\TBclean-cli-r1\mcp.json
+6711195.520	2026-10-03T13:58:37.3893646Z	72004	harness	WROTE	C:\Source\SixFive7\BrowserAI\.work\q369\runs\tui2\policy.json
+6711227.059	2026-10-03T13:58:37.4209009Z	72004	harness	ENV	ALLUSERSPROFILE ANTHROPIC_API_KEY ANTHROPIC_BASE_URL APPDATA CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC CLAUDE_CONFIG_DIR CODEX_HOME COMMONPROGRAMFILES CommonProgramFiles(x86) CommonProgramW6432 COMPUTERNAME COMSPEC DISABLE_AUTOUPDATER DISABLE_ERROR_REPORTING DISABLE_TELEMETRY DOTNET_CLI_TELEMETRY_OPTOUT DriverData GCM_INTERACTIVE GIT_CEILING_DIRECTORIES GIT_TERMINAL_PROMPT HOMEDRIVE HOMEPATH LOCALAPPDATA LOGONSERVER NUMBER_OF_PROCESSORS OS PATH PATHEXT PROCESSOR_ARCHITECTURE PROCESSOR_IDENTIFIER PROCESSOR_LEVEL PROCESSOR_REVISION ProgramData PROGRAMFILES ProgramFiles(x86) ProgramW6432 PUBLIC SESSIONNAME SYSTEMDRIVE SYSTEMROOT TEMP TERM TMP USERDOMAIN USERDOMAIN_ROAMINGPROFILE USERNAME USERPROFILE WINDIR
+6711227.468	2026-10-03T13:58:37.4213028Z	72004	harness	LAUNCH_PTY	cmd=C:\Source\SixFive7\BrowserAI\.work\q369\bin\cli\claude.exe --mcp-config C:\Source\SixFive7\BrowserAI\.work\q369\runs\tui2\TBclean-cli-r1\mcp.json --strict-mcp-config --tools "" --allowedTools mcp__browserai__update_in_flight,mcp__browserai__browserai_init,mcp__browserai__browserai_list --permission-mode acceptEdits --debug-file C:\Source\SixFive7\BrowserAI\.work\q369\runs\tui2\TBclean-cli-r1\claude-debug.log --model sonnet cwd=C:\Source\SixFive7\BrowserAI\.work\q369\proj
+6711227.606	2026-10-03T13:58:37.4214404Z	72004	harness	PTY_STARTUP	nullStdHandles=True
+6711241.810	2026-10-03T13:58:37.4356502Z	72004	observer	ROOT	pid=67664 role=client created=2026-10-03T13:58:37.4273844Z inJob=False image=C:\Source\SixFive7\BrowserAI\.work\q369\bin\cli\claude.exe cmd=C:\Source\SixFive7\BrowserAI\.work\q369\bin\cli\claude.exe --mcp-config C:\Source\SixFive7\BrowserAI\.work\q369\runs\tui2\TBclean-cli-r1\mcp.json --strict-mcp-config --tools "" --allowedTools mcp__browserai__update_in_flight,mcp__browserai__browserai_init,mcp__browserai__browserai_list --permission-mode acceptEdits --debug-file C:\Source\SixFive7\BrowserAI\.work\q369\runs\tui2\TBclean-cli-r1\claude-debug.log --model sonnet
+6711247.611	2026-10-03T13:58:37.4414546Z	72004	harness	STEP	{"do":"waitScreen","pattern":"for shortcuts|bypass permissions|accept edits","timeoutMs":30000}
+6711326.162	2026-10-03T13:58:37.5200019Z	72004	observer	FOUND	pid=68720 ppid=67664 role=other:<image? err 5> created=2026-10-03T13:58:37.4895427Z inJob=True image=<image? err 5> cmd=<cmdline? status 0xC000010A>
+6711326.503	2026-10-03T13:58:37.5203363Z	72004	observer	FOUND	pid=20320 ppid=68720 role=conhost created=2026-10-03T13:58:37.4982186Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711326.677	2026-10-03T13:58:37.5205114Z	72004	observer	FOUND	pid=74460 ppid=67664 role=other:reg.exe created=2026-10-03T13:58:37.4983130Z inJob=True image=C:\Windows\System32\reg.exe cmd=C:\WINDOWS\System32\reg.exe query HKCU\SOFTWARE\Policies\ClaudeCode /v Settings
+6711326.867	2026-10-03T13:58:37.5207012Z	72004	observer	FOUND	pid=35328 ppid=74460 role=conhost created=2026-10-03T13:58:37.5066886Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711327.243	2026-10-03T13:58:37.5210758Z	72004	observer	EXIT	pid=68720 role=other:<image? err 5> code=1 (0x00000001) exitUtc=2026-10-03T13:58:37.5184660Z qpcSeen=6711326.418
+6711327.979	2026-10-03T13:58:37.5218119Z	72004	observer	EXIT	pid=20320 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:37.5200077Z qpcSeen=6711327.949
+6711331.533	2026-10-03T13:58:37.5253663Z	72004	observer	EXIT	pid=74460 role=other:reg.exe code=1 (0x00000001) exitUtc=2026-10-03T13:58:37.5243484Z qpcSeen=6711331.502
+6711333.273	2026-10-03T13:58:37.5271060Z	72004	observer	EXIT	pid=35328 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:37.5255383Z qpcSeen=6711333.252
+6711455.950	2026-10-03T13:58:37.6497913Z	72004	observer	FOUND	pid=65824 ppid=67664 role=other:git.exe created=2026-10-03T13:58:37.6169916Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.hooksPath=\\.\NUL -c core.fsmonitor= remote get-url origin
+6711456.251	2026-10-03T13:58:37.6500854Z	72004	observer	FOUND	pid=66324 ppid=65824 role=conhost created=2026-10-03T13:58:37.6232903Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711471.573	2026-10-03T13:58:37.6654132Z	72004	observer	EXIT	pid=65824 role=other:git.exe code=2 (0x00000002) exitUtc=2026-10-03T13:58:37.6634641Z qpcSeen=6711471.507
+6711474.516	2026-10-03T13:58:37.6683617Z	72004	observer	EXIT	pid=66324 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:37.6654085Z qpcSeen=6711474.412
+6711486.168	2026-10-03T13:58:37.6800080Z	72004	observer	FOUND	pid=18152 ppid=67664 role=other:git.exe created=2026-10-03T13:58:37.6681739Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.hooksPath=\\.\NUL -c core.fsmonitor= remote
+6711517.179	2026-10-03T13:58:37.7110204Z	72004	observer	FOUND	pid=47864 ppid=18152 role=conhost created=2026-10-03T13:58:37.6749048Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711519.142	2026-10-03T13:58:37.7129751Z	72004	observer	EXIT	pid=18152 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:37.7102022Z qpcSeen=6711519.097
+6711520.500	2026-10-03T13:58:37.7143332Z	72004	observer	EXIT	pid=47864 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:37.7124475Z qpcSeen=6711520.443
+6711641.755	2026-10-03T13:58:37.8355942Z	72004	observer	FOUND	pid=40848 ppid=67664 role=other:where.exe created=2026-10-03T13:58:37.8072737Z inJob=True image=C:\Windows\System32\where.exe cmd=C:\WINDOWS\System32\where.exe git
+6711642.038	2026-10-03T13:58:37.8358728Z	72004	observer	FOUND	pid=66800 ppid=40848 role=conhost created=2026-10-03T13:58:37.8134749Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711725.161	2026-10-03T13:58:37.9189952Z	72004	observer	EXIT	pid=40848 role=other:where.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:37.9171905Z qpcSeen=6711725.031
+6711728.793	2026-10-03T13:58:37.9226274Z	72004	observer	EXIT	pid=66800 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:37.9206983Z qpcSeen=6711728.731
+6711752.914	2026-10-03T13:58:37.9467520Z	72004	observer	FOUND	pid=49056 ppid=67664 role=other:git.exe created=2026-10-03T13:58:37.9206840Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.hooksPath=/dev/null -c core.fsmonitor= -C C:\Source\SixFive7\BrowserAI\.work\q369\proj ls-files --error-unmatch -- :(icase).claude/settings.local.json
+6711753.187	2026-10-03T13:58:37.9470208Z	72004	observer	FOUND	pid=3032 ppid=49056 role=conhost created=2026-10-03T13:58:37.9266315Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711759.723	2026-10-03T13:58:37.9535565Z	72004	observer	EXIT	pid=49056 role=other:git.exe code=1 (0x00000001) exitUtc=2026-10-03T13:58:37.9516823Z qpcSeen=6711759.663
+6711761.644	2026-10-03T13:58:37.9554778Z	72004	observer	EXIT	pid=3032 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:37.9535240Z qpcSeen=6711761.591
+6711861.829	2026-10-03T13:58:38.0556667Z	72004	observer	FOUND	pid=24364 ppid=67664 role=other:git.exe created=2026-10-03T13:58:38.0288121Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.hooksPath=\\.\NUL -c core.fsmonitor= remote get-url origin
+6711863.136	2026-10-03T13:58:38.0569716Z	72004	observer	FOUND	pid=74408 ppid=24364 role=conhost created=2026-10-03T13:58:38.0329522Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711877.303	2026-10-03T13:58:38.0711365Z	72004	observer	EXIT	pid=24364 role=other:git.exe code=2 (0x00000002) exitUtc=2026-10-03T13:58:38.0690158Z qpcSeen=6711877.225
+6711879.345	2026-10-03T13:58:38.0731780Z	72004	observer	EXIT	pid=74408 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.0712617Z qpcSeen=6711879.297
+6711892.338	2026-10-03T13:58:38.0861749Z	72004	observer	FOUND	pid=73400 ppid=67664 role=other:<image? err 5> created=2026-10-03T13:58:38.0491816Z inJob=True image=<image? err 5> cmd=<cmdline? status 0xC000010A>
+6711892.631	2026-10-03T13:58:38.0864663Z	72004	observer	FOUND	pid=72560 ppid=73400 role=conhost created=2026-10-03T13:58:38.0555187Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711892.868	2026-10-03T13:58:38.0867019Z	72004	observer	FOUND	pid=13552 ppid=67664 role=other:claude.exe created=2026-10-03T13:58:38.0590341Z inJob=True image=C:\Source\SixFive7\BrowserAI\.work\q369\bin\cli\claude.exe cmd=rg --no-config --files --hidden --no-ignore --max-depth 4 --glob .orphaned_at C:\Source\SixFive7\BrowserAI\.work\q369\runs\tui2\TBclean-cli-r1\cfg\plugins\cache
+6711893.078	2026-10-03T13:58:38.0869124Z	72004	observer	FOUND	pid=62792 ppid=13552 role=conhost created=2026-10-03T13:58:38.0668333Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711894.019	2026-10-03T13:58:38.0878535Z	72004	observer	EXIT	pid=73400 role=other:<image? err 5> code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.0826906Z qpcSeen=6711893.986
+6711894.252	2026-10-03T13:58:38.0880849Z	72004	observer	EXIT	pid=72560 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.0859241Z qpcSeen=6711894.225
+6711909.051	2026-10-03T13:58:38.1028855Z	72004	observer	EXIT	pid=13552 role=other:claude.exe code=2 (0x00000002) exitUtc=2026-10-03T13:58:38.0961100Z qpcSeen=6711908.981
+6711911.661	2026-10-03T13:58:38.1054990Z	72004	observer	EXIT	pid=62792 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.1022609Z qpcSeen=6711911.591
+6711921.500	2026-10-03T13:58:38.1153377Z	72004	observer	FOUND	pid=73604 ppid=67664 role=other:cmd.exe created=2026-10-03T13:58:38.0887932Z inJob=True image=C:\Windows\System32\cmd.exe cmd=C:\WINDOWS\system32\cmd.exe /d /s /c "%windir%\System32\REG.exe QUERY HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography /v MachineGuid"
+6711936.581	2026-10-03T13:58:38.1304146Z	72004	observer	EXIT	pid=73604 role=other:cmd.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.1279564Z qpcSeen=6711936.486
+6711955.541	2026-10-03T13:58:38.1493810Z	72004	observer	FOUND	pid=19996 ppid=67664 role=other:git.exe created=2026-10-03T13:58:38.1150226Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.hooksPath=\\.\NUL -c core.fsmonitor= remote
+6711955.933	2026-10-03T13:58:38.1497691Z	72004	observer	FOUND	pid=9824 ppid=19996 role=conhost created=2026-10-03T13:58:38.1191341Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6711973.992	2026-10-03T13:58:38.1678261Z	72004	observer	EXIT	pid=19996 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.1653649Z qpcSeen=6711973.924
+6711976.163	2026-10-03T13:58:38.1699965Z	72004	observer	EXIT	pid=9824 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.1678515Z qpcSeen=6711976.117
+6712110.032	2026-10-03T13:58:38.3038655Z	72004	harness	WAIT_MATCHED	pattern=for shortcuts|bypass permissions|accept edits afterMs=861
+6712110.195	2026-10-03T13:58:38.3040302Z	72004	harness	STEP	{"do":"sleep","ms":2500}
+6712124.710	2026-10-03T13:58:38.3185476Z	72004	observer	FOUND	pid=74508 ppid=67664 role=other:claude.exe created=2026-10-03T13:58:38.2929454Z inJob=True image=C:\Source\SixFive7\BrowserAI\.work\q369\bin\cli\claude.exe cmd=rg --no-config --files --hidden C:\Source\SixFive7\BrowserAI\.work\q369\proj
+6712125.043	2026-10-03T13:58:38.3188765Z	72004	observer	FOUND	pid=61004 ppid=74508 role=conhost created=2026-10-03T13:58:38.3001691Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6712125.351	2026-10-03T13:58:38.3191870Z	72004	observer	FOUND	pid=65424 ppid=67664 role=other:git.exe created=2026-10-03T13:58:38.3100823Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false --no-optional-locks status --short --ignore-submodules=dirty
+6712159.744	2026-10-03T13:58:38.3535829Z	72004	observer	EXIT	pid=74508 role=other:claude.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.3452061Z qpcSeen=6712159.670
+6712160.198	2026-10-03T13:58:38.3540320Z	72004	observer	EXIT	pid=61004 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.3514040Z qpcSeen=6712160.152
+6712171.976	2026-10-03T13:58:38.3658112Z	72004	observer	EXIT	pid=65424 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.3621358Z qpcSeen=6712171.897
+6712180.650	2026-10-03T13:58:38.3744873Z	72004	observer	FOUND	pid=65580 ppid=67664 role=other:<image? err 31> created=2026-10-03T13:58:38.3161550Z inJob=True image=<image? err 31> cmd=<cmdline? status 0xC000010A>
+6712180.945	2026-10-03T13:58:38.3747785Z	72004	observer	FOUND_NOHANDLE	pid=10172 ppid=65424 err=87
+6712180.958	2026-10-03T13:58:38.3747914Z	72004	observer	FOUND_NOHANDLE	pid=66516 ppid=65580 err=87
+6712180.964	2026-10-03T13:58:38.3747970Z	72004	observer	EXIT	pid=65580 role=other:<image? err 31> code=128 (0x00000080) exitUtc=2026-10-03T13:58:38.3633920Z qpcSeen=6712180.924
+6712181.049	2026-10-03T13:58:38.3748826Z	72004	observer	FOUND	pid=70580 ppid=67664 role=other:git.exe created=2026-10-03T13:58:38.3262412Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false config user.name
+6712181.320	2026-10-03T13:58:38.3751543Z	72004	observer	FOUND	pid=74316 ppid=70580 role=conhost created=2026-10-03T13:58:38.3344078Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6712181.586	2026-10-03T13:58:38.3754193Z	72004	observer	FOUND	pid=72400 ppid=67664 role=other:node.exe created=2026-10-03T13:58:38.3495445Z inJob=True image=C:\Program Files\nodejs\node.exe cmd="C:\Program Files\nodejs\node.exe" C:\Source\SixFive7\BrowserAI\.work\q369\rig\phserver.js
+6712181.800	2026-10-03T13:58:38.3756335Z	72004	observer	FOUND	pid=32372 ppid=72400 role=conhost created=2026-10-03T13:58:38.3586791Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6712186.055	2026-10-03T13:58:38.3798897Z	72004	observer	EXIT	pid=70580 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.3778326Z qpcSeen=6712185.986
+6712190.977	2026-10-03T13:58:38.3848103Z	72004	observer	EXIT	pid=74316 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.3827694Z qpcSeen=6712190.912
+6712213.321	2026-10-03T13:58:38.4071632Z	72004	observer	FOUND	pid=73452 ppid=67664 role=other:where.exe created=2026-10-03T13:58:38.3644719Z inJob=True image=C:\Windows\System32\where.exe cmd=C:\WINDOWS\System32\where.exe reg
+6712213.804	2026-10-03T13:58:38.4076388Z	72004	observer	FOUND	pid=37228 ppid=73452 role=conhost created=2026-10-03T13:58:38.3722762Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6712317.556	2026-10-03T13:58:38.5113897Z	72004	observer	EXIT	pid=73452 role=other:where.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.5094906Z qpcSeen=6712317.473
+6712320.419	2026-10-03T13:58:38.5142529Z	72004	observer	EXIT	pid=37228 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.5116109Z qpcSeen=6712320.348
+6712343.365	2026-10-03T13:58:38.5372046Z	72004	observer	FOUND	pid=5388 ppid=67664 role=other:reg.exe created=2026-10-03T13:58:38.5142339Z inJob=True image=C:\Windows\System32\reg.exe cmd=C:\Windows\System32\reg.exe query HKEY_CLASSES_ROOT\claude /ve
+6712343.755	2026-10-03T13:58:38.5375891Z	72004	observer	FOUND	pid=71820 ppid=5388 role=conhost created=2026-10-03T13:58:38.5243262Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6712352.274	2026-10-03T13:58:38.5461089Z	72004	observer	EXIT	pid=5388 role=other:reg.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.5450097Z qpcSeen=6712352.225
+6712355.035	2026-10-03T13:58:38.5488681Z	72004	observer	EXIT	pid=71820 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.5465560Z qpcSeen=6712354.982
+6712440.667	2026-10-03T13:58:38.6345009Z	72004	observer	FOUND	pid=64960 ppid=67664 role=other:git.exe created=2026-10-03T13:58:38.5930475Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.quotepath=false ls-files --recurse-submodules
+6712440.997	2026-10-03T13:58:38.6348291Z	72004	observer	FOUND	pid=23432 ppid=64960 role=conhost created=2026-10-03T13:58:38.6000154Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6712446.874	2026-10-03T13:58:38.6407075Z	72004	observer	EXIT	pid=64960 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.6386176Z qpcSeen=6712446.827
+6712452.095	2026-10-03T13:58:38.6459330Z	72004	observer	EXIT	pid=23432 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.6437515Z qpcSeen=6712452.047
+6712501.192	2026-10-03T13:58:38.6950263Z	72004	observer	FOUND	pid=49708 ppid=67664 role=other:git.exe created=2026-10-03T13:58:38.6583969Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.quotepath=false ls-files --others --exclude-standard
+6712501.597	2026-10-03T13:58:38.6954300Z	72004	observer	FOUND	pid=2592 ppid=49708 role=conhost created=2026-10-03T13:58:38.6646910Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6712509.160	2026-10-03T13:58:38.7029931Z	72004	observer	EXIT	pid=49708 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.7009558Z qpcSeen=6712509.113
+6712511.172	2026-10-03T13:58:38.7050116Z	72004	observer	EXIT	pid=2592 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:38.7030760Z qpcSeen=6712511.137
+6714610.600	2026-10-03T13:58:40.8044343Z	72004	harness	STEP	{"do":"snap","text":"startup"}
+6714610.625	2026-10-03T13:58:40.8044574Z	72004	harness	SNAP	startup	qpc=6714610.624
+6714610.635	2026-10-03T13:58:40.8044677Z	72004	harness	STEP	{"do":"type","text":"Use the browserai tools."}
+6714625.857	2026-10-03T13:58:40.8196932Z	72004	harness	TYPED	"Use the browserai tools."
+6714625.935	2026-10-03T13:58:40.8197672Z	72004	harness	STEP	{"do":"sleep","ms":500}
+6715127.100	2026-10-03T13:58:41.3209342Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6715127.202	2026-10-03T13:58:41.3210349Z	72004	harness	TYPED	"\r"
+6715127.227	2026-10-03T13:58:41.3210596Z	72004	harness	STEP	{"do":"waitScreen","pattern":"stub-turn-finished","timeoutMs":60000}
+6715164.800	2026-10-03T13:58:41.3586354Z	72004	observer	FOUND	pid=30872 ppid=67664 role=other:reg.exe created=2026-10-03T13:58:41.3500157Z inJob=True image=C:\Windows\System32\reg.exe cmd=C:\Windows\System32\reg.exe query HKEY_CURRENT_USER\Software\Classes\claude-cli\shell\open\command /ve
+6715185.732	2026-10-03T13:58:41.3795695Z	72004	observer	EXIT	pid=30872 role=other:reg.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:41.3784094Z qpcSeen=6715185.660
+6715191.901	2026-10-03T13:58:41.3857353Z	72004	observer	FOUND_NOHANDLE	pid=12036 ppid=30872 err=87
+6715297.257	2026-10-03T13:58:41.4910899Z	72004	harness	WAIT_MATCHED	pattern=stub-turn-finished afterMs=169
+6715297.324	2026-10-03T13:58:41.4911564Z	72004	harness	STEP	{"do":"sleep","ms":2000}
+6715585.598	2026-10-03T13:58:41.7794316Z	72004	observer	EXIT	pid=72400 role=other:node.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:41.7733503Z qpcSeen=6715585.535
+6715586.943	2026-10-03T13:58:41.7807757Z	72004	observer	EXIT	pid=32372 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:41.7790246Z qpcSeen=6715586.881
+6717298.922	2026-10-03T13:58:43.4927565Z	72004	harness	STEP	{"do":"snap","text":"after turn 1"}
+6717298.950	2026-10-03T13:58:43.4927821Z	72004	harness	SNAP	after turn 1	qpc=6717298.948
+6717298.961	2026-10-03T13:58:43.4927934Z	72004	harness	STEP	{"do":"sleep","ms":3000}
+6720299.347	2026-10-03T13:58:46.4931821Z	72004	harness	STEP	{"do":"type","text":"/mcp"}
+6720299.401	2026-10-03T13:58:46.4932338Z	72004	harness	TYPED	"/mcp"
+6720299.425	2026-10-03T13:58:46.4932576Z	72004	harness	STEP	{"do":"sleep","ms":800}
+6721100.984	2026-10-03T13:58:47.2948189Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6721101.038	2026-10-03T13:58:47.2948700Z	72004	harness	TYPED	"\r"
+6721101.050	2026-10-03T13:58:47.2948825Z	72004	harness	STEP	{"do":"sleep","ms":2500}
+6723602.524	2026-10-03T13:58:49.7963599Z	72004	harness	STEP	{"do":"snap","text":"after launch 1 ended: /mcp list"}
+6723602.552	2026-10-03T13:58:49.7963845Z	72004	harness	SNAP	after launch 1 ended: /mcp list	qpc=6723602.550
+6723602.849	2026-10-03T13:58:49.7966821Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6723602.901	2026-10-03T13:58:49.7967342Z	72004	harness	TYPED	"\r"
+6723602.919	2026-10-03T13:58:49.7967513Z	72004	harness	STEP	{"do":"sleep","ms":2000}
+6725603.297	2026-10-03T13:58:51.7971315Z	72004	harness	STEP	{"do":"snap","text":"after launch 1 ended: server menu"}
+6725603.321	2026-10-03T13:58:51.7971534Z	72004	harness	SNAP	after launch 1 ended: server menu	qpc=6725603.319
+6725603.450	2026-10-03T13:58:51.7972829Z	72004	harness	STEP	{"do":"type","text":"\u001B"}
+6725603.511	2026-10-03T13:58:51.7973433Z	72004	harness	TYPED	"\u001B"
+6725603.527	2026-10-03T13:58:51.7973614Z	72004	harness	STEP	{"do":"sleep","ms":900}
+6726505.046	2026-10-03T13:58:52.6988797Z	72004	harness	STEP	{"do":"type","text":"\u001B"}
+6726505.092	2026-10-03T13:58:52.6989240Z	72004	harness	TYPED	"\u001B"
+6726505.107	2026-10-03T13:58:52.6989395Z	72004	harness	STEP	{"do":"sleep","ms":900}
+6726596.843	2026-10-03T13:58:52.7906769Z	72004	observer	FOUND	pid=24740 ppid=67664 role=other:git.exe created=2026-10-03T13:58:52.7733322Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.quotepath=false ls-files --recurse-submodules
+6726597.185	2026-10-03T13:58:52.7910175Z	72004	observer	FOUND	pid=40180 ppid=24740 role=conhost created=2026-10-03T13:58:52.7774547Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6726617.565	2026-10-03T13:58:52.8113976Z	72004	observer	EXIT	pid=24740 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:52.8096425Z qpcSeen=6726617.517
+6726619.255	2026-10-03T13:58:52.8130883Z	72004	observer	EXIT	pid=40180 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:52.8113771Z qpcSeen=6726619.238
+6726645.362	2026-10-03T13:58:52.8391962Z	72004	observer	FOUND	pid=6772 ppid=67664 role=other:git.exe created=2026-10-03T13:58:52.8134330Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.quotepath=false ls-files --others --exclude-standard
+6726645.614	2026-10-03T13:58:52.8394469Z	72004	observer	FOUND	pid=49376 ppid=6772 role=conhost created=2026-10-03T13:58:52.8168015Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6726654.912	2026-10-03T13:58:52.8487444Z	72004	observer	EXIT	pid=6772 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:58:52.8469427Z qpcSeen=6726654.887
+6726656.887	2026-10-03T13:58:52.8507196Z	72004	observer	EXIT	pid=49376 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:58:52.8488542Z qpcSeen=6726656.865
+6727405.400	2026-10-03T13:58:53.5992357Z	72004	harness	STEP	{"do":"type","text":"Try the browserai tools again."}
+6727405.469	2026-10-03T13:58:53.5993019Z	72004	harness	TYPED	"Try the browserai tools again."
+6727405.485	2026-10-03T13:58:53.5993170Z	72004	harness	STEP	{"do":"sleep","ms":500}
+6727906.117	2026-10-03T13:58:54.0999517Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6727906.172	2026-10-03T13:58:54.1000041Z	72004	harness	TYPED	"\r"
+6727906.186	2026-10-03T13:58:54.1000182Z	72004	harness	STEP	{"do":"waitScreen","pattern":"stub-turn-finished","timeoutMs":60000}
+6727906.251	2026-10-03T13:58:54.1000837Z	72004	harness	WAIT_MATCHED	pattern=stub-turn-finished afterMs=0
+6727906.260	2026-10-03T13:58:54.1000921Z	72004	harness	STEP	{"do":"sleep","ms":2000}
+6729906.440	2026-10-03T13:58:56.1002756Z	72004	harness	STEP	{"do":"snap","text":"after turn 2"}
+6729906.470	2026-10-03T13:58:56.1003021Z	72004	harness	SNAP	after turn 2	qpc=6729906.468
+6729906.487	2026-10-03T13:58:56.1003189Z	72004	harness	STEP	{"do":"mark","text":"IDLE 10 s"}
+6729906.491	2026-10-03T13:58:56.1003233Z	72004	harness	MARK	IDLE 10 s
+6729906.497	2026-10-03T13:58:56.1003295Z	72004	harness	STEP	{"do":"sleep","ms":10000}
+6739907.679	2026-10-03T13:59:06.1015153Z	72004	harness	STEP	{"do":"type","text":"/mcp"}
+6739907.739	2026-10-03T13:59:06.1015711Z	72004	harness	TYPED	"/mcp"
+6739907.756	2026-10-03T13:59:06.1015885Z	72004	harness	STEP	{"do":"sleep","ms":800}
+6740707.848	2026-10-03T13:59:06.9016818Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6740707.893	2026-10-03T13:59:06.9017249Z	72004	harness	TYPED	"\r"
+6740707.900	2026-10-03T13:59:06.9017327Z	72004	harness	STEP	{"do":"sleep","ms":2500}
+6743207.953	2026-10-03T13:59:09.4017874Z	72004	harness	STEP	{"do":"snap","text":"before Reconnect: /mcp list"}
+6743207.978	2026-10-03T13:59:09.4018100Z	72004	harness	SNAP	before Reconnect: /mcp list	qpc=6743207.976
+6743207.991	2026-10-03T13:59:09.4018230Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6743208.023	2026-10-03T13:59:09.4018556Z	72004	harness	TYPED	"\r"
+6743208.032	2026-10-03T13:59:09.4018643Z	72004	harness	STEP	{"do":"sleep","ms":2000}
+6745208.125	2026-10-03T13:59:11.4019596Z	72004	harness	STEP	{"do":"snap","text":"before Reconnect: server menu"}
+6745208.156	2026-10-03T13:59:11.4019885Z	72004	harness	SNAP	before Reconnect: server menu	qpc=6745208.154
+6745208.175	2026-10-03T13:59:11.4020069Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6745208.215	2026-10-03T13:59:11.4020477Z	72004	harness	TYPED	"\r"
+6745208.224	2026-10-03T13:59:11.4020566Z	72004	harness	STEP	{"do":"sleep","ms":4000}
+6745228.352	2026-10-03T13:59:11.4221872Z	72004	observer	FOUND	pid=61232 ppid=67664 role=other:node.exe created=2026-10-03T13:59:11.4080467Z inJob=True image=C:\Program Files\nodejs\node.exe cmd="C:\Program Files\nodejs\node.exe" C:\Source\SixFive7\BrowserAI\.work\q369\rig\phserver.js
+6745228.661	2026-10-03T13:59:11.4224937Z	72004	observer	FOUND	pid=68576 ppid=61232 role=conhost created=2026-10-03T13:59:11.4128042Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6745330.768	2026-10-03T13:59:11.5246018Z	72004	observer	FOUND	pid=70896 ppid=67664 role=other:git.exe created=2026-10-03T13:59:11.5083277Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.quotepath=false ls-files --recurse-submodules
+6745331.101	2026-10-03T13:59:11.5249347Z	72004	observer	FOUND	pid=37188 ppid=70896 role=conhost created=2026-10-03T13:59:11.5125775Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6745353.335	2026-10-03T13:59:11.5471674Z	72004	observer	EXIT	pid=70896 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:59:11.5453532Z qpcSeen=6745353.295
+6745355.357	2026-10-03T13:59:11.5491908Z	72004	observer	EXIT	pid=37188 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:59:11.5472107Z qpcSeen=6745355.323
+6745383.925	2026-10-03T13:59:11.5777587Z	72004	observer	FOUND	pid=70112 ppid=67664 role=other:git.exe created=2026-10-03T13:59:11.5495768Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.quotepath=false ls-files --others --exclude-standard
+6745384.180	2026-10-03T13:59:11.5780124Z	72004	observer	FOUND	pid=64016 ppid=70112 role=conhost created=2026-10-03T13:59:11.5537175Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6745393.878	2026-10-03T13:59:11.5877109Z	72004	observer	EXIT	pid=70112 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:59:11.5859871Z qpcSeen=6745393.841
+6745397.162	2026-10-03T13:59:11.5910021Z	72004	observer	EXIT	pid=64016 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:59:11.5876235Z qpcSeen=6745397.137
+6749208.521	2026-10-03T13:59:15.4023557Z	72004	harness	STEP	{"do":"snap","text":"after Reconnect (Enter on 1. Reconnect)"}
+6749208.573	2026-10-03T13:59:15.4024050Z	72004	harness	SNAP	after Reconnect (Enter on 1. Reconnect)	qpc=6749208.571
+6749208.585	2026-10-03T13:59:15.4024169Z	72004	harness	STEP	{"do":"type","text":"\u001B"}
+6749208.617	2026-10-03T13:59:15.4024495Z	72004	harness	TYPED	"\u001B"
+6749208.627	2026-10-03T13:59:15.4024596Z	72004	harness	STEP	{"do":"sleep","ms":900}
+6750109.289	2026-10-03T13:59:16.3031239Z	72004	harness	STEP	{"do":"type","text":"\u001B"}
+6750109.343	2026-10-03T13:59:16.3031754Z	72004	harness	TYPED	"\u001B"
+6750109.351	2026-10-03T13:59:16.3031828Z	72004	harness	STEP	{"do":"sleep","ms":900}
+6751010.469	2026-10-03T13:59:17.2043032Z	72004	harness	STEP	{"do":"type","text":"\u001B"}
+6751010.596	2026-10-03T13:59:17.2044288Z	72004	harness	TYPED	"\u001B"
+6751010.607	2026-10-03T13:59:17.2044389Z	72004	harness	STEP	{"do":"sleep","ms":900}
+6751911.682	2026-10-03T13:59:18.1055183Z	72004	harness	STEP	{"do":"type","text":"/mcp"}
+6751912.029	2026-10-03T13:59:18.1058621Z	72004	harness	TYPED	"/mcp"
+6751912.052	2026-10-03T13:59:18.1058844Z	72004	harness	STEP	{"do":"sleep","ms":800}
+6752713.905	2026-10-03T13:59:18.9077397Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6752713.967	2026-10-03T13:59:18.9077995Z	72004	harness	TYPED	"\r"
+6752713.975	2026-10-03T13:59:18.9078076Z	72004	harness	STEP	{"do":"sleep","ms":2500}
+6755214.199	2026-10-03T13:59:21.4080345Z	72004	harness	STEP	{"do":"snap","text":"after Reconnect: /mcp list"}
+6755214.226	2026-10-03T13:59:21.4080587Z	72004	harness	SNAP	after Reconnect: /mcp list	qpc=6755214.224
+6755214.252	2026-10-03T13:59:21.4080840Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6755214.287	2026-10-03T13:59:21.4081199Z	72004	harness	TYPED	"\r"
+6755214.299	2026-10-03T13:59:21.4081315Z	72004	harness	STEP	{"do":"sleep","ms":2000}
+6757215.415	2026-10-03T13:59:23.4092509Z	72004	harness	STEP	{"do":"snap","text":"after Reconnect: server menu"}
+6757215.448	2026-10-03T13:59:23.4092802Z	72004	harness	SNAP	after Reconnect: server menu	qpc=6757215.446
+6757215.488	2026-10-03T13:59:23.4093201Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6757215.528	2026-10-03T13:59:23.4093602Z	72004	harness	TYPED	"\r"
+6757215.535	2026-10-03T13:59:23.4093671Z	72004	harness	STEP	{"do":"sleep","ms":2000}
+6759215.956	2026-10-03T13:59:25.4097906Z	72004	harness	STEP	{"do":"snap","text":"after Reconnect: View tools"}
+6759215.986	2026-10-03T13:59:25.4098186Z	72004	harness	SNAP	after Reconnect: View tools	qpc=6759215.984
+6759216.013	2026-10-03T13:59:25.4098451Z	72004	harness	STEP	{"do":"type","text":"\u001B"}
+6759216.048	2026-10-03T13:59:25.4098807Z	72004	harness	TYPED	"\u001B"
+6759216.057	2026-10-03T13:59:25.4098892Z	72004	harness	STEP	{"do":"sleep","ms":900}
+6760116.346	2026-10-03T13:59:26.3101809Z	72004	harness	STEP	{"do":"type","text":"\u001B"}
+6760116.401	2026-10-03T13:59:26.3102337Z	72004	harness	TYPED	"\u001B"
+6760116.648	2026-10-03T13:59:26.3104810Z	72004	harness	STEP	{"do":"sleep","ms":900}
+6761017.796	2026-10-03T13:59:27.2116303Z	72004	harness	STEP	{"do":"type","text":"\u001B"}
+6761017.848	2026-10-03T13:59:27.2116800Z	72004	harness	TYPED	"\u001B"
+6761017.855	2026-10-03T13:59:27.2116876Z	72004	harness	STEP	{"do":"sleep","ms":900}
+6761108.972	2026-10-03T13:59:27.3028054Z	72004	observer	FOUND	pid=8328 ppid=67664 role=other:git.exe created=2026-10-03T13:59:27.2826940Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.quotepath=false ls-files --recurse-submodules
+6761109.236	2026-10-03T13:59:27.3030681Z	72004	observer	FOUND	pid=48560 ppid=8328 role=conhost created=2026-10-03T13:59:27.2867643Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6761131.093	2026-10-03T13:59:27.3249256Z	72004	observer	EXIT	pid=8328 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:59:27.3224129Z qpcSeen=6761131.069
+6761136.609	2026-10-03T13:59:27.3304421Z	72004	observer	EXIT	pid=48560 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:59:27.3271104Z qpcSeen=6761136.575
+6761157.712	2026-10-03T13:59:27.3515456Z	72004	observer	FOUND	pid=71000 ppid=67664 role=other:git.exe created=2026-10-03T13:59:27.3273157Z inJob=True image=C:\Program Files\Git\mingw64\bin\git.exe cmd="C:\Program Files\Git\mingw64\bin\git.exe" -c core.fsmonitor= -c core.hooksPath=\\.\NUL -c core.askPass= -c protocol.ext.allow=never -c submodule.recurse=false -c log.showSignature=false -c format.pretty=medium -c gc.auto=0 -c maintenance.auto=false -c core.quotepath=false ls-files --others --exclude-standard
+6761157.948	2026-10-03T13:59:27.3517803Z	72004	observer	FOUND	pid=36504 ppid=71000 role=conhost created=2026-10-03T13:59:27.3315219Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6761176.966	2026-10-03T13:59:27.3707984Z	72004	observer	EXIT	pid=71000 role=other:git.exe code=0 (0x00000000) exitUtc=2026-10-03T13:59:27.3687267Z qpcSeen=6761176.931
+6761182.044	2026-10-03T13:59:27.3758776Z	72004	observer	EXIT	pid=36504 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:59:27.3732766Z qpcSeen=6761182.003
+6761918.095	2026-10-03T13:59:28.1119304Z	72004	harness	STEP	{"do":"type","text":"And once more."}
+6761918.155	2026-10-03T13:59:28.1119879Z	72004	harness	TYPED	"And once more."
+6761918.165	2026-10-03T13:59:28.1119971Z	72004	harness	STEP	{"do":"sleep","ms":500}
+6762418.439	2026-10-03T13:59:28.6122767Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6762418.500	2026-10-03T13:59:28.6123328Z	72004	harness	TYPED	"\r"
+6762418.520	2026-10-03T13:59:28.6123525Z	72004	harness	STEP	{"do":"waitScreen","pattern":"stub-turn-finished","timeoutMs":60000}
+6762418.605	2026-10-03T13:59:28.6124369Z	72004	harness	WAIT_MATCHED	pattern=stub-turn-finished afterMs=0
+6762418.616	2026-10-03T13:59:28.6124479Z	72004	harness	STEP	{"do":"sleep","ms":2000}
+6764419.560	2026-10-03T13:59:30.6133957Z	72004	harness	STEP	{"do":"snap","text":"after turn 3"}
+6764419.588	2026-10-03T13:59:30.6134207Z	72004	harness	SNAP	after turn 3	qpc=6764419.586
+6764419.605	2026-10-03T13:59:30.6134373Z	72004	harness	STEP	{"do":"type","text":"\u000F"}
+6764419.661	2026-10-03T13:59:30.6134938Z	72004	harness	TYPED	"\u000F"
+6764419.673	2026-10-03T13:59:30.6135054Z	72004	harness	STEP	{"do":"sleep","ms":1500}
+6765920.209	2026-10-03T13:59:32.1140451Z	72004	harness	STEP	{"do":"snap","text":"turn 3: transcript (ctrl\u002Bo)"}
+6765920.251	2026-10-03T13:59:32.1140839Z	72004	harness	SNAP	turn 3: transcript (ctrl+o)	qpc=6765920.249
+6765920.263	2026-10-03T13:59:32.1140950Z	72004	harness	STEP	{"do":"type","text":"\u000F"}
+6765920.327	2026-10-03T13:59:32.1141597Z	72004	harness	TYPED	"\u000F"
+6765920.337	2026-10-03T13:59:32.1141695Z	72004	harness	STEP	{"do":"sleep","ms":1200}
+6767120.868	2026-10-03T13:59:33.3147031Z	72004	harness	STEP	{"do":"type","text":"/exit"}
+6767120.964	2026-10-03T13:59:33.3147968Z	72004	harness	TYPED	"/exit"
+6767120.973	2026-10-03T13:59:33.3148050Z	72004	harness	STEP	{"do":"sleep","ms":500}
+6767621.094	2026-10-03T13:59:33.8149298Z	72004	harness	STEP	{"do":"type","text":"\r"}
+6767621.158	2026-10-03T13:59:33.8149906Z	72004	harness	TYPED	"\r"
+6767621.166	2026-10-03T13:59:33.8149986Z	72004	harness	STEP	{"do":"sleep","ms":3000}
+6767660.318	2026-10-03T13:59:33.8541522Z	72004	observer	FOUND	pid=59508 ppid=67664 role=KILLER:taskkill created=2026-10-03T13:59:33.8311294Z inJob=True image=C:\Windows\System32\taskkill.exe cmd=C:\WINDOWS\System32\taskkill.exe /PID 61232 /T /F
+6767660.713	2026-10-03T13:59:33.8545453Z	72004	observer	FOUND	pid=71564 ppid=59508 role=conhost created=2026-10-03T13:59:33.8420743Z inJob=False image=C:\Windows\System32\conhost.exe cmd=\??\C:\WINDOWS\system32\conhost.exe 0x4
+6767710.108	2026-10-03T13:59:33.9039409Z	72004	observer	EXIT	pid=61232 role=other:node.exe code=0 (0x00000000) exitUtc=2026-10-03T13:59:33.8986067Z qpcSeen=6767710.051
+6767711.651	2026-10-03T13:59:33.9054836Z	72004	observer	EXIT	pid=68576 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:59:33.9035115Z qpcSeen=6767711.624
+6767719.946	2026-10-03T13:59:33.9137783Z	72004	observer	EXIT	pid=59508 role=KILLER:taskkill code=0 (0x00000000) exitUtc=2026-10-03T13:59:33.9102206Z qpcSeen=6767719.901
+6767721.856	2026-10-03T13:59:33.9156883Z	72004	observer	EXIT	pid=71564 role=conhost code=0 (0x00000000) exitUtc=2026-10-03T13:59:33.9133377Z qpcSeen=6767721.836
+6767741.910	2026-10-03T13:59:33.9357434Z	72004	observer	EXIT	pid=67664 role=client code=0 (0x00000000) exitUtc=2026-10-03T13:59:33.9078317Z qpcSeen=6767741.881
+6770621.772	2026-10-03T13:59:36.8156063Z	72004	harness	CLIENT_EXITED	code=0
+6770622.134	2026-10-03T13:59:36.8159674Z	72004	harness	PTY_CLOSED_AFTER_EXIT	

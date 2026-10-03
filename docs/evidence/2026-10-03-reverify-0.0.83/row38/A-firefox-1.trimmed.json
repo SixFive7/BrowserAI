@@ -1,0 +1,39 @@
+{
+  "browser": "firefox",
+  "sessionDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1",
+  "utc": "2026-10-03T13:31:05.591Z",
+  "origin": "http://127.0.0.1:52875/",
+  "initMs": 880.3323,
+  "initText": "Session ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1\n  browser: firefox\n  headed: false\n  profile: C:\\Source\\SixFive7\\Browse",
+  "navigate1Ms": 2620.887,
+  "wrote": "### Result\n\"wrote:sw-ok\"",
+  "before": "### Result\n\"{\\\"cookie\\\":\\\"cookie-value\\\",\\\"local\\\":\\\"local-value\\\",\\\"session\\\":\\\"session-value\\\",\\\"idb\\\":\\\"idb-value\\\",\\\"cache\\\":\\\"cache-value\\\",\\\"serviceWorkers\\\":1}\"",
+  "nodeChildren": [
+    {
+      "pid": 500,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"
+    },
+    {
+      "pid": 61812,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"
+    }
+  ],
+  "childStates": [
+    {
+      "pid": 500,
+      "state": "GONE"
+    },
+    {
+      "pid": 61812,
+      "state": "GONE"
+    }
+  ],
+  "serverAExited": "GONE",
+  "resumeMs": 522.5789,
+  "resume": "NOTE: the first browser call after this starts the browser, and its own session restore reopens the tabs this profile last recorded, if any. Refs from earlier snapshots do not carry over: call browser_tabs and browser_snapshot before you act, because the selected tab may not be the one you left.\nNOTE: you are driving a session this connection did not create; it was opened 2026-10-03T15:31:06.1616098+02:00. Another agent may be using it.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1\n  browser: firefox\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1\\downloads\n  purpose: Re-establishing the resume cost and what a resume preserves, for kb re-verification row 38 on 2026-09-16.\n  created: 2026-10-03T15:31:06.1616098+02:00   last used: 2026-10-03T15:31:17.2442487+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- firefox 156.0 (revision 1553) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553'.\n  how this session got here -- every field of browserai.data is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n    holder: 2026-10-03T15:31:06.1616098+02:00 PID 28704 started by node → 2026-10-03T15:31:17.2442487+02:00 PID 69536 started by node\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38: 0\n",
+  "navigate2Ms": 1721.3906,
+  "after": "### Result\n\"{\\\"cookie\\\":\\\"cookie-value\\\",\\\"local\\\":null,\\\"session\\\":\\\"session-value\\\",\\\"idb\\\":\\\"idb-value\\\",\\\"cache\\\":\\\"cache-value\\\",\\\"serviceWorkers\\\":1}\"",
+  "destroy": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1' (31.8 MiB). Its purpose was: Re-establishing the resume cost and what a resume preserves, for kb re-verification row 38 on 2026-09-16.\nYou said it was being destroyed because: The probe is finished; leave nothing in the session index.",
+  "stderrTailA": "\ninfo: BrowserAI.Protocol.DirectStdioServerTransport[4]\r\n      BrowserAI (stdio): the peer closed its end of the connection.\r\ninfo: BrowserAI.Proxy.ChildConnection[4]\r\n      Forwarded notifications/cancelled for child request browserai-39D20E44-4.\r\nwarn: BrowserAI.Sessions.LiveSession[64]\r\n      The browser on the session at C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1 did not answer its close within 00:00:01 at shutdown; its child is ended through its stdin and its job anyway.\r\ninfo: ModelContextProtocol.Client.McpClient[2103773711]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1\r\n      playwright-mcp[39D20E44] message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[39D20E44]: pid 61812 exited with code 0.\r\ninfo: BrowserAI.Runtime.ServerRegistryReap[90]\r\n      Started Playwright's own server-registry reap after the client went away or BrowserAI is shutting down, detached and not awaited: reaper=14332@134355078736283034.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1; the guard stays so a later reader can say who had it.\r\ninfo: ModelContextProtocol.Client.McpClient[2103773711]\r\n      playwright-mcp[surface] message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[surface]: pid 500 exited with code 0.\r\n",
+  "stderrTailB": "s.LiveSession[47]\r\n      browser_evaluate: Read every store back and record exactly which survived the resume.\r\ninfo: ModelContextProtocol.Client.McpClient[2103773711]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1\r\n      playwright-mcp[39D20E44] message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[39D20E44]: pid 71032 exited with code 0.\r\ninfo: BrowserAI.Runtime.ServerRegistryReap[90]\r\n      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=24776@134355078806534363.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[12]\r\n      Session lock re-acquired for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1 by the process that already held its guard, PID 69536 -- this process. Nothing was taken from anybody.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[42]\r\n      Session destroyed at C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-A-firefox-1; 0 item(s) could not be removed.\r\n"
+}

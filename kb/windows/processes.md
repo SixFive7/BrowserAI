@@ -313,6 +313,33 @@ nowhere for stdout to go that anybody will read.
 
 ### `SW_SHOWNOACTIVATE` keeps a headed Chromium off the foreground, and Firefox never takes it -- measured 2026-08-24
 
+> ⚠️ *Corrected 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`)
+> and Firefox 156.0 (`firefox-1553`), by addition (previously, in the table
+> below, "**Firefox** -- `firefox-1539` | did not | **did not either**"). The
+> heading stays as it was because other records link to it.* **Firefox 1553 TAKES
+> the foreground, with the flag and without it. Chromium 1247 still takes it only
+> without.** Measured in the condition this entry asks for:
+> `SPI_GETFOREGROUNDLOCKTIMEOUT` read as 2,147,483,647 ms, and the foreground
+> window, confirmed by `GetForegroundWindow` and its pid, owned by VS Code, an
+> ancestor of the launching PowerShell. Each browser was started through
+> `CreateProcessW` with a hand-built `STARTUPINFOW`, and the foreground and the
+> launched tree's visible windows were read about every 280 ms for 5 s.
+>
+> | Browser | With `STARTF_USESHOWWINDOW` + `SW_SHOWNOACTIVATE` | Without it |
+> |---|---|---|
+> | **Chromium** -- `chromium-1247` | **did NOT take the foreground**, while its own *about:blank* window was visible from 0.9 s | **TOOK the foreground** at 0.6 s |
+> | **Firefox** -- `firefox-1553` | **TOOK the foreground** at 0.8 s: an untitled `MozillaDialogClass` window, then the *Nightly* window | **TOOK the foreground** at 0.8 s, the same two windows |
+>
+> A second run of the Firefox arm with the flag took the foreground again, at
+> 1.1 s. **The Chromium flag arm now carries the visible-window control this entry
+> says it lacked**, so its *did not take the foreground* is told apart from
+> *showed nothing*. A first run the same day, taken while a window of an unrelated
+> process held the foreground, gave the same four answers, which the reasoning
+> below says it should not have; why the lock let those windows through there is
+> not established. Each arm put a headed browser on the maintainer's screen for
+> about five seconds, with his approval for this measurement, and the logs say
+> what appeared and when: [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 **`CREATE_NO_WINDOW` and the show-window flag answer two different questions, and
 this is the one about a GUI child.** The entry above is about a *console* child's
 window; this one is about a browser's first real window, which `CREATE_NO_WINDOW`
@@ -2106,6 +2133,19 @@ rename the *shared* provisioned browsers root that every browser-touching test o
 the machine reads, so a script that dies half-way breaks the suite instead of
 failing its own assertion. That is also why none of this is automated: see
 re-verification row 103.
+
+> ✅ *Verified 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`)
+> and Firefox 156.0 (`firefox-1553`).* **Every refusal and every control holds,
+> error for error.** A live headless Chromium at eleven processes refused
+> `chrome-win64` with the sharing violation and `chromium-1247` with *access
+> denied*, and both renamed once it was gone; a live headless Firefox at seven
+> processes did the same for `firefox` and `firefox-1553`. With either family
+> live, `ffmpeg-1011` and `winldd-1007` renamed and the browsers root was refused;
+> with the browser gone, all three renamed. Firefox 1553 brought no Remote Agent up
+> either, so its arm proved liveness by process tree again. The three scripts ran
+> with the revision constants moved and a scratch profile and working directory,
+> under the suite lock, and every renamed directory was back in place at the end:
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 **Windows does not reuse a pid while any handle to that process is open, and
 the control shows reuse is otherwise quick.** Measured 2026-08-18 on Windows

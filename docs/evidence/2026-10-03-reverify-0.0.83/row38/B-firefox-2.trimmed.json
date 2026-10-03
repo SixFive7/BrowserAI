@@ -1,0 +1,42 @@
+{
+  "mode": "kill",
+  "browser": "firefox",
+  "sessionDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2",
+  "utc": "2026-10-03T13:32:21.961Z",
+  "origin": "http://127.0.0.1:49615/",
+  "initMs": 385.7156,
+  "navigate1Ms": 2369.4131,
+  "wrote": "### Result\n\"wrote:sw-ok\"",
+  "before": "### Result\n\"{\\\"cookie\\\":\\\"cookie-value\\\",\\\"local\\\":\\\"local-value\\\",\\\"session\\\":\\\"session-value\\\",\\\"idb\\\":\\\"idb-value\\\",\\\"cache\\\":\\\"cache-value\\\",\\\"serviceWorkers\\\":1}\"",
+  "nodeChildren": [
+    {
+      "pid": 53156,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"
+    },
+    {
+      "pid": 71668,
+      "exe": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"
+    }
+  ],
+  "browsersBefore": 7,
+  "deathAt": "2026-10-03T13:32:27.986Z",
+  "childStates": [
+    {
+      "pid": 53156,
+      "state": "GONE"
+    },
+    {
+      "pid": 71668,
+      "state": "GONE"
+    }
+  ],
+  "msUntilChildrenGone": 80,
+  "serverAStillAlive": "ALIVE",
+  "browsersAfterDeath": 0,
+  "resumeMs": 424.461,
+  "resume": "NOTE: the browser server for this session had died, and this resume started a new one with the per-run settings it asked for. The session's directory, profile and log are on disk and unchanged -- but what is on disk is not everything that was written: a browser that did not shut down cleanly had no chance to flush, and measurement says recent cookie and localStorage writes may be gone, while IndexedDB and CacheStorage survive. Read any stored value back before you rely on it. Nothing that lived only in the old process survived it: anything a previous call left on a page is gone.\nNOTE: the first browser call after this starts the browser, and its own session restore reopens the tabs this profile last recorded, if any. Refs from earlier snapshots do not carry over: call browser_tabs and browser_snapshot before you act, because the selected tab may not be the one you left.\n\nSession ready. Pass session='C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2' on every browser tool call.\n  directory: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2\n  browser: firefox\n  headed: false\n  profile: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2\\profile\n  output: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2\\output -- every file a tool writes lands here, flat, under whatever name the tool was given. Pass a plain 'filename' such as login.png; an absolute one, or one that climbs out of this directory, is refused by the browser server itself. A name that already exists is OVERWRITTEN.\n  downloads: C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2\\downloads\n  purpose: Q223c: measuring whether a browser server that dies of its own accord flushes what a killed one loses.\n  created: 2026-10-03T15:32:22.4754969+02:00   last used: 2026-10-03T15:32:33.5163420+02:00\n  viewport: 1920x1080 -- a screenshot arrives at this size unscaled, so it is what one costs you\n  child protocol: 2025-11-25\n  browserProvisioning: installed -- firefox 156.0 (revision 1553) is installed at '%USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\firefox-1553'.\n  how this session got here -- every field of browserai.data is an ordered list of timestamped statements, and these are the ones that have been more than one thing:\n    holder: 2026-10-03T15:32:22.4754969+02:00 PID 51188 started by node → 2026-10-03T15:32:33.5163420+02:00 PID 51188 started by node\n  other sessions under C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38: 0\n",
+  "navigate2Ms": 2049.5004,
+  "after": "### Result\n\"{\\\"cookie\\\":\\\"cookie-value\\\",\\\"local\\\":null,\\\"session\\\":null,\\\"idb\\\":\\\"idb-value\\\",\\\"cache\\\":\\\"cache-value\\\",\\\"serviceWorkers\\\":1}\"",
+  "destroy": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2' (31.9 MiB). Its purpose was: Q223c: measuring whether a browser server that dies of its own ac",
+  "stderrTailA": "erAI.Sessions.LiveSession[47]\r\n      browser_evaluate: Read every store back and record exactly which survived.\r\ninfo: ModelContextProtocol.Client.McpClient[2103773711]\r\n      => session=C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2\r\n      playwright-mcp[4AC031C7] message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[4AC031C7]: pid 3260 exited with code 0.\r\ninfo: BrowserAI.Runtime.ServerRegistryReap[90]\r\n      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=71904@134355079574818023.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[12]\r\n      Session lock re-acquired for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2 by the process that already held its guard, PID 51188 -- this process. Nothing was taken from anybody.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[42]\r\n      Session destroyed at C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row38\\session-B-firefox-2; 0 item(s) could not be removed.\r\n"
+}

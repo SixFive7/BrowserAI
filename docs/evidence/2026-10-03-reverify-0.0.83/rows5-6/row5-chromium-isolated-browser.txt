@@ -1,0 +1,124 @@
+# Row 5, the one browser-path caller new at 155.0.8059.12, and the gate in front of it.
+== chrome/app/chrome_main_delegate.cc 1226-1296
+  // Attempt to launch an isolated browser. If this is successful, this browser
+  // process becomes the stub, and will terminate after the main browser has
+  // terminated, with the exit code from the main browser.
+  if (is_browser && chrome::IsIsolationEnabled(&command_line)) {
+    const auto isolated_process =
+        chrome::IsolatedBrowserProcess::Launch(command_line);
+    // Record the launch result HRESULT so that it can be reported to UMA once
+    // metrics reporting has been initialized. If the launch fails, this process
+    // falls through to run unisolated and reports the failure HRESULT. If the
+    // launch succeeds, this process acts as a stub and exits after WaitForExit
+    // without initializing metrics; the isolated child process will report
+    // S_OK.
+    chrome::SetIsolatedBrowserLaunchResult(isolated_process.error_or(S_OK));
+    if (isolated_process.has_value()) {
+      // Set the stub process's shutdown priority to a lower value than the
+      // default value. The default priority is 0x280, so 0x27E is picked, which
+      // is below the 0x27F picked by child processes in `CommonSubprocessInit`.
+      // Assigning a lower priority instructs Windows to delay terminating this
+      // stub process until all higher priority processes (the isolated browser,
+      // and its child processes) have fully completed their shutdown sequence.
+      // This ensures the Job Object remains open and the isolated browser is
+      // not killed abruptly during OS shutdown.
+      ::SetProcessShutdownParameters(0x27E, SHUTDOWN_NORETRY);
+
+      auto exit_code = isolated_process->WaitForExit();
+      if (!exit_code.has_value()) {
+        return CHROME_RESULT_CODE_INVALID_ISOLATED_BROWSER_PROCESS;
+      }
+
+      // A negative exit code indicates the browser crashed, however
+      // `content::RunContentProcess` treats negative return code from
+      // `BasicStartupComplete` as indicating that startup should continue, so
+      // in this case it is best to simply pass the exit code straight back to
+      // the shell by terminating immediately.
+      if (*exit_code < 0) {
+        base::Process::TerminateCurrentProcessImmediately(*exit_code);
+      }
+
+      // If the isolated browser requested a relaunch on exit (for instance via
+      // chrome://restart or chrome://flags relaunch button), the stub process
+      // must launch a new stub process to initiate the restart sequence.
+      // Reuses the shared upgrade_util relaunch logic to normalize the
+      // executable path (handling in-use updates and old_chrome vs new_chrome),
+      // strip transient switches and autostart arguments according to the
+      // restart mode, and launch the new stub with force_breakaway_from_job_
+      // enabled so it can break away from the current stub's Job Object.
+      if (IsRelaunchResultCode(*exit_code)) {
+        browser_shutdown::RestartMode restart_mode =
+            browser_shutdown::RestartMode::kRestartLastSession;
+        if (*exit_code == CHROME_RESULT_CODE_NORMAL_EXIT_RELAUNCH_BACKGROUND) {
+          restart_mode = browser_shutdown::RestartMode::kRestartInBackground;
+        } else if (*exit_code == CHROME_RESULT_CODE_DOWNGRADE_AND_RELAUNCH ||
+                   *exit_code ==
+                       CHROME_RESULT_CODE_NORMAL_EXIT_UPGRADE_RELAUNCHED) {
+          restart_mode = browser_shutdown::RestartMode::kRestartThisSession;
+        }
+        base::CommandLine new_cl =
+            upgrade_util::GetRelaunchCommandLine(command_line, restart_mode);
+        // Feature state cannot be queried this early in browser startup, so
+        // hard-code `wait_for_parent` to false. Because the stub already waits
+        // until all child processes have terminated before reaching this code
+        // (contained within a job monitored by `WaitForExit`), waiting for
+        // parent handle is not strictly necessary here.
+        // TODO(crbug.com/526636718): Enable `wait_for_parent` by default once
+        // the feature is fully launched.
+        upgrade_util::RelaunchChromeBrowser(new_cl,
+                                            /*force_breakaway_from_job=*/true,
+                                            /*wait_for_parent=*/false);
+        return content::RESULT_CODE_NORMAL_EXIT;
+      }
+
+== chrome/browser/win/isolated_browser/isolated_browser_support.cc 298-345
+bool IsIsolationEnabled(const base::CommandLine* command_line) {
+  if (!install_static::IsSystemInstall()) {
+    return false;
+  }
+
+  if (command_line) {
+    // Set of switches that will never result in an attempt to launch an
+    // isolated browser.
+    const char* const kNoIsolationSwitches[] = {
+        // Custom user data dir always runs uninsolated as it's not possible to
+        // determine the isolation state of any cryptographic data.
+        ::switches::kUserDataDir,
+        // If this browser is running isolated, never attempt to launch isolated
+        // again.
+        ::switches::kIsolated,
+    };
+
+    for (const auto* no_isolation_switch : kNoIsolationSwitches) {
+      if (command_line->HasSwitch(no_isolation_switch)) {
+        return false;
+      }
+    }
+  }
+
+  auto regkey = GetIsolatedBrowserRegistryKey(KEY_READ);
+  if (!regkey.has_value()) {
+    return false;
+  }
+
+  DWORD out_value = 0;
+  if (regkey->ReadValueDW(kIsolationStateValue, &out_value) != ERROR_SUCCESS) {
+    return false;
+  }
+
+  if (out_value > static_cast<DWORD>(IsolationState::kMaxValue)) {
+    return false;
+  }
+
+  IsolationState state = static_cast<IsolationState>(out_value);
+
+  switch (state) {
+    case IsolationState::kIsolationDisabled:
+      return false;
+    case IsolationState::kProcessIsolation:
+      return true;
+  }
+}
+
+== the same gate at 152.0.7977.8, chrome_main_delegate.cc
+1168:  if (is_browser && chrome::IsIsolationEnabled(&command_line)) {

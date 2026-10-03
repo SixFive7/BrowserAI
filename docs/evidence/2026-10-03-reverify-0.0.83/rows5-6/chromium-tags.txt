@@ -1,0 +1,3 @@
+# chromium/src, two tags fetched at depth 1 from https://chromium.googlesource.com/chromium/src on 2026-10-03
+152.0.7977.8 690eeba1cdac8a8dc7b6cd318e9e3810b25788c8
+155.0.8059.12 384c82079f60e0b79cdca6e49efd5cfceefa5b74

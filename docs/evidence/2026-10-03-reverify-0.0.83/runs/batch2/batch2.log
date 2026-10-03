@@ -1,0 +1,9 @@
+before: .downloads .links chromium-1244 chromium-1245 chromium-1246 chromium-1247 ffmpeg-1011 firefox-1544 firefox-1548 firefox-1549 firefox-1553 winldd-1007
+=== 2026-10-03T13:35:26Z BEGIN rename-under-chromium.ps1
+=== 2026-10-03T13:35:31Z END rename-under-chromium.ps1 exit=0
+=== 2026-10-03T13:35:31Z BEGIN rename-under-firefox.ps1
+=== 2026-10-03T13:36:09Z END rename-under-firefox.ps1 exit=0
+=== 2026-10-03T13:36:09Z BEGIN rename-shared-components.ps1
+=== 2026-10-03T13:36:24Z END rename-shared-components.ps1 exit=0
+after: .downloads .links chromium-1244 chromium-1245 chromium-1246 chromium-1247 ffmpeg-1011 firefox-1544 firefox-1548 firefox-1549 firefox-1553 winldd-1007
+=== 2026-10-03T13:36:24Z BATCH2 COMPLETE

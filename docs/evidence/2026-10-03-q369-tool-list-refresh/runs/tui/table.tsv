@@ -1,0 +1,10 @@
+run	launches	lists	calls	list_changed_sent	client_refresh_lines	first_req_with_real_tool	real_served_by	placeholder_still_offered_after_real	no_such_tool_errors	mcp_status	inits	exit	waitTimeout
+TA-cli-r1	1	L1:2	L1:update_in_flight+browserai_list	L1@13:52:11	1	5	L1	yes	3	-	-	0	-
+TA-cli-r2	1	L1:2	L1:update_in_flight+browserai_list	L1@13:52:54	1	5	L1	yes	3	-	-	0	-
+TA-cli-r3	1	L1:2	L1:update_in_flight+browserai_list	L1@13:53:36	1	5	L1	yes	3	-	-	0	-
+TB-cli-r1	2	L1:1,L2:2	L1:update_in_flight L2:browserai_list	L2@13:54:33	1	8	L2	yes	5	-	-	0	-
+TB-cli-r2	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	L2@13:55:35	0	8	L2	yes	5	-	-	0	-
+TB-cli-r3	2	L1:1,L2:2	L1:update_in_flight L2:browserai_list	L2@13:56:36	1	8	L2	yes	5	-	-	0	-
+TC-cli-r1	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	8	L2	yes	3	-	-	0	-
+TC-cli-r2	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	8	L2	yes	3	-	-	0	-
+TC-cli-r3	2	L1:1,L2:1	L1:update_in_flight+update_in_flight L2:browserai_list	-	0	8	L2	yes	3	-	-	0	-

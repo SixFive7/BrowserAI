@@ -1,0 +1,87 @@
+chrome/browser/chrome_browser_main.cc C |   // but should run on startup if extended to handle crashes/hangs/patches.
+chrome/browser/chrome_browser_main.cc C |   // Also, better to run once here than once for each HWND's WM_QUERYENDSESSION.
+chrome/browser/chrome_browser_main.cc C |   if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
+chrome/browser/chrome_browser_main.cc M |           switches::kBrowserTest)) {
+chrome/browser/chrome_browser_main.cc C |     ChromeBrowserMainPartsWin::RegisterApplicationRestart(
+chrome/browser/chrome_browser_main.cc C |         *base::CommandLine::ForCurrentProcess());
+chrome/browser/chrome_browser_main.cc C |   }
+--
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc C |   // Don't intercept WebUI tests
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc C |   if (url.path() == "/test_loader.html" ||
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc C |       base::CommandLine::ForCurrentProcess()->HasSwitch(
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc M |           switches::kBrowserTest)) {
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc C |     return false;
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc C |   }
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc C | 
+--
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc C |     // which would cause the OS call to be made in browser tests that don't
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc C |     // directly override the prefs handler.
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc C |     const auto* command_line = base::CommandLine::ForCurrentProcess();
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc M |     if (command_line->HasSwitch(switches::kBrowserTest) ||
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc C |         command_line->HasSwitch(switches::kTestType) ||
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc C |         command_line->GetProgram().BaseName().value().find(FILE_PATH_LITERAL(
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc C |             "interactive_ui_tests")) != base::FilePath::StringType::npos) {
+--
+content/browser/browser_main_loop.cc C | CreateMemoryPressureMonitor(const base::CommandLine& command_line) {
+content/browser/browser_main_loop.cc C |   // Behavior of browser tests should not depend on things outside of their
+content/browser/browser_main_loop.cc C |   // control (like the amount of memory on the system running the tests).
+content/browser/browser_main_loop.cc M |   if (command_line.HasSwitch(switches::kBrowserTest))
+content/browser/browser_main_loop.cc C |     return nullptr;
+content/browser/browser_main_loop.cc C | 
+content/browser/browser_main_loop.cc C |   std::unique_ptr<memory_pressure::MultiSourceMemoryPressureMonitor> monitor;
+--
+content/browser/in_memory_federated_permission_context.cc C |   const base::CommandLine* current_command_line =
+content/browser/in_memory_federated_permission_context.cc C |       base::CommandLine::ForCurrentProcess();
+content/browser/in_memory_federated_permission_context.cc C |   return current_command_line->HasSwitch("run-web-tests") ||
+content/browser/in_memory_federated_permission_context.cc M |          current_command_line->HasSwitch(switches::kBrowserTest) ||
+content/browser/in_memory_federated_permission_context.cc C |          current_command_line->HasSwitch(switches::kTestType);
+content/browser/in_memory_federated_permission_context.cc C | }
+content/browser/in_memory_federated_permission_context.cc C | 
+--
+content/public/test/browser_test_base.cc C |   // disable themselves based on the switch below (to ensure that browser tests
+content/public/test/browser_test_base.cc C |   // behave deterministically / do not flakily change behavior based on external
+content/public/test/browser_test_base.cc C |   // factors).
+content/public/test/browser_test_base.cc M |   command_line->AppendSwitch(switches::kBrowserTest);
+content/public/test/browser_test_base.cc C | 
+content/public/test/browser_test_base.cc C |   // Override the child process connection timeout since tests can exceed that
+content/public/test/browser_test_base.cc C |   // when sharded.
+--
+content/shell/app/shell_content_main.cc C | #if BUILDFLAG(IS_MAC)
+content/shell/app/shell_content_main.cc C | int ContentMain(int argc, const char** argv) {
+content/shell/app/shell_content_main.cc C |   bool is_browsertest = false;
+content/shell/app/shell_content_main.cc M |   std::string browser_test_flag(std::string("--") + switches::kBrowserTest);
+content/shell/app/shell_content_main.cc C |   for (int i = 0; i < argc; ++i) {
+content/shell/app/shell_content_main.cc C |     if (browser_test_flag == UNSAFE_BUFFERS(argv[i])) {
+content/shell/app/shell_content_main.cc C |       is_browsertest = true;
+--
+content/shell/browser/shell_browser_main_parts.cc C | namespace {
+content/shell/browser/shell_browser_main_parts.cc C | GURL GetStartupURL() {
+content/shell/browser/shell_browser_main_parts.cc C |   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+content/shell/browser/shell_browser_main_parts.cc M |   if (command_line->HasSwitch(switches::kBrowserTest))
+content/shell/browser/shell_browser_main_parts.cc C |     return GURL();
+content/shell/browser/shell_browser_main_parts.cc C | 
+content/shell/browser/shell_browser_main_parts.cc C | #if BUILDFLAG(IS_ANDROID)
+--
+content/shell/browser/shell_content_browser_client.cc C |       // content_test_launcher.cc and instead uses shell_main.cc. So give a
+content/shell/browser/shell_content_browser_client.cc C |       // signal
+content/shell/browser/shell_content_browser_client.cc C |       // to shell_main.cc that it's a browser test.
+content/shell/browser/shell_content_browser_client.cc M |       switches::kBrowserTest,
+content/shell/browser/shell_content_browser_client.cc C | #endif
+content/shell/browser/shell_content_browser_client.cc C |       switches::kCrashDumpsDir,
+content/shell/browser/shell_content_browser_client.cc C |       switches::kEnableCrashReporter,
+--
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc C |       // Behavior of browser tests should not depend on things outside of their
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc C |       // control (like the amount of memory on the system running the tests).
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc C |       !base::CommandLine::ForCurrentProcess()->HasSwitch(
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc M |           switches::kBrowserTest)) {
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc C |     memory_pressure_monitor_ =
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc C |         std::make_unique<memory_pressure::MultiSourceMemoryPressureMonitor>();
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc C |     memory_pressure_monitor_->MaybeStartPlatformVoter();
+--
+fuchsia_web/webengine/test/web_engine_test_launcher.cc C |   // Indicate to all processes that they are being run as part of a browser
+fuchsia_web/webengine/test/web_engine_test_launcher.cc C |   // test, so that dependencies which might compromise test isolation
+fuchsia_web/webengine/test/web_engine_test_launcher.cc C |   // won't be used (e.g. memory pressure).
+fuchsia_web/webengine/test/web_engine_test_launcher.cc M |   command_line->AppendSwitch(switches::kBrowserTest);
+fuchsia_web/webengine/test/web_engine_test_launcher.cc C | 
+fuchsia_web/webengine/test/web_engine_test_launcher.cc C |   size_t parallel_jobs = base::NumParallelJobs(/*cores_per_job=*/2);
+fuchsia_web/webengine/test/web_engine_test_launcher.cc C |   if (parallel_jobs == 0U)

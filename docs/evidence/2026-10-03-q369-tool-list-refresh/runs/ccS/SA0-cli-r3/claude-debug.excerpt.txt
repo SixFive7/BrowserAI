@@ -1,0 +1,17 @@
+# The lines of claude-debug.log that match
+# ToolSearch|list_changed|tools/list|render-time tools|[Rr]econnect|disconnected|MCP server \"browserai\"|browserai.*(failed|connected|Connection)
+# in file order, with the profile path, the user name and the machine name cut.
+# The whole log is listed in left-out.sha256.
+2026-10-03T13:46:18.824Z [DEBUG] [ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:8972 is not a first-party Anthropic host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.
+2026-10-03T13:46:19.108Z [DEBUG] MCP server "browserai": Starting connection with timeout of 30000ms
+2026-10-03T13:46:19.205Z [DEBUG] MCP server "browserai": Successfully connected (transport: stdio) in 98ms
+2026-10-03T13:46:19.205Z [DEBUG] MCP server "browserai": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"BrowserAI","version":"9.9.9-placeholder-stub"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-10-03T13:46:19.205Z [DEBUG] [MCP] Server "browserai" connected with subscribe=false
+2026-10-03T13:46:19.302Z [DEBUG] MCP server "browserai": Calling MCP tool: update_in_flight
+2026-10-03T13:46:19.320Z [DEBUG] MCP server "browserai": Tool 'update_in_flight' completed successfully in 18ms
+2026-10-03T13:46:22.583Z [DEBUG] MCP server "browserai": Calling MCP tool: update_in_flight
+2026-10-03T13:46:22.601Z [ERROR] MCP server "browserai" The BrowserAI update has finished, but your tool list is still the placeholder: your client has not fetched the new list. Reconnect the browserai server, or start a new session, to load the real tools.
+2026-10-03T13:46:22.602Z [DEBUG] MCP server "browserai": Tool 'update_in_flight' failed after 0s: The BrowserAI update has finished, but your tool list is still the placeholder: your client has not fetched the new list. Reconnect the browserai server, or start a new session, to load the real tools.
+2026-10-03T13:46:23.708Z [DEBUG] MCP server "browserai": Terminating MCP server process tree
+2026-10-03T13:46:23.777Z [DEBUG] MCP server "browserai": STDIO connection closed after 4s (cleanly)
+2026-10-03T13:46:23.777Z [DEBUG] MCP server "browserai": Cleared connection cache for reconnection

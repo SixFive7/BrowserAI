@@ -1,0 +1,20 @@
+origin = http://127.0.0.1:52957/
+initMs = 415.0326
+navigate1Ms = 5609.8811
+wrote = ### Result
+"wrote:sw-ok"
+before = ### Result
+"{\"cookie\":\"cookie-value\",\"local\":\"local-value\",\"session\":\"session-value\",\"idb\":\"idb-value\",\"cache\":\"cache-value\",\"serviceWorkers\":1}"
+nodeChildren = [{"pid":23524,"exe":"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"},{"pid":23124,"exe":"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"}]
+browsersBefore = 7
+deathAt = 2026-10-03T13:31:31.144Z
+childStates = [{"pid":23524,"state":"GONE"},{"pid":23124,"state":"GONE"}]
+msUntilChildrenGone = 73
+serverAStillAlive = ALIVE
+browsersAfterDeath = 0
+resumeMs = 562.7348
+resume = NOTE: the browser server for this session had died, and this resume started a new one with the per-run settings it asked for. The session's directory, profile and log are on disk and unchanged -- but what is on disk is not everything that was written: a browser that did not shut down cleanly had no chance to flush, and measurement says recent cookie and localStorage writes may be gone, while IndexedDB and CacheStorage survive. Read any stored value back before you rely on it. Nothing that lived 
+navigate2Ms = 2319.1129
+after = ### Result
+"{\"cookie\":\"cookie-value\",\"local\":null,\"session\":null,\"idb\":\"idb-value\",\"cache\":\"cache-value\",\"serviceWorkers\":1}"
+destroy = Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row38\session-B-firefox-1' (32.0 MiB). Its purpose was: Q223c: measuring whether a browser server that dies of its own ac

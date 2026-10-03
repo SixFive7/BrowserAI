@@ -1,0 +1,25 @@
+{
+  "playwrightVersion": "1.64.0-alpha-1790635538000",
+  "playwrightLib": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\payload\\mcp\\node_modules\\playwright-core",
+  "title": "zoomout-c-owner",
+  "browser": {
+    "guid": "browser@1a20e4c0c80ca73282efb4b454941d8e",
+    "browserName": "chromium",
+    "launchOptions": {
+      "ignoreAllDefaultArgs": false,
+      "handleSIGINT": false,
+      "handleSIGTERM": false,
+      "headless": true,
+      "noDefaultViewport": false,
+      "viewport": {
+        "width": 1000,
+        "height": 700
+      },
+      "selectorEngines": [],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\.work\\zoomout\\c\\profile-owner"
+    },
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\.work\\zoomout\\c\\profile-owner"
+  },
+  "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@1a20e4-9ab93219",
+  "workspaceDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\.work\\zoomout\\c"
+}

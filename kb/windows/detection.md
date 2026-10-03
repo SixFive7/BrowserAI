@@ -839,6 +839,16 @@ Chromium's own single-instance protection exists **only in the headed build**,
 and headless is the mode upstream defaults to, so the lock is not defence in
 depth.
 
+> ✅ *Verified 2026-10-03 @ Chrome for Testing and `chrome-headless-shell`
+> 155.0.8059.12 (revision 1247).* **Both halves hold, to the number.** Two full
+> `chrome.exe` on one directory: the second exits **21** without a DevTools
+> endpoint while the first serves. Two shells on one directory: both serve, six
+> interleaved rounds of writes, both close with exit code 0, and the reopened
+> profile holds **240 `localStorage` keys, all the first instance's**, with every
+> SQLite store `PRAGMA integrity_check = ok` -- 4 of 4 in the shell's profile and
+> 20 of 20 in the full build's. The rig is the 2026-09-23 one, pointed at the new
+> revision: [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 **Firefox has no `Chrome_MessageWindow` equivalent**, so its stray detection is a
 different path entirely: `parent.lock` sharing violation → Restart Manager
 `RmGetList`. `[FLOATS]`

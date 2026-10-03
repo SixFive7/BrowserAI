@@ -1,0 +1,6 @@
+2026-10-03T13:40:03.287Z child pid 69264 userDataDir (a file) C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row32\a-mcp\occupied-by-a-file
+2026-10-03T13:40:03.627Z initialize error? false ms 337
+2026-10-03T13:40:09.001Z browser_navigate isError false ms 5373 text "### Ran Playwright code\n```js\nawait page.goto('data:text/html,<h1>ok</h1>');\n```\n### Page\n- Page URL: data:text/html,<h1>ok</h1>\n### Snapshot\n- [Snapshot](output\\page-2026-10-03T13-40-08-991Z.yml)"
+2026-10-03T13:40:34.001Z at 30725 ms after launch: {"root":69264,"browserProcesses":7,"types":"browser=1,gpu-process=1,renderer=3,utility=2","visibleWindows":[],"messageWindows":["47164|DeviceMonitorMessageWindow","2612|","47164|","47164|%USERPROFILE%\\AppData\\Local\\Google\\Chrome for Testing\\User Data","47164|"],"restart":["pid 47164: 0x80070490"],"pids":[47164,2612,70620,6992,66164,4856,11524]}
+2026-10-03T13:40:34.194Z browser_close isError false
+2026-10-03T13:40:34.211Z child exited 0

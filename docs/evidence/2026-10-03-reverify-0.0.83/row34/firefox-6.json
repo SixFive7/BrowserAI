@@ -1,0 +1,21 @@
+{
+  "browser": "firefox",
+  "sessionDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-firefox-6",
+  "idleSeconds": 30,
+  "utc": "2026-10-03T13:30:03.146Z",
+  "origin": "http://127.0.0.1:65012/",
+  "initMs": 390.1888,
+  "firstNavigateMs": 2114.9554,
+  "secondNavigateMs": 50.5334,
+  "processes": 7,
+  "workingSetBytes": 587665408,
+  "idleWindowMs": 30523,
+  "idleCpuMs": 875,
+  "idleCpuPercentOfOneCore": 2.867,
+  "processesAfterIdle": 7,
+  "workingSetAfterIdleBytes": 557670400,
+  "profileBytes": 36470697,
+  "profileFiles": 66,
+  "destroy": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-firefox-6' (32.0 MiB). Its purpose was: Re-establishing the Firefox-against-Chromium cost ratios, for kb re",
+  "stderrTail": "CBD] message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[62C23CBD]: pid 51996 exited with code 0.\r\ninfo: BrowserAI.Runtime.ServerRegistryReap[90]\r\n      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=27288@134355078397791522.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-firefox-6; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[12]\r\n      Session lock re-acquired for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-firefox-6 by the process that already held its guard, PID 27100 -- this process. Nothing was taken from anybody.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-firefox-6; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[42]\r\n      Session destroyed at C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-firefox-6; 0 item(s) could not be removed.\r\n"
+}

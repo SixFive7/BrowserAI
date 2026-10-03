@@ -1,0 +1,11 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\chromium-nothing\\profile",
+    "launchOptions": {
+      "headless": true,
+      "channel": "chrome-for-testing"
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\chromium-nothing\\output"
+}

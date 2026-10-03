@@ -1,0 +1,13 @@
+{
+  "browser": {
+    "browserName": "firefox",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-pref-general.useragent.override-CONTROL\\profile",
+    "launchOptions": {
+      "headless": true,
+      "firefoxUserPrefs": {
+        "general.useragent.override": "BrowserAI-probe/1.0 distinct-pref"
+      }
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-pref-general.useragent.override-CONTROL\\output"
+}

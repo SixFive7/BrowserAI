@@ -1,0 +1,21 @@
+{
+  "browser": "chromium",
+  "sessionDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-chromium-2",
+  "idleSeconds": 30,
+  "utc": "2026-10-03T13:24:26.400Z",
+  "origin": "http://127.0.0.1:65034/",
+  "initMs": 379.898,
+  "firstNavigateMs": 576.3987,
+  "secondNavigateMs": 41.7069,
+  "processes": 9,
+  "workingSetBytes": 498319360,
+  "idleWindowMs": 30653,
+  "idleCpuMs": 719,
+  "idleCpuPercentOfOneCore": 2.346,
+  "processesAfterIdle": 9,
+  "workingSetAfterIdleBytes": 497414144,
+  "profileBytes": 13204699,
+  "profileFiles": 179,
+  "destroy": "Destroyed the session at 'C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-chromium-2' (12.6 MiB). Its purpose was: Re-establishing the Firefox-against-Chromium cost ratios, for kb r",
+  "stderrTail": " message processing canceled.\r\ninfo: BrowserAI.Protocol.ChildProcessSession[8]\r\n      playwright-mcp[3BA87CB3]: pid 14616 exited with code 0.\r\ninfo: BrowserAI.Runtime.ServerRegistryReap[90]\r\n      Started Playwright's own server-registry reap after a session was destroyed, detached and not awaited: reaper=10808@134355075015755162.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-chromium-2; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[12]\r\n      Session lock re-acquired for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-chromium-2 by the process that already held its guard, PID 57864 -- this process. Nothing was taken from anybody.\r\ninfo: BrowserAI.Sessions.SessionManager[8]\r\n      Session lock released for C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-chromium-2; the guard stays so a later reader can say who had it.\r\ninfo: BrowserAI.Sessions.SessionManager[42]\r\n      Session destroyed at C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row34\\session-chromium-2; 0 item(s) could not be removed.\r\n"
+}

@@ -1,0 +1,2 @@
+ERROR: Invalid syntax.
+Type "REG QUERY /?" for usage.

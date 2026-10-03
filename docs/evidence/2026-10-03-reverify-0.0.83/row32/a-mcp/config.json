@@ -1,0 +1,11 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row32\\a-mcp\\occupied-by-a-file",
+    "launchOptions": {
+      "headless": true,
+      "channel": "chrome-for-testing"
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row32\\a-mcp\\output"
+}

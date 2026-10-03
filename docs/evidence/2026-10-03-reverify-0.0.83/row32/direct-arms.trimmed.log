@@ -1,0 +1,21 @@
+[2026-10-03T13:41:29.201Z] (b) DACL now: C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row32\b-dacl\profile-with-an-empty-dacl  / Successfully processed 1 files; Failed processing 0 files
+[2026-10-03T13:41:29.213Z] (b) fallback directory before: exists=False
+[2026-10-03T13:41:29.237Z] (b) launched pid 52000
+[2026-10-03T13:41:29.377Z] (b) exited after 154 ms with code 21
+[2026-10-03T13:41:29.385Z] (b) visible windows seen: 0; fallback directory after: exists=False
+[2026-10-03T13:41:29.414Z] (c) fallback directory before: exists=False
+[2026-10-03T13:41:29.424Z] (c) launched pid 72056
+[2026-10-03T13:41:29.618Z] (c) dialog visible at 195 ms: title=Failed to create data directory || Button:OK || Static:Chromium cannot read and write to its data directory:  C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row32\c-dialog\occupied-by-a-file
+[2026-10-03T13:41:35.471Z] (c) at 6047 ms, dialog still up: 
+[2026-10-03T13:41:35.482Z] (c) WM_CLOSE posted at 6062 ms
+[2026-10-03T13:41:39.546Z] (c) at 10126 ms, 4 s after WM_CLOSE: 
+[2026-10-03T13:41:41.196Z] (c) tree ended at 11759 ms; still alive: 0; fallback directory after: exists=True
+[2026-10-03T13:41:41.204Z] done
+[2026-10-03T13:42:20.471Z] (c) fallback directory before: exists=False
+[2026-10-03T13:42:20.508Z] (c) launched pid 38056
+[2026-10-03T13:42:20.710Z] (c) dialog visible at 215 ms: title=Failed to create data directory || Button:OK || Static:Chromium cannot read and write to its data directory:  C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row32\c-dialog\occupied-by-a-file
+[2026-10-03T13:42:27.125Z] (c) at 6052 ms, dialog still up: {"browserProcesses":1,"types":"browser=1","visibleWindows":["0x1415FE|38056|#32770|Failed to create data directory"],"messageWindows":["38056|%USERPROFILE%\\AppData\\Local\\Google\\Chrome for Testing\\User Data","38056|"],"restart":["pid 38056: 0x80070490"]}
+[2026-10-03T13:42:27.136Z] (c) WM_CLOSE posted at 6645 ms
+[2026-10-03T13:42:31.677Z] (c) at 11187 ms, 4 s after WM_CLOSE: {"browserProcesses":11,"types":"browser=1,gpu-process=1,renderer=7,utility=2","visibleWindows":["0x1A13D0|38056|Chrome_WidgetWin_1|about:blank – Google Chrome for Testing"],"messageWindows":["38056|DeviceMonitorMessageWindow","9524|","38056|","38056|%USERPROFILE%\\AppData\\Local\\Google\\Chrome for Testing\\User Data","38056|"],"restart":["pid 38056: S_OK registered, 157 chars"]}
+[2026-10-03T13:42:33.256Z] (c) tree ended at 12762 ms; still alive: 0; fallback directory after: exists=True
+[2026-10-03T13:42:33.264Z] done

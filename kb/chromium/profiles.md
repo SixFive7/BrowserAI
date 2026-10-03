@@ -23,6 +23,17 @@ code path from the file case**: `RecursiveDirectoryCreate` succeeds on an
 existing directory, so there is no fallback; the singleton lock then fails and
 Chrome fails closed. `[FLOATS]`
 
+> ✅ *Verified 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`),
+> `@playwright/mcp` 0.0.83, with one figure corrected (previously "exits at
+> ~2.5 s").* **The file case still falls back invisibly**: through the payload's
+> own `cli.js`, headless, with `userDataDir` naming a file, `initialize` and
+> `browser_navigate` answered without error, and at 30.7 s seven processes were
+> running with a message window titled with
+> `%LOCALAPPDATA%\Google\Chrome for Testing\User Data`, not registered for
+> restart. **The deny-all directory still exits 21 with no fallback and no
+> window**, and it now does so **154 ms** after the launch. The arms and their
+> logs: [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 ## Chromium's cookie store, and what it takes to read one -- measured 2026-08-18
 
 **Measured 2026-08-18 @ Chrome for Testing 152.0.7977.8 (`chromium-1237`) /
@@ -65,6 +76,18 @@ against files the calling agent chose the location of. The 32-byte prefix on the
 plaintext is Chromium's domain binding; it changes what a reader must skip and
 nothing about whether it can read.
 
+> ✅ *Verified 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`),
+> `@playwright/mcp` 0.0.83, through a `headless` session of a BrowserAI published
+> from `5f1166c`.* **Every row of the table holds**: `os_crypt` holds
+> `audit_enabled` and `encrypted_key` and nothing else, no
+> `app_bound_encrypted_key`, a 317-byte `DPAPI`-prefixed key that
+> `CryptUnprotectData` turns into 32 bytes, scheme tag `v10`, and AES-256-GCM
+> recovering the cookie: 101 B to 70 B, the value after a 32-byte prefix. **The
+> prefix was checked this time and it is the SHA-256 of the cookie's host**,
+> `127.0.0.1`, which is what *domain binding* above means. The cookie was set by a
+> loopback server and read from a second process against a copy, as before:
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 ⚠️ **The stronger form of the result, and the reason it is not "ABE could not
 possibly apply here".** `elevation_service.exe` **is present** in the provisioned
 `chrome-win64` tree, and this machine **does have** a registered
@@ -93,6 +116,20 @@ broken script, not like ABE.
 dismissed.** Measured on a short direct launch: at 6 s there was **one process,
 no renderers, no GPU, and no registration**, with a visible `#32770` dialog. After
 posting `WM_CLOSE`: **10 processes and registration**. `[FLOATS]`
+
+> ✅ *Verified 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`),
+> with one count corrected (previously "10 processes").* The dialog, titled
+> *Failed to create data directory* with one OK button, was visible 215 ms after
+> a direct launch against a path occupied by a file. At 6 s: **one browser
+> process and nothing else**, the dialog the only visible window, no restart
+> registration. After `WM_CLOSE`: **11 processes** (one browser, one GPU, seven
+> renderers, two utility) and a registration of 157 characters. ⚠️ **What a
+> dismissed dialog leads to is a headed browser on the fallback profile**: four
+> seconds after the close, a visible *about:blank - Google Chrome for Testing*
+> window was up, and the fallback directory had been created. This arm puts two
+> windows on the screen and was run with the maintainer at the desk; what
+> appeared and for how long is in
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 - `--noerrdialogs` does **not** suppress it. A suppressing switch was not
   identified. `[UNVERIFIED]`

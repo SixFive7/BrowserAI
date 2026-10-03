@@ -1,0 +1,9 @@
+2026-10-03T13:46:12.242Z +2ms launch=1 pid=35192 LAUNCH mode=placeholder cap=none ppid=56676
+2026-10-03T13:46:12.246Z +6ms launch=1 pid=35192 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.288","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25 clientCaps={"roots":{"listChanged":true},"elicitation":{"form":{},"url":{}}}
+2026-10-03T13:46:12.287Z +47ms launch=1 pid=35192 tools/list answered with the PLACEHOLDER (update_in_flight)
+2026-10-03T13:46:12.386Z +146ms launch=1 pid=35192 tools/call #1 update_in_flight answered with the PLACEHOLDER text
+2026-10-03T13:46:12.545Z +305ms launch=1 pid=35192 UPDATE DONE (C:\Source\SixFive7\BrowserAI\.work\q369\runs\ccS\SA0-cli-r2\update.done appeared): serving the real list from now on, in this process
+2026-10-03T13:46:12.545Z +305ms launch=1 pid=35192 SEND notifications/tools/list_changed (the update is done)
+2026-10-03T13:46:15.480Z +3240ms launch=1 pid=35192 tools/call #2 update_in_flight answered with the STALE text (the update is done)
+2026-10-03T13:46:16.522Z +4282ms launch=1 pid=35192 stdin EOF after 4282 ms; exiting 0
+2026-10-03T13:46:16.575Z +4335ms launch=1 pid=35192 process exit code=0

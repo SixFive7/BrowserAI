@@ -1,0 +1,58 @@
+batch	scenario	client	runs	launches	tools/list per launch	list_changed honoured (client refresh line)	real tool offered to the model	real tool served by	placeholder still offered after real
+ccKp	PK	cli	3	1 x3	L1:0 x3	0/3	0/3	- x3	- x3
+ccKp2	PBr	cli	3	2 x3	L1:1,L2:0 x3	0/3	3/3	L1,L2 x3	no x3
+ccKs	SBr	cli	3	2 x3	L1:1,L2:0 x3	0/3	3/3	L1,L2 x3	no x3
+ccKs	SBr	vsc287	3	2 x3	L1:1,L2:0 x3	0/3	3/3	L1,L2 x3	no x3
+ccKs	SK	cli	3	2 x3	L1:0,L2:1 x3	0/3	3/3	L2 x3	no x3
+ccKs	SK	vsc287	3	2 x3	L1:0,L2:1 x3	0/3	3/3	L2 x3	no x3
+ccP	PA	cli	3	1 x3	L1:2 x3	3/3	3/3	L1 x3	yes x3
+ccP	PA0	cli	3	1 x3	L1:1 x3	0/3	0/3	- x3	- x3
+ccP	PB	cli	3	2 x3	L1:1,L2:0 x3	0/3	0/3	- x3	- x3
+ccP	PBd	cli	3	2 x3	L1:1,L2:0 x3	0/3	0/3	- x3	- x3
+ccS	SA	cli	3	1 x3	L1:2 x3	3/3	3/3	L1 x3	yes x3
+ccS	SA	vsc287	3	1 x3	L1:2 x3	3/3	3/3	L1 x3	yes x3
+ccS	SA0	cli	3	1 x3	L1:1 x3	0/3	0/3	- x3	- x3
+ccS	SA0	vsc287	3	1 x3	L1:1 x3	0/3	0/3	- x3	- x3
+ccS	SB	cli	3	2 x3	L1:1,L2:0 x3	0/3	0/3	- x3	- x3
+ccS	SB	vsc287	3	2 x3	L1:1,L2:0 x3	0/3	0/3	- x3	- x3
+ccS	SC	cli	3	2 x3	L1:1,L2:1 x3	0/3	3/3	L2 x3	yes x3
+ccS	SC	vsc287	3	2 x3	L1:1,L2:1 x3	0/3	3/3	L2 x3	yes x3
+ccS	SCd	cli	3	2 x3	L1:1,L2:1 x3	0/3	3/3	L2 x3	yes x3
+ccS	SCd	vsc287	3	2 x3	L1:1,L2:1 x3	0/3	3/3	L2 x3	yes x3
+ccS	SCt	cli	3	2 x3	L1:1,L2:1 x3	0/3	3/3	L2 x3	yes x3
+ccS	SCt	vsc287	3	2 x3	L1:1,L2:1 x3	0/3	3/3	L2 x3	yes x3
+ccS2	PR	cli	3	1 x3	L1:1 x3	0/3	0/3	- x3	- x3
+ccS2	PR	vsc287	3	1 x3	L1:1 x3	0/3	0/3	- x3	- x3
+ccS2	SAts	cli	3	1 x3	L1:2 x3	3/3	3/3	L1 x3	yes x3
+ccS2	SAts	vsc287	3	1 x3	L1:2 x3	3/3	3/3	L1 x3	yes x3
+ccS2	SBts	cli	3	2 x3	L1:1,L2:0 x3	0/3	0/3	- x3	- x3
+ccS2	SBts	vsc287	3	2 x3	L1:1,L2:0 x3	0/3	0/3	- x3	- x3
+ccS2	SR	cli	3	1 x3	L1:1 x3	0/3	0/3	- x3	- x3
+ccS2	SR	vsc287	3	1 x3	L1:1 x3	0/3	0/3	- x3	- x3
+tui	TA	cli	3	1 x3	L1:2 x3	3/3	3/3	L1 x3	yes x3
+tui	TB	cli	3	2 x3	L1:1,L2:1 x1 / L1:1,L2:2 x2	2/3	3/3	L2 x3	yes x3
+tui	TC	cli	3	2 x3	L1:1,L2:1 x3	0/3	3/3	L2 x3	yes x3
+tui2	TBclean	cli	3	2 x3	L1:1,L2:1 x2 / L1:1,L2:2 x1	1/3	3/3	L2 x3	yes x3
+tui3	TR	cli	3	2 x3	L1:1,L2:1 x3	0/3	3/3	L2 x3	yes x3
+tuiK	TBr	cli	3	2 x3	L1:1,L2:1 x2 / L1:1,L2:2 x1	1/3	3/3	L1,L2 x3	no x3
+tuiK	TK	cli	3	2 x3	L1:0,L2:1 x3	0/3	3/3	L2 x3	no x3
+
+batch	scenario	codex	runs	thread launches	probe launches	list_changed sent	turn outcomes (tool:status per turn, in order)
+cx	AAn	155	3	2 x3	3 x3	1 x3	update_in_flight:completed update_in_flight:failed browserai_list:completed x3
+cx	AAn	160	3	2 x3	3 x3	1 x3	update_in_flight:completed update_in_flight:failed browserai_list:completed x3
+cx	AAr	155	3	1 x3	3 x3	1 x3	update_in_flight:completed update_in_flight:failed update_in_flight:failed x3
+cx	AAr	160	3	1 x3	3 x3	1 x3	update_in_flight:completed update_in_flight:failed update_in_flight:failed x3
+cx	AAs	155	3	2 x3	3 x3	1 x3	update_in_flight:completed update_in_flight:failed browserai_list:completed x3
+cx	AAs	160	3	2 x3	3 x3	1 x3	update_in_flight:completed update_in_flight:failed browserai_list:completed x3
+cx	AB	155	3	2 x3	2 x3	3 x3	update_in_flight:completed update_in_flight:failed browserai_list:completed x3
+cx	AB	160	3	2 x3	2 x3	3 x3	update_in_flight:completed update_in_flight:failed browserai_list:completed x3
+cx	XA	155	3	2 x3	0 x3	1 x3	exec1:update_in_flight:completed exec1:update_in_flight:failed exec2:browserai_list:completed x3
+cx	XA	160	3	2 x3	0 x3	1 x3	exec1:update_in_flight:completed exec1:update_in_flight:failed exec2:browserai_list:completed x3
+cx	XB	155	3	2 x3	0 x3	1 x3	exec1:update_in_flight:completed exec1:update_in_flight:failed exec2:browserai_list:completed x3
+cx	XB	160	3	2 x3	0 x3	1 x3	exec1:update_in_flight:completed exec1:update_in_flight:failed exec2:browserai_list:completed x3
+cx2	AAq	155	3	1 x3	3 x3	1 x3	update_in_flight:completed update_in_flight:failed x3
+cx2	AAq	160	3	1 x3	2 x3	1 x3	update_in_flight:completed update_in_flight:failed x3
+cxK	AK	155	3	2 x3	2 x3	0 x3	browserai_list:completed x3
+cxK	AK	160	3	2 x3	2 x3	0 x3	browserai_list:completed x3
+cxK	XK	155	3	2 x3	0 x3	0 x3	exec2:browserai_list:completed x3
+cxK	XK	160	3	2 x3	0 x3	0 x3	exec2:browserai_list:completed x3

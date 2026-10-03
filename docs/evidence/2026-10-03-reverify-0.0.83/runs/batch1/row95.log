@@ -1,0 +1,33 @@
+origin = http://127.0.0.1:55034/
+init = Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row95\session' on every browser tool call.
+  directory: C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row95\session
+  browser: chromium
+  headed: false
+  profile: C:\Source\SixFive7\BrowserAI\.work\stale-scratch
+navigate1Ms = 532.1677
+navigate2Ms = 34.6836
+documentCookie = ### Result
+"browserai_probe=row95-musf9kya-persistent-cookie-value"
+close = ### Result
+No open tabs. Navigate to a URL to create one.
+{
+  "profile": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row95\\session\\profile",
+  "osCryptKeys": [
+    "audit_enabled",
+    "encrypted_key"
+  ],
+  "appBoundEncryptedKeyPresent": false,
+  "encryptedKeyBytes": 317,
+  "encryptedKeyPrefix": "DPAPI",
+  "unprotectSucceeded": true,
+  "masterKeyBytes": 32,
+  "cookieRowFound": true,
+  "hostKey": "127.0.0.1",
+  "schemeTag": "v10",
+  "encryptedValueBytes": 101,
+  "plaintextBytes": 70,
+  "prefixIsSha256OfHost": true,
+  "valueAfter32ByteprefixMatches": true
+}
+destroy = Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row95\session' (12.5 MiB). Its purpose was: Re-verification row 95 on 2026-10-03: whether a session cookie store decrypts with DPAPI alone at chromium 1247.
+You said it was being destroyed because: Row 95 is read; the ses

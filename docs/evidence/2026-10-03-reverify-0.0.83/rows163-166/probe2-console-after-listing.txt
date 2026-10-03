@@ -1,0 +1,12 @@
+### Result
+Total messages: 3 (Errors: 3, Warnings: 0)
+
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:55761/favicon.ico:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:55761/favicon.ico:0
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:55761/favicon.ico:0
+### Page
+- Page URL: http://127.0.0.1:55761/noicon
+- Page Title: /noicon
+- Console: 3 errors, 0 warnings
+### Events
+- New console entries: C:\Source\SixFive7\BrowserAI\.work\wt\stale\.work\zoomout\c\mcp\out\console-2026-10-03T13-37-34-345Z.log#L1-L3

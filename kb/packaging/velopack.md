@@ -1617,6 +1617,23 @@ runtime with the first.
 
 ### The app opens its window in 155-243 ms, and the window is 556 × 426
 
+> ⚠️ *Corrected 2026-10-03 by addition (previously "155-243 ms" and "556 ×
+> 426").* **The configuration app published from `5f1166c` opens its window in
+> 461 to 843 ms, and the window is 556 × 444.** Three runs, measured the way this
+> entry says: started with no window from PowerShell, `EnumWindows` polled with
+> no pause from the moment `Process.Start` returned until a visible `#32770` owned
+> by the app's pid appeared: **843**, **534.7** and **460.6 ms**, the first the
+> cold one, the same 556 × 444 every time. `WM_CLOSE` posted within 4 ms of each
+> sighting exited the app **0**, 3 of 3, so each dialog was on the screen for
+> well under a second. ⚠️ **The predicate moved with the product, and the
+> numbers are not a regression claim**: at this build the app reads every
+> client's registration before it shows the window (`AppState.Read` in the
+> window's `Show`), whether it did on 2026-09-15 was not checked, and these runs
+> pointed
+> `CLAUDE_CONFIG_DIR` and `CODEX_HOME` at empty scratch folders, which starts the
+> Codex CLI; how much of the difference that is was not separated. The runs and
+> the rig: [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 Measured 2026-09-15 over three runs of the **published** binary, launched with no
 window from PowerShell, polling `EnumWindows` continuously from the moment the
 process started until a visible `#32770` owned by it appeared: **243.2 ms**,

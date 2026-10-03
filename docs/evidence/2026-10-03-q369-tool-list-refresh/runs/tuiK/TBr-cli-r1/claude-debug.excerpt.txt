@@ -1,0 +1,22 @@
+# The lines of claude-debug.log that match
+# ToolSearch|list_changed|tools/list|render-time tools|[Rr]econnect|disconnected|MCP server \"browserai\"|browserai.*(failed|connected|Connection)
+# in file order, with the profile path, the user name and the machine name cut.
+# The whole log is listed in left-out.sha256.
+2026-10-03T14:05:08.387Z [DEBUG] [ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:8975 is not a first-party Anthropic host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.
+2026-10-03T14:05:09.025Z [DEBUG] MCP server "browserai": Starting connection with timeout of 30000ms
+2026-10-03T14:05:09.292Z [DEBUG] MCP server "browserai": Successfully connected (transport: stdio) in 268ms
+2026-10-03T14:05:09.292Z [DEBUG] MCP server "browserai": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"BrowserAI","version":"9.9.9-real-stub"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-10-03T14:05:09.293Z [DEBUG] [MCP] Server "browserai" connected with subscribe=false
+2026-10-03T14:05:09.358Z [DEBUG] MCP server "browserai": Channel notifications skipped: server did not declare claude/channel capability
+2026-10-03T14:05:12.119Z [DEBUG] MCP server "browserai": Calling MCP tool: browserai_list
+2026-10-03T14:05:12.144Z [DEBUG] MCP server "browserai": Tool 'browserai_list' completed successfully in 25ms
+2026-10-03T14:05:12.457Z [ERROR] Tool mcp__browserai__browserai_list not found in render-time tools
+2026-10-03T14:05:24.918Z [ERROR] Tool mcp__browserai__browserai_list not found in render-time tools
+2026-10-03T14:05:42.134Z [DEBUG] MCP server "browserai": Starting connection with timeout of 30000ms
+2026-10-03T14:05:42.234Z [DEBUG] MCP server "browserai": Successfully connected (transport: stdio) in 101ms
+2026-10-03T14:05:42.234Z [DEBUG] MCP server "browserai": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"BrowserAI","version":"9.9.9-real-stub"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-10-03T14:05:42.234Z [DEBUG] [MCP] Server "browserai" connected with subscribe=false
+2026-10-03T14:05:42.255Z [DEBUG] MCP server "browserai": Channel notifications skipped: server did not declare claude/channel capability
+2026-10-03T14:05:59.410Z [DEBUG] MCP server "browserai": Calling MCP tool: browserai_list
+2026-10-03T14:05:59.425Z [DEBUG] MCP server "browserai": Tool 'browserai_list' completed successfully in 15ms
+2026-10-03T14:06:04.563Z [DEBUG] MCP server "browserai": Terminating MCP server process tree

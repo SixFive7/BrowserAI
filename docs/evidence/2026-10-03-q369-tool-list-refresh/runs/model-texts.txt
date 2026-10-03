@@ -1,0 +1,96 @@
+##### CLAUDE CODE 2.1.288, stream-json (VS Code shape), runs/ccS/SA-cli-r1 #####
+--- tools[] entry the model is given (request 1):
+{
+ "name": "mcp__browserai__update_in_flight",
+ "description": "BrowserAI is installing an update, so this tool list is a placeholder: the browser tools are not loaded yet. Call this tool to check on the update, and try again in about a minute. When the update is done, BrowserAI tells your client that its tools have changed, and the real tools replace this one.",
+ "input_schema": {
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+ }
+}
+--- server instructions block in the system prompt:
+NOT FOUND
+--- tool_result as sent to the model:
+{"tool_use_id": "toolu_52680_1_4e0ba6bc", "type": "tool_result", "content": [{"type": "text", "text": "BrowserAI is installing an update. No browser tool ran and nothing changed. Try again in about a minute. The tool list you have is a placeholder: when the update is done, BrowserAI tells your client to fetch the real tool list."}]}
+--- tool_result as sent to the model:
+{"tool_use_id": "toolu_52680_3_da66328d", "type": "tool_result", "content": [{"type": "text", "text": "REAL-TOOL-SERVED launch=1 pid=71764: browserai_list found no sessions under C:/q369-probe."}]}
+--- tool_result as sent to the model:
+{"type": "tool_result", "content": "<tool_use_error>Error: No such tool available: mcp__browserai__update_in_flight. Its MCP server 'browserai' is connected but does not offer this tool here. Continue without it.</tool_use_error>", "is_error": true, "tool_use_id": "toolu_52680_4_8d44e6af"}
+
+##### CLAUDE CODE 2.1.288, tool search on, runs/ccS2/SAts-cli-r1 #####
+
+##### CODEX 0.160.0 exec, runs/cx/XA-cx160-r1 #####
+--- tools[] namespace entry:
+[
+ {
+  "type": "namespace",
+  "name": "mcp__browserai",
+  "description": "PH-INSTRUCTIONS-PLACEHOLDER: BrowserAI is installing an update. Its tools are not loaded yet; call update_in_flight to check on it.",
+  "tools": [
+   {
+    "type": "function",
+    "name": "update_in_flight",
+    "description": "BrowserAI is installing an update, so this tool list is a placeholder: the browser tools are not loaded yet. Call this tool to check on the update, and try again in about a minute. When the update is done, BrowserAI tells your client that its tools have changed, and the real tools replace this one.",
+    "strict": false,
+    "parameters": {
+     "type": "object",
+     "properties": {},
+     "additionalProperties": false
+    }
+   }
+  ]
+ }
+]
+--- function_call_output as sent to the model:
+[{"type": "input_text", "text": "Wall time: 0.0158 seconds\nOutput:"}, {"type": "input_text", "text": "BrowserAI is installing an update. No browser tool ran and nothing changed. Try again in about a minute. The tool list you have is a placeholder: when the update is done, BrowserAI tells your client to fetch the real tool list."}]
+--- function_call_output as sent to the model:
+[{"type": "input_text", "text": "Wall time: 0.0101 seconds\nOutput:"}, {"type": "input_text", "text": "The BrowserAI update has finished, but your tool list is still the placeholder: your client has not fetched the new list. Reconnect the browserai server, or start a new session, to load the real tools."}]
+--- function_call_output as sent to the model:
+[{"type": "input_text", "text": "Wall time: 0.0122 seconds\nOutput:"}, {"type": "input_text", "text": "REAL-TOOL-SERVED launch=2 pid=13256: browserai_list found no sessions under C:/q369-probe."}]
+
+##### CODEX 0.155.0-alpha.9.2 exec, runs/cx/XB-cx155-r1 (dead server) #####
+--- function_call_output as sent to the model:
+[{"type": "input_text", "text": "Wall time: 0.0110 seconds\nOutput:"}, {"type": "input_text", "text": "BrowserAI is installing an update. No browser tool ran and nothing changed. Try again in about a minute. The tool list you have is a placeholder: when the update is done, BrowserAI tells your client to fetch the real tool list."}]
+--- function_call_output as sent to the model:
+[{"type": "input_text", "text": "Wall time: 0.0079 seconds\nOutput:"}, {"type": "input_text", "text": "tool call error: tool call failed for `browserai/update_in_flight`\n\nCaused by:\n    Transport closed"}]
+--- function_call_output as sent to the model:
+[{"type": "input_text", "text": "Wall time: 0.0121 seconds\nOutput:"}, {"type": "input_text", "text": "REAL-TOOL-SERVED launch=2 pid=19392: browserai_list found no sessions under C:/q369-probe."}]
+
+##### CLAUDE CODE 2.1.288: where the server instructions are, runs/ccS/SA-cli-r1 request 1 #####
+--- in messages[1] role=system:
+# MCP Server Instructions
+
+The following MCP servers have provided instructions for how to use their tools and resources:
+
+## browserai
+PH-INSTRUCTIONS-PLACEHOLDER: BrowserAI is installing an update. Its tools are not loaded yet; call update_in_flight to check on it.
+
+<total_tokens>15000000 tokens left</total_tokens>
+
+Today's date is 2026-10-03.
+
+##### CLAUDE CODE 2.1.288: the stale text with isError true, runs/ccS/SA0-cli-r1 #####
+{"type": "tool_result", "content": "The BrowserAI update has finished, but your tool list is still the placeholder: your client has not fetched the new list. Reconnect the browserai server, or start a new session, to load the real tools.", "is_error": true, "tool_use_id": "toolu_52680_33_68a55e9a"}
+
+##### CLAUDE CODE 2.1.288, tool search on (ENABLE_TOOL_SEARCH=true), runs/ccS2/SAts-cli-r1 #####
+--- request 1, messages[1] role=system:
+The following deferred tools are now available via ToolSearch. Their schemas are NOT loaded — calling them directly will fail with InputValidationError. Use ToolSearch with query "select:<name>[,<name>...]" to load tool schemas before calling them:
+CronCreate
+CronDelete
+CronList
+EnterWorktree
+ExitWorktree
+NotebookEdit
+SendMessage
+TaskStop
+WebFetch
+WebSearch
+mcp__browserai__update_in_flight
+--- request 4, messages[10] role=system:
+The following deferred tools are now available via ToolSearch. Their schemas are NOT loaded — calling them directly will fail with InputValidationError. Use ToolSearch with query "select:<name>[,<name>...]" to load tool schemas before calling them:
+mcp__browserai__browserai_init
+mcp__browserai__browserai_list
+
+The following deferred tools are no longer available (their MCP server disconnected). Do not search for them — ToolSearch will return no match:
+mcp__browserai__update_in_flight

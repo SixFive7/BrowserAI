@@ -1,0 +1,13 @@
+{
+  "browser": {
+    "browserName": "firefox",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-contextOptions-userAgent\\profile",
+    "launchOptions": {
+      "headless": true
+    },
+    "contextOptions": {
+      "userAgent": "BrowserAI-probe/1.0 distinct-context-option"
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-contextOptions-userAgent\\output"
+}

@@ -1,0 +1,4 @@
+run	launches	lists	calls	list_changed_sent	client_refresh_lines	first_req_with_real_tool	real_served_by	placeholder_still_offered_after_real	no_such_tool_errors	mcp_status	inits	exit	waitTimeout
+TBclean-cli-r1	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	L2@13:59:11	0	8	L2	yes	5	-	-	0	-
+TBclean-cli-r2	2	L1:1,L2:1	L1:update_in_flight L2:browserai_list	L2@14:00:12	0	8	L2	yes	5	-	-	0	-
+TBclean-cli-r3	2	L1:1,L2:2	L1:update_in_flight L2:browserai_list	L2@14:01:14	1	8	L2	yes	5	-	-	0	-

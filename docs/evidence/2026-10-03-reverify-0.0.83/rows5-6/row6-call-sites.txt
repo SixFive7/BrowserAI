@@ -1,0 +1,28 @@
+# Row 6. Predicate: files whose text holds switches::kBrowserTest as a whole word (git grep -l -w -E 'switches::kBrowserTest' <tag>).
+== 152.0.7977.8: 11 files
+chrome/browser/chrome_browser_main.cc
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc
+content/browser/browser_main_loop.cc
+content/browser/in_memory_federated_permission_context.cc
+content/public/test/browser_test_base.cc
+content/shell/app/shell_content_main.cc
+content/shell/browser/shell_browser_main_parts.cc
+content/shell/browser/shell_content_browser_client.cc
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc
+fuchsia_web/webengine/test/web_engine_test_launcher.cc
+== 155.0.8059.12: 11 files
+chrome/browser/chrome_browser_main.cc
+chrome/browser/contextual_tasks/contextual_tasks_ui_service.cc
+chrome/browser/enterprise/platform_auth/extensible_enterprise_sso_prefs_handler.cc
+content/browser/browser_main_loop.cc
+content/browser/in_memory_federated_permission_context.cc
+content/public/test/browser_test_base.cc
+content/shell/app/shell_content_main.cc
+content/shell/browser/shell_browser_main_parts.cc
+content/shell/browser/shell_content_browser_client.cc
+fuchsia_web/webengine/renderer/web_engine_content_renderer_client.cc
+fuchsia_web/webengine/test/web_engine_test_launcher.cc
+== the definition, which the predicate does not count
+content/public/common/content_switches.cc:48:const char kBrowserTest[] = "browser-test";
+content/public/common/content_switches.h:28:CONTENT_EXPORT extern const char kBrowserTest[];

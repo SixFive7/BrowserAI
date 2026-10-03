@@ -332,6 +332,19 @@ image name -- and read its token. **For the second control, do the same with a
 run in which no arm ever produces `TokenIsAppContainer = 1` proves nothing about
 sandboxing and only that the reader cannot see it. `[FLOATS]`
 
+> ✅ *Verified 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`),
+> with one line number corrected (previously "`network_service_instance_impl.cc:650`").*
+> **Present then absent, twice each.** Launched directly and headless with
+> `--enable-logging=stderr --v=1`, each plain launch logged the
+> `sandbox_win.cc:804` refusal once, the restart once, now at
+> `network_service_instance_impl.cc:653`, and one `Applying
+> FieldTrialTestingConfig`; with `--disable-field-trial-config` added, none of the
+> three appeared. The network service, found by descent from the launched pid,
+> carried `--service-sandbox-type=none` in all four. The token reads, the forced
+> arm and the `Program Files` control were not repeated, since the row's check is
+> the two direct launches; the four stderr captures are in
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 ## Defaults that are not what they look like
 
 **`validateBrowserConfig` defaults to `chromium` *and* sets `channel: "chrome"`**
@@ -454,6 +467,15 @@ the moment a browser launches, and never cleaned up.**
 > first check found one directory recreated, by the one test that writes its own
 > config to exercise `chromiumSandbox`. A config that launches a browser and does
 > not name a `userDataDir` writes there, whoever wrote it.
+>
+> ✅ *Verified 2026-10-03 @ `@playwright/mcp` 0.0.83 / `playwright-core`
+> 1.64.0-alpha-1790635538000, chromium 1247 and firefox 1553.*
+> `%LOCALAPPDATA%\ms-playwright-mcp\` was absent after each of the two two-shell
+> gate rounds the 0.0.83 review ran that morning, each a `FULL RUN` of 896 tests
+> that drove both families, the second green in both shells; the review's gate
+> driver tested for the directory at the end of each round. It was still absent
+> that evening, after the day's other suite runs. The driver's records are in
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 **There is no trace option at 0.0.79 -- not on the CLI and not in the config.**
 `tracesDir` is computed internally as `path.resolve(outputDir, "traces")` and is
@@ -565,6 +587,15 @@ takes the *"Executable doesn't exist ... npx playwright install"* path
 instead -- so a classifier must not key on `EFTYPE`. And upstream's
 remediation string points at `npx @playwright/mcp install-browser chromium`,
 a package we do not ship resolving a different revision. `[FLOATS]`
+
+> ✅ *Verified 2026-10-03 @ `playwright-core` 1.64.0-alpha-1790635538000, node
+> v24.21.0, `chromium-headless-shell` 1247.* **Both errnos and both controls
+> hold**: with `INSTALLATION_COMPLETE` present, a 0-byte executable and one cut
+> to 2,048 bytes of a real PE gave `spawn EFTYPE` with code `EFTYPE`, ten bytes
+> of ASCII gave `spawn UNKNOWN` with code `UNKNOWN`, a valid unrelated executable
+> in the same place was launched and failed on its arguments, and a missing file
+> took the *"Executable doesn't exist"* path. The arms and their output:
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 **The remediation string's exact shape, because BrowserAI replaces it.** Read
 2026-08-16 in `playwright-core/lib/coreBundle.js`, `throwIfExecutableMissing`:
@@ -919,6 +950,20 @@ recorded this.
 any reason silently drops upstream's `AutomationControlled` suppression and turns
 `navigator.webdriver` true. That is why this product writes **both** entries
 explicitly, and why the round-trip test asserts both.
+
+> ✅ *Verified 2026-10-03 for the HEADLESS half only @ Chrome for Testing
+> 155.0.8059.12 (`chromium-1247`), `@playwright/mcp` 0.0.83.* Through the
+> product's own funnel, headless, the switch again changed nothing a page or a
+> server can see: 43 of 43 JS-visible properties identical with and without it,
+> 13 of the 14 headers of the page request identical, the fourteenth being `host`
+> with its ephemeral port, and `navigator.webdriver` `false` in both arms. The
+> append the trap above turns on is unchanged in the 0.0.83 bundle
+> (`coreBundle.js:74335`, previously :73755): the switch is pushed only when no
+> configured argument already contains `--disable-blink-features`. ⚠️ **The
+> headed arms were not re-run**, because nothing may put a window on the screen
+> today; the headed reading above stands at chromium 1246, and
+> [row 152](../re-verification.md) keeps its staleness mark for that half. The
+> arms: [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 ### The Google arms, and what they did not establish
 

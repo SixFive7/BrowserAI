@@ -1,0 +1,29 @@
+# The lines of claude-debug.log that match
+# ToolSearch|list_changed|tools/list|render-time tools|[Rr]econnect|disconnected|MCP server \"browserai\"|browserai.*(failed|connected|Connection)
+# in file order, with the profile path, the user name and the machine name cut.
+# The whole log is listed in left-out.sha256.
+2026-10-03T13:59:39.022Z [DEBUG] [ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:8969 is not a first-party Anthropic host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.
+2026-10-03T13:59:39.555Z [DEBUG] MCP server "browserai": Starting connection with timeout of 30000ms
+2026-10-03T13:59:39.773Z [DEBUG] MCP server "browserai": Successfully connected (transport: stdio) in 220ms
+2026-10-03T13:59:39.774Z [DEBUG] MCP server "browserai": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"BrowserAI","version":"9.9.9-placeholder-stub"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-10-03T13:59:39.774Z [DEBUG] [MCP] Server "browserai" connected with subscribe=false
+2026-10-03T13:59:39.835Z [DEBUG] MCP server "browserai": Channel notifications skipped: server did not declare claude/channel capability
+2026-10-03T13:59:42.649Z [DEBUG] MCP server "browserai": Calling MCP tool: update_in_flight
+2026-10-03T13:59:42.676Z [DEBUG] MCP server "browserai": Tool 'update_in_flight' completed successfully in 27ms
+2026-10-03T13:59:43.040Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T13:59:55.454Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T14:00:12.679Z [DEBUG] MCP server "browserai": Starting connection with timeout of 30000ms
+2026-10-03T14:00:12.753Z [DEBUG] MCP server "browserai": Successfully connected (transport: stdio) in 76ms
+2026-10-03T14:00:12.754Z [DEBUG] MCP server "browserai": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"BrowserAI","version":"9.9.9-real-stub"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-10-03T14:00:12.754Z [DEBUG] [MCP] Server "browserai" connected with subscribe=false
+2026-10-03T14:00:12.759Z [DEBUG] MCP server "browserai": Channel notifications skipped: server did not declare claude/channel capability
+2026-10-03T14:00:29.992Z [DEBUG] MCP server "browserai": Calling MCP tool: browserai_list
+2026-10-03T14:00:30.004Z [DEBUG] MCP server "browserai": Tool 'browserai_list' completed successfully in 12ms
+2026-10-03T14:00:30.087Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T14:00:31.937Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T14:00:31.938Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T14:00:31.938Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T14:00:33.439Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T14:00:33.439Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T14:00:33.439Z [ERROR] Tool mcp__browserai__update_in_flight not found in render-time tools
+2026-10-03T14:00:35.136Z [DEBUG] MCP server "browserai": Terminating MCP server process tree

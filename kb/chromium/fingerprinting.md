@@ -62,6 +62,15 @@ FedCM requests *is* web-observable -- and it is ruled out because Chrome's
 `GetFederatedIdentity*PermissionContext()`, so the in-memory context is
 content_shell-only. `[FLOATS]`
 
+> ✅ *Verified 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`).*
+> **The inventory is the same 11 files at 155.0.8059.12 as at 152.0.7977.8**,
+> read with `git grep -w 'switches::kBrowserTest'` at both tags of
+> `chromium/src`, each fetched at depth 1. The three lines either side of every
+> call site, 87 lines at each tag, are identical once the line numbers are
+> removed; what moved is line numbers only. The two lists and both normalised
+> context files are in
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 **The only real behavioural delta is the memory-pressure monitor.** With the
 switch, `CreateMemoryPressureMonitor` returns `nullptr`, so the browser never
 fires `MemoryPressureListener` → `ChildProcess::OnMemoryPressure` → Blink cache
@@ -123,6 +132,19 @@ reading both values back through `browser_evaluate`, at `@playwright/mcp` 0.0.79
 | firefox, `browser.contextOptions.userAgent` set to a distinct string | `BrowserAI-probe/1.0 distinct-context-option` -- **the value we asked for** | **`true`** |
 | firefox, `firefoxUserPrefs["dom.webdriver.enabled"] = false` | unchanged | **`true`** -- the pref does nothing |
 | firefox, `firefoxUserPrefs["general.useragent.override"]` set -- **the control** | `BrowserAI-probe/1.0 distinct-pref` | `true` |
+
+> ✅ *Verified 2026-10-03 @ `@playwright/mcp` 0.0.83 / `playwright-core`
+> 1.64.0-alpha-1790635538000, Chrome for Testing 155.0.8059.12 (`chromium-1247`)
+> and Firefox 156.0 (`firefox-1553`), headless, the same six arms through the
+> payload's own `cli.js`.* **Every cell above holds with the versions moved**:
+> Chromium reads `HeadlessChrome/155.0.0.0` with nothing set and the asked-for
+> `Chrome/155.0.0.0` with `contextOptions.userAgent`, `webdriver` `false` both
+> times; Firefox reads `rv:156.0 ... Firefox/156.0`, takes the distinct
+> `contextOptions.userAgent` and the `general.useragent.override` control, and
+> reports `webdriver` `true` in all four arms, `dom.webdriver.enabled: false`
+> included. The reduced user agent keeps its major-then-`.0.0.0` shape at 155.
+> Rig and readings:
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 **Three findings, and the control is what makes the third one mean anything.**
 

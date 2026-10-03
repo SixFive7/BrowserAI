@@ -1,0 +1,50 @@
+[
+  {
+    "tag": "plain-1",
+    "processes": 11,
+    "networkServicePid": 14080,
+    "serviceSandboxType": "none",
+    "sandboxWinLines": 1,
+    "networkServiceRestartLines": 1,
+    "fieldTrialTestingConfigLines": 1,
+    "errorLines": 7,
+    "stderrBytes": 66847,
+    "firstSandboxLine": "[14596:9328:1003/151742.302:ERROR:sandbox\\policy\\win\\sandbox_win.cc:804] Sandbox cannot access executable %USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe. Check filesystem permissions are valid. See https://bit.ly/31yqMJR.: Access is denied. (0x5)"
+  },
+  {
+    "tag": "disable-field-trial-config-1",
+    "processes": 10,
+    "networkServicePid": 25444,
+    "serviceSandboxType": "none",
+    "sandboxWinLines": 0,
+    "networkServiceRestartLines": 0,
+    "fieldTrialTestingConfigLines": 0,
+    "errorLines": 4,
+    "stderrBytes": 60084,
+    "firstSandboxLine": ""
+  },
+  {
+    "tag": "plain-2",
+    "processes": 12,
+    "networkServicePid": 11976,
+    "serviceSandboxType": "none",
+    "sandboxWinLines": 1,
+    "networkServiceRestartLines": 1,
+    "fieldTrialTestingConfigLines": 1,
+    "errorLines": 7,
+    "stderrBytes": 66851,
+    "firstSandboxLine": "[69240:40696:1003/151807.607:ERROR:sandbox\\policy\\win\\sandbox_win.cc:804] Sandbox cannot access executable %USERPROFILE%\\AppData\\Local\\BrowserAI\\browsers\\chromium-1247\\chrome-win64\\chrome.exe. Check filesystem permissions are valid. See https://bit.ly/31yqMJR.: Access is denied. (0x5)"
+  },
+  {
+    "tag": "disable-field-trial-config-2",
+    "processes": 9,
+    "networkServicePid": 61820,
+    "serviceSandboxType": "none",
+    "sandboxWinLines": 0,
+    "networkServiceRestartLines": 0,
+    "fieldTrialTestingConfigLines": 0,
+    "errorLines": 5,
+    "stderrBytes": 60296,
+    "firstSandboxLine": ""
+  }
+]

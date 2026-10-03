@@ -1,0 +1,19 @@
+[15:35:32.273] firefox.exe: %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe (exists: True)
+[15:35:32.351] started pid 24444
+[15:36:06.611] REMOTE AGENT NEVER CAME UP (tree=7) -- falling back to the process-tree signal only
+[15:36:06.672] BEFORE: alive=True tree=7 processes devtools=False
+[15:36:06.705]   tree pid 24444 %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+[15:36:06.715]   tree pid 68744 %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+[15:36:06.765]   tree pid 54284 %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+[15:36:06.766]   tree pid 71720 %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+[15:36:06.767]   tree pid 31812 %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+[15:36:06.768]   tree pid 72160 %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+[15:36:06.769]   tree pid 22732 %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe
+[15:36:06.799] --- with the browser LIVE ---
+[15:36:06.842] live: rename firefox (the executable's own directory) : REFUSED -- IOException: Exception calling "Move" with "2" argument(s): "The process cannot access the file because it is being used by another process."
+[15:36:06.845] live: rename firefox-1553 (the revision directory) : REFUSED -- IOException: Exception calling "Move" with "2" argument(s): "Access to the path '%USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553' is denied."
+[15:36:09.354] --- CONTROL: the same two renames with the browser GONE ---
+[15:36:09.356] dead: rename firefox : MOVED
+[15:36:09.359] dead: rename firefox-1553 : MOVED
+[15:36:09.361] restored: firefox.exe present = True
+[15:36:09.419] done

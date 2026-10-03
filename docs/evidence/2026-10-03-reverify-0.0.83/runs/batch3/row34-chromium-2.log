@@ -1,0 +1,14 @@
+origin = http://127.0.0.1:65034/
+initMs = 379.898
+firstNavigateMs = 576.3987
+secondNavigateMs = 41.7069
+processes = 9
+workingSetBytes = 498319360
+idleWindowMs = 30653
+idleCpuMs = 719
+idleCpuPercentOfOneCore = 2.346
+processesAfterIdle = 9
+workingSetAfterIdleBytes = 497414144
+profileBytes = 13204699
+profileFiles = 179
+destroy = Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row34\session-chromium-2' (12.6 MiB). Its purpose was: Re-establishing the Firefox-against-Chromium cost ratios, for kb r

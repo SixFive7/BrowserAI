@@ -1,0 +1,40 @@
+# Row 5, Chromium half. Every line naming CREATE_BREAKAWAY_FROM_JOB or force_breakaway_from_job, at both tags, test and vendored files left in.
+== 152.0.7977.8
+base/process/launch.h:211:  // CREATE_BREAKAWAY_FROM_JOB flag which allows it to breakout of the parent
+base/process/launch.h:213:  bool force_breakaway_from_job_ = false;
+base/process/launch_win.cc:380:  if (options.force_breakaway_from_job_) {
+base/process/launch_win.cc:381:    flags |= CREATE_BREAKAWAY_FROM_JOB;
+chrome/browser/platform_experience/installer/installer_win.cc:154:  launch_options.force_breakaway_from_job_ = true;
+chrome/browser/updater/scheduler_impl.cc:87:  options.force_breakaway_from_job_ = true;
+chrome/installer/setup/install.cc:517:  launch_options.force_breakaway_from_job_ = true;
+chrome/installer/setup/setup_main.cc:337:  launch_options.force_breakaway_from_job_ = true;
+chrome/installer/util/google_update_util.cc:90:  launch_options.force_breakaway_from_job_ = true;
+remoting/host/win/wts_session_process_delegate.cc:494:          /*creation_flags=*/CREATE_SUSPENDED | CREATE_BREAKAWAY_FROM_JOB,
+testing/test_env.py:37:  break away if explicitly requested via CREATE_BREAKAWAY_FROM_JOB.
+third_party/rust/chromium_crates_io/vendor/windows-sys-v0_52/src/Windows/Win32/System/Threading/mod.rs:598:pub const CREATE_BREAKAWAY_FROM_JOB: PROCESS_CREATION_FLAGS = 16777216u32;
+== 155.0.8059.12
+base/process/launch.h:211:  // CREATE_BREAKAWAY_FROM_JOB flag which allows it to breakout of the parent
+base/process/launch.h:213:  bool force_breakaway_from_job_ = false;
+base/process/launch_win.cc:380:  if (options.force_breakaway_from_job_) {
+base/process/launch_win.cc:381:    flags |= CREATE_BREAKAWAY_FROM_JOB;
+chrome/app/chrome_main_delegate.cc:1270:      // restart mode, and launch the new stub with force_breakaway_from_job_
+chrome/app/chrome_main_delegate.cc:1292:                                            /*force_breakaway_from_job=*/true,
+chrome/browser/first_run/first_run_unittest.cc:374:  upgrade_util::RelaunchChromeBrowser(cl, /*force_breakaway_from_job=*/false,
+chrome/browser/first_run/upgrade_util.cc:38:                               bool force_breakaway_from_job,
+chrome/browser/first_run/upgrade_util.cc:96:                           bool force_breakaway_from_job,
+chrome/browser/first_run/upgrade_util.cc:114:                                   force_breakaway_from_job, wait_for_parent);
+chrome/browser/first_run/upgrade_util.h:32:// launched, returns false. On Windows, if `force_breakaway_from_job` is true,
+chrome/browser/first_run/upgrade_util.h:37:                           bool force_breakaway_from_job = false,
+chrome/browser/first_run/upgrade_util_win.cc:424:                               bool force_breakaway_from_job,
+chrome/browser/first_run/upgrade_util_win.cc:451:  launch_options.force_breakaway_from_job_ = force_breakaway_from_job;
+chrome/browser/lifetime/browser_shutdown.cc:303:                                        /*force_breakaway_from_job=*/false,
+chrome/browser/platform_experience/installer/installer_win.cc:154:  launch_options.force_breakaway_from_job_ = true;
+chrome/browser/updater/scheduler_impl.cc:87:  options.force_breakaway_from_job_ = true;
+chrome/browser/win/isolated_browser/SECURITY.md:115:3.  **Stub #1** spawns **Stub #2** with `options.force_breakaway_from_job_ =
+chrome/installer/setup/install.cc:517:  launch_options.force_breakaway_from_job_ = true;
+chrome/installer/setup/setup_main.cc:338:  launch_options.force_breakaway_from_job_ = true;
+chrome/installer/util/google_update_util.cc:90:  launch_options.force_breakaway_from_job_ = true;
+remoting/host/file_transfer/file_chooser_win.cc:138:  launch_options.force_breakaway_from_job_ = true;
+remoting/host/win/wts_session_process_delegate.cc:558:          /*creation_flags=*/CREATE_SUSPENDED | CREATE_BREAKAWAY_FROM_JOB,
+testing/test_env.py:28:  break away if explicitly requested via CREATE_BREAKAWAY_FROM_JOB.
+third_party/rust/chromium_crates_io/vendor/windows-sys-v0_52/src/Windows/Win32/System/Threading/mod.rs:598:pub const CREATE_BREAKAWAY_FROM_JOB: PROCESS_CREATION_FLAGS = 16777216u32;

@@ -1,0 +1,11 @@
+real registry before: 
+=== 2026-10-03T13:36:35Z BEGIN dashboard-probe
+=== 2026-10-03T13:37:33Z END dashboard-probe exit=0
+=== 2026-10-03T13:37:33Z BEGIN mcp-pause-probe
+=== 2026-10-03T13:38:24Z END mcp-pause-probe exit=0
+=== 2026-10-03T13:38:24Z BEGIN singleton-probe
+=== 2026-10-03T13:38:25Z END singleton-probe exit=0
+=== 2026-10-03T13:38:26Z BEGIN trace-viewer-probe
+=== 2026-10-03T13:38:27Z END trace-viewer-probe exit=0
+real registry after: 
+=== 2026-10-03T13:38:28Z BATCH4 COMPLETE

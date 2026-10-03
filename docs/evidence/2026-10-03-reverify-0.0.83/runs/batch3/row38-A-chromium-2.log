@@ -1,0 +1,25 @@
+origin = http://127.0.0.1:53030/
+initMs = 496.0377
+initText = Session ready. Pass session='C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row38\session-A-chromium-2' on every browser tool call.
+  directory: C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row38\session-A-chromium-2
+  browser: chromium
+  headed: false
+  profile: C:\Source\SixFive7\Bro
+navigate1Ms = 607.5204
+wrote = ### Result
+"wrote:sw-ok"
+before = ### Result
+"{\"cookie\":\"cookie-value\",\"local\":\"local-value\",\"session\":\"session-value\",\"idb\":\"idb-value\",\"cache\":\"cache-value\",\"serviceWorkers\":1}"
+nodeChildren = [{"pid":72036,"exe":"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"},{"pid":13572,"exe":"C:\\Source\\SixFive7\\BrowserAI\\.work\\wt\\stale\\src\\BrowserAI\\bin\\Release\\net10.0-windows\\win-x64\\publish\\payload\\node\\node.exe"}]
+childStates = [{"pid":72036,"state":"GONE"},{"pid":13572,"state":"GONE"}]
+serverAExited = GONE
+resumeMs = 389.2446
+resume = NOTE: the first browser call after this starts the browser, and its own session restore reopens the tabs this profile last recorded, if any. Refs from earlier snapshots do not carry over: call browser_tabs and browser_snapshot before you act, because the selected tab may not be the one you left.
+NOTE: you are driving a session this connection did not create; it was opened 2026-10-03T15:31:43.8112128+02:00. Another agent may be using it.
+
+Session ready. Pass session='C:\Source\SixFive7\BrowserAI\
+navigate2Ms = 425.6355
+after = ### Result
+"{\"cookie\":\"cookie-value\",\"local\":\"local-value\",\"session\":\"session-value\",\"idb\":\"idb-value\",\"cache\":\"cache-value\",\"serviceWorkers\":1}"
+destroy = Destroyed the session at 'C:\Source\SixFive7\BrowserAI\.work\stale-scratch\out\row38\session-A-chromium-2' (12.5 MiB). Its purpose was: Re-establishing the resume cost and what a resume preserves, for kb re-verification row 38 on 2026-09-16.
+You said it was being destroyed because: The probe is finished; leave nothing in the session index.

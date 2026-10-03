@@ -1,0 +1,25 @@
+run	launches	lists	calls	list_changed_sent	client_refresh_lines	first_req_with_real_tool	real_served_by	placeholder_still_offered_after_real	no_such_tool_errors	mcp_status	inits	exit	waitTimeout
+PR-cli-r1	1	L1:1	L1:update_in_flight	-	0	-	-	-	0	-	update_in_flight	0	-
+PR-cli-r2	1	L1:1	L1:update_in_flight	-	0	-	-	-	0	-	update_in_flight	0	-
+PR-cli-r3	1	L1:1	L1:update_in_flight	-	0	-	-	-	0	-	update_in_flight	0	-
+PR-vsc287-r1	1	L1:1	L1:update_in_flight	-	0	-	-	-	0	-	update_in_flight	0	-
+PR-vsc287-r2	1	L1:1	L1:update_in_flight	-	0	-	-	-	0	-	update_in_flight	0	-
+PR-vsc287-r3	1	L1:1	L1:update_in_flight	-	0	-	-	-	0	-	update_in_flight	0	-
+SAts-cli-r1	1	L1:2	L1:update_in_flight+browserai_list	L1@13:58:03	1	5	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SAts-cli-r2	1	L1:2	L1:update_in_flight+browserai_list	L1@13:58:10	1	5	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SAts-cli-r3	1	L1:2	L1:update_in_flight+browserai_list	L1@13:58:17	1	5	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SAts-vsc287-r1	1	L1:2	L1:update_in_flight+browserai_list	L1@13:58:24	1	5	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SAts-vsc287-r2	1	L1:2	L1:update_in_flight+browserai_list	L1@13:58:31	1	5	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SAts-vsc287-r3	1	L1:2	L1:update_in_flight+browserai_list	L1@13:58:38	1	5	L1	yes	2	pending: | connected:browserai_init+browserai_list	browserai_init+browserai_list	0	-
+SBts-cli-r1	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:58:55	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SBts-cli-r2	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:59:14	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SBts-cli-r3	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:59:32	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SBts-vsc287-r1	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@13:59:50	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SBts-vsc287-r2	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@14:00:11	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SBts-vsc287-r3	2	L1:1,L2:0	L1:update_in_flight L2:update_in_flight+update_in_flight	L2@14:00:30	0	-	-	-	0	connected:update_in_flight | connected:update_in_flight	update_in_flight | update_in_flight	0	-
+SR-cli-r1	1	L1:1	L1:update_in_flight+update_in_flight	-	0	-	-	-	0	connected:update_in_flight	update_in_flight	0	-
+SR-cli-r2	1	L1:1	L1:update_in_flight+update_in_flight	-	0	-	-	-	0	connected:update_in_flight	update_in_flight	0	-
+SR-cli-r3	1	L1:1	L1:update_in_flight+update_in_flight	-	0	-	-	-	0	connected:update_in_flight	update_in_flight	0	-
+SR-vsc287-r1	1	L1:1	L1:update_in_flight+update_in_flight	-	0	-	-	-	0	connected:update_in_flight	update_in_flight	0	-
+SR-vsc287-r2	1	L1:1	L1:update_in_flight+update_in_flight	-	0	-	-	-	0	connected:update_in_flight	update_in_flight	0	-
+SR-vsc287-r3	1	L1:1	L1:update_in_flight+update_in_flight	-	0	-	-	-	0	connected:update_in_flight	update_in_flight	0	-

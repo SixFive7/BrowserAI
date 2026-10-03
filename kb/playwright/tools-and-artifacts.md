@@ -703,6 +703,15 @@ the WebP pair straddles the boundary -- **the 16,383 arm is the positive control
 and it is not optional**, because a zero-byte result at one height alone cannot
 tell a format limit from a broken rig. `[FLOATS]`
 
+> ✅ *Verified 2026-10-03 @ `@playwright/mcp` 0.0.83 / `playwright-core`
+> 1.64.0-alpha-1790635538000, Chrome for Testing 155.0.8059.12 (`chromium-1247`),
+> the raw child driven over stdio, headless.* **The same four lines, byte for
+> byte**: 16,383 px as `webp` gave a 12,284-byte 1280×16383 image inline and on
+> disk, 16,384 px as `webp` gave **0** bytes in both with `isError: false` and
+> `mimeType` `image/webp`, and `png` and `jpeg` at 16,384 px gave 137,816 and
+> 768,991 bytes. So the Chromium change this entry waits for is not in 155; the
+> run is in [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 ## Every launched browser leaves a descriptor in `%LOCALAPPDATA%\ms-playwright\b\`, and nothing reaps it -- measured 2026-09-16
 
 **`playwright-core` writes one JSON file per launched browser into a cache
@@ -1017,6 +1026,26 @@ since 2026-07-23 (#41711), read 2026-10-01 at `82db81d`.
 **What was decided on the strength of this** is
 [the dashboard row in DECISIONS](../../DECISIONS.md#processes-browsers-and-session-modes):
 BrowserAI does not expose, host or proxy it.
+
+> ✅ *Verified 2026-10-03 @ `@playwright/mcp` 0.0.83 / `playwright-core`
+> 1.64.0-alpha-1790635538000 / node v24.21.0 / headless Chromium 155.0.8059.12,
+> all four rigs as stored, with the registry and the sockets directory in
+> scratch.* **Every finding the four rigs measure held**, here and in the
+> subsections that cite them: E0 to E14, E20 to E25, the singleton's five lines
+> and the trace viewer's six.
+> The numbers that moved: the first list arrived **80 ms** after the websocket
+> opened (previously 67), the first screencast frame **18 ms** after `selectTab`
+> (previously 25), `closeSession` disconnected the owner in **27 ms** (previously
+> 21), and the parked `browser_navigate` answered **15,071 ms** after it was sent
+> (previously 15,053). The owner's trace again held three actions, all three the
+> owner's own. The real registry held no names before or after. ⚠️ **The `:line`
+> citations in this section are the 0.0.82 bundle's.** At 0.0.83 the dashboard
+> code sits about 580 lines further down (`connectToBrowserAcrossVersions` at
+> :75330, `wrapInternal` at :76522, `faviconUrl` at :76534, `parseOpenArgs` at
+> :77537), `createBeforeActionTraceEvent` at :26683 and the trace viewer's
+> coding-agent check at :57768; only the last was read again for what it says.
+> The four logs, the trace and the screenshots:
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 ### Opening the page lists every bound browser, connects to it and runs script in its pages
 
@@ -2042,3 +2071,17 @@ than it did** -- a passthrough-fidelity assertion still needs a canned blob
 from a fake child, not because a live capture is unstable but because its
 stability is a property of the page and the browser build, and a test that
 depends on both is asserting the wrong thing. `[FLOATS]`
+
+> ✅ *Verified 2026-10-03 @ chromium 1247 / chromium-headless-shell 1247
+> (155.0.8059.12), and one expectation corrected (previously, in
+> [row 141](../re-verification.md), "a new Chromium changes them by
+> construction").* Six captures across two browser processes gave one SHA-256
+> and one byte count, `fullPage` included, and the one-character change moved
+> the hash. ⭐ **The bytes did not move across the roll**: the full build's
+> capture is the same **3,556 bytes and the same SHA-256** (`df2be9a4...`) at
+> 155.0.8059.12 as at 154.0.8037.0, and the headless shell's is the same 3,462
+> bytes and the same hash (`2a6c23a3...`), across two browser versions whose
+> `chrome.dll` differ. So a browser roll *can* change these bytes and this one did
+> not; the rule
+> above does not depend on which. The captures and hashes:
+> [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).

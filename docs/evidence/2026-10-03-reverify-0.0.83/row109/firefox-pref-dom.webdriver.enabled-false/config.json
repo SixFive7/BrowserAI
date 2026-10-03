@@ -1,0 +1,13 @@
+{
+  "browser": {
+    "browserName": "firefox",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-pref-dom.webdriver.enabled-false\\profile",
+    "launchOptions": {
+      "headless": true,
+      "firefoxUserPrefs": {
+        "dom.webdriver.enabled": false
+      }
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\firefox-pref-dom.webdriver.enabled-false\\output"
+}

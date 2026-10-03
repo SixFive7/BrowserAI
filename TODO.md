@@ -162,11 +162,15 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       processes only, because the night's rules forbade a global install. Every
       gate needs a `vpk` 1.2.161 until this is done:
       `dotnet tool update -g vpk --version 1.2.161`, then delete the copy.
-- [ ] **Re-take the rows the 0.0.83 roll left `[STALE]`** in
-      [the re-verification index](kb/re-verification.md): 6, 22, 32, 34, 38, 95,
-      103, 109, 115, 121's Chromium half, 122, 127's window time, 140, 141,
-      152 and 163 to 166. Each carries its reason in place; three of them put a
-      window on the screen and need a person at the desk.
+- [ ] **Re-take the headed half of row 152**, the one part of the rows the 0.0.83
+      roll left `[STALE]` in [the re-verification index](kb/re-verification.md)
+      that is still owed: what `--enable-automation` changes that a page or a
+      server can see, through the product funnel with a window. It puts a browser
+      on the screen and needs a person at the desk. *Narrowed 2026-10-03
+      (previously "rows 6, 22, 32, 34, 38, 95, 103, 109, 115, 121's Chromium half,
+      122, 127's window time, 140, 141, 152 and 163 to 166"):* every other row is
+      re-taken, and rows 5 and 66 are stamped with it, from
+      [`docs/evidence/2026-10-03-reverify-0.0.83`](docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 ### Research that exists only under `.work`, owed to `docs/evidence/` and `kb/` before the session closes
 

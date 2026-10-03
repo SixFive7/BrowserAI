@@ -1,0 +1,14 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\chromium-contextOptions-userAgent\\profile",
+    "launchOptions": {
+      "headless": true,
+      "channel": "chrome-for-testing"
+    },
+    "contextOptions": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+    }
+  },
+  "outputDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\out\\row109\\chromium-contextOptions-userAgent\\output"
+}

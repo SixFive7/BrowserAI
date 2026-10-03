@@ -1,0 +1,38 @@
+
+HKEY_CURRENT_USER\Software\Mozilla\Firefox\Launcher
+    C:\Program Files\Mozilla Firefox\firefox.exe|Image    REG_DWORD    0x6ab4f782
+    C:\Program Files\Mozilla Firefox\firefox.exe|Blocklist    REG_SZ    %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-AC3F455D0E724E7A
+    C:\Program Files\Mozilla Firefox\firefox.exe|Telemetry    REG_DWORD    0x1
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Image    REG_DWORD    0x6a626f37
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Blocklist    REG_SZ    %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-79B105BEED18A595
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Launcher    REG_QWORD    0x2900cec8ce6
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Browser    REG_QWORD    0x2900cf0ec1d
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1539\firefox\firefox.exe|Telemetry    REG_DWORD    0x0
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Image    REG_DWORD    0x6a91efe3
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Blocklist    REG_SZ    %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-1CF6719242D0B0AD
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Launcher    REG_QWORD    0x8702c49044
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Browser    REG_QWORD    0x8702c98960
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1542\firefox\firefox.exe|Telemetry    REG_DWORD    0x0
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Image    REG_DWORD    0x6aa0650f
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Blocklist    REG_SZ    %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-84F66AD0E7340473
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Launcher    REG_QWORD    0x10b02cd929e
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Browser    REG_QWORD    0x10b02d0c3f9
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1544\firefox\firefox.exe|Telemetry    REG_DWORD    0x0
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Image    REG_DWORD    0x6aaa7373
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Blocklist    REG_SZ    %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-7D88A43D2CFC22EF
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Launcher    REG_QWORD    0x44042be4986
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Browser    REG_QWORD    0x44042c0f16c
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1548\firefox\firefox.exe|Telemetry    REG_DWORD    0x0
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Image    REG_DWORD    0x6aac56e1
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Blocklist    REG_SZ    %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-CA307ED5C781B732
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Launcher    REG_QWORD    0x46362a667c1
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Browser    REG_QWORD    0x46362e6d06f
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1549\firefox\firefox.exe|Telemetry    REG_DWORD    0x0
+    C:\Program Files\Mozilla Firefox\firefox.exe|Launcher    REG_QWORD    0x492b24c1f
+    C:\Program Files\Mozilla Firefox\firefox.exe|Browser    REG_QWORD    0x492b4634b
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Image    REG_DWORD    0x6ab96526
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Blocklist    REG_SZ    %USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-256E5B3595FE7C95
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Launcher    REG_QWORD    0x192a9bfcc76
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Browser    REG_QWORD    0x192a9c2e301
+    %USERPROFILE%\AppData\Local\BrowserAI\browsers\firefox-1553\firefox\firefox.exe|Telemetry    REG_DWORD    0x0
+

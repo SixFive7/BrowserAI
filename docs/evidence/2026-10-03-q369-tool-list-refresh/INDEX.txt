@@ -1,0 +1,67 @@
+q369 -- can a placeholder tool list ("update_in_flight") plus notifications/tools/list_changed carry a
+client across a BrowserAI update? Measured 2026-10-03, all times UTC. Everything here is scratch
+(gitignored); nothing under docs\ was written. Never BrowserAI itself: a stub MCP server.
+
+BINARIES (copies; sha256 in isolation\binaries.tsv)
+  bin\cli\claude.exe         Claude Code 2.1.288 (copied from .work\client-exit\bin\cli; byte-identical to
+                             %USERPROFILE%\.local\bin\claude.exe AND to the VS Code extension 2.1.288's native-binary,
+                             which the extension updated to before this lane started)
+  bin\vscode287\claude.exe   Claude Code 2.1.287 (the VS Code extension's binary of the morning; copy from client-exit)
+  bin\codex155\codex.exe     codex-cli 0.155.0-alpha.9.2 (copy from client-exit)
+  bin\codex160\...\codex.exe codex-cli 0.160.0 (npm, copy from client-exit)
+
+RIG (rig\)
+  phserver.js     the stub MCP server. Answers tools/list with ONE tool, update_in_flight, while "updating";
+                  the real list (browserai_init, browserai_list) after. Declares tools.listChanged or not
+                  (PH_CAP). Becomes real on a file (PH_DONE_FILE) or a timer (PH_DONE_AFTER_CALL_MS), and
+                  can then send list_changed (PH_NOTIFY_ON_DONE). Per-launch modes (PH_MODES), a self-kill
+                  after the Nth call or on initialize (TerminateProcess, exit 1, as an apply's kill pass
+                  ends a server; PH_KILL_MODE=clean is the exit-0 control), and list_changed right after
+                  notifications/initialized from chosen launches (PH_NOTIFY_AFTER_INIT[_DELAY_MS]).
+                  Writes <run>\ph.launches.log and <run>\ph.wire.jsonl (every frame, with launch and pid).
+  ccmodel.js      scripted Anthropic Messages API stub; stateless policy re-read from a per-run policy
+                  file; captures every request body (model.requests.jsonl) and a digest (model.seen.jsonl:
+                  which browserai tools were offered, what the "model" did, every browserai result).
+                  Loads deferred tools through ToolSearch when tool search is on.
+  cxmodel.js      the same for the OpenAI Responses API (Codex), namespace-aware.
+  ExitRig\        copy of .work\client-exit's harness, plus steps touch / rm / waitFile / snap and a raw
+                  pseudoconsole capture (pty-raw.bin) for screen rendering. Built into rig\bin.
+  appdrv.js       copy of .work\client-behaviour's app-server driver.
+  gen.js          Claude Code batches: P = claude -p, S = stream-json with the VS Code extension's env
+                  (CLAUDE_CODE_ENTRYPOINT=claude-vscode, MCP_CONNECTION_NONBLOCKING=true, ...) and its
+                  control requests (mcp_status, mcp_reconnect, mcp_toggle, as extension.js sends them).
+  gen-tui.js      Claude Code interactive UI in a pseudoconsole (no window), /mcp driven by keystrokes.
+  cx-batch.js     Codex batches: codex exec (+ exec resume --last) and codex app-server, clean env.
+  summarize.py / table.py / cxtable.py / render.py (pyte, installed into pylib\) / offsets.py / g.py
+
+RUNS (runs\<batch>\<scenario>-<client>-r<n>\)
+  ccP    P  PA PA0 PB PBd                         cli x3                    12
+  ccS    S  SA SA0 SB SC SCt SCd                  cli, vsc287 x3            36
+  ccS2   S  SAts SBts SR ; P PR                   cli, vsc287 x3            24
+  ccKp2  P  PBr ; ccKp P PK (PBr there is void)   cli x3                     6
+  ccKs   S  SBr SK                                cli, vsc287 x3            12
+  tui    TUI TA TB TC                             cli x3                     9
+  tui2   TUI TBclean                              cli x3                     3
+  tui3   TUI TR                                   cli x3                     3
+  tuiK   TUI TBr TK                               cli x3                     6
+  cx     exec XA XB ; app-server AAr AAs AAn AB   155, 160 x3               36
+  cx2    app-server AAq                           155, 160 x3                6
+  cxK    exec XK ; app-server AK                  155, 160 x3               12
+  smoke1..4, tuiX, tuiS, cxsmoke: rig shake-down, not counted (smoke2's SC/SCt hit a stub race
+  fixed before ccS: a launch that started after the update must be real from its first frame).
+
+RESULTS
+  runs\<batch>\table.tsv (Claude Code), runs\cx*\table.txt (Codex), runs\tui*\*\screens.txt (rendered
+  screens), runs\model-texts.txt (the exact model-facing texts), REPORT.txt.
+
+CODE READ
+  code\offsets-claude.tsv           byte offsets in both claude.exe copies
+  code\chunk-*.js, code\cli-2.1.288-region-195M-245M.txt   source slices of the 2.1.288 bundle (read only)
+  code\codex-0.160.0                openai/codex tag rust-v0.160.0 (a956835d020762cb2b570053af06f643a11c0ecc), sparse
+  ..\client-exit\code\codex-src     openai/codex tag rust-v0.155.0-alpha.9.2 (4607249e430dac1c961df4dc615beae88e33cec8)
+
+ISOLATION
+  isolation\real-config-hashes.tsv (BEFORE and AFTER), isolation\*.codex-tree.*.txt, isolation\binaries.tsv.
+  Every client ran with CLAUDE_CONFIG_DIR = <run>\cfg (Claude) and CODEX_HOME = <run>\home (Codex),
+  DISABLE_AUTOUPDATER=1, a local API stub, an allowlisted environment, cwd .work\q369\proj (its own
+  git root), --strict-mcp-config for Claude Code.

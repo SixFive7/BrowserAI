@@ -242,6 +242,17 @@ is false**: measured twice, the client re-listed in **1-2 ms** and the model
 called a tool that appeared only in the second list. This does **not** unlock a
 per-connection tool list -- SEP-2567 stands -- but the cited issues need re-dating.
 
+> ⚠️ *Narrowed 2026-10-03 @ Claude Code 2.1.288 by addition.* **The handler is
+> registered only for a server that declares `capabilities.tools.listChanged`.**
+> Read in the 2.1.288 bundle at all three places Claude Code registers one, the
+> headless and SDK client, the terminal UI and the device bridge, each gated on
+> that capability; and measured: against a server answering `"tools":{}`, which is
+> what BrowserAI declares, the notification was ignored 9 of 9 on 2026-10-03,
+> through `claude -p` and the stream-json transport, and 3 of 3 on 2026-09-25;
+> with `"listChanged":true` declared it re-listed at once, 3 of 3 and 6 of 6. So a
+> re-list is a property of the pair, and this product's half of it is not there.
+> [Evidence](../../docs/evidence/2026-10-03-q369-tool-list-refresh/README.md).
+
 ## Registering BrowserAI with the client
 
 Measured 2026-08-16 @ **Claude Code 2.1.233** (`claude.exe`, native install at
@@ -658,6 +669,32 @@ fed is [Q254 and Q261](../../DECISIONS.md#the-update-lane-the-sessions-that-hold
 
 ### Claude Code re-launches a dead server transparently, and never re-lists its tools
 
+> ⚠️ *Corrected 2026-10-03 @ Claude Code 2.1.288 by addition (previously the
+> heading above and its first sentence, read as true of Claude Code as a
+> whole).* **It holds for `claude -p` and for the stream-json transport the VS
+> Code extension drives, and NOT for the terminal UI.** Every run below was `-p`.
+> Driven in a pseudoconsole with no window, the terminal UI never started a dead
+> stdio server again: the server was shown as failed and the next call was
+> refused by Claude Code itself, 9 of 9, whether the server ended with
+> `TerminateProcess` and exit code 1, with a clean exit 0, or holding the real
+> tool list; `/mcp`, the server, Reconnect brought it back every time. Automatic
+> reconnection after a close is skipped for stdio in the client's own code (read
+> at 2.1.288), and the transparent re-launch is the headless client's
+> `ensureConnectedClient`. `-p` and the stream-json transport re-launched on the
+> next call, 6 of 6 and 12 of 12, and never re-listed, as below.
+> [Evidence](../../docs/evidence/2026-10-03-q369-tool-list-refresh/README.md).
+>
+> ⚠️ *Added 2026-10-03 @ Claude Code 2.1.288 by addition.* **These runs had
+> tool search off, and a first-party session has it on.** A custom
+> `ANTHROPIC_BASE_URL` turns it off, and the batch's own debug logs say so:
+> `[ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:<port> is not a first-party Anthropic host`.
+> So the model here was handed every
+> tool's full definition from the first turn, where a session against
+> Anthropic's own API is handed only the deferred tools' names until a ToolSearch
+> call loads them ([the client](#the-client-claude-code)). What crossed the pipe
+> and what the client did hold either way; what the model was shown before it
+> searched does not.
+
 **A stdio server that exits cleanly is started again on the next tool call, 3/3 in
 every scenario measured**: inside one session registered with `--mcp-config`,
 inside one registered with `claude mcp add --scope user`, after an idle exit that
@@ -677,6 +714,13 @@ model actually saw.
 **It does honour `notifications/tools/list_changed`, 3/3**, and says so in its own
 `--debug-file`: *Received tools/list\_changed notification, refreshing tools*. One
 frame is enough; nothing else measured moves that cached list.
+
+> ⚠️ *Narrowed 2026-10-03 @ Claude Code 2.1.288 by addition.* **The dummy server
+> here declared `capabilities.tools.listChanged`** (`rig/server.js`, line 86 of
+> the batch), and that is what the 3/3 rests on. Against `"tools":{}`, which is
+> what BrowserAI declares, Claude Code ignored the notification 9 of 9 on
+> 2026-10-03 and 3 of 3 on 2026-09-25; see
+> [the narrowing above](#the-client-claude-code).
 
 ⚠️ **A failed re-launch is sticky for the rest of the session.** When the server
 cannot start, the tool result is an error reading *MCP server "probe" is not
@@ -818,6 +862,15 @@ within 0.57 s, and a direct tool call answered a JSON-RPC error; a
 **Neither client showed the model the sentence**: it is in 0 of the captured
 request bodies. Only Codex's host sees it, in the startup status.
 
+⚠️ *Added 2026-10-03 @ Claude Code 2.1.288 by addition.* **The Claude Code runs
+here had tool search off, and a first-party session has it on.** A custom
+`ANTHROPIC_BASE_URL` turns it off, and the batch's own Claude Code debug logs
+carry `[ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:<port> is not a first-party Anthropic host`.
+So what the model was offered in each turn is the full-definition list, where a
+session against Anthropic's own API is offered the deferred tools' names until a
+ToolSearch call loads them ([the client](#the-client-claude-code)). The wire, the
+retries and what each client did hold either way.
+
 **The shapes measured beside it, all with the stand-in, 3 of 3 each:**
 
 | What the updating server does | Claude Code | Codex |
@@ -856,6 +909,17 @@ Captures:
 ⚠️ **The section above establishes the DEFECT; this one establishes what the
 answer to it actually achieves.** They are separate measurements against separate
 servers: that one drove a dummy server, this one drives the product.
+
+⚠️ *Added 2026-10-03 @ Claude Code 2.1.288 by addition.* **The Claude Code runs
+here had tool search off, and a first-party session has it on.** A custom
+`ANTHROPIC_BASE_URL` turns it off, and the batch's own debug logs carry
+`[ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:<port> is not a first-party Anthropic host`.
+So *"the model was offered 79 tool definitions on every turn"* below is a
+property of that setting: a session against Anthropic's own API is offered the
+deferred tools' names until a ToolSearch call loads them
+([the client](#the-client-claude-code)). The frames, the refusal and the retry
+are the wire's and hold either way; how the refusal reads to a model that had to
+search for the tool first was not measured.
 
 ### The refusal fires on exactly the connection it was designed for, 3/3
 

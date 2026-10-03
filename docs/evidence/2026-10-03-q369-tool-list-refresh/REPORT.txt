@@ -1,0 +1,127 @@
+# Q369 measured: a placeholder tool list during an update (lane q369, 2026-10-03, 13:25Z to 14:12Z)
+
+Stub MCP server, local API stubs, scratch client homes; never BrowserAI. 165 counted runs, every arm at least 3 times. Scratch: `C:\Source\SixFive7\BrowserAI\.work\q369\` (read `INDEX.txt` first). Per-arm rollup: `runs\summary-by-arm.tsv`. Exact model-facing texts: `runs\model-texts.txt`. Rendered terminal screens: `runs\tui*\<run>\screens.txt`.
+
+## The plain answer
+
+**Claude Code (CLI 2.1.288 and the VS Code binary 2.1.287, identical in every arm): it works, on two conditions.** BrowserAI must declare `capabilities.tools.listChanged: true`; today it answers `"tools":{}` (`BrowserProxy.cs:340-346` on origin/next), and then Claude Code ignores the notification (9 of 9). And the process that handed out the placeholder must be the one that sends the notification. Then Claude Code re-lists at once in `-p`, in the VS Code transport and in the terminal UI (18 of 18), and the model can call a real tool on its next request, inside the same turn in `-p`. Two things stay for the rest of the session: the placeholder tool (still offered to the model; calling it gets Claude Code's own "No such tool available ... does not offer this tool here") and the placeholder's server instructions (87 of 87 sessions that started on a placeholder).
+
+**If the update ends that process**, which Velopack does to every server that started before the swap, the session keeps the placeholder. `-p` and VS Code start the server again on the next call, but never re-list a server they re-launch that way, and a list_changed the re-launched server sends right after `initialize`, or 1.5 s later, changes nothing (0 of 18). The terminal UI does not re-launch at all: it lists the server as failed and refuses the call itself (9 of 9). **A person** then has to reconnect: terminal `/mcp`, browserai, Reconnect (real tools 18 of 18); VS Code's "MCP servers" dialog, Reconnect, or Disable then enable (24 of 24, driven through the control requests the extension sends); or a new conversation. **A model cannot**: 2.1.288 contains a `RefreshMcpTools` tool, but it was offered in none of 27 sessions with the default tools on.
+
+**Codex (0.155.0-alpha.9.2 and 0.160.0, exec and app-server): no.** It ignores list_changed in every arm (30 of 30) and keeps the list a thread's connection took when it started. Only a new connection replaces it: a new thread (6/6), a working-directory change (TUI `/cd`, app-server `thread/settings/update`, 6/6), or a new process (`exec resume --last`, 18/18). `config/mcpServer/reload` leaves a live placeholder in place (6/6) and helps only once the process is dead or failed (12/12). A model cannot refresh.
+
+**For the case Q369 is about**, a server started during an apply and killed by it, the placeholder leaves Claude Code `-p` and VS Code sessions worse off than today's real list: with the real list the same kill heals by itself on the next call (PBr 3/3, SBr 6/6).
+
+## Table: client, version and arm against what happened
+
+| Client, version, how driven | Arm a: placeholder, then list_changed from the same process | Arm b: process killed, re-launched; list_changed right after `initialize` | Arm c: refresh a person or a model can trigger |
+|---|---|---|---|
+| Claude Code 2.1.288, `claude -p` | capability declared: re-listed 3/3, real tool called later in the same turn 3/3; capability absent: ignored 3/3 | re-launched on the next call 6/6; no `tools/list` to it 6/6 (notification at 0 ms and at 1.5 s after `notifications/initialized`); placeholder kept | none inside one `-p` process. Model: `RefreshMcpTools` not offered 0/6 |
+| Claude Code 2.1.288 and VS Code binary 2.1.287, stream-json as the extension drives it | re-listed 6/6, and 6/6 more with tool search on; ignored without the capability 6/6 | re-launched on the next call 6/6, never on its own in 10 s idle; no `tools/list` 6/6, and 6/6 more with tool search on | `mcp_reconnect` (dialog Reconnect): live server 6/6, dead 6/6, failed start 6/6; `mcp_toggle` off then on 6/6; each re-lists. Model: 0/12 |
+| Claude Code 2.1.288, terminal UI (pseudoconsole) | re-listed 3/3; `/mcp` shows "1 tool" then "2 tools"; nothing on screen announces it | no re-launch: server listed as failed, the call refused by Claude Code 9/9 (TerminateProcess 3, clean exit 3, real list 3) | `/mcp`, browserai, Reconnect: real tools 18/18; the reconnected server's own list_changed honoured 4/9, a race that does not matter because Reconnect lists. Model: 0/3 |
+| Codex 0.155.0-alpha.9.2 and 0.160.0, `codex exec` | ignored 6/6 | no re-launch: "Transport closed" 6/6 | `exec resume --last` in a new process: real list 18/18 |
+| Codex, both, `codex app-server` | ignored 24/24 | "Transport closed" 6/6 until a refresh | reload with a live placeholder: kept 6/6; reload after death or a failed start: real list 12/12; cwd change 6/6; new thread 6/6. Model: none |
+
+## Evidence, and what I read in the code
+
+**Claude Code, measured** (run folders under `runs\`; every count is out of the runs named):
+- Arm a: `ccP\PA-*`, `ccS\SA-*`, `ccS2\SAts-*`, `tui\TA-*`. The wire log (`ph.wire.jsonl`) has a second `tools/list` right after the notification, and the debug log says "Received tools/list_changed notification, refreshing tools". Without the capability: `ccP\PA0-*`, `ccS\SA0-*`, one `tools/list` only.
+- Arm b: `ccP\PB-*`, `ccP\PBd-*`, `ccS\SB-*`, `ccS2\SBts-*`. Launch 2 receives `initialize`, `notifications/initialized`, `tools/call` and no `tools/list`; `mcp_status` keeps reporting `update_in_flight`.
+- Terminal death: `tui\TB-*`, `tui2\TBclean-*`, `tuiK\TBr-*`. Screens show the server failed and the turn's refusal "No such tool available: mcp__browserai__update_in_flight. Its MCP server 'browserai' has disconnected. Continue without this tool; it becomes callable again only if the server reconnects."; the debug log reports the server's tool "not found in render-time tools" 32 to 92 ms after the kill (9/9).
+- Reconnects: `ccS\SC-*`, `SCd-*`, `SCt-*`, `ccKs\SK-*`; `tui\TC-*`, `tui3\TR-*`, the TB family, `tuiK\TK-*`.
+- `RefreshMcpTools` absent: tool names in `model.seen.jsonl` of `ccS2\PR-*`, `ccS2\SR-*`, `tui3\TR-*`, `ccS2\SAts-*`, `ccS2\SBts-*`.
+- Kill before the handshake finished (Q369's hazard): `ccKp\PK-*` 3/3 failed, the model given no BrowserAI tool, no second launch; `ccKs\SK-*` 6/6 failed until `mcp_reconnect`; `tuiK\TK-*` 3/3 failed until Reconnect.
+- Real-list controls: `ccKp2\PBr-*` 3/3 and `ccKs\SBr-*` 6/6 re-launched on the next call and served with no `tools/list`; `tuiK\TBr-*` 3/3 failed until Reconnect.
+
+**Claude Code, read** (byte offsets in `bin\cli\claude.exe`, 2.1.288; the 2.1.287 offsets are in `code\offsets-claude.tsv`):
+- Three list_changed registration sites, each gated on `capabilities.tools.listChanged`: headless and SDK at 230358941, terminal UI at 234248497, device bridge at 227837337.
+- The headless registration runs over the app-state client list and remembers client objects in a WeakSet: `Xn=gco({stores:bn,...})` at 230893616, re-run when `w().mcp.clients` changes at 230893933. The handler is set on one client object (`setNotificationHandler`, 238881241). The transparent re-launch is `ensureConnectedClient` (238881502): as read, it dials through the memoised connect and does not put the new client into app state, so the re-launched connection gets no handler. Consistent with that, `mcp_status` after the re-launch still reports the first server's `serverInfo` (placeholder version) and tool list (SB 6/6). A reconnect goes through `reconnectMcpServerImpl` and app state, which is why a reconnected server is re-listed and its notification can be honoured.
+- Automatic reconnect after a close only for non-stdio transports: `c.type!=="stdio"&&c.type!=="sdk"` at 230356739.
+- Tools once shown to the model stay in its list (`recordedOnly`, 211029270); a call to one the server no longer offers gets the text at 213413597, a call to a disconnected server the text at 213412614.
+- `mcp_reconnect`: "Reconnects a disconnected or failed MCP server." at 205772031. The VS Code extension 2.1.288 sends it from its MCP servers dialog (`extension.js`: `reconnectMcpServer` sends `{subtype:"mcp_reconnect"}`; the webview registers the action "MCP servers", "Configure Model Context Protocol servers"; read, not opened).
+- `RefreshMcpTools` at 211477670 ("this tool never dials or re-dials connections"), its `isEnabled` gated on the MCP client accessor at 219741159; also in 2.1.287 (210403904). What keeps it out of the measured sessions was not found.
+
+**Codex, read** at the tag run: `rust-v0.155.0-alpha.9.2` (4607249e430dac1c961df4dc615beae88e33cec8, `.work\client-exit\code\codex-src`) and `rust-v0.160.0` (a956835d020762cb2b570053af06f643a11c0ecc, `.work\q369\code\codex-0.160.0`):
+- `on_tool_list_changed` only logs "MCP server tool list changed": `rmcp-client/src/logging_client_handler.rs:86-88`, both tags.
+- Tools are listed once, when a connection starts (trigger "initial"): `codex-mcp/src/rmcp_client.rs:1008-1016` (0.155), `:1019-1028` (0.160), kept in the client's `tool_catalog` (`:1059-1066`, 0.160).
+- A refresh keeps any live connection whose configuration is unchanged: `reusable_client`, `codex-mcp/src/connection_manager.rs:93-107` (0.155) and `:94-129` (0.160), applied at `:480` and `:504-529`. Reload is `app-server/src/mcp_refresh.rs:9-29`, then `Session::refresh_mcp_config` (`core/src/session/mod.rs:2126` at 0.155, `:2142` at 0.160), which marks the runtime dirty and rebuilds with the previous connections offered for reuse.
+- A catalog refresh exists only for the Codex Apps server: `codex-mcp/src/connection_manager/tool_catalog.rs:563-658` (0.160).
+- `mcpServerStatus/list`: with `threadId` and `serverName`, 0.160 reads the thread's own connection (`app-server/src/request_processors/mcp_processor.rs:299-306`); otherwise it collects a fresh snapshot (`:334`), which starts a throwaway server. 0.155 always collects (`mcp_processor.rs:336`).
+
+## What the model receives, and how each client shows it
+
+The "model" is a script, so what a real model would do with these texts is not measured. What it would receive is captured byte for byte (`runs\model-texts.txt`):
+- **Claude Code tool entry**: name `mcp__browserai__update_in_flight`, the server's description unchanged, `input_schema` `{"type":"object","properties":{},"additionalProperties":false}`.
+- **Claude Code server instructions**: in a role `system` message, "# MCP Server Instructions / The following MCP servers have provided instructions for how to use their tools and resources: / ## browserai / <instructions>".
+- **Claude Code call result**: `content:[{"type":"text","text":"<the server's text>"}]`; a server `isError` result arrives as the plain string with `is_error: true`, no wrapper. After a refresh, a call to the placeholder: `<tool_use_error>Error: No such tool available: mcp__browserai__update_in_flight. Its MCP server 'browserai' is connected but does not offer this tool here. Continue without it.</tool_use_error>`.
+- **Claude Code with tool search on** (the first-party default; a custom `ANTHROPIC_BASE_URL` turns it off, so those runs forced `ENABLE_TOOL_SEARCH=true`): the model sees only the name in a deferred-tools list until it calls ToolSearch. After the refresh it is told "The following deferred tools are now available via ToolSearch ... mcp__browserai__browserai_init, mcp__browserai__browserai_list" and "The following deferred tools are no longer available (their MCP server disconnected). Do not search for them ...: mcp__browserai__update_in_flight". So up front the name and the instructions carry the message, and the description only after a ToolSearch.
+- **Codex**: a namespace `mcp__browserai` whose description is the server instructions, holding `update_in_flight` with its description. Output: `[{"type":"input_text","text":"Wall time: 0.0158 seconds\nOutput:"},{"type":"input_text","text":"<the server's text>"}]`. After a kill: "tool call error: tool call failed for `browserai/update_in_flight` / Caused by: / Transport closed".
+
+How each client shows it:
+- **Claude Code terminal**: the call collapses to "Called browserai"; ctrl+o shows "browserai - update_in_flight (MCP)" with the text under it; an isError result shows "Error: <text>". `/mcp` lists "browserai 1 tool"; the server menu shows Status connected, Tools: 1 tool, View tools / Reconnect / Disable, and View tools lists `update_in_flight`. After the notification: "2 tools", nothing announced. After a kill: failed, with Reconnect / Disable.
+- **VS Code**: not opened (no window). What its webview receives: the stream-json tool_use and tool_result, a new `system/init` at the next turn listing the new tools, and `mcp_status` (the data its MCP dialog shows): "connected: update_in_flight" before, "connected: browserai_init, browserai_list" after a refresh. After a kill it still reports connected with the placeholder.
+- **Codex**: `exec --json` emits `item.completed` `mcp_tool_call` with the result content, status "completed", or "failed" for an isError result or a transport error. The app-server emits `item/completed` `mcpToolCall` the same way and `mcpServer/startupStatus/updated` starting / ready / failed. A host using the plain status list shows the real tools while the thread's model still has the placeholder (24 of 24).
+
+## Directions for Q369
+
+**Primer.** An apply ends every process under the install root with `TerminateProcess(handle, 1)`, in two passes, the second just before the swap (`kb/packaging/velopack.md`, measured 2026-09-24: servers started up to about 2.5 s into the apply were killed, later ones ran the new version). A server a client starts in that window is killed if it started before the swap. What the client is left with depends on whether the kill lands before or after the server finished its handshake. Q369 is about that: Q296 c makes the handshake wait for the Playwright child, so more of those kills land before it finishes. Measured today:
+- Killed before the handshake finished: every client records a failed server. `-p` and VS Code: zero BrowserAI tools for the session, no retry (PK 3/3, SK 6/6). Terminal: failed until Reconnect (TK 3/3). Codex: failed until a reload or a new thread, or a resume for exec (AK 6/6, XK 6/6).
+- Killed after it, holding the real list: `-p` and VS Code heal on the next call and the model never sees it (PBr 3/3, SBr 6/6). Terminal: failed until Reconnect (TBr 3/3). Codex: Transport closed until a refresh (AB 6/6, XB 6/6).
+- Killed after it, holding a placeholder: `-p` and VS Code keep the placeholder until a person reconnects (0/18 re-lists). Terminal and Codex as above.
+
+| | Handshake during an apply | Server killed after the handshake: `-p` / VS Code | Not killed: Codex | Cost |
+|---|---|---|---|---|
+| A. Keep Q296 c, declare `listChanged` | waits for the child | heals on the next call | real list | one capability line and a test |
+| B. Placeholder as posed | milliseconds | stuck on the placeholder until a person acts | placeholder for the whole thread | stale tool name and instructions in every Claude Code session it touches |
+| C. Real list from this version's own copy, child started after the updater | milliseconds | heals on the next call | real list | an exception to "schemas come from the child at run time", a fallback, a test |
+| D. Hold the handshake until the updater has gone | the whole hold | the hold is pre-handshake, so a kill is a failed start | real list | small |
+| E. A relay outside the install root | not exposed to the kill | the client never sees the kill | real list | the largest change; Q254 reversed |
+
+- **A. Keep Q296 c and add `tools.listChanged: true`.** No behaviour change for a client that never gets a notification, and BrowserAI's own Q261 notification (`BrowserProxy.cs:630`), which Claude Code cannot honour today, starts working on first connections. Q369's window stays as accepted under Q286 b.
+- **B. The placeholder as posed** (`update_in_flight`, `listChanged`, list_changed once the updater has gone). Shortens the handshake to milliseconds. Works only in Claude Code and only for a server that survives the apply, which means one started after the swap. A server started before the swap is killed anyway, and the placeholder turns today's self-healing post-kill state into a stuck one in `-p` and VS Code; Codex keeps the placeholder for the whole thread even when nothing is killed.
+- **C. Serve this version's real list without the child during an apply, and start the child once the updater has gone.** Same short handshake as B with a valid list, so a post-kill re-launch heals in `-p` and VS Code and Codex gets the real tools. Two possible sources: a copy the server writes from the child's `tools/list` on every normal start, or the golden snapshot the payload already carries and `UpstreamSnapshotTests` holds against the child. Needs the maintainer's exception to "schemas come from the child's `tools/list` at run time" for the apply window, a fallback when the copy is missing (start the child, as now), and a test. The client half is measured (PBr, SBr, the 2026-09-25 Q296 runs); the server half is neither built nor measured.
+- **D. Hold the handshake until the updater has gone** (Q296's alternative e, measured 2026-09-25 to work for holds of 1.3 to 2.8 s). Simple, but every kill inside the hold is a kill before the handshake, which is the failed start Q369 wants fewer of.
+- **E. Take servers out of the kill pass**: a relay outside the install root as the registered command (Q254's direction not taken; measured 3/3 in both clients on 2026-09-24). The client's pipe survives the swap, so no client ever sees a kill, and a refusal or placeholder from the relay needs no refresh. The at-least-once re-send that priced the relay out does not arise for calls refused during an apply. Cost: a second binary outside the root, and Q254 reversed.
+
+**Recommendation: A now, and C as the answer to Q369's window if the maintainer accepts the exception; not B.** A is needed for any notification to work in Claude Code and costs one line. C keeps the placeholder's speed and drops its cost. If C is declined, keep Q296 c and accept the window as Q286 b did: no measured client is better off with B.
+
+## Tangential findings
+
+1. **The terminal UI never re-launches a dead stdio server** (9 of 9, whatever the exit code). `kb/mcp/protocol.md`'s "Claude Code re-launches a dead server transparently" holds for `-p` and the SDK transport (VS Code) only. HAZARDS row 326 and `SessionErrors`' Claude Code remedy ("your client starts the updated BrowserAI by itself on that call") are wrong for terminal sessions, which need `/mcp` Reconnect.
+2. **BrowserAI's Q261 list_changed cannot be honoured by Claude Code**: no `listChanged` capability (ignored 9/9 today, CCK 3/3 on 2026-09-25). HAZARDS row 320 says the notification is one "which Claude Code was measured to honour 3/3"; that measurement used a server that declared the capability.
+3. **Server instructions from the first `initialize` stay for the session** (87/87). A terminal Reconnect of a failed server added the new instructions beside the old ones (6/6); the other reconnects did not (S mode 18, terminal from connected 6).
+4. **Codex `mcpServerStatus/list` without `serverName` starts a throwaway server per call** and reports its fresh tools, not the thread's (24/24, both versions). 0.160 with `serverName` reports the thread's own list (3/3); 0.155 ignores `serverName` (3/3).
+5. **Every stub measurement of what the model sees, 2026-09-23 to today, ran with tool search off** (a custom `ANTHROPIC_BASE_URL` disables it: "[ToolSearch:optimistic] disabled ... not a first-party Anthropic host"), while a first-party user sees deferred names until ToolSearch.
+6. In `-p`, a call the model made from the pre-refresh list still reaches the server (PA: the second `update_in_flight` got the server's stale answer); in the SDK transport Claude Code refuses it.
+7. The VS Code extension updated itself to 2.1.288 during the day; its native binary is byte-identical to the CLI 2.1.288 (sha256 84304f7d...). The Codex desktop app's bundled `codex.exe` (folder be3fd7e5c1969ff6) carries version strings for 0.159.0-alpha.12.1, read from the file, not run.
+
+## Lane report
+
+**What I did.** Measurements only, in scratch. No commit, no push, no worktree, no file in the repository changed.
+
+**What is left.** Nothing the brief asked for. The records corrections in findings 1, 2, 3 and 5 belong to the records lane. Direction C's server half is unbuilt and unmeasured.
+
+**Decisions taken for review**
+1. The VS Code arm ran the 2.1.287 copy from this morning. The extension updated itself to 2.1.288 before the lane started, and that binary is byte-identical to the CLI 2.1.288, so the CLI runs in the same stream-json shape stand for it. Rejected: copying the new extension binary, which would have duplicated the CLI.
+2. VS Code was emulated, not opened, because no window is allowed. The binary ran in stream-json with the environment `extension.js` 2.1.288 gives it (`CLAUDE_CODE_ENTRYPOINT=claude-vscode`, `MCP_CONNECTION_NONBLOCKING=true`, `CLAUDE_CODE_ENABLE_TASKS=0`, `CLAUDE_CODE_EMIT_STARTUP_TIMING=1`) and the control requests its MCP dialog sends (`mcp_status`, `mcp_reconnect`, `mcp_toggle`). How the dialog draws them was read from the webview code, not seen.
+3. The updater's kill is the server ending itself with TerminateProcess, exit code 1. Stopping a process I did not start is forbidden, the client starts the server, and Velopack's kill pass is `TerminateProcess(handle, 1)`, so the client sees the same exit code and pipe close. A clean-exit control (exit 0) gave the same terminal result, 3/3.
+4. Registration through `--mcp-config --strict-mcp-config`, not `claude mcp add --scope user`. The run folder is inside the repository, whose `.mcp.json` would have connected four servers (three HTTP, one `dnx`). The 2026-09-23 user-scope control showed the same re-launch; user scope was not re-measured today.
+5. The stub texts are mine and are not wording proposals. The placeholder call returns `isError: false`; the post-update "your list is stale" answer `isError: true`.
+6. Scope added beyond the brief, because the directions depend on it: tool search on, the `RefreshMcpTools` check, the kill before the handshake, and the real-list controls.
+7. `.work\q369\proj` was made its own git repository (`git init`) so Claude Code took it as the project root and ran its git status there, not in the BrowserAI checkout. Claude Code still reads the repository's AGENTS.md by walking up; that only adds text to the captured requests.
+8. pyte 0.8.2 and wcwidth 0.9.1 were installed with `pip --target` into `.work\q369\pylib`, not globally, to render the terminal screens. openai/codex `rust-v0.160.0` was sparse-cloned into `.work\q369\code`, because the existing 0.160 clone lacks the app-server.
+
+**Deviations**
+1. The rigs were copied from `.work\client-exit` and `.work\client-behaviour`; the docs rig was read, not copied. The client-exit harness already had the stream-json and pseudoconsole drivers the brief pointed to, and the docs rig's `server.js` was replaced by the purpose-built `phserver.js`.
+2. The Codex TUI was not driven (the brief asked for exec and app-server); its `/cd` is represented by `thread/settings/update`.
+
+**What went wrong, and what was cleaned up**
+1. A stub race in the shake-down (a launch that started after the update still answered the placeholder, because it polled the done-file every 100 ms) was fixed before any counted run; those shake-down runs are not counted.
+2. `ccKp`'s three PBr runs were void (the scripted model made one call, so nothing was re-launched) and were re-run as `ccKp2`; `ccKp`'s PK runs are valid and counted.
+3. An early recursive grep over the repository outran its timeout, continued in the background and ended by itself.
+4. Two heredoc edits to rig files lost backslashes; both were fixed with direct edits before a counted run used them.
+5. No rig process is left: no process has `.work\q369` in its command line or image path, the same query that found the running batch earlier. Scratch is 2.2 GB, 1.3 GB of it the binary copies.
+
+**Isolation.** `~/.claude.json` `mcpServers`, top level and per project, identical before and after (16CD8795..., 44136FA3...); the whole file changed, as expected with other sessions running. `~/.codex/config.toml` identical (9554670F..., modified 12:11:23Z). `~/.codex` holds the same 10,680 names; six files changed (`logs_2.sqlite`, `-shm`, `-wal`, `models_cache.json`, `.codex-global-state.json` and its `.bak`), attributable to the Codex desktop app running since 12:07Z with its own `codex.exe` (pids 15308 and 38384). Every run of mine wrote its own `logs_2.sqlite`, `sessions` and `tmp\arg0` under its scratch `CODEX_HOME`.
+
+**Locks.** None taken, none touched. `.work\locks\suite` exists, owned by lane small since 13:55:45Z, and was left alone.

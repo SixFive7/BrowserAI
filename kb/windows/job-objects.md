@@ -149,6 +149,31 @@ network-service or crashpad path. `crashpad_handler` is an ordinary child
 (`crashpad_client_win.cc:437-463`). Firefox's launcher uses `CREATE_SUSPENDED |
 CREATE_UNICODE_ENVIRONMENT` only. `[FLOATS]`
 
+> ⚠️ *Corrected 2026-10-03 @ Chrome for Testing 155.0.8059.12 (`chromium-1247`)
+> and Firefox 156.0 (`firefox-1553`), by addition (previously "Chromium: every
+> caller of `CREATE_BREAKAWAY_FROM_JOB` is installer, updater or remote-desktop
+> code").* **Chromium 155 adds one caller on a browser path, and no Playwright
+> launch can reach it.** The isolated-browser stub in
+> `chrome/app/chrome_main_delegate.cc` starts its replacement with
+> `force_breakaway_from_job=true` (line 1292) when the isolated browser it waits
+> on exits asking for a relaunch. The whole block sits behind
+> `chrome::IsIsolationEnabled`, which returns false for a per-user install and
+> for any command line carrying `--user-data-dir`
+> (`chrome/browser/win/isolated_browser/isolated_browser_support.cc:298-345`),
+> and every Playwright launch carries one. The other names new since 152 are
+> `RelaunchChromeBrowser`'s `force_breakaway_from_job` parameter, which every
+> other caller leaves false, and `remoting/host/file_transfer/file_chooser_win.cc`,
+> remote-desktop code. **Firefox is unchanged** at its 156.0 base revision
+> (`mozilla-firefox` `3bf8f468`, the one Playwright's r1553 roll names): the
+> launcher's flags are the two above (`LauncherProcessWin.cpp:496`),
+> `NeedToBreakAwayFromJob()` still wants both job flags, and the only callers that
+> break away are the background-task runner, the crash reporter and the restart
+> path. Playwright's own Firefox patches at that roll name no breakaway and no job
+> object. Read at both Chromium tags and at the Firefox revision; the call-site
+> lists are in [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+> `BrowserContainmentTests` passed at both revisions in both shells of the
+> 0.0.83 review's second gate round, 0 escapees, which is the measured half.
+
 **Firefox actively checks and declines.** `nsWindowsRestart.cpp`'s
 `NeedToBreakAwayFromJob()` returns false unless the job carries **both**
 `KILL_ON_JOB_CLOSE` and `BREAKAWAY_OK`. Ours carries only the first. Consequence:

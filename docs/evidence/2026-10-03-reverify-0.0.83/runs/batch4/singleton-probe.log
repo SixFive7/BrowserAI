@@ -1,0 +1,5 @@
+[+   379 ms] D1 pid 48420 says Listening on http://127.0.0.1:63889 ; GET / -> 302
+[+   792 ms] D2 pid 68060 stdout: "Dashboard is running pid=48420" stderr: "" exit: {"code":0,"sig":null,"at":771}
+[+   795 ms] D1 still serving after D2? 302 ; D1 exit null
+[+  1168 ms] D3 (--kill) exit: {"code":0,"sig":null,"at":1154} ; D1 exit after the kill: {"code":0,"sig":null,"at":1146} ; GET / on D1 -> ERR ECONNREFUSED
+[+  1669 ms] all stopped: [{"pid":48420,"exitCode":0,"killed":false},{"pid":68060,"exitCode":0,"killed":false},{"pid":59904,"exitCode":0,"killed":false}]

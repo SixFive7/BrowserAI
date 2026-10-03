@@ -1120,6 +1120,69 @@ that did not exist when the figure below was last taken.
   2026-09-17. Where this used to be a 7.68 ms no-op that left the session
   unusable, it is now a relaunch -- [see below](#the-resume-wedge-measured----2026-09-17).
 
+✅ **RE-ESTABLISHED 2026-10-03 at chromium 1247 and firefox 1553 under
+`@playwright/mcp` 0.0.83, through a `BrowserAI.Server.exe` published from
+`5f1166c`, clearing the staleness mark the 0.0.83 roll left on
+[row 38](../re-verification.md).** Twice per path per family as before, then four
+more Path A runs on Firefox and two on Chromium once the first Firefox run had lost
+a store: fourteen runs. *Corrected 2026-10-03 (previously "**Path A costs 494 and
+456 ms on Chromium and 483 and 492 ms on Firefox, and loses only
+`sessionStorage`. PATH B COSTS 406 and 401 ms on Chromium and 396 and 406 ms on
+Firefox -- AND LOSES MORE THAN `sessionStorage`**").* **Path A costs 381 and 389
+ms on Chromium and 523 and 425 ms on Firefox in the paired runs, and it now keeps
+`sessionStorage` as well. Path B costs 392 and 373 ms on Chromium and 563 and 424
+ms on Firefox, and it still loses persistent stores.**
+
+| Store | Path A -- Chromium ×4 | Path A -- Firefox ×6 | Path B -- Chromium ×2 | Path B -- Firefox ×2 |
+|---|---|---|---|---|
+| Cookie (`max-age=3600`) | survived ×4 | survived ×6 | ⚠️ **GONE** ×2 | survived ×2 |
+| `localStorage` | survived ×4 | survived ×5, ⚠️ **GONE** ×1 | survived ×2 | ⚠️ **GONE** ×2 |
+| `sessionStorage` | ⭐ **survived ×4** | ⭐ **survived ×6** | gone ×2 | gone ×2 |
+| IndexedDB, CacheStorage, one service worker | survived ×4 | survived ×6 | survived ×2 | survived ×2 |
+
+⭐ **Path A kept `sessionStorage` 10 of 10, where every earlier sitting lost it,
+and the likely cause is the product's.** Since 2026-10-03 every session launch
+carries the browsers' own restore options
+([below](#what-a-session-keeps-across-a-browser-close-and-what-brings-the-rest-back----measured-2026-10-03)),
+and the resume now answers that the first browser call *"starts the browser, and
+its own session restore reopens the tabs this profile last recorded"*; a reopened
+tab carries its `sessionStorage`. That is read from the answer and the build, and
+no arm without the options separated it from the new browser revisions. **Path B,
+which relaunches after the child was killed, kept no `sessionStorage`, 4 of 4**,
+so on that path nothing brought it back; that is the first reading of the
+question that section leaves open, on this one path.
+
+⚠️ **ONE FIREFOX PATH A RUN IN SIX LOST `localStorage`, AND THE FIRST SERVER'S OWN
+LOG SAYS THE BROWSER WAS NOT CLOSED.** Its stderr carries *"The browser on the
+session at ... did not answer its close within 00:00:01 at shutdown; its child is
+ended through its stdin and its job anyway"*: `LiveSession.ShutdownCloseBudget`,
+one second, ran out before Firefox answered `browser_close`, and the child was
+ended. The second paired run's log covers the same shutdown with no such line, and
+that run lost nothing. The four extra Firefox runs kept their readings and not their
+server logs, so whether their closes were answered in time is not recorded. The
+budget's own remarks quote a Firefox `browser_close` at 444 to 1,163 ms, so a
+close inside that range can miss it, and this run is one that did. The cookie
+survived the run, as Firefox's cookie did on Path B.
+
+**Costs, 2026-10-03.** The paired runs first, the extra Path A runs after the
+semicolon:
+
+| | Chromium 1247 | Firefox 1553 | 2026-09-22 |
+|---|---:|---:|---|
+| **Path A** `browserai_resume` | **381** · **389**; 362 · 368 ms | **523** · **425**; 1,676 · 398 · 1,912 · 368 ms | 494 · 456 (C), 483 · 492 (F) |
+| Path A, the next `browser_navigate` | 404 · 426; 373 · 390 ms | 1,721 · 1,270; 1,216 · 1,346 · 1,668 · 1,119 ms | 515 · 517 (C), 1,501 · 1,502 (F) |
+| **Path B** `browserai_resume` | **392** · **373** ms | **563** · **424** ms | 406 · 401 (C), 396 · 406 (F) |
+| Path B, the next `browser_navigate` | 641 · 578 ms | 2,319 · 2,050 ms | 526 · 573 (C), 2,455 · 2,333 (F) |
+
+⚠️ **The two starred readings under the 2026-09-22 costs below do not hold at
+this sitting**, and they stay as written because they were true of theirs.
+Firefox did not resume within 3% of Chromium: 523 and 425 against 381 and 389 ms
+on Path A, two of the extra Firefox resumes took 1,676 and 1,912 ms, and Path B
+was 563 and 424 against 392 and 373. Path B was not cheaper than Path A on
+Chromium, 392 and 373 against 381 and 389. What a 1.7 to 1.9 s resume spent its
+time on is not established. Runs, logs and the rig as it ran:
+[the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
+
 **Path A costs 494 and 456 ms on Chromium and 483 and 492 ms on Firefox, and
 loses only `sessionStorage`. PATH B COSTS 406 and 401 ms on Chromium and 396 and
 406 ms on Firefox -- AND LOSES MORE THAN `sessionStorage`.** Re-measured
@@ -1517,6 +1580,11 @@ local tabs open.
 ⚠️ **Not established:** whether the restore options survive a browser that was
 killed and not closed, which is how a client ends a session; what a restored
 page re-runs on load, beyond the one POST; and what a headed window does.
+*Narrowed 2026-10-03 by addition:* on one path it is now read. A resume after the
+session's child was killed, Path B of
+[the resume re-measurement](#timings-spawn-resume-idle-close-proxy-overhead), came
+back without `sessionStorage` 4 of 4 at chromium 1247 and firefox 1553, where a
+resume through a second server kept it 10 of 10.
 
 ✅ *Measured 2026-10-03 at `chromium-1247` and `firefox-1553`, by addition,
 [below](#committing-to-disk-sooner-and-session-restore-after-a-hard-kill----measured-2026-10-03):*
@@ -1941,6 +2009,41 @@ involved. A newer Firefox that launches under it, or a `playwright-core` that
 sets the variable itself, is the change to look for.
 
 ## Firefox against Chromium: the standing cost ratios
+
+✅ **RE-ESTABLISHED 2026-10-03 at chromium 1247 (`browserVersion`
+155.0.8059.12) and firefox 1553 (156.0), clearing the staleness mark the
+`@playwright/mcp` 0.0.83 roll left on [row 34](../re-verification.md) that
+morning.** Six rounds per family in one sitting, the families alternating round
+by round, through a `BrowserAI.Server.exe` published from `5f1166c` with the 0.0.83
+payload; **every Firefox round produced a browser this time.** *Corrected
+2026-10-03 (previously "**1.19× RAM, 4.65× first navigate, 2.76× profile
+disk**").* **1.18× RAM, 3.57× first navigate, 2.76× profile disk.** Profile disk
+is unchanged to three figures and is 2.76× on every round; RAM moved one in the
+third figure; **first navigate left the 4.37× to 4.65× band the last three
+sittings held**. There is no unchanged binary to read the instrument against this
+time: Chromium is a new `browserVersion`, and firefox 1553 is a rebuild of the
+same 156.0 whose `xul.dll` hashes differently from 1549's.
+
+| Axis | Chromium 1247 (6 rounds) | Firefox 1553 (6 rounds) | Firefox : Chromium |
+|---|---:|---:|---:|
+| Resident set, whole browser tree | **497.5** MB (484.6-500.8) | **587.9** MB (586.5-590.0) | **1.18×** |
+| First navigate, cold -- includes the launch | **659** ms (576-702) | **2,355** ms (2,071-4,744) | **3.57×** |
+| Second navigate, browser already up | **48** ms (37-91) | **59** ms (45-75) | **1.24×** |
+| ~~Idle CPU over 30 s, no page activity~~ | **742.5** ms (155-1,112) | **570.5** ms (469-875) | struck, as since 2026-09-18: Firefox's whole range sits inside Chromium's |
+| Profile directory on disk | **13,204,703.5 B** (179 files) | **36,467,388 B** (66 files) | **2.76×** on all six |
+| Processes under the browsers root | 8 · 9 · 9 · 8 · 9 · 9 | 7 every round | **0.78×** |
+
+⚠️ **Read the first-navigate ratio with its spread.** Firefox's six first
+navigates were 2,090, 4,744, 2,071, 2,594, 3,532 and 2,115 ms, so the per-round
+ratio runs from 2.98× to 8.23× and the median falls between two rounds that are
+479 ms apart. Against 2026-09-22, Chromium's first navigate moved **+14%** (576 to
+659 ms) and Firefox's **-12%** (2,679 to 2,355 ms); with both binaries changed,
+how much of either is the machine is not separable from two sittings, and no
+attempt is made. **Second navigate turned over**, 0.72× to 1.24×, on medians of
+48 and 59 ms that one round moves; it is recorded as a number that moved, the way
+the processes row was last time, and the processes row is back at 0.78× because
+Chromium's median went back to 9. The rounds, the rig as it ran and the per-round
+files: [the batch](../../docs/evidence/2026-10-03-reverify-0.0.83/README.md).
 
 ✅ **RE-ESTABLISHED 2026-09-22 at chromium 1246 and firefox 1549 (`browserVersion`
 156.0), clearing the `[STALE]` this section carried since 2026-09-21.** All three
