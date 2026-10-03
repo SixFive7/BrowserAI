@@ -871,6 +871,9 @@ for **133,761 B** where a cold one moves **425 MB** across the adapter counters.
 `SW_SHOWNOACTIVATE` so that a headed browser's first window appears without
 taking the foreground, and that is measured
 ([kb](kb/windows/processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it----measured-2026-08-24)).
+*Corrected 2026-10-03 by addition: measured for Chromium, which at revision 1247
+still stays off the foreground with the flag; Firefox 1553 takes the foreground
+with the flag and without it, so the flag does not do this for a headed Firefox.*
 **No test in this suite can check it, and the reason is the machine, not
 the code.** `SPI_GETFOREGROUNDLOCKTIMEOUT` reads `2147483647` ms here, so Windows
 refuses a foreground change in the general case: a focus experiment answers *no

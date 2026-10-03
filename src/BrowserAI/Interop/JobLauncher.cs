@@ -192,6 +192,16 @@ internal static partial class JobLauncher
             // all
             // ([kb](../../../kb/windows/processes.md#sw_shownoactivate-keeps-a-headed-chromium-off-the-foreground-and-firefox-never-takes-it----measured-2026-08-24)).
             //
+            // ⚠️ Corrected 2026-10-03 @ chromium-1247 and firefox-1553, by
+            // addition (previously "Firefox (firefox-1539) took it in NEITHER
+            // arm ... so Firefox does not do this at all"). Measured the same
+            // way, with an ancestor's window in front: Chromium 1247 still did
+            // not take the foreground with the flag and took it without, and
+            // Firefox 1553 TOOK it in both arms. So the flag keeps a headed
+            // Chromium off the foreground and does not keep a headed Firefox
+            // off it; whether a Firefox the product starts through node does
+            // the same was not measured.
+            //
             // ⚠️ IT IS ONE DISCRIMINATING TRIAL, AND WHOEVER RE-RUNS IT MUST
             // REPRODUCE THE CONDITION AND NOT THE COUNT. Three further trials
             // each way answered "no steal" on BOTH arms and discriminate nothing:
