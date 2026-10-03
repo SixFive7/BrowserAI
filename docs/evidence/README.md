@@ -74,6 +74,12 @@ the SPDX rule covers keeps its name with the two header lines added, and its
 original's digest is in `originals.sha256` too. `registrar-survey` also lists two
 left-out files under changed names, and its README says why.
 
+⚠️ *Corrected 2026-10-03 by addition (previously "a file left out whole is listed
+with its SHA-256 in `left-out.sha256`").* **That holds for files left out one at
+a time.** Package caches, build output, browsers, profiles and the other bulk
+trees these batches came with are left out by directory: each batch's README
+gives their file count and byte total, and no digest per file.
+
 **`.gitignore` un-ignores this subtree explicitly**, at the very end of the
 file, because `*.log` and `releases.*.json` are ignored everywhere else for
 reasons that have nothing to do with a record. Adding a pattern below that
