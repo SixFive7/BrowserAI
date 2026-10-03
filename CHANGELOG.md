@@ -1242,6 +1242,23 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **A Firefox started with Shift held no longer stalls in safe mode, and a run that starts one fails.**
+  Q312 b, the maintainer's words verbatim: *"Q312 b"*. On Windows a Firefox browser process that
+  starts while Shift is held enters safe mode, opens a modal window before any browser window,
+  headless or not, and never answers Playwright, so the launch waits out its 180 s timeout: the
+  stuck Firefox launch the gates of 2026-09-22 and 2026-09-24 met and read as contention. Measured
+  2026-09-25 at firefox 1549: 4 stuck in 133 serial launches without the fix, 0 in 155 with it.
+  Every child is now started with `MOZ_DISABLE_SAFE_MODE_KEY=1` in `ChildEnvironment.Forced`, which
+  reaches Firefox through node. **The suite fails any run in which a Firefox of its own starts in
+  safe mode**: a session-long watch reads the command line of every process under the browsers
+  root and the scratch roots for the `-safeMode` a safe-mode Firefox gives its content processes,
+  and a new `firefox safe mode` row in the coverage block says what it saw. **The fix line cannot
+  be planted red** without holding a key down, which makes it the second named exception to the
+  plant-it-red rule, made by the rule's owner and written into `AGENTS.md`; the watch is the half
+  that can, and was: with `MOZ_SAFE_MODE_RESTART=1` planted, a route the variable does not cover,
+  one Firefox arm waited out three minutes and the run failed with exit 10, naming the safe-mode
+  content process.
+
 - 🐛 **Registering in a project checks whose entry is already there, and rewrites a stale one of ours.**
   The window's **Register in a project** had no ownership check at all, so it would write over
   another BrowserAI's entry in somebody's `.mcp.json`; and over an entry of our own it ran

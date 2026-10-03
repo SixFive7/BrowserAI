@@ -94,6 +94,18 @@ internal static class SuiteCoverage
     public static void WatchForWindows() => WindowWatch.Start();
 
     /// <summary>
+    /// Starts the scan for a Firefox of the suite's in safe mode before the first
+    /// test runs.
+    /// </summary>
+    /// <remarks>
+    /// <b>A session hook, so no filter can deselect it</b>, for the window watch's
+    /// reason. Q312 b, the maintainer's words verbatim: <i>"Q312 b"</i>. See
+    /// <see cref="SafeModeWatch"/>.
+    /// </remarks>
+    [Before(TestSession)]
+    public static void WatchForFirefoxInSafeMode() => SafeModeWatch.Start();
+
+    /// <summary>
     /// Takes <c>.work\installer.lock</c> for the whole session, or finds the live holder
     /// that started this run holding it.
     /// </summary>
@@ -114,6 +126,10 @@ internal static class SuiteCoverage
         // stopped after the events queued ahead of the stop are delivered, and the
         // closing sweep counts anything of the suite's still open.
         WindowWatch.Stop();
+
+        // And the safe-mode scan, for the same reason: its closing scan reads any
+        // process that started after the last tick.
+        SafeModeWatch.Stop();
 
         var summary = SuiteEnvironment.Summary();
 
@@ -177,9 +193,15 @@ internal static class SuiteCoverage
 
     /// <summary>
     /// Fails the whole run when its own filter reading says it may not be a
-    /// release, or its own window watch saw it show a window.
+    /// release, its own window watch saw it show a window, or its safe-mode watch
+    /// saw a Firefox of its own start in safe mode.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Three refusals since 2026-10-03 (previously two)</b>, when Q312 b added
+    /// <see cref="SafeModeWatch"/>; the paragraph below is about the first two and
+    /// stands as written.
+    /// </para>
     /// <para>
     /// ⚠️ <b>Two refusals since 2026-09-24, and one exception carrying both.</b>
     /// <i>Previously <c>RefuseARunThatMayNotBeARelease</c>, which carried the filter
@@ -241,6 +263,13 @@ internal static class SuiteCoverage
         if (WindowWatch.Refusal(WindowWatch.Reading, SuiteEnvironment.IsReleaseRun) is { } windows)
         {
             refusals.Add(windows);
+        }
+
+        // ⚠️ THE THIRD, since 2026-10-03, Q312 b: a run in which a Firefox of the
+        // suite's started in safe mode fails in every mode. See SafeModeWatch.
+        if (SafeModeWatch.Refusal(SafeModeWatch.Reading) is { } safeMode)
+        {
+            refusals.Add(safeMode);
         }
 
         if (refusals.Count is not 0)

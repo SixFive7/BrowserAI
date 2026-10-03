@@ -213,11 +213,30 @@ internal static class ChildEnvironment
     /// machine, forever.
     /// <c>PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD</c> keeps provisioning a decision
     /// BrowserAI makes and not a side effect of the child starting.
+    /// <para>
+    /// ⚠️ <b><c>MOZ_DISABLE_SAFE_MODE_KEY</c> -- Q312 b, decided 2026-10-03 by the
+    /// maintainer, in his words: <i>"Q312 b"</i>.</b> On Windows a Firefox browser
+    /// process that starts while Shift is held, with Ctrl and Alt up, enters safe
+    /// mode unless this variable is set (<c>toolkit/xre/SafeMode.h</c>), and a
+    /// safe-mode Firefox opens a modal window before any browser window, headless
+    /// or not, so juggler's <c>Browser.enable</c> is never answered and the launch
+    /// waits out Playwright's own 180 s timeout. Measured 2026-09-25 at firefox
+    /// 1549 with playwright-core 1.64.0-alpha-1789764292000: 4 of 133 serial
+    /// launches stuck without it, 0 of 155 with it, and every stuck browser had a
+    /// content process started with <c>-safeMode</c>. It reaches Firefox through
+    /// node, because Playwright hands its own environment to the browser.
+    /// Mozilla's browser toolbox launcher sets it for the same reason. <b>It
+    /// covers the key and nothing else</b>: <c>MOZ_SAFE_MODE_RESTART</c> still
+    /// forces safe mode, which is how the suite's <c>SafeModeWatch</c> is planted
+    /// red, and that watch fails any run in which a Firefox of the suite's starts
+    /// in safe mode by any route.
+    /// </para>
     /// </remarks>
     public static FrozenDictionary<string, string> Forced { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["PLAYWRIGHT_SKIP_BROWSER_GC"] = "1",
         ["PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"] = "1",
+        ["MOZ_DISABLE_SAFE_MODE_KEY"] = "1",
     }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>

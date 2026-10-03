@@ -808,9 +808,14 @@ internal static partial class WindowWatch
     }
 
     /// <summary>The live parent chain above a process, nearest first.</summary>
+    /// <remarks>
+    /// <b>Internal since 2026-10-03</b>, when <see cref="SafeModeWatch"/> began asking
+    /// the same question of a Firefox content process: one walk, so the two watches
+    /// cannot come to disagree about what descends from the host.
+    /// </remarks>
     /// <param name="processId">The process.</param>
     /// <returns>Each parent that could still be opened, until one could not.</returns>
-    private static List<ProcessMark> AncestryOf(int processId)
+    internal static List<ProcessMark> AncestryOf(int processId)
     {
         var chain = new List<ProcessMark>();
         var current = processId;

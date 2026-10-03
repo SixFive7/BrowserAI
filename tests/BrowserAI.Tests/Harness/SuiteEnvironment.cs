@@ -542,6 +542,13 @@ internal static class SuiteEnvironment
         // see WindowWatch, and SuiteCoverage for where the refusal is raised.
         _ = report.Append(WindowWatch.CoverageRow).Append('\n');
 
+        // ⚠️ WHETHER A FIREFOX THIS RUN STARTED WAS IN SAFE MODE, the second row
+        // here that fails the run by itself. Added 2026-10-03 with Q312 b, the
+        // maintainer's words verbatim: "Q312 b". A safe-mode Firefox never answers
+        // Playwright and waits out the 180 s launch timeout, which until then read as
+        // contention; see SafeModeWatch.
+        _ = report.Append(SafeModeWatch.CoverageRow).Append('\n');
+
         // ⚠️ WHO HELD .work\installer.lock FOR THIS RUN, which is what lets the
         // installer arms run at all since Q291 a: this run itself, a gate driver that
         // declared it, or nobody in time -- and then those arms did not run. See
