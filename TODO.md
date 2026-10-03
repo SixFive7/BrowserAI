@@ -31,50 +31,16 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 
 ### Decided, and the work that follows
 
-- [ ] **The four decided fixes: Q296 c, Q297 b, Q312 b and Q322 a.** A server
-      started during an update answers `tools/list` with its real list,
-      refuses every call while the install's `Update.exe` runs, and keeps
-      serving once it has gone. A server's pipe serves its connections in
-      parallel, which closes the never-closing-caller row in the
-      [hazard index](HAZARDS.md#hazard-index). `MOZ_DISABLE_SAFE_MODE_KEY=1`
-      goes into `ChildEnvironment.Forced` with a test that it is there, a live
-      check fails any run in which a Firefox starts in safe mode, and the
-      `AGENTS.md` paragraph that says *exactly one exception* names the second.
-      Snapshot boxes go off by default, BrowserAI's `instructions` gain the
-      sentence about asking for them before the coordinate tools, and
-      `README.md` and `BrowserConfiguration`'s remark lose the claim that their
-      cost is deferred. **What to do:** each planted red first, except the
-      safe-mode line, which is the named exception; then the rows each one
-      closes.
-- [ ] **The idle close and resume redesign: Q324, Q325, Q326 a and Q327 a.**
-      The idle close ends the session's whole child (P4 b); every forwarded
-      call after a close, the caller's own `browser_close` included, is refused
-      until `browserai_resume` (P2 a, P3 b), with a sentence that names the
-      tool and the ten minutes and says what was lost and what was kept;
-      resume restores through the launch options the research measured (P1):
-      Chromium's `--restore-last-session`, Firefox's
-      `browser.sessionstore.resume_session_once` with `restore_on_demand` and
-      `restore_tabs_lazily` off, and `about:blank` dropped from the default
-      arguments. A resume of a held session names what it did not apply and
-      refuses a change it cannot make, then applies it whenever no browser is
-      open (Q324 a then c). The idle timer is never armed for a headed launch,
-      and upstream's idle hour is written as `0` for one (Q326 a). With only
-      the `node` child in the job, the timer writes no row and sends nothing
-      (Q327 a). A session child's `TEMP` and `TMP` move inside its instance
-      directory, and Playwright's registry is reaped at startup (P5 a).
-      `LiveSession.IdleCloseWhy` and the relaunch sentences stop saying that
-      nothing was lost: session cookies are not kept by a browser that ends
-      uncleanly. **What to do:** build it in that order with an arm per part,
-      each planted red first, and close the field report's four rows and the
-      wedge, close-with-no-browser, capture and temp rows as each part lands.
-- [ ] **What a client's exit costs a session, Q356.** Chromium's
+- [ ] **What a client's exit costs a session, Q356: the arm that proves it.** Built
+      2026-10-03 in `9a1b921`: Chromium's
       `--enable-aggressive-domstorage-flushing` on every launch, and at the end
       of the server's input a `browser_close` on every live session at once,
-      bounded at about 1 s, before today's shutdown path; together they are
-      measured to get every write to disk inside Claude Code's window. **What
-      to do:** build both with arms that kill the server the way Claude Code
-      does and read the profile back; the process outside the client's tree,
-      direction (c), is not built.
+      bounded at 1 s, before the rest of the shutdown. Not built: an arm that
+      kills the server the way Claude Code does and reads the profile back,
+      which the building lane judged a timing test. **What to do:** decide
+      whether a kill-and-read-back arm can be written as a hang detector, and
+      build it if it can; the process outside the client's tree, direction (c),
+      is not built by decision.
 - [ ] **The browser tab, Q315 a, which replaces the configuration window.**
       Kestrel from ASP.NET Core's empty builder, plain request handlers, no
       OpenAPI (Q340 b, Q341 b, Q342 c, Q343); the secret address handed over
@@ -128,6 +94,15 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
 - [ ] **The three reports Q356 drafted**, to Claude Code, Codex and
       `@playwright/mcp`, none posted. **What to do:** his review; posting under
       his name needs his word, as Q357 did.
+- [ ] **The coordinator's own pipe and a caller that never finishes.** Q297 b
+      named the per-server pipe, which serves in parallel since `b3ef12f`; the
+      coordinator's pipe is still single-instance, and an open hazard row says
+      so. **What to do:** ask him whether it serves in parallel too.
+- [ ] **A clean close first at idle (P4 b's report-back).** The idle close ends
+      the whole child without asking the browser to close itself first; in the
+      research, 1 of 16 Chromium and 1 of 19 Firefox ends of input lost a
+      store. **What to do:** ask him whether the idle close sends the same
+      1-second-bounded `browser_close` the shutdown sends.
 - [ ] **The night's own decisions, for his review.** Q356's second half --
       (c) not built, and whether the 30-second Chromium cookie window under a
       hard kill matters enough to revisit it -- and the choices the coordinator
@@ -135,11 +110,6 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       name. **What to do:** walk him through them and record each answer.
 
 ### Paused work
-
-- [ ] **Phase 2, the coordinator core.** Steps 1 to 5 are committed on `next` at
-      `21de415`, and step 6, the records and the measurements, landed on
-      2026-10-03. Owed: step 7, a two-shell gate over the coordinator core, and
-      `master` fast-forwarded to the commit that passed it.
 
 ### Small fixes, ready once decided or scheduled
 
