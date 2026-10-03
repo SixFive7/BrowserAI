@@ -1,0 +1,24 @@
+model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:8992"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.browserai]
+command = 'C:\Program Files\nodejs\node.exe'
+args = ['C:\Source\SixFive7\BrowserAI\.work\stale-scratch\codex-timeouts\standin.js']
+env = { SI_LOG = 'C:\Source\SixFive7\BrowserAI\.work\stale-scratch\codex-timeouts\runs\S15-cx160\standin.log', SI_INIT_DELAY_MS = '15000', SI_CALL_DELAY_MS = '0' }
+
+[projects.'C:\Source\SixFive7\BrowserAI\.work\stale-scratch\codex-timeouts\proj']
+trust_level = "trusted"
+
+[projects.'c:\source\sixfive7\browserai\.work\stale-scratch\codex-timeouts\proj']
+trust_level = "trusted"

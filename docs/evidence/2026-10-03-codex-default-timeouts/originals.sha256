@@ -1,0 +1,9 @@
+# SHA-256 of the file as the run wrote it, its path, the name it is stored under, and what was changed.
+2f76563db193d4880fcd723454e81fc0a25da77fb775a275b16da7de6351116e  q369 rig/appdrv.js  ->  rig/q369/appdrv.js  (SPDX header added)
+66f6dcb0d1aac8658f7fae8c195ec01af82ac6c9d51ea8c8d6d37ad53a0a63f0  q369 rig/cxmodel.js  ->  rig/q369/cxmodel.js  (SPDX header added)
+4c96844c1ebcefa2983165327938beb0b1d8e770d606b7f5b103f41b23c28046  runs-app/A0-cx155/driver.log  ->  runs-app/A0-cx155/driver.trimmed.log  (machine name)
+9c6eecee8920b567dfeaaf1cc2cd1923d34424b18aaabaa3ca2a07468950c030  runs-app/A0-cx160/driver.log  ->  runs-app/A0-cx160/driver.trimmed.log  (machine name)
+38d8440e970aace40d03caf1499f35514a3c8cb435a3ba123c1810712837cefe  runs-app/A15-cx155/driver.log  ->  runs-app/A15-cx155/driver.trimmed.log  (machine name)
+a484238320fd5872c55487f658ca8f18608eaaa15463e97b605c136dd42d0d57  runs-app/A15-cx160/driver.log  ->  runs-app/A15-cx160/driver.trimmed.log  (machine name)
+ff7eb3acdc72a2a9b3466efc66a20083ccaf6aa890eeb65ea82e8f5513b70090  runs-app/A35-cx155/driver.log  ->  runs-app/A35-cx155/driver.trimmed.log  (machine name)
+5a32acd88b851f66138d7e1b6e7efe1759f6b60b198a4fb4ea55a79db6de370a  runs-app/A35-cx160/driver.log  ->  runs-app/A35-cx160/driver.trimmed.log  (machine name)

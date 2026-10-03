@@ -1,0 +1,38 @@
+# Left out whole, with SHA-256 and size: the environment each app-server was handed, each app-server's
+# own trace output (driver.log.stderr.txt, up to 1.8 MB a run), and every request body the scripted
+# model received, which carries Codex's own prompt and this repository's AGENTS.md.
+de5e7514a60ac7731f5bb9fe86db79f97e12cff1f3179c9d80cdab59c62bd709  runs/S0-cx155/model.requests.jsonl  153701
+fae35a671df6521171d4a0e34b29f819e8bb01121f9fd509800e518c37055b0d  runs/S0-cx160/model.requests.jsonl  305283
+6d6d7f4297d3e7515709564bd591e3623a84fbb2e004fd0c4613135416a85268  runs/S15-cx155/model.requests.jsonl  76331
+92b6756f8d1cecad5561c3fca28e6794cb93ae3e75fbb879fc3a0e486c1be6b3  runs/S15-cx160/model.requests.jsonl  75802
+fc0fe6004538318e03e4989a97c0501465b359b94b8938020c389e221996a42b  runs/S35-cx155/model.requests.jsonl  76331
+ad2442447c8b916b8744e5e2946cc4c47d749db08fbeffaad7eacb1048e0169a  runs/S35-cx160/model.requests.jsonl  75802
+f403439d3b0cee49c4e008aa5ccbdd4f0364f2fb904128244f549904b57d28b0  runs/T75-cx155/model.requests.jsonl  153709
+a4fb9a8b608c1d6726aafea51d165a9572be08b8374deeae78f6e95c4c547cb4  runs/T75-cx160/model.requests.jsonl  152655
+e4ed9c90547f553d072b56ee40ccc550487d8405ed01fd2b755c9b6024d2c75a  runs-app/A0-cx155/appenv.json  4855
+15d3ba7c03ffd63fb6e571ff5d5d151b90af92e394c9cb2266621b668e251a53  runs-app/A0-cx155/driver.log.stderr.txt  1824217
+db42e3b6f76c2032bd553101e279dc7966c031eba9e5bfcffc7063c6b63354fc  runs-app/A0-cx160/appenv.json  4855
+889ae06958667a2bf77b2da3f9233fb787c08bb4ed680bf6b41cf1cabaf1b5ba  runs-app/A0-cx160/driver.log.stderr.txt  281048
+fc3dfa23cb377ac2e52e85227e01d7958bb477a8bfeccb1c337c658857099146  runs-app/A15-cx155/appenv.json  4856
+70d15670464ca579b4b7f2d78a26e23e7ac88d945e9a7c14e801c2d70fdc2534  runs-app/A15-cx155/driver.log.stderr.txt  1840581
+113f680aa3f8c61c3536d4e5f739178bf088820b1fa3daa1d15b0329be38dbcc  runs-app/A15-cx160/appenv.json  4856
+b4c51612071e36b717fa730444b7fea7b23ceaae84c33f3953c3e5ff729111ae  runs-app/A15-cx160/driver.log.stderr.txt  287086
+7437a6d98938908c3bde04adb24c36bfe9651d21a1277078c619152e2f042290  runs-app/A35-cx155/appenv.json  4856
+33e83fc58e70697d3a240c1e6e9daeb9e39acc0f38f326ec33f5641714a309f0  runs-app/A35-cx155/driver.log.stderr.txt  1756493
+52f761cd44ad30b17a915029740d73c7928a49ba1ae7cd3b3c609f9e468d5ef7  runs-app/A35-cx160/appenv.json  4856
+886a5622779c598206856049052db90754dc10fa9839878700b583cd48ad2970  runs-app/A35-cx160/driver.log.stderr.txt  287170
+# Left out by directory, with no digest per file: each run's scratch CODEX_HOME, apart from its config.toml.
+#   runs-app/A0-cx155/home/  78 files  2880244 bytes
+#   runs-app/A0-cx160/home/  67 files  2892025 bytes
+#   runs-app/A15-cx155/home/  78 files  2884364 bytes
+#   runs-app/A15-cx160/home/  67 files  2892025 bytes
+#   runs-app/A35-cx155/home/  78 files  2925564 bytes
+#   runs-app/A35-cx160/home/  67 files  2937345 bytes
+#   runs/S0-cx155/home/  72 files  3160729 bytes
+#   runs/S0-cx160/home/  66 files  4062898 bytes
+#   runs/S15-cx155/home/  80 files  3578327 bytes
+#   runs/S15-cx160/home/  63 files  3251885 bytes
+#   runs/S35-cx155/home/  78 files  3426046 bytes
+#   runs/S35-cx160/home/  61 files  1235877 bytes
+#   runs/T75-cx155/home/  74 files  3243154 bytes
+#   runs/T75-cx160/home/  64 files  3131085 bytes

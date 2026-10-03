@@ -1,0 +1,25 @@
+[
+ {
+  "m": "initialize",
+  "p": {
+   "clientInfo": {
+    "name": "timeout-probe",
+    "title": "timeout probe",
+    "version": "1.0.0"
+   },
+   "capabilities": {
+    "experimentalApi": true
+   }
+  }
+ },
+ {
+  "m": "thread/start",
+  "p": {
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\stale-scratch\\codex-timeouts\\proj"
+  }
+ },
+ {
+  "waitStatus": "browserai",
+  "timeout": 90000
+ }
+]

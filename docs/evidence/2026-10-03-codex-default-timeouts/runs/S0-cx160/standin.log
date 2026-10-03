@@ -1,0 +1,16 @@
+2026-10-03T19:46:55.870Z +1ms pid=101876 LAUNCH initDelayMs=0 callDelayMs=0
+2026-10-03T19:46:55.876Z +6ms pid=101876 RECV initialize id=0
+2026-10-03T19:46:55.880Z +10ms pid=101876 SENT the initialize result
+2026-10-03T19:46:55.882Z +12ms pid=101876 RECV notifications/initialized id=-
+2026-10-03T19:46:55.891Z +21ms pid=101876 RECV tools/list id=1
+2026-10-03T19:46:55.892Z +22ms pid=101876 SENT the tools/list result
+2026-10-03T19:46:56.197Z +327ms pid=101876 RECV tools/call id=2
+2026-10-03T19:46:56.198Z +328ms pid=101876 SENT the tools/call result
+2026-10-03T19:47:09.828Z +2ms pid=71672 LAUNCH initDelayMs=0 callDelayMs=0
+2026-10-03T19:47:09.836Z +8ms pid=71672 RECV initialize id=0
+2026-10-03T19:47:09.838Z +10ms pid=71672 SENT the initialize result
+2026-10-03T19:47:09.839Z +11ms pid=71672 RECV notifications/initialized id=-
+2026-10-03T19:47:09.840Z +12ms pid=71672 RECV tools/list id=1
+2026-10-03T19:47:09.840Z +12ms pid=71672 SENT the tools/list result
+2026-10-03T19:47:10.006Z +178ms pid=71672 RECV tools/call id=2
+2026-10-03T19:47:10.008Z +180ms pid=71672 SENT the tools/call result

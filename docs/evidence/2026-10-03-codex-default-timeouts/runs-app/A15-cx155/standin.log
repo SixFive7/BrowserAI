@@ -1,0 +1,6 @@
+2026-10-03T19:50:17.050Z +1ms pid=74064 LAUNCH initDelayMs=15000 callDelayMs=0
+2026-10-03T19:50:17.063Z +13ms pid=74064 RECV initialize id=0
+2026-10-03T19:50:32.066Z +15016ms pid=74064 SENT the initialize result
+2026-10-03T19:50:32.067Z +15017ms pid=74064 RECV notifications/initialized id=-
+2026-10-03T19:50:32.068Z +15018ms pid=74064 RECV tools/list id=1
+2026-10-03T19:50:32.069Z +15019ms pid=74064 SENT the tools/list result

@@ -478,6 +478,31 @@ download is NOT this path**: provisioning is 208.8 MB and 13 to 17 s (re-measure
 the first browser call and not during startup, so it cannot reach a startup timeout
 -- it reaches a TOOL timeout instead, which Codex defaults to 60 s.
 
+> ⚠️ *Corrected 2026-10-03 @ codex-cli 0.155.0-alpha.9.2 and 0.160.0, by
+> addition (previously "default **10** seconds", "a ten-second budget" and
+> "which Codex defaults to 60 s").* **Codex's default startup timeout is 30 s,
+> and its default tool timeout is more than 75 s.** Measured with a
+> `config.toml` that sets neither key, against a stand-in server that answers
+> late, with `CODEX_HOME` in scratch and no window. Through `codex app-server`, a
+> server answering `initialize` after 15 s was reported `ready` at 15.1 s, and one
+> answering after 35 s was reported `failed` at 30.0 s with Codex's own *"MCP
+> client for `browserai` timed out after 30 seconds. Add or adjust
+> `startup_timeout_sec` in your config.toml"*, at both versions. Through `codex
+> exec`, a tool call answered after 75 s completed and the answer reached the
+> model, at both versions. Codex's source names 30 s and 300 s at both tags
+> (`rmcp_client.rs:103-104` and `connection_manager.rs:332-338` at 0.155,
+> `rmcp_client.rs:105-106` at 0.160); the 300 s was read there and not measured.
+> So BrowserAI's 340 ms handshake sits against thirty seconds, and the 13 to 17 s
+> first-run download against a tool timeout no measured provisioning reaches.
+> ⚠️ **And `codex exec` does not wait for a slow server at all.** With
+> `initialize` answered after 15 s or 35 s, its first turn went to the model
+> about 1.2 s after the server started, with no BrowserAI tool in the list, and
+> the run ended about 2 s after it began, 4 of 4 over the two versions; a server
+> that answered at once was in the list and was called, 2 of 2. Under `exec`, a
+> server that is still starting a second in misses that turn, whatever the
+> startup timeout says. The runs and the rig:
+> [the batch](../../docs/evidence/2026-10-03-codex-default-timeouts/README.md).
+
 **Re-establish** by pointing a stdio driver at the published server, writing
 `initialize` and timing the first framed answer, then `tools/list`; and by reading
 `codex mcp add --help` for the option set. The probe is
@@ -877,7 +902,7 @@ retries and what each client did hold either way.
 |---|---|---|
 | Real `tools/list`, calls refused with the sentence, ends when the updater does | the model saw the refusal; after the end the next call started the server again, without a new `tools/list`, and was served | the model saw the refusal; after the end every call answered *"Transport closed"* until a reload, a new thread or a resume |
 | The same, and keeps serving after the updater ends | served by the same process, no relaunch | served by the same process, no reload |
-| Holds `tools/list` until the updater ends, 1.3 to 2.8 s | waited, then served | waited, inside its 10 s startup timeout, then served |
+| Holds `tools/list` until the updater ends, 1.3 to 2.8 s | waited, then served | waited, inside its 10 s startup timeout, then served. *Corrected 2026-10-03 by addition: the default is 30 s, measured at 0.155.0-alpha.9.2 and 0.160.0 ([above](#registering-with-codex-and-what-its-startup-timeout-costs----measured-2026-09-24)); under `codex exec` a server still starting after about a second misses the first turn* |
 | Keeps the error, then sends `notifications/tools/list_changed` | with `"tools":{}` the notification was ignored and the session stayed toolless; with `"listChanged":true` it listed again and served | had already terminated the server |
 
 **Two client habits found on the way.** `codex --version` writes

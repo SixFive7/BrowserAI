@@ -1,0 +1,2 @@
+2026-10-03T19:47:26.638Z #9 tools=13 browserai=[browserai_list] items=3 usesThisTurn=[] -> function_call {"namespace":"mcp__browserai","name":"browserai_list"}
+2026-10-03T19:48:41.716Z #10 tools=13 browserai=[browserai_list] items=5 usesThisTurn=[browserai_list] -> message "stub-turn-finished"

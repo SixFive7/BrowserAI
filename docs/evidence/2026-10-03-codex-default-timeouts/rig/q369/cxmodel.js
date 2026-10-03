@@ -1,0 +1,134 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+// Q369: a scripted OpenAI Responses API stub for driving Codex with no credential.
+// Derived from .work/client-behaviour/rig/cxstub.js and .work/client-exit/stub/openai-stub.js.
+// STATELESS policy, per request (same as ccmodel.js):
+//   1. a real BrowserAI tool is offered and this turn has not called it  -> call it
+//   2. update_in_flight is offered and this turn called it fewer than N times -> call it
+//   3. otherwise -> a message "stub-turn-finished"
+// MCP tools arrive either as a namespace {"type":"namespace","name":"mcp__browserai","tools":[...]}
+// (codex 0.155) or as flat functions named mcp__browserai__<tool>; the call uses the offered form.
+// STUB_POLICY_FILE: JSON re-read on every request {"logDir","tag","phPerTurn","delayAfterPhMs","server","realTool","directory"}
+'use strict';
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const PORT = Number(process.env.STUB_PORT || 8899);
+const POLICY_FILE = process.env.STUB_POLICY_FILE || '';
+function policy() {
+  let p = {};
+  if (POLICY_FILE) { try { p = JSON.parse(fs.readFileSync(POLICY_FILE, 'utf8')); } catch (e) { p = {}; } }
+  return {
+    logDir: p.logDir || process.env.STUB_LOGDIR || '.',
+    tag: p.tag || process.env.STUB_TAG || 'model',
+    phPerTurn: Number(p.phPerTurn ?? 1),
+    delayAfterPhMs: Number(p.delayAfterPhMs ?? 0),
+    server: p.server || 'browserai',
+    realTool: p.realTool || 'browserai_list',
+    directory: p.directory || 'C:/q369-probe',
+  };
+}
+let P = policy();
+function files() {
+  fs.mkdirSync(P.logDir, { recursive: true });
+  return { EV: path.join(P.logDir, `${P.tag}.events.log`), REQ: path.join(P.logDir, `${P.tag}.requests.jsonl`), SEEN: path.join(P.logDir, `${P.tag}.seen.jsonl`) };
+}
+const ev = (s) => fs.appendFileSync(files().EV, `${new Date().toISOString()} ${s}\n`);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let n = 0;
+
+function write(res, e) { res.write(`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`); }
+const outText = (o) => (typeof o === 'string' ? o : Array.isArray(o) ? o.map((x) => x && (x.text ?? '')).join('\n') : JSON.stringify(o));
+
+function offered(tools, server) {
+  // returns [{tool, call:{namespace?, name}, description}] for the server's tools, plus the namespace description
+  const ns = `mcp__${server}`;
+  const out = [];
+  let nsDescription = null;
+  for (const t of tools || []) {
+    if (!t) continue;
+    if (t.type === 'namespace' && (t.name === ns || t.name === `${ns}__` || t.name === server)) {
+      nsDescription = t.description ?? null;
+      for (const x of t.tools || []) out.push({ tool: x.name, call: { namespace: t.name, name: x.name }, description: x.description, parameters: x.parameters });
+    } else if (typeof t.name === 'string' && t.name.startsWith(`${ns}__`)) {
+      out.push({ tool: t.name.slice(ns.length + 2), call: { name: t.name }, description: t.description, parameters: t.parameters });
+    }
+  }
+  return { list: out, nsDescription };
+}
+
+function analyse(input, server) {
+  const items = Array.isArray(input) ? input : [];
+  let turnStart = 0;
+  items.forEach((it, i) => {
+    if (it && it.type === 'message' && it.role === 'user') {
+      const txt = (it.content || []).map((c) => c.text || '').join('');
+      if (!txt.startsWith('<environment_context>') && !txt.startsWith('<permissions') && !txt.includes('<user_instructions>')) turnStart = i;
+    }
+  });
+  const callIdToTool = new Map();
+  const uses = [];
+  const results = [];
+  items.forEach((it, i) => {
+    if (it && it.type === 'function_call') {
+      const toolName = it.namespace ? it.name : String(it.name).replace(`mcp__${server}__`, '');
+      callIdToTool.set(it.call_id, toolName);
+      if (i > turnStart) uses.push(toolName);
+    }
+  });
+  items.forEach((it, i) => {
+    if (it && it.type === 'function_call_output') results.push({ i, inTurn: i > turnStart, tool: callIdToTool.get(it.call_id) || null, text: outText(it.output) });
+  });
+  const last = items[items.length - 1];
+  const lastIsPhResult = !!last && last.type === 'function_call_output' && callIdToTool.get(last.call_id) === 'update_in_flight';
+  return { items, turnStart, uses, results, lastIsPhResult };
+}
+
+const server = http.createServer((req, res) => {
+  let body = '';
+  req.on('data', (c) => { body += c; });
+  req.on('end', async () => {
+    P = policy();
+    const url = req.url.split('?')[0];
+    if (!url.endsWith('/responses')) { ev(`REQ ${req.method} ${req.url} -> 404`); res.statusCode = 404; res.end('{}'); return; }
+    const { REQ, SEEN } = files();
+    const idx = ++n;
+    let parsed; try { parsed = JSON.parse(body); } catch (e) { parsed = {}; }
+    fs.appendFileSync(REQ, JSON.stringify({ n: idx, at: new Date().toISOString(), url: req.url, body: parsed }) + '\n');
+    const off = offered(parsed.tools, P.server);
+    const a = analyse(parsed.input, P.server);
+    if (a.lastIsPhResult && P.delayAfterPhMs > 0) { ev(`#${idx} delaying ${P.delayAfterPhMs} ms after an update_in_flight result`); await sleep(P.delayAfterPhMs); }
+    const names = off.list.map((x) => x.tool);
+    const phThisTurn = a.uses.filter((u) => u === 'update_in_flight').length;
+    let pick = null;
+    if (names.includes(P.realTool) && !a.uses.includes(P.realTool)) pick = off.list.find((x) => x.tool === P.realTool);
+    else if (names.includes('update_in_flight') && phThisTurn < P.phPerTurn) pick = off.list.find((x) => x.tool === 'update_in_flight');
+    const seen = {
+      n: idx, at: new Date().toISOString(), model: parsed.model, toolCount: (parsed.tools || []).length,
+      nsDescription: off.nsDescription, browseraiTools: off.list.map((x) => ({ tool: x.tool, call: x.call, description: x.description })),
+      items: a.items.length, turnStart: a.turnStart, usesThisTurn: a.uses,
+      browseraiResults: a.results.filter((r) => r.tool),
+      decision: pick ? `function_call ${JSON.stringify(pick.call)}` : 'message "stub-turn-finished"',
+    };
+    fs.appendFileSync(SEEN, JSON.stringify(seen) + '\n');
+    ev(`#${idx} tools=${seen.toolCount} browserai=[${names.join(',')}] items=${a.items.length} usesThisTurn=[${a.uses.join(',')}] -> ${seen.decision}`);
+    res.statusCode = 200;
+    res.setHeader('content-type', 'text/event-stream');
+    const uid = `${process.pid}_${idx}_${crypto.randomBytes(3).toString('hex')}`;
+    const rid = `resp_${uid}`;
+    write(res, { type: 'response.created', response: { id: rid } });
+    if (pick) {
+      const item = { type: 'function_call', call_id: `call_${uid}`, id: `fc_${uid}`, name: pick.call.name, arguments: JSON.stringify(pick.tool === 'update_in_flight' ? {} : { directory: P.directory }) };
+      if (pick.call.namespace) item.namespace = pick.call.namespace;
+      write(res, { type: 'response.output_item.done', item });
+    } else {
+      write(res, { type: 'response.output_item.done', item: { type: 'message', role: 'assistant', id: `msg_${uid}`, content: [{ type: 'output_text', text: 'stub-turn-finished' }] } });
+    }
+    write(res, { type: 'response.completed', response: { id: rid, usage: { input_tokens: 42, input_tokens_details: { cached_tokens: 0 }, output_tokens: 5, output_tokens_details: null, total_tokens: 47 } } });
+    res.end();
+  });
+});
+server.listen(PORT, '127.0.0.1', () => ev(`LISTENING ${PORT} pid=${process.pid} policyFile=${POLICY_FILE}`));
