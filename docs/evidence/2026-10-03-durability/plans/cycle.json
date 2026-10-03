@@ -1,0 +1,200 @@
+[
+ {
+  "id": "cr-cycle-patch-D6-r3",
+  "browser": "chromium",
+  "lever": "cycle-patch",
+  "D": 6,
+  "rep": 3,
+  "cycle": 6,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "fx-cycle-base-D17-r1",
+  "browser": "firefox",
+  "lever": "cycle-base",
+  "D": 17,
+  "rep": 1,
+  "cycle": 17,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "cr-cycle-patch-D6-r1",
+  "browser": "chromium",
+  "lever": "cycle-patch",
+  "D": 6,
+  "rep": 1,
+  "cycle": 6,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cycle-patch-D6-r2",
+  "browser": "chromium",
+  "lever": "cycle-patch",
+  "D": 6,
+  "rep": 2,
+  "cycle": 6,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "fx-cycle-ss1000-D4-r3",
+  "browser": "firefox",
+  "lever": "cycle-ss1000",
+  "D": 4,
+  "rep": 3,
+  "cycle": 4,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "cr-cycle-base-D6-r1",
+  "browser": "chromium",
+  "lever": "cycle-base",
+  "D": 6,
+  "rep": 1,
+  "cycle": 6,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cycle-base-D6-r2",
+  "browser": "chromium",
+  "lever": "cycle-base",
+  "D": 6,
+  "rep": 2,
+  "cycle": 6,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "fx-cycle-base-D17-r2",
+  "browser": "firefox",
+  "lever": "cycle-base",
+  "D": 17,
+  "rep": 2,
+  "cycle": 17,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-cycle-base-D17-r3",
+  "browser": "firefox",
+  "lever": "cycle-base",
+  "D": 17,
+  "rep": 3,
+  "cycle": 17,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "cr-cycle-hide-D6-r2",
+  "browser": "chromium",
+  "lever": "cycle-hide",
+  "D": 6,
+  "rep": 2,
+  "cycle": 6,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cycle-hide-D6-r3",
+  "browser": "chromium",
+  "lever": "cycle-hide",
+  "D": 6,
+  "rep": 3,
+  "cycle": 6,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cycle-base-D6-r3",
+  "browser": "chromium",
+  "lever": "cycle-base",
+  "D": 6,
+  "rep": 3,
+  "cycle": 6,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "fx-cycle-ss1000-D4-r2",
+  "browser": "firefox",
+  "lever": "cycle-ss1000",
+  "D": 4,
+  "rep": 2,
+  "cycle": 4,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "cr-cycle-hide-D6-r1",
+  "browser": "chromium",
+  "lever": "cycle-hide",
+  "D": 6,
+  "rep": 1,
+  "cycle": 6,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "fx-cycle-ss1000-D4-r1",
+  "browser": "firefox",
+  "lever": "cycle-ss1000",
+  "D": 4,
+  "rep": 1,
+  "cycle": 4,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ }
+]

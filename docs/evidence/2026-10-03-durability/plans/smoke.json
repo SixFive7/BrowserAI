@@ -1,0 +1,9 @@
+[
+ {"id":"smoke-cr-base-D0.5","browser":"chromium","lever":"base","D":0.5,"rep":0,"tabs":2,"prefsChange":true,"keep":true},
+ {"id":"smoke-cr-hide-D4","browser":"chromium","lever":"hide","D":4,"rep":0,"tabs":2,"prefsChange":true,"extraArgs":["--hide-crash-restore-bubble"],"keep":true},
+ {"id":"smoke-cr-cdpflush-D0.2","browser":"chromium","lever":"cdpflush","D":0.2,"rep":0,"tabs":0,"flush":"cdp-clearorigin","keep":true},
+ {"id":"smoke-fx-base-D0.5","browser":"firefox","lever":"base","D":0.5,"rep":0,"tabs":2,"keep":true},
+ {"id":"smoke-fx-base-D17","browser":"firefox","lever":"base","D":17,"rep":0,"tabs":2,"keep":true},
+ {"id":"smoke-cr-hide-cycle","browser":"chromium","lever":"hide","D":4,"rep":0,"tabs":2,"cycle":6,"extraArgs":["--hide-crash-restore-bubble"],"keep":true},
+ {"id":"smoke-cr-work","kind":"work","browser":"chromium","lever":"base","rep":0,"secs":20,"keep":true}
+]

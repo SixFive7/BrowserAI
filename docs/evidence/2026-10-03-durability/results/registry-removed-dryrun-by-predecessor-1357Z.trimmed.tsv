@@ -1,0 +1,9 @@
+# 2026-10-03T13:57:31.9621310Z dryRun=True removed=7
+HKCU:\Software\Mozilla\Firefox\Launcher	C:\Source\SixFive7\BrowserAI\.work\durability\browsers\firefox-1553\firefox\firefox.exe|Image	DWord	1790534950
+HKCU:\Software\Mozilla\Firefox\Launcher	C:\Source\SixFive7\BrowserAI\.work\durability\browsers\firefox-1553\firefox\firefox.exe|Blocklist	String	%USERPROFILE%\AppData\Roaming\Mozilla\Firefox\blocklist-B594FFD2F29AEE4D
+HKCU:\Software\Mozilla\Firefox\Launcher	C:\Source\SixFive7\BrowserAI\.work\durability\browsers\firefox-1553\firefox\firefox.exe|Launcher	QWord	63808651886
+HKCU:\Software\Mozilla\Firefox\Launcher	C:\Source\SixFive7\BrowserAI\.work\durability\browsers\firefox-1553\firefox\firefox.exe|Browser	QWord	63808796697
+HKCU:\Software\Mozilla\Firefox\Launcher	C:\Source\SixFive7\BrowserAI\.work\durability\browsers\firefox-1553\firefox\firefox.exe|Telemetry	DWord	0
+HKCU:\Software\Mozilla\Firefox\DllPrefetchExperiment	C:\Source\SixFive7\BrowserAI\.work\durability\browsers\firefox-1553\firefox\firefox.exe	DWord	0
+HKCU:\Software\Mozilla\Firefox\PreXULSkeletonUISettings	C:\Source\SixFive7\BrowserAI\.work\durability\browsers\firefox-1553\firefox\firefox.exe|Progress	DWord	1
+# values added since the baseline that are not ours (left alone):

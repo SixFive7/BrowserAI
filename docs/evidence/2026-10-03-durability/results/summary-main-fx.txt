@@ -1,0 +1,26 @@
+browser	lever	D	actualD	runs	cookieHttpOnly	cookieJs	localStorage40	localStoragePartial	indexedDb	cacheStorage	tabsOnDisk	tabsAllRestored	tabsSessionStorage	prefOnDisk	exitCrashedOnDisk	mid:tabs12Restored	final:tab9Restored	final:tabs12Restored
+firefox	base	0.5	0.504-0.522	3	3/3	3/3	0/3	0/3	3/3	3/3	0/3	0/3	0/3					
+firefox	base	3	3.009-3.014	3	3/3	3/3	0/3	0/3	3/3	3/3	0/3	0/3	0/3					
+firefox	base	4.5	4.504-4.517	3	3/3	3/3	0/3	0/3	3/3	3/3	0/3	0/3	0/3					
+firefox	base	6	6.004-6.014	3	3/3	3/3	3/3	0/3	3/3	3/3	0/3	0/3	0/3					
+firefox	base	13	13.004-13.009	3	3/3	3/3	3/3	0/3	3/3	3/3	0/3	0/3	0/3					
+firefox	base	16.5	16.504-16.514	3	3/3	3/3	3/3	0/3	3/3	3/3	0/3	0/3	0/3					
+firefox	noclose	0.2	0.202-0.215	3	3/3	3/3	0/3	0/3	3/3	3/3								
+firefox	pageclose	0.2	0.205-1.121	3	3/3	3/3	2/3	0/3	3/3	3/3								
+firefox	ss0	1.75	1.761-1.763	3	3/3	3/3	0/3	0/3	3/3	3/3	3/3	3/3	3/3					
+firefox	ss0	2.5	2.503-2.515	3	3/3	3/3	0/3	0/3	3/3	3/3	3/3	3/3	3/3					
+firefox	ss1000	1	1.007-1.016	3	3/3	3/3	0/3	0/3	3/3	3/3	0/3	0/3	0/3					
+firefox	ss1000	1.75	1.755-1.770	3	3/3	3/3	0/3	0/3	3/3	3/3	2/3	2/3	2/3					
+firefox	ss1000	2.5	2.504-2.512	3	3/3	3/3	0/3	0/3	3/3	3/3	2/3	2/3	2/3					
+firefox	ss1000	3.5	3.503-3.516	3	3/3	3/3	0/3	0/3	3/3	3/3	3/3	3/3	3/3					
+
+first on-disk change after the write, ms (runs in which it happened before the kill):
+  firefox   base           cacheStorage    n=6   min=8251   med=8304   max=8352
+  firefox   base           localStorage    n=9   min=5020   med=5078   max=5130
+  firefox   base           prefsjs         n=15  min=2325   med=2472   max=12696
+  firefox   noclose        prefsjs         n=1   min=125    med=125    max=125
+  firefox   pageclose      cacheStorage    n=2   min=297    med=341    max=341
+  firefox   pageclose      localStorage    n=3   min=297    med=341    max=465
+  firefox   pageclose      prefsjs         n=1   min=185    med=185    max=185
+  firefox   ss0            sessionFile     n=6   min=1547   med=1647   max=1671
+  firefox   ss1000         sessionFile     n=7   min=547    med=1885   max=2915

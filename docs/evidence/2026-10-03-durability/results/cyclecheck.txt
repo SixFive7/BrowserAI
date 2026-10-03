@@ -1,0 +1,36 @@
+cr-cycle-patch-D6-r3   exit_type after kill 1: Crashed  patched: Crashed->Normal relaunch showed: ['/tab?run=cr-cycle-patch-D6-r3&k=1', '/tab?run=cr-cycle-patch-D6-r3&k=2', '/write?run=cr-cycle-patch-D6-r3&tag=a']
+    session-file writes in the 6 s after the new tab: ['1269|Default\\Sessions\\Session_13435513002059242|19044', '1392|Default\\Sessions\\Tabs_13435513002171145|1616']
+    session files after kill 2: [('Session_13435512982453616', 15703, ['tab1', 'tab2', 'write']), ('Session_13435513002059242', 19044, ['tab1', 'tab2', 'tab9', 'write']), ('Tabs_13435512994884206', 1616, []), ('Tabs_13435513002171145', 1616, [])]
+    restored by the final relaunch: 1,2,9
+cr-cycle-patch-D6-r1   exit_type after kill 1: Crashed  patched: Crashed->Normal relaunch showed: ['/tab?run=cr-cycle-patch-D6-r1&k=2', '/tab?run=cr-cycle-patch-D6-r1&k=1', '/write?run=cr-cycle-patch-D6-r1&tag=a']
+    session-file writes in the 6 s after the new tab: ['1253|Default\\Sessions\\Session_13435513117298480|19044', '1377|Default\\Sessions\\Tabs_13435513117413789|1616']
+    session files after kill 2: [('Session_13435513097555131', 15703, ['tab1', 'tab2', 'write']), ('Session_13435513117298480', 19044, ['tab1', 'tab2', 'tab9', 'write']), ('Tabs_13435513110071245', 1616, []), ('Tabs_13435513117413789', 1616, [])]
+    restored by the final relaunch: 1,2,9
+cr-cycle-patch-D6-r2   exit_type after kill 1: Crashed  patched: Crashed->Normal relaunch showed: ['/tab?run=cr-cycle-patch-D6-r2&k=1', '/tab?run=cr-cycle-patch-D6-r2&k=2', '/write?run=cr-cycle-patch-D6-r2&tag=a']
+    session-file writes in the 6 s after the new tab: ['1238|Default\\Sessions\\Session_13435513149868468|19044', '1344|Default\\Sessions\\Tabs_13435513149987619|1616']
+    session files after kill 2: [('Session_13435513129938389', 15703, ['tab1', 'tab2', 'write']), ('Session_13435513149868468', 19044, ['tab1', 'tab2', 'tab9', 'write']), ('Tabs_13435513142438837', 1616, []), ('Tabs_13435513149987619', 1616, [])]
+    restored by the final relaunch: 1,2,9
+cr-cycle-base-D6-r1    exit_type after kill 1: Crashed  patched: -               relaunch showed: ['chrome://new-tab-page/']
+    session-file writes in the 6 s after the new tab: none
+    session files after kill 2: [('Session_13435513195890657', 15703, ['tab1', 'tab2', 'write']), ('Tabs_13435513208398113', 1616, []), ('Tabs_13435513215828170', 8346, ['tab1', 'tab2', 'write'])]
+    restored by the final relaunch: nothing
+cr-cycle-base-D6-r2    exit_type after kill 1: Crashed  patched: -               relaunch showed: ['chrome://new-tab-page/']
+    session-file writes in the 6 s after the new tab: none
+    session files after kill 2: [('Session_13435513242971784', 15703, ['tab1', 'tab2', 'write']), ('Tabs_13435513255507016', 1616, []), ('Tabs_13435513262944827', 8346, ['tab1', 'tab2', 'write'])]
+    restored by the final relaunch: nothing
+cr-cycle-hide-D6-r2    exit_type after kill 1: Crashed  patched: -               relaunch showed: ['/tab?run=cr-cycle-hide-D6-r2&k=2', '/tab?run=cr-cycle-hide-D6-r2&k=1', '/write?run=cr-cycle-hide-D6-r2&tag=a']
+    session-file writes in the 6 s after the new tab: ['1329|Default\\Sessions\\Tabs_13435513454856919|1616', '1329|Default\\Sessions\\Session_13435513454835590|11668']
+    session files after kill 2: [('Session_13435513435025641', 15703, ['tab1', 'tab2', 'write']), ('Session_13435513454835590', 11668, ['tab1', 'tab2', 'tab9', 'write']), ('Tabs_13435513447472146', 1616, []), ('Tabs_13435513454856919', 1616, [])]
+    restored by the final relaunch: 1,2,9
+cr-cycle-hide-D6-r3    exit_type after kill 1: Crashed  patched: -               relaunch showed: ['/tab?run=cr-cycle-hide-D6-r3&k=1', '/write?run=cr-cycle-hide-D6-r3&tag=a', '/tab?run=cr-cycle-hide-D6-r3&k=2']
+    session-file writes in the 6 s after the new tab: ['1352|Default\\Sessions\\Tabs_13435513487574969|1616', '1352|Default\\Sessions\\Session_13435513487554920|11668']
+    session files after kill 2: [('Session_13435513467593589', 15703, ['tab1', 'tab2', 'write']), ('Session_13435513487554920', 11668, ['tab1', 'tab2', 'tab9', 'write']), ('Tabs_13435513480273850', 1616, []), ('Tabs_13435513487574969', 1616, [])]
+    restored by the final relaunch: 1,2,9
+cr-cycle-base-D6-r3    exit_type after kill 1: Crashed  patched: -               relaunch showed: ['chrome://new-tab-page/']
+    session-file writes in the 6 s after the new tab: none
+    session files after kill 2: [('Session_13435513499776874', 15703, ['tab1', 'tab2', 'write']), ('Tabs_13435513512171393', 1616, []), ('Tabs_13435513519412745', 8346, ['tab1', 'tab2', 'write'])]
+    restored by the final relaunch: nothing
+cr-cycle-hide-D6-r1    exit_type after kill 1: Crashed  patched: -               relaunch showed: ['/tab?run=cr-cycle-hide-D6-r1&k=2', '/write?run=cr-cycle-hide-D6-r1&tag=a', '/tab?run=cr-cycle-hide-D6-r1&k=1']
+    session-file writes in the 6 s after the new tab: ['1320|Default\\Sessions\\Session_13435513593181070|11668', '1320|Default\\Sessions\\Tabs_13435513593196317|1616']
+    session files after kill 2: [('Session_13435513573396585', 15703, ['tab1', 'tab2', 'write']), ('Session_13435513593181070', 11668, ['tab1', 'tab2', 'tab9', 'write']), ('Tabs_13435513585925422', 1616, []), ('Tabs_13435513593196317', 1616, [])]
+    restored by the final relaunch: 1,2,9

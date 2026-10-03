@@ -141,6 +141,15 @@ It carries none of the eight spellings, by a search that found one in
 was not put to the scan. **The scan would still flag nine files, and only
 `observe.ps1` selects a process by name.**
 
+⚠️ *Added 2026-10-03, in the evening.* **Thirty-one**, counted as its
+subdirectories, when [`2026-10-03-durability`](2026-10-03-durability/README.md)
+arrived. It went through the real scan the same way, copied under `build/` with
+`observe.ps1` beside it as the positive control and removed after, and was
+flagged in one file, a false positive: `hk.cs`, copied from the hard-kill rig,
+declares the `szExeFile` field of the toolhelp struct for a parent-pid walk.
+**The scan would now flag ten files, and still only `observe.ps1` selects a
+process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -214,3 +223,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-09-25-registrar-survey`](2026-09-25-registrar-survey/README.md) | The clients' own registration commands and three registrars against a seeded sandbox home, with a copy of every configuration file after each step | |
 | [`2026-09-25-management-interface`](2026-09-25-management-interface/README.md) | Five listeners on `127.0.0.1` and what each answers by default, WebView2 and Avalonia from NativeAOT, a listener with one gate attacked from two browsers, and the provisioned Chromium as a window over a DevTools pipe | |
 | [`2026-10-03-pipe-instances`](2026-10-03-pipe-instances/README.md) | How many callers one pipe created the way BrowserAI creates its pipes holds at once, past the 255 its instances are created with | |
+| [`2026-10-03-durability`](2026-10-03-durability/README.md) | How soon each store of each browser reaches disk with and without every lever found, what a hard kill does to session restore, what the levers cost, and what a job's I/O counters count | a false positive |

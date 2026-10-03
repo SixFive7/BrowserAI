@@ -1,0 +1,491 @@
+[
+ {
+  "id": "fx-ss1000-D1.75-r2",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 1.75,
+  "rep": 2,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D3-r2",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 3,
+  "rep": 2,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D1-r2",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 1,
+  "rep": 2,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D13-r1",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 13,
+  "rep": 1,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D6-r1",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 6,
+  "rep": 1,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D16.5-r3",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 16.5,
+  "rep": 3,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss0-D1.75-r1",
+  "browser": "firefox",
+  "lever": "ss0",
+  "D": 1.75,
+  "rep": 1,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 0,
+   "browser.sessionstore.interval.idle": 0
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D1.75-r3",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 1.75,
+  "rep": 3,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D2.5-r2",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 2.5,
+  "rep": 2,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D1-r1",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 1,
+  "rep": 1,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D3.5-r3",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 3.5,
+  "rep": 3,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss0-D2.5-r2",
+  "browser": "firefox",
+  "lever": "ss0",
+  "D": 2.5,
+  "rep": 2,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 0,
+   "browser.sessionstore.interval.idle": 0
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-pageclose-D0.2-r1",
+  "browser": "firefox",
+  "lever": "pageclose",
+  "D": 0.2,
+  "rep": 1,
+  "flush": "pageclose",
+  "warm": true,
+  "tabs": 0
+ },
+ {
+  "id": "fx-base-D6-r3",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 6,
+  "rep": 3,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D3.5-r2",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 3.5,
+  "rep": 2,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D0.5-r3",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 0.5,
+  "rep": 3,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D2.5-r1",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 2.5,
+  "rep": 1,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D0.5-r1",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 0.5,
+  "rep": 1,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D4.5-r3",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 4.5,
+  "rep": 3,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D3-r1",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 3,
+  "rep": 1,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss0-D2.5-r3",
+  "browser": "firefox",
+  "lever": "ss0",
+  "D": 2.5,
+  "rep": 3,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 0,
+   "browser.sessionstore.interval.idle": 0
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D13-r3",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 13,
+  "rep": 3,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-pageclose-D0.2-r2",
+  "browser": "firefox",
+  "lever": "pageclose",
+  "D": 0.2,
+  "rep": 2,
+  "flush": "pageclose",
+  "warm": true,
+  "tabs": 0
+ },
+ {
+  "id": "fx-ss1000-D3.5-r1",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 3.5,
+  "rep": 1,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D13-r2",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 13,
+  "rep": 2,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D4.5-r1",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 4.5,
+  "rep": 1,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-pageclose-D0.2-r3",
+  "browser": "firefox",
+  "lever": "pageclose",
+  "D": 0.2,
+  "rep": 3,
+  "flush": "pageclose",
+  "warm": true,
+  "tabs": 0
+ },
+ {
+  "id": "fx-base-D4.5-r2",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 4.5,
+  "rep": 2,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D1-r3",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 1,
+  "rep": 3,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-noclose-D0.2-r3",
+  "browser": "firefox",
+  "lever": "noclose",
+  "D": 0.2,
+  "rep": 3,
+  "warm": true,
+  "tabs": 0
+ },
+ {
+  "id": "fx-noclose-D0.2-r2",
+  "browser": "firefox",
+  "lever": "noclose",
+  "D": 0.2,
+  "rep": 2,
+  "warm": true,
+  "tabs": 0
+ },
+ {
+  "id": "fx-base-D0.5-r2",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 0.5,
+  "rep": 2,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D6-r2",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 6,
+  "rep": 2,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D3-r3",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 3,
+  "rep": 3,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-base-D16.5-r2",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 16.5,
+  "rep": 2,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D2.5-r3",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 2.5,
+  "rep": 3,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss1000-D1.75-r1",
+  "browser": "firefox",
+  "lever": "ss1000",
+  "D": 1.75,
+  "rep": 1,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 1000,
+   "browser.sessionstore.interval.idle": 1000
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-noclose-D0.2-r1",
+  "browser": "firefox",
+  "lever": "noclose",
+  "D": 0.2,
+  "rep": 1,
+  "warm": true,
+  "tabs": 0
+ },
+ {
+  "id": "fx-base-D16.5-r1",
+  "browser": "firefox",
+  "lever": "base",
+  "D": 16.5,
+  "rep": 1,
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss0-D2.5-r1",
+  "browser": "firefox",
+  "lever": "ss0",
+  "D": 2.5,
+  "rep": 1,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 0,
+   "browser.sessionstore.interval.idle": 0
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss0-D1.75-r3",
+  "browser": "firefox",
+  "lever": "ss0",
+  "D": 1.75,
+  "rep": 3,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 0,
+   "browser.sessionstore.interval.idle": 0
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ },
+ {
+  "id": "fx-ss0-D1.75-r2",
+  "browser": "firefox",
+  "lever": "ss0",
+  "D": 1.75,
+  "rep": 2,
+  "extraPrefs": {
+   "browser.sessionstore.interval": 0,
+   "browser.sessionstore.interval.idle": 0
+  },
+  "warm": true,
+  "syncToSave": true,
+  "tabs": 2
+ }
+]

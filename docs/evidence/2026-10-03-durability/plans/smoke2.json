@@ -1,0 +1,7 @@
+[
+ {"id":"smoke2-cr-base-warm-D4","browser":"chromium","lever":"base","D":4,"rep":0,"tabs":2,"prefsChange":true,"warm":true,"preIdleMs":12000,"keep":true},
+ {"id":"smoke2-cr-hide-warm-D4","browser":"chromium","lever":"hide","D":4,"rep":0,"tabs":2,"prefsChange":true,"warm":true,"preIdleMs":12000,"extraArgs":["--hide-crash-restore-bubble"],"keep":true},
+ {"id":"smoke2-cr-patch-warm-D4","browser":"chromium","lever":"patch","D":4,"rep":0,"tabs":2,"prefsChange":true,"warm":true,"preIdleMs":12000,"patchExitType":true,"keep":true},
+ {"id":"smoke2-fx-base-warm-D5","browser":"firefox","lever":"base","D":5,"rep":0,"tabs":2,"warm":true,"syncToSave":true,"keep":true},
+ {"id":"smoke2-fx-ss1000-warm-D3","browser":"firefox","lever":"ss1000","D":3,"rep":0,"tabs":2,"warm":true,"syncToSave":true,"extraPrefs":{"browser.sessionstore.interval":1000,"browser.sessionstore.interval.idle":1000},"keep":true}
+]

@@ -1,0 +1,25 @@
+browser	lever	D	actualD	runs	cookieHttpOnly	cookieJs	localStorage40	localStoragePartial	indexedDb	cacheStorage	tabsOnDisk	tabsAllRestored	tabsSessionStorage	prefOnDisk	exitCrashedOnDisk	mid:tabs12Restored	final:tab9Restored	final:tabs12Restored
+firefox	base	22	22.007-22.369	3	3/3	3/3	3/3	0/3	3/3	3/3	1/3	1/3	1/3					
+firefox	idle1s-default	20	20.013-20.015	3	3/3	3/3	3/3	0/3	3/3	3/3	2/3	2/3	2/3					
+firefox	ss0	1	1.014-1.187	3	3/3	3/3	0/3	0/3	3/3	3/3	0/3	0/3	0/3					
+
+first on-disk change after the write, ms (runs in which it happened before the kill):
+  firefox   base           cacheStorage    n=3   min=8187   med=8305   max=8321
+  firefox   base           localStorage    n=3   min=4896   med=5072   max=5373
+  firefox   base           prefsjs         n=3   min=2526   med=11375  max=11881
+  firefox   base           sessionFile     n=3   min=14063  med=14132  max=17023
+  firefox   idle1s-default cacheStorage    n=3   min=7594   med=8239   max=8414
+  firefox   idle1s-default localStorage    n=3   min=4176   med=5025   max=5068
+  firefox   idle1s-default prefsjs         n=3   min=11644  med=11775  max=11966
+  firefox   idle1s-default sessionFile     n=3   min=14262  med=16130  max=16332
+
+cost workload (job I/O over the window, page timer lag):
+  firefox   base           form-fx-base-r1                    win= 60.1s cpuMs=71391.0/33891.0 writeMB=602.52 writeOps=489477 lagP50=  1.0 P99=  12.0 max=  52.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 4, 'sessionFile': 4}
+  firefox   base           form-fx-base-r2                    win= 60.1s cpuMs=58562.0/31531.0 writeMB=638.38 writeOps=553097 lagP50=  1.0 P99=  55.0 max= 130.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 4, 'sessionFile': 4}
+  firefox   base           form-fx-base-r3                    win= 60.1s cpuMs=69094.0/43891.0 writeMB=875.31 writeOps=770062 lagP50=  1.0 P99=   9.0 max=  38.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 4, 'sessionFile': 4}
+  firefox   ss0            form-fx-ss0-r1                     win= 60.2s cpuMs=64719.0/20172.0 writeMB=466.65 writeOps=410060 lagP50=  2.0 P99= 109.0 max= 187.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 5, 'sessionFile': 35}
+  firefox   ss0            form-fx-ss0-r2                     win= 60.1s cpuMs=69312.0/44875.0 writeMB=833.24 writeOps=746185 lagP50=  1.0 P99=   6.0 max=  47.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 4, 'sessionFile': 29}
+  firefox   ss0            form-fx-ss0-r3                     win= 60.1s cpuMs=67078.0/40453.0 writeMB=725.38 writeOps=646808 lagP50=  1.0 P99=  45.0 max= 124.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 4, 'sessionFile': 29}
+  firefox   ss1000         form-fx-ss1000-r1                  win= 60.1s cpuMs=65422.0/45609.0 writeMB=872.60 writeOps=787636 lagP50=  1.0 P99=   9.0 max=  20.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 4, 'sessionFile': 28}
+  firefox   ss1000         form-fx-ss1000-r2                  win= 60.1s cpuMs=69047.0/42750.0 writeMB=868.69 writeOps=758740 lagP50=  1.0 P99=  10.0 max=  47.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 4, 'sessionFile': 28}
+  firefox   ss1000         form-fx-ss1000-r3                  win= 60.1s cpuMs=66094.0/38719.0 writeMB=805.75 writeOps=707371 lagP50=  1.0 P99=  76.0 max= 173.0 lsOps=0 flushes=0 flushMs=0 files={'prefsjs': 4, 'sessionFile': 28}

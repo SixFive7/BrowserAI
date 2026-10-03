@@ -1,0 +1,8 @@
+server: {"listening":47911,"pid":56728}
+[1/5] smoke2-cr-base-warm-D4 D=4 actualD=4,014 ck=False/False ls=40 idb=True cache=True tabs=[] ss=[] pref= exit=Crashed err= (30,2s)
+[2/5] smoke2-cr-hide-warm-D4 D=4 actualD=4,013 ck=False/False ls=40 idb=True cache=True tabs=[1,2] ss=[1,2] pref= exit=Crashed err= (22,8s)
+[3/5] smoke2-cr-patch-warm-D4 D=4 actualD=4,014 ck=False/False ls=40 idb=True cache=True tabs=[1,2] ss=[1,2] pref= exit=Crashed err= (23,1s)
+[4/5] smoke2-fx-base-warm-D5 D=5 actualD=5,003 ck=True/True ls=0 idb=True cache=True tabs=[] ss=[] pref= exit= err= (42,3s)
+[5/5] smoke2-fx-ss1000-warm-D3 D=3 actualD=3,004 ck=True/True ls=0 idb=True cache=True tabs=[1,2] ss=[1,2] pref= exit= err= (16,3s)
+server exited: True
+EXIT 0

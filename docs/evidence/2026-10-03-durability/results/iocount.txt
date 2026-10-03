@@ -1,0 +1,9 @@
+none rep 1: writeBytes +5  writeOps +1  readBytes +4  stderr=DONE
+pipe rep 1: writeBytes +33.554.437  writeOps +513  readBytes +4  stderr=DONE
+file rep 1: writeBytes +33.554.437  writeOps +513  readBytes +4  stderr=DONE
+none rep 2: writeBytes +5  writeOps +1  readBytes +4  stderr=DONE
+pipe rep 2: writeBytes +33.554.437  writeOps +513  readBytes +4  stderr=DONE
+file rep 2: writeBytes +33.554.437  writeOps +513  readBytes +4  stderr=DONE
+none rep 3: writeBytes +5  writeOps +1  readBytes +4  stderr=DONE
+pipe rep 3: writeBytes +33.554.437  writeOps +513  readBytes +4  stderr=DONE
+file rep 3: writeBytes +33.554.437  writeOps +513  readBytes +4  stderr=DONE

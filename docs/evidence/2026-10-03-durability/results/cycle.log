@@ -1,0 +1,17 @@
+server: {"listening":47911,"pid":74604}
+[1/15] cr-cycle-patch-D6-r3 D=6 actualD=6,019 ck=False/False ls=40 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit=Crashed err= (32,9s)
+[2/15] fx-cycle-base-D17-r1 D=17 actualD=17,01 ck=True/True ls=40 idb=True cache=True tabs=[1,2] ss=[1,2] pref= exit= err= (82,9s)
+[3/15] cr-cycle-patch-D6-r1 D=6 actualD=6,016 ck=False/False ls=40 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit=Crashed err= (32,4s)
+[4/15] cr-cycle-patch-D6-r2 D=6 actualD=6,005 ck=False/False ls=40 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit=Crashed err= (32,6s)
+[5/15] fx-cycle-ss1000-D4-r3 D=4 actualD=4,036 ck=True/True ls=0 idb=True cache=True tabs=[1,2,9] ss=[9] pref= exit= err= (33,3s)
+[6/15] cr-cycle-base-D6-r1 D=6 actualD=6,006 ck=False/False ls=40 idb=True cache=True tabs=[] ss=[] pref= exit=Crashed err= (46,8s)
+[7/15] cr-cycle-base-D6-r2 D=6 actualD=6,005 ck=False/False ls=40 idb=True cache=True tabs=[] ss=[] pref= exit=Crashed err= (47,1s)
+[8/15] fx-cycle-base-D17-r2 D=17 actualD=17,003 ck=True/True ls=40 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit= err= (67s)
+[9/15] fx-cycle-base-D17-r3 D=17 actualD=17,014 ck=True/True ls=40 idb=True cache=True tabs=[1,2] ss=[1,2] pref= exit= err= (76,7s)
+[10/15] cr-cycle-hide-D6-r2 D=6 actualD=6,006 ck=False/False ls=40 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit=Crashed err= (34,1s)
+[11/15] cr-cycle-hide-D6-r3 D=6 actualD=6,011 ck=False/False ls=40 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit=Crashed err= (32,5s)
+[12/15] cr-cycle-base-D6-r3 D=6 actualD=6,019 ck=False/False ls=40 idb=True cache=True tabs=[] ss=[] pref= exit=Crashed err= (46,4s)
+[13/15] fx-cycle-ss1000-D4-r2 D=4 actualD=4,004 ck=True/True ls=0 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit= err= (26,7s)
+[14/15] cr-cycle-hide-D6-r1 D=6 actualD=6,006 ck=False/False ls=40 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit=Crashed err= (32,7s)
+[15/15] fx-cycle-ss1000-D4-r1 D=4 actualD=4,005 ck=True/True ls=0 idb=True cache=True tabs=[1,2,9] ss=[1,2,9] pref= exit= err= (27s)
+server exited: True

@@ -1,0 +1,1 @@
+[{"id": "smoke-form-fx-ss0", "kind": "work", "page": "form", "browser": "firefox", "lever": "ss0", "rep": 1, "secs": 10, "extraPrefs": {"browser.sessionstore.interval": 0, "browser.sessionstore.interval.idle": 0}}]

@@ -1,0 +1,35 @@
+age of each store's own write at the kill, seconds: kept (min-max) | lost (min-max)
+  firefox   base               cacheStorage  18 kept 0.504-16.514         | 0 lost
+  firefox   base               cookie        18 kept 0.599-16.632         | 0 lost
+  firefox   base               indexedDb     18 kept 0.534-16.550         | 0 lost
+  firefox   base               localStorage  9 kept 6.100-16.629          | 9 lost 0.596-4.786
+  firefox   base               tabsOnDisk    0 kept                       | 18 lost 0.617-16.667
+  firefox   base               tabsRestored  0 kept                       | 18 lost 0.617-16.667
+  firefox   noclose            cacheStorage  3 kept 0.203-0.215           | 0 lost
+  firefox   noclose            cookie        3 kept 0.314-0.719           | 0 lost
+  firefox   noclose            indexedDb     3 kept 0.243-0.251           | 0 lost
+  firefox   noclose            localStorage  0 kept                       | 3 lost 0.311-0.716
+  firefox   pageclose          cacheStorage  3 kept 0.396-1.480           | 0 lost
+  firefox   pageclose          cookie        3 kept 0.497-1.648           | 0 lost
+  firefox   pageclose          indexedDb     3 kept 0.428-1.534           | 0 lost
+  firefox   pageclose          localStorage  2 kept 0.495-0.568           | 1 lost 1.643-1.643
+  firefox   ss0                cacheStorage  6 kept 1.761-2.515           | 0 lost
+  firefox   ss0                cookie        6 kept 1.859-2.661           | 0 lost
+  firefox   ss0                indexedDb     6 kept 1.792-2.560           | 0 lost
+  firefox   ss0                localStorage  0 kept                       | 6 lost 1.856-2.658
+  firefox   ss0                tabsOnDisk    6 kept 1.876-2.693           | 0 lost
+  firefox   ss0                tabsRestored  6 kept 1.876-2.693           | 0 lost
+  firefox   ss1000             cacheStorage  12 kept 1.007-3.516          | 0 lost
+  firefox   ss1000             cookie        12 kept 1.115-4.676          | 0 lost
+  firefox   ss1000             indexedDb     12 kept 1.044-3.568          | 0 lost
+  firefox   ss1000             localStorage  0 kept                       | 12 lost 1.113-4.672
+  firefox   ss1000             tabsOnDisk    7 kept 1.928-4.696           | 5 lost 1.139-2.625
+  firefox   ss1000             tabsRestored  7 kept 1.928-4.696           | 5 lost 1.139-2.625
+
+first change of the store's files after the store's own write, ms:
+  firefox   base               cacheStorage    n=6   min=8251   med=8304   max=8352
+  firefox   base               localStorage    n=9   min=5117   med=5193   max=5279
+  firefox   pageclose          cacheStorage    n=2   min=297    med=341    max=341
+  firefox   pageclose          localStorage    n=3   min=396    med=469    max=628
+  firefox   ss0                sessionFile     n=6   min=1726   med=1763   max=1801
+  firefox   ss1000             sessionFile     n=7   min=1396   med=2679   max=3028

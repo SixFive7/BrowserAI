@@ -1,0 +1,1013 @@
+[
+ {
+  "id": "cr-cdpsetdel-D0-r3",
+  "browser": "chromium",
+  "lever": "cdpsetdel",
+  "D": 0,
+  "rep": 3,
+  "flush": "cdp-setdel",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D2-r3",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 2,
+  "rep": 3,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpsetdel-D0.25-r3",
+  "browser": "chromium",
+  "lever": "cdpsetdel",
+  "D": 0.25,
+  "rep": 3,
+  "flush": "cdp-setdel",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D1.5-r1",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 1.5,
+  "rep": 1,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.1-r3",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.1,
+  "rep": 3,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D31-r2",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 31,
+  "rep": 2,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-patch-D3.5-r3",
+  "browser": "chromium",
+  "lever": "patch",
+  "D": 3.5,
+  "rep": 3,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D6-r2",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 6,
+  "rep": 2,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D6-r1",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 6,
+  "rep": 1,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D0.5-r3",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 0.5,
+  "rep": 3,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noclose-noaggr-D0.2-r2",
+  "browser": "chromium",
+  "lever": "noclose-noaggr",
+  "D": 0.2,
+  "rep": 2,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 0
+ },
+ {
+  "id": "cr-hide-D1.5-r2",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 1.5,
+  "rep": 2,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.25-r2",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.25,
+  "rep": 2,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D2.5-r1",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 2.5,
+  "rep": 1,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-patch-D3.5-r1",
+  "browser": "chromium",
+  "lever": "patch",
+  "D": 3.5,
+  "rep": 1,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.1-r2",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.1,
+  "rep": 2,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D0.5-r2",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 0.5,
+  "rep": 2,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D11-r3",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 11,
+  "rep": 3,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D0.5-r1",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 0.5,
+  "rep": 1,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0-r3",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0,
+  "rep": 3,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D1-r2",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 1,
+  "rep": 2,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D3-r2",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 3,
+  "rep": 2,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D0.5-r2",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 0.5,
+  "rep": 2,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.5-r3",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.5,
+  "rep": 3,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D3-r1",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 3,
+  "rep": 1,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-patch-D3.5-r2",
+  "browser": "chromium",
+  "lever": "patch",
+  "D": 3.5,
+  "rep": 2,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D1.5-r2",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 1.5,
+  "rep": 2,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.25-r3",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.25,
+  "rep": 3,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpsetdel-D0-r1",
+  "browser": "chromium",
+  "lever": "cdpsetdel",
+  "D": 0,
+  "rep": 1,
+  "flush": "cdp-setdel",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D6-r2",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 6,
+  "rep": 2,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D2.5-r2",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 2.5,
+  "rep": 2,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D3-r3",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 3,
+  "rep": 3,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpsetdel-D0.25-r1",
+  "browser": "chromium",
+  "lever": "cdpsetdel",
+  "D": 0.25,
+  "rep": 1,
+  "flush": "cdp-setdel",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D1.5-r3",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 1.5,
+  "rep": 3,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-patch-D1.5-r1",
+  "browser": "chromium",
+  "lever": "patch",
+  "D": 1.5,
+  "rep": 1,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-pageclose-noaggr-D0.2-r2",
+  "browser": "chromium",
+  "lever": "pageclose-noaggr",
+  "D": 0.2,
+  "rep": 2,
+  "flush": "pageclose",
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 0
+ },
+ {
+  "id": "cr-hide-D2-r1",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 2,
+  "rep": 1,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D1.5-r3",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 1.5,
+  "rep": 3,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D9-r1",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 9,
+  "rep": 1,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0-r2",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0,
+  "rep": 2,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D31-r3",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 31,
+  "rep": 3,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D1.5-r2",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 1.5,
+  "rep": 2,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D29-r3",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 29,
+  "rep": 3,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D2.5-r3",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 2.5,
+  "rep": 3,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpsetdel-D0-r2",
+  "browser": "chromium",
+  "lever": "cdpsetdel",
+  "D": 0,
+  "rep": 2,
+  "flush": "cdp-setdel",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D6-r3",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 6,
+  "rep": 3,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-pageclose-noaggr-D0.2-r1",
+  "browser": "chromium",
+  "lever": "pageclose-noaggr",
+  "D": 0.2,
+  "rep": 1,
+  "flush": "pageclose",
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 0
+ },
+ {
+  "id": "cr-cdpsetdel-D0.25-r2",
+  "browser": "chromium",
+  "lever": "cdpsetdel",
+  "D": 0.25,
+  "rep": 2,
+  "flush": "cdp-setdel",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D3.5-r3",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 3.5,
+  "rep": 3,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D1.5-r3",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 1.5,
+  "rep": 3,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D31-r1",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 31,
+  "rep": 1,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D29-r2",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 29,
+  "rep": 2,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0-r1",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0,
+  "rep": 1,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D6-r1",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 6,
+  "rep": 1,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D3-r2",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 3,
+  "rep": 2,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-patch-D1.5-r3",
+  "browser": "chromium",
+  "lever": "patch",
+  "D": 1.5,
+  "rep": 3,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noaggr-D6-r3",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 6,
+  "rep": 3,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D9-r3",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 9,
+  "rep": 3,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-pageclose-noaggr-D0.2-r3",
+  "browser": "chromium",
+  "lever": "pageclose-noaggr",
+  "D": 0.2,
+  "rep": 3,
+  "flush": "pageclose",
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 0
+ },
+ {
+  "id": "cr-noclose-noaggr-D0.2-r3",
+  "browser": "chromium",
+  "lever": "noclose-noaggr",
+  "D": 0.2,
+  "rep": 3,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 0
+ },
+ {
+  "id": "cr-noaggr-D3-r3",
+  "browser": "chromium",
+  "lever": "noaggr",
+  "D": 3,
+  "rep": 3,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D1.5-r1",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 1.5,
+  "rep": 1,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-patch-D1.5-r2",
+  "browser": "chromium",
+  "lever": "patch",
+  "D": 1.5,
+  "rep": 2,
+  "patchExitType": true,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D11-r2",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 11,
+  "rep": 2,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D11-r1",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 11,
+  "rep": 1,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D3.5-r1",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 3.5,
+  "rep": 1,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.1-r1",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.1,
+  "rep": 1,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D0.5-r3",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 0.5,
+  "rep": 3,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D3-r1",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 3,
+  "rep": 1,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D1-r3",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 1,
+  "rep": 3,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.5-r1",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.5,
+  "rep": 1,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D3.5-r2",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 3.5,
+  "rep": 2,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D9-r2",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 9,
+  "rep": 2,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.5-r2",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.5,
+  "rep": 2,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D1-r1",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 1,
+  "rep": 1,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-cdpflush-D0.25-r1",
+  "browser": "chromium",
+  "lever": "cdpflush",
+  "D": 0.25,
+  "rep": 1,
+  "flush": "cdp-clearorigin",
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D29-r1",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 29,
+  "rep": 1,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-hide-D2-r2",
+  "browser": "chromium",
+  "lever": "hide",
+  "D": 2,
+  "rep": 2,
+  "extraArgs": [
+   "--hide-crash-restore-bubble"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-base-D0.5-r1",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 0.5,
+  "rep": 1,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ },
+ {
+  "id": "cr-noclose-noaggr-D0.2-r1",
+  "browser": "chromium",
+  "lever": "noclose-noaggr",
+  "D": 0.2,
+  "rep": 1,
+  "dropArgs": [
+   "--enable-aggressive-domstorage-flushing"
+  ],
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 0
+ },
+ {
+  "id": "cr-base-D1.5-r1",
+  "browser": "chromium",
+  "lever": "base",
+  "D": 1.5,
+  "rep": 1,
+  "warm": true,
+  "preIdleMs": 12000,
+  "tabs": 2,
+  "prefsChange": true
+ }
+]

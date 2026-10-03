@@ -1,0 +1,3 @@
+72be27fc530a335bd2be66b64e30ec3f207ff5a5c699a38a52651db6cc43583b        1265  results/registry-removed.tsv  ->  results/registry-removed.trimmed.tsv  (1 profile path occurrence(s) replaced by %USERPROFILE%)
+a5d60e0297794b6748b74669f967d6cc97bd6007204b9cf5c3cd73942b8e0db6        1262  results/registry-removed-dryrun-by-predecessor-1357Z.tsv  ->  results/registry-removed-dryrun-by-predecessor-1357Z.trimmed.tsv  (1 profile path occurrence(s) replaced by %USERPROFILE%)
+4de8c9cc7b3918867c66e5fef0db9a49d0f09d75c23566591240cbe893f32863       18175  results/load-supp.csv  ->  results/load-supp.trimmed.csv  (1 machine name in the counter path replaced by <machine>)

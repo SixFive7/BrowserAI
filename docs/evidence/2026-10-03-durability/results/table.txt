@@ -1,0 +1,154 @@
+runs per browser and lever (cycle runs pooled with their lever):
+  chromium  base             27
+  chromium  batch512         3
+  chromium  cdpflush         12
+  chromium  cdpsetdel        6
+  chromium  hide             18
+  chromium  noaggr           12
+  chromium  noclose-noaggr   3
+  chromium  pageclose-noaggr 3
+  chromium  patch            9
+  firefox   active15         6
+  firefox   base             24
+  firefox   idle1s-default   6
+  firefox   idle1s-ss1000    3
+  firefox   noclose          3
+  firefox   pageclose        3
+  firefox   ss0              9
+  firefox   ss1000           15
+
+browser   lever            store          kept: n, youngest kept age (s)     lost: n, oldest lost age (s)
+chromium  base             CacheStorage   27 kept, youngest 0.506             0 lost
+chromium  base             IndexedDB      27 kept, youngest 0.517             0 lost
+chromium  base             Preferences     9 kept, youngest 11.260           18 lost, oldest 9.313
+chromium  base             cookies         3 kept, youngest 31.075           24 lost, oldest 29.237
+chromium  base             localStorage   24 kept, youngest 1.586             3 lost, oldest 0.592
+chromium  base             tabs on disk   21 kept, youngest 3.121             6 lost, oldest 1.643
+chromium  base             tabs restored   0 kept                            27 lost, oldest 31.122
+chromium  batch512         CacheStorage    3 kept, youngest 0.328             0 lost
+chromium  batch512         IndexedDB       3 kept, youngest 0.338             0 lost
+chromium  batch512         Preferences     0 kept                             3 lost, oldest 0.606
+chromium  batch512         cookies         3 kept, youngest 0.393             0 lost
+chromium  batch512         localStorage    0 kept                             3 lost, oldest 0.408
+chromium  batch512         tabs on disk    0 kept                             3 lost, oldest 0.435
+chromium  batch512         tabs restored   0 kept                             3 lost, oldest 0.435
+chromium  cdpflush         CacheStorage   12 kept, youngest 0.036             0 lost
+chromium  cdpflush         IndexedDB      12 kept, youngest 0.046             0 lost
+chromium  cdpflush         Preferences     0 kept                            12 lost, oldest 1.127
+chromium  cdpflush         cookies        12 kept, youngest 0.100             0 lost
+chromium  cdpflush         localStorage    0 kept                            12 lost, oldest 0.929
+chromium  cdpflush         tabs on disk    0 kept                            12 lost, oldest 0.958
+chromium  cdpflush         tabs restored   0 kept                            12 lost, oldest 0.958
+chromium  cdpsetdel        CacheStorage    6 kept, youngest 0.037             0 lost
+chromium  cdpsetdel        IndexedDB       6 kept, youngest 0.047             0 lost
+chromium  cdpsetdel        Preferences     0 kept                             6 lost, oldest 0.581
+chromium  cdpsetdel        cookies         6 kept, youngest 0.142             0 lost
+chromium  cdpsetdel        localStorage    0 kept                             6 lost, oldest 0.375
+chromium  cdpsetdel        tabs on disk    0 kept                             6 lost, oldest 0.409
+chromium  cdpsetdel        tabs restored   0 kept                             6 lost, oldest 0.409
+chromium  hide             CacheStorage   18 kept, youngest 1.005             0 lost
+chromium  hide             IndexedDB      18 kept, youngest 1.014             0 lost
+chromium  hide             Preferences     0 kept                            18 lost, oldest 6.296
+chromium  hide             cookies         0 kept                            18 lost, oldest 6.082
+chromium  hide             localStorage   18 kept, youngest 1.070             0 lost
+chromium  hide             tabs on disk   11 kept, youngest 2.119             7 lost, oldest 2.105
+chromium  hide             tabs restored  11 kept, youngest 2.119             7 lost, oldest 2.105
+chromium  noaggr           CacheStorage   12 kept, youngest 0.505             0 lost
+chromium  noaggr           IndexedDB      12 kept, youngest 0.513             0 lost
+chromium  noaggr           Preferences     0 kept                            12 lost, oldest 6.294
+chromium  noaggr           cookies         0 kept                            12 lost, oldest 6.093
+chromium  noaggr           localStorage    3 kept, youngest 6.064             9 lost, oldest 3.979
+chromium  noaggr           tabs on disk    7 kept, youngest 1.735             5 lost, oldest 1.608
+chromium  noaggr           tabs restored   0 kept                            12 lost, oldest 6.123
+chromium  noclose-noaggr   CacheStorage    3 kept, youngest 0.205             0 lost
+chromium  noclose-noaggr   IndexedDB       3 kept, youngest 0.218             0 lost
+chromium  noclose-noaggr   cookies         0 kept                             3 lost, oldest 0.331
+chromium  noclose-noaggr   localStorage    0 kept                             3 lost, oldest 0.329
+chromium  pageclose-noaggr CacheStorage    3 kept, youngest 0.256             0 lost
+chromium  pageclose-noaggr IndexedDB       3 kept, youngest 0.269             0 lost
+chromium  pageclose-noaggr cookies         0 kept                             3 lost, oldest 2.565
+chromium  pageclose-noaggr localStorage    3 kept, youngest 0.325             0 lost
+chromium  patch            CacheStorage    9 kept, youngest 1.505             0 lost
+chromium  patch            IndexedDB       9 kept, youngest 1.514             0 lost
+chromium  patch            Preferences     0 kept                             9 lost, oldest 6.275
+chromium  patch            cookies         0 kept                             9 lost, oldest 6.092
+chromium  patch            localStorage    9 kept, youngest 1.564             0 lost
+chromium  patch            tabs on disk    6 kept, youngest 3.607             3 lost, oldest 1.651
+chromium  patch            tabs restored   6 kept, youngest 3.607             3 lost, oldest 1.651
+firefox   active15         CacheStorage    6 kept, youngest 13.004            0 lost
+firefox   active15         IndexedDB       6 kept, youngest 13.039            0 lost
+firefox   active15         cookies         6 kept, youngest 13.108            0 lost
+firefox   active15         localStorage    6 kept, youngest 13.105            0 lost
+firefox   active15         tabs on disk    1 kept, youngest 17.138            5 lost, oldest 17.148  OVERLAP
+firefox   active15         tabs restored   1 kept, youngest 17.138            5 lost, oldest 17.148  OVERLAP
+firefox   base             CacheStorage   24 kept, youngest 0.504             0 lost
+firefox   base             IndexedDB      24 kept, youngest 0.534             0 lost
+firefox   base             cookies        24 kept, youngest 0.599             0 lost
+firefox   base             localStorage   15 kept, youngest 6.100             9 lost, oldest 4.786
+firefox   base             tabs on disk    4 kept, youngest 17.141           20 lost, oldest 22.546  OVERLAP
+firefox   base             tabs restored   4 kept, youngest 17.141           20 lost, oldest 22.546  OVERLAP
+firefox   idle1s-default   CacheStorage    6 kept, youngest 20.003            0 lost
+firefox   idle1s-default   IndexedDB       6 kept, youngest 20.040            0 lost
+firefox   idle1s-default   cookies         6 kept, youngest 20.109            0 lost
+firefox   idle1s-default   localStorage    6 kept, youngest 20.106            0 lost
+firefox   idle1s-default   tabs on disk    3 kept, youngest 20.181            3 lost, oldest 20.258  OVERLAP
+firefox   idle1s-default   tabs restored   3 kept, youngest 20.181            3 lost, oldest 20.258  OVERLAP
+firefox   idle1s-ss1000    CacheStorage    3 kept, youngest 3.505             0 lost
+firefox   idle1s-ss1000    IndexedDB       3 kept, youngest 3.542             0 lost
+firefox   idle1s-ss1000    cookies         3 kept, youngest 3.610             0 lost
+firefox   idle1s-ss1000    localStorage    0 kept                             3 lost, oldest 4.598
+firefox   idle1s-ss1000    tabs on disk    3 kept, youngest 3.639             0 lost
+firefox   idle1s-ss1000    tabs restored   3 kept, youngest 3.639             0 lost
+firefox   noclose          CacheStorage    3 kept, youngest 0.203             0 lost
+firefox   noclose          IndexedDB       3 kept, youngest 0.243             0 lost
+firefox   noclose          cookies         3 kept, youngest 0.314             0 lost
+firefox   noclose          localStorage    0 kept                             3 lost, oldest 0.716
+firefox   pageclose        CacheStorage    3 kept, youngest 0.396             0 lost
+firefox   pageclose        IndexedDB       3 kept, youngest 0.428             0 lost
+firefox   pageclose        cookies         3 kept, youngest 0.497             0 lost
+firefox   pageclose        localStorage    2 kept, youngest 0.495             1 lost, oldest 1.643  OVERLAP
+firefox   ss0              CacheStorage    9 kept, youngest 1.014             0 lost
+firefox   ss0              IndexedDB       9 kept, youngest 1.056             0 lost
+firefox   ss0              cookies         9 kept, youngest 1.136             0 lost
+firefox   ss0              localStorage    0 kept                             9 lost, oldest 2.658
+firefox   ss0              tabs on disk    6 kept, youngest 1.876             3 lost, oldest 1.520
+firefox   ss0              tabs restored   6 kept, youngest 1.876             3 lost, oldest 1.520
+firefox   ss1000           CacheStorage   15 kept, youngest 1.007             0 lost
+firefox   ss1000           IndexedDB      15 kept, youngest 1.044             0 lost
+firefox   ss1000           cookies        15 kept, youngest 1.115             0 lost
+firefox   ss1000           localStorage    0 kept                            15 lost, oldest 4.672
+firefox   ss1000           tabs on disk   10 kept, youngest 1.928             5 lost, oldest 2.625  OVERLAP
+firefox   ss1000           tabs restored  10 kept, youngest 1.928             5 lost, oldest 2.625  OVERLAP
+
+first on-disk change of the store's files after its own write, s (runs where it happened before the kill):
+  chromium  base             cacheStorage  n=6   min=20.000 med=20.025 max=20.108
+  chromium  base             cookies       n=3   min=29.994 med=30.020 max=30.089
+  chromium  base             localStorage  n=24  min=1.007 med=1.079 max=1.136
+  chromium  base             preferences   n=9   min=9.347 med=9.862 max=9.888
+  chromium  base             sessionFile   n=21  min=1.327 med=2.190 max=3.324
+  chromium  batch512         cookies       n=3   min=0.129 med=0.141 max=0.145
+  chromium  cdpflush         cookies       n=12  min=0.087 med=0.108 max=0.668
+  chromium  cdpsetdel        cookies       n=6   min=0.097 med=0.129 max=0.208
+  chromium  hide             localStorage  n=17  min=1.004 med=1.081 max=1.107
+  chromium  hide             sessionFile   n=10  min=1.882 med=2.116 max=2.211
+  chromium  noaggr           localStorage  n=3   min=5.033 med=5.065 max=5.067
+  chromium  noaggr           sessionFile   n=7   min=1.668 med=2.167 max=2.285
+  chromium  pageclose-noaggr cacheStorage  n=3   min=0.045 med=0.074 max=0.166
+  chromium  pageclose-noaggr localStorage  n=3   min=0.149 med=0.227 max=2.351
+  chromium  pageclose-noaggr sessionFile   n=1   min=2.585 med=2.585 max=2.585
+  chromium  patch            localStorage  n=9   min=1.016 med=1.057 max=1.081
+  chromium  patch            sessionFile   n=6   min=2.145 med=2.211 max=2.251
+  firefox   active15         cacheStorage  n=6   min=8.271 med=8.330 max=8.361
+  firefox   active15         localStorage  n=6   min=5.103 med=5.191 max=5.210
+  firefox   active15         sessionFile   n=1   min=16.851 med=16.851 max=16.851
+  firefox   base             cacheStorage  n=12  min=7.567 med=8.305 max=8.356
+  firefox   base             localStorage  n=15  min=5.008 med=5.189 max=5.543
+  firefox   base             sessionFile   n=6   min=14.309 med=16.728 max=17.206
+  firefox   idle1s-default   cacheStorage  n=6   min=7.594 med=8.315 max=8.414
+  firefox   idle1s-default   localStorage  n=6   min=5.052 med=5.165 max=5.207
+  firefox   idle1s-default   sessionFile   n=5   min=2.122 med=16.313 max=17.871
+  firefox   idle1s-ss1000    sessionFile   n=3   min=2.599 med=2.791 max=3.105
+  firefox   pageclose        cacheStorage  n=2   min=0.297 med=0.341 max=0.341
+  firefox   pageclose        localStorage  n=3   min=0.396 med=0.469 max=0.628
+  firefox   ss0              sessionFile   n=6   min=1.726 med=1.763 max=1.801
+  firefox   ss1000           sessionFile   n=10  min=1.396 med=2.679 max=3.028

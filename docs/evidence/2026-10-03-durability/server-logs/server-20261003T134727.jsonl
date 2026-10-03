@@ -1,0 +1,47 @@
+{"t":1791035248633,"ev":"tabseen","run":"smoke-cr-base-D0.5","k":"1","ss":"","phase":"write"}
+{"t":1791035248749,"ev":"tabseen","run":"smoke-cr-base-D0.5","k":"2","ss":"","phase":"write"}
+{"t":1791035248796,"ev":"write-served","run":"smoke-cr-base-D0.5","tag":"a","phase":"write","cookie":""}
+{"t":1791035248873,"ev":"done","run":"smoke-cr-base-D0.5","tag":"a","done":{"t0":1791035248809,"t":1791035248873,"error":null,"at":1791035248873}}
+{"t":1791035249895,"ev":"phase","run":"smoke-cr-base-D0.5","phase":"read"}
+{"t":1791035258812,"ev":"read-served","run":"smoke-cr-base-D0.5","cookie":""}
+{"t":1791035259978,"ev":"report","run":"smoke-cr-base-D0.5"}
+{"t":1791035261584,"ev":"tabseen","run":"smoke-cr-hide-D4","k":"1","ss":"","phase":"write"}
+{"t":1791035261690,"ev":"tabseen","run":"smoke-cr-hide-D4","k":"2","ss":"","phase":"write"}
+{"t":1791035261738,"ev":"write-served","run":"smoke-cr-hide-D4","tag":"a","phase":"write","cookie":""}
+{"t":1791035261832,"ev":"done","run":"smoke-cr-hide-D4","tag":"a","done":{"t0":1791035261751,"t":1791035261831,"error":null,"at":1791035261832}}
+{"t":1791035266367,"ev":"phase","run":"smoke-cr-hide-D4","phase":"read"}
+{"t":1791035275492,"ev":"read-served","run":"smoke-cr-hide-D4","cookie":""}
+{"t":1791035275528,"ev":"report","run":"smoke-cr-hide-D4"}
+{"t":1791035276515,"ev":"write-served","run":"smoke-cr-cdpflush-D0.2","tag":"a","phase":"write","cookie":""}
+{"t":1791035276609,"ev":"done","run":"smoke-cr-cdpflush-D0.2","tag":"a","done":{"t0":1791035276525,"t":1791035276608,"error":null,"at":1791035276609}}
+{"t":1791035277368,"ev":"phase","run":"smoke-cr-cdpflush-D0.2","phase":"read"}
+{"t":1791035286324,"ev":"read-served","run":"smoke-cr-cdpflush-D0.2","cookie":"hk_srv_a=smoke-cr-cdpflush-D0.2; hk_js_a=smoke-cr-cdpflush-D0.2"}
+{"t":1791035287691,"ev":"report","run":"smoke-cr-cdpflush-D0.2"}
+{"t":1791035291042,"ev":"tabseen","run":"smoke-fx-base-D0.5","k":"1","ss":"","phase":"write"}
+{"t":1791035291341,"ev":"tabseen","run":"smoke-fx-base-D0.5","k":"2","ss":"","phase":"write"}
+{"t":1791035291381,"ev":"write-served","run":"smoke-fx-base-D0.5","tag":"a","phase":"write","cookie":""}
+{"t":1791035292006,"ev":"done","run":"smoke-fx-base-D0.5","tag":"a","done":{"t0":1791035291398,"t":1791035292003,"error":null,"at":1791035292006}}
+{"t":1791035292953,"ev":"phase","run":"smoke-fx-base-D0.5","phase":"read"}
+{"t":1791035303160,"ev":"read-served","run":"smoke-fx-base-D0.5","cookie":"hk_srv_a=smoke-fx-base-D0.5; hk_js_a=smoke-fx-base-D0.5"}
+{"t":1791035303348,"ev":"report","run":"smoke-fx-base-D0.5"}
+{"t":1791035306497,"ev":"tabseen","run":"smoke-fx-base-D17","k":"1","ss":"","phase":"write"}
+{"t":1791035306745,"ev":"tabseen","run":"smoke-fx-base-D17","k":"2","ss":"","phase":"write"}
+{"t":1791035306773,"ev":"write-served","run":"smoke-fx-base-D17","tag":"a","phase":"write","cookie":""}
+{"t":1791035306890,"ev":"done","run":"smoke-fx-base-D17","tag":"a","done":{"t0":1791035306786,"t":1791035306890,"error":null,"at":1791035306890}}
+{"t":1791035324322,"ev":"phase","run":"smoke-fx-base-D17","phase":"read"}
+{"t":1791035326622,"ev":"write-served","run":"smoke-fx-base-D17","tag":"a","phase":"read","cookie":"hk_srv_a=smoke-fx-base-D17; hk_js_a=smoke-fx-base-D17"}
+{"t":1791035327137,"ev":"tabseen","run":"smoke-fx-base-D17","k":"1","ss":"smoke-fx-base-D17_1","phase":"read"}
+{"t":1791035327143,"ev":"tabseen","run":"smoke-fx-base-D17","k":"2","ss":"smoke-fx-base-D17_2","phase":"read"}
+{"t":1791035329056,"ev":"read-served","run":"smoke-fx-base-D17","cookie":"hk_srv_a=smoke-fx-base-D17; hk_js_a=smoke-fx-base-D17"}
+{"t":1791035329167,"ev":"report","run":"smoke-fx-base-D17"}
+{"t":1791035330907,"ev":"tabseen","run":"smoke-cr-hide-cycle","k":"1","ss":"","phase":"write"}
+{"t":1791035331124,"ev":"tabseen","run":"smoke-cr-hide-cycle","k":"2","ss":"","phase":"write"}
+{"t":1791035331190,"ev":"write-served","run":"smoke-cr-hide-cycle","tag":"a","phase":"write","cookie":""}
+{"t":1791035331304,"ev":"done","run":"smoke-cr-hide-cycle","tag":"a","done":{"t0":1791035331209,"t":1791035331302,"error":null,"at":1791035331304}}
+{"t":1791035335888,"ev":"phase","run":"smoke-cr-hide-cycle","phase":"mid"}
+{"t":1791035344980,"ev":"tabseen","run":"smoke-cr-hide-cycle","k":"9","ss":"","phase":"mid"}
+{"t":1791035351347,"ev":"phase","run":"smoke-cr-hide-cycle","phase":"read"}
+{"t":1791035352397,"ev":"tabseen","run":"smoke-cr-hide-cycle","k":"9","ss":"smoke-cr-hide-cycle_9","phase":"read"}
+{"t":1791035361058,"ev":"read-served","run":"smoke-cr-hide-cycle","cookie":""}
+{"t":1791035361188,"ev":"report","run":"smoke-cr-hide-cycle"}
+{"t":1791035397458,"ev":"work","run":"smoke-cr-work"}

@@ -1518,6 +1518,15 @@ local tabs open.
 killed and not closed, which is how a client ends a session; what a restored
 page re-runs on load, beyond the one POST; and what a headed window does.
 
+✅ *Measured 2026-10-03 at `chromium-1247` and `firefox-1553`, by addition,
+[below](#committing-to-disk-sooner-and-session-restore-after-a-hard-kill----measured-2026-10-03):*
+**after a hard kill, Chromium's switch restores nothing**, 0 of 27, and the
+session that follows does not save its tabs until the crash is acknowledged;
+`--hide-crash-restore-bubble` makes it restore, 11 of 11 runs that had the tabs
+on disk. **Firefox's preferences restore whatever reached disk**, 27 of 27,
+and the session file reaches disk 15 s or more after a change at the default
+interval, and up to an hour later once nobody is at the machine.
+
 ✅ **Built 2026-10-03.** Every session launch carries the options measured above:
 `BrowserConfiguration.RestoreLastSessionSwitch` for Chromium,
 `BrowserConfiguration.FirefoxSessionRestorePreferences` for Firefox, and
@@ -1606,9 +1615,230 @@ over a long session; and what a headed window does differently. Many runs of the
 rig refused to kill a tree that held a process it could not prove its own, and
 are recorded as refusals and not counted.
 
+⚠️ *Corrected 2026-10-03 by addition, from
+[the entry below](#committing-to-disk-sooner-and-session-restore-after-a-hard-kill----measured-2026-10-03),
+measured at `chromium-1247` and `firefox-1553`:* **`sessionStorage` comes back
+with its tab when the browser restores the tab.** This rig launched without
+the restore options BrowserAI took up later the same day and read in a page of
+its own, which is where the *never* in the table above comes from; with them,
+every run that restored a tab brought its `sessionStorage` back but one. **And
+a Chromium cookie does not need thirty seconds when something asks for a
+commit**: a DevTools `Storage.clearDataForOrigin` for `cookies` on an origin
+holding none committed the store at once, 12 of 12 kept from 0.10 s, and so
+did 512 throwaway cookies. Nothing at launch shortens it. The windows
+themselves held at the new revisions: Chromium cookies 30 s, `localStorage`
+about 1 s with the switch and 5 s without, Firefox `localStorage` 5 s, Firefox
+cookies and IndexedDB at once. ✅ *The second write, read at `155.0.8059.12`:*
+without the switch a commit waits for the larger of 5 s and a limit of 60
+commits an hour counted from when the storage area opened, so a second commit
+comes no sooner than a minute after the area opened; with the switch the delay
+is a flat second and the limit is not consulted
+(`components/services/storage/dom_storage/storage_area_impl.cc:36-46` and
+`:702-715`). Read at `chromium-1247`, measured at `chromium-1246`, and not
+re-measured. What the switch costs over a minute is in the entry below.
+
 **Re-establish** with the rig: `orchestrate.ps1` runs a plan from `plans/` and
 writes one `results/*.jsonl` row per run; `summarize.py` prints the table above
 as `survival-summary.txt`.
+
+### Committing to disk sooner, and session restore after a hard kill -- measured 2026-10-03
+
+`[FLOATS]` Chrome for Testing **155.0.8059.12** (`chromium-1247`) and Firefox
+**156.0** (`firefox-1553`) under `playwright-core`
+**1.64.0-alpha-1790635538000**, from the `@playwright/mcp` **0.0.83** payload
+and on its node v24.21.0, headless, with the launch options
+`BrowserConfiguration` and `ChildEnvironment` hold from `5f1166c` to `427188d`
+(unchanged across those eight commits), on Windows 11 build 26300.9550 with 32
+logical processors. The maintainer's ask, verbatim: *"An additional ask: figure
+out if we can tell both browsers to commit everything directly to disk as well.
+That can't hurt."* [Evidence](../../docs/evidence/2026-10-03-durability/README.md),
+[rig](../../docs/probes/2026-10-03-durability/README.md).
+
+**The method widens [the entry above](#how-old-a-write-must-be-before-a-hard-kill-keeps-it----measured-2026-10-03).**
+Each run launches the profile once and closes it cleanly, launches it again and,
+in most cells, opens two tabs and, in Chromium, changes a preference; then a
+page writes an `HttpOnly` cookie, a script cookie, 40 `localStorage` keys, an
+IndexedDB record, a Cache Storage entry and a `sessionStorage` key. The tree is
+killed by closing its kill-on-close job a chosen time later, a watcher records
+when each store's files change, and the profile is launched again and read
+back. Most Firefox cells start writing right after a session write, the worst
+case for its interval. **192 runs in 64 cells of three**: 162 survival runs and
+30 workload runs. An age below is the age of the store's own write at the kill.
+
+| Store | Chromium as BrowserAI launches it | Chromium, with a lever | Firefox as BrowserAI launches it | Firefox, with a lever |
+|---|---|---|---|---|
+| Cookies | **30 s**: lost up to 29.2 s (69 runs), kept from 31.1 s (3); the database written 30.0 to 30.1 s after the cookie | DevTools `Storage.clearDataForOrigin` for `cookies` on an origin that holds none: kept 12 of 12, from 0.10 s, the database written within 0.7 s of the cookie. `Network.setCookie` then `Network.deleteCookies` on that origin: 6 of 6. 512 throwaway cookies through `addCookies`: 3 of 3 | **At once**: 69 of 69, from 0.31 s | None needed |
+| `localStorage` | **About 1 s**, with the shipped `--enable-aggressive-domstorage-flushing`: lost in all 24 runs up to 0.93 s, kept in all 51 from 1.07 s; the file written 1.00 to 1.14 s after the write | Without that switch: lost up to 3.98 s, kept from 6.06 s, the file written 5.0 to 5.1 s after | **5 s**: lost up to 4.79 s, kept from 6.10 s; the file written 5.0 to 5.3 s after | None exists |
+| IndexedDB and Cache Storage | **At once**: 93 of 93 each, from 0.05 and 0.04 s | - | **At once**: 69 of 69 each, from 0.24 and 0.20 s | - |
+| Open tabs, on disk | **2.5 s** after the first change: lost up to 2.11 s, kept from 1.74 s, over 87 runs | None exists | **15 s or more, and up to an hour when idle**, below: kept 5 of 30 from 17.1 s, lost 25 up to 22.5 s | `browser.sessionstore.interval` and `browser.sessionstore.interval.idle` at 1000: lost up to 2.63 s (5 runs), kept from 1.93 s (13), every run older than 2.63 s kept. Both at 0: kept 6 of 6 from 1.88 s, lost 3 up to 1.52 s |
+| Open tabs, restored after the kill | **Never**: 0 of 27, though 21 had them on disk | `--hide-crash-restore-bubble`: 11 of 11 that had them on disk, of 18 runs. `profile.exit_type` rewritten from `Crashed` to `Normal` before the relaunch: 6 of 6, of 9 | Whenever they were on disk: 27 of 27 | The same |
+| Preferences | **10 s**: lost up to 9.3 s (78 runs), kept from 11.3 s (9); the file written 9.3 to 9.9 s after the change | None exists | - | - |
+
+The restored tabs carried their `sessionStorage` in every run but one: after
+two kills in a row at 1000, one Firefox run brought the first two tabs back
+without it.
+
+⭐ **After a hard kill, Chromium's `--restore-last-session` restores nothing,
+and the session that follows saves nothing.** A kill leaves `profile.exit_type`
+at `Crashed`, and Chromium does not restore on a launch after an unclean exit,
+because a page could crash it again
+(`chrome/browser/ui/startup/startup_browser_creator_impl.cc:492`, `:551-552` and
+`:822-826`): the relaunch showed `chrome://new-tab-page/` in 27 of 27 runs. In
+that next session `SessionService` keeps saving off until the crash is
+acknowledged (`chrome/browser/sessions/session_service.cc:136-142` and
+`chrome/browser/sessions/exit_type_service.cc:195-208`), and a new tab counts
+toward that only in a window that was not created at startup
+(`exit_type_service.cc:85-86` and `:111`). A tab opened there through Playwright
+was followed by no write of the session file within 6 s, 3 of 3, where the
+sessions launched with either lever below wrote theirs 1.2 to 1.4 s after the
+tab. **`--hide-crash-restore-bubble` changes both**: `HasPendingUncleanExit`
+reads false when it is on
+(`chrome/browser/ui/startup/startup_browser_creator.cc:1599-1605`), the
+relaunch restored the tabs in every run that had them on disk, and across two
+kills in a row 3 of 3 came back with the tab opened between them. The switch's
+own description is about ChromeOS (`chrome/common/chrome_switches.h:408-412`);
+the check that reads it has no platform condition. Rewriting `Crashed` to
+`Normal` in `Default/Preferences` before the relaunch did the same, 6 of 6 and 3
+of 3, by editing a file the browser owns. A Chromium relaunch that restored took
+369 to 626 ms (17 runs), and one that did not 377 to 1,674 ms (76). `[FLOATS]`
+
+⭐ **Firefox's session file trails a navigation by two 15 s timers in series,
+and by an hour once nobody is at the machine.** The content process reports a
+navigation after `browser.sessionstore.interval`
+(`toolkit/components/sessionstore/SessionStoreListener.cpp:140`, `:212-235` and
+`:359-366`), and the parent writes at most once per that interval
+(`SessionSaver.sys.mjs:174-177`, read out of `firefox-1553`'s `omni.ja`), so a
+tab change waits for one timer and then for the next free write. At D = 22 s,
+two of three runs had written the tab opened first and not the one opened 0.4
+to 0.6 s after it, in a write 14.1 s after the page's own. After a launch that
+restored a session, the first write waits a full interval
+(`SessionStore.sys.mjs:1388-1390`): 16.1 to 16.8 s after the first navigation,
+30 of 30. **The idle interval is one hour** (`SessionSaver.sys.mjs:408-413`),
+and Firefox is idle once it has itself run for `browser.sessionstore.idleDelay`,
+180 s, with no keyboard or mouse input on the machine for as long: the idle time
+it reads is the smaller of `GetLastInputInfo`'s and the time since its idle
+service started (`widget/nsUserIdleService.cpp:385-389` and `:637-658`,
+`widget/windows/nsUserIdleServiceWin.cpp:9-17`). In the 30 runs at the default,
+Firefox had run for under a minute while the machine had seen no input for up
+to 1,172 s at the write, and every one wrote on the active cadence. Forced with
+`idleDelay` at 1 s, 2 of 6 runs wrote no session within 40 s of the first
+navigation, and their tabs were not on disk at the kill 62 s after launch; the
+input on the machine ended 11.5 s after launch in one of them and before launch
+in the other. The other 4 had input up to the write and wrote 16.2 to 20.5 s
+after the first navigation. Returning input replaces a write scheduled while
+idle (`SessionSaver.sys.mjs:227-235`), which does not explain the run whose
+input ended 11.5 s after launch.
+
+**`browser.sessionstore.interval` and `browser.sessionstore.interval.idle` at
+1000 bring the tabs to disk in 1.9 to 2.6 s**, the forced idle regime included,
+and the first write after a restoring launch to 2.3 to 2.6 s, 18 of 18. The floor
+is the 2 s every scheduled write waits (`SessionSaver.sys.mjs:167`), and no
+preference moves it. At 0 the content side reports each change at once, form and
+scroll changes included (`toolkit/components/sessionstore/SessionStoreChangeListener.cpp:378-381`),
+and the first write came 0.4 to 1.6 s after a restoring launch, 9 of 9. Firefox
+restored the tabs in every run that had them on disk, and across two kills in a
+row 3 of 3 at the default and 3 of 3 at 1000: Playwright's build sets
+`browser.sessionstore.resume_from_crash` to `false` (`playwright.cfg:230` in
+`firefox-1553`), and BrowserAI's `resume_session_once` wins over the crash
+(`SessionStartup.sys.mjs:421-422`). `[FLOATS]`
+
+**What nothing at launch changes**, read at Chromium `155.0.8059.12` and at
+`mozilla-firefox/firefox` `3bf8f468258c2181f455e23d4ffcd6acb8f4cdb1`, the base
+revision of `firefox-1553`, with the session store and Juggler read out of
+`firefox-1553` itself:
+
+- **Chromium cookies**: the 30 s timer and the 512-operation batch are constants
+  inside `BatchOperation` (`net/extras/sqlite/sqlite_persistent_cookie_store.cc:1234-1237`,
+  the timer at `:1281-1291`). Only a flush reaches the store sooner, and
+  `DeleteMatchingCookies` flushes even when nothing matched
+  (`net/cookies/cookie_monster.cc:989`), which is why the DevTools call above
+  works: `Storage.clearDataForOrigin` goes from
+  `content/browser/devtools/protocol/storage_handler.cc:633` through
+  `content/browser/storage_partition_impl.cc:3061` and
+  `services/network/cookie_manager.cc:190` to `cookie_monster.cc:639-650`.
+- **Chromium `localStorage`**: the switch fixes the delay at 1 s
+  (`components/services/storage/dom_storage/storage_area_impl.cc:703-704`).
+  Without it a commit waits for the larger of 5 s and two hourly limits, 60
+  commits and the area's quota in bytes (`local_storage_impl.cc:48-59`,
+  `storage_area_impl.cc:702-715`); the commit limiter allows the n-th commit no
+  sooner than n minutes after the storage area was opened
+  (`storage_area_impl.cc:36-46` and `:74`, `storage_area_impl.h:231-232`). An
+  immediate commit happens when the origin's last page goes
+  (`local_storage_impl.cc:124-130`, measured without the switch: 3 of 3 kept at
+  0.33 s) or on a partition flush
+  (`content/browser/storage_partition_impl.cc:3277-3283`), which no DevTools
+  handler calls, by a search of `content/browser/devtools/protocol` on
+  Chromium's `main` whose positive control was `ClearDataForOrigin`.
+  `Storage.clearDataForOrigin` for `local_storage` commits only the area it
+  clears (`local_storage_impl.cc:220-228`).
+- **The Chromium session file**: `kSaveDelay`, 2500 ms
+  (`components/sessions/core/command_storage_manager.cc:39`, the timer at
+  `:320-330`).
+- **Chromium Preferences**: 10 s (`base/files/important_file_writer.cc:46`),
+  which `JsonPrefStore` takes as it is (`components/prefs/json_pref_store.cc:156-158`).
+- **Chromium's Cache Storage index**: 20.05 s
+  (`content/browser/cache_storage/cache_storage.cc:942`) and the simple cache's
+  20 s (`net/disk_cache/simple/simple_index.cc:45`), both after the entries,
+  which survived every kill.
+- **Firefox `localStorage`**: `kFlushTimeoutMs`, a constant 5000
+  (`dom/localstorage/ActorsParent.cpp:282`); the legacy implementation, which
+  only `dom.storage.enable_unsupported_legacy_implementation` reaches
+  (`modules/libpref/init/StaticPrefList.yaml:5431`), waits 5000 ms as well
+  (`dom/storage/StorageDBThread.cpp:40`). The early flush is the datastore
+  closing with the origin's last page (`ActorsParent.cpp:4051-4058` and
+  `:5230-5236`): 2 of 3 kept at 0.50 and 0.57 s, and the third was killed with
+  a 0-byte database beside its journal.
+- **Firefox cookies** are written per change already
+  (`netwerk/cookie/CookiePersistentStorage.cpp:725-760`).
+- **Juggler** has no command that flushes storage or the session store: none
+  of the 117 method and event names of its protocol in `firefox-1553` does.
+
+**Costs.** Three runs per setting, each over a 60 s window opened 12 s after
+launch. The page timer is a 50 ms interval, and its lag is how late it fires.
+
+| Workload, browser | Setting | Write-call bytes | Store-file changes seen | Timer lag P99 |
+|---|---|--:|---|---|
+| Storage, Chromium | As launched, with the switch | 3.33 to 3.85 MB | `localStorage` 96 to 97 | 13.7 to 14.2 ms |
+| Storage, Chromium | Without the switch | 2.67 to 3.18 MB | `localStorage` 2 to 3 | 14.0 to 14.7 ms |
+| Storage, Chromium | As launched, with the DevTools cookie flush once a second | 4.77 to 5.29 MB | cookies 117 to 119, against 4; each call 6.1 to 9.8 ms | 13.2 to 13.5 ms |
+| Storage, Firefox | Default, an idle delay of a day, 1000 or 0 | 17.7 to 18.1 MB in all 12 | the session file 4 at the default, 12 at 1000 or 0, 1.0 to 2.2 KB each | 2 to 25 ms |
+| Form, Firefox | Default | 602 to 875 MB | the session file 4, about 1 KB each | 9 to 55 ms |
+| Form, Firefox | 1000 | 806 to 873 MB | the session file 28 | 9 to 76 ms |
+| Form, Firefox | 0 | 467 to 833 MB | the session file 29 to 31 | 6 to 109 ms |
+
+The storage page writes `localStorage` every 100 ms over 20 keys of 1 KiB, a
+cookie every second, an IndexedDB record every 2 s and a `pushState` every 5 s.
+The form page holds 300 text fields that the driver fills through Playwright's
+`fill` as fast as it answers, 2,026 to 4,209 fills a minute, while the page
+scrolls every 50 ms. **Write-call bytes are not disk writes**: a job's counters
+count a write to a pipe exactly as a write to a file
+([job objects](../windows/job-objects.md)), and the form runs moved as much at
+the default as with the levers, with reads of about the same size, while the
+session file they wrote was about 1 KB. **What the Firefox setting costs on disk
+is the session file times how often it is written**: under constant change,
+about once every 2 s at 1000 or 0 and about every 15 s at the default. The
+spread inside each Firefox form setting is wider than any difference between
+them; another lane's suite runs held the machine at a median 77% CPU during
+them. A stall of 1.21 to 1.23 s showed up in 5 of the 6 Firefox storage runs at
+the default interval and in none at 1000 or 0, and its cause is not
+established. `[FLOATS]`
+
+⚠️ **Not established:** what a large Firefox session costs on disk at 1000,
+where the file is far larger than these; whether Playwright's synthesized input
+counts as input to Firefox's idle detection, which on Windows is reset where
+native input arrives (`widget/windows/nsWindow.cpp:4133` and `:6598-6606` for
+the mouse) and which this rig never drove; why the forced idle run whose input
+ended 11.5 s after launch wrote nothing within 40 s; whether Chromium with
+`--hide-crash-restore-bubble` restores a page that crashes the browser itself on
+every launch; what made the 1.2 s stalls; and anything about an operating-system
+crash or a power loss, since every kill here ended processes and left the disk
+cache to Windows. The forced idle cell has two runs without input, not three:
+the four others had input from the person at the machine.
+
+**Re-establish** with the rig: `chain.sh` runs plans through `orchestrate.ps1`,
+one JSON line per run, and `table.py` prints the table above as `table.txt`;
+`firstsave.py`, `cyclecheck.py`, `fxsess.py`, `summarize.py` and `formcost.py`
+print the rest, as listed in [the evidence](../../docs/evidence/2026-10-03-durability/README.md).
 
 ### A headless Firefox that starts while Shift is held never finishes launching -- measured 2026-09-25
 

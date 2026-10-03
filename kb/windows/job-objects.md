@@ -294,3 +294,27 @@ downloads and the newest was published in **2017**. `dotnet/runtime`
 [#126273](https://github.com/dotnet/runtime/issues/126273) proposed built-in
 support and was closed as not planned. The hand-rolled surface is ~60 lines.
 `[FLOATS]`
+
+**A job's I/O counters count a write to a pipe exactly as a write to a file**, so
+`JOBOBJECT_BASIC_AND_IO_ACCOUNTING_INFORMATION` measures what a tree's
+processes handed to write calls, and not what reached a disk. Microsoft
+describes the counters as covering *"all I/O operations"* a process performs
+([`GetProcessIoCounters`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getprocessiocounters)),
+and a job's as covering every process that was ever in it
+([`IO_COUNTERS`](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-io_counters)).
+Measured 2026-10-03 on Windows 11 build 26300.9550, with the bundled node v24.21.0
+in a kill-on-close job: 32 MiB written to stdout, a pipe the parent drained,
+raised the job's `WriteTransferCount` by 33,554,437 bytes in 513 operations, and
+the same 32 MiB written to a file raised it by the same 33,554,437 bytes in 513,
+three runs each, against 5 bytes in 1 operation for a run that wrote neither; the
+5 are each run's closing line on its stderr pipe. A browser's processes talk to
+each other over pipes, so a cost read off these counters is mostly that
+traffic: a Firefox form workload moved 466 to 875 MB a minute through write
+calls, with reads of about the same size, while the session file it wrote was
+about 1 KB
+([kb](../playwright/provisioning-and-timings.md#committing-to-disk-sooner-and-session-restore-after-a-hard-kill----measured-2026-10-03)).
+Re-establish with `iocount.ps1` and `iocount.js` from
+[the probe record](../../docs/probes/2026-10-03-durability/README.md); the
+runs are `results/iocount.txt` in
+[the evidence](../../docs/evidence/2026-10-03-durability/README.md).
+`[STABLE]`

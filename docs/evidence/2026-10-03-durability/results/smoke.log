@@ -1,0 +1,10 @@
+server: {"listening":47911,"pid":65440}
+[1/7] smoke-cr-base-D0.5 D=0,5 actualD=0,515 ck=False/False ls=0 idb=True cache=True tabs=[] ss=[] pref= exit= err= (13s)
+[2/7] smoke-cr-hide-D4 D=4 actualD=4,013 ck=False/False ls=40 idb=True cache=True tabs=[] ss=[] pref= exit= err= (15,5s)
+[3/7] smoke-cr-cdpflush-D0.2 D=0,2 actualD=0,212 ck=True/True ls=0 idb=True cache=True tabs=[] ss=[] pref= exit= err= (12,1s)
+[4/7] smoke-fx-base-D0.5 D=0,5 actualD=0,512 ck=True/True ls=0 idb=True cache=True tabs=[] ss=[] pref= exit= err= (16s)
+[5/7] smoke-fx-base-D17 D=17 actualD=17,003 ck=True/True ls=40 idb=True cache=True tabs=[1,2] ss=[1,2] pref= exit= err= (26s)
+[6/7] smoke-cr-hide-cycle D=4 actualD=4,012 ck=False/False ls=40 idb=True cache=True tabs=[9] ss=[9] pref= exit= err= (34,3s)
+[7/7] smoke-cr-work D= actualD= writeBytes=2028891 writeOps=2933 lagP99=14,5 ls=200 err= (33,7s)
+server exited: True
+EXIT 0

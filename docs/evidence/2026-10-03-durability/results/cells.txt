@@ -1,0 +1,70 @@
+== main-cr (predecessor): 81 runs in 27 cells
+   chromium  base             D=0.5              runs=3 errors=0
+   chromium  base             D=1.5              runs=3 errors=0
+   chromium  base             D=11               runs=3 errors=0
+   chromium  base             D=29               runs=3 errors=0
+   chromium  base             D=3                runs=3 errors=0
+   chromium  base             D=31               runs=3 errors=0
+   chromium  base             D=6                runs=3 errors=0
+   chromium  base             D=9                runs=3 errors=0
+   chromium  cdpflush         D=0                runs=3 errors=0
+   chromium  cdpflush         D=0.1              runs=3 errors=0
+   chromium  cdpflush         D=0.25             runs=3 errors=0
+   chromium  cdpflush         D=0.5              runs=3 errors=0
+   chromium  cdpsetdel        D=0                runs=3 errors=0
+   chromium  cdpsetdel        D=0.25             runs=3 errors=0
+   chromium  hide             D=1                runs=3 errors=0
+   chromium  hide             D=1.5              runs=3 errors=0
+   chromium  hide             D=2                runs=3 errors=0
+   chromium  hide             D=2.5              runs=3 errors=0
+   chromium  hide             D=3.5              runs=3 errors=0
+   chromium  noaggr           D=0.5              runs=3 errors=0
+   chromium  noaggr           D=1.5              runs=3 errors=0
+   chromium  noaggr           D=3                runs=3 errors=0
+   chromium  noaggr           D=6                runs=3 errors=0
+   chromium  noclose-noaggr   D=0.2              runs=3 errors=0
+   chromium  pageclose-noaggr D=0.2              runs=3 errors=0
+   chromium  patch            D=1.5              runs=3 errors=0
+   chromium  patch            D=3.5              runs=3 errors=0
+== main-fx (predecessor): 42 runs in 14 cells
+   firefox   base             D=0.5              runs=3 errors=0
+   firefox   base             D=13               runs=3 errors=0
+   firefox   base             D=16.5             runs=3 errors=0
+   firefox   base             D=3                runs=3 errors=0
+   firefox   base             D=4.5              runs=3 errors=0
+   firefox   base             D=6                runs=3 errors=0
+   firefox   noclose          D=0.2              runs=3 errors=0
+   firefox   pageclose        D=0.2              runs=3 errors=0
+   firefox   ss0              D=1.75             runs=3 errors=0
+   firefox   ss0              D=2.5              runs=3 errors=0
+   firefox   ss1000           D=1                runs=3 errors=0
+   firefox   ss1000           D=1.75             runs=3 errors=0
+   firefox   ss1000           D=2.5              runs=3 errors=0
+   firefox   ss1000           D=3.5              runs=3 errors=0
+== cycle (predecessor): 15 runs in 5 cells
+   chromium  cycle-base       D=6 +cycle 6       runs=3 errors=0
+   chromium  cycle-hide       D=6 +cycle 6       runs=3 errors=0
+   chromium  cycle-patch      D=6 +cycle 6       runs=3 errors=0
+   firefox   cycle-base       D=17 +cycle 17     runs=3 errors=0
+   firefox   cycle-ss1000     D=4 +cycle 4       runs=3 errors=0
+== idle (predecessor (ran after it stopped)): 15 runs in 5 cells
+   chromium  batch512         D=0.25             runs=3 errors=0
+   firefox   active15         D=13               runs=3 errors=0
+   firefox   active15         D=17               runs=3 errors=0
+   firefox   idle1s-default   D=20               runs=3 errors=0
+   firefox   idle1s-ss1000    D=3.5              runs=3 errors=0
+== work (predecessor (ran after it stopped)): 21 runs in 7 cells
+   chromium  base             work:work          runs=3 errors=0
+   chromium  cdpflush1s       work:work          runs=3 errors=0
+   chromium  noaggr           work:work          runs=3 errors=0
+   firefox   active15         work:work          runs=3 errors=0
+   firefox   base             work:work          runs=3 errors=0
+   firefox   ss0              work:work          runs=3 errors=0
+   firefox   ss1000           work:work          runs=3 errors=0
+== supp (replacement): 18 runs in 6 cells
+   firefox   base             D=22               runs=3 errors=0
+   firefox   base             work:form          runs=3 errors=0
+   firefox   idle1s-default   D=20               runs=3 errors=0
+   firefox   ss0              D=1                runs=3 errors=0
+   firefox   ss0              work:form          runs=3 errors=0
+   firefox   ss1000           work:form          runs=3 errors=0

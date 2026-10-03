@@ -1,0 +1,13 @@
+form-fx-ss1000-r3    lag p50=1    p95=8    p99=76   max=173   fills=3752  ms/fill=13.6  cpu= 104.8s wMB= 805.7 rMB= 899.2 sessionWrites=28  (29.0 KB) idle=(1921, 1859)
+form-fx-ss0-r3       lag p50=1    p95=6    p99=45   max=124   fills=3287  ms/fill=15.6  cpu= 107.5s wMB= 725.4 rMB= 818.8 sessionWrites=29  (29.7 KB) idle=(1547, 6640)
+form-fx-ss0-r2       lag p50=1    p95=4    p99=6    max=47    fills=3829  ms/fill=13.4  cpu= 114.2s wMB= 833.2 rMB= 926.7 sessionWrites=29  (29.8 KB) idle=(31, 47)
+form-fx-ss1000-r1    lag p50=1    p95=8    p99=9    max=20    fills=4209  ms/fill=12.2  cpu= 111.0s wMB= 872.6 rMB= 878.3 sessionWrites=28  (29.0 KB) idle=(328, 719)
+form-fx-ss1000-r2    lag p50=1    p95=7    p99=10   max=47    fills=4027  ms/fill=12.8  cpu= 111.8s wMB= 868.7 rMB= 962.1 sessionWrites=28  (29.0 KB) idle=(16, 422)
+form-fx-base-r3      lag p50=1    p95=7    p99=9    max=38    fills=4095  ms/fill=12.6  cpu= 113.0s wMB= 875.3 rMB= 968.8 sessionWrites=4   (4.1 KB) idle=(375, 2906)
+form-fx-ss0-r1       lag p50=2    p95=36   p99=109  max=187   fills=2026  ms/fill=25.3  cpu=  84.9s wMB= 466.7 rMB= 560.1 sessionWrites=31  (29.8 KB) idle=(6562, 2203)
+form-fx-base-r2      lag p50=1    p95=13   p99=55   max=130   fills=2900  ms/fill=17.6  cpu=  90.1s wMB= 638.4 rMB= 728.2 sessionWrites=4   (4.1 KB) idle=(234, 78)
+form-fx-base-r1      lag p50=1    p95=7    p99=12   max=52    fills=2496  ms/fill=20.4  cpu= 105.3s wMB= 602.5 rMB= 696.2 sessionWrites=4   (4.1 KB) idle=(703, 9109)
+
+base    n=3  lagP99 9-55 ms  lagMax 38-130 ms  fills 2496-4095  cpu 90.1-113.0 s  sessionWrites 4-4  writeMB 602.5-875.3
+ss0     n=3  lagP99 6-109 ms  lagMax 47-187 ms  fills 2026-3829  cpu 84.9-114.2 s  sessionWrites 29-31  writeMB 466.7-833.2
+ss1000  n=3  lagP99 9-76 ms  lagMax 20-173 ms  fills 3752-4209  cpu 104.8-111.8 s  sessionWrites 28-28  writeMB 805.7-872.6
