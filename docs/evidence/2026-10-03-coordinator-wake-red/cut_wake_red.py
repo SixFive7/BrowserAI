@@ -1,4 +1,4 @@
-"""Cut the two full runs in which CoordinatorWakeTests' recheck arm went red, and the runs beside them.
+"""Cut the three full runs in which CoordinatorWakeTests' recheck arm went red, and the runs beside them.
 
 Copies the logs into docs/evidence/2026-10-03-coordinator-wake-red, removing the
 user-profile path, the user name and the machine name where a file holds them
@@ -13,6 +13,7 @@ W = r"C:\Source\SixFive7\BrowserAI\.work\wt\stale"
 DST = os.path.join(W, "docs", "evidence", "2026-10-03-coordinator-wake-red")
 REG = r"C:\Source\SixFive7\BrowserAI\.work\wt\reg\.work\suite"
 MAIN = r"C:\Source\SixFive7\BrowserAI\.work\suite"
+STALE = os.path.join(W, ".work", "suite")
 
 USER = os.path.basename(os.environ["USERPROFILE"])
 MACHINE = os.environ.get("COMPUTERNAME", "")
@@ -24,6 +25,10 @@ SOURCES = [
     (os.path.join(REG, "reg6d-ps.log"), "dffe9d4-ps/reg6d-ps.log"),
     (os.path.join(REG, "reg6e-bash.log"), "dffe9d4-bash-again/reg6e-bash.log"),
     (os.path.join(MAIN, "agentsmd-ps-1.log"), "2026-09-29-ps/agentsmd-ps-1.log"),
+    (os.path.join(STALE, "stale-bash-3.log"), "6e6388d-bash/stale-bash-3.log"),
+    (os.path.join(STALE, "stale-bash-3-driver.log"), "6e6388d-bash/stale-bash-3-driver.log"),
+    (os.path.join(STALE, "stale-ps-3.log"), "6e6388d-ps/stale-ps-3.log"),
+    (os.path.join(STALE, "stale-bash-4.log"), "6e6388d-bash-again/stale-bash-4.log"),
 ]
 
 originals = []

@@ -4,3 +4,7 @@ aafa4ff55ea84c0f113a58f7d0d416b785ede70c95b0cf8febd7a03485a17c3f  dffe9d4-bash/r
 22992930ac2cbe5e5847dd16c0be8abb80dcbe67eb50e710f84c4a593447d73d  dffe9d4-ps/reg6d-ps.log  ->  dffe9d4-ps/reg6d-ps.trimmed.log  (profile path)
 172dd9ed9cb086a5b1e882077a8539f1ead5364d5fb8632bd7dee3a1cc6cfb8f  dffe9d4-bash-again/reg6e-bash.log  ->  dffe9d4-bash-again/reg6e-bash.trimmed.log  (profile path)
 abc06a744b444db1320e54ec159f54a658c97183eee1709c67a9dee468fb222e  2026-09-29-ps/agentsmd-ps-1.log  ->  2026-09-29-ps/agentsmd-ps-1.trimmed.log  (profile path)
+9ceb1cd84afe800ed39873f2bddd2d34add568e40b7f047923222840efab1bde  6e6388d-bash/stale-bash-3.log  ->  6e6388d-bash/stale-bash-3.trimmed.log  (profile path)
+01f3345b2226695ee620da8aa372d58083b4ba4f7e24861c2c9db181788fd5c3  6e6388d-bash/stale-bash-3-driver.log  ->  6e6388d-bash/stale-bash-3-driver.trimmed.log  (profile path)
+8096e9967a7707aed2eb8773c60db981a76c531fb6f2bbcd7c5e1d76ed40785f  6e6388d-ps/stale-ps-3.log  ->  6e6388d-ps/stale-ps-3.trimmed.log  (profile path)
+6c3e56c94e69854ed4d07b7356001f1c9cd1eee48a511ec7485194700f8492b2  6e6388d-bash-again/stale-bash-4.log  ->  6e6388d-bash-again/stale-bash-4.trimmed.log  (profile path)
