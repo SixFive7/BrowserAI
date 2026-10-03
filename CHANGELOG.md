@@ -57,9 +57,19 @@ release body; nothing else depends on it.
   a button for each session's folder, and the traces each has written. It warns where closing a
   server costs a Codex thread its server and where a server may be in the middle of a task, and
   closes only the servers a person selects (Q317 c). `BrowserAI.exe --sessions` opens a tab on
-  that page, which is what the update toast's *Review* will start (Q339). Registration with
-  Claude Code and Codex is still in the configuration window, opened from the page's
-  registration link, until it moves into the page.
+  that page, which is what the update toast's *Review* will start (Q339).
+
+  **Registration lives on the status page, and the configuration window is gone (Q319 b).** Each
+  client has its own section: what it has, for all your projects and in the project the page was
+  started in, and buttons that each name their client, to register or unregister for all your
+  projects, register in a project, or remove BrowserAI from a project. A project folder is chosen
+  in Windows' own folder picker, which BrowserAI opens (Q311) and which may come up behind the
+  browser. A registration that was not done is one sentence with the full text under *Show
+  details* (Q309 b), and the Codex section says that a Codex already running when BrowserAI was
+  installed finds it in a project only after a restart (Q314 b). The first tab after an install
+  says BrowserAI is installed and shows what each client has; it no longer claims every client was
+  registered. The window, its task dialog and the link handler that could run what a project file
+  planted are deleted.
 
   **The page proves itself by its address, and nothing else gets in (Q334 a, Q335 a).** The
   listener is Kestrel from ASP.NET Core's empty builder (Q340 b), on `127.0.0.1` alone and a

@@ -9,16 +9,25 @@ using Microsoft.Extensions.Logging;
 namespace BrowserAI.App.Page;
 
 /// <summary>
-/// The page's desktop in the product: Explorer, the configuration window, and the
+/// The page's desktop in the product: Explorer, Windows' folder picker, and the
 /// coordinator's own thread.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Everything that touches the desktop runs on the coordinator's own thread</b>,
-/// which is the process's main thread and a single-threaded apartment. The shell's
-/// calls want one, and a request thread of Kestrel's is in the multithreaded
-/// apartment, so an action queues its work here and wakes the coordinator through
-/// its inbox; the loop runs it on its next pass.
+/// <b>Explorer is opened on the coordinator's own thread</b>, which is the
+/// process's main thread and a single-threaded apartment. The shell's calls want
+/// one, and a request thread of Kestrel's is in the multithreaded apartment, so an
+/// action queues its work here and wakes the coordinator through its inbox; the
+/// loop runs it on its next pass.
+/// </para>
+/// <para>
+/// <b>The folder picker gets a thread of its own, Q311</b>, a single-threaded
+/// apartment as <see cref="ShellInterop.PickFolder"/> requires, because it is modal
+/// and waits for a person: on the coordinator's thread it would hold the loop, and
+/// with it an update the loop would otherwise apply, for as long as the picker is
+/// open. It has no owner window, so by Windows' focus rules it may open behind the
+/// browser; the page says so while it is open, and looking at that on the real
+/// desktop is in TODO.md.
 /// </para>
 /// <para>
 /// <b>Nothing here may run in the suite</b>: every call opens something on the
@@ -27,9 +36,8 @@ namespace BrowserAI.App.Page;
 /// </para>
 /// </remarks>
 /// <param name="inbox">The coordinator's inbox, whose wake runs the queue.</param>
-/// <param name="window">The configuration window, for the registration link.</param>
 /// <param name="logger">Where a failed call is recorded.</param>
-internal sealed partial class DesktopPageHost(CoordinatorInbox inbox, ICoordinatorWindow window, ILogger logger) : IPageHost
+internal sealed partial class DesktopPageHost(CoordinatorInbox inbox, ILogger logger) : IPageHost
 {
     private readonly ConcurrentQueue<Action> _work = new();
 
@@ -41,7 +49,33 @@ internal sealed partial class DesktopPageHost(CoordinatorInbox inbox, ICoordinat
         "This build of BrowserAI does not open Playwright's trace viewer yet. The trace is in the session's output folder.";
 
     /// <inheritdoc />
-    public void ShowRegistrationWindow() => Post(() => _ = window.Show());
+    public Task<FolderPick> PickFolderAsync(string prompt)
+    {
+        var picked = new TaskCompletionSource<FolderPick>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                picked.SetResult(ShellInterop.PickFolder(0, prompt));
+            }
+#pragma warning disable CA1031 // A picker that threw is a sentence on the page, and the coordinator keeps coordinating.
+            catch (Exception failure)
+#pragma warning restore CA1031
+            {
+                DesktopLog.Failed(logger, failure);
+                picked.SetResult(FolderPick.Broke(failure.Message));
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "the page's folder picker",
+        };
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        return picked.Task;
+    }
 
     /// <inheritdoc />
     public void RunQueuedWork()

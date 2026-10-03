@@ -15,6 +15,13 @@
     loader binds version 5, the export is absent, and the call fails at run time
     with no compile-time signal whatever. It is the classic failure of this
     whole approach, and it presents as "the app starts and nothing happens".
+
+    CORRECTED 2026-10-03 (previously as written above): the task dialog is
+    deleted with the configuration window. The dependency stays for the folder
+    picker the browser tab asks the coordinator to open, whose controls are drawn
+    with visual styles only from version 6: by default a process gets the common
+    controls of version 5, per Microsoft's "Enabling Visual Styles",
+    learn.microsoft.com/windows/win32/controls/cookbook-overview, read 2026-10-03.
   -->
   <dependency>
     <dependentAssembly>
@@ -39,7 +46,9 @@
       <!--
         Per-monitor v2. A dialog that is blurry on the monitor it was not opened
         on is the first thing a person sees of this product, and the task dialog
-        scales correctly only when the process says it can.
+        scales correctly only when the process says it can. Corrected 2026-10-03
+        (previously as written): the task dialog is gone, and the one window this
+        process still shows is the folder picker, which scales the same way.
       -->
       <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
     </windowsSettings>

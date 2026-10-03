@@ -545,9 +545,13 @@ is the shape a confident wrong answer takes.
 **A session is not a check, and a browser is certainly not.** Sessions and
 browsers are children of one server per client connection, so 100 browsers inside
 one session cost **zero** extra requests. The only things that ask are: a server
-start of an installed release build, the configuration app's own *Check for
-updates* button (`ConfigurationDialog.Command.CheckForUpdates`, one request per
-click), and the release chain's own post-publish polls.
+start of an installed release build, the browser tab's *Check for updates*
+button (the page's `check-updates` action, one request per click), and the release
+chain's own post-publish polls. *Corrected 2026-10-03 (previously "the
+configuration app's own *Check for updates* button
+(`ConfigurationDialog.Command.CheckForUpdates`, one request per click)"): the
+window is deleted, and the tab's button asks through the same update client the
+window's did, read in `VelopackPageUpdates.CheckAsync`, not measured.*
 
 **The monitor is the asset's own download counter, and it discriminates.** Read
 from `gh release view v1.0.0` on 2026-09-22: `releases.win.json` **48**, against

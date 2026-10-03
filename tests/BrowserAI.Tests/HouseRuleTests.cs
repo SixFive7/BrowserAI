@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
 using System.Globalization;
-using System.Text;
 using System.Text.RegularExpressions;
 using BrowserAI.Tests.Harness;
 
@@ -2315,8 +2314,12 @@ internal sealed partial class HouseRuleTests
     /// <para>
     /// <b>What it cannot see:</b> whether the token is bounded by anything
     /// sensible. That half is
-    /// <see cref="BrowserAI.Tests.ConfigurationAppTests.WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline"/>,
-    /// which holds the budget against the server's constant.
+    /// <see cref="BrowserAI.Tests.PageServiceTests.AFolderFeedWithNoReleaseListIsNotUpToDateAndAHungCheckCanBeGivenUp"/>,
+    /// which holds the page's check to the server's own tripwire on the clock it
+    /// moves. <i>Corrected 2026-10-03 (previously
+    /// <c>ConfigurationAppTests.WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline</c>,
+    /// which held the window's budget against the same constant): the window and its
+    /// background work are deleted, and the browser tab makes these calls.</i>
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
@@ -2388,82 +2391,72 @@ internal sealed partial class HouseRuleTests
 
     /// <summary>
     /// The call this scan is about -- through the type name, so the picker's own
-    /// declaration is not read as a call site that forgot its owner.
+    /// declaration is not read as a call site.
     /// </summary>
     private const string PickerCall = "ShellInterop.PickFolder(";
 
     /// <summary>
-    /// The same call through the delegate the configuration session is handed --
-    /// Q289 b, 2026-09-24.
+    /// What a thread is told before it starts, for the folder picker on it to be the
+    /// one the call asks for.
     /// </summary>
-    private const string PickerDelegateCall = "pickFolder(";
-
-    /// <summary>Every spelling of a folder-picker call this scan reads.</summary>
-    private static readonly string[] PickerCalls = [PickerCall, PickerDelegateCall];
+    private const string PickerApartment = ".SetApartmentState(ApartmentState.STA)";
 
     /// <summary>
-    /// Every folder picker this tree opens is owned by the dialog's own window.
+    /// Every folder picker this tree opens runs on a thread that asks for a
+    /// single-threaded apartment.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// ⚠️ <b>A modal dialog with a zero owner is modal to nothing.</b>
-    /// <c>SHBrowseForFolderW</c> disables its owner while it is up; given zero
-    /// it disables nothing, so the task dialog underneath stays live. Its command
-    /// links can then be clicked while the picker is on top -- which re-enters
-    /// <c>OnCommand</c>, and a <c>TDM_NAVIGATE_PAGE</c> issued from there
-    /// rebuilds the page out from under a modal child. It also means the picker
-    /// can end up behind the dialog, where a person cannot find it and the
-    /// application looks hung.
+    /// ⚠️ <b>On a thread outside a single-threaded apartment,
+    /// <c>SHBrowseForFolderW</c> shows the pre-Vista picker</b>, because
+    /// <c>BIF_NEWDIALOGSTYLE</c> needs one: no error, a different window. Until
+    /// 2026-10-03 the picker ran on the configuration window's thread, which is
+    /// <c>Main</c>'s, and
+    /// <see cref="AppBinaryTests.ThePublishedConfigurationAppRunsInASingleThreadedApartment"/>
+    /// holds that apartment out of the published binary. The browser tab's picker
+    /// runs on a thread of its own (Q311), which that arm cannot see, so the
+    /// apartment is asked for where the thread is made.
     /// </para>
     /// <para>
-    /// <b>A tree-as-text scan, because the defect is an ARGUMENT.</b> Nothing an
-    /// analyzer can express says <i>this parameter may not be a literal zero</i>,
-    /// and no test here can open a modal window to observe the consequence. What
-    /// is assertable is that the owner passed is the dialog's window, which is
-    /// what <c>TaskDialogHost.Window</c> exists for. <i>Added 2026-09-16, after
-    /// the call site was found passing <c>0</c> because that member was
-    /// private.</i>
+    /// <i>Renamed 2026-10-03 (previously <c>EveryFolderPickerIsOwnedByTheDialogThatOpenedIt</c>,
+    /// which held that the picker's owner was the task dialog's window).</i> The
+    /// dialog is deleted with the window, and the coordinator opens the picker with
+    /// no owner, by Q311. What the owner gave, that nothing under the picker could be
+    /// clicked, is the page's own refusal now:
+    /// <see cref="PageRegistrationTests.WhileThePickerIsOpenThePageSaysSoAndRunsNoOtherRegistration"/>.
     /// </para>
     /// <para>
-    /// <b>What it cannot see:</b> whether the window it names is the right one,
-    /// or whether it is zero at the moment of the call. It holds that the owner
-    /// is read from a dialog and not written as a constant, which is the
-    /// assertable half.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Two spellings since Q289 b, 2026-09-24.</b> The configuration session
-    /// calls a picker it is handed, so the suite can drive a click without opening
-    /// anything, and the product hands it <c>ShellInterop.PickFolder</c> by name.
-    /// The call sites are the delegate's now. With the first needle alone the
-    /// scan read zero sites and went red on its own not-vacuous check, which is
-    /// how the second was found to be needed; the controls below plant both.
+    /// <b>What it cannot see:</b> whether the thread that is told is the thread that
+    /// calls. It holds that a file which opens the picker asks for the apartment at
+    /// all, which is the assertable half, since no test here may open a picker to
+    /// look.
     /// </para>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task EveryFolderPickerIsOwnedByTheDialogThatOpenedIt()
+    public async Task EveryFolderPickerRunsOnAThreadThatAsksForASingleThreadedApartment()
     {
         var offenders = new List<string>();
         var sites = 0;
 
         // ⚠️ src/ ONLY, like the raw-handle scan: the rule is about the product,
-        // and this file's own needle and its synthetic controls are literal call
+        // and this file's own needles and its synthetic controls are literal call
         // sites that would otherwise report themselves.
         foreach (var file in RepositoryLayout.SourceAndScriptFiles.Where(
             file => file.Extension is ".cs" && Relative(file).StartsWith("src", StringComparison.OrdinalIgnoreCase)))
         {
+            // The reader drops comment lines, so a line number would be a count of
+            // code lines, and none is reported.
             var lines = (await RepositoryLayout.ReadCodeAsync(file)).Split('\n');
+            var calls = PickerCalls(lines);
 
-            foreach (var (number, owner) in PickerOwners(lines))
+            sites += calls;
+
+            if (calls > 0 && !AsksForTheApartment(lines))
             {
-                sites++;
-
-                if (!owner.Contains("Window", StringComparison.Ordinal))
-                {
-                    offenders.Add(
-                        $"{Relative(file)}:{number.ToString(CultureInfo.InvariantCulture)}: the folder picker is opened with owner '{owner}',"
-                        + " which is not a dialog window -- an unowned modal leaves the task dialog's command links live underneath it");
-                }
+                offenders.Add(
+                    $"{Relative(file)}: the folder picker is opened on {calls.ToString(CultureInfo.InvariantCulture)} line(s)"
+                    + " of a file that asks for no single-threaded apartment, and on any other thread Windows shows the pre-Vista picker with no error");
             }
         }
 
@@ -2473,90 +2466,29 @@ internal sealed partial class HouseRuleTests
         await Assert.That(sites).IsGreaterThan(0);
 
         // ⚠️ THE CONTROLS, synthetic, in both directions. A scan whose needle
-        // stopped matching reports the tree clean and is indistinguishable from
-        // a tree that is clean, so the exact shape the call site carried until
-        // 2026-09-16 is planted here and must be reported.
-        string[] unowned = ["        var picked = " + PickerCall + "0, \"Choose a folder.\");"];
+        // stopped matching reports the tree clean and is indistinguishable from a
+        // tree that is clean.
+        string[] bare = ["        var picked = " + PickerCall + "0, prompt);"];
+        string[] told = [.. bare, "        thread" + PickerApartment + ";"];
+        string[] otherApartment = [.. bare, "        thread.SetApartmentState(ApartmentState.MTA);"];
 
-        await Assert.That(PickerOwners(unowned).Count).IsEqualTo(1);
-        await Assert.That(PickerOwners(unowned)[0].Owner).IsEqualTo("0");
-
-        string[] owned = ["        var picked = " + PickerCall + "_host?.Window ?? 0, \"Choose a folder.\");"];
-
-        await Assert.That(PickerOwners(owned).Count).IsEqualTo(1);
-        await Assert.That(PickerOwners(owned)[0].Owner.Contains("Window", StringComparison.Ordinal)).IsTrue();
-
-        // And the WRAPPED shape of each, which is what the real call site is.
-        string[] wrappedUnowned = ["        var picked = " + PickerCall, "            0,", "            \"Choose a folder.\");"];
-
-        await Assert.That(PickerOwners(wrappedUnowned).Count).IsEqualTo(1);
-        await Assert.That(PickerOwners(wrappedUnowned)[0].Owner).IsEqualTo("0");
-
-        string[] wrappedOwned = ["        var picked = " + PickerCall, "            _host?.Window ?? 0,", "            \"Choose a folder.\");"];
-
-        await Assert.That(PickerOwners(wrappedOwned).Count).IsEqualTo(1);
-        await Assert.That(PickerOwners(wrappedOwned)[0].Owner.Contains("Window", StringComparison.Ordinal)).IsTrue();
-
-        // And the delegate's spelling, unowned and owned, which is what both of
-        // the session's call sites are.
-        string[] delegateUnowned = ["        var picked = " + PickerDelegateCall, "            0,", "            \"Choose a folder.\");"];
-
-        await Assert.That(PickerOwners(delegateUnowned).Count).IsEqualTo(1);
-        await Assert.That(PickerOwners(delegateUnowned)[0].Owner).IsEqualTo("0");
-
-        string[] delegateOwned = ["        var picked = " + PickerDelegateCall, "            _host?.Window ?? 0,", "            \"Choose a folder.\");"];
-
-        await Assert.That(PickerOwners(delegateOwned).Count).IsEqualTo(1);
-        await Assert.That(PickerOwners(delegateOwned)[0].Owner.Contains("Window", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(PickerCalls(bare)).IsEqualTo(1);
+        await Assert.That(AsksForTheApartment(bare)).IsFalse();
+        await Assert.That(AsksForTheApartment(told)).IsTrue();
+        await Assert.That(AsksForTheApartment(otherApartment)).IsFalse();
     }
 
-    /// <summary>How many lines of a wrapped call are read looking for its first argument.</summary>
-    private const int PickerArgumentLines = 4;
-
-    /// <summary>Every folder-picker call in some lines, and the owner each passes.</summary>
-    /// <remarks>
-    /// <b>The call is read across lines</b>, because the real one wraps: a
-    /// scanner that read only the line carrying the call would see an empty
-    /// first argument and report a perfectly owned call as unowned. That is not
-    /// hypothetical -- it is what this answered the moment the fix made the call
-    /// three lines long.
-    /// </remarks>
+    /// <summary>How many lines call the folder picker.</summary>
     /// <param name="lines">The file, as lines.</param>
-    /// <returns>The one-based line number and the first argument, verbatim.</returns>
-    private static List<(int Number, string Owner)> PickerOwners(string[] lines)
-    {
-        var found = new List<(int, string)>();
+    /// <returns>The count.</returns>
+    private static int PickerCalls(string[] lines) =>
+        lines.Count(line => line.Contains(PickerCall, StringComparison.Ordinal));
 
-        for (var index = 0; index < lines.Length; index++)
-        {
-            var line = lines[index];
-            var needle = Array.Find(PickerCalls, call => line.Contains(call, StringComparison.Ordinal));
-
-            if (needle is null)
-            {
-                continue;
-            }
-
-            var at = line.IndexOf(needle, StringComparison.Ordinal);
-            var rest = new StringBuilder(line[(at + needle.Length)..]);
-
-            for (var next = index + 1;
-                 next < lines.Length
-                     && next <= index + PickerArgumentLines
-                     && rest.ToString().IndexOf(',', StringComparison.Ordinal) < 0;
-                 next++)
-            {
-                _ = rest.Append(' ').Append(lines[next]);
-            }
-
-            var argument = rest.ToString();
-            var comma = argument.IndexOf(',', StringComparison.Ordinal);
-
-            found.Add((index + 1, (comma < 0 ? argument : argument[..comma]).Trim()));
-        }
-
-        return found;
-    }
+    /// <summary>Whether some lines tell a thread to be a single-threaded apartment.</summary>
+    /// <param name="lines">The file, as lines.</param>
+    /// <returns>Whether any line does.</returns>
+    private static bool AsksForTheApartment(string[] lines) =>
+        Array.Exists(lines, line => line.Contains(PickerApartment, StringComparison.Ordinal));
 
     private static string Relative(FileInfo file) =>
         Path.GetRelativePath(RepositoryLayout.Root.FullName, file.FullName);

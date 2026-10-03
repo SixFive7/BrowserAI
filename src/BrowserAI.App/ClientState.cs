@@ -192,8 +192,9 @@ internal sealed record ClientState
     /// there was no way at all to make BrowserAI rewrite an entry that was
     /// already correct, which is what a person needs after editing their own copy
     /// of it by hand and wanting the product's version back. What changes with
-    /// the state is the LABEL, not the availability: see
-    /// <see cref="ConfigurationDialog"/>. Foreign and unreadable are still
+    /// the state is the LABEL, not the availability: see the browser tab's
+    /// registration section, <see cref="Page.PageContent"/>, which took it over from
+    /// the configuration window on 2026-10-03. Foreign and unreadable are still
     /// refused, because neither is ours to write over.
     /// </remarks>
     public bool MayRegister =>

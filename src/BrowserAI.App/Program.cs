@@ -3,7 +3,6 @@
 
 using BrowserAI.App.Interop;
 using BrowserAI.App.Page;
-using BrowserAI.App.Ui;
 using BrowserAI.Coordination;
 using BrowserAI.Hosting;
 using BrowserAI.Interop;
@@ -27,8 +26,7 @@ namespace BrowserAI.App;
 /// person's start then opens a tab in the person's own browser.
 /// <i>Corrected 2026-10-03 (previously "and only one of them has a window ...
 /// anything else opens the dialog"), Q315 a: the browser tab replaces the window as
-/// what a start opens, and the window is reached from the tab for registration until
-/// the tab covers that too.</i>
+/// what a start opens, and the window is deleted (Q319 b).</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>And every start that is neither a hook nor a report settles who the
@@ -36,10 +34,13 @@ namespace BrowserAI.App;
 /// maintainer's words verbatim: <i>"Q284 a"</i>. The app is the coordinator when
 /// it holds its pipe, <c>\\.\pipe\BrowserAI-Coordinator-</c> and the install
 /// root's key. A start that finds the pipe held hands over instead: a person's
-/// start grants the coordinator the foreground and asks it to <c>show</c> its
-/// window, a hidden start (<c>--coordinate</c>, <c>--sign-in</c>) asks it to
-/// <c>recheck</c>, and either way this process exits. The dialog is still the
-/// only window, and only a person's start or a <c>show</c> opens it.
+/// start grants the coordinator the foreground and asks it for a tab
+/// (<c>show</c>, or <c>sessions</c> for the sessions page), a hidden start
+/// (<c>--coordinate</c>, <c>--sign-in</c>) asks it to <c>recheck</c>, and either
+/// way this process exits. <i>Corrected 2026-10-03 (previously "asks it to
+/// <c>show</c> its window ... The dialog is still the only window, and only a
+/// person's start or a <c>show</c> opens it"): the coordinator answers a tab's
+/// address through the pipe, and the app has no window at all.</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>The hooks are dispatched by Velopack itself and not by reading
@@ -60,7 +61,10 @@ internal static class Program
     /// application whose only entry point opens a window is one nothing can
     /// assert about, and a support artifact that describes a different state
     /// from the window would be worse than none -- so the dialog and this file
-    /// render the same <see cref="AppState"/>.
+    /// render the same <see cref="AppState"/>. <i>Corrected 2026-10-03 (previously
+    /// as written, of the configuration window): the browser tab's registration
+    /// section and this file render the same <see cref="AppState"/>, read through
+    /// RegisterAI.</i>
     /// </remarks>
     public const string ReportArgument = "--report";
 
@@ -95,7 +99,7 @@ internal static class Program
     /// <b>Cleared, not filtered per launch</b>: there is more than one
     /// place this process starts something, and a filter that had to be
     /// remembered at each of them is the shape of the defect and not its
-    /// fix. The value is read first, so the dialog still knows it was a first
+    /// fix. The value is read first, so the page still knows it was a first
     /// run.
     /// </para>
     /// <para>
@@ -120,7 +124,11 @@ internal static class Program
     /// The shell's folder picker falls back to the pre-Vista dialog on a thread
     /// that is not in one -- silently, with no error -- and the common controls a
     /// task dialog is made of expect it. Neither failure is one a test here can
-    /// see, so the reason is written at both ends.
+    /// see, so the reason is written at both ends. <i>Corrected 2026-10-03
+    /// (previously as written): the task dialog is gone with the configuration
+    /// window, and the folder picker runs on a single-threaded thread of its own
+    /// (<see cref="Page.DesktopPageHost"/>). What still needs this thread's
+    /// apartment is Explorer, which the page opens on the coordinator's thread.</i>
     /// </remarks>
     /// <param name="args">The command line.</param>
     /// <returns>Zero when what was asked for happened.</returns>
@@ -174,7 +182,7 @@ internal static class Program
         // every client for its registration, which starts each client's CLI; a
         // start that hands over to the coordinator, or a hidden one, shows nothing
         // and must not pay for that or start anybody's CLI. The report reads it
-        // here, and the window reads it each time it opens.
+        // here, and the page reads it each time a tab loads its status page.
         if (ReportPathFrom(args) is { Length: > 0 } report)
         {
             var written = StatusReport.Write(AppState.Read(tool, Environment.CurrentDirectory), report);
@@ -217,7 +225,8 @@ internal static class Program
             occasion,
             new VelopackPageUpdates(feed, InstallLocation.IsInstalled),
             new CensusPageSessions(root, TimeProvider.System),
-            new DesktopPageHost(inbox, new ConfigurationWindow(tool, paths, logger, Occasion.Ordinary, inbox), logger),
+            new RegisterAiPageRegistration(tool, Environment.ProcessPath, () => AppState.Read(tool, Environment.CurrentDirectory), logger),
+            new DesktopPageHost(inbox, logger),
             inbox.Wake,
             TimeProvider.System,
             PageTabs.ProductLinger,
@@ -343,512 +352,9 @@ internal static class Program
     }
 }
 
-/// <summary>
-/// One run of the dialog: the state it is showing, and what each click does to
-/// it.
-/// </summary>
-/// <remarks>
-/// <para>
-/// <b>Every action is one explicit click and nothing runs on open.</b> The
-/// window is built from state that was read; the update check, the registration
-/// calls and the folder picker all wait to be asked.
-/// </para>
-/// <para>
-/// ⚠️ <b>The image path, the folder picker and the re-read are handed in -- Q289 b,
-/// 2026-09-24</b> -- so the suite can drive a click through
-/// <see cref="TaskDialogHost.Dispatch"/> with a picker that opens nothing, a
-/// scratch install and a state it built. The product passes
-/// <c>Environment.ProcessPath</c>, <see cref="ShellInterop.PickFolder"/> and
-/// <see cref="AppState.Read(IRegisterAi, string)"/>, which is what this class reached for itself
-/// until then.
-/// </para>
-/// </remarks>
-/// <param name="state">What the window opens on.</param>
-/// <param name="tool">RegisterAI, which reads and writes every client's registration.</param>
-/// <param name="paths">Where the logs are.</param>
-/// <param name="logger">Where the records go.</param>
-/// <param name="occasion">Why the window opened.</param>
-/// <param name="imagePath">This process's own image, which every registration is judged from.</param>
-/// <param name="pickFolder">Asks for a folder, modal to the window it is given.</param>
-/// <param name="read">Reads the state again after a change.</param>
-/// <param name="inbox">
-/// The coordinator's verbs, whose <c>show</c> brings this window forward while it
-/// is open, or <see langword="null"/> when this process is not the coordinator.
-/// </param>
-/// <param name="raise">Brings a window of this process to the foreground; <see cref="Foreground.Raise"/> in the product.</param>
-internal sealed class ConfigurationSession(
-    AppState state,
-    IRegisterAi tool,
-    IAppPaths paths,
-    ILogger logger,
-    Occasion occasion,
-    string? imagePath,
-    Func<nint, string, FolderPick> pickFolder,
-    Func<AppState> read,
-    CoordinatorInbox? inbox,
-    Func<nint, bool> raise) : IDisposable
-{
-    private readonly BackgroundWork<UpdateAnswer> _work = new();
-
-    private AppState _state = state;
-    private string? _available;
-#pragma warning disable CA2213 // Borrowed, not owned: Show() creates the host in a using and clears this in its finally.
-    private TaskDialogHost? _host;
-#pragma warning restore CA2213
-
-    /// <summary>Opens the window and returns when it closes.</summary>
-    /// <returns>Zero when the dialog ran.</returns>
-    public int Show()
-    {
-        // ⚠️ THE APP IS A MEMBER OF THE LIVE CENSUS for exactly as long as its
-        // window is open. Velopack's run_hook ends with force_stop_package,
-        // which kills every process whose image path is under the install root
-        // -- so an update applied by a SERVER while this window is open would
-        // take the window with it, mid-click. The server's update lane defers
-        // while the census is non-empty, and this marker is what makes it
-        // non-empty.
-        using var live = _state.InstallRoot is { Length: > 0 } root
-            ? LiveInstances.Join(root, logger)
-            : null;
-
-        using var host = Attach();
-
-        try
-        {
-            return host.Show() is 0 ? 0 : 1;
-        }
-        finally
-        {
-            _host = null;
-        }
-    }
-
-    /// <summary>The dialog this session answers for, built and not shown.</summary>
-    /// <remarks>
-    /// <b>What <see cref="Show"/> opens, and what the suite dispatches clicks
-    /// into</b> without a window: with none, a re-render builds the page and
-    /// returns before it calls Windows.
-    /// </remarks>
-    /// <returns>The host, which the caller disposes.</returns>
-    internal TaskDialogHost Attach()
-    {
-        var host = new TaskDialogHost(
-            () => ConfigurationDialog.Page(_state, occasion, Note, _available),
-            OnCommand,
-            OnLink,
-            OnTick,
-            OnFailure);
-
-        _host = host;
-
-        return host;
-    }
-
-    /// <summary>The sentence the window shows above everything else, or <see langword="null"/>.</summary>
-    internal string? Note { get; private set; }
-
-    private ClickOutcome OnCommand(int id)
-    {
-        switch (id)
-        {
-            case ConfigurationDialog.Command.CheckForUpdates:
-                return CheckForUpdates();
-
-            case ConfigurationDialog.Command.ApplyUpdate:
-                return ApplyUpdate();
-
-            case ConfigurationDialog.Command.OpenLogs:
-                _ = Directory.CreateDirectory(paths.LogDirectory);
-                _ = ShellInterop.OpenInExplorer(paths.LogDirectory);
-                return ClickOutcome.Stay;
-
-            default:
-                // ⚠️ EVERY REGISTRATION VERB IS PER CLIENT SINCE 2026-09-24, so the
-                // identifier carries which client as well as which verb, and the
-                // arithmetic is the dialog's. An identifier this does not
-                // recognise changes nothing, which is the same answer an unknown
-                // one has always had.
-                return ConfigurationDialog.Command.ClientCommandOf(id, _state.Clients.Count) switch
-                {
-                    (ConfigurationDialog.Command.Register, var index) => Apply(RegistrationIntent.Install, index),
-                    (ConfigurationDialog.Command.Unregister, var index) => Apply(RegistrationIntent.Uninstall, index),
-                    (ConfigurationDialog.Command.RegisterInProject, var index) => RegisterInProject(index),
-                    (ConfigurationDialog.Command.UnregisterFromProject, var index) => UnregisterFromProject(index),
-                    (ConfigurationDialog.Command.UnregisterFromAProject, var index) => UnregisterFromAProject(index),
-                    _ => ClickOutcome.Stay,
-                };
-        }
-    }
-
-    /// <summary>
-    /// What a click did that it was not supposed to be able to do.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>This is the reporting half of the dialog's exception boundary.</b>
-    /// Everything this app does runs inside a reverse P/Invoke, where an escaped
-    /// exception is a <c>FailFast</c> -- no window, no record, nothing. The host
-    /// catches, hands it here, and then re-renders, so the note this sets is
-    /// what the person meets. The log line is the other half and is the one a
-    /// support artifact will carry. <i>Added 2026-09-16.</i>
-    /// </remarks>
-    /// <param name="failure">What was thrown.</param>
-    private void OnFailure(Exception failure)
-    {
-        AppLog.ClickFailed(logger, failure);
-
-        Note = $"Something went wrong and BrowserAI has changed nothing: {failure.Message}";
-    }
-
-    /// <summary>Lets go of anything still in flight.</summary>
-    /// <remarks>
-    /// The work is abandoned, not waited for -- a window that is closing
-    /// must not wait for a feed that is not answering, which is the whole reason
-    /// the work left this thread.
-    /// </remarks>
-    public void Dispose() => _work.Dispose();
-
-    /// <summary>
-    /// The dialog's own timer, roughly every 200 ms: is the thing we are waiting
-    /// for over yet?
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>This is what replaces blocking the UI thread -- 2026-09-16.</b> The
-    /// update check and the download used to be called with
-    /// <c>.GetAwaiter().GetResult()</c> from inside the click, against a client
-    /// whose only bound was Velopack's thirty-minute <c>HttpClient</c> default.
-    /// They run on the thread pool now, under
-    /// <see cref="BackgroundWork{TResult}.DefaultBudget"/>, and this asks whether
-    /// they are done. It must return immediately: it is the same callback every
-    /// click arrives on.
-    /// </remarks>
-    /// <returns>Whether the page has to be redrawn.</returns>
-    private ClickOutcome OnTick()
-    {
-        // ⚠️ A SECOND START ASKED FOR THIS WINDOW -- Q284 a, 2026-09-25. The
-        // coordinator's thread is inside this dialog while it is open, so the
-        // pipe's `show` is answered here, on the dialog's own thread, from the
-        // timer that already runs every 200 ms or so. The second start granted
-        // this process the foreground before it asked, which is what lets the
-        // raise take effect.
-        if (inbox?.TakeShow() is true)
-        {
-            _ = raise(_host?.Window ?? 0);
-        }
-
-        var poll = _work.Poll();
-
-        if (!poll.Finished)
-        {
-            return ClickOutcome.Stay;
-        }
-
-        Note = poll.Refusal ?? poll.Result?.Note;
-        _available = poll.Result?.Available;
-        _state = _state with { LastUpdateCheck = Note };
-
-        return ClickOutcome.Rerender;
-    }
-
-    private void OnLink(string href)
-    {
-        if (ConfigurationDialog.FolderFrom(href) is { Length: > 0 } folder)
-        {
-            _ = Directory.CreateDirectory(folder);
-            _ = ShellInterop.OpenInExplorer(folder);
-            return;
-        }
-
-        _ = ShellInterop.OpenUrl(href);
-    }
-
-    private ClickOutcome Apply(RegistrationIntent intent, int index)
-    {
-        var who = _state.Clients[index].Client;
-        var report = McpRegistrar.Apply(who, intent, imagePath, tool, logger, replace: intent is RegistrationIntent.Install);
-
-        Note = ConfigurationDialog.NoteFor(report, who);
-
-        return Reread();
-    }
-
-    private ClickOutcome RegisterInProject(int index)
-    {
-        var who = _state.Clients[index].Client;
-
-        // ⚠️ OWNED BY THE DIALOG. An unowned modal disables nothing, so the task
-        // dialog underneath stays live: its command links can be clicked while
-        // the picker is up, which re-enters this handler and can navigate the
-        // page out from under a modal child. The window is zero only before the
-        // dialog is created, which is before any command can arrive.
-        var picked = pickFolder(
-            _host?.Window ?? 0,
-            $"Choose the folder to register BrowserAI in for {who.DisplayName}. A {who.ProjectFileName} is written under it, to be committed with the project.");
-
-        if (picked.Outcome is FolderPickOutcome.Failed)
-        {
-            Note = picked.Reason;
-            return ClickOutcome.Rerender;
-        }
-
-        if (picked.Outcome is not FolderPickOutcome.Picked || picked.Path is not { Length: > 0 } folder)
-        {
-            return ClickOutcome.Stay;
-        }
-
-        // ⚠️ THE CLIENT DECIDES WHAT A PROJECT FILE SAYS, and the two answer
-        // differently. Claude Code expands `${LOCALAPPDATA}`, so its entry is the
-        // portable spelling when that expands to this install. Codex expands NO
-        // variable in a command -- measured 2026-09-24, 0 of 48 across four spellings,
-        // and read in its launcher -- so no spelling of this install's path resolves
-        // on another machine, and Q294 b, the maintainer's answer verbatim "Q294 b",
-        // is the bare name `BrowserAI.Server.exe`, found on the PATH the install puts
-        // this install's folder on. *Previously this method composed the command
-        // itself and wrote Codex's as the absolute path, "because BrowserAI does not
-        // rely on Codex expanding a variable in a server command".*
-        var server = _state.ServerCommand ?? string.Empty;
-        var project = who.ProjectCommandFor(server, _state.InstallRoot);
-        var report = McpRegistrar.ApplyToProject(who, register: true, folder, imagePath, tool, logger, project.Command);
-
-        // Codex's sentence names what its bare name finds on the PATH, which is
-        // RegisterAI's answer about the entry it just wrote (2026-10-03).
-        var note = project.Note ?? (server.Length > 0 ? who.ProjectNoteAfter(server, report.ResolvesTo) : null);
-
-        Note = ConfigurationDialog.ProjectNoteFor(report, who, note);
-
-        return Reread();
-    }
-
-    /// <summary>
-    /// Removes the project registration this folder already has.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>No folder picker, and that is the difference from registering --
-    /// added 2026-09-24.</b> The link exists only when a registration OF OURS was
-    /// found at or above the working directory, so the folder is already known and
-    /// is named in the link's own text. An unregister that asked a person to find
-    /// the folder is an unregister that can be pointed at the wrong one, and the
-    /// consequence of that is a deleted entry in a repository nobody meant to
-    /// touch.
-    /// <i>Superseded the same day by Q289 b, the maintainer's answer verbatim
-    /// "Q289 b": <see cref="UnregisterFromAProject"/> asks for the folder, and it
-    /// is safe because the registrar removes only an entry this install wrote. This
-    /// link stays for the folder the walk found, which it names.</i>
-    /// </remarks>
-    /// <param name="index">Which client.</param>
-    /// <returns>Whether the page has to be redrawn.</returns>
-    private ClickOutcome UnregisterFromProject(int index)
-    {
-        var client = _state.Clients[index];
-
-        if (client.ProjectDirectory is not { Length: > 0 } folder)
-        {
-            Note = $"There is no {client.Client.DisplayName} project registration at or above this folder, so nothing was changed.";
-            return ClickOutcome.Rerender;
-        }
-
-        var report = McpRegistrar.ApplyToProject(
-            client.Client, register: false, folder, imagePath, tool, logger);
-
-        Note = ConfigurationDialog.NoteFor(report, client.Client);
-
-        return Reread();
-    }
-
-    /// <summary>
-    /// Asks for a project folder and removes this client's registration from it.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Q289, decided 2026-09-24 by the maintainer, verbatim: <i>"Q289 b"</i></b>
-    /// -- a folder picker for removing a project registration, safe because only an
-    /// entry this install wrote is ever removed. The link
-    /// <see cref="UnregisterFromProject"/> offers exists only when the window was
-    /// started at or below a project with a registration of ours, which a window
-    /// opened from the Start Menu is not.
-    /// </para>
-    /// <para>
-    /// <b>The folder picked, exactly, and no walk upwards</b>: the entry is looked for
-    /// in that folder's own <c>.mcp.json</c> or <c>.codex</c>, the way
-    /// <see cref="RegisterInProject"/> writes into the folder picked. The
-    /// registrar refuses an entry another install wrote and says when there is
-    /// none, so a wrong folder costs a sentence and not an entry.
-    /// </para>
-    /// </remarks>
-    /// <param name="index">Which client.</param>
-    /// <returns>Whether the page has to be redrawn.</returns>
-    private ClickOutcome UnregisterFromAProject(int index)
-    {
-        var who = _state.Clients[index].Client;
-
-        // ⚠️ OWNED BY THE DIALOG, for the reason RegisterInProject's picker is.
-        var picked = pickFolder(
-            _host?.Window ?? 0,
-            $"Choose the project folder to remove BrowserAI from for {who.DisplayName}. Only an entry this install wrote in its {who.ProjectFileName} is removed.");
-
-        if (picked.Outcome is FolderPickOutcome.Failed)
-        {
-            Note = picked.Reason;
-            return ClickOutcome.Rerender;
-        }
-
-        if (picked.Outcome is not FolderPickOutcome.Picked || picked.Path is not { Length: > 0 } folder)
-        {
-            return ClickOutcome.Stay;
-        }
-
-        var report = McpRegistrar.ApplyToProject(who, register: false, folder, imagePath, tool, logger);
-
-        Note = ConfigurationDialog.NoteFor(report, who);
-
-        return Reread();
-    }
-
-    /// <summary>Reads the state again and keeps this session's update answer.</summary>
-    private ClickOutcome Reread()
-    {
-        _state = read() with { LastUpdateCheck = _state.LastUpdateCheck };
-
-        return ClickOutcome.Rerender;
-    }
-
-    private ClickOutcome CheckForUpdates()
-    {
-        if (UpdateConfiguration.Resolve(logger) is not { } feed)
-        {
-            Note = "No release feed is configured for this build, so there is nothing to check.";
-            return ClickOutcome.Rerender;
-        }
-
-        var version = _state.Version;
-
-        if (!_work.Start("Checking for updates...", "The update check", token => Ask(feed, version, token)))
-        {
-            return ClickOutcome.Stay;
-        }
-
-        Note = _work.Progress;
-        _state = _state with { LastUpdateCheck = Note };
-
-        return ClickOutcome.Rerender;
-    }
-
-    /// <summary>
-    /// The check itself, off the dialog's thread.
-    /// </summary>
-    /// <remarks>
-    /// <b>Static, and it computes the whole sentence.</b> Nothing this touches is
-    /// read by the dialog while it runs, which is what makes the hand-back at
-    /// completion the only place two threads meet.
-    /// </remarks>
-    /// <param name="feed">Where to look.</param>
-    /// <param name="version">What is installed.</param>
-    /// <param name="token">The dialog's deadline.</param>
-    /// <returns>What to say, and what is available.</returns>
-    private static UpdateAnswer Ask(UpdateFeed feed, string version, CancellationToken token)
-    {
-        try
-        {
-            var client = new VelopackUpdateClient(feed);
-            var candidate = client.CheckAsync(token).GetAwaiter().GetResult();
-
-            return candidate is null
-                ? new UpdateAnswer($"BrowserAI {version} is up to date.", null)
-                : new UpdateAnswer($"BrowserAI {candidate.Version} is available.", candidate.Version);
-        }
-#pragma warning disable CA1031 // A failed check is a sentence in a dialog, never a crash on somebody's screen.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            return new UpdateAnswer($"The update check did not finish: {failure.Message}", null);
-        }
-    }
-
-    private ClickOutcome ApplyUpdate()
-    {
-        if (UpdateConfiguration.Resolve(logger) is not { } feed || _available is not { Length: > 0 })
-        {
-            return ClickOutcome.Stay;
-        }
-
-        if (!_work.Start("Downloading the update...", "The update download", token => Install(feed, token)))
-        {
-            return ClickOutcome.Stay;
-        }
-
-        Note = _work.Progress;
-
-        return ClickOutcome.Rerender;
-    }
-
-    /// <summary>
-    /// The download and the apply, off the dialog's thread.
-    /// </summary>
-    /// <remarks>
-    /// <b>The apply is in here and not on the click, and the reason is that
-    /// it does not return.</b> <c>ApplyAndRestart</c> hands over to
-    /// <c>Update.exe</c> and ends this process, so there is nothing for a UI
-    /// thread to do afterwards -- and putting it on the click would mean the
-    /// download it follows had to be on the click too, which is the defect this
-    /// whole path was rewritten for.
-    /// </remarks>
-    /// <param name="feed">Where to look.</param>
-    /// <param name="token">The dialog's deadline.</param>
-    /// <returns>What to say, when there is anybody left to say it to.</returns>
-    private static UpdateAnswer Install(UpdateFeed feed, CancellationToken token)
-    {
-        try
-        {
-            var client = new VelopackUpdateClient(feed);
-            var candidate = client.CheckAsync(token).GetAwaiter().GetResult();
-
-            if (candidate is null)
-            {
-                return new UpdateAnswer("There is nothing to install any more: the feed no longer offers a newer version.", null);
-            }
-
-            client.DownloadAsync(candidate, _ => { }, token).GetAwaiter().GetResult();
-
-            // ⚠️ restart: true, which is the opposite of what the SERVER's lane
-            // does. A server that restarted would pop this window in the middle
-            // of somebody's session; an app that did not restart would vanish
-            // mid-click with nothing to say it had succeeded.
-            client.ApplyAndRestart(candidate);
-
-            return new UpdateAnswer("BrowserAI is restarting into the new version.", candidate.Version);
-        }
-#pragma warning disable CA1031 // Same boundary as the check: a sentence, never a crash.
-        catch (Exception failure)
-#pragma warning restore CA1031
-        {
-            return new UpdateAnswer($"The update did not install: {failure.Message}", null);
-        }
-    }
-}
-
-/// <summary>What an update check or an install concluded.</summary>
-/// <remarks>
-/// <b>One value, computed entirely off the dialog's thread.</b> It is the only
-/// thing that crosses back, which is what makes the background work safe without
-/// a lock.
-/// </remarks>
-/// <param name="Note">The sentence the dialog shows.</param>
-/// <param name="Available">The version that is available, when one is.</param>
-internal sealed record UpdateAnswer(string Note, string? Available);
-
 /// <summary>The configuration app's own records.</summary>
 internal static partial class AppLog
 {
-    /// <summary>The window is opening.</summary>
-    /// <param name="logger">Where the record goes.</param>
-    /// <param name="version">What this build is.</param>
-    /// <param name="occasion">Why it opened.</param>
-    /// <param name="status">What it is about to say.</param>
-    [LoggerMessage(
-        EventId = 6001,
-        Level = LogLevel.Information,
-        Message = "BrowserAI {Version} opening its configuration window ({Occasion}). {Status}")]
-    public static partial void Opening(ILogger logger, string version, Occasion occasion, string status);
-
     /// <summary>A status report was written.</summary>
     /// <param name="logger">Where the record goes.</param>
     /// <param name="path">Where it went.</param>
@@ -877,63 +383,7 @@ internal static partial class AppLog
         Message = "Velopack reported a problem: {Message}")]
     public static partial void VelopackProblem(ILogger logger, string message, Exception? failure);
 
-    /// <summary>A click threw where an escaped exception would have killed the process.</summary>
-    /// <param name="logger">Where the record goes.</param>
-    /// <param name="failure">What was thrown.</param>
-    [LoggerMessage(
-        EventId = 6005,
-        Level = LogLevel.Error,
-        Message = "A click in the configuration window threw. Nothing was changed and the window is still open.")]
-    public static partial void ClickFailed(ILogger logger, Exception failure);
-}
-
-/// <summary>
-/// The configuration window as the coordinator opens it: read the state, show
-/// the dialog, return when it closes.
-/// </summary>
-/// <remarks>
-/// <b>The first window carries the occasion the process was started for</b> --
-/// the installer's first run, or the restart after an update -- and every later
-/// one, opened by a second start's <c>show</c>, is an ordinary one.
-/// </remarks>
-/// <param name="tool">RegisterAI, which reads and writes every client's registration.</param>
-/// <param name="paths">Where the logs are.</param>
-/// <param name="logger">Where the records go.</param>
-/// <param name="first">Why the first window opens.</param>
-/// <param name="inbox">The coordinator's verbs, whose <c>show</c> brings an open window forward.</param>
-internal sealed class ConfigurationWindow(
-    IRegisterAi tool,
-    IAppPaths paths,
-    ILogger logger,
-    Occasion first,
-    CoordinatorInbox inbox) : ICoordinatorWindow
-{
-    private Occasion _next = first;
-
-    /// <inheritdoc />
-    public int Show()
-    {
-        var state = AppState.Read(tool, Environment.CurrentDirectory);
-        var occasion = _next;
-
-        _next = Occasion.Ordinary;
-
-        var status = state.StatusSentence();
-
-        AppLog.Opening(logger, state.Version, occasion, status);
-
-        using var session = new ConfigurationSession(
-            state,
-            tool,
-            paths,
-            logger,
-            occasion,
-            Environment.ProcessPath,
-            ShellInterop.PickFolder,
-            () => AppState.Read(tool, Environment.CurrentDirectory),
-            inbox,
-            Foreground.Raise);
-
-        return session.Show();
-    }
+    // Ids 6001 (the window opening) and 6005 (a click in the window threw) went with
+    // the configuration window on 2026-10-03, which the browser tab replaced. A log
+    // query written against them reads the window's events, so neither comes back.
 }

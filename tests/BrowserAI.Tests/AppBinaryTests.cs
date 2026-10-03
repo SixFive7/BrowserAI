@@ -3,125 +3,27 @@
 
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using BrowserAI.App.Interop;
 using BrowserAI.App;
 using BrowserAI.Interop;
 using BrowserAI.Runtime;
 using BrowserAI.Tests.Harness;
-using W = Windows.Win32;
 
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The two hand-written task dialog structures, against Microsoft's own
-/// metadata -- and the subsystem each shipped executable declares.
+/// What each shipped executable declares about itself: its subsystem, the
+/// configuration app's embedded manifest, and the apartment its main thread runs in.
 /// </summary>
 /// <remarks>
-/// <para>
-/// ⚠️ <b><c>TASKDIALOGCONFIG</c> is <c>#pragma pack(1)</c>, and that is the one
-/// fact this whole file exists for.</b> The natural C# layout pads every pointer
-/// to eight bytes and produces a 184-byte structure that Windows reads as though
-/// it were the 160-byte one: every field after the first mismatch means
-/// something else, and the failure is not a diagnostic -- the call returns
-/// <c>E_INVALIDARG</c>, or renders a dialog whose title is its content. That is
-/// the classic way to get the raw task dialog wrong, and it is checked against
-/// the vendor and not against the last person who read the header.
-/// </para>
-/// <para>
-/// <b>The literal is written out as well as compared</b>, for the same reason
-/// <c>InteropLayoutTests</c> does it: comparing only the two would move both
-/// sides at once if a future <c>CsWin32</c> generated a different shape, and
-/// report agreement. 160 and 12 are the numbers this repository measured on
-/// 2026-09-15, on x64.
-/// </para>
+/// <i>Renamed 2026-10-03 (previously <c>TaskDialogLayoutTests</c>, whose summary was
+/// "The two hand-written task dialog structures, against Microsoft's own metadata --
+/// and the subsystem each shipped executable declares").</i> The configuration
+/// window is deleted (Q319 b), and with it the task dialog's two structures and the
+/// three arms that held their layout against Microsoft's metadata. What is left is
+/// about the binaries.
 /// </remarks>
-internal sealed class TaskDialogLayoutTests
+internal sealed class AppBinaryTests
 {
-    /// <summary>
-    /// The configuration structure is the size Windows says, and the constant
-    /// the marshalling reads is that size too.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheDialogConfigurationIsPackedTheWayWindowsPacksIt()
-    {
-        var ours = Marshal.SizeOf<TaskDialogInterop.TaskDialogConfig>();
-        var windows = Marshal.SizeOf<W.UI.Controls.TASKDIALOGCONFIG>();
-
-        await Assert.That(ours).IsEqualTo(TaskDialogInterop.ConfigSize);
-        await Assert.That(ours).IsEqualTo(windows);
-        await Assert.That(ours).IsEqualTo(160);
-
-        // ⚠️ The positive control for the claim above: a naturally packed
-        // version of the same fields is a DIFFERENT size, so this arm is
-        // capable of failing. Without it, a `Pack = 1` silently dropped from
-        // the declaration would have to be caught by the 160 alone -- which it
-        // would be, but nothing would say why the number was chosen.
-        await Assert.That(Marshal.SizeOf<NaturallyPacked>()).IsNotEqualTo(ours);
-    }
-
-    /// <summary>One button is the size Windows says.</summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task OneButtonIsTheSizeWindowsSaysItIs()
-    {
-        var ours = Marshal.SizeOf<TaskDialogInterop.TaskDialogButton>();
-
-        await Assert.That(ours).IsEqualTo(TaskDialogInterop.ButtonSize);
-        await Assert.That(ours).IsEqualTo(Marshal.SizeOf<W.UI.Controls.TASKDIALOG_BUTTON>());
-        await Assert.That(ours).IsEqualTo(12);
-    }
-
-    /// <summary>
-    /// Every field sits where Windows puts it, not merely the total.
-    /// </summary>
-    /// <remarks>
-    /// <b>A size that agrees says nothing about a field that moved</b>: two
-    /// pointers swapped leave the total unchanged and turn the window title into
-    /// the instruction. The offsets are read out of both structures by name, so
-    /// this is the assertion that would catch a reordering.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task EveryFieldSitsWhereWindowsPutsIt()
-    {
-        (string Ours, string Windows)[] fields =
-        [
-            (nameof(TaskDialogInterop.TaskDialogConfig.Size), "cbSize"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.Parent), "hwndParent"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.Instance), "hInstance"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.Flags), "dwFlags"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.CommonButtons), "dwCommonButtons"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.WindowTitle), "pszWindowTitle"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.MainInstruction), "pszMainInstruction"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.Content), "pszContent"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.ButtonCount), "cButtons"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.Buttons), "pButtons"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.DefaultButton), "nDefaultButton"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.RadioButtonCount), "cRadioButtons"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.RadioButtons), "pRadioButtons"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.DefaultRadioButton), "nDefaultRadioButton"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.VerificationText), "pszVerificationText"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.ExpandedInformation), "pszExpandedInformation"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.ExpandedControlText), "pszExpandedControlText"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.CollapsedControlText), "pszCollapsedControlText"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.Footer), "pszFooter"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.Callback), "pfCallback"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.CallbackData), "lpCallbackData"),
-            (nameof(TaskDialogInterop.TaskDialogConfig.Width), "cxWidth"),
-        ];
-
-        // Not empty, and not a subset somebody trimmed: the two unions are the
-        // only fields deliberately absent from the list.
-        await Assert.That(fields.Length).IsEqualTo(22);
-
-        foreach (var (ours, windows) in fields)
-        {
-            await Assert.That(Marshal.OffsetOf<TaskDialogInterop.TaskDialogConfig>(ours))
-                .IsEqualTo(Marshal.OffsetOf<W.UI.Controls.TASKDIALOGCONFIG>(windows));
-        }
-    }
-
     /// <summary>
     /// The configuration app is a Windows-subsystem binary and the server is a
     /// console one, read out of the executables themselves.
@@ -185,7 +87,13 @@ internal sealed class TaskDialogLayoutTests
     /// dependency the loader binds version 5, the export is absent, and the call
     /// fails at run time with <b>no compile-time signal of any kind</b>. Nothing
     /// in this repository could see that until this arm -- it was read by hand,
-    /// once. <i>Added 2026-09-16.</i>
+    /// once. <i>Added 2026-09-16.</i> <i>Corrected 2026-10-03 (previously as written):
+    /// the task dialog is deleted with the configuration window. The dependency stays
+    /// for the folder picker the browser tab asks the coordinator to open: without
+    /// it a process draws its common controls from version 5, with no visual styles,
+    /// per Microsoft's "Enabling Visual Styles"
+    /// (learn.microsoft.com/windows/win32/controls/cookbook-overview, read
+    /// 2026-10-03).</i>
     /// </para>
     /// <para>
     /// <b>Out of the BUILT file, never out of <c>app.manifest</c>.</b> The source

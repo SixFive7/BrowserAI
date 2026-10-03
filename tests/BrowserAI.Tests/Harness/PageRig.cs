@@ -3,7 +3,9 @@
 
 using System.Collections.Concurrent;
 using BrowserAI.App;
+using BrowserAI.App.Interop;
 using BrowserAI.App.Page;
+using BrowserAI.Registration;
 using BrowserAI.Updates;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -14,8 +16,10 @@ internal sealed class PageRig : IDisposable
 {
     private readonly ScratchDirectory _scratch = ScratchDirectory.Create("page-rig");
 
-    public PageRig(CapturingLoggerProvider? logs = null, Action? wake = null)
+    public PageRig(CapturingLoggerProvider? logs = null, Action? wake = null, IPageRegistration? registration = null, Occasion occasion = Occasion.Ordinary)
     {
+        Registration = registration ?? new FakeRegistration();
+
         Facts = new PageFacts
         {
             Version = "9.0.0",
@@ -28,9 +32,10 @@ internal sealed class PageRig : IDisposable
 
         Page = new PageService(
             Facts,
-            Occasion.Ordinary,
+            occasion,
             Updates,
             Sessions,
+            Registration,
             Host,
             wake ?? (() => { }),
             Clock,
@@ -47,6 +52,8 @@ internal sealed class PageRig : IDisposable
     public FakeSessions Sessions { get; } = new();
 
     public RecordingHost Host { get; } = new();
+
+    public IPageRegistration Registration { get; }
 
     public PageService Page { get; }
 
@@ -144,17 +151,69 @@ internal sealed class RecordingHost : IPageHost
 {
     public ConcurrentQueue<string> Opened { get; } = new();
 
-    public int RegistrationWindows => Volatile.Read(ref _registrationWindows);
+    /// <summary>Every prompt the picker was asked with, in order.</summary>
+    public ConcurrentQueue<string> Prompts { get; } = new();
 
-    private int _registrationWindows;
+    /// <summary>What the picker answers.</summary>
+    public FolderPick Pick { get; set; } = FolderPick.Cancelled;
+
+    /// <summary>
+    /// A picker nobody has answered yet: while it is set, every picker waits on it
+    /// and <see cref="Pick"/> is not read.
+    /// </summary>
+    public TaskCompletionSource<FolderPick>? Open { get; set; }
 
     public void OpenFolder(string directory) => Opened.Enqueue(directory);
 
     public string? OpenTrace(string trace) => null;
 
-    public void ShowRegistrationWindow() => Interlocked.Increment(ref _registrationWindows);
+    public Task<FolderPick> PickFolderAsync(string prompt)
+    {
+        Prompts.Enqueue(prompt);
+        return Open is { } open ? open.Task : Task.FromResult(Pick);
+    }
 
     public void RunQueuedWork()
     {
+    }
+}
+
+/// <summary>Every client's registration, scripted, and every action recorded.</summary>
+internal sealed class FakeRegistration : IPageRegistration
+{
+    /// <summary>What a read answers; <see langword="null"/> makes the read throw.</summary>
+    public AppState? State { get; set; }
+
+    public int Reads => Volatile.Read(ref _reads);
+
+    private int _reads;
+
+    /// <summary>Every action, as its verb, the client's key and the folder when there was one.</summary>
+    public ConcurrentQueue<(string Verb, string Client, string? Folder)> Actions { get; } = new();
+
+    /// <summary>What every action concludes.</summary>
+    public Func<RegistrationClient, RegistrationReport> Report { get; set; } =
+        who => new RegistrationReport(RegistrationStatus.Registered, $"Registered with {who.DisplayName}.", null, null);
+
+    public Task<AppState> ReadAsync(CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _reads);
+        return State is { } state ? Task.FromResult(state) : Task.FromException<AppState>(new InvalidOperationException("The registration could not be read."));
+    }
+
+    public Task<RegistrationReport> RegisterAsync(RegistrationClient who, CancellationToken cancellationToken) => Act("register", who, null);
+
+    public Task<RegistrationReport> UnregisterAsync(RegistrationClient who, CancellationToken cancellationToken) => Act("unregister", who, null);
+
+    public Task<RegistrationReport> RegisterInProjectAsync(RegistrationClient who, string folder, string command, CancellationToken cancellationToken) =>
+        Act("register-in-project", who, folder);
+
+    public Task<RegistrationReport> UnregisterFromProjectAsync(RegistrationClient who, string folder, CancellationToken cancellationToken) =>
+        Act("unregister-from-project", who, folder);
+
+    private Task<RegistrationReport> Act(string verb, RegistrationClient who, string? folder)
+    {
+        Actions.Enqueue((verb, who.Key, folder));
+        return Task.FromResult(Report(who));
     }
 }

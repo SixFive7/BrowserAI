@@ -16,14 +16,12 @@ internal sealed record CoordinatorArrival(CoordinatorVerb Verb, int? From);
 /// <para>
 /// <b>Two threads meet here and nowhere else.</b> The pipe's thread posts a verb
 /// once its client has read the acknowledgement; the coordinator's own thread
-/// takes it, whether it is waiting on <see cref="Arrived"/> or running the window,
-/// whose timer asks for <see cref="TakeShow"/> every 200 ms or so.
-/// </para>
-/// <para>
-/// <b>A show can be taken out of turn, and only a show.</b> While the window is
-/// open, the coordinator's thread is inside the dialog, and a second start asking
-/// for the window has to be answered from there; a recheck waits for the window to
-/// close, because nothing is applied while it is open.
+/// takes it when it is woken through <see cref="Arrived"/>. <i>Corrected 2026-10-03
+/// (previously "whether it is waiting on Arrived or running the window, whose timer
+/// asks for TakeShow every 200 ms or so", with a paragraph on taking a show out of
+/// turn while the window was open): the configuration window is gone, the browser
+/// tab's address is handed out on the pipe's own thread, and every verb is taken in
+/// turn.</i>
 /// </para>
 /// </remarks>
 /// <param name="startTheHost">
@@ -103,16 +101,6 @@ internal sealed class CoordinatorInbox(Func<bool>? startTheHost = null) : IDispo
             arrival = _pending[0];
             _pending.RemoveAt(0);
             return true;
-        }
-    }
-
-    /// <summary>Takes every waiting show at once, leaving the rechecks where they are.</summary>
-    /// <returns>Whether any show was waiting.</returns>
-    public bool TakeShow()
-    {
-        lock (_gate)
-        {
-            return _pending.RemoveAll(arrival => arrival.Verb is CoordinatorVerb.Show) > 0;
         }
     }
 

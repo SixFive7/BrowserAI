@@ -5,6 +5,8 @@ using System.Buffers;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using BrowserAI.App.Interop;
+using BrowserAI.Registration;
 using BrowserAI.Updates;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -30,8 +32,10 @@ internal interface IPageHost
     /// <returns>A sentence when it could not be opened, or <see langword="null"/>.</returns>
     string? OpenTrace(string trace);
 
-    /// <summary>Opens the BrowserAI window for what the page does not cover yet: registration.</summary>
-    void ShowRegistrationWindow();
+    /// <summary>Asks the person for a folder through Windows' own picker, Q311.</summary>
+    /// <param name="prompt">What the picker says the folder is for.</param>
+    /// <returns>What the person chose, or that they chose nothing.</returns>
+    Task<FolderPick> PickFolderAsync(string prompt);
 
     /// <summary>Runs what was queued for the coordinator's own thread. Called by the coordinator's loop.</summary>
     void RunQueuedWork();
@@ -112,6 +116,7 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     private readonly PageFacts _facts;
     private readonly IPageUpdates _updates;
     private readonly IPageSessions _sessions;
+    private readonly IPageRegistration _registrar;
     private readonly IPageHost _host;
     private readonly Action _wake;
     private readonly TimeProvider _clock;
@@ -129,12 +134,16 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     private UpdateCandidate? _staged;
     private SessionsSnapshot _snapshot = SessionsSnapshot.Empty;
     private CancellationTokenSource? _check;
+    private RegistrationSnapshot? _registration;
+    private string? _registering;
+    private bool _readingRegistration;
 
     /// <summary>A page for one coordinator.</summary>
     /// <param name="facts">What does not change.</param>
     /// <param name="firstOccasion">Why the coordinator was started, which the first tab says.</param>
     /// <param name="updates">The update machinery.</param>
     /// <param name="sessions">The running servers.</param>
+    /// <param name="registrar">Every client's registration, read and changed.</param>
     /// <param name="host">The desktop.</param>
     /// <param name="wake">Wakes the coordinator's thread; called whenever something it decides on changed.</param>
     /// <param name="clock">The clock the linger runs on.</param>
@@ -145,6 +154,7 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
         Occasion firstOccasion,
         IPageUpdates updates,
         IPageSessions sessions,
+        IPageRegistration registrar,
         IPageHost host,
         Action wake,
         TimeProvider clock,
@@ -154,6 +164,7 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
         ArgumentNullException.ThrowIfNull(facts);
         ArgumentNullException.ThrowIfNull(updates);
         ArgumentNullException.ThrowIfNull(sessions);
+        ArgumentNullException.ThrowIfNull(registrar);
         ArgumentNullException.ThrowIfNull(host);
         ArgumentNullException.ThrowIfNull(wake);
         ArgumentNullException.ThrowIfNull(clock);
@@ -163,6 +174,7 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
         _firstOccasion = firstOccasion;
         _updates = updates;
         _sessions = sessions;
+        _registrar = registrar;
         _host = host;
         _wake = wake;
         _clock = clock;
@@ -329,7 +341,7 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
     {
         lock (_gate)
         {
-            return new PageView(_facts, _update, _staged?.Version, _snapshot, _notes[kind]);
+            return new PageView(_facts, _update, _staged?.Version, _snapshot, _notes[kind], _registration, _registering);
         }
     }
 
@@ -347,7 +359,10 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
             case "" when get:
                 // What a server has staged is read again for every page load, so a
                 // tab opened between two of the coordinator's passes is not behind.
+                // The registration is read again too, the way the window read it each
+                // time it opened, and arrives through the stream when it is in.
                 Staged(_updates.Staged());
+                StartRegistrationRead();
                 await WriteAsync(context, "text/html; charset=utf-8", Page(PageKind.Status, query)).ConfigureAwait(false);
                 return true;
 
@@ -535,7 +550,9 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
             "open-trace" => OpenTrace(String(request, "trace")),
             "refresh-sessions" => Run(RefreshSessionsAsync(CancellationToken.None)),
             "close-servers" => Run(CloseServersAsync(Strings(request, "servers"))),
-            "registration-window" => ShowRegistrationWindow(),
+            "read-registration" => StartRegistrationRead(),
+            "register" or "unregister" or "register-in-project" or "unregister-from-project" or "unregister-from-a-project" =>
+                StartRegistration(String(request, "client"), action),
             _ => false,
         };
 
@@ -828,10 +845,187 @@ internal sealed partial class PageService : IPageRoutes, ICoordinatorPage, IAsyn
         return true;
     }
 
-    private bool ShowRegistrationWindow()
+    /// <summary>Reads every client's registration again, unless a read is already running.</summary>
+    /// <returns>Always <see langword="true"/>: the request was taken.</returns>
+    private bool StartRegistrationRead()
     {
-        _host.ShowRegistrationWindow();
+        lock (_gate)
+        {
+            if (_readingRegistration)
+            {
+                return true;
+            }
+
+            _readingRegistration = true;
+        }
+
+        _ = Task.Run(ReadRegistrationAsync, CancellationToken.None);
         return true;
+    }
+
+    private async Task ReadRegistrationAsync()
+    {
+        RegistrationSnapshot read;
+
+        try
+        {
+            var state = await _registrar.ReadAsync(CancellationToken.None).ConfigureAwait(false);
+
+            read = new RegistrationSnapshot(_clock.GetUtcNow(), state);
+        }
+#pragma warning disable CA1031 // A read that failed is a sentence on the page, never a coordinator that stops.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            read = new RegistrationSnapshot(_clock.GetUtcNow(), null, failure.Message);
+        }
+
+        lock (_gate)
+        {
+            _registration = read;
+            _readingRegistration = false;
+        }
+
+        Push();
+    }
+
+    /// <summary>
+    /// Starts one registration action for one client, when the page offered it for
+    /// that client in the state it last read.
+    /// </summary>
+    /// <remarks>
+    /// <b>The client is named by its key and nothing else, and the folder never comes
+    /// from the page</b>: a project folder is the one the client's own read found, or
+    /// one a person picks in Windows' picker, which the coordinator opens (Q311). An
+    /// action the page did not offer for that client is refused like an unknown one,
+    /// and one action runs at a time; the page offers no button while it does.
+    /// </remarks>
+    /// <param name="key">The client's key.</param>
+    /// <param name="action">The action.</param>
+    /// <returns>Whether the request was taken.</returns>
+    private bool StartRegistration(string? key, string action)
+    {
+        AppState state;
+        ClientState client;
+
+        lock (_gate)
+        {
+            if (_registration?.State is not { } read
+                || read.Clients.FirstOrDefault(each => string.Equals(each.Client.Key, key, StringComparison.Ordinal)) is not { } found
+                || !Offered(found, action))
+            {
+                return false;
+            }
+
+            if (_registering is not null)
+            {
+                return true;
+            }
+
+            state = read;
+            client = found;
+            _registering = Working(found, action);
+        }
+
+        Push();
+        _ = Task.Run(() => RegisterAsync(state, client, action), CancellationToken.None);
+        return true;
+    }
+
+    private static bool Offered(ClientState client, string action) => action switch
+    {
+        "register" => client.MayRegister,
+        "unregister" => client.MayUnregister,
+        "register-in-project" => client.MayRegisterInProject,
+        "unregister-from-project" => client.MayUnregisterFromProject,
+        "unregister-from-a-project" => client.MayUnregisterFromAProject,
+        _ => false,
+    };
+
+    private static string Working(ClientState client, string action)
+    {
+        var name = client.Client.DisplayName;
+
+        return action switch
+        {
+            "register" => $"Registering BrowserAI with {name}.",
+            "unregister" => $"Removing BrowserAI from {name}.",
+            "unregister-from-project" => $"Removing BrowserAI from the project at {client.ProjectDirectory} for {name}.",
+            _ => $"Windows' folder picker is open for {name}. If it is not in front, it is behind this browser window.",
+        };
+    }
+
+    private async Task RegisterAsync(AppState state, ClientState client, string action)
+    {
+        var who = client.Client;
+        PageNote? note;
+
+        try
+        {
+            note = action switch
+            {
+                "register" => RegistrationNotes.For(await _registrar.RegisterAsync(who, CancellationToken.None).ConfigureAwait(false), who, registering: true),
+                "unregister" => RegistrationNotes.For(await _registrar.UnregisterAsync(who, CancellationToken.None).ConfigureAwait(false), who, registering: false),
+                "unregister-from-project" => RegistrationNotes.ForProject(
+                    await _registrar.UnregisterFromProjectAsync(who, client.ProjectDirectory!, CancellationToken.None).ConfigureAwait(false), who, registering: false, null),
+                "register-in-project" => await InProjectAsync(state, who, register: true).ConfigureAwait(false),
+                _ => await InProjectAsync(state, who, register: false).ConfigureAwait(false),
+            };
+        }
+#pragma warning disable CA1031 // A registration that threw is a sentence on the page; the coordinator keeps running.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            note = new PageNote($"BrowserAI could not finish that request for {who.DisplayName}.", failure.Message);
+        }
+
+        lock (_gate)
+        {
+            _registering = null;
+
+            // A picker closed without a choice changes nothing and says nothing.
+            if (note is not null)
+            {
+                _notes[PageKind.Status] = note;
+            }
+        }
+
+        Push();
+        _ = StartRegistrationRead();
+    }
+
+    private async Task<PageNote?> InProjectAsync(AppState state, RegistrationClient who, bool register)
+    {
+        var picked = await _host.PickFolderAsync(register
+            ? $"Choose the folder to register BrowserAI in for {who.DisplayName}. A {who.ProjectFileName} is written under it, to be committed with the project."
+            : $"Choose the project folder to remove BrowserAI from for {who.DisplayName}. Only an entry this install wrote in its {who.ProjectFileName} is removed.").ConfigureAwait(false);
+
+        if (picked.Outcome is FolderPickOutcome.Failed)
+        {
+            return new PageNote("The folder that was chosen could not be used, so nothing was changed.", picked.Reason);
+        }
+
+        if (picked.Outcome is not FolderPickOutcome.Picked || picked.Path is not { Length: > 0 } folder)
+        {
+            return null;
+        }
+
+        if (!register)
+        {
+            return RegistrationNotes.ForProject(
+                await _registrar.UnregisterFromProjectAsync(who, folder, CancellationToken.None).ConfigureAwait(false), who, registering: false, null);
+        }
+
+        // The client decides what a project file says (Q294 b): Claude Code's entry is
+        // the portable spelling, Codex's the bare server name found on the PATH. Codex's
+        // sentence names what that name finds, which is RegisterAI's answer about the
+        // entry it just wrote, and it is where Q314 b's restart sentence is.
+        var server = state.ServerCommand ?? string.Empty;
+        var project = who.ProjectCommandFor(server, state.InstallRoot);
+        var report = await _registrar.RegisterInProjectAsync(who, folder, project.Command, CancellationToken.None).ConfigureAwait(false);
+        var note = project.Note ?? (server.Length > 0 ? who.ProjectNoteAfter(server, report.ResolvesTo) : null);
+
+        return RegistrationNotes.ForProject(report, who, registering: true, note);
     }
 
     private async Task RefreshSessionsAsync(CancellationToken cancellationToken)

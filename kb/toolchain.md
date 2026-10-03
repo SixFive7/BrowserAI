@@ -704,6 +704,12 @@ never measured, and two things depend on it with **no diagnostic if it is
 wrong**: `SHBrowseForFolderW`'s `BIF_NEWDIALOGSTYLE` falls back to the pre-Vista
 dialog on a thread that is not in an STA -- silently, no error, a different window
 -- and the version 6 common controls a task dialog is made of expect one.
+*Corrected 2026-10-03 by addition: neither rests on `Main` now. The task dialog
+is deleted with the configuration window, and the folder picker runs on a thread
+of its own that asks for the apartment itself, which
+`HouseRuleTests.EveryFolderPickerRunsOnAThreadThatAsksForASingleThreadedApartment`
+holds. Explorer is still opened on the coordinator's own thread, which is
+`Main`'s.*
 
 Measured by running the published `BrowserAI.exe --report <path>` and reading the
 field it writes: **`"apartment": "STA"`**, at
@@ -713,8 +719,9 @@ Windows 10.0.26200. `[FLOATS]`
 **The suite's own host cannot answer this**, which is why the field exists at
 all: `dotnet test` runs an ordinary CoreCLR process whose apartment says nothing
 about what ILC did with the attribute.
-`TaskDialogLayoutTests.ThePublishedConfigurationAppRunsInASingleThreadedApartment`
-runs the published binary and asserts it, so the answer is re-established on
+`AppBinaryTests.ThePublishedConfigurationAppRunsInASingleThreadedApartment`
+*(`TaskDialogLayoutTests` until 2026-10-03, when the window was deleted)* runs the
+published binary and asserts it, so the answer is re-established on
 every release gate and not on a day somebody remembered to look.
 
 Re-establish it by hand with
@@ -732,7 +739,11 @@ resolved. `EmbeddedManifest` in the test harness is that reader, and
 is what now holds the **`Microsoft.Windows.Common-Controls` 6.0.0.0**
 dependency -- the one whose absence makes `TaskDialogIndirect` fail at run time
 with no compile-time signal, presenting as *the app starts and nothing happens* --
-along with `longPathAware`, `PerMonitorV2` and `asInvoker`.
+along with `longPathAware`, `PerMonitorV2` and `asInvoker`. *Corrected 2026-10-03
+by addition: the class is `AppBinaryTests` since the window was deleted, and with
+`TaskDialogIndirect` gone the dependency stays for the folder picker, which draws
+its controls with visual styles only from version 6; `app.manifest` says so in
+place.*
 
 **The control is the server**, which carries a manifest of its own and declares no
 common controls: a reader that had stopped finding resources reports every

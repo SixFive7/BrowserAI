@@ -61,25 +61,19 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       `BrowserConfiguration`, which every session child the host starts is
       launched with. The coordinator stays while a tab is open or its host runs,
       whichever is longer.
-- [ ] **The browser tab, Q315 a: what is left of replacing the configuration
-      window.** Built on 2026-10-03, in `src/BrowserAI.App/Page/`: the listener,
-      its gate and its token (Q340 b, Q341 b, Q342 c, Q343, Q334 a, Q335 a, with
-      the other-users hazard row); the coordinator's minute and the newest tab
-      winning (Q336 a, Q337 a, Q338 b); the status page with the update section
-      (Q308 a, Q309 b, Q310 a) and the two states the 2026-09-24 rendering found
-      in it, a feed folder with no release list read as up to date and a hung
-      check with no way out; the sessions page (Q317 c's first part); and the
-      `--sessions` entry point the toast's *Review* will start (Q339). **What is
-      left**: registration in the tab, both clients at both scopes with Q309 b's
-      Codex error line and Q314 b's sentence about a Codex started before the
-      install, once BrowserAI calls RegisterAI; the folder picker for a project,
-      opened by the coordinator with a topmost owner (Q311), and a look at its
-      focus on the real desktop; the first-run note saying what registration
-      really did, which today says only that BrowserAI is installed; the trace
-      viewer link on the sessions page; and then deleting the task-dialog window,
-      still opened from the tab for registration. Deleting it closes the
-      link-hole row in [the hazard index](HAZARDS.md#hazard-index). ⚠️ **No
-      release is cut until the tab has replaced the window (Q319 b).**
+- [ ] **The browser tab, Q315 a: what is left.** Built on 2026-10-03, in
+      `src/BrowserAI.App/Page/`: the listener, its gate and its token, the
+      coordinator's minute, the newest tab winning, the status page with its
+      update and registration sections, the sessions page, the `--sessions` entry
+      point, and registration for both clients at both scopes through RegisterAI;
+      the configuration window is deleted, which closed the link-hole row in
+      [the hazard index](HAZARDS.md#hazard-index) and is what Q319 b held a
+      release for. **What is left**: a look at the folder picker's focus on the
+      real desktop, which the coordinator opens with no owner window and which
+      may come up behind the browser (Q311), with a topmost owner if the look
+      calls for one; whether Chromium closes the tab a real Start Menu click
+      opened, once a newer one replaces it, which no run here can open; and the
+      trace viewer link on the sessions page (Q317 c).
 - [ ] **A view-only look at a headless session, Q317 c's second part.** Taken
       by the process that holds the session, on a person's request, and logged
       with a `why`. **What to do:** three measurements come first, as they were
@@ -217,8 +211,11 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
   [bringing CI back](#continuous-integration)**, both kept on this list by the
   maintainer on 2026-09-23.
 - **The [feature-catalogue candidates](#the-next-version)**, waiting on his pick.
-- **Release 1.1.1 is not cut.** Only the maintainer drives a release, and none is
-  cut until the browser tab has replaced the configuration window (Q319 b).
+- **Release 1.1.1 is not cut.** Only the maintainer drives a release. The browser
+  tab replaced the configuration window on 2026-10-03, which is what Q319 b held a
+  release for; RegisterAI going public is still ahead of one, in its own item above.
+  *Changed 2026-10-03 (previously "and none is cut until the browser tab has replaced
+  the configuration window (Q319 b)").*
 
 ---
 
@@ -251,7 +248,10 @@ is named as candidates and says so.
       new surface in it, not a new application. ⚠️ *Changed 2026-10-03: the page belongs to the
       browser tab, which replaces the window (Q315 a, Q317 c), and the toast's
       Review opens a new tab (Q339); both are items in
-      [the zoom-out section](#decided-and-the-work-that-follows).* The Windows toast properties that
+      [the zoom-out section](#decided-and-the-work-that-follows).* *Changed again the same day: the window is
+      deleted, and the page this item describes is built in the tab, with the
+      `--sessions` start the toast's Review will make (Q339); what is left of this
+      item is the toast.* The Windows toast properties that
       decide the layout are measured in
       [kb](kb/windows/notifications.md).
 

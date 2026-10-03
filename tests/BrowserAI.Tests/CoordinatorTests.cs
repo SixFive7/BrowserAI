@@ -6,7 +6,6 @@ using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using BrowserAI.App;
-using BrowserAI.App.Interop;
 using BrowserAI.App.Page;
 using BrowserAI.Coordination;
 using BrowserAI.Interop;
@@ -632,72 +631,6 @@ internal sealed class CoordinatorTests
     }
 
     /// <summary>
-    /// A <c>show</c> that arrives while the window is open brings that window
-    /// forward, from the dialog's own timer, and a recheck waits for it to close.
-    /// </summary>
-    /// <remarks>
-    /// <b>Driven through the host's dispatch with a made-up window handle</b>, the
-    /// way <see cref="ConfigurationAppTests"/> drives a click: the raise is a seam
-    /// that records the handle, so no message is ever sent to it.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AShowWhileTheWindowIsOpenRaisesThatWindowAndLeavesTheRecheckWaiting()
-    {
-        const nint Window = 4321;
-
-        using var install = ScratchDirectory.Create("coordinator-raise");
-        using var inbox = new CoordinatorInbox();
-
-        var raised = new List<nint>();
-        var state = new AppState
-        {
-            Version = "0.0.0-test",
-            InstallRoot = install.Path,
-            DataRoot = install.Path,
-            ServerCommand = null,
-            ServerRefusal = "not installed",
-            Clients = [],
-        };
-
-        using var session = new ConfigurationSession(
-            state,
-            new UnusedTool(),
-            new BrowserAI.Hosting.LocalAppDataPaths(install.Path),
-            NullLogger.Instance,
-            Occasion.Ordinary,
-            imagePath: null,
-            (_, _) => FolderPick.Cancelled,
-            () => state,
-            inbox,
-            window =>
-            {
-                raised.Add(window);
-                return true;
-            });
-
-        using var host = session.Attach();
-
-        _ = host.Dispatch(Window, TaskDialogInterop.Notification.Created, 0, 0);
-
-        // A tick with nothing asked raises nothing.
-        _ = host.Dispatch(Window, TaskDialogInterop.Notification.Timer, 0, 0);
-        await Assert.That(raised.Count).IsEqualTo(0);
-
-        inbox.Post(CoordinatorVerb.Recheck, from: 1);
-        inbox.Post(CoordinatorVerb.Show, from: 2);
-
-        _ = host.Dispatch(Window, TaskDialogInterop.Notification.Timer, 0, 0);
-
-        await Assert.That(raised).IsEquivalentTo([Window]);
-
-        // The recheck is still there for the coordinator once the window closes.
-        await Assert.That(inbox.TryTake(out var left)).IsTrue();
-        await Assert.That(left!.Verb).IsEqualTo(CoordinatorVerb.Recheck);
-        await Assert.That(inbox.TryTake(out _)).IsFalse();
-    }
-
-    /// <summary>
     /// The published app, started as a second start, hands its verb to the
     /// coordinator this host holds and exits: <c>recheck</c> for
     /// <c>--coordinate</c> and <c>--sign-in</c>, <c>show</c> for a start with no
@@ -1076,14 +1009,5 @@ internal sealed class CoordinatorTests
             Granted.Enqueue(processId);
             return true;
         }
-    }
-
-    /// <summary>A RegisterAI no arm here reaches.</summary>
-    private sealed class UnusedTool : IRegisterAi
-    {
-        public string Executable => "<unused>";
-
-        public ToolRun Run(IReadOnlyList<string> arguments, TimeSpan budget) =>
-            throw new InvalidOperationException("No arm in this class runs RegisterAI.");
     }
 }

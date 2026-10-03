@@ -127,6 +127,45 @@ internal sealed class PageServiceTests
     }
 
     /// <summary>
+    /// A check the feed never answers ends at the server's own tripwire for the same
+    /// call, on the page's clock, as one sentence with the reason under Show details.
+    /// </summary>
+    /// <remarks>
+    /// <b>What the window's
+    /// <c>ConfigurationAppTests.WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline</c>
+    /// held, moved with the window's deletion on 2026-10-03</b>: the bound on a check is
+    /// <see cref="BrowserAI.Updates.UpdateService.CrashTripwire"/> and no number of the
+    /// page's own. The arm moves the clock to the newest timer, which is the check's,
+    /// and not by a guess at how long the bound is.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACheckTheFeedNeverAnswersEndsAtTheServersOwnTripwire()
+    {
+        using var rig = new PageRig();
+
+        var hung = new TaskCompletionSource<UpdateCandidate?>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        rig.Updates.Check = _ => hung.Task;
+
+        using var stream = await rig.StreamAsync(rig.HandOut(), 1);
+
+        await rig.ActAsync("""{"action":"check-updates"}""");
+        await Assert.That(await StateContainingAsync(stream, "Asking the release feed")).IsNotNull();
+
+        // The check's own deadline is the newest timer once the check has started.
+        await Assert.That(await WaitForAsync(() => rig.Clock.UntilTheNewestTimerFires() == UpdateService.CrashTripwire)).IsTrue();
+
+        rig.Clock.Advance(UpdateService.CrashTripwire);
+
+        var failed = await StateContainingAsync(stream, "The update check did not finish.");
+
+        await Assert.That(failed).IsNotNull();
+        await Assert.That(failed!).Contains($"<details><summary>Show details</summary><pre>The release feed did not answer within {UpdateService.CrashTripwire.TotalMinutes:F0} minutes.</pre></details>");
+        await Assert.That(failed).Contains("data-action=\"check-updates\"");
+    }
+
+    /// <summary>
     /// A feed that is a folder with no release list in it is not read as up to date,
     /// and a check that does not come back can be given up, its late answer dropped.
     /// </summary>

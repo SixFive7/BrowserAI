@@ -7,8 +7,8 @@ using BrowserAI.Coordination;
 namespace BrowserAI.App.Interop;
 
 /// <summary>
-/// The two halves of bringing the coordinator's window forward: a second start
-/// grants the right, and the coordinator uses it.
+/// The grant a second start the person made hands the coordinator: the right to
+/// set the foreground once.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -29,55 +29,24 @@ namespace BrowserAI.App.Interop;
 /// </para>
 /// <para>
 /// <b>The grant does not move anything on the screen.</b> It lets one process set
-/// the foreground once, until the person's next input goes elsewhere; the window
-/// moves only when the coordinator calls <see cref="Raise"/> on its own window.
+/// the foreground once, until the person's next input goes elsewhere.
+/// <i>Corrected 2026-10-03 (previously "the window moves only when the coordinator
+/// calls Raise on its own window"): the configuration window is gone, and with it
+/// <c>Raise</c> and the three calls it made. A person's start opens the browser tab
+/// itself, so the coordinator has no window to bring forward and the grant moves
+/// nothing today; it is kept because it is part of the pipe's hand-over, which the
+/// coordinator's tests hold.</i>
 /// </para>
 /// </remarks>
 internal static partial class Foreground
 {
-    /// <summary><c>SW_RESTORE</c>: un-minimise and activate.</summary>
-    private const int ShowRestore = 9;
-
     /// <summary>The grant a start the person made hands the coordinator.</summary>
     public static IForegroundGrant Grant { get; } = new AllowSetForeground();
-
-    /// <summary>Brings one of this process's windows to the foreground, restoring it first when it is minimised.</summary>
-    /// <param name="window">The window.</param>
-    /// <returns>Whether Windows made it the foreground window.</returns>
-    public static bool Raise(nint window)
-    {
-        if (window is 0)
-        {
-            return false;
-        }
-
-        if (IsIconic(window))
-        {
-            _ = ShowWindow(window, ShowRestore);
-        }
-
-        return SetForegroundWindow(window);
-    }
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("user32.dll", EntryPoint = "AllowSetForegroundWindow", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool AllowSetForegroundWindow(uint processId);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [LibraryImport("user32.dll", EntryPoint = "SetForegroundWindow", SetLastError = false)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool SetForegroundWindow(nint window);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [LibraryImport("user32.dll", EntryPoint = "ShowWindow", SetLastError = false)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool ShowWindow(nint window, int command);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [LibraryImport("user32.dll", EntryPoint = "IsIconic", SetLastError = false)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool IsIconic(nint window);
 
     /// <summary>The real grant.</summary>
     private sealed class AllowSetForeground : IForegroundGrant

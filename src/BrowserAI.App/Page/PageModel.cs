@@ -148,15 +148,42 @@ internal sealed record SessionsSnapshot(DateTimeOffset ReadAt, IReadOnlyList<Ser
 /// <param name="Details">The raw text, shown under <i>Show details</i>, or <see langword="null"/>.</param>
 internal sealed record PageNote(string Sentence, string? Details = null);
 
+/// <summary>The registration the page last read.</summary>
+/// <param name="ReadAt">When it was read.</param>
+/// <param name="State">What was read: every client's registration, and the server a registration names.</param>
+/// <param name="Failure">Why the read itself failed, as the raw text, or <see langword="null"/> when it did not.</param>
+internal sealed record RegistrationSnapshot(DateTimeOffset ReadAt, AppState? State, string? Failure = null);
+
+/// <summary>Why the coordinator's first tab was opened, which changes what that tab says first.</summary>
+/// <remarks>
+/// <i>Moved here 2026-10-03 from the configuration window, which it was first written for and
+/// which the browser tab replaces.</i>
+/// </remarks>
+internal enum Occasion
+{
+    /// <summary>Somebody opened it.</summary>
+    Ordinary,
+
+    /// <summary>The installer started it, once, immediately after installing.</summary>
+    FirstRun,
+
+    /// <summary>It came back after applying an update.</summary>
+    AfterUpdate,
+}
+
 /// <summary>Everything the page shows at one moment, which is what one render reads.</summary>
 /// <param name="Facts">What does not change.</param>
 /// <param name="Update">The update section.</param>
 /// <param name="Staged">The version a server has already downloaded and staged, or <see langword="null"/>.</param>
 /// <param name="Sessions">The last read of the sessions.</param>
 /// <param name="Note">The last action's sentence, or <see langword="null"/>.</param>
+/// <param name="Registration">The last read of the registration, or <see langword="null"/> before the first.</param>
+/// <param name="Registering">A sentence while a registration action runs, or <see langword="null"/>.</param>
 internal sealed record PageView(
     PageFacts Facts,
     UpdateView Update,
     string? Staged,
     SessionsSnapshot Sessions,
-    PageNote? Note);
+    PageNote? Note,
+    RegistrationSnapshot? Registration = null,
+    string? Registering = null);

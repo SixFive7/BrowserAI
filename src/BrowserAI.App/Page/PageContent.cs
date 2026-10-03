@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Encodings.Web;
+using BrowserAI.Registration;
 
 namespace BrowserAI.App.Page;
 
@@ -148,18 +149,29 @@ internal static class PageContent
 
         _ = html.Append("<h1>").Append(Text(Heading(facts, occasion))).Append("</h1>\n");
 
+        // The 2026-09-24 rendering found the window's first run claiming that every
+        // client had been registered, whatever had happened. The sentence claims only
+        // the install; what each client says is read live, in its own section below.
         if (occasion is Occasion.FirstRun)
         {
-            _ = html.Append("<p>BrowserAI is installed.</p>\n");
+            _ = html.Append("<p>").Append(Text(FirstRunSentence)).Append("</p>\n");
         }
 
         AppendNote(html, view.Note);
         AppendUpdate(html, view);
+        AppendRegistration(html, view);
         AppendWhere(html, facts);
-        AppendRegistrationBridge(html);
 
         return html.ToString();
     }
+
+    /// <summary>What the tab the installer opened says first.</summary>
+    public const string FirstRunSentence =
+        "BrowserAI is installed. Below is how it is registered with each client now. Sessions and threads that were already open do not see BrowserAI until they are started again.";
+
+    /// <summary>Q314 b: what the Codex section says about a Codex that predates the install.</summary>
+    public const string CodexStartedBeforeTheInstall =
+        "A Codex that was already running when BrowserAI was installed does not find BrowserAI in a project until it is restarted.";
 
     private static void AppendNote(StringBuilder html, PageNote? note)
     {
@@ -270,11 +282,126 @@ internal static class PageContent
         _ = html.Append("</section>\n");
     }
 
-    private static void AppendRegistrationBridge(StringBuilder html) =>
-        _ = html.Append("<section id=\"registration\"><h2>Registration</h2>\n")
-            .Append("<p>Registering BrowserAI with Claude Code and Codex is still done in the BrowserAI window.</p>\n")
-            .Append(Button("registration-window", "Open the registration window"))
-            .Append("</section>\n");
+    private static void AppendRegistration(StringBuilder html, PageView view)
+    {
+        _ = html.Append("<section id=\"registration\"><h2>Registration</h2>\n");
+
+        if (view.Registering is { Length: > 0 } working)
+        {
+            _ = html.Append("<p role=\"status\">").Append(Text(working)).Append("</p>\n");
+        }
+
+        switch (view.Registration)
+        {
+            case null:
+                _ = html.Append("<p class=\"muted\">Reading how BrowserAI is registered with Claude Code and Codex.</p>\n");
+                break;
+
+            case { State: null } failed:
+                _ = html.Append("<p>BrowserAI could not read how it is registered.</p>\n");
+                AppendDetails(html, failed.Failure);
+                _ = html.Append(Button("read-registration", "Read it again"));
+                break;
+
+            case { State: { } state } read:
+                _ = html.Append("<p class=\"muted\">")
+                    .Append(Text($"Read at {read.ReadAt.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture)}."))
+                    .Append(' ').Append(Button("read-registration", "Read again")).Append("</p>\n");
+
+                foreach (var client in state.Clients)
+                {
+                    AppendClient(html, client, offerActions: view.Registering is null);
+                }
+
+                break;
+        }
+
+        _ = html.Append("</section>\n");
+    }
+
+    /// <summary>One client's registration and what can be done to it.</summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Every button names its client</b>, the maintainer's words of 2026-09-24
+    /// verbatim: <i>"I easy I want separate control over system level registration
+    /// between codex and claude."</i> No action here applies to both at once.
+    /// </para>
+    /// <para>
+    /// <b>The register button's label follows the state</b>, as the window's link
+    /// did: absent asks, stale repairs, and present offers to write it again, which
+    /// is how a person undoes their own edits to the entry.
+    /// </para>
+    /// <para>
+    /// <b>The words about scope are OutlookAI's</b>, <i>"for all my ... projects"</i>
+    /// and <i>"in a project"</i>, because two products in one estate describing one
+    /// mechanism differently is how a person learns it twice.
+    /// </para>
+    /// </remarks>
+    /// <param name="html">Where to write.</param>
+    /// <param name="client">The client.</param>
+    /// <param name="offerActions">Whether buttons are offered: none while an action runs.</param>
+    private static void AppendClient(StringBuilder html, ClientState client, bool offerActions)
+    {
+        var who = client.Client;
+        var name = who.DisplayName;
+
+        _ = html.Append("<div class=\"client\" id=\"client-").Append(Text(who.Key)).Append("\"><h3>").Append(Text(name)).Append("</h3>\n")
+            .Append("<p>").Append(Text(client.StatusSentence())).Append("</p>\n");
+
+        if (client.ProjectScope is { Command: { Length: > 0 } command } view && client.ProjectDirectory is { Length: > 0 } project)
+        {
+            _ = html.Append("<p>The project at <code>").Append(Text(project)).Append("</code> registers <code>").Append(Text(command))
+                .Append("</code> in <code>").Append(Text(view.File)).Append("</code>.</p>\n");
+        }
+
+        if (offerActions)
+        {
+            if (client.MayRegister)
+            {
+                var (label, what) = client.UserScope.Ownership switch
+                {
+                    RegistrationOwnership.OursAndStale =>
+                        ($"Repair the {name} registration", "Points that entry at this install, which an entry naming a file that is not the server needs."),
+                    RegistrationOwnership.OursAndPresent =>
+                        ($"Register again for all my {name} projects", "Rewrites the entry as BrowserAI writes it, which undoes your own edits to it."),
+                    _ => ($"Register for all my {name} projects", $"Writes one entry in your own {name} configuration."),
+                };
+
+                AppendAction(html, "register", who.Key, label, what);
+            }
+
+            if (client.MayUnregister)
+            {
+                AppendAction(html, "unregister", who.Key, $"Unregister from {name}", "Removes that entry. BrowserAI stays installed, and your sessions and browsers are untouched.");
+            }
+
+            if (client.MayRegisterInProject)
+            {
+                AppendAction(html, "register-in-project", who.Key, $"Register in a project for {name}", $"Writes {who.ProjectFileName} in a folder you choose, to be committed with the project.");
+            }
+
+            if (client.MayUnregisterFromProject)
+            {
+                AppendAction(html, "unregister-from-project", who.Key, $"Remove BrowserAI from that project for {name}", $"Edits {who.ProjectFileIn(client.ProjectDirectory!)}.");
+            }
+
+            if (client.MayUnregisterFromAProject)
+            {
+                AppendAction(html, "unregister-from-a-project", who.Key, $"Remove from a project for {name}", $"Removes BrowserAI's entry from {who.ProjectFileName} in a folder you choose. An entry another install wrote is left alone.");
+            }
+        }
+
+        if (string.Equals(who.Key, RegistrationClient.Codex.Key, StringComparison.Ordinal) && client.ClientFound)
+        {
+            _ = html.Append("<p class=\"muted\">").Append(Text(CodexStartedBeforeTheInstall)).Append("</p>\n");
+        }
+
+        _ = html.Append("</div>\n");
+    }
+
+    private static void AppendAction(StringBuilder html, string action, string client, string label, string what) =>
+        _ = html.Append("<p>").Append(Button(action, label, ("client", client)).TrimEnd('\n'))
+            .Append(" <span class=\"muted\">").Append(Text(what)).Append("</span></p>\n");
 
     private static string SessionsMain(PageView view, DateTimeOffset now)
     {

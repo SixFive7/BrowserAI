@@ -4,29 +4,27 @@
 using System.Text.Json;
 using BrowserAI.App;
 using BrowserAI.App.Interop;
-using BrowserAI.App.Ui;
 using BrowserAI.Registration;
-using BrowserAI.Updates;
 using BrowserAI.Tests.Harness;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// The configuration app, asserted without a window.
+/// The configuration app's state and its report, asserted without a window.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Everything the dialog says is a pure function of an <c>AppState</c></b>,
-/// and that is what makes a window application testable at all. What is left
-/// over -- that Windows draws the page -- is covered by
-/// <c>RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow</c>
-/// and by <c>TaskDialogLayoutTests</c>; between them the untested remainder is
-/// the pixels.
+/// <b>What each client's registration says, and what it offers, is a pure function
+/// of an <c>AppState</c></b>, read once and rendered twice: by the browser tab's
+/// registration section and by <c>--report</c>. <i>Corrected 2026-10-03 (previously
+/// "Everything the dialog says is a pure function of an AppState ... covered by
+/// RealInstallerTests.TheInstalledMainExecutableOpensOneDialogAndNoConsoleWindow
+/// and by TaskDialogLayoutTests"): the configuration window is deleted (Q319 b), its
+/// arms went with it, and what a click does is <c>PageRegistrationTests</c>'.</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>Nothing here starts the app.</b> The arms below read the same state
-/// object <c>--report</c> serialises and the dialog renders, so a divergence
+/// object <c>--report</c> serialises and the page renders, so a divergence
 /// between the two is a red and not a support artifact that disagrees with
 /// the screen.
 /// </para>
@@ -129,90 +127,6 @@ internal sealed class ConfigurationAppTests
     }
 
     /// <summary>
-    /// The two clients are told apart everywhere a person can see or act, and
-    /// neither one's state reaches the other's actions.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The maintainer's third ask, and it is a requirement and not an
-    /// implementation detail:</b> <i>"I easy I want separate control over system
-    /// level registration between codex and claude."</i> What this holds is the
-    /// assertable half of it -- every link's identifier resolves to exactly one
-    /// client, every label names that client, and a state that offers an action
-    /// for one offers nothing for the other.
-    /// </para>
-    /// <para>
-    /// <b>Planted red 2026-09-24</b> by giving both clients the same identifier
-    /// block, which is what a window with one register button and a client
-    /// dropdown would produce.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task EveryRegistrationActionBelongsToExactlyOneNamedClient()
-    {
-        using var install = ScratchDirectory.Create("app-per-client");
-
-        _ = InstalledLayout.Create(install.Path);
-
-        var server = InstalledLayout.ServerIn(install.Path);
-
-        // Claude Code registered, Codex not: one client offers unregister and the
-        // other offers register, and nothing offers both.
-        var state = StateFor(
-            install.Path,
-            server,
-            [
-                ClientFor(RegistrationClient.ClaudeCode, server, RegistrationOwnership.OursAndPresent),
-                ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
-            ]);
-
-        var commands = ConfigurationDialog.Commands(state, updateAvailable: null);
-
-        // Every per-client identifier resolves to one client and one verb, and
-        // the label names that client.
-        foreach (var command in commands)
-        {
-            if (ConfigurationDialog.Command.ClientCommandOf(command.Id, state.Clients.Count) is not { } resolved)
-            {
-                continue;
-            }
-
-            await Assert.That(command.Text).Contains(state.Clients[resolved.Index].Client.DisplayName);
-        }
-
-        var unregisterClaude = ConfigurationDialog.Command.For(ConfigurationDialog.Command.Unregister, 0);
-        var unregisterCodex = ConfigurationDialog.Command.For(ConfigurationDialog.Command.Unregister, 1);
-        var registerCodex = ConfigurationDialog.Command.For(ConfigurationDialog.Command.Register, 1);
-
-        await Assert.That(commands.Any(command => command.Id == unregisterClaude)).IsTrue();
-        await Assert.That(commands.Any(command => command.Id == unregisterCodex)).IsFalse();
-        await Assert.That(commands.Any(command => command.Id == registerCodex)).IsTrue();
-
-        // The identifiers are distinct across clients AND across verbs, which is
-        // the property a shared block would break.
-        await Assert.That(commands.Select(command => command.Id).Distinct().Count()).IsEqualTo(commands.Count);
-
-        // ⚠️ AND THE BLOCKS ARE WIDE ENOUGH FOR THE CLIENTS THERE ARE. A tenth
-        // client would make one verb's last identifier equal the next verb's
-        // first, and the link would fire the wrong action with nothing to say so.
-        await Assert.That(RegistrationClient.All.Count).IsLessThanOrEqualTo(ConfigurationDialog.Command.Slots);
-
-        // Both clients are named in the body whether or not they have an action,
-        // so "Codex is fine" and "BrowserAI has never heard of Codex" are not the
-        // same window.
-        var page = ConfigurationDialog.Page(state, Occasion.Ordinary);
-
-        foreach (var client in RegistrationClient.All)
-        {
-            await Assert.That(page.Content).Contains(client.DisplayName);
-        }
-
-        await Assert.That(page.Instruction).Contains("Claude Code: registered");
-        await Assert.That(page.Instruction).Contains("Codex: not registered");
-    }
-
-    /// <summary>
     /// A project registration can be removed, and the link for it appears only
     /// when there is one of ours to remove.
     /// </summary>
@@ -221,8 +135,9 @@ internal sealed class ConfigurationAppTests
     /// unregister did not exist for either client. It is offered without a folder
     /// picker, because the folder is the one the walk already found, and naming it
     /// in the link is what stops the action being pointed somewhere else.
-    /// <i>A picker was added beside it the same day, Q289 b:
-    /// <see cref="RemovingFromAProjectYouPickAsksOnlyOnItsClickAndRemovesOnlyOurEntry"/>.</i>
+    /// <i>A picker was added beside it the same day, Q289 b. Corrected 2026-10-03
+    /// (previously this arm also read the window's links): the page's button for it
+    /// is <c>PageRegistrationTests</c>', and this arm holds the offer.</i>
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -264,362 +179,22 @@ internal sealed class ConfigurationAppTests
 
         await Assert.That(none.MayUnregisterFromProject).IsFalse();
 
-        var state = StateFor(install.Path, server, [ours, ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent)]);
-        var commands = ConfigurationDialog.Commands(state, updateAvailable: null);
-        var remove = ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromProject, 0);
-
-        var link = commands.Single(command => command.Id == remove);
-
-        await Assert.That(link.Text).Contains("Claude Code");
-        await Assert.That(link.Text).Contains(RegistrationClient.ClaudeCode.ProjectFileIn(folder));
-
         // And not offered for the client that has none.
-        await Assert.That(commands.Any(command =>
-                command.Id == ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromProject, 1)))
-            .IsFalse();
-    }
-
-    /// <summary>
-    /// Removing BrowserAI from a project you pick asks for the folder only when
-    /// its link is clicked, owns the picker by the dialog, and removes only an
-    /// entry of ours.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Q289, decided 2026-09-24 by the maintainer, verbatim: <i>"Q289 b"</i></b>
-    /// -- a folder picker for removing a project registration, safe because only an
-    /// entry this install wrote is ever removed. The link the walk offers exists
-    /// only below a project with a registration of ours, which a window opened from
-    /// the Start Menu is not.
-    /// </para>
-    /// <para>
-    /// <b>Driven through the dialog's own dispatch, and nothing is shown.</b> The
-    /// session is handed a picker that records what it was asked and answers what
-    /// the arm says. The host has no window, so a re-render builds the page and
-    /// stops. The owner half comes last: it dispatches <c>TDN_DIALOG_CREATED</c>
-    /// with a made-up handle and then a click whose picker cancels, which
-    /// re-renders nothing, so the made-up handle is never sent a message.
-    /// </para>
-    /// <para>
-    /// <b>Planted red 2026-09-24</b> by leaving the new verb out of the session's
-    /// <c>OnCommand</c>: the click changed nothing and the picker was never asked.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task RemovingFromAProjectYouPickAsksOnlyOnItsClickAndRemovesOnlyOurEntry()
-    {
-        using var install = ScratchDirectory.Create("app-pick-unregister");
-        using var project = ScratchDirectory.Create("app-pick-unregister-repo");
-        using var data = ScratchDirectory.Create("app-pick-unregister-data");
-
-        var image = InstalledLayout.Create(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
-
-        // Ours, in the picked folder, the way RegisterAI would find it there.
-        var tool = new FakeRegisterAi();
-        var key = ("claude-code", "project", project.Path);
-
-        tool.RegisterIn("claude-code", project.Path, server);
-
-        var state = StateFor(
-            install.Path,
-            server,
-            [
-                ClientFor(RegistrationClient.ClaudeCode, server, RegistrationOwnership.OursAndPresent),
-                ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent),
-            ]);
-
-        var asked = new List<(nint Owner, string Prompt)>();
-        var answer = FolderPick.Of(project.Path);
-
-        using var session = new ConfigurationSession(
-            state,
-            tool,
-            new BrowserAI.Hosting.LocalAppDataPaths(data.Path),
-            NullLogger.Instance,
-            Occasion.Ordinary,
-            image,
-            (owner, prompt) =>
-            {
-                asked.Add((owner, prompt));
-                return answer;
-            },
-            () => state,
-            inbox: null,
-            raise: _ => false);
-
-        using var host = session.Attach();
-
-        // Offered for each client, and each label names its own.
-        var links = ConfigurationDialog.Commands(state, updateAvailable: null);
-        var claude = ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromAProject, 0);
-        var codex = ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromAProject, 1);
-
-        await Assert.That(links.Single(link => link.Id == claude).Text).Contains(RegistrationClient.ClaudeCode.DisplayName);
-        await Assert.That(links.Single(link => link.Id == codex).Text).Contains(RegistrationClient.Codex.DisplayName);
-
-        // Nothing is asked when the window opens, nor on the timer that ticks
-        // five times a second whether anybody clicks or not.
-        _ = host.Dispatch(0, TaskDialogInterop.Notification.Timer, 0, 0);
-
-        await Assert.That(asked).IsEmpty();
-        await Assert.That(tool.Calls).IsEmpty();
-
-        // The click asks once, and RegisterAI is asked to remove this client's
-        // entry in exactly the folder picked, with this install's root as what
-        // makes it ours.
-        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
-
-        await Assert.That(asked.Count).IsEqualTo(1);
-        await Assert.That(asked[0].Prompt).Contains(RegistrationClient.ClaudeCode.DisplayName);
-
-        var call = tool.Calls.Single();
-
-        await Assert.That(call[0]).IsEqualTo("unregister");
-        await Assert.That(FakeRegisterAi.Option(call, "--client")).IsEqualTo("claude-code");
-        await Assert.That(FakeRegisterAi.Option(call, "--scope")).IsEqualTo("project");
-        await Assert.That(FakeRegisterAi.Option(call, "--project")).IsEqualTo(project.Path);
-        await Assert.That(FakeRegisterAi.Option(call, "--owned-root")).IsEqualTo(install.Path);
-        await Assert.That(tool.Entries.ContainsKey(key)).IsFalse();
-        await Assert.That(session.Note).IsNotNull();
-        await Assert.That(session.Note!).Contains(RegistrationClient.ClaudeCode.RestartHint);
-
-        // ANOTHER INSTALL'S ENTRY in a picked folder is refused and reported, and
-        // it is still there afterwards.
-        using var elsewhere = ScratchDirectory.Create("app-pick-unregister-other");
-
-        _ = InstalledLayout.Create(elsewhere.Path);
-
-        var theirs = InstalledLayout.ServerIn(elsewhere.Path);
-
-        tool.RegisterIn("claude-code", project.Path, theirs);
-        tool.Calls.Clear();
-
-        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
-
-        await Assert.That(asked.Count).IsEqualTo(2);
-        await Assert.That(tool.Entries[key]).IsEqualTo(theirs);
-        await Assert.That(session.Note!).Contains("never adopts, overwrites or removes");
-
-        // A picker that could not turn the folder into a path says so, and a
-        // cancel says nothing; neither runs anything.
-        answer = FolderPick.Broke("Windows could not give a path for that folder.");
-        tool.Calls.Clear();
-
-        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
-
-        await Assert.That(session.Note).IsEqualTo("Windows could not give a path for that folder.");
-        await Assert.That(tool.Calls).IsEmpty();
-
-        answer = FolderPick.Cancelled;
-
-        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
-
-        await Assert.That(asked.Count).IsEqualTo(4);
-        await Assert.That(session.Note).IsEqualTo("Windows could not give a path for that folder.");
-        await Assert.That(tool.Calls).IsEmpty();
-
-        // ⚠️ THE OWNER, LAST. Before the dialog exists the picker is owned by
-        // nothing; once it exists, by the dialog's own window. The click cancels,
-        // so the made-up handle is never sent a message.
-        await Assert.That(asked[^1].Owner).IsEqualTo(nint.Zero);
-
-        _ = host.Dispatch(4321, TaskDialogInterop.Notification.Created, 0, 0);
-        _ = host.Dispatch(4321, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
-
-        await Assert.That(asked[^1].Owner).IsEqualTo((nint)4321);
-    }
-
-    /// <summary>
-    /// Removing BrowserAI from a picked folder for Codex asks RegisterAI about that
-    /// folder's own Codex configuration, and the user's own entry stays.
-    /// </summary>
-    /// <remarks>
-    /// <i>Corrected 2026-10-03 (previously the arm watched each call's environment for
-    /// <c>CODEX_HOME</c> set to the project's <c>.codex</c>)</i>: how Codex is pointed at
-    /// a project is RegisterAI's now, held by its own suite, and what BrowserAI owns is
-    /// the folder it names.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task RemovingFromAPickedCodexProjectMovesTheHomeAndLeavesTheUsersEntry()
-    {
-        using var install = ScratchDirectory.Create("app-pick-codex");
-        using var project = ScratchDirectory.Create("app-pick-codex-repo");
-        using var data = ScratchDirectory.Create("app-pick-codex-data");
-
-        var image = InstalledLayout.Create(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
-        var tool = new FakeRegisterAi();
-
-        tool.RegisterIn("codex", project.Path, RegistrationTarget.ServerFileName);
-        tool.Register("codex", server);
-
-        var state = StateFor(
-            install.Path,
-            server,
-            [
-                ClientFor(RegistrationClient.ClaudeCode, null, RegistrationOwnership.Absent),
-                ClientFor(RegistrationClient.Codex, server, RegistrationOwnership.OursAndPresent),
-            ]);
-
-        using var session = new ConfigurationSession(
-            state,
-            tool,
-            new BrowserAI.Hosting.LocalAppDataPaths(data.Path),
-            NullLogger.Instance,
-            Occasion.Ordinary,
-            image,
-            (_, _) => FolderPick.Of(project.Path),
-            () => state,
-            inbox: null,
-            raise: _ => false);
-
-        using var host = session.Attach();
-
-        _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromAProject, 1), 0);
-
-        // The project's entry is gone; the user's own stays.
-        var call = tool.Calls.Single();
-
-        await Assert.That(FakeRegisterAi.Option(call, "--client")).IsEqualTo("codex");
-        await Assert.That(FakeRegisterAi.Option(call, "--scope")).IsEqualTo("project");
-        await Assert.That(FakeRegisterAi.Option(call, "--project")).IsEqualTo(project.Path);
-        await Assert.That(FakeRegisterAi.Command(call)).IsEqualTo(RegistrationTarget.ServerFileName);
-        await Assert.That(tool.Entries.ContainsKey(("codex", "project", project.Path))).IsFalse();
-        await Assert.That(tool.UserEntry("codex")).IsEqualTo(server);
-        await Assert.That(session.Note!).Contains(RegistrationClient.Codex.RestartHint);
-    }
-
-    /// <summary>
-    /// The page carries the version, both locations as links, the restart hint
-    /// on a first run, and Close as the default button.
-    /// </summary>
-    /// <remarks>
-    /// <b>The restart hint is the sentence that stops a person concluding the
-    /// product is broken</b>, and it is asserted verbatim because a paraphrase
-    /// of it is a different sentence.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task ThePageSaysWhereEverythingIsAndWhatJustHappened()
-    {
-        using var install = ScratchDirectory.Create("app-page");
-
-        _ = InstalledLayout.Create(install.Path);
-
-        var state = StateFor(install.Path, InstalledLayout.ServerIn(install.Path), null, RegistrationOwnership.Absent);
-        var ordinary = ConfigurationDialog.Page(state, Occasion.Ordinary);
-
-        await Assert.That(ordinary.Title).IsEqualTo("BrowserAI");
-        await Assert.That(ordinary.Instruction).Contains(state.Version);
-        await Assert.That(ordinary.Content).Contains(install.Path);
-        await Assert.That(ordinary.Content).Contains(state.DataRoot);
-        await Assert.That(ordinary.Content).Contains(ConfigurationDialog.FolderLinkPrefix);
-        await Assert.That(ordinary.Footer!).Contains(ConfigurationDialog.GuideUrl);
-
-        // Not on an ordinary open: it would be a sentence about something that
-        // did not just happen.
-        await Assert.That(ordinary.Content).DoesNotContain("will not see this change");
-
-        var first = ConfigurationDialog.Page(state, Occasion.FirstRun);
-
-        await Assert.That(first.Content).Contains("BrowserAI is installed and has registered itself");
-        await Assert.That(first.Content).Contains("will not see it until they are started again");
-
-        // The hint a change is followed by is the CLIENT's own sentence, because
-        // the unit of staleness is a session for one client and a thread for the
-        // other, and a note about the wrong one is advice a person cannot act on.
-        await Assert.That(ConfigurationDialog.RestartHintFor(RegistrationClient.ClaudeCode))
-            .IsEqualTo("Claude Code reads its MCP configuration when a session starts. Sessions already open will not see this change until they are restarted.");
-        await Assert.That(ConfigurationDialog.RestartHintFor(RegistrationClient.Codex)).Contains("new thread");
-        await Assert.That(ConfigurationDialog.RestartHintFor(RegistrationClient.Codex)).DoesNotContain("session");
-
-        var updated = ConfigurationDialog.Page(state, Occasion.AfterUpdate);
-
-        await Assert.That(updated.Instruction).StartsWith("Updated to BrowserAI ");
-
-        // A hyperlink asks for a folder or for a URL, and the two are told apart
-        // by the prefix and not by guessing at the string.
-        await Assert.That(ConfigurationDialog.FolderFrom(ConfigurationDialog.FolderLinkPrefix + install.Path))
-            .IsEqualTo(install.Path);
-        await Assert.That(ConfigurationDialog.FolderFrom(ConfigurationDialog.GuideUrl)).IsNull();
-    }
-
-    /// <summary>
-    /// The update command becomes an apply once a check has found something, and
-    /// the apply says what it costs.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheUpdateCommandBecomesAnApplyAndWarnsWhatItCosts()
-    {
-        using var install = ScratchDirectory.Create("app-update");
-
-        _ = InstalledLayout.Create(install.Path);
-
-        var state = StateFor(install.Path, InstalledLayout.ServerIn(install.Path), null, RegistrationOwnership.Absent);
-
-        var check = ConfigurationDialog.Commands(state, updateAvailable: null)
-            .Single(command => command.Id is ConfigurationDialog.Command.CheckForUpdates);
-
-        await Assert.That(check.Text).StartsWith("Check for updates");
-
-        var apply = ConfigurationDialog.Commands(state, updateAvailable: "9.9.9")
-            .Single(command => command.Id is ConfigurationDialog.Command.ApplyUpdate);
-
-        await Assert.That(apply.Text).Contains("9.9.9");
-        await Assert.That(apply.Text).Contains("lose the server until they are restarted");
-
-        // ⚠️ AND NOT OFFERED AT ALL WHEN THIS IS NOT AN INSTALL. There is
-        // nothing to update a `dotnet run` of, and a button that answered
-        // "nothing to check" is a button that should not have been there.
-        var uninstalled = state with { InstallRoot = null };
-
-        await Assert.That(ConfigurationDialog.Commands(uninstalled, null)
-                .Any(command => command.Id is ConfigurationDialog.Command.CheckForUpdates))
-            .IsFalse();
-    }
-
-    /// <summary>
-    /// Every command link has an identifier outside the stock button range.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>A collision here would be silent and would fire the wrong
-    /// action.</b> <c>IDOK</c> is 1, <c>IDCANCEL</c> 2 and <c>IDCLOSE</c> 8;
-    /// those are what the close box and Escape report, and a command sharing one
-    /// would be indistinguishable from a person closing the window.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task NoCommandCanBeMistakenForTheCloseButton()
-    {
-        using var install = ScratchDirectory.Create("app-ids");
-
-        _ = InstalledLayout.Create(install.Path);
-
-        var state = StateFor(install.Path, InstalledLayout.ServerIn(install.Path), null, RegistrationOwnership.Absent);
-        var commands = ConfigurationDialog.Commands(state, "9.9.9");
-
-        await Assert.That(commands).IsNotEmpty();
-
-        foreach (var command in commands)
-        {
-            await Assert.That(command.Id).IsGreaterThan(100);
-            await Assert.That(command.Text).IsNotEmpty();
-        }
-
-        await Assert.That(commands.Select(command => command.Id).Distinct().Count()).IsEqualTo(commands.Count);
+        await Assert.That(ClientFor(RegistrationClient.Codex, null, RegistrationOwnership.Absent).MayUnregisterFromProject).IsFalse();
     }
 
     /// <summary>
     /// <c>--report</c> writes the state as JSON, and the schema is what the
-    /// dialog shows.
+    /// page shows.
     /// </summary>
+    /// <remarks>
+    /// <i>Renamed 2026-10-03 (previously
+    /// <c>TheReportCarriesEveryAnswerTheWindowWouldHaveShown</c>), when the browser
+    /// tab replaced the window as what renders the same state.</i>
+    /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
-    public async Task TheReportCarriesEveryAnswerTheWindowWouldHaveShown()
+    public async Task TheReportCarriesEveryAnswerThePageShows()
     {
         using var install = ScratchDirectory.Create("app-report");
         using var output = ScratchDirectory.Create("app-report-out");
@@ -649,8 +224,8 @@ internal sealed class ConfigurationAppTests
         await Assert.That(root.GetProperty("dataRoot").GetString()).IsEqualTo(state.DataRoot);
         await Assert.That(root.GetProperty("serverCommand").GetString()).IsEqualTo(server);
 
-        // The one sentence the window leads with, in the file that stands in for
-        // the window.
+        // The one sentence the state leads with, in the file that stands in for
+        // the page.
         await Assert.That(root.GetProperty("status").GetString()).IsEqualTo(state.StatusSentence());
 
         // ONE ENTRY PER CLIENT SINCE 2026-09-24, and nothing at the top level
@@ -744,115 +319,6 @@ internal sealed class ConfigurationAppTests
     }
 
     /// <summary>
-    /// Nothing a click does can throw out of the dialog's callback.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>An exception crossing an <c>[UnmanagedCallersOnly]</c> boundary is
-    /// a <c>FailFast</c>, not an exception.</b> The runtime cannot unwind into
-    /// native frames, so the process is terminated where it stands: no dialog,
-    /// no log line, no exit code a person or a script could read -- the window
-    /// simply vanishes mid-click. Every action this app offers runs inside that
-    /// callback, and three of them could reach one today:
-    /// <c>Directory.CreateDirectory</c> for the log directory,
-    /// <c>Path.Combine</c> outside the reader's own <c>try</c> when
-    /// <c>CLAUDE_CONFIG_DIR</c> holds an invalid path, and
-    /// <c>Path.GetFullPath</c> on a project directory.
-    /// </para>
-    /// <para>
-    /// <b>Assertable because the dispatch is not the unmanaged method.</b>
-    /// <c>Callback</c> resolves the instance and forwards to
-    /// <c>Dispatch</c>, which is ordinary managed code -- an
-    /// <c>[UnmanagedCallersOnly]</c> method cannot be called from C# at all, so
-    /// a dispatch written inside one is a dispatch no test can ever reach.
-    /// </para>
-    /// <para>
-    /// <b>No window is ever created here.</b> Every arm runs with
-    /// <c>_window</c> at zero, where <c>Rerender</c> and <c>SetContent</c> both
-    /// return before they call Windows -- so this is the callback's decisions and
-    /// nothing else.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task NothingAClickDoesCanThrowOutOfTheDialogsCallback()
-    {
-        var reported = new List<string>();
-
-        using var host = new TaskDialogHost(
-            () => throw new InvalidOperationException("the page factory threw"),
-            _ => throw new InvalidOperationException("the command threw"),
-            _ => throw new InvalidOperationException("the link threw"),
-            () => ClickOutcome.Stay,
-            failure => reported.Add(failure.Message));
-
-        // A hyperlink whose handler throws: reported, and the notification's own
-        // answer is still given.
-        await Assert.That(host.Dispatch(0, TaskDialogInterop.Notification.HyperlinkClicked, 0, 0))
-            .IsEqualTo(TaskDialogInterop.Ok);
-
-        // A command link whose handler throws: reported, and S_FALSE keeps the
-        // dialog open instead of closing it on a failure nobody saw.
-        await Assert.That(host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.OpenLogs, 0))
-            .IsEqualTo(TaskDialogInterop.False);
-
-        await Assert.That(reported).IsEquivalentTo(["the link threw", "the command threw"]);
-
-        // And the third one: a handler that succeeds and asks for a re-render,
-        // over a page factory that throws. The factory runs before the window
-        // check, so this is the same failure the real one would be.
-        reported.Clear();
-
-        using var rerendering = new TaskDialogHost(
-            () => throw new InvalidOperationException("the page factory threw"),
-            _ => ClickOutcome.Rerender,
-            _ => { },
-            () => ClickOutcome.Stay,
-            failure => reported.Add(failure.Message));
-
-        await Assert.That(rerendering.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.Register, 0))
-            .IsEqualTo(TaskDialogInterop.False);
-
-        // Once, not twice: the report is made, and the attempt to show it must
-        // not report its own failure again.
-        await Assert.That(reported).IsEquivalentTo(["the page factory threw"]);
-
-        // The control: a host whose delegates do not throw reports nothing, so
-        // the arms above fail for their own reason and not because the
-        // reporter fires on every notification.
-        reported.Clear();
-
-        using var quiet = new TaskDialogHost(
-            () => ConfigurationDialog.Page(StateFor(@"C:\install", @"C:\install\current\BrowserAI.Server.exe", null, RegistrationOwnership.Absent), Occasion.Ordinary, null, null),
-            _ => ClickOutcome.Stay,
-            _ => { },
-            () => ClickOutcome.Stay,
-            failure => reported.Add(failure.Message));
-
-        await Assert.That(quiet.Dispatch(0, TaskDialogInterop.Notification.HyperlinkClicked, 0, 0))
-            .IsEqualTo(TaskDialogInterop.Ok);
-        await Assert.That(quiet.Dispatch(0, TaskDialogInterop.Notification.Timer, 0, 0))
-            .IsEqualTo(TaskDialogInterop.Ok);
-        await Assert.That(reported).IsEmpty();
-
-        // ⚠️ AND THE TIMER, which is the notification that arrives five times
-        // a second whether anybody clicked anything or not. An exception out of
-        // it would terminate the process on its own, with no click to blame.
-        reported.Clear();
-
-        using var ticking = new TaskDialogHost(
-            () => ConfigurationDialog.Page(StateFor(@"C:\install", @"C:\install\current\BrowserAI.Server.exe", null, RegistrationOwnership.Absent), Occasion.Ordinary, null, null),
-            _ => ClickOutcome.Stay,
-            _ => { },
-            () => throw new InvalidOperationException("the tick threw"),
-            failure => reported.Add(failure.Message));
-
-        await Assert.That(ticking.Dispatch(0, TaskDialogInterop.Notification.Timer, 0, 0))
-            .IsEqualTo(TaskDialogInterop.Ok);
-        await Assert.That(reported).IsEquivalentTo(["the tick threw"]);
-    }
-
-    /// <summary>
     /// A folder that could not be turned into a path is not a cancel.
     /// </summary>
     /// <remarks>
@@ -903,256 +369,6 @@ internal sealed class ConfigurationAppTests
     }
 
     /// <summary>
-    /// The host reports the window a modal child has to be owned by.
-    /// </summary>
-    /// <remarks>
-    /// <b>The value the folder picker is now given.</b> It is zero before
-    /// <c>TDN_DIALOG_CREATED</c> and after the dialog closes, and the window in
-    /// between -- which is what makes
-    /// <see cref="HouseRuleTests.EveryFolderPickerIsOwnedByTheDialogThatOpenedIt"/>
-    /// a statement about a real value and not about a spelling.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheHostReportsTheWindowAModalChildMustBeOwnedBy()
-    {
-        using var host = new TaskDialogHost(
-            () => ConfigurationDialog.Page(StateFor(@"C:\install", @"C:\install\current\BrowserAI.Server.exe", null, RegistrationOwnership.Absent), Occasion.Ordinary, null, null),
-            _ => ClickOutcome.Stay,
-            _ => { },
-            () => ClickOutcome.Stay,
-            _ => { });
-
-        await Assert.That(host.Window).IsEqualTo(nint.Zero);
-
-        _ = host.Dispatch(4321, TaskDialogInterop.Notification.Created, 0, 0);
-
-        await Assert.That(host.Window).IsEqualTo((nint)4321);
-    }
-
-    /// <summary>
-    /// Work the dialog waits for is bounded, and the bound is the server's own
-    /// deadline, not a number invented for the window.
-    /// </summary>
-    /// <remarks>
-    /// <b>The other half of
-    /// <see cref="HouseRuleTests.NoUpdateCallIsMadeWithAnUnboundedToken"/>.</b>
-    /// That one holds that every caller names a token; this holds what the token
-    /// is worth -- and it is <c>UpdateService.CrashTripwire</c>, the outer
-    /// deadline the server's own pass runs the same two calls under.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task WorkTheDialogWaitsForIsBoundedByTheServersOwnDeadline() =>
-        await Assert.That(BackgroundWork<string>.DefaultBudget).IsEqualTo(UpdateService.CrashTripwire);
-
-    /// <summary>
-    /// Work that never finishes is abandoned at the deadline, with a sentence
-    /// saying so.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>The deadline is enforced by the poll and not by the token, and
-    /// this is what says so.</b> The work below ignores its token entirely --
-    /// which is not a contrivance: <c>UpdateManager.CheckForUpdatesAsync</c>
-    /// takes no token at all, so the real call cannot be stopped either. What is
-    /// asserted is that the dialog stops <i>waiting</i>.
-    /// </para>
-    /// <para>
-    /// <b>The budget is the product's parameter and the wait is a hang
-    /// detector.</b> The work is given a deliberately tiny budget, which is what
-    /// is under test; how long this arm is willing to sit in the loop comes from
-    /// <see cref="TestDefaults.InProcessHang"/> and is a bound on a wedge, never
-    /// a claim about promptness.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task WorkThatNeverFinishesIsAbandonedAtItsDeadline()
-    {
-        var budget = TimeSpan.FromMilliseconds(200);
-        var gate = new TaskCompletionSource();
-
-        using var work = new BackgroundWork<string>(budget);
-
-        try
-        {
-            await Assert.That(work.Start("Checking for updates...", "The update check", _ =>
-            {
-                gate.Task.GetAwaiter().GetResult();
-                return "never seen";
-            })).IsTrue();
-
-            await Assert.That(work.Running).IsTrue();
-            await Assert.That(work.Progress).IsEqualTo("Checking for updates...");
-
-            // A second start while one is in flight is refused instead of
-            // stacking two checks on one window.
-            await Assert.That(work.Start("again", "The update check", _ => "no")).IsFalse();
-
-            var clock = System.Diagnostics.Stopwatch.StartNew();
-            BackgroundPoll<string> poll = default;
-
-            while (clock.Elapsed < TestDefaults.InProcessHang)
-            {
-                poll = work.Poll();
-
-                if (poll.Finished)
-                {
-                    break;
-                }
-
-                await Task.Delay(20);
-            }
-
-            await Assert.That(poll.Finished).IsTrue();
-            await Assert.That(poll.Result).IsNull();
-            await Assert.That(poll.Refusal).IsNotNull();
-            await Assert.That(poll.Refusal!).Contains("did not finish within");
-            await Assert.That(poll.Refusal!).StartsWith("The update check");
-
-            // And it is over: the dialog is not left saying "Checking..." for ever.
-            await Assert.That(work.Running).IsFalse();
-        }
-        finally
-        {
-            _ = gate.TrySetResult();
-        }
-    }
-
-    /// <summary>
-    /// Work that finishes hands its answer back exactly once.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task WorkThatFinishesIsReportedOnceAndThenIsOver()
-    {
-        using var work = new BackgroundWork<string>(TimeSpan.FromMinutes(1));
-
-        await Assert.That(work.Start("Checking...", "The update check", _ => "BrowserAI 9.9.9 is available.")).IsTrue();
-
-        var clock = System.Diagnostics.Stopwatch.StartNew();
-        BackgroundPoll<string> poll = default;
-
-        while (clock.Elapsed < TestDefaults.InProcessHang)
-        {
-            poll = work.Poll();
-
-            if (poll.Finished)
-            {
-                break;
-            }
-
-            await Task.Delay(20);
-        }
-
-        await Assert.That(poll.Finished).IsTrue();
-        await Assert.That(poll.Result).IsEqualTo("BrowserAI 9.9.9 is available.");
-        await Assert.That(poll.Refusal).IsNull();
-
-        // Once. A second poll has nothing left to report, which is what stops the
-        // dialog re-rendering on every 200 ms tick after the work is done.
-        await Assert.That(work.Poll().Finished).IsFalse();
-        await Assert.That(work.Running).IsFalse();
-    }
-
-    /// <summary>
-    /// Work that throws is reported with what it said, and never as a timeout.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task WorkThatThrowsIsReportedWithWhatItSaid()
-    {
-        using var work = new BackgroundWork<string>(TimeSpan.FromMinutes(1));
-
-        await Assert.That(work.Start("Checking...", "The update check", _ => throw new InvalidOperationException("the feed answered 404"))).IsTrue();
-
-        var clock = System.Diagnostics.Stopwatch.StartNew();
-        BackgroundPoll<string> poll = default;
-
-        while (clock.Elapsed < TestDefaults.InProcessHang)
-        {
-            poll = work.Poll();
-
-            if (poll.Finished)
-            {
-                break;
-            }
-
-            await Task.Delay(20);
-        }
-
-        await Assert.That(poll.Finished).IsTrue();
-        await Assert.That(poll.Refusal).IsEqualTo("the feed answered 404");
-    }
-
-    /// <summary>
-    /// The dialog's icon is asked for at the dialog's DPI and not at the
-    /// classic size.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b><c>LoadIconW</c> has no size parameter at all.</b> It answers the
-    /// 32×32 image out of the group, and a Per-Monitor-V2 process then draws it
-    /// <i>stretched</i> -- on a 200% display, thirty-two pixels blown up to
-    /// sixty-four, beside text that is not. The application icon ships larger
-    /// images and <c>LoadImageW</c> at <c>IMAGE_ICON</c> with a size is what picks
-    /// one.
-    /// <i>Changed 2026-09-16.</i>
-    /// </para>
-    /// <para>
-    /// <b>Two claims, because neither alone is the fix.</b> That the size asked
-    /// for really does follow the DPI, which is behaviour and is asserted
-    /// against Windows' own metric; and that the call which takes a size is the
-    /// one the product makes, which is not observable from here -- no test in
-    /// this repository can open a dialog and read the pixels off it -- so it is
-    /// read out of the source, the way the other unobservable argument rules in
-    /// this suite are.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheDialogsIconIsAskedForAtTheDialogsDpi()
-    {
-        // The size follows the DPI, with Windows supplying every number.
-        var (classicWidth, classicHeight) = TaskDialogHost.IconSizeFor(96);
-        var (doubledWidth, doubledHeight) = TaskDialogHost.IconSizeFor(192);
-
-        await Assert.That(classicWidth).IsGreaterThan(0);
-        await Assert.That(classicHeight).IsEqualTo(classicWidth);
-        await Assert.That(doubledWidth).IsGreaterThan(classicWidth);
-        await Assert.That(doubledHeight).IsGreaterThan(classicHeight);
-
-        // And the product asks through the call that takes one, keeping the
-        // unscaled load as the fallback it always was.
-        var source = await File.ReadAllTextAsync(
-            Path.Combine(RepositoryLayout.Root.FullName, "src", "BrowserAI.App", "Ui", "TaskDialogPage.cs"));
-
-        await Assert.That(source).Contains("LoadImageW(");
-        await Assert.That(source).Contains("TaskDialogInterop.ImageIcon");
-
-        // ⚠️ AND NEVER A CALL TO LoadIconWithScaleSize, which is the
-        // function the documentation points at for this and is exported from
-        // comctl32 by ORDINAL ONLY: naming it in a LibraryImport fails at the
-        // call with EntryPointNotFoundException, from inside Show(), which is
-        // outside the callback's boundary and takes the window with it. Measured
-        // 2026-09-16 against the published binary, which exited 0xC0000409 and
-        // left the reason in its own process log.
-        //
-        // The CALL, not the NAME: the remark that explains why the function is
-        // not used has to be allowed to name it, or the only way to satisfy this
-        // is to delete the explanation.
-        await Assert.That(source.Contains("LoadIconWithScaleSize(", StringComparison.Ordinal)).IsFalse();
-
-        // And the control, so that predicate is not one nothing could ever
-        // match: the same shape with the name that IS used is found.
-        await Assert.That(source.Contains("LoadImageW(", StringComparison.Ordinal)).IsTrue();
-        await Assert.That(source).Contains("IconSizeFor(Dpi())");
-        await Assert.That(source).Contains("GetDpiForWindow");
-        await Assert.That(source).Contains("LoadIconW(");
-    }
-
-    /// <summary>
     /// A state with the given registration for Claude Code and an unregistered
     /// Codex beside it.
     /// </summary>
@@ -1160,8 +376,8 @@ internal sealed class ConfigurationAppTests
     /// <b>Two clients in every state since 2026-09-24</b>, because one is no
     /// longer a shape the product can be in: <c>AppState.Read</c> builds a
     /// <c>ClientState</c> for every member of <c>RegistrationClient.All</c>, and a
-    /// helper that built one would let an arm pass against a window nobody can
-    /// open.
+    /// helper that built one would let an arm pass against a state the product
+    /// cannot be in.
     /// </remarks>
     private static AppState StateFor(string installRoot, string server, string? registered, RegistrationOwnership ownership) =>
         StateFor(

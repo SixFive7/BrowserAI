@@ -18,6 +18,11 @@
     hiding one instance of it. That the window is then USEFUL is the second
     decision and it followed the first.
 
+    CORRECTED 2026-10-03 (previously as written above, of a window): the
+    configuration window is deleted, and a person's start opens BrowserAI's
+    page in the person's own browser (Q315 a, Q319 b). The subsystem stays for
+    the reason in the first paragraph, which never depended on the window.
+
     WHY NOT WPF OR WINFORMS. Neither is supported under NativeAOT: the SDK
     disables trimming for both, which PublishAot requires
     (Learn: dotnet/core/deploying/trimming/incompatibilities). That includes
@@ -36,9 +41,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\..\assets\BrowserAI.ico</ApplicationIcon>
     <!-- Required by [LibraryImport]. Every use is a P/Invoke declaration under
-         Interop\, never hand-written unsafe code. The one exception is the
-         function pointer the task dialog callback is taken as, which the
-         runtime requires to be written in an unsafe context. -->
+         Interop\, never hand-written unsafe code. Corrected 2026-10-03
+         (previously "The one exception is the function pointer the task dialog
+         callback is taken as, which the runtime requires to be written in an
+         unsafe context"): the task dialog is deleted with its callback. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

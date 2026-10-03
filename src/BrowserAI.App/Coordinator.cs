@@ -92,19 +92,6 @@ internal static class StartModes
     public static PageKind PageOf(CoordinatorVerb verb) => verb is CoordinatorVerb.Sessions ? PageKind.Sessions : PageKind.Status;
 }
 
-/// <summary>The configuration window, as the page's registration link opens it.</summary>
-/// <remarks>
-/// <b>A seam, so that the suite records the call and never opens a window.</b> The
-/// product's is <see cref="ConfigurationWindow"/>, which the browser tab still sends a
-/// person to for registration until the tab covers it.
-/// </remarks>
-internal interface ICoordinatorWindow
-{
-    /// <summary>Shows the window and returns when it closes.</summary>
-    /// <returns>Zero when the window ran.</returns>
-    int Show();
-}
-
 /// <summary>The page, as the coordinator's loop sees it.</summary>
 /// <remarks>
 /// <b>Everything the loop asks of the browser tab, and nothing about HTTP.</b> The

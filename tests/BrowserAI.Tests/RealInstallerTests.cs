@@ -304,9 +304,9 @@ internal sealed partial class RealInstallerTests
     /// up as a window owned by <b>Windows Terminal's</b> process, not by ours:
     /// scanning for <c>ConsoleWindowClass</c> is exactly what reported a clean
     /// screen while two windows were on it. What carries that guarantee is
-    /// <c>TaskDialogLayoutTests.TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c>,
-    /// which reads the subsystem out of the binary -- the cause and not the
-    /// symptom.
+    /// <c>AppBinaryTests.TheAppIsAWindowBinaryAndTheServerIsAConsoleOne</c>
+    /// (<c>TaskDialogLayoutTests</c> until 2026-10-03), which reads the subsystem
+    /// out of the binary -- the cause and not the symptom.
     /// </para>
     /// <para>
     /// ⚠️ <b>The app runs on a desktop nobody is looking at, since 2026-09-24 --
