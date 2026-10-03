@@ -603,6 +603,31 @@ release body; nothing else depends on it.
   or deleted, by three independent readings ending in GitHub's own reply that they may not be
   funding it.
 
+- ✨ **The configuration app becomes the update coordinator, started at sign-in or by a blocked server.**
+  Q280 b and Q282 a to Q285 a, each settled in the maintainer's own words on 2026-09-24 and built on
+  2026-09-25 as phase 2. `BrowserAI.exe` settles who coordinates before it does anything else:
+  holding `\\.\pipe\BrowserAI-Coordinator-<the install root's key>` is being the coordinator, and a
+  second start hands over and exits, a person's start asking for the window and granting it the
+  foreground, a hidden start asking it to look again. The install and update hooks register a
+  per-user logon task, `<pack id> sign-in <root key>`, through the scheduler's COM interface, and
+  the uninstall hook removes it; a registration that fails is a warning in the installer's log and
+  never fails the hook. At sign-in the task runs the sign-in step: a staged package and nothing
+  else running from the install is handed to `Update.exe`, silent and with no restart. A server
+  whose update pass stages a package it may not apply wakes the coordinator, with a `recheck` when
+  one serves and otherwise by starting the same task with `--coordinate`, so the coordinator is the
+  task scheduler's child and outlives the client. The coordinator then holds a handle on every
+  process under the install root and applies when the last of them exits, with no timer.
+
+  **What it does not do yet**: there is no toast and no sessions page, so nothing tells a person
+  that an update is waiting, and the hazard index carries that open. Every step was watched red
+  against planted defects first, and one plant that stayed green is what prompted measuring an
+  exited process. The four test classes are
+  `CoordinatorTests`, `SignInTaskTests`, `SignInStepTests` and `CoordinatorWakeTests`. What the
+  scheduler does and costs, measured for it, is
+  [in the kb](kb/windows/processes.md#the-task-scheduler-from-a-nativeaot-process-through-com----measured-2026-09-24):
+  only `IRegisteredTask::Run` passes a value into the action, the stored definition is not the one
+  written, and the interop adds 160,768 bytes to the app and 189,440 to the server.
+
 ### Changed
 
 - 🔧 **`mcp-registration.json` records one entry per client, and no single outcome for both.**

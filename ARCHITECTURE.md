@@ -169,13 +169,15 @@ path** is under the install root -- the name is never consulted -- so an update
 applied by a *server* while the window is open would take the window with it,
 mid-click. The server's lane defers while the census is non-empty; the app's own
 apply is `restart: true`, which is the opposite, and the button says what that
-costs.
+costs. *Added 2026-09-25:* the coordinator's apply loop is a member too, from the
+first pass that finds a package staged until it stops, so a server finishing its
+own update pass counts it and wakes it instead of applying.
 
 | Concern | Implemented by |
 |---|---|
 | The proxy itself: filters, forwarding, the two methods it serves | `src/BrowserAI/Proxy/{BrowserProxy, ChildConnection, ServerInstructions}.cs` |
 | Entry point, wiring, `--sweep` | `src/BrowserAI/Program.cs` |
-| The configuration app: modes, dialog content, status report | `src/BrowserAI.App/{Program, AppState, ClientState, ConfigurationDialog, StatusReport}.cs` -- *`ClientState` added 2026-09-24: one client's state and every predicate the window asks of it, one per client, so no link acts on both* |
+| The configuration app: modes, dialog content, status report | `src/BrowserAI.App/{Program, AppState, ClientState, ConfigurationDialog, StatusReport}.cs` -- *`ClientState` added 2026-09-24: one client's state and every predicate the window asks of it, one per client, so no link acts on both* -- *and `Coordinator.cs` added 2026-09-25: the three start modes, the sign-in step and the apply loop, under [Updates](#updates)* |
 | The task dialog, the folder picker and Explorer | `src/BrowserAI.App/Interop/{TaskDialogInterop, ShellInterop}.cs`, `src/BrowserAI.App/Ui/TaskDialogPage.cs` |
 | Removing BrowserAI from a project you pick -- **added 2026-09-24, Q289 b** | `ConfigurationSession.UnregisterFromAProject` in `src/BrowserAI.App/Program.cs`, offered by `ConfigurationDialog.Command.UnregisterFromAProject` when `ClientState.MayUnregisterFromAProject`; the session is handed its picker, image path and re-read, and `ConfigurationSession.Attach` is the host the suite dispatches into |
 | Reading what a client has been told, and whose it is | `src/BrowserAI.Core/Registration/McpRegistryView.cs` |
@@ -1208,6 +1210,10 @@ door and `ChildEnvironmentTests` holds the environment one.
 | Each server's pipe: `describe` answered from memory, `stop` acknowledged and then acted on -- **added 2026-09-24, Q284 a** | `src/BrowserAI.Core/Coordination/{ServerPipe, ServerPipeProtocol, ServerDescription}.cs` and `src/BrowserAI.Core/Interop/NamedPipes.cs`; the server's half is `src/BrowserAI/Proxy/{ServerActivity, ServerPipeResponder}.cs`, `BrowserProxy.HeldSessions` and `SessionManager.Held`, opened by `Program.Main` straight after the live join |
 | Asking a server: the census first, the pipe's owner checked, the whole call bounded | `src/BrowserAI.Core/Coordination/ServerPipeClient.cs` and `LiveInstances.IsMarkerHeld`, which the configuration app links as well |
 | What a server does about an update -- **added 2026-09-24, Q286 b**: calls in flight when a stop arrives are refused with a sentence, and a server started while its install's `Update.exe` runs refuses every call, starts nothing and ends when the updater goes | `BrowserProxy.RefuseCallsInFlightForAnUpdateAsync` and its door out, `Program.StopThroughThePipeAsync`, `Program.FindTheUpdater` over `BrowserProcesses.FirstRunning` and `WatchedProcess`, `Program.ServeWhileUpdatingAsync` over `src/BrowserAI/Proxy/UpdateInProgressServer.cs`, and the one catalogue row `SessionErrors.UpdateIsBeingInstalled` |
+| The coordinator: which process it is, and a second start handing over -- **added 2026-09-25, Q280 b and Q284 a** | `CoordinatorStart.Settle` and `CoordinatorClient` in `src/BrowserAI.Core/Coordination/CoordinatorClient.cs`, beside `{CoordinatorProtocol, CoordinatorPipe, CoordinatorInbox}.cs`; the app's half is `StartModes` and `ConfigurationWindow` in `src/BrowserAI.App/{Coordinator, Program}.cs`, and `src/BrowserAI.App/Interop/Foreground.cs`, which grants a pid the foreground and raises the window |
+| The per-user logon task -- **added 2026-09-25, Q282 a** | `src/BrowserAI.Core/Registration/{SignInTask, LogonTasks}.cs` over `src/BrowserAI.Core/Interop/TaskScheduler.cs`, called from `HookRegistration.Run` for every intent and written into the installer's own log by `VelopackStartup.Mirror`; the pack id the task is named for is `InstallLocation.AppId`, and the root's key is `LiveInstances.RootKeyFor` |
+| The sign-in step and the apply loop -- **added 2026-09-25, Q282 a and Q285 a** | `SignInStep` and `CoordinatorLoop` in `src/BrowserAI.App/Coordinator.cs`, over `IStagedUpdates` -- `VelopackUpdateClient` in the product, `NothingStaged` without a feed -- and `BrowserProcesses.HeldUnder`, which returns a `RootScan` of `HeldProcess` handles |
+| A blocked server waking the coordinator -- **added 2026-09-25, Q283 a** | `src/BrowserAI.Core/Coordination/CoordinatorWake.cs`, which `UpdateService` calls when a pass stages a package it may not apply |
 
 **The pipe is named after the live marker, so the census entry is the address --
 2026-09-24.** `\\.\pipe\BrowserAI-<pid>-<guid>` for the marker
@@ -1221,6 +1227,20 @@ else, `PIPE_REJECT_REMOTE_CLIENTS` refuses other machines, and
 `stop` is `Program.RequestStop`, the same cancellation a client leaving fires, so
 there is one graceful path and not two. What each number rests on:
 [kb](kb/windows/processes.md#a-per-server-named-pipe-answers-from-memory-and-cannot-tear----measured-2026-09-24).
+
+**The coordinator is the configuration app holding one pipe, and holding it is the
+whole of being the coordinator -- 2026-09-25.** `\\.\pipe\BrowserAI-Coordinator-<key>`,
+where the key is `LiveInstances.RootKeyFor` of the install root -- the key the census
+gate and the logon task's name end in too, so one install has one coordinator and two
+roots of one pack id have two. Every start of `BrowserAI.exe` that is not a hook or a
+report settles it first: it creates the pipe, or it connects, learns the holder's pid,
+grants it the foreground when a person made the start, hands over `show` or `recheck`
+and exits. A hidden start -- `--sign-in` from the logon task at sign-in, `--coordinate`
+from a blocked server through the same task -- runs the sign-in step once, or the apply
+loop until nothing is staged. The loop holds a handle on every process under the
+install root and waits on those handles and its own pipe, with no timer, and applies
+only on a pass whose scan finds nothing. What each number rests on:
+[kb](kb/windows/processes.md#the-task-scheduler-from-a-nativeaot-process-through-com----measured-2026-09-24).
 
 Per-user to `%LocalAppData%`, never `--msi`. ⚠️ **`--shortcuts StartMenuRoot`
 since 2026-09-15** *(previously `None`, "this is a background stdio server that a

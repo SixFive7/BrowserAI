@@ -76,9 +76,9 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
 ### Paused work
 
 - [ ] **Phase 2, the coordinator core.** Steps 1 to 5 are committed on `next` at
-      `21de415` and ungated. Owed: step 6, the records (DECISIONS, ARCHITECTURE,
-      HAZARDS, CHANGELOG, the fragment count) and the measurements that exist
-      only under `.work/phase2/`; step 7, the gate and the merge.
+      `21de415`, and step 6, the records and the measurements, landed on
+      2026-10-03. Owed: step 7, a two-shell gate over the coordinator core, and
+      `master` fast-forwarded to the commit that passed it.
 - [ ] **Phase 3, the toast, and phase 4, the sessions page and window.** Not
       started; both wait on track B. Track C is decided, and what it leaves
       open for phase 4 is in
@@ -143,7 +143,6 @@ below were taken 2026-09-24 and 2026-09-25 at firefox 1549, `playwright-core`
 - [ ] **`.work/window-render/`**, behind Q303 and Q307 to Q310, never images
       19a and 19b, which show the maintainer's Desktop folder names, and never
       the binary copies.
-- [ ] **`.work/phase2/`**, phase 2's probes, plants and readings.
 - [ ] **The Q308 downgrade facts**, which only the ledger holds.
 
 ### Standing and unchanged

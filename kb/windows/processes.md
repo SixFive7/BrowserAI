@@ -1658,6 +1658,126 @@ morning of a sign-in, and `proto/measure.ps1.txt` over a publish of `proto/`; a
 task-started reading needs a task registered with the probe's `fg-info` mode as its
 action, removed afterwards.
 
+## The task scheduler from a NativeAOT process, through COM -- measured 2026-09-24
+
+`[STABLE]` for what the scheduler does and `[MACHINE]` for every time and size; the two
+toolchain refusals at the end float, because they are properties of the SDK and of the
+generator and not of Windows, and they are marked where they stand. Windows 11 Pro
+**10.0.26200**, .NET SDK
+**10.0.401**, NativeAOT win-x64, a non-elevated token. Measured by the writer of the
+coordinator core with a scratch rig between 22:22Z and 22:23Z on 2026-09-24, which was
+already 2026-09-25 on this machine's clock, and the product's remarks carry that local
+date. It decided how the per-user logon task of Q282 a is registered and started:
+through the scheduler's own COM interface, in
+[`Interop/TaskScheduler.cs`](../../src/BrowserAI.Core/Interop/TaskScheduler.cs) and
+[`Registration/LogonTasks.cs`](../../src/BrowserAI.Core/Registration/LogonTasks.cs).
+
+**The rig.** A NativeAOT console driver registered a task in the scheduler's root
+folder from XML -- a logon trigger and an interactive-token principal, both naming the
+user by SID, `MultipleInstancesPolicy` `Parallel`, `ExecutionTimeLimit` `PT0S`,
+`Priority` 5 -- read it back, ran it on demand twice and deleted it. The action was a
+NativeAOT Windows-subsystem probe that writes its own command line beside itself and
+exits, at a path with a space in it, written into `<Command>` unquoted. The driver ran
+twice: once with its main thread in the multi-threaded apartment, once with
+`[STAThread]`.
+
+| What | Result |
+|---|---|
+| `CoCreateInstance` of `CLSID_TaskScheduler`, then `Connect` | `S_OK` in 2.8 ms; connected at 15.6 ms |
+| `RegisterTask` from XML into `\`, non-elevated | **21.9 ms** in the first run, **19.8 ms** in the second |
+| `IRegisteredTask::Run` with one `BSTR`, `--coordinate` | returned in 1.0 to 1.1 ms, and the probe recorded `--sign-in --coordinate` |
+| `IRegisteredTask::Run` with `VT_EMPTY` | returned in 1.2 to 1.3 ms, and the probe recorded `--sign-in $(Arg0)`: with no value the placeholder is passed as it is written |
+| `DeleteTask` | 2.4 to 2.5 ms |
+| `GetTask` or `DeleteTask` of a task that is not there | `0x80070002`, which .NET raises as `FileNotFoundException` |
+| `CoInitializeEx` for the MTA, on a main thread the runtime had already put there | `S_FALSE` |
+| `CoInitializeEx` for the MTA, on an `[STAThread]` main thread | `RPC_E_CHANGED_MODE`, `0x80010106`, and every call above still worked |
+| a `<Command>` holding a space, unquoted | the probe started, and its own command line showed the path quoted |
+
+**What the scheduler stores is not what it was given.** Read back with `GetXml`, the
+trigger's `<UserId>` had become `DOMAIN\user` where the principal kept the SID; every
+element equal to its default was gone (`Enabled`, `RunLevel` `LeastPrivilege`,
+`AllowStartOnDemand`); and it had added a `<URI>` naming the task and an
+`<IdleSettings>` block and moved `<Settings>` ahead of `<Triggers>`. A comparison of the
+definition a hook wrote with the definition the scheduler holds compares two different
+documents. The gate's clearance hashes the stored XML, read the same way either side of
+a run.
+
+**Only `IRegisteredTask::Run` passes a value to the action.** Read 2026-10-03, not
+measured: the documentation of
+[`IRegisteredTask::Run`](https://learn.microsoft.com/windows/win32/api/taskschd/nf-taskschd-iregisteredtask-run)
+pairs a single `BSTR` with the name `Arg0` and substitutes it wherever an action
+property says `$(Arg0)`, and
+[`schtasks /run`](https://learn.microsoft.com/windows-server/administration/windows-commands/schtasks-run)
+takes a task name, a computer and a user, and no value. The two `Run` rows above are
+the first half measured, and the second is what the page does not say: with no value,
+the placeholder arrives literally. A logon trigger supplies no value either, so a start
+at sign-in is expected to carry `$(Arg0)` as written, an argument the configuration app
+does not know and ignores. That start was not run, because it takes a real sign-in.
+
+**A task started on demand is the scheduler's child, and this user cannot open its
+parent.** `CoordinatorWakeTests.ATaskStartedOnDemandRunsTheAppWithCoordinateAsTheSchedulersChild`
+measured it on 2026-09-24 against the published configuration app: the process the
+task started had as its parent the pid the service control manager gives for the
+`Schedule` service, and that parent's image could not be read. The writer opened the
+same pid by hand with the query right the same night and was refused with error 5.
+That is the whole of Q283 a's reason: a process whose parent is the scheduler is
+outside every client's process tree, and `taskkill /T`, which ends a process and the
+processes it started, does not reach it from a client's server.
+
+**What the COM code costs the binaries** `[MACHINE]`, on this tree's publishes: the
+configuration app went from **10,674,176 to 10,834,944 bytes (+160,768)** when the
+task-scheduler interop arrived with the logon task, and the server from **19,402,752
+to 19,592,192 bytes (+189,440)** when the blocked server's wake linked it. At the end
+of the coordinator core the app was **10,914,304** bytes and the server **19,592,704**.
+
+**Two toolchain refusals, and why `VARIANT` is written by hand** `[FLOATS]`, both
+measured by the writer on 2026-09-24 at SDK 10.0.401 and `Microsoft.Windows.CsWin32`
+**0.3.335**; the build output was not kept, and the second message is quoted in
+[`NativeMethods.txt`](../../tests/BrowserAI.Tests/NativeMethods.txt). The framework's
+`ComVariant` cannot cross a `[GeneratedComInterface]` method by value without
+`DisableRuntimeMarshallingAttribute` on the whole assembly, `error SYSLIB1051`. And
+CsWin32 refuses to generate `VARIANT` in its COM-interface mode, `error PInvoke003:
+This API will not be generated. Use object instead of VARIANT when in COM interface
+mode`, so the layout oracle cannot supply it either. The product declares a 24-byte
+blittable `TaskSchedulerInterop.Variant`, and `InteropLayoutTests` holds it against the
+size of `ComVariant`, the way `NativeFile.Overlapped` is held against the framework's
+`NativeOverlapped`: the same two refusals, met first for `OVERLAPPED`
+([above](#locking-a-log-file-without-locking-its-readers-out----2026-08-24)).
+Re-verification row 116a.
+
+**Re-establish it** with a task named for the suite's test pack and removed in the same
+run: `SignInTaskTests.TheRealSchedulerKeepsTheTaskAndRemovesItAgain` registers and
+reads back a real definition, and the wake arm above starts one on demand. The rig
+itself is not kept; it is one `RegisterTask`, one `GetXml`, two `Run` calls and one
+`DeleteTask` against the root folder, timed with a stopwatch, and an action that
+writes `Environment.CommandLine` to a file.
+
+### An exited process is not in the process list, even while its handle is held -- measured 2026-09-24
+
+`[STABLE]`. Windows 11 Pro 10.0.26200, PowerShell 7, at about 23:36Z on 2026-09-24 by
+the file's own time; the line the rig printed says 2026-09-25, which was the local
+date. A `cmd.exe /d /c exit 3` was started and its handle held open by the script for
+the whole reading. After it exited, **it was not in `EnumProcesses`' list**;
+`OpenProcess` on its pid with `PROCESS_QUERY_LIMITED_INFORMATION` and `SYNCHRONIZE`
+still succeeded; **`QueryFullProcessImageNameW` on that handle failed**; and a wait on
+it with a zero timeout was already signalled. So a scan that lists processes and then
+reads each one's image cannot find a process that has exited, whoever still holds it,
+and `BrowserProcesses.HeldUnder` carries no filter of its own for one. It was measured
+because a planted defect that counted exited processes stayed green.
+
+**Re-establish it** with the same four calls against any child you start and keep a
+handle to: list, open, query the image, wait with a zero timeout.
+
+### One wait holds 64 handles -- measured 2026-09-25
+
+`[STABLE]` for the limit. `WaitHandle.WaitAny` over 65 handles threw
+`NotSupportedException`, *"The number of WaitHandles must be less than or equal to
+64."*, at once, measured by a planted defect in the coordinator's loop at 00:31Z on
+2026-09-25. That is why `CoordinatorLoop.ProcessesPerWait` is 63: the pipe's inbox is
+the 64th, and a pass holding more processes than that waits on the first 63 and still
+holds and counts the rest. `CoordinatorTests.MoreProcessesThanOneWaitCanHoldAreAllWaitedForSixtyThreeAtATime`
+is the arm.
+
 ## A new environment's Path is the machine's entries, then the user's, and a running program keeps its own -- measured 2026-09-24
 
 `[MACHINE]` for the counts; `[STABLE]` for what a running program keeps, which is
