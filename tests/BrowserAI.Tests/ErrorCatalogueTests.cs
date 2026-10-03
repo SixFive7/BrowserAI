@@ -256,6 +256,86 @@ internal sealed partial class ErrorCatalogueTests
         }
     }
 
+    /// <summary>
+    /// Both update rows, provoked for a client that calls itself Claude Code,
+    /// say what a terminal session needs as well as what the other two surfaces
+    /// do on their own.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Measured 2026-10-03 at Claude Code 2.1.288 against a stand-in
+    /// server</b>, <c>docs/evidence/2026-10-03-q369-tool-list-refresh</c>:
+    /// <c>claude -p</c> and the stream-json transport the VS Code extension
+    /// drives start a stdio server that has gone again on the next call, and the
+    /// terminal UI never does, 9 of 9. It shows the server as failed, refuses the
+    /// call itself, and needs the user to reconnect the server through
+    /// <c>/mcp</c>. All three send the same <c>clientInfo</c> and the same
+    /// capabilities, so a server cannot tell them apart and one sentence has to
+    /// be right for all three.
+    /// </para>
+    /// <para>
+    /// <b>Planted red against the sentences as they stood</b>, which promised
+    /// every Claude Code session the restart and named no reconnect.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AClaudeCodeSessionIsToldWhatATerminalNeedsWhenAnUpdateEndsTheServer()
+    {
+        // ---- The still-installing row: a server that started during the apply.
+        await using (var sessions = RigSessionEnvironment.Create())
+        await using (var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions, clientName: KnownClients.ClaudeCode))
+        {
+            rig.Proxy.RefuseCallsWhileAnUpdateInstalls();
+
+            var refused = TextOf(await CallAsync(rig, "browser_snapshot", new JsonObject
+            {
+                ["session"] = rig.Session!,
+                ["why"] = "the suite calling while an update installs",
+            }));
+
+            Match(
+                refused,
+                nameof(SessionErrors.UpdateIsStillInstalling),
+                SessionErrors.UpdateIsStillInstalling("browser_snapshot", KnownClients.ClaudeCode));
+
+            await tellsBothSurfacesAsync(refused);
+        }
+
+        // ---- The update row: a server the update is stopping, met at the door.
+        await using (var sessions = RigSessionEnvironment.Create())
+        await using (var rig = await McpTestHarness.ThroughTheProxyAsync(sessions: sessions, clientName: KnownClients.ClaudeCode))
+        {
+            using (var bound = new CancellationTokenSource(TestDefaults.InProcessHang))
+            {
+                await rig.Proxy.RefuseCallsInFlightForAnUpdateAsync(bound.Token);
+            }
+
+            var refused = TextOf(await CallAsync(rig, "browser_snapshot", new JsonObject
+            {
+                ["session"] = rig.Session!,
+                ["why"] = "the suite calling after the stop began",
+            }));
+
+            Match(
+                refused,
+                nameof(SessionErrors.UpdateIsBeingInstalled),
+                SessionErrors.UpdateIsBeingInstalled("browser_snapshot", wasRunning: false, KnownClients.ClaudeCode));
+
+            await tellsBothSurfacesAsync(refused);
+        }
+
+        static async Task tellsBothSurfacesAsync(string refusal)
+        {
+            // What -p and the VS Code transport do on the next call by themselves.
+            await Assert.That(refusal).Contains("by itself");
+
+            // What the terminal UI needs instead: it never starts the server again.
+            await Assert.That(refusal).Contains("disconnected");
+            await Assert.That(refusal).Contains("/mcp");
+        }
+    }
+
     [Test]
     public async Task TheProxyRefusesACallWithNoSessionAndOneNamingNothing()
     {

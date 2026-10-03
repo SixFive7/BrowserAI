@@ -180,10 +180,16 @@ internal static class SessionErrors
     /// </para>
     /// <para>
     /// <b>The recovery is per client, for the reason the stale-list row gives.</b>
-    /// Claude Code starts a stdio server again on the next call by itself, and
-    /// after the update that server is the new one; Codex never does, so its
-    /// remedy is a new thread or a reconnect; a client this build has never met
-    /// is told both halves.
+    /// Claude Code run with <c>-p</c> or in VS Code starts a stdio server again on
+    /// the next call by itself, and after the update that server is the new one;
+    /// its terminal UI never does, and shows the server as failed until the user
+    /// reconnects it through <c>/mcp</c>. All three send the same
+    /// <c>clientInfo</c>, so the Claude Code remedy says both. <i>Corrected
+    /// 2026-10-03 @ Claude Code 2.1.288 (previously "Claude Code starts a stdio
+    /// server again on the next call by itself"), 9 of 9 for the terminal,
+    /// measured against a stand-in server.</i> Codex never does, so its remedy is
+    /// a new thread or a reconnect; a client this build has never met is told
+    /// both halves.
     /// </para>
     /// </remarks>
     /// <param name="tool">The tool the call named, whatever the caller said.</param>
@@ -242,7 +248,7 @@ internal static class SessionErrors
     /// <returns>One or two sentences naming the fix.</returns>
     private static string StillInstallingRemedy(string? clientName) =>
         KnownClients.Matches(clientName, KnownClients.ClaudeCode)
-            ? "Wait about a minute, then call again: this BrowserAI answers once the update has finished, and if the update ends it, your client starts the updated BrowserAI by itself on that call."
+            ? "Wait about a minute, then call again: this BrowserAI answers once the update has finished. If the update ends it, your client starts the updated BrowserAI by itself on that call when it runs with -p or in VS Code; in a terminal session it reports the BrowserAI server as disconnected instead, and only the user can reconnect it, through /mcp, so ask them to."
             : KnownClients.Matches(clientName, KnownClients.Codex)
                 ? "Wait about a minute, then call again: this BrowserAI answers once the update has finished. If the update ends it, your client does not start a server again, so these tools then need a new thread, or a reconnect of the BrowserAI server."
                 : "Wait about a minute, then call again: this BrowserAI answers once the update has finished. If your client then reports that the server has gone, reconnect the BrowserAI server.";
@@ -256,7 +262,7 @@ internal static class SessionErrors
     /// <returns>One or two sentences naming the fix.</returns>
     private static string UpdateRemedy(string? clientName) =>
         KnownClients.Matches(clientName, KnownClients.ClaudeCode)
-            ? "Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call."
+            ? "Wait about a minute, then call again: run with -p or in VS Code, your client starts the updated BrowserAI by itself on the next call. In a terminal session it reports the BrowserAI server as disconnected instead, and only the user can reconnect it, through /mcp, so ask them to."
             : KnownClients.Matches(clientName, KnownClients.Codex)
                 ? "Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer."
                 : "Wait about a minute, then call again. If your client then reports that the server has gone, reconnect the BrowserAI server.";
