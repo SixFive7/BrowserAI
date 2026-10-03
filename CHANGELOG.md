@@ -1427,6 +1427,16 @@ release body; nothing else depends on it.
 
 ### Fixed
 
+- 🐛 **A Claude Code terminal session is told to reconnect through `/mcp` when an update ends its server.**
+  Measured 2026-10-03 at Claude Code 2.1.288 against a stand-in server: `claude -p` and the VS
+  Code extension start a stdio server that has gone again on the next call, and the terminal UI
+  never does, 9 of 9; it shows the server as failed until the user reconnects it. The two update
+  refusals told every Claude Code session that its client starts the updated BrowserAI by itself,
+  which left a model in a terminal session waiting for something that does not happen. The three
+  surfaces send the same `clientInfo`, so the Claude Code remedy now says both: what `-p` and VS
+  Code do on their own, and that a terminal session reports the server as disconnected and only
+  the user can reconnect it, so the model should ask them to. `ErrorCatalogueTests` holds both
+  rows, watched red against the old sentences.
 - 🐛 **A Firefox started with Shift held no longer stalls in safe mode, and a run that starts one fails.**
   Q312 b, the maintainer's words verbatim: *"Q312 b"*. On Windows a Firefox browser process that
   starts while Shift is held enters safe mode, opens a modal window before any browser window,
