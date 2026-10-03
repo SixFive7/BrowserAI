@@ -95,8 +95,9 @@ internal enum SuiteCapability
     /// <c>BROWSERAI_RELEASE_RUN=1</c> they fail, which is correct -- BrowserAI
     /// registers itself with this client, so a release that has never seen one
     /// connect is one whose second client is untested. Found the way the product
-    /// finds it, through <c>CodexRegistration.Locate</c>, so a machine where the
-    /// product would find no CLI is a machine where these arms cannot run either.
+    /// finds it, which since 2026-10-03 is RegisterAI's own search, so a machine where
+    /// the product would find no CLI is a machine where these arms cannot run either.
+    /// <i>Previously through <c>CodexRegistration.Locate</c>, which went to RegisterAI.</i>
     /// </remarks>
     CodexCommandLine,
 }
@@ -306,15 +307,15 @@ internal static class SuiteEnvironment
     /// product finds it.
     /// </summary>
     /// <remarks>
-    /// <b>Through the product's own <see cref="ClientCommandLine.Locate"/>
-    /// and not a second search.</b> A harness that looked somewhere else
-    /// could report the capability present on a machine where the product would
-    /// not find it, which is a false green about the one thing these tests
-    /// exist to establish.
+    /// <b>Through RegisterAI's own search and not a second one.</b> A harness that
+    /// looked somewhere else could report the capability present on a machine where
+    /// the product would not find it, which is a false green about the one thing these
+    /// tests exist to establish. <i>Corrected 2026-10-03 (previously "Through the
+    /// product's own <c>ClientCommandLine.Locate</c>"), when finding a client became
+    /// RegisterAI's: see <see cref="ClientsRegisterAiFinds"/>.</i>
     /// </remarks>
     /// <returns>The path, or <see langword="null"/>.</returns>
-    public static string? ClientExecutable() =>
-        new ClientCommandLine().Locate(McpClientRegistration.ClientExecutable);
+    public static string? ClientExecutable() => ClientsRegisterAiFinds.Value.Claude;
 
     /// <summary>
     /// The Codex CLI, or a skip.
@@ -331,15 +332,82 @@ internal static class SuiteEnvironment
     /// The Codex CLI on this machine, found exactly the way the product finds it.
     /// </summary>
     /// <remarks>
-    /// <b>Through the product's own <see cref="CodexRegistration.Locate"/></b>, so
-    /// the four places it looks -- the search path, the fallback directory, the
-    /// Codex desktop manifest and the npm global package -- are the four places
-    /// these arms look, and a machine the product would find no CLI on is a
-    /// machine these arms skip on.
+    /// <b>Through RegisterAI's own search</b>, so the places it looks -- the search
+    /// path, the fallback directory, the Codex desktop manifest and the npm global
+    /// package -- are the places these arms look, and a machine the product would find
+    /// no CLI on is a machine these arms skip on. <i>Corrected 2026-10-03 (previously
+    /// "Through the product's own <c>CodexRegistration.Locate</c>").</i>
     /// </remarks>
     /// <returns>The path, or <see langword="null"/>.</returns>
-    public static string? CodexExecutable() =>
-        CodexRegistration.Locate(new ClientCommandLine());
+    public static string? CodexExecutable() => ClientsRegisterAiFinds.Value.Codex;
+
+    /// <summary>
+    /// Both clients, as the payload's RegisterAI finds them: one <c>status</c> run per
+    /// session, asked once and kept.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-03, when finding a client became RegisterAI's.</b> Its status
+    /// reports the executable it would run for each client as <c>clientPath</c>, and
+    /// that is the answer every hook and the window act on now.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b>The run reads scratch configuration.</b> RegisterAI asks Codex for its list
+    /// to answer, so <c>CODEX_HOME</c> and <c>CLAUDE_CONFIG_DIR</c> are set on that one
+    /// child to a scratch folder, and no variable of this process moves. A payload with
+    /// no RegisterAI finds no client, and the witness says why.
+    /// </para>
+    /// </remarks>
+    private static readonly Lazy<(string? Claude, string? Codex, string Why)> ClientsRegisterAiFinds = new(AskRegisterAi);
+
+    private static (string? Claude, string? Codex, string Why) AskRegisterAi()
+    {
+        var exe = RepositoryPayload.RegisterAi;
+
+        if (!File.Exists(exe))
+        {
+            return (null, null, $"the payload's RegisterAI, which finds the clients, is not at '{exe}'");
+        }
+
+        // ⚠️ AS COMPOSED AND NEVER SWEPT. Corrected 2026-10-03 (previously
+        // "ScratchDirectory.Create("client-search")"): this runs wherever a client
+        // capability is first read, and the session-end hook of a child test host an
+        // arm starts reads every capability. Taking ScratchRoot.Path there ran the
+        // reclaim in the child over the parent's live scratch, which is what
+        // ScratchRoot.PathAsComposed exists to prevent, and
+        // SuiteCoverageTests.AChildTestHostLeavesItsParentsScratchAlone holds it.
+        var homes = Path.Combine(ScratchRoot.PathAsComposed, $"client-search-{Guid.NewGuid():N}");
+        ToolRun run;
+
+        try
+        {
+            var tool = new RegisterAiTool(
+                exe,
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["CLAUDE_CONFIG_DIR"] = Directory.CreateDirectory(homes).FullName,
+                    ["CODEX_HOME"] = Directory.CreateDirectory(Path.Combine(homes, "codex")).FullName,
+                });
+
+            run = tool.Run(
+                McpRegistrar.Arguments("status", RegistrationClient.All, "user", project: null, ownedRoot: null, replace: false, pathFolder: null, command: null),
+                McpRegistrar.ToolBudget);
+        }
+        finally
+        {
+            _ = ScratchDirectory.RemoveTree(homes);
+        }
+
+        if (!ToolDocuments.TryRead(run, out var document, out var problem))
+        {
+            return (null, null, $"RegisterAI at '{exe}' could not be asked: {problem}");
+        }
+
+        return (
+            document!.For(RegistrationClient.ClaudeCode.ToolId)?.ClientPath,
+            document.For(RegistrationClient.Codex.ToolId)?.ClientPath,
+            string.Join(" ", document.Results.Where(result => result.ClientPath is null).Select(result => result.Error ?? $"{result.Client} was not found.")));
+    }
 
     /// <summary>
     /// Whether the repository payload is available, recording its absence
@@ -943,8 +1011,8 @@ internal static class SuiteEnvironment
         SuiteCapability.RepositoryPayload => Path.Combine(RepositoryPayload.Layout.Root, "payload.json"),
         SuiteCapability.ProvisionedChromium => BrowserAiPaths.ExpectedChromiumExecutable,
         SuiteCapability.ProvisionedFirefox => BrowserAiPaths.FirefoxExecutable,
-        SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{McpClientRegistration.ClientExecutable} (not on PATH, nor at {BrowserAI.Registration.ClientCommandLine.FallbackDirectory})",
-        SuiteCapability.CodexCommandLine => CodexExecutable() ?? CodexRegistration.NotFoundDetail("mcp list"),
+        SuiteCapability.ClientCommandLine => ClientExecutable() ?? $"{RegistrationClient.ClaudeCode.Executable}, not found: {ClientsRegisterAiFinds.Value.Why}",
+        SuiteCapability.CodexCommandLine => CodexExecutable() ?? $"{RegistrationClient.Codex.Executable}, not found: {ClientsRegisterAiFinds.Value.Why}",
         SuiteCapability.ReleaseInstaller => string.Join(
             "; ",
             new[]
@@ -965,7 +1033,7 @@ internal static class SuiteEnvironment
         SuiteCapability.RepositoryPayload => "Run: pwsh -File build/Build-Payload.ps1",
         SuiteCapability.ProvisionedChromium => "Provision it: BrowserAI downloads it on first use, or run the suite once with a payload present.",
         SuiteCapability.ProvisionedFirefox => "Provision it: BrowserAI downloads it on first use of a Firefox session.",
-        SuiteCapability.ClientCommandLine => $"Install the MCP client, so that '{McpClientRegistration.ClientExecutable}' is on PATH. Nothing is written to it: the real-client arms point it at a scratch configuration directory.",
+        SuiteCapability.ClientCommandLine => $"Install the MCP client, so that '{RegistrationClient.ClaudeCode.Executable}' is on PATH. Nothing is written to it: the real-client arms point it at a scratch configuration directory.",
         SuiteCapability.CodexCommandLine => "Install the Codex CLI. Nothing is written to it: the real-client arms force CODEX_HOME at a scratch directory and never read the user's own.",
         SuiteCapability.ReleaseInstaller => $"Publish both slices, then run: pwsh -File build/New-Release.ps1 -TestPackOnly, which every gate driver does; or set {ReleaseLayout.FeedVariable} to a directory one has packed into. Nothing is installed by the suite outside a scratch directory: the arm that uses it passes --installto and a scratch data root, and uninstalls what it installed.",
         SuiteCapability.Git => "Install git and run the suite from a checkout rather than from an export. Nothing is written: the only command asked for is 'git ls-files'.",

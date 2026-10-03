@@ -159,7 +159,7 @@ internal sealed class SignInStepTests
         var environment = PublishedSlice.InheritedEnvironment();
 
         environment[BrowserAiPaths.AppRootOverride] = root.Path;
-        environment[CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(root.Path, "codex")).FullName;
+        environment[RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(root.Path, "codex")).FullName;
 
         using var desktop = PrivateDesktop.Create("sign-in-step");
         using var job = JobObject.CreateKillOnClose();

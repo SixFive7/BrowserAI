@@ -11,10 +11,13 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// Every version in this project floats, and the resolved set is recorded
-/// and not declared. There are three records and they are written by three
+/// and not declared. There are four records and they are written by four
 /// different steps: <c>build/payload/package-lock.json</c> by the payload
-/// build, <c>packages.lock.json</c> by NuGet restore, and
-/// <c>upstream-snapshots/tools-list.json</c> by the snapshot generator.
+/// build, <c>packages.lock.json</c> by NuGet restore,
+/// <c>upstream-snapshots/tools-list.json</c> by the snapshot generator, and
+/// <c>build/payload/registerai.json</c> by <c>build/Get-RegisterAi.ps1</c>.
+/// <i>Corrected 2026-10-03 (previously "There are three records and they are
+/// written by three different steps"), when RegisterAI joined the payload.</i>
 /// </para>
 /// <para>
 /// All three are committed on purpose, which is what lets the marker test run
@@ -67,6 +70,19 @@ internal static class ResolvedVersions
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// The RegisterAI half: the release the last payload build took, from the
+    /// stamp <c>build/Get-RegisterAi.ps1</c> writes beside the npm lock. Null
+    /// when the stamp names no version.
+    /// </summary>
+    public static string? FromRegisterAiStamp()
+    {
+        using var stamp = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(RepositoryLayout.Root.FullName, "build", "payload", "registerai.json")));
+
+        return stamp.RootElement.TryGetProperty("version", out var version) ? version.GetString() : null;
     }
 
     /// <summary>

@@ -768,9 +768,10 @@ whose fields are version, path, bytes and hash. Verified 2026-08-26: the
 downloaded archive matched that hash and that byte count exactly. `[STABLE]` --
 a released archive's hash cannot move. The pin, the two file hashes and the
 re-resolve procedure live in [`drift-check.json`](../drift-check.json) under
-`vendored`, deliberately outside `resolved`, because `resolved` is the five
+`vendored`, deliberately outside `resolved`, because `resolved` is the six
 upstreams the build floats and a name added there has to exist in
-`upstream-review.json` too.
+`upstream-review.json` too. *(Six since 2026-10-03, previously "the five":
+RegisterAI joined them, floating to its newest release.)*
 
 **The amalgamation ships LF and is warning-clean at `/W4`.** Measured
 2026-08-26: `sqlite3.c` carries **269,649 LF and zero CR**, so

@@ -9,10 +9,14 @@ using Microsoft.Win32;
 namespace BrowserAI.Tests;
 
 /// <summary>
-/// Q294 b: a Codex project entry names <c>BrowserAI.Server.exe</c> alone, the install
-/// puts its own folder on the user's PATH, and the Codex ownership check resolves the
-/// bare name the way Codex does.
+/// Q294 b: a Codex project entry names <c>BrowserAI.Server.exe</c> alone, and the
+/// install puts its own folder on the user's PATH.
 /// </summary>
+/// <remarks>
+/// <i>Corrected 2026-10-03 (previously "and the Codex ownership check resolves the
+/// bare name the way Codex does")</i>: that check went to RegisterAI with the switch,
+/// and its arm with it; RegisterAI reports what the name finds as <c>resolvesTo</c>.
+/// </remarks>
 /// <remarks>
 /// <para>
 /// ⚠️ <b>The maintainer's decision, 2026-09-24, verbatim: <i>"Q294 b"</i>.</b> Codex
@@ -183,51 +187,6 @@ internal sealed class UserPathTests
     }
 
     /// <summary>
-    /// A bare name in a Codex entry is judged by the file it finds first on a PATH:
-    /// this install is ours, another is not, and nothing found is the product's own
-    /// spelling gone stale.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task ABareNameIsJudgedByTheFileItFindsFirstOnThePath()
-    {
-        using var ours = ScratchDirectory.Create("bare-name-ours");
-        using var theirs = ScratchDirectory.Create("bare-name-theirs");
-        using var empty = ScratchDirectory.Create("bare-name-empty");
-
-        _ = InstalledLayout.Create(ours.Path);
-        _ = InstalledLayout.Create(theirs.Path);
-
-        var oursFolder = Path.GetDirectoryName(InstalledLayout.ServerIn(ours.Path))!;
-        var theirsFolder = Path.GetDirectoryName(InstalledLayout.ServerIn(theirs.Path))!;
-        const string Name = RegistrationTarget.ServerFileName;
-
-        // Found under this install, after a folder that holds nothing.
-        await Assert.That(CodexRegistryView.Classify(Name, ours.Path, () => [empty.Path, oursFolder]))
-            .IsEqualTo(RegistrationOwnership.OursAndPresent);
-
-        // Another install first on the PATH: the name finds that one, which is not ours.
-        await Assert.That(CodexRegistryView.Classify(Name, ours.Path, () => [theirsFolder, oursFolder]))
-            .IsEqualTo(RegistrationOwnership.Foreign);
-
-        // Nothing on the PATH: the product's own spelling, pointing at nothing.
-        await Assert.That(CodexRegistryView.Classify(Name, ours.Path, () => [empty.Path]))
-            .IsEqualTo(RegistrationOwnership.OursAndStale);
-
-        // Any other bare name that finds nothing is somebody else's.
-        await Assert.That(CodexRegistryView.Classify("node.exe", ours.Path, () => [empty.Path]))
-            .IsEqualTo(RegistrationOwnership.Foreign);
-
-        // A relative path is not a bare name and is not ours.
-        await Assert.That(CodexRegistryView.Classify(@"current\" + Name, ours.Path, () => [oursFolder]))
-            .IsEqualTo(RegistrationOwnership.Foreign);
-
-        // And an absolute path is judged as it always was, with no PATH read at all.
-        await Assert.That(CodexRegistryView.Classify(InstalledLayout.ServerIn(ours.Path), ours.Path, () => throw new InvalidOperationException("no PATH read for an absolute path")))
-            .IsEqualTo(RegistrationOwnership.OursAndPresent);
-    }
-
-    /// <summary>
     /// A Codex project entry names the server alone, whatever the PATH finds, and the
     /// sentence after it says what the name finds; Claude Code's is unchanged.
     /// </summary>
@@ -238,25 +197,24 @@ internal sealed class UserPathTests
         const string Server = @"C:\Users\someone\AppData\Local\BrowserAI.app\current\BrowserAI.Server.exe";
         const string Other = @"D:\elsewhere\current\BrowserAI.Server.exe";
 
-        var here = CodexRegistration.ProjectCommandGiven(Server, Server);
-        var elsewhere = CodexRegistration.ProjectCommandGiven(Server, Other);
-        var nowhere = CodexRegistration.ProjectCommandGiven(Server, null);
-
-        // Never an absolute path, in any of the three.
-        foreach (var project in new[] { here, elsewhere, nowhere })
-        {
-            await Assert.That(project.Command).IsEqualTo(RegistrationTarget.ServerFileName);
-            await Assert.That(project.Note).IsNotNull();
-        }
-
-        await Assert.That(here.Note!).Contains("finds this install");
-        await Assert.That(here.Note!).Contains("restarted");
-        await Assert.That(elsewhere.Note!).Contains(Other);
-        await Assert.That(nowhere.Note!).Contains("No folder on your PATH holds one yet");
-
-        // The client's own member answers the same way, from this machine's PATH.
+        // Never an absolute path, wherever the install is.
         await Assert.That(RegistrationClient.Codex.ProjectCommandFor(Server, Path.GetDirectoryName(Path.GetDirectoryName(Server))).Command)
             .IsEqualTo(RegistrationTarget.ServerFileName);
+        await Assert.That(RegistrationClient.Codex.ProjectCommandFor(Other, @"D:\elsewhere").Command)
+            .IsEqualTo(RegistrationTarget.ServerFileName);
+
+        // The sentence after it, from what RegisterAI says the name finds.
+        var here = RegistrationClient.Codex.ProjectNoteAfter(Server, Server);
+        var elsewhere = RegistrationClient.Codex.ProjectNoteAfter(Server, Other);
+        var nowhere = RegistrationClient.Codex.ProjectNoteAfter(Server, null);
+
+        await Assert.That(here!).Contains("finds this install");
+        await Assert.That(here!).Contains("restarted");
+        await Assert.That(elsewhere!).Contains(Other);
+        await Assert.That(nowhere!).Contains("No folder on your PATH holds one yet");
+
+        // Claude Code has no sentence to add after the run.
+        await Assert.That(RegistrationClient.ClaudeCode.ProjectNoteAfter(Server, Server)).IsNull();
 
         // Claude Code: the portable spelling at the default location, the absolute
         // path and the reason anywhere else.

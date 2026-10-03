@@ -663,7 +663,7 @@ internal sealed class CoordinatorTests
         var environment = PublishedSlice.InheritedEnvironment();
 
         environment[BrowserAiPaths.AppRootOverride] = root.Path;
-        environment[CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(root.Path, "codex")).FullName;
+        environment[RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(root.Path, "codex")).FullName;
 
         (string[] Arguments, CoordinatorVerb Verb)[] starts =
         [

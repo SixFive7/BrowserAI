@@ -89,6 +89,13 @@ and it does change the tool-count total a run reports, which is what the
 [kb entry](../../../kb/mcp/protocol.md#the-refusal-fires-on-exactly-the-connection-it-was-designed-for-33)
 now records.
 
+*(3) Corrected 2026-10-03, by addition:* `ClientReconnectTests` no longer resolves
+the binary through `CodexRegistration.Locate`, which went to RegisterAI with the
+rest of BrowserAI's registration code. It asks the RegisterAI the payload carries,
+whose search finds the same `~\.codex\plugins\.plugin-appserver\codex.exe` on
+this machine, read that day with `CODEX_HOME` and `CLAUDE_CONFIG_DIR` pointed at
+scratch.
+
 ## Running them
 
 Publish the server first -- these drive the published binary, not the tree:

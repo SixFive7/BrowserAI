@@ -1130,6 +1130,88 @@ internal sealed partial class SuiteCoverageTests
     }
 
     /// <summary>
+    /// A child test host leaves its parent's scratch alone: a directory the parent is
+    /// using is still there after a child started from it has run its own session to
+    /// the end.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ⚠️ <b>Added 2026-10-03, with the first ordinary gate on step 7 of RegisterAI's
+    /// plan.</b> Finding the clients became a run of the payload's RegisterAI with
+    /// scratch homes, taken through <see cref="ScratchDirectory.Create"/>, and the
+    /// session-end hook of every test process reads every capability. In the child
+    /// <see cref="AFilteredChildRunReadsAsFilteredAndIsRefusedAsARelease"/> starts,
+    /// that was the child's first touch of <see cref="ScratchRoot.Path"/>, so the
+    /// child ran the reclaim over the parent's live scratch.
+    /// <see cref="ScratchRoot.PathAsComposed"/> says why a child must not take it.
+    /// </para>
+    /// <para>
+    /// <b>The console is asserted first</b>: a child that never reached its
+    /// coverage block never read a capability, and the sentinel would then survive
+    /// without anything having been asked.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task AChildTestHostLeavesItsParentsScratchAlone()
+    {
+        // The arm above's recursion guard: a process that sees the probe variable is
+        // a child, and has no parent's scratch of its own to check.
+        if (Environment.GetEnvironmentVariable(SuiteFilter.ProbeVariable) is { Length: > 0 })
+        {
+            return;
+        }
+
+        var host = Path.Combine(AppContext.BaseDirectory, "BrowserAI.Tests.exe");
+
+        await Assert.That(File.Exists(host)).IsTrue().Because(host);
+
+        using var sentinel = ScratchDirectory.Create("parent-sentinel");
+        var marker = Path.Combine(sentinel.Path, "still-here.txt");
+
+        await File.WriteAllTextAsync(marker, "the parent's own scratch, which no child may reclaim");
+
+        using var probe = ScratchDirectory.Create("child-probe");
+
+        var startInfo = new ProcessStartInfo(host)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = AppContext.BaseDirectory,
+            StandardOutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            StandardErrorEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+        };
+
+        startInfo.ArgumentList.Add("--disable-logo");
+        startInfo.ArgumentList.Add("--treenode-filter");
+        startInfo.ArgumentList.Add("/*/*/SuiteCoverageTests/" + nameof(AReleaseRunFailsWhereAnOrdinaryRunSkips));
+
+        startInfo.Environment[SuiteFilter.ProbeVariable] = Path.Combine(probe.Path, "filter.txt");
+
+        using var child = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start '{host}'.");
+
+        // Started outside a job object, as the arm above's child is.
+        SpawnRecord.Add(child.Id);
+
+        var stdout = child.StandardOutput.ReadToEndAsync();
+        var stderr = child.StandardError.ReadToEndAsync();
+
+        using var patience = new CancellationTokenSource(TestDefaults.ProcessHang);
+
+        await child.WaitForExitAsync(patience.Token);
+
+        var console = await stdout + await stderr;
+
+        await Assert.That(console).Contains("suite coverage -- what this run actually exercised").Because(console);
+
+        await Assert.That(File.Exists(marker))
+            .IsTrue()
+            .Because($"a child test host reclaimed its parent's scratch: '{marker}' is gone after the child ran.{Environment.NewLine}{console}");
+    }
+
+    /// <summary>
     /// Nothing this run could not exercise is merely half-installed.
     /// </summary>
     /// <remarks>

@@ -368,7 +368,9 @@ git diff --exit-code --stat -- build/payload/package-lock.json   # the npm lock
 
 The diff *is* the drift report, and it is the cheapest detector this policy has.
 Record both, empty or not; an empty diff is a result. Plus the resolved version
-of each of the five upstreams and the browser revision.
+of each of the six upstreams and the browser revision. *(Six since 2026-10-03,
+previously "each of the five upstreams": RegisterAI is the sixth, and its version
+is the release `build/Get-RegisterAi.ps1` took, in `build/payload/registerai.json`.)*
 
 > **Corrected 2026-08-16 on the first run of this checklist (previously:
 > `git diff -- "**/packages.lock.json"`, and nothing about the npm lock).** Two
@@ -447,7 +449,8 @@ with its output.
 
 ### 3. Upstream drift adjudicated
 
-Resolve the five upstreams **the way the build resolves them** -- the table in
+Resolve the six upstreams **the way the build resolves them** *(previously "the
+five", corrected 2026-10-03 when RegisterAI joined them)* -- the table in
 [`AGENTS.md` → the daily drift check](AGENTS.md#the-daily-drift-check). A
 registry query's defaults are not that: on 2026-08-15, npm `latest` for
 `playwright-core` was `1.62.1` while the shipping version was
@@ -462,7 +465,7 @@ The marker test enforces this and is red until the entry adjudicates what moved.
 **A red marker is not a stale file to fix.** If the diff is large, split it: bump
 to an intermediate version, review, land it green, then bump again.
 
-**Evidence:** the resolved-versus-reviewed pair for each of the five upstreams,
+**Evidence:** the resolved-versus-reviewed pair for each of the six upstreams,
 and the marker test's result. [`drift-check.json`](drift-check.json) stamped
 with `lastChecked` **only after a lookup actually returned a version.**
 
@@ -1260,7 +1263,7 @@ the package's SHA-256 and the resolved version each copied file carries:
 | `packages.lock.json` ×3 | `src/BrowserAI/`, `tests/BrowserAI.Tests/`, `tests/BrowserAI.TestProbe/` |
 | `package-lock.json` | `build/payload/` -- the committed provenance stamp the payload build writes |
 | `package.json` | `build/payload/` -- the payload's own manifest, and **the only record that an npm `overrides` entry is in force**: npm writes no `overrides` block into the lock it produces |
-| `payload.json` | `payload/` -- Node's version, LTS name, archive SHA-256 and both tree sizes |
+| `payload.json` | `payload/` -- Node's version, LTS name, archive SHA-256 and both tree sizes, and since 2026-10-03 the RegisterAI release the payload took, its tag and the SHA-256 it was checked against, which `manifest.json` restates under `resolved.registerai`. A payload without that block refuses the manifest |
 | `browsers.json` | `upstream-snapshots/` -- the browser revisions, from the resolved payload |
 | `tool-verdicts.json` | the repository root -- which tools this build forwards, and the `judgedAgainst` upstream versions that judgement was made on |
 | The derived version and its tag | item 9 |
@@ -1437,6 +1440,12 @@ item is still about the package this run publishes. Verified against
 - **A short trademark disclaimer in the installed artifact.** Apache-2.0 §6
   grants no trademark rights, and the inherited `browser_*` names surface
   upstream branding directly in BrowserAI's own API.
+- **RegisterAI's licence, since 2026-10-03.** It is the same author's program
+  under its own `LicenseRef-RegisterAI-FSL-1.1-MIT-5yr`, compiled into
+  `payload\registerai\RegisterAI.exe` and printed by its `license` verb, so the
+  obligation is the executable itself, and `THIRD-PARTY-NOTICES.txt` names it and
+  the command. The six above are owed to third parties and this one is not, so
+  the count of six in the correction below stands.
 
 The last four have no upstream file of their own -- a NuGet package compiled
 *into* `BrowserAI.exe` leaves its licence in the machine's package cache, which

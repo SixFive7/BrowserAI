@@ -122,8 +122,7 @@ internal sealed record UserPathReport(UserPathChange Change, string Entry, strin
 
 /// <summary>
 /// The install's <c>current\</c> folder on the user's PATH: put there by the install
-/// and update hooks, taken off by the uninstall hook, and read by the Codex
-/// ownership check.
+/// and update hooks, and taken off by the uninstall hook.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -142,6 +141,16 @@ internal sealed record UserPathReport(UserPathChange Change, string Entry, strin
 /// entry, and an entry a person wrote in another spelling is never taken off.
 /// <b>The value's kind is kept</b>, and a value that did not exist is created as
 /// <c>REG_EXPAND_SZ</c>.
+/// </para>
+/// <para>
+/// <b>The reading half went to RegisterAI on 2026-10-03</b>, with the Codex ownership
+/// check it served: RegisterAI looks a bare name up on the PATH a new program gets
+/// and reports what it finds as <c>resolvesTo</c>. <i>Previously this type also read the
+/// machine's and the user's PATH from the registry and resolved a bare name over
+/// them.</i> The writer stays, by the maintainer's decision Q348, verbatim <i>"a by
+/// default - the tool reports it when it is missing however. Then presents option b as
+/// well."</i>: the installer keeps its own PATH edit, and RegisterAI reports a missing
+/// folder and offers its own <c>path add</c> and <c>path remove</c>.
 /// </para>
 /// <para>
 /// ⚠️ <b>Appended, and appended after a separator even when the value already ends
@@ -259,82 +268,6 @@ internal static class UserPath
     /// <returns>Whether it names it.</returns>
     public static bool Names(string segment, string entry) =>
         string.Equals(Trimmed(segment), Trimmed(entry), StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// The folders a program started now would search for a bare name: the machine's
-    /// PATH, then the user's, each read from the registry and expanded, which is the
-    /// order a new environment block holds them in -- measured, kb/windows/processes.md.
-    /// </summary>
-    /// <remarks>
-    /// <b>The registry and not this process's own PATH</b>, because this process may
-    /// be older than the entry, or started by a program that is: a child receives a
-    /// copy of its parent's environment, and a running program keeps the one it has.
-    /// </remarks>
-    /// <returns>The folders, in order.</returns>
-    public static IReadOnlyList<string> SearchDirectories()
-    {
-        var folders = new List<string>();
-
-        foreach (var (hive, subKey) in new[]
-        {
-            (Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
-            (Registry.CurrentUser, "Environment"),
-        })
-        {
-            try
-            {
-                using var key = hive.OpenSubKey(subKey, writable: false);
-
-                if (key?.GetValue(RegistryUserPathStore.ValueName, null, RegistryValueOptions.DoNotExpandEnvironmentNames) is string text)
-                {
-                    folders.AddRange(Segments(Environment.ExpandEnvironmentVariables(text)).Where(folder => folder.Trim().Length > 0));
-                }
-            }
-            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException or System.Security.SecurityException)
-            {
-                // A hive this process cannot read contributes nothing, which is what
-                // a program started under the same account would find too.
-            }
-        }
-
-        return folders;
-    }
-
-    /// <summary>The first folder that holds a file of this name, joined to it.</summary>
-    /// <param name="fileName">A bare file name.</param>
-    /// <param name="folders">The folders to search, in order.</param>
-    /// <returns>The file's full path, or <see langword="null"/> when no folder holds it.</returns>
-    public static string? Resolve(string fileName, IEnumerable<string> folders)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
-        ArgumentNullException.ThrowIfNull(folders);
-
-        foreach (var folder in folders)
-        {
-            try
-            {
-                var candidate = Path.Combine(folder.Trim().Trim('"'), fileName);
-
-                if (Path.IsPathFullyQualified(candidate) && File.Exists(candidate))
-                {
-                    return Path.GetFullPath(candidate);
-                }
-            }
-            catch (Exception failure) when (failure is ArgumentException or NotSupportedException or PathTooLongException)
-            {
-                // A PATH entry that is not a path cannot hold anything.
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>Whether a command is a bare file name, which a client resolves through PATH.</summary>
-    /// <param name="command">The command.</param>
-    /// <returns>Whether it names no folder at all.</returns>
-    public static bool IsBareName(string command) =>
-        command.Length > 0
-        && command.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar, Path.VolumeSeparatorChar]) < 0;
 
     private static string Trimmed(string path) =>
         path.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);

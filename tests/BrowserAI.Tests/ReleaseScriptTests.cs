@@ -621,6 +621,13 @@ internal sealed class ReleaseScriptTests
         await Assert.That(manifest).Contains("\"version\": \"v24.0.0\"");
         await Assert.That(manifest).Contains("\"revision\": \"4321\"");
 
+        // RegisterAI, the program every registration runs through since
+        // 2026-10-03: the release the payload took and the hash it was checked
+        // against, read out of the copied payload.json (RELEASING item 11).
+        await Assert.That(manifest).Contains("\"registerai\"");
+        await Assert.That(manifest).Contains("\"tag\": \"v9.0.9\"");
+        await Assert.That(manifest).Contains("\"sha256\": \"def789\"");
+
         // The verdicts file states what it was judged against, and the manifest
         // states that and not the row set: which tools a build forwards is
         // only meaningful beside the upstream it was adjudicated on. The
@@ -1275,6 +1282,38 @@ internal sealed class ReleaseScriptTests
     }
 
     /// <summary>
+    /// A payload that carries no RegisterAI refuses the manifest and writes nothing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-03, when every registration started running through
+    /// RegisterAI</b> (Q332): a release without it fails the registration of every
+    /// client, and a manifest that left it out would read like a complete one. The
+    /// refusal names the script that takes it.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task APayloadWithoutRegisterAiRefusesTheManifestAndWritesNothing()
+    {
+        using var scratch = ScratchDirectory.Create("release-manifest-registerai");
+        var root = await SyntheticRootAsync(scratch.Path);
+
+        await File.WriteAllTextAsync(Path.Combine(root, "payload", "payload.json"), """
+            {"node":{"version":"v24.0.0","lts":"Synthetic","sha256":"abc123"},
+             "npm":{"@playwright/mcp":"0.0.777"}}
+            """);
+
+        var destination = Path.Combine(scratch.Path, "manifest");
+
+        var (exit, _, output) = await RunAsync(
+            ManifestScript, "-Root", root, "-Destination", destination, "-Version", "0.9.1");
+
+        await Assert.That(exit).IsNotEqualTo(0);
+        await Assert.That(output).Contains("registerai");
+        await Assert.That(output).Contains("Get-RegisterAi.ps1");
+        await Assert.That(Directory.Exists(destination)).IsFalse();
+    }
+
+    /// <summary>
     /// The manifest states whether the release was a crunch override, in both
     /// directions -- and an ordinary release says <c>null</c> instead of saying
     /// nothing.
@@ -1475,9 +1514,13 @@ internal sealed class ReleaseScriptTests
              "//":["a note npm ignores"],
              "dependencies":{"@playwright/mcp":"latest"}}
             """);
+        // The registerai block is what build/Get-RegisterAi.ps1 writes, with values
+        // no real release carries, so the manifest's copy of it is a read and
+        // cannot be a default.
         await writeAsync("payload/payload.json", """
             {"node":{"version":"v24.0.0","lts":"Synthetic","sha256":"abc123"},
-             "npm":{"@playwright/mcp":"0.0.777"}}
+             "npm":{"@playwright/mcp":"0.0.777"},
+             "registerai":{"version":"9.0.9","tag":"v9.0.9","source":"release","sha256":"def789"}}
             """);
         await writeAsync("upstream-snapshots/browsers.json", """
             {"browsers":[{"name":"chromium","revision":"4321","browserVersion":"999.0.0.0"},

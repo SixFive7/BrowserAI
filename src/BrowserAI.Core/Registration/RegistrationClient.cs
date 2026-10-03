@@ -12,23 +12,27 @@ namespace BrowserAI.Registration;
 internal sealed record ProjectCommand(string Command, string? Note);
 
 /// <summary>
-/// One MCP client, as everything that registers with it needs to see it.
+/// One MCP client, as BrowserAI names it, spells its command for it and talks about
+/// it.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>Added 2026-09-24 for Q258, and the shape is the point: there is ONE
 /// registrar and one ownership rule, not one per client.</b> The two clients
-/// disagree about almost everything -- Claude Code has a <c>--scope</c> flag and a
-/// JSON file this product reads; Codex has neither and is asked through
-/// <c>mcp list --json</c> -- and the thing that must not be duplicated is the
-/// decision about whether a registration is OURS. Duplicating that means two
+/// disagree about almost everything, and the thing that must not be duplicated is
+/// the decision about whether a registration is OURS. Duplicating that means two
 /// answers to <i>may I delete this</i>, and the cost of disagreeing is somebody
 /// else's registration.
 /// </para>
 /// <para>
-/// ⚠️ <b>EVERY PER-CLIENT DIFFERENCE IS A MEMBER HERE AND NOWHERE ELSE.</b> If a
-/// third client arrives, it is one more instance of this record; if the registrar
-/// needs an <c>if</c> on which client it has, the difference belongs here instead.
+/// ⚠️ <b>Narrowed 2026-10-03, with the switch to RegisterAI (Q332).</b> How each
+/// client is found, asked and written to is RegisterAI's now, so the members that
+/// said so are gone: the client search, the add and remove arguments, the readers and
+/// what each client's exit codes mean. What stays is what makes the client
+/// BrowserAI's to talk about: its name and key, RegisterAI's id for it, the command a
+/// project file is given, the line a person can run by hand, and the sentences a
+/// person reads after a change. <i>Previously this record carried every per-client
+/// difference the registrar acted on.</i>
 /// </para>
 /// </remarks>
 internal sealed record RegistrationClient
@@ -42,38 +46,8 @@ internal sealed record RegistrationClient
     /// <summary>RegisterAI's id for this client, as its <c>--client</c> option and its documents spell it.</summary>
     public required string ToolId { get; init; }
 
-    /// <summary>The executable, by file name only.</summary>
+    /// <summary>The client's executable, by file name, for a sentence.</summary>
     public required string Executable { get; init; }
-
-    /// <summary>The server key this client is given.</summary>
-    public required string ServerName { get; init; }
-
-    /// <summary>How long one call gets.</summary>
-    public required TimeSpan Budget { get; init; }
-
-    /// <summary>Where the client is, or null when no shape found it.</summary>
-    public required Func<IRegistrationCommand, string?> Locate { get; init; }
-
-    /// <summary>What to say when it was not found, naming every place that was looked.</summary>
-    public required Func<string, string> NotFoundDetail { get; init; }
-
-    /// <summary>The arguments that register at user scope.</summary>
-    public required Func<string, IReadOnlyList<string>> AddArguments { get; init; }
-
-    /// <summary>The arguments that unregister at user scope.</summary>
-    public required Func<IReadOnlyList<string>> RemoveArguments { get; init; }
-
-    /// <summary>What is registered at user scope, and whose it is.</summary>
-    /// <remarks>
-    /// ⚠️ <b>The client path is nullable, and that is not tidiness -- 2026-09-24.</b>
-    /// Claude Code's reading is a file this product opens, so it answers with or
-    /// without a client on the machine. Codex's reading IS the client, so with no
-    /// binary there is nothing to ask and the honest answer is <i>unknown</i>,
-    /// never <i>nothing is registered</i>. The configuration window reads
-    /// this for every client whether or not it found one, so the difference has
-    /// to be expressible here.
-    /// </remarks>
-    public required Func<IRegistrationCommand, string?, string?, RegistrationView> UserView { get; init; }
 
     /// <summary>
     /// The sentence a person is told after a registration changed, in this
@@ -106,38 +80,86 @@ internal sealed record RegistrationClient
     /// <remarks>
     /// <b>One member, two uses:</b> it is what a dialog names to a person, and it
     /// is the marker an upward walk looks for to decide whether a folder carries
-    /// a project registration at all. A second member for the second use would be
-    /// two answers to <i>where does this client keep it</i>.
+    /// a project registration at all.
     /// </remarks>
     public required string ProjectFileName { get; init; }
 
     /// <summary>
-    /// What a project file for this install says, and the sentence a person is
-    /// told about it: from the server's absolute path and the install root.
+    /// What a project file for this install says, and the sentence that goes with it
+    /// when the spelling alone decides it: from the server's absolute path and the
+    /// install root.
     /// </summary>
     /// <remarks>
-    /// <para>
     /// ⚠️ <b>Per client because only one of them expands a variable in a server
     /// command.</b> Claude Code expands <c>${VAR}</c> inside <c>.mcp.json</c>, which
-    /// is the only reason <see cref="McpClientRegistration.PortableCommandFor"/> is
-    /// usable, and it is written when it expands to this install. <b>Codex expands
-    /// nothing</b>: <c>${LOCALAPPDATA}</c>, <c>$LOCALAPPDATA</c>,
-    /// <c>%LOCALAPPDATA%</c> and <c>~</c> started nothing in 48 attempts, and its
-    /// launcher resolves the configured text with <c>which</c> and starts it as it
-    /// is (measured and read 2026-09-24,
-    /// <c>docs/evidence/2026-09-24-codex-expansion</c>).
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>So a Codex project entry names <c>BrowserAI.Server.exe</c> alone and
-    /// never an absolute path -- Q294, the maintainer's words verbatim:
-    /// <i>"Q294 b"</i>.</b> <i>Corrected 2026-09-24 (previously "So a Codex project
-    /// entry carries this machine's absolute path, and the window says so").</i>
-    /// Codex finds the name on the PATH it hands the server, and the install puts its
-    /// own folder there (<see cref="UserPath"/>); the sentence says which file the
-    /// name finds today.
-    /// </para>
+    /// is the only reason <see cref="PortableCommandFor"/> is usable, and it is
+    /// written when it expands to this install. <b>Codex expands nothing</b>:
+    /// <c>${LOCALAPPDATA}</c>, <c>$LOCALAPPDATA</c>, <c>%LOCALAPPDATA%</c> and
+    /// <c>~</c> started nothing in 48 attempts (measured and read 2026-09-24,
+    /// <c>docs/evidence/2026-09-24-codex-expansion</c>), so by Q294, the maintainer's
+    /// words verbatim <i>"Q294 b"</i>, a Codex project entry names
+    /// <c>BrowserAI.Server.exe</c> alone, found on the PATH the install puts its own
+    /// folder on (<see cref="UserPath"/>).
     /// </remarks>
     public required Func<string, string?, ProjectCommand> ProjectCommandFor { get; init; }
+
+    /// <summary>
+    /// The sentence that follows a project registration once RegisterAI has said which
+    /// file the entry resolves to, or <see langword="null"/>: from this install's server
+    /// and that file.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-03.</b> Codex's sentence names what its bare name finds on the
+    /// PATH, which BrowserAI used to look up itself and RegisterAI now reports as
+    /// <c>resolvesTo</c>.
+    /// </remarks>
+    public required Func<string, string?, string?> ProjectNoteAfter { get; init; }
+
+    /// <summary>The line a person can run by hand, from the command to register.</summary>
+    public required Func<string, string> ManualCommandFor { get; init; }
+
+    /// <summary>Claude Code, the client this product was written against first.</summary>
+    public static RegistrationClient ClaudeCode { get; } = new()
+    {
+        DisplayName = "Claude Code",
+        Key = "claude-code",
+        ToolId = "claude-code",
+        Executable = "claude.exe",
+        RestartHint =
+            "Claude Code reads its MCP configuration when a session starts. Sessions already open will not see this change until they are restarted.",
+        ProjectHint =
+            "Claude Code will ask you to approve this server the first time you open a session in that folder.",
+        ProjectFileName = ".mcp.json",
+        ProjectCommandFor = ClaudeProjectCommandFor,
+        ProjectNoteAfter = (_, _) => null,
+        ManualCommandFor = command => $"claude mcp add {McpRegistrar.ServerName} --scope user -- \"{command}\"",
+    };
+
+    /// <summary>Codex, added 2026-09-24.</summary>
+    public static RegistrationClient Codex { get; } = new()
+    {
+        DisplayName = "Codex",
+        Key = "codex",
+        ToolId = "codex",
+        Executable = "codex.exe",
+        RestartHint =
+            "Codex does not pick up this change in a thread that is already open. Start a new thread to use it.",
+        ProjectHint =
+            "Codex reads a project's own configuration only in a project you have trusted, so this entry does nothing in a folder Codex has not been trusted in.",
+        ProjectFileName = Path.Combine(".codex", "config.toml"),
+        ProjectCommandFor = (_, _) => new ProjectCommand(RegistrationTarget.ServerFileName, null),
+        ProjectNoteAfter = CodexProjectNote,
+        ManualCommandFor = command => $"codex mcp add {McpRegistrar.ServerName} -- \"{command}\"",
+    };
+
+    /// <summary>Both clients, in the order a report lists them.</summary>
+    /// <remarks>
+    /// <b>Claude Code first, because it is the one the product was written against
+    /// and the one whose absence used to mean the product was unusable.</b> The
+    /// order is stable so that a record on disk and a dialog read the same way, and
+    /// it is RegisterAI's order too.
+    /// </remarks>
+    public static IReadOnlyList<RegistrationClient> All { get; } = [ClaudeCode, Codex];
 
     /// <summary>The project registration's file, under a named repository.</summary>
     /// <param name="projectDirectory">The repository root.</param>
@@ -149,126 +171,87 @@ internal sealed record RegistrationClient
         return Path.Combine(projectDirectory, ProjectFileName);
     }
 
-    /// <summary>Whether an add that failed means it was already there.</summary>
-    public required Func<int, string, bool> MeansAlreadyRegistered { get; init; }
-
-    /// <summary>Whether a remove that failed means there was nothing to remove.</summary>
-    public required Func<int, string, bool> MeansNothingToRemove { get; init; }
-
-    /// <summary>The line a person can run by hand.</summary>
-    public required Func<string, string> ManualCommandFor { get; init; }
+    /// <summary>
+    /// The portable form of an installed server's path, for a committed
+    /// <c>.mcp.json</c>.
+    /// </summary>
+    /// <param name="packId">The Velopack pack id, which is the install folder.</param>
+    /// <returns>The command, with the environment reference unexpanded.</returns>
+    /// <remarks>
+    /// <para>
+    /// <b>Claude Code expands <c>${VAR}</c> inside <c>.mcp.json</c> and this is the
+    /// only reason the form is usable.</b> A committed absolute path under one
+    /// person's user profile is wrong on every teammate's machine and right on exactly
+    /// one, which makes committing it worse than committing nothing.
+    /// </para>
+    /// <para>
+    /// <b>Forward slashes</b>, because JSON is where this lands and a backslash is an
+    /// escape there; the client and Windows both accept them. <i>Moved here 2026-10-03
+    /// from <c>McpClientRegistration</c>, unchanged.</i>
+    /// </para>
+    /// </remarks>
+    public static string PortableCommandFor(string packId) =>
+        $"${{LOCALAPPDATA}}/{packId}/{RegistrationTarget.CurrentDirectoryName}/{RegistrationTarget.ServerFileName}";
 
     /// <summary>
-    /// How the client is told which scope to write, when that is not a flag.
+    /// What a Claude Code project file is given: the portable spelling when it
+    /// expands to this install, and the absolute path with the reason otherwise.
     /// </summary>
+    /// <param name="server">This install's server, absolute.</param>
+    /// <param name="installRoot">This install's root, or <see langword="null"/>.</param>
+    /// <returns>The command and the sentence.</returns>
     /// <remarks>
-    /// ⚠️ <b>The two clients answer this differently and that is the only place the
-    /// difference lives.</b> Claude Code takes <c>--scope project</c> and is run in
-    /// the repository; Codex takes no scope at all and writes whatever
-    /// <c>CODEX_HOME</c> points at. So a project registration is
-    /// <see cref="ProjectAddArguments"/> plus <see cref="ProjectEnvironment"/> plus
-    /// <see cref="ProjectWorkingDirectory"/>, and a client that does not use one of
-    /// the three returns nothing for it.
+    /// ⚠️ <b>The portable form is only written when it expands to the install this
+    /// process is running out of.</b> A non-default install root -- <c>Setup.exe</c>
+    /// with an install-to argument -- does not sit under <c>%LOCALAPPDATA%</c>, and
+    /// writing this form there would commit a path that resolves to nothing on the
+    /// very machine that wrote it.
     /// </remarks>
-    public required Func<string, string, IReadOnlyList<string>> ProjectAddArguments { get; init; }
-
-    /// <summary>The arguments that unregister from a repository.</summary>
-    public required Func<string, IReadOnlyList<string>> ProjectRemoveArguments { get; init; }
-
-    /// <summary>The environment a repository-scoped call runs under.</summary>
-    public required Func<string, IReadOnlyDictionary<string, string>> ProjectEnvironment { get; init; }
-
-    /// <summary>Where a repository-scoped call runs, or null for the profile.</summary>
-    public required Func<string, string?> ProjectWorkingDirectory { get; init; }
-
-    /// <summary>What must exist before a repository-scoped call, or null.</summary>
-    /// <remarks>
-    /// Codex refuses to write into a <c>CODEX_HOME</c> that does not exist, and
-    /// Claude Code needs nothing. Named and not inferred, because creating a
-    /// directory in somebody's repository is an act and not a detail.
-    /// </remarks>
-    public required Func<string, string?> ProjectDirectoryToCreate { get; init; }
-
-    /// <summary>What the client leaves behind in a repository, to be removed.</summary>
-    public required Func<string, string?> ProjectResidue { get; init; }
-
-    /// <summary>What is registered in a repository, and whose it is.</summary>
-    public required Func<IRegistrationCommand, string, string, string?, RegistrationView> ProjectView { get; init; }
-
-    /// <summary>Claude Code, the client this product was written against first.</summary>
-    public static RegistrationClient ClaudeCode { get; } = new()
+    public static ProjectCommand ClaudeProjectCommandFor(string server, string? installRoot)
     {
-        DisplayName = "Claude Code",
-        Key = "claude-code",
-        ToolId = "claude-code",
-        Executable = McpClientRegistration.ClientExecutable,
-        ServerName = McpClientRegistration.ServerName,
-        Budget = McpClientRegistration.Budget,
-        Locate = commands => commands.Locate(McpClientRegistration.ClientExecutable),
-        NotFoundDetail = command =>
-            $"No '{McpClientRegistration.ClientExecutable}' was found on PATH or at '{ClientCommandLine.FallbackDirectory}', so BrowserAI has not registered itself with anything. "
-            + $"Install the client and run: {McpClientRegistration.ManualCommandFor(command)}",
-        AddArguments = McpClientRegistration.AddArguments,
-        RemoveArguments = McpClientRegistration.RemoveArguments,
-        UserView = (_, _, installRoot) => McpRegistryView.User(installRoot),
-        RestartHint =
-            "Claude Code reads its MCP configuration when a session starts. Sessions already open will not see this change until they are restarted.",
-        ProjectHint =
-            "Claude Code will ask you to approve this server the first time you open a session in that folder.",
-        ProjectFileName = McpRegistryView.ProjectConfigFileName,
-        ProjectCommandFor = McpClientRegistration.ProjectCommandFor,
-        MeansAlreadyRegistered = McpClientRegistration.MeansAlreadyRegistered,
-        MeansNothingToRemove = McpClientRegistration.MeansNothingToRemove,
-        ManualCommandFor = McpClientRegistration.ManualCommandFor,
-        ProjectAddArguments = (command, _) => McpClientRegistration.AddArguments(command, McpClientRegistration.ProjectScope),
-        ProjectRemoveArguments = _ => McpClientRegistration.RemoveArguments(McpClientRegistration.ProjectScope),
-        ProjectEnvironment = _ => new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
-        ProjectWorkingDirectory = project => project,
-        ProjectDirectoryToCreate = _ => null,
-        ProjectResidue = _ => null,
-        ProjectView = (_, _, project, installRoot) => McpRegistryView.Project(project, installRoot),
-    };
+        ArgumentException.ThrowIfNullOrWhiteSpace(server);
 
-    /// <summary>Codex, added 2026-09-24.</summary>
-    public static RegistrationClient Codex { get; } = new()
-    {
-        DisplayName = "Codex",
-        Key = "codex",
-        ToolId = "codex",
-        Executable = CodexRegistration.ClientExecutable,
-        ServerName = CodexRegistration.ServerName,
-        Budget = CodexRegistration.Budget,
-        Locate = CodexRegistration.Locate,
-        NotFoundDetail = CodexRegistration.NotFoundDetail,
-        AddArguments = CodexRegistration.AddArguments,
-        RemoveArguments = CodexRegistration.RemoveArguments,
-        UserView = (commands, client, installRoot) => client is { Length: > 0 }
-            ? CodexRegistryView.Read(commands, client, installRoot, home: null, RegistrationScope.User)
-            : CodexRegistryView.WithoutAClient(RegistrationScope.User, home: null),
-        RestartHint =
-            "Codex does not pick up this change in a thread that is already open. Start a new thread to use it.",
-        ProjectHint =
-            "Codex reads a project's own configuration only in a project you have trusted, so this entry does nothing in a folder Codex has not been trusted in.",
-        ProjectFileName = Path.Combine(CodexRegistration.ProjectDirectoryName, CodexRegistration.ConfigFileName),
-        ProjectCommandFor = CodexRegistration.ProjectCommandFor,
-        MeansAlreadyRegistered = CodexRegistration.MeansAlreadyRegistered,
-        MeansNothingToRemove = CodexRegistration.MeansNothingToRemove,
-        ManualCommandFor = CodexRegistration.ManualCommandFor,
-        ProjectAddArguments = (command, _) => CodexRegistration.AddArguments(command),
-        ProjectRemoveArguments = _ => CodexRegistration.RemoveArguments(),
-        ProjectEnvironment = project => CodexRegistryView.Environment(CodexRegistration.ProjectHome(project)),
-        ProjectWorkingDirectory = _ => null,
-        ProjectDirectoryToCreate = CodexRegistration.ProjectHome,
-        ProjectResidue = project => Path.Combine(CodexRegistration.ProjectHome(project), CodexRegistration.ProjectResidue),
-        ProjectView = (commands, client, project, installRoot) =>
-            CodexRegistryView.ReadProject(commands, client, installRoot, CodexRegistration.ProjectHome(project)),
-    };
+        var folder = installRoot is { Length: > 0 } root
+            ? Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+            : "BrowserAI.app";
 
-    /// <summary>Both clients, in the order a report lists them.</summary>
+        var expanded = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
+            folder,
+            RegistrationTarget.CurrentDirectoryName,
+            RegistrationTarget.ServerFileName);
+
+        return string.Equals(Path.GetFullPath(expanded), Path.GetFullPath(server), StringComparison.OrdinalIgnoreCase)
+            ? new ProjectCommand(PortableCommandFor(folder), null)
+            : new ProjectCommand(
+                server,
+                "This install is not at its default location, so the entry carries its absolute path and will not resolve on another machine.");
+    }
+
+    /// <summary>
+    /// What a person is told after a Codex project registration: that the entry names
+    /// the server alone, and which file that name finds on the PATH.
+    /// </summary>
+    /// <param name="server">This install's server, absolute.</param>
+    /// <param name="found">The file the bare name resolves to, as RegisterAI reported it, or <see langword="null"/>.</param>
+    /// <returns>The sentence.</returns>
     /// <remarks>
-    /// <b>Claude Code first, because it is the one the product was written against
-    /// and the one whose absence used to mean the product was unusable.</b> The
-    /// order is stable so that a record on disk and a dialog read the same way.
+    /// <b>The sentence names what the name finds, and that it may take a restart</b>:
+    /// a Codex process started before the install carries a PATH without the folder,
+    /// which follows from how the launcher builds the server's environment and was not
+    /// measured. <i>Moved here 2026-10-03 from <c>CodexRegistration.ProjectCommandGiven</c>,
+    /// with its wording unchanged.</i>
     /// </remarks>
-    public static IReadOnlyList<RegistrationClient> All { get; } = [ClaudeCode, Codex];
+    public static string CodexProjectNote(string server, string? found)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(server);
+
+        const string How = "The entry names BrowserAI.Server.exe and no folder, because Codex expands no variable in a command; Codex finds it on the PATH it gives the server.";
+
+        return found is null
+            ? $"{How} No folder on your PATH holds one yet. BrowserAI's installer puts its own there, so install BrowserAI on this machine, or put the folder that holds it on your PATH."
+            : string.Equals(Path.GetFullPath(found), Path.GetFullPath(server), StringComparison.OrdinalIgnoreCase)
+                ? $"{How} It finds this install. A Codex that was already running before BrowserAI was installed may need to be restarted to see it."
+                : $"{How} The first one on your PATH is '{found}', which is not this install.";
+    }
 }

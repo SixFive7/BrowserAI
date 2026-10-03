@@ -18,11 +18,19 @@ namespace BrowserAI.Tests;
 /// <remarks>
 /// <para>
 /// <b>Two layers, and the split is the whole design.</b> Everything above
-/// <see cref="IRegistrationCommand"/> runs against a double, because a Velopack
-/// fast-exit hook is a context no test host can enter -- the same reason the
-/// update lane is driven through <c>IUpdateClient</c>. What only the real client
-/// can answer is asked of the real client, in the same run, against a
+/// <see cref="IRegisterAi"/> runs against <see cref="FakeRegisterAi"/>, because a
+/// Velopack fast-exit hook is a context no test host can enter -- the same reason the
+/// update lane is driven through <c>IUpdateClient</c>. What only the real tool and the
+/// real clients can answer is asked of them, in the same run, against a
 /// <b>scratch configuration directory</b>.
+/// </para>
+/// <para>
+/// <b>Since 2026-10-03 the registering is RegisterAI's</b>, and its own suite holds what
+/// it does against each client: the wording, the exit codes, the readers and the
+/// search. <i>Previously the layer below the seam was each client's own command line,
+/// and this class held the decisions above it against a double of each client; those
+/// arms moved to RegisterAI with the code, and <see cref="RegisterAiTests"/> holds
+/// what BrowserAI makes of RegisterAI's answers.</i>
 /// </para>
 /// <para>
 /// ⚠️ <b>Nothing here may touch the maintainer's own MCP configuration, and that
@@ -62,6 +70,16 @@ internal sealed class RegistrationTests
     /// registration testable without writing into the user's own file.
     /// </summary>
     internal const string ConfigDirectoryVariable = "CLAUDE_CONFIG_DIR";
+
+    /// <summary>
+    /// The variable that moves Codex's configuration, which is what makes a real
+    /// Codex registration testable without writing into the user's own.
+    /// </summary>
+    /// <remarks>
+    /// <i>Here since 2026-10-03; it was <c>CodexRegistration.HomeVariable</c>, which
+    /// went with the switch to RegisterAI.</i>
+    /// </remarks>
+    internal const string CodexHomeVariable = "CODEX_HOME";
 
     /// <summary>The file the client keeps its user-scoped configuration in.</summary>
     private const string ConfigFileName = ".claude.json";
@@ -216,487 +234,7 @@ internal sealed class RegistrationTests
         await Assert.That(shouting!.InstallRoot).IsEqualTo(shoutingInstall.Path);
     }
 
-    // ---- Idempotence, which the client does not supply ----------------------
-
-    /// <summary>
-    /// Install, update, repair and reinstall converge on exactly one
-    /// registration.
-    /// </summary>
-    /// <remarks>
-    /// <b>The client's <c>add</c> is not idempotent</b> -- measured 2026-08-16 @
-    /// 2.1.233, a second one exits 1 -- so this property belongs to BrowserAI and
-    /// is asserted here over a double that models exactly that behaviour.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task InstallUpdateRepairAndReinstallProduceExactlyOneRegistration()
-    {
-        var client = new FakeClientCommandLine();
-        var (logger, _) = Capture();
-
-        // A real layout on disk, because the command is composed from it and
-        // checked against it now. Everything else here is still a double.
-        using var install = ScratchDirectory.Create("registration-idempotence");
-        var command = InstalledLayout.Create(install.Path);
-
-        // ⚠️ The update reads what the DOUBLE holds, 2026-09-15. Without the
-        // seam it reads the real client's own configuration file, and this arm
-        // would then pass or fail on what the machine happens to have
-        // registered. It is not a question this arm is asking.
-        var seen = WhatTheDoubleHolds(client);
-
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger, seen).Status)
-            .IsEqualTo(RegistrationStatus.Registered);
-
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, client, logger, seen).Status)
-            .IsEqualTo(RegistrationStatus.AlreadyRegistered);
-
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger, seen).Status)
-            .IsEqualTo(RegistrationStatus.Registered);
-
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, client, logger, seen).Status)
-            .IsEqualTo(RegistrationStatus.AlreadyRegistered);
-
-        await Assert.That(client.Registered.Count).IsEqualTo(1);
-
-        // The SERVER, not the app the hook ran as. `command` is the image path
-        // a hook is handed; what a client is given is its sibling.
-        await Assert.That(client.Registered[McpClientRegistration.ServerName])
-            .IsEqualTo(InstalledLayout.ServerIn(install.Path));
-    }
-
-    /// <summary>
-    /// An install re-points a registration of ours; an update leaves one alone;
-    /// neither touches one that is not ours.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The only judgement that differs between the two intents, and both
-    /// directions cost something real.</b> Re-pointing on every update would
-    /// silently delete arguments a user added to their own registration;
-    /// never re-pointing would leave a stale path after a
-    /// <c>Setup.exe --installto</c> elsewhere, which is a registration that
-    /// launches nothing.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>Widened 2026-09-16</b> <i>(previously "An install re-points an
-    /// existing registration", asserted over an entry outside this install
-    /// root).</i> <b>Existing</b> was doing two jobs in that sentence. An entry
-    /// under this install root is ours and is re-pointed; an entry anywhere else
-    /// is another BrowserAI's, and an install that re-pointed it was one product
-    /// overwriting another's configuration. Both halves are asserted here now,
-    /// and the wider statement of the rule is
-    /// <see cref="NeitherAnInstallNorAnUninstallTouchesAnEntryThisInstallDidNotWrite"/>.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AnInstallRePointsAStaleRegistrationAndAnUpdateNeverOverwritesOne()
-    {
-        var client = new FakeClientCommandLine();
-        var (logger, _) = Capture();
-
-        using var install = ScratchDirectory.Create("registration-moved");
-
-        // A path that no longer exists, which is exactly what an entry written
-        // by an older install looks like after the binary moved.
-        const string Stale = @"C:\somewhere\old\current\BrowserAI.Server.exe";
-        client.Registered[McpClientRegistration.ServerName] = Stale;
-
-        var app = InstalledLayout.Create(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
-
-        // ⚠️ An update leaves it alone, and since 2026-09-15 it SAYS WHY
-        // instead of reporting it as already registered: this path is not under
-        // this install root, so it belongs to another BrowserAI and is reported
-        // with its location. Untouched either way, which is the property the
-        // name of this arm is about.
-        var update = McpRegistrar.Apply(RegistrationIntent.Update, app, client, logger, WhatTheDoubleHolds(client));
-
-        await Assert.That(update.Status).IsEqualTo(RegistrationStatus.Refused);
-        await Assert.That(update.Detail).Contains("Another BrowserAI is registered at");
-        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(Stale);
-
-        // ⚠️ AND SO DOES AN INSTALL, since 2026-09-16. *Corrected 2026-09-16
-        // (previously this asserted `Registered` and that the entry had been
-        // re-pointed at `server`.)* That WAS the behaviour and it was the defect:
-        // `Reassert` ran `mcp remove` and then `mcp add` without reading anything,
-        // so installing this BrowserAI deleted another BrowserAI's registration
-        // and wrote its own over the top. The re-pointing half of this arm's name
-        // is asserted below, where the entry really is ours.
-        var refusedInstall = McpRegistrar.Apply(RegistrationIntent.Install, app, client, logger, WhatTheDoubleHolds(client));
-
-        await Assert.That(refusedInstall.Status).IsEqualTo(RegistrationStatus.Refused);
-        await Assert.That(refusedInstall.Detail).Contains("Another BrowserAI is registered at");
-        await Assert.That(client.Registered[McpClientRegistration.ServerName]).IsEqualTo(Stale);
-
-        // Nothing ran on either intent, because both refused.
-        await Assert.That(client.Verbs).IsEmpty();
-
-        // ---- and the re-pointing this arm is named for, over an entry that IS
-        // ours: same install root, a file that is no longer there.
-        var ours = new FakeClientCommandLine();
-        var gone = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.old");
-
-        ours.Registered[McpClientRegistration.ServerName] = gone;
-
-        await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, app, ours, logger, WhatTheDoubleHolds(ours)).Status)
-            .IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(ours.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
-
-        // An install removes before it adds.
-        await Assert.That(ours.Verbs).IsEquivalentTo(RemoveAdd);
-    }
-
-    /// <summary>
-    /// The update hook repairs an entry of ours that has gone stale, leaves one
-    /// that still resolves exactly as it is, and never touches a foreign one.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The three arms are the three states an update can meet</b>, and only
-    /// one of them writes. Each is constructed, not provoked: what is
-    /// registered already is handed in, so the arm is about the judgement and
-    /// not about a file the client happens to have.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>The foreign arm is the one that would be cheapest to get wrong.</b>
-    /// An entry named <c>browserai</c> pointing outside this install root is
-    /// another BrowserAI, and an update that adopted it would be one product
-    /// silently re-pointing another's configuration. It is reported with the
-    /// path, and the verb list proves nothing ran.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AnUpdateRepairsOurOwnStaleEntryAndLeavesEveryOtherKindAlone()
-    {
-        using var install = ScratchDirectory.Create("registration-repair");
-
-        var app = InstalledLayout.Create(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
-        var (logger, log) = Capture();
-
-        // ---- ours, and the file it names is gone: re-pointed ----------------
-        var stale = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.old");
-        var repairing = new FakeClientCommandLine();
-        repairing.Registered[McpClientRegistration.ServerName] = stale;
-
-        var repaired = McpRegistrar.Apply(
-            RegistrationIntent.Update, app, repairing, logger,
-            root => new RegistrationView(
-                RegistrationScope.User, "<constructed>", stale, McpRegistryView.Classify(stale, root), null));
-
-        await Assert.That(repaired.Status).IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(repairing.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
-        await Assert.That(log.Records.Any(record => record.Message.Contains("Repaired the MCP registration", StringComparison.Ordinal))).IsTrue();
-
-        // ---- ours, and it still resolves: untouched, arguments and all ------
-        var keeping = new FakeClientCommandLine();
-        keeping.Registered[McpClientRegistration.ServerName] = server;
-
-        var kept = McpRegistrar.Apply(
-            RegistrationIntent.Update, app, keeping, logger,
-            root => new RegistrationView(
-                RegistrationScope.User, "<constructed>", server, McpRegistryView.Classify(server, root), null));
-
-        await Assert.That(kept.Status).IsEqualTo(RegistrationStatus.AlreadyRegistered);
-        await Assert.That(keeping.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
-        await Assert.That(keeping.Verbs).IsEmpty();
-
-        // ---- ours, present, and the CONFIGURATION APP: re-pointed ----------
-        // ⚠️ Added 2026-09-16. This is the state every pre-split 1.0.0 install
-        // is in, and it is the one the update hook used to leave alone: the
-        // entry names `current\BrowserAI.exe`, which is there, and which is now
-        // the window and not the server. A client that starts it gets a
-        // dialog and no handshake.
-        var misdirecting = new FakeClientCommandLine();
-        misdirecting.Registered[McpClientRegistration.ServerName] = app;
-
-        var corrected = McpRegistrar.Apply(
-            RegistrationIntent.Update, app, misdirecting, logger,
-            root => new RegistrationView(
-                RegistrationScope.User, "<constructed>", app, McpRegistryView.Classify(app, root), null));
-
-        await Assert.That(corrected.Status).IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(misdirecting.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
-
-        // ---- somebody else's: reported, and nothing runs --------------------
-        using var elsewhere = ScratchDirectory.Create("registration-repair-foreign");
-
-        _ = InstalledLayout.Create(elsewhere.Path);
-
-        var theirs = InstalledLayout.ServerIn(elsewhere.Path);
-        var foreignClient = new FakeClientCommandLine();
-        foreignClient.Registered[McpClientRegistration.ServerName] = theirs;
-
-        var foreign = McpRegistrar.Apply(
-            RegistrationIntent.Update, app, foreignClient, logger,
-            root => new RegistrationView(
-                RegistrationScope.User, "<constructed>", theirs, McpRegistryView.Classify(theirs, root), null));
-
-        await Assert.That(foreign.Status).IsEqualTo(RegistrationStatus.Refused);
-        await Assert.That(foreign.Detail).Contains("Another BrowserAI is registered at");
-        await Assert.That(foreign.Detail).Contains(theirs);
-        await Assert.That(foreignClient.Registered[McpClientRegistration.ServerName]).IsEqualTo(theirs);
-        await Assert.That(foreignClient.Verbs).IsEmpty();
-    }
-
-    /// <summary>
-    /// A configuration file that cannot be read is never reported as nothing
-    /// being registered.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AnUnreadableConfigurationIsNotReadAsNothingRegistered()
-    {
-        using var install = ScratchDirectory.Create("registration-unreadable");
-
-        var app = InstalledLayout.Create(install.Path);
-        var client = new FakeClientCommandLine();
-        var (logger, _) = Capture();
-
-        var report = McpRegistrar.Apply(
-            RegistrationIntent.Update, app, client, logger,
-            _ => new RegistrationView(
-                RegistrationScope.User,
-                "<constructed>",
-                null,
-                RegistrationOwnership.Absent,
-                "'<constructed>' is not readable JSON, so what is registered there is unknown."));
-
-        await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Refused);
-        await Assert.That(report.Detail).Contains("unknown");
-        await Assert.That(client.Verbs).IsEmpty();
-    }
-
-    /// <summary>
-    /// An install and an uninstall refuse a foreign entry the way an update
-    /// does, and behave exactly as they did over every other state.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Added 2026-09-16, after a review found the ownership check on one
-    /// intent out of three.</b> <c>Repair</c> read the client's file and refused
-    /// what it did not write; <c>Reassert</c> (the install hook) ran
-    /// <c>mcp remove</c> and then <c>mcp add</c> with no check at all, and
-    /// <c>Remove</c> (the uninstall hook) ran <c>mcp remove</c> unconditionally.
-    /// So installing BrowserAI <b>overwrote</b> another BrowserAI's registration
-    /// and uninstalling it <b>deleted</b> one -- which is the exact thing
-    /// <see cref="RegistrationOwnership"/>'s own summary, <c>AppState.MayRemove</c>
-    /// and the registration row in <c>DECISIONS.md</c> all say this product never
-    /// does. Those three sentences were kept true, not narrowed.
-    /// </para>
-    /// <para>
-    /// <b>Over constructed inputs, like the update arm above.</b> What is
-    /// registered already is handed in, so each arm is about the judgement and
-    /// not about whatever the machine's own <c>~/.claude.json</c> holds.
-    /// </para>
-    /// <para>
-    /// <b>The states that must NOT have changed are asserted beside the one that
-    /// did</b> -- absent, ours-and-present and ours-and-stale all still reassert
-    /// on install and still unregister on uninstall. A refusal that fired on
-    /// everything would satisfy the foreign arm alone.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task NeitherAnInstallNorAnUninstallTouchesAnEntryThisInstallDidNotWrite()
-    {
-        using var install = ScratchDirectory.Create("registration-ownership");
-        using var elsewhere = ScratchDirectory.Create("registration-ownership-foreign");
-
-        var app = InstalledLayout.Create(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
-
-        _ = InstalledLayout.Create(elsewhere.Path);
-
-        var theirs = InstalledLayout.ServerIn(elsewhere.Path);
-        var (logger, _) = Capture();
-
-        // ---- somebody else's, on install: reported, and nothing runs --------
-        var installing = new FakeClientCommandLine();
-        installing.Registered[McpClientRegistration.ServerName] = theirs;
-
-        var overwritten = McpRegistrar.Apply(
-            RegistrationIntent.Install, app, installing, logger, WhatTheDoubleHolds(installing));
-
-        await Assert.That(overwritten.Status).IsEqualTo(RegistrationStatus.Refused);
-        await Assert.That(overwritten.Detail).Contains("Another BrowserAI is registered at");
-        await Assert.That(overwritten.Detail).Contains(theirs);
-        await Assert.That(overwritten.Command).IsEqualTo(theirs);
-        await Assert.That(overwritten.IsWhatWasAskedFor).IsFalse();
-        await Assert.That(installing.Registered[McpClientRegistration.ServerName]).IsEqualTo(theirs);
-        await Assert.That(installing.Verbs).IsEmpty();
-
-        // ---- somebody else's, on uninstall: the same ------------------------
-        var uninstalling = new FakeClientCommandLine();
-        uninstalling.Registered[McpClientRegistration.ServerName] = theirs;
-
-        var spared = McpRegistrar.Apply(
-            RegistrationIntent.Uninstall, app, uninstalling, logger, WhatTheDoubleHolds(uninstalling));
-
-        await Assert.That(spared.Status).IsEqualTo(RegistrationStatus.Refused);
-        await Assert.That(spared.Detail).Contains("Another BrowserAI is registered at");
-        await Assert.That(spared.Detail).Contains(theirs);
-        await Assert.That(spared.Command).IsEqualTo(theirs);
-        await Assert.That(spared.IsWhatWasAskedFor).IsFalse();
-        await Assert.That(uninstalling.Registered[McpClientRegistration.ServerName]).IsEqualTo(theirs);
-        await Assert.That(uninstalling.Verbs).IsEmpty();
-
-        // ---- nothing registered: an install still adds ----------------------
-        var fresh = new FakeClientCommandLine();
-
-        await Assert.That(McpRegistrar.Apply(
-            RegistrationIntent.Install, app, fresh, logger, WhatTheDoubleHolds(fresh)).Status)
-            .IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(fresh.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
-        await Assert.That(fresh.Verbs).IsEquivalentTo(RemoveAdd);
-
-        // ---- ours and present: an install still reasserts -------------------
-        var ours = new FakeClientCommandLine();
-        ours.Registered[McpClientRegistration.ServerName] = server;
-
-        await Assert.That(McpRegistrar.Apply(
-            RegistrationIntent.Install, app, ours, logger, WhatTheDoubleHolds(ours)).Status)
-            .IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(ours.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
-        await Assert.That(ours.Verbs).IsEquivalentTo(RemoveAdd);
-
-        // ---- ours and stale: an install still re-points ---------------------
-        var staleCommand = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.old");
-        var stale = new FakeClientCommandLine();
-        stale.Registered[McpClientRegistration.ServerName] = staleCommand;
-
-        await Assert.That(McpRegistrar.Apply(
-            RegistrationIntent.Install, app, stale, logger, WhatTheDoubleHolds(stale)).Status)
-            .IsEqualTo(RegistrationStatus.Registered);
-        await Assert.That(stale.Registered[McpClientRegistration.ServerName]).IsEqualTo(server);
-
-        // ---- ours and present: an uninstall still removes -------------------
-        var removing = new FakeClientCommandLine();
-        removing.Registered[McpClientRegistration.ServerName] = server;
-
-        await Assert.That(McpRegistrar.Apply(
-            RegistrationIntent.Uninstall, app, removing, logger, WhatTheDoubleHolds(removing)).Status)
-            .IsEqualTo(RegistrationStatus.Unregistered);
-        await Assert.That(removing.Registered.ContainsKey(McpClientRegistration.ServerName)).IsFalse();
-
-        // ---- nothing registered: an uninstall says so -----------------------
-        var nothing = new FakeClientCommandLine();
-
-        await Assert.That(McpRegistrar.Apply(
-            RegistrationIntent.Uninstall, app, nothing, logger, WhatTheDoubleHolds(nothing)).Status)
-            .IsEqualTo(RegistrationStatus.NothingToUnregister);
-
-        // ---- and a file nobody could read acts on nothing, either way -------
-        foreach (var intent in new[] { RegistrationIntent.Install, RegistrationIntent.Uninstall })
-        {
-            var blind = new FakeClientCommandLine();
-            blind.Registered[McpClientRegistration.ServerName] = server;
-
-            var refused = McpRegistrar.Apply(
-                intent, app, blind, logger,
-                _ => new RegistrationView(
-                    RegistrationScope.User,
-                    "<constructed>",
-                    null,
-                    RegistrationOwnership.Absent,
-                    "'<constructed>' is not readable JSON, so what is registered there is unknown."));
-
-            await Assert.That(refused.Status).IsEqualTo(RegistrationStatus.Refused);
-            await Assert.That(refused.Detail).Contains("unknown");
-            await Assert.That(blind.Verbs).IsEmpty();
-        }
-    }
-
-    /// <summary>
-    /// The four states the reader reports, over files it wrote itself.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheReaderTellsAbsentFromOursFromStaleFromForeign()
-    {
-        using var config = ScratchDirectory.Create("registry-view");
-        using var install = ScratchDirectory.Create("registry-view-install");
-
-        _ = InstalledLayout.Create(install.Path);
-
-        var server = InstalledLayout.ServerIn(install.Path);
-        var file = Path.Combine(config.Path, McpRegistryView.UserConfigFileName);
-
-        // No file at all.
-        var absent = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
-
-        await Assert.That(absent.Ownership).IsEqualTo(RegistrationOwnership.Absent);
-        await Assert.That(absent.Unreadable).IsNull();
-
-        // Ours, present.
-        await WriteServerEntryAsync(file, server);
-
-        var ours = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
-
-        await Assert.That(ours.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
-        await Assert.That(ours.Command).IsEqualTo(server);
-
-        // ⚠️ OURS, PRESENT, AND THE WRONG BINARY -- 2026-09-16. Every
-        // registration written before the two-binary split names
-        // `current\BrowserAI.exe`, which since 2026-09-15 is the CONFIGURATION
-        // APP. The file is there, so a classifier that asks only whether it
-        // exists answers "ours and present", the update hook leaves it exactly
-        // as it is, and the client then starts a window and waits forever for a
-        // JSON-RPC handshake from a process that is showing a dialog -- with
-        // nothing in any log, because nothing failed.
-        //
-        // What makes an entry OURS is the install root. What makes it PRESENT is
-        // being the SERVER, read out of the file's own PE subsystem and not
-        // taken from its name, which is the same discriminator
-        // RegistrationTarget uses when it composes the path in the first place.
-        var theApp = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, RegistrationTarget.AppFileName);
-
-        await Assert.That(File.Exists(theApp)).IsTrue();
-        await Assert.That(PeSubsystem.Of(theApp)).IsEqualTo(PeSubsystem.WindowsGui);
-
-        await WriteServerEntryAsync(file, theApp);
-
-        var misdirected = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
-
-        await Assert.That(misdirected.Ownership).IsEqualTo(RegistrationOwnership.OursAndStale);
-        await Assert.That(misdirected.Command).IsEqualTo(theApp);
-
-        // And a file under our root that is not a portable executable at all
-        // gets the same answer, because the question is never "is something
-        // there" -- it is "may this be launched as the server".
-        var notAnExecutable = Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.Server.exe.bak");
-
-        InstalledLayout.WriteSomethingThatIsNotAnExecutable(notAnExecutable);
-        await WriteServerEntryAsync(file, notAnExecutable);
-
-        await Assert.That(McpRegistryView.Read(RegistrationScope.User, file, install.Path).Ownership)
-            .IsEqualTo(RegistrationOwnership.OursAndStale);
-
-        // Ours, stale.
-        await WriteServerEntryAsync(
-            file, Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.gone"));
-
-        await Assert.That(McpRegistryView.Read(RegistrationScope.User, file, install.Path).Ownership)
-            .IsEqualTo(RegistrationOwnership.OursAndStale);
-
-        // Somebody else's.
-        await WriteServerEntryAsync(file, Path.Combine("D:", "someone", "else", "current", RegistrationTarget.ServerFileName));
-
-        await Assert.That(McpRegistryView.Read(RegistrationScope.User, file, install.Path).Ownership)
-            .IsEqualTo(RegistrationOwnership.Foreign);
-
-        // Not readable JSON: an answer of its own, never "absent".
-        await File.WriteAllTextAsync(file, "{ this is not json");
-
-        var broken = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
-
-        await Assert.That(broken.Ownership).IsEqualTo(RegistrationOwnership.Absent);
-        await Assert.That(broken.Unreadable).IsNotNull();
-        await Assert.That(broken.Unreadable!).Contains("unknown");
-    }
+    // ---- What a project file is given -----------------------------------------
 
     /// <summary>
     /// The portable form is what a project file gets, and it expands to the
@@ -715,7 +253,7 @@ internal sealed class RegistrationTests
     {
         const string PackId = "BrowserAI.app";
 
-        var portable = McpClientRegistration.PortableCommandFor(PackId);
+        var portable = RegistrationClient.PortableCommandFor(PackId);
 
         await Assert.That(portable).StartsWith("${LOCALAPPDATA}/");
         await Assert.That(portable).EndsWith(RegistrationTarget.ServerFileName);
@@ -727,174 +265,21 @@ internal sealed class RegistrationTests
             RegistrationTarget.CurrentDirectoryName,
             RegistrationTarget.ServerFileName);
 
-        await Assert.That(Path.GetFullPath(McpRegistryView.Expand(portable))).IsEqualTo(expected);
+        // Claude Code's project file gets the portable spelling for the install at
+        // its default place, and the absolute path, with the reason, anywhere else.
+        var atHome = RegistrationClient.ClaudeProjectCommandFor(expected, Path.GetDirectoryName(Path.GetDirectoryName(expected)));
 
-        // A name nothing defines is left exactly as it stands instead of
-        // collapsing to an empty segment, which would silently produce a path
-        // that resolves somewhere.
-        await Assert.That(McpRegistryView.Expand("${BROWSERAI_NO_SUCH_VARIABLE}/x"))
-            .IsEqualTo("${BROWSERAI_NO_SUCH_VARIABLE}/x");
+        await Assert.That(atHome.Command).IsEqualTo(portable);
+        await Assert.That(atHome.Note).IsNull();
 
-        // And the scope really is the only difference in the call.
-        await Assert.That(McpClientRegistration.AddArguments("c", McpClientRegistration.ProjectScope))
-            .IsEquivalentTo(ProjectScopeAdd);
+        var moved = RegistrationClient.ClaudeProjectCommandFor(@"D:\elsewhere\current\BrowserAI.Server.exe", @"D:\elsewhere");
+
+        await Assert.That(moved.Command).IsEqualTo(@"D:\elsewhere\current\BrowserAI.Server.exe");
+        await Assert.That(moved.Note!).Contains("not at its default location");
     }
 
     /// <summary>A single backslash, spelled once.</summary>
     private const string BackslashText = "\\";
-
-    /// <summary>What a project-scope add looks like on the wire.</summary>
-    private static readonly string[] ProjectScopeAdd =
-        ["mcp", "add", McpClientRegistration.ServerName, "--scope", "project", "--", "c"];
-
-    private static Task WriteServerEntryAsync(string file, string command) =>
-        File.WriteAllTextAsync(
-            file,
-            "{\n  \"mcpServers\": {\n    \""
-                + McpClientRegistration.ServerName
-                + "\": {\n      \"type\": \"stdio\",\n      \"command\": "
-                + System.Text.Json.JsonSerializer.Serialize(command)
-                + ",\n      \"args\": [],\n      \"env\": {}\n    }\n  }\n}\n");
-
-    /// <summary>
-    /// An uninstall removes the registration, and an already-absent one is not a
-    /// failure.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AnUninstallRemovesTheRegistrationAndAnAbsentOneIsNotAFailure()
-    {
-        var client = new FakeClientCommandLine();
-        var (logger, log) = Capture();
-
-        using var install = ScratchDirectory.Create("registration-uninstall");
-        var command = InstalledLayout.Create(install.Path);
-
-        _ = McpRegistrar.Apply(RegistrationIntent.Install, command, client, logger, WhatTheDoubleHolds(client));
-
-        var removed = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, client, logger, WhatTheDoubleHolds(client));
-
-        await Assert.That(removed.Status).IsEqualTo(RegistrationStatus.Unregistered);
-        await Assert.That(client.Registered).IsEmpty();
-
-        var again = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, client, logger, WhatTheDoubleHolds(client));
-
-        await Assert.That(again.Status).IsEqualTo(RegistrationStatus.NothingToUnregister);
-        await Assert.That(again.IsWhatWasAskedFor).IsTrue();
-        await Assert.That(log.Logged("There was no 'browserai' registered")).IsTrue();
-    }
-
-    // ---- Failing visibly, and never failing the install ---------------------
-
-    /// <summary>
-    /// A machine with no MCP client is reported, with the command to run once
-    /// there is one.
-    /// </summary>
-    /// <remarks>
-    /// <b>Warning, not error, and never a throw.</b> An installer that failed
-    /// because the user has no MCP client would be worse than the state it was
-    /// protecting against -- but an installed BrowserAI nothing is configured to
-    /// talk to is exactly the state this whole mechanism exists to end, so it is
-    /// never silent either.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AMachineWithNoClientIsReportedRatherThanFailedOrIgnored()
-    {
-        var client = new FakeClientCommandLine { Executable = null };
-        var (logger, log) = Capture();
-
-        using var install = ScratchDirectory.Create("registration-no-client");
-
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, InstalledLayout.Create(install.Path), client, logger);
-
-        await Assert.That(report.Status).IsEqualTo(RegistrationStatus.ClientNotFound);
-        await Assert.That(report.IsWhatWasAskedFor).IsTrue();
-        await Assert.That(report.Detail).Contains("claude mcp add browserai --scope user");
-        await Assert.That(client.Invocations).IsEmpty();
-
-        var warning = log.Records.Single(record => record.EventId.Id is 5);
-
-        await Assert.That(warning.Level).IsEqualTo(LogLevel.Warning);
-        await Assert.That(warning.Message).Contains("nothing is configured to talk to it");
-    }
-
-    /// <summary>
-    /// A client that refuses, one that hangs, and one that cannot be started at
-    /// all are each named with the command to run by hand.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AClientThatDoesNotDoWhatWasAskedIsNamedWithTheManualCommand()
-    {
-        using var install = ScratchDirectory.Create("registration-client-said-no");
-        var command = InstalledLayout.Create(install.Path);
-
-        var refused = new FakeClientCommandLine { Always = new CommandOutcome(2, "some other failure", TimedOut: false, null) };
-        var (logger, log) = Capture();
-
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, command, refused, logger, WhatTheDoubleHolds(refused));
-
-        await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Failed);
-        await Assert.That(report.IsWhatWasAskedFor).IsFalse();
-        await Assert.That(report.Detail).Contains("exited 2");
-        await Assert.That(report.Detail).Contains("some other failure");
-        await Assert.That(report.Detail).Contains($"mcp add {McpClientRegistration.ServerName} --scope user");
-        await Assert.That(log.Records.Any(record => record.Level is LogLevel.Error)).IsTrue();
-
-        var hanging = new FakeClientCommandLine { Always = new CommandOutcome(-1, string.Empty, TimedOut: true, null) };
-        var stalled = McpRegistrar.Apply(RegistrationIntent.Install, command, hanging, logger, WhatTheDoubleHolds(hanging));
-
-        await Assert.That(stalled.Status).IsEqualTo(RegistrationStatus.Failed);
-        await Assert.That(stalled.Detail).Contains("did not finish within 10s");
-
-        var dead = new FakeClientCommandLine { Always = new CommandOutcome(-1, string.Empty, TimedOut: false, "Access is denied") };
-        var unstartable = McpRegistrar.Apply(RegistrationIntent.Install, command, dead, logger, WhatTheDoubleHolds(dead));
-
-        await Assert.That(unstartable.Status).IsEqualTo(RegistrationStatus.Failed);
-        await Assert.That(unstartable.Detail).Contains("Access is denied");
-    }
-
-    /// <summary>
-    /// Nothing a client does can throw into the installer.
-    /// </summary>
-    /// <remarks>
-    /// A hook that throws breaks the install. This is the boundary that makes
-    /// that impossible, so it is asserted, not reviewed.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task AThrowingClientIsCaughtRatherThanBreakingTheInstall()
-    {
-        var client = new FakeClientCommandLine { Throws = true };
-        var (logger, log) = Capture();
-
-        using var install = ScratchDirectory.Create("registration-throwing");
-
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, InstalledLayout.Create(install.Path), client, logger, WhatTheDoubleHolds(client));
-
-        await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Failed);
-        await Assert.That(report.Detail).Contains("asked to throw");
-        await Assert.That(log.Records.Any(record => record.EventId.Id is 8)).IsTrue();
-    }
-
-    /// <summary>
-    /// A refusal to register still produces a log record and a report; it never
-    /// registers the wrong thing quietly.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task ARefusedPathIsLoggedAtErrorAndTheClientIsNeverStarted()
-    {
-        var client = new FakeClientCommandLine();
-        var (logger, log) = Capture();
-
-        var report = McpRegistrar.Apply(RegistrationIntent.Install, @"C:\install\BrowserAI.exe", client, logger);
-
-        await Assert.That(report.Status).IsEqualTo(RegistrationStatus.Refused);
-        await Assert.That(client.Invocations).IsEmpty();
-        await Assert.That(log.Records.Single(record => record.EventId.Id is 6).Level).IsEqualTo(LogLevel.Error);
-    }
 
     // ---- The state a person can find ---------------------------------------
 
@@ -971,7 +356,7 @@ internal sealed class RegistrationTests
         var text = string.Join("\n", logs.Select(ReadShared));
 
         await Assert.That(text).Contains("Velopack Install hook running for BrowserAI 9.9.9");
-        await Assert.That(text).Contains($"Registered '{McpClientRegistration.ServerName}'");
+        await Assert.That(text).Contains($"Registered '{McpRegistrar.ServerName}'");
 
         // ⚠️ THE HALF THAT IS RED AGAINST THE OLD LAYOUT: the install root the
         // image path names is a directory Setup.exe renames aside and deletes,
@@ -1498,7 +883,7 @@ internal sealed class RegistrationTests
         using (PointTheClientAt(config.Path))
         {
             var claudeFile = Path.Combine(config.Path, ConfigFileName);
-            var codexFile = Path.Combine(Environment.GetEnvironmentVariable(CodexRegistration.HomeVariable)!, CodexRegistration.ConfigFileName);
+            var codexFile = Path.Combine(Environment.GetEnvironmentVariable(CodexHomeVariable)!, "config.toml");
 
             foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Install, image, tool, logger))
             {
@@ -1550,71 +935,7 @@ internal sealed class RegistrationTests
         await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
     }
 
-    /// <summary>
-    /// Step 6 of the RegisterAI plan: the reader BrowserAI had and RegisterAI agree on
-    /// every Claude Code state, the same file read both ways.
-    /// </summary>
-    /// <remarks>
-    /// <b>Transitional, and deleted with the old reader.</b> The plan's step 6 is done
-    /// when <i>"old and new agree on the same scenarios"</i>; this is that check, over
-    /// the states the window and the hooks act on. Claude Code's entry is read from its
-    /// file by both, so no client runs. The working folder is the drive root, so no
-    /// project file above this repository's own is read.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheOldReaderAndRegisterAiAgreeOnEveryClaudeCodeState()
-    {
-        SuiteEnvironment.RequireRepositoryPayload();
-
-        await Assert.That(File.Exists(RepositoryPayload.RegisterAi)).IsTrue().Because($"the payload holds no '{RepositoryPayload.RegisterAi}'. Run: pwsh -File build/Get-RegisterAi.ps1");
-
-        using var config = ScratchDirectory.Create("registerai-agree");
-        using var install = ScratchDirectory.Create("registerai-agree-install");
-        using var elsewhere = ScratchDirectory.Create("registerai-agree-other");
-
-        var image = InstalledLayout.Create(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
-        var tool = new RegisterAiTool(RepositoryPayload.RegisterAi);
-        var file = Path.Combine(config.Path, ConfigFileName);
-
-        _ = InstalledLayout.Create(elsewhere.Path);
-
-        (string Name, string? Command, string? Text)[] scenarios =
-        [
-            ("absent", null, "{}"),
-            ("ours", server, null),
-            ("the app under the server's root", image, null),
-            ("a file that is gone", Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.gone"), null),
-            ("another install", InstalledLayout.ServerIn(elsewhere.Path), null),
-            ("not readable", null, "{ this is not json"),
-        ];
-
-        using (PointTheClientAt(config.Path))
-        {
-            foreach (var (name, command, text) in scenarios)
-            {
-                if (command is not null)
-                {
-                    await WriteServerEntryAsync(file, command);
-                }
-                else
-                {
-                    await File.WriteAllTextAsync(file, text);
-                }
-
-                var old = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
-                var now = RegistrationReader.Read(tool, [RegistrationClient.ClaudeCode], install.Path, server, Path.GetPathRoot(config.Path)!)[0];
-
-                await Assert.That(now.Unanswered).IsNull().Because(name);
-                await Assert.That(now.UserScope.Ownership).IsEqualTo(old.Ownership).Because(name);
-                await Assert.That(now.UserScope.Unreadable is null).IsEqualTo(old.Unreadable is null).Because(name);
-                await Assert.That(now.UserScope.Command).IsEqualTo(old.Command).Because(name);
-            }
-        }
-    }
-
-    // ---- The real client ----------------------------------------------------
+    // ---- The scratch configuration the real clients are pointed at -----------
 
     /// <summary>
     /// The scratch configuration a real-client arm hands over already carries
@@ -1676,377 +997,6 @@ internal sealed class RegistrationTests
     }
 
     /// <summary>
-    /// The real client still says what its exit codes cannot.
-    /// </summary>
-    /// <remarks>
-    /// <b>The one assertion the double cannot make.</b> Every failure the client
-    /// has exits 1 -- a duplicate <c>add</c> and a broken configuration are
-    /// indistinguishable by exit code -- so the product discriminates on
-    /// upstream's English. This is what turns a wording change into a red test
-    /// instead of a registration silently reported as failed in the field.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheClientStillSaysWhatTheExitCodesCannot()
-    {
-        var client = SuiteEnvironment.RequireClientCommandLine();
-
-        using var config = ScratchDirectory.Create("registration-wording");
-        using var install = ScratchDirectory.Create("registration-wording-install");
-
-        var command = InstalledLayout.Create(install.Path);
-        var commands = new ClientCommandLine();
-
-        using (PointTheClientAt(config.Path))
-        {
-            var first = commands.Run(client, McpClientRegistration.AddArguments(command), McpClientRegistration.Budget);
-            await Assert.That(first.Succeeded).IsTrue();
-
-            var duplicate = commands.Run(client, McpClientRegistration.AddArguments(command), McpClientRegistration.Budget);
-
-            await Assert.That(duplicate.Succeeded).IsFalse();
-            await Assert.That(McpClientRegistration.MeansAlreadyRegistered(duplicate.ExitCode, duplicate.Output)).IsTrue();
-
-            var removed = commands.Run(client, McpClientRegistration.RemoveArguments(), McpClientRegistration.Budget);
-            await Assert.That(removed.Succeeded).IsTrue();
-
-            var absent = commands.Run(client, McpClientRegistration.RemoveArguments(), McpClientRegistration.Budget);
-
-            await Assert.That(absent.Succeeded).IsFalse();
-            await Assert.That(McpClientRegistration.MeansNothingToRemove(absent.ExitCode, absent.Output)).IsTrue();
-
-            // And the two are told apart, which is the property that matters:
-            // an "already exists" is not read as "nothing to remove" or the
-            // reverse.
-            await Assert.That(McpClientRegistration.MeansNothingToRemove(duplicate.ExitCode, duplicate.Output)).IsFalse();
-            await Assert.That(McpClientRegistration.MeansAlreadyRegistered(absent.ExitCode, absent.Output)).IsFalse();
-        }
-    }
-
-    /// <summary>
-    /// The whole mechanism against the real client: registered at user scope,
-    /// idempotent, removable -- and the maintainer's own configuration untouched.
-    /// </summary>
-    /// <remarks>
-    /// <b>This is the proof that the charter's promise is kept</b> -- one
-    /// registration, at user scope, available in every repository, with no file
-    /// written into any of them. The entry is asserted in the client's own
-    /// configuration file and not in the client's report of it.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheRealClientRegistersBrowserAiAtUserScopeAndNothingElseIsTouched()
-    {
-        _ = SuiteEnvironment.RequireClientCommandLine();
-
-        using var config = ScratchDirectory.Create("registration-live");
-        using var install = ScratchDirectory.Create("registration-live-install");
-
-        var command = InstalledLayout.Create(install.Path);
-        var commands = new ClientCommandLine();
-        var (logger, _) = Capture();
-        var file = Path.Combine(config.Path, ConfigFileName);
-
-        using (PointTheClientAt(config.Path))
-        {
-            var installed = McpRegistrar.Apply(RegistrationIntent.Install, command, commands, logger);
-
-            await Assert.That(installed.Status).IsEqualTo(RegistrationStatus.Registered);
-            await Assert.That(File.Exists(file)).IsTrue();
-
-            var written = await File.ReadAllTextAsync(file);
-
-            await Assert.That(written).Contains($"\"{McpClientRegistration.ServerName}\"");
-
-            // The sibling server, JSON-escaped, and never the app that composed it.
-            var registered = InstalledLayout.ServerIn(install.Path);
-
-            await Assert.That(written).Contains(registered.Replace(@"\", @"\\", StringComparison.Ordinal));
-            await Assert.That(written).DoesNotContain(
-                command.Replace(@"\", @"\\", StringComparison.Ordinal) + "\"");
-
-            // Idempotence, against the client and not against the double.
-            await Assert.That(McpRegistrar.Apply(RegistrationIntent.Update, command, commands, logger).Status)
-                .IsEqualTo(RegistrationStatus.AlreadyRegistered);
-            await Assert.That(McpRegistrar.Apply(RegistrationIntent.Install, command, commands, logger).Status)
-                .IsEqualTo(RegistrationStatus.Registered);
-
-            var afterFour = await File.ReadAllTextAsync(file);
-
-            await Assert.That(Occurrences(afterFour, $"\"{McpClientRegistration.ServerName}\"")).IsEqualTo(1);
-
-            var removed = McpRegistrar.Apply(RegistrationIntent.Uninstall, command, commands, logger);
-
-            await Assert.That(removed.Status).IsEqualTo(RegistrationStatus.Unregistered);
-
-            var afterRemoval = await File.ReadAllTextAsync(file);
-
-            await Assert.That(afterRemoval).DoesNotContain($"\"{McpClientRegistration.ServerName}\"");
-
-            await Assert.That(McpRegistrar.Apply(RegistrationIntent.Uninstall, command, commands, logger).Status)
-                .IsEqualTo(RegistrationStatus.NothingToUnregister);
-        }
-
-        // ⚠️ The negative that matters. The registered path carries this run's
-        // GUID, so its absence from the user's own configuration is proof and
-        // not an argument -- and it survives the client rewriting that file for
-        // its own reasons while the test runs, which a hash comparison would not.
-        var mine = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
-            ConfigFileName);
-
-        if (File.Exists(mine))
-        {
-            var untouched = await File.ReadAllTextAsync(mine);
-
-            await Assert.That(untouched).DoesNotContain(install.Path.Replace(@"\", @"\\", StringComparison.Ordinal));
-            await Assert.That(untouched).DoesNotContain(install.Path);
-        }
-    }
-
-    /// <summary>
-    /// The product finds the real client the way it says it does.
-    /// </summary>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheClientIsLocatedByFileNameAndNeverAsAShim()
-    {
-        var located = SuiteEnvironment.RequireClientCommandLine();
-
-        await Assert.That(Path.IsPathFullyQualified(located)).IsTrue();
-        await Assert.That(Path.GetFileName(located)).IsEqualTo(McpClientRegistration.ClientExecutable);
-        await Assert.That(File.Exists(located)).IsTrue();
-
-        // A .cmd shim cannot be started without cmd.exe, which stack.md
-        // deviation 1 forbids -- so the name searched for carries its extension
-        // and a shim can never be found by it.
-        await Assert.That(McpClientRegistration.ClientExecutable).EndsWith(".exe");
-
-        await Assert.That(new ClientCommandLine().Locate("browserai-no-such-client.exe")).IsNull();
-    }
-
-    // ---- The real Codex, under a scratch CODEX_HOME ---------------------------
-
-    /// <summary>
-    /// The real Codex answers a duplicate add and a remove of nothing with exit
-    /// zero, which is the dialect the product and the double both assume.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The mirror of <see cref="TheClientStillSaysWhatTheExitCodesCannot"/>,
-    /// and it pins the opposite fact.</b> Claude Code exits 1 on both and the
-    /// product reads its words; Codex exits 0 on both, so its two predicates answer
-    /// <see langword="false"/> always and the double models exit 0. If a Codex
-    /// release started refusing a duplicate, the product would report a failed
-    /// registration where there is none -- and this is the arm that would say so.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b><c>CODEX_HOME</c> is a scratch directory for every call</b>, set by
-    /// <see cref="PointTheClientAt"/>; the maintainer's own <c>~\.codex</c> is read
-    /// at the end only to prove this run's GUID-bearing path is not in it.
-    /// </para>
-    /// <para>
-    /// <b>Planted red 2026-09-24</b> by making
-    /// <c>CodexRegistration.MeansAlreadyRegistered</c> answer true on a clean exit,
-    /// which is what a reader that expected Claude Code's dialect would do.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheRealCodexAnswersADuplicateAddAndARemoveOfNothingWithExitZero()
-    {
-        var codex = SuiteEnvironment.RequireCodexCommandLine();
-
-        using var config = ScratchDirectory.Create("codex-wording");
-        using var install = ScratchDirectory.Create("codex-wording-install");
-
-        _ = InstalledLayout.Create(install.Path);
-
-        var server = InstalledLayout.ServerIn(install.Path);
-        var commands = new ClientCommandLine();
-
-        using (PointTheClientAt(config.Path))
-        {
-            var first = commands.Run(codex, CodexRegistration.AddArguments(server), CodexRegistration.Budget);
-            var duplicate = commands.Run(codex, CodexRegistration.AddArguments(server), CodexRegistration.Budget);
-            var removed = commands.Run(codex, CodexRegistration.RemoveArguments(), CodexRegistration.Budget);
-            var absent = commands.Run(codex, CodexRegistration.RemoveArguments(), CodexRegistration.Budget);
-
-            await Assert.That(first.Succeeded).IsTrue();
-            await Assert.That(duplicate.Succeeded).IsTrue();
-            await Assert.That(removed.Succeeded).IsTrue();
-            await Assert.That(absent.Succeeded).IsTrue();
-
-            // Which is why the two predicates answer false, and must.
-            await Assert.That(CodexRegistration.MeansAlreadyRegistered(duplicate.ExitCode, duplicate.Output)).IsFalse();
-            await Assert.That(CodexRegistration.MeansNothingToRemove(absent.ExitCode, absent.Output)).IsFalse();
-        }
-
-        await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
-    }
-
-    /// <summary>
-    /// The whole mechanism against the real Codex: registered, idempotent,
-    /// removable, an uninstall over nothing says so -- and the maintainer's own
-    /// home untouched.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The mirror of
-    /// <see cref="TheRealClientRegistersBrowserAiAtUserScopeAndNothingElseIsTouched"/></b>,
-    /// driven through <c>McpRegistrar.Apply</c> with the real runner. The entry is
-    /// asserted in the file Codex wrote -- a TOML literal string, so the path
-    /// needs no escaping -- and ownership in what <c>mcp list --json</c> answers.
-    /// </para>
-    /// <para>
-    /// <b>Planted red 2026-09-24</b> against the uninstall that ran the client's
-    /// remove whatever the reading said: the second uninstall came back
-    /// <c>Unregistered</c>, because Codex exits 0 on removing nothing, and the
-    /// record would have said "Removed 'browserai' from Codex".
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheRealCodexRegistersBrowserAiAtUserScopeAndTheMaintainersOwnHomeIsUntouched()
-    {
-        _ = SuiteEnvironment.RequireCodexCommandLine();
-
-        using var config = ScratchDirectory.Create("codex-live");
-        using var install = ScratchDirectory.Create("codex-live-install");
-
-        var command = InstalledLayout.Create(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
-        var commands = new ClientCommandLine();
-        var (logger, _) = Capture();
-
-        using (PointTheClientAt(config.Path))
-        {
-            var file = Path.Combine(
-                Environment.GetEnvironmentVariable(CodexRegistration.HomeVariable)!,
-                CodexRegistration.ConfigFileName);
-
-            var installed = McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Install, command, commands, logger);
-
-            await Assert.That(installed.Status).IsEqualTo(RegistrationStatus.Registered);
-            await Assert.That(File.Exists(file)).IsTrue();
-
-            var written = await File.ReadAllTextAsync(file);
-
-            await Assert.That(written).Contains("[mcp_servers.browserai]");
-            await Assert.That(written).Contains(server);
-
-            // Idempotence, against the client and not against the double.
-            await Assert.That(McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Update, command, commands, logger).Status)
-                .IsEqualTo(RegistrationStatus.AlreadyRegistered);
-            await Assert.That(McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Install, command, commands, logger).Status)
-                .IsEqualTo(RegistrationStatus.Registered);
-            await Assert.That(Occurrences(await File.ReadAllTextAsync(file), "[mcp_servers.browserai]")).IsEqualTo(1);
-
-            var removed = McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Uninstall, command, commands, logger);
-
-            await Assert.That(removed.Status).IsEqualTo(RegistrationStatus.Unregistered);
-            await Assert.That(await File.ReadAllTextAsync(file)).DoesNotContain("[mcp_servers.browserai]");
-
-            await Assert.That(McpRegistrar.Apply(RegistrationClient.Codex, RegistrationIntent.Uninstall, command, commands, logger).Status)
-                .IsEqualTo(RegistrationStatus.NothingToUnregister);
-        }
-
-        // ⚠️ The negative that matters: the registered path carries this run's
-        // GUID, so its absence from the maintainer's own configuration is proof
-        // and not an argument.
-        await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
-    }
-
-    /// <summary>
-    /// The real Codex writes a project registration into the repository, and into
-    /// nothing else.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The lever the decision recorded as undocumented, driven for real.</b>
-    /// A project registration is <c>codex mcp add</c> with <c>CODEX_HOME</c> moved
-    /// to <c>&lt;repo&gt;\.codex</c>; the user-scope home is ALSO a scratch
-    /// directory here, so a registration that lost the lever lands somewhere this
-    /// arm can see, and not in the maintainer's configuration.
-    /// </para>
-    /// <para>
-    /// <b>And the residue is gone afterwards.</b> Measured the same morning: a run
-    /// leaves <c>tmp\arg0\</c>, two empty directories.
-    /// </para>
-    /// <para>
-    /// <b>Planted red 2026-09-24</b> by restoring the <c>File.Delete</c> the
-    /// residue removal was first written with: <c>tmp\arg0</c> survived the run.
-    /// </para>
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheRealCodexWritesAProjectRegistrationIntoTheRepositoryAndNowhereElse()
-    {
-        _ = SuiteEnvironment.RequireCodexCommandLine();
-
-        using var config = ScratchDirectory.Create("codex-project-live");
-        using var install = ScratchDirectory.Create("codex-project-live-install");
-        using var project = ScratchDirectory.Create("codex-project-live-repo");
-
-        var command = InstalledLayout.Create(install.Path);
-        var server = InstalledLayout.ServerIn(install.Path);
-        var commands = new ClientCommandLine();
-        var (logger, _) = Capture();
-        var projectFile = RegistrationClient.Codex.ProjectFileIn(project.Path);
-
-        using (PointTheClientAt(config.Path))
-        {
-            var userFile = Path.Combine(
-                Environment.GetEnvironmentVariable(CodexRegistration.HomeVariable)!,
-                CodexRegistration.ConfigFileName);
-
-            var written = McpRegistrar.ApplyToProject(RegistrationClient.Codex, register: true, project.Path, command, commands, logger);
-
-            await Assert.That(written.Status).IsEqualTo(RegistrationStatus.Registered);
-            await Assert.That(File.Exists(projectFile)).IsTrue();
-            await Assert.That(await File.ReadAllTextAsync(projectFile)).Contains("[mcp_servers.browserai]");
-            await Assert.That(await File.ReadAllTextAsync(projectFile)).Contains(server);
-
-            // Nowhere else: the user-scope home this process points at holds no
-            // such entry, whether or not the client created the file.
-            await Assert.That(File.Exists(userFile) ? await File.ReadAllTextAsync(userFile) : string.Empty)
-                .DoesNotContain("[mcp_servers.browserai]");
-
-            // The residue the client leaves is gone.
-            await Assert.That(Directory.Exists(Path.Combine(CodexRegistration.ProjectHome(project.Path), "tmp"))).IsFalse();
-
-            var removed = McpRegistrar.ApplyToProject(RegistrationClient.Codex, register: false, project.Path, command, commands, logger);
-
-            await Assert.That(removed.Status).IsEqualTo(RegistrationStatus.Unregistered);
-            await Assert.That(await File.ReadAllTextAsync(projectFile)).DoesNotContain("[mcp_servers.browserai]");
-        }
-
-        await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
-    }
-
-    /// <summary>
-    /// The product finds the real Codex CLI the way it says it does, and it is an
-    /// executable.
-    /// </summary>
-    /// <remarks>
-    /// The mirror of <see cref="TheClientIsLocatedByFileNameAndNeverAsAShim"/>. On
-    /// this machine the CLI is on no search path at all and is found through the
-    /// desktop app's own manifest, which is the shape the discovery order exists
-    /// for.
-    /// </remarks>
-    /// <returns>The assertion task.</returns>
-    [Test]
-    public async Task TheCodexCliIsLocatedAsAnExecutableAndNeverAsAShim()
-    {
-        var located = SuiteEnvironment.RequireCodexCommandLine();
-
-        await Assert.That(Path.IsPathFullyQualified(located)).IsTrue();
-        await Assert.That(Path.GetFileName(located)).IsEqualTo(CodexRegistration.ClientExecutable);
-        await Assert.That(File.Exists(located)).IsTrue();
-        await Assert.That(CodexRegistration.ClientExecutable).EndsWith(".exe");
-    }
-
-    /// <summary>
     /// The maintainer's own Codex configuration, or nothing when there is none.
     /// </summary>
     /// <remarks>
@@ -2059,60 +1009,13 @@ internal sealed class RegistrationTests
     {
         var file = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
-            CodexRegistration.ProjectDirectoryName,
-            CodexRegistration.ConfigFileName);
+            ".codex",
+            "config.toml");
 
         return File.Exists(file) ? File.ReadAllText(file) : string.Empty;
     }
 
     // ---- Helpers ------------------------------------------------------------
-
-    /// <summary>
-    /// The verbs a refused update followed by an install produces: the update
-    /// runs nothing at all, and the install removes before it adds.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>Replaces <c>AddRemoveAdd</c>, 2026-09-15</b> (previously
-    /// <c>["add", "remove", "add"]</c>, described as "an update never removes,
-    /// an install always does"). The update in that arm meets a registration
-    /// that is not under this install root, and since this day that is reported
-    /// and not silently accepted, so the update runs no verb at all. What is
-    /// unchanged is the property the arm asserts: an update does not overwrite.
-    /// </remarks>
-    private static readonly string[] RemoveAdd = ["remove", "add"];
-
-    /// <summary>
-    /// What a <see cref="FakeClientCommandLine"/> currently holds, as the view
-    /// the registrar would otherwise read off the real client's file.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>Every arm driving <c>McpRegistrar.Apply</c> through a double
-    /// has to pass this -- every intent, not just
-    /// <see cref="RegistrationIntent.Update"/>.</b> <i>Widened 2026-09-16
-    /// (previously "Every arm driving <c>RegistrationIntent.Update</c> through a
-    /// double")</i>: until that day only an update read the client's file, so an
-    /// install or an uninstall without the seam happened to be deterministic. It
-    /// is not any more, and the six arms that relied on it went red the moment
-    /// the read moved -- against the maintainer's own registration, which is
-    /// foreign to every scratch install root. The registrar's default reads the
-    /// client's own user-scope configuration, which on this machine is the
-    /// maintainer's, so an arm without the seam asks a question about whatever
-    /// happens to be registered there and answers it differently on a different
-    /// machine. Nothing enforces this; the failure it prevents is a red that
-    /// moves with the environment, which is the worst kind to diagnose.
-    /// </remarks>
-    private static Func<string, RegistrationView> WhatTheDoubleHolds(FakeClientCommandLine client) =>
-        root =>
-        {
-            var command = client.Registered.GetValueOrDefault(McpClientRegistration.ServerName);
-
-            return new RegistrationView(
-                RegistrationScope.User,
-                "<the double>",
-                command,
-                McpRegistryView.Classify(command, root),
-                null);
-        };
 
     /// <summary>
     /// Reads a log file the way everything else in this suite does -- sharing
@@ -2196,7 +1099,7 @@ internal sealed class RegistrationTests
         return new EnvironmentScope(new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
             [ConfigDirectoryVariable] = OnboardedClientConfig.Seed(directory),
-            [CodexRegistration.HomeVariable] = codexHome,
+            [CodexHomeVariable] = codexHome,
         });
     }
 }

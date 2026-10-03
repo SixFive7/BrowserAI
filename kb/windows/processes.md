@@ -1035,8 +1035,10 @@ label syntax is incorrect."* on stderr. The control is the identical
 three byte-for-byte.
 
 **Why it matters here:** a registered client path is exactly the kind of argument
-that carries spaces, which is why `McpClientRegistration` registers an `.exe` and
-never a shim.
+that carries spaces, which is why the client is started as an `.exe` found by its
+file name and never through a shim: by BrowserAI's own code until 2026-10-03, and by
+RegisterAI since *(corrected 2026-10-03, previously "which is why
+`McpClientRegistration` registers an `.exe` and never a shim")*.
 
 **Re-establish** with a `.cmd` that echoes `%CMDCMDLINE%` and its arguments, one
 arm through `CreateProcessW` and one through a real executable, with the same
@@ -1940,7 +1942,12 @@ known-folder property. Consequence: **a clientless machine cannot be simulated
 from the environment**; the client-absent path is exercised through the
 `IRegistrationCommand` seam instead, and `Locate` returning `null` for a name that
 is genuinely not on this machine is asserted by
-`RegistrationTests.TheClientIsLocatedByFileNameAndNeverAsAShim`.
+`RegistrationTests.TheClientIsLocatedByFileNameAndNeverAsAShim`. *Corrected
+2026-10-03, by addition: the three names in that paragraph went to RegisterAI with
+the rest of BrowserAI's registration code. RegisterAI keeps the same fallback,
+`%USERPROFILE%\.local\bin`, and reads the profile from the token the same way;
+its own tests simulate a clientless machine through the machine they hand it, and
+BrowserAI's through `FakeRegisterAi`, which can leave a client missing.*
 
 **A COM/interop enum value the running OS does not know throws on assignment** --
 at the property set, not at load and not at compile time. The managed enum is only

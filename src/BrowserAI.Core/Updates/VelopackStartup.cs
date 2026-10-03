@@ -85,8 +85,12 @@ namespace BrowserAI.Updates;
 /// <c>--veloapp-uninstall</c> 60 s
 /// ([kb](../../../kb/packaging/velopack.md#nativeaot-hooks-and-vpk-output)) -- and
 /// anything slow or interactive in one is a broken install. The registration
-/// call is measured at 613-645 ms with a 10 s budget of its own, and it can
-/// neither prompt nor block: see <see cref="Registration.McpClientRegistration"/>.
+/// is one run of RegisterAI for both clients, bounded at
+/// <see cref="Registration.McpRegistrar.ToolTimeout"/> for the whole run, and it can
+/// neither prompt nor block: see <see cref="Registration.McpRegistrar"/>.
+/// <i>Corrected 2026-10-03 (previously "The registration call is measured at 613-645
+/// ms with a 10 s budget of its own"), which described one client's own command,
+/// run by BrowserAI.</i>
 /// </para>
 /// <para>
 /// <b><c>OnBeforeUpdate</c> deliberately registers nothing.</b> It runs as the

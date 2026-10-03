@@ -72,16 +72,19 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       way a Start Menu click does, through the COM activator of the toast's
       design. **What to do:** build it after the tab, against
       [`docs/design/toast-2026-09-24`](docs/design/toast-2026-09-24/README.md).
-- [ ] **RegisterAI's half inside BrowserAI.** Once RegisterAI's own steps are
-      done: the build fetches its release file and checks it against the
-      release's checksum list, with a local path while it is private (Q349);
-      a row in `drift-check.json` and `upstream-review.json` and one test that
-      fails on a changed output schema (Q350); BrowserAI's own registration
-      code deleted, after a full gate, except the PATH edit, which stays
-      (Q348). **What to do:** follow RegisterAI's plan, steps 6 to 8.
 
 ### Still open, and the maintainer's to choose
 
+- [ ] **RegisterAI public, step 8 of its plan.** BrowserAI registers through
+      RegisterAI since 2026-10-03 (steps 6 and 7), and the repository is
+      still private (Q345), so a payload build needs a `gh` signed in to an
+      account that can read it, or `-RegisterAiFrom`. **What to do:** his word
+      on going public, then the plan's checklist: the whole-history scan, the
+      released executable scanned, a second reader for the README,
+      `SECURITY.md`, the real-client arms run that day, and
+      `build/Get-RegisterAi.ps1` reading the public release without `gh`.
+      Until then `master` should not take the switch, because a clone of it
+      cannot build its payload.
 - [ ] **The look-alike tools report.** Eleven tools ranked by how likely a
       model is to confuse them with BrowserAI's own, each with a reason and a
       recommendation; `browser_resume` is the only one denied so far (Q321 with

@@ -185,10 +185,10 @@ own update pass counts it and wakes it instead of applying.
 | The configuration app: modes, dialog content, status report | `src/BrowserAI.App/{Program, AppState, ClientState, ConfigurationDialog, StatusReport}.cs` -- *`ClientState` added 2026-09-24: one client's state and every predicate the window asks of it, one per client, so no link acts on both* -- *and `Coordinator.cs` added 2026-09-25: the three start modes, the sign-in step and the apply loop, under [Updates](#updates)* |
 | The task dialog, the folder picker and Explorer | `src/BrowserAI.App/Interop/{TaskDialogInterop, ShellInterop}.cs`, `src/BrowserAI.App/Ui/TaskDialogPage.cs` |
 | Removing BrowserAI from a project you pick -- **added 2026-09-24, Q289 b** | `ConfigurationSession.UnregisterFromAProject` in `src/BrowserAI.App/Program.cs`, offered by `ConfigurationDialog.Command.UnregisterFromAProject` when `ClientState.MayUnregisterFromAProject`; the session is handed its picker, image path and re-read, and `ConfigurationSession.Attach` is the host the suite dispatches into |
-| Reading what a client has been told, and whose it is | `src/BrowserAI.Core/Registration/McpRegistryView.cs` |
+| Reading what a client has been told, and whose it is | `src/BrowserAI.Core/Registration/{RegistrationReading, RegistrationView}.cs`, through RegisterAI's `status` -- *corrected 2026-10-03 (previously `src/BrowserAI.Core/Registration/McpRegistryView.cs`), when RegisterAI took the reading over: one `status` run for every client's user scope and one per project, read by `RegistrationReader`* |
 | Telling a console binary from a window one | `src/BrowserAI.Core/Runtime/PeSubsystem.cs` |
-| Registering BrowserAI with the client | `src/BrowserAI.Core/Registration/{McpClientRegistration, RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar, RegistrationRecord, HookRegistration}.cs` |
-| Registering with Codex, and everything that differs between the two clients | `src/BrowserAI.Core/Registration/{RegistrationClient, CodexRegistration, CodexRegistryView}.cs` -- *added 2026-09-24 (Q258). Every per-client difference is a member of `RegistrationClient`; the ownership rule stays in `McpRegistrar`, once, and `McpRegistrar.ApplyToProject` is the one project-scope path for both clients* |
+| Registering BrowserAI with the client | `src/BrowserAI.Core/Registration/{RegistrationTarget, RegisterAi, McpRegistrar, RegistrationRecord, HookRegistration}.cs` -- *corrected 2026-10-03 (previously `{McpClientRegistration, RegistrationTarget, IRegistrationCommand, ClientCommandLine, McpRegistrar, RegistrationRecord, HookRegistration}.cs`)*: `RegisterAiTool` runs the RegisterAI the payload carries and `ToolDocuments` reads its schema-1 document; `McpRegistrar` builds the command line and turns each answer into BrowserAI's status and sentence. The program itself is `build/Get-RegisterAi.ps1`'s, checked against its release's `SHA256SUMS` (Q349 a) |
+| Registering with Codex, and everything that differs between the two clients | `src/BrowserAI.Core/Registration/RegistrationClient.cs` -- *added 2026-09-24 (Q258), and narrowed 2026-10-03 (previously `{RegistrationClient, CodexRegistration, CodexRegistryView}.cs`)*: how each client is found, asked and written is RegisterAI's; what stays per client is the name, RegisterAI's id, the command a project file is given, the line to run by hand and the sentences. The ownership rule is RegisterAI's, once, given this install's root |
 
 **The protocol version is split deliberately.** `McpServerOptions.ProtocolVersion`
 is `null` upward -- whatever the caller asks for -- while `McpClientOptions.
@@ -270,6 +270,19 @@ the options object, because the constructor overwrites it and it is
 `[Obsolete("MCP9005")]`. What BrowserAI advertises is now byte-identical to what
 the child advertises -- `{"tools":{}}` -- and `VerticalSliceTests` asserts the whole
 object off the wire against the child's own snapshot. *Added 2026-08-18.*
+
+⚠️ **Registration is RegisterAI's since 2026-10-03, and BrowserAI decides when and
+what to say.** The maintainer's decision Q332, verbatim *"Go for only the small
+command line program."*: RegisterAI is a program of its own repository, shipped in the
+payload at `payload\registerai\RegisterAI.exe`, and BrowserAI runs it once per hook
+for both clients, once to read the state the window and `--report` show, and once per
+click. It runs the clients' own commands, reads every entry back, and refuses an entry
+this install did not write, with this install's root as `--owned-root`. What stays in
+BrowserAI is what makes the registration BrowserAI's: `RegistrationTarget`, the hooks,
+the record, the PATH writer (Q348) and the sentences. One behaviour changed with it
+(Q347 a): an install over an entry of ours that already names this server leaves it as
+it is. The paragraphs below describe the code before the switch and are kept as they
+were written.
 
 **Registration is one file's decision.** `McpClientRegistration` is the only place
 that decides *how* BrowserAI registers, and it carries the three rejected
@@ -1248,7 +1261,7 @@ door and `ChildEnvironmentTests` holds the environment one.
 |---|---|
 | The update lane | `src/BrowserAI.Core/Updates/{InstallLocation, UpdateFeed, UpdateConfiguration, IUpdateClient, VelopackUpdateClient, UpdateService, LiveInstances, VelopackStartup}.cs` |
 | Packing, versioning and the resolved-set manifest | `build/{New-Release.ps1, Test-ReleaseVersion.ps1, Write-ReleaseManifest.ps1, Get-ReleaseNotes.ps1}` |
-| The install's folder on the user's PATH, and a Codex project entry that names the server alone -- **added 2026-09-24, Q294 b** | `src/BrowserAI.Core/Registration/UserPath.cs` (`UserPath`, `IUserPathStore`, `RegistryUserPathStore`), called from `HookRegistration.Run` for every intent; `src/BrowserAI.Core/Interop/EnvironmentBroadcast.cs`; `CodexRegistration.ProjectCommandFor` and `CodexRegistryView.Classify`'s bare-name branch; `RegistrationClient.ProjectCommandFor`, which the configuration window asks |
+| The install's folder on the user's PATH, and a Codex project entry that names the server alone -- **added 2026-09-24, Q294 b** | `src/BrowserAI.Core/Registration/UserPath.cs` (`UserPath`, `IUserPathStore`, `RegistryUserPathStore`), called from `HookRegistration.Run` for every intent; `src/BrowserAI.Core/Interop/EnvironmentBroadcast.cs`; `RegistrationClient.ProjectCommandFor`, which the configuration window asks, and `RegistrationClient.CodexProjectNote` for the sentence after it -- *corrected 2026-10-03 (previously also "`CodexRegistration.ProjectCommandFor` and `CodexRegistryView.Classify`'s bare-name branch")*: what a bare name finds is RegisterAI's answer now, as `resolvesTo`, and RegisterAI 0.2.0 reports a PATH entry naming a folder that is gone and offers `path add` and `path remove` (Q348, Q370 a) |
 | The suite's installer, packed from the tree before each gate run -- **added 2026-09-24, Q287 a** | `build/New-Release.ps1 -TestPackOnly`, called by the four gate drivers under `build/InstallerLock.ps1`; the suite's half is `ReleaseLayout.TestPackMismatch` and `ReleaseLayout.ShippingTwinOf` in `tests/BrowserAI.Tests/Harness/ReleaseLayout.cs` |
 | Each server's pipe: `describe` answered from memory, `stop` acknowledged and then acted on -- **added 2026-09-24, Q284 a** | `src/BrowserAI.Core/Coordination/{ServerPipe, ServerPipeProtocol, ServerDescription}.cs` and `src/BrowserAI.Core/Interop/NamedPipes.cs`; the server's half is `src/BrowserAI/Proxy/{ServerActivity, ServerPipeResponder}.cs`, `BrowserProxy.HeldSessions` and `SessionManager.Held`, opened by `Program.Main` straight after the live join |
 | Asking a server: the census first, the pipe's owner checked, the whole call bounded | `src/BrowserAI.Core/Coordination/ServerPipeClient.cs` and `LiveInstances.IsMarkerHeld`, which the configuration app links as well |

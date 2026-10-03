@@ -356,12 +356,15 @@ internal sealed class ClientReconnectTests
     /// gone, and the marker it left is not held, so the census does not count it.
     /// </para>
     /// <para>
-    /// <b>Registered through <c>McpRegistrar</c>, into a scratch home forced on
-    /// every call the runner makes</b> -- never on this process's environment, so
-    /// this file needs no <c>[NotInParallel]</c> and no other arm inherits it.
-    /// The install root's <c>current\</c> is a junction to the published slice, so
-    /// the registrar composes and checks the server exactly as it does for an
-    /// install, and Codex starts the published binary with its payload beside it.
+    /// <b>Registered through <c>McpRegistrar</c> and the RegisterAI the published slice
+    /// carries, into a scratch home forced on every run of the tool</b> -- never on
+    /// this process's environment, so this file needs no <c>[NotInParallel]</c> and no
+    /// other arm inherits it. The install root's <c>current\</c> is a junction to the
+    /// published slice, so the registrar composes and checks the server exactly as it
+    /// does for an install, finds RegisterAI where an install has it, and Codex starts
+    /// the published binary with its payload beside it. <i>Corrected 2026-10-03
+    /// (previously "forced on every call the runner makes"), when the runner of each
+    /// client's command line went to RegisterAI.</i>
     /// </para>
     /// <para>
     /// ⚠️ <b><c>BROWSERAI_ROOT</c> is added to that registration with Codex's
@@ -405,31 +408,44 @@ internal sealed class ClientReconnectTests
         await File.WriteAllTextAsync(Path.Combine(home, "config.toml"), "approval_policy = \"never\"\nsandbox_mode = \"read-only\"\nproject_doc_max_bytes = 0\n");
 
         // ---- Registered the product's way --------------------------------------
-        IRegistrationCommand runner = new ForcedEnvironment(
-            new ClientCommandLine(),
-            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [CodexRegistration.HomeVariable] = home });
-
         var image = Path.Combine(current, RegistrationTarget.AppFileName);
         var server = Path.Combine(current, RegistrationTarget.ServerFileName);
+        var tool = new RegisterAiTool(
+            RegisterAiTool.Beside(image).Executable,
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                [RegistrationTests.CodexHomeVariable] = home,
+            });
+
+        // ⚠️ THE HOME IS PROVEN BEFORE ANYTHING IS WRITTEN: RegisterAI names the
+        // configuration it reads, and a variable that did not reach it would name
+        // the person's own.
+        var before = RegistrationReader.Read(tool, [RegistrationClient.Codex], install, server, Path.GetPathRoot(home)!)[0];
+
+        await Assert.That(before.UserScope.File).IsEqualTo(Path.Combine(home, "config.toml"));
 
         var registered = McpRegistrar.Apply(
-            RegistrationClient.Codex, RegistrationIntent.Install, image, runner, NullLogger.Instance);
+            RegistrationClient.Codex, RegistrationIntent.Install, image, tool, NullLogger.Instance);
 
-        await Assert.That(registered.Status).IsEqualTo(RegistrationStatus.Registered);
+        await Assert.That(registered.Status).IsEqualTo(RegistrationStatus.Registered).Because(registered.Detail);
 
-        var listed = CodexRegistryView.Read(runner, codex, install, home: null, RegistrationScope.User);
+        var listed = RegistrationReader.Read(tool, [RegistrationClient.Codex], install, server, Path.GetPathRoot(home)!)[0];
 
-        await Assert.That(listed.Command).IsEqualTo(server);
-        await Assert.That(listed.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
+        await Assert.That(listed.UserScope.Command).IsEqualTo(server);
+        await Assert.That(listed.UserScope.Ownership).IsEqualTo(RegistrationOwnership.OursAndPresent);
 
-        // The sandbox, added through the client's own flag and not by writing its
-        // file: the same entry, with the one variable Codex would otherwise drop.
-        var sandboxed = runner.Run(
-            codex,
-            ["mcp", "add", CodexRegistration.ServerName, "--env", $"{BrowserAiPaths.AppRootOverride}={appRoot}", "--", server],
-            CodexRegistration.Budget);
+        // The sandbox, added through RegisterAI and Codex's own flag and not by
+        // writing its file: the same entry, rewritten with the one variable Codex
+        // would otherwise drop.
+        var sandboxed = tool.Run(
+            [
+                "register", "--name", McpRegistrar.ServerName, "--client", RegistrationClient.Codex.ToolId, "--scope", "user",
+                "--owned-root", install, "--replace", "--env", $"{BrowserAiPaths.AppRootOverride}={appRoot}", "--", server,
+            ],
+            McpRegistrar.ToolBudget);
 
-        await Assert.That(sandboxed.Succeeded).IsTrue();
+        await Assert.That(ToolDocuments.TryRead(sandboxed, out var rewritten, out var problem)).IsTrue().Because(problem);
+        await Assert.That(rewritten!.For(RegistrationClient.Codex.ToolId)!.Action).IsEqualTo("replaced");
 
         // ---- Started by the real client, one call ------------------------------
         var steps = new JsonArray(
@@ -441,7 +457,7 @@ internal sealed class ClientReconnectTests
                 ["p"] = new JsonObject
                 {
                     ["threadId"] = "$THREAD",
-                    ["server"] = CodexRegistration.ServerName,
+                    ["server"] = McpRegistrar.ServerName,
                     ["tool"] = SessionToolSurface.List,
                     ["arguments"] = new JsonObject { ["directory"] = sessions },
                 },
@@ -579,46 +595,6 @@ internal sealed class ClientReconnectTests
         using var reader = new StreamReader(stream);
 
         return reader.ReadToEnd();
-    }
-
-    /// <summary>
-    /// The real process runner with named variables forced on every call.
-    /// </summary>
-    /// <remarks>
-    /// <b>The child's environment and never this process's.</b> Forcing
-    /// <c>CODEX_HOME</c> here is what keeps every call the registrar makes --
-    /// the ownership read and the write -- inside a scratch home, without the
-    /// process-wide override that would make every other arm's children inherit
-    /// it.
-    /// </remarks>
-    /// <param name="inner">The real runner.</param>
-    /// <param name="forced">What to force.</param>
-    private sealed class ForcedEnvironment(IRegistrationCommand inner, IReadOnlyDictionary<string, string> forced) : IRegistrationCommand
-    {
-        /// <inheritdoc />
-        public string? Locate(string executableName) => inner.Locate(executableName);
-
-        /// <inheritdoc />
-        public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory) =>
-            Run(executable, arguments, budget, workingDirectory, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
-
-        /// <inheritdoc />
-        public CommandOutcome Run(
-            string executable,
-            IReadOnlyList<string> arguments,
-            TimeSpan budget,
-            string? workingDirectory,
-            IReadOnlyDictionary<string, string> environment)
-        {
-            var merged = new Dictionary<string, string>(environment, StringComparer.OrdinalIgnoreCase);
-
-            foreach (var (name, value) in forced)
-            {
-                merged[name] = value;
-            }
-
-            return inner.Run(executable, arguments, budget, workingDirectory, merged);
-        }
     }
 
     /// <summary>

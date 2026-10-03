@@ -57,7 +57,12 @@ internal interface IRegisterAi
 /// </para>
 /// </remarks>
 /// <param name="executable">The tool's full path.</param>
-internal sealed class RegisterAiTool(string executable) : IRegisterAi
+/// <param name="environment">
+/// Variables every run gets on top of this process's own, or <see langword="null"/>.
+/// The product passes none; an arm that points a client at a scratch home passes it
+/// here, so no other arm inherits it.
+/// </param>
+internal sealed class RegisterAiTool(string executable, IReadOnlyDictionary<string, string>? environment = null) : IRegisterAi
 {
     /// <summary>The executable's file name.</summary>
     public const string FileName = "RegisterAI.exe";
@@ -120,6 +125,11 @@ internal sealed class RegisterAiTool(string executable) : IRegisterAi
         foreach (var argument in arguments)
         {
             start.ArgumentList.Add(argument);
+        }
+
+        foreach (var (name, value) in environment ?? new Dictionary<string, string>())
+        {
+            start.Environment[name] = value;
         }
 
         using var process = new Process { StartInfo = start };

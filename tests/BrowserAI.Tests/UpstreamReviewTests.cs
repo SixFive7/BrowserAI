@@ -109,8 +109,11 @@ internal sealed class UpstreamReviewTests
     }
 
     [Test]
-    public async Task TheFiveReviewedUpstreamsAreTheOnesTheDriftCheckResolves()
+    public async Task TheReviewedUpstreamsAreTheOnesTheDriftCheckResolves()
     {
+        // Renamed 2026-10-03 from TheFiveReviewedUpstreamsAreTheOnesTheDriftCheckResolves,
+        // when RegisterAI made the set six and the number in the name false.
+        //
         // Two files list the same upstreams for different reasons:
         // upstream-review.json records what was reviewed, drift-check.json
         // records what a lookup last saw. A name in one and not the other is
@@ -232,6 +235,7 @@ internal sealed class UpstreamReviewTests
     {
         "@playwright/mcp" or "playwright-core" => ResolvedVersions.FromPayloadLock(upstream),
         "node" => ResolvedVersions.FromSnapshotProvenance("node"),
+        "RegisterAI" => ResolvedVersions.FromRegisterAiStamp(),
         _ => ResolvedVersions.FromNuGetLocks(upstream),
     };
 

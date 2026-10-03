@@ -6,7 +6,6 @@ using System.Text.Json;
 using BrowserAI.App.Interop;
 using BrowserAI.App;
 using BrowserAI.Interop;
-using BrowserAI.Registration;
 using BrowserAI.Runtime;
 using BrowserAI.Tests.Harness;
 using W = Windows.Win32;
@@ -294,7 +293,7 @@ internal sealed class TaskDialogLayoutTests
         // so no other arm inherits it and this file needs no [NotInParallel].
         var environment = PublishedSlice.InheritedEnvironment();
 
-        environment[CodexRegistration.HomeVariable] =
+        environment[RegistrationTests.CodexHomeVariable] =
             Directory.CreateDirectory(Path.Combine(output.Path, "codex")).FullName;
 
         // ⚠️ ON A PRIVATE DESKTOP SINCE 2026-09-24, Q278 (previously Process.Start

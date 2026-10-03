@@ -275,11 +275,16 @@ of the same name exits **1** printing *"MCP server browserai already exists in
 user config"*; a `remove` of a name that is not there exits **1** printing *"No
 MCP server named \"browserai\" in user scope"*. There is no exit code that
 distinguishes either from a real failure, so **the words are the only
-discriminator there is** -- which is why `McpClientRegistration` matches on them
-and why `RegistrationTests.TheClientStillSaysWhatTheExitCodesCannot` asserts both
-against the real client on every run that has one. Getting it wrong is safe in
-one direction only: an unrecognised wording reports the pass as *failed*, which
-is loud; it never reports a registration that did not happen as done.
+discriminator there is** -- which is why RegisterAI reads the entry before every
+write, so it never asks for an `add` that exists or a `remove` that does not, and
+reads it back after, and why its own `RealClientTests` holds both texts against
+the real client. *Corrected 2026-10-03 (previously "which is why
+`McpClientRegistration` matches on them and why
+`RegistrationTests.TheClientStillSaysWhatTheExitCodesCannot` asserts both against
+the real client on every run that has one. Getting it wrong is safe in one
+direction only: an unrecognised wording reports the pass as failed, which is
+loud; it never reports a registration that did not happen as done"), when
+BrowserAI's registration moved to RegisterAI.*
 
 **`claude mcp get` starts the server.** It health-checks, so it reported
 *"✘ Failed to connect"* for a path that does not exist -- **and still exited 0**,
@@ -1065,7 +1070,10 @@ Claude Code 2.1.281** against two synthetic user-scope servers, a command that d
 not exist and a node process that starts and never speaks MCP: both commands exit
 **0** while printing `✘ Failed to connect`, and every failure the client does
 report exits **1** -- a duplicate `add` and a nothing-to-remove `remove` are
-indistinguishable by code, which is why `McpClientRegistration` reads the English.
+indistinguishable by code, which is why BrowserAI read the English until
+2026-10-03, and RegisterAI, which registers it since, reads the entry back
+instead *(corrected 2026-10-03, previously "which is why `McpClientRegistration`
+reads the English")*.
 ⚠️ **Exit 0 also covers a broken CONFIG and not only a broken server**: a
 `.mcp.json` that is not valid JSON exits 0 printing `MCP config diagnostics ✘`.
 *This entry carried no client version until today, which is what the hazard row

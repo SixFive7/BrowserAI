@@ -137,7 +137,7 @@ internal sealed partial class RealInstallerTests
         {
             [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
-            [CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
+            [RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
         });
 
         // ⚠️ THE REAL INSTALL'S OWN ADD/REMOVE ENTRY, READ BEFORE ANYTHING RUNS.
@@ -349,7 +349,7 @@ internal sealed partial class RealInstallerTests
         {
             [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
-            [CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
+            [RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
         });
 
         try
@@ -551,7 +551,7 @@ internal sealed partial class RealInstallerTests
         {
             [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
-            [CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
+            [RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
         });
 
         var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");
@@ -733,7 +733,7 @@ internal sealed partial class RealInstallerTests
         {
             [RegistrationTests.ConfigDirectoryVariable] = OnboardedClientConfig.Seed(clientConfig.Path),
             [BrowserAiPaths.AppRootOverride] = dataRoot.Path,
-            [CodexRegistration.HomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
+            [RegistrationTests.CodexHomeVariable] = Directory.CreateDirectory(Path.Combine(clientConfig.Path, "codex")).FullName,
         });
 
         var realKeyBefore = ReadUninstallKey($@"{ReleaseLayout.UninstallKeyPath}\{ReleaseLayout.PackId}");

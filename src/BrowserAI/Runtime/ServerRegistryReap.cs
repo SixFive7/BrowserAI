@@ -229,9 +229,11 @@ internal sealed class ServerRegistryReap(PayloadLayout payload, ILogger logger)
                 // session tree the instant this returns, and a working directory
                 // inside it is an open directory handle that makes the delete
                 // report survivors; and `current\` is what an update replaces
-                // wholesale. The profile is where `ClientCommandLine` sends a
-                // command with no directory of its own, for the same reason: it
-                // exists, and nothing this product does deletes it.
+                // wholesale. The profile exists, and nothing this product does
+                // deletes it. Corrected 2026-10-03 (previously "The profile is
+                // where `ClientCommandLine` sends a command with no directory of
+                // its own, for the same reason"): that class went to RegisterAI
+                // with the rest of the registration code.
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
 
                 // The same allowlist every child gets, which is what carries

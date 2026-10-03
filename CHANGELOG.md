@@ -308,6 +308,12 @@ release body; nothing else depends on it.
   the loader rejects. A product that does not write the TOML cannot set that key, and this one
   does not. Re-verification row 148 carries all of it, keyed on the codex-cli version.
 
+  *Corrected 2026-10-03, by addition, before this version shipped:* `CodexRegistration` and
+  `CodexRegistryView` went to RegisterAI with the rest of BrowserAI's registration code, and what
+  a person gets is unchanged: the same `codex mcp add` at both scopes, found in the same four
+  places, with a refusal that still names them and the command to run by hand. The entry under
+  *Changed* says how.
+
 - ✨ **The configuration window gives each client its own state line and its own controls.**
   In the maintainer's words, *"I easy I want separate control over system level registration
   between codex and claude."* The heading carries both clients in a few words each --
@@ -637,6 +643,44 @@ release body; nothing else depends on it.
   written, and the interop adds 160,768 bytes to the app and 189,440 to the server.
 
 ### Changed
+
+- 🔧 **Claude Code and Codex registrations run through RegisterAI, a program the installer carries.**
+  Q332, the maintainer's words verbatim: *"Go for only the small command line program."* BrowserAI
+  no longer starts `claude.exe` or `codex.exe` itself. The install, update and uninstall hooks, the
+  window's clicks and the state the window and `--report` show all run
+  `payload\registerai\RegisterAI.exe`: one run for every client's user scope and one per project,
+  each answered with one JSON document. RegisterAI runs the same client commands at the same
+  scopes, reads each entry before it writes and reads it back after, and refuses an entry this
+  install did not write, given this install's root. BrowserAI turns each answer into the sentence
+  and the `mcp-registration.json` entry it always wrote, with the line to run by hand on every
+  refusal and failure. A RegisterAI that is missing, hangs or writes something else fails the
+  registration of every client and never the install, and the window then shows each client's
+  state as unknown and offers nothing.
+
+  **One change a person can see**, Q347 a: an install or an update over an entry of ours that
+  already names this install's server leaves it exactly as it is, arguments added by hand
+  included, where it used to write it again. The window's *Register again* writes it back. What
+  stays BrowserAI's is what Q348 and RegisterAI's plan keep: the installer's PATH edit,
+  `RegistrationTarget`, the hooks, `mcp-registration.json` and every sentence. Its own client
+  search, both clients' readers and the client-by-client registrar are deleted, after a two-shell
+  gate with the old code and the new side by side.
+
+  **The build takes the newest release and checks it** (Q349 a): `build/Get-RegisterAi.ps1`
+  downloads `RegisterAI.exe` and `SHA256SUMS` with `gh`, refuses the file unless it matches its
+  line, requires `--version` to print the release's tag, and records the release in
+  `payload.json` and in the committed `build/payload/registerai.json`. While the repository is
+  private, `-RegisterAiFrom` takes the same two files from a folder and checks them against the
+  same list. RegisterAI is a sixth row in `drift-check.json` and `upstream-review.json` (Q350 a),
+  the release manifest states it under `resolved.registerai` and refuses a payload without it, and
+  `THIRD-PARTY-NOTICES.txt` names its licence.
+  `RegisterAiTests.ThePayloadsRegisterAiWritesTheSchemaThisReaderReads` runs the payload's own
+  RegisterAI and fails when it writes a schema other than 1. Watched red: 14 arms against stubs
+  that never ran the program and a script that was not there, 8 of them new and 6 re-pointed; the
+  arm for an image with no folder against the fallback the gate found; the manifest's two arms
+  against the script without the block; the review row against a test that could not resolve it;
+  and the notices' two arms against a publish and a package without the program. The schema,
+  stamp, published-slice, real-client and agreement arms were watched red only after the gate,
+  each against a plant, and the README says which.
 
 - 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
   Q322 a, the maintainer's words verbatim: *"Q322 a"*. The generated config writes

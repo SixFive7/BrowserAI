@@ -116,7 +116,7 @@ internal static class RegistrationRecord
             writer.WriteString("when", when.ToString("O", CultureInfo.InvariantCulture));
             writer.WriteString("intent", intent.ToString());
             writer.WriteBoolean("isWhatWasAskedFor", passes.All(pass => pass.Report.IsWhatWasAskedFor));
-            writer.WriteString("server", McpClientRegistration.ServerName);
+            writer.WriteString("server", McpRegistrar.ServerName);
             writer.WriteString("browserAiVersion", version);
 
             writer.WritePropertyName("clients");
@@ -127,7 +127,7 @@ internal static class RegistrationRecord
                 writer.WriteStartObject();
                 writer.WriteString("key", pass.Key);
                 writer.WriteString("displayName", pass.DisplayName);
-                writer.WriteString("scope", McpClientRegistration.UserScope);
+                writer.WriteString("scope", "user");
                 writer.WriteString("outcome", pass.Report.Status.ToString());
                 writer.WriteBoolean("isWhatWasAskedFor", pass.Report.IsWhatWasAskedFor);
 

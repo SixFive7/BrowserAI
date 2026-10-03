@@ -16,6 +16,8 @@ Where each notice lives inside the artifact
   playwright              payload\mcp\node_modules\playwright\LICENSE
                           payload\mcp\node_modules\playwright\NOTICE
                           payload\mcp\node_modules\playwright\ThirdPartyNotices.txt
+  RegisterAI              payload\registerai\RegisterAI.exe, which prints it when
+                          run as: RegisterAI.exe license
   Velopack                this file, below
   ModelContextProtocol    this file, below
   Microsoft.Extensions.*  this file, below
@@ -62,6 +64,14 @@ in the machine's package cache: it is never copied to a publish output, so
 nothing carries it to a recipient unless it is reproduced here. MIT requires its
 notice to travel with the binary and Apache-2.0 section 4(a) requires a copy of
 the licence to reach every recipient, so all three are reproduced below in full.
+
+RegisterAI is the program BrowserAI registers itself with Claude Code and Codex
+through, since 2026-10-03. It is the same author's work, released on its own and
+under its own licence, LicenseRef-RegisterAI-FSL-1.1-MIT-5yr: the Functional
+Source License 1.1 with the MIT future licence, modified to a five-year term.
+Its full text is compiled into the program, which prints it when run as
+RegisterAI.exe license, and the version this payload carries is in
+payload\payload.json.
 
 No browser is redistributed. Chromium, Firefox, ffmpeg and winldd are downloaded
 to the user's machine on first run and no copy of any of them ships here. That

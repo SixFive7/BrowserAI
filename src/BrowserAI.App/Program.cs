@@ -541,10 +541,15 @@ internal sealed class ConfigurationSession(
         // this install's folder on. *Previously this method composed the command
         // itself and wrote Codex's as the absolute path, "because BrowserAI does not
         // rely on Codex expanding a variable in a server command".*
-        var project = who.ProjectCommandFor(_state.ServerCommand ?? string.Empty, _state.InstallRoot);
+        var server = _state.ServerCommand ?? string.Empty;
+        var project = who.ProjectCommandFor(server, _state.InstallRoot);
         var report = McpRegistrar.ApplyToProject(who, register: true, folder, imagePath, tool, logger, project.Command);
 
-        Note = ConfigurationDialog.ProjectNoteFor(report, who, project.Note);
+        // Codex's sentence names what its bare name finds on the PATH, which is
+        // RegisterAI's answer about the entry it just wrote (2026-10-03).
+        var note = project.Note ?? (server.Length > 0 ? who.ProjectNoteAfter(server, report.ResolvesTo) : null);
+
+        Note = ConfigurationDialog.ProjectNoteFor(report, who, note);
 
         return Reread();
     }

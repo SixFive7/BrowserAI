@@ -86,6 +86,7 @@ internal sealed class ThirdPartyNoticeTests
         ("playwright, Apache-2.0", @"payload\mcp\node_modules\playwright\LICENSE"),
         ("playwright, the NOTICE section 4(d) propagates", @"payload\mcp\node_modules\playwright\NOTICE"),
         ("playwright, its own third-party notices", @"payload\mcp\node_modules\playwright\ThirdPartyNotices.txt"),
+        ("RegisterAI, whose licence is compiled into it and printed by its license verb", @"payload\registerai\RegisterAI.exe"),
         ("Velopack, ModelContextProtocol and Microsoft.Extensions.*, plus the trademark disclaimer", "THIRD-PARTY-NOTICES.txt"),
     ];
 

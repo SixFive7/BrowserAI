@@ -181,6 +181,16 @@ if ($missing) {
     exit 1
 }
 
+# RegisterAI runs every registration since 2026-10-03, so a payload without it is
+# not one this release can ship, and a manifest that left it out would read like a
+# complete one. build/Get-RegisterAi.ps1 writes the block. Read before anything is
+# copied, so a refusal leaves no directory behind.
+$payloadRecord = Get-Content -LiteralPath (Join-Path $Root 'payload/payload.json') -Raw | ConvertFrom-Json
+if (-not ($payloadRecord.PSObject.Properties.Name -contains 'registerai')) {
+    Write-Error "payload/payload.json carries no registerai block, so the RegisterAI this release carries cannot be recorded. Run build/Build-Payload.ps1, which takes it with build/Get-RegisterAi.ps1."
+    exit 1
+}
+
 $null = New-Item -ItemType Directory -Force -Path $Destination
 $destination = [System.IO.Path]::GetFullPath($Destination)
 
@@ -334,6 +344,14 @@ $manifest = [ordered]@{
             version = $payload.node.version
             lts     = $payload.node.lts
             sha256  = $payload.node.sha256
+        }
+        # The release the payload took and the SHA-256 it was checked against,
+        # read out of the copied payload.json.
+        registerai = [ordered]@{
+            version = $payload.registerai.version
+            tag     = $payload.registerai.tag
+            source  = $payload.registerai.source
+            sha256  = $payload.registerai.sha256
         }
         # What the verdict file itself says it was judged against, read back out
         # of the copy. A row set is only meaningful beside the upstream it was

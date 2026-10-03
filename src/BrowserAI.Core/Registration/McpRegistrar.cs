@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Jori Huisman
 // SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
 
+using System.Globalization;
 using Microsoft.Extensions.Logging;
 
 namespace BrowserAI.Registration;
@@ -17,10 +18,18 @@ namespace BrowserAI.Registration;
 internal enum RegistrationIntent
 {
     /// <summary>
-    /// A fresh install. <b>This install wins:</b> any existing entry is replaced,
-    /// because the path just changed and the newest install is the authority on
-    /// where BrowserAI now is.
+    /// A fresh install. <b>An entry of ours is made to name this install's server</b>,
+    /// and an entry of ours that already does is left as it is.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Corrected 2026-10-03 (previously "<b>This install wins:</b> any existing
+    /// entry is replaced, because the path just changed and the newest install is the
+    /// authority on where BrowserAI now is")</b>, by the maintainer's decision Q347,
+    /// verbatim <i>"Q347 a"</i>: replacing an entry that already names this server
+    /// also dropped any argument a person had added to it, and RegisterAI's register
+    /// leaves such an entry alone unless <c>--replace</c> asks. An entry of ours naming
+    /// anything else is still re-pointed, and since 2026-09-16 a foreign one is refused.
+    /// </remarks>
     Install,
 
     /// <summary>
@@ -86,7 +95,12 @@ internal enum RegistrationStatus
 /// </param>
 /// <param name="ClientPath">The client executable that was used, when one was found.</param>
 /// <param name="Command">The path that was, or would have been, registered.</param>
-internal sealed record RegistrationReport(RegistrationStatus Status, string Detail, string? ClientPath, string? Command)
+/// <param name="ResolvesTo">
+/// The file the entry resolves to afterwards, as RegisterAI reported it, when it
+/// reported one. Added 2026-10-03, for the sentence after a Codex project
+/// registration, which names what its bare name finds.
+/// </param>
+internal sealed record RegistrationReport(RegistrationStatus Status, string Detail, string? ClientPath, string? Command, string? ResolvesTo = null)
 {
     /// <summary>
     /// Whether the pass left the machine in the state it was asked for.
@@ -101,215 +115,172 @@ internal sealed record RegistrationReport(RegistrationStatus Status, string Deta
 }
 
 /// <summary>
-/// Registers and unregisters BrowserAI with the MCP client, idempotently, and
-/// never throws.
+/// The registrar over RegisterAI: when to register and what to say about it are
+/// BrowserAI's, and the registering is RegisterAI's.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Nothing here decides <i>how</i> -- that is
-/// <see cref="McpClientRegistration"/>, deliberately in a file of its own.</b>
-/// This type decides <i>when</i>, reads the client's answers, and makes certain
-/// that whatever happened is legible afterwards.
+/// <b>Q332, decided 2026-10-01 by the maintainer, verbatim: <i>"Go for only the small
+/// command line program."</i></b> RegisterAI reads each client's entry, decides whether
+/// it is this install's own, runs the client's own <c>mcp add</c> or <c>mcp remove</c>,
+/// reads the entry back, and writes one JSON document saying so. What stays here is
+/// what makes it BrowserAI's: which executable may be registered
+/// (<see cref="RegistrationTarget"/>), the install root that makes an entry ours, the
+/// command each client is given, the sentences a person reads and the record on disk.
 /// </para>
 /// <para>
-/// ⚠️ <b>It cannot throw, and that is a requirement, not a courtesy.</b>
-/// It runs inside a Velopack fast-exit hook: an exception there fails the
-/// install, and an install that fails because a <i>registration</i> failed is a
-/// worse outcome than an installed product nobody registered. Every path returns
-/// a <see cref="RegistrationReport"/>, and the two that mean <i>this did not
-/// work</i> carry the command to run by hand.
+/// <b>One run per hook, both clients in it.</b> RegisterAI is given
+/// <see cref="ToolTimeout"/> for the whole run, which bounds both clients together;
+/// two client calls of ten seconds each used to be able to outlast the fifteen the
+/// update hook gets.
 /// </para>
 /// <para>
-/// <b>Idempotence is measured, not assumed.</b> Measured 2026-08-16 @ Claude Code
-/// 2.1.233: a second <c>add</c> of the same name exits <b>1</b> with <i>"already
-/// exists"</i> -- so <c>add</c> alone is <i>not</i> idempotent and this type
-/// supplies the property the client does not. An install removes first and then
-/// adds; an update adds and treats <i>already exists</i> as success. Install,
-/// update, repair and reinstall therefore all converge on exactly one entry.
+/// ⚠️ <b>One behaviour changed with the switch, by the maintainer's decision Q347,
+/// verbatim: <i>"Q347 a"</i>.</b> An install over an entry of ours that already names
+/// this server leaves it as it is, arguments a person added included; until
+/// 2026-10-03 an install removed and re-added it. The window's <i>Register again</i>
+/// is the explicit rewrite, and passes <c>--replace</c>.
 /// </para>
 /// </remarks>
-internal static partial class McpRegistrar
+internal static class McpRegistrar
 {
-    /// <summary>Runs one registration pass.</summary>
-    /// <param name="intent">Which lifecycle event is asking.</param>
-    /// <param name="imagePath">
-    /// The running image, normally <see cref="Environment.ProcessPath"/>. It is
-    /// checked before it is used: see <see cref="RegistrationTarget"/>.
-    /// </param>
-    /// <param name="commands">The seam over starting the client.</param>
-    /// <param name="logger">Where the pass reports.</param>
-    /// <param name="existing">
-    /// What is registered already, read and not asked for. Supplied by the
-    /// suite; resolved from the client's own user-scope file when omitted.
-    /// </param>
-    /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
-    /// <param name="client">The client to register with, or null for Claude Code.</param>
-    public static RegistrationReport Apply(
-        RegistrationIntent intent,
-        string? imagePath,
-        IRegistrationCommand commands,
-        ILogger logger,
-        Func<string, RegistrationView>? existing = null,
-        RegistrationClient? client = null) =>
-        Apply(client ?? RegistrationClient.ClaudeCode, intent, imagePath, commands, logger, existing);
+    /// <summary>The name every client is given, and the prefix of every tool the model sees.</summary>
+    public const string ServerName = "browserai";
 
-    /// <summary>One pass, against one named client.</summary>
+    /// <summary>
+    /// The budget RegisterAI is given for one run, as <c>--timeout</c>: both clients,
+    /// every read and every write.
+    /// </summary>
     /// <remarks>
-    /// ⚠️ <b>THE CLIENT IS A PARAMETER AND THE OWNERSHIP RULE IS NOT.</b> Added
-    /// 2026-09-24 for Q258: everything the two clients disagree about is a member
-    /// of <see cref="RegistrationClient"/>, and everything about whether a
-    /// registration is OURS stays here, once. Two implementations of that decision
-    /// would be two answers to <i>may I delete this</i>.
+    /// Sized against the tightest hook, <c>--veloapp-updated</c>'s fifteen seconds, and
+    /// not against the measurement: a pass took 1 to 2 s in the 2026-10-01 survey.
     /// </remarks>
-    /// <param name="who">The client to register with.</param>
-    /// <param name="intent">What is being asked.</param>
+    public static TimeSpan ToolTimeout { get; } = TimeSpan.FromSeconds(12);
+
+    /// <summary>How long BrowserAI waits for that run: the tool's own budget and a margin to stop its clients.</summary>
+    public static TimeSpan ToolBudget { get; } = TimeSpan.FromSeconds(14);
+
+    /// <summary>Runs one user-scope pass for one client.</summary>
+    /// <param name="who">The client.</param>
+    /// <param name="intent">Which lifecycle event or click is asking.</param>
     /// <param name="imagePath">This process's own image, which decides the command.</param>
-    /// <param name="commands">The process runner.</param>
+    /// <param name="tool">RegisterAI.</param>
     /// <param name="logger">Where the pass reports.</param>
-    /// <param name="existing">What is registered, for a test to supply.</param>
-    /// <returns>What happened, in the client's own words where it spoke.</returns>
-    /// <exception cref="ArgumentNullException">A required argument is null.</exception>
+    /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
+    /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
     public static RegistrationReport Apply(
         RegistrationClient who,
         RegistrationIntent intent,
         string? imagePath,
-        IRegistrationCommand commands,
+        IRegisterAi tool,
         ILogger logger,
-        Func<string, RegistrationView>? existing = null)
+        bool replace = false)
     {
         ArgumentNullException.ThrowIfNull(who);
-        ArgumentNullException.ThrowIfNull(commands);
+
+        return Apply([who], intent, imagePath, tool, logger, replace)[0].Report;
+    }
+
+    /// <summary>Runs one user-scope pass for several clients, with one run of RegisterAI.</summary>
+    /// <param name="clients">The clients, in the order the record lists them.</param>
+    /// <param name="intent">Which lifecycle event or click is asking.</param>
+    /// <param name="imagePath">This process's own image, which decides the command.</param>
+    /// <param name="tool">RegisterAI.</param>
+    /// <param name="logger">Where the pass reports.</param>
+    /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
+    /// <returns>One pass per client, in the order given. Never throws.</returns>
+    public static IReadOnlyList<ClientRegistration> Apply(
+        IReadOnlyList<RegistrationClient> clients,
+        RegistrationIntent intent,
+        string? imagePath,
+        IRegisterAi tool,
+        ILogger logger,
+        bool replace = false)
+    {
+        ArgumentNullException.ThrowIfNull(clients);
+        ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(logger);
+
+        // No client asked about is no run at all: RegisterAI would refuse a
+        // register that names none, and there is nothing to report either way.
+        if (clients.Count is 0)
+        {
+            return [];
+        }
 
         try
         {
             if (!RegistrationTarget.TryResolve(imagePath, out var target, out var refusal))
             {
                 RegistrationLog.Refused(logger, refusal);
-                return new RegistrationReport(RegistrationStatus.Refused, refusal, null, imagePath);
+                return [.. clients.Select(who => new ClientRegistration(who.Key, who.DisplayName, new RegistrationReport(RegistrationStatus.Refused, refusal, null, imagePath)))];
             }
 
             var command = target!.Command;
-            var client = who.Locate(commands);
+            var verb = intent is RegistrationIntent.Uninstall ? "unregister" : "register";
+            var run = tool.Run(
+                Arguments(verb, clients, "user", project: null, target.InstallRoot, replace, pathFolder: null, command),
+                ToolBudget);
 
-            if (client is null)
+            if (!ToolDocuments.TryRead(run, out var document, out var problem))
             {
-                var detail = who.NotFoundDetail(command);
-
-                RegistrationLog.NoClient(logger, who.Executable, $"on PATH or at {ClientCommandLine.FallbackDirectory}", who.ManualCommandFor(command));
-                return new RegistrationReport(RegistrationStatus.ClientNotFound, detail, null, command);
+                return [.. clients.Select(who => new ClientRegistration(who.Key, who.DisplayName, ToolFailed(who, tool, problem, verb, command, logger)))];
             }
 
-            // ⚠️ READ BEFORE EVERY INTENT, AND NOT ONLY BEFORE AN UPDATE --
-            // 2026-09-16. Until this day the install hook ran `mcp remove` and
-            // then `mcp add` with no check at all, and the uninstall hook ran
-            // `mcp remove` unconditionally -- so installing BrowserAI OVERWROTE
-            // another BrowserAI's registration and uninstalling it DELETED one.
-            // Three sentences in this codebase said that never happens
-            // (RegistrationOwnership's own summary, AppState.MayRemove, and the
-            // registration row in DECISIONS.md), and one intent out of three was
-            // keeping them.
-            var view = (existing ?? (root => who.UserView(commands, client, root)))(target.InstallRoot);
-
-            // Unreadable and Foreign answer the same way whatever was asked, so
-            // they are decided once and not three times. Everything below
-            // this line is about a registration that is ABSENT or OURS.
-            if (NotOursToTouch(who, logger, client, command, intent, view) is { } notOurs)
-            {
-                return notOurs;
-            }
-
-            // ⚠️ AN UNINSTALL OVER NOTHING RUNS NOTHING -- 2026-09-24. Until the
-            // second client this was left to the client's own exit code: Claude
-            // Code exits 1 with "No MCP server named", which reads as nothing to
-            // remove. Codex exits 0 on removing a server that is not there
-            // (measured at 0.155.0-alpha.9.2), so the same path reported
-            // "Removed 'browserai' from Codex" on every machine where nothing had
-            // been registered -- a sentence in the record a person could check and
-            // find false. The reading taken above is the answer to the question,
-            // and it has already been trusted to refuse and to add.
-            if (intent is RegistrationIntent.Uninstall && view.Ownership is RegistrationOwnership.Absent)
-            {
-                return NothingThere(who, logger, client, command);
-            }
-
-            return intent switch
-            {
-                RegistrationIntent.Uninstall => Remove(who, commands, logger, client, command),
-                RegistrationIntent.Install => Reassert(who, commands, logger, client, command),
-                _ => Repair(who, commands, logger, client, command, view),
-            };
+            return
+            [
+                .. clients.Select(who => new ClientRegistration(
+                    who.Key,
+                    who.DisplayName,
+                    document!.For(who.ToolId) is { } result
+                        ? UserReport(who, intent, result, command, logger)
+                        : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, logger))),
+            ];
         }
-#pragma warning disable CA1031 // The hook boundary. A registration failure is a log line, a record on disk and an install that still succeeds -- never an exception into the installer.
+#pragma warning disable CA1031 // The hook boundary. A registration failure is a log line, a record on disk and an install that still succeeds, never an exception into the installer.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
             RegistrationLog.PassFailed(logger, failure);
 
-            return new RegistrationReport(
-                RegistrationStatus.Failed,
-                $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with {who.DisplayName}; register it by hand with: {who.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>")}",
-                null,
-                imagePath);
+            return
+            [
+                .. clients.Select(who => new ClientRegistration(
+                    who.Key,
+                    who.DisplayName,
+                    new RegistrationReport(
+                        RegistrationStatus.Failed,
+                        $"The registration pass threw: {failure.Message}. BrowserAI is installed and is not registered with {who.DisplayName}; register it by hand with: {who.ManualCommandFor(imagePath ?? "<the installed BrowserAI.exe>")}",
+                        null,
+                        imagePath))),
+            ];
         }
     }
 
-    /// <summary>
-    /// One pass against a repository's own configuration, in either direction.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Added 2026-09-24, and the reason it is HERE is the ownership
-    /// rule.</b> Project-scope registration existed only as a hand-written
-    /// sequence inside the configuration app: locate the client, compose the
-    /// command, run <c>mcp add --scope project</c>, read the exit code. It had no
-    /// ownership check at all, so <i>register in a project</i> would happily
-    /// overwrite another BrowserAI's entry in somebody's repository -- the exact
-    /// thing the user-scope path refuses. And there was no unregister in that
-    /// direction at all. Both verbs go through this now, which means one answer to
-    /// <i>may I write this</i> for both scopes and both clients.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>The scope lever is the client's, not this method's.</b> Claude Code
-    /// takes <c>--scope project</c> and must be RUN IN the repository; Codex takes
-    /// no scope at all and writes whichever configuration <c>CODEX_HOME</c> names.
-    /// Both are members of <see cref="RegistrationClient"/>, and all three are
-    /// applied here together -- arguments, environment and working directory --
-    /// because applying two of the three is how a project registration silently
-    /// becomes a user one.
-    /// </para>
-    /// <para>
-    /// <b>The command may be spelled by the caller, and that is a real product
-    /// behaviour and not a hook.</b> A project file is meant to be committed,
-    /// so the configuration window writes the <i>portable</i> spelling of this
-    /// install's path when the install is at its default location. Ownership is
-    /// still judged on the expanded form, by <see cref="McpRegistryView.Classify"/>.
-    /// </para>
-    /// </remarks>
+    /// <summary>One pass against a repository's own configuration, in either direction, through RegisterAI.</summary>
     /// <param name="who">The client to write to.</param>
     /// <param name="register">Whether to add or to remove.</param>
     /// <param name="project">The repository root.</param>
     /// <param name="imagePath">This process's own image, which decides what may be registered.</param>
-    /// <param name="commands">The process runner.</param>
+    /// <param name="tool">RegisterAI.</param>
     /// <param name="logger">Where the pass reports.</param>
     /// <param name="commandToRegister">
-    /// What to write, or <see langword="null"/> for the resolved image's own
-    /// command.
+    /// What to write, or <see langword="null"/> for this client's own spelling of the
+    /// server (<see cref="RegistrationClient.ProjectCommandFor"/>).
     /// </param>
     /// <returns>What happened. Never <see langword="null"/>, never throws.</returns>
-    /// <exception cref="ArgumentNullException">A required argument is null.</exception>
     public static RegistrationReport ApplyToProject(
         RegistrationClient who,
         bool register,
         string project,
         string? imagePath,
-        IRegistrationCommand commands,
+        IRegisterAi tool,
         ILogger logger,
         string? commandToRegister = null)
     {
         ArgumentNullException.ThrowIfNull(who);
         ArgumentException.ThrowIfNullOrWhiteSpace(project);
-        ArgumentNullException.ThrowIfNull(commands);
+        ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(logger);
 
         try
@@ -320,85 +291,28 @@ internal static partial class McpRegistrar
                 return new RegistrationReport(RegistrationStatus.Refused, refusal, null, imagePath);
             }
 
-            var command = commandToRegister is { Length: > 0 } spelled ? spelled : target!.Command;
-            var client = who.Locate(commands);
+            var command = commandToRegister is { Length: > 0 } spelled ? spelled : who.ProjectCommandFor(target!.Command, target.InstallRoot).Command;
+            var verb = register ? "register" : "unregister";
 
-            if (client is null)
+            // A bare name is found through the PATH, so RegisterAI is told which
+            // folder that has to be: the install's current\, which the hooks put on
+            // the user's PATH (Q294 b).
+            var pathFolder = register && IsBareName(command) ? Path.GetDirectoryName(target!.Command) : null;
+
+            var run = tool.Run(
+                Arguments(verb, [who], "project", project, target!.InstallRoot, replace: false, pathFolder, command),
+                ToolBudget);
+
+            if (!ToolDocuments.TryRead(run, out var document, out var problem))
             {
-                var detail = who.NotFoundDetail(command);
-
-                RegistrationLog.NoClient(logger, who.Executable, $"on PATH or at {ClientCommandLine.FallbackDirectory}", who.ManualCommandFor(command));
-                return new RegistrationReport(RegistrationStatus.ClientNotFound, detail, null, command);
+                return ToolFailed(who, tool, problem, verb, command, logger);
             }
 
-            // The same gate the user scope has, and it is read before either verb:
-            // an entry in somebody's repository that this install did not write
-            // belongs to another install, and neither writing over it nor
-            // deleting it is ours to do.
-            var view = who.ProjectView(commands, client, project, target!.InstallRoot);
-
-            if (NotOursToTouch(
-                    who,
-                    logger,
-                    client,
-                    command,
-                    register ? RegistrationIntent.Install : RegistrationIntent.Uninstall,
-                    view) is { } notOurs)
-            {
-                return notOurs;
-            }
-
-            if (!register && view.Ownership is RegistrationOwnership.Absent)
-            {
-                RegistrationLog.NothingToUnregister(logger, who.ServerName);
-
-                return new RegistrationReport(
-                    RegistrationStatus.NothingToUnregister,
-                    $"There is no '{who.ServerName}' registered in '{project}' for {who.DisplayName} to remove.",
-                    client,
-                    command);
-            }
-
-            // Codex refuses to write into a CODEX_HOME that is not there, and
-            // creating a directory inside somebody's repository is an act, so it
-            // is a named member and not an inference.
-            if (register && who.ProjectDirectoryToCreate(project) is { Length: > 0 } needed)
-            {
-                _ = Directory.CreateDirectory(needed);
-            }
-
-            // ⚠️ A REGISTER OVER AN ENTRY OF OURS REMOVES IT FIRST, the way the
-            // user-scope install does (Reassert). Claude Code's `mcp add` over an
-            // existing project entry exits 1 with "already exists", which the
-            // client's own predicate reads as success -- so without this, the one
-            // case a person clicks register for over an existing entry, a stale
-            // one, would be reported as written and left pointing where it was.
-            // Unexamined for the same reason Reassert's is: a remove that failed
-            // for any reason surfaces as the add failing, in the client's words.
-            if (register && view.Ownership is RegistrationOwnership.OursAndPresent or RegistrationOwnership.OursAndStale)
-            {
-                _ = commands.Run(
-                    client,
-                    who.ProjectRemoveArguments(project),
-                    who.Budget,
-                    who.ProjectWorkingDirectory(project),
-                    who.ProjectEnvironment(project));
-            }
-
-            var outcome = commands.Run(
-                client,
-                register ? who.ProjectAddArguments(command, project) : who.ProjectRemoveArguments(project),
-                who.Budget,
-                who.ProjectWorkingDirectory(project),
-                who.ProjectEnvironment(project));
-
-            RemoveResidue(who, project);
-
-            return register
-                ? ProjectAdded(who, logger, client, command, project, outcome)
-                : ProjectRemoved(who, logger, client, command, project, outcome);
+            return document!.For(who.ToolId) is { } result
+                ? ProjectReport(who, register, project, result, command, logger)
+                : ToolFailed(who, tool, $"its answer carried nothing about {who.DisplayName}", verb, command, logger);
         }
-#pragma warning disable CA1031 // Same boundary as Apply: a registration failure is a report, never an exception into a click handler or a hook.
+#pragma warning disable CA1031 // Same boundary as Apply: a registration failure is a report, never an exception into a click handler.
         catch (Exception failure)
 #pragma warning restore CA1031
         {
@@ -412,366 +326,237 @@ internal static partial class McpRegistrar
         }
     }
 
-    /// <summary>What a project add amounts to.</summary>
-    private static RegistrationReport ProjectAdded(
-        RegistrationClient who,
-        ILogger logger,
-        string client,
-        string command,
-        string project,
-        CommandOutcome outcome)
+    /// <summary>The command line one run is given.</summary>
+    /// <param name="verb">status, register or unregister.</param>
+    /// <param name="clients">The clients asked about.</param>
+    /// <param name="scope">user or project.</param>
+    /// <param name="project">The repository, for project scope.</param>
+    /// <param name="ownedRoot">The install root under which an entry is ours, or null.</param>
+    /// <param name="replace">Whether an entry of ours that already matches is rewritten.</param>
+    /// <param name="pathFolder">The folder a bare command is found in, or null.</param>
+    /// <param name="command">The server's command, or null.</param>
+    /// <returns>The arguments, one element each.</returns>
+    internal static List<string> Arguments(
+        string verb,
+        IReadOnlyList<RegistrationClient> clients,
+        string scope,
+        string? project,
+        string? ownedRoot,
+        bool replace,
+        string? pathFolder,
+        string? command)
     {
-        if (outcome.Succeeded || who.MeansAlreadyRegistered(outcome.ExitCode, outcome.Output))
-        {
-            RegistrationLog.Registered(logger, who.ServerName, command, client);
+        ArgumentNullException.ThrowIfNull(clients);
 
-            return new RegistrationReport(
-                RegistrationStatus.Registered,
-                $"Wrote '{who.ProjectFileIn(project)}' registering '{command}' for {who.DisplayName}.",
-                client,
-                command);
+        var arguments = new List<string> { verb, "--name", ServerName };
+
+        if (RegistrationClient.All.All(client => clients.Any(asked => asked.ToolId == client.ToolId)))
+        {
+            arguments.AddRange(["--client", "all"]);
         }
-
-        return Failed(who, logger, client, command, outcome, "register in a project");
-    }
-
-    /// <summary>What a project remove amounts to.</summary>
-    private static RegistrationReport ProjectRemoved(
-        RegistrationClient who,
-        ILogger logger,
-        string client,
-        string command,
-        string project,
-        CommandOutcome outcome)
-    {
-        if (outcome.Succeeded || who.MeansNothingToRemove(outcome.ExitCode, outcome.Output))
+        else
         {
-            RegistrationLog.Unregistered(logger, who.ServerName);
-
-            return new RegistrationReport(
-                RegistrationStatus.Unregistered,
-                $"Removed '{who.ServerName}' from '{who.ProjectFileIn(project)}' for {who.DisplayName}.",
-                client,
-                command);
-        }
-
-        return Failed(who, logger, client, command, outcome, "unregister from a project");
-    }
-
-    /// <summary>
-    /// Deletes what a project-scope run left behind, when the client leaves
-    /// anything, and only while it is empty.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <b>It is not ours to leave in somebody's repository</b>, and it is
-    /// tolerated when absent: an earlier run on 2026-09-24 did not produce it at
-    /// all.
-    /// </para>
-    /// <para>
-    /// ⚠️ <b>IT IS A DIRECTORY, AND SO IS ITS PARENT -- measured 2026-09-24 at
-    /// 08:20Z @ codex-cli 0.155.0-alpha.9.2</b>, with <c>CODEX_HOME</c> at a
-    /// scratch project: an <c>mcp add</c>, an <c>mcp list --json</c> and an
-    /// <c>mcp remove</c> left <c>tmp\</c> and <c>tmp\arg0\</c>, both empty, beside
-    /// a <c>config.toml</c> of 0 bytes. The version of this method written before
-    /// that measurement called <c>File.Delete</c> on the path, which throws on a
-    /// directory and would have left it every time.
-    /// </para>
-    /// <para>
-    /// <b>Innermost first, each only while EMPTY, and never above the home the
-    /// client was pointed at.</b> The single-argument <c>Directory.Delete</c>
-    /// refuses a directory with anything in it, which is the property wanted
-    /// here: a <c>tmp</c> that somebody else put a file in is not this product's
-    /// to remove, and neither is the <c>config.toml</c> -- that file is the
-    /// client's, which is the whole charter.
-    /// </para>
-    /// </remarks>
-    private static void RemoveResidue(RegistrationClient who, string project)
-    {
-        if (who.ProjectResidue(project) is not { Length: > 0 } residue
-            || who.ProjectDirectoryToCreate(project) is not { Length: > 0 } home)
-        {
-            return;
-        }
-
-        var stop = Path.GetFullPath(home).TrimEnd(Path.DirectorySeparatorChar);
-
-        for (var directory = Path.GetFullPath(residue).TrimEnd(Path.DirectorySeparatorChar);
-             directory.Length > stop.Length
-                && directory.StartsWith(stop + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
-             directory = Path.GetDirectoryName(directory) ?? stop)
-        {
-            try
+            foreach (var client in clients)
             {
-                if (!Directory.Exists(directory))
+                arguments.AddRange(["--client", client.ToolId]);
+            }
+        }
+
+        arguments.AddRange(["--scope", scope]);
+
+        if (project is { Length: > 0 })
+        {
+            arguments.AddRange(["--project", project]);
+        }
+
+        if (ownedRoot is { Length: > 0 })
+        {
+            arguments.AddRange(["--owned-root", ownedRoot]);
+        }
+
+        if (replace)
+        {
+            arguments.Add("--replace");
+        }
+
+        if (pathFolder is { Length: > 0 })
+        {
+            arguments.AddRange(["--path-folder", pathFolder]);
+        }
+
+        arguments.AddRange(["--timeout", ToolTimeout.TotalSeconds.ToString("F0", CultureInfo.InvariantCulture)]);
+
+        if (command is { Length: > 0 })
+        {
+            arguments.AddRange(["--", command]);
+        }
+
+        return arguments;
+    }
+
+    /// <summary>Whether a command is a file name with no folder, which a client finds through PATH.</summary>
+    /// <param name="command">The command.</param>
+    /// <returns>Whether it names no folder at all.</returns>
+    internal static bool IsBareName(string command) =>
+        command.Length > 0 && command.IndexOfAny(['\\', '/', ':']) < 0;
+
+    /// <summary>What one client's user-scope result amounts to, in BrowserAI's words.</summary>
+    private static RegistrationReport UserReport(RegistrationClient who, RegistrationIntent intent, ToolResult result, string command, ILogger logger)
+    {
+        var client = result.ClientPath;
+
+        switch (result.Action)
+        {
+            case "added" or "replaced":
+                if (result.Before.State is "ours-stale")
                 {
-                    continue;
+                    RegistrationLog.Repairing(logger, result.Before.Command ?? "<none>", command);
                 }
 
-                Directory.Delete(directory);
-            }
-            catch (Exception failure) when (failure is IOException or UnauthorizedAccessException)
-            {
-                // Not empty, or not ours to delete. Either way it is left, and so
-                // is everything above it: a parent cannot be empty while a child
-                // stands in it.
-                return;
-            }
-        }
-    }
+                RegistrationLog.Registered(logger, ServerName, command, client ?? who.Executable);
 
-    /// <summary>
-    /// An update: repair an entry of ours that has gone stale, and touch nothing
-    /// else.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Added 2026-09-15 (previously this intent went to
-    /// <see cref="EnsurePresent"/>, which adds when absent and otherwise does
-    /// nothing at all).</b> That was right while the registered path could not
-    /// change under an update, and it stopped being right the day the server was
-    /// renamed: every registration written before that day names
-    /// <c>current\BrowserAI.exe</c>, which is now the configuration app's name
-    /// and, in an install that has been updated, a file the client can still
-    /// launch. Left alone, a person who updates gets a window instead of a
-    /// server.
-    /// </para>
-    /// <para>
-    /// <b>Four states, and only one of them writes.</b> Absent adds, because an
-    /// update of a BrowserAI somebody unregistered by hand is not an invitation
-    /// to leave them without one and that has been this hook's behaviour since
-    /// it existed. <i>Ours and present</i> is left exactly as it is, arguments
-    /// and all -- a person may have added their own. <i>Ours and stale</i> is
-    /// re-pointed, which is the whole reason this method exists. <b>Foreign is
-    /// reported and never touched</b>: an entry named <c>browserai</c> whose
-    /// command is not under our install root belongs to another BrowserAI, and
-    /// adopting it would be an update of one product silently re-pointing
-    /// another. <i>Since 2026-09-16 that last judgement is taken in
-    /// <see cref="NotOursToTouch"/> and applies to every intent</i>, so this
-    /// method only ever meets the two that are ours and the one that is nothing.
-    /// </para>
-    /// <para>
-    /// <b>Ours is decided by the install root and not by the file name</b>, so a
-    /// second install elsewhere reads as foreign -- which it is.
-    /// </para>
-    /// </remarks>
-    private static RegistrationReport Repair(
-        RegistrationClient who,
-        IRegistrationCommand commands,
-        ILogger logger,
-        string client,
-        string command,
-        RegistrationView existing)
-    {
-        // Unreadable and Foreign never reach here: Apply decides both before it
-        // picks an intent, because the answer is the same for all three.
-        switch (existing.Ownership)
-        {
-            case RegistrationOwnership.Absent:
-                return Add(who, commands, logger, client, command);
+                return new RegistrationReport(
+                    RegistrationStatus.Registered,
+                    $"Registered '{ServerName}' with {who.DisplayName} for this user, pointing at '{command}'. It is available in every repository and wrote no file into any of them.",
+                    client,
+                    command);
 
-            case RegistrationOwnership.OursAndStale:
-                RegistrationLog.Repairing(logger, existing.Command ?? "<none>", command);
-                _ = commands.Run(client, who.RemoveArguments(), who.Budget);
-                return Add(who, commands, logger, client, command);
+            case "removed":
+                RegistrationLog.Unregistered(logger, ServerName);
 
-            default:
-                RegistrationLog.AlreadyRegistered(logger, who.ServerName, command);
+                return new RegistrationReport(RegistrationStatus.Unregistered, $"Removed '{ServerName}' from {who.DisplayName} for this user.", client, command);
+
+            case "none" when intent is RegistrationIntent.Uninstall:
+                RegistrationLog.NothingToUnregister(logger, ServerName);
+
+                return new RegistrationReport(
+                    RegistrationStatus.NothingToUnregister,
+                    $"There was no '{ServerName}' registered with {who.DisplayName} for this user to remove, which is what an uninstall of a BrowserAI somebody had already unregistered looks like.",
+                    client,
+                    command);
+
+            case "none":
+                RegistrationLog.AlreadyRegistered(logger, ServerName, command);
+
                 return new RegistrationReport(
                     RegistrationStatus.AlreadyRegistered,
-                    $"'{who.ServerName}' is already registered at '{existing.Command}' and was left exactly as it is.",
+                    $"'{ServerName}' is already registered with {who.DisplayName} at '{result.Before.Command}' and was left exactly as it is.",
                     client,
-                    existing.Command);
+                    result.Before.Command);
+
+            default:
+                return NotDone(who, intent is RegistrationIntent.Uninstall ? "unregister" : "register", result, command, logger, Foreign(who, result, intent is RegistrationIntent.Uninstall));
         }
     }
 
-    /// <summary>
-    /// The two states in which no intent may act: a configuration nobody could
-    /// read, and an entry this install did not write.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// ⚠️ <b>Shared by all three intents since 2026-09-16.</b> It was
-    /// <see cref="Repair"/>'s alone, which meant an <i>install</i> overwrote a
-    /// foreign entry and an <i>uninstall</i> deleted one -- the exact two things
-    /// <see cref="RegistrationOwnership"/> says this product never does. The
-    /// wording is unchanged for the intents that write, so a person who has met
-    /// this message before meets the same one; the uninstall's closing sentence
-    /// differs because <i>register this one instead</i> is not advice about an
-    /// uninstall.
-    /// </para>
-    /// <para>
-    /// <b>Nothing runs.</b> The refusal is returned before any client command is
-    /// started, so the verb list a double records is empty -- which is how the
-    /// suite tells <i>refused</i> from <i>tried and failed</i>.
-    /// </para>
-    /// <para>
-    /// <b>There is no exit code on this path and that is by design</b>: these run
-    /// inside Velopack fast-exit callbacks, where a non-zero result fails
-    /// somebody's install. What carries the outcome instead is
-    /// <c>mcp-registration.json</c> -- <c>isWhatWasAskedFor</c> is
-    /// <see langword="false"/> for a refusal and the detail names the foreign
-    /// path -- and a warning-level line in the installer's own log.
-    /// </para>
-    /// </remarks>
-    /// <param name="who">The client being registered with.</param>
-    /// <param name="logger">Where the refusal is reported.</param>
-    /// <param name="client">The client executable that was found.</param>
-    /// <param name="command">What this install would have registered.</param>
-    /// <param name="intent">Which lifecycle event asked.</param>
-    /// <param name="existing">What is registered already.</param>
-    /// <returns>The refusal, or <see langword="null"/> when the caller may act.</returns>
-    private static RegistrationReport? NotOursToTouch(
-        RegistrationClient who,
-        ILogger logger,
-        string client,
-        string command,
-        RegistrationIntent intent,
-        RegistrationView existing)
+    /// <summary>What one client's project-scope result amounts to, in BrowserAI's words.</summary>
+    private static RegistrationReport ProjectReport(RegistrationClient who, bool register, string project, ToolResult result, string command, ILogger logger)
     {
-        if (existing.Unreadable is { } unreadable)
+        var client = result.ClientPath;
+        var file = result.Config ?? who.ProjectFileIn(project);
+
+        switch (result.Action)
         {
-            // Never treated as "nothing is registered": that reading would make
-            // an unreadable file into a licence to write one -- or, on an
-            // uninstall, into a licence to delete one.
+            case "added" or "replaced":
+                RegistrationLog.Registered(logger, ServerName, command, client ?? who.Executable);
+
+                return new RegistrationReport(RegistrationStatus.Registered, $"Wrote '{file}' registering '{command}' for {who.DisplayName}.", client, command, result.After.ResolvesTo);
+
+            case "removed":
+                RegistrationLog.Unregistered(logger, ServerName);
+
+                return new RegistrationReport(RegistrationStatus.Unregistered, $"Removed '{ServerName}' from '{file}' for {who.DisplayName}.", client, command);
+
+            case "none" when !register:
+                RegistrationLog.NothingToUnregister(logger, ServerName);
+
+                return new RegistrationReport(
+                    RegistrationStatus.NothingToUnregister,
+                    $"There is no '{ServerName}' registered in '{project}' for {who.DisplayName} to remove.",
+                    client,
+                    command);
+
+            case "none":
+                RegistrationLog.AlreadyRegistered(logger, ServerName, command);
+
+                return new RegistrationReport(
+                    RegistrationStatus.AlreadyRegistered,
+                    $"'{file}' already registers '{result.Before.Command}' for {who.DisplayName}, and it was left exactly as it is.",
+                    client,
+                    result.Before.Command,
+                    result.Before.ResolvesTo);
+
+            default:
+                return NotDone(who, register ? "register in a project" : "unregister from a project", result, command, logger, Foreign(who, result, !register));
+        }
+    }
+
+    /// <summary>The refusals, the missing client and the failure, which read the same at either scope.</summary>
+    private static RegistrationReport NotDone(RegistrationClient who, string verb, ToolResult result, string command, ILogger logger, string foreign)
+    {
+        var client = result.ClientPath;
+        var manual = who.ManualCommandFor(command);
+
+        if (result.Action is "refused-foreign")
+        {
+            RegistrationLog.Refused(logger, foreign);
+            return new RegistrationReport(RegistrationStatus.Refused, foreign, client, result.Before.Command);
+        }
+
+        if (result.Action is "refused-unreadable")
+        {
+            var unreadable = $"{result.Error ?? $"{who.DisplayName}'s configuration could not be read."} What is registered there is unknown, and BrowserAI acts on nothing it could not read.";
+
             RegistrationLog.Refused(logger, unreadable);
             return new RegistrationReport(RegistrationStatus.Refused, unreadable, client, command);
         }
 
-        if (existing.Ownership is not RegistrationOwnership.Foreign)
+        if (result.Action is "client-not-found")
         {
-            return null;
-        }
-
-        var advice = intent is RegistrationIntent.Uninstall
-            ? "That entry belongs to the other install, and removing it is for that install to do."
-            : $"If this install is the one you want, unregister the other and register this one: {who.ManualCommandFor(command)}";
-
-        var foreign =
-            $"Another BrowserAI is registered at '{existing.Command}', which is not under this install root. "
-            + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{who.ServerName}' entry it did not write. "
-            + advice;
-
-        RegistrationLog.Refused(logger, foreign);
-        return new RegistrationReport(RegistrationStatus.Refused, foreign, client, existing.Command);
-    }
-
-    /// <summary>
-    /// An install: remove whatever <b>of ours</b> is there, then add. The newest
-    /// install is the authority on where <i>this</i> BrowserAI is, and on
-    /// nothing else.
-    /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>Corrected 2026-09-16 (previously "remove whatever is there, then
-    /// add. The newest install is the authority on where BrowserAI is").</b>
-    /// That sentence was true of the code and false of the product: <i>whatever
-    /// is there</i> included another BrowserAI's entry, and this method deleted
-    /// it and wrote its own over the top. <c>Apply</c> now refuses a
-    /// foreign entry before this is reached, so the remaining states really are
-    /// the ones the sentence assumed -- absent, or ours.
-    /// </remarks>
-    private static RegistrationReport Reassert(RegistrationClient who, IRegistrationCommand commands, ILogger logger, string client, string command)
-    {
-        // Deliberately unexamined. "Nothing to remove" is the ordinary case on a
-        // first install, and a remove that failed for any other reason will
-        // surface as the add failing, with the client's own words attached.
-        _ = commands.Run(client, who.RemoveArguments(), who.Budget);
-
-        return Add(who, commands, logger, client, command);
-    }
-
-    /// <summary>
-    /// An update: add only if absent. An entry that is already there is left
-    /// exactly as the user left it.
-    /// </summary>
-    private static RegistrationReport EnsurePresent(RegistrationClient who, IRegistrationCommand commands, ILogger logger, string client, string command) =>
-        Add(who, commands, logger, client, command);
-
-    private static RegistrationReport Add(RegistrationClient who, IRegistrationCommand commands, ILogger logger, string client, string command)
-    {
-        var outcome = commands.Run(client, who.AddArguments(command), who.Budget);
-
-        if (outcome.Succeeded)
-        {
-            RegistrationLog.Registered(logger, who.ServerName, command, client);
+            RegistrationLog.NoClient(logger, who.Executable, "where RegisterAI looks", manual);
 
             return new RegistrationReport(
-                RegistrationStatus.Registered,
-                $"Registered '{who.ServerName}' with {who.DisplayName} for this user, pointing at '{command}'. It is available in every repository and wrote no file into any of them.",
-                client,
+                RegistrationStatus.ClientNotFound,
+                $"{result.Error ?? $"{who.Executable} was not found."} So BrowserAI has not registered itself with {who.DisplayName}. Install the client and run: {manual}",
+                null,
                 command);
         }
 
-        if (who.MeansAlreadyRegistered(outcome.ExitCode, outcome.Output))
-        {
-            RegistrationLog.AlreadyRegistered(logger, who.ServerName, command);
+        var said = $"{result.Error ?? "RegisterAI reported the change as not done."}{(result.Said is { Length: > 0 } words ? $" What {who.Executable} printed: {words}" : string.Empty)}";
 
-            return new RegistrationReport(
-                RegistrationStatus.AlreadyRegistered,
-                $"'{who.ServerName}' was already registered with {who.DisplayName} for this user and was left exactly as it was. An update does not overwrite a registration, because the path does not move and the arguments may not be ours.",
-                client,
-                command);
-        }
-
-        return Failed(who, logger, client, command, outcome, "register");
-    }
-
-    private static RegistrationReport Remove(RegistrationClient who, IRegistrationCommand commands, ILogger logger, string client, string command)
-    {
-        var outcome = commands.Run(client, who.RemoveArguments(), who.Budget);
-
-        if (outcome.Succeeded)
-        {
-            RegistrationLog.Unregistered(logger, who.ServerName);
-
-            return new RegistrationReport(
-                RegistrationStatus.Unregistered,
-                $"Removed '{who.ServerName}' from {who.DisplayName} for this user.",
-                client,
-                command);
-        }
-
-        if (who.MeansNothingToRemove(outcome.ExitCode, outcome.Output))
-        {
-            return NothingThere(who, logger, client, command);
-        }
-
-        return Failed(who, logger, client, command, outcome, "unregister");
-    }
-
-    /// <summary>The report for an uninstall that found nothing of ours to remove.</summary>
-    /// <param name="who">The client.</param>
-    /// <param name="logger">Where the pass reports.</param>
-    /// <param name="client">The client executable.</param>
-    /// <param name="command">What this install would have registered.</param>
-    /// <returns>The report.</returns>
-    private static RegistrationReport NothingThere(RegistrationClient who, ILogger logger, string client, string command)
-    {
-        RegistrationLog.NothingToUnregister(logger, who.ServerName);
+        RegistrationLog.Failed(logger, verb, client ?? who.Executable, said, manual);
 
         return new RegistrationReport(
-            RegistrationStatus.NothingToUnregister,
-            $"There was no '{who.ServerName}' registered with {who.DisplayName} for this user to remove, which is what an uninstall of a BrowserAI somebody had already unregistered looks like.",
+            RegistrationStatus.Failed,
+            $"BrowserAI could not {verb} itself with {who.DisplayName}. {said} BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {manual}",
             client,
             command);
     }
 
-    private static RegistrationReport Failed(RegistrationClient who, ILogger logger, string client, string command, CommandOutcome outcome, string verb)
+    /// <summary>The sentence for an entry another install wrote.</summary>
+    private static string Foreign(RegistrationClient who, ToolResult result, bool removing)
     {
-        var said = outcome switch
-        {
-            { TimedOut: true } => $"it did not finish within {who.Budget.TotalSeconds:F0}s and was stopped",
-            { Failure: { } failure } => $"it could not be started: {failure}",
-            _ => $"it exited {outcome.ExitCode} saying: {(outcome.Output.Length is 0 ? "<nothing>" : outcome.Output)}",
-        };
+        var advice = removing
+            ? "That entry belongs to the other install, and removing it is for that install to do."
+            : $"If this install is the one you want, unregister the other and register this one: {who.ManualCommandFor(result.Before.Command ?? "<this install's server>")}";
 
-        var detail =
-            $"BrowserAI could not {verb} itself. '{client}' was found and {said}. " +
-            $"BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {who.ManualCommandFor(command)}";
+        return $"Another BrowserAI is registered at '{result.Before.Command ?? "<an entry with no local command>"}', which is not under this install root. "
+            + $"Nothing was changed: BrowserAI never adopts, overwrites or removes a '{ServerName}' entry it did not write. "
+            + advice;
+    }
 
-        RegistrationLog.Failed(logger, verb, client, said, who.ManualCommandFor(command));
+    /// <summary>A run of RegisterAI that gave no answer BrowserAI can read.</summary>
+    private static RegistrationReport ToolFailed(RegistrationClient who, IRegisterAi tool, string problem, string verb, string command, ILogger logger)
+    {
+        var said = $"RegisterAI at '{tool.Executable}' gave no answer: {problem}.";
 
-        return new RegistrationReport(RegistrationStatus.Failed, detail, client, command);
+        RegistrationLog.Failed(logger, verb, tool.Executable, said, who.ManualCommandFor(command));
+
+        return new RegistrationReport(
+            RegistrationStatus.Failed,
+            $"BrowserAI could not {verb} itself with {who.DisplayName}. {said} BrowserAI is installed and working; what is missing is the client's pointer at it. Run: {who.ManualCommandFor(command)}",
+            null,
+            command);
     }
 }
 

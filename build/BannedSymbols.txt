@@ -71,11 +71,13 @@
 ; process is gone and does NOT drain the asynchronous output readers, so stderr
 ; is silently truncated -- a green build that loses the line explaining a
 ; failure, which is this project's founding defect class. The parameterless
-; overload is what flushes the event queue. There is exactly one legitimate call
-; site, Registration/ClientCommandLine.cs, and it carries an RS0030 suppression
-; with the reason beside it AND a bare WaitForExit() on the next statement. The
-; suppression permits the timed call and cannot require the flush, so the pairing
-; has a test of its own:
+; overload is what flushes the event queue. No call site is left in src/ since
+; 2026-10-03, when Registration/ClientCommandLine.cs went to RegisterAI with the
+; rest of the registration code (previously "There is exactly one legitimate call
+; site, Registration/ClientCommandLine.cs"). A new one carries an RS0030
+; suppression with the reason beside it AND a bare WaitForExit() on the next
+; statement. The suppression permits the timed call and cannot require the flush,
+; so the pairing has a test of its own:
 ; ProcessLogTests.EveryTimedWaitForExitIsFollowedByABareOne, added 2026-08-17,
 ; which fails if the second call is ever deleted. Without it, deleting that line
 ; leaves the suppression, its comment and the whole build intact.
