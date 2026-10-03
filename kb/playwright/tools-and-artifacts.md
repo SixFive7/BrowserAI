@@ -1745,7 +1745,7 @@ already on record in this article.
 | `--console-level` | `info` | `debug`, because the default silently drops debug messages |
 | `--codegen` | `typescript` | `none` |
 | `--file-paths` | `relative` | `absolute`, so a pointer in a tool result means something to a caller |
-| `--snapshot-boxes` | off | on |
+| `--snapshot-boxes` | off | `false`, written explicitly, and a model asks `browser_snapshot` for `boxes: true` on the call that needs coordinates -- *corrected 2026-10-03, Q322 a (previously "on"): `browser_snapshot` returns its snapshot inline, and boxes on cost 175,611 tokens against 105,804 off over nine pages, measured 2026-09-25 at `@playwright/mcp` 0.0.82, Chrome for Testing 154.0.8037.0, `o200k_base` as a proxy tokenizer* |
 | `--idle-timeout` | 3,600,000 ms | the same number, written so it is on the record, and unreachable behind BrowserAI's own 10-minute timer |
 | `--no-webmcp` | webmcp on | webmcp on, written as a stance |
 | `--allow-unrestricted-file-access` | off | `false`, written explicitly |

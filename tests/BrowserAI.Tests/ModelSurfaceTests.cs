@@ -610,6 +610,111 @@ internal sealed class ModelSurfaceTests
         "'filename'",
     ];
 
+    /// <summary>
+    /// The instructions tell a model to ask <c>browser_snapshot</c> for boxes
+    /// before it reaches for a coordinate tool, and both names in that sentence
+    /// are real.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q322 a, decided 2026-10-03 by the maintainer, in his words:
+    /// <i>"Q322 a"</i>.</b> The generated config writes <c>snapshot.boxes</c> as
+    /// <c>false</c>, which is upstream's own default, and
+    /// <c>browser_snapshot</c>'s per-call <c>boxes</c> parameter stays. A
+    /// snapshot without boxes carries no coordinates, and the
+    /// <c>browser_mouse_*_xy</c> tools take nothing else, so the one string
+    /// BrowserAI writes says how to get them before the first call is made.
+    /// <i>Previously the config wrote <c>true</c> for every session</i>, and
+    /// <c>browser_snapshot</c> returns its snapshot inline, so every snapshot paid
+    /// for boxes: 175,611 tokens against 105,804 over nine pages, measured
+    /// 2026-09-25.
+    /// </para>
+    /// <para>
+    /// <b>The phrases are asserted and not the whole sentence</b>, for the reason
+    /// <see cref="TheFullPageScreenshotCostIsInTheInstructionsAndNotOnTheToolsDescription"/>
+    /// gives. <b>And both names are held against upstream's own snapshot</b>:
+    /// <c>browser_snapshot</c> really takes a boolean <c>boxes</c>, and the glob
+    /// matches tools that exist and that require a coordinate. A sentence naming a
+    /// parameter or a family of tools that has gone is one a model acts on and
+    /// fails with.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheInstructionsTellAModelToAskForBoxesBeforeACoordinateTool()
+    {
+        var missing = new List<string>();
+
+        foreach (var required in RequiredBoxesPhrases)
+        {
+            if (!ServerInstructions.Text.Contains(required, StringComparison.Ordinal))
+            {
+                missing.Add($"the server instructions do not say '{required}', so nothing tells a model to ask browser_snapshot for boxes before it uses a coordinate tool");
+            }
+        }
+
+        var tools = JsonNode.Parse(UpstreamSurface.SnapshotToolsListResult())!["tools"]!.AsArray().OfType<JsonObject>().ToList();
+
+        var snapshot = tools.Single(tool => (string?)tool["name"] == "browser_snapshot");
+
+        if ((string?)snapshot["inputSchema"]?["properties"]?["boxes"]?["type"] != "boolean")
+        {
+            missing.Add("browser_snapshot no longer takes a boolean 'boxes' in upstream's snapshot, so the sentence names a parameter that is not there");
+        }
+
+        var coordinateTools = tools
+            .Where(tool => (string?)tool["name"] is { } name
+                && name.StartsWith("browser_mouse_", StringComparison.Ordinal)
+                && name.EndsWith("_xy", StringComparison.Ordinal))
+            .ToList();
+
+        if (coordinateTools.Count is 0)
+        {
+            missing.Add("no tool in upstream's snapshot matches browser_mouse_*_xy, so the sentence names a family of tools that is not there");
+        }
+
+        foreach (var tool in coordinateTools)
+        {
+            var required = (tool["inputSchema"]?["required"]?.AsArray() ?? []).Select(node => (string?)node).ToList();
+
+            if (!required.Contains("x") && !required.Contains("startX"))
+            {
+                missing.Add($"{(string?)tool["name"]} matches browser_mouse_*_xy and requires no coordinate");
+            }
+        }
+
+        await Assert.That(string.Join(Environment.NewLine, missing)).IsEmpty();
+
+        // The budget, asserted again here because this is a change that spends it.
+        await Assert.That(ServerInstructions.CharacterCount).IsLessThanOrEqualTo(ServerInstructions.MaximumCharacters);
+
+        // And it survives the wire, and not only the constant.
+        await using var rig = await McpTestHarness.ThroughTheProxyAsync();
+
+        var initialize = await rig.Client.RoundTripAsync("initialize", new JsonObject
+        {
+            ["protocolVersion"] = TestDefaults.CallerProtocolVersion,
+            ["capabilities"] = new JsonObject(),
+            ["clientInfo"] = new JsonObject { ["name"] = "boxes-sentence-probe", ["version"] = "0" },
+        });
+
+        foreach (var required in RequiredBoxesPhrases)
+        {
+            await Assert.That((string?)initialize["instructions"]).Contains(required);
+        }
+    }
+
+    /// <summary>
+    /// What the boxes line has to keep saying, however it is reworded: the tool to
+    /// call, the argument to pass, and the tools it comes before.
+    /// </summary>
+    private static readonly string[] RequiredBoxesPhrases =
+    [
+        "browser_snapshot",
+        "'boxes: true'",
+        "browser_mouse_*_xy",
+    ];
+
     [Test]
     public async Task EveryToolDescriptionFitsTheSameBudget()
     {

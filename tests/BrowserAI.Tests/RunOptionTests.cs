@@ -240,10 +240,17 @@ internal sealed partial class RunOptionTests
         // every response for a feature this product does not have.
         await Assert.That(opinions["codegen"]).IsEqualTo("\"none\"");
 
-        // Snapshot boxes: on. The cost is deferred -- a response carries a link
-        // and not the snapshot -- and every session is granted `vision`,
-        // whose six coordinate tools are unusable without them.
-        await Assert.That(opinions["snapshot.boxes"]).IsEqualTo("true");
+        // Snapshot boxes: OFF, upstream's own default, written and not omitted --
+        // Q322 a, the maintainer's words verbatim: "Q322 a". A model that needs
+        // coordinates for a browser_mouse_*_xy tool asks browser_snapshot for
+        // `boxes: true` on that one call, and the server instructions say so.
+        // Corrected 2026-10-03 (previously "Snapshot boxes: on. The cost is
+        // deferred -- a response carries a link and not the snapshot -- and
+        // every session is granted `vision`, whose six coordinate tools are
+        // unusable without them", asserting "true"). browser_snapshot returns
+        // the snapshot inline, so the cost was paid on every snapshot: 175,611
+        // tokens against 105,804 over nine pages, measured 2026-09-25.
+        await Assert.That(opinions["snapshot.boxes"]).IsEqualTo("false");
 
         // ⚠️ AND THE ONE THAT IS NOT THE SAME FOR EVERY SESSION, measured
         // 2026-08-20: Firefox fails at `initializeServer` with `Unknown

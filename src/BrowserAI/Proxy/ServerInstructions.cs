@@ -124,6 +124,25 @@ namespace BrowserAI.Proxy;
 /// addition has to find its own space the same way too.
 /// </para>
 /// <para>
+/// ⚠️ <b>The boxes line, added 2026-10-03 -- Q322 a, the maintainer's words
+/// verbatim: <i>"Q322 a"</i> -- and two clauses were cut to pay for it, recorded
+/// here and not left to a diff.</b> The generated config writes
+/// <c>snapshot.boxes</c> as <c>false</c> since that day, upstream's own default,
+/// so a snapshot carries no coordinates unless a call asks for them, and the
+/// <c>browser_mouse_*_xy</c> tools take nothing else. The line is 74 characters
+/// and a paragraph break; the string stood at <b>2,024 characters with 24 of
+/// headroom</b>, computed from this file's own text, so at least 52 had to go,
+/// and 63 went. Cut: <i>", not bound to the directory"</i>, 28 characters after
+/// <i>"both per-run"</i>, which said
+/// again what <i>"Nothing chosen at init binds a later call"</i> says at the
+/// start of the same sentence; and <i>" -- the tool name already says that"</i>,
+/// 35 after <i>"not what it does"</i>, the reason for a rule whose wording stays,
+/// and which every <c>why</c> parameter's own description still carries in the
+/// same words. <b>Nothing that tells a model what to DO was touched.</b>
+/// <b>2,037 characters, 11 of headroom</b>, computed the same way and before
+/// any wire measured it, and the next addition has to find its own space.
+/// </para>
+/// <para>
 /// <b>The deletion line is the short half of a rule stated in three places.</b>
 /// Settled 2026-09-21: BrowserAI never deletes a session on its own, so the
 /// agent that created one destroys it when the work is done, and promptly when
@@ -190,15 +209,17 @@ internal static class ServerInstructions
         $"""
         BrowserAI drives a real browser. Call {SessionToolSurface.Init} first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.
 
-        Every session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run, not bound to the directory.
+        Every session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run.
 
         'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.
+
+        Call browser_snapshot with 'boxes: true' before a browser_mouse_*_xy tool.
 
         Browsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.
 
         Supply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.
 
-        Every call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does -- the tool name already says that. It goes in the session's record, and {SessionToolSurface.CatchUp} reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.
+        Every call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does. It goes in the session's record, and {SessionToolSurface.CatchUp} reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.
 
         WARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.
 

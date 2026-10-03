@@ -858,16 +858,38 @@ internal static class BrowserConfiguration
             writer.WriteString("level", ConsoleLevel);
             writer.WriteEndObject();
 
-            // ⚠️ ALWAYS TRUE, AND THE COST IS DEFERRED AND NOT PAID. A
-            // snapshot response carries a LINK to the file and not the
-            // snapshot text, so boxes cost nothing until something reads it --
-            // and BrowserAI grants the `vision` capability to every session,
-            // whose six `browser_mouse_*_xy` tools take viewport coordinates
-            // that a snapshot without boxes gives a model no way to compute.
-            // Granting the tools and withholding the numbers they need would be
-            // a surface that looks complete and is not.
+            // ⚠️ FALSE, UPSTREAM'S OWN DEFAULT, WRITTEN AND NOT OMITTED -- Q322 a,
+            // decided 2026-10-03 by the maintainer, in his words: "Q322 a". A
+            // model that needs coordinates asks for them on the one call:
+            // browser_snapshot takes a per-call `boxes`, and the server
+            // instructions tell a model to pass `boxes: true` before it uses a
+            // browser_mouse_*_xy tool. Written for the reason
+            // `allowUnrestrictedFileAccess` is: an omission records no decision,
+            // and browser_get_config cannot read back a key the file never
+            // carried.
+            //
+            // Corrected 2026-10-03 (previously "ALWAYS TRUE, AND THE COST IS
+            // DEFERRED AND NOT PAID. A snapshot response carries a LINK to the
+            // file and not the snapshot text, so boxes cost nothing until
+            // something reads it -- and BrowserAI grants the `vision` capability
+            // to every session, whose six `browser_mouse_*_xy` tools take
+            // viewport coordinates that a snapshot without boxes gives a model
+            // no way to compute. Granting the tools and withholding the numbers
+            // they need would be a surface that looks complete and is not.").
+            // Two halves of that were wrong. The cost was deferred for an
+            // action's response and NOT for browser_snapshot, which returns the
+            // snapshot inline: measured 2026-09-25 @ @playwright/mcp 0.0.82,
+            // playwright-core 1.64.0-alpha-1789764292000, Chrome for Testing
+            // 154.0.8037.0 headless at 1920x1080, over nine pages, medians of 6
+            // to 10 runs counted with the o200k_base tokenizer as a proxy, boxes
+            // on cost 175,611 tokens and boxes off 105,804 (the zoom-out
+            // research, track D). And `vision` grants six tools of which THREE
+            // take coordinates, the three the glob names; the other three press,
+            // release and scroll. What the old sentence feared is answered by
+            // the per-call parameter and the instructions line, so the tools are
+            // still usable and nothing is withheld.
             writer.WriteStartObject("snapshot");
-            writer.WriteBoolean("boxes", true);
+            writer.WriteBoolean("boxes", false);
             writer.WriteEndObject();
 
             // See the constant: it strips a `### Ran Playwright code` block from

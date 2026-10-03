@@ -77,8 +77,13 @@ character** on a navigation response, because the events line is a *pointer*
 and not the text, and `browser_console_messages` already takes a read level
 that can be lowered at the moment of asking; `codegen` is `none`, which strips a
 `### Ran Playwright code` block from every response for a feature this product
-does not have; `snapshot.boxes` is `true`, whose cost is deferred behind a link
-and which the `vision` capability's six coordinate tools are unusable without;
+does not have; `snapshot.boxes` is `false`, upstream's own default, and a model
+that needs coordinates passes `boxes: true` to `browser_snapshot` on that call,
+as the server instructions tell it to -- *corrected 2026-10-03, Q322 a (previously
+"`snapshot.boxes` is `true`, whose cost is deferred behind a link and which the
+`vision` capability's six coordinate tools are unusable without"): the cost was
+paid inline on every `browser_snapshot`, measured in the README's paragraph on
+the hard-coded opinions, and three of the six `vision` tools take coordinates*;
 and `permissions` is `["clipboard-read"]` -- ⚠️ **for Chromium only**, because
 Firefox fails at `initializeServer` with `Unknown permission: clipboard-read` and
 the browser exits, [measured

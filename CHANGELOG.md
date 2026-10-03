@@ -630,6 +630,21 @@ release body; nothing else depends on it.
 
 ### Changed
 
+- 🔧 **Snapshots carry no bounding boxes unless the call asks for them.**
+  Q322 a, the maintainer's words verbatim: *"Q322 a"*. The generated config writes
+  `snapshot.boxes: false`, upstream's own default, where it wrote `true` for every session.
+  `browser_snapshot` returns its snapshot inline, so every snapshot paid for the boxes: over nine
+  pages they cost 175,611 tokens on against 105,804 off, measured 2026-09-25 at `@playwright/mcp`
+  0.0.82 and Chrome for Testing 154.0.8037.0, with `o200k_base` as a proxy tokenizer.
+  `browser_snapshot`'s per-call `boxes` parameter stays, and the server instructions gained one
+  sentence, `Call browser_snapshot with 'boxes: true' before a browser_mouse_*_xy tool.` Two
+  clauses that restated a rule beside them were cut from the instructions to pay for it, and
+  nothing that tells a model what to do moved: 2,037 characters of the 2,048 the client reads.
+  The README, ARCHITECTURE, the kb row and the remark in `BrowserConfiguration` that called the
+  cost deferred are corrected, each with what it said before. Watched red first: the config arm
+  read `true` for all four sessions it builds, and the instructions arm named the phrases it
+  could not find.
+
 - ⬆️ **The payload rolled to `@playwright/mcp` 0.0.83, Chromium moved to 155, and Velopack to 1.2.161.**
   `playwright-core` and `playwright` resolve to `1.64.0-alpha-1790635538000`, the version 0.0.83
   pins for both. Chromium **1246 -> 1247** with `browserVersion` **154.0.8037.0 -> 155.0.8059.12**,
