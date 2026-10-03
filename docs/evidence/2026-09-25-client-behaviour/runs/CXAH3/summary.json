@@ -1,0 +1,275 @@
+{
+ "run": "CXAH3",
+ "serverLaunches": [
+  "2026-09-24T23:25:19.335Z launch=1 pid=101632 LAUNCH mode=held-updater-file behaves=UPDATING ppid=83860",
+  "2026-09-24T23:25:29.685Z launch=2 pid=86460 LAUNCH mode=held-updater-file behaves=NORMAL ppid=83860"
+ ],
+ "serverEvents": [
+  "2026-09-24T23:25:19.335Z launch=1 pid=101632 LAUNCH mode=held-updater-file behaves=UPDATING ppid=83860 argv=[]",
+  "2026-09-24T23:25:19.344Z launch=1 pid=101632 tools/list HELD until the updater goes",
+  "2026-09-24T23:25:22.170Z launch=1 pid=101632 the updater went (2838 ms after start): answering 1 held tools/list and serving from now on",
+  "2026-09-24T23:25:22.171Z launch=1 pid=101632 tools/list answered with 1 tool (held, answered after the updater went)",
+  "2026-09-24T23:25:22.734Z launch=1 pid=101632 tools/call browserai_list SERVED",
+  "2026-09-24T23:25:23.145Z launch=1 pid=101632 tools/call browserai_list SERVED",
+  "2026-09-24T23:25:25.857Z launch=1 pid=101632 tools/call browserai_list SERVED",
+  "2026-09-24T23:25:25.997Z launch=1 pid=101632 tools/call browserai_list SERVED",
+  "2026-09-24T23:25:29.196Z launch=1 pid=101632 tools/call browserai_list SERVED",
+  "2026-09-24T23:25:29.334Z launch=1 pid=101632 tools/call browserai_list SERVED",
+  "2026-09-24T23:25:29.685Z launch=2 pid=86460 LAUNCH mode=held-updater-file behaves=NORMAL ppid=83860 argv=[]",
+  "2026-09-24T23:25:29.693Z launch=2 pid=86460 tools/list answered with 1 tool",
+  "2026-09-24T23:25:29.757Z launch=2 pid=86460 tools/call browserai_list SERVED",
+  "2026-09-24T23:25:29.984Z launch=2 pid=86460 tools/call browserai_list SERVED"
+ ],
+ "steps": [
+  {
+   "marker": "(start)",
+   "events": [
+    "TOUCHED C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/logs/updater.running",
+    "startupStatus browserai starting",
+    "REMOVED (scheduled 3000 ms earlier) C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/logs/updater.running",
+    "startupStatus browserai ready",
+    "liveness CXAH3.launch.1 pid=101632 ALIVE"
+   ]
+  },
+  {
+   "marker": "A: mcpServer/tool/call on the thread, updater still running",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions.\"}],\"isError\":false}"
+   ]
+  },
+  {
+   "marker": "T1: a model turn, updater still running",
+   "events": [
+    "model-turn mcpToolCall status=completed error=null result=[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions.\"}]",
+    "liveness CXAH3.launch.1 pid=101632 ALIVE"
+   ]
+  },
+  {
+   "marker": "UPDATER EXITS",
+   "events": [
+    "liveness CXAH3.launch.1 pid=101632 ALIVE"
+   ]
+  },
+  {
+   "marker": "B: mcpServer/tool/call on the same thread after the updater exited",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions.\"}],\"isError\":false}"
+   ]
+  },
+  {
+   "marker": "T2: a model turn on the same thread after the updater exited",
+   "events": [
+    "model-turn mcpToolCall status=completed error=null result=[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions.\"}]",
+    "liveness CXAH3.launch.1 pid=101632 ALIVE"
+   ]
+  },
+  {
+   "marker": "RELOAD: config/mcpServer/reload",
+   "events": [
+    "startupStatus browserai ready",
+    "liveness CXAH3.launch.1 pid=101632 ALIVE"
+   ]
+  },
+  {
+   "marker": "C: mcpServer/tool/call after the reload",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions.\"}],\"isError\":false}"
+   ]
+  },
+  {
+   "marker": "T3: a model turn after the reload",
+   "events": [
+    "model-turn mcpToolCall status=completed error=null result=[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions.\"}]"
+   ]
+  },
+  {
+   "marker": "NEW THREAD",
+   "events": [
+    "startupStatus browserai starting",
+    "startupStatus browserai ready"
+   ]
+  },
+  {
+   "marker": "D: mcpServer/tool/call on the new thread",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=2 pid=86460: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions.\"}],\"isError\":false}"
+   ]
+  },
+  {
+   "marker": "T4: a model turn on the new thread",
+   "events": [
+    "model-turn mcpToolCall status=completed error=null result=[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=2 pid=86460: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions.\"}]",
+    "liveness CXAH3.launch.1 pid=101632 ALIVE",
+    "liveness CXAH3.launch.2 pid=86460 ALIVE"
+   ]
+  }
+ ],
+ "modelRequests": [
+  {
+   "turn": 0,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": null
+  },
+  {
+   "turn": 1,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0271 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions."
+    }
+   ]
+  },
+  {
+   "turn": 2,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0271 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions."
+    }
+   ]
+  },
+  {
+   "turn": 3,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0127 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions."
+    }
+   ]
+  },
+  {
+   "turn": 4,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0127 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions."
+    }
+   ]
+  },
+  {
+   "turn": 5,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0210 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=1 pid=101632: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions."
+    }
+   ]
+  },
+  {
+   "turn": 6,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": null
+  },
+  {
+   "turn": 7,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0135 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=2 pid=86460: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAH3/sessions."
+    }
+   ]
+  }
+ ]
+}

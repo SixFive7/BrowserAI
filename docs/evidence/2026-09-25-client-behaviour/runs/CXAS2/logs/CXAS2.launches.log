@@ -1,0 +1,15 @@
+2026-09-24T23:50:34.140Z launch=1 pid=100100 LAUNCH mode=listed-serve-updater-file behaves=UPDATING-LISTED ppid=90204 argv=[]
+2026-09-24T23:50:34.145Z launch=1 pid=100100 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:50:34.148Z launch=1 pid=100100 tools/list answered with 1 tool (UPDATING, option-b shape)
+2026-09-24T23:50:34.668Z launch=1 pid=100100 tools/call browserai_list REFUSED with the update sentence
+2026-09-24T23:50:34.942Z launch=1 pid=100100 tools/call browserai_list REFUSED with the update sentence
+2026-09-24T23:50:35.233Z launch=1 pid=100100 the updater went (1095 ms after start): serving from now on, in this process
+2026-09-24T23:50:37.760Z launch=1 pid=100100 tools/call browserai_list SERVED
+2026-09-24T23:50:38.007Z launch=1 pid=100100 tools/call browserai_list SERVED
+2026-09-24T23:50:41.218Z launch=1 pid=100100 tools/call browserai_list SERVED
+2026-09-24T23:50:41.328Z launch=1 pid=100100 tools/call browserai_list SERVED
+2026-09-24T23:50:41.753Z launch=2 pid=109836 LAUNCH mode=listed-serve-updater-file behaves=NORMAL ppid=90204 argv=[]
+2026-09-24T23:50:41.759Z launch=2 pid=109836 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:50:41.763Z launch=2 pid=109836 tools/list answered with 1 tool
+2026-09-24T23:50:41.820Z launch=2 pid=109836 tools/call browserai_list SERVED
+2026-09-24T23:50:42.050Z launch=2 pid=109836 tools/call browserai_list SERVED

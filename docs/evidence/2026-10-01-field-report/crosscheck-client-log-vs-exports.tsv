@@ -1,0 +1,24 @@
+== 24 Sep: client-side MCP log (connection 15:30:14Z) vs session A rows dated 24 Sep, idle-close rows excluded
+browser_evaluate	client=46	record=46	diff=0
+browser_navigate	client=2	record=2	diff=0
+browser_tabs	client=5	record=5	diff=0
+browserai_init	client=1	record=1	diff=0
+browserai_list	client=1	record=0	diff=1
+== 29 Sep: client-side MCP log (connection 08:15:09Z) vs session A rows dated 29 Sep + session B rows, idle-close rows excluded
+browser_click	client=28	A=0	B=28	diff=0
+browser_close	client=2	A=2	B=0	diff=0
+browser_evaluate	client=62	A=13	B=45	diff=4
+browser_find	client=1	A=0	B=1	diff=0
+browser_navigate	client=26	A=2	B=21	diff=3
+browser_network_request	client=14	A=0	B=14	diff=0
+browser_network_requests	client=6	A=0	B=6	diff=0
+browser_run_code_unsafe	client=63	A=5	B=57	diff=1
+browser_snapshot	client=2	A=0	B=2	diff=0
+browser_tabs	client=1	A=1	B=0	diff=0
+browser_type	client=14	A=0	B=14	diff=0
+browser_wait_for	client=1	A=0	B=1	diff=0
+browserai_catch_up	client=1	A=0	B=0	diff=1
+browserai_destroy	client=3	A=0	B=0	diff=3
+browserai_init	client=2	A=0	B=1	diff=1
+browserai_list	client=1	A=0	B=0	diff=1
+browserai_resume	client=3	A=3	B=0	diff=0

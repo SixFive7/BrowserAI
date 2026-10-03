@@ -1,0 +1,23 @@
+ARP BrowserAI.app PRESENT
+  DisplayIcon String = %USERPROFILE%\AppData\Local\BrowserAI.app\current\BrowserAI.exe
+  DisplayName String = BrowserAI
+  DisplayVersion String = 1.1.0
+  EstimatedSize DWord = 140351
+  InstallDate String = 20260924
+  InstallLocation String = %USERPROFILE%\AppData\Local\BrowserAI.app
+  Language DWord = 1033
+  NoModify DWord = 1
+  NoRepair DWord = 1
+  Publisher String = Jori Huisman
+  QuietUninstallString String = "%USERPROFILE%\AppData\Local\BrowserAI.app\Update.exe" --uninstall --silent
+  UninstallString String = "%USERPROFILE%\AppData\Local\BrowserAI.app\Update.exe" --uninstall
+ARP BrowserAI.app.test ABSENT
+TEMP velopack_BrowserAI.app: ABSENT
+StartMenu BrowserAI.lnk len=2323 sha256=F99795CDE013EDF8404B212B152B094D2AD40C509FCE79BD368CAAFE84CA6145
+--- HKCU\Environment Path, read raw ---
+  kind=ExpandString chars=1465 sha256=7A3C7896CEE83F78952E9A1969FE914BF35FEC02CF363A01C0A60B39AB47FAE0
+  raw regType=2 bytes=2932 sha256=4FF732EAF5B4DD6ADCE36A3FF19DE64BA6736FE8C24C36E7DF94C4995E3BE541
+  entries naming BrowserAI: none
+--- Task Scheduler root folder, the sign-in tasks ---
+  BrowserAI.app sign-in: none
+  BrowserAI.app.test tasks: none

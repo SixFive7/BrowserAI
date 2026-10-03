@@ -1,0 +1,265 @@
+{
+ "run": "CXEN1",
+ "serverLaunches": [
+  "2026-09-24T23:03:47.049Z launch=1 pid=96200 LAUNCH mode=normal behaves=NORMAL ppid=31300",
+  "2026-09-24T23:04:56.760Z launch=2 pid=94456 LAUNCH mode=normal behaves=NORMAL ppid=55268"
+ ],
+ "toolsListPerLaunch": {
+  "1": [
+   "answered"
+  ],
+  "2": [
+   "answered"
+  ]
+ },
+ "callsPerLaunch": {
+  "1": [
+   "browserai_list SERVED",
+   "browserai_list SERVED",
+   "browserai_list SERVED"
+  ],
+  "2": [
+   "browserai_list SERVED"
+  ]
+ },
+ "endOfLaunch1": [],
+ "s1": {
+  "items": [
+   {
+    "type": "error",
+    "message": "Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "completed",
+    "error": null,
+    "result": [
+     {
+      "type": "text",
+      "text": "NORMAL-SERVER launch=1 pid=96200: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "completed",
+    "error": null,
+    "result": [
+     {
+      "type": "text",
+      "text": "NORMAL-SERVER launch=1 pid=96200: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "completed",
+    "error": null,
+    "result": [
+     {
+      "type": "text",
+      "text": "NORMAL-SERVER launch=1 pid=96200: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   },
+   {
+    "type": "agent_message",
+    "text": "exec one is done"
+   }
+  ],
+  "tracing": [
+   "INFO app_server.thread_start.create_thread{otel.name=\"app_server.thread_start.create_thread\" thread_start.dynamic_tool_count=0}:thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: task cancelled",
+   "INFO app_server.thread_start.create_thread{otel.name=\"app_server.thread_start.create_thread\" thread_start.dynamic_tool_count=0}:thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: serve finished quit_reason=Cancelled"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": null
+   },
+   {
+    "turn": 1,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0141 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "NORMAL-SERVER launch=1 pid=96200: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   },
+   {
+    "turn": 2,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0231 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "NORMAL-SERVER launch=1 pid=96200: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   },
+   {
+    "turn": 3,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0153 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "NORMAL-SERVER launch=1 pid=96200: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   }
+  ]
+ },
+ "s2": {
+  "items": [
+   {
+    "type": "error",
+    "message": "Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "completed",
+    "error": null,
+    "result": [
+     {
+      "type": "text",
+      "text": "NORMAL-SERVER launch=2 pid=94456: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   },
+   {
+    "type": "agent_message",
+    "text": "exec two is done"
+   }
+  ],
+  "tracing": [
+   "INFO thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: task cancelled",
+   "INFO thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: serve finished quit_reason=Cancelled"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0153 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "NORMAL-SERVER launch=1 pid=96200: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   },
+   {
+    "turn": 1,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0142 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "NORMAL-SERVER launch=2 pid=94456: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEN1/sessions."
+     }
+    ]
+   }
+  ]
+ }
+}

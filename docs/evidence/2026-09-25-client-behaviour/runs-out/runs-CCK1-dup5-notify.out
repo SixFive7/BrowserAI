@@ -1,0 +1,20 @@
+--- launches ---
+2026-09-24T23:43:39.082Z launch=1 pid=109820 LAUNCH mode=notify-updater-file behaves=UPDATING ppid=69332 argv=[]
+2026-09-24T23:43:39.087Z launch=1 pid=109820 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:43:39.091Z launch=1 pid=109820 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:43:39.343Z launch=1 pid=109820 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:43:39.852Z launch=1 pid=109820 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:43:40.855Z launch=1 pid=109820 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:43:41.379Z launch=1 pid=109820 the updater went (2299 ms after start): sending notifications/tools/list_changed and serving from now on
+2026-09-24T23:43:41.394Z launch=1 pid=109820 the updater went (2314 ms after start): sending notifications/tools/list_changed and serving from now on
+2026-09-24T23:43:41.396Z launch=1 pid=109820 the updater went (2316 ms after start): sending notifications/tools/list_changed and serving from now on
+2026-09-24T23:43:41.397Z launch=1 pid=109820 the updater went (2317 ms after start): sending notifications/tools/list_changed and serving from now on
+2026-09-24T23:43:41.398Z launch=1 pid=109820 the updater went (2318 ms after start): sending notifications/tools/list_changed and serving from now on
+2026-09-24T23:43:48.087Z launch=1 pid=109820 client closed stdin after 9007 ms
+2026-09-24T23:43:48.137Z launch=1 pid=109820 process exit code=0 alive_ms=9057
+2026-09-24T23:43:51.053Z launch=2 pid=54056 LAUNCH mode=notify-updater-file behaves=NORMAL ppid=100876 argv=[]
+2026-09-24T23:43:51.059Z launch=2 pid=54056 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:43:51.079Z launch=2 pid=54056 tools/list answered with 1 tool
+2026-09-24T23:43:51.265Z launch=2 pid=54056 tools/call browserai_list SERVED
+2026-09-24T23:43:51.345Z launch=2 pid=54056 client closed stdin after 295 ms
+2026-09-24T23:43:51.405Z launch=2 pid=54056 process exit code=0 alive_ms=355

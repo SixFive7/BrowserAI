@@ -1,0 +1,260 @@
+{
+ "run": "CXEB3",
+ "serverLaunches": [
+  "2026-09-24T23:20:49.639Z launch=1 pid=93020 LAUNCH mode=listed-first behaves=UPDATING-LISTED ppid=99384",
+  "2026-09-24T23:21:03.224Z launch=2 pid=56264 LAUNCH mode=listed-first behaves=NORMAL ppid=82556"
+ ],
+ "toolsListPerLaunch": {
+  "1": [
+   "answered"
+  ],
+  "2": [
+   "answered"
+  ]
+ },
+ "callsPerLaunch": {
+  "1": [
+   "browserai_list REFUSED"
+  ],
+  "2": [
+   "browserai_list SERVED"
+  ]
+ },
+ "endOfLaunch1": [
+  "2026-09-24T23:20:53.652Z launch=1 pid=93020 ENDING the conversation: the updater went (4000 ms after start)",
+  "2026-09-24T23:20:53.761Z launch=1 pid=93020 EXIT code=0",
+  "2026-09-24T23:20:53.762Z launch=1 pid=93020 process exit code=0 alive_ms=4126"
+ ],
+ "s1": {
+  "items": [
+   {
+    "type": "error",
+    "message": "Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "failed",
+    "error": null,
+    "result": [
+     {
+      "type": "text",
+      "text": "BrowserAI is installing an update, so 'browserai_list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+     }
+    ]
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "failed",
+    "error": {
+     "message": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+    },
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "failed",
+    "error": {
+     "message": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+    },
+    "result": null
+   },
+   {
+    "type": "agent_message",
+    "text": "exec one is done"
+   }
+  ],
+  "tracing": [
+   "INFO app_server.thread_start.create_thread{otel.name=\"app_server.thread_start.create_thread\" thread_start.dynamic_tool_count=0}:thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: serve finished quit_reason=Closed"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": null
+   },
+   {
+    "turn": 1,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 1,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0154 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "BrowserAI is installing an update, so 'browserai_list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+     }
+    ]
+   },
+   {
+    "turn": 2,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 1,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0122 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+     }
+    ]
+   },
+   {
+    "turn": 3,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 1,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0142 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+     }
+    ]
+   }
+  ]
+ },
+ "s2": {
+  "items": [
+   {
+    "type": "error",
+    "message": "Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "completed",
+    "error": null,
+    "result": [
+     {
+      "type": "text",
+      "text": "NORMAL-SERVER launch=2 pid=56264: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEB3/sessions."
+     }
+    ]
+   },
+   {
+    "type": "agent_message",
+    "text": "exec two is done"
+   }
+  ],
+  "tracing": [
+   "INFO thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: task cancelled",
+   "INFO thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: serve finished quit_reason=Cancelled"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 1,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0142 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+     }
+    ]
+   },
+   {
+    "turn": 1,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+      "tools": [
+       "browserai_list"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 1,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0120 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "NORMAL-SERVER launch=2 pid=56264: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEB3/sessions."
+     }
+    ]
+   }
+  ]
+ }
+}

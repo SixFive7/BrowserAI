@@ -1,0 +1,79 @@
+{
+  "versions": {
+    "mcp": "0.0.83",
+    "node": "v26.7.0"
+  },
+  "experiments": {
+    "help": {
+      "lines": 159,
+      "mentionsBindOrRegistry": true
+    },
+    "E1": {
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1790635538000"
+      },
+      "tools": 38,
+      "hasResume": true,
+      "hasRunCode": true
+    },
+    "E2": {
+      "registryDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\localappdata\\ms-playwright\\b",
+      "entries": [
+        "browser@c9d61b328d4e0b707d3cc514d984f396"
+      ],
+      "title": "probe-a",
+      "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@c9d61b-4b96c860",
+      "keys": [
+        "playwrightVersion",
+        "playwrightLib",
+        "title",
+        "browser",
+        "endpoint",
+        "workspaceDir"
+      ],
+      "browserKeys": [
+        "guid",
+        "browserName",
+        "launchOptions",
+        "userDataDir"
+      ],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\runs\\mcp083\\profile-a"
+    },
+    "E3": {
+      "bTabs": "### Result\n- 0: (current) [/one](http://127.0.0.1:51562/one)\n### Events\n- New console entries: out-b\\console-2026-10-03T00-38-30-269Z.log#L1",
+      "bNavigate": "### Ran Playwright code | ```js | await page.goto('http://127.0.0.1:51562/driven-by-b'); | ``` | ### Page | - Page URL: http://127.0.0.1:51562/driven-by-b | - Page Title: /driven-by-b | ### Snapshot | - [Snapshot](out-b\\page-2026-10-03T00-38-30-323Z.yml)",
+      "aTabsAfter": "### Result\n- 0: (current) [/driven-by-b](http://127.0.0.1:51562/driven-by-b)"
+    },
+    "E4": {
+      "armOk": false,
+      "armText": null,
+      "navigateAnsweredWithin10s": true,
+      "snapshotAnswered": true,
+      "snapshotMentionsPaused": true,
+      "navigateAnsweredAfterResume": true,
+      "navigateAnsweredAt": 22760,
+      "navigateSentAt": 22724,
+      "resumeAnsweredWithin30s": false,
+      "tabsWhileResumePending": true,
+      "closeSentAt": 52771,
+      "resumeAnsweredAfterClose": true,
+      "resumeAnsweredAt": 52800,
+      "resumeText": ""
+    },
+    "E5": {
+      "navigateOk": true,
+      "added": [
+        "browser@004db0d6e1c1d77f18873e1b879c385d"
+      ],
+      "title": "probe-isolated"
+    },
+    "end": {
+      "registryAtEnd": [
+        "browser@c9d61b328d4e0b707d3cc514d984f396"
+      ],
+      "stderrA": "",
+      "stderrC": ""
+    }
+  }
+}

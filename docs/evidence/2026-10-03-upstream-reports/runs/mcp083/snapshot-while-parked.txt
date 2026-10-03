@@ -1,0 +1,10 @@
+### Page
+- Page URL: http://127.0.0.1:60569/driven-by-b
+- Page Title: /driven-by-b
+### Snapshot
+```yaml
+- heading "/driven-by-b" [level=1] [ref=f1e2]
+```
+### Paused
+- Navigate 127.0.0.1:60569/after-pause at async C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\mcp083\node_modules\playwright-core\lib\coreBundle.js:73913
+- Use any tools to explore and interact, resume by calling resume/step-over/pause-at

@@ -1,0 +1,228 @@
+[
+ {
+  "touch": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/logs/updater.running"
+ },
+ {
+  "m": "initialize",
+  "p": {
+   "clientInfo": {
+    "name": "q296-probe",
+    "title": "q296",
+    "version": "1"
+   }
+  }
+ },
+ {
+  "m": "thread/start",
+  "p": {
+   "cwd": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/proj"
+  }
+ },
+ {
+  "waitStatus": "browserai",
+  "timeout": 30000
+ },
+ {
+  "sleep": 500
+ },
+ {
+  "checkLaunches": {
+   "dir": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/logs",
+   "tag": "CXAN1"
+  }
+ },
+ {
+  "marker": "A: mcpServer/tool/call on the thread, updater still running"
+ },
+ {
+  "m": "mcpServer/tool/call",
+  "p": {
+   "threadId": "$THREAD",
+   "server": "browserai",
+   "tool": "browserai_list",
+   "arguments": {
+    "directory": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/sessions"
+   }
+  },
+  "timeout": 60000
+ },
+ {
+  "marker": "T1: a model turn, updater still running"
+ },
+ {
+  "m": "turn/start",
+  "p": {
+   "threadId": "$THREAD",
+   "input": [
+    {
+     "type": "text",
+     "text": "List the BrowserAI sessions under the directory."
+    }
+   ]
+  },
+  "timeout": 60000,
+  "waitNote": "turn/completed",
+  "waitNoteTimeout": 90000
+ },
+ {
+  "checkLaunches": {
+   "dir": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/logs",
+   "tag": "CXAN1"
+  }
+ },
+ {
+  "marker": "UPDATER EXITS"
+ },
+ {
+  "rm": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/logs/updater.running"
+ },
+ {
+  "sleep": 2500
+ },
+ {
+  "checkLaunches": {
+   "dir": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/logs",
+   "tag": "CXAN1"
+  }
+ },
+ {
+  "marker": "B: mcpServer/tool/call on the same thread after the updater exited"
+ },
+ {
+  "m": "mcpServer/tool/call",
+  "p": {
+   "threadId": "$THREAD",
+   "server": "browserai",
+   "tool": "browserai_list",
+   "arguments": {
+    "directory": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/sessions"
+   }
+  },
+  "timeout": 60000
+ },
+ {
+  "marker": "T2: a model turn on the same thread after the updater exited"
+ },
+ {
+  "m": "turn/start",
+  "p": {
+   "threadId": "$THREAD",
+   "input": [
+    {
+     "type": "text",
+     "text": "List them again."
+    }
+   ]
+  },
+  "timeout": 60000,
+  "waitNote": "turn/completed",
+  "waitNoteTimeout": 90000
+ },
+ {
+  "checkLaunches": {
+   "dir": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/logs",
+   "tag": "CXAN1"
+  }
+ },
+ {
+  "marker": "RELOAD: config/mcpServer/reload"
+ },
+ {
+  "m": "config/mcpServer/reload",
+  "p": null
+ },
+ {
+  "sleep": 3000
+ },
+ {
+  "checkLaunches": {
+   "dir": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/logs",
+   "tag": "CXAN1"
+  }
+ },
+ {
+  "marker": "C: mcpServer/tool/call after the reload"
+ },
+ {
+  "m": "mcpServer/tool/call",
+  "p": {
+   "threadId": "$THREAD",
+   "server": "browserai",
+   "tool": "browserai_list",
+   "arguments": {
+    "directory": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/sessions"
+   }
+  },
+  "timeout": 60000
+ },
+ {
+  "marker": "T3: a model turn after the reload"
+ },
+ {
+  "m": "turn/start",
+  "p": {
+   "threadId": "$THREAD",
+   "input": [
+    {
+     "type": "text",
+     "text": "And once more."
+    }
+   ]
+  },
+  "timeout": 60000,
+  "waitNote": "turn/completed",
+  "waitNoteTimeout": 90000
+ },
+ {
+  "marker": "NEW THREAD"
+ },
+ {
+  "m": "thread/start",
+  "p": {
+   "cwd": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/proj"
+  }
+ },
+ {
+  "waitStatus": "browserai",
+  "timeout": 30000
+ },
+ {
+  "marker": "D: mcpServer/tool/call on the new thread"
+ },
+ {
+  "m": "mcpServer/tool/call",
+  "p": {
+   "threadId": "$THREAD",
+   "server": "browserai",
+   "tool": "browserai_list",
+   "arguments": {
+    "directory": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/sessions"
+   }
+  },
+  "timeout": 60000
+ },
+ {
+  "marker": "T4: a model turn on the new thread"
+ },
+ {
+  "m": "turn/start",
+  "p": {
+   "threadId": "$THREAD",
+   "input": [
+    {
+     "type": "text",
+     "text": "On the new thread."
+    }
+   ]
+  },
+  "timeout": 60000,
+  "waitNote": "turn/completed",
+  "waitNoteTimeout": 90000
+ },
+ {
+  "checkLaunches": {
+   "dir": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAN1/logs",
+   "tag": "CXAN1"
+  }
+ }
+]

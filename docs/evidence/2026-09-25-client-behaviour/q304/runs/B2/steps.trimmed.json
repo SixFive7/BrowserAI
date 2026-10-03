@@ -1,0 +1,111 @@
+[
+ {
+  "m": "initialize",
+  "p": {
+   "clientInfo": {
+    "name": "q304-probe",
+    "title": "q304",
+    "version": "1"
+   }
+  }
+ },
+ {
+  "marker": "THREAD 1, started BEFORE the install"
+ },
+ {
+  "m": "thread/start",
+  "p": {
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\proj"
+  }
+ },
+ {
+  "waitStatus": "browserai",
+  "timeout": 30000
+ },
+ {
+  "procs": "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.Server.exe"
+ },
+ {
+  "hold": "C:/Source/SixFive7/BrowserAI/.work/client-behaviour/q304/installed.flag"
+ },
+ {
+  "marker": "INSTALLED: the same app-server, still running"
+ },
+ {
+  "marker": "CALL on thread 1 (its server failed before the install)"
+ },
+ {
+  "m": "mcpServer/tool/call",
+  "p": {
+   "threadId": "$THREAD",
+   "server": "browserai",
+   "tool": "browserai_list",
+   "arguments": {
+    "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\proj"
+   }
+  },
+  "timeout": 60000
+ },
+ {
+  "marker": "THREAD 2, a new thread in the same app-server"
+ },
+ {
+  "m": "thread/start",
+  "p": {
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\proj"
+  }
+ },
+ {
+  "waitStatus": "browserai",
+  "timeout": 30000
+ },
+ {
+  "procs": "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.Server.exe"
+ },
+ {
+  "marker": "CALL on thread 2"
+ },
+ {
+  "m": "mcpServer/tool/call",
+  "p": {
+   "threadId": "$THREAD",
+   "server": "browserai",
+   "tool": "browserai_list",
+   "arguments": {
+    "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\proj"
+   }
+  },
+  "timeout": 60000
+ },
+ {
+  "marker": "RELOAD: config/mcpServer/reload"
+ },
+ {
+  "m": "config/mcpServer/reload",
+  "p": null
+ },
+ {
+  "sleep": 4000
+ },
+ {
+  "procs": "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.Server.exe"
+ },
+ {
+  "marker": "CALL on thread 2 after the reload"
+ },
+ {
+  "m": "mcpServer/tool/call",
+  "p": {
+   "threadId": "$THREAD",
+   "server": "browserai",
+   "tool": "browserai_list",
+   "arguments": {
+    "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\proj"
+   }
+  },
+  "timeout": 60000
+ },
+ {
+  "procs": "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.Server.exe"
+ }
+]

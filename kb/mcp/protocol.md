@@ -581,6 +581,20 @@ that is inferred from the same source and is not measured either. `which` resolv
 leading `~` in a PATH entry as well (`finder.rs:242` in `which` 8.0.0): the same case
 with `env.PATH` spelled `~\AppData\Local\...` started 3 of 3.
 
+✅ *Added 2026-10-03 by addition: both halves are measured now, 2026-09-25 @
+codex-cli 0.155.0-alpha.9.2, through the suite's test installer* (Q304,
+[evidence](../../docs/evidence/2026-09-25-client-behaviour/README.md)). A project
+entry written by `codex mcp add` as the bare `BrowserAI.Server.exe`, with no PATH
+in it: **an app-server started AFTER the install started the server from the
+install's `current\` folder, 3 of 3**, its log naming that image and the
+app-server as its parent; **one started BEFORE the install never did, 3 of 3**,
+answering *"MCP startup failed: program not found"* on the old thread, on a new
+thread and after `config/mcpServer/reload`. Each app-server ran with the
+environment Windows builds for a new process of the user at its start, which is
+how a Codex launched after the install gets the new PATH. The user PATH read back
+byte-identical after the uninstall. The Codex desktop app and a Codex started from
+a terminal were not driven.
+
 **What BrowserAI does with it is Q294, decided 2026-09-24 by the maintainer, verbatim:
 *"Q294 b"*: a Codex project entry names the server by its bare file name, and the
 install puts its own `current\` folder on the user's PATH.** Claude Code's project entry
@@ -764,6 +778,63 @@ real client configuration** -- every run here wrote inside its own scratch home,
 and the runs that omitted `--strict-mcp-config` also connected this repository's
 own committed `.mcp.json` servers, which is noted in the batch because it is
 visible in the captures.
+
+## What each client does when `tools/list` fails at the first connection -- measured 2026-09-25
+
+`[FLOATS]` **Claude Code 2.1.282** and **codex-cli 0.155.0-alpha.9.2**, BrowserAI
+1.1.1-alpha.0.130 published from the tree, Windows 11. A stand-in server answered
+`initialize` normally, with `"tools":{}` as BrowserAI declares it, and answered
+`tools/list` with a JSON-RPC error carrying BrowserAI's own updating sentence
+(Q296); the real server in its real updating mode was run once per client
+beside it. Every client ran under a scratch configuration against a local API
+stub, three runs per arm unless stated, and every request body the model was
+sent was captured. [Evidence](../../docs/evidence/2026-09-25-client-behaviour/README.md),
+[rig](../../docs/probes/2026-09-25-client-behaviour/README.md).
+
+**Claude Code keeps a server that failed its first `tools/list` connected and
+toolless for the rest of the session.** It sent `tools/list` four times, with
+retries at 250, 500 and 1,000 ms, logged *"Failed to fetch tools"* to its debug
+log, offered the model no BrowserAI tool in any of four turns, and did not start
+the server again when it ended, 3 of 3; a server that ended inside the retries
+and one that ended 91.5 s earlier changed nothing. Each call the model tried
+answered *"No such tool available"*, while the server's instructions, which
+still say to call `browserai_init` first, stayed in its context. `claude -p
+--continue`, a new process, listed and served normally. The real server
+behaved the same.
+
+**Codex marks the server failed and terminates it.** `codex exec` sent
+`tools/list` once, logged *"MCP startup failed"* with the sentence, terminated
+the server and offered the model no `mcp__browserai` namespace, 3 of 3; `exec
+resume --last` started it again and served. The app-server reported
+`mcpServer/startupStatus/updated` *failed* with the sentence, the server was gone
+within 0.57 s, and a direct tool call answered a JSON-RPC error; a
+`config/mcpServer/reload` or a new thread started it again and served, 3 of 3.
+
+**Neither client showed the model the sentence**: it is in 0 of the captured
+request bodies. Only Codex's host sees it, in the startup status.
+
+**The shapes measured beside it, all with the stand-in, 3 of 3 each:**
+
+| What the updating server does | Claude Code | Codex |
+|---|---|---|
+| Real `tools/list`, calls refused with the sentence, ends when the updater does | the model saw the refusal; after the end the next call started the server again, without a new `tools/list`, and was served | the model saw the refusal; after the end every call answered *"Transport closed"* until a reload, a new thread or a resume |
+| The same, and keeps serving after the updater ends | served by the same process, no relaunch | served by the same process, no reload |
+| Holds `tools/list` until the updater ends, 1.3 to 2.8 s | waited, then served | waited, inside its 10 s startup timeout, then served |
+| Keeps the error, then sends `notifications/tools/list_changed` | with `"tools":{}` the notification was ignored and the session stayed toolless; with `"listChanged":true` it listed again and served | had already terminated the server |
+
+**Two client habits found on the way.** `codex --version` writes
+`<CODEX_HOME>\tmp\arg0` like any other verb, and a scratch Codex run clones
+the curated plugins from GitHub and calls `chatgpt.com` at its start. Claude
+Code rewrites a `tool_use` id that a conversation reuses across `--continue` to
+*"[Tool use interrupted]"*.
+
+⚠️ **Not established:** the Codex desktop app and an interactive Claude Code
+with `/mcp`, which were not driven; and every shape in the table against a
+BrowserAI built to do it, because only the stand-in did.
+
+**Re-establish** with the rig: the run scripts drive each client against the
+stand-in and the stubs, `runs-index.json` in the evidence lists all 51 runs, and
+`texts.json` holds every sentence byte for byte.
 
 ## What Q261's refusal does at the other end -- measured 2026-09-24
 

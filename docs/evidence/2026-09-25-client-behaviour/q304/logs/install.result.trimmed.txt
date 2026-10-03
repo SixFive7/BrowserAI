@@ -1,0 +1,1 @@
+2026-09-24T23:38:54.208Z C:/Source/SixFive7/BrowserAI/.work/client-behaviour/q304/BrowserAI.test-installer.exe ["--silent","--log","C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\logs\\setup.log","--installto","%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root"] exit=0 signal=null ms=4287 pid=103528

@@ -1,0 +1,38 @@
+When `CLAUDE_CONFIG_DIR` is set, Claude Code keeps its user-scope MCP servers in `$CLAUDE_CONFIG_DIR/.claude.json`, and per its docs its settings move there too. add-mcp still writes `~/.claude.json` and `~/.claude/settings.json`, so a server installed with `-g -a claude-code` reports success and never shows up in Claude Code.
+
+**Measured on Windows only.** I ran this on Windows 11 with add-mcp 2.4.1 and Claude Code 2.1.288, with `HOME` and `USERPROFILE` pointed at one scratch folder and `CLAUDE_CONFIG_DIR` at another. I have not run it on macOS or Linux. The block below is written as a POSIX shell session to match the other issues here, but the commands and outputs are the ones I saw on Windows. The add-mcp code involved does not branch on the OS, so I would expect the same result elsewhere, but I have not checked that.
+
+**Repro (add-mcp 2.4.1, Claude Code 2.1.288, Windows 11):**
+
+```sh
+export HOME=$(mktemp -d) CLAUDE_CONFIG_DIR=$(mktemp -d)   # on Windows, USERPROFILE as well as HOME
+npx add-mcp@2.4.1 "node server.js" --name demo -g -a claude-code -y
+# Claude Code: ~\.claude.json, Done!  (the entry is in $HOME/.claude.json; $CLAUDE_CONFIG_DIR/.claude.json does not exist)
+claude mcp remove demo --scope user
+# No MCP server named "demo" in user scope
+claude mcp add demo2 --scope user -- node server.js
+# File modified: <CLAUDE_CONFIG_DIR>\.claude.json
+npx add-mcp@2.4.1 list -g -a claude-code
+# Claude Code: not detected
+```
+
+With `--auto-approve` added to the install, the permission rule goes to `~/.claude/settings.json`, which by the same docs Claude Code does not read while the variable is set. That part comes from Claude Code's documentation; I did not measure it.
+
+**Cause:** the `claude-code` entry in `src/agents.ts` uses `configPath: join(home, ".claude.json")`, and `detectGlobalInstall` checks `join(home, ".claude")`. `getClaudeCodeSettingsPath` in `src/installer.ts` writes the global allow rules to `join(home, ".claude", "settings.json")`. None of the three reads `CLAUDE_CONFIG_DIR`.
+
+**Why it matters:** the Claude Code docs suggest `CLAUDE_CONFIG_DIR` for running more than one account side by side. For anyone who does that, add-mcp says the install worked, and Claude Code then says the server does not exist.
+
+**Suggested fix:** the same pattern as `CODEX_HOME`, and as `COPILOT_HOME` since 2.4.1 (#126):
+
+```ts
+const claudeConfigDir = process.env.CLAUDE_CONFIG_DIR;
+
+// agents.ts, "claude-code"
+configPath: claudeConfigDir ? join(claudeConfigDir, ".claude.json") : join(home, ".claude.json"),
+detectGlobalInstall: async () => existsSync(claudeConfigDir || join(home, ".claude")),
+
+// installer.ts, global allow rules
+join(claudeConfigDir || join(home, ".claude"), "settings.json")
+```
+
+The two defaults differ: without the variable, `.claude.json` sits in the home directory and `settings.json` in `~/.claude`. With it, both live in `$CLAUDE_CONFIG_DIR`.

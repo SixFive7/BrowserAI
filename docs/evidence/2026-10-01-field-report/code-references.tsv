@@ -1,0 +1,50 @@
+topic	file	v1.1.0 (d3aabf1)	master (234f8ff) and next (ecfbab3)	what
+resume: arguments parsed	src/BrowserAI/Sessions/SessionManager.cs	744-751	809-816	directory, why, purpose, debug, headed, tracing, run options are read
+resume: already-open branch	src/BrowserAI/Sessions/SessionManager.cs	764	829	_live.TryGetValue -> short circuit; headed/tracing/run/debug are not read again
+resume: purpose appended on that branch	src/BrowserAI/Sessions/SessionManager.cs	774-777	839-842	AppendPurpose runs before the answer says nothing was changed
+resume: dead child relaunch on that branch	src/BrowserAI/Sessions/SessionManager.cs	792-814	857-879	ChildHasGone -> RelaunchAsync -> ChildWasRelaunched
+resume: the answer	src/BrowserAI/Sessions/SessionManager.cs	818-820	883-885	"This session is already open in this BrowserAI; nothing was changed." IsError false
+resume: real open	src/BrowserAI/Sessions/SessionManager.cs	878-895	960-977	OpenAsync(headed, tracing ?? false, run, debug) only when the process does not hold the session
+RelaunchAsync	src/BrowserAI/Sessions/SessionManager.cs	2390-2407	2493-2510	ConnectChild(session.Launch) -- the launch captured at open
+OpenAsync: config generated and child started	src/BrowserAI/Sessions/SessionManager.cs	2226, 2264	2329, 2367	BrowserConfiguration.ForSession(location, headed, browser, tracing, run); new LiveSession(...)
+Describe: no headed line; viewport from Config	src/BrowserAI/Sessions/SessionManager.cs	2422, 2461	2525, 2564	the answer prints viewport from the running config and never says headed or headless
+omitted run options collapse to defaults	src/BrowserAI/Sessions/SessionManager.cs	(same shape)	3179-3186, 814	Run(arguments) and Flag(...) ?? false cannot tell omitted from default
+_live leaves only by destroy or shutdown	src/BrowserAI/Sessions/SessionManager.cs	1471, 605-607	1564, 670-672	the only two TryRemove sites
+init treats lost, closed and open-here alike	src/BrowserAI/Sessions/SessionManager.cs	649-657	714-722	comment: the reason a session ended stops being a thing anyone has to model
+LiveSession.Launch and Config are get-only	src/BrowserAI/Sessions/LiveSession.cs	172, 188	197, 213	kept, not recomputed
+idle close row text	src/BrowserAI/Sessions/LiveSession.cs	130-132 (em dash)	154-156 (double hyphen)	IdleCloseWhy: ... Nothing was lost ...
+idle close: row written before the count is used	src/BrowserAI/Sessions/LiveSession.cs	337-347	431-441	before = JobProcessIds().Count is read and not used to skip; Append(BrowserCloseTool, IdleCloseWhy)
+idle close: reap only when a browser was up	src/BrowserAI/Sessions/LiveSession.cs	(absent)	110	if (closed.ProcessesBefore > 1) -- the code already knows the difference
+timer period	src/BrowserAI/Sessions/BrowserIdleTimer.cs	99	99	DefaultIdlePeriod = 10 minutes
+timer armed by any forwarded call, both ends	src/BrowserAI/Sessions/BrowserIdleTimer.cs	171-180, 340-347	171-180, 340-347	Call() and Finished() both Arm()
+timer fires	src/BrowserAI/Sessions/BrowserIdleTimer.cs	256-291, 293-338	256-291, 293-338	OnIdle, CloseAsync
+timer armed here and nowhere else	src/BrowserAI/Proxy/BrowserProxy.cs	706	1064	using var driving = live.Idle.Call()
+forwarded answers are byte-identical	src/BrowserAI/Proxy/BrowserProxy.cs	(same doctrine)	1025-1041	nothing between the two servers except the session system and the reason system
+init description: per-run sentence	src/BrowserAI/Sessions/SessionToolSurface.cs	646	646	all per-run, none is recorded, and the same arguments are accepted again on browserai_resume
+init headed	src/BrowserAI/Sessions/SessionToolSurface.cs	653	653	a property of THIS launch ... resumed headed tomorrow and headless the day after
+captureNetwork (init, resume)	src/BrowserAI/Sessions/SessionToolSurface.cs	656, 679	656, 680	takes effect at the NEXT BROWSER LAUNCH ... must be closed and reopened first
+resume description	src/BrowserAI/Sessions/SessionToolSurface.cs	668	668	Every per-run argument init takes is accepted here too and none is read back from last time
+resume headed	src/BrowserAI/Sessions/SessionToolSurface.cs	676	677	NOT read back ... the case that matters is a session created headless that now needs a human to sign in
+resume debug	src/BrowserAI/Sessions/SessionToolSurface.cs	677	678	the interesting case is almost always a session that is already running badly
+server instructions	src/BrowserAI/Proxy/ServerInstructions.cs	193	193	Nothing chosen at init binds a later call
+headed doc comment: intent	src/BrowserAI/Runtime/BrowserConfiguration.cs	(same text)	564-570	a caller that wants to watch a session it created headless should not have to destroy it first
+upstream idle default quoted	src/BrowserAI/Runtime/BrowserConfiguration.cs	(same text)	243-247	one hour for headless browsers Playwright launched, and to no timeout for headed or attached ones
+HAR path fixed per child launch	src/BrowserAI/Runtime/BrowserConfiguration.cs	(same text)	622-639	recordHar truncates and rewrites whatever path it is given at every context creation
+test: no-op resume pinned (no arguments passed)	tests/BrowserAI.Tests/DeadChildTests.cs		125	AResumeOfALiveSessionStillChangesNothing
+test: ten minutes pinned, no assignment in src	tests/BrowserAI.Tests/BrowserIdleTimerTests.cs		70	TheShippedIdlePeriodIsTenMinutesAndNothingInTheProductChangesIt
+test: nothing about the close reaches the caller	tests/BrowserAI.Tests/BrowserIdleTimerTests.cs		236, 305-310	EveryToolCallResetsTheTimerAndOnlyASessionThatGoesQuietIsClosed
+test: the row is written	tests/BrowserAI.Tests/BrowserIdleTimerTests.cs		343	AnIdleCloseWritesItsOwnRowSoTheLogSaysBrowserAiClosedTheBrowser
+test: next call carries no closed-browser wording; follow-up is a navigate	tests/BrowserAI.Tests/BrowserIdleTimerTests.cs		544, 628-642	AnIdleSessionLosesItsBrowserKeepsItsNodeChildAndTheNextCallStillWorks
+upstream: backend (browser) created before any tool is dispatched	%LOCALAPPDATA%/BrowserAI.app/current/payload/mcp/node_modules/playwright-core/lib/coreBundle.js	73306-73333, 73444, 75036-75052		playwright-core 1.64.0-alpha-1789764292000 as installed
+upstream: browser_close handler	same file	67071-67088		setClose -> dispose after the answer
+upstream: idle default	same file	74986		Defaults to one hour for headless browsers, never for headed ones
+decision: per-run headed, purpose	DECISIONS.md		733	because a session created headless and later needed headed had to be destroyed and recreated
+decision: no close tool, timer settled	DECISIONS.md		702, 841	nothing ends one while keeping it resumable, because nothing needs to
+decision: resume repairs a dead child; what was rejected	DECISIONS.md		737	teardown-and-reopen releases the lock; a silent lazy relaunch hides the gap
+architecture: lifetime	ARCHITECTURE.md		753-757	one timer and no expiry
+architecture: per-run	ARCHITECTURE.md		71-74	regenerated at every child launch
+architecture: byte-identical and the one exception	ARCHITECTURE.md		217-232	nothing is added to the answer
+hazard rows	HAZARDS.md		312, 318	the 7.68 ms no-op resume (closed 2026-09-17); the relaunch sentence (closed 2026-09-22)
+kb: idle close measurement	kb/playwright/provisioning-and-timings.md		928-978	follow-up call measured was browser_navigate; a close with no browser open costs 156-514 ms
+kb: durability measured with a persistent cookie	kb/playwright/provisioning-and-timings.md		1005-1040	max-age=3600; no session-cookie measurement exists
+todo: headed and headless user agents differ	TODO.md		226-232	Chrome/152 headed against HeadlessChrome/152 headless

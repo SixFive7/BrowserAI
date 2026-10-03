@@ -1,0 +1,18 @@
+2026-09-24T23:21:14.894Z launch=1 pid=102384 LAUNCH mode=listed-updater-file behaves=UPDATING-LISTED ppid=77660 argv=[]
+2026-09-24T23:21:14.900Z launch=1 pid=102384 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:21:14.904Z launch=1 pid=102384 tools/list answered with 1 tool (UPDATING, option-b shape)
+2026-09-24T23:21:15.475Z launch=1 pid=102384 tools/call browserai_list REFUSED with the update sentence
+2026-09-24T23:21:15.844Z launch=1 pid=102384 tools/call browserai_list REFUSED with the update sentence
+2026-09-24T23:21:16.081Z launch=1 pid=102384 ENDING the conversation: the updater went (C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB1/logs/updater.running removed, 1188 ms after start)
+2026-09-24T23:21:16.188Z launch=1 pid=102384 EXIT code=0
+2026-09-24T23:21:16.189Z launch=1 pid=102384 process exit code=0 alive_ms=1297
+2026-09-24T23:21:18.895Z launch=2 pid=102740 LAUNCH mode=listed-updater-file behaves=NORMAL ppid=77660 argv=[]
+2026-09-24T23:21:18.900Z launch=2 pid=102740 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:21:18.903Z launch=2 pid=102740 tools/list answered with 1 tool
+2026-09-24T23:21:21.862Z launch=2 pid=102740 tools/call browserai_list SERVED
+2026-09-24T23:21:21.990Z launch=2 pid=102740 tools/call browserai_list SERVED
+2026-09-24T23:21:22.427Z launch=3 pid=109460 LAUNCH mode=listed-updater-file behaves=NORMAL ppid=77660 argv=[]
+2026-09-24T23:21:22.433Z launch=3 pid=109460 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:21:22.436Z launch=3 pid=109460 tools/list answered with 1 tool
+2026-09-24T23:21:22.476Z launch=3 pid=109460 tools/call browserai_list SERVED
+2026-09-24T23:21:22.788Z launch=3 pid=109460 tools/call browserai_list SERVED

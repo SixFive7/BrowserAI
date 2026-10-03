@@ -107,6 +107,16 @@ it holds; and `reap-test.ps1` compares `Name -like` on a directory listing, not
 on a process. **The scan would now flag six files across the two rigs here and
 `observe.ps1`, and only `observe.ps1` selects a process by name.**
 
+⚠️ *Added 2026-10-03, later still.* **Twenty-six**, counted as its subdirectories,
+when [`2026-09-25-client-behaviour`](2026-09-25-client-behaviour/README.md) and
+[`2026-10-03-upstream-reports`](2026-10-03-upstream-reports/README.md) arrived.
+The first went through the real scan the same way and was flagged in two files,
+both false positives: `appdrv.js` compares a JSON-RPC notification's server
+`name`, and `q304-helpers.ps1` compares scheduled tasks' `Name`, neither a
+process. The second, whose only spelling of the eight is a `Win32_Process` walk by
+parent pid, passed. **The scan would now flag eight files, and still only
+`observe.ps1` selects a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -174,3 +184,5 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-03-hard-kill`](2026-10-03-hard-kill/README.md) | How old a browser's writes must be before a hard kill keeps them, and what an `@playwright/mcp` child does to its browser when its stdin ends | false positives |
 | [`2026-10-03-state-across-close`](2026-10-03-state-across-close/README.md) | What a session keeps across a browser close, what the browsers' restore options bring back, and a close with no browser | |
 | [`2026-10-03-debugger-tools`](2026-10-03-debugger-tools/README.md) | A pause armed from inside a session, and what each tool does to the call it parks | |
+| [`2026-09-25-client-behaviour`](2026-09-25-client-behaviour/README.md) | Real clients against a stand-in for an updating server, and a Codex started on either side of an install | false positives |
+| [`2026-10-03-upstream-reports`](2026-10-03-upstream-reports/README.md) | The reproductions behind the three upstream posts: Firefox safe mode at two more builds, closed shadow roots, add-mcp and `CLAUDE_CONFIG_DIR`, and the attach by name | |

@@ -1,0 +1,7 @@
+{
+  "name": "pw-firefox-safe-mode-repro",
+  "private": true,
+  "dependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

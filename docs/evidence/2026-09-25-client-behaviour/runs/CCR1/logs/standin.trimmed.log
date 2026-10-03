@@ -1,0 +1,3 @@
+2026-09-24T23:15:23.173Z STARTED stand-in pid=94400 image=%USERPROFILE%\Downloads\tmp-client-behaviour\CCR1\Update.exe
+2026-09-24T23:15:31.202Z ENDING stand-in pid=94400 by its handle (life 8000 ms)
+2026-09-24T23:15:31.205Z stand-in pid=94400 exited code=null signal=SIGTERM after 8030 ms

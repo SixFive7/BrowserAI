@@ -1,0 +1,397 @@
+{
+ "run": "CCR1",
+ "serverLaunches": [
+  "2026-09-24T23:15:25.970Z launch=1 shim=30100 LAUNCH server=94960 exe=C:/Source/SixFive7/BrowserAI/.work/client-behaviour/server/BrowserAI.Server.exe BROWSERAI_ROOT=%USERPROFILE%/Downloads/tmp-client-behaviour/CCR1",
+  "2026-09-24T23:15:41.370Z launch=2 shim=89124 LAUNCH server=97684 exe=C:/Source/SixFive7/BrowserAI/.work/client-behaviour/server/BrowserAI.Server.exe BROWSERAI_ROOT=%USERPROFILE%/Downloads/tmp-client-behaviour/CCR1"
+ ],
+ "toolsListPerLaunch": {},
+ "callsPerLaunch": {},
+ "ending": [
+  "2026-09-24T23:15:31.225Z launch=1 shim=30100 server=94960 exited code=0 signal=null",
+  "2026-09-24T23:15:43.324Z launch=2 shim=89124 client closed its end; closing server=97684's stdin",
+  "2026-09-24T23:15:43.386Z launch=2 shim=89124 server=97684 exited code=0 signal=null"
+ ],
+ "s1": {
+  "init": {
+   "mcp_servers": [
+    {
+     "name": "browserai",
+     "status": "connected",
+     "source": "dynamic"
+    }
+   ],
+   "tools": []
+  },
+  "result": {
+   "subtype": "success",
+   "is_error": false,
+   "result": "session one is done"
+  },
+  "toolResults": [
+   "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+   "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+   "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>"
+  ],
+  "debugMcpLines": [
+   "2026-09-24T23:15:25.763Z [DEBUG] MCP server \"browserai\": Starting connection with timeout of 30000ms",
+   "2026-09-24T23:15:26.086Z [DEBUG] MCP server \"browserai\": Successfully connected (transport: stdio) in 325ms",
+   "2026-09-24T23:15:26.087Z [DEBUG] MCP server \"browserai\": Connection established with capabilities: {\"hasTools\":true,\"hasPrompts\":false,\"hasResources\":false,\"hasResourceSubscribe\":false,\"serverVersion\":{\"name\":\"BrowserAI\",\"version\":\"1.1.1-alpha.0.130\"},\"protocolEra\":\"legacy\",\"negotiatedProtocolVersion\":\"2025-11-25\"}",
+   "2026-09-24T23:15:26.091Z [DEBUG] MCP server \"browserai\": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 250ms",
+   "2026-09-24T23:15:26.352Z [DEBUG] MCP server \"browserai\": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 500ms",
+   "2026-09-24T23:15:26.856Z [DEBUG] MCP server \"browserai\": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 1000ms",
+   "2026-09-24T23:15:27.861Z [ERROR] MCP server \"browserai\" Failed to fetch tools: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.",
+   "2026-09-24T23:15:31.397Z [DEBUG] MCP server \"browserai\": STDIO connection closed after 5s (cleanly)",
+   "2026-09-24T23:15:31.398Z [DEBUG] MCP server \"browserai\": Cleared connection cache for reconnection"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "tools": [],
+    "instructionsSeen": [],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": null
+   },
+   {
+    "turn": 1,
+    "tools": [],
+    "instructionsSeen": [],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+      "is_error": true
+     }
+    ]
+   },
+   {
+    "turn": 2,
+    "tools": [],
+    "instructionsSeen": [],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+      "is_error": true
+     }
+    ]
+   },
+   {
+    "turn": 3,
+    "tools": [],
+    "instructionsSeen": [],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+      "is_error": true
+     }
+    ]
+   }
+  ]
+ },
+ "s2": {
+  "init": {
+   "mcp_servers": [
+    {
+     "name": "browserai",
+     "status": "connected",
+     "source": "dynamic"
+    }
+   ],
+   "tools": [
+    "mcp__browserai__browser_click",
+    "mcp__browserai__browser_close",
+    "mcp__browserai__browser_console_messages",
+    "mcp__browserai__browser_cookie_clear",
+    "mcp__browserai__browser_cookie_delete",
+    "mcp__browserai__browser_cookie_get",
+    "mcp__browserai__browser_cookie_list",
+    "mcp__browserai__browser_cookie_set",
+    "mcp__browserai__browser_drag",
+    "mcp__browserai__browser_drop",
+    "mcp__browserai__browser_emulate_media",
+    "mcp__browserai__browser_evaluate",
+    "mcp__browserai__browser_file_upload",
+    "mcp__browserai__browser_fill_form",
+    "mcp__browserai__browser_find",
+    "mcp__browserai__browser_generate_locator",
+    "mcp__browserai__browser_get_config",
+    "mcp__browserai__browser_handle_dialog",
+    "mcp__browserai__browser_hide_highlight",
+    "mcp__browserai__browser_highlight",
+    "mcp__browserai__browser_hover",
+    "mcp__browserai__browser_localstorage_clear",
+    "mcp__browserai__browser_localstorage_delete",
+    "mcp__browserai__browser_localstorage_get",
+    "mcp__browserai__browser_localstorage_list",
+    "mcp__browserai__browser_localstorage_set",
+    "mcp__browserai__browser_mouse_click_xy",
+    "mcp__browserai__browser_mouse_down",
+    "mcp__browserai__browser_mouse_drag_xy",
+    "mcp__browserai__browser_mouse_move_xy",
+    "mcp__browserai__browser_mouse_up",
+    "mcp__browserai__browser_mouse_wheel",
+    "mcp__browserai__browser_navigate",
+    "mcp__browserai__browser_navigate_back",
+    "mcp__browserai__browser_network_request",
+    "mcp__browserai__browser_network_requests",
+    "mcp__browserai__browser_network_state_set",
+    "mcp__browserai__browser_pdf_save",
+    "mcp__browserai__browser_press_key",
+    "mcp__browserai__browser_resize",
+    "mcp__browserai__browser_resume",
+    "mcp__browserai__browser_route",
+    "mcp__browserai__browser_route_list",
+    "mcp__browserai__browser_run_code_unsafe",
+    "mcp__browserai__browser_select_option",
+    "mcp__browserai__browser_sessionstorage_clear",
+    "mcp__browserai__browser_sessionstorage_delete",
+    "mcp__browserai__browser_sessionstorage_get",
+    "mcp__browserai__browser_sessionstorage_list",
+    "mcp__browserai__browser_sessionstorage_set",
+    "mcp__browserai__browser_set_storage_state",
+    "mcp__browserai__browser_snapshot",
+    "mcp__browserai__browser_start_recording",
+    "mcp__browserai__browser_start_tracing",
+    "mcp__browserai__browser_start_video",
+    "mcp__browserai__browser_stop_recording",
+    "mcp__browserai__browser_stop_tracing",
+    "mcp__browserai__browser_stop_video",
+    "mcp__browserai__browser_storage_state",
+    "mcp__browserai__browser_tabs",
+    "mcp__browserai__browser_take_screenshot",
+    "mcp__browserai__browser_type",
+    "mcp__browserai__browser_unroute",
+    "mcp__browserai__browser_verify_element_visible",
+    "mcp__browserai__browser_verify_list_visible",
+    "mcp__browserai__browser_verify_text_visible",
+    "mcp__browserai__browser_verify_value",
+    "mcp__browserai__browser_video_chapter",
+    "mcp__browserai__browser_video_hide_actions",
+    "mcp__browserai__browser_video_show_actions",
+    "mcp__browserai__browser_wait_for",
+    "mcp__browserai__browserai_catch_up",
+    "mcp__browserai__browserai_destroy",
+    "mcp__browserai__browserai_init",
+    "mcp__browserai__browserai_list",
+    "mcp__browserai__browserai_page_tool",
+    "mcp__browserai__browserai_reinstall_browser",
+    "mcp__browserai__browserai_resume",
+    "mcp__browserai__browserai_set_purpose"
+   ]
+  },
+  "result": {
+   "subtype": "success",
+   "is_error": false,
+   "result": "session two is done"
+  },
+  "toolResults": [
+   [
+    {
+     "type": "text",
+     "text": "No BrowserAI sessions under 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCR1\\sessions'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named."
+    }
+   ]
+  ],
+  "debugMcpLines": [
+   "2026-09-24T23:15:41.266Z [DEBUG] MCP server \"browserai\": Starting connection with timeout of 30000ms",
+   "2026-09-24T23:15:42.852Z [DEBUG] MCP server \"browserai\": Successfully connected (transport: stdio) in 1589ms",
+   "2026-09-24T23:15:42.853Z [DEBUG] MCP server \"browserai\": Connection established with capabilities: {\"hasTools\":true,\"hasPrompts\":false,\"hasResources\":false,\"hasResourceSubscribe\":false,\"serverVersion\":{\"name\":\"BrowserAI\",\"version\":\"1.1.1-alpha.0.130\"},\"protocolEra\":\"legacy\",\"negotiatedProtocolVersion\":\"2025-11-25\"}",
+   "2026-09-24T23:15:43.160Z [DEBUG] MCP server \"browserai\": Calling MCP tool: browserai_list",
+   "2026-09-24T23:15:43.166Z [DEBUG] MCP server \"browserai\": Tool 'browserai_list' completed successfully in 6ms",
+   "2026-09-24T23:15:43.313Z [DEBUG] MCP server \"browserai\": Terminating MCP server process tree",
+   "2026-09-24T23:15:43.581Z [DEBUG] MCP server \"browserai\": STDIO connection closed after 0s (cleanly)",
+   "2026-09-24T23:15:43.581Z [DEBUG] MCP server \"browserai\": Cleared connection cache for reconnection"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "tools": [
+     "mcp__browserai__browser_click",
+     "mcp__browserai__browser_close",
+     "mcp__browserai__browser_console_messages",
+     "mcp__browserai__browser_cookie_clear",
+     "mcp__browserai__browser_cookie_delete",
+     "mcp__browserai__browser_cookie_get",
+     "mcp__browserai__browser_cookie_list",
+     "mcp__browserai__browser_cookie_set",
+     "mcp__browserai__browser_drag",
+     "mcp__browserai__browser_drop",
+     "mcp__browserai__browser_emulate_media",
+     "mcp__browserai__browser_evaluate",
+     "mcp__browserai__browser_file_upload",
+     "mcp__browserai__browser_fill_form",
+     "mcp__browserai__browser_find",
+     "mcp__browserai__browser_generate_locator",
+     "mcp__browserai__browser_get_config",
+     "mcp__browserai__browser_handle_dialog",
+     "mcp__browserai__browser_hide_highlight",
+     "mcp__browserai__browser_highlight",
+     "mcp__browserai__browser_hover",
+     "mcp__browserai__browser_localstorage_clear",
+     "mcp__browserai__browser_localstorage_delete",
+     "mcp__browserai__browser_localstorage_get",
+     "mcp__browserai__browser_localstorage_list",
+     "mcp__browserai__browser_localstorage_set",
+     "mcp__browserai__browser_mouse_click_xy",
+     "mcp__browserai__browser_mouse_down",
+     "mcp__browserai__browser_mouse_drag_xy",
+     "mcp__browserai__browser_mouse_move_xy",
+     "mcp__browserai__browser_mouse_up",
+     "mcp__browserai__browser_mouse_wheel",
+     "mcp__browserai__browser_navigate",
+     "mcp__browserai__browser_navigate_back",
+     "mcp__browserai__browser_network_request",
+     "mcp__browserai__browser_network_requests",
+     "mcp__browserai__browser_network_state_set",
+     "mcp__browserai__browser_pdf_save",
+     "mcp__browserai__browser_press_key",
+     "mcp__browserai__browser_resize",
+     "mcp__browserai__browser_resume",
+     "mcp__browserai__browser_route",
+     "mcp__browserai__browser_route_list",
+     "mcp__browserai__browser_run_code_unsafe",
+     "mcp__browserai__browser_select_option",
+     "mcp__browserai__browser_sessionstorage_clear",
+     "mcp__browserai__browser_sessionstorage_delete",
+     "mcp__browserai__browser_sessionstorage_get",
+     "mcp__browserai__browser_sessionstorage_list",
+     "mcp__browserai__browser_sessionstorage_set",
+     "mcp__browserai__browser_set_storage_state",
+     "mcp__browserai__browser_snapshot",
+     "mcp__browserai__browser_start_recording",
+     "mcp__browserai__browser_start_tracing",
+     "mcp__browserai__browser_start_video",
+     "mcp__browserai__browser_stop_recording",
+     "mcp__browserai__browser_stop_tracing",
+     "mcp__browserai__browser_stop_video",
+     "mcp__browserai__browser_storage_state",
+     "mcp__browserai__browser_tabs",
+     "mcp__browserai__browser_take_screenshot",
+     "mcp__browserai__browser_type",
+     "mcp__browserai__browser_unroute",
+     "mcp__browserai__browser_verify_element_visible",
+     "mcp__browserai__browser_verify_list_visible",
+     "mcp__browserai__browser_verify_text_visible",
+     "mcp__browserai__browser_verify_value",
+     "mcp__browserai__browser_video_chapter",
+     "mcp__browserai__browser_video_hide_actions",
+     "mcp__browserai__browser_video_show_actions",
+     "mcp__browserai__browser_wait_for",
+     "mcp__browserai__browserai_catch_up",
+     "mcp__browserai__browserai_destroy",
+     "mcp__browserai__browserai_init",
+     "mcp__browserai__browserai_list",
+     "mcp__browserai__browserai_page_tool",
+     "mcp__browserai__browserai_reinstall_browser",
+     "mcp__browserai__browserai_resume",
+     "mcp__browserai__browserai_set_purpose"
+    ],
+    "instructionsSeen": [],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+      "is_error": true
+     }
+    ]
+   },
+   {
+    "turn": 1,
+    "tools": [
+     "mcp__browserai__browser_click",
+     "mcp__browserai__browser_close",
+     "mcp__browserai__browser_console_messages",
+     "mcp__browserai__browser_cookie_clear",
+     "mcp__browserai__browser_cookie_delete",
+     "mcp__browserai__browser_cookie_get",
+     "mcp__browserai__browser_cookie_list",
+     "mcp__browserai__browser_cookie_set",
+     "mcp__browserai__browser_drag",
+     "mcp__browserai__browser_drop",
+     "mcp__browserai__browser_emulate_media",
+     "mcp__browserai__browser_evaluate",
+     "mcp__browserai__browser_file_upload",
+     "mcp__browserai__browser_fill_form",
+     "mcp__browserai__browser_find",
+     "mcp__browserai__browser_generate_locator",
+     "mcp__browserai__browser_get_config",
+     "mcp__browserai__browser_handle_dialog",
+     "mcp__browserai__browser_hide_highlight",
+     "mcp__browserai__browser_highlight",
+     "mcp__browserai__browser_hover",
+     "mcp__browserai__browser_localstorage_clear",
+     "mcp__browserai__browser_localstorage_delete",
+     "mcp__browserai__browser_localstorage_get",
+     "mcp__browserai__browser_localstorage_list",
+     "mcp__browserai__browser_localstorage_set",
+     "mcp__browserai__browser_mouse_click_xy",
+     "mcp__browserai__browser_mouse_down",
+     "mcp__browserai__browser_mouse_drag_xy",
+     "mcp__browserai__browser_mouse_move_xy",
+     "mcp__browserai__browser_mouse_up",
+     "mcp__browserai__browser_mouse_wheel",
+     "mcp__browserai__browser_navigate",
+     "mcp__browserai__browser_navigate_back",
+     "mcp__browserai__browser_network_request",
+     "mcp__browserai__browser_network_requests",
+     "mcp__browserai__browser_network_state_set",
+     "mcp__browserai__browser_pdf_save",
+     "mcp__browserai__browser_press_key",
+     "mcp__browserai__browser_resize",
+     "mcp__browserai__browser_resume",
+     "mcp__browserai__browser_route",
+     "mcp__browserai__browser_route_list",
+     "mcp__browserai__browser_run_code_unsafe",
+     "mcp__browserai__browser_select_option",
+     "mcp__browserai__browser_sessionstorage_clear",
+     "mcp__browserai__browser_sessionstorage_delete",
+     "mcp__browserai__browser_sessionstorage_get",
+     "mcp__browserai__browser_sessionstorage_list",
+     "mcp__browserai__browser_sessionstorage_set",
+     "mcp__browserai__browser_set_storage_state",
+     "mcp__browserai__browser_snapshot",
+     "mcp__browserai__browser_start_recording",
+     "mcp__browserai__browser_start_tracing",
+     "mcp__browserai__browser_start_video",
+     "mcp__browserai__browser_stop_recording",
+     "mcp__browserai__browser_stop_tracing",
+     "mcp__browserai__browser_stop_video",
+     "mcp__browserai__browser_storage_state",
+     "mcp__browserai__browser_tabs",
+     "mcp__browserai__browser_take_screenshot",
+     "mcp__browserai__browser_type",
+     "mcp__browserai__browser_unroute",
+     "mcp__browserai__browser_verify_element_visible",
+     "mcp__browserai__browser_verify_list_visible",
+     "mcp__browserai__browser_verify_text_visible",
+     "mcp__browserai__browser_verify_value",
+     "mcp__browserai__browser_video_chapter",
+     "mcp__browserai__browser_video_hide_actions",
+     "mcp__browserai__browser_video_show_actions",
+     "mcp__browserai__browser_wait_for",
+     "mcp__browserai__browserai_catch_up",
+     "mcp__browserai__browserai_destroy",
+     "mcp__browserai__browserai_init",
+     "mcp__browserai__browserai_list",
+     "mcp__browserai__browserai_page_tool",
+     "mcp__browserai__browserai_reinstall_browser",
+     "mcp__browserai__browserai_resume",
+     "mcp__browserai__browserai_set_purpose"
+    ],
+    "instructionsSeen": [],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": [
+       {
+        "type": "text",
+        "text": "No BrowserAI sessions under 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCR1\\sessions'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

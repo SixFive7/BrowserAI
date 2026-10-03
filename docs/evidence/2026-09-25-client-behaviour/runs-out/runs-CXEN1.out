@@ -1,0 +1,11 @@
+--- launches ---
+2026-09-24T23:03:47.049Z launch=1 pid=96200 LAUNCH mode=normal behaves=NORMAL ppid=31300 argv=[]
+2026-09-24T23:03:47.055Z launch=1 pid=96200 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:03:47.057Z launch=1 pid=96200 tools/list answered with 1 tool
+2026-09-24T23:03:47.296Z launch=1 pid=96200 tools/call browserai_list SERVED
+2026-09-24T23:04:48.926Z launch=1 pid=96200 tools/call browserai_list SERVED
+2026-09-24T23:04:54.003Z launch=1 pid=96200 tools/call browserai_list SERVED
+2026-09-24T23:04:56.760Z launch=2 pid=94456 LAUNCH mode=normal behaves=NORMAL ppid=55268 argv=[]
+2026-09-24T23:04:56.766Z launch=2 pid=94456 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:04:56.769Z launch=2 pid=94456 tools/list answered with 1 tool
+2026-09-24T23:04:56.946Z launch=2 pid=94456 tools/call browserai_list SERVED

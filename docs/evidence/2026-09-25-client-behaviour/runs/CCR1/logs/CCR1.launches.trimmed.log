@@ -1,0 +1,7 @@
+2026-09-24T23:15:25.970Z launch=1 shim=30100 LAUNCH server=94960 exe=C:/Source/SixFive7/BrowserAI/.work/client-behaviour/server/BrowserAI.Server.exe BROWSERAI_ROOT=%USERPROFILE%/Downloads/tmp-client-behaviour/CCR1
+2026-09-24T23:15:31.225Z launch=1 shim=30100 server=94960 exited code=0 signal=null
+2026-09-24T23:15:31.387Z launch=1 shim=30100 EXIT shim=30100
+2026-09-24T23:15:41.370Z launch=2 shim=89124 LAUNCH server=97684 exe=C:/Source/SixFive7/BrowserAI/.work/client-behaviour/server/BrowserAI.Server.exe BROWSERAI_ROOT=%USERPROFILE%/Downloads/tmp-client-behaviour/CCR1
+2026-09-24T23:15:43.324Z launch=2 shim=89124 client closed its end; closing server=97684's stdin
+2026-09-24T23:15:43.386Z launch=2 shim=89124 server=97684 exited code=0 signal=null
+2026-09-24T23:15:43.549Z launch=2 shim=89124 EXIT shim=89124

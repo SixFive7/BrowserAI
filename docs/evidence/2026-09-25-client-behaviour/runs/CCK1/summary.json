@@ -1,0 +1,189 @@
+{
+ "run": "CCK1",
+ "serverLaunches": [
+  "2026-09-24T23:45:14.344Z launch=1 pid=52288 LAUNCH mode=notify-updater-file behaves=UPDATING ppid=45160",
+  "2026-09-24T23:45:26.114Z launch=2 pid=73968 LAUNCH mode=notify-updater-file behaves=NORMAL ppid=83708"
+ ],
+ "toolsListPerLaunch": {
+  "1": [
+   "REFUSED",
+   "REFUSED",
+   "REFUSED",
+   "REFUSED"
+  ],
+  "2": [
+   "answered"
+  ]
+ },
+ "callsPerLaunch": {
+  "2": [
+   "browserai_list SERVED"
+  ]
+ },
+ "ending": [
+  "2026-09-24T23:45:23.028Z launch=1 pid=52288 client closed stdin after 8686 ms",
+  "2026-09-24T23:45:26.338Z launch=2 pid=73968 client closed stdin after 227 ms"
+ ],
+ "s1": {
+  "init": {
+   "mcp_servers": [
+    {
+     "name": "browserai",
+     "status": "connected",
+     "source": "dynamic"
+    }
+   ],
+   "tools": []
+  },
+  "result": {
+   "subtype": "success",
+   "is_error": false,
+   "result": "session one is done"
+  },
+  "toolResults": [
+   "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+   "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+   "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>"
+  ],
+  "debugMcpLines": [
+   "2026-09-24T23:45:14.273Z [DEBUG] MCP server \"browserai\": Starting connection with timeout of 30000ms",
+   "2026-09-24T23:45:14.352Z [DEBUG] MCP server \"browserai\": Successfully connected (transport: stdio) in 80ms",
+   "2026-09-24T23:45:14.352Z [DEBUG] MCP server \"browserai\": Connection established with capabilities: {\"hasTools\":true,\"hasPrompts\":false,\"hasResources\":false,\"hasResourceSubscribe\":false,\"serverVersion\":{\"name\":\"BrowserAI\",\"version\":\"9.9.9-updating-stub\"},\"protocolEra\":\"legacy\",\"negotiatedProtocolVersion\":\"2025-11-25\"}",
+   "2026-09-24T23:45:14.356Z [DEBUG] MCP server \"browserai\": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 250ms",
+   "2026-09-24T23:45:14.609Z [DEBUG] MCP server \"browserai\": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 500ms",
+   "2026-09-24T23:45:15.113Z [DEBUG] MCP server \"browserai\": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 1000ms",
+   "2026-09-24T23:45:16.117Z [ERROR] MCP server \"browserai\" Failed to fetch tools: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.",
+   "2026-09-24T23:45:23.021Z [DEBUG] MCP server \"browserai\": Terminating MCP server process tree",
+   "2026-09-24T23:45:23.102Z [DEBUG] MCP server \"browserai\": STDIO connection closed after 8s (cleanly)",
+   "2026-09-24T23:45:23.102Z [DEBUG] MCP server \"browserai\": Cleared connection cache for reconnection"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "tools": [],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": null
+   },
+   {
+    "turn": 1,
+    "tools": [],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+      "is_error": true
+     }
+    ]
+   },
+   {
+    "turn": 2,
+    "tools": [],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+      "is_error": true
+     }
+    ]
+   },
+   {
+    "turn": 3,
+    "tools": [],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+      "is_error": true
+     }
+    ]
+   }
+  ]
+ },
+ "s2": {
+  "init": {
+   "mcp_servers": [
+    {
+     "name": "browserai",
+     "status": "connected",
+     "source": "dynamic"
+    }
+   ],
+   "tools": [
+    "mcp__browserai__browserai_list"
+   ]
+  },
+  "result": {
+   "subtype": "success",
+   "is_error": false,
+   "result": "session two is done"
+  },
+  "toolResults": [
+   [
+    {
+     "type": "text",
+     "text": "NORMAL-SERVER launch=2 pid=73968: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCK1/sessions."
+    }
+   ]
+  ],
+  "debugMcpLines": [
+   "2026-09-24T23:45:26.051Z [DEBUG] MCP server \"browserai\": Starting connection with timeout of 30000ms",
+   "2026-09-24T23:45:26.123Z [DEBUG] MCP server \"browserai\": Successfully connected (transport: stdio) in 74ms",
+   "2026-09-24T23:45:26.123Z [DEBUG] MCP server \"browserai\": Connection established with capabilities: {\"hasTools\":true,\"hasPrompts\":false,\"hasResources\":false,\"hasResourceSubscribe\":false,\"serverVersion\":{\"name\":\"BrowserAI\",\"version\":\"9.9.9-normal-stub\"},\"protocolEra\":\"legacy\",\"negotiatedProtocolVersion\":\"2025-11-25\"}",
+   "2026-09-24T23:45:26.271Z [DEBUG] MCP server \"browserai\": Calling MCP tool: browserai_list",
+   "2026-09-24T23:45:26.275Z [DEBUG] MCP server \"browserai\": Tool 'browserai_list' completed successfully in 4ms",
+   "2026-09-24T23:45:26.332Z [DEBUG] MCP server \"browserai\": Terminating MCP server process tree",
+   "2026-09-24T23:45:26.409Z [DEBUG] MCP server \"browserai\": STDIO connection closed after 0s (cleanly)",
+   "2026-09-24T23:45:26.409Z [DEBUG] MCP server \"browserai\": Cleared connection cache for reconnection"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "tools": [
+     "mcp__browserai__browserai_list"
+    ],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+      "is_error": true
+     }
+    ]
+   },
+   {
+    "turn": 1,
+    "tools": [
+     "mcp__browserai__browserai_list"
+    ],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": [
+       {
+        "type": "text",
+        "text": "NORMAL-SERVER launch=2 pid=73968: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCK1/sessions."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

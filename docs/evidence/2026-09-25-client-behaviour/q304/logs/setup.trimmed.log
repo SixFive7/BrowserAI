@@ -1,0 +1,62 @@
+[setup:103528] [01:38:49] [INFO] Starting Velopack Setup (1.2.158)
+[setup:103528] [01:38:49] [INFO]     Location: "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\BrowserAI.test-installer.exe"
+[setup:103528] [01:38:49] [INFO]     Silent: true
+[setup:103528] [01:38:49] [INFO]     Verbose: false
+[setup:103528] [01:38:49] [INFO]     Log: "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\logs\\setup.log"
+[setup:103528] [01:38:49] [INFO]     Install To: Some("%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root")
+[setup:103528] [01:38:49] [INFO] OS: Windows 10.0.26200 (Windows 11 Professional) [64-bit], Arch=Some(
+    X64,
+)
+[setup:103528] [01:38:49] [INFO] Reading bundle header...
+[setup:103528] [01:38:49] [INFO] Bundle offset = 7562752, length = 55319356
+[setup:103528] [01:38:49] [INFO] Loading bundle from embedded zip...
+[setup:103528] [01:38:49] [INFO] No channel override tag found in installer signature.
+[setup:103528] [01:38:49] [INFO] Loading bundle from embedded zip...
+[setup:103528] [01:38:49] [INFO] Reading package manifest...
+[setup:103528] [01:38:49] [INFO] Package manifest loaded successfully.
+[setup:103528] [01:38:49] [INFO]     Package ID: BrowserAI.app.test
+[setup:103528] [01:38:49] [INFO]     Package Version: 1.1.1-alpha.0.130
+[setup:103528] [01:38:49] [INFO]     Package Title: BrowserAI (suite)
+[setup:103528] [01:38:49] [INFO]     Package Authors: Jori Huisman
+[setup:103528] [01:38:49] [INFO]     Package Description: BrowserAI (suite)
+[setup:103528] [01:38:49] [INFO]     Package Machine Architecture: x64
+[setup:103528] [01:38:49] [INFO]     Package Runtime Dependencies: 
+[setup:103528] [01:38:49] [INFO] Checking application pre-requisites...
+[setup:103528] [01:38:49] [INFO] Determining install directory...
+[setup:103528] [01:38:49] [INFO] Installation Directory: "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root"
+[setup:103528] [01:38:49] [INFO] There is 384.38 GB free space available at destination, this package requires 254.43 MB.
+[setup:103528] [01:38:49] [INFO] Preparing and cleaning installation directory...
+[setup:103528] [01:38:50] [INFO] Acquiring lock...
+[setup:103528] [01:38:50] [INFO] Root directory '%USERPROFILE%\Downloads\tmp-client-behaviour\q304\root' writable: true
+[setup:103528] [01:38:50] [INFO] Using root packages directory: %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root\packages
+[setup:103528] [01:38:50] [INFO] Attempting to acquire exclusive lock on packages directory (non-blocking)...
+[setup:103528] [01:38:50] [INFO] Will not show splash because silent mode is on.
+[setup:103528] [01:38:50] [INFO] Starting installation!
+[setup:103528] [01:38:50] [INFO] Extracting Update.exe...
+[setup:103528] [01:38:50] [INFO] Extracting stub 'BrowserAI (suite)_ExecutionStub.exe' to '"%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\BrowserAI (suite).exe"'
+[setup:103528] [01:38:50] [INFO] Successfully extracted stub executable: "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\BrowserAI (suite).exe"
+[setup:103528] [01:38:50] [INFO] Copying nupkg to packages directory...
+[setup:103528] [01:38:50] [INFO] Extracting 213 app files to '"%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current"'...
+[setup:103528] [01:38:50] [INFO] Creating shortcuts...
+[setup:103528] [01:38:50] [INFO] COM context initialized in 10ms
+[setup:103528] [01:38:50] [INFO] Shortcut Previous Locations: ShortcutLocationFlags(0x0) (None)
+[setup:103528] [01:38:50] [INFO] Shortcut Next Locations: ShortcutLocationFlags(START_MENU_ROOT) ("1.1.1-alpha.0.130")
+[setup:103528] [01:38:50] [INFO] App Model ID: Some("velopack.BrowserAI.app.test")
+[setup:103528] [01:38:50] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root"'
+[setup:103528] [01:38:50] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+[setup:103528] [01:38:50] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[setup:103528] [01:38:50] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[setup:103528] [01:38:51] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[setup:103528] [01:38:51] [INFO] Will update all current shortcuts: []
+[setup:103528] [01:38:51] [INFO] Creating new shortcut for flag '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' (ShortcutLocationFlags(START_MENU_ROOT)).
+[setup:103528] [01:38:51] [INFO] Starting process install hook
+[setup:103528] [01:38:51] [INFO] Running --veloapp-install hook...
+[setup:103528] [01:38:51] [INFO] About to launch: 'WideString("%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.exe")' in dir 'Some(WideString("%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current"))' with arguments: WideString("\"%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.exe\" --veloapp-install 1.1.1-alpha.0.130\0")
+[setup:103528] [01:38:51] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[setup:103528] [01:38:51] [INFO] Waiting 30000ms for process handle to exit.
+[setup:103528] [01:38:53] [INFO] Hook executed successfully (took 2877.1702ms)
+[setup:103528] [01:38:53] [INFO] Checking for running processes in: %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root
+[setup:103528] [01:38:54] [INFO] Inspected 653 running processes in 201ms, 0 matched directory
+[setup:103528] [01:38:54] [INFO] Force-stop check complete.
+[setup:103528] [01:38:54] [INFO] Writing uninstall registry key...
+[setup:103528] [01:38:54] [INFO] Installation completed successfully!

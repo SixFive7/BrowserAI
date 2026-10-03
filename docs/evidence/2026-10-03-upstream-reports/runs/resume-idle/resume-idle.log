@@ -1,0 +1,5 @@
+[+   754 ms] navigate /start ### Ran Playwright code | ```js | await page.goto('http://127.0.0.1:62121/start'); | ``` | ### Page | - Page URL: http:/
+[+  1259 ms] arm ### Result | "armed" | ### Ran Playwright code | ```js | await (async (page) => 
+[+  6295 ms] parked navigate answered after resume? true at +6295
+[+ 21288 ms] browser_resume answered within 60 s? true at +21287 ms, sent at +6261 ms, text: 
+[+ 22604 ms] browser_tabs afterwards -> ### Result | - 0: (current) [](about:blank)

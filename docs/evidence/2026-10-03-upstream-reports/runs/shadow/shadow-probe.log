@@ -1,0 +1,67 @@
+playwright-core 1.63.0 node v26.7.0
+=== chromium 153.0.8010.12
+- heading "Shadow roots" [level=1]
+- paragraph: Text in an open root
+- button "Open root button"
+{
+ "version": "153.0.8010.12",
+ "buttonsByRole": 1,
+ "closedButtonByRole": 0,
+ "closedTextByText": 0,
+ "openButtonByRole": 1,
+ "hostBox": {
+  "x": 8,
+  "y": 114.875,
+  "width": 1264,
+  "height": 88
+ },
+ "titleAfterMouseClick": "closed root button clicked",
+ "cdpAxTreeHasClosedButton": true,
+ "cdpAxTreeHasClosedText": true,
+ "cdpAxTreeExcerpt": [
+  "RootWebArea: closed root button clicked",
+  "heading: Shadow roots",
+  "button: Open root button",
+  "button: Closed root button",
+  "StaticText: Shadow roots",
+  "StaticText: Text in an open root",
+  "StaticText: Open root button",
+  "StaticText: Text in a closed root",
+  "StaticText: Closed root button",
+  "InlineTextBox: Shadow roots",
+  "InlineTextBox: Text in an open root",
+  "InlineTextBox: Open root button",
+  "InlineTextBox: Text in a closed root",
+  "InlineTextBox: Closed root button"
+ ]
+}
+=== firefox 155.0
+- heading "Shadow roots" [level=1]
+- paragraph: Text in an open root
+- button "Open root button"
+{
+ "version": "155.0",
+ "buttonsByRole": 1,
+ "closedButtonByRole": 0,
+ "closedTextByText": 0,
+ "openButtonByRole": 1,
+ "hostBox": {
+  "x": 8,
+  "y": 116.86666870117188,
+  "width": 1264,
+  "height": 89
+ },
+ "titleAfterMouseClick": "closed root button clicked"
+}
+=== @playwright/mcp 0.0.83 {"name":"Playwright","version":"1.64.0-alpha-1790635538000"}
+### Page
+- Page URL: http://127.0.0.1:59001/
+- Page Title: closed shadow root
+### Snapshot
+```yaml
+- generic [active] [ref=e1]:
+  - heading "Shadow roots" [level=1] [ref=e2]
+  - generic [ref=e3]:
+    - paragraph [ref=e4]: Text in an open root
+    - button "Open root button" [ref=e5]
+```

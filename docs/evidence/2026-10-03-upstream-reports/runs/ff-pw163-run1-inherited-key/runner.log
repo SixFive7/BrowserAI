@@ -1,0 +1,11 @@
+2026-10-03T00:30:51Z arm=control-persistent start
+2026-10-03T00:30:57Z arm=control-persistent rc=0
+2026-10-03T00:30:57Z arm=forced-persistent start
+2026-10-03T00:31:43Z arm=forced-persistent rc=0
+2026-10-03T00:31:43Z arm=forced-persistent-keyoff start
+2026-10-03T00:32:29Z arm=forced-persistent-keyoff rc=0
+2026-10-03T00:32:29Z arm=control-nonpersistent start
+2026-10-03T00:32:33Z arm=control-nonpersistent rc=0
+2026-10-03T00:32:33Z arm=forced-nonpersistent start
+2026-10-03T00:32:37Z arm=forced-nonpersistent rc=0
+ALL DONE

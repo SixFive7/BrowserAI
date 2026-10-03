@@ -1,0 +1,38 @@
+
+ █████╗ ██████╗ ██████╗       ███╗   ███╗ ██████╗██████╗ 
+██╔══██╗██╔══██╗██╔══██╗      ████╗ ████║██╔════╝██╔══██╗
+███████║██║  ██║██║  ██║█████╗██╔████╔██║██║     ██████╔╝
+██╔══██║██║  ██║██║  ██║╚════╝██║╚██╔╝██║██║     ██╔═══╝ 
+██║  ██║██████╔╝██████╔╝      ██║ ╚═╝ ██║╚██████╗██║     
+╚═╝  ╚═╝╚═════╝ ╚═════╝       ╚═╝     ╚═╝ ╚═════╝╚═╝     
+
+│
+◇  Source: C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\server\probe-server.exe (local)
+│
+●  Server name: probe-approve
+
+│
+◇  Installation Summary ────╮
+│                           │
+│  Server: probe-approve    │
+│  Type: local              │
+│  Auto-approve: All tools  │
+│  Scope: Global            │
+│  Agents: Claude Code      │
+│                           │
+├───────────────────────────╯
+│
+◇  Installation complete
+
+│
+◇  Installed to 1 agent ─────────────────────╮
+│                                            │
+│  ✓ Claude Code: ~\.claude.json             │
+│    ↳ permissions: ~\.claude\settings.json  │
+│                                            │
+├────────────────────────────────────────────╯
+
+│
+└  Done!
+
+rc=0

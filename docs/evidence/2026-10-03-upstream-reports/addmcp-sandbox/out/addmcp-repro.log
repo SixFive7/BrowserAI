@@ -1,0 +1,18 @@
+USERPROFILE=C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home3
+CLAUDE_CONFIG_DIR=C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\cfg3
+$ add-mcp "node server.js" --name demo -g -a claude-code -y
+│  Agents: Claude Code   │
+│  ✓ Claude Code: ~\.claude.json  │
+└  Done!
+rc=0
+EXISTS C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home3\.claude.json: { "mcpServers": { "demo": { "command": "node", "args": [ "server.js" ] } }}
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\cfg3\.claude.json
+$ claude mcp remove demo --scope user
+No MCP server named "demo" in user scope
+rc=1
+$ claude mcp add demo2 --scope user -- node server.js
+Added stdio MCP server demo2 with command: node server.js to user config
+File modified: C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\cfg3\.claude.json
+rc=0
+$ add-mcp list -g -a claude-code
+Claude Code: not detected

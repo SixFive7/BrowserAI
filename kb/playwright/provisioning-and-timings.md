@@ -1426,6 +1426,15 @@ starting a new one in its place (design B, in the evidence):
 the close answers *"Ref e4 not found in the current page snapshot"*, 3 of 3 in
 every cell.
 
+**The field shows the same.** In two sessions an agent ran on the installed
+BrowserAI 1.1.0 between 24 and 29 September, the records hold five idle closes,
+each 600.00 to 600.01 s after the previous call settled and each with no call
+from the client behind it, and the first call after the last but one, a
+`browser_evaluate` that depended on the page the agent had left, failed with a
+`TypeError` on `about:blank`
+([evidence](../../docs/evidence/2026-10-01-field-report/README.md), rows 55, 80,
+83, 187 and 192, and row 188).
+
 ⭐ **The browsers can bring the session back themselves, through launch options
 and nothing BrowserAI builds.** Chromium launched with `--restore-last-session`
 reopened the closed tabs with their session cookies, `sessionStorage`, form
@@ -1617,6 +1626,19 @@ log, which the batch does not keep).
 source and not measured here**: `firefox.launch()` passes `-silent`, which
 resolves juggler's startup promise at once (`Juggler.js:83-87`).
 `@playwright/mcp`, and so BrowserAI, uses the persistent path.
+
+✅ *Added 2026-10-03 by addition: measured at two more builds.* At Firefox
+**155.0** (`firefox-1543`) under `playwright-core` **1.63.0** and Firefox
+**156.0** (`firefox-1553`) under **1.64.0-alpha-1790635538000**, on node
+v26.7.0, the forced state hung the persistent launch at its 45 s timeout on both
+(45,019 and 45,008 ms, one content process with `-safeMode` at 20 s), while
+`launch()`, `newPage()` and `goto()` under the same forced state all worked on
+both, in about 2.5 s with two `-safeMode` content processes. The unforced
+persistent control launched in 1,598 and 1,924 ms
+([evidence](../../docs/evidence/2026-10-03-upstream-reports/README.md),
+`runs/ff-pw163` and `runs/ff-mcp083`). This is the reproduction filed as
+[microsoft/playwright#43089](https://github.com/microsoft/playwright/issues/43089)
+on 2026-10-03.
 
 ⚠️ **Not established:** who or what held Shift, because the keyboard was
 deliberately not observed; what a HEADED launch does, which from the same

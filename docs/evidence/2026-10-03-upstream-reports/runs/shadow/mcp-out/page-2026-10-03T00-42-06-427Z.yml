@@ -1,0 +1,5 @@
+- generic [active] [ref=e1]:
+  - heading "Shadow roots" [level=1] [ref=e2]
+  - generic [ref=e3]:
+    - paragraph [ref=e4]: Text in an open root
+    - button "Open root button" [ref=e5]

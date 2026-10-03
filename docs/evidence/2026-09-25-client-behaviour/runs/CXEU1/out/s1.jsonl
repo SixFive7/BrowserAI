@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"01a0d5aa-6088-7d03-bdf6-19af0e49f1fe"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"exec one is done"}}
+{"type":"turn.completed","usage":{"input_tokens":168,"cached_input_tokens":48,"cache_write_input_tokens":0,"output_tokens":20,"reasoning_output_tokens":0}}

@@ -1,0 +1,23 @@
+{
+  "playwrightCore": "1.63.0",
+  "chromium": {
+    "version": "153.0.8010.12",
+    "ariaSnapshot": "- heading \"Shadow roots\" [level=1]\n- paragraph: Text in an open root\n- button \"Open root button\"",
+    "buttons": 1,
+    "axNamed": [
+      "heading: Shadow roots",
+      "button: Open root button",
+      "button: Closed root button",
+      "StaticText: Shadow roots",
+      "StaticText: Text in an open root",
+      "StaticText: Open root button",
+      "StaticText: Text in a closed root",
+      "StaticText: Closed root button"
+    ]
+  },
+  "firefox": {
+    "version": "155.0",
+    "ariaSnapshot": "- heading \"Shadow roots\" [level=1]\n- paragraph: Text in an open root\n- button \"Open root button\"",
+    "buttons": 1
+  }
+}

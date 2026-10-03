@@ -1,0 +1,42 @@
+[01:41:09] [INFO] --
+[01:41:09] [INFO] Starting Velopack Updater (1.2.158)
+[01:41:09] [INFO]     Location: "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\Update.exe"
+[01:41:09] [INFO]     CWD: "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root"
+[01:41:09] [INFO]     Verbose: false
+[01:41:09] [INFO]     Silent: true
+[01:41:09] [INFO]     Root Directory: None
+[01:41:09] [INFO]     Log File: "%USERPROFILE%\\AppData\\Local\\velopack\\velopack_BrowserAI.app.test.log"
+[01:41:09] [INFO]     Context: IAmUpdateExe
+[01:41:09] [INFO] Command: Uninstall
+[01:41:09] [INFO] Auto-locating app manifest...
+[01:41:09] [INFO] Root directory '%USERPROFILE%\Downloads\tmp-client-behaviour\q304\root' writable: true
+[01:41:09] [INFO] Using root packages directory: %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root\packages
+[01:41:09] [INFO] Command: Uninstall
+[01:41:09] [INFO] Checking for running processes in: %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root
+[01:41:10] [INFO] Inspected 654 running processes in 207ms, 1 matched directory
+[01:41:10] [WARN] Skipping killing self: %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root\Update.exe (95008)
+[01:41:10] [INFO] Force-stop check complete.
+[01:41:10] [INFO] Running --veloapp-uninstall hook...
+[01:41:10] [INFO] About to launch: 'WideString("%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.exe")' in dir 'Some(WideString("%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current"))' with arguments: WideString("\"%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.exe\" --veloapp-uninstall 1.1.1-alpha.0.130\0")
+[01:41:10] [INFO] Environment block present: true, flags: PROCESS_CREATION_FLAGS(134218752)
+[01:41:10] [INFO] Waiting 60000ms for process handle to exit.
+[01:41:12] [INFO] Hook executed successfully (took 2098.792ms)
+[01:41:12] [INFO] Checking for running processes in: %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root
+[01:41:12] [INFO] Inspected 654 running processes in 216ms, 1 matched directory
+[01:41:12] [WARN] Skipping killing self: %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root\Update.exe (95008)
+[01:41:12] [INFO] Force-stop check complete.
+[01:41:12] [INFO] COM context initialized in 5ms
+[01:41:12] [INFO] Searching for shortcuts containing root: '"%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root"'
+[01:41:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(DESKTOP) (%USERPROFILE%\Desktop/*.lnk)
+[01:41:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(STARTUP) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup/*.lnk)
+[01:41:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(START_MENU) (%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs/**/*.lnk)
+[01:41:12] [INFO] Selected shortcut for update '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' because target '"%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.exe"' matched.
+[01:41:12] [INFO] Searching for shortcuts in: ShortcutLocationFlags(USER_PINNED) (%USERPROFILE%\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned/**/*.lnk)
+[01:41:12] [INFO] Removing shortcut '"%USERPROFILE%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\BrowserAI (suite).lnk"' (ShortcutLocationFlags(START_MENU)).
+[01:41:12] [INFO] Removing directory '"%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root"'
+[01:41:12] [INFO] Removing directory '"%USERPROFILE%\\AppData\\Local\\Temp\\velopack_BrowserAI.app.test"'
+[01:41:12] [INFO] Removing uninstall registry keys...
+[01:41:12] [INFO] Finished successfully.
+[01:41:12] [INFO] Scheduling removal of install directory...
+[01:41:12] [INFO] Running: cmd.exe /C choice /C Y /N /D Y /T 3 & rmdir /s /q "%USERPROFILE%\Downloads\tmp-client-behaviour\q304\root"
+Y

@@ -1,0 +1,276 @@
+2026-09-24T22:57:04.072Z [DEBUG] MDM settings load completed in 2ms
+2026-09-24T22:57:04.078Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\settings.json
+2026-09-24T22:57:04.079Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Program Files\ClaudeCode\managed-settings.json
+2026-09-24T22:57:04.082Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\proj\.claude\settings.json
+2026-09-24T22:57:04.084Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.087Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\proj\.claude\settings.local.json
+2026-09-24T22:57:04.087Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.087Z [DEBUG] CA certs: Config fallback - globalEnv keys: , settingsEnv keys: none
+2026-09-24T22:57:04.089Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.089Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.090Z [DEBUG] [init] configureGlobalMTLS starting
+2026-09-24T22:57:04.090Z [DEBUG] [init] configureGlobalMTLS complete
+2026-09-24T22:57:04.090Z [DEBUG] [init] configureGlobalAgents starting
+2026-09-24T22:57:04.090Z [DEBUG] CA certs: stores=bundled,system, extraCertsPath=undefined
+2026-09-24T22:57:04.091Z [DEBUG] CA certs: Loaded 121 bundled root certificates
+2026-09-24T22:57:04.111Z [DEBUG] CA certs: Dropped 18 expired certificate(s) from system store
+2026-09-24T22:57:04.111Z [DEBUG] CA certs: Loaded 181 system CA certificates
+2026-09-24T22:57:04.112Z [DEBUG] mTLS: Creating HTTPS agent with custom certificates
+2026-09-24T22:57:04.112Z [DEBUG] [init] configureGlobalAgents complete
+2026-09-24T22:57:04.113Z [DEBUG] Using bash path: "C:\Program Files\Git\bin\bash.exe"
+2026-09-24T22:57:04.113Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.115Z [DEBUG] Git remote URL: null
+2026-09-24T22:57:04.115Z [DEBUG] No git remote URL found
+2026-09-24T22:57:04.115Z [DEBUG] Error log sink initialized
+2026-09-24T22:57:04.121Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\settings.json.tmp.32120.0ebe1e999d2b
+2026-09-24T22:57:04.126Z [DEBUG] Temp file written successfully, size: 50 bytes
+2026-09-24T22:57:04.126Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\settings.json.tmp.32120.0ebe1e999d2b to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\settings.json
+2026-09-24T22:57:04.128Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\settings.json written atomically
+2026-09-24T22:57:04.156Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\proj\.claude\settings.json
+2026-09-24T22:57:04.156Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.156Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.159Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\proj\.claude\settings.local.json
+2026-09-24T22:57:04.159Z [DEBUG] Broken symlink or missing file encountered for settings.json at path: C:\Program Files\ClaudeCode\managed-settings.json
+2026-09-24T22:57:04.161Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.161Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.14426fb0f7b9
+2026-09-24T22:57:04.162Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.166Z [DEBUG] Temp file written successfully, size: 184 bytes
+2026-09-24T22:57:04.166Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.14426fb0f7b9 to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.167Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.174Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.174Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.4f80f9e58468
+2026-09-24T22:57:04.175Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.179Z [DEBUG] Temp file written successfully, size: 267 bytes
+2026-09-24T22:57:04.179Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.4f80f9e58468 to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.181Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.188Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.188Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.d86f95521e92
+2026-09-24T22:57:04.189Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.193Z [DEBUG] Temp file written successfully, size: 243 bytes
+2026-09-24T22:57:04.193Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.d86f95521e92 to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.194Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.200Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.200Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.34078a328bd5
+2026-09-24T22:57:04.201Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.205Z [DEBUG] Temp file written successfully, size: 279 bytes
+2026-09-24T22:57:04.205Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.34078a328bd5 to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.206Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.213Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.213Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.56fbc31d21ca
+2026-09-24T22:57:04.213Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.218Z [DEBUG] Temp file written successfully, size: 318 bytes
+2026-09-24T22:57:04.218Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.56fbc31d21ca to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.219Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.226Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.226Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.a80d28a5abac
+2026-09-24T22:57:04.227Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.231Z [DEBUG] Temp file written successfully, size: 345 bytes
+2026-09-24T22:57:04.231Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.a80d28a5abac to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.232Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.238Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.238Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.a8bee91d9b8d
+2026-09-24T22:57:04.239Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.243Z [DEBUG] Temp file written successfully, size: 393 bytes
+2026-09-24T22:57:04.243Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.a8bee91d9b8d to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.245Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.250Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.250Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.af6e0b818dfe
+2026-09-24T22:57:04.251Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.255Z [DEBUG] Temp file written successfully, size: 419 bytes
+2026-09-24T22:57:04.255Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.af6e0b818dfe to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.257Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.264Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.264Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.270Z [DEBUG] [Claude in Chrome] Disabled: OAuth token has no scope accepted by /api/oauth/validate (needs user:profile, user:office, or user:ccr_inference; env-var and setup-token sessions default to user:inference only)
+2026-09-24T22:57:04.273Z [DEBUG] [ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=http://127.0.0.1:8872 is not a first-party Anthropic host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.
+2026-09-24T22:57:04.274Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.450Z [DEBUG] [STARTUP] Loading MCP configs...
+2026-09-24T22:57:04.462Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-09-24T22:57:04.463Z [DEBUG] [STARTUP] Running setup()...
+2026-09-24T22:57:04.468Z [DEBUG] [win32-kernel32] bun:ffi loaded
+2026-09-24T22:57:04.476Z [DEBUG] Loading skills from: managed=C:\Program Files\ClaudeCode\.claude\skills, user=C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\skills, project=[]
+2026-09-24T22:57:04.477Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\agents: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\agents'
+2026-09-24T22:57:04.477Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\agents: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\agents'
+2026-09-24T22:57:04.478Z [DEBUG] Found 1 plugins (1 enabled, 0 disabled)
+2026-09-24T22:57:04.478Z [DEBUG] getPluginSkills: Processing 1 enabled plugins
+2026-09-24T22:57:04.479Z [DEBUG] Checking plugin agents-md: skillsPath=none, skillsPaths=0 paths
+2026-09-24T22:57:04.479Z [DEBUG] Total plugin workflows loaded: 0
+2026-09-24T22:57:04.479Z [DEBUG] Total plugin commands loaded: 0
+2026-09-24T22:57:04.479Z [DEBUG] Total plugin skills loaded: 0 (0 duplicate/user-owned entries skipped)
+2026-09-24T22:57:04.479Z [DEBUG] Total plugin agents loaded: 0
+2026-09-24T22:57:04.481Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\commands: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\commands'
+2026-09-24T22:57:04.481Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\commands: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\commands'
+2026-09-24T22:57:04.481Z [DEBUG] Loaded 0 unique skills (0 unconditional, 0 conditional, managed: 0, user: 0, project: 0, additional: 0, legacy commands: 0)
+2026-09-24T22:57:04.484Z [INFO] [uds-messaging] Listening: \\.\pipe\LOCAL\cc-msg-09ecd28f0fabe7e1ec0d9550914eeae3
+2026-09-24T22:57:04.484Z [INFO] [uds-messaging] Inject messages (auth line REQUIRED here; a pipe is not reachable via socat/AF_UNIX): node -e "const c=require('net').connect(process.argv[1],()=>{c.write(JSON.stringify({type:'auth',token:[REDACTED]})+'\n'+JSON.stringify({type:'user',message:{role:'user',content:'hello'}})+'\n');c.end()})" "\\.\pipe\LOCAL\cc-msg-09ecd28f0fabe7e1ec0d9550914eeae3"
+2026-09-24T22:57:04.484Z [INFO] [uds-messaging] Connect when the data is ready (run the command first, then connect and write its output as ONE line, as in the node recipe above): a connection that sends no complete line within 30000 ms is closed
+2026-09-24T22:57:04.487Z [DEBUG] Error log sink initialized
+2026-09-24T22:57:04.488Z [DEBUG] installed plugins' hooks modules not loaded: rollout flag (tengu_plugin_hooks_modules) is off, from the default (GrowthBook is off for this session: a third-party provider, or telemetry opted out); built-in plugins load regardless
+2026-09-24T22:57:04.489Z [DEBUG] sec-default@builtin not seated: installed plugins' hooks modules are off in this process
+2026-09-24T22:57:04.489Z [DEBUG] [STARTUP] setup() completed in 26ms
+2026-09-24T22:57:04.490Z [DEBUG] Cleared mTLS configuration cache
+2026-09-24T22:57:04.490Z [DEBUG] Cleared proxy agent cache
+2026-09-24T22:57:04.490Z [DEBUG] mTLS: Creating HTTPS agent with custom certificates
+2026-09-24T22:57:04.518Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.518Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.518Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.518Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.518Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.518Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.518Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.518Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.519Z [DEBUG] [STARTUP] Loading commands and agents...
+2026-09-24T22:57:04.522Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills, 40 bundled skills, 0 builtin plugin skills
+2026-09-24T22:57:04.526Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.526Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.528Z [DEBUG] [STARTUP] Commands and agents loaded in 9ms
+2026-09-24T22:57:04.529Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.530Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-09-24T22:57:04.530Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-09-24T22:57:04.530Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-09-24T22:57:04.530Z [DEBUG] Starting background startup prefetches
+2026-09-24T22:57:04.531Z [DEBUG] [Bootstrap] Skipped: Nonessential traffic disabled
+2026-09-24T22:57:04.531Z [DEBUG] [STARTUP] MCP configs resolved in 1ms (awaited at +81ms)
+2026-09-24T22:57:04.534Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.534Z [DEBUG] Cleared mTLS configuration cache
+2026-09-24T22:57:04.534Z [DEBUG] Cleared proxy agent cache
+2026-09-24T22:57:04.534Z [DEBUG] mTLS: Creating HTTPS agent with custom certificates
+2026-09-24T22:57:04.535Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.535Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2026-09-24T22:57:04.536Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.536Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:04.537Z [DEBUG] [MCP] --mcp-config servers running fully async (nonblocking)
+2026-09-24T22:57:04.537Z [DEBUG] [MCP] claude.ai connectors running fully async (nonblocking)
+2026-09-24T22:57:04.537Z [DEBUG] Total LSP servers loaded: 0
+2026-09-24T22:57:04.539Z [DEBUG] [LSP SERVER MANAGER] getAllLspServers returned 0 server(s)
+2026-09-24T22:57:04.539Z [DEBUG] LSP manager initialized with 0 servers
+2026-09-24T22:57:04.556Z [DEBUG] LSP server manager initialized successfully
+2026-09-24T22:57:04.556Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-09-24T22:57:04.556Z [DEBUG] [auto-mode] verifyAutoModeGateAccess: enabledState=enabled disabledBySettings=false model=claude-sonnet-5 modelSupported=true disableFastModeBreakerFires=false carouselAvailable=true canEnterAuto=true
+2026-09-24T22:57:04.557Z [DEBUG] [servedCatalog] off (essential_traffic)
+2026-09-24T22:57:04.593Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.593Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.595Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.595Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.599Z [DEBUG] [Perfetto] initializePerfettoTracing called, env value: undefined
+2026-09-24T22:57:04.599Z [DEBUG] [3P telemetry] isTelemetryEnabled=false (CLAUDE_CODE_ENABLE_TELEMETRY=undefined)
+2026-09-24T22:57:04.602Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.602Z [WARN] [3P telemetry] Event dropped (no event logger initialized): plugin_loaded
+2026-09-24T22:57:04.602Z [DEBUG] Plugin autoupdate: command-source refresh disabled by tengu_plugin_command_source_refresh (still excluding command-sourced plugins from the regular pass)
+2026-09-24T22:57:04.603Z [DEBUG] Plugin autoupdate: skipped (auto-updater disabled)
+2026-09-24T22:57:04.617Z [DEBUG] plugin agents-md: no pluginConfigs["agents-md@builtin"].options in user, --settings or managed settings (project settings are not read); every option is its default
+2026-09-24T22:57:04.619Z [DEBUG] hooks module agents-md@builtin loaded (native, environment 1, tier builtin); events: session.start,prompt.context,agent.spawn,tool.call
+2026-09-24T22:57:04.621Z [DEBUG] engine.create: no plugin-provided interfaces; $ built for agents-md
+2026-09-24T22:57:04.621Z [DEBUG] plugin.register: agents-md (builtin, agents-md@builtin), judged by core alone: admitted
+2026-09-24T22:57:04.623Z [DEBUG] Registered 0 hooks from 1 plugins
+2026-09-24T22:57:04.629Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:04.634Z [DEBUG] [ScheduledTasks] scheduler start() — enabled=false, hasTasks=false
+2026-09-24T22:57:04.635Z [DEBUG] session.start: raised (surface none, not interactive)
+2026-09-24T22:57:04.636Z [DEBUG] [claudeai-mcp] Disabled: API-key auth precedence active
+2026-09-24T22:57:04.644Z [DEBUG] hooks module agents-md@builtin session.start settled in 8.9ms (native link, next() included)
+2026-09-24T22:57:04.649Z [DEBUG] installPluginsForHeadless: starting
+2026-09-24T22:57:04.650Z [DEBUG] installPluginsForHeadless: no marketplaces declared
+2026-09-24T22:57:04.706Z [DEBUG] [sessionRegistry] sweep permitted (domain win32:pc657)
+2026-09-24T22:57:04.716Z [DEBUG] hooks module agents-md@builtin prompt.context settled in 1.3ms (native link, next() included)
+2026-09-24T22:57:04.716Z [DEBUG] mcp runtime arm: v2 (source: default)
+2026-09-24T22:57:04.740Z [DEBUG] MCP server "browserai": Starting connection with timeout of 30000ms
+2026-09-24T22:57:04.786Z [DEBUG] Git remote URL: https://github.com/SixFive7/BrowserAI.git
+2026-09-24T22:57:04.786Z [DEBUG] Parsed repository: github.com/SixFive7/BrowserAI from URL: https://github.com/SixFive7/BrowserAI.git
+2026-09-24T22:57:04.787Z [DEBUG] Ripgrep first use test: PASSED (mode=embedded, path=%USERPROFILE%\.local\bin\claude.exe)
+2026-09-24T22:57:04.787Z [DEBUG] "rg error (signal=undefined, code=2, stderr: rg: C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCU1\\cfg\\plugins\\cache: IO error for operation on C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCU1\\cfg\\plugins\\cache: The system cannot find the path specified. (os error 3)\n), 0 results"
+2026-09-24T22:57:04.792Z [DEBUG] Watching C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\proj for C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\proj\.claude to appear
+2026-09-24T22:57:04.793Z [DEBUG] Watching for changes in setting files C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\settings.json...
+2026-09-24T22:57:04.795Z [DEBUG] Lock acquisition took longer than expected - another Claude instance may be running
+2026-09-24T22:57:04.799Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.799Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.8ee700478f0e
+2026-09-24T22:57:04.803Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.808Z [DEBUG] Temp file written successfully, size: 499 bytes
+2026-09-24T22:57:04.808Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.8ee700478f0e to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.810Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.817Z [DEBUG] Preserving file permissions: 100666
+2026-09-24T22:57:04.817Z [DEBUG] Writing to temp file: C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.eaf465f3c492
+2026-09-24T22:57:04.820Z [DEBUG] Applied original permissions to temp file
+2026-09-24T22:57:04.822Z [DEBUG] Temp file written successfully, size: 645 bytes
+2026-09-24T22:57:04.822Z [DEBUG] Renaming C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json.tmp.32120.eaf465f3c492 to C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json
+2026-09-24T22:57:04.824Z [DEBUG] File C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\.claude.json written atomically
+2026-09-24T22:57:04.844Z [DEBUG] MCP server "browserai": Successfully connected (transport: stdio) in 105ms
+2026-09-24T22:57:04.844Z [DEBUG] MCP server "browserai": Connection established with capabilities: {"hasTools":true,"hasPrompts":false,"hasResources":false,"hasResourceSubscribe":false,"serverVersion":{"name":"BrowserAI","version":"9.9.9-updating-stub"},"protocolEra":"legacy","negotiatedProtocolVersion":"2025-11-25"}
+2026-09-24T22:57:04.844Z [DEBUG] [MCP] Server "browserai" connected with subscribe=false
+2026-09-24T22:57:04.848Z [DEBUG] MCP server "browserai": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 250ms
+2026-09-24T22:57:05.102Z [DEBUG] MCP server "browserai": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 500ms
+2026-09-24T22:57:05.104Z [DEBUG] [fs.watch probe] verdict: delivers
+2026-09-24T22:57:05.606Z [DEBUG] MCP server "browserai": tools/list failed (BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.); retrying in 1000ms
+2026-09-24T22:57:06.609Z [ERROR] MCP server "browserai" Failed to fetch tools: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.
+2026-09-24T22:57:06.618Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:06.618Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:06.620Z [DEBUG] Failed to stat directory C:\Program Files\ClaudeCode\.claude\output-styles: ENOENT: no such file or directory, stat 'C:\Program Files\ClaudeCode\.claude\output-styles'
+2026-09-24T22:57:06.620Z [DEBUG] Failed to stat directory C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\output-styles: ENOENT: no such file or directory, stat 'C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CCU1\cfg\output-styles'
+2026-09-24T22:57:06.620Z [DEBUG] Total plugin output styles loaded: 0
+2026-09-24T22:57:06.622Z [DEBUG] act_dont_rederive_arm_active source=growthbook
+2026-09-24T22:57:06.623Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:06.627Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-09-24T22:57:06.628Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-09-24T22:57:06.628Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:06.636Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:06.636Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:06.641Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:06.641Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:06.642Z [DEBUG] [session-notices] advertise=false mode=acceptEdits flag=false(disabled) pollChannel=false remote=false remoteEnv=false nonInteractive=true
+2026-09-24T22:57:06.643Z [DEBUG] FileHistory: Added snapshot for db76ede5-c88a-4429-99f7-883a83b3a0b8, tracking 0 files
+2026-09-24T22:57:06.644Z [DEBUG] [engine] turn 1 start
+2026-09-24T22:57:06.649Z [DEBUG] autocompact: tokens=[REDACTED] level=ok effectiveWindow=180000
+2026-09-24T22:57:06.659Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.282.2d9; cc_entrypoint=sdk-cli;
+2026-09-24T22:57:06.659Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:06.661Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:06.664Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:06.664Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5
+2026-09-24T22:57:06.665Z [DEBUG] [API REQUEST] /v1/messages source=sdk
+2026-09-24T22:57:06.679Z [DEBUG] Stream started - received first chunk
+2026-09-24T22:57:06.679Z [DEBUG] [API:timing] first byte after 16ms
+2026-09-24T22:57:06.682Z [DEBUG] Unknown tool mcp_tool: toolu_0
+2026-09-24T22:57:06.690Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-09-24T22:57:06.690Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-09-24T22:57:06.690Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:06.693Z [DEBUG] autocompact: tokens=[REDACTED] level=ok effectiveWindow=180000
+2026-09-24T22:57:06.697Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.282.2d9; cc_entrypoint=sdk-cli;
+2026-09-24T22:57:06.697Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:06.698Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:06.699Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:06.699Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5
+2026-09-24T22:57:06.700Z [DEBUG] [API REQUEST] /v1/messages source=sdk
+2026-09-24T22:57:08.954Z [DEBUG] MCP server "browserai": STDIO connection closed after 4s (cleanly)
+2026-09-24T22:57:08.954Z [DEBUG] MCP server "browserai": Cleared connection cache for reconnection
+2026-09-24T22:57:09.606Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:10.392Z [DEBUG] Stream started - received first chunk
+2026-09-24T22:57:10.392Z [DEBUG] [API:timing] first byte after 3693ms
+2026-09-24T22:57:10.394Z [DEBUG] Unknown tool mcp_tool: toolu_1
+2026-09-24T22:57:10.399Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-09-24T22:57:10.399Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-09-24T22:57:10.399Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:10.401Z [DEBUG] autocompact: tokens=[REDACTED] level=ok effectiveWindow=180000
+2026-09-24T22:57:10.404Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.282.2d9; cc_entrypoint=sdk-cli;
+2026-09-24T22:57:10.404Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:10.405Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:10.407Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:10.407Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5
+2026-09-24T22:57:10.407Z [DEBUG] [API REQUEST] /v1/messages source=sdk
+2026-09-24T22:57:15.413Z [DEBUG] Stream started - received first chunk
+2026-09-24T22:57:15.413Z [DEBUG] [API:timing] first byte after 5007ms
+2026-09-24T22:57:15.415Z [DEBUG] Unknown tool mcp_tool: toolu_2
+2026-09-24T22:57:15.419Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-09-24T22:57:15.420Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-09-24T22:57:15.420Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)
+2026-09-24T22:57:15.421Z [DEBUG] autocompact: tokens=[REDACTED] level=ok effectiveWindow=180000
+2026-09-24T22:57:15.424Z [DEBUG] attribution header x-anthropic-billing-header: cc_version=2.1.282.2d9; cc_entrypoint=sdk-cli;
+2026-09-24T22:57:15.425Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:15.425Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:15.427Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:15.428Z [DEBUG] [API:timing] dispatching to firstParty model=claude-sonnet-5
+2026-09-24T22:57:15.428Z [DEBUG] [API REQUEST] /v1/messages source=sdk
+2026-09-24T22:57:15.433Z [DEBUG] Stream started - received first chunk
+2026-09-24T22:57:15.433Z [DEBUG] [API:timing] first byte after 6ms
+2026-09-24T22:57:15.466Z [DEBUG] [engine] turn 1 end (turns=4 usage in=40 out=80 cost=$0.0009 api=8776ms stop=end_turn resultLen=19)
+2026-09-24T22:57:15.466Z [DEBUG] Fast mode unavailable: Fast mode is not available in the Agent SDK
+2026-09-24T22:57:15.472Z [DEBUG] [uds-messaging] Shutting down
+2026-09-24T22:57:15.474Z [DEBUG] LSP server manager shut down successfully
+2026-09-24T22:57:15.480Z [WARN] localSettings: not canonicalizing the consent store to C:\Source\SixFive7\BrowserAI — this platform has no uid semantics to verify directory ownership with, so the store stays at the session cwd (canonicalization is POSIX-only)

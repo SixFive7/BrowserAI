@@ -1,0 +1,14 @@
+--- launches ---
+2026-09-24T23:12:33.428Z launch=1 pid=75244 LAUNCH mode=updater-file behaves=UPDATING ppid=64696 argv=[]
+2026-09-24T23:12:33.435Z launch=1 pid=75244 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:12:33.439Z launch=1 pid=75244 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:12:37.402Z launch=2 pid=60908 LAUNCH mode=updater-file behaves=NORMAL ppid=64696 argv=[]
+2026-09-24T23:12:37.409Z launch=2 pid=60908 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:12:37.411Z launch=2 pid=60908 tools/list answered with 1 tool
+2026-09-24T23:12:40.356Z launch=2 pid=60908 tools/call browserai_list SERVED
+2026-09-24T23:12:40.487Z launch=2 pid=60908 tools/call browserai_list SERVED
+2026-09-24T23:12:40.860Z launch=3 pid=100772 LAUNCH mode=updater-file behaves=NORMAL ppid=64696 argv=[]
+2026-09-24T23:12:40.866Z launch=3 pid=100772 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:12:40.869Z launch=3 pid=100772 tools/list answered with 1 tool
+2026-09-24T23:12:40.936Z launch=3 pid=100772 tools/call browserai_list SERVED
+2026-09-24T23:12:41.222Z launch=3 pid=100772 tools/call browserai_list SERVED

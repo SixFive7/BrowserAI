@@ -1,0 +1,16 @@
+info: BrowserAI.Startup[1]
+      BrowserAI 1.1.1-alpha.0.130 started. pid=108712 image=C:\Source\SixFive7\BrowserAI\.work\client-behaviour\server\BrowserAI.Server.exe cwd=C:\Source\SixFive7\BrowserAI\.work\client-behaviour\runs\CXAR1\proj sqlite=3.53.4 sqliteBuild=intended
+warn: BrowserAI.Startup[4]
+      BROWSERAI_ROOT is set, so this BrowserAI's app root is %USERPROFILE%/Downloads/tmp-client-behaviour/CXAR1, not the one under %LocalAppData%. Its sessions, log and provisioned browsers all live there.
+info: BrowserAI.Startup[70]
+      Watching the MCP client, pid 50400, through an open process handle. It is signalled when the client exits; nothing polls and nothing is pinged.
+info: BrowserAI.Pipe[1]
+      Listening on \\.\pipe\BrowserAI-108712-91d54f3928f446c48d9c7f9de0f4b1fa for describe and stop.
+warn: BrowserAI.Startup[10]
+      This install's updater is running (pid=83256, %USERPROFILE%\Downloads\tmp-client-behaviour\CXAR1\Update.exe), so this server answers its client's handshake, refuses every tool call and starts no browser server until the updater has gone.
+info: ModelContextProtocol.Server.McpServer[570385771]
+      Server (BrowserAI 1.1.1-alpha.0.130) method 'initialize' request handler called.
+info: ModelContextProtocol.Server.McpServer[1867955179]
+      Server (BrowserAI 1.1.1-alpha.0.130), Client (codex-mcp-client 0.155.0-alpha.9.2) method 'initialize' request handler completed in 0.3702ms.
+info: BrowserAI.Proxy.UpdateInProgressServer[20]
+      'tools/list' arrived while an update is being installed and was refused; nothing was forwarded.

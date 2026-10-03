@@ -1,0 +1,15 @@
+2026-09-24T23:00:57.314Z launch=1 pid=17216 LAUNCH mode=updating-first behaves=UPDATING ppid=41084 argv=[]
+2026-09-24T23:00:57.320Z launch=1 pid=17216 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:00:57.325Z launch=1 pid=17216 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:00:57.579Z launch=1 pid=17216 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:00:58.093Z launch=1 pid=17216 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:00:59.096Z launch=1 pid=17216 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:01:01.323Z launch=1 pid=17216 ENDING the conversation: the updater went (4000 ms after start)
+2026-09-24T23:01:01.433Z launch=1 pid=17216 EXIT code=0
+2026-09-24T23:01:01.434Z launch=1 pid=17216 process exit code=0 alive_ms=4122
+2026-09-24T23:02:36.155Z launch=2 pid=25928 LAUNCH mode=updating-first behaves=NORMAL ppid=54104 argv=[]
+2026-09-24T23:02:36.160Z launch=2 pid=25928 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:02:36.175Z launch=2 pid=25928 tools/list answered with 1 tool
+2026-09-24T23:02:36.424Z launch=2 pid=25928 tools/call browserai_list SERVED
+2026-09-24T23:02:36.510Z launch=2 pid=25928 client closed stdin after 357 ms
+2026-09-24T23:02:36.574Z launch=2 pid=25928 process exit code=0 alive_ms=421

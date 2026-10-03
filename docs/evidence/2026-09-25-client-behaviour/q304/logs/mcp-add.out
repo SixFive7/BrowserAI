@@ -1,0 +1,3 @@
+Added global MCP server 'browserai'.
+mcp add exit=0
+mcp get exit=0

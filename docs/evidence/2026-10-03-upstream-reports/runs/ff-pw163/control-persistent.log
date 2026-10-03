@@ -1,0 +1,6 @@
++   211 ms START {"arm":"control-persistent","playwrightCore":"1.63.0","firefox":"C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\browsers\\firefox-1543\\firefox\\firefox.exe","node":"v26.7.0","persistent":true,"forced":false,"keyOff":false,"safeModeRestart":null,"inheritedKeyVariable":"1","startUtc":"2026-10-03T00:33:46.040Z"}
++   230 ms SPAWN pid=8652 args=-no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\runs\ff-pw163\control-persistent-profile -juggler-pipe about:blank
++  1810 ms LAUNCH {"ok":true,"ms":1598}
++  2108 ms GOTO {"ok":true,"ms":297}
++  2829 ms TREE {"processes":7,"contentProcesses":5,"safeModeProcesses":0}
++  3184 ms DONE {"arm":"control-persistent","playwrightCore":"1.63.0","firefox":"C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\browsers\\firefox-1543\\firefox\\firefox.exe","node":"v26.7.0","persistent":true,"forced":false,"keyOff":false,"safeModeRestart":null,"inheritedKeyVariable":"1","startUtc":"2026-10-03T00:33:46.040Z","launch":{"ok":true,"ms":1598},"goto":{"ok":true,"ms":297},"treeHealthy":{"processes":7,"contentProcesses":5,"safeModeProcesses":0},"close":"ok","treeAt20s":null,"firefoxPid":8652,"totalMs":3184}

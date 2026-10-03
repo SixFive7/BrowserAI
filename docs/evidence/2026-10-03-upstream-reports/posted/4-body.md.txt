@@ -1,0 +1,33 @@
+One more place this shows up: ARIA snapshots. Content inside a closed shadow root is missing from `locator.ariaSnapshot()` and from @playwright/mcp's `browser_snapshot`, although the browser's own accessibility tree has it.
+
+```html
+<h1>Shadow roots</h1>
+<open-box></open-box>
+<closed-box></closed-box>
+<script>
+customElements.define('open-box', class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' }).innerHTML = '<p>Text in an open root</p><button>Open root button</button>';
+  }
+});
+customElements.define('closed-box', class extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'closed' }).innerHTML = '<p>Text in a closed root</p><button>Closed root button</button>';
+  }
+});
+</script>
+```
+
+With playwright-core 1.63.0 in headless Chromium 153.0.8010.12 and Firefox 155.0, `await page.locator('body').ariaSnapshot()` returns:
+
+```yaml
+- heading "Shadow roots" [level=1]
+- paragraph: Text in an open root
+- button "Open root button"
+```
+
+`getByRole('button')` counts 1. On the same page, Chromium's `Accessibility.getFullAXTree` over CDP lists both buttons and the text of both paragraphs, and with a click listener added inside the closed root, `page.mouse.click` at the button's position fires it. `browser_snapshot` in @playwright/mcp 0.0.83 leaves the closed content out the same way.
+
+For an agent working through the snapshot, that part of the page does not exist: it cannot see it or get a ref for it, although a user can use it and the browser's accessibility tree has it. The init-script workaround above changes what `attachShadow` returns to the page's own code, so it can change how the page behaves, which is the concern raised earlier in this thread. If forcing roots open is too invasive, building the snapshot for closed roots from the browser's accessibility tree would cover this case without changing the page.

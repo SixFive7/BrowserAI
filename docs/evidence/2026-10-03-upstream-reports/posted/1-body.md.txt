@@ -1,0 +1,72 @@
+### Version
+
+1.63.0 (also 1.64.0-alpha-1790635538000, the build @playwright/mcp 0.0.83 pins)
+
+### Steps to reproduce
+
+Minimal repro: https://gist.github.com/SixFive7/a80adceb13f39d360713dad9ff57b102 (`npm install`, `npx playwright-core install firefox`, `node repro.js`).
+
+On Windows, Firefox starts in safe mode if Shift is held down (with Ctrl and Alt up) at the moment its browser process starts, unless `MOZ_DISABLE_SAFE_MODE_KEY` is set. That check is `IsSafeModeRequested` in `toolkit/xre/SafeMode.h`. Firefox's own `MOZ_SAFE_MODE_RESTART=1` goes through the same function, so the repro uses it to get the same state without touching the keyboard:
+
+```js
+const { firefox } = require('playwright-core');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+(async () => {
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ff-safe-mode-'));
+  // Requests safe mode through the same check a held Shift key goes through.
+  const env = { ...process.env, MOZ_SAFE_MODE_RESTART: '1' };
+  const start = Date.now();
+  try {
+    const context = await firefox.launchPersistentContext(userDataDir, { headless: true, env, timeout: 45000 });
+    console.log(`launched in ${Date.now() - start} ms`);
+    await context.close();
+  } catch (e) {
+    console.log(`${e.message.split('\n')[0]} (after ${Date.now() - start} ms)`);
+  }
+})();
+```
+
+By the source, holding Shift (Ctrl and Alt up) while the browser process starts has the same effect. I have not tried that by hand.
+
+### Expected behavior
+
+The context launches in a couple of seconds whatever the keyboard is doing. Without `MOZ_SAFE_MODE_RESTART` the same script prints `launched in 1575 ms` here.
+
+### Actual behavior
+
+In headless mode this is a very confusing failure. The browser has no window and nobody is looking at it, yet whether it starts depends on the keyboard of the person sitting at the machine. If Shift happens to be down at the moment the Firefox process starts, for example while typing a capital letter or Shift-selecting text in an editor, Firefox goes into safe mode and opens its Troubleshoot Mode dialog. Headless, that dialog is invisible and nothing can dismiss it, so the launch waits until the timeout, and the launch log looks normal. To the person at the keyboard it is a random hang that will not reproduce on demand, with nothing tying it to a key they pressed.
+
+The script prints `browserType.launchPersistentContext: Timeout 45000ms exceeded. (after 45008 ms)`. With the default timeout it waits the full 180 s (180,009 ms in one earlier run). While it waits, the browser's process tree has a content process started with `-safeMode`.
+
+Cause, from the Firefox and Juggler sources:
+- In safe mode, `BrowserGlue._beforeUIStartup` opens the modal `chrome://browser/content/safeMode.xhtml` (Troubleshoot Mode) before the first browser window. Nothing checks for headless, so the dialog is invisible and nobody closes it.
+- The first window never opens, `browser-idle-startup-tasks-finished` never fires, and Juggler's `Browser.enable` waits on it forever. "Juggler listening to the pipe" is still printed, so the launch log looks normal.
+
+A non-persistent launch gets past this: `firefox.launch()` passes `-silent`, which resolves Juggler's startup promise at once, and with the same forced safe mode `launch()`, `newPage()` and `goto()` all worked for me. @playwright/mcp uses the persistent path by default.
+
+### Additional context
+
+- Seen without forcing anything: 4 hangs in 133 headless persistent launches, one at a time, on an idle Windows 11 machine (Firefox 156.0 build 1549, playwright-core 1.64.0-alpha-1789764292000). Each hung browser I inspected had a `-safeMode` content process (3 of 3), and none of 287 healthy ones did. With `MOZ_DISABLE_SAFE_MODE_KEY=1` in the browser's environment there were 0 hangs in 155 launches. I did not record the keyboard, so I can't say what held Shift.
+- Checked again on 2026-10-03 with 1.63.0 (Firefox 155.0 build 1543) and 1.64.0-alpha-1790635538000 (Firefox 156.0 build 1553): forced safe mode hangs the persistent launch on both, and the same launch without it takes about 2 s.
+- `MOZ_DISABLE_SAFE_MODE_KEY` only turns off the keyboard check. With both variables set, forced safe mode still hung, and by the source `-safe-mode` still works too.
+- `playwright.cfg` already sets `toolkit.startup.max_resumed_crashes` to -1 so Firefox does not offer safe mode after crashes. No pref covers the keyboard check; besides this variable, the only off switch is the `DisableSafeMode` enterprise policy, which applies to every Firefox on the machine or for the user.
+- On macOS the same function checks the Option key, with the same variable as the off switch. I did not try macOS.
+- Possibly related: #40882. There the launch returned and `newPage` hung, which is not what safe mode did in my runs, so it may be a different problem.
+
+Suggested fix: set `MOZ_DISABLE_SAFE_MODE_KEY=1` in `Firefox.amendEnvironment` (`packages/playwright-core/src/server/firefox/firefox.ts`), the way `BidiFirefox.amendEnvironment` already sets the `MOZ_CRASHREPORTER*` variables. The BiDi path probably wants it too, but I did not test that path. Mozilla's own launchers set it for the same reason: the browser toolbox (`devtools/client/framework/browser-toolbox/Launcher.sys.mjs`: "Disable safe mode for the new process in case this was opened via the keyboard shortcut") and mozregression (`FirefoxLauncher` in `mozregression/launchers.py`).
+
+Nobody types on a CI runner, which would explain why CI never sees this. It shows up on developer machines, and on machines where an agent drives a headless browser while a person keeps working.
+
+### Environment
+
+```
+System:
+  OS: Windows 11
+Binaries:
+  Node: 26.7.0
+npmPackages:
+  playwright-core: ^1.63.0 => 1.63.0
+```

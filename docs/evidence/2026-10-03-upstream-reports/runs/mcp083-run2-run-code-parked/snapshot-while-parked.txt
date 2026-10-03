@@ -1,0 +1,10 @@
+### Page
+- Page URL: http://127.0.0.1:51562/after-pause
+- Page Title: /after-pause
+### Snapshot
+```yaml
+- heading "/after-pause" [level=1] [ref=f2e2]
+```
+### Paused
+- Evaluate at async C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\mcp083\node_modules\playwright-core\lib\coreBundle.js:73913
+- Use any tools to explore and interact, resume by calling resume/step-over/pause-at

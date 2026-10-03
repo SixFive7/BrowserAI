@@ -1,0 +1,280 @@
+{
+ "run": "CXAB3",
+ "serverLaunches": [
+  "2026-09-24T23:21:38.624Z launch=1 pid=16852 LAUNCH mode=listed-updater-file behaves=UPDATING-LISTED ppid=83380",
+  "2026-09-24T23:21:42.637Z launch=2 pid=81484 LAUNCH mode=listed-updater-file behaves=NORMAL ppid=83380",
+  "2026-09-24T23:21:46.138Z launch=3 pid=15532 LAUNCH mode=listed-updater-file behaves=NORMAL ppid=83380"
+ ],
+ "serverEvents": [
+  "2026-09-24T23:21:38.624Z launch=1 pid=16852 LAUNCH mode=listed-updater-file behaves=UPDATING-LISTED ppid=83380 argv=[]",
+  "2026-09-24T23:21:38.636Z launch=1 pid=16852 tools/list answered with 1 tool (UPDATING, option-b shape)",
+  "2026-09-24T23:21:39.207Z launch=1 pid=16852 tools/call browserai_list REFUSED with the update sentence",
+  "2026-09-24T23:21:39.561Z launch=1 pid=16852 tools/call browserai_list REFUSED with the update sentence",
+  "2026-09-24T23:21:39.817Z launch=1 pid=16852 ENDING the conversation: the updater went (C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/logs/updater.running removed, 1196 ms after start)",
+  "2026-09-24T23:21:39.924Z launch=1 pid=16852 EXIT code=0",
+  "2026-09-24T23:21:39.925Z launch=1 pid=16852 process exit code=0 alive_ms=1304",
+  "2026-09-24T23:21:42.637Z launch=2 pid=81484 LAUNCH mode=listed-updater-file behaves=NORMAL ppid=83380 argv=[]",
+  "2026-09-24T23:21:42.649Z launch=2 pid=81484 tools/list answered with 1 tool",
+  "2026-09-24T23:21:45.585Z launch=2 pid=81484 tools/call browserai_list SERVED",
+  "2026-09-24T23:21:45.719Z launch=2 pid=81484 tools/call browserai_list SERVED",
+  "2026-09-24T23:21:46.138Z launch=3 pid=15532 LAUNCH mode=listed-updater-file behaves=NORMAL ppid=83380 argv=[]",
+  "2026-09-24T23:21:46.161Z launch=3 pid=15532 tools/list answered with 1 tool",
+  "2026-09-24T23:21:46.198Z launch=3 pid=15532 tools/call browserai_list SERVED",
+  "2026-09-24T23:21:46.575Z launch=3 pid=15532 tools/call browserai_list SERVED"
+ ],
+ "steps": [
+  {
+   "marker": "(start)",
+   "events": [
+    "TOUCHED C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/logs/updater.running",
+    "startupStatus browserai starting",
+    "startupStatus browserai ready",
+    "liveness CXAB3.launch.1 pid=16852 ALIVE"
+   ]
+  },
+  {
+   "marker": "A: mcpServer/tool/call on the thread, updater still running",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"BrowserAI is installing an update, so 'browserai_list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.\"}],\"isError\":true}"
+   ]
+  },
+  {
+   "marker": "T1: a model turn, updater still running",
+   "events": [
+    "model-turn mcpToolCall status=failed error=null result=[{\"type\":\"text\",\"text\":\"BrowserAI is installing an update, so 'browserai_list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.\"}]",
+    "liveness CXAB3.launch.1 pid=16852 ALIVE"
+   ]
+  },
+  {
+   "marker": "UPDATER EXITS",
+   "events": [
+    "REMOVED C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/logs/updater.running",
+    "liveness CXAB3.launch.1 pid=16852 GONE"
+   ]
+  },
+  {
+   "marker": "B: mcpServer/tool/call on the same thread after the updater exited",
+   "events": [
+    "RESP {\"code\":-32603,\"message\":\"tool call failed for `browserai/browserai_list`: Transport closed\"}"
+   ]
+  },
+  {
+   "marker": "T2: a model turn on the same thread after the updater exited",
+   "events": [
+    "model-turn mcpToolCall status=failed error={\"message\":\"tool call error: tool call failed for `browserai/browserai_list`\\n\\nCaused by:\\n    Transport closed\"} result=null",
+    "liveness CXAB3.launch.1 pid=16852 GONE"
+   ]
+  },
+  {
+   "marker": "RELOAD: config/mcpServer/reload",
+   "events": [
+    "startupStatus browserai starting",
+    "startupStatus browserai ready",
+    "liveness CXAB3.launch.1 pid=16852 GONE",
+    "liveness CXAB3.launch.2 pid=81484 ALIVE"
+   ]
+  },
+  {
+   "marker": "C: mcpServer/tool/call after the reload",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=2 pid=81484: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/sessions.\"}],\"isError\":false}"
+   ]
+  },
+  {
+   "marker": "T3: a model turn after the reload",
+   "events": [
+    "model-turn mcpToolCall status=completed error=null result=[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=2 pid=81484: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/sessions.\"}]"
+   ]
+  },
+  {
+   "marker": "NEW THREAD",
+   "events": [
+    "startupStatus browserai starting",
+    "startupStatus browserai ready"
+   ]
+  },
+  {
+   "marker": "D: mcpServer/tool/call on the new thread",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=3 pid=15532: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/sessions.\"}],\"isError\":false}"
+   ]
+  },
+  {
+   "marker": "T4: a model turn on the new thread",
+   "events": [
+    "model-turn mcpToolCall status=completed error=null result=[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=3 pid=15532: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/sessions.\"}]",
+    "liveness CXAB3.launch.1 pid=16852 GONE",
+    "liveness CXAB3.launch.2 pid=81484 ALIVE",
+    "liveness CXAB3.launch.3 pid=15532 ALIVE"
+   ]
+  }
+ ],
+ "modelRequests": [
+  {
+   "turn": 0,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": null
+  },
+  {
+   "turn": 1,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 1,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0156 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "BrowserAI is installing an update, so 'browserai_list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+    }
+   ]
+  },
+  {
+   "turn": 2,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 1,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0156 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "BrowserAI is installing an update, so 'browserai_list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+    }
+   ]
+  },
+  {
+   "turn": 3,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=1 behaves=UPDATING: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 1,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0126 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+    }
+   ]
+  },
+  {
+   "turn": 4,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 1,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0126 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+    }
+   ]
+  },
+  {
+   "turn": 5,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 1,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0160 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=2 pid=81484: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/sessions."
+    }
+   ]
+  },
+  {
+   "turn": 6,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=3 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": null
+  },
+  {
+   "turn": 7,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=3 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0175 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=3 pid=15532: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAB3/sessions."
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,3 @@
+2026-09-24T23:16:17.939Z STARTED stand-in pid=96524 image=%USERPROFILE%\Downloads\tmp-client-behaviour\CXER1\Update.exe
+2026-09-24T23:16:25.948Z ENDING stand-in pid=96524 by its handle (life 8000 ms)
+2026-09-24T23:16:25.952Z stand-in pid=96524 exited code=null signal=SIGTERM after 8010 ms

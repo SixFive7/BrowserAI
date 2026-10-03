@@ -1,0 +1,5 @@
+[mcp_servers.browserai]
+command = "BrowserAI.Server.exe"
+
+[mcp_servers.browserai.env]
+BROWSERAI_ROOT = '%USERPROFILE%\Downloads\tmp-client-behaviour\q304\data'

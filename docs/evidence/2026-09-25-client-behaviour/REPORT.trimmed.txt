@@ -1,0 +1,245 @@
+Q296 a and Q304 a -- client-behaviour researcher, 2026-09-24/25 (all times UTC)
+==========================================================================
+
+Versions: Claude Code 2.1.282 (claude --version); codex-cli 0.155.0-alpha.9.2
+(AppData\Local\OpenAI\Codex\bin\247581e40ee272fb\codex.exe, sha256 bc45017e...e226);
+node v26.7.0; published BrowserAI.Server.exe 1.1.1-alpha.0.130 (sha256 70c84ad8...b815,
+copied from the writer's publish of 23:06:58Z into .work\client-behaviour\server so the
+writer's next publish never met a locked file); test pack BrowserAI.app.test
+1.1.1-alpha.0.130 (Releases\test-pack, packed 23:17:11Z, installer sha256 9260cbff...3e9a).
+Every client ran under a scratch CLAUDE_CONFIG_DIR (seeded with OnboardedClientConfig's
+recipe) or a scratch CODEX_HOME, against a local API stub: no credential used, no inference.
+Rig: .work\client-behaviour\rig\ (updstub.js = the stand-in server; ccstub.js / cxstub.js =
+API stubs derived from docs/probes/2026-09-24-q261/apistub.js and the 2026-09-23
+openaistub.js; appdrv.js = app-server driver derived from q261 appserver.js + Q288 appsrv.js;
+passthru.js = full-frame pass-through for the real server; standin.js = the stand-in
+Update.exe staged as UpdateInProgressTests.cs:223-240 stages it).
+Index of all 51 runs: .work\client-behaviour\runs-index.json. Byte-exact texts:
+.work\client-behaviour\texts.json.
+
+--------------------------------------------------------------------------
+Q296 a -- what the clients do with an updating server's tools/list error
+--------------------------------------------------------------------------
+Stub: initialize answered normally (instructions, caps {"tools":{}} like BrowserProxy.cs:
+330-336), tools/list -> JSON-RPC error -32603 carrying the sentence of
+SessionErrors.cs:193-212 per clientInfo.name, tools/call refused with it, conversation
+ended when the "updater" goes (4 s timer, or an updater file). Later launches are normal.
+
+RUNS (state a = today's behaviour)                                      evidence: runs\<run>\
+ Claude Code  CCU1-3   3/3: status "connected", tools []; tools/list sent 4 times      out\s1.debug.log
+                       (retries 250/500/1000 ms) then [ERROR] "Failed to fetch       out\s1.stream.jsonl
+                       tools: <sentence>"; model offered 0 BrowserAI tools in all    logs\<run>-s1.requests.jsonl
+                       4 turns; server ended at +4 s; NO relaunch for the rest of    logs\<run>.launches.log
+                       the session; `claude -p --continue` (new process): launch 2,  logs\<run>.wire.jsonl
+                       tools/list answered, tool offered, call served.
+              CCE1     1/1: server ended 600 ms after start, inside the retries: no
+                       re-dial on the retry, 0 tools, no relaunch.
+              CCL1     1/1: 0 tools and no relaunch 91.5 s after the server ended.
+              CCR1     REAL server in real updating mode: identical (4 refusals, 0
+                       tools, no relaunch); the server ended its own conversation
+                       20 ms after the stand-in updater exited (its log:
+                       Startup[10] updater running, Startup[11] updater gone);
+                       --continue: 79 tools, call served.
+ codex exec   CXEU1-3  3/3: tools/list sent once; tracing WARN "MCP server startup    out\s1.err.txt
+                       failed server_name="browserai" error=Mcp error: -32603:       out\s1.jsonl
+                       <sentence>"; the server process was TERMINATED by Codex      logs\<run>-s1.requests.jsonl
+                       (no stdin-end/exit line in its log); "omitting MCP server
+                       without an exact ready client"; model offered 12 tools, no
+                       mcp__browserai namespace; nothing in --json output; no
+                       relaunch in the exec; `exec resume --last`: launch 2,
+                       namespace present, call served.
+              CXER1    REAL server: identical; resume: 79 tools, served.
+ app-server   CXAU1-3  3/3: mcpServer/startupStatus/updated "failed" with the        logs\<run>.driver.log
+                       sentence; server gone within 0.57 s; direct                   logs\<run>-model.requests.jsonl
+                       mcpServer/tool/call -> JSON-RPC error; model: no namespace,   summary.json
+                       "unsupported call"; after the updater exited: unchanged;
+                       config/mcpServer/reload -> relaunch (starting -> ready),
+                       tools/list answered, the SAME thread's next turn had the
+                       namespace and the call was served; a new thread also works.
+              CXAR1    REAL server: identical; 79 tools after the reload.
+ Controls (normal server): CCN1, CXEN1, CXAN1 -- all calls served.
+ Excluded: CCU0-dup-tool-ids (the stub reused tool_use ids across --continue; Claude Code
+ rewrote them to "[Tool use interrupted]" -- rig artefact, fixed, re-run as CCU1-3).
+
+BYTE-EXACT TEXTS (state a)
+ The sentence on the wire (real server, Claude Code): "BrowserAI is installing an update,
+   so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a
+   minute, then call again: your client starts the updated BrowserAI by itself on the next
+   call. A session you were using is closed by the update and not lost: its profile, files
+   and log stay on disk, so call browserai_resume on its directory before you use it again."
+   (Codex variant: "... nothing changed. Your client does not start a server again once it
+   has gone, so after about a minute these tools need a new thread, or a reconnect of the
+   BrowserAI server, before they answer. A session you were using ...")
+ What the model saw, Claude Code: no BrowserAI tool; a system-reminder "# MCP Server
+   Instructions ... ## browserai\n<the server's 2,024-char instructions, 'Call
+   browserai_init first ...'>"; each call -> tool_result "<tool_use_error>Error: No such
+   tool available: mcp__browserai__browserai_list</tool_use_error>", is_error true. The
+   sentence: 0 occurrences in any request body (CCU1-3, CCR1).
+ What the model saw, Codex (exec and app-server): no mcp__browserai namespace; each call
+   -> function_call_output "unsupported call: mcp__browseraibrowserai_list". The sentence:
+   0 occurrences.
+ What the HOST saw, app-server: startupStatus error "MCP client for `browserai` failed to
+   start: MCP startup failed: Mcp error: -32603: <sentence>"; direct call
+   {"code":-32603,"message":"failed to get client: MCP startup failed: Mcp error: -32603:
+   <sentence>"}. Claude Code: debug log only.
+
+SUPPLEMENTARY RUNS (stub, to decide b)                                    3/3 each
+ b-shape (real list during the update, calls refused, end when the updater goes)
+   CCB1-3: tool offered; call refused with the sentence (model sees it, is_error true);
+           after the end the next call RE-DIALLED (launch 2, no tools/list) and was
+           served -- the session healed itself.
+   CXEB1-3 / CXAB1-3: model sees "Wall time: ... Output:" + the Codex sentence; after the
+           end: "tool call error: tool call failed for `browserai/browserai_list`\n\n
+           Caused by:\n    Transport closed" until resume / reload / new thread.
+ b + keep serving after the updater goes (no conversation end)
+   CCS1-3, CXAS1-3: list at once, calls refused during the update, then served by the
+           SAME process; no relaunch, no reload, no Transport closed.
+ hold tools/list until the updater goes, then serve
+   CCH1-3 (held 1.3-2.1 s), CXAH1-3 (held 2.8 s, default 10 s startup timeout): both
+           clients waited; every call served by the same process.
+ keep the error, then send list_changed and serve
+   CCK1-3 with caps {"tools":{}} (BrowserAI's): list_changed IGNORED, 0 tools all session.
+   CCKL1-3 with {"tools":{"listChanged":true}}: Claude Code RE-LISTED, tool appeared,
+           served by the same process. (Codex had already terminated the server.)
+ side: Q261 shape on a re-dialled connection: CCQN1-3 (no capability) and CCQL1-3
+   (listChanged declared): no re-list either way -- consistent with kb/mcp/protocol.md:811.
+
+CONCLUSION Q296: option b IS needed, for Claude Code. Today a Claude Code session that
+connects during an apply keeps zero BrowserAI tools for its whole life (no relaunch: there
+is no tool left to call), and neither client ever shows the model the sentence. Codex
+marks the server failed and kills it; a reload / new thread / resume recovers it either
+way, so for Codex b only changes what the model is told.
+
+DIRECTIONS (primer: which answer should an updating server give to tools/list?)
+ a keep the error        CC: no tools for the session; Codex: failed, host sees sentence.
+                         Cost: none. Measured above.
+ b option b as posed     CC self-heals on the next call (3/3); Codex model told why, then
+                         Transport closed until reload. Cost: the surface child starts
+                         during an apply; it is under the install root, so Velopack's two
+                         kill passes end it with the server (kb/packaging/velopack.md:
+                         921, 938-939 -- read, not measured for the child).
+ c b + keep serving      Both clients recover in the same process, no reload (3/3 + 3/3).
+   after the updater     Cost: N91's alternative b, a Program restructuring. A server
+   (RECOMMENDED)         killed by the kill pass is still lost to Codex (accepted gap).
+ d error + declare       CC recovers (3/3); Codex not (server already killed). Cost:
+   listChanged + notify  declaring a capability BrowserAI does not declare today.
+ e hold the list, then   Both recover (3/3 + 3/3) for a server that survives the apply;
+   serve                 a server killed while holding is today's outcome; the hold must
+                         stay under Codex's 10 s default startup timeout.
+ Recommendation: c; if the restructure is not wanted now, b is the minimum that fixes
+ Claude Code.
+
+--------------------------------------------------------------------------
+Q304 a -- Codex's bare-name resolution, end to end with the test installer
+--------------------------------------------------------------------------
+Lock: .work\installer.lock created exclusively by a holder process
+("pid=84696 created=134347666440514420"), TAKEN 23:37:25.26Z, RELEASED 23:41:35.26Z
+(deleted only because it still named the holder). Install: BrowserAI.test-installer.exe
+--silent --installto %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root, exit 0 in
+4.3 s, with CLAUDE_CONFIG_DIR, CODEX_HOME and BROWSERAI_ROOT pointing at scratch (the hooks
+registered only into the scratch configs). Project: q304\proj, its own git root, trusted in
+each run's scratch CODEX_HOME; entry written by `codex mcp add` with CODEX_HOME=proj\.codex:
+command "BrowserAI.Server.exe" exactly, plus env BROWSERAI_ROOT (scratch) so the installed
+server's data root and stray sweep never touched %LOCALAPPDATA%\BrowserAI; PATH is not in
+the entry, so the resolver still read Codex's inherited PATH. Environment of each
+app-server: CreateEnvironmentBlock(own token) at its start (what a process started from
+the registry's state gets), credential-named variables dropped.
+
+RUNS                                                            evidence: q304\runs\<R>\driver.log
+ B1-B3 started BEFORE (PATH 51 entries, no test root), kept running across the install:
+   pre-install thread: "MCP client for `browserai` failed to start: MCP startup failed:
+   program not found"; after the install, same process: call on thread 1 -> "failed to
+   get client: MCP startup failed: program not found"; NEW thread -> failed "program not
+   found"; config/mcpServer/reload -> both threads failed "program not found"; no process
+   with the test pack's server image at any of 4 checks.                 3/3 NOT FOUND
+ A1-A3 started AFTER (PATH 52 entries, the root's current\ last): status ready; process
+   image %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root\current\BrowserAI.Server.exe
+   with the app-server as parent (97408<-70256, 74796<-53340, 13488<-109976); its log:
+   "BrowserAI 1.1.1-alpha.0.130 started ... image=...\q304\root\current\..." and "Watching
+   the MCP client, pid <app-server>"; the call answered "No BrowserAI sessions under
+   '...\q304\proj'. That is an answer, not an error: ..."            3/3 STARTED FROM current\
+ Explorer's own environment (pid 14840, found by GetShellWindow): PATH 54 entries ->
+   55 after the install (only the new entry) -> the identical 54 after the uninstall.
+
+PATH (HKCU\Environment\Path, RegGetValueW RRF_NOEXPAND)          q304\readings\*.user-path.json(.raw)
+ before    23:37:32.96Z REG_EXPAND_SZ 2932 bytes raw sha256 4FF732EAF5B4DD6ADCE36A3FF19DE64BA6736FE8C24C36E7DF94C4995E3BE541
+                        1465 chars, UTF-16 sha256 7A3C7896CEE83F78952E9A1969FE914BF35FEC02CF363A01C0A60B39AB47FAE0
+ installed 23:39:06.14Z 3058 bytes, 5708F3BE8475B384E90941AC2F6435F4F63913DF4D9D9A0653BAE4E36238EC87;
+                        exactly before + ";" + the entry (before already ended in ";")
+ after     23:41:25.50Z 2932 bytes, 4FF732EA...E541; text sha256 7A3C7896...FAE0 --
+                        BYTE-IDENTICAL to before (byte comparison), kind identical.
+ Clearance subset (ARP real/test keys, TEMP staging, Start Menu BrowserAI*.lnk, PATH,
+ scheduled tasks): q304\readings\1-before.clearance.txt == 3-after.clearance.txt.
+
+CONCLUSION Q304: measured, no longer read from source. A Codex started after the install
+starts BrowserAI.Server.exe from the install's current\ through the bare name, 3/3. A
+Codex app-server started before the install cannot start it without a restart, 3/3 --
+not with a new thread and not with config/mcpServer/reload.
+
+DIRECTIONS (primer: how should a running Codex reach a server installed after it started?)
+ a keep Q294 b, say the restart need plainly (measured now) -- cheap. RECOMMENDED with d.
+ b project entry through cmd.exe /d /v:on /c !LOCALAPPDATA!\BrowserAI.app\current\...:
+   Q288's cmdwrap_v / cmdwrap_space_v started 3/3 and LOCALAPPDATA is in Codex's
+   allowlist, so no restart would be needed -- not measured end to end; costs an extra
+   process between Codex and the server and fits only the default root.
+ c a launcher in a folder already on every PATH (WindowsApps is on this machine's) --
+   invasive, one owner per machine, not measured.
+ d the configuration window notices a Codex process older than the install and says to
+   restart it -- cheap, complements a.
+ e absolute path in the project entry -- rejected by Q294 (not portable).
+
+--------------------------------------------------------------------------
+REMOVED / CLEANUP STATE
+--------------------------------------------------------------------------
+ - The test pack install, by its own silent uninstall (exit 0, 3.3 s): root gone; ARP
+   BrowserAI.app.test absent; Start Menu "BrowserAI (suite).lnk" absent; PATH entry off;
+   sign-in task removed (0 tasks named BrowserAI* after).
+ - .work\installer.lock: released and deleted by the holder.
+ - %USERPROFILE%\Downloads\tmp-client-behaviour\ (real-server scratch app roots CCR1,
+   CXER1, CXAR1 with stand-in Update.exe copies; q304\data): removed after their logs were
+   copied to runs\<run>\server-root-logs and q304\data-root.
+ - %USERPROFILE%\.codex\tmp\arg0\codex-arg0O3cd8S: created 22:45:52.86Z by MY
+   `codex --version` run without CODEX_HOME (its apply_patch.bat names the binary I ran);
+   removed. Only the pre-existing codex-arg0DzNbql (07:39Z) remains there.
+ - grep.exe pid 99060 (my stalled search): TaskStop left it running; stopped by pid after
+   re-checking its command line and creation time.
+ - q304\probe-fresh-env.json first version held a credential value; deleted; the helper
+   now drops credential-named variables.
+ - Codex's plugin-catalogue clones (~88 MB per scratch CODEX_HOME): removed from every
+   scratch home (0 left).
+ - Final check at 23:58-23:59Z: PATH re-read, raw bytes identical to the first reading
+   (sha256 4FF732EA...E541, REG_EXPAND_SZ); 0 processes of this research running (of 440
+   visible with a command line); lock absent; profile scratch root absent; ARP
+   BrowserAI.app.test absent; 0 scheduled tasks named BrowserAI*.
+ - One aborted attempt, for the record: timeline.txt's first "install start/done" at
+   23:38:12Z is a runner that failed parsing its own arguments before spawning anything;
+   no installer ran (root absent and PATH unchanged afterwards).
+ Remaining scratch (gitignored): .work\client-behaviour (rigs, logs, summaries, the server
+ copy 127 MB, the installer copy 62 MB, scratch client homes).
+
+NOT DONE / LIMITS
+ - The Codex desktop app and a terminal-started Codex were not measured (a Codex "started
+   after the install" is modelled by CreateEnvironmentBlock; Explorer's PATH was read).
+ - Options b-e were measured with the stub, not with a built BrowserAI; the real server was
+   measured in state a only, once per client as asked.
+ - Claude Code interactive mode (/mcp reconnect) not measured; only claude -p.
+ - The cmd.exe direction for Q304 was not measured end to end.
+
+TANGENTIAL ISSUES
+ 1. Releases\test-pack (1.1.1-alpha.0.130, packed 23:17:11Z) carries a PLANTED hook: it
+    registered "BrowserAI.app.test.planted sign-in 7F567A7EFA0F5CF345C1F603C0AB56FD", while
+    SignInTask.NameFor (SignInTask.cs:59-64) composes "<pack id> sign-in <key>" and src has
+    no ".planted". The clearance script's reading 8 matches only 'BrowserAI.app sign-in *'
+    and 'BrowserAI.app.test *', so a leftover ".planted" task would pass unseen. My
+    uninstall removed it.
+ 2. Clearance reading 7 lists "entries naming BrowserAI" by substring; a root whose path
+    lacks "BrowserAI" (mine) is invisible on that line (the hash still catches it).
+ 3. `codex --version` writes <CODEX_HOME>\tmp\arg0 even for --version.
+ 4. Scratch Codex runs make network calls at startup: a curated-plugins git clone from
+    GitHub and https://chatgpt.com/backend-api/plugins/featured (401, no credential).
+ 5. BrowserAI declares "tools":{} (no listChanged): Claude Code then ignores list_changed on
+    a first connection (CCK 3/3) and honours it when declared (CCKL 3/3).
+ 6. Claude Code rewrites a tool_use id reused across --continue into "[Tool use
+    interrupted]"; docs/probes/2026-09-24-q261/apistub.js reuses ids per process.
+ 7. In state a, Claude Code shows the model BrowserAI's instructions ("Call browserai_init
+    first") while offering no BrowserAI tool.

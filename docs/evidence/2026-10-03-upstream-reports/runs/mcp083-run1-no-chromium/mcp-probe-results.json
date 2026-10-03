@@ -1,0 +1,61 @@
+{
+  "versions": {
+    "mcp": "0.0.83",
+    "node": "v26.7.0"
+  },
+  "experiments": {
+    "help": {
+      "lines": 159,
+      "mentionsBindOrRegistry": true
+    },
+    "E1": {
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1790635538000"
+      },
+      "tools": 38,
+      "hasResume": true,
+      "hasRunCode": true
+    },
+    "E2": {
+      "registryDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\localappdata\\ms-playwright\\b",
+      "entries": [],
+      "title": null,
+      "endpoint": null,
+      "keys": null,
+      "browserKeys": null,
+      "userDataDir": null
+    },
+    "E3": {
+      "bTabs": "### Error\nError: async initializeServer: connect ENOENT probe-a",
+      "bNavigate": "### Error | Error: async initializeServer: connect ENOENT probe-a",
+      "aTabsAfter": "### Error\nError: Browser \"chrome-for-testing\" is not installed; expected executable at C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\browsers\\chromium-1247\\chrome-win64\\chrome.exe. Run `npx @playwright/mcp install-browser chrome-for-testing` to install"
+    },
+    "E4": {
+      "armOk": true,
+      "armText": "### Error | Error: Browser \"chrome-for-testing\" is not installed; expected executable at C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\browsers\\chromium-1247\\chrome-win64\\chrome.exe. Run `npx @playwright/mcp install-browser chrome-for-testing` to install",
+      "navigateAnsweredWithin10s": true,
+      "snapshotAnswered": true,
+      "snapshotMentionsPaused": false,
+      "navigateAnsweredAfterResume": true,
+      "navigateAnsweredAt": 1141,
+      "navigateSentAt": 1139,
+      "resumeAnsweredWithin30s": true,
+      "tabsWhileResumePending": true,
+      "closeSentAt": 1149,
+      "resumeAnsweredAfterClose": true,
+      "resumeAnsweredAt": 1147,
+      "resumeText": "### Error\nError: Browser \"chrome-for-testing\" is not installed; expected executable at C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\browsers\\chromium-1247\\chrome-win64\\chrome.exe. Run `npx @playwright/mcp install-browser chrome-for-testing` to install"
+    },
+    "E5": {
+      "navigateOk": true,
+      "added": [],
+      "title": null
+    },
+    "end": {
+      "registryAtEnd": [],
+      "stderrA": "",
+      "stderrC": ""
+    }
+  }
+}

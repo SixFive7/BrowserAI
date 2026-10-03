@@ -1,0 +1,20 @@
+--- launches ---
+2026-09-24T23:19:43.788Z launch=1 pid=77180 LAUNCH mode=listed-first behaves=UPDATING-LISTED ppid=84636 argv=[]
+2026-09-24T23:19:43.795Z launch=1 pid=77180 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:19:43.800Z launch=1 pid=77180 tools/list answered with 1 tool (UPDATING, option-b shape)
+2026-09-24T23:19:43.916Z launch=1 pid=77180 tools/call browserai_list REFUSED with the update sentence
+2026-09-24T23:19:47.802Z launch=1 pid=77180 ENDING the conversation: the updater went (4000 ms after start)
+2026-09-24T23:19:47.909Z launch=1 pid=77180 EXIT code=0
+2026-09-24T23:19:47.909Z launch=1 pid=77180 process exit code=0 alive_ms=4123
+2026-09-24T23:19:49.446Z launch=2 pid=66524 LAUNCH mode=listed-first behaves=NORMAL ppid=84636 argv=[]
+2026-09-24T23:19:49.451Z launch=2 pid=66524 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:19:49.456Z launch=2 pid=66524 tools/call browserai_list SERVED
+2026-09-24T23:19:54.504Z launch=2 pid=66524 tools/call browserai_list SERVED
+2026-09-24T23:19:54.603Z launch=2 pid=66524 client closed stdin after 5160 ms
+2026-09-24T23:19:54.661Z launch=2 pid=66524 process exit code=0 alive_ms=5218
+2026-09-24T23:20:00.199Z launch=3 pid=93432 LAUNCH mode=listed-first behaves=NORMAL ppid=89228 argv=[]
+2026-09-24T23:20:00.219Z launch=3 pid=93432 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:20:00.240Z launch=3 pid=93432 tools/list answered with 1 tool
+2026-09-24T23:20:00.578Z launch=3 pid=93432 tools/call browserai_list SERVED
+2026-09-24T23:20:00.693Z launch=3 pid=93432 client closed stdin after 501 ms
+2026-09-24T23:20:00.752Z launch=3 pid=93432 process exit code=0 alive_ms=560

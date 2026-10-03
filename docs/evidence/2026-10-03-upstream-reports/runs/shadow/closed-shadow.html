@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>closed shadow root</title></head>
+<body>
+<h1>Shadow roots</h1>
+<open-box></open-box>
+<closed-box></closed-box>
+<script>
+customElements.define('open-box', class extends HTMLElement {
+  constructor() {
+    super();
+    const root = this.attachShadow({ mode: 'open' });
+    root.innerHTML = '<p>Text in an open root</p><button>Open root button</button>';
+  }
+});
+customElements.define('closed-box', class extends HTMLElement {
+  constructor() {
+    super();
+    const root = this.attachShadow({ mode: 'closed' });
+    root.innerHTML = '<p>Text in a closed root</p><button>Closed root button</button>';
+    root.querySelector('button').addEventListener('click', () => { document.title = 'closed root button clicked'; });
+  }
+});
+</script>
+</body></html>

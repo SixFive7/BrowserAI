@@ -1,0 +1,34 @@
+{
+  "playwrightVersion": "1.64.0-alpha-1790635538000",
+  "playwrightLib": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\mcp083\\node_modules\\playwright-core",
+  "title": "probe-a",
+  "browser": {
+    "guid": "browser@c9d61b328d4e0b707d3cc514d984f396",
+    "browserName": "chromium",
+    "launchOptions": {
+      "channel": "chrome-for-testing",
+      "args": [
+        "--disable-blink-features=AutomationControlled"
+      ],
+      "ignoreAllDefaultArgs": false,
+      "ignoreDefaultArgs": [
+        "--disable-extensions"
+      ],
+      "handleSIGINT": false,
+      "handleSIGTERM": false,
+      "headless": true,
+      "tracesDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\runs\\mcp083\\out\\traces",
+      "chromiumSandbox": true,
+      "noDefaultViewport": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "selectorEngines": [],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\runs\\mcp083\\profile-a"
+    },
+    "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\runs\\mcp083\\profile-a"
+  },
+  "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@c9d61b-4b96c860",
+  "workspaceDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\runs\\mcp083"
+}

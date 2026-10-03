@@ -1,0 +1,153 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+// Drives `codex app-server` over stdio JSON-RPC through a list of steps.
+// Derived from docs/probes/2026-09-24-q261/appserver.js (sha256 a32777a8...) and the
+// Q288 driver docs/evidence/2026-09-24-codex-expansion/rig/appsrv.js (sha256 633c5bc8...).
+//
+// usage: node appdrv.js <steps.json>
+// env: CODEX_EXE, DRIVER_LOG, DRIVER_CWD, APP_ENV_FILE (optional: a JSON object used as the
+//      app-server's WHOLE environment instead of this process's), DRIVER_KILL_AFTER_MS
+//
+// steps:
+//   {m, p, timeout, waitNote: "<method>", waitNoteTimeout}  a request; "$THREAD" is substituted.
+//        waitNote: after the response, wait for a notification of that method sent after the request.
+//   {waitStatus: "<server>", timeout}   wait for a terminal mcpServer/startupStatus/updated for that
+//        server sent after the previous request.
+//   {sleep: ms} | {marker: "..."} | {touch: file} | {rm: file}
+//   {waitFile: file, timeout}           wait until a file exists
+//   {hold: file}                        wait (no timeout) until a file exists: used to keep an
+//                                       app-server alive across a step taken outside this driver
+'use strict';
+const { spawn } = require('child_process');
+const fs = require('fs');
+
+const CODEX = process.env.CODEX_EXE;
+const LOG = process.env.DRIVER_LOG;
+const steps = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const log = (s) => fs.appendFileSync(LOG, `${new Date().toISOString()} ${s}\n`);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const TERMINAL = new Set(['ready', 'failed', 'cancelled']);
+
+const env = process.env.APP_ENV_FILE ? JSON.parse(fs.readFileSync(process.env.APP_ENV_FILE, 'utf8')) : process.env;
+const child = spawn(CODEX, ['app-server', '--listen', 'stdio://'], {
+  stdio: ['pipe', 'pipe', 'pipe'], env, cwd: process.env.DRIVER_CWD || process.cwd(), windowsHide: true,
+});
+log(`SPAWNED app-server pid=${child.pid} exe=${CODEX}`);
+fs.writeFileSync(LOG + '.pid', String(child.pid));
+let exitInfo = null;
+child.on('exit', (code, signal) => { exitInfo = { code, signal }; log(`APPSERVER EXIT code=${code} signal=${signal}`); });
+
+let buf = '';
+const pending = new Map();
+let nextId = 1;
+const notes = [];
+child.stdout.on('data', (d) => {
+  buf += d.toString('utf8');
+  let nl;
+  while ((nl = buf.indexOf('\n')) >= 0) {
+    const line = buf.slice(0, nl).trim();
+    buf = buf.slice(nl + 1);
+    if (!line) continue;
+    let msg;
+    try { msg = JSON.parse(line); } catch (e) { log(`NONJSON ${line.slice(0, 300)}`); continue; }
+    if (msg.id !== undefined && (msg.result !== undefined || msg.error !== undefined) && !msg.method) {
+      log(`RESP id=${msg.id} ${JSON.stringify(msg.error ?? msg.result).slice(0, 6000)}`);
+      const p = pending.get(msg.id);
+      if (p) { pending.delete(msg.id); p(msg); }
+    } else if (msg.method) {
+      notes.push(msg);
+      if (!/^(item\/agentMessage\/delta|thread\/tokenUsage|account\/rateLimits)/.test(msg.method)) {
+        log(`NOTE#${notes.length - 1} ${msg.method} ${JSON.stringify(msg.params ?? {}).slice(0, 6000)}`);
+      }
+      if (msg.id !== undefined) {
+        child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result: {} }) + '\n');
+        log(`AUTOREPLY to ${msg.method}`);
+      }
+    }
+  }
+});
+child.stderr.on('data', (d) => fs.appendFileSync(LOG + '.stderr.txt', d));
+
+function call(method, params, timeoutMs) {
+  const id = nextId++;
+  log(`SEND id=${id} ${method} ${JSON.stringify(params ?? {}).slice(0, 800)}`);
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+  return new Promise((resolve) => {
+    const t = setTimeout(() => { log(`TIMEOUT id=${id} ${method}`); pending.delete(id); resolve({ timeout: true }); }, timeoutMs || 120000);
+    pending.set(id, (m) => { clearTimeout(t); resolve(m); });
+  });
+}
+
+async function waitNoteAfter(anchor, pred, timeoutMs, what) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) {
+    for (let i = anchor; i < notes.length; i++) if (pred(notes[i])) { log(`WAITED ${what}: NOTE#${i} after ${Date.now() - t0} ms`); return notes[i]; }
+    await sleep(50);
+  }
+  log(`WAIT TIMEOUT ${what} after ${timeoutMs} ms`);
+  return null;
+}
+
+(async () => {
+  const ctx = { threadId: null };
+  let anchor = 0;
+  for (const step of steps) {
+    if (step.sleep) { await sleep(step.sleep); continue; }
+    if (step.marker) { log(`MARKER ${step.marker}`); continue; }
+    if (step.touch) { fs.writeFileSync(step.touch, new Date().toISOString()); log(`TOUCHED ${step.touch}`); continue; }
+    if (step.rmAfter) { const file = step.rmAfter; setTimeout(() => { try { fs.unlinkSync(file); log(`REMOVED (scheduled ${step.ms} ms earlier) ${file}`); } catch (e) { log(`REMOVE FAILED ${file} ${e.message}`); } }, step.ms); log(`SCHEDULED removal of ${file} in ${step.ms} ms`); continue; }
+    if (step.rm) { try { fs.unlinkSync(step.rm); log(`REMOVED ${step.rm}`); } catch (e) { log(`REMOVE FAILED ${step.rm} ${e.message}`); } continue; }
+    if (step.waitFile) { const t0 = Date.now(); while (!fs.existsSync(step.waitFile) && Date.now() - t0 < (step.timeout || 60000)) await sleep(100); log(`WAITFILE ${step.waitFile} present=${fs.existsSync(step.waitFile)} after ${Date.now() - t0} ms`); continue; }
+    if (step.hold) { log(`HOLDING until ${step.hold} exists`); while (!fs.existsSync(step.hold)) await sleep(250); log(`HOLD released by ${step.hold}`); continue; }
+    if (step.procs) {
+      // Observation only, keyed by the full image PATH and never by name: every process
+      // running the given image, with its parent's image. The rig in
+      // docs/evidence/2026-09-24-codex-expansion/rig/lib.js:43-58 does the same.
+      const { spawnSync } = require('child_process');
+      const esc = step.procs.replace(/\\/g, '\\\\').replace(/'/g, "''");
+      const script = [
+        "$ErrorActionPreference='Stop'",
+        `$ps = @(Get-CimInstance Win32_Process -Filter "ExecutablePath = '${esc}'")`,
+        '$out = foreach ($p in $ps) { $parent = Get-CimInstance Win32_Process -Filter "ProcessId = $($p.ParentProcessId)"; [pscustomobject]@{ pid=$p.ProcessId; ppid=$p.ParentProcessId; path=$p.ExecutablePath; created=$p.CreationDate.ToUniversalTime().ToString(\'o\'); parentPath=$parent.ExecutablePath } }',
+        'ConvertTo-Json -InputObject @($out) -Depth 3 -Compress',
+      ].join('\n');
+      const r = spawnSync('pwsh.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { windowsHide: true, encoding: 'utf8', timeout: 60000 });
+      log(`PROCS ${step.procs} status=${r.status} ${(r.stdout || '').trim()} ${(r.stderr || '').trim().slice(0, 300)}`);
+      continue;
+    }
+    if (step.checkLaunches) {
+      // Liveness of every server launch this run recorded, by the pid its own launch file
+      // names: observation only, nothing is ended here.
+      const { dir, tag } = step.checkLaunches;
+      const found = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.startsWith(`${tag}.launch.`)).sort() : [];
+      for (const f of found) {
+        const m = fs.readFileSync(`${dir}/${f}`, 'utf8').match(/(?:pid|shim)=(\d+)/);
+        let alive = false;
+        if (m) { try { process.kill(Number(m[1]), 0); alive = true; } catch (e) { alive = e.code === 'EPERM'; } }
+        log(`LAUNCH-LIVENESS ${f} pid=${m ? m[1] : '?'} ${alive ? 'ALIVE' : 'GONE'}`);
+      }
+      continue;
+    }
+    if (step.waitStatus) {
+      await waitNoteAfter(anchor, (n) => n.method === 'mcpServer/startupStatus/updated' && n.params && n.params.name === step.waitStatus && TERMINAL.has(n.params.status), step.timeout || 30000, `terminal startup status of ${step.waitStatus}`);
+      continue;
+    }
+    const params = JSON.parse(JSON.stringify(step.p ?? {}), (k, v) => (v === '$THREAD' ? ctx.threadId : v));
+    anchor = notes.length;
+    const r = await call(step.m, params, step.timeout);
+    if (step.m === 'thread/start' && r.result) {
+      ctx.threadId = r.result.thread_id ?? r.result.threadId ?? (r.result.thread && r.result.thread.id);
+      log(`THREAD_ID=${ctx.threadId}`);
+    }
+    if (step.waitNote) await waitNoteAfter(anchor, (n) => n.method === step.waitNote, step.waitNoteTimeout || 120000, step.waitNote);
+  }
+  await sleep(1000);
+  log('DONE, closing the app-server stdin');
+  child.stdin.end();
+  const killAfter = Number(process.env.DRIVER_KILL_AFTER_MS || 10000);
+  const t0 = Date.now();
+  while (!exitInfo && Date.now() - t0 < killAfter) await sleep(100);
+  if (!exitInfo) { log('KILLING the app-server by its handle'); child.kill(); await sleep(1000); }
+  process.exit(0);
+})();

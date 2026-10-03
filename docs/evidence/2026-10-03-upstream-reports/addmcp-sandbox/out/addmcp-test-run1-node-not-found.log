@@ -1,0 +1,47 @@
+add-mcp env: 'node': No such file or directory; claude 2.1.288 (Claude Code)
+C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt
+--- files after: start
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude.json
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt\.claude.json
+=== addmcp-cli-add :: node C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp241\node_modules\add-mcp\dist\index.js C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\server\probe-server.exe -g -a claude-code -n probe-cli -y
+env: 'node': No such file or directory
+rc=127
+--- files after: addmcp-cli-add
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude.json
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt\.claude.json
+=== addmcp-sdk-upsert :: node --input-type=module -e import { pathToFileURL } from 'node:url'; const lib = await import(pathToFileURL(process.argv[1]).href); console.log(JSON.stringify(lib.upsertServer('claude-code', 'probe-sdk', { command: process.argv[2], args: [] }))); C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp241\node_modules\add-mcp\dist\lib.js C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\server\probe-server.exe
+env: 'node': No such file or directory
+rc=127
+--- files after: addmcp-sdk-upsert
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude.json
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt\.claude.json
+=== addmcp-list :: node C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp241\node_modules\add-mcp\dist\index.js list -g -a claude-code
+env: 'node': No such file or directory
+rc=127
+=== claude-remove-probe-cli :: /c/Source/SixFive7/BrowserAI/.work/upstream-drafts/addmcp-sandbox/bin/claude.exe mcp remove probe-cli --scope user
+No MCP server named "probe-cli" in user scope
+rc=1
+=== claude-remove-probe-sdk :: /c/Source/SixFive7/BrowserAI/.work/upstream-drafts/addmcp-sandbox/bin/claude.exe mcp remove probe-sdk --scope user
+No MCP server named "probe-sdk" in user scope
+rc=1
+--- files after: claude-removes
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude.json
+EXISTS C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt\.claude.json
+  mcpServers: []
+=== claude-add-own :: /c/Source/SixFive7/BrowserAI/.work/upstream-drafts/addmcp-sandbox/bin/claude.exe mcp add probe-own --scope user -- C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\server\probe-server.exe
+Added stdio MCP server probe-own with command: C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\server\probe-server.exe  to user config
+File modified: C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt\.claude.json
+rc=0
+--- files after: claude-add-own
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude.json
+EXISTS C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt\.claude.json
+  mcpServers: ["probe-own"]
+=== claude-remove-own :: /c/Source/SixFive7/BrowserAI/.work/upstream-drafts/addmcp-sandbox/bin/claude.exe mcp remove probe-own --scope user
+Removed MCP server probe-own from user config
+File modified: C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt\.claude.json
+rc=0
+--- files after: claude-remove-own
+ABSENT C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude.json
+EXISTS C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\addmcp-sandbox\home\.claude-alt\.claude.json
+  mcpServers: []
+DONE

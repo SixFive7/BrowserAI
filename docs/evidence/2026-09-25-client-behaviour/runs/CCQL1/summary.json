@@ -1,0 +1,235 @@
+{
+ "run": "CCQL1",
+ "serverLaunches": [
+  "2026-09-24T23:48:21.987Z launch=1 pid=55772 LAUNCH mode=q261-first behaves=NORMAL ppid=80976",
+  "2026-09-24T23:48:24.032Z launch=2 pid=105788 LAUNCH mode=q261-first behaves=NORMAL ppid=80976",
+  "2026-09-24T23:48:32.204Z launch=3 pid=105384 LAUNCH mode=q261-first behaves=NORMAL ppid=57416"
+ ],
+ "toolsListPerLaunch": {
+  "1": [
+   "answered"
+  ],
+  "3": [
+   "answered"
+  ]
+ },
+ "callsPerLaunch": {
+  "1": [
+   "browserai_list SERVED"
+  ],
+  "2": [
+   "browserai_list REFUSED",
+   "browserai_list SERVED"
+  ],
+  "3": [
+   "browserai_list SERVED"
+  ]
+ },
+ "ending": [
+  "2026-09-24T23:48:22.363Z launch=1 pid=55772 ENDING the conversation: Q261 shape: launch 1 ends after its first answered call",
+  "2026-09-24T23:48:29.144Z launch=2 pid=105788 client closed stdin after 5114 ms",
+  "2026-09-24T23:48:32.438Z launch=3 pid=105384 client closed stdin after 239 ms"
+ ],
+ "s1": {
+  "init": {
+   "mcp_servers": [
+    {
+     "name": "browserai",
+     "status": "connected",
+     "source": "dynamic"
+    }
+   ],
+   "tools": [
+    "mcp__browserai__browserai_list"
+   ]
+  },
+  "result": {
+   "subtype": "success",
+   "is_error": false,
+   "result": "session one is done"
+  },
+  "toolResults": [
+   [
+    {
+     "type": "text",
+     "text": "NORMAL-SERVER launch=1 pid=55772: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCQL1/sessions."
+    }
+   ],
+   "Q261-STUB launch=2: this server was started again since your tool list was read, so it may be stale. Call the tool again.",
+   [
+    {
+     "type": "text",
+     "text": "NORMAL-SERVER launch=2 pid=105788: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCQL1/sessions."
+    }
+   ]
+  ],
+  "debugMcpLines": [
+   "2026-09-24T23:48:21.886Z [DEBUG] MCP server \"browserai\": Starting connection with timeout of 30000ms",
+   "2026-09-24T23:48:21.996Z [DEBUG] MCP server \"browserai\": Successfully connected (transport: stdio) in 112ms",
+   "2026-09-24T23:48:21.996Z [DEBUG] MCP server \"browserai\": Connection established with capabilities: {\"hasTools\":true,\"hasPrompts\":false,\"hasResources\":false,\"hasResourceSubscribe\":false,\"serverVersion\":{\"name\":\"BrowserAI\",\"version\":\"9.9.9-normal-stub\"},\"protocolEra\":\"legacy\",\"negotiatedProtocolVersion\":\"2025-11-25\"}",
+   "2026-09-24T23:48:22.103Z [DEBUG] MCP server \"browserai\": Calling MCP tool: browserai_list",
+   "2026-09-24T23:48:22.108Z [DEBUG] MCP server \"browserai\": Tool 'browserai_list' completed successfully in 5ms",
+   "2026-09-24T23:48:22.485Z [DEBUG] MCP server \"browserai\": STDIO connection closed after 0s (cleanly)",
+   "2026-09-24T23:48:22.485Z [DEBUG] MCP server \"browserai\": Cleared connection cache for reconnection",
+   "2026-09-24T23:48:23.973Z [DEBUG] MCP server \"browserai\": Starting connection with timeout of 30000ms",
+   "2026-09-24T23:48:24.039Z [DEBUG] MCP server \"browserai\": Successfully connected (transport: stdio) in 67ms",
+   "2026-09-24T23:48:24.039Z [DEBUG] MCP server \"browserai\": Connection established with capabilities: {\"hasTools\":true,\"hasPrompts\":false,\"hasResources\":false,\"hasResourceSubscribe\":false,\"serverVersion\":{\"name\":\"BrowserAI\",\"version\":\"9.9.9-normal-stub\"},\"protocolEra\":\"legacy\",\"negotiatedProtocolVersion\":\"2025-11-25\"}",
+   "2026-09-24T23:48:24.040Z [DEBUG] MCP server \"browserai\": Calling MCP tool: browserai_list",
+   "2026-09-24T23:48:24.043Z [ERROR] MCP server \"browserai\" Q261-STUB launch=2: this server was started again since your tool list was read, so it may be stale. Call the tool again.",
+   "2026-09-24T23:48:24.043Z [DEBUG] MCP server \"browserai\": Tool 'browserai_list' failed after 0s: Q261-STUB launch=2: this server was started again since your tool list was read, so it may be stale. Call the tool again.",
+   "2026-09-24T23:48:29.070Z [DEBUG] MCP server \"browserai\": Calling MCP tool: browserai_list",
+   "2026-09-24T23:48:29.072Z [DEBUG] MCP server \"browserai\": Tool 'browserai_list' completed successfully in 2ms",
+   "2026-09-24T23:48:29.132Z [DEBUG] MCP server \"browserai\": Terminating MCP server process tree",
+   "2026-09-24T23:48:29.215Z [DEBUG] MCP server \"browserai\": STDIO connection closed after 5s (cleanly)",
+   "2026-09-24T23:48:29.215Z [DEBUG] MCP server \"browserai\": Cleared connection cache for reconnection"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "tools": [
+     "mcp__browserai__browserai_list"
+    ],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": null
+   },
+   {
+    "turn": 1,
+    "tools": [
+     "mcp__browserai__browserai_list"
+    ],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": [
+       {
+        "type": "text",
+        "text": "NORMAL-SERVER launch=1 pid=55772: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCQL1/sessions."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "turn": 2,
+    "tools": [
+     "mcp__browserai__browserai_list"
+    ],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": "Q261-STUB launch=2: this server was started again since your tool list was read, so it may be stale. Call the tool again.",
+      "is_error": true
+     }
+    ]
+   },
+   {
+    "turn": 3,
+    "tools": [
+     "mcp__browserai__browserai_list"
+    ],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": [
+       {
+        "type": "text",
+        "text": "NORMAL-SERVER launch=2 pid=105788: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCQL1/sessions."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "s2": {
+  "init": {
+   "mcp_servers": [
+    {
+     "name": "browserai",
+     "status": "connected",
+     "source": "dynamic"
+    }
+   ],
+   "tools": [
+    "mcp__browserai__browserai_list"
+   ]
+  },
+  "result": {
+   "subtype": "success",
+   "is_error": false,
+   "result": "session two is done"
+  },
+  "toolResults": [
+   [
+    {
+     "type": "text",
+     "text": "NORMAL-SERVER launch=3 pid=105384: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCQL1/sessions."
+    }
+   ]
+  ],
+  "debugMcpLines": [
+   "2026-09-24T23:48:32.131Z [DEBUG] MCP server \"browserai\": Starting connection with timeout of 30000ms",
+   "2026-09-24T23:48:32.219Z [DEBUG] MCP server \"browserai\": Successfully connected (transport: stdio) in 90ms",
+   "2026-09-24T23:48:32.219Z [DEBUG] MCP server \"browserai\": Connection established with capabilities: {\"hasTools\":true,\"hasPrompts\":false,\"hasResources\":false,\"hasResourceSubscribe\":false,\"serverVersion\":{\"name\":\"BrowserAI\",\"version\":\"9.9.9-normal-stub\"},\"protocolEra\":\"legacy\",\"negotiatedProtocolVersion\":\"2025-11-25\"}",
+   "2026-09-24T23:48:32.372Z [DEBUG] MCP server \"browserai\": Calling MCP tool: browserai_list",
+   "2026-09-24T23:48:32.375Z [DEBUG] MCP server \"browserai\": Tool 'browserai_list' completed successfully in 3ms",
+   "2026-09-24T23:48:32.432Z [DEBUG] MCP server \"browserai\": Terminating MCP server process tree",
+   "2026-09-24T23:48:32.510Z [DEBUG] MCP server \"browserai\": STDIO connection closed after 0s (cleanly)",
+   "2026-09-24T23:48:32.510Z [DEBUG] MCP server \"browserai\": Cleared connection cache for reconnection"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "tools": [
+     "mcp__browserai__browserai_list"
+    ],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": [
+       {
+        "type": "text",
+        "text": "NORMAL-SERVER launch=2 pid=105788: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCQL1/sessions."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "turn": 1,
+    "tools": [
+     "mcp__browserai__browserai_list"
+    ],
+    "instructionsSeen": [
+     "UPDSTUB-INSTRUCTIONS launch=1 behaves=NORMAL"
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastToolResult": [
+     {
+      "content": [
+       {
+        "type": "text",
+        "text": "NORMAL-SERVER launch=3 pid=105384: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCQL1/sessions."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

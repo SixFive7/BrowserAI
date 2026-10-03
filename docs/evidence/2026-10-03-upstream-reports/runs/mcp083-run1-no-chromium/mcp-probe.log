@@ -1,0 +1,21 @@
+[+   296 ms] E0 --help lines 159 registry dir C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\localappdata\ms-playwright\b before []
+[+   579 ms] E1 A initialize {"name":"Playwright","version":"1.64.0-alpha-1790635538000"}
+[+   585 ms] E1 tools 38 browser_resume true browser_run_code_unsafe true
+[+   599 ms] E2 A navigate /one -> ### Error | Error: Browser "chrome-for-testing" is not installed; expected executable at C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\browsers\chromium-1247\chrome-win64\chrome.exe. Run `npx @pl
+[+   600 ms] E2 registry after first navigate [] title null endpoint null
+[+   908 ms] E3 B initialize {"name":"Playwright","version":"1.64.0-alpha-1790635538000"}
+[+   925 ms] E3 B browser_tabs -> ### Error | Error: async initializeServer: connect ENOENT probe-a
+[+   929 ms] E3 B browser_navigate /driven-by-b -> ### Error | Error: async initializeServer: connect ENOENT probe-a
+[+   932 ms] E3 A browser_tabs after B navigated -> ### Error | Error: Browser "chrome-for-testing" is not installed; expected executable at C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\browsers\chromium-1247\chrome-win64\chrome.exe. Run `npx @playwright/mcp install-browser chrome-for-testing` to install
+[+  1133 ms] E3 B stopped, exit 0
+[+  1136 ms] E3 A browser_tabs after B exited -> ### Error | Error: Browser "chrome-for-testing" is not installed; expected executable at C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\browsers\chromium-1247\chrome-win64\chrome.exe. Run `npx @playwright/mcp install-browser chrome-for-testing` to install
+[+  1139 ms] E4 A run_code requestPause -> ### Error | Error: Browser "chrome-for-testing" is not installed; expected executable at C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\browsers\chromium-1247\chrome-win64\chrome.exe. Run `npx @playwright/mcp install-browser chrome-for-testing` to install
+[+  1142 ms] E4 A navigate /after-pause answered within 10 s? true
+[+  1144 ms] E4 A concurrent browser_snapshot -> answered; mentions "### Paused": false
+[+  1145 ms] E4 parked navigate answered after resume? true at +1141 ms, sent at +1139 ms
+[+  1147 ms] E4 browser_resume answered within 30 s? true
+[+  1149 ms] E4 A concurrent browser_tabs while resume pending -> ### Error | Error: Browser "chrome-for-testing" is not installed; expected executable at C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\browsers\chromium-1247\chrome-win64\chrome.exe. Run `npx @pl
+[+  1151 ms] E4 A browser_close -> ### Error | Error: Browser "chrome-for-testing" is not installed; expected executable at C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\browsers\chromium-1247\chrome-win64\chrome.exe. Run `npx @pl
+[+  1151 ms] E4 browser_resume answered after browser_close? true at +1147 ms (close sent at +1149 ms): ### Error | Error: Browser "chrome-for-testing" is not installed; expected executable at C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\browsers\chromium-1247\chrome-win64\chrome.exe. Run `npx @pl
+[+  1469 ms] E5 --isolated navigate -> ok new descriptors [] title null
+[+  1871 ms] END registry []

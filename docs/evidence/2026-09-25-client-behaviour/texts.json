@@ -1,0 +1,344 @@
+{
+ "claudeCode_real_s1": {
+  "toolsOffered": [],
+  "mcpInstructionsReminder": [
+   "<system-reminder>\n# MCP Server Instructions\n\nThe following MCP servers have provided instructions for how to use their tools and resources:\n\n## browserai\nBrowserAI drives a real browser. Call browserai_init first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.\n\nEvery session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run, not bound to the directory.\n\n'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.\n\nBrowsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.\n\nSupply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.\n\nEvery call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does -- the tool name already says that. It goes in the session's record, and browserai_catch_up reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nWARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.\n\nbrowserai_init refuses a directory that is already a session and directs you to browserai_resume; browserai_list reports the sessions beneath a directory, browserai_set_purpose rewrites what one says it is for, and browserai_destroy deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login.\n</system-reminder>"
+  ],
+  "toolResults": [
+   {
+    "type": "tool_result",
+    "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+    "is_error": true,
+    "tool_use_id": "toolu_CCR1_s1_0"
+   },
+   {
+    "type": "tool_result",
+    "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+    "is_error": true,
+    "tool_use_id": "toolu_CCR1_s1_1"
+   },
+   {
+    "type": "tool_result",
+    "content": "<tool_use_error>Error: No such tool available: mcp__browserai__browserai_list</tool_use_error>",
+    "is_error": true,
+    "tool_use_id": "toolu_CCR1_s1_2"
+   }
+  ],
+  "updateSentenceAnywhere": 0
+ },
+ "claudeCode_real_s2": {
+  "toolsOffered": 79,
+  "lastToolResult": [
+   {
+    "tool_use_id": "toolu_CCR1_s2_0",
+    "type": "tool_result",
+    "content": [
+     {
+      "type": "text",
+      "text": "No BrowserAI sessions under 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCR1\\sessions'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named."
+     }
+    ]
+   }
+  ]
+ },
+ "codexExec_real_s1": {
+  "namespacesPerRequest": [
+   [
+    "multi_agent_v1[5]"
+   ],
+   [
+    "multi_agent_v1[5]"
+   ],
+   [
+    "multi_agent_v1[5]"
+   ],
+   [
+    "multi_agent_v1[5]"
+   ]
+  ],
+  "functionCallOutputs": [
+   {
+    "type": "function_call_output",
+    "id": "fco_01a0d5b4-a30d-7921-9c02-c31fab3987aa",
+    "call_id": "call_CXER1_s1_0",
+    "output": "unsupported call: mcp__browseraibrowserai_list"
+   },
+   {
+    "type": "function_call_output",
+    "id": "fco_01a0d5b5-93e5-7c82-be3e-032c9fd83e3f",
+    "call_id": "call_CXER1_s1_1",
+    "output": "unsupported call: mcp__browseraibrowserai_list"
+   },
+   {
+    "type": "function_call_output",
+    "id": "fco_01a0d5b5-a7d0-7e20-98e9-d0bc76543a8d",
+    "call_id": "call_CXER1_s1_2",
+    "output": "unsupported call: mcp__browseraibrowserai_list"
+   }
+  ],
+  "updateSentenceAnywhere": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "codexExec_real_s2": {
+  "namespacesPerRequest": [
+   [
+    "multi_agent_v1[5]",
+    "mcp__browserai[79]"
+   ],
+   [
+    "multi_agent_v1[5]",
+    "mcp__browserai[79]"
+   ]
+  ],
+  "functionCallOutputs": [
+   {
+    "type": "function_call_output",
+    "id": "fco_01a0d5b4-a30d-7921-9c02-c31fab3987aa",
+    "call_id": "call_CXER1_s1_0",
+    "output": "unsupported call: mcp__browseraibrowserai_list"
+   },
+   {
+    "type": "function_call_output",
+    "id": "fco_01a0d5b5-93e5-7c82-be3e-032c9fd83e3f",
+    "call_id": "call_CXER1_s1_1",
+    "output": "unsupported call: mcp__browseraibrowserai_list"
+   },
+   {
+    "type": "function_call_output",
+    "id": "fco_01a0d5b5-a7d0-7e20-98e9-d0bc76543a8d",
+    "call_id": "call_CXER1_s1_2",
+    "output": "unsupported call: mcp__browseraibrowserai_list"
+   },
+   {
+    "type": "function_call_output",
+    "id": "fco_01a0d5b5-b81a-7061-a8d2-a11f07fa0080",
+    "call_id": "call_CXER1_s2_0",
+    "output": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0146 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "No BrowserAI sessions under 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXER1\\sessions'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named."
+     }
+    ]
+   }
+  ],
+  "updateSentenceAnywhere": [
+   0,
+   0
+  ]
+ },
+ "codexApp_real": {
+  "namespacesPerRequest": [
+   [
+    "multi_agent_v1[5]"
+   ],
+   [
+    "multi_agent_v1[5]"
+   ],
+   [
+    "multi_agent_v1[5]"
+   ],
+   [
+    "multi_agent_v1[5]"
+   ],
+   [
+    "multi_agent_v1[5]",
+    "mcp__browserai[79]"
+   ],
+   [
+    "multi_agent_v1[5]",
+    "mcp__browserai[79]"
+   ],
+   [
+    "multi_agent_v1[5]",
+    "mcp__browserai[79]"
+   ],
+   [
+    "multi_agent_v1[5]",
+    "mcp__browserai[79]"
+   ]
+  ],
+  "functionCallOutputs": [
+   {
+    "type": "function_call_output",
+    "id": "fco_01a0d5b6-3ea3-7683-8439-771ea749055c",
+    "call_id": "call_CXAR1_model_6",
+    "output": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0163 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "No BrowserAI sessions under 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAR1\\sessions'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named."
+     }
+    ]
+   }
+  ],
+  "updateSentenceAnywhere": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ "claudeCode_bShape": [
+  {
+   "type": "tool_result",
+   "content": "BrowserAI is installing an update, so 'browserai_list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.",
+   "is_error": true,
+   "tool_use_id": "toolu_CCB1_s1_0"
+  },
+  {
+   "tool_use_id": "toolu_CCB1_s1_1",
+   "type": "tool_result",
+   "content": [
+    {
+     "type": "text",
+     "text": "NORMAL-SERVER launch=2 pid=104224: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCB1/sessions."
+    }
+   ]
+  },
+  {
+   "tool_use_id": "toolu_CCB1_s1_2",
+   "type": "tool_result",
+   "content": [
+    {
+     "type": "text",
+     "text": "NORMAL-SERVER launch=2 pid=104224: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCB1/sessions."
+    }
+   ]
+  }
+ ],
+ "codexExec_bShape": [
+  {
+   "type": "function_call_output",
+   "id": "fco_01a0d5b8-37d4-7803-ac45-fb3c1bbe853d",
+   "call_id": "call_CXEB1_s1_0",
+   "output": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0142 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "BrowserAI is installing an update, so 'browserai_list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+    }
+   ]
+  },
+  {
+   "type": "function_call_output",
+   "id": "fco_01a0d5b8-4a93-7fc2-851f-c2c8307c4d8e",
+   "call_id": "call_CXEB1_s1_1",
+   "output": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0311 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+    }
+   ]
+  },
+  {
+   "type": "function_call_output",
+   "id": "fco_01a0d5b8-5e99-7fc1-afbb-bb10f7d4420d",
+   "call_id": "call_CXEB1_s1_2",
+   "output": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0118 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "tool call error: tool call failed for `browserai/browserai_list`\n\nCaused by:\n    Transport closed"
+    }
+   ]
+  }
+ ],
+ "codexApp_real_host": {
+  "startupStatusFailed": [
+   {
+    "threadId": "01a0d5b6-1550-7a31-96a0-0bb0b90f18c7",
+    "name": "browserai",
+    "status": "failed",
+    "error": "MCP client for `browserai` failed to start: MCP startup failed: Mcp error: -32603: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.",
+    "failureReason": null
+   }
+  ],
+  "directCallErrors": [
+   {
+    "code": -32603,
+    "message": "failed to get client: MCP startup failed: Mcp error: -32603: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+   },
+   {
+    "code": -32603,
+    "message": "failed to get client: MCP startup failed: Mcp error: -32603: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+   }
+  ]
+ },
+ "realServer_toolsListError_claudeCode": [
+  {
+   "error": {
+    "code": -32603,
+    "message": "BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+   },
+   "id": 1,
+   "jsonrpc": "2.0"
+  },
+  {
+   "error": {
+    "code": -32603,
+    "message": "BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+   },
+   "id": 2,
+   "jsonrpc": "2.0"
+  },
+  {
+   "error": {
+    "code": -32603,
+    "message": "BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+   },
+   "id": 3,
+   "jsonrpc": "2.0"
+  },
+  {
+   "error": {
+    "code": -32603,
+    "message": "BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Wait about a minute, then call again: your client starts the updated BrowserAI by itself on the next call. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+   },
+   "id": 4,
+   "jsonrpc": "2.0"
+  }
+ ],
+ "realServer_toolsListError_codex": [
+  {
+   "error": {
+    "code": -32603,
+    "message": "BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+   },
+   "id": 1,
+   "jsonrpc": "2.0"
+  },
+  {
+   "error": {
+    "code": -32603,
+    "message": "BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+   },
+   "id": 1,
+   "jsonrpc": "2.0"
+  }
+ ]
+}

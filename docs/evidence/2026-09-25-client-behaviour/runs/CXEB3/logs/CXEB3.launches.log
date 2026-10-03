@@ -1,0 +1,11 @@
+2026-09-24T23:20:49.639Z launch=1 pid=93020 LAUNCH mode=listed-first behaves=UPDATING-LISTED ppid=99384 argv=[]
+2026-09-24T23:20:49.645Z launch=1 pid=93020 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:20:49.648Z launch=1 pid=93020 tools/list answered with 1 tool (UPDATING, option-b shape)
+2026-09-24T23:20:49.943Z launch=1 pid=93020 tools/call browserai_list REFUSED with the update sentence
+2026-09-24T23:20:53.652Z launch=1 pid=93020 ENDING the conversation: the updater went (4000 ms after start)
+2026-09-24T23:20:53.761Z launch=1 pid=93020 EXIT code=0
+2026-09-24T23:20:53.762Z launch=1 pid=93020 process exit code=0 alive_ms=4126
+2026-09-24T23:21:03.224Z launch=2 pid=56264 LAUNCH mode=listed-first behaves=NORMAL ppid=82556 argv=[]
+2026-09-24T23:21:03.230Z launch=2 pid=56264 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:21:03.233Z launch=2 pid=56264 tools/list answered with 1 tool
+2026-09-24T23:21:03.399Z launch=2 pid=56264 tools/call browserai_list SERVED

@@ -1,0 +1,16 @@
+2026-09-24T23:24:49.772Z launch=1 pid=101604 LAUNCH mode=held-updater-file behaves=UPDATING ppid=28572 argv=[]
+2026-09-24T23:24:49.778Z launch=1 pid=101604 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:24:49.780Z launch=1 pid=101604 tools/list HELD until the updater goes
+2026-09-24T23:24:52.595Z launch=1 pid=101604 the updater went (2826 ms after start): answering 1 held tools/list and serving from now on
+2026-09-24T23:24:52.595Z launch=1 pid=101604 tools/list answered with 1 tool (held, answered after the updater went)
+2026-09-24T23:24:53.164Z launch=1 pid=101604 tools/call browserai_list SERVED
+2026-09-24T23:24:53.562Z launch=1 pid=101604 tools/call browserai_list SERVED
+2026-09-24T23:24:56.241Z launch=1 pid=101604 tools/call browserai_list SERVED
+2026-09-24T23:24:56.366Z launch=1 pid=101604 tools/call browserai_list SERVED
+2026-09-24T23:24:59.736Z launch=1 pid=101604 tools/call browserai_list SERVED
+2026-09-24T23:24:59.878Z launch=1 pid=101604 tools/call browserai_list SERVED
+2026-09-24T23:25:00.342Z launch=2 pid=90580 LAUNCH mode=held-updater-file behaves=NORMAL ppid=28572 argv=[]
+2026-09-24T23:25:00.348Z launch=2 pid=90580 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:25:00.352Z launch=2 pid=90580 tools/list answered with 1 tool
+2026-09-24T23:25:00.405Z launch=2 pid=90580 tools/call browserai_list SERVED
+2026-09-24T23:25:00.689Z launch=2 pid=90580 tools/call browserai_list SERVED

@@ -1,0 +1,20 @@
+--- launches ---
+2026-09-24T23:48:07.162Z launch=1 pid=70364 LAUNCH mode=q261-first behaves=NORMAL ppid=65152 argv=[]
+2026-09-24T23:48:07.170Z launch=1 pid=70364 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:48:07.175Z launch=1 pid=70364 tools/list answered with 1 tool
+2026-09-24T23:48:07.285Z launch=1 pid=70364 tools/call browserai_list SERVED
+2026-09-24T23:48:07.536Z launch=1 pid=70364 ENDING the conversation: Q261 shape: launch 1 ends after its first answered call
+2026-09-24T23:48:07.652Z launch=1 pid=70364 EXIT code=0
+2026-09-24T23:48:07.653Z launch=1 pid=70364 process exit code=0 alive_ms=494
+2026-09-24T23:48:09.653Z launch=2 pid=57024 LAUNCH mode=q261-first behaves=NORMAL ppid=65152 argv=[]
+2026-09-24T23:48:09.778Z launch=2 pid=57024 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:48:09.900Z launch=2 pid=57024 tools/call browserai_list REFUSED ONCE (Q261 shape): no tools/list on this connection; list_changed sent first
+2026-09-24T23:48:14.967Z launch=2 pid=57024 tools/call browserai_list SERVED
+2026-09-24T23:48:15.027Z launch=2 pid=57024 client closed stdin after 5377 ms
+2026-09-24T23:48:15.083Z launch=2 pid=57024 process exit code=0 alive_ms=5433
+2026-09-24T23:48:17.973Z launch=3 pid=69092 LAUNCH mode=q261-first behaves=NORMAL ppid=53988 argv=[]
+2026-09-24T23:48:17.978Z launch=3 pid=69092 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:48:17.993Z launch=3 pid=69092 tools/list answered with 1 tool
+2026-09-24T23:48:18.172Z launch=3 pid=69092 tools/call browserai_list SERVED
+2026-09-24T23:48:18.240Z launch=3 pid=69092 client closed stdin after 269 ms
+2026-09-24T23:48:18.292Z launch=3 pid=69092 process exit code=0 alive_ms=321

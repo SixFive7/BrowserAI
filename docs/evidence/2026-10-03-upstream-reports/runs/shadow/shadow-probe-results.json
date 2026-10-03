@@ -1,0 +1,63 @@
+{
+  "playwrightCore": "1.63.0",
+  "browsers": {
+    "chromium": {
+      "version": "153.0.8010.12",
+      "ariaSnapshot": "- heading \"Shadow roots\" [level=1]\n- paragraph: Text in an open root\n- button \"Open root button\"",
+      "buttonsByRole": 1,
+      "closedButtonByRole": 0,
+      "closedTextByText": 0,
+      "openButtonByRole": 1,
+      "hostBox": {
+        "x": 8,
+        "y": 114.875,
+        "width": 1264,
+        "height": 88
+      },
+      "titleAfterMouseClick": "closed root button clicked",
+      "cdpAxTreeHasClosedButton": true,
+      "cdpAxTreeHasClosedText": true,
+      "cdpAxTreeExcerpt": [
+        "RootWebArea: closed root button clicked",
+        "heading: Shadow roots",
+        "button: Open root button",
+        "button: Closed root button",
+        "StaticText: Shadow roots",
+        "StaticText: Text in an open root",
+        "StaticText: Open root button",
+        "StaticText: Text in a closed root",
+        "StaticText: Closed root button",
+        "InlineTextBox: Shadow roots",
+        "InlineTextBox: Text in an open root",
+        "InlineTextBox: Open root button",
+        "InlineTextBox: Text in a closed root",
+        "InlineTextBox: Closed root button"
+      ]
+    },
+    "firefox": {
+      "version": "155.0",
+      "ariaSnapshot": "- heading \"Shadow roots\" [level=1]\n- paragraph: Text in an open root\n- button \"Open root button\"",
+      "buttonsByRole": 1,
+      "closedButtonByRole": 0,
+      "closedTextByText": 0,
+      "openButtonByRole": 1,
+      "hostBox": {
+        "x": 8,
+        "y": 116.86666870117188,
+        "width": 1264,
+        "height": 89
+      },
+      "titleAfterMouseClick": "closed root button clicked"
+    }
+  },
+  "mcp": {
+    "version": "0.0.83",
+    "server": {
+      "name": "Playwright",
+      "version": "1.64.0-alpha-1790635538000"
+    },
+    "snapshot": "### Page\n- Page URL: http://127.0.0.1:59001/\n- Page Title: closed shadow root\n### Snapshot\n```yaml\n- generic [active] [ref=e1]:\n  - heading \"Shadow roots\" [level=1] [ref=e2]\n  - generic [ref=e3]:\n    - paragraph [ref=e4]: Text in an open root\n    - button \"Open root button\" [ref=e5]\n```",
+    "hasClosedButton": false,
+    "hasOpenButton": true
+  }
+}

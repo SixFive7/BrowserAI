@@ -1348,6 +1348,17 @@ registry beside everybody else's. It follows that a person's own
 `playwright-cli show` lists them and can do to them what is measured above. That
 was not run against a BrowserAI session. `[FLOATS]`
 
+✅ *Added 2026-10-03 by addition: the attach by name is measured.* At
+`@playwright/mcp` 0.0.83 / `playwright-core` 1.64.0-alpha-1790635538000, headless
+Chromium, a second child started with `--endpoint=probe-a`, the first child's
+client name, listed the first child's tab, navigated it to another page, and the
+first child's own `browser_tabs` then showed that page; it stayed there after the
+second child exited. A child started with `--isolated` bound its browser into the
+registry too, under its own client name. Both runs used a scratch registry and
+never a BrowserAI session
+([evidence](../../docs/evidence/2026-10-03-upstream-reports/README.md), `E3` and
+`E5` in `runs/mcp083/mcp-probe.log`).
+
 ### What these rigs did not run
 
 Each of these is also a row in [what is not established](../not-established.md).
@@ -1368,6 +1379,29 @@ Each of these is also a row in [what is not established](../not-established.md).
 with both `PWTEST_` variables pointing into scratch. Each of the first three
 refuses to start otherwise. The probe record says what each one needs and what
 it leaves behind.
+
+## Content in a closed shadow root is missing from the snapshot -- measured 2026-10-03
+
+`[FLOATS]` `playwright-core` **1.63.0**, headless Chromium **153.0.8010.12** and
+Firefox **155.0**; and `browser_snapshot` in `@playwright/mcp` **0.0.83**.
+[Evidence](../../docs/evidence/2026-10-03-upstream-reports/README.md),
+[rig](../../docs/probes/2026-10-03-upstream-reports/README.md).
+
+A page with one open and one closed shadow root, each holding a paragraph and a
+button: `locator('body').ariaSnapshot()` returned the heading, the open root's
+paragraph and its button, and nothing of the closed root, in both families;
+`getByRole('button')` counted one. On the same page Chromium's own
+`Accessibility.getFullAXTree` over CDP listed both buttons and both paragraphs'
+text, and a `page.mouse.click` at the closed button's position fired its click
+listener. `browser_snapshot` at 0.0.83 left the closed content out the same way.
+**So for a model working from the snapshot, that part of a page is not there**:
+it gets no ref for it, while a person can use it and the coordinate tools can
+reach it. Posted as a comment on
+[microsoft/playwright#23047](https://github.com/microsoft/playwright/issues/23047)
+on 2026-10-03.
+
+**Re-establish** with `shadow-probe.cjs` and `shadow-exact.cjs` from the rig,
+which serve the page and print what each reader returned.
 
 ## A pause armed from inside a session, and every way out -- measured 2026-10-03
 

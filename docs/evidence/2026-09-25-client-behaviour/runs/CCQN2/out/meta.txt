@@ -1,0 +1,4 @@
+2026-09-24T23:47:52.084Z session 1 start
+2026-09-24T23:48:00.176Z session 1 claude exit=0
+2026-09-24T23:48:02.366Z session 2 start
+2026-09-24T23:48:03.509Z session 2 claude exit=0

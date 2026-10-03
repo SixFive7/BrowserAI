@@ -1,0 +1,2 @@
+### Error
+Error: Browser "chrome-for-testing" is not installed; expected executable at C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\browsers\chromium-1247\chrome-win64\chrome.exe. Run `npx @playwright/mcp install-browser chrome-for-testing` to install

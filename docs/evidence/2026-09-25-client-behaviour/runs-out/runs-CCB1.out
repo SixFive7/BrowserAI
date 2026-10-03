@@ -1,0 +1,20 @@
+--- launches ---
+2026-09-24T23:19:06.415Z launch=1 pid=45392 LAUNCH mode=listed-first behaves=UPDATING-LISTED ppid=103340 argv=[]
+2026-09-24T23:19:06.422Z launch=1 pid=45392 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:19:06.427Z launch=1 pid=45392 tools/list answered with 1 tool (UPDATING, option-b shape)
+2026-09-24T23:19:06.565Z launch=1 pid=45392 tools/call browserai_list REFUSED with the update sentence
+2026-09-24T23:19:10.419Z launch=1 pid=45392 ENDING the conversation: the updater went (4000 ms after start)
+2026-09-24T23:19:10.526Z launch=1 pid=45392 EXIT code=0
+2026-09-24T23:19:10.526Z launch=1 pid=45392 process exit code=0 alive_ms=4113
+2026-09-24T23:19:12.118Z launch=2 pid=104224 LAUNCH mode=listed-first behaves=NORMAL ppid=103340 argv=[]
+2026-09-24T23:19:12.124Z launch=2 pid=104224 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:19:12.128Z launch=2 pid=104224 tools/call browserai_list SERVED
+2026-09-24T23:19:17.173Z launch=2 pid=104224 tools/call browserai_list SERVED
+2026-09-24T23:19:17.283Z launch=2 pid=104224 client closed stdin after 5169 ms
+2026-09-24T23:19:17.341Z launch=2 pid=104224 process exit code=0 alive_ms=5227
+2026-09-24T23:19:20.579Z launch=3 pid=71864 LAUNCH mode=listed-first behaves=NORMAL ppid=108656 argv=[]
+2026-09-24T23:19:20.585Z launch=3 pid=71864 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:19:20.604Z launch=3 pid=71864 tools/list answered with 1 tool
+2026-09-24T23:19:20.868Z launch=3 pid=71864 tools/call browserai_list SERVED
+2026-09-24T23:19:20.970Z launch=3 pid=71864 client closed stdin after 395 ms
+2026-09-24T23:19:21.021Z launch=3 pid=71864 process exit code=0 alive_ms=446

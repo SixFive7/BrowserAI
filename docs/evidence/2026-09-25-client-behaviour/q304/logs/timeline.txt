@@ -1,0 +1,20 @@
+2026-09-24T23:37:43.523Z B1 (before) driver start
+2026-09-24T23:37:43.570Z B2 (before) driver start
+2026-09-24T23:37:43.583Z B3 (before) driver start
+2026-09-24T23:38:12.030Z install start
+2026-09-24T23:38:12.357Z install done
+2026-09-24T23:38:49.831Z install start
+2026-09-24T23:38:54.246Z install done
+2026-09-24T23:40:05.594Z installed.flag touched
+2026-09-24T23:40:13.423Z B1 (before) driver exit=0
+2026-09-24T23:40:13.694Z B2 (before) driver exit=0
+2026-09-24T23:40:13.711Z B3 (before) driver exit=0
+2026-09-24T23:40:25.552Z A1 (after) driver start
+2026-09-24T23:40:30.859Z A1 (after) driver exit=0
+2026-09-24T23:40:32.339Z A2 (after) driver start
+2026-09-24T23:40:37.512Z A2 (after) driver exit=0
+2026-09-24T23:40:38.986Z A3 (after) driver start
+2026-09-24T23:40:44.281Z A3 (after) driver exit=0
+2026-09-24T23:41:09.665Z uninstall start
+2026-09-24T23:41:13.093Z uninstall done
+2026-09-24T23:41:13.194Z current gone=yes after 1 polls

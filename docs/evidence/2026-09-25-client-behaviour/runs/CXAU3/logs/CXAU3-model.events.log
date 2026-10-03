@@ -1,0 +1,25 @@
+2026-09-24T23:12:55.425Z LISTENING 8892 steps=8
+2026-09-24T23:12:58.943Z REQ POST /responses bytes=43314
+2026-09-24T23:12:58.945Z turn 0: tools=12 []
+2026-09-24T23:12:58.951Z turn 0: function_call mcp__browserai/browserai_list {"directory":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions"}
+2026-09-24T23:12:59.030Z REQ POST /responses bytes=43722
+2026-09-24T23:12:59.031Z turn 1: tools=12 []
+2026-09-24T23:12:59.034Z turn 1: message
+2026-09-24T23:13:01.854Z REQ POST /responses bytes=43744
+2026-09-24T23:13:01.855Z turn 2: tools=12 []
+2026-09-24T23:13:01.858Z turn 2: function_call mcp__browserai/browserai_list {"directory":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions"}
+2026-09-24T23:13:02.052Z REQ POST /responses bytes=44152
+2026-09-24T23:13:02.055Z turn 3: tools=12 []
+2026-09-24T23:13:02.058Z turn 3: message
+2026-09-24T23:13:05.490Z REQ POST /responses bytes=44938
+2026-09-24T23:13:05.491Z turn 4: tools=13 ["ns:mcp__browserai[browserai_list]"]
+2026-09-24T23:13:05.493Z turn 4: function_call mcp__browserai/browserai_list {"directory":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions"}
+2026-09-24T23:13:05.591Z REQ POST /responses bytes=45772
+2026-09-24T23:13:05.591Z turn 5: tools=13 ["ns:mcp__browserai[browserai_list]"]
+2026-09-24T23:13:05.593Z turn 5: message
+2026-09-24T23:13:06.253Z REQ POST /responses bytes=43810
+2026-09-24T23:13:06.254Z turn 6: tools=13 ["ns:mcp__browserai[browserai_list]"]
+2026-09-24T23:13:06.255Z turn 6: function_call mcp__browserai/browserai_list {"directory":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions"}
+2026-09-24T23:13:06.371Z REQ POST /responses bytes=44403
+2026-09-24T23:13:06.372Z turn 7: tools=13 ["ns:mcp__browserai[browserai_list]"]
+2026-09-24T23:13:06.373Z turn 7: message

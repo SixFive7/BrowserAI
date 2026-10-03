@@ -1,0 +1,79 @@
+{
+  "versions": {
+    "mcp": "0.0.83",
+    "node": "v26.7.0"
+  },
+  "experiments": {
+    "help": {
+      "lines": 159,
+      "mentionsBindOrRegistry": true
+    },
+    "E1": {
+      "serverInfo": {
+        "name": "Playwright",
+        "version": "1.64.0-alpha-1790635538000"
+      },
+      "tools": 38,
+      "hasResume": true,
+      "hasRunCode": true
+    },
+    "E2": {
+      "registryDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\localappdata\\ms-playwright\\b",
+      "entries": [
+        "browser@8d49cbde81657ca2b422d3dc1253dd47"
+      ],
+      "title": "probe-a",
+      "endpoint": "\\\\.\\pipe\\pw-e52b5188-browser-browser@8d49cb-4b96c860",
+      "keys": [
+        "playwrightVersion",
+        "playwrightLib",
+        "title",
+        "browser",
+        "endpoint",
+        "workspaceDir"
+      ],
+      "browserKeys": [
+        "guid",
+        "browserName",
+        "launchOptions",
+        "userDataDir"
+      ],
+      "userDataDir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\runs\\mcp083\\profile-a"
+    },
+    "E3": {
+      "bTabs": "### Result\n- 0: (current) [/one](http://127.0.0.1:60569/one)\n### Events\n- New console entries: out-b\\console-2026-10-03T00-40-07-665Z.log#L1",
+      "bNavigate": "### Ran Playwright code | ```js | await page.goto('http://127.0.0.1:60569/driven-by-b'); | ``` | ### Page | - Page URL: http://127.0.0.1:60569/driven-by-b | - Page Title: /driven-by-b | ### Snapshot | - [Snapshot](out-b\\page-2026-10-03T00-40-07-717Z.yml)",
+      "aTabsAfter": "### Result\n- 0: (current) [/driven-by-b](http://127.0.0.1:60569/driven-by-b)"
+    },
+    "E4": {
+      "armOk": true,
+      "armText": "### Result | \"pause requested in 2 s\" | ### Ran Playwright code | ```js | await (async (page) => { setTimeout(() => page.context().debugger.requestPause().catch(() => {}), 2000); return \"pause requested in 2 s\"; })(page); | ```",
+      "navigateAnsweredWithin10s": false,
+      "snapshotAnswered": true,
+      "snapshotMentionsPaused": true,
+      "navigateAnsweredAfterResume": true,
+      "navigateAnsweredAt": 16155,
+      "navigateSentAt": 6115,
+      "resumeAnsweredWithin30s": false,
+      "tabsWhileResumePending": true,
+      "closeSentAt": 46161,
+      "resumeAnsweredAfterClose": true,
+      "resumeAnsweredAt": 46200,
+      "resumeText": ""
+    },
+    "E5": {
+      "navigateOk": true,
+      "added": [
+        "browser@107f57296ff2ba66a500e642ab54f75d"
+      ],
+      "title": "probe-isolated"
+    },
+    "end": {
+      "registryAtEnd": [
+        "browser@8d49cbde81657ca2b422d3dc1253dd47"
+      ],
+      "stderrA": "",
+      "stderrC": ""
+    }
+  }
+}

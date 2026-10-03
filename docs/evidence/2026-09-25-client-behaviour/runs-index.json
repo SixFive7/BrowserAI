@@ -1,0 +1,1487 @@
+[
+ {
+  "run": "CCB1",
+  "client": "claude -p 2.1.282",
+  "case": "b-shape: real list, calls refused, end at updater exit",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCB1",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED"
+   ],
+   "2": [
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCB2",
+  "client": "claude -p 2.1.282",
+  "case": "b-shape",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCB2",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED"
+   ],
+   "2": [
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCB3",
+  "client": "claude -p 2.1.282",
+  "case": "b-shape",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCB3",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED"
+   ],
+   "2": [
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCE1",
+  "client": "claude -p 2.1.282",
+  "case": "a variant: server ends 600 ms after start, inside the retries",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCE1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCH1",
+  "client": "claude -p 2.1.282",
+  "case": "hold tools/list until the updater goes, then serve",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCH1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED",
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCH2",
+  "client": "claude -p 2.1.282",
+  "case": "hold",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCH2",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED",
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCH3",
+  "client": "claude -p 2.1.282",
+  "case": "hold",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCH3",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED",
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCK1",
+  "client": "claude -p 2.1.282",
+  "case": "error, then list_changed + serve; tools:{} (BrowserAI's capability)",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCK1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCK2",
+  "client": "claude -p 2.1.282",
+  "case": "error then list_changed, tools:{}",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCK2",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCK3",
+  "client": "claude -p 2.1.282",
+  "case": "error then list_changed, tools:{}",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCK3",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCKL1",
+  "client": "claude -p 2.1.282",
+  "case": "error, then list_changed + serve; tools.listChanged declared",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCKL1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCKL2",
+  "client": "claude -p 2.1.282",
+  "case": "same, listChanged declared",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCKL2",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCKL3",
+  "client": "claude -p 2.1.282",
+  "case": "same, listChanged declared",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCKL3",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCL1",
+  "client": "claude -p 2.1.282",
+  "case": "a variant: 90 s idle after the server ended",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCL1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCN1",
+  "client": "claude -p 2.1.282",
+  "case": "control: normal server",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCN1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED",
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCQL1",
+  "client": "claude -p 2.1.282",
+  "case": "side: Q261 shape on a re-dialled connection, listChanged declared",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCQL1",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCQL2",
+  "client": "claude -p 2.1.282",
+  "case": "side: Q261, listChanged",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCQL2",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCQL3",
+  "client": "claude -p 2.1.282",
+  "case": "side: Q261, listChanged",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCQL3",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCQN1",
+  "client": "claude -p 2.1.282",
+  "case": "side: Q261 shape on a re-dialled connection, tools:{}",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCQN1",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCQN2",
+  "client": "claude -p 2.1.282",
+  "case": "side: Q261, tools:{}",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCQN2",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCQN3",
+  "client": "claude -p 2.1.282",
+  "case": "side: Q261, tools:{}",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCQN3",
+  "serverLaunches": 3,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "3": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED"
+   ],
+   "3": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCR1",
+  "client": "claude -p 2.1.282",
+  "case": "a: REAL server 1.1.1-alpha.0.130, stand-in Update.exe",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCR1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {},
+  "callsPerLaunch": {},
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   79,
+   79
+  ]
+ },
+ {
+  "run": "CCS1",
+  "client": "claude -p 2.1.282",
+  "case": "b + keep serving after the updater goes",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCS1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCS2",
+  "client": "claude -p 2.1.282",
+  "case": "b + keep serving",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCS2",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCS3",
+  "client": "claude -p 2.1.282",
+  "case": "b + keep serving",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCS3",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED",
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCU0-dup-tool-ids",
+  "client": "claude -p 2.1.282",
+  "case": "EXCLUDED: stub reused tool_use ids across --continue",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCU0-dup-tool-ids",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCU1",
+  "client": "claude -p 2.1.282",
+  "case": "a: tools/list error",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCU1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCU2",
+  "client": "claude -p 2.1.282",
+  "case": "a: tools/list error",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCU2",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CCU3",
+  "client": "claude -p 2.1.282",
+  "case": "a: tools/list error",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CCU3",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED",
+    "REFUSED",
+    "REFUSED",
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "session2ToolsPerTurn": [
+   1,
+   1
+  ]
+ },
+ {
+  "run": "CXAB1",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "b-shape",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAB1",
+  "serverLaunches": 3,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAB2",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "b-shape",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAB2",
+  "serverLaunches": 3,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAB3",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "b-shape",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAB3",
+  "serverLaunches": 3,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAH1",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "hold 3 s, default 10 s startup timeout",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAH1",
+  "serverLaunches": 2,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAH2",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "hold",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAH2",
+  "serverLaunches": 2,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAH3",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "hold",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAH3",
+  "serverLaunches": 2,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAN1",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "control: normal server",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAN1",
+  "serverLaunches": 2,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAR1",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "a: REAL server",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAR1",
+  "serverLaunches": 3,
+  "modelToolCountPerRequest": [
+   12,
+   12,
+   12,
+   12,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAS1",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "b + keep serving",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAS1",
+  "serverLaunches": 2,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAS2",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "b + keep serving",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAS2",
+  "serverLaunches": 2,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAS3",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "b + keep serving",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAS3",
+  "serverLaunches": 2,
+  "modelToolCountPerRequest": [
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAU1",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "a: tools/list error",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAU1",
+  "serverLaunches": 3,
+  "modelToolCountPerRequest": [
+   12,
+   12,
+   12,
+   12,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAU2",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "a",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAU2",
+  "serverLaunches": 3,
+  "modelToolCountPerRequest": [
+   12,
+   12,
+   12,
+   12,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXAU3",
+  "client": "codex app-server 0.155.0-alpha.9.2",
+  "case": "a",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXAU3",
+  "serverLaunches": 3,
+  "modelToolCountPerRequest": [
+   12,
+   12,
+   12,
+   12,
+   13,
+   13,
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXEB1",
+  "client": "codex exec 0.155.0-alpha.9.2",
+  "case": "b-shape",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXEB1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   13,
+   13,
+   13,
+   13
+  ],
+  "session2ToolsPerTurn": [
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXEB2",
+  "client": "codex exec 0.155.0-alpha.9.2",
+  "case": "b-shape",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXEB2",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   13,
+   13,
+   13,
+   13
+  ],
+  "session2ToolsPerTurn": [
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXEB3",
+  "client": "codex exec 0.155.0-alpha.9.2",
+  "case": "b-shape",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXEB3",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list REFUSED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   13,
+   13,
+   13,
+   13
+  ],
+  "session2ToolsPerTurn": [
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXEN1",
+  "client": "codex exec 0.155.0-alpha.9.2",
+  "case": "control: normal server",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXEN1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "answered"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "1": [
+    "browserai_list SERVED",
+    "browserai_list SERVED",
+    "browserai_list SERVED"
+   ],
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   13,
+   13,
+   13,
+   13
+  ],
+  "session2ToolsPerTurn": [
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXER1",
+  "client": "codex exec 0.155.0-alpha.9.2",
+  "case": "a: REAL server",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXER1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {},
+  "callsPerLaunch": {},
+  "session1ToolsPerTurn": [
+   12,
+   12,
+   12,
+   12
+  ],
+  "session2ToolsPerTurn": [
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXEU1",
+  "client": "codex exec 0.155.0-alpha.9.2",
+  "case": "a: tools/list error",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXEU1",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   12,
+   12,
+   12,
+   12
+  ],
+  "session2ToolsPerTurn": [
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXEU2",
+  "client": "codex exec 0.155.0-alpha.9.2",
+  "case": "a",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXEU2",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   12,
+   12,
+   12,
+   12
+  ],
+  "session2ToolsPerTurn": [
+   13,
+   13
+  ]
+ },
+ {
+  "run": "CXEU3",
+  "client": "codex exec 0.155.0-alpha.9.2",
+  "case": "a",
+  "dir": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXEU3",
+  "serverLaunches": 2,
+  "toolsListPerLaunch": {
+   "1": [
+    "REFUSED"
+   ],
+   "2": [
+    "answered"
+   ]
+  },
+  "callsPerLaunch": {
+   "2": [
+    "browserai_list SERVED"
+   ]
+  },
+  "session1ToolsPerTurn": [
+   12,
+   12,
+   12,
+   12
+  ],
+  "session2ToolsPerTurn": [
+   13,
+   13
+  ]
+ }
+]

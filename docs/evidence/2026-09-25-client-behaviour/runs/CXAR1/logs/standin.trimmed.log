@@ -1,0 +1,3 @@
+2026-09-24T23:17:52.975Z STARTED stand-in pid=83256 image=%USERPROFILE%\Downloads\tmp-client-behaviour\CXAR1\Update.exe
+2026-09-24T23:17:56.795Z ENDING stand-in pid=83256 by its handle (trigger file)
+2026-09-24T23:17:56.800Z stand-in pid=83256 exited code=null signal=SIGTERM after 3821 ms

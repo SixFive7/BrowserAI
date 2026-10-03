@@ -1,0 +1,1 @@
+2026-09-24T23:41:13.050Z %USERPROFILE%\Downloads\tmp-client-behaviour\q304\root\Update.exe ["--uninstall","--silent"] exit=0 signal=null ms=3319 pid=95008

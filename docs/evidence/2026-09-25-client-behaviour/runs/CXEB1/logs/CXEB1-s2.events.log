@@ -1,0 +1,7 @@
+2026-09-24T23:20:26.683Z LISTENING 8884 steps=2
+2026-09-24T23:20:28.145Z REQ POST /responses bytes=45931
+2026-09-24T23:20:28.146Z turn 0: tools=13 ["ns:mcp__browserai[browserai_list]"]
+2026-09-24T23:20:28.150Z turn 0: function_call mcp__browserai/browserai_list {"directory":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXEB1/sessions"}
+2026-09-24T23:20:28.224Z REQ POST /responses bytes=46753
+2026-09-24T23:20:28.224Z turn 1: tools=13 ["ns:mcp__browserai[browserai_list]"]
+2026-09-24T23:20:28.226Z turn 1: message

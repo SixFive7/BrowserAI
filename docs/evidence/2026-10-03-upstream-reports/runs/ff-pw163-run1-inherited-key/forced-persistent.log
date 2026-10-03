@@ -1,0 +1,5 @@
++   232 ms START {"arm":"forced-persistent","playwrightCore":"1.63.0","firefox":"C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\browsers\\firefox-1543\\firefox\\firefox.exe","node":"v26.7.0","persistent":true,"forced":true,"keyOff":true,"startUtc":"2026-10-03T00:30:57.448Z"}
++   258 ms SPAWN pid=63824 args=-no-remote -headless -profile C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\runs\ff-pw163\forced-persistent-profile -juggler-pipe about:blank
++ 21029 ms TREE@20s {"processes":5,"contentProcesses":3,"safeModeProcesses":1}
++ 45244 ms LAUNCH {"ok":false,"ms":45011,"error":"browserType.launchPersistentContext: Timeout 45000ms exceeded."}
++ 45245 ms DONE {"arm":"forced-persistent","playwrightCore":"1.63.0","firefox":"C:\\Source\\SixFive7\\BrowserAI\\.work\\upstream-drafts\\browsers\\firefox-1543\\firefox\\firefox.exe","node":"v26.7.0","persistent":true,"forced":true,"keyOff":true,"startUtc":"2026-10-03T00:30:57.448Z","launch":{"ok":false,"ms":45011,"error":"browserType.launchPersistentContext: Timeout 45000ms exceeded."},"treeAt20s":{"processes":5,"contentProcesses":3,"safeModeProcesses":1},"firefoxPid":63824,"totalMs":45245}

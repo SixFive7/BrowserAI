@@ -1,0 +1,209 @@
+{
+ "run": "CXAU3",
+ "serverLaunches": [
+  "2026-09-24T23:12:58.007Z launch=1 pid=109188 LAUNCH mode=updater-file behaves=UPDATING ppid=91036",
+  "2026-09-24T23:13:02.580Z launch=2 pid=103924 LAUNCH mode=updater-file behaves=NORMAL ppid=91036",
+  "2026-09-24T23:13:05.961Z launch=3 pid=32136 LAUNCH mode=updater-file behaves=NORMAL ppid=91036"
+ ],
+ "serverEvents": [
+  "2026-09-24T23:12:58.007Z launch=1 pid=109188 LAUNCH mode=updater-file behaves=UPDATING ppid=91036 argv=[]",
+  "2026-09-24T23:12:58.022Z launch=1 pid=109188 tools/list REFUSED with a JSON-RPC error",
+  "2026-09-24T23:13:02.580Z launch=2 pid=103924 LAUNCH mode=updater-file behaves=NORMAL ppid=91036 argv=[]",
+  "2026-09-24T23:13:02.607Z launch=2 pid=103924 tools/list answered with 1 tool",
+  "2026-09-24T23:13:05.376Z launch=2 pid=103924 tools/call browserai_list SERVED",
+  "2026-09-24T23:13:05.529Z launch=2 pid=103924 tools/call browserai_list SERVED",
+  "2026-09-24T23:13:05.961Z launch=3 pid=32136 LAUNCH mode=updater-file behaves=NORMAL ppid=91036 argv=[]",
+  "2026-09-24T23:13:05.970Z launch=3 pid=32136 tools/list answered with 1 tool",
+  "2026-09-24T23:13:06.018Z launch=3 pid=32136 tools/call browserai_list SERVED",
+  "2026-09-24T23:13:06.292Z launch=3 pid=32136 tools/call browserai_list SERVED"
+ ],
+ "steps": [
+  {
+   "marker": "(start)",
+   "events": [
+    "TOUCHED C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/logs/updater.running",
+    "startupStatus browserai starting",
+    "startupStatus browserai failed error=\"MCP client for `browserai` failed to start: MCP startup failed: Mcp error: -32603: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.\"",
+    "liveness CXAU3.launch.1 pid=109188 GONE"
+   ]
+  },
+  {
+   "marker": "A: mcpServer/tool/call on the thread, updater still running",
+   "events": [
+    "RESP {\"code\":-32603,\"message\":\"failed to get client: MCP startup failed: Mcp error: -32603: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.\"}"
+   ]
+  },
+  {
+   "marker": "T1: a model turn, updater still running",
+   "events": [
+    "liveness CXAU3.launch.1 pid=109188 GONE"
+   ]
+  },
+  {
+   "marker": "UPDATER EXITS",
+   "events": [
+    "REMOVED C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/logs/updater.running",
+    "liveness CXAU3.launch.1 pid=109188 GONE"
+   ]
+  },
+  {
+   "marker": "B: mcpServer/tool/call on the same thread after the updater exited",
+   "events": [
+    "RESP {\"code\":-32603,\"message\":\"failed to get client: MCP startup failed: Mcp error: -32603: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.\"}"
+   ]
+  },
+  {
+   "marker": "T2: a model turn on the same thread after the updater exited",
+   "events": [
+    "liveness CXAU3.launch.1 pid=109188 GONE"
+   ]
+  },
+  {
+   "marker": "RELOAD: config/mcpServer/reload",
+   "events": [
+    "startupStatus browserai starting",
+    "startupStatus browserai ready",
+    "liveness CXAU3.launch.1 pid=109188 GONE",
+    "liveness CXAU3.launch.2 pid=103924 ALIVE"
+   ]
+  },
+  {
+   "marker": "C: mcpServer/tool/call after the reload",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=2 pid=103924: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions.\"}],\"isError\":false}"
+   ]
+  },
+  {
+   "marker": "T3: a model turn after the reload",
+   "events": [
+    "model-turn mcpToolCall status=completed error=null result=[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=2 pid=103924: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions.\"}]"
+   ]
+  },
+  {
+   "marker": "NEW THREAD",
+   "events": [
+    "startupStatus browserai starting",
+    "startupStatus browserai ready"
+   ]
+  },
+  {
+   "marker": "D: mcpServer/tool/call on the new thread",
+   "events": [
+    "RESP {\"content\":[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=3 pid=32136: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions.\"}],\"isError\":false}"
+   ]
+  },
+  {
+   "marker": "T4: a model turn on the new thread",
+   "events": [
+    "model-turn mcpToolCall status=completed error=null result=[{\"type\":\"text\",\"text\":\"NORMAL-SERVER launch=3 pid=32136: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions.\"}]",
+    "liveness CXAU3.launch.1 pid=109188 GONE",
+    "liveness CXAU3.launch.2 pid=103924 ALIVE",
+    "liveness CXAU3.launch.3 pid=32136 ALIVE"
+   ]
+  }
+ ],
+ "modelRequests": [
+  {
+   "turn": 0,
+   "toolCount": 12,
+   "browseraiNamespace": [],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": null
+  },
+  {
+   "turn": 1,
+   "toolCount": 12,
+   "browseraiNamespace": [],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": "unsupported call: mcp__browseraibrowserai_list"
+  },
+  {
+   "turn": 2,
+   "toolCount": 12,
+   "browseraiNamespace": [],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": "unsupported call: mcp__browseraibrowserai_list"
+  },
+  {
+   "turn": 3,
+   "toolCount": 12,
+   "browseraiNamespace": [],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": "unsupported call: mcp__browseraibrowserai_list"
+  },
+  {
+   "turn": 4,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": "unsupported call: mcp__browseraibrowserai_list"
+  },
+  {
+   "turn": 5,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=2 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0209 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=2 pid=103924: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions."
+    }
+   ]
+  },
+  {
+   "turn": 6,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=3 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": null
+  },
+  {
+   "turn": 7,
+   "toolCount": 13,
+   "browseraiNamespace": [
+    {
+     "description": "UPDSTUB-INSTRUCTIONS launch=3 behaves=NORMAL: BrowserAI drives a real browser. Call browserai_list to list sessions.",
+     "tools": [
+      "browserai_list"
+     ]
+    }
+   ],
+   "updateSentenceOccurrences": 0,
+   "lastOutput": [
+    {
+     "type": "input_text",
+     "text": "Wall time: 0.0168 seconds\nOutput:"
+    },
+    {
+     "type": "input_text",
+     "text": "NORMAL-SERVER launch=3 pid=32136: no BrowserAI sessions under C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXAU3/sessions."
+    }
+   ]
+  }
+ ]
+}

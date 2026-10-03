@@ -1,0 +1,1 @@
+{"mcpServers":{"browserai":{"type":"stdio","command":"C:/Program Files/nodejs/node.exe","args":["C:/Source/SixFive7/BrowserAI/.work/client-behaviour/rig/updstub.js"],"env":{"US_LOGDIR":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCE1/logs","US_TAG":"CCE1","US_MODE":"updating-first","US_EXIT_AFTER_MS":"600"}}}}

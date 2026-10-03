@@ -1,0 +1,46 @@
+[
+ {
+  "m": "initialize",
+  "p": {
+   "clientInfo": {
+    "name": "q304-probe",
+    "title": "q304",
+    "version": "1"
+   }
+  }
+ },
+ {
+  "marker": "THREAD 1, app-server started AFTER the install"
+ },
+ {
+  "m": "thread/start",
+  "p": {
+   "cwd": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\proj"
+  }
+ },
+ {
+  "waitStatus": "browserai",
+  "timeout": 30000
+ },
+ {
+  "procs": "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.Server.exe"
+ },
+ {
+  "marker": "CALL on thread 1"
+ },
+ {
+  "m": "mcpServer/tool/call",
+  "p": {
+   "threadId": "$THREAD",
+   "server": "browserai",
+   "tool": "browserai_list",
+   "arguments": {
+    "directory": "C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\q304\\proj"
+   }
+  },
+  "timeout": 60000
+ },
+ {
+  "procs": "%USERPROFILE%\\Downloads\\tmp-client-behaviour\\q304\\root\\current\\BrowserAI.Server.exe"
+ }
+]

@@ -1,0 +1,8 @@
+2026-09-24T22:56:47.701Z LISTENING on 127.0.0.1:8871 steps=2
+2026-09-24T22:56:48.965Z REQ HEAD /api/hello bytes=0
+2026-09-24T22:56:49.620Z REQ POST /v1/messages?beta=true bytes=67729
+2026-09-24T22:56:49.622Z turn 0: model=claude-sonnet-5 tools=1 ["mcp__browserai__browserai_list"]
+2026-09-24T22:56:49.623Z turn 0: emitting tool_use mcp__browserai__browserai_list {"directory":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CCN1/sessions"}
+2026-09-24T22:56:49.668Z REQ POST /v1/messages?beta=true bytes=67985
+2026-09-24T22:56:49.668Z turn 1: model=claude-sonnet-5 tools=1 ["mcp__browserai__browserai_list"]
+2026-09-24T22:56:49.670Z turn 1: emitting text

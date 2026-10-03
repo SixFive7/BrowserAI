@@ -1,0 +1,19 @@
+[+   293 ms] E0 --help lines 159 registry dir C:\Source\SixFive7\BrowserAI\.work\upstream-drafts\localappdata\ms-playwright\b before []
+[+   578 ms] E1 A initialize {"name":"Playwright","version":"1.64.0-alpha-1790635538000"}
+[+   583 ms] E1 tools 38 browser_resume true browser_run_code_unsafe true
+[+  1049 ms] E2 A navigate /one -> ### Ran Playwright code | ```js | await page.goto('http://127.0.0.1:50581/one'); | ``` | ### Page | - Page URL: http://127.0.0.1:50581/one | - Page Title: /one | - Console: 1 errors, 0 warnings | ### 
+[+  1051 ms] E2 registry after first navigate ["browser@7f189988b3bdea4065861e6eb0716259"] title probe-a endpoint \\.\pipe\pw-e52b5188-browser-browser@7f1899-4b96c860
+[+  1379 ms] E3 B initialize {"name":"Playwright","version":"1.64.0-alpha-1790635538000"}
+[+  1419 ms] E3 B browser_tabs -> ### Result | - 0: (current) [/one](http://127.0.0.1:50581/one) | ### Events | - New console entries: out-b\console-2026-10-03T00-45-50-084Z.log#L1
+[+  1461 ms] E3 B browser_navigate /driven-by-b -> ### Ran Playwright code | ```js | await page.goto('http://127.0.0.1:50581/driven-by-b'); | ``` | ### Page | - Page URL: http://127.0.0.1:50581/driven-by-b | - Page Title: /driven-by-b | ### Snapshot |
+[+  1467 ms] E3 A browser_tabs after B navigated -> ### Result | - 0: (current) [/driven-by-b](http://127.0.0.1:50581/driven-by-b)
+[+  1974 ms] E4 B run_code (delayed requestPause) -> ### Result | "pause requested in 2 s" | ### Ran Playwright code | ```js | await (async (page) => { setTimeout(() => page.context().debugger.requestPause().catch(() => {}), 2000); return "pause requested in 2 s"; })(page); | ```
+[+ 15988 ms] E4 A navigate /after-pause answered within 10 s? false
+[+ 15993 ms] E4 A concurrent browser_snapshot -> answered; mentions "### Paused": true
+[+ 16028 ms] E4 parked navigate answered after resume? true at +16028 ms, sent at +5975 ms
+[+ 46029 ms] E4 browser_resume answered within 30 s? false
+[+ 46033 ms] E4 A concurrent browser_tabs while resume pending -> ### Result | - 0: (current) [/after-pause](http://127.0.0.1:50581/after-pause)
+[+ 46173 ms] E4 A browser_close -> ### Result | No open tabs. Navigate to a URL to create one. | ### Ran Playwright code | ```js | await page.close() | ```
+[+ 46173 ms] E4 browser_resume answered after browser_close? true at +46064 ms (close sent at +46034 ms): 
+[+ 46887 ms] E5 --isolated navigate -> ok new descriptors ["browser@8bf0f8c0d3d8beb04f3fa249248ca656"] title probe-isolated
+[+ 47904 ms] END registry ["browser@7f189988b3bdea4065861e6eb0716259"]

@@ -1,0 +1,7 @@
+2026-09-24T23:06:21.550Z launch=1 pid=110088 LAUNCH mode=updating-first behaves=UPDATING ppid=63212 argv=[]
+2026-09-24T23:06:21.558Z launch=1 pid=110088 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:06:21.560Z launch=1 pid=110088 tools/list REFUSED with a JSON-RPC error
+2026-09-24T23:07:31.241Z launch=2 pid=68308 LAUNCH mode=updating-first behaves=NORMAL ppid=106032 argv=[]
+2026-09-24T23:07:31.247Z launch=2 pid=68308 initialize from clientInfo={"name":"codex-mcp-client","title":"Codex","version":"0.155.0-alpha.9.2"} protocolVersion=2025-06-18
+2026-09-24T23:07:31.251Z launch=2 pid=68308 tools/list answered with 1 tool
+2026-09-24T23:07:31.416Z launch=2 pid=68308 tools/call browserai_list SERVED

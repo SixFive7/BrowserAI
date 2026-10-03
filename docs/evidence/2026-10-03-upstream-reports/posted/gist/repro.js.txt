@@ -1,0 +1,18 @@
+const { firefox } = require('playwright-core');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+(async () => {
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ff-safe-mode-'));
+  // Requests safe mode through the same check a held Shift key goes through.
+  const env = { ...process.env, MOZ_SAFE_MODE_RESTART: '1' };
+  const start = Date.now();
+  try {
+    const context = await firefox.launchPersistentContext(userDataDir, { headless: true, env, timeout: 45000 });
+    console.log(`launched in ${Date.now() - start} ms`);
+    await context.close();
+  } catch (e) {
+    console.log(`${e.message.split('\n')[0]} (after ${Date.now() - start} ms)`);
+  }
+})();

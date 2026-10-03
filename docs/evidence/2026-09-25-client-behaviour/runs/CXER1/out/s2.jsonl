@@ -1,0 +1,7 @@
+{"type":"thread.started","thread_id":"01a0d5b4-a124-7180-82bc-bfa88bd0057c"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_1","type":"mcp_tool_call","server":"browserai","tool":"browserai_list","arguments":{"directory":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXER1/sessions"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"browserai","tool":"browserai_list","arguments":{"directory":"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXER1/sessions"},"result":{"content":[{"type":"text","text":"No BrowserAI sessions under 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXER1\\sessions'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named."}],"structured_content":null},"error":null,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"exec two is done"}}
+{"type":"turn.completed","usage":{"input_tokens":252,"cached_input_tokens":72,"cache_write_input_tokens":0,"output_tokens":30,"reasoning_output_tokens":0}}

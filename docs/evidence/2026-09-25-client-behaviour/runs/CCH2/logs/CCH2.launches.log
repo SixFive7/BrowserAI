@@ -1,0 +1,16 @@
+2026-09-24T23:23:46.199Z launch=1 pid=30136 LAUNCH mode=held-updater-file behaves=UPDATING ppid=87048 argv=[]
+2026-09-24T23:23:46.205Z launch=1 pid=30136 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:23:46.209Z launch=1 pid=30136 tools/list HELD until the updater goes
+2026-09-24T23:23:48.238Z launch=1 pid=30136 the updater went (2042 ms after start): answering 1 held tools/list and serving from now on
+2026-09-24T23:23:48.239Z launch=1 pid=30136 tools/list answered with 1 tool (held, answered after the updater went)
+2026-09-24T23:23:48.367Z launch=1 pid=30136 tools/call browserai_list SERVED
+2026-09-24T23:23:49.927Z launch=1 pid=30136 tools/call browserai_list SERVED
+2026-09-24T23:23:54.970Z launch=1 pid=30136 tools/call browserai_list SERVED
+2026-09-24T23:23:55.067Z launch=1 pid=30136 client closed stdin after 8871 ms
+2026-09-24T23:23:55.126Z launch=1 pid=30136 process exit code=0 alive_ms=8930
+2026-09-24T23:23:58.450Z launch=2 pid=79200 LAUNCH mode=held-updater-file behaves=NORMAL ppid=110516 argv=[]
+2026-09-24T23:23:58.458Z launch=2 pid=79200 initialize from clientInfo={"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"} protocolVersion=2025-11-25
+2026-09-24T23:23:58.488Z launch=2 pid=79200 tools/list answered with 1 tool
+2026-09-24T23:23:58.801Z launch=2 pid=79200 tools/call browserai_list SERVED
+2026-09-24T23:23:58.905Z launch=2 pid=79200 client closed stdin after 459 ms
+2026-09-24T23:23:58.967Z launch=2 pid=79200 process exit code=0 alive_ms=521

@@ -1,0 +1,4 @@
+2026-09-24T23:20:13.412Z exec 1 start
+2026-09-24T23:20:25.335Z exec 1 codex exit=0
+2026-09-24T23:20:27.656Z exec 2 start
+2026-09-24T23:20:28.531Z exec 2 codex exit=0

@@ -1,0 +1,295 @@
+{
+ "run": "CXER1",
+ "serverLaunches": [
+  "2026-09-24T23:16:20.073Z launch=1 shim=81176 LAUNCH server=56916 exe=C:/Source/SixFive7/BrowserAI/.work/client-behaviour/server/BrowserAI.Server.exe BROWSERAI_ROOT=%USERPROFILE%/Downloads/tmp-client-behaviour/CXER1",
+  "2026-09-24T23:17:30.401Z launch=2 shim=56688 LAUNCH server=84676 exe=C:/Source/SixFive7/BrowserAI/.work/client-behaviour/server/BrowserAI.Server.exe BROWSERAI_ROOT=%USERPROFILE%/Downloads/tmp-client-behaviour/CXER1"
+ ],
+ "toolsListPerLaunch": {},
+ "callsPerLaunch": {},
+ "endOfLaunch1": [],
+ "s1": {
+  "items": [
+   {
+    "type": "error",
+    "message": "Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+   },
+   {
+    "type": "agent_message",
+    "text": "exec one is done"
+   }
+  ],
+  "tracing": [
+   "WARN app_server.thread_start.create_thread{otel.name=\"app_server.thread_start.create_thread\" thread_start.dynamic_tool_count=0}:thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}: codex_mcp::rmcp_client: MCP server startup failed server_name=\"browserai\" error=Mcp error: -32603: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again.",
+   "INFO app_server.thread_start.create_thread{otel.name=\"app_server.thread_start.create_thread\" thread_start.dynamic_tool_count=0}:thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: task cancelled",
+   "INFO app_server.thread_start.create_thread{otel.name=\"app_server.thread_start.create_thread\" thread_start.dynamic_tool_count=0}:thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: serve finished quit_reason=Cancelled",
+   "TRACE session_loop{thread_id=01a0d5b4-a124-7180-82bc-bfa88bd0057c}:submission_dispatch{otel.name=\"op.dispatch.turn_input\" submission.id=\"01a0d5b4-a1a1-76b3-b515-8b3700591bd2\" codex.op=\"turn_input\"}:turn{otel.name=\"session_task.turn\" thread.id=01a0d5b4-a124-7180-82bc-bfa88bd0057c turn.id=01a0d5b4-a1a1-76b3-b515-8b3700591bd2 model=stub-model codex.turn.reasoning_effort=default}:step_context.capture:mcp.runtime.resolve_for_step:capture_binding_with_metadata: codex_mcp::connection_manager::tool_catalog: omitting MCP server without an exact ready client server_name=browserai",
+   "INFO codex_otel.log_only: event.name=\"codex.tool_result\" tool_result_seq=1 tool_name=browserai_list tool_namespace=mcp__browserai call_id=call_CXER1_s1_0 duration_ms=0 success=false output_truncated=false agent_name=/root arguments={\"directory\":\"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXER1/sessions\"} output=unsupported call: mcp__browseraibrowserai_list mcp_server= mcp_server_origin= event.timestamp=2026-09-24T23:16:20.353Z conversation.id=01a0d5b4-a124-7180-82bc-bfa88bd0057c app.version=0.155.0-alpha.9.2 originator=codex_exec terminal.type=xterm-256color model=stub-model slug=stub-model",
+   "ERROR codex_core::tools::router: error=unsupported call: mcp__browseraibrowserai_list",
+   "INFO codex_otel.log_only: event.name=\"codex.tool_result\" tool_result_seq=2 tool_name=browserai_list tool_namespace=mcp__browserai call_id=call_CXER1_s1_1 duration_ms=0 success=false output_truncated=false agent_name=/root arguments={\"directory\":\"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXER1/sessions\"} output=unsupported call: mcp__browseraibrowserai_list mcp_server= mcp_server_origin= event.timestamp=2026-09-24T23:17:22.009Z conversation.id=01a0d5b4-a124-7180-82bc-bfa88bd0057c app.version=0.155.0-alpha.9.2 originator=codex_exec terminal.type=xterm-256color model=stub-model slug=stub-model",
+   "ERROR codex_core::tools::router: error=unsupported call: mcp__browseraibrowserai_list",
+   "INFO codex_otel.log_only: event.name=\"codex.tool_result\" tool_result_seq=3 tool_name=browserai_list tool_namespace=mcp__browserai call_id=call_CXER1_s1_2 duration_ms=0 success=false output_truncated=false agent_name=/root arguments={\"directory\":\"C:/Source/SixFive7/BrowserAI/.work/client-behaviour/runs/CXER1/sessions\"} output=unsupported call: mcp__browseraibrowserai_list mcp_server= mcp_server_origin= event.timestamp=2026-09-24T23:17:27.108Z conversation.id=01a0d5b4-a124-7180-82bc-bfa88bd0057c app.version=0.155.0-alpha.9.2 originator=codex_exec terminal.type=xterm-256color model=stub-model slug=stub-model",
+   "ERROR codex_core::tools::router: error=unsupported call: mcp__browseraibrowserai_list",
+   "WARN codex_mcp::rmcp_client: failed to initialize MCP client during shutdown: MCP startup failed: Mcp error: -32603: BrowserAI is installing an update, so 'tools/list' was NOT run: nothing reached a browser and nothing changed. Your client does not start a server again once it has gone, so after about a minute these tools need a new thread, or a reconnect of the BrowserAI server, before they answer. A session you were using is closed by the update and not lost: its profile, files and log stay on disk, so call browserai_resume on its directory before you use it again."
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "toolCount": 12,
+    "browseraiNamespace": [],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": null
+   },
+   {
+    "turn": 1,
+    "toolCount": 12,
+    "browseraiNamespace": [],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": "unsupported call: mcp__browseraibrowserai_list"
+   },
+   {
+    "turn": 2,
+    "toolCount": 12,
+    "browseraiNamespace": [],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": "unsupported call: mcp__browseraibrowserai_list"
+   },
+   {
+    "turn": 3,
+    "toolCount": 12,
+    "browseraiNamespace": [],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": "unsupported call: mcp__browseraibrowserai_list"
+   }
+  ]
+ },
+ "s2": {
+  "items": [
+   {
+    "type": "error",
+    "message": "Model metadata for `stub-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "in_progress",
+    "error": null,
+    "result": null
+   },
+   {
+    "type": "mcp_tool_call",
+    "status": "completed",
+    "error": null,
+    "result": [
+     {
+      "type": "text",
+      "text": "No BrowserAI sessions under 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXER1\\sessions'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named."
+     }
+    ]
+   },
+   {
+    "type": "agent_message",
+    "text": "exec two is done"
+   }
+  ],
+  "tracing": [
+   "INFO thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: task cancelled",
+   "INFO thread_spawn{otel.name=\"thread_spawn\"}:session_init:session_init.mcp_manager_init{otel.name=\"session_init.mcp_manager_init\"}:mcp.runtime.refresh:new{server_name=browserai}:start_server_task{server_name=browserai}:initialize:serve_inner: rmcp::service: serve finished quit_reason=Cancelled"
+  ],
+  "turns": [
+   {
+    "turn": 0,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "BrowserAI drives a real browser. Call browserai_init first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.\n\nEvery session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run, not bound to the directory.\n\n'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.\n\nBrowsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.\n\nSupply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.\n\nEvery call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does -- the tool name already says that. It goes in the session's record, and browserai_catch_up reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nWARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.\n\nbrowserai_init refuses a directory that is already a session and directs you to browserai_resume; browserai_list reports the sessions beneath a directory, browserai_set_purpose rewrites what one says it is for, and browserai_destroy deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login.",
+      "tools": [
+       "browser_click",
+       "browser_close",
+       "browser_console_messages",
+       "browser_cookie_clear",
+       "browser_cookie_delete",
+       "browser_cookie_get",
+       "browser_cookie_list",
+       "browser_cookie_set",
+       "browser_drag",
+       "browser_drop",
+       "browser_emulate_media",
+       "browser_evaluate",
+       "browser_file_upload",
+       "browser_fill_form",
+       "browser_find",
+       "browser_generate_locator",
+       "browser_get_config",
+       "browser_handle_dialog",
+       "browser_hide_highlight",
+       "browser_highlight",
+       "browser_hover",
+       "browser_localstorage_clear",
+       "browser_localstorage_delete",
+       "browser_localstorage_get",
+       "browser_localstorage_list",
+       "browser_localstorage_set",
+       "browser_mouse_click_xy",
+       "browser_mouse_down",
+       "browser_mouse_drag_xy",
+       "browser_mouse_move_xy",
+       "browser_mouse_up",
+       "browser_mouse_wheel",
+       "browser_navigate",
+       "browser_navigate_back",
+       "browser_network_request",
+       "browser_network_requests",
+       "browser_network_state_set",
+       "browser_pdf_save",
+       "browser_press_key",
+       "browser_resize",
+       "browser_resume",
+       "browser_route",
+       "browser_route_list",
+       "browser_run_code_unsafe",
+       "browser_select_option",
+       "browser_sessionstorage_clear",
+       "browser_sessionstorage_delete",
+       "browser_sessionstorage_get",
+       "browser_sessionstorage_list",
+       "browser_sessionstorage_set",
+       "browser_set_storage_state",
+       "browser_snapshot",
+       "browser_start_recording",
+       "browser_start_tracing",
+       "browser_start_video",
+       "browser_stop_recording",
+       "browser_stop_tracing",
+       "browser_stop_video",
+       "browser_storage_state",
+       "browser_tabs",
+       "browser_take_screenshot",
+       "browser_type",
+       "browser_unroute",
+       "browser_verify_element_visible",
+       "browser_verify_list_visible",
+       "browser_verify_text_visible",
+       "browser_verify_value",
+       "browser_video_chapter",
+       "browser_video_hide_actions",
+       "browser_video_show_actions",
+       "browser_wait_for",
+       "browserai_catch_up",
+       "browserai_destroy",
+       "browserai_init",
+       "browserai_list",
+       "browserai_page_tool",
+       "browserai_reinstall_browser",
+       "browserai_resume",
+       "browserai_set_purpose"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": "unsupported call: mcp__browseraibrowserai_list"
+   },
+   {
+    "turn": 1,
+    "toolCount": 13,
+    "browseraiNamespace": [
+     {
+      "name": "mcp__browserai",
+      "description": "BrowserAI drives a real browser. Call browserai_init first: it returns the session directory every other tool requires as 'session'. There is no default and BrowserAI never guesses one.\n\nEvery session gets every tool. Nothing chosen at init binds a later call: 'headed: true' opens a window and 'tracing: true' records the run, both per-run, not bound to the directory.\n\n'fullPage: true' leaves at full document height and nothing downscales it: cost follows pixels, with no ceiling. Pass 'filename' for a link to the file and no inline image.\n\nBrowsers are managed by BrowserAI -- never install any yourself (no `npx playwright install`). If the browser installation is broken, `browserai_reinstall_browser` is the repair.\n\nSupply an absolute directory and a one-sentence 'purpose'. The directory IS the session -- its profile, screenshots, downloads and log live there -- so name it for the work, and write the purpose for the next agent that meets it.\n\nEvery call that NAMES a session also takes a required 'why'. Write why you are making the call, not what it does -- the tool name already says that. It goes in the session's record, and browserai_catch_up reads it back beside what the directory holds now: call it when you arrive at a session you did not create, and before you destroy one.\n\nWARNING -- browser_route and browser_network_state_set change what the page IS, not just what you see. A mocked response renders as if the server sent it: the address bar keeps the real origin and nothing on screen says otherwise, so a human watching a headed window is seeing something you made up. Say so in 'why' and to the human, and browser_unroute when you are done.\n\nbrowserai_init refuses a directory that is already a session and directs you to browserai_resume; browserai_list reports the sessions beneath a directory, browserai_set_purpose rewrites what one says it is for, and browserai_destroy deletes one. Nothing else ever deletes a session: destroy yours when the work is done, and promptly if it held a login.",
+      "tools": [
+       "browser_click",
+       "browser_close",
+       "browser_console_messages",
+       "browser_cookie_clear",
+       "browser_cookie_delete",
+       "browser_cookie_get",
+       "browser_cookie_list",
+       "browser_cookie_set",
+       "browser_drag",
+       "browser_drop",
+       "browser_emulate_media",
+       "browser_evaluate",
+       "browser_file_upload",
+       "browser_fill_form",
+       "browser_find",
+       "browser_generate_locator",
+       "browser_get_config",
+       "browser_handle_dialog",
+       "browser_hide_highlight",
+       "browser_highlight",
+       "browser_hover",
+       "browser_localstorage_clear",
+       "browser_localstorage_delete",
+       "browser_localstorage_get",
+       "browser_localstorage_list",
+       "browser_localstorage_set",
+       "browser_mouse_click_xy",
+       "browser_mouse_down",
+       "browser_mouse_drag_xy",
+       "browser_mouse_move_xy",
+       "browser_mouse_up",
+       "browser_mouse_wheel",
+       "browser_navigate",
+       "browser_navigate_back",
+       "browser_network_request",
+       "browser_network_requests",
+       "browser_network_state_set",
+       "browser_pdf_save",
+       "browser_press_key",
+       "browser_resize",
+       "browser_resume",
+       "browser_route",
+       "browser_route_list",
+       "browser_run_code_unsafe",
+       "browser_select_option",
+       "browser_sessionstorage_clear",
+       "browser_sessionstorage_delete",
+       "browser_sessionstorage_get",
+       "browser_sessionstorage_list",
+       "browser_sessionstorage_set",
+       "browser_set_storage_state",
+       "browser_snapshot",
+       "browser_start_recording",
+       "browser_start_tracing",
+       "browser_start_video",
+       "browser_stop_recording",
+       "browser_stop_tracing",
+       "browser_stop_video",
+       "browser_storage_state",
+       "browser_tabs",
+       "browser_take_screenshot",
+       "browser_type",
+       "browser_unroute",
+       "browser_verify_element_visible",
+       "browser_verify_list_visible",
+       "browser_verify_text_visible",
+       "browser_verify_value",
+       "browser_video_chapter",
+       "browser_video_hide_actions",
+       "browser_video_show_actions",
+       "browser_wait_for",
+       "browserai_catch_up",
+       "browserai_destroy",
+       "browserai_init",
+       "browserai_list",
+       "browserai_page_tool",
+       "browserai_reinstall_browser",
+       "browserai_resume",
+       "browserai_set_purpose"
+      ]
+     }
+    ],
+    "updateSentenceOccurrences": 0,
+    "lastOutput": [
+     {
+      "type": "input_text",
+      "text": "Wall time: 0.0146 seconds\nOutput:"
+     },
+     {
+      "type": "input_text",
+      "text": "No BrowserAI sessions under 'C:\\Source\\SixFive7\\BrowserAI\\.work\\client-behaviour\\runs\\CXER1\\sessions'. That is an answer, not an error: sessions live wherever a caller put them, and this tool only reports what is under the path you named."
+     }
+    ]
+   }
+  ]
+ }
+}
