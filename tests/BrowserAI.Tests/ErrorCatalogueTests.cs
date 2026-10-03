@@ -1599,7 +1599,51 @@ internal sealed partial class ErrorCatalogueTests
         await Assert.That((bool?)recovered["isError"]).IsNotEqualTo(true);
     }
 
+    /// <summary>
+    /// The driven-elsewhere row, provoked by a second client of the session host
+    /// naming a session the first one drives.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q366 b, 2026-10-03.</b> The session host holds every client's sessions, so
+    /// one driver at a time is asked inside it, and this is the refusal a second
+    /// driver meets. <c>SessionHostTests</c> holds the rest of the behaviour.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
     [Test]
+    public async Task TheDrivenElsewhereRowIsEmittedByASecondClientNamingASessionTheFirstDrives()
+    {
+        await using var sessions = RigSessionEnvironment.Create(opensDefaultSession: false);
+        await using var host = await SessionHostRig.StartAsync(sessions);
+
+        var driving = await host.ConnectAsync("the client that opened it");
+        var directory = Path.Combine(sessions.Root, "driven-elsewhere");
+
+        var opened = await driving.CallAsync("browserai_init", new JsonObject
+        {
+            ["directory"] = directory,
+            ["purpose"] = "the catalogue's driven-elsewhere arm",
+        });
+
+        await Assert.That((bool?)opened["isError"]).IsNotEqualTo(true).Because(HostConnection.TextOf(opened));
+
+        var other = await host.ConnectAsync("another client");
+
+        var refused = await other.CallAsync("browser_snapshot", new JsonObject
+        {
+            ["session"] = directory,
+            ["why"] = "the suite naming a session another client drives",
+        });
+
+        await Assert.That((bool?)refused["isError"]).IsTrue();
+
+        Match(
+            HostConnection.TextOf(refused),
+            nameof(SessionErrors.SessionDrivenByAnotherClient),
+            SessionErrors.SessionDrivenByAnotherClient("browser_snapshot", directory, driving.Proxy.Connection.Describe()));
+    }
+
+    [Test]
+    [DependsOn(nameof(TheDrivenElsewhereRowIsEmittedByASecondClientNamingASessionTheFirstDrives))]
     [DependsOn(nameof(ACallWhoseLogRowCannotBeWrittenIsRefusedAndNeverReachesTheChild))]
     [DependsOn(nameof(TheProvisioningRowIsEmittedByACallMadeWhileTheBrowserIsStillDownloading))]
     [DependsOn(nameof(TheUnattributableBrowserRowIsEmittedByAProcessRunningFromTheBrowsersRoot))]
@@ -1815,7 +1859,15 @@ internal sealed partial class ErrorCatalogueTests
         // run, names `browserai_resume` and says what was kept and lost (P2 a,
         // P3 b); and `ResumeCannotApplyWhileTheBrowserIsUp`, which names each
         // per-run setting a resume could not apply while a browser is up (Q324 a).
-        await Assert.That(rows.Count).IsEqualTo(37);
+        //
+        // ⚠️ **Corrected 2026-10-03 a third time, to 38 (previously 37)**, with
+        // option c, Q366 b. `SessionDrivenByAnotherClient` arrived: the session
+        // host holds the sessions of every client on the machine, so a call naming
+        // a session another connected client drives is refused inside it the way
+        // a lock another process holds is refused between processes, naming that
+        // client. One row whatever the tool, resume and destroy included, because
+        // the condition and its recovery are the same.
+        await Assert.That(rows.Count).IsEqualTo(38);
     }
 
     /// <summary>

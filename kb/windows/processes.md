@@ -1733,6 +1733,77 @@ morning of a sign-in, and `proto/measure.ps1.txt` over a publish of `proto/`; a
 task-started reading needs a task registered with the probe's `fg-info` mode as its
 action, removed afterwards.
 
+## A process the Task Scheduler starts keeps its job's processes through every client's exit -- measured 2026-10-03
+
+`[FLOATS]` on the clients' releases for the seven exits, keyed like
+[what each client does to a stdio server](../mcp/protocol.md#what-each-client-does-to-a-stdio-server-when-the-session-ends----measured-2026-10-03),
+whose rig this one extends; `[MACHINE]` for the job the scheduler put the task's
+process in. Windows 11 Pro 10.0.26300; Claude Code **2.1.288** (the CLI) and
+**2.1.287** (the binary the VS Code extension ships), codex-cli
+**0.155.0-alpha.9.2** and **0.160.0**. Taken 2026-10-03 between 13:38:40Z and
+13:41:19Z, with stand-ins and not BrowserAI's binaries. Everything it was read from:
+[`docs/evidence/2026-10-03-coordinator-survival`](../../docs/evidence/2026-10-03-coordinator-survival/README.md);
+the rig: [`docs/probes/2026-10-03-coordinator-survival`](../../docs/probes/2026-10-03-coordinator-survival/README.md).
+It answers the precondition of Q366 b: **whether a process the coordinator starts is
+out of every client's reach.** It is.
+
+A *coordinator* stand-in, built for the Windows subsystem, was started by a scratch
+per-user task with the sign-in task's settings, run on demand the way a blocked
+server runs that task. It created a kill-on-close job and started a *host* in it;
+the host started one *browser* per request in a kill-on-close job of its own, nested
+in the coordinator's. Each run's dummy server, started by a real client, asked the
+host for a browser named after the run, and started the stand-in it always started
+in a job of its own, as BrowserAI's server does. Then the client was ended.
+
+| Exit | Server | Its own stand-in | The host's browser after the settle, and 3 s later |
+|---|---|---|---|
+| Claude Code CLI, stdin closed, so its own `taskkill /T /F` | killed 3/3 | dead 3/3 | **alive 3/3** |
+| Claude Code CLI terminated | killed 3/3 | dead 3/3 | **alive 3/3** |
+| the VS Code extension host exiting, through a stand-in, with 2.1.287 | killed 3/3 | dead 3/3 | **alive 3/3** |
+| `codex exec` 0.155.0-alpha.9.2 finishing | killed 3/3 | dead 3/3 | **alive 3/3** |
+| the codex 0.155.0-alpha.9.2 app-server, stdin closed | killed 3/3 | dead 3/3 | **alive 3/3** |
+| `codex exec` 0.160.0 finishing | killed 3/3 | dead 3/3 | **alive 3/3** |
+| the codex 0.160.0 app-server, stdin closed | killed 3/3 | dead 3/3 | **alive 3/3** |
+
+Every released browser then exited, code 0, 21 of 21.
+
+**Why it holds, as far as the clients go.** Claude Code reaches its server through
+the server's tree, with `taskkill /T`, and through its own job when it is killed;
+Codex reaches it through a job of its own per server, which allows no breakaway.
+A process the Task Scheduler starts is in neither: its tree begins at the scheduler's
+service, and its job is one the scheduler made. So a job of that process's own, and
+everything in it, is reached by none of the three. **A keeper the server starts is
+not**: it inherits the server's job, and Codex's ends it, 12 of 12 in the same day's
+`keeper` arm ([`analysis-keeper.tsv`](../../docs/evidence/2026-10-03-client-exit/analysis-keeper.tsv)).
+
+**And the containment half, which is what keeps it safe.** With the batch done, the
+host was asked for two more browsers, a watcher opened handles to both and checked
+each against its recorded creation time, and the coordinator stand-in was terminated
+by its recorded pid and creation time about 700 ms after the watcher started. Both
+browsers exited, code 0, 690 ms into the watch, and the host no longer answered on its
+pipe 2 s later. **The coordinator going takes everything it started**, however it
+goes: its job's one handle closes with it. The watch's clock and the kill's were not
+one clock, so this places the exits at the kill and no closer.
+
+**The scheduler's own job** `[MACHINE]`. The task's process was already in a job when
+it started, one the Task Scheduler put it in with six other processes, limit flags
+`0x0`: no kill on close and no breakaway rule. Kill-on-close jobs nested under it
+worked, three levels deep: the scheduler's, the coordinator's (`0x2000`, read back by
+the host) and each browser's (`0x2000`). Which processes the six others were was not
+recorded.
+
+**What it does not establish.** The real binaries: the coordinator, host and browser
+were stand-ins, and the real ones are measured by the suite's arms over the published
+slice. Signing out and shutting down, which end the coordinator's job by ending its
+session and were not run. The Codex desktop app and the real VS Code extension host,
+whose exits were driven through the CLI and a stand-in.
+
+**Re-establish it** with the probe record's `tools\drive.ps1`, which registers the
+scratch task, runs the batch, kills the coordinator and removes the task whatever
+happened, and `tools\analyzec.py` over the run; compare against the batch's
+`summary-survival.tsv`. Every client runs from the client-exit rig's copies, under a
+scratch configuration against a local stub.
+
 ## The task scheduler from a NativeAOT process, through COM -- measured 2026-09-24
 
 `[STABLE]` for what the scheduler does and `[MACHINE]` for every time and size; the two

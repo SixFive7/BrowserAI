@@ -198,7 +198,15 @@ internal static class Program
         var writeAddress = PageOpener.WriteAddressFrom(args);
         var feed = UpdateConfiguration.Resolve(logger);
 
-        using var inbox = new CoordinatorInbox();
+        // ⚠️ THE SESSION HOST'S KEEPER, BEFORE THE PIPE -- Q366 b, 2026-10-03. A
+        // server's `host` is answered on the pipe's own thread, which may run the
+        // moment the pipe exists, so what it starts the host with has to exist first.
+        // An empty job and nothing started until somebody asks; a start that hands
+        // over closes it again. Declared before the inbox and the pipe so it is
+        // disposed after them: the pipe stops answering, and then the job's close
+        // ends the host and everything it started.
+        using var keeper = SessionHostKeeper.ForThisInstall(Environment.ProcessPath, paths.RootAppDir, logger);
+        using var inbox = new CoordinatorInbox(keeper is null ? null : keeper.EnsureStarted);
 
         // ⚠️ THE PAGE EXISTS BEFORE THE PIPE, AND STARTS NOTHING UNTIL ASKED -- Q315 a,
         // 2026-10-03. The pipe hands out tabs from its first connection on, so the
@@ -235,7 +243,12 @@ internal static class Program
 
         using var pipe = start.Pipe;
 
-        RootScan scanRoot() => BrowserProcesses.HeldUnder(root, Environment.ProcessId);
+        // The session host and everything it started run from the install too, and
+        // are this process's own to stop before an apply, not processes it waits
+        // for: the scan leaves them out (Q366 b).
+        RootScan scanRoot() => keeper is null
+            ? BrowserProcesses.HeldUnder(root, Environment.ProcessId)
+            : keeper.LeaveOutMine(BrowserProcesses.HeldUnder(root, Environment.ProcessId));
 
         if (pipe is null)
         {
@@ -261,6 +274,13 @@ internal static class Program
             _ = PageOpener.Deliver(page.HandOut(StartModes.PageOf(verb)), writeAddress, ShellInterop.OpenUrl, logger);
         }
 
+        // A server found neither a host nor a coordinator and ran the logon task to
+        // have one started; the loop below then stays for as long as it runs.
+        if (mode is StartMode.StartHost)
+        {
+            _ = keeper?.EnsureStarted();
+        }
+
         IStagedUpdates staged = feed is not null
             ? new VelopackUpdateClient(feed)
             : NothingStaged.Instance;
@@ -274,9 +294,11 @@ internal static class Program
         // start that sent it has already exited.
         if (mode is StartMode.SignIn)
         {
-            var signIn = SignInStep.Run(staged, scanRoot, logger);
+            var signIn = SignInStep.Run(staged, scanRoot, logger, keeper);
 
-            if (signIn.Outcome is SignInOutcome.Applied || (inbox.IsEmpty && !page.IsServing))
+            // Q366 b: a host a server asked for during the pass keeps this process,
+            // whose job it is in, even before that server's verb reaches the inbox.
+            if (signIn.Outcome is SignInOutcome.Applied || (inbox.IsEmpty && !page.IsServing && keeper?.Running is null))
             {
                 return 0;
             }
@@ -287,8 +309,10 @@ internal static class Program
         // re-scans on each exit and each verb, applies once nothing else runs from the
         // install, and stops when nothing is staged and no tab has been open for a
         // minute. A build with no update feed has nothing staged, so it stops as soon
-        // as its page has nobody left.
-        _ = new CoordinatorLoop(root, inbox, staged, scanRoot, page, logger).Run();
+        // as its page has nobody left. Since 2026-10-03 it also stays for as long as
+        // the session host it started runs, and stops that host before an apply
+        // (Q366 b).
+        _ = new CoordinatorLoop(root, inbox, staged, scanRoot, page, logger) { Host = keeper }.Run();
 
         return 0;
     }

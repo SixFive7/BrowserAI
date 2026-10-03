@@ -74,14 +74,14 @@ internal sealed class CoordinatorPipe : IDisposable
     /// <summary>Stops serving, which is letting another process become the coordinator.</summary>
     public void Dispose() => _pipe.Dispose();
 
-    /// <summary>The coordinator's three verbs.</summary>
+    /// <summary>The coordinator's four verbs.</summary>
     /// <param name="inbox">Where each goes.</param>
     /// <param name="addressFor">Hands out a tab, or <see langword="null"/> for a coordinator with no page.</param>
     /// <param name="logger">Where each is recorded.</param>
     private sealed class Answers(CoordinatorInbox inbox, Func<CoordinatorVerb, string?>? addressFor, ILogger logger) : IPipeAnswers
     {
         public IReadOnlyList<string> Verbs { get; } =
-            [CoordinatorProtocol.ShowVerb, CoordinatorProtocol.RecheckVerb, CoordinatorProtocol.SessionsVerb];
+            [CoordinatorProtocol.ShowVerb, CoordinatorProtocol.RecheckVerb, CoordinatorProtocol.SessionsVerb, CoordinatorProtocol.HostVerb];
 
         public ServerPipeReply? Answer(string verb, int? clientProcessId)
         {
@@ -106,6 +106,14 @@ internal sealed class CoordinatorPipe : IDisposable
                 {
                     return new ServerPipeReply(ServerPipeProtocol.Refused(verb, CoordinatorProtocol.StoppingRefusal));
                 }
+            }
+
+            // Q366 b: the host is started here, before the answer, so an
+            // acknowledged `host` means one runs and a refused one sends the server
+            // to serve its client itself without waiting.
+            if (taken is CoordinatorVerb.Host && !inbox.StartTheHost())
+            {
+                return new ServerPipeReply(ServerPipeProtocol.Refused(verb, CoordinatorProtocol.NoHostRefusal));
             }
 
             return new ServerPipeReply(

@@ -26,11 +26,29 @@ internal sealed record CoordinatorArrival(CoordinatorVerb Verb, int? From);
 /// close, because nothing is applied while it is open.
 /// </para>
 /// </remarks>
-internal sealed class CoordinatorInbox : IDisposable
+/// <param name="startTheHost">
+/// Starts the session host when none runs and says whether one runs now, or
+/// <see langword="null"/> for a coordinator that has none to start (Q366 b).
+/// </param>
+internal sealed class CoordinatorInbox(Func<bool>? startTheHost = null) : IDisposable
 {
     private readonly Lock _gate = new();
     private readonly List<CoordinatorArrival> _pending = [];
     private readonly EventWaitHandle _arrived = new(initialState: false, EventResetMode.AutoReset);
+
+    /// <summary>
+    /// Starts the session host when none runs, on the pipe's own thread, before the
+    /// <c>host</c> verb is answered.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not queued like the other verbs, and that is the point of it.</b> A server
+    /// waits a few seconds for the host's pipe and then serves its client itself, and
+    /// the coordinator's own thread may be inside the window the whole time, where a
+    /// queued verb waits for the window to close. Starting it here answers the server
+    /// with a host that runs, or with a refusal it can act on at once.
+    /// </remarks>
+    /// <returns>Whether a host runs now.</returns>
+    public bool StartTheHost() => startTheHost?.Invoke() ?? false;
 
     /// <summary>Set each time a verb arrives; reset by the wait that sees it.</summary>
     public WaitHandle Arrived => _arrived;

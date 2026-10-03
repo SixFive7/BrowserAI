@@ -1,0 +1,14 @@
+5567644.303	2026-10-03T13:39:33.8386112Z	38704	server	START	delayMs=15000 ppid=21400 parentImage=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\vscode\claude.exe cmdline=C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\rig\bin\ExitRig.dll server --logdir C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\runs\surv-20261003T133840\e5-r1 --delay-ms 15000 --host-pipe c-probe-host-20261003T133840 --host-id surv-20261003T133840-e5-r1
+5567648.654	2026-10-03T13:39:33.8425013Z	38704	server	CONSOLE	consoleWindow=0x0 visible=False consoleProcs=[38704]
+5567650.213	2026-10-03T13:39:33.8440499Z	38704	server	JOB	inJob=True immediateJobLimitFlags=0x3C00 assigned=2 listed=2 first64=[21400,38704]
+5567650.910	2026-10-03T13:39:33.8447494Z	38704	server	STDIO	stdin=pipe stdout=pipe stderr=pipe
+5567652.305	2026-10-03T13:39:33.8461395Z	38704	server	PARENT_WATCH	pid=21400 image=C:\Source\SixFive7\BrowserAI\.work\client-exit\bin\vscode\claude.exe created=2026-10-03T13:39:32.4076465Z
+5567660.715	2026-10-03T13:39:33.8545546Z	38704	server	STANDIN	pid=39048 jobFlagsReadBack=0x2000 
+5567669.009	2026-10-03T13:39:33.8628528Z	38704	server	HOST_BROWSER	ok pid=67588 created=134355083738574179 
+5567678.563	2026-10-03T13:39:33.8724046Z	38704	server	RECV	method=initialize id=0 bytes=341
+5567685.363	2026-10-03T13:39:33.8792056Z	38704	server	SENT	id=0 for=initialize
+5567697.564	2026-10-03T13:39:33.8914036Z	38704	server	RECV	method=notifications/initialized id=- bytes=54
+5567701.809	2026-10-03T13:39:33.8956471Z	38704	server	RECV	method=tools/list id=1 bytes=46
+5567702.015	2026-10-03T13:39:33.8958489Z	38704	server	SENT	id=1 for=tools/list
+5567856.796	2026-10-03T13:39:34.0506359Z	38704	server	RECV	method=tools/call id=2 bytes=163
+5567857.423	2026-10-03T13:39:34.0512712Z	38704	server	SENT	id=2 for=tools/call

@@ -130,10 +130,19 @@ internal static class SessionErrors
     /// <param name="tool">The tool the call named, whatever the caller said.</param>
     /// <param name="version">The version of the BrowserAI that is actually serving the connection.</param>
     /// <param name="clientName">What the client put in <c>clientInfo.name</c>, if anything.</param>
+    /// <param name="throughTheSessionHost">
+    /// Whether the connection reached the session host through a front, Q366 b. A server
+    /// a client started is a new process, so a list its connection never asked for was
+    /// read before it started, and the sentence says so. The host outlives its fronts:
+    /// a client that re-dials reaches the same host, whose list it may already hold, so
+    /// that sentence would be false, and this one says only what the host can know.
+    /// </param>
     /// <returns>The refusal.</returns>
-    public static string ToolListPredatesThisServer(string tool, string version, string? clientName) =>
+    public static string ToolListPredatesThisServer(string tool, string version, string? clientName, bool throughTheSessionHost = false) =>
         $"'{tool}' was NOT forwarded, once, because this connection has never asked BrowserAI for its tool list. "
-        + $"The BrowserAI serving you is version {version}, and it started after the tool list you are calling from was read -- so that list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. "
+        + (throughTheSessionHost
+            ? $"It reached BrowserAI's session host, version {version}, which may be the BrowserAI the tool list you are calling from came from, or may have started after that list was read; BrowserAI cannot tell which from here, and in the second case the list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. "
+            : $"The BrowserAI serving you is version {version}, and it started after the tool list you are calling from was read -- so that list came from a different BrowserAI and may name tools this one does not have, or be missing tools it does. ")
         + $"{Remedy(clientName)} "
         + "Nothing reached a browser, no session was opened or changed, and this is said once per connection: if you call again without a list, the call is forwarded normally.";
 
@@ -356,6 +365,33 @@ internal static class SessionErrors
     public static string SessionNotOpen(string tool, string path) =>
         $"'{path}' is a BrowserAI session, but this BrowserAI is not driving it, so '{tool}' was not run and nothing was changed. "
         + $"Call {SessionToolSurface.Resume} with directory='{path}' first -- a session is resumable forever, so one that exists can always be reopened.";
+
+    /// <summary>
+    /// Row 2's second companion -- the session host holds the session, and another
+    /// client that is still connected drives it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q366 b, 2026-10-03.</b> The session host holds the sessions of every
+    /// client on the machine, so the question a lock asks between two processes is
+    /// asked inside it between two connections, and answered the same way: one
+    /// driver at a time. A session whose client went is not this refusal; the next
+    /// call that names it takes it over.
+    /// </para>
+    /// <para>
+    /// <b>It names the client and not a process</b>, because the process is the host
+    /// in both cases and would tell the reader nothing.
+    /// </para>
+    /// </remarks>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="path">The session directory.</param>
+    /// <param name="client">The client driving it, as <see cref="Proxy.CallerConnection.Describe"/> spells it.</param>
+    /// <returns>The refusal.</returns>
+    public static string SessionDrivenByAnotherClient(string tool, string path, string client) =>
+        $"'{path}' is open in BrowserAI and another {client} is driving it right now, so '{tool}' was not run and nothing was changed. "
+        + "One client drives a session at a time. Use a session of your own: "
+        + $"{SessionToolSurface.Init} creates one, and {SessionToolSurface.List} shows the sessions under a directory and which are in use. "
+        + "If that client goes away, the next call that names this session takes it over.";
 
     /// <summary>Row 3 -- the directory is empty, relative or malformed.</summary>
     /// <param name="argument">Which argument was wrong.</param>

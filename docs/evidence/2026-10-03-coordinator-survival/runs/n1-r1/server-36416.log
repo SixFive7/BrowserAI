@@ -1,0 +1,14 @@
+5631195.868	2026-10-03T13:40:37.3902482Z	36416	server	START	delayMs=15000 ppid=31556 parentImage=C:\Source\SixFive7\BrowserAI\.work\client-exit\npm-codex-0.160.0\node_modules\@openai\codex-win32-x64\vendor\x86_64-pc-windows-msvc\bin\codex.exe cmdline=C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\rig\bin\ExitRig.dll server --logdir C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\runs\surv-20261003T133840\n1-r1 --delay-ms 15000 --host-pipe c-probe-host-20261003T133840 --host-id surv-20261003T133840-n1-r1
+5631201.707	2026-10-03T13:40:37.3955627Z	36416	server	CONSOLE	consoleWindow=0x0 visible=False consoleProcs=[36416]
+5631203.655	2026-10-03T13:40:37.3974938Z	36416	server	JOB	inJob=True immediateJobLimitFlags=0x2000 assigned=2 listed=2 first64=[36416,18904]
+5631204.129	2026-10-03T13:40:37.3979638Z	36416	server	STDIO	stdin=pipe stdout=pipe stderr=pipe
+5631205.775	2026-10-03T13:40:37.3996118Z	36416	server	PARENT_WATCH	pid=31556 image=C:\Source\SixFive7\BrowserAI\.work\client-exit\npm-codex-0.160.0\node_modules\@openai\codex-win32-x64\vendor\x86_64-pc-windows-msvc\bin\codex.exe created=2026-10-03T13:40:36.7107487Z
+5631217.104	2026-10-03T13:40:37.4109487Z	36416	server	STANDIN	pid=24712 jobFlagsReadBack=0x2000 
+5631227.733	2026-10-03T13:40:37.4215806Z	36416	server	HOST_BROWSER	ok pid=10744 created=134355084374151692 
+5631236.689	2026-10-03T13:40:37.4305337Z	36416	server	RECV	method=initialize id=0 bytes=257
+5631242.836	2026-10-03T13:40:37.4366796Z	36416	server	SENT	id=0 for=initialize
+5631246.048	2026-10-03T13:40:37.4398872Z	36416	server	RECV	method=notifications/initialized id=- bytes=54
+5631255.290	2026-10-03T13:40:37.4491336Z	36416	server	RECV	method=tools/list id=1 bytes=85
+5631255.583	2026-10-03T13:40:37.4494176Z	36416	server	SENT	id=1 for=tools/list
+5631431.992	2026-10-03T13:40:37.6258324Z	36416	server	RECV	method=tools/call id=2 bytes=790
+5631432.469	2026-10-03T13:40:37.6263037Z	36416	server	SENT	id=2 for=tools/call

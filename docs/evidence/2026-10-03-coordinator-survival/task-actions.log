@@ -1,0 +1,12 @@
+2026-10-03T13:34:33.2491704Z registered 'BrowserAI.c-probe coordinator 20261003T133433' exe=C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\rig\binw\ExitRig.exe args=coord --logdir "C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\runs\tasktry-20261003T133433" --host-pipe c-probe-host-20261003T133433 --ctl-pipe c-probe-ctl-20261003T133433 --max-minutes 10
+2026-10-03T13:34:33.3010246Z ran 'BrowserAI.c-probe coordinator 20261003T133433' enginePid=47524 instanceGuid={4BF5D866-0253-4336-9C2D-56C13F3A11C3}
+2026-10-03T13:34:35.8570215Z removed 'BrowserAI.c-probe coordinator 20261003T133433'
+2026-10-03T13:35:36.3684958Z registered 'BrowserAI.c-probe coordinator 20261003T133536' exe=C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\rig\binw\ExitRig.exe args=coord --logdir "C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\runs\surv-20261003T133536" --host-pipe c-probe-host-20261003T133536 --ctl-pipe c-probe-ctl-20261003T133536 --max-minutes 90
+2026-10-03T13:35:36.4503687Z ran 'BrowserAI.c-probe coordinator 20261003T133536' enginePid=14388 instanceGuid={31979E93-5446-468B-A6DD-90113C359036}
+2026-10-03T13:35:41.4148839Z removed 'BrowserAI.c-probe coordinator 20261003T133536'
+2026-10-03T13:36:42.7685799Z registered 'BrowserAI.c-probe coordinator 20261003T133642' exe=C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\rig\binw\ExitRig.exe args=coord --logdir "C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\runs\surv-20261003T133642" --host-pipe c-probe-host-20261003T133642 --ctl-pipe c-probe-ctl-20261003T133642 --max-minutes 90
+2026-10-03T13:36:43.5797574Z ran 'BrowserAI.c-probe coordinator 20261003T133642' enginePid=10740 instanceGuid={70748DF6-C512-4061-A5B0-FE261AB16F84}
+2026-10-03T13:37:07.1195938Z removed 'BrowserAI.c-probe coordinator 20261003T133642'
+2026-10-03T13:38:40.5938194Z registered 'BrowserAI.c-probe coordinator 20261003T133840' exe=C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\rig\binw\ExitRig.exe args=coord --logdir "C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\runs\surv-20261003T133840" --host-pipe c-probe-host-20261003T133840 --ctl-pipe c-probe-ctl-20261003T133840 --max-minutes 90
+2026-10-03T13:38:40.6439937Z ran 'BrowserAI.c-probe coordinator 20261003T133840' enginePid=44784 instanceGuid={41D4CF4C-B3CC-4264-8E4B-6F4C88366D97}
+2026-10-03T13:41:19.4383807Z removed 'BrowserAI.c-probe coordinator 20261003T133840'

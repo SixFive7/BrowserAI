@@ -240,6 +240,35 @@ internal static partial class BrowserProcesses
     }
 
     /// <summary>
+    /// Holds one process this caller started, by its identity, so it can be waited
+    /// on beside other handles.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-03 for the coordinator's session host</b> (Q366 b): the
+    /// coordinator waits on its host beside its pipe and the processes its scan
+    /// holds, and a wait needs a <see cref="WaitHandle"/>. Opened by pid and kept
+    /// only when the creation time is the one recorded at the launch, so a reused
+    /// pid is never held as the host.
+    /// </remarks>
+    /// <param name="processId">The pid.</param>
+    /// <param name="createdFileTime">The creation time recorded when it was started.</param>
+    /// <returns>The held process, or <see langword="null"/> when it has already gone.</returns>
+    public static HeldProcess? Hold(int processId, long createdFileTime)
+    {
+        var handle = OpenProcessToWaitOn(ProcessQueryLimitedInformation | Synchronize, bInheritHandle: false, (uint)processId);
+
+        if (handle.IsInvalid
+            || !GetProcessTimes(handle, out var created, out _, out _, out _)
+            || created != createdFileTime)
+        {
+            handle.Dispose();
+            return null;
+        }
+
+        return new HeldProcess(processId, created, ImagePathOf(handle) ?? string.Empty, handle);
+    }
+
+    /// <summary>
     /// Every live process whose image lies under a root, except one, each held open
     /// to be waited on: the set an apply's kill pass would end.
     /// </summary>

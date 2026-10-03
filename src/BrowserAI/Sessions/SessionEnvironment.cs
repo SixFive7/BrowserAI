@@ -99,6 +99,20 @@ internal sealed record SessionEnvironment
     public TimeSpan BrowserIdlePeriod { get; init; } = BrowserIdleTimer.DefaultIdlePeriod;
 
     /// <summary>
+    /// How long a shutdown waits for each session's own <c>browser_close</c> before
+    /// it ends the child anyway: <see cref="LiveSession.ShutdownCloseBudget"/>, one
+    /// second, in a server a client started.
+    /// </summary>
+    /// <remarks>
+    /// <b>The session host sets it, and nothing else does</b> (Q366 b, 2026-10-03). A
+    /// client kills its server about a second after it closes the server's input, so
+    /// that server gets the second there is. Nobody kills the host on a clock: the
+    /// coordinator asks it to stop for an update and waits, so it gets
+    /// <c>SessionHostProtocol.ShutdownCloseBudget</c>, thirty seconds.
+    /// </remarks>
+    public TimeSpan ShutdownCloseBudget { get; init; } = LiveSession.ShutdownCloseBudget;
+
+    /// <summary>
     /// The clock <see cref="BrowserIdleTimer"/> reads and schedules against.
     /// </summary>
     /// <remarks>

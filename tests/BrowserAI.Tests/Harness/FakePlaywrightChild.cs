@@ -305,6 +305,18 @@ internal sealed class FakePlaywrightChild : IAsyncDisposable
     /// </summary>
     public bool CallsOpenABrowser { get; set; } = true;
 
+    /// <summary>
+    /// Takes the browser down with no call, the way a person closing a headed
+    /// session's window does.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-03 for Q366 b</b>: a headed session whose client went is kept
+    /// until its window closes, and the session host notices that by asking whether
+    /// a browser is up. No tool call says the window closed, so the double needs a
+    /// way to stop being up that is not one.
+    /// </remarks>
+    public void CloseTheWindow() => Volatile.Write(ref _browserIsOpen, 0);
+
     /// <summary>Starts serving.</summary>
     public void Start() => _loop = Task.Run(RunAsync, CancellationToken.None);
 

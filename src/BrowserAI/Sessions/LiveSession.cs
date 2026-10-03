@@ -101,9 +101,297 @@ internal sealed class LiveSession : IAsyncDisposable
             : new BrowserIdleTimer(
                 location.FullPath,
                 environment.BrowserIdlePeriod,
-                CloseForIdleAsync,
+                FireIdleAsync,
                 logging.Factory.CreateLogger<BrowserIdleTimer>(),
                 environment.Clock);
+    }
+
+    /// <summary>
+    /// How often a headed session whose client went is asked whether its browser
+    /// is still up: the session host's own look,
+    /// <see cref="Proxy.SessionHostServer.LingerLook"/>, <b>15 s</b>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A look and not a close.</b> Q326 a keeps a headed session out of the idle
+    /// timer, because its window holds what a person was doing. Once its client has
+    /// gone nothing drives it, so the session host keeps it for as long as the
+    /// window is open and lets it go once the person has closed it, which this
+    /// notices. Asking is one membership read of the child's job.
+    /// </para>
+    /// <para>
+    /// <b>One cadence with the host's</b>: when the last window closes, this look lets
+    /// the session go and the host's next look at its own emptiness sees it, so the
+    /// host's linger starts no later than two looks after the window closed. The price
+    /// of the period is a closed window's node child, about 50 MB, held for at most one
+    /// look. It is a seam for the suite through the session environment's clock, as the
+    /// idle period is.
+    /// </para>
+    /// </remarks>
+    public static TimeSpan DetachedWindowLook { get; } = Proxy.SessionHostServer.LingerLook;
+
+    /// <summary>
+    /// Which connection drives this session now, and whether the host is letting it go.
+    /// </summary>
+    /// <remarks>
+    /// <b>Its own lock and not <see cref="SessionLock"/>'s</b>: a claim is asked on
+    /// every forwarded call, and it decides nothing the record holds.
+    /// </remarks>
+    private readonly Lock _attachment = new();
+
+    private readonly TaskCompletionSource _released = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    private CallerConnection? _attachedTo;
+    private bool _releasing;
+    private ITimer? _windowWatch;
+    private Func<LiveSession, Task>? _afterIdle;
+
+    /// <summary>
+    /// Completes once the session host has let this session go, after
+    /// <see cref="TryBeginRelease"/> answered <see langword="true"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>What a resume waits for when it meets <see cref="SessionClaim.Releasing"/></b>:
+    /// the lock is this process's own until the release has finished, so the resume
+    /// opens the directory again only after it.
+    /// </remarks>
+    public Task Released => _released.Task;
+
+    /// <summary>Records that the release <see cref="TryBeginRelease"/> began has finished.</summary>
+    public void ReleaseFinished() => _ = _released.TrySetResult();
+
+    /// <summary>
+    /// The connection this session is attached to, or <see langword="null"/> once its
+    /// client has gone.
+    /// </summary>
+    public CallerConnection? AttachedTo
+    {
+        get
+        {
+            lock (_attachment)
+            {
+                return _attachedTo;
+            }
+        }
+    }
+
+    /// <summary>Whether this session's client has gone and nothing has taken it over yet.</summary>
+    public bool IsDetached
+    {
+        get
+        {
+            lock (_attachment)
+            {
+                return _attachedTo is null && !_releasing;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Attaches this session to the connection that opened it.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    public void AttachTo(CallerConnection connection)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        lock (_attachment)
+        {
+            _attachedTo = connection;
+        }
+    }
+
+    /// <summary>
+    /// Asks whether a connection may drive this session, and takes it over for that
+    /// connection when its own client has gone.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q366 b: a relaunched client reconnects to the session the host kept</b>
+    /// <i>"through browserai_resume or its next call"</i>, which is this. A session
+    /// whose connection has ended is taken over by the next connection that names it,
+    /// and its browser never closed, so there is nothing to restore.
+    /// </para>
+    /// <para>
+    /// <b>A session another open connection drives is refused</b>, as a directory
+    /// another process holds is refused by its lock. A session the host is already
+    /// letting go answers <see cref="SessionClaim.Releasing"/>, and the caller is told
+    /// what a session nobody holds is told.
+    /// </para>
+    /// </remarks>
+    /// <param name="connection">The connection naming it.</param>
+    /// <param name="holder">The connection driving it, when the answer is <see cref="SessionClaim.HeldElsewhere"/>.</param>
+    /// <returns>Whether the connection may go ahead, and how.</returns>
+    public SessionClaim Claim(CallerConnection connection, out CallerConnection? holder)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        ITimer? watch;
+
+        lock (_attachment)
+        {
+            holder = null;
+
+            if (_releasing)
+            {
+                return SessionClaim.Releasing;
+            }
+
+            if (ReferenceEquals(_attachedTo, connection))
+            {
+                return SessionClaim.Attached;
+            }
+
+            if (_attachedTo is { IsOpen: true } other)
+            {
+                holder = other;
+                return SessionClaim.HeldElsewhere;
+            }
+
+            _attachedTo = connection;
+            watch = _windowWatch;
+            _windowWatch = null;
+        }
+
+        watch?.Dispose();
+
+        return SessionClaim.TakenOver;
+    }
+
+    /// <summary>
+    /// Detaches this session from a connection that has ended, when it is the one
+    /// attached.
+    /// </summary>
+    /// <param name="connection">The connection that ended.</param>
+    /// <returns>Whether this session was attached to it and is detached now.</returns>
+    public bool DetachFrom(CallerConnection connection)
+    {
+        lock (_attachment)
+        {
+            if (!ReferenceEquals(_attachedTo, connection))
+            {
+                return false;
+            }
+
+            _attachedTo = null;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Marks a detached session as being let go, so no connection can take it over
+    /// from here on.
+    /// </summary>
+    /// <returns>Whether it was detached and is now this caller's to release.</returns>
+    public bool TryBeginRelease()
+    {
+        ITimer? watch;
+
+        lock (_attachment)
+        {
+            if (_attachedTo is not null || _releasing)
+            {
+                return false;
+            }
+
+            _releasing = true;
+            watch = _windowWatch;
+            _windowWatch = null;
+        }
+
+        watch?.Dispose();
+
+        return true;
+    }
+
+    /// <summary>
+    /// What runs once the idle timer has fired, whatever it found: the session host's
+    /// release of a session whose client went. Set once, by the manager that holds
+    /// this session.
+    /// </summary>
+    /// <param name="afterIdle">The callback.</param>
+    public void WhenIdleFires(Func<LiveSession, Task> afterIdle) => Volatile.Write(ref _afterIdle, afterIdle);
+
+    /// <summary>
+    /// Looks every <see cref="DetachedWindowLook"/> whether a detached headed session's
+    /// browser is still up, and once it is not, hands the session to
+    /// <paramref name="whenGone"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Stopped by a claim and by a release</b>, so a session a client takes over is
+    /// never let go behind it.
+    /// </remarks>
+    /// <param name="whenGone">The release.</param>
+    public void WatchTheWindowWhileDetached(Func<LiveSession, Task> whenGone)
+    {
+        ArgumentNullException.ThrowIfNull(whenGone);
+
+        var timer = _clock.CreateTimer(
+            _ =>
+            {
+                if (!IsDetached || BrowserIsOpen)
+                {
+                    return;
+                }
+
+                StopWatching();
+                _ = Task.Run(() => whenGone(this));
+            },
+            null,
+            DetachedWindowLook,
+            DetachedWindowLook);
+
+        ITimer? previous;
+
+        lock (_attachment)
+        {
+            if (!(_attachedTo is null && !_releasing))
+            {
+                previous = timer;
+            }
+            else
+            {
+                previous = _windowWatch;
+                _windowWatch = timer;
+            }
+        }
+
+        previous?.Dispose();
+    }
+
+    private void StopWatching()
+    {
+        ITimer? watch;
+
+        lock (_attachment)
+        {
+            watch = _windowWatch;
+            _windowWatch = null;
+        }
+
+        watch?.Dispose();
+    }
+
+    /// <summary>The idle timer's close, and then whatever the host does about a session whose client went.</summary>
+    /// <remarks>
+    /// <b>The callback is started and not awaited</b>: a release tears this session
+    /// down, and the teardown waits for the very close this runs inside.
+    /// </remarks>
+    /// <param name="cancellationToken">Cancelled by a teardown that starts while this runs.</param>
+    /// <returns>What the close did.</returns>
+    private async Task<BrowserCloseResult?> FireIdleAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await CloseForIdleAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (Volatile.Read(ref _afterIdle) is { } after)
+            {
+                _ = Task.Run(() => after(this), CancellationToken.None);
+            }
+        }
     }
 
     /// <summary>
@@ -441,8 +729,14 @@ internal sealed class LiveSession : IAsyncDisposable
     /// is not the moment to add a database write to every session.
     /// </para>
     /// </remarks>
+    /// <param name="budget">
+    /// How long the close is given: <see cref="ShutdownCloseBudget"/> in a server a
+    /// client started, and thirty seconds in the session host, which nobody kills on a
+    /// clock (<see cref="SessionEnvironment.ShutdownCloseBudget"/>). Measured on the
+    /// session's own clock, the one the idle timer reads.
+    /// </param>
     /// <returns>A task that completes once the close has answered or the bound has passed.</returns>
-    public async Task CloseTheBrowserForShutdownAsync()
+    public async Task CloseTheBrowserForShutdownAsync(TimeSpan budget)
     {
         if (Closed is not null || !BrowserIsOpen)
         {
@@ -461,7 +755,7 @@ internal sealed class LiveSession : IAsyncDisposable
             Volatile.Write(ref _reapOwed, 1);
         }
 
-        using var bound = new CancellationTokenSource(ShutdownCloseBudget);
+        using var bound = new CancellationTokenSource(budget, _clock);
 
         try
         {
@@ -476,7 +770,7 @@ internal sealed class LiveSession : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            IdleLog.ShutdownCloseUnanswered(Logger, Location.FullPath, ShutdownCloseBudget);
+            IdleLog.ShutdownCloseUnanswered(Logger, Location.FullPath, budget);
         }
     }
 
@@ -514,6 +808,9 @@ internal sealed class LiveSession : IAsyncDisposable
         {
             await Idle.DisposeAsync().ConfigureAwait(false);
         }
+
+        // And a detached headed session's look at its window, for the same reason.
+        StopWatching();
 
         // ⚠️ READ BEFORE THE CHILD GOES, because afterwards there is no job to
         // ask. More than the child's own processes in it means a browser tree is
@@ -810,6 +1107,22 @@ internal sealed class LiveSession : IAsyncDisposable
 /// <param name="Debug">Whether this session's own log is at debug level.</param>
 /// <param name="Run">Everything else a caller can set per run.</param>
 internal sealed record SessionRunSettings(bool Headed, bool Tracing, bool Debug, RunOptions Run);
+
+/// <summary>Whether a connection may drive a session the host holds.</summary>
+internal enum SessionClaim
+{
+    /// <summary>The session is already attached to this connection.</summary>
+    Attached,
+
+    /// <summary>Its client had gone, and this connection has taken it over.</summary>
+    TakenOver,
+
+    /// <summary>Another connection that is still open drives it.</summary>
+    HeldElsewhere,
+
+    /// <summary>The host is letting it go; to a caller it is a session nobody holds.</summary>
+    Releasing,
+}
 
 /// <summary>Who closed a session's browser.</summary>
 internal enum SessionCloseCause

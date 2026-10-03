@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -267,6 +268,20 @@ internal sealed class SessionManager : IAsyncDisposable
         "no browser was up in this session, so this resume applied the per-run settings it was asked for by starting a new browser server. No page was open to lose.";
 
     /// <summary>
+    /// What a resume says when it took over a session whose client had gone and
+    /// whose browser the session host kept.
+    /// </summary>
+    /// <remarks>
+    /// <b>Q366 b, the maintainer's words of 2026-10-03, verbatim:</b> <i>"This allows
+    /// restarting vscode, the claude code plugin or soemthing without losing the
+    /// state."</i> Nothing was closed, so nothing was restored, and a caller that has
+    /// read the restore notes elsewhere is told that none of them applies.
+    /// </remarks>
+    public const string KeptWhileItsClientWasAway =
+        "the client that was driving this session went away, and BrowserAI kept its browser running, so nothing was closed and nothing needed restoring: "
+        + "the pages, tabs and everything in them are as they were left. Refs from snapshots taken before are still valid only while those pages are unchanged; take a new snapshot if you are unsure.";
+
+    /// <summary>
     /// What a resume says when it opened a session whose browser had been closed
     /// by the idle timer or by the caller.
     /// </summary>
@@ -383,27 +398,30 @@ internal sealed class SessionManager : IAsyncDisposable
     private readonly SessionEnvironment _environment;
     private readonly SessionIndex _index;
     private readonly ILogger _logger;
-    private readonly Func<JsonRpcNotification, CancellationToken, ValueTask> _relay;
     private readonly ServerRegistryReap _reap;
     private int _disposed;
 
     /// <summary>Creates the manager over one process's environment.</summary>
+    /// <remarks>
+    /// ⚠️ <b>A session child's notifications go to the connection the session is
+    /// attached to, since 2026-10-03</b> (previously to one relay handed in here,
+    /// which was the process's one caller). The session host serves several
+    /// connections over one set of sessions (Q366 b), so the caller a progress
+    /// notification belongs to is a fact about the session and not about the
+    /// process.
+    /// </remarks>
     /// <param name="environment">Where the index, the payload and the browsers are.</param>
     /// <param name="loggerFactory">The process-wide factory. Each session also gets its own.</param>
-    /// <param name="relay">Where a session child's progress notifications go.</param>
     public SessionManager(
         SessionEnvironment environment,
-        ILoggerFactory loggerFactory,
-        Func<JsonRpcNotification, CancellationToken, ValueTask> relay)
+        ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentNullException.ThrowIfNull(loggerFactory);
-        ArgumentNullException.ThrowIfNull(relay);
 
         _environment = environment;
         _logger = loggerFactory.CreateLogger<SessionManager>();
         _index = new SessionIndex(environment.Paths, _logger);
-        _relay = relay;
 
         // ⚠️ ONE PER PROCESS, and its logger is the PROCESS log's and not a
         // session's. Playwright's server registry is machine-wide, every reap of
@@ -720,22 +738,25 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     /// <summary>Runs one of the authored tools.</summary>
+    /// <param name="connection">The connection the call arrived on, which a session it opens or takes over is attached to.</param>
     /// <param name="tool">The tool name, <c>browserai_</c> prefixed.</param>
     /// <param name="arguments">Its arguments, as they arrived.</param>
     /// <param name="cancellationToken">The caller's token.</param>
     /// <returns>What to tell the caller, and whether it is a refusal.</returns>
-    public async Task<ToolOutcome> InvokeAsync(string tool, JsonObject? arguments, CancellationToken cancellationToken)
+    public async Task<ToolOutcome> InvokeAsync(CallerConnection connection, string tool, JsonObject? arguments, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(connection);
+
         try
         {
             return tool switch
             {
-                SessionToolSurface.Init => await InitAsync(arguments, cancellationToken).ConfigureAwait(false),
-                SessionToolSurface.Resume => await ResumeAsync(arguments, cancellationToken).ConfigureAwait(false),
+                SessionToolSurface.Init => await InitAsync(connection, arguments, cancellationToken).ConfigureAwait(false),
+                SessionToolSurface.Resume => await ResumeAsync(connection, arguments, cancellationToken).ConfigureAwait(false),
                 SessionToolSurface.CatchUp => CatchUp(arguments),
                 SessionToolSurface.List => List(arguments),
-                SessionToolSurface.Destroy => await DestroyAsync(arguments).ConfigureAwait(false),
-                SessionToolSurface.SetPurpose => SetPurpose(arguments),
+                SessionToolSurface.Destroy => await DestroyAsync(connection, arguments).ConfigureAwait(false),
+                SessionToolSurface.SetPurpose => await SetPurposeAsync(connection, arguments).ConfigureAwait(false),
                 SessionToolSurface.ReinstallBrowser => await ReinstallBrowserAsync(arguments, cancellationToken).ConfigureAwait(false),
                 _ => new ToolOutcome(SessionToolSurface.NotOneOfOurs(tool), IsError: true),
             };
@@ -766,6 +787,12 @@ internal sealed class SessionManager : IAsyncDisposable
     /// is the one there always was.
     /// </para>
     /// <para>
+    /// <b>The bound is the environment's since 2026-10-03</b>
+    /// (<see cref="SessionEnvironment.ShutdownCloseBudget"/>): one second in a server a
+    /// client started, as above, and thirty in the session host, which a client's kill
+    /// does not reach and which an update stops and waits for (Q366 b).
+    /// </para>
+    /// <para>
     /// <b>The bound is what keeps a wedged browser from holding a shutdown.</b>
     /// A close that meets an armed debugger pause never answers; past the bound
     /// the child is ended through its stdin, which a paused child obeys.
@@ -788,16 +815,162 @@ internal sealed class SessionManager : IAsyncDisposable
             }
         }
 
-        await Task.WhenAll(sessions.Select(shutDownAsync)).ConfigureAwait(false);
+        var budget = _environment.ShutdownCloseBudget;
 
-        static async Task shutDownAsync(LiveSession session)
+        await Task.WhenAll(sessions.Select(session => shutDownAsync(session, budget))).ConfigureAwait(false);
+
+        static async Task shutDownAsync(LiveSession session, TimeSpan budget)
         {
-            await session.CloseTheBrowserForShutdownAsync().ConfigureAwait(false);
+            await session.CloseTheBrowserForShutdownAsync(budget).ConfigureAwait(false);
             await session.DisposeAsync().ConfigureAwait(false);
         }
     }
 
-    private async Task<ToolOutcome> InitAsync(JsonObject? arguments, CancellationToken cancellationToken)
+    /// <summary>How many sessions this process holds right now.</summary>
+    public int HeldCount => _live.Count;
+
+    /// <summary>
+    /// Detaches every session a connection drove, once that connection has ended,
+    /// and judges each one: kept, or let go.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q366 b, the maintainer's words of 2026-10-03, verbatim:</b> <i>"If the
+    /// server crashes and the coordinator loses the pipe, keep the browser around
+    /// with the already running activity timeout timer active. This allows restarting
+    /// vscode, the claude code plugin or soemthing without losing the state. And the
+    /// timer logic for cleaning up inactive sessions already exsits."</i> And his
+    /// standing words from P7: <i>"it all needs to be done in a super safe way so we
+    /// don't permanently leak stuff."</i>
+    /// </para>
+    /// <para>
+    /// <b>Only the session host calls this.</b> A server a client started has one
+    /// connection, and when it ends the whole process ends with it, as it always did.
+    /// </para>
+    /// </remarks>
+    /// <param name="connection">The connection that ended.</param>
+    /// <returns>A task that completes once every session it drove has been judged.</returns>
+    public async Task DetachAsync(CallerConnection connection)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        _ = connection.End();
+
+        foreach (var live in _live.Values)
+        {
+            if (live.DetachFrom(connection))
+            {
+                await JudgeDetachedAsync(live, connection).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// What happens to one session whose client went: let go at once when there is
+    /// nothing to keep, and otherwise kept with what will end it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Released at once</b> when its browser was closed, by the idle timer or by a
+    /// <c>browser_close</c>; when its browser server has ended; and when no browser is
+    /// up. None of the three holds state a restart would lose, and a node child
+    /// with nothing to drive is about 50 MB held for nobody.
+    /// </para>
+    /// <para>
+    /// <b>Kept otherwise, and never without a way to end.</b> A headless session's
+    /// idle timer is still running from its last call, and the idle close lets it go
+    /// once it fires (<see cref="OnIdleFiredAsync"/>). A headed session has no timer
+    /// (Q326 a), so its window is looked at every
+    /// <see cref="LiveSession.DetachedWindowLook"/> and the session is let go once the
+    /// person has closed it.
+    /// </para>
+    /// </remarks>
+    /// <param name="live">The session, detached.</param>
+    /// <param name="connection">The connection that ended, for the log.</param>
+    /// <returns>The judgement.</returns>
+    private async Task JudgeDetachedAsync(LiveSession live, CallerConnection connection)
+    {
+        var nothingToKeep = live.Closed is not null ? "its browser had already been closed, so there was nothing to keep"
+            : live.Child.ChildHasGone ? "its browser server had ended, so there was nothing to keep"
+            : !live.BrowserIsOpen ? "no browser was up, so there was nothing to keep"
+            : null;
+
+        if (nothingToKeep is not null)
+        {
+            await ReleaseDetachedAsync(live, nothingToKeep).ConfigureAwait(false);
+            return;
+        }
+
+        // Guarded because the clauses are composed and not formatted: with the
+        // level off, neither is built.
+        if (live.Logger.IsEnabled(LogLevel.Information))
+        {
+            var ended = connection.Describe();
+            var until = live.Idle is { } idle
+                ? $"until it has gone {SessionErrors.Duration(idle.Period)} with no call, when the idle close ends it and the session is let go"
+                : $"for as long as its window is open: a headed session has no idle timer, so it is looked at every {SessionErrors.Duration(LiveSession.DetachedWindowLook)} and let go once the window is closed";
+
+            SessionToolLog.KeptWithoutAClient(live.Logger, live.Location.FullPath, ended, until);
+        }
+
+        if (live.Idle is null)
+        {
+            live.WatchTheWindowWhileDetached(session => ReleaseDetachedAsync(session, "its window was closed"));
+        }
+    }
+
+    /// <summary>What the idle timer's firing means for a session nobody drives: it is let go.</summary>
+    /// <param name="live">The session whose timer fired.</param>
+    /// <returns>The release, or nothing when a client drives it.</returns>
+    private async Task OnIdleFiredAsync(LiveSession live)
+    {
+        if (!live.IsDetached)
+        {
+            return;
+        }
+
+        await ReleaseDetachedAsync(
+            live,
+            live.Closed is not null
+                ? "the idle close ended its browser"
+                : "the idle timer fired and found no browser up").ConfigureAwait(false);
+    }
+
+    /// <summary>Tears a detached session down and lets its directory go.</summary>
+    /// <remarks>
+    /// <b>It stays in the dictionary until the teardown has finished</b>, answering
+    /// <see cref="SessionClaim.Releasing"/>, so a resume that arrives meanwhile waits
+    /// for the lock this process still holds and does not meet it as another holder.
+    /// </remarks>
+    /// <param name="live">The session.</param>
+    /// <param name="why">Why it is let go, for the log.</param>
+    /// <returns>The release.</returns>
+    private async Task ReleaseDetachedAsync(LiveSession live, string why)
+    {
+        if (!live.TryBeginRelease())
+        {
+            return;
+        }
+
+        try
+        {
+            await live.TearDownAsync(ServerRegistryReap.AfterTeardown).ConfigureAwait(false);
+            SessionToolLog.ReleasedWithoutAClient(_logger, live.Location.FullPath, why);
+        }
+#pragma warning disable CA1031 // A release that fails is a log line: the child's job still ends its browser when this process ends.
+        catch (Exception failure)
+#pragma warning restore CA1031
+        {
+            SessionToolLog.ReleaseFailed(_logger, live.Location.FullPath, failure);
+        }
+        finally
+        {
+            _ = _live.TryRemove(new KeyValuePair<string, LiveSession>(live.Location.Key, live));
+            live.ReleaseFinished();
+        }
+    }
+
+    private async Task<ToolOutcome> InitAsync(CallerConnection connection, JsonObject? arguments, CancellationToken cancellationToken)
     {
         // ⚠️ FIRST, AND HELD FROM HERE TO THE END OF THE SESSION. This is the
         // reader half of the machine-wide reader/writer claim on the browsers
@@ -877,6 +1050,7 @@ internal sealed class SessionManager : IAsyncDisposable
             claim = null;
 
             return await OpenAsync(
+                connection,
                 location,
                 new SessionLockRequest
                 {
@@ -907,7 +1081,7 @@ internal sealed class SessionManager : IAsyncDisposable
         }
     }
 
-    private async Task<ToolOutcome> ResumeAsync(JsonObject? arguments, CancellationToken cancellationToken)
+    private async Task<ToolOutcome> ResumeAsync(CallerConnection connection, JsonObject? arguments, CancellationToken cancellationToken)
     {
         // ⚠️ FIRST, exactly as `init` does and for the same reason: a resume
         // opens a browser into an existing profile under the same tree, so it is
@@ -949,7 +1123,50 @@ internal sealed class SessionManager : IAsyncDisposable
             var createdHere = false;
             var noticeGiven = false;
 
-            if (_live.TryGetValue(location.Key, out var already))
+            // ⚠️ WHO DRIVES IT FIRST -- Q366 b, 2026-10-03. In the session host one
+            // process holds the sessions of every client, so "this process holds
+            // it" is no longer "this caller drives it". A session another open
+            // connection drives is refused the way a lock another process holds
+            // is; one whose client went is taken over, and its browser never
+            // closed, which the answer says. One the host is letting go is waited
+            // for and then opened again, because its lock is this process's own
+            // until the release has finished.
+            LiveSession? already = null;
+
+            while (_live.TryGetValue(location.Key, out var found))
+            {
+                var driving = found.Claim(connection, out var holder);
+
+                if (driving is SessionClaim.Releasing)
+                {
+                    await found.Released.ConfigureAwait(false);
+                    continue;
+                }
+
+                if (driving is SessionClaim.HeldElsewhere)
+                {
+                    return new ToolOutcome(
+                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Resume, location.FullPath, holder!.Describe()),
+                        IsError: true);
+                }
+
+                if (driving is SessionClaim.TakenOver)
+                {
+                    if (found.Logger.IsEnabled(LogLevel.Information))
+                    {
+                        var taking = connection.Describe();
+
+                        SessionToolLog.TakenOver(found.Logger, location.FullPath, taking);
+                    }
+
+                    notes.Add(KeptWhileItsClientWasAway);
+                }
+
+                already = found;
+                break;
+            }
+
+            if (already is not null)
             {
                 // ⚠️ THE QUESTION THIS PATH USED TO ASK WAS THE WRONG ONE, AND
                 // SINCE 2026-09-17 IT ASKS MORE THAN ONE. `do I already own this
@@ -1016,7 +1233,7 @@ internal sealed class SessionManager : IAsyncDisposable
                     already.Lock.Settle(row, SessionStore.Successful, failure: null);
 
                     return new ToolOutcome(
-                        Describe(already, [browserUp ? BrowserIsUpSoNothingWasApplied : NothingNeededApplying]),
+                        Describe(already, [.. notes, browserUp ? BrowserIsUpSoNothingWasApplied : NothingNeededApplying]),
                         IsError: false);
                 }
 
@@ -1123,6 +1340,7 @@ internal sealed class SessionManager : IAsyncDisposable
             claim = null;
 
             return await OpenAsync(
+                connection,
                 location,
                 new SessionLockRequest
                 {
@@ -1714,7 +1932,7 @@ internal sealed class SessionManager : IAsyncDisposable
         };
     }
 
-    private async Task<ToolOutcome> DestroyAsync(JsonObject? arguments)
+    private async Task<ToolOutcome> DestroyAsync(CallerConnection connection, JsonObject? arguments)
     {
         var location = Resolve(Required(arguments, "directory"), "directory");
 
@@ -1723,6 +1941,29 @@ internal sealed class SessionManager : IAsyncDisposable
         // changed nothing, and by the time the session's browser is closed and
         // its tree is walked there is nothing left to refuse into.
         var why = Why(arguments, SessionToolSurface.Destroy);
+
+        // ⚠️ NOT A SESSION ANOTHER OPEN CLIENT DRIVES -- Q366 b, 2026-10-03. The
+        // session host holds every client's sessions, so a destroy is asked the
+        // question a lock asks between processes. One whose client went is taken
+        // over and destroyed; one being let go is waited for, and then the
+        // directory is free for the path below.
+        if (_live.TryGetValue(location.Key, out var named))
+        {
+            switch (named.Claim(connection, out var holder))
+            {
+                case SessionClaim.HeldElsewhere:
+                    return new ToolOutcome(
+                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.Destroy, location.FullPath, holder!.Describe()),
+                        IsError: true);
+
+                case SessionClaim.Releasing:
+                    await named.Released.ConfigureAwait(false);
+                    break;
+
+                default:
+                    break;
+            }
+        }
 
         if (_live.TryRemove(location.Key, out var live))
         {
@@ -1845,11 +2086,30 @@ internal sealed class SessionManager : IAsyncDisposable
                 IsError: true);
     }
 
-    private ToolOutcome SetPurpose(JsonObject? arguments)
+    private async Task<ToolOutcome> SetPurposeAsync(CallerConnection connection, JsonObject? arguments)
     {
         var location = Resolve(Required(arguments, "session"), "session");
         var purpose = RecordText.Sanitise(Required(arguments, "purpose"));
         var why = Why(arguments, SessionToolSurface.SetPurpose);
+
+        // Q366 b: the claim a destroy asks, for the same reason.
+        if (_live.TryGetValue(location.Key, out var named))
+        {
+            switch (named.Claim(connection, out var holder))
+            {
+                case SessionClaim.HeldElsewhere:
+                    return new ToolOutcome(
+                        SessionErrors.SessionDrivenByAnotherClient(SessionToolSurface.SetPurpose, location.FullPath, holder!.Describe()),
+                        IsError: true);
+
+                case SessionClaim.Releasing:
+                    await named.Released.ConfigureAwait(false);
+                    break;
+
+                default:
+                    break;
+            }
+        }
 
         if (_live.TryGetValue(location.Key, out var live))
         {
@@ -2439,6 +2699,7 @@ internal sealed class SessionManager : IAsyncDisposable
     }
 
     private async Task<ToolOutcome> OpenAsync(
+        CallerConnection connection,
         SessionPath location,
         SessionLockRequest request,
         SessionRunSettings settings,
@@ -2524,12 +2785,24 @@ internal sealed class SessionManager : IAsyncDisposable
             // that does not get there -- but both types are IAsyncDisposable
             // and not IDisposable, and the rule's dataflow does not follow an
             // `await x.DisposeAsync()` in a finally.
+            // ⚠️ A CHILD'S NOTIFICATIONS GO TO WHOEVER DRIVES THE SESSION WHEN THEY
+            // ARRIVE -- Q366 b, 2026-10-03. The session host serves many
+            // connections, and the one a session is attached to can change while
+            // the child lives, so the relay asks the session each time and not the
+            // connection that opened it.
+            var relayTo = new StrongBox<LiveSession?>();
+
+            ValueTask relay(JsonRpcNotification notification, CancellationToken token) =>
+                Volatile.Read(ref relayTo.Value)?.AttachedTo is { } driving
+                    ? driving.RelayAsync(notification, token)
+                    : ValueTask.CompletedTask;
+
 #pragma warning disable CA2000
             child = await _environment.ConnectChild(
                 options,
                 logging.Factory,
                 ChildRequestIdPrefix(location),
-                _relay,
+                relay,
                 cancellationToken).ConfigureAwait(false);
 
             session = new LiveSession(location, held, claim, child, settings, logging, config, configFile, createdHere, _environment, _reap)
@@ -2537,6 +2810,12 @@ internal sealed class SessionManager : IAsyncDisposable
                 NoticeGiven = noticeGiven,
             };
 #pragma warning restore CA2000
+
+            // Attached BEFORE it is published, so no other connection can meet it
+            // with nobody driving it and take it over.
+            session.AttachTo(connection);
+            session.WhenIdleFires(OnIdleFiredAsync);
+            Volatile.Write(ref relayTo.Value, session);
 
             if (!_live.TryAdd(location.Key, session))
             {
@@ -2562,7 +2841,18 @@ internal sealed class SessionManager : IAsyncDisposable
                 SessionToolLog.Why(sessionLogger, SessionToolSurface.Resume, why);
             }
 
-            return new ToolOutcome(Describe(session, notes), IsError: false);
+            var answer = new ToolOutcome(Describe(session, notes), IsError: false);
+
+            // ⚠️ A CONNECTION THAT ENDED WHILE THIS OPEN RAN has already detached
+            // whatever it found in the dictionary, and this session was not in it
+            // yet. Asked after the add, so one of the two always sees the other,
+            // and after the opening is settled, so the record says it opened.
+            if (!connection.IsOpen && session.DetachFrom(connection))
+            {
+                await JudgeDetachedAsync(session, connection).ConfigureAwait(false);
+            }
+
+            return answer;
         }
         catch (FirefoxProfileLockedException collision)
         {
@@ -3529,6 +3819,47 @@ internal static partial class SessionToolLog
         Level = LogLevel.Warning,
         Message = "Whether {Browser} is provisioned could not be determined; the call was allowed through, not refused on a guess.")]
     public static partial void ProvisioningUnreadable(ILogger logger, string browser, Exception failure);
+
+    /// <summary>A connection took over a session whose client had gone.</summary>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="connection">The connection that took it, as a person reads it.</param>
+    [LoggerMessage(
+        EventId = 51,
+        Level = LogLevel.Information,
+        Message = "The session at {Directory} was kept while no client drove it, and {Connection} drives it now; its browser never closed.")]
+    public static partial void TakenOver(ILogger logger, string directory, string connection);
+
+    /// <summary>A session's client went, and the host keeps the session.</summary>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="connection">The connection that ended.</param>
+    /// <param name="until">What ends the session from here, in one clause.</param>
+    [LoggerMessage(
+        EventId = 52,
+        Level = LogLevel.Information,
+        Message = "The client driving the session at {Directory} went away ({Connection}). Its browser is kept {Until}.")]
+    public static partial void KeptWithoutAClient(ILogger logger, string directory, string connection, string until);
+
+    /// <summary>A session whose client went was released, and why.</summary>
+    /// <param name="logger">The process log: the session's own stack is being torn down.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="why">Why it was released.</param>
+    [LoggerMessage(
+        EventId = 53,
+        Level = LogLevel.Information,
+        Message = "Released the session at {Directory}, which no client drove: {Why}")]
+    public static partial void ReleasedWithoutAClient(ILogger logger, string directory, string why);
+
+    /// <summary>Releasing a session whose client went failed, and the session is left to the process's own shutdown.</summary>
+    /// <param name="logger">The process log.</param>
+    /// <param name="directory">The session directory.</param>
+    /// <param name="failure">Why.</param>
+    [LoggerMessage(
+        EventId = 54,
+        Level = LogLevel.Error,
+        Message = "Releasing the session at {Directory}, which no client drove, failed. Its child's job still ends its browser when this process ends.")]
+    public static partial void ReleaseFailed(ILogger logger, string directory, Exception failure);
 
     // Ids 49 and 50 were `ChildRelaunched` and `ChildNotRelaunched`, written by
     // the in-place relaunch a resume made from 2026-09-17 when it met a dead

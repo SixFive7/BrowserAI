@@ -40,7 +40,27 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       which the building lane judged a timing test. **What to do:** decide
       whether a kill-and-read-back arm can be written as a hang detector, and
       build it if it can; the process outside the client's tree, direction (c),
-      is not built by decision.
+      is not built by decision. *Corrected 2026-10-03 by addition (previously
+      "is not built by decision"): the maintainer reversed it the same day,
+      Q366 b, and (c) is built, see the next item. In an install the client's
+      kill reaches no browser now, so the arm is owed for a server that serves
+      its client itself, which is every build that is not installed.*
+- [ ] **Option c, Q366 b and Q364: what the build of 2026-10-03 leaves.** Built
+      by lane c: the coordinator starts a session host in a kill-on-close job of
+      its own, and the server a client starts relays its stdio to it, so a
+      session outlives its client; see
+      [the design](docs/design/coordinator-owned-browsers/README.md). **What to
+      do:** an arm through a real logon task and a real client, which installs
+      a test pack, lets an installed server reach its host through the task,
+      ends that server the way each client does and finds the session as it was
+      left, once it is decided whether the real-installer arms may start a
+      coordinator through the scheduler; a measurement of that cold path and of
+      the first request a Codex thread sends, which the hazard row on Codex's
+      one-second grace asks for; and the launch levers the durability
+      research recommends, once the maintainer has answered Q376 to Q378, in
+      `BrowserConfiguration`, which every session child the host starts is
+      launched with. The coordinator stays while a tab is open or its host runs,
+      whichever is longer.
 - [ ] **The browser tab, Q315 a: what is left of replacing the configuration
       window.** Built on 2026-10-03, in `src/BrowserAI.App/Page/`: the listener,
       its gate and its token (Q340 b, Q341 b, Q342 c, Q343, Q334 a, Q335 a, with
@@ -105,6 +125,14 @@ record is its [ledger](docs/ledger/2026-09-24-development-session.md).
       hard kill matters enough to revisit it -- and the choices the coordinator
       core's writer made inside the design, which its rows in `DECISIONS.md`
       name. **What to do:** walk him through them and record each answer.
+      *Corrected 2026-10-03 by addition: (c) is built since Q366 b, and its own
+      choices are the next item.*
+- [ ] **Option c's decisions taken for review.** The ones
+      [the design](docs/design/coordinator-owned-browsers/README.md#decisions-taken-for-review)
+      numbers, and one question the build put to the root session: whether a
+      session the host kept for a client that went should hold an update the way
+      a connected client's does, where today the update closes its browser.
+      **What to do:** walk him through them and record each answer.
 
 ### Paused work
 

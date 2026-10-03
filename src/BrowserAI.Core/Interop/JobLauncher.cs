@@ -311,7 +311,7 @@ internal static partial class JobLauncher
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>One caller and one purpose:</b> <see cref="Runtime.ServerRegistryReap"/>,
+    /// <b>One caller and one purpose:</b> the server's <c>Runtime.ServerRegistryReap</c>,
     /// which starts Playwright's own registry reaper at a session close and never
     /// waits for it. Every other launch in this product is this one's opposite --
     /// inside a job from the instant it exists, with its three streams on pipes --
@@ -413,6 +413,90 @@ internal static partial class JobLauncher
             _ = CloseHandle(information.Thread);
             _ = CloseHandle(information.Process);
         }
+    }
+
+    /// <summary>
+    /// Starts <paramref name="command"/> inside <paramref name="job"/>, inheriting
+    /// <b>nothing</b>, with no standard stream named and a console of its own that has
+    /// no window on it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>One caller and one purpose: the coordinator starting the session host</b>,
+    /// Q366 b, the maintainer's words of 2026-10-03, verbatim: <i>"Q366 b - lets go
+    /// with a fully build option c."</i> The host is a member of the coordinator's
+    /// kill-on-close job from the instant it exists, through
+    /// <c>PROC_THREAD_ATTRIBUTE_JOB_LIST</c> as every child here is, so the
+    /// coordinator's death takes it and everything it started; and it inherits
+    /// nothing, the way <see cref="StartDetached"/>'s launch does, because a process
+    /// that lives for hours must hold none of its parent's handles.
+    /// </para>
+    /// <para>
+    /// <b>Its output goes to a console nothing reads</b>, as the detached launch's
+    /// does: no standard handle is named, so with <c>CREATE_NO_WINDOW</c> a
+    /// console-subsystem child is given a new console and writes into its screen
+    /// buffer, which cannot fill. A pipe nobody drained would stop the host the
+    /// first time it filled.
+    /// </para>
+    /// </remarks>
+    /// <param name="job">The job the child is created in. Not modified.</param>
+    /// <param name="command">The executable's absolute path. Nothing resolves it and no shell sees it.</param>
+    /// <param name="arguments">Arguments, quoted for <c>CreateProcessW</c> here.</param>
+    /// <param name="workingDirectory">The child's working directory. Required, never inherited.</param>
+    /// <param name="environment">The child's complete environment block. It replaces ours instead of adding to it.</param>
+    /// <returns>The running child, held open to be waited on.</returns>
+    /// <exception cref="Win32Exception">Windows refused some step of the launch, named in the message.</exception>
+    public static JobMember StartInJob(
+        JobObject job,
+        string command,
+        IReadOnlyList<string> arguments,
+        string workingDirectory,
+        IReadOnlyDictionary<string, string> environment)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentNullException.ThrowIfNull(workingDirectory);
+        ArgumentNullException.ThrowIfNull(environment);
+
+        using var attributes = ProcessAttributeList.For(job, []);
+
+        var commandLine = BuildCommandLine(command, arguments);
+        var environmentBlock = BuildEnvironmentBlock(environment);
+
+        var startup = default(StartupInfoEx);
+        startup.StartupInfo.Cb = Unsafe.SizeOf<StartupInfoEx>();
+        startup.AttributeList = attributes.Pointer;
+
+        if (!CreateProcessW(
+                command,
+                commandLine,
+                nint.Zero,
+                nint.Zero,
+                bInheritHandles: false,
+                ExtendedStartupInfoPresent | CreateUnicodeEnvironment | CreateNoWindow,
+                environmentBlock,
+                workingDirectory,
+                ref startup,
+                out var information))
+        {
+            throw new Win32Exception(
+                Marshal.GetLastPInvokeError(),
+                $"CreateProcessW could not start '{command}' in '{workingDirectory}'.");
+        }
+
+        // After the call, for the reason Start gives: the attribute list names the
+        // job's handle by value, and this keeps the object holding it alive across
+        // the one call that reads it.
+        GC.KeepAlive(job);
+
+        _ = CloseHandle(information.Thread);
+
+        var created = ProcessLiveness.TryCreationTimeOf(information.Process, out var creationFileTime) ? creationFileTime : 0;
+
+#pragma warning disable CA2000 // JobMember takes ownership of the handle and closes it; the caller owns the member.
+        return new JobMember(new SafeProcessHandle(information.Process, ownsHandle: true), (int)information.ProcessId, created);
+#pragma warning restore CA2000
     }
 
     /// <summary>
@@ -605,8 +689,11 @@ internal static partial class JobLauncher
     /// </remarks>
     private sealed class ProcessAttributeList : IDisposable
     {
-        /// <summary>The job, then the handle list.</summary>
+        /// <summary>The job, then the handle list when there is one.</summary>
         private const int AttributeCount = 2;
+
+        /// <summary>The job alone, for a launch that inherits nothing.</summary>
+        private const int JobOnly = 1;
 
         private readonly SafeJobHandle _job;
         private readonly nint _jobHandleStorage;
@@ -625,11 +712,17 @@ internal static partial class JobLauncher
 
         public static ProcessAttributeList For(JobObject job, IReadOnlyList<nint> inheritable)
         {
+            // ⚠️ NO HANDLE LIST WHEN NOTHING IS INHERITED -- added 2026-10-03 with
+            // StartInJob. The list is the exact set a launch with bInheritHandles
+            // TRUE may pass on; a launch that passes FALSE inherits nothing, and a
+            // list of none is not a list Windows accepts.
+            var attributes = inheritable.Count is 0 ? JobOnly : AttributeCount;
+
             // The documented two-call shape: the first call fails with
             // ERROR_INSUFFICIENT_BUFFER and reports the size.
             var size = nuint.Zero;
 
-            if (InitializeProcThreadAttributeList(nint.Zero, AttributeCount, 0, ref size))
+            if (InitializeProcThreadAttributeList(nint.Zero, attributes, 0, ref size))
             {
                 throw new Win32Exception("InitializeProcThreadAttributeList unexpectedly succeeded while sizing the buffer.");
             }
@@ -648,7 +741,7 @@ internal static partial class JobLauncher
 
             try
             {
-                if (!InitializeProcThreadAttributeList(list, AttributeCount, 0, ref size))
+                if (!InitializeProcThreadAttributeList(list, attributes, 0, ref size))
                 {
                     throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not initialise the process attribute list.");
                 }
@@ -676,6 +769,11 @@ internal static partial class JobLauncher
                 if (!UpdateProcThreadAttribute(list, 0, ProcThreadAttributeJobList, jobStorage, (nuint)nint.Size, nint.Zero, nint.Zero))
                 {
                     throw new Win32Exception(Marshal.GetLastPInvokeError(), "Could not put the job object on the process attribute list.");
+                }
+
+                if (inheritable.Count is 0)
+                {
+                    return new ProcessAttributeList(list, job.Handle, jobStorage, handleStorage);
                 }
 
                 var handleListBytes = nint.Size * inheritable.Count;
@@ -913,3 +1011,25 @@ internal static partial class JobLauncher
 /// the same thing <c>@0</c> means in a record in the process log.
 /// </param>
 internal readonly record struct DetachedProcess(int ProcessId, long CreatedFileTime);
+
+/// <summary>
+/// A process <see cref="JobLauncher.StartInJob"/> started: its handle, held open to be
+/// waited on, and its identity.
+/// </summary>
+/// <param name="handle">The process handle. This object owns it.</param>
+/// <param name="processId">The pid.</param>
+/// <param name="createdFileTime">Its creation time, which with the pid is its identity; zero when it could not be read.</param>
+internal sealed class JobMember(SafeProcessHandle handle, int processId, long createdFileTime) : IDisposable
+{
+    /// <summary>The process handle, which signals when the process exits.</summary>
+    public SafeProcessHandle Handle { get; } = handle;
+
+    /// <summary>The pid.</summary>
+    public int ProcessId { get; } = processId;
+
+    /// <summary>The creation time.</summary>
+    public long CreatedFileTime { get; } = createdFileTime;
+
+    /// <inheritdoc />
+    public void Dispose() => Handle.Dispose();
+}

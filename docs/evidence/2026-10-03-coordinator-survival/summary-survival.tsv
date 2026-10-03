@@ -1,0 +1,8 @@
+scenario	runs	server killed (exit!=77)	in-tree stand-in dead	host browser alive after settle	alive 3 s later	released and died
+b1	3	3/3	3/3	3/3	3/3	3/3
+b2	3	3/3	3/3	3/3	3/3	3/3
+d1	3	3/3	3/3	3/3	3/3	3/3
+d2	3	3/3	3/3	3/3	3/3	3/3
+e5	3	3/3	3/3	3/3	3/3	3/3
+n1	3	3/3	3/3	3/3	3/3	3/3
+n2	3	3/3	3/3	3/3	3/3	3/3

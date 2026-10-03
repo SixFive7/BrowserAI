@@ -1,0 +1,599 @@
+// SPDX-FileCopyrightText: 2026 Jori Huisman
+// SPDX-License-Identifier: LicenseRef-BrowserAI-FSL-1.1-MIT-5yr
+
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using Microsoft.Win32.SafeHandles;
+
+namespace ExitRig;
+
+sealed class Proc
+{
+    public int Pid, Ppid;
+    public long CreateFt;
+    public string Image = "", Cmd = "", Role = "";
+    public SafeProcessHandle? H;
+    public long FoundQpc, ExitQpc, ExitFt;
+    public uint? ExitCode;
+    public bool? InJob;
+    public bool Exited => Volatile.Read(ref ExitQpc) != 0;
+}
+
+/// <summary>
+/// Observes a process tree from OUTSIDE it: polls toolhelp snapshots every ~1 ms, adopts every
+/// process whose parent pid is already tracked (and which was created after that parent), opens
+/// a handle at once, and records each exit's time and code through that handle. Holding the
+/// handle keeps the pid from being reused, so the parent-pid walk cannot alias.
+/// </summary>
+sealed class Tracker
+{
+    readonly ConcurrentDictionary<int, Proc> _byPid = new();
+    readonly Log _ev;
+    readonly string _rigExe;
+    volatile bool _stop;
+    Thread? _thread;
+    public long Snapshots;
+    readonly HashSet<int> _unopenable = new();
+
+    public Tracker(Log ev, string rigExe) { _ev = ev; _rigExe = rigExe; }
+
+    public IEnumerable<Proc> All => _byPid.Values.OrderBy(p => p.FoundQpc);
+
+    public Proc AddRoot(SafeProcessHandle h, int pid, string role)
+    {
+        var p = new Proc { Pid = pid, Ppid = -1, H = h, Role = role, FoundQpc = Clock.Now(), CreateFt = Native.CreationTime(h) };
+        p.Image = Native.ImageOf(h);
+        p.Cmd = Native.CommandLineOf(h);
+        if (Native.IsProcessInJob(h, IntPtr.Zero, out bool j)) p.InJob = j;
+        _byPid[pid] = p;
+        _ev.W("observer", "ROOT", $"pid={pid} role={role} created={Clock.Ft(p.CreateFt)} inJob={p.InJob} image={p.Image} cmd={p.Cmd}");
+        StartWaiter(p);
+        return p;
+    }
+
+    public void Start()
+    {
+        _thread = new Thread(Loop) { IsBackground = true, Priority = ThreadPriority.AboveNormal, Name = "tracker" };
+        _thread.Start();
+    }
+
+    public void Stop() { _stop = true; _thread?.Join(2000); }
+
+    public bool AllExited => _byPid.Values.All(p => p.Exited);
+
+    string Classify(Proc p)
+    {
+        string img = p.Image;
+        string file = Path.GetFileName(img).ToLowerInvariant();
+        if (string.Equals(img, _rigExe, StringComparison.OrdinalIgnoreCase))
+        {
+            if (p.Cmd.Contains(" server ", StringComparison.Ordinal)) return "server";
+            if (p.Cmd.Contains(" standin ", StringComparison.Ordinal)) return "standin";
+            if (p.Cmd.Contains(" keeper ", StringComparison.Ordinal)) return "keeper";
+            if (p.Cmd.Contains(" launcher ", StringComparison.Ordinal)) return "launcher";
+            return "rig";
+        }
+        return file switch
+        {
+            "taskkill.exe" => "KILLER:taskkill",
+            "conhost.exe" => "conhost",
+            _ => "other:" + file,
+        };
+    }
+
+    void Loop()
+    {
+        var e = new Native.PROCESSENTRY32W { dwSize = (uint)Marshal.SizeOf<Native.PROCESSENTRY32W>() };
+        var list = new List<(int pid, int ppid)>(1024);
+        while (!_stop)
+        {
+            IntPtr snap = Native.CreateToolhelp32Snapshot(2, 0);
+            if (snap != new IntPtr(-1))
+            {
+                list.Clear();
+                e.dwSize = (uint)Marshal.SizeOf<Native.PROCESSENTRY32W>();
+                if (Native.Process32FirstW(snap, ref e))
+                {
+                    do { list.Add(((int)e.th32ProcessID, (int)e.th32ParentProcessID)); } while (Native.Process32NextW(snap, ref e));
+                }
+                Native.CloseHandle(snap);
+                Interlocked.Increment(ref Snapshots);
+                bool added;
+                do
+                {
+                    added = false;
+                    foreach (var (pid, ppid) in list)
+                    {
+                        if (_byPid.ContainsKey(pid) || _unopenable.Contains(pid)) continue;
+                        if (!_byPid.TryGetValue(ppid, out var parent)) continue;
+                        long found = Clock.Now();
+                        var h = Native.OpenProcess(Native.PROCESS_QUERY_LIMITED_INFORMATION | Native.SYNCHRONIZE, false, pid);
+                        if (h.IsInvalid)
+                        {
+                            int err = Marshal.GetLastWin32Error();
+                            _unopenable.Add(pid);
+                            _ev.W("observer", "FOUND_NOHANDLE", $"pid={pid} ppid={ppid} err={err}");
+                            continue;
+                        }
+                        long ct = Native.CreationTime(h);
+                        if (ct < parent.CreateFt || (parent.ExitFt != 0 && ct > parent.ExitFt))
+                        {
+                            _unopenable.Add(pid);
+                            _ev.W("observer", "FOUND_NOT_CHILD", $"pid={pid} ppid={ppid} created={Clock.Ft(ct)} parentCreated={Clock.Ft(parent.CreateFt)}");
+                            h.Dispose();
+                            continue;
+                        }
+                        var p = new Proc { Pid = pid, Ppid = ppid, H = h, FoundQpc = found, CreateFt = ct };
+                        p.Image = Native.ImageOf(h);
+                        p.Cmd = Native.CommandLineOf(h);
+                        if (Native.IsProcessInJob(h, IntPtr.Zero, out bool j)) p.InJob = j;
+                        p.Role = Classify(p);
+                        _byPid[pid] = p;
+                        added = true;
+                        _ev.W("observer", "FOUND", $"pid={pid} ppid={ppid} role={p.Role} created={Clock.Ft(ct)} inJob={p.InJob} image={p.Image} cmd={p.Cmd}");
+                        StartWaiter(p);
+                    }
+                } while (added);
+            }
+            Thread.Sleep(1);
+        }
+    }
+
+    void StartWaiter(Proc p)
+    {
+        var t = new Thread(() =>
+        {
+            Native.WaitForSingleObject(p.H!, Native.INFINITE);
+            long q = Clock.Now();
+            Native.GetExitCodeProcess(p.H!, out uint code);
+            Native.GetProcessTimes(p.H!, out _, out long ex, out _, out _);
+            p.ExitCode = code; p.ExitFt = ex;
+            Volatile.Write(ref p.ExitQpc, q);
+            _ev.W("observer", "EXIT", $"pid={p.Pid} role={p.Role} code={code} (0x{code:X8}) exitUtc={Clock.Ft(ex)} qpcSeen={Clock.Ms(q)}");
+        }) { IsBackground = true, Priority = ThreadPriority.AboveNormal, Name = "waiter-" + p.Pid };
+        t.Start();
+    }
+}
+
+sealed class RunSpec
+{
+    public string Name = "";
+    public string Dir = "";
+    public string Exe = "";
+    public List<string> Args = new();
+    public string? Cwd;
+    public Dictionary<string, string?> Env = new();
+    public string Stdin = "closed"; // closed | pipe
+    public string Console = "pipes"; // pipes | pty
+    public bool PtyNullStdHandles;   // STARTF_USESTDHANDLES with NULL handles, so the child cannot pick up the harness's redirected ones
+    public List<JsonObject> Steps = new();
+    public List<(string path, string content)> WriteFiles = new();
+    public bool AutoReplyJsonRpc;
+    public int MaxMs = 120000;
+    public int SettleMs = 25000;
+    public string? HostPipe;
+    public string? HostId;
+
+    public static RunSpec From(JsonObject o)
+    {
+        var s = new RunSpec
+        {
+            Name = o["name"]!.GetValue<string>(),
+            Dir = o["dir"]!.GetValue<string>(),
+            Exe = o["exe"]!.GetValue<string>(),
+            Cwd = o["cwd"]?.GetValue<string>(),
+            Stdin = o["stdin"]?.GetValue<string>() ?? "closed",
+            Console = o["console"]?.GetValue<string>() ?? "pipes",
+            PtyNullStdHandles = o["ptyNullStdHandles"]?.GetValue<bool>() ?? false,
+            AutoReplyJsonRpc = o["autoReplyJsonRpc"]?.GetValue<bool>() ?? false,
+            MaxMs = o["maxMs"]?.GetValue<int>() ?? 120000,
+            SettleMs = o["settleMs"]?.GetValue<int>() ?? 25000,
+            HostPipe = o["hostPipe"]?.GetValue<string>(),
+            HostId = o["hostId"]?.GetValue<string>(),
+        };
+        if (o["args"] is JsonArray a) foreach (var x in a) s.Args.Add(x!.GetValue<string>());
+        if (o["env"] is JsonObject env) foreach (var kv in env) s.Env[kv.Key] = kv.Value?.GetValue<string>();
+        if (o["steps"] is JsonArray st) foreach (var x in st) s.Steps.Add((JsonObject)x!.DeepClone());
+        if (o["writeFiles"] is JsonArray wf) foreach (var x in wf) s.WriteFiles.Add((x!["path"]!.GetValue<string>(), x["content"]!.GetValue<string>()));
+        return s;
+    }
+}
+
+static class Harness
+{
+    static readonly string[] EnvAllow =
+    {
+        "ALLUSERSPROFILE", "COMPUTERNAME", "ComSpec", "CommonProgramFiles", "CommonProgramFiles(x86)", "CommonProgramW6432",
+        "DriverData", "HOMEDRIVE", "HOMEPATH", "LOGONSERVER", "NUMBER_OF_PROCESSORS", "OS", "Path", "PATHEXT",
+        "PROCESSOR_ARCHITECTURE", "PROCESSOR_IDENTIFIER", "PROCESSOR_LEVEL", "PROCESSOR_REVISION", "ProgramData",
+        "ProgramFiles", "ProgramFiles(x86)", "ProgramW6432", "PUBLIC", "SESSIONNAME", "SystemDrive", "SystemRoot",
+        "USERDOMAIN", "USERDOMAIN_ROAMINGPROFILE", "USERNAME", "USERPROFILE", "windir",
+    };
+
+    public static int RunBatch(string batchPath)
+    {
+        Native.timeBeginPeriod(1);
+        var batch = JsonNode.Parse(File.ReadAllText(batchPath))!.AsObject();
+        string progress = batch["progress"]!.GetValue<string>();
+        var plog = new Log(progress);
+        var stubs = new List<(Process p, string name)>();
+        try
+        {
+            if (batch["stubs"] is JsonArray sa)
+            {
+                foreach (var sn in sa)
+                {
+                    var so = sn!.AsObject();
+                    var psi = new ProcessStartInfo(so["exe"]!.GetValue<string>()) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+                    foreach (var x in (JsonArray)so["args"]!) psi.ArgumentList.Add(x!.GetValue<string>());
+                    if (so["env"] is JsonObject se) foreach (var kv in se) psi.Environment[kv.Key] = kv.Value?.GetValue<string>();
+                    var p = Process.Start(psi)!;
+                    p.OutputDataReceived += (_, _) => { }; p.ErrorDataReceived += (_, _) => { };
+                    p.BeginOutputReadLine(); p.BeginErrorReadLine();
+                    stubs.Add((p, so["name"]!.GetValue<string>()));
+                    plog.W("batch", "STUB_START", $"name={so["name"]} pid={p.Id} created={p.StartTime.ToUniversalTime():O}");
+                }
+                Thread.Sleep(1500);
+            }
+            var runs = (JsonArray)batch["runs"]!;
+            int i = 0;
+            foreach (var rn in runs)
+            {
+                i++;
+                var spec = RunSpec.From(rn!.AsObject());
+                if (File.Exists(Path.Combine(spec.Dir, "result.json"))) { plog.W("batch", "SKIP_DONE", $"{i}/{runs.Count} {spec.Name}"); continue; }
+                plog.W("batch", "RUN_START", $"{i}/{runs.Count} {spec.Name}");
+                int rc;
+                try { rc = RunSpecOnce(spec); }
+                catch (Exception ex) { plog.W("batch", "RUN_ERROR", $"{spec.Name} {ex}"); rc = -99; }
+                plog.W("batch", "RUN_END", $"{i}/{runs.Count} {spec.Name} rc={rc}");
+                Thread.Sleep(batch["gapMs"]?.GetValue<int>() ?? 1000);
+            }
+        }
+        finally
+        {
+            foreach (var (p, name) in stubs)
+            {
+                try
+                {
+                    if (!p.HasExited) { Native.TerminateProcess(p.SafeHandle, 0); p.WaitForExit(5000); p.WaitForExit(); }
+                    plog.W("batch", "STUB_STOP", $"name={name} pid={p.Id} exited={p.HasExited}");
+                }
+                catch (Exception ex) { plog.W("batch", "STUB_STOP_ERROR", $"name={name} {ex.Message}"); }
+            }
+            plog.W("batch", "BATCH_DONE", "");
+        }
+        return 0;
+    }
+
+    public static int RunOne(string specPath)
+    {
+        Native.timeBeginPeriod(1);
+        var spec = RunSpec.From(JsonNode.Parse(File.ReadAllText(specPath))!.AsObject());
+        return RunSpecOnce(spec);
+    }
+
+    static string Subst(string s, Dictionary<string, string> vars)
+    {
+        foreach (var kv in vars) s = s.Replace("$" + kv.Key, kv.Value, StringComparison.Ordinal);
+        return s;
+    }
+
+    public static int RunSpecOnce(RunSpec spec)
+    {
+        Directory.CreateDirectory(spec.Dir);
+        var ev = new Log(Path.Combine(spec.Dir, "harness.log"));
+        foreach (var (path, content) in spec.WriteFiles)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, content, new UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(spec.Dir, "wrote-" + Path.GetFileName(path) + ".txt"), content, new UTF8Encoding(false));
+            ev.W("harness", "WROTE", path);
+        }
+        var outLog = new Log(Path.Combine(spec.Dir, "client-stdout.log"));
+        var errLog = new Log(Path.Combine(spec.Dir, "client-stderr.log"));
+        if (spec.Console == "pty")
+        {
+            var cur = Environment.GetEnvironmentVariables();
+            var env = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (System.Collections.DictionaryEntry de in cur)
+            {
+                var k = (string)de.Key;
+                if (EnvAllow.Contains(k, StringComparer.OrdinalIgnoreCase)) env[k] = (string)de.Value!;
+            }
+            foreach (var kv in spec.Env) { if (kv.Value is null) env.Remove(kv.Key); else env[kv.Key] = kv.Value; }
+            return PtyHarness.Run(spec, env);
+        }
+        var result = new JsonObject { ["name"] = spec.Name, ["startUtc"] = Clock.Utc(), ["exe"] = spec.Exe };
+        string rigExe = Environment.ProcessPath!;
+        var tracker = new Tracker(ev, rigExe);
+
+        var psi = new ProcessStartInfo(spec.Exe)
+        {
+            UseShellExecute = false, CreateNoWindow = true,
+            RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
+            WorkingDirectory = spec.Cwd ?? spec.Dir,
+            StandardOutputEncoding = new UTF8Encoding(false), StandardErrorEncoding = new UTF8Encoding(false),
+        };
+        foreach (var a in spec.Args) psi.ArgumentList.Add(a);
+        var current = psi.Environment.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        psi.Environment.Clear();
+        foreach (var k in EnvAllow) if (current.TryGetValue(k, out var v) && v is not null) psi.Environment[k] = v;
+        foreach (var kv in spec.Env) { if (kv.Value is null) psi.Environment.Remove(kv.Key); else psi.Environment[kv.Key] = kv.Value; }
+        ev.W("harness", "ENV", string.Join(" ", psi.Environment.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase)));
+        ev.W("harness", "LAUNCH", $"exe={spec.Exe} args={JsonSerializer.Serialize(spec.Args)} cwd={psi.WorkingDirectory}");
+
+        long tLaunch = Clock.Now();
+        var proc = Process.Start(psi)!;
+        var root = tracker.AddRoot(new SafeProcessHandle(proc.SafeHandle.DangerousGetHandle(), false), proc.Id, "client");
+        tracker.Start();
+        result["clientPid"] = proc.Id;
+        result["clientCreatedUtc"] = Clock.Ft(root.CreateFt);
+        result["launchQpcMs"] = Clock.Ms(tLaunch);
+
+        var lines = new List<string>();
+        var linesGate = new object();
+        var stdinWriter = proc.StandardInput;
+        stdinWriter.AutoFlush = true;
+        stdinWriter.NewLine = "\n";
+        var stdinGate = new object();
+        bool stdinClosed = false;
+        void WriteLine(string s)
+        {
+            lock (stdinGate)
+            {
+                if (stdinClosed) { ev.W("harness", "SEND_SKIPPED", "stdin already closed"); return; }
+                try { stdinWriter.Write(s + "\n"); stdinWriter.Flush(); ev.W("harness", "SENT", s.Length > 400 ? s[..400] : s); }
+                catch (Exception e) { ev.W("harness", "SEND_FAILED", e.Message); }
+            }
+        }
+        void CloseStdin(string why)
+        {
+            lock (stdinGate)
+            {
+                if (stdinClosed) return;
+                stdinClosed = true;
+                long t = Clock.Now();
+                try { stdinWriter.Close(); } catch (Exception e) { ev.W("harness", "CLOSE_STDIN_ERR", e.Message); }
+                ev.W("harness", "ACTION_CLOSE_STDIN", $"why={why} qpcBefore={Clock.Ms(t)}");
+                result["closeStdinQpcMs"] ??= Clock.Ms(t);
+            }
+        }
+        bool Terminate(string why)
+        {
+            long t = Clock.Now();
+            bool ok = Native.TerminateProcess(proc.SafeHandle, 1);
+            ev.W("harness", "ACTION_TERMINATE_CLIENT", $"why={why} ok={ok} err={(ok ? 0 : Marshal.GetLastWin32Error())} qpcBefore={Clock.Ms(t)}");
+            result["terminateQpcMs"] = Clock.Ms(t);
+            return ok;
+        }
+
+        var outThread = new Thread(() =>
+        {
+            try
+            {
+                string? l;
+                while ((l = proc.StandardOutput.ReadLine()) is not null)
+                {
+                    outLog.W("client", "OUT", l.Length > 4000 ? l[..4000] + "...<cut>" : l);
+                    lock (linesGate) { lines.Add(l); Monitor.PulseAll(linesGate); }
+                    if (spec.AutoReplyJsonRpc && l.StartsWith('{'))
+                    {
+                        try
+                        {
+                            var m = JsonNode.Parse(l) as JsonObject;
+                            if (m is not null && m["method"] is not null && m["id"] is not null)
+                                WriteLine(new JsonObject { ["jsonrpc"] = "2.0", ["id"] = m["id"]!.DeepClone(), ["result"] = new JsonObject() }.ToJsonString());
+                        }
+                        catch { }
+                    }
+                }
+                outLog.W("client", "OUT_EOF", "");
+            }
+            catch (Exception e) { outLog.W("client", "OUT_ERR", e.Message); }
+            lock (linesGate) Monitor.PulseAll(linesGate);
+        }) { IsBackground = true };
+        outThread.Start();
+        var errThread = new Thread(() =>
+        {
+            try { string? l; while ((l = proc.StandardError.ReadLine()) is not null) errLog.W("client", "ERR", l.Length > 4000 ? l[..4000] : l); errLog.W("client", "ERR_EOF", ""); }
+            catch (Exception e) { errLog.W("client", "ERR_ERR", e.Message); }
+        }) { IsBackground = true };
+        errThread.Start();
+
+        if (spec.Stdin == "closed") CloseStdin("spec stdin=closed");
+
+        var vars = new Dictionary<string, string>();
+        int cursor = 0;
+        var deadline = Stopwatch.StartNew();
+        foreach (var step in spec.Steps)
+        {
+            string kind = step["do"]!.GetValue<string>();
+            ev.W("harness", "STEP", step.ToJsonString());
+            switch (kind)
+            {
+                case "send":
+                    WriteLine(Subst(step["line"]!.GetValue<string>(), vars));
+                    break;
+                case "sleep":
+                    Thread.Sleep(step["ms"]!.GetValue<int>());
+                    break;
+                case "waitFor":
+                {
+                    var re = new Regex(step["pattern"]!.GetValue<string>());
+                    int timeout = step["timeoutMs"]?.GetValue<int>() ?? 60000;
+                    var sw = Stopwatch.StartNew();
+                    bool matched = false;
+                    lock (linesGate)
+                    {
+                        while (!matched)
+                        {
+                            for (; cursor < lines.Count; cursor++)
+                            {
+                                var m = re.Match(lines[cursor]);
+                                if (!m.Success) continue;
+                                matched = true;
+                                foreach (var gn in re.GetGroupNames()) if (!int.TryParse(gn, out _) && m.Groups[gn].Success) vars[gn] = m.Groups[gn].Value;
+                                cursor++;
+                                break;
+                            }
+                            if (matched) break;
+                            if (proc.HasExited && !outThread.IsAlive) break;
+                            long left = timeout - sw.ElapsedMilliseconds;
+                            if (left <= 0) break;
+                            Monitor.Wait(linesGate, (int)Math.Min(left, 200));
+                        }
+                    }
+                    ev.W("harness", matched ? "WAIT_MATCHED" : "WAIT_TIMEOUT", $"pattern={step["pattern"]} afterMs={sw.ElapsedMilliseconds} vars={JsonSerializer.Serialize(vars)}");
+                    if (!matched) result["waitTimeout"] = (result["waitTimeout"]?.GetValue<string>() ?? "") + step["pattern"]!.GetValue<string>() + ";";
+                    break;
+                }
+                case "mark":
+                    ev.W("harness", "MARK", step["text"]?.GetValue<string>() ?? "");
+                    break;
+                case "closeStdin":
+                    CloseStdin("step");
+                    break;
+                case "terminate":
+                    Terminate("step");
+                    break;
+                case "terminateIfAliveAfter":
+                {
+                    int ms = step["ms"]!.GetValue<int>();
+                    bool exited = proc.WaitForExit(ms);
+                    ev.W("harness", "TERMINATE_CHECK", $"afterMs={ms} clientExited={exited}");
+                    if (!exited) Terminate($"still alive {ms} ms after the check began");
+                    break;
+                }
+            }
+        }
+
+        long left2 = Math.Max(0, spec.MaxMs - deadline.ElapsedMilliseconds);
+        if (!proc.WaitForExit((int)left2))
+        {
+            ev.W("harness", "CLIENT_OVERRAN", $"maxMs={spec.MaxMs}");
+            result["harnessKilledClient"] = true;
+            Terminate("maxMs reached");
+            proc.WaitForExit(10000);
+        }
+        proc.WaitForExit();
+        long tClientExit = Clock.Now();
+        ev.W("harness", "CLIENT_EXITED", $"code={proc.ExitCode}");
+        result["clientExitCode"] = proc.ExitCode;
+
+        var settle = Stopwatch.StartNew();
+        while (!tracker.AllExited && settle.ElapsedMilliseconds < spec.SettleMs) Thread.Sleep(50);
+        Thread.Sleep(300); // one more snapshot window for late children
+        while (!tracker.AllExited && settle.ElapsedMilliseconds < spec.SettleMs) Thread.Sleep(50);
+        tracker.Stop();
+        var stillAlive = tracker.All.Where(p => !p.Exited).Select(p => $"{p.Pid}:{p.Role}").ToList();
+        if (stillAlive.Count > 0) ev.W("harness", "STILL_ALIVE_AFTER_SETTLE", string.Join(",", stillAlive));
+        result["stillAliveAfterSettle"] = new JsonArray(stillAlive.Select(s => (JsonNode)JsonValue.Create(s)!).ToArray());
+        result["snapshots"] = tracker.Snapshots;
+        result["vars"] = JsonSerializer.SerializeToNode(vars);
+        var procs = new JsonArray();
+        foreach (var p in tracker.All)
+        {
+            procs.Add(new JsonObject
+            {
+                ["pid"] = p.Pid, ["ppid"] = p.Ppid, ["role"] = p.Role, ["image"] = p.Image, ["cmd"] = p.Cmd,
+                ["createdUtc"] = Clock.Ft(p.CreateFt), ["foundQpcMs"] = Clock.Ms(p.FoundQpc),
+                ["exitQpcMs"] = p.Exited ? Clock.Ms(p.ExitQpc) : null, ["exitUtc"] = Clock.Ft(p.ExitFt),
+                ["exitCode"] = p.ExitCode, ["inJob"] = p.InJob,
+            });
+        }
+        result["procs"] = procs;
+        if (spec.HostPipe is { } hp && spec.HostId is { } hid)
+        {
+            // Lane c: the browser stand-in the coordinator-owned host started for this run.
+            var host = new JsonObject();
+            try
+            {
+                host["afterSettle"] = Coord.Ask(hp, $"status {hid}");
+                Thread.Sleep(3000);
+                host["after3sMore"] = Coord.Ask(hp, $"status {hid}");
+                host["release"] = Coord.Ask(hp, $"release {hid}", 20000);
+                host["afterRelease"] = Coord.Ask(hp, $"status {hid}");
+            }
+            catch (Exception e) { host["error"] = e.GetType().Name + ": " + e.Message; }
+            result["hostBrowser"] = host;
+            ev.W("harness", "HOST_BROWSER", host.ToJsonString());
+        }
+        result["endUtc"] = Clock.Utc();
+        File.WriteAllText(Path.Combine(spec.Dir, "result.json"), result.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        return proc.ExitCode;
+    }
+}
+
+/// <summary>
+/// The control client: spawns the dummy server the way a client would (pipes, CREATE_NO_WINDOW),
+/// talks MCP to it, then ends it with one of the known mechanisms, so every signature the
+/// analysis reads has a positive control.
+/// </summary>
+static class FakeClient
+{
+    public static int Run(string[] a)
+    {
+        Native.timeBeginPeriod(1);
+        var o = Args.Parse(a, 1);
+        string dir = o["logdir"];
+        var log = new Log(Path.Combine(dir, $"fakeclient-{Environment.ProcessId}.log"));
+        string action = o["action"];
+        int delay = int.Parse(o.GetValueOrDefault("delay-ms", "0"), CultureInfo.InvariantCulture);
+        int afterMs = int.Parse(o.GetValueOrDefault("after-ms", "200"), CultureInfo.InvariantCulture);
+        string exe = Environment.ProcessPath!;
+        var psi = new ProcessStartInfo(exe) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
+        foreach (var x in new[] { "server", "--logdir", dir, "--delay-ms", delay.ToString(CultureInfo.InvariantCulture) }) psi.ArgumentList.Add(x);
+        var p = Process.Start(psi)!;
+        log.W("fakeclient", "SPAWNED", $"pid={p.Id} action={action}");
+        p.StandardInput.AutoFlush = true;
+        p.StandardInput.NewLine = "\n";
+        new Thread(() => { try { while (p.StandardError.ReadLine() is not null) { } } catch { } }) { IsBackground = true }.Start();
+        void Req(string json) { p.StandardInput.Write(json + "\n"); }
+        Req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},\"clientInfo\":{\"name\":\"fakeclient\",\"version\":\"1\"}}}");
+        log.W("fakeclient", "RESP", p.StandardOutput.ReadLine() ?? "<eof>");
+        Req("{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}");
+        Req("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}");
+        log.W("fakeclient", "RESP", p.StandardOutput.ReadLine() ?? "<eof>");
+        Req("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"ping\",\"arguments\":{}}}");
+        log.W("fakeclient", "RESP", p.StandardOutput.ReadLine() ?? "<eof>");
+        Thread.Sleep(afterMs);
+        Process? killer = null;
+        void Taskkill()
+        {
+            var k = new ProcessStartInfo(Path.Combine(Environment.GetEnvironmentVariable("SystemRoot") ?? @"C:\Windows", "System32", "taskkill.exe")) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+            foreach (var x in new[] { "/PID", p.Id.ToString(CultureInfo.InvariantCulture), "/T", "/F" }) k.ArgumentList.Add(x);
+            killer = Process.Start(k)!;
+            log.W("fakeclient", "TASKKILL_SPAWNED", $"pid={killer.Id}");
+        }
+        switch (action)
+        {
+            case "close":
+                p.StandardInput.Close(); log.W("fakeclient", "CLOSED_STDIN", ""); break;
+            case "taskkill":
+                Taskkill(); break;
+            case "taskkill-then-close":
+                Taskkill(); p.StandardInput.Close(); log.W("fakeclient", "CLOSED_STDIN", ""); break;
+            case "terminate":
+                log.W("fakeclient", "TERMINATE", $"ok={Native.TerminateProcess(p.SafeHandle, 1)}"); break;
+            case "exit-self":
+                log.W("fakeclient", "EXIT_SELF", "exiting without closing anything"); Environment.Exit(5); break;
+        }
+        if (killer is not null)
+        {
+            string ko = killer.StandardOutput.ReadToEnd() + killer.StandardError.ReadToEnd();
+            killer.WaitForExit();
+            log.W("fakeclient", "TASKKILL_DONE", $"code={killer.ExitCode} out={ko.Replace("\r", " ").Replace("\n", " ")}");
+        }
+        bool exited = p.WaitForExit(30000);
+        if (exited) p.WaitForExit();
+        log.W("fakeclient", "SERVER_DONE", $"exited={exited} code={(exited ? p.ExitCode : -1)}");
+        return 0;
+    }
+}

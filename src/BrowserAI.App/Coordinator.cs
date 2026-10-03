@@ -26,6 +26,13 @@ internal enum StartMode
 
     /// <summary>Hidden, as the coordinator and nothing else, <c>--coordinate</c>. It shows nothing.</summary>
     Coordinate,
+
+    /// <summary>
+    /// Hidden, as the coordinator, to start the session host, <c>--start-host</c>: what
+    /// a server that found neither a host nor a coordinator runs the logon task with
+    /// (Q366 b). It shows nothing.
+    /// </summary>
+    StartHost,
 }
 
 /// <summary>Reads the start mode out of the arguments.</summary>
@@ -53,6 +60,7 @@ internal static class StartModes
         ArgumentNullException.ThrowIfNull(args);
 
         return args.Contains(CoordinatorProtocol.CoordinateArgument, StringComparer.Ordinal) ? StartMode.Coordinate
+            : args.Contains(CoordinatorProtocol.StartHostArgument, StringComparer.Ordinal) ? StartMode.StartHost
             : args.Contains(CoordinatorProtocol.SignInArgument, StringComparer.Ordinal) ? StartMode.SignIn
             : args.Contains(CoordinatorProtocol.SessionsArgument, StringComparer.Ordinal) ? StartMode.Sessions
             : StartMode.User;
@@ -62,12 +70,14 @@ internal static class StartModes
     /// <param name="mode">The mode.</param>
     /// <returns>
     /// <see cref="CoordinatorVerb.Show"/> for a person's start, <see cref="CoordinatorVerb.Sessions"/>
-    /// for one asking for the sessions page, and <see cref="CoordinatorVerb.Recheck"/> for every other.
+    /// for one asking for the sessions page, <see cref="CoordinatorVerb.Host"/> for a start asking
+    /// for the session host, and <see cref="CoordinatorVerb.Recheck"/> for every other.
     /// </returns>
     public static CoordinatorVerb VerbOf(StartMode mode) => mode switch
     {
         StartMode.User => CoordinatorVerb.Show,
         StartMode.Sessions => CoordinatorVerb.Sessions,
+        StartMode.StartHost => CoordinatorVerb.Host,
         _ => CoordinatorVerb.Recheck,
     };
 
@@ -131,9 +141,11 @@ internal interface ICoordinatorPage
 internal enum CoordinatorEnd
 {
     /// <summary>
-    /// No newer package is staged and no tab is open, so there is nothing to
-    /// coordinate. <i>Corrected 2026-10-03 (previously "No newer package is staged,
-    /// so there is nothing to coordinate"), when the page's tabs joined the loop.</i>
+    /// No newer package is staged, no tab is open and no session host runs, so there is
+    /// nothing to coordinate. <i>Corrected 2026-10-03 (previously "No newer package is
+    /// staged, so there is nothing to coordinate"), when the page's tabs joined the loop,
+    /// and again the same day when the coordinator began to start the session host
+    /// (Q366 b).</i>
     /// </summary>
     NothingPending,
 
@@ -200,6 +212,19 @@ internal enum CoordinatorEnd
 /// it holds no handle, so no exit can wake it, and it applies nothing, which is the
 /// sign-in step's rule. The next blocked server's <c>recheck</c> is what looks again.
 /// </para>
+/// <para>
+/// ⚠️ <b>It stays for as long as the session host it started runs, since 2026-10-03 --
+/// Q366 b, the maintainer's words verbatim: <i>"If the server crashes and the
+/// coordinator loses the pipe, keep the browser around with the already running
+/// activity timeout timer active."</i></b> The host is in this process's own
+/// kill-on-close job, so the coordinator going would take every session with it. With
+/// nothing staged the loop waits on the host's exit and the pipe; it is in the census
+/// meanwhile, so a server finishing an update pass wakes it. With a package staged the
+/// scan leaves the host and everything it started out (<see cref="Host"/>), and once
+/// nothing else runs from the install the host is asked to close every browser and
+/// end, and the scan is taken again before anything is applied, because a client may
+/// have started a server in that time.
+/// </para>
 /// </remarks>
 /// <param name="installRoot">The install root, or the data root of a process that is not installed.</param>
 /// <param name="inbox">The verbs the pipe has taken.</param>
@@ -230,6 +255,16 @@ internal sealed class CoordinatorLoop(
     /// wait for something that should not happen.
     /// </remarks>
     internal Action? Waiting { get; init; }
+
+    /// <summary>
+    /// The session host this coordinator started, or <see langword="null"/> for one that
+    /// has none (Q366 b): a build that is not installed, and the suite's loops.
+    /// </summary>
+    /// <remarks>
+    /// <b>The scan this loop is handed already leaves the host's processes out</b>;
+    /// what this adds is the stay while it runs and the stop before an apply.
+    /// </remarks>
+    internal ISessionHostHold? Host { get; init; }
 
     /// <summary>Runs until there is nothing left to coordinate, or the package has been handed over.</summary>
     /// <returns>Why it stopped.</returns>
@@ -263,9 +298,25 @@ internal sealed class CoordinatorLoop(
 
                 if (pending is null)
                 {
+                    // Q366 b: the session host's sessions die with this process, so
+                    // it stays while the host runs, in the census, waking when the
+                    // host exits or a verb arrives. The listener still ends once no
+                    // tab is left, as it does while an apply waits; a later show
+                    // starts a new one.
+                    if (Host?.Running is { } host)
+                    {
+                        _ = page.TryStop(final: false);
+
+                        member ??= LiveInstances.Join(installRoot, logger);
+
+                        Waiting?.Invoke();
+                        _ = WaitHandle.WaitAny([inbox.Arrived, host]);
+                        continue;
+                    }
+
                     if (page.TryStop(final: true))
                     {
-                        CoordinatorLog.Stopping(logger, "no newer package is staged and no tab is open, so there is nothing to coordinate.");
+                        CoordinatorLog.Stopping(logger, "no newer package is staged, no tab is open and no session host runs, so there is nothing to coordinate.");
                         return CoordinatorEnd.NothingPending;
                     }
 
@@ -284,6 +335,22 @@ internal sealed class CoordinatorLoop(
 
                 if (found.Held.Count is 0 && found.Unresolved.Count is 0)
                 {
+                    // Q366 b: the host is this process's own, so the scan left it out.
+                    // It closes every browser and ends first, and a server a client
+                    // started meanwhile is waited for like any other.
+                    if (Host is { Running: not null } held)
+                    {
+                        _ = held.StopForUpdate();
+
+                        using var again = scan();
+
+                        if (again.Held.Count is not 0 || again.Unresolved.Count is not 0)
+                        {
+                            held.Reopen();
+                            continue;
+                        }
+                    }
+
                     // An open tab does not hold the update back (Q336 a). It is told,
                     // and it says to open BrowserAI again from the Start Menu.
                     page.Tell($"BrowserAI {pending.Version} is being installed, so this page has stopped. Open BrowserAI from the Start Menu again once it is done.");
@@ -376,9 +443,19 @@ internal static class SignInStep
     /// <param name="staged">Whether a newer package is on disk, and the apply.</param>
     /// <param name="scan">The path scan under the install root, this process left out.</param>
     /// <param name="logger">Where the outcome is recorded.</param>
+    /// <param name="host">The session host this coordinator holds, or <see langword="null"/> for one that has none.</param>
     /// <returns>What happened.</returns>
-    public static SignInReport Run(IStagedUpdates staged, Func<RootScan> scan, ILogger logger)
+    /// <remarks>
+    /// ⚠️ <b>Nothing is applied while the session host runs, since 2026-10-03 (Q366 b).</b>
+    /// The scan leaves the host out, because the loop stops it before an apply and does
+    /// not wait for it, so a host a server asked for during this pass reads as nothing
+    /// running. Applying then would end it with this process's job, and every browser in
+    /// it with no close. The step reports <see cref="SignInOutcome.NotAlone"/> instead,
+    /// and the loop, which closes every browser first, applies.
+    /// </remarks>
+    public static SignInReport Run(IStagedUpdates staged, Func<RootScan> scan, ILogger logger, ISessionHostHold? host = null)
     {
+
         ArgumentNullException.ThrowIfNull(staged);
         ArgumentNullException.ThrowIfNull(scan);
         ArgumentNullException.ThrowIfNull(logger);
@@ -388,6 +465,10 @@ internal static class SignInStep
         if (staged.Pending() is not { } pending)
         {
             report = new SignInReport(SignInOutcome.NothingStaged, "no newer package is staged, so there is nothing to apply.");
+        }
+        else if (host?.Running is not null)
+        {
+            report = new SignInReport(SignInOutcome.NotAlone, $"{pending.Version} is staged and was not applied: the session host runs from this install, and the coordinator's loop closes every browser it holds before it applies.");
         }
         else
         {

@@ -42,6 +42,20 @@ from it. *(Corrected 2026-08-26, previously "the index, the mutex names, the
 artifact routing, the sweep": artifact routing is deleted, and the two files the
 directory carries are what the identity now derives.)*
 
+⚠️ **An installed server is a front since 2026-10-03 -- Q366 b, the maintainer's
+words verbatim: *"Q366 b - lets go with a fully build option c."*** The process a
+client starts relays its stdio, byte for byte, to a **session host** that the
+coordinator started outside every client's tree and job, and the host is what the
+diagram above describes. A build that is not installed, or a front that finds no
+host within its bound, still serves exactly as drawn.
+[The session host](#the-session-host-q366-b) maps it to the code.
+
+```
+MCP client ──stdio──> BrowserAI.Server.exe ──pipe──> BrowserAI.Server.exe --host ──stdio──> node.exe ──> browser
+                        (the front: relays)          (the session host, in the
+                                                      coordinator's own job)
+```
+
 **What BrowserAI is, in one sentence:** a session-lifecycle manager and reason
 logger wrapped around a verbatim Playwright pipe. Nothing sits between the two
 servers except the session system and the reason system, and
@@ -1122,11 +1136,45 @@ is `RmStartSession` → `RmRegisterResources` → `RmGetList` via
 candidate set and guarded on `ProcessStartTime`, because the Restart Manager
 answers about whatever file it is handed and is never actionable alone.
 
+## The session host (Q366 b)
+
+**Decided 2026-10-03 by the maintainer, in his words verbatim:** *"Q366 b - lets go
+with a fully build option c. If the server crashes and the coordinator loses the
+pipe, keep the browser around with the already running activity timeout timer
+active."* The design, what was measured before it and the directions it was chosen
+from are in [`docs/design/coordinator-owned-browsers`](docs/design/coordinator-owned-browsers/README.md);
+the decision of record is [its row](DECISIONS.md#the-zoom-out-of-2026-09-25-and-what-followed-it).
+
+| Concern | Implemented by |
+|---|---|
+| The front: finding the host, having the coordinator start one, and relaying stdio to its pipe with no parsing | `src/BrowserAI/Program.Host.cs` (`FindTheSessionHost`, `RelayAsync`), `src/BrowserAI.Core/Coordination/SessionHostAccess.cs` |
+| The host's mode: everything below the stdio, served over a pipe | `src/BrowserAI/Program.Host.cs` (`RunTheSessionHostAsync`) |
+| One set of sessions, any number of connections | `src/BrowserAI/Proxy/{SessionHost, SessionHostServer, CallerConnection}.cs`, `src/BrowserAI/Protocol/PipeServerTransport.cs` |
+| The host's pipe: unlimited instances, one per connection, each waited on without a thread | `src/BrowserAI.Core/Interop/NamedPipes.cs` (`CreateStreamServer`, `CreateStreamInstance`, `WaitForClient`) |
+| Who drives a session: attached, refused, taken over, or being let go | `src/BrowserAI/Sessions/LiveSession.cs` (`Claim`, `DetachFrom`, `TryBeginRelease`), asked by `src/BrowserAI/Proxy/BrowserProxy.cs` on every call that names a session and by `SessionManager`'s resume, destroy and purpose |
+| A connection ending: each session it drove judged, kept or let go | `src/BrowserAI/Sessions/SessionManager.cs` (`DetachAsync`, `JudgeDetachedAsync`, `OnIdleFiredAsync`, `ReleaseDetachedAsync`), and `LiveSession.WatchTheWindowWhileDetached` for a headed one |
+| A child's progress going to whoever drives its session now | `SessionManager.OpenAsync`'s relay, through `CallerConnection.RelayAsync` |
+| The shutdown's generous close in the host | `SessionEnvironment.ShutdownCloseBudget`, set from `SessionHostProtocol.ShutdownCloseBudget` |
+| The coordinator's hold: the job, the start, the scan's exclusion and the stop for an update | `src/BrowserAI.Core/Coordination/SessionHostKeeper.cs` |
+| `host`, answered on the coordinator's pipe thread before it is acknowledged | `src/BrowserAI.Core/Coordination/{CoordinatorPipe, CoordinatorInbox, CoordinatorProtocol}.cs` |
+| The coordinator's stay while its host runs, and the stop and second scan before an apply | `src/BrowserAI.App/Coordinator.cs` (`StartMode.StartHost`, `CoordinatorLoop.Host`), wired in `src/BrowserAI.App/Program.cs` |
+| The sign-in step applying nothing while the host runs, so only the loop, which closes every browser first, applies | `SignInStep.Run`'s `host` in `src/BrowserAI.App/Coordinator.cs`, handed the keeper by `src/BrowserAI.App/Program.cs` |
+| A connection that calls before it lists, refused once in words true of a host that may have served its list | `BrowserProxy`'s stale-list refusal, which asks whether the proxy owns its host, and `SessionErrors.ToolListPredatesThisServer`'s `throughTheSessionHost` |
+| Every bound the host added, derived from a named setting with its reason beside it | `SessionHostAccess.ClientStartupAllowance` and `StartBound`, `SessionHostProtocol.ShutdownCloseBudget` and `StopBound`, `SessionHostServer.Linger` and `LingerLook`, `LiveSession.DetachedWindowLook`, `NamedPipes.StreamBufferBytes`; `SessionHostBoundsTests` holds each to what it is derived from, two of them across binaries |
+
+**The arms.** `SessionHostTests` drive the host in process over a fake child;
+`SessionHostAccessTests` drive an installed server's search for its host with a
+pipe the arm creates and a scheduler that starts nothing;
+`SessionHostCoordinatorTests` drive the coordinator's half with a scripted host and
+the keeper with windowless stand-ins; `SessionHostProcessTests` drive the published
+slice with a real browser, a front killed the way Codex kills one, and a host whose
+death takes every child and browser with it.
+
 ## Process containment and observability
 
 | Concern | Implemented by |
 |---|---|
-| The job object, and starting a child inside it | `src/BrowserAI/Interop/{JobObject, JobLauncher, LaunchedProcess}.cs` |
+| The job object, and starting a child inside it | `src/BrowserAI.Core/Interop/{JobObject, JobLauncher, LaunchedProcess}.cs` *(moved 2026-10-03 from `src/BrowserAI/Interop/`, so the coordinator starts the session host with the same launcher the server starts its children with; Q366 b)* |
 | The two custom transports | `src/BrowserAI/Protocol/{DirectStdioClientTransport, ChildProcessSession, DirectStdioServerTransport, JsonLines, JsonLinesTransport, VerbatimPayload, ChildLink, ChildEnvironment}.cs` |
 | stdout ownership | `src/BrowserAI/Protocol/StdioChannel.cs`, `src/BrowserAI/BannedSymbols.txt` |
 | stderr classification | `src/BrowserAI/Protocol/StandardErrorClassifier.cs` and its pinned reference copy |
@@ -1292,6 +1340,7 @@ role or a digest of a session's directory, and never by a path. What it rests on
 | The per-user logon task -- **added 2026-09-25, Q282 a** | `src/BrowserAI.Core/Registration/{SignInTask, LogonTasks}.cs` over `src/BrowserAI.Core/Interop/TaskScheduler.cs`, called from `HookRegistration.Run` for every intent and written into the installer's own log by `VelopackStartup.Mirror`; the pack id the task is named for is `InstallLocation.AppId`, and the root's key is `LiveInstances.RootKeyFor` |
 | The sign-in step and the apply loop -- **added 2026-09-25, Q282 a and Q285 a** | `SignInStep` and `CoordinatorLoop` in `src/BrowserAI.App/Coordinator.cs`, over `IStagedUpdates` -- `VelopackUpdateClient` in the product, `NothingStaged` without a feed -- and `BrowserProcesses.HeldUnder`, which returns a `RootScan` of `HeldProcess` handles |
 | A blocked server waking the coordinator -- **added 2026-09-25, Q283 a** | `src/BrowserAI.Core/Coordination/CoordinatorWake.cs`, which `UpdateService` calls when a pass stages a package it may not apply |
+| The session host in the apply: left out of the scan, closed before the apply, and a second scan after -- **added 2026-10-03, Q366 b** | `CoordinatorLoop.Host` in `src/BrowserAI.App/Coordinator.cs`, over `SessionHostKeeper.LeaveOutMine` and `SessionHostKeeper.StopForUpdate` in `src/BrowserAI.Core/Coordination/SessionHostKeeper.cs`; see [the session host](#the-session-host-q366-b) |
 
 **The pipe is named after the live marker, so the census entry is the address --
 2026-09-24.** `\\.\pipe\BrowserAI-<pid>-<guid>` for the marker

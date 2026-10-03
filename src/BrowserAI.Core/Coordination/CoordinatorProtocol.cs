@@ -21,6 +21,12 @@ internal enum CoordinatorVerb
     /// asks, the way a Start Menu click asks <see cref="Show"/> (Q339).
     /// </summary>
     Sessions,
+
+    /// <summary>
+    /// Start the session host if none runs. A server a client started asks this when
+    /// it finds no host to relay to (Q366 b).
+    /// </summary>
+    Host,
 }
 
 /// <summary>
@@ -108,6 +114,9 @@ internal static class CoordinatorProtocol
     /// <summary>The verb every other start, and a blocked server, sends.</summary>
     public const string RecheckVerb = "recheck";
 
+    /// <summary>The verb a server sends when it finds no session host to relay to.</summary>
+    public const string HostVerb = "host";
+
     /// <summary>
     /// The argument the per-user logon task starts the app with: the sign-in step.
     /// </summary>
@@ -127,6 +136,21 @@ internal static class CoordinatorProtocol
     /// </summary>
     public const string SessionsArgument = "--sessions";
 
+    /// <summary>
+    /// The argument that starts the app hidden, as the coordinator, to start the
+    /// session host. A server that finds neither a host nor a coordinator passes it to
+    /// the logon task, which appends it through <c>$(Arg0)</c> (Q366 b).
+    /// </summary>
+    public const string StartHostArgument = "--start-host";
+
+    /// <summary>
+    /// The refusal a coordinator gives <c>host</c> when it cannot start the session
+    /// host, so the server that asked serves its client itself at once and does not
+    /// wait for a pipe that will not come.
+    /// </summary>
+    public const string NoHostRefusal =
+        "This coordinator cannot start a session host: it is not an installed BrowserAI, the host would not start, or an update is closing the one it had.";
+
     /// <summary>The coordinator's pipe for one install root.</summary>
     /// <param name="installRoot">The install root, or the data root of a process that is not installed.</param>
     /// <returns>The full pipe name.</returns>
@@ -143,6 +167,7 @@ internal static class CoordinatorProtocol
     {
         CoordinatorVerb.Show => ShowVerb,
         CoordinatorVerb.Sessions => SessionsVerb,
+        CoordinatorVerb.Host => HostVerb,
         _ => RecheckVerb,
     };
 
@@ -154,6 +179,7 @@ internal static class CoordinatorProtocol
         ShowVerb => CoordinatorVerb.Show,
         RecheckVerb => CoordinatorVerb.Recheck,
         SessionsVerb => CoordinatorVerb.Sessions,
+        HostVerb => CoordinatorVerb.Host,
         _ => null,
     };
 

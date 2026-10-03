@@ -1,0 +1,22 @@
+run	scenario	clientExit	waitTimeout	serverExit	inTreeStandinExit	taskkillSeen	stillAliveAfterSettle	hostBrowserAfterSettle	hostBrowserAfter3sMore	release	afterRelease
+b1-r1	b1	0		1	1	1		alive pid=70920	alive pid=70920	released wasAlive=True diedWithin10s=True code=0	exited pid=70920 code=0
+b1-r2	b1	0		1	1	1		alive pid=20740	alive pid=20740	released wasAlive=True diedWithin10s=True code=0	exited pid=20740 code=0
+b1-r3	b1	0		1	1	1		alive pid=39948	alive pid=39948	released wasAlive=True diedWithin10s=True code=0	exited pid=39948 code=0
+b2-r1	b2	1		0	0	0		alive pid=40164	alive pid=40164	released wasAlive=True diedWithin10s=True code=0	exited pid=40164 code=0
+b2-r2	b2	1		0	0	0		alive pid=10280	alive pid=10280	released wasAlive=True diedWithin10s=True code=0	exited pid=10280 code=0
+b2-r3	b2	1		0	0	0		alive pid=51764	alive pid=51764	released wasAlive=True diedWithin10s=True code=0	exited pid=51764 code=0
+d1-r1	d1	0		1	1	0		alive pid=41672	alive pid=41672	released wasAlive=True diedWithin10s=True code=0	exited pid=41672 code=0
+d1-r2	d1	0		1	1	0		alive pid=57424	alive pid=57424	released wasAlive=True diedWithin10s=True code=0	exited pid=57424 code=0
+d1-r3	d1	0		1	1	0		alive pid=72056	alive pid=72056	released wasAlive=True diedWithin10s=True code=0	exited pid=72056 code=0
+d2-r1	d2	0		1	1	0		alive pid=15236	alive pid=15236	released wasAlive=True diedWithin10s=True code=0	exited pid=15236 code=0
+d2-r2	d2	0		1	1	0		alive pid=48492	alive pid=48492	released wasAlive=True diedWithin10s=True code=0	exited pid=48492 code=0
+d2-r3	d2	0		1	1	0		alive pid=47768	alive pid=47768	released wasAlive=True diedWithin10s=True code=0	exited pid=47768 code=0
+e5-r1	e5	0		0	0	0		alive pid=67588	alive pid=67588	released wasAlive=True diedWithin10s=True code=0	exited pid=67588 code=0
+e5-r2	e5	0		0	0	0		alive pid=71436	alive pid=71436	released wasAlive=True diedWithin10s=True code=0	exited pid=71436 code=0
+e5-r3	e5	0		0	0	0		alive pid=36472	alive pid=36472	released wasAlive=True diedWithin10s=True code=0	exited pid=36472 code=0
+n1-r1	n1	0		1	1	0		alive pid=10744	alive pid=10744	released wasAlive=True diedWithin10s=True code=0	exited pid=10744 code=0
+n1-r2	n1	0		1	1	0		alive pid=36800	alive pid=36800	released wasAlive=True diedWithin10s=True code=0	exited pid=36800 code=0
+n1-r3	n1	0		1	1	0		alive pid=68648	alive pid=68648	released wasAlive=True diedWithin10s=True code=0	exited pid=68648 code=0
+n2-r1	n2	0		1	1	0		alive pid=17848	alive pid=17848	released wasAlive=True diedWithin10s=True code=0	exited pid=17848 code=0
+n2-r2	n2	0		1	1	0		alive pid=59352	alive pid=59352	released wasAlive=True diedWithin10s=True code=0	exited pid=59352 code=0
+n2-r3	n2	0		1	1	0		alive pid=57848	alive pid=57848	released wasAlive=True diedWithin10s=True code=0	exited pid=57848 code=0

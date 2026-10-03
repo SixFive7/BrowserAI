@@ -1,0 +1,5 @@
+5514497.446	2026-10-03T13:38:40.6916763Z	44784	coord	START	ppid=2984 parentImage=<open failed 5> cmdline=C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\rig\binw\ExitRig.dll coord --logdir C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\runs\surv-20261003T133840 --host-pipe c-probe-host-20261003T133840 --ctl-pipe c-probe-ctl-20261003T133840 --max-minutes 90
+5514499.584	2026-10-03T13:38:40.6934232Z	44784	coord	JOB	inJob=True immediateJobLimitFlags=0x0 assigned=7 listed=7 first64=[12088,19764,31376,31432,30948,44784,25992]
+5514501.999	2026-10-03T13:38:40.6958357Z	44784	coord	CONSOLE	consoleWindow=0x0 visible=False consoleProcs=[]
+5514502.442	2026-10-03T13:38:40.6962802Z	44784	coord	STDIO	stdin=none stdout=none stderr=none
+5514514.031	2026-10-03T13:38:40.7078706Z	44784	coord	HOST_STARTED	pid=72468 jobFlagsReadBack=0x2000 

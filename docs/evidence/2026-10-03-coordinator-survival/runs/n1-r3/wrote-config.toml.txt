@@ -1,0 +1,25 @@
+model = "stub-model"
+model_provider = "stub"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+plugins = false
+
+[model_providers.stub]
+name = "stub"
+base_url = "http://127.0.0.1:8952"
+wire_api = "responses"
+env_key = "STUB_KEY"
+
+[mcp_servers.probe]
+command = 'C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\rig\bin\ExitRig.exe'
+args = ['server', '--logdir', 'C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\runs\surv-20261003T133840\n1-r3', '--delay-ms', '15000', '--host-pipe', 'c-probe-host-20261003T133840', '--host-id', 'surv-20261003T133840-n1-r3']
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+
+[projects.'C:\Source\SixFive7\BrowserAI\.work\c-scratch\m1\proj']
+trust_level = "trusted"
+
+[projects.'c:\source\sixfive7\browserai\.work\c-scratch\m1\proj']
+trust_level = "trusted"

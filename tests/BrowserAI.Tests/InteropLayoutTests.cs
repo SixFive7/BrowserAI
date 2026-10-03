@@ -60,7 +60,8 @@ namespace BrowserAI.Tests;
 /// 2026-08-24. It is still Microsoft's own definition and still a definition this
 /// repository did not write; it simply arrives from the framework instead of from
 /// the metadata. The <b>literal</b> tiebreaker below applies to it exactly as it
-/// does to the other seven.
+/// does to the other seven. <i>Added 2026-10-03:</i> <c>NamedPipes.Overlapped</c>,
+/// the session host's pending connect, has the same oracle for the same reason.
 /// </para>
 /// <para>
 /// <b>The structs are reached by reflection because they are <c>private</c>
@@ -100,6 +101,10 @@ internal sealed class InteropLayoutTests
         // Added 2026-09-25 with the per-user logon task (Q282 a): the VARIANT the
         // Task Scheduler's interfaces take by value.
         (nameof(TaskSchedulerInterop), "Variant", 24),
+
+        // Added 2026-10-03 with the session host's pipe (Q366 b): the OVERLAPPED
+        // its pending connect waits on, so an idle pipe holds no thread.
+        (nameof(NamedPipes), "Overlapped", 32),
     ];
 
     /// <summary>
@@ -146,7 +151,9 @@ internal sealed class InteropLayoutTests
         // ⚠️ Corrected 2026-09-24 to 10 (previously 8): NamedPipes brought a
         // second SECURITY_ATTRIBUTES and a TOKEN_USER with the server pipe.
         // Corrected 2026-09-25 to 11 (previously 10): the Task Scheduler's VARIANT.
-        await Assert.That(Structs.Length).IsEqualTo(11);
+        // Corrected 2026-10-03 to 12 (previously 11): the session host's pipe
+        // brought a second OVERLAPPED.
+        await Assert.That(Structs.Length).IsEqualTo(12);
 
         foreach (var (owner, nested, _) in Structs)
         {
@@ -388,6 +395,13 @@ internal sealed class InteropLayoutTests
         await Assert.That((int)Marshal.OffsetOf<System.Threading.NativeOverlapped>("OffsetLow")).IsEqualTo(16);
         await Assert.That((int)Marshal.OffsetOf<System.Threading.NativeOverlapped>("OffsetHigh")).IsEqualTo(20);
         await Assert.That((int)Marshal.OffsetOf<System.Threading.NativeOverlapped>("EventHandle")).IsEqualTo(24);
+
+        // The session host's pipe's own, added 2026-10-03 (Q366 b). The one field
+        // BrowserAI writes there is the event a pending connect signals, and an
+        // event read from the wrong eight bytes is a wait that never wakes.
+        var connect = Nested(nameof(NamedPipes), "Overlapped");
+
+        await Assert.That((int)Marshal.OffsetOf(connect, "EventHandle")).IsEqualTo(24);
     }
 
     /// <summary>

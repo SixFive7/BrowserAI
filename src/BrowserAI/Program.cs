@@ -29,7 +29,7 @@ namespace BrowserAI;
 /// reasons the caller cannot see. stdout is acquired last, and by then it
 /// belongs to the protocol.
 /// </remarks>
-internal static class Program
+internal static partial class Program
 {
     /// <summary>
     /// The one environment variable BrowserAI reads about <b>itself</b>, and it
@@ -210,6 +210,17 @@ internal static class Program
         if (overridden is not null)
         {
             StartupLog.AppRootOverridden(logger, AppRootVariable, overridden);
+        }
+
+        // ⚠️ THE SESSION HOST -- Q366 b, the maintainer's words of 2026-10-03,
+        // verbatim: "Q366 b - lets go with a fully build option c." Started by the
+        // coordinator inside a kill-on-close job of its own, outside every client's
+        // tree and job, it holds every session and serves them over a pipe. It has
+        // no client of its own, so it branches off before the client watch and the
+        // no-client check below. See Program.Host.cs.
+        if (ValueOf(args, HostArgument) is { Length: > 0 } hostPipe)
+        {
+            return await RunTheSessionHostAsync(paths, log, logger, updateLogger, hostPipe).ConfigureAwait(false);
         }
 
         // ⚠️ THERE IS NO INSTALLER EXIT HERE ANY MORE -- Q276 a, 2026-09-24, the
@@ -397,6 +408,29 @@ internal static class Program
             () => _ = StopThroughThePipeAsync(() => Volatile.Read(ref serving), () => RequestStop(stopping), logger));
 
         using var pipe = OpenPipe(live, responder, log.Factory.CreateLogger("BrowserAI.Pipe"));
+
+        // ⚠️ THE FRONT -- Q366 b, 2026-10-03. A server that can reach the session
+        // host relays its client's bytes to it and holds no session of its own, so
+        // the sessions outlive this process: the client's kill, or VS Code closing,
+        // ends this relay and nothing the host holds. In the census and serving its
+        // own pipe like any server, and still running the update lane, because a
+        // feed nobody checks is an update nobody gets. Not while an update installs:
+        // that server serves in-process, as Q296 c has it.
+        if (updater is null)
+        {
+#pragma warning disable CA2000 // RelayAsync owns the pipe from here and disposes it on every path.
+            var host = FindTheSessionHost(args, installRoot, logger, out var relayTo);
+#pragma warning restore CA2000
+
+            if (host is not null)
+            {
+                HostLog.Relaying(logger, relayTo);
+                activity.Serving();
+                StartTheUpdateLane(installRoot, live, updateLogger, stopping);
+
+                return await RelayAsync(host, logger, stopping.Token).ConfigureAwait(false);
+            }
+        }
 
         // ⚠️ A SERVER THAT STARTED DURING AN UPDATE TAKES THE ORDINARY PATH -- Q296
         // c, 2026-10-03. Corrected (previously "A SERVER THAT STARTED DURING AN

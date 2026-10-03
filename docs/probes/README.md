@@ -150,6 +150,19 @@ declares the `szExeFile` field of the toolhelp struct for a parent-pid walk.
 **The scan would now flag ten files, and still only `observe.ps1` selects a
 process by name.**
 
+⚠️ *Added 2026-10-03, later in the evening.* **Thirty-two**, counted as its
+subdirectories, when
+[`2026-10-03-coordinator-survival`](2026-10-03-coordinator-survival/README.md)
+arrived with option c. A search found four of the eight spellings in it, so it
+went through the real scan the same way, copied under `build/` with
+`observe.ps1` beside it as the positive control and removed after: the scan named
+`observe.ps1`, and in the rig one file, `ExitRig/Harness.cs`, on nine lines. **All
+nine are the false positives recorded above for `2026-10-03-client-exit`**, which
+the rig copied that file from and left those lines unchanged: a role label for a
+process the harness found by parent pid, a method name, case labels and log event
+names, while the one launch passes `/PID` on the next line. **The scan would now
+flag eleven files, and still only `observe.ps1` selects a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -224,3 +237,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-09-25-management-interface`](2026-09-25-management-interface/README.md) | Five listeners on `127.0.0.1` and what each answers by default, WebView2 and Avalonia from NativeAOT, a listener with one gate attacked from two browsers, and the provisioned Chromium as a window over a DevTools pipe | |
 | [`2026-10-03-pipe-instances`](2026-10-03-pipe-instances/README.md) | How many callers one pipe created the way BrowserAI creates its pipes holds at once, past the 255 its instances are created with | |
 | [`2026-10-03-durability`](2026-10-03-durability/README.md) | How soon each store of each browser reaches disk with and without every lever found, what a hard kill does to session restore, what the levers cost, and what a job's I/O counters count | a false positive |
+| [`2026-10-03-coordinator-survival`](2026-10-03-coordinator-survival/README.md) | The client-exit rig with a coordinator stand-in started by a scratch logon task, a host in that coordinator's job and browsers nested below it: whether they outlive every way a client ends its server, and whether the coordinator's death ends them | false positives |

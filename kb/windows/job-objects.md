@@ -103,7 +103,9 @@ job is always in the chain.
 **The product implementation is measured, not only the prototype.** 2026-08-16,
 `JobContainmentTests`, both arms run twice with identical results -- job created
 by `src/BrowserAI/Interop/JobObject.cs`, child started by
-`JobLauncher.Start`: `[FLOATS]`
+`JobLauncher.Start`: `[FLOATS]` *(Both files moved unchanged to `src/BrowserAI.Core/Interop/` on
+2026-10-03, so the coordinator starts the session host with the same launcher, Q366 b; the
+measurement was taken where they were then.)*
 
 | Arm | Processes walked | Job pid-list | Escapees | Job members the walk missed | Survivors after the launcher is `TerminateProcess`d |
 |---|---|---|---|---|---|

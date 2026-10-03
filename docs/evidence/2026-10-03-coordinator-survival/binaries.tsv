@@ -1,0 +1,5 @@
+binary	version	sha256	same binary as
+.work\client-exit\bin\cli\claude.exe	Claude Code 2.1.288	84304F7D4B0CD0EBCBE8318695A260151B48991A6659C3366FDD5DA290C0AB91	2026-10-03-client-exit/binaries.trimmed.tsv
+.work\client-exit\bin\vscode\claude.exe	Claude Code 2.1.287, the VS Code extension's binary	6D5BE51F0EDFE3429CD1A9885950DB31C1E59EB9A2C9A30A47E64179D2FF98B4	2026-10-03-client-exit/binaries.trimmed.tsv
+.work\client-exit\bin\codex\codex.exe	codex-cli 0.155.0-alpha.9.2	BC45017E8239DC150258F69309CED9DF6BBCDF5B8E4F346DECF780AC0999E226	2026-10-03-client-exit/binaries.trimmed.tsv
+.work\client-exit\npm-codex-0.160.0\node_modules\@openai\codex-win32-x64\vendor\x86_64-pc-windows-msvc\bin\codex.exe	codex-cli 0.160.0, from npm	FDDA5FA3CF3FB3D000B876720742857676293E4315E4B045FAE6F8BD7E866D1D	not digested there

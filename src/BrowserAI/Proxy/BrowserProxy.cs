@@ -76,12 +76,13 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </remarks>
     private const string RemoteErrorPrefix = "Request failed (remote): ";
 
+    private readonly SessionHost _host;
+    private readonly bool _ownsHost;
     private readonly ChildConnection _surface;
     private readonly SessionManager _sessions;
     private readonly ToolVerdicts _verdicts;
     private readonly ILogger _logger;
 
-    private McpServer? _caller;
     private int _disposed;
 
     /// <summary>
@@ -91,7 +92,9 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// <para>
     /// <b>A field and not a dictionary, because a stdio server has exactly one
     /// connection.</b> One process, one pipe pair, one client -- which is the same
-    /// premise <see cref="_caller"/> already rests on. It is reset on
+    /// premise <see cref="Connection"/> already rests on: since 2026-10-03 the
+    /// session host makes one proxy per connection, so the premise holds there too.
+    /// It is reset on
     /// <c>initialize</c> and not only at construction, so *since the
     /// handshake* is literally what it means and a second handshake on the same
     /// transport starts the question again.
@@ -136,13 +139,44 @@ internal sealed class BrowserProxy : IAsyncDisposable
     /// </summary>
     private int _updateInstalling;
 
-    private BrowserProxy(ChildConnection surface, SessionManager sessions, ToolVerdicts verdicts, ServerActivity activity, ILogger logger)
+    private BrowserProxy(SessionHost host, CallerConnection connection, ServerActivity activity, bool ownsHost, ILogger logger)
     {
-        _surface = surface;
-        _sessions = sessions;
-        _verdicts = verdicts;
+        _host = host;
+        Connection = connection;
+        _ownsHost = ownsHost;
+        _surface = host.Surface;
+        _sessions = host.Sessions;
+        _verdicts = host.Verdicts;
         Activity = activity;
         _logger = logger;
+    }
+
+    /// <summary>The connection this proxy answers.</summary>
+    public CallerConnection Connection { get; }
+
+    /// <summary>A proxy for one connection over a host's sessions.</summary>
+    /// <remarks>
+    /// <b>Two owners, and the difference is what disposal does.</b> A server a client
+    /// started owns its host through its one proxy, so disposing the proxy ends every
+    /// session as it always did; the session host's proxies own nothing, so disposing
+    /// one detaches what its connection drove (Q366 b).
+    /// </remarks>
+    /// <param name="host">The host.</param>
+    /// <param name="connection">The connection.</param>
+    /// <param name="activity">Where the proxy records what it does, or <see langword="null"/> for a record nobody reads.</param>
+    /// <param name="ownsHost">Whether disposing the proxy disposes the host.</param>
+    /// <returns>The proxy.</returns>
+    internal static BrowserProxy For(SessionHost host, CallerConnection connection, ServerActivity? activity, bool ownsHost)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        ArgumentNullException.ThrowIfNull(connection);
+
+        return new BrowserProxy(
+            host,
+            connection,
+            activity ?? new ServerActivity(TimeProvider.System, Environment.CurrentDirectory),
+            ownsHost,
+            host.LoggerFactory.CreateLogger<BrowserProxy>());
     }
 
     /// <summary>The revision negotiated with the run's own child.</summary>
@@ -218,57 +252,22 @@ internal sealed class BrowserProxy : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(loggerFactory);
         ArgumentNullException.ThrowIfNull(environment);
 
-        var logger = loggerFactory.CreateLogger<BrowserProxy>();
-
-        // The manager is built before the connection because a session child's
-        // progress notifications are relayed through the proxy, and the proxy
-        // does not exist until the surface child has handshaken. The closure
-        // reads `proxy` late, which is what unties the knot.
-        BrowserProxy? proxy = null;
-        SessionManager? sessions = null;
-        ChildConnection? surface = null;
-
-        ValueTask relay(JsonRpcNotification notification, CancellationToken token) =>
-            proxy is null ? ValueTask.CompletedTask : proxy.RelayToCallerAsync(notification, token);
+        // ⚠️ ONE CONNECTION, AND IT OWNS ITS HOST -- the shape of every server a
+        // client starts, and of the in-process rig. Since 2026-10-03 the surface
+        // child, the sessions and the verdicts live in a SessionHost (Q366 b),
+        // and a server with one connection is a host with one proxy that owns it.
+#pragma warning disable CA2000 // Ownership moves into the proxy, and the catch disposes the host on the one path that does not get there.
+        var host = await SessionHost.ConnectAsync(transport, loggerFactory, environment, cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2000
 
         try
         {
-            // CA2000 is disabled for these two statements and nothing else. The
-            // pattern the rule asks for is exactly what is here -- locals
-            // declared before the try, nulled the instant ownership moves, and an
-            // unconditional disposal in the finally -- but both types are
-            // IAsyncDisposable and not IDisposable, and the rule's dataflow
-            // does not follow an `await x.DisposeAsync()` in a finally.
-#pragma warning disable CA2000
-            sessions = new SessionManager(environment, loggerFactory, relay);
-            surface = await ChildConnection.ConnectAsync(transport, loggerFactory, "browserai-", relay, cancellationToken).ConfigureAwait(false);
-#pragma warning restore CA2000
-
-            proxy = new BrowserProxy(
-                surface,
-                sessions,
-                environment.Verdicts,
-                activity ?? new ServerActivity(TimeProvider.System, Environment.CurrentDirectory),
-                logger);
-
-            // Ownership of both has moved into the proxy, which the caller now
-            // owns and disposes.
-            sessions = null;
-            surface = null;
-
-            return proxy;
+            return For(host, new CallerConnection(), activity, ownsHost: true);
         }
-        finally
+        catch
         {
-            if (surface is not null)
-            {
-                await surface.DisposeAsync().ConfigureAwait(false);
-            }
-
-            if (sessions is not null)
-            {
-                await sessions.DisposeAsync().ConfigureAwait(false);
-            }
+            await host.DisposeAsync().ConfigureAwait(false);
+            throw;
         }
     }
 
@@ -424,11 +423,17 @@ internal sealed class BrowserProxy : IAsyncDisposable
             return;
         }
 
-        // Sessions first: each owns a child whose job holds a browser, and each
-        // holds a directory lock that should be released while the process is
-        // still able to log why.
-        await _sessions.DisposeAsync().ConfigureAwait(false);
-        await _surface.DisposeAsync().ConfigureAwait(false);
+        // ⚠️ A PROXY THAT OWNS ITS HOST ENDS EVERY SESSION; ONE THAT DOES NOT
+        // DETACHES WHAT ITS CONNECTION DROVE -- Q366 b, 2026-10-03. The first is
+        // every server a client starts, unchanged; the second is a connection to
+        // the session host ending, after which its sessions outlive it.
+        if (_ownsHost)
+        {
+            await _host.DisposeAsync().ConfigureAwait(false);
+            return;
+        }
+
+        await _host.EndAsync(Connection).ConfigureAwait(false);
     }
 
     /// <summary>Rebuilds a typed error detail from the child's own error bytes.</summary>
@@ -465,8 +470,9 @@ internal sealed class BrowserProxy : IAsyncDisposable
     {
         // Recorded for every message, not only the two that are forwarded: the
         // progress relay needs somewhere to send to, and a child may report
-        // progress on the very first call.
-        Volatile.Write(ref _caller, context.Server);
+        // progress on the very first call. Since 2026-10-03 it is the
+        // connection's, and a session relays to whichever connection drives it.
+        Connection.AnsweredThrough(context.Server);
 
         if (context.JsonRpcMessage is JsonRpcRequest request)
         {
@@ -547,6 +553,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
             && context.Server.ClientInfo is { } introduced)
         {
             Activity.Introduced(new ClientIdentity(introduced.Name, introduced.Title, introduced.Version));
+            Connection.Introduced(introduced.Name);
         }
     }
 
@@ -624,7 +631,18 @@ internal sealed class BrowserProxy : IAsyncDisposable
 
         var client = caller.ClientInfo?.Name;
 
-        ProxyLog.ToolListPredatesThisServer(_logger, name, client ?? "<unnamed>", BuildVersion.Current);
+        // Q366 b: a proxy that does not own its host is one of the session host's
+        // connections, and the host outlives the front a client re-dials through.
+        var throughTheHost = !_ownsHost;
+
+        if (throughTheHost)
+        {
+            ProxyLog.ToolListMayPredateTheSessionHost(_logger, name, client ?? "<unnamed>", BuildVersion.Current);
+        }
+        else
+        {
+            ProxyLog.ToolListPredatesThisServer(_logger, name, client ?? "<unnamed>", BuildVersion.Current);
+        }
 
         await caller.SendMessageAsync(
             new JsonRpcNotification { Method = NotificationMethods.ToolListChangedNotification },
@@ -633,7 +651,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         await RefuseAsync(
             caller,
             request.Id,
-            SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client),
+            SessionErrors.ToolListPredatesThisServer(name, BuildVersion.Current, client, throughTheHost),
             cancellationToken).ConfigureAwait(false);
 
         return true;
@@ -888,7 +906,7 @@ internal sealed class BrowserProxy : IAsyncDisposable
         // only from an authored tool, which is how two of them end up disagreeing.
         if (SessionToolSurface.IsAuthored(name) && !string.Equals(name, SessionToolSurface.PageTool, StringComparison.Ordinal))
         {
-            var authored = await _sessions.InvokeAsync(name!, arguments, cancellationToken).ConfigureAwait(false);
+            var authored = await _sessions.InvokeAsync(Connection, name!, arguments, cancellationToken).ConfigureAwait(false);
 
             await caller.SendMessageAsync(
                 new JsonRpcResponse { Id = request.Id, Result = TextResult(authored.Text, authored.IsError) },
@@ -937,6 +955,45 @@ internal sealed class BrowserProxy : IAsyncDisposable
             ProxyLog.UnknownSession(_logger, tool, session);
             await RefuseAsync(caller, request.Id, SessionManager.ExplainUnknownSession(tool, session), cancellationToken).ConfigureAwait(false);
             return;
+        }
+
+        // ⚠️ WHO DRIVES IT -- Q366 b, the maintainer's words of 2026-10-03,
+        // verbatim: "This allows restarting vscode, the claude code plugin or
+        // soemthing without losing the state." A relaunched client reconnects to
+        // the session the host kept through its next call, which is this: a
+        // session whose client went is taken over, its browser never having
+        // closed. One another open connection drives is refused, and one the host
+        // is letting go is, to this caller, a session nobody holds. A server a
+        // client started has one connection, so all three are unreachable there.
+        switch (live.Claim(Connection, out var holder))
+        {
+            case SessionClaim.HeldElsewhere:
+            {
+                var elsewhere = SessionErrors.SessionDrivenByAnotherClient(tool, live.Location.FullPath, holder!.Describe());
+
+                ProxyLog.SessionDrivenElsewhere(live.Logger, tool, live.Location.FullPath);
+                Refused(live, tool, why, elsewhere);
+                await RefuseAsync(caller, request.Id, elsewhere, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            case SessionClaim.Releasing:
+                ProxyLog.UnknownSession(_logger, tool, session);
+                await RefuseAsync(caller, request.Id, SessionManager.ExplainUnknownSession(tool, session), cancellationToken).ConfigureAwait(false);
+                return;
+
+            case SessionClaim.TakenOver:
+                if (live.Logger.IsEnabled(LogLevel.Information))
+                {
+                    var driving = Connection.Describe();
+
+                    SessionToolLog.TakenOver(live.Logger, live.Location.FullPath, driving);
+                }
+
+                break;
+
+            default:
+                break;
         }
 
         // ⚠️ THE VERDICT, AND SINCE 2026-08-26 IT IS READ FROM A FILE RATHER
@@ -1709,22 +1766,6 @@ internal sealed class BrowserProxy : IAsyncDisposable
         /// <summary>The tool it named.</summary>
         public string Tool { get; } = tool;
     }
-
-    private async ValueTask RelayToCallerAsync(JsonRpcNotification notification, CancellationToken cancellationToken)
-    {
-        if (Volatile.Read(ref _caller) is not { } caller)
-        {
-            return;
-        }
-
-        // A fresh envelope, for the same reason results get one: the child's own
-        // message may carry a RelatedTransport that would send this straight back
-        // where it came from. The params -- progress token included -- pass
-        // through untouched, which is what puts it under the caller's token.
-        await caller.SendMessageAsync(
-            new JsonRpcNotification { Method = notification.Method, Params = notification.Params },
-            cancellationToken).ConfigureAwait(false);
-    }
 }
 
 /// <summary>Source-generated log messages for the proxy.</summary>
@@ -1823,6 +1864,30 @@ internal static partial class ProxyLog
         Level = LogLevel.Information,
         Message = "'{Tool}' named session '{Session}', which is not open in this process; the caller was told to resume it.")]
     public static partial void UnknownSession(ILogger logger, string tool, string session);
+
+    /// <summary>
+    /// A connection to the session host called a tool before it ever listed them, and
+    /// the host cannot tell whether that list was its own.
+    /// </summary>
+    /// <param name="logger">Where to write.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="client">What the client called itself.</param>
+    /// <param name="version">This build's version.</param>
+    [LoggerMessage(
+        EventId = 24,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' arrived from client '{Client}' before any tools/list on this connection to the session host, BrowserAI {Version}, which cannot tell whether the client's list was its own. Refused once, and notifications/tools/list_changed was sent with the refusal.")]
+    public static partial void ToolListMayPredateTheSessionHost(ILogger logger, string tool, string client, string version);
+
+    /// <summary>A tool call named a session another connection of the session host drives.</summary>
+    /// <param name="logger">The session's own logger.</param>
+    /// <param name="tool">The tool that was called.</param>
+    /// <param name="session">The session it named.</param>
+    [LoggerMessage(
+        EventId = 23,
+        Level = LogLevel.Information,
+        Message = "'{Tool}' named the session at {Session}, which another client drives right now; the call was refused and nothing was forwarded.")]
+    public static partial void SessionDrivenElsewhere(ILogger logger, string tool, string session);
 
     /// <summary>A tool call arrived with no session at all.</summary>
     /// <param name="logger">Where to write.</param>

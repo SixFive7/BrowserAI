@@ -73,6 +73,9 @@ internal static partial class NamedPipes
     /// <summary>A client connected between the pipe's creation and the wait for one.</summary>
     public const int ErrorPipeConnected = 535;
 
+    /// <summary>An overlapped operation was started and has not finished yet.</summary>
+    public const int ErrorIoPending = 997;
+
     /// <summary>
     /// How much of a reply the pipe buffers before a server's write waits for
     /// its client to read.
@@ -184,14 +187,158 @@ internal static partial class NamedPipes
     /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
     public static SafeFileHandle CreateParallelInstance(string name) => Create(name, 0, UnlimitedInstances);
 
+    /// <summary>
+    /// How much a stream pipe buffers in each direction: the session host's, which
+    /// carries whole MCP conversations and not one-line requests. The server pipe's
+    /// reply buffer, <see cref="OutBufferBytes"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Advisory, as every pipe buffer size is, so it takes the size this file
+    /// already gives a pipe</b>: a write larger than what the reader has drained waits
+    /// for it, which is the backpressure a conversation should have, and a size only
+    /// decides how much is in flight before it does. A frame of every size passes
+    /// through any buffer; a screenshot's is larger than any of them.
+    /// </remarks>
+    public static int StreamBufferBytes { get; } = OutBufferBytes;
+
+    /// <summary>
+    /// Creates the first instance of a stream pipe: overlapped, parallel, with the
+    /// three properties every pipe of ours has.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q366 b, 2026-10-03.</b> The session host serves one MCP conversation per
+    /// connection for as long as the client lives, and there may be hundreds of them.
+    /// A synchronous handle holds a thread in every idle read, so this one is opened
+    /// for overlapped I/O: <see cref="WaitForClient(SafeFileHandle, WaitHandle)"/>
+    /// accepts on it, and a <see cref="FileStream"/> opened asynchronously over it
+    /// reads and writes through the thread pool's completion port.
+    /// </para>
+    /// <para>
+    /// <b>Instances are not capped</b>: <see cref="UnlimitedInstances"/>, which
+    /// Microsoft documents as limited only by the system's resources, and which held
+    /// 2,000 connected instances of one name when it was measured on 2026-10-03 (see
+    /// that constant). So the host's sessions are bounded by nothing here: a
+    /// connection is one per running client, and it carries any number of sessions.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The full pipe name, <c>\\.\pipe\...</c>.</param>
+    /// <returns>The first server end. The caller owns it.</returns>
+    /// <exception cref="IOException">The pipe was not created; <see cref="Exception.HResult"/> says why.</exception>
+    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
+    public static SafeFileHandle CreateStreamServer(string name) =>
+        Create(name, FileFlagFirstPipeInstance | FileFlagOverlapped, UnlimitedInstances, StreamBufferBytes);
+
+    /// <summary>
+    /// Creates one more instance of a stream pipe this process already serves, on the
+    /// rule <see cref="CreateParallelInstance"/> states.
+    /// </summary>
+    /// <param name="name">The full pipe name, exactly as <see cref="CreateStreamServer"/> was given it.</param>
+    /// <returns>The new server end. The caller owns it.</returns>
+    /// <exception cref="IOException">The instance was not created; <see cref="Exception.HResult"/> says why.</exception>
+    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
+    public static SafeFileHandle CreateStreamInstance(string name) =>
+        Create(name, FileFlagOverlapped, UnlimitedInstances, StreamBufferBytes);
+
+    /// <summary>
+    /// Waits on an overlapped server end for a client to connect, or for
+    /// <paramref name="stop"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The OVERLAPPED lives in a pinned array</b>, so the address Windows writes
+    /// the result to never moves while the connect is pending, and an event is its
+    /// completion signal. Nothing is bound to the thread pool here: the handle is
+    /// bound once, by the <see cref="FileStream"/> the caller opens over it after
+    /// this returns.
+    /// </para>
+    /// <para>
+    /// <b>A stop cancels the pending connect and waits for Windows to say so</b>
+    /// before the array is let go, because memory a pending operation still names
+    /// is memory Windows may still write into.
+    /// </para>
+    /// </remarks>
+    /// <param name="server">An overlapped server end from <see cref="CreateStreamServer"/> or <see cref="CreateStreamInstance"/>.</param>
+    /// <param name="stop">Set when the caller stops listening.</param>
+    /// <returns><see langword="true"/> when a client is connected; <see langword="false"/> when the stop came first.</returns>
+    /// <exception cref="IOException">The connect failed for a reason other than a stop.</exception>
+    public static bool WaitForClient(SafeFileHandle server, WaitHandle stop)
+    {
+        ArgumentNullException.ThrowIfNull(server);
+        ArgumentNullException.ThrowIfNull(stop);
+
+        var overlapped = GC.AllocateArray<Overlapped>(1, pinned: true);
+
+        using var connected = new ManualResetEvent(initialState: false);
+
+        var signal = connected.SafeWaitHandle;
+        var added = false;
+
+        // ⚠️ THE EVENT'S RAW VALUE SITS IN THE OVERLAPPED FOR AS LONG AS THE
+        // CONNECT IS PENDING, so the handle is held open by a reference count
+        // until Windows has finished with it -- the rule for any raw handle that
+        // outlives the expression that read it.
+        signal.DangerousAddRef(ref added);
+
+        try
+        {
+            overlapped[0].EventHandle = signal.DangerousGetHandle();
+
+            if (ConnectNamedPipe(server, ref overlapped[0]))
+            {
+                return true;
+            }
+
+            var error = Marshal.GetLastPInvokeError();
+
+            if (error is ErrorPipeConnected)
+            {
+                return true;
+            }
+
+            if (error is not ErrorIoPending)
+            {
+                throw new IOException($"Waiting for a client on a pipe failed: {new Win32Exception(error).Message}", HResultFromWin32(error));
+            }
+
+            if (WaitHandle.WaitAny([connected, stop]) is 1)
+            {
+                // Cancelled, and then waited out: a connect that completed in the
+                // instant before the cancel still answers true below, and the
+                // caller drops that client with the instance.
+                _ = CancelIoEx(server, ref overlapped[0]);
+                _ = GetOverlappedResult(server, ref overlapped[0], out _, bWait: true);
+
+                return false;
+            }
+
+            if (GetOverlappedResult(server, ref overlapped[0], out _, bWait: false))
+            {
+                return true;
+            }
+
+            var failed = Marshal.GetLastPInvokeError();
+
+            throw new IOException($"A client's connect to a pipe failed: {new Win32Exception(failed).Message}", HResultFromWin32(failed));
+        }
+        finally
+        {
+            if (added)
+            {
+                signal.DangerousRelease();
+            }
+        }
+    }
+
     /// <summary>The one creation every pipe of ours goes through.</summary>
     /// <param name="name">The full pipe name.</param>
-    /// <param name="firstInstance"><see cref="FileFlagFirstPipeInstance"/>, or zero for a further instance.</param>
+    /// <param name="flags"><see cref="FileFlagFirstPipeInstance"/> for a first instance, and <see cref="FileFlagOverlapped"/> for a stream pipe.</param>
     /// <param name="maxInstances">How many instances the name may have at once.</param>
+    /// <param name="buffers">How much each direction buffers, or zero for the request-and-answer pipe's own sizes.</param>
     /// <returns>The server end. The caller owns it.</returns>
     /// <exception cref="IOException">The pipe was not created; <see cref="Exception.HResult"/> says why.</exception>
     /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
-    private static SafeFileHandle Create(string name, uint firstInstance, uint maxInstances)
+    private static SafeFileHandle Create(string name, uint flags, uint maxInstances, int buffers = 0)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
@@ -208,11 +355,11 @@ internal static partial class NamedPipes
 
             var handle = CreateNamedPipeW(
                 name,
-                PipeAccessDuplex | firstInstance,
+                PipeAccessDuplex | flags,
                 PipeRejectRemoteClients,
                 maxInstances,
-                (uint)OutBufferBytes,
-                (uint)InBufferBytes,
+                (uint)(buffers is 0 ? OutBufferBytes : buffers),
+                (uint)(buffers is 0 ? InBufferBytes : buffers),
                 nDefaultTimeOut: 0,
                 ref attributes);
 
@@ -399,6 +546,31 @@ internal static partial class NamedPipes
         public int InheritHandle;
     }
 
+    /// <summary><c>OVERLAPPED</c>, for the stream pipe's pending connect.</summary>
+    /// <remarks>
+    /// Checked against Microsoft's own definition by <c>InteropLayoutTests</c>,
+    /// whose oracle for this one is <see cref="NativeOverlapped"/>, as it is for
+    /// <c>NativeFile</c>'s: CsWin32 refuses to generate the name.
+    /// </remarks>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Overlapped
+    {
+        /// <summary>Reserved; the status, when Windows uses it.</summary>
+        public nuint Internal;
+
+        /// <summary>Reserved; the byte count, when Windows uses it.</summary>
+        public nuint InternalHigh;
+
+        /// <summary>The low half of an offset; unused on a pipe.</summary>
+        public uint Offset;
+
+        /// <summary>The high half of an offset; unused on a pipe.</summary>
+        public uint OffsetHigh;
+
+        /// <summary>The event Windows sets when the operation finishes.</summary>
+        public nint EventHandle;
+    }
+
 #pragma warning disable CS0649 // Filled in by Windows: read out of the buffer GetTokenInformation wrote, and never assigned in C#.
     /// <summary><c>TOKEN_USER</c>, which is one <c>SID_AND_ATTRIBUTES</c>.</summary>
     /// <remarks>
@@ -431,6 +603,25 @@ internal static partial class NamedPipes
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool ConnectNamedPipe(SafeFileHandle hNamedPipe, nint lpOverlapped);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "ConnectNamedPipe", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool ConnectNamedPipe(SafeFileHandle hNamedPipe, ref Overlapped lpOverlapped);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetOverlappedResult(
+        SafeFileHandle hFile,
+        ref Overlapped lpOverlapped,
+        out uint lpNumberOfBytesTransferred,
+        [MarshalAs(UnmanagedType.Bool)] bool bWait);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CancelIoEx(SafeFileHandle hFile, ref Overlapped lpOverlapped);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", SetLastError = true)]

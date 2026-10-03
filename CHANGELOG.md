@@ -675,6 +675,55 @@ release body; nothing else depends on it.
   only `IRegisteredTask::Run` passes a value into the action, the stored definition is not the one
   written, and the interop adds 160,768 bytes to the app and 189,440 to the server.
 
+- ✨ **A session outlives the client that drove it, kept by a session host the coordinator starts.**
+  Q366 b and Q364, the maintainer's words verbatim: *"Q366 b - lets go with a fully build option
+  c. If the server crashes and the coordinator loses the pipe, keep the browser around with the
+  already running activity timeout timer active. This allows restarting vscode, the claude code
+  plugin or soemthing without losing the state. And the timer logic for cleaning up inactive
+  sessions already exsits. Of course if a close or destroy is called explicitly then do clean it
+  up."* and *"Q364 Lets add option c"*. Measured before any code, with stand-ins: a process the
+  Task Scheduler starts kept everything in a kill-on-close job of its own through every way Claude
+  Code 2.1.287 and 2.1.288 and codex-cli 0.155 and 0.160 end a server, 21 runs of 21 over seven
+  exits, and terminating it ended both browsers left in that job as the kill landed.
+
+  **How it works.** The coordinator starts `BrowserAI.Server.exe --host` inside a kill-on-close job
+  only it holds. The server a client starts is a front that copies its stdio, byte for byte, to the
+  host's pipe, `\\.\pipe\BrowserAI-Host-<the install root's key>`, which takes any number of
+  connections and holds no thread for an idle one; a front that finds no host asks the coordinator
+  for one, and when no coordinator runs it starts one through the logon task with `--start-host`.
+  A build that is not installed, or a front with no host after 15 s, half the 30 s both clients give a
+  server to start, serves its client itself as before. **When a client goes**, each session it
+  drove is let go at once when there is nothing to
+  keep, and kept otherwise: a headless one until its idle close, a headed one until its window is
+  closed. The next call or `browserai_resume` that names a kept session takes it over with its pages
+  as they were left; a second client is refused while the first is still connected, with a new
+  sentence in the catalogue; and `browser_close` and `browserai_destroy` clean up at once. The
+  coordinator stays for as long as its host runs, and before an update has the host close every
+  browser with its own `browser_close`, capped at 30 s; the sign-in step applies nothing while the
+  host runs.
+
+  **Every bound is derived and pinned**, after the maintainer's words of the same day about the idle
+  close's cap: *"I need a motivation. Also, I do not like magic numbers."* The front waits for a host
+  half of the 30 s both clients give a server to start, measured that day for codex-cli 0.155 and
+  0.160 and read in Claude Code 2.1.288's binary; the host's close before an update is the idle close's own
+  cap, and the coordinator waits twice that for the host to end; the host lingers a minute after its
+  last session and connection, as the coordinator does after its last tab, and looks every quarter
+  of that. A client that re-dials the host and calls before it lists is refused once, as before,
+  in words that no longer claim the host started after the client's list was read.
+
+  **The arms**: `SessionHostTests` in process over a fake child, `SessionHostAccessTests` for the
+  front's search with a scheduler that starts nothing, `SessionHostCoordinatorTests` with a scripted
+  host and windowless stand-ins in a real job, `SessionHostProcessTests` with the published host and
+  front against Chromium, the front ended the way Codex ends a server, and `SessionHostBoundsTests`,
+  which holds each bound to what it is derived from. Five open hazard rows name what it costs: one
+  host for every session, the coordinator's end killing every kept browser, a headed session kept
+  until its window closes, an update closing kept browsers, and a Codex thread's first turn missing
+  BrowserAI's tools behind a host that starts cold, since `codex exec` sends that turn about a second
+  after a server starts.
+  [Design](docs/design/coordinator-owned-browsers/README.md),
+  [kb](kb/windows/processes.md#a-process-the-task-scheduler-starts-keeps-its-jobs-processes-through-every-clients-exit----measured-2026-10-03),
+  [evidence](docs/evidence/2026-10-03-coordinator-survival/README.md).
+
 ### Changed
 
 - 🔧 **Claude Code and Codex registrations run through RegisterAI, a program the installer carries.**
