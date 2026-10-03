@@ -128,7 +128,7 @@ internal sealed record RegistrationReport(RegistrationStatus Status, string Deta
 /// update, repair and reinstall therefore all converge on exactly one entry.
 /// </para>
 /// </remarks>
-internal static class McpRegistrar
+internal static partial class McpRegistrar
 {
     /// <summary>Runs one registration pass.</summary>
     /// <param name="intent">Which lifecycle event is asking.</param>
@@ -196,7 +196,7 @@ internal static class McpRegistrar
             {
                 var detail = who.NotFoundDetail(command);
 
-                RegistrationLog.NoClient(logger, who.Executable, ClientCommandLine.FallbackDirectory, command);
+                RegistrationLog.NoClient(logger, who.Executable, $"on PATH or at {ClientCommandLine.FallbackDirectory}", who.ManualCommandFor(command));
                 return new RegistrationReport(RegistrationStatus.ClientNotFound, detail, null, command);
             }
 
@@ -327,7 +327,7 @@ internal static class McpRegistrar
             {
                 var detail = who.NotFoundDetail(command);
 
-                RegistrationLog.NoClient(logger, who.Executable, ClientCommandLine.FallbackDirectory, command);
+                RegistrationLog.NoClient(logger, who.Executable, $"on PATH or at {ClientCommandLine.FallbackDirectory}", who.ManualCommandFor(command));
                 return new RegistrationReport(RegistrationStatus.ClientNotFound, detail, null, command);
             }
 
@@ -834,19 +834,27 @@ internal static partial class RegistrationLog
     /// </summary>
     /// <param name="logger">Where to write.</param>
     /// <param name="executable">What was looked for.</param>
-    /// <param name="fallback">The one directory searched beyond PATH.</param>
-    /// <param name="command">What would have been registered.</param>
+    /// <param name="where">Where it was looked for.</param>
+    /// <param name="manual">The line that registers by hand.</param>
     /// <remarks>
+    /// <para>
     /// <b>Warning, not Information.</b> An installed BrowserAI that no
     /// client can reach is the exact state this whole mechanism exists to
     /// prevent, and the fact that it is nobody's fault does not make it a state
     /// anyone should have to guess at.
+    /// </para>
+    /// <para>
+    /// <i>Corrected 2026-10-03 (previously the message named <c>claude mcp add</c>
+    /// for every client and "on PATH or at" one folder)</i>: the manual line is the
+    /// client's own, because the second client has one of its own, and where the
+    /// search looked is said by whoever searched.
+    /// </para>
     /// </remarks>
     [LoggerMessage(
         EventId = 5,
         Level = LogLevel.Warning,
-        Message = "No '{Executable}' was found on PATH or at {Fallback}, so BrowserAI has not registered itself with any MCP client. It is installed and working; nothing is configured to talk to it. Register it by hand once a client is installed: claude mcp add browserai --scope user -- \"{Command}\"")]
-    public static partial void NoClient(ILogger logger, string executable, string fallback, string command);
+        Message = "No '{Executable}' was found {Where}, so BrowserAI has not registered itself with that client. It is installed and working; nothing is configured to talk to it. Register it by hand once the client is installed: {Manual}")]
+    public static partial void NoClient(ILogger logger, string executable, string where, string manual);
 
     /// <summary>BrowserAI refused to register the path it was given.</summary>
     /// <param name="logger">Where to write.</param>

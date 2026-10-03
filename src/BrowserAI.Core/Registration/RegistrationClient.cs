@@ -39,6 +39,9 @@ internal sealed record RegistrationClient
     /// <summary>A short, stable key for the record on disk.</summary>
     public required string Key { get; init; }
 
+    /// <summary>RegisterAI's id for this client, as its <c>--client</c> option and its documents spell it.</summary>
+    public required string ToolId { get; init; }
+
     /// <summary>The executable, by file name only.</summary>
     public required string Executable { get; init; }
 
@@ -197,6 +200,7 @@ internal sealed record RegistrationClient
     {
         DisplayName = "Claude Code",
         Key = "claude-code",
+        ToolId = "claude-code",
         Executable = McpClientRegistration.ClientExecutable,
         ServerName = McpClientRegistration.ServerName,
         Budget = McpClientRegistration.Budget,
@@ -230,6 +234,7 @@ internal sealed record RegistrationClient
     {
         DisplayName = "Codex",
         Key = "codex",
+        ToolId = "codex",
         Executable = CodexRegistration.ClientExecutable,
         ServerName = CodexRegistration.ServerName,
         Budget = CodexRegistration.Budget,

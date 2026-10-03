@@ -592,7 +592,7 @@ internal sealed class CoordinatorTests
 
         using var session = new ConfigurationSession(
             state,
-            new UnusedCommands(),
+            new UnusedTool(),
             new BrowserAI.Hosting.LocalAppDataPaths(install.Path),
             NullLogger.Instance,
             Occasion.Ordinary,
@@ -969,20 +969,12 @@ internal sealed class CoordinatorTests
         }
     }
 
-    /// <summary>A command seam no arm here reaches.</summary>
-    private sealed class UnusedCommands : IRegistrationCommand
+    /// <summary>A RegisterAI no arm here reaches.</summary>
+    private sealed class UnusedTool : IRegisterAi
     {
-        public string? Locate(string executableName) => null;
+        public string Executable => "<unused>";
 
-        public CommandOutcome Run(string executable, IReadOnlyList<string> arguments, TimeSpan budget, string? workingDirectory) =>
-            throw new InvalidOperationException("No arm in this class starts a client.");
-
-        public CommandOutcome Run(
-            string executable,
-            IReadOnlyList<string> arguments,
-            TimeSpan budget,
-            string? workingDirectory,
-            IReadOnlyDictionary<string, string> environment) =>
-            throw new InvalidOperationException("No arm in this class starts a client.");
+        public ToolRun Run(IReadOnlyList<string> arguments, TimeSpan budget) =>
+            throw new InvalidOperationException("No arm in this class runs RegisterAI.");
     }
 }

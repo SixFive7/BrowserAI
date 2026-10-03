@@ -86,12 +86,17 @@ internal enum RegistrationOwnership
 /// <see langword="null"/> when the file was read -- including when it simply is
 /// not there, which is an answer, not a failure.
 /// </param>
+/// <param name="ResolvesTo">
+/// The file <paramref name="Command"/> resolves to, the way its client resolves it,
+/// when RegisterAI found one. Added 2026-10-03.
+/// </param>
 internal sealed record RegistrationView(
     RegistrationScope Scope,
     string File,
     string? Command,
     RegistrationOwnership Ownership,
-    string? Unreadable);
+    string? Unreadable,
+    string? ResolvesTo = null);
 
 /// <summary>
 /// Reads what the client has been told about <c>browserai</c>, and never writes.

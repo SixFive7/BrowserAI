@@ -238,7 +238,7 @@ internal sealed class SignInTaskTests
             intent,
             "9.9.9",
             image,
-            new FakeClientCommandLine(),
+            new FakeRegisterAi(),
             new LocalAppDataPaths(data),
             new ScratchUserPath(),
             tasks,

@@ -138,7 +138,7 @@ internal static class HookRegistration
             intent,
             version,
             Environment.ProcessPath,
-            new ClientCommandLine(),
+            RegisterAiTool.Beside(Environment.ProcessPath),
             new LocalAppDataPaths(LocalAppDataPaths.Overridden()),
             RegistryUserPathStore.User,
             ScheduledTasks.Instance,
@@ -152,7 +152,11 @@ internal static class HookRegistration
     /// <param name="intent">Which hook is asking.</param>
     /// <param name="version">The version Velopack handed the callback.</param>
     /// <param name="imagePath">The running image, or what stands in for it.</param>
-    /// <param name="commands">The seam over starting the client.</param>
+    /// <param name="tool">
+    /// RegisterAI, which registers with every client in one run. The hook passes the
+    /// one beside the running image; the suite passes a fake. <i>Until 2026-10-03 this
+    /// was the seam over starting each client's own command line.</i>
+    /// </param>
     /// <param name="paths">
     /// Where the log and the record go, and -- on an uninstall -- what is offered
     /// for deletion. <b>Required, not defaulted</b>: a test that forgot
@@ -191,20 +195,17 @@ internal static class HookRegistration
     /// somebody else's executable, and a human at the screen.
     /// </para>
     /// <para>
-    /// ⚠️ <b>The client set is one of those things, added 2026-09-24.</b> Codex's
-    /// discovery looks in three places <i>below</i>
-    /// <see cref="IRegistrationCommand"/> -- the desktop manifest and the npm
-    /// layout among them -- so on a machine that has Codex installed there is no
-    /// way to ask a double for its absence, and an arm about a missing client
-    /// would drive somebody's real CLI instead. It defaults to every client, and
-    /// the hook itself never passes one.
+    /// ⚠️ <b>The client set is one of those things, added 2026-09-24.</b> It
+    /// defaults to every client, and the hook itself never passes one. <i>Since
+    /// 2026-10-03 a missing client is RegisterAI's answer and the fake gives it, so
+    /// the set only narrows which clients a pass is about.</i>
     /// </para>
     /// </remarks>
     public static HookOutcome Run(
         RegistrationIntent intent,
         string version,
         string? imagePath,
-        IRegistrationCommand commands,
+        IRegisterAi tool,
         IAppPaths paths,
         IUserPathStore userPath,
         ILogonTasks tasks,
@@ -213,7 +214,7 @@ internal static class HookRegistration
         Func<string, bool>? ask = null,
         IReadOnlyList<RegistrationClient>? clients = null)
     {
-        ArgumentNullException.ThrowIfNull(commands);
+        ArgumentNullException.ThrowIfNull(tool);
         ArgumentNullException.ThrowIfNull(paths);
         ArgumentNullException.ThrowIfNull(userPath);
         ArgumentNullException.ThrowIfNull(tasks);
@@ -222,7 +223,7 @@ internal static class HookRegistration
 
         try
         {
-            var passes = new List<ClientRegistration>(who.Count);
+            IReadOnlyList<ClientRegistration> passes = [];
             DataRootDisposalReport? disposal = null;
             UserPathReport? pathEntry = null;
             SignInTaskReport? signIn = null;
@@ -236,18 +237,13 @@ internal static class HookRegistration
 
                 RegistrationHookLog.HookRunning(logger, intent, version, imagePath ?? "<unknown>");
 
-                // ⚠️ EVERY CLIENT, AND ONE PASS EACH -- 2026-09-24, Q258 step 2.
+                // ⚠️ EVERY CLIENT, AND ONE ANSWER EACH -- 2026-09-24, Q258 step 2.
                 // Each carries its own ownership read, so a foreign entry in one
                 // client's configuration refuses that client and says nothing
-                // about the other. McpRegistrar.Apply never throws, so no client
-                // can stop the next one from being reached.
-                foreach (var client in who)
-                {
-                    passes.Add(new ClientRegistration(
-                        client.Key,
-                        client.DisplayName,
-                        McpRegistrar.Apply(client, intent, imagePath, commands, logger)));
-                }
+                // about the other. Since 2026-10-03 the pass is one run of
+                // RegisterAI for all of them, bounded as a whole, and
+                // McpRegistrar.Apply still never throws.
+                passes = McpRegistrar.Apply(who, intent, imagePath, tool, logger);
 
                 WriteRecord(paths.RootAppDir, passes, intent, version, logger);
 

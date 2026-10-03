@@ -102,7 +102,7 @@ internal sealed class InstallerHandoffTests
 
         var run = source.IndexOf("VelopackStartup.RunAndServeLifecycleHooks(", StringComparison.Ordinal);
         var clear = source.IndexOf("        ClearTheInstallersOwnVariables();", StringComparison.Ordinal);
-        var launch = source.IndexOf("new ClientCommandLine()", StringComparison.Ordinal);
+        var launch = source.IndexOf("RegisterAiTool.Beside(Environment.ProcessPath)", StringComparison.Ordinal);
 
         await Assert.That(run).IsGreaterThan(-1);
         await Assert.That(clear).IsGreaterThan(-1);

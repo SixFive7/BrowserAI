@@ -110,16 +110,22 @@ internal sealed record AppState
         Clients.Single(client => string.Equals(client.Client.Key, key, StringComparison.Ordinal));
 
     /// <summary>Reads the whole state.</summary>
-    /// <param name="commands">The seam over starting the client.</param>
+    /// <param name="tool">RegisterAI, which reads every client's registration.</param>
     /// <param name="workingDirectory">Where the search for a project file starts.</param>
     /// <returns>What is true right now.</returns>
-    public static AppState Read(IRegistrationCommand commands, string workingDirectory)
+    public static AppState Read(IRegisterAi tool, string workingDirectory)
     {
-        ArgumentNullException.ThrowIfNull(commands);
+        ArgumentNullException.ThrowIfNull(tool);
         ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
 
         var installRoot = InstallLocation.RootAppDir;
         var resolved = RegistrationTarget.TryResolve(Environment.ProcessPath, out var target, out var refusal);
+        var readings = RegistrationReader.Read(
+            tool,
+            RegistrationClient.All,
+            installRoot ?? target?.InstallRoot,
+            resolved ? target!.Command : null,
+            workingDirectory);
 
         return new AppState
         {
@@ -128,12 +134,24 @@ internal sealed record AppState
             DataRoot = new LocalAppDataPaths(LocalAppDataPaths.Overridden()).RootAppDir,
             ServerCommand = resolved ? target!.Command : null,
             ServerRefusal = resolved ? null : refusal,
-            Clients = [.. RegistrationClient.All.Select(who => ClientState.Read(
-                who,
-                commands,
-                workingDirectory,
-                installRoot ?? target?.InstallRoot,
-                resolved))],
+            Clients = [.. readings.Select(reading => ClientState.From(reading, resolved))],
         };
     }
+
+    /// <summary>
+    /// Reads the whole state through the RegisterAI this install ships, the way the
+    /// window and <c>--report</c> do.
+    /// </summary>
+    /// <param name="workingDirectory">Where the search for a project registration starts.</param>
+    /// <returns>What is true right now.</returns>
+    /// <remarks>
+    /// <b>The one call for a caller that only wants to show the state.</b> Each
+    /// client's <see cref="ClientState.StatusSentence"/> and
+    /// <see cref="ClientState.ShortStatus"/> are what a person reads, and
+    /// <see cref="StatusReport.ToUtf8"/> is the same state as JSON. It starts
+    /// RegisterAI once, and once more per client that has a project file at or above
+    /// <paramref name="workingDirectory"/>, so it belongs off a UI thread.
+    /// </remarks>
+    public static AppState Read(string workingDirectory) =>
+        Read(RegisterAiTool.Beside(Environment.ProcessPath), workingDirectory);
 }

@@ -928,18 +928,9 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("registration-hook");
         using var data = ScratchDirectory.Create("registration-hook-data");
 
-        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement and not tidiness. HookRegistration.Run has no seam
-        // over what is registered already, and the registrar now reads it on
-        // EVERY intent -- so without this the hook asks about the maintainer's
-        // own ~/.claude.json, finds an entry foreign to this scratch install
-        // root, and refuses. The read is the product's; the file it reads is
-        // this arm's.
-        using var clientConfig = ScratchDirectory.Create("registration-hook-data-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var command = InstalledLayout.Create(install.Path);
-        var client = new FakeClientCommandLine();
+        var tool = new FakeRegisterAi();
 
         var before = Directory
             .EnumerateFileSystemEntries(install.Path, "*", SearchOption.AllDirectories)
@@ -950,7 +941,7 @@ internal sealed class RegistrationTests
             RegistrationIntent.Install,
             "9.9.9",
             command,
-            client,
+            tool,
             new LocalAppDataPaths(data.Path),
             new ScratchUserPath(),
             new ScratchLogonTasks(),
@@ -1013,24 +1004,15 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("registration-hook-failed");
         using var data = ScratchDirectory.Create("registration-hook-failed-data");
 
-        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement and not tidiness. HookRegistration.Run has no seam
-        // over what is registered already, and the registrar now reads it on
-        // EVERY intent -- so without this the hook asks about the maintainer's
-        // own ~/.claude.json, finds an entry foreign to this scratch install
-        // root, and refuses. The read is the product's; the file it reads is
-        // this arm's.
-        using var clientConfig = ScratchDirectory.Create("registration-hook-failed-data-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var command = InstalledLayout.Create(install.Path);
-        var client = new FakeClientCommandLine { Executable = null };
+        var tool = new FakeRegisterAi { Missing = { "claude-code", "codex" } };
 
         var report = HookRegistration.Run(
             RegistrationIntent.Install,
             "9.9.9",
             command,
-            client,
+            tool,
             new LocalAppDataPaths(data.Path),
             new ScratchUserPath(),
             new ScratchLogonTasks(),
@@ -1077,17 +1059,15 @@ internal sealed class RegistrationTests
     {
         using var install = ScratchDirectory.Create("registration-both");
         using var data = ScratchDirectory.Create("registration-both-data");
-        using var clientConfig = ScratchDirectory.Create("registration-both-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var command = InstalledLayout.Create(install.Path);
-        var client = new FakeClientCommandLine();
+        var tool = new FakeRegisterAi();
 
         var outcome = HookRegistration.Run(
             RegistrationIntent.Install,
             "9.9.9",
             command,
-            client,
+            tool,
             new LocalAppDataPaths(data.Path),
             new ScratchUserPath(),
             new ScratchLogonTasks(),
@@ -1103,8 +1083,17 @@ internal sealed class RegistrationTests
             await Assert.That(outcome.For(who.Key).Status).IsEqualTo(RegistrationStatus.Registered);
         }
 
-        // And the client was asked once per client, not once in total.
-        await Assert.That(client.Verbs.Count(verb => verb is "add")).IsEqualTo(RegistrationClient.All.Count);
+        // ⚠️ AND RegisterAI WAS RUN ONCE FOR BOTH, since 2026-10-03: one register,
+        // every client, this install's root as what makes an entry ours, and the
+        // budget that bounds the whole pass.
+        var call = tool.Calls.Single();
+
+        await Assert.That(call[0]).IsEqualTo("register");
+        await Assert.That(FakeRegisterAi.Option(call, "--client")).IsEqualTo("all");
+        await Assert.That(FakeRegisterAi.Option(call, "--scope")).IsEqualTo("user");
+        await Assert.That(FakeRegisterAi.Option(call, "--owned-root")).IsEqualTo(install.Path);
+        await Assert.That(FakeRegisterAi.Option(call, "--timeout")).IsEqualTo("12");
+        await Assert.That(FakeRegisterAi.Command(call)).IsEqualTo(InstalledLayout.ServerIn(install.Path));
 
         // The whole pass is what was asked for, which is the one aggregate the
         // file still carries: two outcomes cannot be summarised by one word, and
@@ -1126,12 +1115,11 @@ internal sealed class RegistrationTests
     /// nothing anywhere to say that the second client was never reached.
     /// </para>
     /// <para>
-    /// <b>The client set is supplied, for the same reason
-    /// <see cref="IRegistrationCommand"/> is.</b> Codex's discovery looks in
-    /// three places below the seam -- the desktop manifest and the npm layout
-    /// among them -- so on a machine that HAS Codex there is no way to ask the
-    /// double for its absence: the product would correctly find the real one and
-    /// this arm would drive somebody's installed CLI.
+    /// <b>The missing client is RegisterAI's answer, since 2026-10-03.</b> Finding a
+    /// client is RegisterAI's job now, so the fake says Codex was not found and this
+    /// arm holds what BrowserAI makes of that. <i>Previously the client set was
+    /// supplied, because Codex's discovery looked in three places below the seam
+    /// this repository had then.</i>
     /// </para>
     /// <para>
     /// <b>Planted red 2026-09-24</b> by the same one-client hook: there was no
@@ -1144,22 +1132,19 @@ internal sealed class RegistrationTests
     {
         using var install = ScratchDirectory.Create("registration-absent");
         using var data = ScratchDirectory.Create("registration-absent-data");
-        using var clientConfig = ScratchDirectory.Create("registration-absent-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var command = InstalledLayout.Create(install.Path);
-        var client = new FakeClientCommandLine();
+        var tool = new FakeRegisterAi { Missing = { "codex" } };
 
         var outcome = HookRegistration.Run(
             RegistrationIntent.Install,
             "9.9.9",
             command,
-            client,
+            tool,
             new LocalAppDataPaths(data.Path),
             new ScratchUserPath(),
             new ScratchLogonTasks(),
-            ScratchLogonTasks.AppId,
-            clients: [RegistrationClient.ClaudeCode, RegistrationClient.Codex with { Locate = _ => null }]);
+            ScratchLogonTasks.AppId);
 
         await Assert.That(outcome.For(RegistrationClient.ClaudeCode.Key).Status).IsEqualTo(RegistrationStatus.Registered);
         await Assert.That(outcome.For(RegistrationClient.Codex.Key).Status).IsEqualTo(RegistrationStatus.ClientNotFound);
@@ -1200,15 +1185,6 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("uninstall-silent");
         using var data = ScratchDirectory.Create("uninstall-silent-data");
 
-        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement and not tidiness. HookRegistration.Run has no seam
-        // over what is registered already, and the registrar now reads it on
-        // EVERY intent -- so without this the hook asks about the maintainer's
-        // own ~/.claude.json, finds an entry foreign to this scratch install
-        // root, and refuses. The read is the product's; the file it reads is
-        // this arm's.
-        using var clientConfig = ScratchDirectory.Create("uninstall-silent-data-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var paths = new LocalAppDataPaths(data.Path);
         var planted = PlantADataRoot(paths);
@@ -1218,7 +1194,7 @@ internal sealed class RegistrationTests
             RegistrationIntent.Uninstall,
             "9.9.9",
             InstalledLayout.Create(install.Path),
-            new FakeClientCommandLine(),
+            new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
             new ScratchLogonTasks(),
@@ -1261,15 +1237,6 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("uninstall-keep");
         using var data = ScratchDirectory.Create("uninstall-keep-data");
 
-        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement and not tidiness. HookRegistration.Run has no seam
-        // over what is registered already, and the registrar now reads it on
-        // EVERY intent -- so without this the hook asks about the maintainer's
-        // own ~/.claude.json, finds an entry foreign to this scratch install
-        // root, and refuses. The read is the product's; the file it reads is
-        // this arm's.
-        using var clientConfig = ScratchDirectory.Create("uninstall-keep-data-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var paths = new LocalAppDataPaths(data.Path);
         var planted = PlantADataRoot(paths);
@@ -1279,7 +1246,7 @@ internal sealed class RegistrationTests
             RegistrationIntent.Uninstall,
             "9.9.9",
             InstalledLayout.Create(install.Path),
-            new FakeClientCommandLine(),
+            new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
             new ScratchLogonTasks(),
@@ -1322,15 +1289,6 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("uninstall-remove");
         using var data = ScratchDirectory.Create("uninstall-remove-data");
 
-        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement and not tidiness. HookRegistration.Run has no seam
-        // over what is registered already, and the registrar now reads it on
-        // EVERY intent -- so without this the hook asks about the maintainer's
-        // own ~/.claude.json, finds an entry foreign to this scratch install
-        // root, and refuses. The read is the product's; the file it reads is
-        // this arm's.
-        using var clientConfig = ScratchDirectory.Create("uninstall-remove-data-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var paths = new LocalAppDataPaths(data.Path);
         var planted = PlantADataRoot(paths);
@@ -1339,7 +1297,7 @@ internal sealed class RegistrationTests
             RegistrationIntent.Uninstall,
             "9.9.9",
             InstalledLayout.Create(install.Path),
-            new FakeClientCommandLine(),
+            new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
             new ScratchLogonTasks(),
@@ -1377,15 +1335,6 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("upgrade-keeps");
         using var data = ScratchDirectory.Create("upgrade-keeps-data");
 
-        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement and not tidiness. HookRegistration.Run has no seam
-        // over what is registered already, and the registrar now reads it on
-        // EVERY intent -- so without this the hook asks about the maintainer's
-        // own ~/.claude.json, finds an entry foreign to this scratch install
-        // root, and refuses. The read is the product's; the file it reads is
-        // this arm's.
-        using var clientConfig = ScratchDirectory.Create("upgrade-keeps-data-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var paths = new LocalAppDataPaths(data.Path);
         var planted = PlantADataRoot(paths);
@@ -1395,7 +1344,7 @@ internal sealed class RegistrationTests
             intent,
             "9.9.9",
             InstalledLayout.Create(install.Path),
-            new FakeClientCommandLine(),
+            new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
             new ScratchLogonTasks(),
@@ -1431,15 +1380,6 @@ internal sealed class RegistrationTests
         using var install = ScratchDirectory.Create("uninstall-unused");
         using var data = ScratchDirectory.Create("uninstall-unused-data");
 
-        // ⚠️ THE CLIENT'S CONFIGURATION IS SCRATCH, and since 2026-09-16 that is
-        // a requirement and not tidiness. HookRegistration.Run has no seam
-        // over what is registered already, and the registrar now reads it on
-        // EVERY intent -- so without this the hook asks about the maintainer's
-        // own ~/.claude.json, finds an entry foreign to this scratch install
-        // root, and refuses. The read is the product's; the file it reads is
-        // this arm's.
-        using var clientConfig = ScratchDirectory.Create("uninstall-unused-data-config");
-        using var pointed = PointTheClientAt(clientConfig.Path);
 
         var paths = new LocalAppDataPaths(data.Path);
         var asked = 0;
@@ -1448,7 +1388,7 @@ internal sealed class RegistrationTests
             RegistrationIntent.Uninstall,
             "9.9.9",
             InstalledLayout.Create(install.Path),
-            new FakeClientCommandLine(),
+            new FakeRegisterAi(),
             paths,
             new ScratchUserPath(),
             new ScratchLogonTasks(),
@@ -1514,6 +1454,164 @@ internal sealed class RegistrationTests
         File.WriteAllText(planted, "not really a browser, but it is 768 MB in spirit");
 
         return planted;
+    }
+
+    // ---- The RegisterAI the payload carries, against the real clients ------
+
+    /// <summary>
+    /// The RegisterAI the payload carries registers BrowserAI with the real Claude Code
+    /// and the real Codex, leaves a matching entry alone on an update and on a second
+    /// install, removes both on an uninstall, and touches nothing of the person's own.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Added 2026-10-03 with the switch to RegisterAI (Q332, Q349 a).</b> What
+    /// RegisterAI does against each client is held by its own suite; what this holds is
+    /// BrowserAI's half, end to end: the command line the registrar builds, run by the
+    /// file the build put in the payload, against both real clients, read back by
+    /// BrowserAI.
+    /// </para>
+    /// <para>
+    /// <b>Both clients point at scratch, and the class runs beside nothing</b>, for the
+    /// reason on the class: <c>CLAUDE_CONFIG_DIR</c> and <c>CODEX_HOME</c> are
+    /// process-wide, and RegisterAI and every client it starts inherit them.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ThePayloadsRegisterAiRegistersBrowserAiWithBothRealClients()
+    {
+        _ = SuiteEnvironment.RequireClientCommandLine();
+        _ = SuiteEnvironment.RequireCodexCommandLine();
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        await Assert.That(File.Exists(RepositoryPayload.RegisterAi)).IsTrue().Because($"the payload holds no '{RepositoryPayload.RegisterAi}'. Run: pwsh -File build/Get-RegisterAi.ps1");
+
+        using var config = ScratchDirectory.Create("registerai-live");
+        using var install = ScratchDirectory.Create("registerai-live-install");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var tool = new RegisterAiTool(RepositoryPayload.RegisterAi);
+        var (logger, _) = Capture();
+
+        using (PointTheClientAt(config.Path))
+        {
+            var claudeFile = Path.Combine(config.Path, ConfigFileName);
+            var codexFile = Path.Combine(Environment.GetEnvironmentVariable(CodexRegistration.HomeVariable)!, CodexRegistration.ConfigFileName);
+
+            foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Install, image, tool, logger))
+            {
+                await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.Registered).Because(pass.Report.Detail);
+            }
+
+            await Assert.That(await File.ReadAllTextAsync(claudeFile)).Contains(server.Replace(@"\", @"\\", StringComparison.Ordinal));
+            await Assert.That(await File.ReadAllTextAsync(codexFile)).Contains("[mcp_servers.browserai]");
+
+            // Q347 a, against the real clients: an update and a second install leave
+            // an entry of ours that already names this server exactly as it is.
+            foreach (var intent in new[] { RegistrationIntent.Update, RegistrationIntent.Install })
+            {
+                foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, intent, image, tool, logger))
+                {
+                    await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.AlreadyRegistered).Because(pass.Report.Detail);
+                }
+            }
+
+            await Assert.That(Occurrences(await File.ReadAllTextAsync(claudeFile), $"\"{McpRegistrar.ServerName}\"")).IsEqualTo(1);
+            await Assert.That(Occurrences(await File.ReadAllTextAsync(codexFile), "[mcp_servers.browserai]")).IsEqualTo(1);
+
+            foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, tool, logger))
+            {
+                await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.Unregistered).Because(pass.Report.Detail);
+            }
+
+            await Assert.That(await File.ReadAllTextAsync(claudeFile)).DoesNotContain($"\"{McpRegistrar.ServerName}\"");
+            await Assert.That(await File.ReadAllTextAsync(codexFile)).DoesNotContain("[mcp_servers.browserai]");
+
+            foreach (var pass in McpRegistrar.Apply(RegistrationClient.All, RegistrationIntent.Uninstall, image, tool, logger))
+            {
+                await Assert.That(pass.Report.Status).IsEqualTo(RegistrationStatus.NothingToUnregister).Because(pass.Report.Detail);
+            }
+        }
+
+        // ⚠️ The negative that matters: the registered path carries this run's GUID,
+        // so its absence from the person's own configuration is proof and not an
+        // argument.
+        var mine = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.DoNotVerify),
+            ConfigFileName);
+
+        if (File.Exists(mine))
+        {
+            await Assert.That(await File.ReadAllTextAsync(mine)).DoesNotContain(install.Path.Replace(@"\", @"\\", StringComparison.Ordinal));
+        }
+
+        await Assert.That(TheMaintainersOwnCodexConfiguration()).DoesNotContain(install.Path);
+    }
+
+    /// <summary>
+    /// Step 6 of the RegisterAI plan: the reader BrowserAI had and RegisterAI agree on
+    /// every Claude Code state, the same file read both ways.
+    /// </summary>
+    /// <remarks>
+    /// <b>Transitional, and deleted with the old reader.</b> The plan's step 6 is done
+    /// when <i>"old and new agree on the same scenarios"</i>; this is that check, over
+    /// the states the window and the hooks act on. Claude Code's entry is read from its
+    /// file by both, so no client runs. The working folder is the drive root, so no
+    /// project file above this repository's own is read.
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task TheOldReaderAndRegisterAiAgreeOnEveryClaudeCodeState()
+    {
+        SuiteEnvironment.RequireRepositoryPayload();
+
+        await Assert.That(File.Exists(RepositoryPayload.RegisterAi)).IsTrue().Because($"the payload holds no '{RepositoryPayload.RegisterAi}'. Run: pwsh -File build/Get-RegisterAi.ps1");
+
+        using var config = ScratchDirectory.Create("registerai-agree");
+        using var install = ScratchDirectory.Create("registerai-agree-install");
+        using var elsewhere = ScratchDirectory.Create("registerai-agree-other");
+
+        var image = InstalledLayout.Create(install.Path);
+        var server = InstalledLayout.ServerIn(install.Path);
+        var tool = new RegisterAiTool(RepositoryPayload.RegisterAi);
+        var file = Path.Combine(config.Path, ConfigFileName);
+
+        _ = InstalledLayout.Create(elsewhere.Path);
+
+        (string Name, string? Command, string? Text)[] scenarios =
+        [
+            ("absent", null, "{}"),
+            ("ours", server, null),
+            ("the app under the server's root", image, null),
+            ("a file that is gone", Path.Combine(install.Path, RegistrationTarget.CurrentDirectoryName, "BrowserAI.exe.gone"), null),
+            ("another install", InstalledLayout.ServerIn(elsewhere.Path), null),
+            ("not readable", null, "{ this is not json"),
+        ];
+
+        using (PointTheClientAt(config.Path))
+        {
+            foreach (var (name, command, text) in scenarios)
+            {
+                if (command is not null)
+                {
+                    await WriteServerEntryAsync(file, command);
+                }
+                else
+                {
+                    await File.WriteAllTextAsync(file, text);
+                }
+
+                var old = McpRegistryView.Read(RegistrationScope.User, file, install.Path);
+                var now = RegistrationReader.Read(tool, [RegistrationClient.ClaudeCode], install.Path, server, Path.GetPathRoot(config.Path)!)[0];
+
+                await Assert.That(now.Unanswered).IsNull().Because(name);
+                await Assert.That(now.UserScope.Ownership).IsEqualTo(old.Ownership).Because(name);
+                await Assert.That(now.UserScope.Unreadable is null).IsEqualTo(old.Unreadable is null).Because(name);
+                await Assert.That(now.UserScope.Command).IsEqualTo(old.Command).Because(name);
+            }
+        }
     }
 
     // ---- The real client ----------------------------------------------------

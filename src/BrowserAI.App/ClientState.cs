@@ -72,6 +72,18 @@ internal sealed record ClientState
     /// </remarks>
     public required bool ServerComposed { get; init; }
 
+    /// <summary>
+    /// Why RegisterAI gave no answer about this client, or <see langword="null"/>
+    /// when it did.
+    /// </summary>
+    /// <remarks>
+    /// <b>Added 2026-10-03, when the reading moved to RegisterAI.</b> A tool that is
+    /// missing or broken leaves the client unknown, which is neither <i>not found</i>
+    /// nor <i>not registered</i>: the sentence says why, the short form says
+    /// <i>unknown</i>, and no action is offered.
+    /// </remarks>
+    public string? Unanswered { get; init; }
+
     /// <summary>Whether a client was found to talk to.</summary>
     public bool ClientFound => ClientPath is { Length: > 0 };
 
@@ -88,6 +100,11 @@ internal sealed record ClientState
     /// <returns>The sentence.</returns>
     public string StatusSentence()
     {
+        if (Unanswered is { } unanswered)
+        {
+            return unanswered;
+        }
+
         if (!ClientFound)
         {
             return $"{Client.DisplayName} was not found on this machine, so BrowserAI has not been registered with it.";
@@ -121,7 +138,8 @@ internal sealed record ClientState
     /// the path that makes a foreign entry actionable.
     /// </remarks>
     public string ShortStatus =>
-        !ClientFound ? "not found"
+        Unanswered is not null ? "unknown"
+            : !ClientFound ? "not found"
             : UserScope.Unreadable is not null ? "unknown"
             : UserScope.Ownership switch
             {
@@ -149,9 +167,10 @@ internal sealed record ClientState
     /// <para>
     /// <b>The question asked here is whether the file exists, and that is not a
     /// second classifier.</b> Ownership has already been decided; this picks the
-    /// wording for a state that has two causes and one remedy. The expansion is
-    /// <see cref="McpRegistryView.Expand"/>'s, so the path this asks about is the
-    /// path the classifier asked about.
+    /// wording for a state that has two causes and one remedy. The file asked about
+    /// is the one RegisterAI resolved the entry to, so it is the path the classifier
+    /// asked about. <i>Corrected 2026-10-03 (previously "The expansion is
+    /// <c>McpRegistryView.Expand</c>'s"), when the reading moved to RegisterAI.</i>
     /// </para>
     /// </remarks>
     /// <returns>The sentence.</returns>
@@ -159,7 +178,7 @@ internal sealed record ClientState
     {
         var named = UserScope.Command ?? "<none>";
 
-        return File.Exists(McpRegistryView.Expand(named))
+        return File.Exists(UserScope.ResolvesTo ?? named)
             ? $"Registered with {Client.DisplayName} to the wrong binary: the entry names '{named}', which is not the MCP server. Register again to repair it."
             : $"Registered with {Client.DisplayName}, but the entry names '{named}', which is not there any more. Register again to repair it.";
     }
@@ -246,38 +265,29 @@ internal sealed record ClientState
     /// </remarks>
     public bool MayUnregisterFromAProject => ClientFound && ServerComposed;
 
-    /// <summary>Reads one client's whole state.</summary>
-    /// <param name="who">The client to read.</param>
-    /// <param name="commands">The seam over starting it.</param>
-    /// <param name="workingDirectory">Where the search for a project registration starts.</param>
-    /// <param name="installRoot">The root ownership is judged against.</param>
+    /// <summary>One client's whole state, from what RegisterAI said about it.</summary>
+    /// <param name="reading">RegisterAI's answer about the client.</param>
     /// <param name="serverComposed">Whether this install composed a server command.</param>
     /// <returns>What is true right now for that client.</returns>
     /// <exception cref="ArgumentNullException">A required argument is null.</exception>
-    public static ClientState Read(
-        RegistrationClient who,
-        IRegistrationCommand commands,
-        string workingDirectory,
-        string? installRoot,
-        bool serverComposed)
+    /// <remarks>
+    /// <i>Until 2026-10-03 this read the client itself, through each client's own
+    /// command line and files; <see cref="RegistrationReader.Read"/> asks RegisterAI
+    /// now, and this keeps the shape the window and the report were built on.</i>
+    /// </remarks>
+    public static ClientState From(ClientReading reading, bool serverComposed)
     {
-        ArgumentNullException.ThrowIfNull(who);
-        ArgumentNullException.ThrowIfNull(commands);
-        ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
-
-        var client = who.Locate(commands);
-        var project = NearestProject(who, workingDirectory);
+        ArgumentNullException.ThrowIfNull(reading);
 
         return new ClientState
         {
-            Client = who,
-            ClientPath = client,
+            Client = reading.Client,
+            ClientPath = reading.ClientPath,
             ServerComposed = serverComposed,
-            UserScope = who.UserView(commands, client, installRoot),
-            ProjectDirectory = project,
-            ProjectScope = project is { Length: > 0 } && client is { Length: > 0 }
-                ? who.ProjectView(commands, client, project, installRoot)
-                : null,
+            UserScope = reading.UserScope,
+            ProjectDirectory = reading.ProjectDirectory,
+            ProjectScope = reading.ProjectScope,
+            Unanswered = reading.Unanswered,
         };
     }
 
@@ -295,19 +305,6 @@ internal sealed record ClientState
     /// <param name="who">The client whose file is looked for.</param>
     /// <param name="start">Where to start looking.</param>
     /// <returns>The folder, or <see langword="null"/> when there is no such file.</returns>
-    public static string? NearestProject(RegistrationClient who, string start)
-    {
-        ArgumentNullException.ThrowIfNull(who);
-        ArgumentException.ThrowIfNullOrWhiteSpace(start);
-
-        for (var directory = new DirectoryInfo(start); directory is not null; directory = directory.Parent)
-        {
-            if (File.Exists(who.ProjectFileIn(directory.FullName)))
-            {
-                return directory.FullName;
-            }
-        }
-
-        return null;
-    }
+    public static string? NearestProject(RegistrationClient who, string start) =>
+        RegistrationReader.NearestProject(who, start);
 }

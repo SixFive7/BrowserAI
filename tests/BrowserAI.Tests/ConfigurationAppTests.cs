@@ -316,12 +316,11 @@ internal sealed class ConfigurationAppTests
         var image = InstalledLayout.Create(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
 
-        // Ours, in the picked folder's own file, and known to the double the way
-        // the real client would find it there.
-        await File.WriteAllTextAsync(McpRegistryView.ProjectConfigFile(project.Path), ProjectFileNaming(server));
+        // Ours, in the picked folder, the way RegisterAI would find it there.
+        var tool = new FakeRegisterAi();
+        var key = ("claude-code", "project", project.Path);
 
-        var commands = new FakeClientCommandLine();
-        commands.Registered["browserai"] = server;
+        tool.RegisterIn("claude-code", project.Path, server);
 
         var state = StateFor(
             install.Path,
@@ -336,7 +335,7 @@ internal sealed class ConfigurationAppTests
 
         using var session = new ConfigurationSession(
             state,
-            commands,
+            tool,
             new BrowserAI.Hosting.LocalAppDataPaths(data.Path),
             NullLogger.Instance,
             Occasion.Ordinary,
@@ -365,42 +364,53 @@ internal sealed class ConfigurationAppTests
         _ = host.Dispatch(0, TaskDialogInterop.Notification.Timer, 0, 0);
 
         await Assert.That(asked).IsEmpty();
-        await Assert.That(commands.Invocations).IsEmpty();
+        await Assert.That(tool.Calls).IsEmpty();
 
-        // The click asks once, and the entry is removed in the folder picked.
+        // The click asks once, and RegisterAI is asked to remove this client's
+        // entry in exactly the folder picked, with this install's root as what
+        // makes it ours.
         _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
 
         await Assert.That(asked.Count).IsEqualTo(1);
         await Assert.That(asked[0].Prompt).Contains(RegistrationClient.ClaudeCode.DisplayName);
-        await Assert.That(commands.Verbs).IsEquivalentTo(RemoveOnly);
-        await Assert.That(commands.Directories.All(directory => directory == project.Path)).IsTrue();
-        await Assert.That(commands.Registered.ContainsKey("browserai")).IsFalse();
+
+        var call = tool.Calls.Single();
+
+        await Assert.That(call[0]).IsEqualTo("unregister");
+        await Assert.That(FakeRegisterAi.Option(call, "--client")).IsEqualTo("claude-code");
+        await Assert.That(FakeRegisterAi.Option(call, "--scope")).IsEqualTo("project");
+        await Assert.That(FakeRegisterAi.Option(call, "--project")).IsEqualTo(project.Path);
+        await Assert.That(FakeRegisterAi.Option(call, "--owned-root")).IsEqualTo(install.Path);
+        await Assert.That(tool.Entries.ContainsKey(key)).IsFalse();
         await Assert.That(session.Note).IsNotNull();
         await Assert.That(session.Note!).Contains(RegistrationClient.ClaudeCode.RestartHint);
 
         // ANOTHER INSTALL'S ENTRY in a picked folder is refused and reported, and
-        // nothing is run to remove it.
+        // it is still there afterwards.
         using var elsewhere = ScratchDirectory.Create("app-pick-unregister-other");
 
         _ = InstalledLayout.Create(elsewhere.Path);
-        await File.WriteAllTextAsync(McpRegistryView.ProjectConfigFile(project.Path), ProjectFileNaming(InstalledLayout.ServerIn(elsewhere.Path)));
-        commands.Invocations.Clear();
+
+        var theirs = InstalledLayout.ServerIn(elsewhere.Path);
+
+        tool.RegisterIn("claude-code", project.Path, theirs);
+        tool.Calls.Clear();
 
         _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
 
         await Assert.That(asked.Count).IsEqualTo(2);
-        await Assert.That(commands.Verbs.Contains("remove")).IsFalse();
+        await Assert.That(tool.Entries[key]).IsEqualTo(theirs);
         await Assert.That(session.Note!).Contains("never adopts, overwrites or removes");
 
         // A picker that could not turn the folder into a path says so, and a
         // cancel says nothing; neither runs anything.
         answer = FolderPick.Broke("Windows could not give a path for that folder.");
-        commands.Invocations.Clear();
+        tool.Calls.Clear();
 
         _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, claude, 0);
 
         await Assert.That(session.Note).IsEqualTo("Windows could not give a path for that folder.");
-        await Assert.That(commands.Invocations).IsEmpty();
+        await Assert.That(tool.Calls).IsEmpty();
 
         answer = FolderPick.Cancelled;
 
@@ -408,7 +418,7 @@ internal sealed class ConfigurationAppTests
 
         await Assert.That(asked.Count).IsEqualTo(4);
         await Assert.That(session.Note).IsEqualTo("Windows could not give a path for that folder.");
-        await Assert.That(commands.Invocations).IsEmpty();
+        await Assert.That(tool.Calls).IsEmpty();
 
         // ⚠️ THE OWNER, LAST. Before the dialog exists the picker is owned by
         // nothing; once it exists, by the dialog's own window. The click cancels,
@@ -422,14 +432,14 @@ internal sealed class ConfigurationAppTests
     }
 
     /// <summary>
-    /// Removing BrowserAI from a picked folder for Codex moves the home to that
-    /// folder's own, and the user's own entry stays.
+    /// Removing BrowserAI from a picked folder for Codex asks RegisterAI about that
+    /// folder's own Codex configuration, and the user's own entry stays.
     /// </summary>
     /// <remarks>
-    /// <b>Codex takes its scope as <c>CODEX_HOME</c> and no flag</b>, so a removal
-    /// that lost the variable would exit 0 having removed the user's own entry.
-    /// The absolute spelling is registered here on purpose: a bare name is judged
-    /// by the file it finds on this machine's PATH, which an arm cannot own.
+    /// <i>Corrected 2026-10-03 (previously the arm watched each call's environment for
+    /// <c>CODEX_HOME</c> set to the project's <c>.codex</c>)</i>: how Codex is pointed at
+    /// a project is RegisterAI's now, held by its own suite, and what BrowserAI owns is
+    /// the folder it names.
     /// </remarks>
     /// <returns>The assertion task.</returns>
     [Test]
@@ -441,13 +451,10 @@ internal sealed class ConfigurationAppTests
 
         var image = InstalledLayout.Create(install.Path);
         var server = InstalledLayout.ServerIn(install.Path);
-        var home = CodexRegistration.ProjectHome(project.Path);
+        var tool = new FakeRegisterAi();
 
-        _ = Directory.CreateDirectory(home);
-
-        var commands = new FakeClientCommandLine { Executable = @"C:\codex\codex.exe" };
-        commands.CodexHomes[home] = new Dictionary<string, string>(StringComparer.Ordinal) { ["browserai"] = server };
-        commands.CodexRegistered["browserai"] = server;
+        tool.RegisterIn("codex", project.Path, RegistrationTarget.ServerFileName);
+        tool.Register("codex", server);
 
         var state = StateFor(
             install.Path,
@@ -459,7 +466,7 @@ internal sealed class ConfigurationAppTests
 
         using var session = new ConfigurationSession(
             state,
-            commands,
+            tool,
             new BrowserAI.Hosting.LocalAppDataPaths(data.Path),
             NullLogger.Instance,
             Occasion.Ordinary,
@@ -473,34 +480,17 @@ internal sealed class ConfigurationAppTests
 
         _ = host.Dispatch(0, TaskDialogInterop.Notification.ButtonClicked, ConfigurationDialog.Command.For(ConfigurationDialog.Command.UnregisterFromAProject, 1), 0);
 
-        // The project's home lost the entry; the user's own kept it.
-        await Assert.That(commands.CodexHomes[home].ContainsKey("browserai")).IsFalse();
-        await Assert.That(commands.CodexRegistered["browserai"]).IsEqualTo(server);
-        await Assert.That(commands.Verbs.Contains("remove")).IsTrue();
+        // The project's entry is gone; the user's own stays.
+        var call = tool.Calls.Single();
 
-        foreach (var environment in commands.Environments)
-        {
-            await Assert.That(environment.TryGetValue(CodexRegistration.HomeVariable, out var forced) ? forced : "<none>")
-                .IsEqualTo(home);
-        }
-
+        await Assert.That(FakeRegisterAi.Option(call, "--client")).IsEqualTo("codex");
+        await Assert.That(FakeRegisterAi.Option(call, "--scope")).IsEqualTo("project");
+        await Assert.That(FakeRegisterAi.Option(call, "--project")).IsEqualTo(project.Path);
+        await Assert.That(FakeRegisterAi.Command(call)).IsEqualTo(RegistrationTarget.ServerFileName);
+        await Assert.That(tool.Entries.ContainsKey(("codex", "project", project.Path))).IsFalse();
+        await Assert.That(tool.UserEntry("codex")).IsEqualTo(server);
         await Assert.That(session.Note!).Contains(RegistrationClient.Codex.RestartHint);
     }
-
-    /// <summary>What <c>mcp remove</c> alone looks like to the double.</summary>
-    private static readonly string[] RemoveOnly = ["remove"];
-
-    /// <summary>A project <c>.mcp.json</c> whose <c>browserai</c> entry names a command.</summary>
-    /// <param name="command">The command.</param>
-    /// <returns>The file's text.</returns>
-    private static string ProjectFileNaming(string command) =>
-        new System.Text.Json.Nodes.JsonObject
-        {
-            ["mcpServers"] = new System.Text.Json.Nodes.JsonObject
-            {
-                ["browserai"] = new System.Text.Json.Nodes.JsonObject { ["command"] = command },
-            },
-        }.ToJsonString();
 
     /// <summary>
     /// The page carries the version, both locations as links, the restart hint
@@ -730,7 +720,7 @@ internal sealed class ConfigurationAppTests
         }
 
         await File.WriteAllTextAsync(
-            McpRegistryView.ProjectConfigFile(Path.Combine(scratch.Path, "a")),
+            RegistrationClient.ClaudeCode.ProjectFileIn(Path.Combine(scratch.Path, "a")),
             "{ \"mcpServers\": { \"browserai\": { \"command\": \"x\" } } }");
 
         var found = ClientState.NearestProject(RegistrationClient.ClaudeCode, deep.FullName);

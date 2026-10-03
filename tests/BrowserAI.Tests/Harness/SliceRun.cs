@@ -391,4 +391,11 @@ internal static class RepositoryPayload
 
     /// <summary>Whether the payload directory is absent as a whole, as on a clean clone.</summary>
     public static bool IsAbsentAsAWhole => !Directory.Exists(Layout.Root);
+
+    /// <summary>
+    /// The RegisterAI the payload carries, where <c>build/Get-RegisterAi.ps1</c> puts
+    /// it and where an install finds it beside its own image.
+    /// </summary>
+    public static string RegisterAi { get; } =
+        Path.Combine(Layout.Root, Registration.RegisterAiTool.FolderName, Registration.RegisterAiTool.FileName);
 }

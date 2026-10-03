@@ -163,7 +163,7 @@ internal static class Program
             }
         }
 
-        var commands = new ClientCommandLine();
+        var tool = RegisterAiTool.Beside(Environment.ProcessPath);
 
         // ⚠️ THE STATE IS READ ONLY WHERE IT IS SHOWN -- 2026-09-25. Reading it asks
         // every client for its registration, which starts each client's CLI; a
@@ -172,7 +172,7 @@ internal static class Program
         // here, and the window reads it each time it opens.
         if (ReportPathFrom(args) is { Length: > 0 } report)
         {
-            var written = StatusReport.Write(AppState.Read(commands, Environment.CurrentDirectory), report);
+            var written = StatusReport.Write(AppState.Read(tool, Environment.CurrentDirectory), report);
             AppLog.ReportWritten(logger, written);
             return 0;
         }
@@ -205,7 +205,7 @@ internal static class Program
 
         using var pipe = start.Pipe;
 
-        var window = new ConfigurationWindow(commands, paths, logger, occasion, inbox);
+        var window = new ConfigurationWindow(tool, paths, logger, occasion, inbox);
 
         if (pipe is null)
         {
@@ -295,12 +295,12 @@ internal static class Program
 /// <see cref="TaskDialogHost.Dispatch"/> with a picker that opens nothing, a
 /// scratch install and a state it built. The product passes
 /// <c>Environment.ProcessPath</c>, <see cref="ShellInterop.PickFolder"/> and
-/// <see cref="AppState.Read"/>, which is what this class reached for itself
+/// <see cref="AppState.Read(IRegisterAi, string)"/>, which is what this class reached for itself
 /// until then.
 /// </para>
 /// </remarks>
 /// <param name="state">What the window opens on.</param>
-/// <param name="commands">The seam over starting a client.</param>
+/// <param name="tool">RegisterAI, which reads and writes every client's registration.</param>
 /// <param name="paths">Where the logs are.</param>
 /// <param name="logger">Where the records go.</param>
 /// <param name="occasion">Why the window opened.</param>
@@ -314,7 +314,7 @@ internal static class Program
 /// <param name="raise">Brings a window of this process to the foreground; <see cref="Foreground.Raise"/> in the product.</param>
 internal sealed class ConfigurationSession(
     AppState state,
-    IRegistrationCommand commands,
+    IRegisterAi tool,
     IAppPaths paths,
     ILogger logger,
     Occasion occasion,
@@ -500,7 +500,7 @@ internal sealed class ConfigurationSession(
     private ClickOutcome Apply(RegistrationIntent intent, int index)
     {
         var who = _state.Clients[index].Client;
-        var report = McpRegistrar.Apply(who, intent, imagePath, commands, logger);
+        var report = McpRegistrar.Apply(who, intent, imagePath, tool, logger, replace: intent is RegistrationIntent.Install);
 
         Note = ConfigurationDialog.NoteFor(report, who);
 
@@ -542,7 +542,7 @@ internal sealed class ConfigurationSession(
         // itself and wrote Codex's as the absolute path, "because BrowserAI does not
         // rely on Codex expanding a variable in a server command".*
         var project = who.ProjectCommandFor(_state.ServerCommand ?? string.Empty, _state.InstallRoot);
-        var report = McpRegistrar.ApplyToProject(who, register: true, folder, imagePath, commands, logger, project.Command);
+        var report = McpRegistrar.ApplyToProject(who, register: true, folder, imagePath, tool, logger, project.Command);
 
         Note = ConfigurationDialog.ProjectNoteFor(report, who, project.Note);
 
@@ -578,7 +578,7 @@ internal sealed class ConfigurationSession(
         }
 
         var report = McpRegistrar.ApplyToProject(
-            client.Client, register: false, folder, imagePath, commands, logger);
+            client.Client, register: false, folder, imagePath, tool, logger);
 
         Note = ConfigurationDialog.NoteFor(report, client.Client);
 
@@ -627,7 +627,7 @@ internal sealed class ConfigurationSession(
             return ClickOutcome.Stay;
         }
 
-        var report = McpRegistrar.ApplyToProject(who, register: false, folder, imagePath, commands, logger);
+        var report = McpRegistrar.ApplyToProject(who, register: false, folder, imagePath, tool, logger);
 
         Note = ConfigurationDialog.NoteFor(report, who);
 
@@ -827,13 +827,13 @@ internal static partial class AppLog
 /// the installer's first run, or the restart after an update -- and every later
 /// one, opened by a second start's <c>show</c>, is an ordinary one.
 /// </remarks>
-/// <param name="commands">The seam over starting a client.</param>
+/// <param name="tool">RegisterAI, which reads and writes every client's registration.</param>
 /// <param name="paths">Where the logs are.</param>
 /// <param name="logger">Where the records go.</param>
 /// <param name="first">Why the first window opens.</param>
 /// <param name="inbox">The coordinator's verbs, whose <c>show</c> brings an open window forward.</param>
 internal sealed class ConfigurationWindow(
-    IRegistrationCommand commands,
+    IRegisterAi tool,
     IAppPaths paths,
     ILogger logger,
     Occasion first,
@@ -844,7 +844,7 @@ internal sealed class ConfigurationWindow(
     /// <inheritdoc />
     public int Show()
     {
-        var state = AppState.Read(commands, Environment.CurrentDirectory);
+        var state = AppState.Read(tool, Environment.CurrentDirectory);
         var occasion = _next;
 
         _next = Occasion.Ordinary;
@@ -855,13 +855,13 @@ internal sealed class ConfigurationWindow(
 
         using var session = new ConfigurationSession(
             state,
-            commands,
+            tool,
             paths,
             logger,
             occasion,
             Environment.ProcessPath,
             ShellInterop.PickFolder,
-            () => AppState.Read(commands, Environment.CurrentDirectory),
+            () => AppState.Read(tool, Environment.CurrentDirectory),
             inbox,
             Foreground.Raise);
 

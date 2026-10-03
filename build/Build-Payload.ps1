@@ -16,6 +16,12 @@
        version back. The lock that comes out is copied back to
        `build/payload/package-lock.json` and committed as the provenance stamp.
 
+       Since 2026-10-03 it also holds `registerai\RegisterAI.exe`, the program
+       BrowserAI registers itself with clients through: the newest RegisterAI
+       release, refused unless it matches the SHA256SUMS published beside it,
+       with build/payload/registerai.json as its stamp. That step is
+       build/Get-RegisterAi.ps1 and runs last (Q349 a).
+
        Corrected 2026-09-21 (previously "Since 2026-09-17
        `build/payload/package.json` also carries an npm `overrides` entry for
        `playwright-core`, which is a DATED EXCEPTION with a written exit and not
@@ -58,6 +64,12 @@
 .PARAMETER SkipBrowser
     Build the payload only. For a packaging run, which needs no browser.
 
+.PARAMETER RegisterAiFrom
+    A folder holding RegisterAI.exe and SHA256SUMS, used in place of the newest
+    RegisterAI release. Passed to build/Get-RegisterAi.ps1, which checks the file
+    against the list either way. Added 2026-10-03 with Q349 a, for the time the
+    RegisterAI repository is private.
+
 .EXAMPLE
     pwsh -File build/Build-Payload.ps1 -SeedBrowsersFrom "$env:LOCALAPPDATA\ms-playwright"
 #>
@@ -66,7 +78,8 @@ param(
     [string] $PayloadRoot = (Join-Path $PSScriptRoot '..' 'payload'),
     [string] $BrowsersPath = (Join-Path $env:LOCALAPPDATA 'BrowserAI' 'browsers'),
     [string] $SeedBrowsersFrom = '',
-    [switch] $SkipBrowser
+    [switch] $SkipBrowser,
+    [string] $RegisterAiFrom = ''
 )
 
 Set-StrictMode -Version Latest
@@ -436,6 +449,17 @@ $manifest = [ordered]@{
 $manifestPath = Join-Path $PayloadRoot 'payload.json'
 $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
 
+# ---------------------------------------------------------------------------
+# 5. RegisterAI, which registers BrowserAI with the clients. Q349 a.
+# ---------------------------------------------------------------------------
+
+Write-Step 'Fetching RegisterAI and checking it against its release''s SHA256SUMS'
+
+# After payload.json, because the script adds its own block to it. It throws on
+# a file that does not match its list, and that stops this build here.
+& (Join-Path $PSScriptRoot 'Get-RegisterAi.ps1') -PayloadRoot $PayloadRoot -From $RegisterAiFrom
+
+$manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
 $manifest | ConvertTo-Json -Depth 6 | Write-Host
 Write-Host ''
 Write-Host "Manifest: $manifestPath"
