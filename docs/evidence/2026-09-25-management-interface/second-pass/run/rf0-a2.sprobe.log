@@ -1,0 +1,6 @@
+4.1	listening	58717	other=58718
+18.4	admit	GET 	origin=	site=none	dest=document
+45.7	admit	GET app.css	origin=	site=same-origin	dest=style
+46.2	admit	GET app.js	origin=	site=same-origin	dest=script
+52.3	admit	GET events	origin=	site=same-origin	dest=empty
+52.4	+page	n=1

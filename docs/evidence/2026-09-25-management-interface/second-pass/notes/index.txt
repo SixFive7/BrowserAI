@@ -1,0 +1,26 @@
+b2 scratch, 2026-10-01. Research only; nothing here is tracked.
+
+probes/p1probe   NativeAOT: starts Chromium itself, DevTools pipe via --remote-debugging-io-pipes, page served over the pipe, window facts.
+probes/sprobe    NativeAOT: option S listener (Loopback.cs gate, Peer.cs same-user check, Program.cs routes and event stream).
+stest            Instrument: raw request table and headless Chromium checks against sprobe.
+driver           Instrument: private desktop (no switch right) + kill-on-close job + job memory samples.
+ffcheck.mjs      Instrument: the browser checks in Playwright's Firefox 156 (headless).
+resume.mjs       Instrument: retake the same port and token after the listener process is killed.
+p2.mjs           Instrument: node + playwright-core app window (option P2).
+netlog-summary.mjs, netlog-bytes.mjs   Read a Chromium --log-net-log file.
+appcopy          Copy of src/BrowserAI.App + Core with the S and P1 code as build variants (published, never run).
+
+run/h1.*                 P1 headless first run.
+run/a1.* a2.*            P1 app window: captures (a1-window0.png with the infobar, a2-window0.png without), icon, second start, WM_CLOSE.
+run/n0.* n1.* n2.* n3.*  Eight (n3: five and a half) idle minutes: sink proxy log, net log, summaries (*.netlog-summary.tsv).
+run/c*.* w*.*            P1 start-up and memory series (fresh and warm profile). c1 was overwritten by the warm series.
+run/k1.*                 P1: outside navigation blocked; browser exits when the pipe closes.
+run/p2-*.*               P2 series.
+run/s1.* s2.*            S: raw table and Chromium checks (s2 with the peer check enforced).
+run/f*.result.txt        S: Firefox checks, 31 runs.
+run/rc0 rc2 rf0 rf2      S: restart on the same port and token.
+logs/run-*.log           Driver output per run (job memory samples).
+logs/publish-app-summary.txt   In-app sizes.
+notes/hardened-flags.txt The switch set used for n2, n3, c*, w*.
+src-chromium, src-firefox, src-velopack   Source files read (fetched 2026-10-01).
+browsers/firefox-1549    Playwright's Firefox 156.0, downloaded for ffcheck (349 MB; delete when no longer needed).

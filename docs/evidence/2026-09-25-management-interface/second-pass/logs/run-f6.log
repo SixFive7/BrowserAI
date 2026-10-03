@@ -1,0 +1,3 @@
+# 2026-10-01T12:57:20.5938088+00:00 desktop=BrowserAI-b2-2b81405ee7c9427ea1e635cfa0cb5d2c pid=63612 exe=C:\Source\SixFive7\BrowserAI\payload\node\node.exe
+launch_to_ready_ms=-1.0 exited=True exit_code=0 end_ms=10989.8 still_in_job_at_end=0 peak_job_commit_MB=1039.7
+job closed; desktop closed=True

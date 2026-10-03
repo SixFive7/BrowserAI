@@ -1,0 +1,11 @@
+0.0	main
+8.6	environment hr=0x00000000
+11.6	create-controller-called hr=0x00000000
+11.6	create-environment-called hr=0x00000000
+259.2	controller hr=0x00000000
+259.8	browser-pid 86032
+260.0	navigate-to-string hr=0x00000000
+320.6	message ready:59:dark=true:dpr=1
+331.9	navigation-completed success=1
+2807.1	closing controller
+2820.3	exit

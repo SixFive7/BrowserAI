@@ -1,0 +1,4 @@
+4.3	listening	54954	other=62311
+2973.2	admit	GET events	origin=	site=same-origin	dest=empty
+2973.3	+page	n=1
+2986.7	admit	POST act	origin=http://127.0.0.1:54954	site=same-origin	dest=empty

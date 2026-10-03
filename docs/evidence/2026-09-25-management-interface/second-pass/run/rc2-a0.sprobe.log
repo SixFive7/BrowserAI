@@ -1,0 +1,7 @@
+4.4	listening	62894	other=62895
+14.4	admit	GET 	origin=	site=none	dest=document
+28.9	admit	GET app.css	origin=	site=same-origin	dest=style
+30.1	admit	GET app.js	origin=	site=same-origin	dest=script
+44.7	admit	GET events	origin=	site=same-origin	dest=empty
+44.8	+page	n=1
+54.0	deny	Token	GET /favicon.ico	host=127.0.0.1:62894	origin=	site=same-origin

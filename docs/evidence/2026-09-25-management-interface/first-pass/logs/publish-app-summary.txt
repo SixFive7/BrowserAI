@@ -1,0 +1,12 @@
+BASE exit=0 seconds=25 bytes=10914304
+RAW exit=0 seconds=17 bytes=10927104
+HTTPSYS exit=0 seconds=17 bytes=11077632
+KESTREL_EMPTY exit=0 seconds=23 bytes=14405120
+KESTREL_SLIM exit=1 seconds=5 bytes=
+DONE
+KESTREL_SLIM exit=0 seconds=29 bytes=17633792
+DONE
+WEBVIEW2 exit=1 seconds=5 bytes=
+DONE
+WEBVIEW2 exit=0 seconds=19 bytes=11007488
+DONE

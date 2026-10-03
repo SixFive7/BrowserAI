@@ -1,0 +1,5 @@
+    191.5	browser	chromium 154.0.8037.0
+   3463.2	round0	kill_to_exit_ms=4.2 gap_ms=2500 rebind_attempts=1 rebind_ok_ms_after_exit=2540.8 page_reconnected=true reconnect_ms_after_rebind=468 reconnect_ms_after_exit=3009 link=connected write_after=204
+   6559.9	round1	kill_to_exit_ms=7.9 gap_ms=2500 rebind_attempts=1 rebind_ok_ms_after_exit=2539.2 page_reconnected=true reconnect_ms_after_rebind=472 reconnect_ms_after_exit=3011 link=connected write_after=204
+   9657.1	round2	kill_to_exit_ms=3.0 gap_ms=2500 rebind_attempts=1 rebind_ok_ms_after_exit=2538.6 page_reconnected=true reconnect_ms_after_rebind=469 reconnect_ms_after_exit=3008 link=connected write_after=204
+   9810.0	done	0

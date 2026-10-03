@@ -1,0 +1,5 @@
+# 2026-10-01T12:38:43.1382660+00:00 desktop=BrowserAI-b2-89b3e88b1e3146778b9abad0c039f2b3 pid=14376 exe=C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\out\p1probe\p1probe.exe
+launch_to_ready_ms=375.0 exited=True exit_code=0 end_ms=4736.4 still_in_job_at_end=0 peak_job_commit_MB=256.0
+sample_at_ready_plus_ms=2000 processes_in_job=11 private_MB=242.9 working_set_MB=465.5 peak_job_commit_MB=254.4 per_process_private/ws_MB=[p1probe.exe:4.1/10.2 conhost.exe:1.2/7.5 chrome.exe:37.2/120.8 chrome.exe:2.5/10.6 chrome.exe:2.3/9.7 chrome.exe:93.4/86.3 chrome.exe:14.3/34.2 chrome.exe:8.6/18.7 chrome.exe:42.3/81.7 chrome.exe:21.7/54.6 chrome.exe:15.3/31.2]
+job closed; desktop closed=True
+driver exit 0

@@ -1,0 +1,4 @@
+wv2-window exit=0 seconds=7 exe=1233408 loader=
+wv2-dll exit=0 seconds=8 exe=2028032 loader=163680
+wv2-static exit=0 seconds=8 exe=2049536 loader=
+DONE

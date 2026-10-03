@@ -1,0 +1,7 @@
+4.2	listening	62136	other=62137
+14.6	admit	GET 	origin=	site=none	dest=document
+22.9	admit	GET app.css	origin=	site=same-origin	dest=style
+23.7	admit	GET app.js	origin=	site=same-origin	dest=script
+28.1	admit	GET events	origin=	site=same-origin	dest=empty
+28.2	+page	n=1
+33.2	deny	Token	GET /favicon.ico	host=127.0.0.1:62136	origin=	site=same-origin

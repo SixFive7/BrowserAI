@@ -1,0 +1,13 @@
+# file run/n3.netlog.json; events 1277; span 334 s
+# URLs the network stack was asked for (5 distinct)
+7	first@0.1s	https://accounts.google.com/ListAccounts?...
+4	first@2.4s	https://android.clients.google.com/checkin
+2	first@0.1s	https://update.googleapis.com/service/update2/json?...
+1	first@0.1s	http://clients2.google.com/time/1/current?...
+1	first@0.1s	https://www.google.com/async/folae?...
+# host names handed to the resolver (2 distinct)
+34	first@0.1s	https://~notfound
+1	first@0.1s	http://~notfound
+# socket addresses tried (1 distinct)
+19	first@0.1s	UDP_CONNECT [2001:4860:4860::8888]:443
+# requests that ended in an error (0 distinct)

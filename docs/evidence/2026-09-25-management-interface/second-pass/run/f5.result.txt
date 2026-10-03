@@ -1,0 +1,6 @@
+    434.5	browser	Firefox 156.0
+   1355.7	B1_connected	true
+   1447.3	B1_write_status	204
+   1453.6	B1_state_pushed	{"counter":1,"pages":1}
+   1462.9	B1_cookies_and_storage	{"cookie":"","local":0,"session":0}
+   3389.7	B2_reload_gap_ms	n=10 min=19.5 median=23.6 max=32.0

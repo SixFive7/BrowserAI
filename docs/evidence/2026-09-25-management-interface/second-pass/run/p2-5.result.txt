@@ -1,0 +1,9 @@
+     23.9	node	v24.21.0 main reached
+    246.6	playwright_core_loaded	
+    573.0	context_ms_after_launch	325.9
+    644.6	page_ready_ms_after_launch	397.6
+    645.0	page_ready_ms_after_node_start	645.0
+    645.3	page_said	{"ready":true,"inner":[964,681],"outer":[980,720],"ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"}
+    736.5	round_trip_ms	p50=1.13 min=0.72 max=21.85 pongs=40
+   3399.8	closed_ms	155.8
+   3400.3	done	0

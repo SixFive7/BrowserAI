@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PublishAot>true</PublishAot>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseSystemResourceKeys>false</UseSystemResourceKeys>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DefineConstants Condition="'$(NoWebView)' == 'true'">$(DefineConstants);NO_WEBVIEW</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(NoWebView)' != 'true' and '$(StaticLoader)' != 'true'">
+    <!-- The loader DLL from the WebView2 SDK package, copied beside the exe. -->
+    <None Include="..\..\wv2pkg\pkg\build\native\x64\WebView2Loader.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(NoWebView)' != 'true' and '$(StaticLoader)' == 'true'">
+    <!-- The static loader linked into the one executable, the way this repository links SQLite. -->
+    <DirectPInvoke Include="WebView2Loader.dll" />
+    <NativeLibrary Include="..\..\wv2pkg\pkg\build\native\x64\WebView2LoaderStatic.lib" />
+    <NativeLibrary Include="version.lib" />
+    <NativeLibrary Include="advapi32.lib" />
+    <NativeLibrary Include="shell32.lib" />
+    <NativeLibrary Include="ole32.lib" />
+    <NativeLibrary Include="user32.lib" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,53 @@
+# wv2-dll measured 2026-09-25T04:38:00.9630929+00:00; exe 2028032 B; user data C:\Source\SixFive7\BrowserAI\.work\zoomout\b\run\wv2-udf-dll
+## run 0: launch-to-ready 561.8 ms; exited=True code=0 at 3085.6 ms; processes still in job at exit 5
+   processes_in_job=7 [wv2probex1,msedgewebview2x6] private_MB=145,8 working_set_MB=324,2 peak_job_commit_MB=148,4
+   probe: 0.0	main
+   probe: 33.1	environment hr=0x00000000
+   probe: 40.7	create-controller-called hr=0x00000000
+   probe: 40.7	create-environment-called hr=0x00000000
+   probe: 436.8	controller hr=0x00000000
+   probe: 437.4	browser-pid 112492
+   probe: 438.4	navigate-to-string hr=0x00000000
+   probe: 506.3	message ready:67:dark=true:dpr=1
+   probe: 515.1	navigation-completed success=1
+   probe: 3015.2	closing controller
+   probe: 3028.4	exit
+## run 1: launch-to-ready 327.0 ms; exited=True code=0 at 2829.2 ms; processes still in job at exit 5
+   processes_in_job=7 [wv2probex1,msedgewebview2x6] private_MB=146,4 working_set_MB=319,0 peak_job_commit_MB=147,7
+   probe: 0.0	main
+   probe: 8.4	environment hr=0x00000000
+   probe: 11.6	create-controller-called hr=0x00000000
+   probe: 11.6	create-environment-called hr=0x00000000
+   probe: 241.3	controller hr=0x00000000
+   probe: 241.8	browser-pid 30344
+   probe: 242.0	navigate-to-string hr=0x00000000
+   probe: 301.4	message ready:57:dark=true:dpr=1
+   probe: 310.4	navigation-completed success=1
+   probe: 2794.7	closing controller
+   probe: 2807.9	exit
+## run 2: launch-to-ready 329.5 ms; exited=True code=0 at 2850.5 ms; processes still in job at exit 5
+   processes_in_job=7 [wv2probex1,msedgewebview2x6] private_MB=143,6 working_set_MB=315,6 peak_job_commit_MB=145,1
+   probe: 0.0	main
+   probe: 9.6	environment hr=0x00000000
+   probe: 12.7	create-controller-called hr=0x00000000
+   probe: 12.7	create-environment-called hr=0x00000000
+   probe: 247.5	controller hr=0x00000000
+   probe: 248.2	browser-pid 85648
+   probe: 248.4	navigate-to-string hr=0x00000000
+   probe: 307.8	message ready:57:dark=true:dpr=1
+   probe: 316.4	navigation-completed success=1
+   probe: 2814.7	closing controller
+   probe: 2827.8	exit
+## run 3: launch-to-ready 338.0 ms; exited=True code=0 at 2845.4 ms; processes still in job at exit 5
+   processes_in_job=7 [wv2probex1,msedgewebview2x6] private_MB=143,6 working_set_MB=314,8 peak_job_commit_MB=145,0
+   probe: 0.0	main
+   probe: 9.8	environment hr=0x00000000
+   probe: 13.3	create-controller-called hr=0x00000000
+   probe: 13.3	create-environment-called hr=0x00000000
+   probe: 256.2	controller hr=0x00000000
+   probe: 256.9	browser-pid 47760
+   probe: 257.1	navigate-to-string hr=0x00000000
+   probe: 311.9	message ready:52:dark=true:dpr=1
+   probe: 320.1	navigation-completed success=1
+   probe: 2810.1	closing controller
+   probe: 2823.7	exit

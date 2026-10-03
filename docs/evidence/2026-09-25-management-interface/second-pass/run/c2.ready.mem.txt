@@ -1,0 +1,1 @@
+sample_at_ready_plus_ms=2000 processes_in_job=10 private_MB=239.3 working_set_MB=454.6 peak_job_commit_MB=241.9 per_process_private/ws_MB=[p1probe.exe:4.1/10.1 conhost.exe:1.2/7.5 chrome.exe:38.4/121.3 chrome.exe:2.5/9.7 chrome.exe:90.7/85.3 chrome.exe:14.5/34.7 chrome.exe:8.6/18.6 chrome.exe:42.4/81.6 chrome.exe:21.7/54.8 chrome.exe:15.2/31.0]

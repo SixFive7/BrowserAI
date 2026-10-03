@@ -1,0 +1,6 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\probes\p1probe\Win.cs(218,27): warning CA2014: Potential stack overflow. Move the stackalloc out of the loop. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2014) [C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\probes\p1probe\p1probe.csproj]
+  p1probe -> C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\probes\p1probe\bin\Release\net10.0-windows\win-x64\p1probe.dll
+  Generating native code
+  p1probe -> C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\out\p1probe\

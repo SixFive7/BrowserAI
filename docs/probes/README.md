@@ -127,6 +127,13 @@ pid. The second carries none of the eight spellings, by a search that found
 them in the first, so the scan has nothing to read in it. **The scan would now
 flag nine files, and still only `observe.ps1` selects a process by name.**
 
+⚠️ *Added 2026-10-03, after that.* **Twenty-nine**, counted as its
+subdirectories, when
+[`2026-09-25-management-interface`](2026-09-25-management-interface/README.md)
+arrived. It went through the real scan the same way and passed: the scan named
+`observe.ps1`, the positive control, and nothing of the rig. **The scan would
+still flag nine files, and only `observe.ps1` selects a process by name.**
+
 **Fourteen of the fifteen were false positives and the fifteenth is not.**
 [`2026-09-14-firstrun/observe.ps1`](2026-09-14-firstrun/README.md) really does
 call `GetProcessesByName`, over a literal watch list, which is *matching and
@@ -198,3 +205,4 @@ that point is to ask again instead of widening this paragraph.
 | [`2026-10-03-upstream-reports`](2026-10-03-upstream-reports/README.md) | The reproductions behind the three upstream posts: Firefox safe mode at two more builds, closed shadow roots, add-mcp and `CLAUDE_CONFIG_DIR`, and the attach by name | |
 | [`2026-09-25-stagehand`](2026-09-25-stagehand/README.md) | One Chrome for Testing driven by Playwright in BrowserAI's configuration and by Stagehand: snapshot tokens and time, the settle wait, launch, memory, actions and the debugging port | a false positive |
 | [`2026-09-25-registrar-survey`](2026-09-25-registrar-survey/README.md) | The clients' own registration commands and three registrars against a seeded sandbox home, with a copy of every configuration file after each step | |
+| [`2026-09-25-management-interface`](2026-09-25-management-interface/README.md) | Five listeners on `127.0.0.1` and what each answers by default, WebView2 and Avalonia from NativeAOT, a listener with one gate attacked from two browsers, and the provisioned Chromium as a window over a DevTools pipe | |

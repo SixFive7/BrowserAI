@@ -1,0 +1,38 @@
+--- a/src/BrowserAI.App/BrowserAI.App.csproj
++++ b/src/BrowserAI.App/BrowserAI.App.csproj
+@@ -77,6 +77,19 @@
+     <InternalsVisibleTo Include="BrowserAI.Tests" />
+   </ItemGroup>
+ 
++  <!-- Track B scratch: one web-server variant per publish. -->
++  <PropertyGroup Condition="'$(WebUiVariant)' != ''">
++    <DefineConstants>$(DefineConstants);WEBUI_ANY;$(WebUiVariant)</DefineConstants>
++  </PropertyGroup>
++  <ItemGroup Condition="'$(WebUiVariant)' == 'WEBVIEW2'">
++    <DirectPInvoke Include="WebView2Loader.dll" />
++    <NativeLibrary Include="../../../wv2pkg/pkg/build/native/x64/WebView2LoaderStatic.lib" />
++    <NativeLibrary Include="version.lib" />
++  </ItemGroup>
++  <ItemGroup Condition="'$(WebUiVariant)' == 'KESTREL_EMPTY' or '$(WebUiVariant)' == 'KESTREL_SLIM'">
++    <FrameworkReference Include="Microsoft.AspNetCore.App" />
++  </ItemGroup>
++
+   <!--
+     A BUILD THAT DOES NOT KNOW WHAT IT IS MUST NOT PRODUCE A BINARY.
+ 
+--- a/src/BrowserAI.App/Program.cs
++++ b/src/BrowserAI.App/Program.cs
+@@ -124,6 +124,13 @@
+     {
+         args ??= [];
+ 
++#if WEBUI_ANY
++        if (args.Length > 1 && args[0] == "--webui-probe")
++        {
++            return WebUiProbe.Run(args);
++        }
++#endif
++
+         var firstRun = VelopackStartup.StartedByTheInstaller();
+         var restarted = Environment.GetEnvironmentVariable(RestartVariable) is { Length: > 0 };
+ 

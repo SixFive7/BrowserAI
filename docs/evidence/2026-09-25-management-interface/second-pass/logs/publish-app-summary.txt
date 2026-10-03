@@ -1,0 +1,10 @@
+BASE exit=0 seconds=22 bytes=10914304
+S_LOOPBACK exit=1 seconds=3 bytes=
+P1_CDP exit=0 seconds=17 bytes=10955264
+RAW exit=0 seconds=17 bytes=10927104
+HTTPSYS exit=0 seconds=18 bytes=11077632
+DONE
+S_LOOPBACK exit=0 seconds=17 bytes=11008512
+DONE
+S_LOOPBACK exit=0 seconds=23 bytes=11014144
+DONE

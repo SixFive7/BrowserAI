@@ -1,0 +1,7 @@
+4.3	listening	58612	other=58613
+12.5	admit	GET 	origin=	site=none	dest=document
+19.2	admit	GET app.css	origin=	site=same-origin	dest=style
+20.1	admit	GET app.js	origin=	site=same-origin	dest=script
+25.9	admit	GET events	origin=	site=same-origin	dest=empty
+26.0	+page	n=1
+29.2	deny	Token	GET /favicon.ico	host=127.0.0.1:58612	origin=	site=same-origin

@@ -1,0 +1,7 @@
+  Determining projects to restore...
+  Restored C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\appcopy\src\BrowserAI.App\BrowserAI.App.csproj (in 288 ms).
+  Restored C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\appcopy\src\BrowserAI.Core\BrowserAI.Core.csproj (in 288 ms).
+  BrowserAI.Core -> C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\appcopy\src\BrowserAI.Core\bin\Release\net10.0-windows\win-x64\BrowserAI.Core.dll
+  BrowserAI.App -> C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\appcopy\src\BrowserAI.App\bin\Release\net10.0-windows\win-x64\BrowserAI.dll
+  Generating native code
+  BrowserAI.App -> C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\out\app-BASE\

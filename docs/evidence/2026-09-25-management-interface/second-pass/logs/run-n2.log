@@ -1,0 +1,7 @@
+# 2026-10-01T12:25:07.7991949+00:00 desktop=BrowserAI-b2-75d03a35793844309ea5e5be99f0c751 pid=28260 exe=C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\out\p1probe\p1probe.exe
+launch_to_ready_ms=692.2 exited=True exit_code=0 end_ms=486723.1 still_in_job_at_end=0 peak_job_commit_MB=324.7
+sample_at_ready_plus_ms=2000 processes_in_job=10 private_MB=243.0 working_set_MB=467.6 peak_job_commit_MB=245.5 per_process_private/ws_MB=[p1probe.exe:4.5/10.8 conhost.exe:1.2/7.5 chrome.exe:40.7/129.4 chrome.exe:2.5/9.9 chrome.exe:90.7/85.7 chrome.exe:14.9/35.7 chrome.exe:8.6/18.7 chrome.exe:42.8/82.0 chrome.exe:21.9/56.6 chrome.exe:15.3/31.2]
+sample_at_ready_plus_ms=30000 processes_in_job=10 private_MB=242.1 working_set_MB=482.7 peak_job_commit_MB=266.3 per_process_private/ws_MB=[p1probe.exe:9.9/19.3 conhost.exe:1.2/7.5 chrome.exe:46.2/140.9 chrome.exe:2.3/9.9 chrome.exe:86.3/86.0 chrome.exe:14.9/35.9 chrome.exe:8.6/18.7 chrome.exe:36.0/77.4 chrome.exe:21.6/56.3 chrome.exe:15.0/30.9]
+sample_at_ready_plus_ms=120000 processes_in_job=10 private_MB=234.5 working_set_MB=479.5 peak_job_commit_MB=324.7 per_process_private/ws_MB=[p1probe.exe:9.8/19.3 conhost.exe:1.2/7.5 chrome.exe:44.1/139.6 chrome.exe:2.3/9.9 chrome.exe:83.8/85.9 chrome.exe:14.7/35.9 chrome.exe:8.6/18.8 chrome.exe:32.9/74.7 chrome.exe:22.0/57.0 chrome.exe:15.0/30.9]
+job closed; desktop closed=True
+driver exit 0

@@ -1,0 +1,4 @@
+  Determining projects to restore...
+C:\Source\SixFive7\BrowserAI\.work\zoomout\b\probes\avalonia\avalonia.csproj : error NU1108: Cycle detected. 
+C:\Source\SixFive7\BrowserAI\.work\zoomout\b\probes\avalonia\avalonia.csproj : error NU1108:   avalonia -> Avalonia (>= 12.1.3).
+  Failed to restore C:\Source\SixFive7\BrowserAI\.work\zoomout\b\probes\avalonia\avalonia.csproj (in 7,35 sec).

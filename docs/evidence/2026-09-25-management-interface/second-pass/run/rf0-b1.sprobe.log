@@ -1,0 +1,5 @@
+4.8	listening	58703	other=58711
+217.8	deny	Token	GET /favicon.ico	host=127.0.0.1:58703	origin=	site=same-origin
+4966.3	admit	GET events	origin=	site=same-origin	dest=empty
+4966.4	+page	n=1
+4980.6	admit	POST act	origin=http://127.0.0.1:58703	site=same-origin	dest=empty

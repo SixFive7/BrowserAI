@@ -1,0 +1,54 @@
+      0.8	desktop	BrowserAI-b2-afecd56d08df4e4dba7eb97aa51e8b10
+      0.8	mode	app
+      8.1	launched	pid=68784 in=536 out=548
+      8.1	command_line	C:\Source\SixFive7\BrowserAI\.work\zoomout\d\bench\browsers\chromium-1246\chrome-win64\chrome.exe --remote-debugging-pipe --remote-debugging-io-pipes=536,548 --user-data-dir=C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\profiles\a1 --no-first-run --no-default-browser-check --app=data:text/html,<title>BrowserAI</title> --window-size=980,720 --window-position=60,60
+    285.1	first_reply_ms_after_launch	284.3
+    285.1	product	Chrome/154.0.8037.0
+    285.1	protocolVersion	1.3
+    285.1	userAgent	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+    300.3	page_target	{"targetId":"3A82A6DB6A47CDD80657B0CF5D75DBD7","type":"page","title":"","url":"data:text/html,<title>BrowserAI</title>","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"}
+    300.3	page_target_ms_after_launch	299.5
+    315.1	titles_before_navigate	UAC_InputIndicatorOverlayWnd:[] UAC Input Indicator:[] Chrome_WidgetWin_1:[_text/html,<title>BrowserAI</title>]
+    421.4	page_ready_ms_after_launch	420.6
+    421.4	page_ready_ms_after_probe_main	421.3
+    421.4	page_said	{"ready":true,"dark":true,"inner":[964,625],"outer":[980,720],"dpr":1,"origin":"https://app.browserai.invalid","secure":true,"title":"BrowserAI","ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"}
+    441.3	round_trip_ms	p50=0.20 min=0.15 max=9.27 n=40 pongs=40
+    441.3	served_over_the_pipe	/ /app.css /app.js
+   3441.5	foreground_window_on_this_desktop	0x0
+   3441.7	top_level_windows_on_desktop	17
+   3441.7	window	0x22204 owner=browser class=Touch Tooltip Window visible=False rect=0,0,0,0 style=0x86000000 ex=0x082800A8 ownerWindow=0x22224 title=[Tooltip]
+   3441.7	window	0x22224 owner=browser class=UAC_InputIndicatorOverlayWnd visible=True rect=3742,2062,3792,2112 style=0x94000000 ex=0x08200008 ownerWindow=0x0 title=[]
+   3441.7	window	0x2221E owner=browser class=UAC Input Indicator visible=True rect=3742,2062,3792,2112 style=0x96000000 ex=0x08080028 ownerWindow=0x0 title=[]
+   3441.7	window	0x12244 owner=pid 8656 class=Chrome_WidgetWin_0 visible=False rect=0,0,0,0 style=0x8C000000 ex=0x00000080 ownerWindow=0x0 title=[]
+   3441.7	window	0x22232 owner=browser class=Chrome_WidgetWin_0 visible=False rect=0,0,0,0 style=0x8C000000 ex=0x00000080 ownerWindow=0x0 title=[]
+   3441.7	window	0x22208 owner=browser class=Chrome_WidgetWin_1 visible=True rect=60,60,1040,780 style=0x16CF0000 ex=0x00200100 ownerWindow=0x0 title=[BrowserAI]
+   3460.1	capture	ok flags=2 window=980x720 frame=966x713 dpi=96
+   3461.4	icon	WM_GETICON(ICON_BIG) handle=0xE21F7 drawn=True
+   3469.0	taskbar_identity	AppUserModel_ID=[ChromeForTesting._text/htmlAI</title>.a1.Default] hr=0x00000000; RelaunchCommand=[(empty)] hr=0x00000000; RelaunchIconResource=[(empty)] hr=0x00000000; RelaunchDisplayNameResource=[(empty)] hr=0x00000000; 
+   3469.1	taskbar_identity_after_set	SetValue(AppUserModel_ID=BrowserAI.b2probe) hr=0x00000000 commit=0x00000000; AppUserModel_ID=[BrowserAI.b2probe] hr=0x00000000; RelaunchCommand=[(empty)] hr=0x00000000; RelaunchIconResource=[(empty)] hr=0x00000000; RelaunchDisplayNameResource=[(empty)] hr=0x00000000; 
+   3469.1	window	0x22218 owner=browser class=Chrome_StatusTrayWindow visible=False rect=0,0,0,0 style=0x84000000 ex=0x00000000 ownerWindow=0x0 title=[]
+   3469.1	window	0x221FA owner=browser class=Chrome_WidgetWin_0 visible=False rect=182,182,3062,1745 style=0x06CF0000 ex=0x00000100 ownerWindow=0x0 title=[]
+   3469.1	window	0x22210 owner=browser class=Base_PowerMessageWindow visible=False rect=0,0,0,0 style=0x84000000 ex=0x08000000 ownerWindow=0x0 title=[]
+   3469.1	window	0x42230 owner=pid 77844 class=crashpad_SessionEndWatcher visible=False rect=0,0,136,39 style=0x04C00000 ex=0x00000100 ownerWindow=0x0 title=[]
+   3469.1	window	0x2220A owner=browser class=CicLoaderWndClass visible=False rect=0,0,136,39 style=0x0CC00000 ex=0x00000100 ownerWindow=0x0 title=[]
+   3469.1	window	0x22216 owner=browser class=CiceroUIWndFrame visible=False rect=200,200,400,400 style=0x8C000000 ex=0x08080088 ownerWindow=0x22214 title=[CiceroUIWndFrame]
+   3469.1	window	0x22214 owner=browser class=CiceroUIWndFrame visible=False rect=0,0,0,6 style=0x8C000000 ex=0x08000088 ownerWindow=0x2220A title=[TF_FloatingLangBar_WndTitle]
+   3469.1	window	0x12246 owner=pid 8656 class=IME visible=False rect=0,0,0,0 style=0x8C000000 ex=0x00000000 ownerWindow=0x12244 title=[Default IME]
+   3469.1	window	0x2222A owner=browser class=MSCTFIME UI visible=False rect=0,0,0,0 style=0x8C000000 ex=0x00000000 ownerWindow=0x2223E title=[MSCTFIME UI]
+   3469.1	window	0x2223E owner=browser class=IME visible=False rect=0,0,0,0 style=0x8C000000 ex=0x00000000 ownerWindow=0x22208 title=[Default IME]
+   3469.1	window	0x5222E owner=pid 77844 class=IME visible=False rect=0,0,0,0 style=0x8C000000 ex=0x00000000 ownerWindow=0x42230 title=[Default IME]
+   3469.2	message_window	0x1224E owner=browser title=[DeviceMonitorMessageWindow] equals_user_data_dir=False
+   3469.2	message_window	0x3221C owner=pid 8656 title=[] equals_user_data_dir=False
+   3469.2	message_window	0x22212 owner=browser title=[] equals_user_data_dir=False
+   3469.2	message_window	0x221F6 owner=browser title=[C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\profiles\a1] equals_user_data_dir=True
+   3469.2	message_window	0x221F4 owner=browser title=[] equals_user_data_dir=False
+   5045.4	second_start	pid=69948 exited=True exit_code=0 after_ms=76 its_pipe_read_ended=True its_pipe_messages=0
+   5045.7	titles_after_second_start	UAC_InputIndicatorOverlayWnd:[] UAC Input Indicator:[] Chrome_WidgetWin_1:[Second] Chrome_WidgetWin_1:[BrowserAI]
+   5046.0	targets_after_second_start	[{"targetId":"42940CC480FC6AC7AD8A7D7D391F0D00","type":"service_worker","title":"Service Worker chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/thunk.js","url":"chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/thunk.js","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"},{"targetId":"15D92FFB831EBC76356C5037AAE05C12","type":"service_worker","title":"Service Worker chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js","url":"chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"},{"targetId":"E0B86BAE32BA8501B68CF61653494865","type":"browser_ui","title":"Omnibox Popup","url":"chrome://omnibox-popup.top-chrome/","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"},{"targetId":"63...
+   5046.0	blocked_by_the_host	(none)
+   5046.0	target_events	295:Target.targetCreated:{"targetInfo":{"targetId":"3A82A6DB6A47CDD80657B0CF5D75DBD7","type":"page","title":"","url":"data:text/html,<title>BrowserAI</title>","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"}} | 295:Target.targetCreated:{"targetInfo":{"targetId":"630184A8525314808A40A7D0D92F9755","type":"browser_ui","title":"","url":"chrome://omnibox-popup.top-chrome/","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"}} | 295:Target.targetCreated:{"targetInfo":{"targetId":"C9AD5C3197F6E4F1579A1232686B54C6","type":"browser_ui","title":"","url":"chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"}} | 328:Target.targetCreated:{"targetInfo":{"targetId":"42940CC480FC6AC7AD8A7D7D391F0D00","type":"service_worker","title":"Service Worker chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/thunk.js","url":"chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/thunk.js","attached":false,"canAccessOpener":false,"browserContextId":... | 356:Target.targetCreated:{"targetInfo":{"targetId":"15D92FFB831EBC76356C5037AAE05C12","type":"service_worker","title":"Service Worker chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js","url":"chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js","attached":false,"canAccessOpener":false,"browserC... | 3546:Target.targetCreated:{"targetInfo":{"targetId":"7394B33D7E7CF7BA0500EFF595D964A4","type":"browser_ui","title":"","url":"chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"}} | 3550:Target.targetCreated:{"targetInfo":{"targetId":"E0B86BAE32BA8501B68CF61653494865","type":"browser_ui","title":"","url":"chrome://omnibox-popup.top-chrome/","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"}} | 3568:Target.targetCreated:{"targetInfo":{"targetId":"3CDC5F8455BBDA47C124E7C1D9509884","type":"page","title":"","url":"data:text/html,<title>Second</title>","attached":false,"canAccessOpener":false,"browserContextId":"E695F9F6140393A2F6A5A1C77519E978"}}
+   5046.6	wm_close_posted	0x1225E ok=True
+   5046.6	wm_close_posted	0x22208 ok=True
+   5424.3	ended	how=wm exited=True exit_code=0 ms_after_request=177 pipe_read_ended=True pipe_read_ended_ms_after_request=52 read_end_error=109
+   6972.6	profile	files=248 bytes=12605114 MB=12.0
+   6973.1	done	0

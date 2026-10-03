@@ -1,0 +1,61 @@
+     74.2	listening	port=56676 other=56677 token_chars=43 sprobe_start_ms=2.88
+     85.5	page_response_head	HTTP/1.1 200 OK | Cache-Control: no-store | X-Content-Type-Options: nosniff | Referrer-Policy: no-referrer | Cross-Origin-Opener-Policy: same-origin | Cross-Origin-Resource-Policy: same-origin | Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none' | Content-Type: text/html; charset=utf-8 | Content-Length: 246 | Connection: close
+     86.3	raw	ok   R01 page with the token and our Host                             expect[200] got[HTTP/1.1 200 OK]
+     86.8	raw	ok   R01b no Set-Cookie and no CORS header on it                      expect[clean] got[clean]
+     95.2	raw	ok   R02 no token                                                     expect[404] got[HTTP/1.1 404 Not Found]
+    100.5	raw	ok   R03 a wrong token of the right length                            expect[404] got[HTTP/1.1 404 Not Found]
+    105.4	raw	ok   R04 the token, Host: localhost:port                              expect[404] got[HTTP/1.1 404 Not Found]
+    110.9	raw	ok   R05 the token, Host: attacker.example:port (rebinding)           expect[404] got[HTTP/1.1 404 Not Found]
+    116.4	raw	ok   R06 the token, HTTP/1.0 with no Host                             expect[404] got[HTTP/1.1 404 Not Found]
+    121.9	raw	ok   R07 the token, two Host headers                                  expect[404] got[HTTP/1.1 404 Not Found]
+    128.5	raw	ok   R08 the token, GET with a foreign Origin and cross-site          expect[404] got[HTTP/1.1 404 Not Found]
+    135.4	raw	ok   R09 the write, as our page sends it                              expect[204] got[HTTP/1.1 204 No Content]
+    142.8	raw	ok   R10 the write with no Origin                                     expect[404] got[HTTP/1.1 404 Not Found]
+    151.5	raw	ok   R11 the write from a foreign Origin, text/plain                  expect[404] got[HTTP/1.1 404 Not Found]
+    158.3	raw	ok   R12 the write, our Origin, form content type                     expect[404] got[HTTP/1.1 404 Not Found]
+    165.3	raw	ok   R13 a preflight                                                  expect[404] got[HTTP/1.1 404 Not Found]
+    172.4	raw	ok   R14 the token, a route that does not exist                       expect[404] got[HTTP/1.1 404 Not Found]
+    180.2	raw	ok   R15 PUT                                                          expect[404] got[HTTP/1.1 404 Not Found]
+    187.7	raw	ok   R16 a 9 KB header                                                expect[404] got[HTTP/1.1 404 Not Found]
+    194.2	raw	ok   R17 a body announced at 100,000 bytes                            expect[404] got[HTTP/1.1 404 Not Found]
+    202.0	raw	ok   R18 a chunked body                                               expect[404] got[HTTP/1.1 404 Not Found]
+    209.4	raw	ok   R19 not HTTP at all                                              expect[404] got[HTTP/1.1 404 Not Found]
+   2234.8	raw	ok   R20 the same port on [::1]                                       expect[no connection] got[no connection: ConnectionRefused]
+   4261.3	raw	ok   R21 the same port on a non-loopback IPv4 address of this machine expect[no connection] got[no connection: ConnectionRefused]
+   6266.9	raw	ok   R21 the same port on a non-loopback IPv4 address of this machine expect[no connection] got[no connection: ConnectionRefused]
+   6269.1	raw	ok   R22 the counter moved once, by R09 alone                         expect[{"counter":1}] got[{"counter":1}]
+   6277.7	raw_summary	pass=24 fail=0
+   6481.7	browser	Chrome/154.0.8037.0
+   6725.4	B1_connected	True
+   6727.5	B1_link	connected
+   6741.3	B1_write_status	204
+   6750.3	B1_state_pushed	{"counter":2,"pages":1}
+   6760.8	B1_cookies_and_storage	{"cookie":"","local":0,"session":0}
+   8575.4	B2_reload_gap_ms	n=10 min=4.8 median=5.8 max=11.3 (negative means the new stream opened before the old one closed)
+   8718.6	B3_second_tab_connected	True
+   8726.1	B3_pages_now	8649.6	+page	n=2
+   8941.6	B3_tab_close_seen_by_the_listener_ms	212.0
+   9798.9	B4_rebinding_page	{"title":"attacker.example","text":183,"url":"chrome-error://chromewebdata/"}
+   9806.4	B4_listener_denied_on_host	1
+   9812.7	B4_rebinding_fetch	ERR Failed to fetch
+  10355.0	B5_other_site_origin	http://attacker.example:56677
+  10377.7	B5a_cross_site_post_text_plain	opaque 0 || listener: deny FetchSite POST /<token>/act host=127.0.0.1:56676 origin=http://attacker.example:56677 site=cross-site
+  10386.0	B5b_cross_site_get_no_cors	opaque 0 || listener: deny FetchSite GET /<token>/state host=127.0.0.1:56676 origin= site=cross-site
+  10395.9	B5c_cross_site_get_cors	ERR Failed to fetch || listener: deny FetchSite GET /<token>/state host=127.0.0.1:56676 origin=http://attacker.example:56677 site=cross-site
+  10404.2	B5d_cross_site_json_post	ERR Failed to fetch || listener: deny Method OPTIONS /<token>/act host=127.0.0.1:56676 origin=http://attacker.example:56677 site=cross-site
+  10424.8	B5e_iframe	null document || listener: deny FetchSite GET /<token>/ host=127.0.0.1:56676 origin= site=cross-site
+  11251.8	B5f_form_post	submitted || listener: deny FetchSite POST /<token>/act host=127.0.0.1:56676 origin=http://attacker.example:56677 site=cross-site
+  11260.6	B5g_websocket	error || listener: deny Origin GET /<token>/events host=127.0.0.1:56676 origin=http://attacker.example:56677 site=
+  11262.6	B5_counter_after_all_of_that	{"counter":2}
+  11913.5	B6_history_length	1
+  12724.8	B6_window_close_closed_the_tab	True
+  12733.1	admitted	admit GET  origin= site= dest=
+  12734.5	admitted	admit POST act origin=http://127.0.0.1:56676 site=same-origin dest=
+  12735.1	admitted	admit GET nosuch origin= site= dest=
+  12743.7	admitted	admit GET state origin= site= dest=
+  12750.4	admitted	admit GET  origin= site=none dest=document
+  12759.8	admitted	admit GET app.css origin= site=same-origin dest=style
+  12768.3	admitted	admit GET app.js origin= site=same-origin dest=script
+  12776.7	admitted	admit GET events origin= site=same-origin dest=empty
+  12785.4	admitted	admit POST act origin=http://127.0.0.1:56676 site=same-origin dest=empty
+  12986.4	done	0

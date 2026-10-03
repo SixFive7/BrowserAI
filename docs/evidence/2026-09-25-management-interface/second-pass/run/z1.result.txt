@@ -1,0 +1,11 @@
+requests=4000 outcomes={"200":560,"204":200,"404":2465,"closed(timeout)":771,"closed(error)":12}
+answered_200_or_204=760 (a mutation can leave a request valid; listed below)
+  still-valid mutation: "POST /<token>/act HTTP/1.1\r\nHOST:\t127.0.0.1:61836\r\nOrigin: http://127.0.0.1:61836\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"
+  still-valid mutation: "POST /<token>/act HTTP/1.1\r\nHost: 127.0.0.1:61836\r\nOrigin: http://127.0.0.1:61836\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\nX-A: b\r"
+  still-valid mutation: "GET /<token>/ HTTP/1.1\r\nHost: 127.0.0.1:61836\r\nConnection: close\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b\r\nX-A: b"
+  still-valid mutation: "GET /<token>/ HTTP/1.1\r\nHost: 127.0.0.1:61836\r\nConnection: close\r\n\r\n"
+  still-valid mutation: "GET /<token>/ HTTP/1.1\r\nHost: 127.0.0.1:61836\r\nConnection: close\r\n\r\n"
+  still-valid mutation: "GET /<token>/ HTTP/1.1\r\nHOST:\t127.0.0.1:61836\r\nConnection: close\r\n\r\n"
+  still-valid mutation: "GET /<token>/ HTTP/1.1\r\nHost: 127.0.0.1:61836\r\nConnection: close\r\n\r\n"
+  still-valid mutation: "GET /<token>/ HTTP/1.1\r\nHost: 127.0.0.1:61836\r\nConnection: close\r\n\r\n"
+listener_alive=true page_after=200 state_after={"counter":200}

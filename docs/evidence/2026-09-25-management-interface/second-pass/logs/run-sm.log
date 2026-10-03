@@ -1,0 +1,5 @@
+# 2026-10-01T13:22:03.0448941+00:00 desktop=BrowserAI-b2-3fbe1fba012e4c9f816b306ee99c9707 pid=40832 exe=C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\out\sprobe\sprobe.exe
+launch_to_ready_ms=44.4 exited=False exit_code=259 end_ms=6003.6 still_in_job_at_end=2 peak_job_commit_MB=4.6
+sample_at_ready_plus_ms=1000 processes_in_job=2 private_MB=4.6 working_set_MB=16.9 peak_job_commit_MB=4.6 per_process_private/ws_MB=[sprobe.exe:3.3/9.4 conhost.exe:1.2/7.5]
+sample_at_ready_plus_ms=4000 processes_in_job=2 private_MB=4.6 working_set_MB=16.9 peak_job_commit_MB=4.6 per_process_private/ws_MB=[sprobe.exe:3.3/9.4 conhost.exe:1.2/7.5]
+job closed; desktop closed=True

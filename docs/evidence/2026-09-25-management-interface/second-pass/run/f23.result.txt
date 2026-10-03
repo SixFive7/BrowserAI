@@ -1,0 +1,19 @@
+    487.1	browser	Firefox 156.0
+   1652.2	B1_connected	true
+   1751.7	B1_write_status	204
+   1761.9	B1_state_pushed	{"counter":1,"pages":1}
+   1794.6	B1_cookies_and_storage	{"cookie":"","local":0,"session":0}
+   3800.9	B2_reload_gap_ms	n=10 min=23.8 median=29.4 max=65.6
+   4041.6	B3_second_tab_connected	true
+   4073.1	B3_tab_close_seen_by_the_listener_ms	30.8
+   4300.4	B4_rebinding_navigation	ERR page.goto: NS_ERROR_NET_EMPTY_RESPONSE
+   4306.7	B4_listener	deny Host GET /<token>/ host=attacker.example:58124 origin= site=
+   4665.1	B5_other_site_origin	http://attacker.example:58125
+   4701.0	B5a_cross_site_post_text_plain	opaque 0 || listener: deny FetchSite POST /<token>/act host=127.0.0.1:58124 origin=http://attacker.example:58125 site=cross-site
+   4718.0	B5b_cross_site_get_no_cors	opaque 0 || listener: deny FetchSite GET /<token>/state host=127.0.0.1:58124 origin= site=cross-site
+   4733.2	B5c_cross_site_get_cors	ERR NetworkError when attempting to fetch resource. || listener: deny FetchSite GET /<token>/state host=127.0.0.1:58124 origin=http://attacker.example:58125 site=cross-site
+   4750.2	B5d_cross_site_json_post	ERR NetworkError when attempting to fetch resource. || listener: deny Method OPTIONS /<token>/act host=127.0.0.1:58124 origin=http://attacker.example:58125 site=cross-site
+   8763.0	B5e_iframe	no load event || listener: deny FetchSite GET /<token>/ host=127.0.0.1:58124 origin= site=cross-site
+   9618.5	B5f_form_post	submitted || listener: deny FetchSite POST /<token>/act host=127.0.0.1:58124 origin=http://attacker.example:58125 site=cross-site
+   9635.4	B5g_websocket	error || listener: deny FetchSite GET /<token>/events host=127.0.0.1:58124 origin=http://attacker.example:58125 site=cross-site
+   9639.4	B5_counter_after_all_of_that	{"counter":1}

@@ -1,0 +1,6 @@
+b4057424da6df5cd794785d42dbfd22f7e0b55c6a19565b691611d7b76a0105c       33537  REPORT.md  ->  REPORT.md  (two-line SPDX header added)
+fbf8cc24a12e157ff6ecd743e4d767852ac0a23a26f2ad2a51e1ce3a3db676df        6235  logs/install-firefox.log  ->  logs/install-firefox.trimmed.log  (6 terminal escape sequence(s) removed)
+142219ce5f721f4746cefeecdc7ff641226e68febb6ebe09bc12f9d97a17875d        2576  run/f13.result.txt  ->  run/f13.result.trimmed.txt  (1 terminal escape sequence(s) removed)
+ef4ea69a181c8cb8aabbd7c13619dc0e05b0320d12fd72decf9ed3099dc816f3        2575  run/f21.result.txt  ->  run/f21.result.trimmed.txt  (1 terminal escape sequence(s) removed)
+f298f862b321a888965a292c396428873f479a428d78857e507ae6552a4df57a        1071  run/n0.netlog-summary.tsv  ->  run/n0.netlog-summary.trimmed.tsv  (2 this machine's LAN addresses replaced)
+8e3cdbc0e40d485b1a5d781635307caebde59e0fef834470da94321fee29c8d8        1071  run/n1.netlog-summary.tsv  ->  run/n1.netlog-summary.trimmed.tsv  (2 this machine's LAN addresses replaced)

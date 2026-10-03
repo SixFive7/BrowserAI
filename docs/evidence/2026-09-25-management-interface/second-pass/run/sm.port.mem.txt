@@ -1,0 +1,2 @@
+sample_at_ready_plus_ms=1000 processes_in_job=2 private_MB=4.6 working_set_MB=16.9 peak_job_commit_MB=4.6 per_process_private/ws_MB=[sprobe.exe:3.3/9.4 conhost.exe:1.2/7.5]
+sample_at_ready_plus_ms=4000 processes_in_job=2 private_MB=4.6 working_set_MB=16.9 peak_job_commit_MB=4.6 per_process_private/ws_MB=[sprobe.exe:3.3/9.4 conhost.exe:1.2/7.5]

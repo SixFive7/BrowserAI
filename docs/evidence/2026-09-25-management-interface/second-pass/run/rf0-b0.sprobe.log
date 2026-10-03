@@ -1,0 +1,5 @@
+4.2	listening	58690	other=58697
+251.0	deny	Token	GET /favicon.ico	host=127.0.0.1:58690	origin=	site=same-origin
+4971.9	admit	GET events	origin=	site=same-origin	dest=empty
+4972.0	+page	n=1
+4990.1	admit	POST act	origin=http://127.0.0.1:58690	site=same-origin	dest=empty

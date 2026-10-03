@@ -1,0 +1,6 @@
+5.0	listening	58743	other=58744
+51.1	admit	GET 	origin=	site=none	dest=document
+195.4	admit	GET app.css	origin=	site=same-origin	dest=style
+195.5	admit	GET app.js	origin=	site=same-origin	dest=script
+210.7	admit	GET events	origin=	site=same-origin	dest=empty
+210.8	+page	n=1

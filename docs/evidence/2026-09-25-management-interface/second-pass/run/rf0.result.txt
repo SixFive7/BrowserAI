@@ -1,0 +1,5 @@
+    406.1	browser	firefox 156.0
+   6414.0	round0	kill_to_exit_ms=3.5 gap_ms=0 rebind_attempts=1 rebind_ok_ms_after_exit=40.4 page_reconnected=true reconnect_ms_after_rebind=4972 reconnect_ms_after_exit=5012 link=connected write_after=204
+  11561.9	round1	kill_to_exit_ms=3.6 gap_ms=0 rebind_attempts=1 rebind_ok_ms_after_exit=45.5 page_reconnected=true reconnect_ms_after_rebind=4963 reconnect_ms_after_exit=5009 link=connected write_after=204
+  17004.1	round2	kill_to_exit_ms=7.7 gap_ms=0 rebind_attempts=1 rebind_ok_ms_after_exit=38.2 page_reconnected=true reconnect_ms_after_rebind=5267 reconnect_ms_after_exit=5305 link=connected write_after=204
+  17454.7	done	0

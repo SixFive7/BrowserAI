@@ -1,0 +1,116 @@
+4.8	listening	50662	other=50663
+19.0	admit	GET 	origin=	site=	dest=
+26.9	deny	Token	GET /	host=127.0.0.1:50662	origin=	site=
+32.1	deny	Token	GET /AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/	host=127.0.0.1:50662	origin=	site=
+36.8	deny	Host	GET /<token>/	host=localhost:50662	origin=	site=
+42.1	deny	Host	GET /<token>/	host=attacker.example:50662	origin=	site=
+47.1	deny	Host	GET /<token>/	host=	origin=	site=
+53.3	deny	Host	GET /<token>/	host=	origin=	site=
+59.5	deny	FetchSite	GET /<token>/state	host=127.0.0.1:50662	origin=http://attacker.example	site=cross-site
+66.3	admit	POST act	origin=http://127.0.0.1:50662	site=same-origin	dest=
+73.1	deny	Origin	POST /<token>/act	host=127.0.0.1:50662	origin=	site=
+80.5	deny	Origin	POST /<token>/act	host=127.0.0.1:50662	origin=http://attacker.example	site=
+86.6	deny	ContentType	POST /<token>/act	host=127.0.0.1:50662	origin=http://127.0.0.1:50662	site=
+93.1	deny	Method	OPTIONS /<token>/act	host=127.0.0.1:50662	origin=http://attacker.example	site=
+100.0	admit	GET nosuch	origin=	site=	dest=
+106.7	deny	Method	PUT /<token>/act	host=127.0.0.1:50662	origin=	site=
+114.5	deny	TooLarge	 	host=	origin=	site=
+121.4	deny	TooLarge	 	host=	origin=	site=
+129.1	deny	Malformed	 	host=	origin=	site=
+137.0	deny	Malformed	 	host=	origin=	site=
+6203.1	admit	GET state	origin=	site=	dest=
+6621.6	deny	Malformed	 	host=	origin=	site=
+6653.7	admit	GET 	origin=	site=none	dest=document
+6669.8	admit	GET app.css	origin=	site=same-origin	dest=style
+6671.8	admit	GET app.js	origin=	site=same-origin	dest=script
+6689.1	admit	GET events	origin=	site=same-origin	dest=empty
+6689.2	+page	n=1
+6695.8	deny	Token	GET /favicon.ico	host=127.0.0.1:50662	origin=	site=same-origin
+6709.5	admit	POST act	origin=http://127.0.0.1:50662	site=same-origin	dest=empty
+6773.9	admit	GET 	origin=	site=none	dest=document
+6780.5	-page	n=0
+6782.4	admit	GET app.css	origin=	site=same-origin	dest=style
+6783.6	admit	GET app.js	origin=	site=same-origin	dest=script
+6786.6	admit	GET events	origin=	site=same-origin	dest=empty
+6786.7	+page	n=1
+6954.1	admit	GET 	origin=	site=none	dest=document
+6958.8	-page	n=0
+6960.8	admit	GET app.css	origin=	site=same-origin	dest=style
+6961.7	admit	GET app.js	origin=	site=same-origin	dest=script
+6963.7	admit	GET events	origin=	site=same-origin	dest=empty
+6963.8	+page	n=1
+7143.0	admit	GET 	origin=	site=none	dest=document
+7147.3	-page	n=0
+7149.1	admit	GET app.css	origin=	site=same-origin	dest=style
+7149.7	admit	GET app.js	origin=	site=same-origin	dest=script
+7157.7	admit	GET events	origin=	site=same-origin	dest=empty
+7157.8	+page	n=1
+7319.7	admit	GET 	origin=	site=none	dest=document
+7324.3	-page	n=0
+7326.4	admit	GET app.css	origin=	site=same-origin	dest=style
+7327.4	admit	GET app.js	origin=	site=same-origin	dest=script
+7329.3	admit	GET events	origin=	site=same-origin	dest=empty
+7329.4	+page	n=1
+7497.1	admit	GET 	origin=	site=none	dest=document
+7502.1	-page	n=0
+7503.7	admit	GET app.css	origin=	site=same-origin	dest=style
+7504.6	admit	GET app.js	origin=	site=same-origin	dest=script
+7507.0	admit	GET events	origin=	site=same-origin	dest=empty
+7507.1	+page	n=1
+7675.0	admit	GET 	origin=	site=none	dest=document
+7680.1	-page	n=0
+7682.3	admit	GET app.css	origin=	site=same-origin	dest=style
+7683.4	admit	GET app.js	origin=	site=same-origin	dest=script
+7686.4	admit	GET events	origin=	site=same-origin	dest=empty
+7686.5	+page	n=1
+7852.8	admit	GET 	origin=	site=none	dest=document
+7857.0	-page	n=0
+7858.7	admit	GET app.css	origin=	site=same-origin	dest=style
+7859.8	admit	GET app.js	origin=	site=same-origin	dest=script
+7861.7	admit	GET events	origin=	site=same-origin	dest=empty
+7861.8	+page	n=1
+8028.0	admit	GET 	origin=	site=none	dest=document
+8032.2	-page	n=0
+8034.0	admit	GET app.css	origin=	site=same-origin	dest=style
+8035.2	admit	GET app.js	origin=	site=same-origin	dest=script
+8037.5	admit	GET events	origin=	site=same-origin	dest=empty
+8037.7	+page	n=1
+8205.4	admit	GET 	origin=	site=none	dest=document
+8210.4	-page	n=0
+8212.2	admit	GET app.css	origin=	site=same-origin	dest=style
+8213.5	admit	GET app.js	origin=	site=same-origin	dest=script
+8216.0	admit	GET events	origin=	site=same-origin	dest=empty
+8216.1	+page	n=1
+8387.5	admit	GET 	origin=	site=none	dest=document
+8393.7	-page	n=0
+8395.8	admit	GET app.css	origin=	site=same-origin	dest=style
+8397.0	admit	GET app.js	origin=	site=same-origin	dest=script
+8399.0	admit	GET events	origin=	site=same-origin	dest=empty
+8399.0	+page	n=1
+8572.7	admit	GET 	origin=	site=none	dest=document
+8606.5	admit	GET app.css	origin=	site=same-origin	dest=style
+8607.5	admit	GET app.js	origin=	site=same-origin	dest=script
+8699.7	admit	GET events	origin=	site=same-origin	dest=empty
+8699.8	+page	n=2
+8731.1	-page	n=1
+8746.2	deny	Host	GET /<token>/	host=attacker.example:50662	origin=	site=
+9607.1	deny	Host	GET /<token>/state	host=attacker.example:50662	origin=null	site=
+10162.3	deny	FetchSite	POST /<token>/act	host=127.0.0.1:50662	origin=http://attacker.example:50663	site=cross-site
+10185.5	deny	FetchSite	GET /<token>/state	host=127.0.0.1:50662	origin=	site=cross-site
+10195.8	deny	FetchSite	GET /<token>/state	host=127.0.0.1:50662	origin=http://attacker.example:50663	site=cross-site
+10205.2	deny	Method	OPTIONS /<token>/act	host=127.0.0.1:50662	origin=http://attacker.example:50663	site=cross-site
+10218.6	deny	FetchSite	GET /<token>/	host=127.0.0.1:50662	origin=	site=cross-site
+10237.5	deny	FetchSite	POST /<token>/act	host=127.0.0.1:50662	origin=http://attacker.example:50663	site=cross-site
+11045.4	deny	Origin	GET /<token>/events	host=127.0.0.1:50662	origin=http://attacker.example:50663	site=
+11053.5	admit	GET state	origin=	site=	dest=
+11070.0	admit	GET 	origin=	site=none	dest=document
+11088.3	admit	GET app.css	origin=	site=same-origin	dest=style
+11089.3	admit	GET app.js	origin=	site=same-origin	dest=script
+11102.5	admit	GET events	origin=	site=same-origin	dest=empty
+11102.6	+page	n=2
+11707.0	-page	n=1
+12597.4	-page	n=0
+12642.8	deny	Malformed	 	host=	origin=	site=
+12643.3	deny	Malformed	 	host=	origin=	site=
+12766.2	admit	POST quit	origin=http://127.0.0.1:50662	site=	dest=
+12766.2	stopping

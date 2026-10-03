@@ -1,0 +1,29 @@
+    501.6	browser	Firefox 156.0
+   1578.0	B1_connected	true
+   1692.7	B1_write_status	204
+   1703.3	B1_state_pushed	{"counter":1,"pages":1}
+   1742.7	B1_cookies_and_storage	{"cookie":"","local":0,"session":0}
+   3936.4	B2_reload_gap_ms	n=10 min=24.2 median=49.6 max=109.8
+  12143.8	B3_goto_did_not_resolve	page.goto: Timeout 8000ms exceeded. Call log:  - navigating to "http://127.0.0.1:56202/lDeELS8Ug-KuweayZlhGVor1NSHu || page: {"ready":"complete","link":"connected","state":"{\"counter\":1,\"pages\":2}","scripts":1,"sheets":1}
+  12151.1	B3_second_tab_connected	true
+  12179.1	B3_tab_close_seen_by_the_listener_ms	27.4
+  12353.7	B4_rebinding_navigation	ERR page.goto: NS_ERROR_NET_EMPTY_RESPONSE
+  12360.7	B4_listener	deny Host GET /<token>/ host=attacker.example:56202 origin= site=
+  12595.0	B5_other_site_origin	http://attacker.example:56203
+  12612.8	B5a_cross_site_post_text_plain	opaque 0 || listener: deny FetchSite POST /<token>/act host=127.0.0.1:56202 origin=http://attacker.example:56203 site=cross-site
+  12624.4	B5b_cross_site_get_no_cors	opaque 0 || listener: deny FetchSite GET /<token>/state host=127.0.0.1:56202 origin= site=cross-site
+  12638.3	B5c_cross_site_get_cors	ERR NetworkError when attempting to fetch resource. || listener: deny FetchSite GET /<token>/state host=127.0.0.1:56202 origin=http://attacker.example:56203 site=cross-site
+  12653.3	B5d_cross_site_json_post	ERR NetworkError when attempting to fetch resource. || listener: deny Method OPTIONS /<token>/act host=127.0.0.1:56202 origin=http://attacker.example:56203 site=cross-site
+  16666.5	B5e_iframe	no load event || listener: deny FetchSite GET /<token>/ host=127.0.0.1:56202 origin= site=cross-site
+  17514.0	B5f_form_post	submitted || listener: deny FetchSite POST /<token>/act host=127.0.0.1:56202 origin=http://attacker.example:56203 site=cross-site
+  17529.4	B5g_websocket	error || listener: deny FetchSite GET /<token>/events host=127.0.0.1:56202 origin=http://attacker.example:56203 site=cross-site
+  17532.7	B5_counter_after_all_of_that	{"counter":1}
+  17761.6	B6_history_length	1
+  18569.1	B6_window_close_closed_the_tab	true
+  18576.4	admitted	admit GET  origin= site=none dest=document
+  18576.8	admitted	admit GET app.css origin= site=same-origin dest=style
+  18577.1	admitted	admit GET app.js origin= site=same-origin dest=script
+  18577.6	admitted	admit GET events origin= site=same-origin dest=empty
+  18578.0	admitted	admit POST act origin=http://127.0.0.1:56202 site=same-origin dest=empty
+  18578.4	admitted	admit GET state origin= site= dest=
+  18884.4	done	0

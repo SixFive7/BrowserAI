@@ -1,0 +1,1 @@
+sample_at_ready_plus_ms=2000 processes_in_job=2 private_MB=5.9 working_set_MB=21.1 peak_job_commit_MB=267.4 per_process_private/ws_MB=[p1probe.exe:4.7/13.6 conhost.exe:1.2/7.5]

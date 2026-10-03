@@ -1,0 +1,25 @@
+      0.7	desktop	BrowserAI-b2-f9f5a38606b944dc80118150e5380435
+      0.8	mode	headless
+    161.4	launched	pid=27732 in=536 out=548
+    161.4	command_line	C:\Source\SixFive7\BrowserAI\.work\zoomout\d\bench\browsers\chromium-1246\chrome-win64\chrome.exe --remote-debugging-pipe --remote-debugging-io-pipes=536,548 --user-data-dir=C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\profiles\h1 --no-first-run --no-default-browser-check --headless=new
+    426.3	first_reply_ms_after_launch	425.6
+    426.4	product	Chrome/154.0.8037.0
+    426.4	protocolVersion	1.3
+    426.4	userAgent	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36
+    571.7	page_target	{"targetId":"8F30C8993C8331E8B93C63AE3364DF9A","type":"page","title":"New tab","url":"chrome://newtab/","attached":false,"canAccessOpener":false,"browserContextId":"E5F1EC289022EC8CE5843B889F91D113"}
+    571.7	page_target_ms_after_launch	570.9
+    664.0	page_ready_ms_after_launch	663.2
+    664.0	page_ready_ms_after_probe_main	664.0
+    664.0	page_said	{"ready":true,"dark":true,"inner":[764,429],"outer":[780,580],"dpr":1,"origin":"https://app.browserai.invalid","secure":true,"title":"BrowserAI","ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36"}
+    682.3	round_trip_ms	p50=0.31 min=0.21 max=1.86 n=40 pongs=40
+    682.3	served_over_the_pipe	/ /app.css /app.js
+   3682.8	message_window	0x1223E owner=browser title=[DeviceMonitorMessageWindow] equals_user_data_dir=False
+   3682.8	message_window	0x12236 owner=pid 27956 title=[] equals_user_data_dir=False
+   3682.8	message_window	0x1220C owner=browser title=[] equals_user_data_dir=False
+   3682.8	message_window	0x121FA owner=browser title=[C:\Source\SixFive7\BrowserAI\.work\zoomout\b2\profiles\h1] equals_user_data_dir=True
+   3682.8	message_window	0x121F8 owner=browser title=[] equals_user_data_dir=False
+   3682.8	blocked_by_the_host	(none)
+   3682.8	target_events	558:Target.targetCreated:{"targetInfo":{"targetId":"5A639FC2AF20171832BE0EFA2883ED84","type":"browser_ui","title":"","url":"chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html","attached":false,"canAccessOpener":false,"browserContextId":"E5F1EC289022EC8CE5843B889F91D113"}} | 558:Target.targetCreated:{"targetInfo":{"targetId":"5AB7C286D9645DF58B1CCB4049DB340C","type":"browser_ui","title":"","url":"chrome://omnibox-popup.top-chrome/","attached":false,"canAccessOpener":false,"browserContextId":"E5F1EC289022EC8CE5843B889F91D113"}} | 558:Target.targetCreated:{"targetInfo":{"targetId":"8F30C8993C8331E8B93C63AE3364DF9A","type":"page","title":"New tab","url":"chrome://newtab/","attached":false,"canAccessOpener":false,"browserContextId":"E5F1EC289022EC8CE5843B889F91D113"}} | 558:Target.targetCreated:{"targetInfo":{"targetId":"C1B0792F9238464CE132328A1EA574FB","type":"browser_ui","title":"","url":"chrome://webui-toolbar.top-chrome/","attached":false,"canAccessOpener":false,"browserContextId":"E5F1EC289022EC8CE5843B889F91D113"}} | 585:Target.targetCreated:{"targetInfo":{"targetId":"FE71E50561484FE7D5F83050AB82176F","type":"service_worker","title":"Service Worker chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/thunk.js","url":"chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/thunk.js","attached":false,"canAccessOpener":false,"browserContextId":... | 611:Target.targetCreated:{"targetInfo":{"targetId":"A8D2FD2A34507C9B1A417BEC672C6181","type":"service_worker","title":"Service Worker chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js","url":"chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js","attached":false,"canAccessOpener":false,"browserC...
+   4084.0	ended	how=cdp exited=True exit_code=0 ms_after_request=201 pipe_read_ended=True pipe_read_ended_ms_after_request=55 read_end_error=109
+   5616.8	profile	files=247 bytes=8467235 MB=8.1
+   5616.9	done	0

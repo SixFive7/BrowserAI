@@ -1,0 +1,4 @@
+A (probe pid 7536) registered http://127.0.0.1:49940/
+B registration refused: Exception calling "Start" with "0" argument(s): "Access is denied."
+client got 200: {"schemaVersion":3,"product":"BrowserAI","version":"1.1.1-pr
+(re-run not needed: the refused registration is the finding)

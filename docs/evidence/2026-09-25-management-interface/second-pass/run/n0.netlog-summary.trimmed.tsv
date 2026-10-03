@@ -1,0 +1,21 @@
+# file run/n0.netlog.json; events 2435; span 484 s
+# URLs the network stack was asked for (6 distinct)
+8	first@1.8s	https://clients2.google.com/service/update2/crx?...
+7	first@0.0s	https://accounts.google.com/ListAccounts?...
+5	first@2.6s	https://android.clients.google.com/checkin
+4	first@0.0s	https://update.googleapis.com/service/update2/json?...
+1	first@59.9s	http://update.googleapis.com/service/update2/json?...
+1	first@212.9s	https://safebrowsing.googleapis.com/v5/hashLists:batchGet?...
+# host names handed to the resolver (6 distinct)
+1	first@0.0s	https://update.googleapis.com
+1	first@0.0s	https://www.google.com
+1	first@0.1s	https://accounts.google.com
+1	first@1.8s	https://clients2.google.com
+1	first@2.6s	https://android.clients.google.com
+1	first@212.9s	https://safebrowsing.googleapis.com
+# socket addresses tried (4 distinct)
+29	first@0.0s	TCP_CONNECT_ATTEMPT 127.0.0.1:62967
+20	first@0.0s	UDP_CONNECT [2001:4860:4860::8888]:443
+2	first@0.0s	UDP_CONNECT <LAN DNS server>:53
+2	first@0.0s	UDP_LOCAL <LAN address>:*
+# requests that ended in an error (0 distinct)

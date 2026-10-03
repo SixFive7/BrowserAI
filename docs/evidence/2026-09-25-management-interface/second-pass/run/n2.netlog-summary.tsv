@@ -1,0 +1,17 @@
+# file run/n2.netlog.json; events 1716; span 485 s
+# URLs the network stack was asked for (5 distinct)
+7	first@0.2s	https://accounts.google.com/ListAccounts?...
+5	first@2.8s	https://android.clients.google.com/checkin
+2	first@0.3s	https://update.googleapis.com/service/update2/json?...
+1	first@0.2s	http://clients2.google.com/time/1/current?...
+1	first@0.2s	https://www.google.com/async/folae?...
+# host names handed to the resolver (5 distinct)
+1	first@0.2s	http://clients2.google.com
+1	first@0.3s	https://update.googleapis.com
+1	first@0.3s	https://accounts.google.com
+1	first@0.4s	https://www.google.com
+1	first@2.8s	https://android.clients.google.com
+# socket addresses tried (2 distinct)
+23	first@0.2s	TCP_CONNECT_ATTEMPT 127.0.0.1:62969
+13	first@0.2s	UDP_CONNECT [2001:4860:4860::8888]:443
+# requests that ended in an error (0 distinct)

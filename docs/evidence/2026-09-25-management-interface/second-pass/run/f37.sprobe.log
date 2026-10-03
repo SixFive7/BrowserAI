@@ -1,0 +1,156 @@
+4.9	listening	51197	other=51199
+1210.9	peer	pid=67140	same user	1.404 ms
+1211.1	admit	GET 	origin=	site=none	dest=document
+1383.9	peer	pid=67140	same user	1.343 ms
+1383.9	admit	GET app.css	origin=	site=same-origin	dest=style
+1385.1	peer	pid=67140	same user	1.044 ms
+1385.2	admit	GET app.js	origin=	site=same-origin	dest=script
+1401.2	peer	pid=67140	same user	1.350 ms
+1401.3	admit	GET events	origin=	site=same-origin	dest=empty
+1401.4	+page	n=1
+1496.1	peer	pid=67140	same user	1.261 ms
+1496.2	deny	Token	GET /favicon.ico	host=127.0.0.1:51197	origin=	site=same-origin
+1505.5	peer	pid=67140	same user	1.327 ms
+1505.8	admit	POST act	origin=http://127.0.0.1:51197	site=same-origin	dest=empty
+1536.6	-page	n=0
+1544.6	peer	pid=67140	same user	1.203 ms
+1544.6	admit	GET 	origin=	site=none	dest=document
+1562.8	peer	pid=67140	same user	1.191 ms
+1562.9	admit	GET app.css	origin=	site=same-origin	dest=style
+1564.3	peer	pid=67140	same user	1.131 ms
+1564.3	admit	GET app.js	origin=	site=same-origin	dest=script
+1578.8	peer	pid=67140	same user	1.426 ms
+1578.9	admit	GET events	origin=	site=same-origin	dest=empty
+1578.9	+page	n=1
+1759.2	-page	n=0
+1766.5	peer	pid=67140	same user	1.179 ms
+1766.5	admit	GET 	origin=	site=none	dest=document
+1780.0	peer	pid=67140	same user	1.232 ms
+1780.1	admit	GET app.css	origin=	site=same-origin	dest=style
+1781.4	peer	pid=67140	same user	1.192 ms
+1781.5	admit	GET app.js	origin=	site=same-origin	dest=script
+1785.5	peer	pid=67140	same user	1.056 ms
+1785.6	admit	GET events	origin=	site=same-origin	dest=empty
+1785.6	+page	n=1
+1948.1	-page	n=0
+1952.5	peer	pid=67140	same user	1.153 ms
+1952.6	admit	GET 	origin=	site=none	dest=document
+1970.5	peer	pid=67140	same user	1.768 ms
+1970.6	admit	GET app.css	origin=	site=same-origin	dest=style
+1971.8	peer	pid=67140	same user	1.041 ms
+1971.9	admit	GET app.js	origin=	site=same-origin	dest=script
+1976.1	peer	pid=67140	same user	1.188 ms
+1976.2	admit	GET events	origin=	site=same-origin	dest=empty
+1976.2	+page	n=1
+2138.6	-page	n=0
+2142.5	peer	pid=67140	same user	1.163 ms
+2142.6	admit	GET 	origin=	site=none	dest=document
+2157.6	peer	pid=67140	same user	1.101 ms
+2157.7	admit	GET app.css	origin=	site=same-origin	dest=style
+2158.9	peer	pid=67140	same user	1.088 ms
+2158.9	admit	GET app.js	origin=	site=same-origin	dest=script
+2162.8	peer	pid=67140	same user	1.386 ms
+2162.9	admit	GET events	origin=	site=same-origin	dest=empty
+2162.9	+page	n=1
+2326.0	-page	n=0
+2332.9	peer	pid=67140	same user	1.164 ms
+2333.0	admit	GET 	origin=	site=none	dest=document
+2345.3	peer	pid=67140	same user	1.317 ms
+2345.4	admit	GET app.css	origin=	site=same-origin	dest=style
+2346.7	peer	pid=67140	same user	1.170 ms
+2346.8	admit	GET app.js	origin=	site=same-origin	dest=script
+2351.0	peer	pid=67140	same user	1.196 ms
+2351.0	admit	GET events	origin=	site=same-origin	dest=empty
+2351.1	+page	n=1
+2517.6	-page	n=0
+2524.1	peer	pid=67140	same user	1.274 ms
+2524.2	admit	GET 	origin=	site=none	dest=document
+2541.4	peer	pid=67140	same user	1.359 ms
+2541.5	admit	GET app.css	origin=	site=same-origin	dest=style
+2542.6	peer	pid=67140	same user	1.030 ms
+2542.7	admit	GET app.js	origin=	site=same-origin	dest=script
+2546.9	peer	pid=67140	same user	1.219 ms
+2546.9	admit	GET events	origin=	site=same-origin	dest=empty
+2547.0	+page	n=1
+2709.7	-page	n=0
+2715.5	peer	pid=67140	same user	1.333 ms
+2715.6	admit	GET 	origin=	site=none	dest=document
+2727.9	peer	pid=67140	same user	1.196 ms
+2727.9	admit	GET app.css	origin=	site=same-origin	dest=style
+2729.2	peer	pid=67140	same user	1.052 ms
+2729.2	admit	GET app.js	origin=	site=same-origin	dest=script
+2735.5	peer	pid=67140	same user	1.274 ms
+2735.6	admit	GET events	origin=	site=same-origin	dest=empty
+2735.6	+page	n=1
+2895.8	-page	n=0
+2899.4	peer	pid=67140	same user	1.185 ms
+2899.5	admit	GET 	origin=	site=none	dest=document
+2915.1	peer	pid=67140	same user	1.218 ms
+2915.1	admit	GET app.css	origin=	site=same-origin	dest=style
+2916.6	peer	pid=67140	same user	1.294 ms
+2916.6	admit	GET app.js	origin=	site=same-origin	dest=script
+2920.1	peer	pid=67140	same user	1.292 ms
+2920.2	admit	GET events	origin=	site=same-origin	dest=empty
+2920.2	+page	n=1
+3083.8	-page	n=0
+3090.5	peer	pid=67140	same user	1.200 ms
+3090.5	admit	GET 	origin=	site=none	dest=document
+3104.1	peer	pid=67140	same user	1.401 ms
+3104.2	admit	GET app.css	origin=	site=same-origin	dest=style
+3105.6	peer	pid=67140	same user	1.218 ms
+3105.6	admit	GET app.js	origin=	site=same-origin	dest=script
+3110.0	peer	pid=67140	same user	1.153 ms
+3110.1	admit	GET events	origin=	site=same-origin	dest=empty
+3110.1	+page	n=1
+3274.3	-page	n=0
+3280.1	peer	pid=67140	same user	1.171 ms
+3280.2	admit	GET 	origin=	site=none	dest=document
+3293.2	peer	pid=67140	same user	1.548 ms
+3293.3	admit	GET app.css	origin=	site=same-origin	dest=style
+3294.5	peer	pid=67140	same user	1.037 ms
+3294.5	admit	GET app.js	origin=	site=same-origin	dest=script
+3298.5	peer	pid=67140	same user	1.322 ms
+3298.5	admit	GET events	origin=	site=same-origin	dest=empty
+3298.6	+page	n=1
+3619.6	peer	pid=67140	same user	1.256 ms
+3619.7	admit	GET 	origin=	site=none	dest=document
+3652.9	peer	pid=67140	same user	1.373 ms
+3652.9	admit	GET app.css	origin=	site=same-origin	dest=style
+3654.8	peer	pid=67140	same user	1.723 ms
+3654.9	admit	GET app.js	origin=	site=same-origin	dest=script
+3660.4	peer	pid=67140	same user	1.414 ms
+3660.5	admit	GET events	origin=	site=same-origin	dest=empty
+3660.6	+page	n=2
+3690.6	-page	n=1
+3874.7	peer	pid=67140	same user	1.998 ms
+3874.8	deny	Host	GET /<token>/	host=attacker.example:51197	origin=	site=
+4127.8	peer	pid=67140	same user	1.338 ms
+4127.9	deny	FetchSite	POST /<token>/act	host=127.0.0.1:51197	origin=http://attacker.example:51199	site=cross-site
+4142.5	peer	pid=67140	same user	1.401 ms
+4142.6	deny	FetchSite	GET /<token>/state	host=127.0.0.1:51197	origin=	site=cross-site
+4160.2	peer	pid=67140	same user	1.303 ms
+4160.3	deny	FetchSite	GET /<token>/state	host=127.0.0.1:51197	origin=http://attacker.example:51199	site=cross-site
+4176.9	peer	pid=67140	same user	1.217 ms
+4177.2	deny	Method	OPTIONS /<token>/act	host=127.0.0.1:51197	origin=http://attacker.example:51199	site=cross-site
+4199.4	peer	pid=67140	same user	1.220 ms
+4199.4	deny	FetchSite	GET /<token>/	host=127.0.0.1:51197	origin=	site=cross-site
+8238.7	peer	pid=67140	same user	1.245 ms
+8238.8	deny	FetchSite	POST /<token>/act	host=127.0.0.1:51197	origin=http://attacker.example:51199	site=cross-site
+9053.2	peer	pid=67140	same user	1.440 ms
+9053.2	deny	FetchSite	GET /<token>/events	host=127.0.0.1:51197	origin=http://attacker.example:51199	site=cross-site
+9064.3	peer	pid=18472	same user	1.397 ms
+9064.4	admit	GET state	origin=	site=	dest=
+9244.2	peer	pid=67140	same user	1.442 ms
+9244.4	admit	GET 	origin=	site=none	dest=document
+9276.5	peer	pid=67140	same user	1.225 ms
+9276.6	admit	GET app.css	origin=	site=same-origin	dest=style
+9277.8	peer	pid=67140	same user	1.106 ms
+9277.9	admit	GET app.js	origin=	site=same-origin	dest=script
+9284.5	peer	pid=67140	same user	1.361 ms
+9284.6	admit	GET events	origin=	site=same-origin	dest=empty
+9284.6	+page	n=2
+9315.9	-page	n=1
+10153.7	-page	n=0
+10456.9	peer	pid=18472	same user	1.211 ms
+10457.0	admit	POST quit	origin=http://127.0.0.1:51197	site=	dest=
+10457.1	stopping

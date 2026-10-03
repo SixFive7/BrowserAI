@@ -1,0 +1,9 @@
+baseline exit=0 seconds=12
+rawsocket exit=0 seconds=7
+httplistener exit=0 seconds=8
+kestrel-slim exit=1 seconds=4
+kestrel-empty exit=1 seconds=3
+DONE
+kestrel-slim exit=0 seconds=20
+kestrel-empty exit=0 seconds=14
+DONE

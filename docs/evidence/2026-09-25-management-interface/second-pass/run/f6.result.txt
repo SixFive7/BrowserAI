@@ -1,0 +1,28 @@
+    429.5	browser	Firefox 156.0
+   1324.6	B1_connected	true
+   1415.7	B1_write_status	204
+   1431.0	B1_state_pushed	{"counter":1,"pages":1}
+   1469.2	B1_cookies_and_storage	{"cookie":"","local":0,"session":0}
+   3424.7	B2_reload_gap_ms	n=10 min=19.4 median=23.4 max=47.0
+   3632.3	B3_second_tab_connected	true
+   3666.3	B3_tab_close_seen_by_the_listener_ms	28.6
+   3854.5	B4_rebinding_navigation	ERR page.goto: NS_ERROR_NET_EMPTY_RESPONSE
+   3860.7	B4_listener	deny Host GET /<token>/ host=attacker.example:64153 origin= site=
+   4161.1	B5_other_site_origin	http://attacker.example:64154
+   4187.8	B5a_cross_site_post_text_plain	opaque 0 || listener: deny FetchSite POST /<token>/act host=127.0.0.1:64153 origin=http://attacker.example:64154 site=cross-site
+   4204.3	B5b_cross_site_get_no_cors	opaque 0 || listener: deny FetchSite GET /<token>/state host=127.0.0.1:64153 origin= site=cross-site
+   4221.9	B5c_cross_site_get_cors	ERR NetworkError when attempting to fetch resource. || listener: deny FetchSite GET /<token>/state host=127.0.0.1:64153 origin=http://attacker.example:64154 site=cross-site
+   4241.2	B5d_cross_site_json_post	ERR NetworkError when attempting to fetch resource. || listener: deny Method OPTIONS /<token>/act host=127.0.0.1:64153 origin=http://attacker.example:64154 site=cross-site
+   8254.6	B5e_iframe	no load event || listener: deny FetchSite GET /<token>/ host=127.0.0.1:64153 origin= site=cross-site
+   9164.6	B5f_form_post	submitted || listener: deny FetchSite POST /<token>/act host=127.0.0.1:64153 origin=http://attacker.example:64154 site=cross-site
+   9192.0	B5g_websocket	error || listener: deny FetchSite GET /<token>/events host=127.0.0.1:64153 origin=http://attacker.example:64154 site=cross-site
+   9196.0	B5_counter_after_all_of_that	{"counter":1}
+   9460.9	B6_history_length	1
+  10267.8	B6_window_close_closed_the_tab	true
+  10275.9	admitted	admit GET  origin= site=none dest=document
+  10276.5	admitted	admit GET app.css origin= site=same-origin dest=style
+  10277.1	admitted	admit GET app.js origin= site=same-origin dest=script
+  10283.2	admitted	admit GET events origin= site=same-origin dest=empty
+  10289.4	admitted	admit POST act origin=http://127.0.0.1:64153 site=same-origin dest=empty
+  10295.2	admitted	admit GET state origin= site= dest=
+  10664.8	done	0

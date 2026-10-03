@@ -1,0 +1,27 @@
+# wv2-static measured 2026-09-25T04:38:28.7835715+00:00; exe 2049536 B; user data C:\Source\SixFive7\BrowserAI\.work\zoomout\b\run\wv2-udf-static
+## run 0: launch-to-ready 384.5 ms; exited=True code=0 at 2891.0 ms; processes still in job at exit 5
+   processes_in_job=7 [wv2probex1,msedgewebview2x6] private_MB=146,0 working_set_MB=319,8 peak_job_commit_MB=148,7
+   probe: 0.0	main
+   probe: 10.1	environment hr=0x00000000
+   probe: 13.4	create-controller-called hr=0x00000000
+   probe: 13.4	create-environment-called hr=0x00000000
+   probe: 268.6	controller hr=0x00000000
+   probe: 269.2	browser-pid 36572
+   probe: 269.4	navigate-to-string hr=0x00000000
+   probe: 323.4	message ready:52:dark=true:dpr=1
+   probe: 332.5	navigation-completed success=1
+   probe: 2819.8	closing controller
+   probe: 2832.3	exit
+## run 1: launch-to-ready 340.7 ms; exited=True code=0 at 2848.4 ms; processes still in job at exit 5
+   processes_in_job=7 [wv2probex1,msedgewebview2x6] private_MB=143,0 working_set_MB=314,1 peak_job_commit_MB=144,6
+   probe: 0.0	main
+   probe: 8.6	environment hr=0x00000000
+   probe: 11.6	create-controller-called hr=0x00000000
+   probe: 11.6	create-environment-called hr=0x00000000
+   probe: 259.2	controller hr=0x00000000
+   probe: 259.8	browser-pid 86032
+   probe: 260.0	navigate-to-string hr=0x00000000
+   probe: 320.6	message ready:59:dark=true:dpr=1
+   probe: 331.9	navigation-completed success=1
+   probe: 2807.1	closing controller
+   probe: 2820.3	exit

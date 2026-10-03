@@ -1,0 +1,4 @@
+# 2026-10-01T12:40:10.8480188+00:00 desktop=BrowserAI-b2-579b43914cb440e689e3ab2bed8d37f7 pid=58608 exe=C:\Source\SixFive7\BrowserAI\payload\node\node.exe
+launch_to_ready_ms=704.5 exited=True exit_code=0 end_ms=3445.1 still_in_job_at_end=0 peak_job_commit_MB=393.2
+sample_at_ready_plus_ms=2000 processes_in_job=11 private_MB=381.9 working_set_MB=612.0 peak_job_commit_MB=389.6 per_process_private/ws_MB=[conhost.exe:1.2/7.7 chrome.exe:2.5/10.6 chrome.exe:2.3/9.7 chrome.exe:91.7/85.4 chrome.exe:9.2/20.8 chrome.exe:47.0/89.1 chrome.exe:21.0/58.8 chrome.exe:18.9/36.4 node.exe:132.4/121.2 chrome.exe:40.8/132.4 chrome.exe:14.9/39.9]
+job closed; desktop closed=True
