@@ -645,6 +645,18 @@ release body; nothing else depends on it.
   read `true` for all four sessions it builds, and the instructions arm named the phrases it
   could not find.
 
+- 🔧 **A server's pipe serves its connections in parallel, so a caller that never finishes holds nobody up.**
+  Q297 b, the maintainer's words verbatim: *"Q297 b"*. One thread served one instance, reading
+  each request to its newline and each answer until the client closed, so a caller that connected
+  and stopped there held the pipe, and every other caller met a busy pipe until its own bound ran
+  out. The listener now hands each connected instance to a thread of its own and listens on a
+  fresh one, made before the hand-over so the name never stands without an instance of ours; up to
+  255 at once, Windows' own ceiling. `FILE_FLAG_FIRST_PIPE_INSTANCE` still refuses a second
+  server on the name, now with `0x80070005` where one instance per name answered `0x800700E7`.
+  The coordinator's pipe was not part of the decision and keeps one instance. Watched red first:
+  with one caller silent, a describe from another waited out the suite's whole five-minute hang
+  detector and came back with no answer. The hazard row for it closes.
+
 - ⬆️ **The payload rolled to `@playwright/mcp` 0.0.83, Chromium moved to 155, and Velopack to 1.2.161.**
   `playwright-core` and `playwright` resolve to `1.64.0-alpha-1790635538000`, the version 0.0.83
   pins for both. Chromium **1246 -> 1247** with `browserVersion` **154.0.8037.0 -> 155.0.8059.12**,

@@ -227,15 +227,25 @@ internal sealed class ServerPipeTests
     }
 
     /// <summary>
-    /// A second instance under a name this pipe already serves is refused with
-    /// <c>0x800700E7</c>; a name somebody else created first is refused too,
-    /// with <c>0x80070005</c>.
+    /// A second pipe under a name this pipe already serves is refused with
+    /// <c>0x80070005</c>, and so is a name somebody else created first.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Two arms, because they are two different defences.</b> One instance
-    /// per name is what keeps a second server from answering for the first. The
-    /// second arm is what <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is for, and it
+    /// ⚠️ <b>Corrected 2026-10-03 with Q297 b (previously "A second instance under a
+    /// name this pipe already serves is refused with <c>0x800700E7</c>", and the
+    /// first arm expected <c>ERROR_PIPE_BUSY</c>).</b> A server's pipe serves its
+    /// connections in parallel now, so it is created with room for more than one
+    /// instance and <i>one instance per name</i> is no longer what keeps a second
+    /// server out. <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is, in both arms: a second
+    /// <see cref="ServerPipe.OpenNamed(string, IServerPipeResponder, Microsoft.Extensions.Logging.ILogger)"/>
+    /// asks for the first instance of a name that already has one, and Windows
+    /// answers <c>ERROR_ACCESS_DENIED</c>. The coordinator's pipe keeps one
+    /// instance, and <c>CoordinatorTests</c> still holds its <c>ERROR_PIPE_BUSY</c>.
+    /// </para>
+    /// <para>
+    /// <b>Two arms, because a name can be taken two ways.</b> The second arm is
+    /// what <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is for, and it
     /// was measured before it was asserted, 2026-09-24: against a name another
     /// process had created with unlimited instances, a creation carrying the
     /// flag was refused with <c>ERROR_ACCESS_DENIED</c>, and the same creation
@@ -251,7 +261,6 @@ internal sealed class ServerPipeTests
     [Test]
     public async Task ASecondInstanceIsRefusedAndSoIsANameSomebodyElseCreatedFirst()
     {
-        const int PipeBusy = unchecked((int)0x800700E7);
         const int AccessDenied = unchecked((int)0x80070005);
 
         using var responder = new ScriptedResponder();
@@ -262,7 +271,7 @@ internal sealed class ServerPipeTests
         {
             var second = Assert.Throws<IOException>(() => ServerPipe.OpenNamed(name, responder, NullLogger.Instance).Dispose());
 
-            await Assert.That(second.HResult).IsEqualTo(PipeBusy);
+            await Assert.That(second.HResult).IsEqualTo(AccessDenied);
         }
 
         // Released: the same name opens again.
@@ -372,6 +381,73 @@ internal sealed class ServerPipeTests
         {
             responder.Release();
         }
+    }
+
+    /// <summary>
+    /// A caller that connects and never finishes blocks nobody else: with one
+    /// caller silent and another that asked and never read its answer, a third is
+    /// answered, and so is its stop.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q297 b, decided 2026-10-03 by the maintainer, in his words: <i>"Q297
+    /// b"</i>.</b> A server's pipe serves its connections in parallel. Until then
+    /// one thread served one instance, reading each request to its newline and
+    /// each answer until the client closed, so a caller that connected and stopped
+    /// there held the pipe for as long as it liked, and every other caller met a
+    /// busy pipe and waited out its own bound.
+    /// </para>
+    /// <para>
+    /// <b>Two callers, because the old thread could be held at two places</b>:
+    /// reading a request that never ends, and draining an answer nobody reads.
+    /// Either one alone held it. The bound handed to the third caller is the
+    /// suite's hang detector and not the product's 500 ms, for the reason the
+    /// happy-path arms give: the host is loaded, and the claim is that the answer
+    /// comes at all.
+    /// </para>
+    /// </remarks>
+    /// <returns>The assertion task.</returns>
+    [Test]
+    public async Task ACallerThatConnectsAndNeverFinishesBlocksNobodyElse()
+    {
+        using var root = ScratchDirectory.Create("pipe-parallel");
+        using var live = LiveInstances.Join(root.Path, NullLogger.Instance)!;
+        using var responder = new ScriptedResponder();
+        using var pipe = ServerPipe.Open(live.OwnFile, responder, NullLogger.Instance);
+
+        // ---- A caller that connects and sends nothing.
+        using var silent = new NamedPipeClientStream(".", ServerPipeRig.ShortName(pipe.Name), PipeDirection.InOut);
+        await silent.ConnectAsync(TestDefaults.InProcessHang, CancellationToken.None);
+
+        var first = await ServerPipeClient.DescribeAsync(live.OwnFile, TestDefaults.InProcessHang);
+
+        await Assert.That(first.Outcome).IsEqualTo(ServerPipeOutcome.Answered).Because(first.Why);
+        await Assert.That(first.Description!.ProcessId).IsEqualTo(Environment.ProcessId);
+
+        // ---- And one that asks, and never reads its answer or closes.
+        using var unread = new NamedPipeClientStream(".", ServerPipeRig.ShortName(pipe.Name), PipeDirection.InOut);
+        await unread.ConnectAsync(TestDefaults.InProcessHang, CancellationToken.None);
+        await unread.WriteAsync(ServerPipeProtocol.Request(ServerPipeRequest.Describe));
+        await unread.FlushAsync();
+
+        var second = await ServerPipeClient.DescribeAsync(live.OwnFile, TestDefaults.InProcessHang);
+
+        await Assert.That(second.Outcome).IsEqualTo(ServerPipeOutcome.Answered).Because(second.Why);
+
+        var stop = await ServerPipeClient.StopAsync(live.OwnFile, TestDefaults.InProcessHang);
+
+        await Assert.That(stop.Outcome).IsEqualTo(ServerPipeOutcome.Answered).Because(stop.Why);
+
+        // The stop's own work runs once its answer has been delivered and the
+        // connection dropped: waited for, with the hang detector behind it.
+        var waited = Stopwatch.StartNew();
+
+        while (responder.Stops is 0 && waited.Elapsed < TestDefaults.InProcessHang)
+        {
+            await Task.Delay(20);
+        }
+
+        await Assert.That(responder.Stops).IsEqualTo(1);
     }
 
     /// <summary>

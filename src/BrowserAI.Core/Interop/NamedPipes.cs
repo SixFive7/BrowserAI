@@ -87,6 +87,17 @@ internal static partial class NamedPipes
     /// <summary>How much of a request the pipe buffers. A request is one short line.</summary>
     public const int InBufferBytes = 4 * 1024;
 
+    /// <summary>
+    /// How many instances a pipe that serves its connections in parallel may have
+    /// at once: <c>PIPE_UNLIMITED_INSTANCES</c>, which is Windows' own ceiling of
+    /// 255.
+    /// </summary>
+    /// <remarks>
+    /// <b>Every instance of one name has to be created with the same number</b>, so
+    /// it is a constant and not a choice made per instance.
+    /// </remarks>
+    public const uint UnlimitedInstances = 255;
+
     private const uint TokenQuery = 0x0008;
     private const int TokenUserClass = 1;
     private const int ErrorInsufficientBuffer = 122;
@@ -105,6 +116,12 @@ internal static partial class NamedPipes
     /// thread that serves it blocks on it and does nothing else.
     /// </para>
     /// <para>
+    /// ⚠️ <b>The coordinator's pipe only, since 2026-10-03</b> (previously every
+    /// pipe of ours). A server's pipe serves in parallel and is created by
+    /// <see cref="CreateParallelServer"/>, Q297 b; the coordinator's was not part
+    /// of that decision and keeps one instance.
+    /// </para>
+    /// <para>
     /// ⚠️ <b>It throws the HRESULT Windows answered, so a caller can tell a
     /// name in use from anything else.</b> A second instance under a name this
     /// process or another already serves is <c>0x800700E7</c>,
@@ -115,7 +132,62 @@ internal static partial class NamedPipes
     /// <returns>The server end. The caller owns it.</returns>
     /// <exception cref="IOException">The pipe was not created; <see cref="Exception.HResult"/> says why.</exception>
     /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
-    public static SafeFileHandle CreateServer(string name)
+    public static SafeFileHandle CreateServer(string name) => Create(name, FileFlagFirstPipeInstance, maxInstances: 1);
+
+    /// <summary>
+    /// Creates the first instance of a pipe that serves its connections in
+    /// parallel, with the same three properties as <see cref="CreateServer"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Q297 b, decided 2026-10-03 by the maintainer, in his words: <i>"Q297
+    /// b"</i>.</b> A server's pipe takes up to <see cref="UnlimitedInstances"/>
+    /// connections at once, so a caller that connects and never finishes holds
+    /// its own instance and nobody else's.
+    /// </para>
+    /// <para>
+    /// ⚠️ <b><c>FILE_FLAG_FIRST_PIPE_INSTANCE</c> is still on this creation and
+    /// is now the whole of what keeps a second server off the name</b>: a second
+    /// process asking for the first instance of a name that already has one is
+    /// refused with <c>0x80070005</c>, <c>ERROR_ACCESS_DENIED</c>, and so is this
+    /// one when somebody else created the name first. Before Q297 b one instance
+    /// per name did that job too, with <c>0x800700E7</c>.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">The full pipe name, <c>\\.\pipe\...</c>.</param>
+    /// <returns>The first server end. The caller owns it.</returns>
+    /// <exception cref="IOException">The pipe was not created; <see cref="Exception.HResult"/> says why.</exception>
+    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
+    public static SafeFileHandle CreateParallelServer(string name) => Create(name, FileFlagFirstPipeInstance, UnlimitedInstances);
+
+    /// <summary>
+    /// Creates one more instance of a parallel pipe that this process already
+    /// serves, for the next connection.
+    /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Without <c>FILE_FLAG_FIRST_PIPE_INSTANCE</c>, and safe only while the
+    /// caller still holds an instance of the name.</b> A creation without the flag
+    /// joins whatever pipe carries the name, so it is made only by the thread that
+    /// holds an instance open at that moment: the name has then never been without
+    /// one of ours since <see cref="CreateParallelServer"/> made it, and nobody
+    /// else can have created it in between. When every instance Windows allows is
+    /// already in use this throws with <c>0x800700E7</c>,
+    /// <c>ERROR_PIPE_BUSY</c>.
+    /// </remarks>
+    /// <param name="name">The full pipe name, exactly as <see cref="CreateParallelServer"/> was given it.</param>
+    /// <returns>The new server end. The caller owns it.</returns>
+    /// <exception cref="IOException">The instance was not created; <see cref="Exception.HResult"/> says why.</exception>
+    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
+    public static SafeFileHandle CreateParallelInstance(string name) => Create(name, 0, UnlimitedInstances);
+
+    /// <summary>The one creation every pipe of ours goes through.</summary>
+    /// <param name="name">The full pipe name.</param>
+    /// <param name="firstInstance"><see cref="FileFlagFirstPipeInstance"/>, or zero for a further instance.</param>
+    /// <param name="maxInstances">How many instances the name may have at once.</param>
+    /// <returns>The server end. The caller owns it.</returns>
+    /// <exception cref="IOException">The pipe was not created; <see cref="Exception.HResult"/> says why.</exception>
+    /// <exception cref="Win32Exception">The current user's security descriptor could not be built.</exception>
+    private static SafeFileHandle Create(string name, uint firstInstance, uint maxInstances)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
@@ -132,9 +204,9 @@ internal static partial class NamedPipes
 
             var handle = CreateNamedPipeW(
                 name,
-                PipeAccessDuplex | FileFlagFirstPipeInstance,
+                PipeAccessDuplex | firstInstance,
                 PipeRejectRemoteClients,
-                nMaxInstances: 1,
+                maxInstances,
                 (uint)OutBufferBytes,
                 (uint)InBufferBytes,
                 nDefaultTimeOut: 0,
